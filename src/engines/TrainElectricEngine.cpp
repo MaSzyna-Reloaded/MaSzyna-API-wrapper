@@ -7,13 +7,6 @@ namespace godot {
     TrainElectricEngine::TrainElectricEngine() = default;
 
     void TrainElectricEngine::_bind_methods() {
-        ClassDB::bind_method(
-                D_METHOD("set_compressor_switch_pressed"), &TrainElectricEngine::set_compressor_switch_pressed);
-        ClassDB::bind_method(
-                D_METHOD("get_compressor_switch_pressed"), &TrainElectricEngine::get_compressor_switch_pressed);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/compressor"), "set_compressor_switch_pressed",
-                "get_compressor_switch_pressed");
 
         ClassDB::bind_method(
                 D_METHOD("set_converter_switch_pressed"), &TrainElectricEngine::set_converter_switch_pressed);
@@ -64,7 +57,8 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_csw"), &TrainElectricEngine::set_csw);
         ClassDB::bind_method(D_METHOD("get_csw"), &TrainElectricEngine::get_csw);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power/current_collector/collector_sliding_width"), "set_csw", "get_csw");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "power/current_collector/collector_sliding_width"), "set_csw", "get_csw");
 
         ClassDB::bind_method(
                 D_METHOD("set_min_main_switch_voltage"), &TrainElectricEngine::set_min_main_switch_voltage);
@@ -90,13 +84,11 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "power/current_collector/max_pantograph_tank_pressure"),
                 "set_max_pantograph_tank_pressure", "get_max_pantograph_tank_pressure");
 
-        ClassDB::bind_method(
-                D_METHOD("set_overvoltage_relay"), &TrainElectricEngine::set_overvoltage_relay);
-        ClassDB::bind_method(
-                D_METHOD("get_overvoltage_relay"), &TrainElectricEngine::get_overvoltage_relay);
+        ClassDB::bind_method(D_METHOD("set_overvoltage_relay"), &TrainElectricEngine::set_overvoltage_relay);
+        ClassDB::bind_method(D_METHOD("get_overvoltage_relay"), &TrainElectricEngine::get_overvoltage_relay);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "power/current_collector/overvoltage_relay"),
-                "set_overvoltage_relay", "get_overvoltage_relay");
+                PropertyInfo(Variant::BOOL, "power/current_collector/overvoltage_relay"), "set_overvoltage_relay",
+                "get_overvoltage_relay");
 
         ClassDB::bind_method(
                 D_METHOD("set_required_main_switch_voltage"), &TrainElectricEngine::set_required_main_switch_voltage);
@@ -114,23 +106,27 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "power/transducer/input_voltage"), "set_transducer_input_voltage",
                 "get_transducer_input_voltage");
 
-        ClassDB::bind_method(D_METHOD("set_accumulator_recharge_source"), &TrainElectricEngine::set_accumulator_recharge_source);
-        ClassDB::bind_method(D_METHOD("get_accumulator_recharge_source"), &TrainElectricEngine::get_accumulator_recharge_source);
+        ClassDB::bind_method(
+                D_METHOD("set_accumulator_recharge_source"), &TrainElectricEngine::set_accumulator_recharge_source);
+        ClassDB::bind_method(
+                D_METHOD("get_accumulator_recharge_source"), &TrainElectricEngine::get_accumulator_recharge_source);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::INT, "power/accumulator/recharge_source", PROPERTY_HINT_ENUM,
                         "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
                         "Main"),
-                        "set_accumulator_recharge_source", "get_accumulator_recharge_source");
+                "set_accumulator_recharge_source", "get_accumulator_recharge_source");
 
-        ClassDB::bind_method(D_METHOD("set_power_cable_power_source"), &TrainElectricEngine::set_power_cable_power_source);
-        ClassDB::bind_method(D_METHOD("get_power_cable_power_source"), &TrainElectricEngine::get_power_cable_power_source);
+        ClassDB::bind_method(
+                D_METHOD("set_power_cable_power_source"), &TrainElectricEngine::set_power_cable_power_source);
+        ClassDB::bind_method(
+                D_METHOD("get_power_cable_power_source"), &TrainElectricEngine::get_power_cable_power_source);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::INT, "power/power_cable/source", PROPERTY_HINT_ENUM,
                         "NoPower,BioPower,MechPower,ElectricPower,SteamPower"
                         "Main"),
-                        "set_power_cable_power_source", "get_power_cable_power_source");
+                "set_power_cable_power_source", "get_power_cable_power_source");
 
         ClassDB::bind_method(
                 D_METHOD("set_power_cable_steam_pressure"), &TrainElectricEngine::set_power_cable_steam_pressure);
@@ -171,9 +167,11 @@ namespace godot {
 
         mover->EnginePowerSource.SourceType = static_cast<TPowerSource>(power_source);
         mover->CompressorSwitch(compressor_switch_pressed);
+
         mover->ConverterSwitch(converter_switch_pressed);
         switch (static_cast<TPowerSource>(power_source)) {
-            case TPowerSource::InternalSource:; //@TODO: Implement mover->EnginePowerSource.PowerType = LoadFIZ_PowerDecode
+            case TPowerSource::InternalSource:; //@TODO: Implement mover->EnginePowerSource.PowerType =
+                                                //LoadFIZ_PowerDecode
             case TPowerSource::Transducer: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
@@ -182,7 +180,8 @@ namespace godot {
                 // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
             }
             case TPowerSource::Accumulator: {
-                mover->EnginePowerSource.RAccumulator.RechargeSource = static_cast<TPowerSource>(accumulator_recharge_source);
+                mover->EnginePowerSource.RAccumulator.RechargeSource =
+                        static_cast<TPowerSource>(accumulator_recharge_source);
             }
             case TPowerSource::CurrentCollector: {
                 mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
@@ -203,7 +202,7 @@ namespace godot {
                     mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }
             }
-            case TPowerSource::Heater: //Not finished on MaSzyna's side
+            case TPowerSource::Heater: // Not finished on MaSzyna's side
             case TPowerSource::NotDefined:
             default:;
         }

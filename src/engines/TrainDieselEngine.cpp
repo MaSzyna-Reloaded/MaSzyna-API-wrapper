@@ -34,6 +34,13 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "switches/oil_pump_enabled"), "set_oil_pump_enabled",
                 "get_oil_pump_enabled");
+
+        ClassDB::bind_method(D_METHOD("set_wwlist"), &TrainDieselEngine::set_wwlist);
+        ClassDB::bind_method(D_METHOD("get_wwlist"), &TrainDieselEngine::get_wwlist);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::ARRAY, "wwlist", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "TypedArray<Array>"),
+                "set_wwlist", "get_wwlist");
     }
 
     TEngineType TrainDieselEngine::get_engine_type() {
@@ -49,6 +56,12 @@ namespace godot {
 
         state["fuel_pump_active"] = mover->FuelPump.is_active;
         state["fuel_pump_disabled"] = mover->FuelPump.is_disabled;
+
+        state["diesel_startup"] = mover->dizel_startup;
+        state["diesel_ignition"] = mover->dizel_ignition;
+        state["diesel_spinup"] = mover->dizel_spinup;
+        state["diesel_power"] = mover->dizel_Power;
+        state["diesel_torque"] = mover->dizel_Torque;
     }
 
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
@@ -56,14 +69,26 @@ namespace godot {
 
         // FIXME: test data
         mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
+        mover->dizel_nmin = 100; // nie wiem skad to sie ustawia, w FIZ stonki nie ma
+        // end test data
 
         mover->OilPump.pressure_minimum = oil_min_pressure;
         mover->OilPump.pressure_maximum = oil_max_pressure;
 
+        mover->Ftmax = traction_force_max;
+
+        /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
+        const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
+        mover->MainCtrlPosNo = wwlist.size();
+        for (int i = 0; i < std::min(_max, (int)wwlist.size()); i++) {
+            mover->DElist[i].RPM = wwlist[i].get(0);
+            mover->DElist[i].GenPower = wwlist[i].get(1);
+            mover->DElist[i].Umax = wwlist[i].get(2);
+            mover->DElist[i].Imax = wwlist[i].get(3);
+        }
+
         mover->FuelPumpSwitch(sw_fuel_pump_enabled);
         mover->OilPumpSwitch(sw_oil_pump_enabled);
-
-        mover->Ftmax = traction_force_max;
     }
 
     double TrainDieselEngine::get_oil_min_pressure() const {
@@ -109,6 +134,15 @@ namespace godot {
 
     bool TrainDieselEngine::get_oil_pump_enabled() const {
         return sw_oil_pump_enabled;
+    }
+
+    TypedArray<Array> TrainDieselEngine::get_wwlist() {
+        return wwlist;
+    }
+
+    void TrainDieselEngine::set_wwlist(const TypedArray<Array> p_wwlist) {
+        wwlist.clear();
+        wwlist.append_array(p_wwlist);
     }
 
 } // namespace godot

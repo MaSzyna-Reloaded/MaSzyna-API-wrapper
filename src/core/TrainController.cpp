@@ -240,6 +240,8 @@ namespace godot {
             _dirty_prop = false;
         }
 
+        mover->ComputeTotalForce(delta * 1000.0);
+        mover->TractionForce(delta * 1000.0);
         mover->compute_movement_(delta * 1000.0);
     }
 
@@ -363,6 +365,12 @@ namespace godot {
         state["current0"] = mover->ShowCurrent(0);
         state["current1"] = mover->ShowCurrent(1);
         state["current2"] = mover->ShowCurrent(2);
+        state["relay_novolt"] = mover->NoVoltRelay;
+        state["relay_overvoltage"] = mover->OvervoltageRelay;
+        state["relay_ground"] = mover->GroundRelay;
+        state["train_damage"] = mover->DamageFlag;
+        state["controller_second_position"] = mover->ScndCtrlPos;
+        state["controller_main_position"] = mover->MainCtrlPos;
     }
 
 

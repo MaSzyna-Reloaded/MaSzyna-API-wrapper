@@ -31,7 +31,7 @@ namespace godot {
              * The minimum closing voltage of the main switch, in volts.
              * By default, it is 0.5*max_voltage
              */
-            float min_main_switch_voltage = 0.5f*max_voltage;
+            float min_main_switch_voltage = 0.5f * max_voltage;
             /**
              * Minimum pressure in the Pantograph Tank (PT) to raise the pantograph, in MPa
              */
@@ -48,12 +48,13 @@ namespace godot {
              * The voltage required to turn on the main switch
              * By default, it is 0.6*max_voltage
              */
-            float required_main_switch_voltage = 0.6f*max_voltage;
+            float required_main_switch_voltage = 0.6f * max_voltage;
             float transducer_input_voltage = 0;
             int accumulator_recharge_source = 0;
             int power_cable_power_trans = 0;
             float power_cable_steam_pressure = 0;
             //@TODO: Implement bitmask for PhysicalLayout
+
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
@@ -61,6 +62,7 @@ namespace godot {
         public:
             void set_converter_switch_pressed(bool p_state);
             bool get_converter_switch_pressed() const;
+
             void set_compressor_switch_pressed(bool p_state);
             bool get_compressor_switch_pressed() const;
             void set_engine_power_source(int p_source);

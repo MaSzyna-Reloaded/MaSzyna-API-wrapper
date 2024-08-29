@@ -139,6 +139,12 @@ type = 0
 node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
 property = "switches/main"
 
+[node name="Compressor" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Compressor"
+node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
+property = "switches/compressor"
+
 [node name="Electric" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
 

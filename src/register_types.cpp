@@ -13,9 +13,6 @@
 #include "TrainPart.hpp"
 #include "TrainSwitch.hpp"
 #include "TrainSecuritySystem.hpp"
-#include "switches/TrainCompressorSwitch.hpp"
-#include "switches/TrainConverterSwitch.hpp"
-#include "switches/TrainMainSwitch.hpp"
 
 using namespace godot;
 
@@ -32,9 +29,6 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
     GDREGISTER_CLASS(TrainElectricSeriesEngine);
     GDREGISTER_CLASS(TrainController);
     GDREGISTER_ABSTRACT_CLASS(TrainSwitch);
-    GDREGISTER_CLASS(TrainMainSwitch);
-    GDREGISTER_CLASS(TrainConverterSwitch);
-    GDREGISTER_CLASS(TrainCompressorSwitch);
     GDREGISTER_CLASS(TrainSecuritySystem);
 }
 

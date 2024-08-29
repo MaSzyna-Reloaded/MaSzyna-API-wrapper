@@ -39,11 +39,3 @@ emergency_brake_delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
-
-[node name="Guziki" type="Node" parent="."]
-
-[node name="TrainMainSwitch" type="TrainMainSwitch" parent="Guziki"]
-
-[node name="TrainConverterSwitch" type="TrainConverterSwitch" parent="Guziki"]
-
-[node name="TrainCompressorSwitch" type="TrainCompressorSwitch" parent="Guziki"]

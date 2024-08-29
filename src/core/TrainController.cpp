@@ -60,18 +60,6 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "nominal_battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"),
                 "set_nominal_battery_voltage", "get_nominal_battery_voltage");
-
-        /* FIXME: move to TrainDieselEngine section */
-        ClassDB::bind_method(D_METHOD("get_fuel_pump_enabled"), &TrainController::get_fuel_pump_enabled);
-        ClassDB::bind_method(D_METHOD("set_fuel_pump_enabled"), &TrainController::set_fuel_pump_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/fuel_pump_enabled"), "set_fuel_pump_enabled",
-                "get_fuel_pump_enabled");
-        ClassDB::bind_method(D_METHOD("get_oil_pump_enabled"), &TrainController::get_oil_pump_enabled);
-        ClassDB::bind_method(D_METHOD("set_oil_pump_enabled"), &TrainController::set_oil_pump_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/oil_pump_enabled"), "set_oil_pump_enabled",
-                "get_oil_pump_enabled");
     }
 
     TrainController::TrainController() {
@@ -241,6 +229,8 @@ namespace godot {
                 _on_train_part_config_changed(switches[i]);
             }
 
+            // mover->CheckLocomotiveParameters(true, 0);
+
             _dirty = false;
             _dirty_prop = true; // sforsowanie odswiezenia stanu lokalnych propsow
         }
@@ -261,10 +251,6 @@ namespace godot {
         mover->Battery = sw_battery_enabled;
         mover->NominalBatteryVoltage = nominal_battery_voltage;
         mover->BatteryVoltage = nominal_battery_voltage;
-
-        // FIXME: move to TrainDieselEngine
-        mover->FuelPumpSwitch(sw_fuel_pump_enabled);
-        mover->OilPumpSwitch(sw_oil_pump_enabled);
     }
 
     void TrainController::_on_train_part_config_changed(TrainPart *part) const {
@@ -317,25 +303,7 @@ namespace godot {
         return mass;
     }
 
-    void TrainController::set_fuel_pump_enabled(const bool p_state) {
-        sw_fuel_pump_enabled = p_state;
-        _dirty_prop = true;
-    }
-
-    bool TrainController::get_fuel_pump_enabled() const {
-        return sw_fuel_pump_enabled;
-    }
-
-    void TrainController::set_oil_pump_enabled(const bool p_state) {
-        sw_oil_pump_enabled = p_state;
-        _dirty_prop = true;
-    }
-
-    bool TrainController::get_oil_pump_enabled() const {
-        return sw_oil_pump_enabled;
-    }
-
-    Vector<TrainSwitch *> TrainController::get_train_switches() const {
+    Vector<TrainSwitch *> TrainController::get_train_switches() {
         Vector<TrainSwitch *> train_switches;
         _collect_train_switches(this, train_switches);
         return train_switches;

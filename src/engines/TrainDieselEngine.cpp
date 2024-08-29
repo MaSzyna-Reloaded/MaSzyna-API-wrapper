@@ -24,6 +24,17 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_traction_force_max"), &TrainDieselEngine::get_traction_force_max);
         ClassDB::bind_method(D_METHOD("set_traction_force_max", "value"), &TrainDieselEngine::set_traction_force_max);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "Ftmax"), "set_traction_force_max", "get_traction_force_max");
+
+        ClassDB::bind_method(D_METHOD("get_fuel_pump_enabled"), &TrainDieselEngine::get_fuel_pump_enabled);
+        ClassDB::bind_method(D_METHOD("set_fuel_pump_enabled"), &TrainDieselEngine::set_fuel_pump_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "switches/fuel_pump_enabled"), "set_fuel_pump_enabled",
+                "get_fuel_pump_enabled");
+        ClassDB::bind_method(D_METHOD("get_oil_pump_enabled"), &TrainDieselEngine::get_oil_pump_enabled);
+        ClassDB::bind_method(D_METHOD("set_oil_pump_enabled"), &TrainDieselEngine::set_oil_pump_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "switches/oil_pump_enabled"), "set_oil_pump_enabled",
+                "get_oil_pump_enabled");
     }
 
     TEngineType TrainDieselEngine::get_engine_type() {
@@ -44,8 +55,14 @@ namespace godot {
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
         TrainEngine::_do_update_internal_mover(mover);
 
+        // FIXME: test data
+        mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
+
         mover->OilPump.pressure_minimum = oil_min_pressure;
         mover->OilPump.pressure_maximum = oil_max_pressure;
+
+        mover->FuelPumpSwitch(sw_fuel_pump_enabled);
+        mover->OilPumpSwitch(sw_oil_pump_enabled);
 
         mover->Ftmax = traction_force_max;
     }
@@ -76,4 +93,23 @@ namespace godot {
         traction_force_max = value;
         _dirty = true;
     }
+
+    void TrainDieselEngine::set_fuel_pump_enabled(const bool p_state) {
+        sw_fuel_pump_enabled = p_state;
+        _dirty = true;
+    }
+
+    bool TrainDieselEngine::get_fuel_pump_enabled() const {
+        return sw_fuel_pump_enabled;
+    }
+
+    void TrainDieselEngine::set_oil_pump_enabled(const bool p_state) {
+        sw_oil_pump_enabled = p_state;
+        _dirty = true;
+    }
+
+    bool TrainDieselEngine::get_oil_pump_enabled() const {
+        return sw_oil_pump_enabled;
+    }
+
 } // namespace godot

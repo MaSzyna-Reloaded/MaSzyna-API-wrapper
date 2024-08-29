@@ -10,6 +10,7 @@ namespace godot {
             GDCLASS(TrainEngine, TrainPart)
 
             static void _bind_methods();
+            bool main_switch_pressed = false;
 
         protected:
             virtual TEngineType get_engine_type() = 0;
@@ -17,6 +18,9 @@ namespace godot {
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
+            void set_main_switch_pressed(const bool p_state);
+            bool get_main_switch_pressed() const;
+
             TrainEngine();
             ~TrainEngine() override = default;
     };

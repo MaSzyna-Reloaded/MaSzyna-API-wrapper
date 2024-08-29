@@ -2,12 +2,11 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainController.hpp"
 #include "TrainElectricSeriesEngine.hpp"
 #include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
-    TrainElectricSeriesEngine::TrainElectricSeriesEngine() {};
+    TrainElectricSeriesEngine::TrainElectricSeriesEngine()= default;
 
     void TrainElectricSeriesEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_nominal_voltage"), &TrainElectricSeriesEngine::get_nominal_voltage);

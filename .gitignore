@@ -1,5 +1,6 @@
 /venv/
 /demo/.godot/
+/demo/*.import
 /cmake-build-debug/
 CMakeLists.txt
 *.o
@@ -13,7 +14,7 @@ Info.plist
 *.dylib
 /.idea/
 *tmp
-
+docker-storage/MacOSX14.5.sdk.tar.xz
 /doc
 /platform
 /modules

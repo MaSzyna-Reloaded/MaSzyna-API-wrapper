@@ -6,7 +6,6 @@ namespace godot {
     class TrainPart : public Node {
             GDCLASS(TrainPart, Node)
 
-        private:
             static void _bind_methods();
             Dictionary state;
 
@@ -43,10 +42,10 @@ namespace godot {
             // void initialize_mover(TrainController *train_controller_node);
 
             /* High level method for updating the state of the Mover */
-            void update_mover(TrainController *train_controller_node);
+            void update_mover(const TrainController *train_controller_node);
 
             /* High level method for getting the state of the Mover */
-            Dictionary get_mover_state(TrainController *train_controller_node);
+            Dictionary get_mover_state(const TrainController *train_controller_node);
             TrainPart();
             ~TrainPart() override = default;
             void emit_config_changed_signal();

@@ -1,12 +1,10 @@
-#include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
 #include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
     class TrainController;
 
-    TrainEngine::TrainEngine() {}
+    TrainEngine::TrainEngine() = default;
 
     void TrainEngine::_do_update_internal_mover(TMoverParameters *mover) {
         mover->EngineType = get_engine_type();

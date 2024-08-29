@@ -1,21 +1,19 @@
 #pragma once
 #include <godot_cpp/classes/node.hpp>
+#include "../maszyna/McZapkie/MOVER.h"
 #include "TrainPart.hpp"
-#include "maszyna/McZapkie/MOVER.h"
 
 
 namespace godot {
     class TrainSecuritySystem : public TrainPart {
             GDCLASS(TrainSecuritySystem, TrainPart)
 
-
-        private:
             static void _bind_methods();
-            friend class Maszyna::TSecuritySystem;
+            friend class TSecuritySystem;
 
         protected:
-            virtual void _do_update_internal_mover(TMoverParameters *mover) override;
-            virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
             enum EmergencyBrakeWarningSignal { SIREN_LOW_TONE, SIREN_HIGH_TONE, WHISTLE };
@@ -34,9 +32,9 @@ namespace godot {
             double aware_delay = 0.0;           // AwareDelay -> SecuritySystem->AwareDelay
             double emergency_brake_delay = 0.0; // EmergencyBrakeDelay -> SecuritySystem->EmergencyBrakeDelay
             EmergencyBrakeWarningSignal emergency_brake_warning_signal =
-                    EmergencyBrakeWarningSignal::SIREN_HIGH_TONE; // EmergencyBrakeWarningSignal ->
-                                                                  // EmergencyBrakeWarningSignal
-            bool radio_stop = true;                               // RadioStop -> SecuritySystem->radiostop_enabled
+                    SIREN_HIGH_TONE;          // EmergencyBrakeWarningSignal ->
+                                              // EmergencyBrakeWarningSignal
+            bool radio_stop = true;           // RadioStop -> SecuritySystem->radiostop_enabled
             double sound_signal_delay = 0.0;  // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
             double shp_magnet_distance = 0.0; // MagnetLocation -> SecuritySystem->MagnetLocation
             double ca_max_hold_time = 0.0;    // MaxHoldTime -> SecuritySystem->MaxHoldTime

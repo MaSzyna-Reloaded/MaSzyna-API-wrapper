@@ -6,7 +6,7 @@
 
 namespace godot {
 
-    TrainBrake::TrainBrake() {}
+    TrainBrake::TrainBrake() = default;
 
     void TrainBrake::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_valve"), &TrainBrake::set_valve);

@@ -1,0 +1,8 @@
+services:
+  maszyna-physics-server:
+    build:
+      context: ./
+    volumes:
+      - type: bind
+        source: ./
+        target: /var/maszyna

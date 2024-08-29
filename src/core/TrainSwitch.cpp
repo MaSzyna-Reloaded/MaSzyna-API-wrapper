@@ -2,13 +2,12 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainController.hpp"
 #include "TrainSwitch.hpp"
 
 #include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
-    TrainSwitch::TrainSwitch() {};
+    TrainSwitch::TrainSwitch() = default;
 
     void TrainSwitch::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_pushed", "pushed"), &TrainSwitch::set_pushed);

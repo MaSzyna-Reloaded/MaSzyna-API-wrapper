@@ -1,5 +1,4 @@
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "TrainElectricEngine.hpp"
 #include "maszyna/McZapkie/MOVER.h"
 
@@ -10,13 +9,12 @@ namespace godot {
     class TrainElectricSeriesEngine : public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
 
-        private:
             static void _bind_methods();
             double nominal_voltage = 0.0;    // Volt -> NominalVoltage
             double winding_resistance = 0.0; // WindingRes -> WindingRes
 
         protected:
-            virtual TEngineType get_engine_type() override;
+            TEngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *mover) override;
 
         public:

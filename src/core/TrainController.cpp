@@ -103,7 +103,7 @@ namespace godot {
         if (!brake_path.is_empty()) {
             Node *node = get_node_or_null(brake_path);
             if (node) {
-                _brake = Object::cast_to<TrainBrake>(node);
+                _brake = cast_to<TrainBrake>(node);
             }
         }
         return _brake;
@@ -129,7 +129,7 @@ namespace godot {
         if (!engine_path.is_empty()) {
             Node *node = get_node_or_null(engine_path);
             if (node) {
-                _engine = Object::cast_to<TrainEngine>(node);
+                _engine = cast_to<TrainEngine>(node);
             }
         }
         return _engine;
@@ -155,14 +155,14 @@ namespace godot {
         if (!security_system_path.is_empty()) {
             Node *node = get_node_or_null(security_system_path);
             if (node) {
-                _security_system = Object::cast_to<TrainSecuritySystem>(node);
+                _security_system = cast_to<TrainSecuritySystem>(node);
             }
         }
         return _security_system;
     }
 
     void TrainController::initialize_mover() {
-        mover = new Maszyna::TMoverParameters(
+        mover = new TMoverParameters(
                 this->initial_velocity, std::string(this->type_name.utf8().ptr()),
                 std::string(this->get_name().left(this->get_name().length()).utf8().ptr()), this->cabin_number);
 
@@ -181,7 +181,7 @@ namespace godot {
         UtilityFunctions::print("[MaSzyna::TMoverParameters] Mover initialized successfully");
     }
 
-    void TrainController::set_type_name(const String p_type_name) {
+    void TrainController::set_type_name(const String &p_type_name) {
         type_name = p_type_name;
     }
 
@@ -191,8 +191,8 @@ namespace godot {
 
     void TrainController::_connect_signals_to_train_part(TrainPart *part) {
         if (part != nullptr) {
-            Callable _c = Callable(this, "_on_train_part_config_changed").bind(part);
-            part->connect("config_changed", _c);
+            const Callable _c = Callable(this, "_on_train_part_config_changed").bind(part);
+            part->connect("config_changed", _c);// Clang-Tidy: The value returned by this function should not be disregarded; neglecting it may lead to errors
         }
     }
     void TrainController::_ready() {
@@ -208,8 +208,8 @@ namespace godot {
         /* eksperymentalna obsluga switchy umieszczanych jako dzieci TrainControllera
          * automatycznie podpina sygnaly bez koniecznosci podpinania switchy przez NodePath/Assign */
         Vector<TrainSwitch *> switches = get_train_switches();
-        for (int i = 0; i < switches.size(); i++) {
-            TrainSwitch *_s = Object::cast_to<TrainSwitch>(switches[i]);
+        for (const auto switche : switches) {
+            TrainSwitch *_s = cast_to<TrainSwitch>(switche);
             if (_s) {
                 _connect_signals_to_train_part(_s);
             }
@@ -221,7 +221,7 @@ namespace godot {
         UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
     }
 
-    void TrainController::_process(double delta) {
+    void TrainController::_process(const double delta) {
         /* nie daj borze w edytorze */
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
@@ -253,7 +253,7 @@ namespace godot {
         mover->compute_movement_(delta * 1000.0);
     }
 
-    void TrainController::_do_update_internal_mover(TMoverParameters *mover) {
+    void TrainController::_do_update_internal_mover(TMoverParameters *mover) const {
         mover->Mass = mass;
         mover->ComputeMass();
 
@@ -267,7 +267,7 @@ namespace godot {
         mover->OilPumpSwitch(sw_oil_pump_enabled);
     }
 
-    void TrainController::_on_train_part_config_changed(TrainPart *part) {
+    void TrainController::_on_train_part_config_changed(TrainPart *part) const {
         if (part == nullptr) {
             return;
         }
@@ -289,6 +289,9 @@ namespace godot {
 
     double TrainController::get_nominal_battery_voltage() const {
         return nominal_battery_voltage;
+    }
+    void TrainController::set_brake_level(const double p_brake_level) {
+        //@TODO: Implement
     }
 
     void TrainController::set_nominal_battery_voltage(const double p_nominal_battery_voltage) {
@@ -332,13 +335,13 @@ namespace godot {
         return sw_oil_pump_enabled;
     }
 
-    Vector<TrainSwitch *> TrainController::get_train_switches() {
+    Vector<TrainSwitch *> TrainController::get_train_switches() const {
         Vector<TrainSwitch *> train_switches;
         _collect_train_switches(this, train_switches);
         return train_switches;
     }
 
-    void TrainController::_collect_train_switches(Node *node, Vector<TrainSwitch *> &train_switches) {
+    void TrainController::_collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches) {
         if (node == nullptr) {
             return;
         }
@@ -353,7 +356,7 @@ namespace godot {
         }
     }
 
-    void TrainController::update_mover() {
+    void TrainController::update_mover() const {
         TMoverParameters *mover = get_mover();
         if (mover != nullptr) {
             _do_update_internal_mover(mover);

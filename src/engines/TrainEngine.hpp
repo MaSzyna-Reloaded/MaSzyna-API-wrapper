@@ -9,13 +9,12 @@ namespace godot {
     class TrainEngine : public TrainPart {
             GDCLASS(TrainEngine, TrainPart)
 
-        private:
             static void _bind_methods();
 
         protected:
             virtual TEngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
-            virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
             TrainEngine();

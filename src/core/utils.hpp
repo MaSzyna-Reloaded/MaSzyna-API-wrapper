@@ -1,6 +1,5 @@
-#include <sstream>
+#pragma once
 #include <string>
-#include <vector>
 
 #define ENUM_WITH_COUNT(name, ...) enum class name { __VA_ARGS__, COUNT };
 

@@ -1,17 +1,15 @@
-#include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "../maszyna/McZapkie/MOVER.h"
 #include "TrainMainSwitch.hpp"
 
 namespace godot {
-    TrainMainSwitch::TrainMainSwitch() {};
+    TrainMainSwitch::TrainMainSwitch() = default;
 
-    void TrainMainSwitch::_bind_methods() {};
+    void TrainMainSwitch::_bind_methods(){};
 
     void TrainMainSwitch::_do_update_internal_mover(TMoverParameters *mover) {
-        bool pushed = get_pushed();
+        const bool pushed = get_pushed();
 
         /* for testing purposes */
         mover->GroundRelay = true;

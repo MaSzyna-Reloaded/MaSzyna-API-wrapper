@@ -2,13 +2,12 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainController.hpp"
 #include "TrainSecuritySystem.hpp"
 
 #include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
-    TrainSecuritySystem::TrainSecuritySystem() {};
+    TrainSecuritySystem::TrainSecuritySystem() = default;
 
     void TrainSecuritySystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_aware_system_active"), &TrainSecuritySystem::get_aware_system_active);
@@ -210,13 +209,13 @@ namespace godot {
         mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
 
         switch (emergency_brake_warning_signal) {
-            case EmergencyBrakeWarningSignal::SIREN_LOW_TONE:
+            case SIREN_LOW_TONE:
                 mover->EmergencyBrakeWarningSignal = 1;
                 break;
-            case EmergencyBrakeWarningSignal::SIREN_HIGH_TONE:
+            case SIREN_HIGH_TONE:
                 mover->EmergencyBrakeWarningSignal = 2;
                 break;
-            case EmergencyBrakeWarningSignal::WHISTLE:
+            case WHISTLE:
                 mover->EmergencyBrakeWarningSignal = 4;
                 break;
             default:

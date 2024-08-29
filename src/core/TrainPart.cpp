@@ -1,4 +1,3 @@
-
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -13,10 +12,10 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("config_changed"));
     }
 
-    TrainPart::TrainPart() {}
+    TrainPart::TrainPart() = default;
 
     void TrainPart::_ready() {
-        /* nie daj borze w edytorze */
+        /* Dear Lord, prevent it from running in the editor. Thanks~ UwU */
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -34,9 +33,9 @@ namespace godot {
         }
     }
 
-    void TrainPart::update_mover(TrainController *controller) {
-        if (controller != nullptr) {
-            TMoverParameters *mover = controller->get_mover();
+    void TrainPart::update_mover(const TrainController *train_controller_node) {
+        if (train_controller_node != nullptr) {
+            TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_update_internal_mover(mover);
             } else {
@@ -47,9 +46,9 @@ namespace godot {
         }
     }
 
-    Dictionary TrainPart::get_mover_state(TrainController *controller) {
-        if (controller != nullptr) {
-            TMoverParameters *mover = controller->get_mover();
+    Dictionary TrainPart::get_mover_state(const TrainController *train_controller_node) {
+        if (train_controller_node != nullptr) {
+            TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_fetch_state_from_mover(mover, state);
             } else {

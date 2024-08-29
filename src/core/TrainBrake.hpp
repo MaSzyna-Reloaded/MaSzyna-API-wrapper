@@ -12,7 +12,6 @@ namespace godot {
     class TrainBrake : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
 
-        private:
             // BrakeValve -> BrakeValve
             int valve = static_cast<int>(TBrakeValve::NoValve);
             int friction_elements_per_axle = 1;         // NBpA -> NBpA
@@ -42,8 +41,8 @@ namespace godot {
             double rig_effectivnes = 0.0;               // BRE -> BrakeRigEff
 
         protected:
-            virtual void _do_update_internal_mover(TMoverParameters *mover) override;
-            virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
             enum CompressorPower {
@@ -56,81 +55,81 @@ namespace godot {
             };
             static void _bind_methods();
 
-            void set_valve(const int p_valve);
+            void set_valve(int p_valve);
             int get_valve() const;
-            void set_friction_elements_per_axle(const int p_friction_elements_per_axle);
+            void set_friction_elements_per_axle(int p_friction_elements_per_axle);
             int get_friction_elements_per_axle() const;
 
-            void set_max_brake_force(const double p_max_brake_force);
+            void set_max_brake_force(double p_max_brake_force);
             double get_max_brake_force() const;
 
-            void set_valve_size(const int p_valve_size);
+            void set_valve_size(int p_valve_size);
             int get_valve_size() const;
 
-            void set_track_brake_force(const double p_track_brake_force);
+            void set_track_brake_force(double p_track_brake_force);
             double get_track_brake_force() const;
 
-            void set_max_pressure(const double p_max_pressure);
+            void set_max_pressure(double p_max_pressure);
             double get_max_pressure() const;
 
-            void set_max_antislip_pressure(const double p_max_antislip_pressure);
+            void set_max_antislip_pressure(double p_max_antislip_pressure);
             double get_max_antislip_pressure() const;
 
-            void set_cylinders_count(const int p_cylinders_count);
+            void set_cylinders_count(int p_cylinders_count);
             int get_cylinders_count() const;
 
-            void set_cylinder_radius(const double p_cylinder_radius);
+            void set_cylinder_radius(double p_cylinder_radius);
             double get_cylinder_radius() const;
 
-            void set_cylinder_distance(const double p_cylinder_distance);
+            void set_cylinder_distance(double p_cylinder_distance);
             double get_cylinder_distance() const;
 
-            void set_cylinder_spring_force(const double p_cylinder_spring_force);
+            void set_cylinder_spring_force(double p_cylinder_spring_force);
             double get_cylinder_spring_force() const;
 
-            void set_slck_adjustment_force(const double p_slck_adjustment_force);
+            void set_slck_adjustment_force(double p_slck_adjustment_force);
             double get_slck_adjustment_force() const;
 
-            void set_cylinder_gear_ratio(const double p_cylinder_gear_ratio);
+            void set_cylinder_gear_ratio(double p_cylinder_gear_ratio);
             double get_cylinder_gear_ratio() const;
 
-            void set_cylinder_gear_ratio_low(const double p_cylinder_gear_ratio_low);
+            void set_cylinder_gear_ratio_low(double p_cylinder_gear_ratio_low);
             double get_cylinder_gear_ratio_low() const;
 
-            void set_cylinder_gear_ratio_high(const double p_cylinder_gear_ratio_high);
+            void set_cylinder_gear_ratio_high(double p_cylinder_gear_ratio_high);
             double get_cylinder_gear_ratio_high() const;
 
-            void set_pipe_pressure_max(const double p_pipe_pressure_max);
+            void set_pipe_pressure_max(double p_pipe_pressure_max);
             double get_pipe_pressure_max() const;
 
-            void set_pipe_pressure_min(const double p_pipe_pressure_min);
+            void set_pipe_pressure_min(double p_pipe_pressure_min);
             double get_pipe_pressure_min() const;
 
-            void set_main_tank_volume(const double p_main_tank_volume);
+            void set_main_tank_volume(double p_main_tank_volume);
             double get_main_tank_volume() const;
 
-            void set_aux_tank_volume(const double p_aux_tank_volume);
+            void set_aux_tank_volume(double p_aux_tank_volume);
             double get_aux_tank_volume() const;
 
-            void set_compressor_pressure_min(const double p_compressor_pressure_min);
+            void set_compressor_pressure_min(double p_compressor_pressure_min);
             double get_compressor_pressure_min() const;
 
-            void set_compressor_pressure_max(const double p_compressor_pressure_max);
+            void set_compressor_pressure_max(double p_compressor_pressure_max);
             double get_compressor_pressure_max() const;
 
-            void set_compressor_pressure_cab_b_min(const double p_compressor_pressure_cab_b_min);
+            void set_compressor_pressure_cab_b_min(double p_compressor_pressure_cab_b_min);
             double get_compressor_pressure_cab_b_min() const;
 
-            void set_compressor_pressure_cab_b_max(const double p_compressor_pressure_cab_b_max);
+            void set_compressor_pressure_cab_b_max(double p_compressor_pressure_cab_b_max);
             double get_compressor_pressure_cab_b_max() const;
 
-            void set_compressor_speed(const double p_compressor_speed);
+            void set_compressor_speed(double p_compressor_speed);
             double get_compressor_speed() const;
 
-            void set_compressor_power(const int p_compressor_power);
+            void set_compressor_power(int p_compressor_power);
             int get_compressor_power() const;
 
-            void set_rig_effectivnes(const double p_rig_effectivnes);
+            void set_rig_effectivnes(double p_rig_effectivnes);
             double get_rig_effectivnes() const;
 
             TrainBrake();

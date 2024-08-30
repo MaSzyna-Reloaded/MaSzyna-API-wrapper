@@ -5,7 +5,7 @@
 namespace godot {
     class TrainSwitch : public TrainPart {
             GDCLASS(TrainSwitch, TrainPart)
-
+        public:
             static void _bind_methods();
             bool pushed = false;
 

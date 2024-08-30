@@ -6,9 +6,9 @@
 namespace godot {
     class TrainController;
 
-    class TrainDieselEngine : public TrainEngine {
+    class TrainDieselEngine final : public TrainEngine {
             GDCLASS(TrainDieselEngine, TrainEngine)
-
+        private:
             static void _bind_methods();
             double oil_min_pressure = 0.0;   // OilMinPressure -> OilPump.pressure_minimum
             double oil_max_pressure = 0.65;  // OilMaxPressure -> OilPump.pressure_maximum
@@ -33,10 +33,10 @@ namespace godot {
             void set_traction_force_max(double value);
 
             bool get_fuel_pump_enabled() const;
-            void set_fuel_pump_enabled(const bool p_state);
+            void set_fuel_pump_enabled(bool p_state);
 
             bool get_oil_pump_enabled() const;
-            void set_oil_pump_enabled(const bool p_state);
+            void set_oil_pump_enabled(bool p_state);
 
             TrainDieselEngine();
             ~TrainDieselEngine() override = default;

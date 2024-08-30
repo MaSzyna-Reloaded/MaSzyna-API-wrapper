@@ -6,9 +6,9 @@
 namespace godot {
     class TrainController;
 
-    class TrainElectricSeriesEngine : public TrainElectricEngine {
+    class TrainElectricSeriesEngine final : public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
-
+        public:
             static void _bind_methods();
             double nominal_voltage = 0.0;    // Volt -> NominalVoltage
             double winding_resistance = 0.0; // WindingRes -> WindingRes

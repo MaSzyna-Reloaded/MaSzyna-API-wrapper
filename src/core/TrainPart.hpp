@@ -5,7 +5,7 @@
 namespace godot {
     class TrainPart : public Node {
             GDCLASS(TrainPart, Node)
-
+        public:
             static void _bind_methods();
             Dictionary state;
 

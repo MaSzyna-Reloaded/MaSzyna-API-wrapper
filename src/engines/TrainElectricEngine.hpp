@@ -7,7 +7,7 @@ namespace godot {
 
     class TrainElectricEngine : public TrainEngine {
             GDCLASS(TrainElectricEngine, TrainEngine)
-
+        public:
             static void _bind_methods();
             bool converter_switch_pressed = false;
             bool compressor_switch_pressed = false;
@@ -17,9 +17,9 @@ namespace godot {
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
-            void set_converter_switch_pressed(const bool p_state);
+            void set_converter_switch_pressed(bool p_state);
             bool get_converter_switch_pressed() const;
-            void set_compressor_switch_pressed(const bool p_state);
+            void set_compressor_switch_pressed(bool p_state);
             bool get_compressor_switch_pressed() const;
 
             TrainElectricEngine();

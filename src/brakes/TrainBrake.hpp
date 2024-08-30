@@ -11,7 +11,7 @@ namespace godot {
     class TrainController;
     class TrainBrake final : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
-
+        private:
             // BrakeValve -> BrakeValve
             int valve = static_cast<int>(TBrakeValve::NoValve);
             int friction_elements_per_axle = 1;         // NBpA -> NBpA
@@ -38,7 +38,7 @@ namespace godot {
             double compressor_pressure_cab_b_max = 0.0; // MaxCP_B -> MaxCompressor_cabB
             double compressor_speed = 0.0;              // CompressorSpeed -> CompressorSpeed
             int compressor_power = 0;                   // CompressorPower
-            double rig_effectiveness = 0.0;               // BRE -> BrakeRigEff effectiveness
+            double rig_effectiveness = 0.0;             // BRE -> BrakeRigEff effectiveness
 
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;

@@ -10,9 +10,9 @@ namespace godot {
     class TrainSwitch;
     class TrainSecuritySystem;
 
-    class TrainController : public Node {
+    class TrainController final : public Node {
             GDCLASS(TrainController, Node)
-
+        public:
             TMoverParameters *mover;
             double initial_velocity = 0.0;
             int cabin_number = 0;
@@ -27,7 +27,7 @@ namespace godot {
             double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
             double mass = 0.0;
 
-            static void _collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches);
+            void _collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches);
             void _connect_signals_to_train_part(TrainPart *part);
 
         protected:
@@ -71,7 +71,7 @@ namespace godot {
             void set_type_name(const String &type_name);
             void set_nominal_battery_voltage(double p_nominal_battery_voltage);
             double get_nominal_battery_voltage() const;
-            void set_battery_enabled(bool p_battery_enabled);
+            void set_battery_enabled(bool p_battery_enabled); //@TODO: Move to TrainPower section
             bool get_battery_enabled() const;
             void set_mass(double p_mass);
             double get_mass() const;

@@ -37,7 +37,7 @@ namespace godot {
 
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *mover) const;
-            static void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
 
         public:
             void _process(double delta) override;
@@ -71,13 +71,12 @@ namespace godot {
             void set_type_name(const String &type_name);
             void set_nominal_battery_voltage(double p_nominal_battery_voltage);
             double get_nominal_battery_voltage() const;
-            static void set_brake_level(double p_brake_level);
             void set_battery_enabled(bool p_battery_enabled);
             bool get_battery_enabled() const;
             void set_mass(double p_mass);
             double get_mass() const;
 
-            Vector<TrainSwitch *> get_train_switches();
+            Vector<TrainSwitch *> get_train_switches() const;
 
             TrainController();
             ~TrainController() override = default;

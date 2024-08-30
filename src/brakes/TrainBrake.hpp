@@ -4,7 +4,7 @@
 
 #pragma once
 #include <godot_cpp/classes/node.hpp>
-#include "TrainPart.hpp"
+#include "../core/TrainPart.hpp"
 
 
 namespace godot {

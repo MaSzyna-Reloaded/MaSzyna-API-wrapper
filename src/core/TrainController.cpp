@@ -224,9 +224,9 @@ namespace godot {
             _on_train_part_config_changed(get_security_system());
 
             /* eksperymentalna obsluga switchy umieszczanych jako dzieci TrainControllera */
-            Vector<TrainSwitch *> switches = get_train_switches();
-            for (int i = 0; i < switches.size(); i++) {
-                _on_train_part_config_changed(switches[i]);
+            const Vector<TrainSwitch *> switches = get_train_switches();
+            for (auto switche : switches) {
+                _on_train_part_config_changed(switche);
             }
 
             // mover->CheckLocomotiveParameters(true, 0);
@@ -276,9 +276,6 @@ namespace godot {
     double TrainController::get_nominal_battery_voltage() const {
         return nominal_battery_voltage;
     }
-    void TrainController::set_brake_level(const double p_brake_level) {
-        //@TODO: Implement
-    }
 
     void TrainController::set_nominal_battery_voltage(const double p_nominal_battery_voltage) {
         nominal_battery_voltage = p_nominal_battery_voltage;
@@ -303,7 +300,7 @@ namespace godot {
         return mass;
     }
 
-    Vector<TrainSwitch *> TrainController::get_train_switches() {
+    Vector<TrainSwitch *> TrainController::get_train_switches() const {
         Vector<TrainSwitch *> train_switches;
         _collect_train_switches(this, train_switches);
         return train_switches;
@@ -343,7 +340,8 @@ namespace godot {
         return state;
     }
 
-    void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+    // ReSharper disable once CppMemberFunctionMayBeStatic
+    void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
         state["mass_total"] = mover->TotalMass;
         state["velocity"] = mover->V;
         state["speed"] = mover->Vel;

@@ -13,4 +13,5 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Docker build
-        run: docker compose up -d
+        run: chmod +x docker-storage/entrypoint.sh && \
+          docker compose up -d

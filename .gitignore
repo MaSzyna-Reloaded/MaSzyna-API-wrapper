@@ -18,3 +18,4 @@ docker-storage/MacOSX14.5.sdk.tar.xz
 /doc
 /platform
 /modules
+*.macos

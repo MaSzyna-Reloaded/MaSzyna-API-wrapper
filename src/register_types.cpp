@@ -4,15 +4,15 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
-#include "TrainBrake.hpp"
-#include "TrainController.hpp"
-#include "TrainDieselEngine.hpp"
-#include "TrainElectricEngine.hpp"
-#include "TrainElectricSeriesEngine.hpp"
-#include "TrainEngine.hpp"
-#include "TrainPart.hpp"
-#include "TrainSwitch.hpp"
-#include "TrainSecuritySystem.hpp"
+#include "core/TrainBrake.hpp"
+#include "core/TrainController.hpp"
+#include "engines/TrainDieselEngine.hpp"
+#include "engines/TrainElectricEngine.hpp"
+#include "engines/TrainElectricSeriesEngine.hpp"
+#include "engines/TrainEngine.hpp"
+#include "core/TrainPart.hpp"
+#include "core/TrainSwitch.hpp"
+#include "systems/TrainSecuritySystem.hpp"
 
 using namespace godot;
 

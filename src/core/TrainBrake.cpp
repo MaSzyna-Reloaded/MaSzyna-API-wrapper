@@ -1,8 +1,8 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainBrake.hpp"
-#include "TrainController.hpp"
+#include "../core/TrainBrake.hpp"
+#include "../core/TrainController.hpp"
 
 namespace godot {
 

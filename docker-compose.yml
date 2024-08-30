@@ -1,7 +1,7 @@
 services:
   maszyna-physics-server:
-    build:
-      context: ./
+    image: jezsonic/build-tools:latest
+    entrypoint: /var/maszyna/docker-storage/entrypoint.sh
     volumes:
       - type: bind
         source: ./

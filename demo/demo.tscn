@@ -54,13 +54,6 @@ offset_right = 638.0
 offset_bottom = 291.0
 title = "Security"
 
-[node name="DebugMainSwitch" parent="." instance=ExtResource("3_p4ciw")]
-offset_left = 17.0
-offset_top = 297.0
-offset_right = 315.0
-offset_bottom = 443.0
-title = "Main switch"
-
 [node name="DebugBrake" parent="." instance=ExtResource("3_p4ciw")]
 offset_left = 657.0
 offset_top = 48.0

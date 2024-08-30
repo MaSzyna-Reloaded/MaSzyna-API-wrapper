@@ -2,12 +2,12 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainBrake.hpp"
-#include "TrainController.hpp"
-#include "TrainEngine.hpp"
-#include "TrainPart.hpp"
-#include "TrainSecuritySystem.hpp"
-#include "TrainSwitch.hpp"
+#include "../core/TrainBrake.hpp"
+#include "../core/TrainController.hpp"
+#include "../engines/TrainEngine.hpp"
+#include "../core/TrainPart.hpp"
+#include "../systems/TrainSecuritySystem.hpp"
+#include "../core/TrainSwitch.hpp"
 #include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {

@@ -76,7 +76,7 @@ namespace godot {
             void set_mass(double p_mass);
             double get_mass() const;
 
-            Vector<TrainSwitch *> get_train_switches() const;
+            Vector<TrainSwitch *> get_train_switches();
 
             TrainController();
             ~TrainController() override = default;

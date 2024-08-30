@@ -300,7 +300,7 @@ namespace godot {
         return mass;
     }
 
-    Vector<TrainSwitch *> TrainController::get_train_switches() const {
+    Vector<TrainSwitch *> TrainController::get_train_switches() {
         Vector<TrainSwitch *> train_switches;
         _collect_train_switches(this, train_switches);
         return train_switches;

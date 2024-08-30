@@ -5,23 +5,40 @@
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://debug_panel.tscn" id="3_p4ciw"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://debug_switch.tscn" id="4_xvhus"]
 
-[node name="Demo" type="Node2D"]
+[node name="Demo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 script = ExtResource("1_76ghk")
 
-[node name="Train" parent="." instance=ExtResource("2_t8uqe")]
-switches/battery_enabled = true
-
-[node name="HBoxContainer" type="HBoxContainer" parent="."]
-anchors_preset = 10
+[node name="UI" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
 anchor_right = 1.0
-offset_left = 29.0
-offset_right = 736.0
-offset_bottom = 23.0
+anchor_bottom = 1.0
 grow_horizontal = 2
+grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="BatteryProgressBar" type="ProgressBar" parent="HBoxContainer"]
+[node name="Header" type="HBoxContainer" parent="UI"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TrainName" type="Label" parent="UI/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="BatteryLabel" type="Label" parent="UI/Header"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Battery"
+
+[node name="BatteryProgressBar" type="ProgressBar" parent="UI/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -30,94 +47,125 @@ tooltip_text = "Battery"
 max_value = 110.0
 show_percentage = false
 
-[node name="BatteryValue" type="Label" parent="HBoxContainer"]
+[node name="BatteryValue" type="Label" parent="UI/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Label" type="Label" parent="HBoxContainer"]
+[node name="Title" type="Label" parent="UI/Header"]
 layout_mode = 2
 size_flags_horizontal = 10
-text = "MOVER TESTER"
+text = "MaSzyna MOVER TESTER"
 horizontal_alignment = 2
 
-[node name="DebugEngine" parent="." instance=ExtResource("3_p4ciw")]
-offset_left = 19.0
-offset_top = 48.0
-offset_right = 317.0
-offset_bottom = 288.0
+[node name="DebugPanels" type="HFlowContainer" parent="UI"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DebugEngine" parent="UI/DebugPanels" instance=ExtResource("3_p4ciw")]
+unique_name_in_owner = true
+layout_mode = 2
 title = "Engine"
 
-[node name="DebugSecurity" parent="." instance=ExtResource("3_p4ciw")]
-offset_left = 334.0
-offset_top = 48.0
-offset_right = 638.0
-offset_bottom = 291.0
+[node name="DebugSecurity" parent="UI/DebugPanels" instance=ExtResource("3_p4ciw")]
+unique_name_in_owner = true
+layout_mode = 2
 title = "Security"
 
-[node name="DebugBrake" parent="." instance=ExtResource("3_p4ciw")]
-offset_left = 657.0
-offset_top = 48.0
-offset_right = 948.0
-offset_bottom = 289.0
+[node name="DebugBrake" parent="UI/DebugPanels" instance=ExtResource("3_p4ciw")]
+unique_name_in_owner = true
+layout_mode = 2
 title = "Brake"
 
-[node name="DebugTrain" parent="." instance=ExtResource("3_p4ciw")]
-offset_left = 19.0
-offset_top = 440.0
-offset_right = 316.0
-offset_bottom = 628.0
+[node name="DebugTrain" parent="UI/DebugPanels" instance=ExtResource("3_p4ciw")]
+unique_name_in_owner = true
+layout_mode = 2
 title = "Train"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-offset_right = 129.0
-offset_bottom = 23.0
+[node name="MoverSwitches" type="HBoxContainer" parent="UI"]
+layout_mode = 2
 
-[node name="Batony" type="HFlowContainer" parent="."]
-offset_left = 523.0
-offset_top = 589.0
-offset_right = 1141.0
-offset_bottom = 641.0
+[node name="General" type="HFlowContainer" parent="UI/MoverSwitches"]
+layout_mode = 2
 
-[node name="Battery" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Label" type="Label" parent="UI/MoverSwitches/General"]
+layout_mode = 2
+text = "General"
+
+[node name="Battery" parent="UI/MoverSwitches/General" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Battery"
-node = NodePath("../../Train")
+node = NodePath("../../../../SM42_V1")
 property = "switches/battery_enabled"
 
-[node name="OilPump" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Security" type="HFlowContainer" parent="UI/MoverSwitches"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/MoverSwitches/Security"]
+layout_mode = 2
+text = "Security"
+
+[node name="CA_SHP_Reset" parent="UI/MoverSwitches/Security" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "CA/SHP"
+type = 0
+node = NodePath("../../../../SM42_V1/TrainSecuritySystem")
+property = "switches/reset"
+
+[node name="Diesel" type="HFlowContainer" parent="UI/MoverSwitches"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/MoverSwitches/Diesel"]
+layout_mode = 2
+text = "Diesel"
+
+[node name="OilPump" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Oil Pump"
-node = NodePath("../../Train/StonkaDieselEngine")
+type = 0
+node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
 property = "switches/oil_pump_enabled"
 
-[node name="FuelPump" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="FuelPump" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Fuel Pump"
-node = NodePath("../../Train/StonkaDieselEngine")
+type = 0
+node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
 property = "switches/fuel_pump_enabled"
 
-[node name="MainDiesel" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Main" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
-label = "Main Diesel"
-node = NodePath("../../Train/StonkaDieselEngine")
+label = "Main"
+type = 0
+node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
 property = "switches/main"
 
-[node name="Converter" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Electric" type="HFlowContainer" parent="UI/MoverSwitches"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/MoverSwitches/Electric"]
+layout_mode = 2
+text = "Electric"
+
+[node name="Converter" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Converter"
-node = NodePath("../../Train/TestowySilnikElektryczny")
+node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
 property = "switches/converter"
 
-[node name="Compressor" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Compressor" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Compressor"
-node = NodePath("../../Train/TestowySilnikElektryczny")
+node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
 property = "switches/compressor"
 
-[node name="MainDieselElectric" parent="Batony" instance=ExtResource("4_xvhus")]
+[node name="Main" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
-label = "Main Electric"
-node = NodePath("../../Train/TestowySilnikElektryczny")
+label = "Main"
+type = 0
+node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
 property = "switches/main"
 
-[editable path="Train"]
+[node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]
+switches/battery_enabled = true
+
+[editable path="SM42_V1"]

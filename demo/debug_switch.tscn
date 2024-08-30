@@ -5,13 +5,19 @@
 [node name="DebugSwitch" type="HBoxContainer"]
 offset_right = 106.0
 offset_bottom = 24.0
+size_flags_horizontal = 3
 script = ExtResource("1_7hfja")
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 2
-text = "Battery"
+size_flags_horizontal = 3
 
 [node name="Switch" type="CheckButton" parent="."]
 layout_mode = 2
+size_flags_horizontal = 10
+disabled = true
+toggle_mode = false
+action_mode = 0
 
+[connection signal="pressed" from="Switch" to="." method="_on_switch_pressed"]
 [connection signal="toggled" from="Switch" to="." method="_on_switch_toggled"]

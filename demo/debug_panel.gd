@@ -1,3 +1,4 @@
+@tool
 extends Container
 class_name DebugPanel
 

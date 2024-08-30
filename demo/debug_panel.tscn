@@ -3,20 +3,23 @@
 [ext_resource type="Script" path="res://debug_panel.gd" id="1_7xna6"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kvppn"]
+content_margin_left = 10.0
+content_margin_top = 10.0
+content_margin_right = 10.0
+content_margin_bottom = 10.0
 bg_color = Color(0.437927, 0.546875, 0.444736, 1)
 border_width_left = 1
 border_width_top = 1
 border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.160034, 0.223886, 0.359375, 1)
-shadow_size = 6
-shadow_offset = Vector2(2, 2)
 
 [node name="DebugPanel" type="VBoxContainer"]
-offset_left = 1.0
-offset_top = 1.0
-offset_right = 308.0
-offset_bottom = 266.0
+custom_minimum_size = Vector2(0, 400)
+offset_right = 258.0
+offset_bottom = 369.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
 script = ExtResource("1_7xna6")
 
 [node name="Title" type="Label" parent="."]
@@ -29,3 +32,4 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_kvppn")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="DebugPanel"]
 layout_mode = 2
+theme_override_font_sizes/normal_font_size = 12

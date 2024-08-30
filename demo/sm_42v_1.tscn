@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [node name="SM42v1" type="TrainController"]
-parts/engine = NodePath("StonkaDieselEngine")
+parts/engine = NodePath("TestowySilnikElektryczny")
 parts/brake = NodePath("Brake")
 parts/security_system = NodePath("TrainSecuritySystem")
 type_name = "6d"
@@ -31,6 +31,17 @@ oil_pump/pressure_minimum = 0.15
 [node name="TestowySilnikElektryczny" type="TrainElectricSeriesEngine" parent="."]
 nominal_voltage = 11000.0
 winding_resistance = 200.0
+power/source = 5
+power/number_of_collectors = 4
+power/max_voltage = 3000.0
+power/max_current = 600.0
+power/max_collector_lifting = 2.0
+power/min_collector_lifting = 2.0
+power/csw = 213.0
+power/min_main_switch_voltage = 32.0
+power/min_pantograph_tank_pressure = 32.0
+power/max_pantograph_tank_pressure = 3.0
+switches/main = true
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
 aware_system/active = true

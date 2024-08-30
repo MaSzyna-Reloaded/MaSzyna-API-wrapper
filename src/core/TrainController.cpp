@@ -2,7 +2,7 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "../core/TrainBrake.hpp"
+#include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include "../engines/TrainEngine.hpp"
 #include "../core/TrainPart.hpp"

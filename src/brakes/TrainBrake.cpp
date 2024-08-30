@@ -1,7 +1,7 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "../core/TrainBrake.hpp"
+#include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 
 namespace godot {
@@ -149,9 +149,9 @@ namespace godot {
                         "Main,UNUSED,Converter,Engine,Coupler1,Coupler2"),
                 "set_compressor_power", "get_compressor_power");
 
-        ClassDB::bind_method(D_METHOD("set_rig_effectivnes"), &TrainBrake::set_rig_effectivnes);
-        ClassDB::bind_method(D_METHOD("get_rig_effectivnes"), &TrainBrake::get_rig_effectivnes);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rig_effectivnes"), "set_rig_effectivnes", "get_rig_effectivnes");
+        ClassDB::bind_method(D_METHOD("set_rig_effectiveness"), &TrainBrake::set_rig_effectiveness);
+        ClassDB::bind_method(D_METHOD("get_rig_effectiveness"), &TrainBrake::get_rig_effectiveness);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rig_effectiveness"), "set_rig_effectiveness", "get_rig_effectiveness");
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -194,7 +194,7 @@ namespace godot {
         mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
-        mover->BrakeRigEff = rig_effectivnes;
+        mover->BrakeRigEff = rig_effectiveness;
     }
 
     void TrainBrake::set_valve(const int p_valve) {
@@ -419,12 +419,12 @@ namespace godot {
         return compressor_power;
     }
 
-    void TrainBrake::set_rig_effectivnes(const double p_rig_effectivnes) {
-        rig_effectivnes = p_rig_effectivnes;
+    void TrainBrake::set_rig_effectiveness(const double p_rig_effectiveness) {
+        rig_effectiveness = p_rig_effectiveness;
         _dirty = true;
     }
 
-    double TrainBrake::get_rig_effectivnes() const {
-        return rig_effectivnes;
+    double TrainBrake::get_rig_effectiveness() const {
+        return rig_effectiveness;
     }
 } // namespace godot

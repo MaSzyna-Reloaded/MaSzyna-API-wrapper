@@ -4,7 +4,7 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
-#include "core/TrainBrake.hpp"
+#include "brakes/TrainBrake.hpp"
 #include "core/TrainController.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"

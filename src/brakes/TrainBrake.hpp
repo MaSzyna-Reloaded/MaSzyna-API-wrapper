@@ -9,7 +9,7 @@
 
 namespace godot {
     class TrainController;
-    class TrainBrake : public TrainPart {
+    class TrainBrake final : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
 
             // BrakeValve -> BrakeValve
@@ -38,7 +38,7 @@ namespace godot {
             double compressor_pressure_cab_b_max = 0.0; // MaxCP_B -> MaxCompressor_cabB
             double compressor_speed = 0.0;              // CompressorSpeed -> CompressorSpeed
             int compressor_power = 0;                   // CompressorPower
-            double rig_effectivnes = 0.0;               // BRE -> BrakeRigEff
+            double rig_effectiveness = 0.0;               // BRE -> BrakeRigEff effectiveness
 
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
@@ -129,8 +129,8 @@ namespace godot {
             void set_compressor_power(int p_compressor_power);
             int get_compressor_power() const;
 
-            void set_rig_effectivnes(double p_rig_effectivnes);
-            double get_rig_effectivnes() const;
+            void set_rig_effectiveness(double p_rig_effectiveness);
+            double get_rig_effectiveness() const;
 
             TrainBrake();
             ~TrainBrake() override = default;

@@ -23,7 +23,7 @@ compressor/pressure_min = 7.0
 compressor/pressure_max = 8.0
 compressor/speed = 0.057
 compressor/power = 3
-rig_effectivnes = 0.85
+rig_effectiveness = 0.85
 
 [node name="StonkaDieselEngine" type="TrainDieselEngine" parent="."]
 oil_pump/pressure_minimum = 0.15

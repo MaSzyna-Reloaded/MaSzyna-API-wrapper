@@ -306,7 +306,8 @@ namespace godot {
         return train_switches;
     }
 
-    void TrainController::_collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches) {
+    // ReSharper disable once CppMemberFunctionMayBeStatic
+    void TrainController::_collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches) { // NOLINT(*-no-recursion)
         if (node == nullptr) {
             return;
         }

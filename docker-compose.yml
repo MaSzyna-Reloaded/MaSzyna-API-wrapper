@@ -1,6 +1,7 @@
 services:
   maszyna-physics-server:
     image: jezsonic/build-tools:latest
+    container_name: gdextension-builder
     entrypoint: /var/maszyna/docker-storage/entrypoint.sh
     volumes:
       - type: bind

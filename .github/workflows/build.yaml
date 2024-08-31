@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  bulild-debug:
+  build-debug-windows:
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
@@ -13,11 +13,65 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Docker build
+      - name: Docker build Windows x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose up
+          docker compose run windows_x86_64
+
+      - name: Docker build Windows x86_32
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run windows_x86_32
 
       - uses: actions/upload-artifact@v4
         with:
           name: bin-debug
           path: bin/
+
+  build-debug-linux:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Docker build Linux x86_64
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run linux_x86_64
+
+      - name: Docker build Linux x86_32
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run linux_x86_32
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-debug
+          path: bin/linux
+
+  build-debug-android:
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Docker build Android x86_64
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run android_x86_64
+
+      - name: Docker build Android x86_32
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run android_x86_32
+
+      - name: Docker build Android arm64
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run android_arm64
+
+      - name: Docker build Android arm32
+        run: sudo chmod 777 docker-storage/entrypoint.sh |
+          docker compose run android_arm32
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-debug
+          path: bin/android

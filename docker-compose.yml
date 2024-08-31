@@ -11,8 +11,6 @@ services:
     image: jezsonic/build-tools:latest
     container_name: windows_x86_32
     entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p windows -a x86_32
-    depends_on:
-      - windows_x86_64 #Windows builds cannot run in parallel
     volumes:
       - type: bind
         source: ./
@@ -29,8 +27,6 @@ services:
     image: jezsonic/build-tools:latest
     container_name: linux_x86_32
     entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p linux -a x86_32
-    depends_on:
-      - linux_x86_64
     volumes:
       - type: bind
         source: ./
@@ -47,8 +43,6 @@ services:
     image: jezsonic/build-tools:latest
     container_name: android_x86_32
     entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a x86_32
-    depends_on:
-      - android_x86_64
     volumes:
       - type: bind
         source: ./
@@ -65,8 +59,6 @@ services:
     image: jezsonic/build-tools:latest
     container_name: android_arm32
     entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a arm32
-    depends_on:
-      - android_arm64
     volumes:
       - type: bind
         source: ./

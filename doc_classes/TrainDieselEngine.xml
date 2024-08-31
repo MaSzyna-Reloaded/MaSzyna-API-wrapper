@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainDieselEngine" inherits="TrainEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="Ftmax" type="float" setter="set_traction_force_max" getter="get_traction_force_max" default="0.0">
+		</member>
+		<member name="oil_pump/pressure_maximum" type="float" setter="set_oil_max_pressure" getter="get_oil_max_pressure" default="0.65">
+		</member>
+		<member name="oil_pump/pressure_minimum" type="float" setter="set_oil_min_pressure" getter="get_oil_min_pressure" default="0.0">
+		</member>
+		<member name="switches/fuel_pump_enabled" type="bool" setter="set_fuel_pump_enabled" getter="get_fuel_pump_enabled" default="false">
+		</member>
+		<member name="switches/oil_pump_enabled" type="bool" setter="set_oil_pump_enabled" getter="get_oil_pump_enabled" default="false">
+		</member>
+	</members>
+</class>

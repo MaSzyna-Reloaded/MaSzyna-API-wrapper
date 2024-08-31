@@ -1,11 +1,12 @@
 #!/bin/bash
 echo "Creating Dynamic-linked libraries..."
 cd /var/maszyna
-#scons platform="android" arch="x86_64"
-#scons platform="android" arch="x86_32"
-#scons platform="android" arch="arm64"
-#scons platform="android" arch="arm32"
-scons platform="windows" arch="x86_64"
-#scons platform="windows" arch="x86_32"
-#scons platform="linux" arch="x86_64"
-#scons platform="linux" arch="x86_32"
+while getopts a:p: flag
+do
+    # shellcheck disable=SC2220
+    case "${flag}" in
+        p) platform=${OPTARG};;
+        a) arch=${OPTARG};;
+    esac
+done
+scons platform="$platform" arch="$arch"

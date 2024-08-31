@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainController" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_brake" qualifiers="const">
+			<return type="TrainBrake" />
+			<description>
+			</description>
+		</method>
+		<method name="get_engine" qualifiers="const">
+			<return type="TrainEngine" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mover_state">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="get_security_system" qualifiers="const">
+			<return type="TrainSecuritySystem" />
+			<description>
+			</description>
+		</method>
+		<method name="update_mover" qualifiers="const">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="dimensions/mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
+		</member>
+		<member name="nominal_battery_voltage" type="float" setter="set_nominal_battery_voltage" getter="get_nominal_battery_voltage" default="0.0">
+		</member>
+		<member name="parts/brake" type="NodePath" setter="set_brake_path" getter="get_brake_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="parts/engine" type="NodePath" setter="set_engine_path" getter="get_engine_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="parts/security_system" type="NodePath" setter="set_security_system_path" getter="get_security_system_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="switches/battery_enabled" type="bool" setter="set_battery_enabled" getter="get_battery_enabled" default="false">
+		</member>
+		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
+		</member>
+	</members>
+</class>

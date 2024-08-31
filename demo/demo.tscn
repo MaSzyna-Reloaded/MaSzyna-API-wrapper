@@ -168,10 +168,4 @@ property = "switches/main"
 [node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]
 switches/battery_enabled = true
 
-[node name="TestowySilnikElektryczny" parent="SM42_V1" index="2"]
-power/source = 5
-power/number_of_collectors = 2
-power/max_voltage = 3000.0
-power/max_current = 600.0
-
 [editable path="SM42_V1"]

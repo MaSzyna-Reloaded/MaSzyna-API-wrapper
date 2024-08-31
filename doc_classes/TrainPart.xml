@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainPart" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="emit_config_changed_signal">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mover_state">
+			<return type="Dictionary" />
+			<param index="0" name="_unnamed_arg0" type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="update_mover">
+			<return type="void" />
+			<param index="0" name="_unnamed_arg0" type="TrainController" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="config_changed">
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

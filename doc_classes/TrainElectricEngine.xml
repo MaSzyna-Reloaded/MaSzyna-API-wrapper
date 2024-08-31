@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainElectricEngine" inherits="TrainEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" default="0">
+		</member>
+		<member name="power/current_collector/csw" type="float" setter="set_csw" getter="get_csw" default="0.0">
+		</member>
+		<member name="power/current_collector/max_collector_lifting" type="float" setter="set_max_collector_lifting" getter="get_max_collector_lifting" default="0.0">
+		</member>
+		<member name="power/current_collector/max_current" type="float" setter="set_max_current" getter="get_max_current" default="0.0">
+		</member>
+		<member name="power/current_collector/max_overvoltage_relay_value" type="bool" setter="set_overvoltage_relay_value" getter="get_overvoltage_relay_value" default="false">
+		</member>
+		<member name="power/current_collector/max_pantograph_tank_pressure" type="float" setter="set_max_pantograph_tank_pressure" getter="get_max_pantograph_tank_pressure" default="0.0">
+		</member>
+		<member name="power/current_collector/max_voltage" type="float" setter="set_max_voltage" getter="get_max_voltage" default="0.0">
+		</member>
+		<member name="power/current_collector/min_collector_lifting" type="float" setter="set_min_collector_lifting" getter="get_min_collector_lifting" default="0.0">
+		</member>
+		<member name="power/current_collector/min_main_switch_voltage" type="float" setter="set_min_main_switch_voltage" getter="get_min_main_switch_voltage" default="0.0">
+		</member>
+		<member name="power/current_collector/min_pantograph_tank_pressure" type="float" setter="set_min_pantograph_tank_pressure" getter="get_min_pantograph_tank_pressure" default="0.0">
+		</member>
+		<member name="power/current_collector/number_of_collectors" type="int" setter="set_number_of_collectors" getter="get_number_of_collectors" default="0">
+		</member>
+		<member name="power/current_collector/required_main_switch_voltage" type="float" setter="set_required_main_switch_voltage" getter="get_required_main_switch_voltage" default="0.0">
+		</member>
+		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" default="0">
+		</member>
+		<member name="power/power_cable/steam_pressure" type="float" setter="set_power_cable_steam_pressure" getter="get_power_cable_steam_pressure" default="0.0">
+		</member>
+		<member name="power/source" type="int" setter="set_engine_power_source" getter="get_engine_power_source" default="0">
+		</member>
+		<member name="power/transducer/input_voltage" type="float" setter="set_transducer_input_voltage" getter="get_transducer_input_voltage" default="0.0">
+		</member>
+		<member name="switches/compressor" type="bool" setter="set_compressor_switch_pressed" getter="get_compressor_switch_pressed" default="false">
+		</member>
+		<member name="switches/converter" type="bool" setter="set_converter_switch_pressed" getter="get_converter_switch_pressed" default="false">
+		</member>
+	</members>
+</class>

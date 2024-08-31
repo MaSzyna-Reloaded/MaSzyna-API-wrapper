@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainElectricSeriesEngine" inherits="TrainElectricEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="nominal_voltage" type="float" setter="set_nominal_voltage" getter="get_nominal_voltage" default="0.0">
+		</member>
+		<member name="winding_resistance" type="float" setter="set_winding_resistance" getter="get_winding_resistance" default="0.0">
+		</member>
+	</members>
+</class>

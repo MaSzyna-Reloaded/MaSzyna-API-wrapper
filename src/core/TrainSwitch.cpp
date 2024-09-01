@@ -4,8 +4,6 @@
 
 #include "TrainSwitch.hpp"
 
-#include "../maszyna/McZapkie/MOVER.h"
-
 namespace godot {
     TrainSwitch::TrainSwitch() = default;
 

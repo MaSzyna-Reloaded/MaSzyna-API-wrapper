@@ -4,11 +4,10 @@
 
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
-#include "../engines/TrainEngine.hpp"
 #include "../core/TrainPart.hpp"
-#include "../systems/TrainSecuritySystem.hpp"
 #include "../core/TrainSwitch.hpp"
-#include "maszyna/McZapkie/MOVER.h"
+#include "../engines/TrainEngine.hpp"
+#include "../systems/TrainSecuritySystem.hpp"
 
 namespace godot {
 
@@ -180,7 +179,8 @@ namespace godot {
     void TrainController::_connect_signals_to_train_part(TrainPart *part) {
         if (part != nullptr) {
             const Callable _c = Callable(this, "_on_train_part_config_changed").bind(part);
-            part->connect("config_changed", _c);// Clang-Tidy: The value returned by this function should not be disregarded; neglecting it may lead to errors
+            part->connect("config_changed", _c); // Clang-Tidy: The value returned by this function should not be
+                                                 // disregarded; neglecting it may lead to errors
         }
     }
     void TrainController::_ready() {
@@ -196,7 +196,7 @@ namespace godot {
         /* eksperymentalna obsluga switchy umieszczanych jako dzieci TrainControllera
          * automatycznie podpina sygnaly bez koniecznosci podpinania switchy przez NodePath/Assign */
         Vector<TrainSwitch *> switches = get_train_switches();
-        for (const auto switche : switches) {
+        for (const auto switche: switches) {
             TrainSwitch *_s = cast_to<TrainSwitch>(switche);
             if (_s) {
                 _connect_signals_to_train_part(_s);
@@ -225,7 +225,7 @@ namespace godot {
 
             /* eksperymentalna obsluga switchy umieszczanych jako dzieci TrainControllera */
             const Vector<TrainSwitch *> switches = get_train_switches();
-            for (auto switche : switches) {
+            for (auto switche: switches) {
                 _on_train_part_config_changed(switche);
             }
 
@@ -307,7 +307,8 @@ namespace godot {
     }
 
     // ReSharper disable once CppMemberFunctionMayBeStatic
-    void TrainController::_collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches) { // NOLINT(*-no-recursion)
+    void TrainController::_collect_train_switches(
+            const Node *node, Vector<TrainSwitch *> &train_switches) { // NOLINT(*-no-recursion)
         if (node == nullptr) {
             return;
         }
@@ -342,7 +343,8 @@ namespace godot {
     }
 
     // ReSharper disable once CppMemberFunctionMayBeStatic
-    void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
+    void TrainController::_do_fetch_state_from_mover(
+            TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
         state["mass_total"] = mover->TotalMass;
         state["velocity"] = mover->V;
         state["speed"] = mover->Vel;

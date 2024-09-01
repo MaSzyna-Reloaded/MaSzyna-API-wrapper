@@ -4,8 +4,6 @@
 
 #include "TrainSecuritySystem.hpp"
 
-#include "maszyna/McZapkie/MOVER.h"
-
 namespace godot {
     TrainSecuritySystem::TrainSecuritySystem() = default;
 

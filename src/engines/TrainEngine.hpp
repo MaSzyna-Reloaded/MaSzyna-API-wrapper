@@ -1,7 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/node.hpp>
 #include "../core/TrainPart.hpp"
-#include "maszyna/McZapkie/MOVER.h"
+#include "../maszyna/McZapkie/MOVER.h"
 
 
 namespace godot {

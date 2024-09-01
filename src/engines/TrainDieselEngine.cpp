@@ -3,10 +3,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "TrainDieselEngine.hpp"
-#include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
-    TrainDieselEngine::TrainDieselEngine()= default;
+    TrainDieselEngine::TrainDieselEngine() = default;
 
     void TrainDieselEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_oil_min_pressure"), &TrainDieselEngine::get_oil_min_pressure);

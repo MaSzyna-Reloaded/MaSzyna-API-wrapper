@@ -3,7 +3,6 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 #include "TrainElectricEngine.hpp"
-#include "maszyna/McZapkie/MOVER.h"
 
 namespace godot {
     TrainElectricEngine::TrainElectricEngine() = default;

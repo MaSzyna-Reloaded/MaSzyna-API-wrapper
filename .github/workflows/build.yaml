@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bin-debug
+          name: windows-debug
           path: bin/
 
   build-debug-linux:
@@ -44,7 +44,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bin-debug
+          name: linux-debug
           path: bin/linux
 
   build-debug-android:
@@ -73,5 +73,5 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: bin-debug
+          name: android-debug
           path: bin/android

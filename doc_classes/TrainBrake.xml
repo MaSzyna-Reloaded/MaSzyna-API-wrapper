@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="TrainBrake" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Class for handling brake systems along with their parameters
 	</brief_description>
 	<description>
+		Class for handling brake systems
 	</description>
 	<tutorials>
 	</tutorials>
 	<members>
 		<member name="brake_force/max" type="float" setter="set_max_brake_force" getter="get_max_brake_force" default="1.0">
+			Sets maximum braking force to the selected value
 		</member>
 		<member name="brake_force/track" type="float" setter="set_track_brake_force" getter="get_track_brake_force" default="0.0">
 		</member>
@@ -56,8 +59,10 @@
 		<member name="tank/volume_main" type="float" setter="set_main_tank_volume" getter="get_main_tank_volume" default="0.0">
 		</member>
 		<member name="valve/est_size" type="int" setter="set_valve_size" getter="get_valve_size" default="0">
+			Size of the ESt family camshaft valve
 		</member>
 		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" default="0">
+			/ W / W_Lu_VI / W_Lu_L / W_Lu_XR / K / Kg / Kp / Kss / Kkg / Kkp / Kks / Hikg1 / Hikss / Hikp1 / KE / SW / EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype of combined brake / type of brake valve
 		</member>
 	</members>
 </class>

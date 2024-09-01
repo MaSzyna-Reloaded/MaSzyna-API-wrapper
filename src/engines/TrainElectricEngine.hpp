@@ -41,7 +41,7 @@ namespace godot {
              */
             float max_pantograph_tank_pressure = 0;
             /**
-             *Value that makes overvoltage relay
+             * Determines if we do have an overvoltage relay on the train
              */
             bool overvoltage_relay = false;
             /**
@@ -90,7 +90,7 @@ namespace godot {
 
             TrainElectricEngine();
             ~TrainElectricEngine() override = default;
-            void set_transducer_input_voltage(const float p_required_main_switch_voltage);
+            void set_transducer_input_voltage(float p_required_main_switch_voltage);
             float get_transducer_input_voltage() const;
             void set_accumulator_recharge_source(int p_source);
             int get_accumulator_recharge_source() const;

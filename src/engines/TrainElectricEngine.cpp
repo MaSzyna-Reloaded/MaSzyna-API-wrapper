@@ -96,7 +96,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("get_overvoltage_relay_value"), &TrainElectricEngine::get_overvoltage_relay_value);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "power/current_collector/max_overvoltage_relay_value"),
+                PropertyInfo(Variant::BOOL, "power/current_collector/overvoltage_relay_value"),
                 "set_overvoltage_relay_value", "get_overvoltage_relay_value");
 
         ClassDB::bind_method(

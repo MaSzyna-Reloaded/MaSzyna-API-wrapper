@@ -50,6 +50,8 @@ namespace godot {
     void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         TrainEngine::_do_fetch_state_from_mover(mover, state);
 
+        state["main_switch"] = mover->Mains;
+        state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
         state["oil_pump_active"] = mover->OilPump.is_active;
         state["oil_pump_disabled"] = mover->OilPump.is_disabled;
         state["oil_pump_pressure"] = mover->OilPump.pressure;
@@ -79,7 +81,7 @@ namespace godot {
 
         /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
         const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
-        mover->MainCtrlPosNo = wwlist.size();
+        mover->MainCtrlPosNo = wwlist.size() - 1;
         for (int i = 0; i < std::min(_max, (int)wwlist.size()); i++) {
             mover->DElist[i].RPM = wwlist[i].get(0);
             mover->DElist[i].GenPower = wwlist[i].get(1);

@@ -26,9 +26,14 @@ namespace godot {
 
             double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
             double mass = 0.0;
+            double power = 0.0;
+            double max_velocity = 0.0;
 
             void _collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches);
             void _connect_signals_to_train_part(TrainPart *part);
+
+        private:
+            void _update_mover_config_if_dirty();
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -38,6 +43,7 @@ namespace godot {
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *mover) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
+            void _process_mover(double delta);
 
         public:
             void _process(double delta) override;
@@ -75,6 +81,15 @@ namespace godot {
             bool get_battery_enabled() const;
             void set_mass(double p_mass);
             double get_mass() const;
+            void set_power(double p_power);
+            double get_power() const;
+            void set_max_velocity(double p_value);
+            double get_max_velocity() const;
+
+            void main_controller_increase();
+            void main_controller_decrease();
+            void forwarder_increase();
+            void forwarder_decrease();
 
             Vector<TrainSwitch *> get_train_switches();
 

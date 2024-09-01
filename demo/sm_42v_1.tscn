@@ -6,6 +6,8 @@ parts/brake = NodePath("Brake")
 parts/security_system = NodePath("TrainSecuritySystem")
 type_name = "6d"
 dimensions/mass = 74000.0
+power = 590.0
+max_velocity = 90.0
 nominal_battery_voltage = 110.0
 
 [node name="Brake" type="TrainBrake" parent="."]
@@ -29,9 +31,9 @@ rig_effectiveness = 0.85
 nominal_voltage = 11000.0
 winding_resistance = 200.0
 
-[node name="StonkaDieselEngine" type="TrainDieselEngine" parent="."]
+[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
 oil_pump/pressure_minimum = 0.15
-wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0]])
+wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0], [496.0, 50.0, 156.0, 846.0]])
 motor_param_table = Array[Dictionary]([{
 "Idown": 0.0,
 "Isat": 15.0,

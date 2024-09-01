@@ -50,3 +50,19 @@ func _process(delta: float) -> void:
         draw_dictionary(train_state, $%DebugTrain)
         draw_dictionary(brake_state, $%DebugBrake)
         draw_dictionary(security_state, $%DebugSecurity)
+
+
+func _on_main_decrease_button_up():
+    train.main_controller_decrease()
+
+
+func _on_main_increase_button_up():
+    train.main_controller_increase()
+
+
+func _on_reverse_button_up():
+    train.forwarder_decrease()
+
+
+func _on_forward_button_up():
+    train.forwarder_increase()

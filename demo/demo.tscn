@@ -97,6 +97,22 @@ label = "Battery"
 node = NodePath("../../../../SM42_V1")
 property = "switches/battery_enabled"
 
+[node name="MainIncrease" type="Button" parent="UI/MoverSwitches/General"]
+layout_mode = 2
+text = "Main +"
+
+[node name="MainDecrease" type="Button" parent="UI/MoverSwitches/General"]
+layout_mode = 2
+text = "Main -"
+
+[node name="Forward" type="Button" parent="UI/MoverSwitches/General"]
+layout_mode = 2
+text = "Forward"
+
+[node name="Reverse" type="Button" parent="UI/MoverSwitches/General"]
+layout_mode = 2
+text = "Reverse"
+
 [node name="Security" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
 
@@ -173,5 +189,10 @@ property = "switches/main"
 
 [node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]
 switches/battery_enabled = true
+
+[connection signal="button_up" from="UI/MoverSwitches/General/MainIncrease" to="." method="_on_main_increase_button_up"]
+[connection signal="button_up" from="UI/MoverSwitches/General/MainDecrease" to="." method="_on_main_decrease_button_up"]
+[connection signal="button_up" from="UI/MoverSwitches/General/Forward" to="." method="_on_forward_button_up"]
+[connection signal="button_up" from="UI/MoverSwitches/General/Reverse" to="." method="_on_reverse_button_up"]
 
 [editable path="SM42_V1"]

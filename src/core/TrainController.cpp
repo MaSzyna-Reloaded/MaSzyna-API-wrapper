@@ -18,6 +18,10 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainController::get_mover_state);
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
+        ClassDB::bind_method(D_METHOD("main_controller_increase"), &TrainController::main_controller_increase);
+        ClassDB::bind_method(D_METHOD("main_controller_decrease"), &TrainController::main_controller_decrease);
+        ClassDB::bind_method(D_METHOD("forwarder_increase"), &TrainController::forwarder_increase);
+        ClassDB::bind_method(D_METHOD("forwarder_decrease"), &TrainController::forwarder_decrease);
 
         ClassDB::bind_method(
                 D_METHOD("_on_train_part_config_changed"), &TrainController::_on_train_part_config_changed);
@@ -25,6 +29,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_type_name"), &TrainController::get_type_name);
         ClassDB::bind_method(D_METHOD("set_mass"), &TrainController::set_mass);
         ClassDB::bind_method(D_METHOD("get_mass"), &TrainController::get_mass);
+        ClassDB::bind_method(D_METHOD("set_power"), &TrainController::set_power);
+        ClassDB::bind_method(D_METHOD("get_power"), &TrainController::get_power);
+        ClassDB::bind_method(D_METHOD("set_max_velocity"), &TrainController::set_max_velocity);
+        ClassDB::bind_method(D_METHOD("get_max_velocity"), &TrainController::get_max_velocity);
         ClassDB::bind_method(D_METHOD("set_battery_enabled"), &TrainController::set_battery_enabled);
         ClassDB::bind_method(D_METHOD("get_battery_enabled"), &TrainController::get_battery_enabled);
         ClassDB::bind_method(D_METHOD("set_nominal_battery_voltage"), &TrainController::set_nominal_battery_voltage);
@@ -52,6 +60,8 @@ namespace godot {
 
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dimensions/mass"), "set_mass", "get_mass");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power"), "set_power", "get_power");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_velocity"), "set_max_velocity", "get_max_velocity");
 
         /* FIXME: move to TrainPower section? */
         ADD_PROPERTY(
@@ -63,7 +73,6 @@ namespace godot {
 
     TrainController::TrainController() {
         // FIXME: move to _init or _ready signal?
-        initialize_mover();
     }
 
     TMoverParameters *TrainController::get_mover() const {
@@ -153,9 +162,19 @@ namespace godot {
                 this->initial_velocity, std::string(this->type_name.utf8().ptr()),
                 std::string(this->get_name().left(this->get_name().length()).utf8().ptr()), this->cabin_number);
 
+        _dirty = true;
+        _dirty_prop = true;
+        _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
         mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+
+        /* CheckLocomotiveParameters() will reset some parameters, so the changes
+         * must be applied second time */
+
+        _dirty = true;
+        _dirty_prop = true;
+        _update_mover_config_if_dirty();
 
         /* FIXME: remove test data */
         mover->CabActive = 1;
@@ -164,6 +183,9 @@ namespace godot {
         mover->AutomaticCabActivation = true;
         mover->CabActivisationAuto();
         mover->CabActivisation();
+
+        /* switch_physics() raczej trzeba zostawic */
+        mover->switch_physics(true);
 
         UtilityFunctions::print("[MaSzyna::TMoverParameters] Mover initialized successfully");
     }
@@ -203,18 +225,12 @@ namespace godot {
             }
         }
 
-        _dirty = true;      // force refresh mover
-        _dirty_prop = true; // force refresh mover
+        initialize_mover();
 
         UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
     }
 
-    void TrainController::_process(const double delta) {
-        /* nie daj borze w edytorze */
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
+    void TrainController::_update_mover_config_if_dirty() {
         if (_dirty) {
             /* zmienia sie istotny property glownego kontrolera
              * trzeba wszystkie czesci odswiezyc
@@ -239,14 +255,28 @@ namespace godot {
             update_mover();
             _dirty_prop = false;
         }
+    }
 
+    void TrainController::_process_mover(const double delta) {
         mover->ComputeTotalForce(delta * 1000.0);
-        mover->TractionForce(delta * 1000.0);
+        // mover->TractionForce(delta * 1000.0);
         mover->compute_movement_(delta * 1000.0);
+    }
+
+    void TrainController::_process(const double delta) {
+        /* nie daj borze w edytorze */
+        if (Engine::get_singleton()->is_editor_hint()) {
+            return;
+        }
+
+        _update_mover_config_if_dirty();
+        _process_mover(delta);
     }
 
     void TrainController::_do_update_internal_mover(TMoverParameters *mover) const {
         mover->Mass = mass;
+        mover->Power = power;
+        mover->Vmax = max_velocity;
         mover->ComputeMass();
 
         // FIXME: move to TrainPower
@@ -259,20 +289,7 @@ namespace godot {
         if (part == nullptr) {
             return;
         }
-
-        /* TODO: initialize_mover()
-         *
-         * przy propsach ustawianych bezposrednio do movera skasuje dane w runtime
-         *  mozna tak zrobic, gdy wszystkie parametry beda w private memebers wezlow godota
-         * wtedy mozna byloby wywalic initialize_mover() z konstruktora
-         */
-
-        // initialize_mover();
-
         part->update_mover(this);
-
-        /* switch_physics() raczej trzeba zostawic */
-        mover->switch_physics(true);
     }
 
     double TrainController::get_nominal_battery_voltage() const {
@@ -302,6 +319,24 @@ namespace godot {
         return mass;
     }
 
+    void TrainController::set_power(const double p_power) {
+        power = p_power;
+        _dirty_prop = true;
+    }
+
+    double TrainController::get_power() const {
+        return power;
+    }
+
+    void TrainController::set_max_velocity(const double p_value) {
+        max_velocity = p_value;
+        _dirty_prop = true;
+    }
+
+    double TrainController::get_max_velocity() const {
+        return max_velocity;
+    }
+
     Vector<TrainSwitch *> TrainController::get_train_switches() {
         Vector<TrainSwitch *> train_switches;
         _collect_train_switches(this, train_switches);
@@ -323,6 +358,26 @@ namespace godot {
             }
             _collect_train_switches(child, train_switches);
         }
+    }
+
+    void TrainController::main_controller_increase() {
+        // FIXME: mover can be null; change to enqueue command
+        mover->IncMainCtrl(1);
+    }
+
+    void TrainController::main_controller_decrease() {
+        // FIXME: mover can be null; change to enqueue command
+        mover->DecMainCtrl(1);
+    }
+
+    void TrainController::forwarder_decrease() {
+        // FIXME: mover can be null; change to enqueue command
+        mover->DirectionBackward();
+    }
+
+    void TrainController::forwarder_increase() {
+        // FIXME: mover can be null; change to enqueue command
+        mover->DirectionForward();
     }
 
     void TrainController::update_mover() const {
@@ -350,6 +405,7 @@ namespace godot {
         state["mass_total"] = mover->TotalMass;
         state["velocity"] = mover->V;
         state["speed"] = mover->Vel;
+        state["total_distance"] = mover->DistCounter;
         state["direction"] = mover->DirActive;
         state["cabin"] = mover->CabActive;
         state["cabin_controleable"] = mover->IsCabMaster();

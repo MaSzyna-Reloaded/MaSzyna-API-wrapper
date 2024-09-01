@@ -57,7 +57,6 @@ namespace godot {
         state["compressor_enabled"] = mover->CompressorFlag;
         state["compressor_allowed"] = mover->CompressorAllow;
         state["engine_power"] = mover->EnginePower;
-        state["engine_rpm"] = mover->nrot;
         state["engine_rpm_count"] = mover->enrot;
         state["engine_current"] = mover->Im;
         state["engine_damage"] = mover->EngDmgFlag;

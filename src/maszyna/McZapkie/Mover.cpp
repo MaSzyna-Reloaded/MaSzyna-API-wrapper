@@ -4579,6 +4579,8 @@ end*/
             EngineVoltage = (Power > 1.0 ? std::max(GetTrainsetHighVoltage(), PantographVoltage) : 0.0);
         }
 
+
+        godot::UtilityFunctions::print("Power=", Power);
         FTrain = (Power > 0 ? TractionForce(dt) : 0);
         double FT_factor = 1.0;
         if (EngineType == TEngineType::ElectricInductionMotor && InvertersRatio > 0.0) {
@@ -7118,6 +7120,7 @@ end*/
                                    EngineType == TEngineType::DieselEngine ? dizel_nmin : DElist[0].RPM / 60.0));
         }
 
+
         dizel_spinup =
                 (dizel_spinup && Mains &&
                  (enrot < 0.95 * (EngineType == TEngineType::DieselEngine ? dizel_nmin : DElist[0].RPM / 60.0)));
@@ -7270,8 +7273,12 @@ end*/
             // wstrzymywanie przy malych obrotach
             Moment -= dizel_Mstand;
         }
-        if (true == dizel_spinup)
+        if (true == dizel_spinup) {
+            godot::UtilityFunctions::print(
+                    "dizel_spinup: Moment=", Moment, " dizel_Mstand=", dizel_Mstand, " enrot=", enrot,
+                    " dizel_nmin=", dizel_nmin);
             Moment += dizel_Mstand / (0.3 + std::max(0.0, enrot / dizel_nmin)); // rozrusznik
+        }
 
         dizel_Torque = Moment;
 

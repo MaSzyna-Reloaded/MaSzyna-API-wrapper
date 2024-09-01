@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="TrainElectricEngine" inherits="TrainEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Electric engine handler class. Used to check/set it's parameters
 	</brief_description>
 	<description>
+		Class handling electric engines
 	</description>
 	<tutorials>
 	</tutorials>

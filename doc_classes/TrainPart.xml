@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="TrainPart" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Basic train part class. Handles all engines etc.
 	</brief_description>
 	<description>
+		Basic train part class
 	</description>
 	<tutorials>
 	</tutorials>
@@ -10,24 +12,28 @@
 		<method name="emit_config_changed_signal">
 			<return type="void" />
 			<description>
+				Emits the "config_changed" signal
 			</description>
 		</method>
 		<method name="get_mover_state">
 			<return type="Dictionary" />
-			<param index="0" name="_unnamed_arg0" type="TrainController" />
+			<param index="0" name="train_controller_node" type="TrainController" />
 			<description>
+				Returns dictionary ov properties with values from iternal mover
 			</description>
 		</method>
 		<method name="update_mover">
 			<return type="void" />
-			<param index="0" name="_unnamed_arg0" type="TrainController" />
+			<param index="0" name="train_controller_node" type="TrainController" />
 			<description>
+				Performs update on an iternal mover
 			</description>
 		</method>
 	</methods>
 	<signals>
 		<signal name="config_changed">
 			<description>
+				Emitted when the config has changed
 			</description>
 		</signal>
 	</signals>

@@ -1,37 +1,52 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="TrainSecuritySystem" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Class used to handle all security systems like CA/SHP and SIFA
 	</brief_description>
 	<description>
+		Class that handles trains security systems
 	</description>
 	<tutorials>
 	</tutorials>
 	<members>
 		<member name="aware_delay" type="float" setter="set_aware_delay" getter="get_aware_delay" default="0.0">
+			Delay between activation of the aware system, in seconds
 		</member>
 		<member name="aware_system/active" type="bool" setter="set_aware_system_active" getter="get_aware_system_active" default="false">
+			Is the aware system active
 		</member>
 		<member name="aware_system/cabsignal" type="bool" setter="set_aware_system_cabsignal" getter="get_aware_system_cabsignal" default="false">
+			Is the CabSignal aware system available
 		</member>
 		<member name="aware_system/separate_acknowledge" type="bool" setter="set_aware_system_separate_acknowledge" getter="get_aware_system_separate_acknowledge" default="false">
+			Is the SeparateAcknowledge aware system available
 		</member>
 		<member name="aware_system/sifa" type="bool" setter="set_aware_system_sifa" getter="get_aware_system_sifa" default="false">
+			Is the SIFA aware system available
 		</member>
 		<member name="ca_max_hold_time" type="float" setter="set_ca_max_hold_time" getter="get_ca_max_hold_time" default="0.0">
+			The duration of holding down the CA button, after which warning lights are turned on.
 		</member>
 		<member name="emergency_brake_delay" type="float" setter="set_emergency_brake_delay" getter="get_emergency_brake_delay" default="0.0">
+			Time from sound signal activation to emergency brake activation in seconds.
 		</member>
 		<member name="emergency_brake_warning_signal" type="int" setter="set_emergency_brake_warning_signal" getter="get_emergency_brake_warning_signal" enum="TrainSecuritySystem.EmergencyBrakeWarningSignal" default="1">
+			Definition of optional, automatic activation of the vehicle siren during emergency braking implementation
 		</member>
 		<member name="enabled" type="bool" setter="set_enabled" getter="get_enabled" default="true">
+			Is the aware system enabled
 		</member>
 		<member name="radio_stop" type="bool" setter="set_radio_stop" getter="get_radio_stop" default="true">
+			Definition of the operation of the Radio-Stop signal.
 		</member>
 		<member name="shp_magnet_distance" type="float" setter="set_shp_magnet_distance" getter="get_shp_magnet_distance" default="0.0">
+			Distance of the SHP sensor from the vehicle's front in meters. By default, half of the vehicle's length.
 		</member>
 		<member name="sound_signal_delay" type="float" setter="set_sound_signal_delay" getter="get_sound_signal_delay" default="0.0">
+			Time to activate the sound signal in seconds.
 		</member>
 		<member name="switches/reset" type="bool" setter="set_reset_pushed" getter="get_reset_pushed" default="false">
+			Is the reset pressed
 		</member>
 	</members>
 </class>

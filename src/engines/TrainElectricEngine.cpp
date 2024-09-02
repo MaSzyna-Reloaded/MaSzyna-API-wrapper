@@ -92,12 +92,12 @@ namespace godot {
                 "set_max_pantograph_tank_pressure", "get_max_pantograph_tank_pressure");
 
         ClassDB::bind_method(
-                D_METHOD("set_overvoltage_relay_value"), &TrainElectricEngine::set_overvoltage_relay_value);
+                D_METHOD("set_overvoltage_relay"), &TrainElectricEngine::set_overvoltage_relay);
         ClassDB::bind_method(
-                D_METHOD("get_overvoltage_relay_value"), &TrainElectricEngine::get_overvoltage_relay_value);
+                D_METHOD("get_overvoltage_relay"), &TrainElectricEngine::get_overvoltage_relay);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "power/current_collector/overvoltage_relay_value"),
-                "set_overvoltage_relay_value", "get_overvoltage_relay_value");
+                PropertyInfo(Variant::BOOL, "power/current_collector/overvoltage_relay"),
+                "set_overvoltage_relay", "get_overvoltage_relay");
 
         ClassDB::bind_method(
                 D_METHOD("set_required_main_switch_voltage"), &TrainElectricEngine::set_required_main_switch_voltage);
@@ -170,11 +170,10 @@ namespace godot {
     void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *mover) {
         TrainEngine::_do_update_internal_mover(mover);
 
-        // FIXME: test data
         mover->EnginePowerSource.SourceType = static_cast<TPowerSource>(power_source);
         mover->CompressorSwitch(compressor_switch_pressed);
         mover->ConverterSwitch(converter_switch_pressed);
-        switch (mover->EnginePowerSource.SourceType) {
+        switch (static_cast<TPowerSource>(power_source)) {
             case TPowerSource::InternalSource:; //@TODO: Implement mover->EnginePowerSource.PowerType = LoadFIZ_PowerDecode
             case TPowerSource::Transducer: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
@@ -319,12 +318,12 @@ namespace godot {
         return max_pantograph_tank_pressure;
     }
 
-    void TrainElectricEngine::set_overvoltage_relay_value(const bool p_overvoltage_relay_value) {
+    void TrainElectricEngine::set_overvoltage_relay(const bool p_overvoltage_relay_value) {
         overvoltage_relay = p_overvoltage_relay_value;
         _dirty = true;
     }
 
-    bool TrainElectricEngine::get_overvoltage_relay_value() const {
+    bool TrainElectricEngine::get_overvoltage_relay() const {
         return overvoltage_relay;
     }
 

@@ -82,8 +82,8 @@ namespace godot {
             float get_min_pantograph_tank_pressure() const;
             void set_max_pantograph_tank_pressure(float p_max_pantograph_tank_pressure);
             float get_max_pantograph_tank_pressure() const;
-            void set_overvoltage_relay_value(bool p_overvoltage_relay_value);
-            bool get_overvoltage_relay_value() const;
+            void set_overvoltage_relay(bool p_overvoltage_relay_value);
+            bool get_overvoltage_relay() const;
             void set_required_main_switch_voltage(float p_required_main_switch_voltage);
             float get_required_main_switch_voltage() const;
             void set_csw(float p_csw);

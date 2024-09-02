@@ -1,68 +1,94 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainBrake" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-	<brief_description>
-		Class for handling brake systems along with their parameters
-	</brief_description>
-	<description>
-		Class for handling brake systems
-	</description>
-	<tutorials>
-	</tutorials>
-	<members>
-		<member name="brake_force/max" type="float" setter="set_max_brake_force" getter="get_max_brake_force" default="1.0">
-			Sets maximum braking force to the selected value
-		</member>
-		<member name="brake_force/track" type="float" setter="set_track_brake_force" getter="get_track_brake_force" default="0.0">
-		</member>
-		<member name="compressor/power" type="int" setter="set_compressor_power" getter="get_compressor_power" default="0">
-		</member>
-		<member name="compressor/pressure_cab_b_max" type="float" setter="set_compressor_pressure_cab_b_max" getter="get_compressor_pressure_cab_b_max" default="0.0">
-		</member>
-		<member name="compressor/pressure_cab_b_min" type="float" setter="set_compressor_pressure_cab_b_min" getter="get_compressor_pressure_cab_b_min" default="0.0">
-		</member>
-		<member name="compressor/pressure_max" type="float" setter="set_compressor_pressure_max" getter="get_compressor_pressure_max" default="0.0">
-		</member>
-		<member name="compressor/pressure_min" type="float" setter="set_compressor_pressure_min" getter="get_compressor_pressure_min" default="0.0">
-		</member>
-		<member name="compressor/speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed" default="0.0">
-		</member>
-		<member name="cylinders/count" type="int" setter="set_cylinders_count" getter="get_cylinders_count" default="0">
-		</member>
-		<member name="cylinders/distance" type="float" setter="set_cylinder_distance" getter="get_cylinder_distance" default="0.0">
-		</member>
-		<member name="cylinders/gear_ratio" type="float" setter="set_cylinder_gear_ratio" getter="get_cylinder_gear_ratio" default="0.0">
-		</member>
-		<member name="cylinders/gear_ratio_high" type="float" setter="set_cylinder_gear_ratio_high" getter="get_cylinder_gear_ratio_high" default="0.0">
-		</member>
-		<member name="cylinders/gear_ratio_low" type="float" setter="set_cylinder_gear_ratio_low" getter="get_cylinder_gear_ratio_low" default="0.0">
-		</member>
-		<member name="cylinders/radius" type="float" setter="set_cylinder_radius" getter="get_cylinder_radius" default="0.0">
-		</member>
-		<member name="cylinders/spring_force" type="float" setter="set_cylinder_spring_force" getter="get_cylinder_spring_force" default="0.0">
-		</member>
-		<member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle" getter="get_friction_elements_per_axle" default="1">
-		</member>
-		<member name="max_pressures/antislip" type="float" setter="set_max_antislip_pressure" getter="get_max_antislip_pressure" default="0.0">
-		</member>
-		<member name="max_pressures/cylinder" type="float" setter="set_max_pressure" getter="get_max_pressure" default="0.0">
-		</member>
-		<member name="pipe/pressure_max" type="float" setter="set_pipe_pressure_max" getter="get_pipe_pressure_max" default="5.0">
-		</member>
-		<member name="pipe/pressure_min" type="float" setter="set_pipe_pressure_min" getter="get_pipe_pressure_min" default="3.5">
-		</member>
-		<member name="rig_effectiveness" type="float" setter="set_rig_effectiveness" getter="get_rig_effectiveness" default="0.0">
-		</member>
-		<member name="slck/adjustment_force" type="float" setter="set_slck_adjustment_force" getter="get_slck_adjustment_force" default="0.0">
-		</member>
-		<member name="tank/volume_aux" type="float" setter="set_aux_tank_volume" getter="get_aux_tank_volume" default="0.0">
-		</member>
-		<member name="tank/volume_main" type="float" setter="set_main_tank_volume" getter="get_main_tank_volume" default="0.0">
-		</member>
-		<member name="valve/est_size" type="int" setter="set_valve_size" getter="get_valve_size" default="0">
-			Size of the ESt family camshaft valve
-		</member>
-		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" default="0">
-			/ W / W_Lu_VI / W_Lu_L / W_Lu_XR / K / Kg / Kp / Kss / Kkg / Kkp / Kks / Hikg1 / Hikss / Hikp1 / KE / SW / EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype of combined brake / type of brake valve
-		</member>
-	</members>
+<class name="TrainBrake" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+        Class for handling brake systems along with their parameters
+    </brief_description>
+    <description>
+        Class for handling brake systems
+    </description>
+    <tutorials>
+    </tutorials>
+    <members>
+        <member name="brake_force/max" type="float" setter="set_max_brake_force" getter="get_max_brake_force"
+                default="1.0">
+            Sets maximum braking force to the selected value
+        </member>
+        <member name="brake_force/track" type="float" setter="set_track_brake_force" getter="get_track_brake_force"
+                default="0.0">
+        </member>
+        <member name="compressor/power" type="int" setter="set_compressor_power" getter="get_compressor_power"
+                default="0">
+        </member>
+        <member name="compressor/pressure_cab_b_max" type="float" setter="set_compressor_pressure_cab_b_max"
+                getter="get_compressor_pressure_cab_b_max" default="0.0">
+        </member>
+        <member name="compressor/pressure_cab_b_min" type="float" setter="set_compressor_pressure_cab_b_min"
+                getter="get_compressor_pressure_cab_b_min" default="0.0">
+        </member>
+        <member name="compressor/pressure_max" type="float" setter="set_compressor_pressure_max"
+                getter="get_compressor_pressure_max" default="0.0">
+        </member>
+        <member name="compressor/pressure_min" type="float" setter="set_compressor_pressure_min"
+                getter="get_compressor_pressure_min" default="0.0">
+        </member>
+        <member name="compressor/speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed"
+                default="0.0">
+        </member>
+        <member name="cylinders/count" type="int" setter="set_cylinders_count" getter="get_cylinders_count" default="0">
+        </member>
+        <member name="cylinders/distance" type="float" setter="set_cylinder_distance" getter="get_cylinder_distance"
+                default="0.0">
+        </member>
+        <member name="cylinders/gear_ratio" type="float" setter="set_cylinder_gear_ratio"
+                getter="get_cylinder_gear_ratio" default="0.0">
+        </member>
+        <member name="cylinders/gear_ratio_high" type="float" setter="set_cylinder_gear_ratio_high"
+                getter="get_cylinder_gear_ratio_high" default="0.0">
+        </member>
+        <member name="cylinders/gear_ratio_low" type="float" setter="set_cylinder_gear_ratio_low"
+                getter="get_cylinder_gear_ratio_low" default="0.0">
+        </member>
+        <member name="cylinders/radius" type="float" setter="set_cylinder_radius" getter="get_cylinder_radius"
+                default="0.0">
+        </member>
+        <member name="cylinders/spring_force" type="float" setter="set_cylinder_spring_force"
+                getter="get_cylinder_spring_force" default="0.0">
+        </member>
+        <member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle"
+                getter="get_friction_elements_per_axle" default="1">
+        </member>
+        <member name="max_pressures/antislip" type="float" setter="set_max_antislip_pressure"
+                getter="get_max_antislip_pressure" default="0.0">
+        </member>
+        <member name="max_pressures/cylinder" type="float" setter="set_max_pressure" getter="get_max_pressure"
+                default="0.0">
+        </member>
+        <member name="pipe/pressure_max" type="float" setter="set_pipe_pressure_max" getter="get_pipe_pressure_max"
+                default="5.0">
+        </member>
+        <member name="pipe/pressure_min" type="float" setter="set_pipe_pressure_min" getter="get_pipe_pressure_min"
+                default="3.5">
+        </member>
+        <member name="rig_effectiveness" type="float" setter="set_rig_effectiveness" getter="get_rig_effectiveness"
+                default="0.0">
+        </member>
+        <member name="slck/adjustment_force" type="float" setter="set_slck_adjustment_force"
+                getter="get_slck_adjustment_force" default="0.0">
+        </member>
+        <member name="tank/volume_aux" type="float" setter="set_aux_tank_volume" getter="get_aux_tank_volume"
+                default="0.0">
+        </member>
+        <member name="tank/volume_main" type="float" setter="set_main_tank_volume" getter="get_main_tank_volume"
+                default="0.0">
+        </member>
+        <member name="valve/est_size" type="int" setter="set_valve_size" getter="get_valve_size" default="0">
+            Size of the ESt family camshaft valve
+        </member>
+        <member name="valve/type" type="int" setter="set_valve" getter="get_valve" default="0">
+            / W / W_Lu_VI / W_Lu_L / W_Lu_XR / K / Kg / Kp / Kss / Kkg / Kkp / Kks / Hikg1 / Hikss / Hikp1 / KE / SW /
+            EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype
+            of combined brake / type of brake valve
+        </member>
+    </members>
 </class>

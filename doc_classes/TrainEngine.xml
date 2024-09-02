@@ -1,16 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainEngine" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-	<brief_description>
-		Core engine class. Contains most common things for all of available engine types
-	</brief_description>
-	<description>
-		Core engine class
-	</description>
-	<tutorials>
-	</tutorials>
-	<members>
-		<member name="switches/main" type="bool" setter="set_main_switch_pressed" getter="get_main_switch_pressed" default="false">
-			Is the main switch on
-		</member>
-	</members>
+<class name="TrainEngine" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+    <brief_description>
+        Core engine class. Contains most common things for all of available engine types
+    </brief_description>
+    <description>
+        Core engine class
+    </description>
+    <tutorials>
+    </tutorials>
+    <members>
+        <member name="switches/main" type="bool" setter="set_main_switch_pressed" getter="get_main_switch_pressed"
+                default="false">
+            Is the main switch on
+        </member>
+    </members>
 </class>

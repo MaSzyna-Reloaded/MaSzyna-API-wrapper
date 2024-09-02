@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [node name="SM42v1" type="TrainController"]
-parts/engine = NodePath("TestowySilnikElektryczny")
+parts/engine = NodePath("StonkaDieselEngine")
 parts/brake = NodePath("Brake")
 parts/security_system = NodePath("TrainSecuritySystem")
 type_name = "6d"

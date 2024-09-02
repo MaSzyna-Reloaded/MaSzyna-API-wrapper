@@ -28,6 +28,7 @@ namespace godot {
             double mass = 0.0;
             double power = 0.0;
             double max_velocity = 0.0;
+            String axle_arrangement = "";
 
             void _collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches);
             void _connect_signals_to_train_part(TrainPart *part);
@@ -85,6 +86,8 @@ namespace godot {
             double get_power() const;
             void set_max_velocity(double p_value);
             double get_max_velocity() const;
+            void set_axle_arrangement(String p_value);
+            String get_axle_arrangement() const;
 
             void main_controller_increase();
             void main_controller_decrease();

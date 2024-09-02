@@ -64,6 +64,7 @@ namespace godot {
         state["diesel_spinup"] = mover->dizel_spinup;
         state["diesel_power"] = mover->dizel_Power;
         state["diesel_torque"] = mover->dizel_Torque;
+        state["diesel_fill"] = mover->dizel_fill;
     }
 
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
@@ -79,6 +80,7 @@ namespace godot {
 
         mover->Ftmax = traction_force_max;
 
+        /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
         const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
         mover->MainCtrlPosNo = wwlist.size() - 1;

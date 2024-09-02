@@ -4516,14 +4516,14 @@ end*/
 
         Vel = std::fabs(V) * 3.6; // prędkość w km/h
 
-        /* GODOT
-
         // McZapkie-031103: sprawdzanie czy warto liczyc fizyke i inne updaty
         // ABu 300105: cos tu mieszalem , dziala teraz troche lepiej, wiec zostawiam
         {
-            auto const vehicleisactive{(CabActive != 0) || (Vel > 0.0001) || (std::fabs(AccS) > 0.0001) ||
-                                       (LastSwitchingTime < 5) || (TrainType == dt_EZT) || (TrainType == dt_DMU)};
+            auto const vehicleisactive{
+                    (CabActive != 0) || (Vel > 0.0001) || (std::fabs(AccS) > 0.0001) || (LastSwitchingTime < 5) ||
+                    (TrainType == dt_EZT) || (TrainType == dt_DMU)};
 
+            /* FIXME: GODOT
             auto const movingvehicleahead{
                     (Neighbours[end::front].vehicle != nullptr) &&
                     ((Neighbours[end::front].vehicle->MoverParameters->Vel > 0.0001) ||
@@ -4533,12 +4533,15 @@ end*/
                     (Neighbours[end::rear].vehicle != nullptr) &&
                     ((Neighbours[end::rear].vehicle->MoverParameters->Vel > 0.0001) ||
                      (std::fabs(Neighbours[end::rear].vehicle->MoverParameters->AccS) > 0.0001))};
+                     */
 
+            /* FIXME: GODOT
             auto const calculatephysics{vehicleisactive || movingvehicleahead || movingvehiclebehind};
+            */
+            auto const calculatephysics{vehicleisactive};
 
             switch_physics(calculatephysics);
         }
-        */
 
         if (false == PhysicActivation) {
             return;
@@ -4580,7 +4583,6 @@ end*/
         }
 
 
-        godot::UtilityFunctions::print("Power=", Power);
         FTrain = (Power > 0 ? TractionForce(dt) : 0);
         double FT_factor = 1.0;
         if (EngineType == TEngineType::ElectricInductionMotor && InvertersRatio > 0.0) {

@@ -89,6 +89,9 @@ namespace Maszyna {
 
     extern int ConversionError;
 
+    int s2NPW(std::string s);
+    int s2NNW(std::string s);
+
     const double Steel2Steel_friction = 0.15; // tarcie statyczne
     const double g = 9.81;                    // przyspieszenie ziemskie
     const double SandSpeed = 0.1;             // ile kg/s}

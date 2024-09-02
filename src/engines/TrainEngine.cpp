@@ -54,6 +54,11 @@ namespace godot {
     }
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        state["Mm"] = mover->Mm;
+        state["Mw"] = mover->Mw;
+        state["Fw"] = mover->Fw;
+        state["Ft"] = mover->Ft;
+        state["Im"] = mover->Im;
         state["compressor_enabled"] = mover->CompressorFlag;
         state["compressor_allowed"] = mover->CompressorAllow;
         state["engine_power"] = mover->EnginePower;

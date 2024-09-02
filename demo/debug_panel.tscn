@@ -1,6 +1,7 @@
-[gd_scene load_steps=3 format=3 uid="uid://br6moafqr8ykn"]
+[gd_scene load_steps=4 format=3 uid="uid://br6moafqr8ykn"]
 
 [ext_resource type="Script" path="res://debug_panel.gd" id="1_7xna6"]
+[ext_resource type="Texture2D" uid="uid://6lsf2giat1da" path="res://icons/search.png" id="2_s0ly2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kvppn"]
 content_margin_left = 10.0
@@ -22,7 +23,27 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_7xna6")
 
-[node name="Title" type="Label" parent="."]
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TextureRect" type="TextureRect" parent="HBoxContainer"]
+layout_mode = 2
+texture = ExtResource("2_s0ly2")
+stretch_mode = 3
+
+[node name="Filter" type="LineEdit" parent="HBoxContainer"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 4
+
+[node name="HFlowContainer" type="HFlowContainer" parent="HBoxContainer"]
 layout_mode = 2
 
 [node name="DebugPanel" type="PanelContainer" parent="."]
@@ -33,3 +54,5 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_kvppn")
 [node name="RichTextLabel" type="RichTextLabel" parent="DebugPanel"]
 layout_mode = 2
 theme_override_font_sizes/normal_font_size = 12
+
+[connection signal="text_changed" from="HBoxContainer/Filter" to="." method="_on_filter_text_changed"]

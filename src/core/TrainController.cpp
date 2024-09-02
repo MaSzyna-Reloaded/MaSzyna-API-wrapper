@@ -33,6 +33,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_power"), &TrainController::get_power);
         ClassDB::bind_method(D_METHOD("set_max_velocity"), &TrainController::set_max_velocity);
         ClassDB::bind_method(D_METHOD("get_max_velocity"), &TrainController::get_max_velocity);
+        ClassDB::bind_method(D_METHOD("set_axle_arrangement"), &TrainController::set_axle_arrangement);
+        ClassDB::bind_method(D_METHOD("get_axle_arrangement"), &TrainController::get_axle_arrangement);
         ClassDB::bind_method(D_METHOD("set_battery_enabled"), &TrainController::set_battery_enabled);
         ClassDB::bind_method(D_METHOD("get_battery_enabled"), &TrainController::get_battery_enabled);
         ClassDB::bind_method(D_METHOD("set_nominal_battery_voltage"), &TrainController::set_nominal_battery_voltage);
@@ -62,6 +64,7 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dimensions/mass"), "set_mass", "get_mass");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power"), "set_power", "get_power");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_velocity"), "set_max_velocity", "get_max_velocity");
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "axle_arrangement"), "set_axle_arrangement", "get_axle_arrangement");
 
         /* FIXME: move to TrainPower section? */
         ADD_PROPERTY(
@@ -277,7 +280,10 @@ namespace godot {
         mover->Mass = mass;
         mover->Power = power;
         mover->Vmax = max_velocity;
+
         mover->ComputeMass();
+        mover->NPoweredAxles = Maszyna::s2NPW(axle_arrangement.ascii().get_data());
+        mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
 
         // FIXME: move to TrainPower
         mover->Battery = sw_battery_enabled;
@@ -335,6 +341,14 @@ namespace godot {
 
     double TrainController::get_max_velocity() const {
         return max_velocity;
+    }
+
+    void TrainController::set_axle_arrangement(String p_value) {
+        axle_arrangement = p_value;
+    }
+
+    String TrainController::get_axle_arrangement() const {
+        return axle_arrangement;
     }
 
     Vector<TrainSwitch *> TrainController::get_train_switches() {

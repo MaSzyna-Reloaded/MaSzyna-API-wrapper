@@ -4,6 +4,7 @@
 
 #pragma once
 #include <godot_cpp/classes/node.hpp>
+#include <unordered_map>
 #include "../core/TrainPart.hpp"
 
 
@@ -12,6 +13,14 @@ namespace godot {
     class TrainBrake final : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
         private:
+            const std::unordered_map<TBrakeValve, TBrakeSubSystem> BrakeValveToSubsystemMap = {
+                    {TBrakeValve::W, TBrakeSubSystem::ss_W},       {TBrakeValve::W_Lu_L, TBrakeSubSystem::ss_W},
+                    {TBrakeValve::W_Lu_VI, TBrakeSubSystem::ss_W}, {TBrakeValve::W_Lu_XR, TBrakeSubSystem::ss_W},
+                    {TBrakeValve::ESt3, TBrakeSubSystem::ss_ESt},  {TBrakeValve::ESt3AL2, TBrakeSubSystem::ss_ESt},
+                    {TBrakeValve::ESt4, TBrakeSubSystem::ss_ESt},  {TBrakeValve::EP2, TBrakeSubSystem::ss_ESt},
+                    {TBrakeValve::EP1, TBrakeSubSystem::ss_ESt},   {TBrakeValve::KE, TBrakeSubSystem::ss_KE},
+                    {TBrakeValve::CV1, TBrakeSubSystem::ss_Dako},  {TBrakeValve::CV1_L_TR, TBrakeSubSystem::ss_Dako},
+                    {TBrakeValve::LSt, TBrakeSubSystem::ss_LSt},   {TBrakeValve::EStED, TBrakeSubSystem::ss_LSt}};
             // BrakeValve -> BrakeValve
             int valve = static_cast<int>(TBrakeValve::NoValve);
             int friction_elements_per_axle = 1;         // NBpA -> NBpA
@@ -19,7 +28,10 @@ namespace godot {
             int valve_size = 0;                         // Size -> BrakeValveSize
             double track_brake_force = 0.0;             // TBF -> TrackBrakeForce
             double max_pressure = 0.0;                  // MaxBP -> MaxBrakePress[3]
+            double max_pressure_aux = 0.0;              // MaxLBP -> MaxBrakePress[0]
             double max_antislip_pressure = 0.0;         // MaxASBP -> MaxBrakePress[4]
+            double max_pressure_tare = 0.0;             // TareMaxBP -> MaxBrakePress[1]
+            double max_pressure_medium = 0.0;           // MedMaxBP -> MaxBrakePress[2]
             int cylinders_count = 0;                    // BCN -> BrakeCylNo
             double cylinder_radius = 0.0;               // BCR -> BrakeCylRadius
             double cylinder_distance = 0.0;             // BCD -> BrakeCylDist
@@ -39,6 +51,9 @@ namespace godot {
             double compressor_speed = 0.0;              // CompressorSpeed -> CompressorSpeed
             int compressor_power = 0;                   // CompressorPower
             double rig_effectiveness = 0.0;             // BRE -> BrakeRigEff effectiveness
+
+            double brake_level = 0.0;
+            bool sw_releaser_enabled = false;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
@@ -71,6 +86,15 @@ namespace godot {
 
             void set_max_pressure(double p_max_pressure);
             double get_max_pressure() const;
+
+            void set_max_pressure_aux(double p_value);
+            double get_max_pressure_aux() const;
+
+            void set_max_pressure_tare(double p_value);
+            double get_max_pressure_tare() const;
+
+            void set_max_pressure_medium(double p_value);
+            double get_max_pressure_medium() const;
 
             void set_max_antislip_pressure(double p_max_antislip_pressure);
             double get_max_antislip_pressure() const;
@@ -131,6 +155,12 @@ namespace godot {
 
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
+
+            void set_brake_level(double p_value);
+            double get_brake_level();
+
+            void set_sw_releaser_enabled(bool p_value);
+            bool get_sw_releaser_enabled();
 
             TrainBrake();
             ~TrainBrake() override = default;

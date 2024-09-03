@@ -9,6 +9,10 @@ namespace godot {
     TrainBrake::TrainBrake() = default;
 
     void TrainBrake::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("set_brake_level"), &TrainBrake::set_brake_level);
+        ClassDB::bind_method(D_METHOD("get_brake_level"), &TrainBrake::get_brake_level);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "brake_level"), "set_brake_level", "get_brake_level");
+
         ClassDB::bind_method(D_METHOD("set_valve"), &TrainBrake::set_valve);
         ClassDB::bind_method(D_METHOD("get_valve"), &TrainBrake::get_valve);
 
@@ -41,6 +45,21 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_max_pressure"), &TrainBrake::set_max_pressure);
         ClassDB::bind_method(D_METHOD("get_max_pressure"), &TrainBrake::get_max_pressure);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_pressures/cylinder"), "set_max_pressure", "get_max_pressure");
+
+        ClassDB::bind_method(D_METHOD("set_max_pressure_aux"), &TrainBrake::set_max_pressure_aux);
+        ClassDB::bind_method(D_METHOD("get_max_pressure_aux"), &TrainBrake::get_max_pressure_aux);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_pressures/aux"), "set_max_pressure_aux", "get_max_pressure_aux");
+
+        ClassDB::bind_method(D_METHOD("set_max_pressure_tare"), &TrainBrake::set_max_pressure_tare);
+        ClassDB::bind_method(D_METHOD("get_max_pressure_tare"), &TrainBrake::get_max_pressure_tare);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "max_pressures/tare"), "set_max_pressure_tare", "get_max_pressure_tare");
+
+        ClassDB::bind_method(D_METHOD("set_max_pressure_medium"), &TrainBrake::set_max_pressure_medium);
+        ClassDB::bind_method(D_METHOD("get_max_pressure_medium"), &TrainBrake::get_max_pressure_medium);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "max_pressures/medium"), "set_max_pressure_medium",
+                "get_max_pressure_medium");
 
         ClassDB::bind_method(D_METHOD("set_max_antislip_pressure"), &TrainBrake::set_max_antislip_pressure);
         ClassDB::bind_method(D_METHOD("get_max_antislip_pressure"), &TrainBrake::get_max_antislip_pressure);
@@ -151,7 +170,13 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_rig_effectiveness"), &TrainBrake::set_rig_effectiveness);
         ClassDB::bind_method(D_METHOD("get_rig_effectiveness"), &TrainBrake::get_rig_effectiveness);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "rig_effectiveness"), "set_rig_effectiveness", "get_rig_effectiveness");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rig_effectiveness"), "set_rig_effectiveness", "get_rig_effectiveness");
+
+        ClassDB::bind_method(D_METHOD("set_sw_releaser_enabled"), &TrainBrake::set_sw_releaser_enabled);
+        ClassDB::bind_method(D_METHOD("get_sw_releaser_enabled"), &TrainBrake::get_sw_releaser_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "switches/releaser"), "set_sw_releaser_enabled", "get_sw_releaser_enabled");
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -163,38 +188,91 @@ namespace godot {
     }
     void TrainBrake::_do_update_internal_mover(TMoverParameters *mover) {
         /* logika z Mover::LoadFiz_Brake */
-
-
         // FIXME: logika nie jest jeszcze w pelni przeniesiona z LoadFIZ_Brake
+
+        mover->BrakeSystem = TBrakeSystem::Pneumatic;    // BrakeSystem
+        mover->BrakeCtrlPosNo = 6;                       // BCPN
+        mover->BrakeDelay[0] = 15;                       // BDelay1
+        mover->BrakeDelay[1] = 3;                        // BDelay2
+        mover->BrakeDelay[2] = 36;                       // BDelay3
+        mover->BrakeDelay[3] = 22;                       // BDelay4
+        mover->BrakeDelays = bdelay_G + bdelay_P;        // BrakeDelays
+        mover->BrakeHandle = TBrakeHandle::FV4a;         // BrakeHandle
+        mover->BrakeLocHandle = TBrakeHandle::FD1;       // LocBrakeHandle
+        mover->ASBType = 1;                              // ASB
+        mover->LocalBrake = TLocalBrake::PneumaticBrake; // LocalBrake
+        mover->MBrake = true;                            // ManualBrake
+
+        /* FIXME:: BrakeValve nie jest tylko enumem
+         * jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE ustawi BrakeValve=ESt3
+         */
         mover->BrakeValve = static_cast<TBrakeValve>(valve);
+
+        auto it = BrakeValveToSubsystemMap.find(mover->BrakeValve);
+        mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
+
         mover->NBpA = friction_elements_per_axle;
         mover->MaxBrakeForce = max_brake_force;
         mover->BrakeValveSize = valve_size;
         mover->TrackBrakeForce = track_brake_force * 1000.0;
         mover->MaxBrakePress[3] = max_pressure;
-        mover->MaxBrakePress[4] = max_antislip_pressure;
-        mover->BrakeCylNo = cylinders_count;
-        mover->BrakeCylRadius = cylinder_radius;
-        mover->BrakeCylDist = cylinder_distance;
-        mover->BrakeCylSpring = cylinder_spring_force;
-        mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinders_count;
-        mover->BrakeSlckAdj = slck_adjustment_force;
-        mover->BrakeCylMult[0] = cylinder_gear_ratio;
-        mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
-        mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
+        if (max_pressure > 0.0) {
+            mover->BrakeCylNo = cylinders_count;
+
+            if (cylinders_count > 0) {
+                mover->MaxBrakePress[0] = max_pressure_aux < 0.01 ? max_pressure : max_pressure_aux;
+                mover->MaxBrakePress[1] = max_pressure_tare;
+                mover->MaxBrakePress[2] = max_pressure_medium;
+                mover->MaxBrakePress[4] = max_antislip_pressure < 0.01 ? 0.0 : max_antislip_pressure;
+
+                mover->BrakeCylRadius = cylinder_radius;
+                mover->BrakeCylDist = cylinder_distance;
+                mover->BrakeCylSpring = cylinder_spring_force;
+                mover->BrakeSlckAdj = slck_adjustment_force;
+                mover->BrakeRigEff = rig_effectiveness;
+
+                mover->BrakeCylMult[0] = cylinder_gear_ratio;
+                mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
+                mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
+
+                mover->P2FTrans = 100 * M_PI * std::pow(cylinder_radius, 2);
+
+                mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_pressure_tare > 0.0) ? 1 : 0;
+
+                mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinders_count;
+                mover->BrakeVVolume = aux_tank_volume;
+
+                // TODO: mover->BrakeMethod
+                mover->BrakeMethod = 0;
+
+                // TODO: RM -> mover->RapidMult
+                // TODO: RV -> mover->RapidVel
+                mover->RapidMult = 1;
+                mover->RapidVel = 55;
+            }
+        }
         /* PipePress i HighPipePress musza byc skopiowane */
-        mover->PipePress = pipe_pressure_max;
         mover->HighPipePress = pipe_pressure_max;
         mover->LowPipePress = pipe_pressure_min;
         mover->VeselVolume = main_tank_volume;
-        mover->BrakeVVolume = aux_tank_volume;
         mover->MinCompressor = compressor_pressure_min;
         mover->MaxCompressor = compressor_pressure_max;
         mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
         mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
-        mover->BrakeRigEff = rig_effectiveness;
+
+        /* update the brake level state */
+        if (mover->Hamulec != nullptr) {
+            if (mover->fBrakeCtrlPos != brake_level) {
+                mover->BrakeLevelSet(brake_level);
+            }
+            if (sw_releaser_enabled) {
+                mover->BrakeReleaser(1);
+            }
+        }
+
+        // FIXME: Hardcoded brake system params (move to TrainController??? not sure)
     }
 
     void TrainBrake::set_valve(const int p_valve) {
@@ -241,6 +319,7 @@ namespace godot {
     double TrainBrake::get_track_brake_force() const {
         return track_brake_force;
     }
+
     void TrainBrake::set_max_pressure(const double p_max_pressure) {
         max_pressure = p_max_pressure;
         _dirty = true;
@@ -248,6 +327,33 @@ namespace godot {
 
     double TrainBrake::get_max_pressure() const {
         return max_pressure;
+    }
+
+    void TrainBrake::set_max_pressure_aux(const double p_value) {
+        max_pressure_aux = p_value;
+        _dirty = true;
+    }
+
+    double TrainBrake::get_max_pressure_aux() const {
+        return max_pressure_aux;
+    }
+
+    void TrainBrake::set_max_pressure_tare(const double p_value) {
+        max_pressure_tare = p_value;
+        _dirty = true;
+    }
+
+    double TrainBrake::get_max_pressure_tare() const {
+        return max_pressure_tare;
+    }
+
+    void TrainBrake::set_max_pressure_medium(const double p_value) {
+        max_pressure_medium = p_value;
+        _dirty = true;
+    }
+
+    double TrainBrake::get_max_pressure_medium() const {
+        return max_pressure_medium;
     }
 
     void TrainBrake::set_max_antislip_pressure(const double p_max_antislip_pressure) {
@@ -427,4 +533,23 @@ namespace godot {
     double TrainBrake::get_rig_effectiveness() const {
         return rig_effectiveness;
     }
+
+    void TrainBrake::set_brake_level(const double p_value) {
+        brake_level = p_value >= 0.0 ? p_value : 0.0;
+        _dirty = true;
+    }
+
+    double TrainBrake::get_brake_level() {
+        return brake_level;
+    }
+
+    void TrainBrake::set_sw_releaser_enabled(bool p_value) {
+        sw_releaser_enabled = p_value;
+        _dirty = true;
+    }
+
+    bool TrainBrake::get_sw_releaser_enabled() {
+        return sw_releaser_enabled;
+    }
+
 } // namespace godot

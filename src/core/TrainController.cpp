@@ -172,13 +172,6 @@ namespace godot {
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
         mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
 
-        /* CheckLocomotiveParameters() will reset some parameters, so the changes
-         * must be applied second time */
-
-        _dirty = true;
-        _dirty_prop = true;
-        _update_mover_config_if_dirty();
-
         /* FIXME: remove test data */
         mover->CabActive = 1;
         mover->CabMaster = true;

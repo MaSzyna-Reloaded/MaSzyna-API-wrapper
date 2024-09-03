@@ -66,3 +66,9 @@ func _on_reverse_button_up():
 
 func _on_forward_button_up():
     train.forwarder_increase()
+
+
+func _on_brake_level_value_changed(value):
+    var b = train.get_brake() as TrainBrake
+    if b:
+        b.brake_level = value

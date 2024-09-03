@@ -20,6 +20,7 @@ max_pressures/antislip = 1.8
 cylinders/count = 4
 cylinders/radius = 0.114
 cylinders/distance = 0.05
+cylinders/gear_ratio = 6.68
 tank/volume_main = 0.8
 tank/volume_aux = 200.0
 compressor/pressure_min = 7.0

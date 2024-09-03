@@ -425,6 +425,11 @@ namespace godot {
         state["cabin_controleable"] = mover->IsCabMaster();
         state["cabin_occupied"] = mover->CabOccupied;
 
+        /* FIXME: should be just a config property IMO; better to fix AxleArangement */
+        state["axles_powered_count"] = mover->NPoweredAxles;
+        state["axles_count"] = mover->NAxles;
+
+
         /* FIXME: move to TrainPower section? */
         state["battery_voltage"] = mover->BatteryVoltage;
 

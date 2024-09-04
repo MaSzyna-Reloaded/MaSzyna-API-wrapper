@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://djqacw65swdqc"]
+[gd_scene load_steps=6 format=3 uid="uid://djqacw65swdqc"]
 
 [ext_resource type="Script" path="res://demo.gd" id="1_76ghk"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://sm_42v_1.tscn" id="2_t8uqe"]
+[ext_resource type="PackedScene" uid="uid://1v37c7y4cwcx" path="res://gauge.tscn" id="3_dosfj"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://debug_panel.tscn" id="3_p4ciw"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://debug_switch.tscn" id="4_xvhus"]
 
@@ -13,6 +14,21 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_76ghk")
+
+[node name="EngineRPM" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(0, 453)
+start_angle = 140.0
+label = "Engine RPM"
+
+[node name="EngineCurrent" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(200, 453)
+start_angle = 140.0
+label = "Engine Current"
+
+[node name="OilPressure" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(400, 453)
+start_angle = 140.0
+label = "Oil Pressure"
 
 [node name="UI" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -80,6 +96,9 @@ title = "Brake"
 unique_name_in_owner = true
 layout_mode = 2
 title = "Train"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="UI"]
+layout_mode = 2
 
 [node name="MoverSwitches" type="HBoxContainer" parent="UI"]
 layout_mode = 2

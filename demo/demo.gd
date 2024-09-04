@@ -39,6 +39,8 @@ func _process(delta: float) -> void:
         var train_state = train.get_mover_state()
         var bv = train_state.get("battery_voltage")
 
+
+
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
 
@@ -51,6 +53,9 @@ func _process(delta: float) -> void:
         draw_dictionary(brake_state, $%DebugBrake)
         draw_dictionary(security_state, $%DebugSecurity)
 
+        $EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1500.0
+        $EngineCurrent.value = engine_state.get("engine_current", 0.0) / 700.0
+        $OilPressure.value = engine_state.get("oil_pump_pressure", 0.0)
 
 func _on_main_decrease_button_up():
     train.main_controller_decrease()

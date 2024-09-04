@@ -33,6 +33,15 @@ namespace godot {
         }
     }
 
+    void TrainPart::_process_mover(const TrainController *train_controller_node, double delta) {
+        if (train_controller_node != nullptr) {
+            TMoverParameters *mover = train_controller_node->get_mover();
+            if (mover != nullptr) {
+                _do_process_mover(mover, delta);
+            }
+        }
+    }
+
     void TrainPart::update_mover(const TrainController *train_controller_node) {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();

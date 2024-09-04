@@ -220,12 +220,15 @@ namespace godot {
                 mover->EmergencyBrakeWarningSignal = 1;
                 break;
         }
+    }
 
+    void TrainSecuritySystem::_do_process_mover(TMoverParameters *mover, const double delta) {
         /* handle acknowledge button press/release */
-        if (mover->SecuritySystem.pressed && !reset_pushed) {
-            mover->SecuritySystem.acknowledge_release();
-        } else if (!mover->SecuritySystem.pressed && reset_pushed) {
+        if (reset_pushed && !mover->SecuritySystem.pressed) {
             mover->SecuritySystem.acknowledge_press();
+        } else if (!reset_pushed && mover->SecuritySystem.pressed) {
+            mover->SecuritySystem.acknowledge_release();
         }
+        mover->SecuritySystemCheck(delta);
     }
 } // namespace godot

@@ -32,9 +32,12 @@ namespace godot {
 
             virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) = 0;
 
+            virtual void _do_process_mover(TMoverParameters *mover, double delta) = 0;
+
         public:
             void _ready() override;
             void _process(double delta) override;
+            void _process_mover(const TrainController *train_controller_node, double delta);
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),

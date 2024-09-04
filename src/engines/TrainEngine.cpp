@@ -48,7 +48,9 @@ namespace godot {
             mover->MPTRelay[i].Iup = motor_param_table[i].get("Iup");
             mover->MPTRelay[i].Idown = motor_param_table[i].get("Idown");
         }
+    }
 
+    void TrainEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
         mover->MainSwitch(main_switch_pressed);
         mover->CompressorSwitch(compressor_switch_pressed);
     }

@@ -22,6 +22,7 @@ namespace godot {
             TEngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_process_mover(TMoverParameters *mover, const double delta) override;
 
         public:
             double get_oil_min_pressure() const;

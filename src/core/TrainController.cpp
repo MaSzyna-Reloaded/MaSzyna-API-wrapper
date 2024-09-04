@@ -254,9 +254,25 @@ namespace godot {
     }
 
     void TrainController::_process_mover(const double delta) {
-        mover->ComputeTotalForce(delta * 1000.0);
-        // mover->TractionForce(delta * 1000.0);
-        mover->compute_movement_(delta * 1000.0);
+        TrainPart *p;
+
+        p = (TrainPart *)get_brake();
+        if (p != nullptr) {
+            p->_process_mover(this, delta);
+        }
+
+        p = (TrainPart *)get_security_system();
+        if (p != nullptr) {
+            p->_process_mover(this, delta);
+        }
+
+        p = (TrainPart *)get_engine();
+        if (p != nullptr) {
+            p->_process_mover(this, delta);
+        }
+
+        mover->ComputeTotalForce(delta);
+        mover->compute_movement_(delta);
     }
 
     void TrainController::_process(const double delta) {

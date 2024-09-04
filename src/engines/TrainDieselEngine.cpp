@@ -90,6 +90,10 @@ namespace godot {
             mover->DElist[i].Umax = wwlist[i].get(2);
             mover->DElist[i].Imax = wwlist[i].get(3);
         }
+    }
+
+    void TrainDieselEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
+        TrainEngine::_do_process_mover(mover, delta);
 
         mover->FuelPumpSwitch(sw_fuel_pump_enabled);
         mover->OilPumpSwitch(sw_oil_pump_enabled);

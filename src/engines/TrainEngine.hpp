@@ -18,6 +18,7 @@ namespace godot {
             virtual TEngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
             void set_main_switch_pressed(bool p_state);

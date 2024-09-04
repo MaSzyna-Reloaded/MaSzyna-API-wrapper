@@ -166,12 +166,10 @@ namespace godot {
         TrainEngine::_do_update_internal_mover(mover);
 
         mover->EnginePowerSource.SourceType = static_cast<TPowerSource>(power_source);
-        mover->CompressorSwitch(compressor_switch_pressed);
 
-        mover->ConverterSwitch(converter_switch_pressed);
         switch (static_cast<TPowerSource>(power_source)) {
             case TPowerSource::InternalSource:; //@TODO: Implement mover->EnginePowerSource.PowerType =
-                                                //LoadFIZ_PowerDecode
+                                                // LoadFIZ_PowerDecode
             case TPowerSource::Transducer: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
@@ -206,6 +204,13 @@ namespace godot {
             case TPowerSource::NotDefined:
             default:;
         }
+    }
+
+    void TrainElectricEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
+        TrainEngine::_do_process_mover(mover, delta);
+
+        mover->ConverterSwitch(converter_switch_pressed);
+        mover->CompressorSwitch(compressor_switch_pressed);
     }
 
     void TrainElectricEngine::set_converter_switch_pressed(const bool p_state) {

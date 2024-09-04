@@ -30,6 +30,16 @@ position = Vector2(400, 453)
 start_angle = 140.0
 label = "Oil Pressure"
 
+[node name="BrakeCylinderPressure" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(600, 453)
+start_angle = 140.0
+label = "BrakeCyl Pressure"
+
+[node name="BrakePipePressure" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(800, 453)
+start_angle = 130.0
+label = "Przewód główny"
+
 [node name="UI" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -142,7 +152,7 @@ text = "Security"
 [node name="CA_SHP_Reset" parent="UI/MoverSwitches/Security" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "CA/SHP"
-type = 0
+type = 1
 node = NodePath("../../../../SM42_V1/TrainSecuritySystem")
 property = "switches/reset"
 
@@ -156,7 +166,7 @@ text = "Diesel"
 [node name="OilPump" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Oil Pump"
-type = 0
+type = 1
 node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
 property = "switches/oil_pump_enabled"
 
@@ -219,7 +229,7 @@ layout_mode = 2
 [node name="Releaser" parent="UI/MoverSwitches/Brakes" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Releaser"
-type = 0
+type = 1
 node = NodePath("../../../../SM42_V1/Brake")
 property = "switches/releaser"
 

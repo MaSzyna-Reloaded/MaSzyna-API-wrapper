@@ -1,7 +1,7 @@
 #pragma once
 #include <godot_cpp/classes/node.hpp>
-#include "../maszyna/McZapkie/MOVER.h"
 #include "../core/TrainPart.hpp"
+#include "../maszyna/McZapkie/MOVER.h"
 
 
 namespace godot {
@@ -14,6 +14,7 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
             enum EmergencyBrakeWarningSignal { SIREN_LOW_TONE, SIREN_HIGH_TONE, WHISTLE };

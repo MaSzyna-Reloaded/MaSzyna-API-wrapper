@@ -261,7 +261,9 @@ namespace godot {
         mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
+    }
 
+    void TrainBrake::_do_process_mover(TMoverParameters *mover, double delta) {
         /* update the brake level state */
         if (mover->Hamulec != nullptr) {
             if (mover->fBrakeCtrlPos != brake_level) {
@@ -271,8 +273,6 @@ namespace godot {
                 mover->BrakeReleaser(1);
             }
         }
-
-        // FIXME: Hardcoded brake system params (move to TrainController??? not sure)
     }
 
     void TrainBrake::set_valve(const int p_valve) {

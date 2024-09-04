@@ -65,7 +65,7 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_csw"), &TrainElectricEngine::set_csw);
         ClassDB::bind_method(D_METHOD("get_csw"), &TrainElectricEngine::get_csw);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power/current_collector/csw"), "set_csw", "get_csw");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power/current_collector/collector_sliding_width"), "set_csw", "get_csw");
 
         ClassDB::bind_method(
                 D_METHOD("set_min_main_switch_voltage"), &TrainElectricEngine::set_min_main_switch_voltage);
@@ -156,7 +156,7 @@ namespace godot {
         state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
         state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
         state["current_collector/min_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MinH;
-        state["current_collector/csw"] = mover->EnginePowerSource.CollectorParameters.CSW;
+        state["current_collector/collector_sliding_width"] = mover->EnginePowerSource.CollectorParameters.CSW;
         state["current_collector/min_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.MinV;
         state["current_collector/min_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MinPress;
         state["current_collector/max_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MaxPress;
@@ -188,7 +188,7 @@ namespace godot {
             case TPowerSource::CurrentCollector: {
                 mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
                 mover->EnginePowerSource.CollectorParameters.MaxH = max_collector_lifting;
-                mover->EnginePowerSource.CollectorParameters.CSW = csw;
+                mover->EnginePowerSource.CollectorParameters.CSW = collector_sliding_width;
                 mover->EnginePowerSource.CollectorParameters.MinV = min_main_switch_voltage;
                 mover->EnginePowerSource.CollectorParameters.MinPress = min_pantograph_tank_pressure;
                 mover->EnginePowerSource.CollectorParameters.MaxPress = max_pantograph_tank_pressure;
@@ -283,12 +283,12 @@ namespace godot {
     }
 
     void TrainElectricEngine::set_csw(const float p_csw) {
-        csw = p_csw;
+        collector_sliding_width = p_csw;
         _dirty = true;
     }
 
     float TrainElectricEngine::get_csw() const {
-        return csw;
+        return collector_sliding_width;
     }
 
     void TrainElectricEngine::set_min_main_switch_voltage(const float p_min_main_switch_voltage) {

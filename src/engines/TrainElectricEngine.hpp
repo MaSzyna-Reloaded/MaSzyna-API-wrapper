@@ -26,7 +26,7 @@ namespace godot {
             /**
              * Working width of the collector/pantograph slide, in meters
              */
-            float csw = 0;
+            float collector_sliding_width = 0;
             /**
              * The minimum closing voltage of the main switch, in volts.
              * By default, it is 0.5*max_voltage

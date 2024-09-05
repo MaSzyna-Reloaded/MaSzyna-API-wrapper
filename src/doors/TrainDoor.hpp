@@ -1,12 +1,11 @@
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "../core/TrainPart.hpp"
 
 namespace godot {
     class TrainController;
     class TrainDoor : public TrainPart {
-            GDCLASS(TrainDoor, TrainClass)
-        public:
+            GDCLASS(TrainDoor, TrainPart)
+        protected:
             static void _bind_methods();
 
             /**
@@ -80,7 +79,7 @@ namespace godot {
 
             /**
              * Opening a train door by holding the impulse opening permission button, in seconds of holding the button
-            */
+             */
             double door_open_with_permit = 0.0;
 
             /**
@@ -112,53 +111,66 @@ namespace godot {
 
             /**
              * The speed at which the door automatically closes, set by default to -1, i.e. no automatic closing.
-            */
+             */
             double door_auto_close_vel = -1;
 
             /**
              * Docs do not describe this properly. Need to figure this out
-            */
-            auto platform_max_speed;
-            
+             */
+            double platform_max_speed = 0.0;
+
             /**
              * Offset value in meters or rotation angle for a fully extended step
-            */
+             */
             double platform_max_shift = 0.0;
 
             /**
-             * The speed of the animation step, where 1.0 corresponds to an animation lasting one second, a value of 0.5 to two seconds, etc.
-            */
+             * The speed of the animation step, where 1.0 corresponds to an animation lasting one second, a value of 0.5
+             * to two seconds, etc.
+             */
             double platform_speed = 0.0;
 
             /**
              * Platform animation type
              * 0 - Shift
              * 1 - Rot
-            */
+             */
             int platform_shift_method = 0;
 
             /**
              * Rotation angle for fully extended mirror
-            */
+             */
             double mirror_max_shift = 0.0;
 
             /**
              * The speed of the traction vehicle at which the external mirrors are automatically closed
-            */
+             */
             double mirror_vel_close = 0.0;
 
             /**
              * Opening doors by passengers requires the train driver's consent
-            */
+             */
             bool door_needs_permit = false;
 
             /**
              * Flashing of the light indicating permission to open the door on the side:
              * 0 - continuous light
-             * 1 - continuous light when any door is open or any step is extended; flashing only when permission is given
-             * 2 - continuous light when any door is open; flashing when permission is given; the step extension status is irrelevant
-             * 3 - flashing regardless of the door open status and step extension status
-            */
+             * 1 - continuous light when any door is open or any step is extended; flashing only when permission is
+             * given 2 - continuous light when any door is open; flashing when permission is given; the step extension
+             * status is irrelevant 3 - flashing regardless of the door open status and step extension status
+             */
             int door_permit_light_blinking = 0;
-    }
+
+        public:
+            void set_close_control(int p_value);
+            int get_close_control() const;
+            void set_open_control(int p_value);
+            int get_open_control() const;
+            void set_door_stay_open(double p_value);
+            double get_door_stay_open() const;
+            void set_open_speed(double p_value);
+            double get_open_speed() const;
+            void set_close_speed(double p_value);
+            double get_close_speed() const;
+    };
 } // namespace godot

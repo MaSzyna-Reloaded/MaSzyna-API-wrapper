@@ -50,9 +50,11 @@ func _process(delta: float) -> void:
         draw_dictionary(brake_state, $%DebugBrake)
         draw_dictionary(security_state, $%DebugSecurity)
 
-        $EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1500.0
-        $EngineCurrent.value = engine_state.get("engine_current", 0.0) / 700.0
+        $EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1400.0
+        $EngineCurrent.value = engine_state.get("engine_current", 0.0) / 1500.0
         $OilPressure.value = engine_state.get("oil_pump_pressure", 0.0)
+        $BrakeCylinderPressure.value = brake_state.get("brake_air_pressure", 0.0) / brake_state.get("brake_tank_volume", 1.0)
+        $BrakePipePressure.value = brake_state.get("pipe_pressure", 0.0)  / 10.0
 
 
 func _on_brake_level_value_changed(value):

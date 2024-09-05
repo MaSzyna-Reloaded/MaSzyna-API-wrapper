@@ -6,7 +6,7 @@
 namespace godot {
     class TrainController;
 
-    class TrainDieselEngine final : public TrainEngine {
+    class TrainDieselEngine : public TrainEngine {
             GDCLASS(TrainDieselEngine, TrainEngine)
         private:
             static void _bind_methods();
@@ -16,6 +16,7 @@ namespace godot {
 
             bool sw_fuel_pump_enabled = false;
             bool sw_oil_pump_enabled = false;
+            TypedArray<Array> wwlist;
 
         protected:
             TEngineType get_engine_type() override;
@@ -38,6 +39,9 @@ namespace godot {
 
             bool get_oil_pump_enabled() const;
             void set_oil_pump_enabled(bool p_state);
+
+            TypedArray<Array> get_wwlist();
+            void set_wwlist(const TypedArray<Array> p_wwlist);
 
             TrainDieselEngine();
             ~TrainDieselEngine() override = default;

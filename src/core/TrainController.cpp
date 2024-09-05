@@ -86,6 +86,13 @@ namespace godot {
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
         mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
 
+        /* CheckLocomotiveParameters() will reset some parameters, so the changes
+         * must be applied second time */
+
+        _dirty = true;
+        _dirty_prop = true;
+        _update_mover_config_if_dirty();
+
         /* FIXME: remove test data */
         mover->CabActive = 1;
         mover->CabMaster = true;
@@ -302,7 +309,6 @@ namespace godot {
         /* FIXME: should be just a config property IMO; better to fix AxleArangement */
         internal_state["axles_powered_count"] = mover->NPoweredAxles;
         internal_state["axles_count"] = mover->NAxles;
-
 
         /* FIXME: move to TrainPower section? */
         internal_state["battery_voltage"] = mover->BatteryVoltage;

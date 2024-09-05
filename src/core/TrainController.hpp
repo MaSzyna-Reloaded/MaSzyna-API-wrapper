@@ -36,6 +36,7 @@ namespace godot {
             void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts);
             void _connect_signals_to_train_part(TrainPart *part);
 
+        private:
             void _update_mover_config_if_dirty();
 
         protected:

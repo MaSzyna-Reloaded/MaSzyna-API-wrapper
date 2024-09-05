@@ -11,6 +11,8 @@ namespace godot {
         public:
             static void _bind_methods();
             bool main_switch_pressed = false;
+            bool compressor_switch_pressed = false;
+            TypedArray<Dictionary> motor_param_table;
 
         protected:
             virtual TEngineType get_engine_type() = 0;
@@ -21,6 +23,10 @@ namespace godot {
         public:
             void set_main_switch_pressed(bool p_state);
             bool get_main_switch_pressed() const;
+            void set_compressor_switch_pressed(const bool p_state);
+            bool get_compressor_switch_pressed() const;
+            TypedArray<Dictionary> get_motor_param_table();
+            void set_motor_param_table(const TypedArray<Dictionary> p_wwlist);
 
             TrainEngine();
             ~TrainEngine() override = default;

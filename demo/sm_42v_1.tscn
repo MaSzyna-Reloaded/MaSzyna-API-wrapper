@@ -28,12 +28,29 @@ compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
 
-[node name="StonkaDieselEngine" type="TrainDieselEngine" parent="."]
-oil_pump/pressure_minimum = 0.15
-
 [node name="TestowySilnikElektryczny" type="TrainElectricSeriesEngine" parent="."]
 nominal_voltage = 11000.0
 winding_resistance = 200.0
+
+[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
+oil_pump/pressure_minimum = 0.15
+Ftmax = 228000.0
+wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0], [496.0, 50.0, 156.0, 846.0]])
+motor_param_table = Array[Dictionary]([{
+"idown": 0.0,
+"isat": 15.0,
+"iup": 0.0,
+"fi": 1500.0,
+"mfi": 17.567,
+"misat": 64.0
+}, {
+"idown": 0.0,
+"iup": 0.0,
+"fi": 2000.0,
+"isat": 49.0,
+"misat": 183.3,
+"mfi": 15.0
+}])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
 aware_system/active = true

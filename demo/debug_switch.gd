@@ -12,9 +12,9 @@ var _node:Node
         _dirty = true
         label = x
 
-enum SwitchType { MONOSTABLE, BISTABLE }
+enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 
-@export var type:SwitchType = SwitchType.BISTABLE
+@export var type:SwitchType = SwitchType.TOGGLE
 
 @export_node_path var node:NodePath:
     set(x):
@@ -32,12 +32,13 @@ func _ready():
 func _process(delta):
     if _dirty:
         _dirty = false
-        if type == SwitchType.MONOSTABLE:
-            $Switch.action_mode = Button.ACTION_MODE_BUTTON_PRESS
-            $Switch.toggle_mode = false
-        else:
+        if type == SwitchType.TOGGLE:
             $Switch.action_mode = Button.ACTION_MODE_BUTTON_RELEASE
             $Switch.toggle_mode = true
+        else:
+            $Switch.action_mode = Button.ACTION_MODE_BUTTON_PRESS
+            $Switch.toggle_mode = false
+
 
         $Label.text = label
         if not node.is_empty():
@@ -58,3 +59,9 @@ func _on_switch_toggled(toggled_on):
 func _on_switch_pressed():
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _node and property:
         _node.set(property, $Switch.button_pressed)
+
+
+func _on_switch_button_up():
+    if not type == SwitchType.MONOSTABLE:
+        if _node and property:
+            _node.set(property, $Switch.button_pressed)

@@ -1,0 +1,46 @@
+[gd_scene load_steps=7 format=3 uid="uid://1v37c7y4cwcx"]
+
+[ext_resource type="Script" path="res://gauge.gd" id="1_l2s17"]
+[ext_resource type="Shader" path="res://gauge.gdshader" id="1_rywa7"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_xghqt"]
+shader = ExtResource("1_rywa7")
+shader_parameter/center = Vector2(0.5, 0.5)
+shader_parameter/radius = 0.5
+shader_parameter/feather = -0.05
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_e7i56"]
+
+[sub_resource type="CanvasItemMaterial" id="CanvasItemMaterial_0mu1h"]
+
+[sub_resource type="CanvasTexture" id="CanvasTexture_883b5"]
+
+[node name="Gauge" type="Node2D"]
+script = ExtResource("1_l2s17")
+
+[node name="Background" type="TextureRect" parent="."]
+material = SubResource("ShaderMaterial_xghqt")
+offset_right = 150.0
+offset_bottom = 150.0
+texture = SubResource("CanvasTexture_e7i56")
+
+[node name="Arrow" type="TextureRect" parent="."]
+modulate = Color(0, 0, 0, 1)
+self_modulate = Color(0, 0, 0, 1)
+material = SubResource("CanvasItemMaterial_0mu1h")
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = 75.0
+offset_top = 75.0
+offset_right = 123.0
+offset_bottom = 78.0
+grow_vertical = 2
+texture = SubResource("CanvasTexture_883b5")
+
+[node name="Label" type="Label" parent="."]
+offset_left = 8.0
+offset_top = 155.0
+offset_right = 144.0
+offset_bottom = 178.0
+horizontal_alignment = 1

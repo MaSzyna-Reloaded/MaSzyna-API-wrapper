@@ -1,15 +1,14 @@
 #include "register_types.h"
-
 #include <gdextension_interface.h>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
 #include "brakes/TrainBrake.hpp"
 #include "core/TrainController.hpp"
-
 #include "core/GenericTrainPart.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSwitch.hpp"
+#include "doors/TrainDoor.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
@@ -26,6 +25,7 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
     GDREGISTER_ABSTRACT_CLASS(TrainPart);
     GDREGISTER_CLASS(GenericTrainPart);
     GDREGISTER_CLASS(TrainBrake);
+    GDREGISTER_ABSTRACT_CLASS(TrainDoor);
     GDREGISTER_ABSTRACT_CLASS(TrainEngine);
     GDREGISTER_CLASS(TrainDieselEngine);
     GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);

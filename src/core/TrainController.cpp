@@ -12,6 +12,9 @@
 namespace godot {
 
     void TrainController::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("set_state"), &TrainController::set_state);
+        ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
+        ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "state"), "set_state", "get_state");
         ClassDB::bind_method(D_METHOD("get_brake"), &TrainController::get_brake);
         ClassDB::bind_method(D_METHOD("get_engine"), &TrainController::get_engine);
         ClassDB::bind_method(D_METHOD("get_security_system"), &TrainController::get_security_system);
@@ -254,25 +257,39 @@ namespace godot {
     }
 
     void TrainController::_process_mover(const double delta) {
-        TrainPart *p;
+        TrainPart *brake;
+        TrainPart *security;
+        TrainPart *engine;
 
-        p = (TrainPart *)get_brake();
-        if (p != nullptr) {
-            p->_process_mover(this, delta);
+        brake = (TrainPart *)get_brake();
+        if (brake != nullptr) {
+            brake->_process_mover(this, delta);
         }
 
-        p = (TrainPart *)get_security_system();
-        if (p != nullptr) {
-            p->_process_mover(this, delta);
+        security = (TrainPart *)get_security_system();
+        if (security != nullptr) {
+            security->_process_mover(this, delta);
         }
 
-        p = (TrainPart *)get_engine();
-        if (p != nullptr) {
-            p->_process_mover(this, delta);
+        engine = (TrainPart *)get_engine();
+        if (engine != nullptr) {
+            engine->_process_mover(this, delta);
         }
 
         mover->ComputeTotalForce(delta);
         mover->compute_movement_(delta);
+
+        state.merge(internal_state, true);
+
+        if (brake != nullptr) {
+            state.merge(brake->get_mover_state(this), true);
+        }
+        if (engine != nullptr) {
+            state.merge(engine->get_mover_state(this), true);
+        }
+        if (security != nullptr) {
+            state.merge(security->get_mover_state(this), true);
+        }
     }
 
     void TrainController::_process(const double delta) {
@@ -425,37 +442,44 @@ namespace godot {
     // ReSharper disable once CppMemberFunctionMayBeStatic
     void TrainController::_do_fetch_state_from_mover(
             TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
-        state["mass_total"] = mover->TotalMass;
-        state["velocity"] = mover->V;
-        state["speed"] = mover->Vel;
-        state["total_distance"] = mover->DistCounter;
-        state["direction"] = mover->DirActive;
-        state["cabin"] = mover->CabActive;
-        state["cabin_controleable"] = mover->IsCabMaster();
-        state["cabin_occupied"] = mover->CabOccupied;
+        internal_state["mass_total"] = mover->TotalMass;
+        internal_state["velocity"] = mover->V;
+        internal_state["speed"] = mover->Vel;
+        internal_state["total_distance"] = mover->DistCounter;
+        internal_state["direction"] = mover->DirActive;
+        internal_state["cabin"] = mover->CabActive;
+        internal_state["cabin_controleable"] = mover->IsCabMaster();
+        internal_state["cabin_occupied"] = mover->CabOccupied;
 
         /* FIXME: should be just a config property IMO; better to fix AxleArangement */
-        state["axles_powered_count"] = mover->NPoweredAxles;
-        state["axles_count"] = mover->NAxles;
+        internal_state["axles_powered_count"] = mover->NPoweredAxles;
+        internal_state["axles_count"] = mover->NAxles;
 
 
         /* FIXME: move to TrainPower section? */
-        state["battery_voltage"] = mover->BatteryVoltage;
+        internal_state["battery_voltage"] = mover->BatteryVoltage;
 
         /* FIXME: move to TrainPower section */
-        state["power24_voltage"] = mover->Power24vVoltage;
-        state["power24_available"] = mover->Power24vIsAvailable;
-        state["power110_available"] = mover->Power110vIsAvailable;
-        state["current0"] = mover->ShowCurrent(0);
-        state["current1"] = mover->ShowCurrent(1);
-        state["current2"] = mover->ShowCurrent(2);
-        state["relay_novolt"] = mover->NoVoltRelay;
-        state["relay_overvoltage"] = mover->OvervoltageRelay;
-        state["relay_ground"] = mover->GroundRelay;
-        state["train_damage"] = mover->DamageFlag;
-        state["controller_second_position"] = mover->ScndCtrlPos;
-        state["controller_main_position"] = mover->MainCtrlPos;
+        internal_state["power24_voltage"] = mover->Power24vVoltage;
+        internal_state["power24_available"] = mover->Power24vIsAvailable;
+        internal_state["power110_available"] = mover->Power110vIsAvailable;
+        internal_state["current0"] = mover->ShowCurrent(0);
+        internal_state["current1"] = mover->ShowCurrent(1);
+        internal_state["current2"] = mover->ShowCurrent(2);
+        internal_state["relay_novolt"] = mover->NoVoltRelay;
+        internal_state["relay_overvoltage"] = mover->OvervoltageRelay;
+        internal_state["relay_ground"] = mover->GroundRelay;
+        internal_state["train_damage"] = mover->DamageFlag;
+        internal_state["controller_second_position"] = mover->ScndCtrlPos;
+        internal_state["controller_main_position"] = mover->MainCtrlPos;
     }
 
+    void TrainController::set_state(const Dictionary p_state) {
+        state = p_state;
+    }
+
+    Dictionary TrainController::get_state() {
+        return state;
+    }
 
 } // namespace godot

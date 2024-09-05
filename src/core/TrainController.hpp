@@ -12,7 +12,7 @@ namespace godot {
 
     class TrainController final : public Node {
             GDCLASS(TrainController, Node)
-        public:
+        private:
             TMoverParameters *mover;
             double initial_velocity = 0.0;
             int cabin_number = 0;
@@ -21,6 +21,7 @@ namespace godot {
             bool _dirty = false;      // Refreshes all elements
             bool _dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
+            Dictionary internal_state;
 
             bool sw_battery_enabled = false;
 
@@ -33,7 +34,6 @@ namespace godot {
             void _collect_train_switches(const Node *node, Vector<TrainSwitch *> &train_switches);
             void _connect_signals_to_train_part(TrainPart *part);
 
-        private:
             void _update_mover_config_if_dirty();
 
         protected:
@@ -88,6 +88,9 @@ namespace godot {
             double get_max_velocity() const;
             void set_axle_arrangement(String p_value);
             String get_axle_arrangement() const;
+
+            void set_state(Dictionary p_state);
+            Dictionary get_state();
 
             void main_controller_increase();
             void main_controller_decrease();

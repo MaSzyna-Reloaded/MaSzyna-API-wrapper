@@ -4,12 +4,12 @@ class_name DebugPanel
 
 var _dirty = false
 
-@export var text: String:
+@export var text:String:
     set(x):
         _dirty = true
         text = x
 
-@export var title: String:
+@export var title:String:
     set(x):
         _dirty = true
         title = x

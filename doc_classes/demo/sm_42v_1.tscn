@@ -31,20 +31,6 @@ oil_pump/pressure_minimum = 0.15
 [node name="TestowySilnikElektryczny" type="TrainElectricSeriesEngine" parent="."]
 nominal_voltage = 11000.0
 winding_resistance = 200.0
-power/source = 5
-power/current_collector/number_of_collectors = 2
-power/current_collector/max_voltage = 3000.0
-power/current_collector/max_current = 2600.0
-power/current_collector/max_collector_lifting = 12.0
-power/current_collector/min_collector_lifting = 12.0
-power/current_collector/csw = 23.0
-power/current_collector/min_main_switch_voltage = 43.0
-power/current_collector/min_pantograph_tank_pressure = 43.0
-power/current_collector/max_pantograph_tank_pressure = 54.0
-power/current_collector/required_main_switch_voltage = 300.0
-power/transducer/input_voltage = 76.0
-power/accumulator/recharge_source = 4
-power/power_cable/source = 4
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
 aware_system/active = true

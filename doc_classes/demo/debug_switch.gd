@@ -4,30 +4,30 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _node: Node
+var _node:Node
 
-@export var label: String:
+
+@export var label:String:
     set(x):
         _dirty = true
         label = x
 
 enum SwitchType { MONOSTABLE, BISTABLE }
-@export var type: SwitchType = SwitchType.BISTABLE
 
-@export_node_path var node: NodePath:
+@export var type:SwitchType = SwitchType.BISTABLE
+
+@export_node_path var node:NodePath:
     set(x):
         _dirty = true
         node = x
 
-@export var property: String:
+@export var property:String:
     set(x):
         _dirty = true
         property = x
 
-
 func _ready():
     _dirty = true
-
 
 func _process(delta):
     if _dirty:
@@ -49,7 +49,6 @@ func _process(delta):
                 $Switch.disabled = true
         else:
             $Switch.disabled = true
-
 
 func _on_switch_toggled(toggled_on):
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _node and property:

@@ -12,19 +12,13 @@ var _t:float = 0.0
 func _ready() -> void:
     $%TrainName.text = "%s (type: %s)" % [train.name, train.type_name]
 
+
 func draw_dictionary(dict: Dictionary, target: DebugPanel):
     var lines = []
     for k in dict.keys():
         lines.append("%s=%s" % [k, dict[k]])
     target.text = "\n".join(lines)
 
-
-func get_state_by_path(path):
-    var _p = train.get_node(path) as TrainPart
-    if _p:
-        return _p.get_mover_state()
-    else:
-        return {}
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:

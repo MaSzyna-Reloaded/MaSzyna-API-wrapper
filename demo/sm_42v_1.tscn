@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=3 format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" path="res://custom_train_part.gd" id="1_2wure"]
+[ext_resource type="Script" path="res://sm_42v_1.gd" id="1_vib8j"]
 
 [node name="SM42v1" type="TrainController"]
 type_name = "6d"
@@ -9,6 +10,7 @@ power = 590.0
 max_velocity = 90.0
 axle_arrangement = "Bo'Bo'"
 nominal_battery_voltage = 110.0
+script = ExtResource("1_vib8j")
 
 [node name="Brake" type="TrainBrake" parent="."]
 valve/type = 20
@@ -37,19 +39,19 @@ oil_pump/pressure_minimum = 0.15
 Ftmax = 228000.0
 wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0], [496.0, 50.0, 156.0, 846.0]])
 motor_param_table = Array[Dictionary]([{
+"fi": 1500.0,
 "idown": 0.0,
 "isat": 15.0,
 "iup": 0.0,
-"fi": 1500.0,
 "mfi": 17.567,
 "misat": 64.0
 }, {
-"idown": 0.0,
-"iup": 0.0,
 "fi": 2000.0,
+"idown": 0.0,
 "isat": 49.0,
-"misat": 183.3,
-"mfi": 15.0
+"iup": 0.0,
+"mfi": 15.0,
+"misat": 183.3
 }])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]

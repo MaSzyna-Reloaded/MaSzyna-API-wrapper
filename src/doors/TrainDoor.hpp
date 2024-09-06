@@ -99,10 +99,10 @@ namespace godot {
             int door_permit_list = door_permit_list_default;
 
             /**
-             * The default knob position is from the set defined by the door_permit_list entry, positions are numbered
+             * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
              * from 1
              */
-            int door_permit_list_default = 0;
+            int door_permit_list_default = 1;
 
             /**
              * Automatic closing of centrally opened doors after time has elapsed
@@ -180,7 +180,7 @@ namespace godot {
             double get_door_voltage() const;
             void set_door_closure_warning(bool p_closure_warning);
             bool get_door_closure_warning() const;
-            void set_door_auto_closure_warning(bool p_auto_closure_warning);
+            void set_auto_door_closure_warning(bool p_auto_closure_warning);
             bool get_auto_door_closure_warning() const;
             void set_door_open_delay(double p_open_delay);
             double get_door_open_delay() const;
@@ -190,7 +190,31 @@ namespace godot {
             double get_door_open_with_permit() const;
             void set_door_blocked(bool p_blocked);
             bool get_door_blocked() const;
-            void set_door_max_shift_plug(double p_max_shift);
+            void set_door_max_shift_plug(double p_max_shift_plug);
             double get_door_max_shift_plug() const;
+            void set_door_permit_list(int p_permit_list);
+            int get_door_permit_list() const;
+            void set_door_permit_list_default(int p_permit_list_default);
+            int get_door_permit_list_default() const;
+            void set_door_auto_close_remote(bool p_auto_close);
+            bool get_door_auto_close_remote() const;
+            void set_door_auto_close_vel(double p_vel);
+            double get_door_auto_close_vel() const;
+            void set_door_platform_max_speed(double p_max_speed);
+            double get_door_platform_max_speed() const;
+            void set_door_platform_max_shift(double p_max_shift);
+            double get_door_platform_max_shift() const;
+            void set_door_platform_speed(double p_speed);
+            double get_door_platform_speed() const;
+            void set_platform_shift_method(int p_shift_method);
+            int get_platform_shift_method() const;
+            void set_mirror_max_shift(double p_max_shift);
+            double get_mirror_max_shift() const;
+            void set_mirror_vel_close(double p_vel_close);
+            double get_mirror_vel_close() const;
+            void set_door_needs_permit(bool p_needs_permit);
+            bool get_door_needs_permit() const;
+            void set_door_permit_light_blinking(int p_blinking_mode);
+            int get_door_permit_light_blinking() const;
     };
 } // namespace godot

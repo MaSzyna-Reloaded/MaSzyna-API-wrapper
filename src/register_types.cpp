@@ -6,13 +6,13 @@
 #include "brakes/TrainBrake.hpp"
 #include "core/TrainController.hpp"
 #include "core/GenericTrainPart.hpp"
-#include "core/TrainPart.hpp"
-#include "core/TrainSwitch.hpp"
 #include "doors/TrainDoor.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
+#include "core/TrainPart.hpp"
+#include "core/TrainSwitch.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 
 using namespace godot;

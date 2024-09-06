@@ -3,11 +3,9 @@
 
 namespace godot {
     class TrainController;
-    class TrainDoor : public TrainPart {
+    class TrainDoor final : public TrainPart {
             GDCLASS(TrainDoor, TrainPart)
         protected:
-            static void _bind_methods();
-
             /**
              * Door opening control methods:
              * Passenger - default type if not defined; doors are closed manually, ignoring any remote commands
@@ -160,8 +158,12 @@ namespace godot {
              * status is irrelevant 3 - flashing regardless of the door open status and step extension status
              */
             int door_permit_light_blinking = 0;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
+            static void _bind_methods();
             void set_close_control(int p_value);
             int get_close_control() const;
             void set_open_control(int p_value);
@@ -216,5 +218,7 @@ namespace godot {
             bool get_door_needs_permit() const;
             void set_door_permit_light_blinking(int p_blinking_mode);
             int get_door_permit_light_blinking() const;
+            TrainDoor();
+            ~TrainDoor() override = default;
     };
 } // namespace godot

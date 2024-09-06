@@ -85,10 +85,19 @@ namespace godot {
         const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
         mover->MainCtrlPosNo = wwlist.size() - 1;
         for (int i = 0; i < std::min(_max, (int)wwlist.size()); i++) {
-            mover->DElist[i].RPM = wwlist[i].get(0);
-            mover->DElist[i].GenPower = wwlist[i].get(1);
-            mover->DElist[i].Umax = wwlist[i].get(2);
-            mover->DElist[i].Imax = wwlist[i].get(3);
+            Array row = wwlist[i];
+            mover->DElist[i].RPM = row[0];
+            mover->DElist[i].GenPower = row[1];
+            mover->DElist[i].Umax = row[2];
+            mover->DElist[i].Imax = row[3];
+            if (row.size() == 7) {
+                mover->SST[i].Umin = row[4];
+                mover->SST[i].Umax = row[5];
+                mover->SST[i].Pmax = row[6];
+
+                mover->SST[i].Pmin = std::sqrt(std::pow(mover->SST[i].Umin, 2) / 47.6);
+                mover->SST[i].Pmax = std::min(mover->SST[i].Pmax, std::pow(mover->SST[i].Umax, 2) / 47.6);
+            }
         }
     }
 

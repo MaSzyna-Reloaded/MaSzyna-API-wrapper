@@ -4,7 +4,7 @@ extends Node2D
 @export var value = 0.0:
     set(x):
         value = x
-        _target = x * max_angle
+        _target = clampf(x * max_angle, 0.0, max_angle)
 @export var max_angle = 270.0;
 @export var start_angle = 270.0;
 @export var label = "":

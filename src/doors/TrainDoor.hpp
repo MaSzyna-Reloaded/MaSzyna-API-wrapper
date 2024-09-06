@@ -172,5 +172,25 @@ namespace godot {
             double get_open_speed() const;
             void set_close_speed(double p_value);
             double get_close_speed() const;
+            void set_door_max_shift(double p_max_shift);
+            double get_door_max_shift() const;
+            void set_door_open_method(int p_open_method);
+            int get_door_open_method() const;
+            void set_door_voltage(double p_voltage);
+            double get_door_voltage() const;
+            void set_door_closure_warning(bool p_closure_warning);
+            bool get_door_closure_warning() const;
+            void set_door_auto_closure_warning(bool p_auto_closure_warning);
+            bool get_auto_door_closure_warning() const;
+            void set_door_open_delay(double p_open_delay);
+            double get_door_open_delay() const;
+            void set_door_close_delay(double p_close_delay);
+            double get_door_close_delay() const;
+            void set_door_open_with_permit(double p_holding_time);
+            double get_door_open_with_permit() const;
+            void set_door_blocked(bool p_blocked);
+            bool get_door_blocked() const;
+            void set_door_max_shift_plug(double p_max_shift);
+            double get_door_max_shift_plug() const;
     };
 } // namespace godot

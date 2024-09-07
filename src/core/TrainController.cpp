@@ -150,8 +150,13 @@ namespace godot {
     }
 
     void TrainController::_process_mover(const double delta) {
+        TLocation mock_location;
+        TRotation mock_rotation;
         mover->ComputeTotalForce(delta);
-        mover->compute_movement_(delta);
+        // mover->compute_movement_(delta);
+        mover->ComputeMovement(
+                delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mock_location,
+                mock_rotation);
 
         state.merge(get_mover_state(), true);
 

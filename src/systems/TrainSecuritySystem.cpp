@@ -80,6 +80,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_reset_pushed"), &TrainSecuritySystem::set_reset_pushed);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "switches/reset"), "set_reset_pushed", "get_reset_pushed");
 
+        ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
+        ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
+
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_LOWTONE);
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_WHISTLE);
@@ -173,6 +176,8 @@ namespace godot {
     }
 
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        const bool prev_beeping = state["beeping"];
+        const bool prev_blinking = state["blinking"];
         state["beeping"] = mover->SecuritySystem.is_beeping();
         state["blinking"] = mover->SecuritySystem.is_blinking();
         state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
@@ -182,6 +187,13 @@ namespace godot {
         state["braking"] = mover->SecuritySystem.is_braking();
         state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
         state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
+
+        if (prev_blinking != (bool)state["blinking"]) {
+            emit_signal("blinking_changed", state["blinking"]);
+        }
+        if (prev_beeping != (bool)state["beeping"]) {
+            emit_signal("beeping_changed", state["beeping"]);
+        }
     }
 
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {

@@ -8,7 +8,6 @@
 #include "core/GenericTrainPart.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
-#include "core/TrainSwitch.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"
@@ -35,7 +34,6 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
         GDREGISTER_CLASS(TrainController);
-        GDREGISTER_ABSTRACT_CLASS(TrainSwitch);
         GDREGISTER_CLASS(TrainSecuritySystem);
     }
 }

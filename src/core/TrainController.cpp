@@ -148,7 +148,7 @@ namespace godot {
 
         state.merge(get_mover_state(), true);
 
-        bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
+        const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
         if (is_powered != new_is_powered) {
             is_powered = new_is_powered;
             emit_signal(POWER_CHANGED_SIGNAL, is_powered);

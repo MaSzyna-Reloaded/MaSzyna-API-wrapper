@@ -33,6 +33,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_door_open_method", "door_open_method"), &TrainDoor::set_door_open_method);
         ClassDB::bind_method(D_METHOD("get_door_open_method"), &TrainDoor::get_door_open_method);
         ADD_PROPERTY(PropertyInfo(Variant::INT, "open/method"), "set_door_open_method", "get_door_open_method");
+        ClassDB::bind_method(D_METHOD("set_door_close_method", "door_close_method"), &TrainDoor::set_door_close_method);
+        ClassDB::bind_method(D_METHOD("get_door_close_method"), &TrainDoor::get_door_close_method);
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "close/method"), "set_door_close_method", "get_door_close_method");
         ClassDB::bind_method(D_METHOD("set_door_voltage", "door_voltage"), &TrainDoor::set_door_voltage);
         ClassDB::bind_method(D_METHOD("get_door_voltage"), &TrainDoor::get_door_voltage);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "voltage"), "set_door_voltage", "get_door_voltage");
@@ -70,7 +73,7 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "max_shift_plug"), "set_door_max_shift_plug", "get_door_max_shift_plug");
         ClassDB::bind_method(D_METHOD("set_door_permit_list", "door_permit_list"), &TrainDoor::set_door_permit_list);
         ClassDB::bind_method(D_METHOD("get_door_permit_list"), &TrainDoor::get_door_permit_list);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "permit/list"), "set_door_permit_list", "get_door_permit_list");
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "permit/list"), "set_door_permit_list", "get_door_permit_list");
         ClassDB::bind_method(
                 D_METHOD("set_door_permit_list_default", "door_permit_list_default"),
                 &TrainDoor::set_door_permit_list_default);
@@ -95,6 +98,9 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "platform/max_speed"), "set_door_platform_max_speed",
                 "get_door_platform_max_speed");
+        ClassDB::bind_method(D_METHOD("set_platform_open_method", "platform_open_method"), &TrainDoor::set_platform_open_method);
+        ClassDB::bind_method(D_METHOD("get_platform_open_method"), &TrainDoor::get_platform_open_method);
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "platform/open_method", PROPERTY_HINT_ENUM, "Shift,Rot"), "set_platform_open_method", "get_platform_open_method");
         ClassDB::bind_method(
                 D_METHOD("set_door_platform_max_shift", "platform_max_shift"), &TrainDoor::set_door_platform_max_shift);
         ClassDB::bind_method(D_METHOD("get_door_platform_max_shift"), &TrainDoor::get_door_platform_max_shift);
@@ -127,7 +133,62 @@ namespace godot {
 
     void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {}
 
-    void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {}
+    void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {
+        const std::map<std::string, control_t>::iterator open_method_lookup =
+                DoorControls.find(IntToDoorControls[door_open_method]);
+        mover->Doors.open_control =
+                open_method_lookup != DoorControls.end() ? open_method_lookup->second : control_t::passenger;
+        const std::map<std::string, control_t>::iterator close_method_lookup =
+                DoorControls.find(IntToDoorControls[door_close_method]);
+        mover->Doors.close_control =
+                close_method_lookup != DoorControls.end() ? close_method_lookup->second : control_t::passenger;
+        mover->Doors.auto_duration = door_stay_open;
+        mover->Doors.auto_velocity = door_auto_close_vel;
+        mover->Doors.auto_include_remote = door_auto_close_remote;
+        mover->Doors.permit_needed = door_needs_permit;
+        const auto permit_presets = libmaszyna::Utils::split(door_permit_list, "|");
+        for (std::string const &permit_preset: permit_presets) {
+            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset));;
+        }
+
+        if (!mover->Doors.permit_presets.empty()) {
+            mover->Doors.permit_preset = door_permit_list_default;
+            mover->Doors.permit_preset =
+                    std::min<int>(mover->Doors.permit_presets.size(), mover->Doors.permit_preset) - 1;
+        }
+        mover->Doors.open_rate = open_speed;
+        mover->Doors.open_delay = door_open_delay;
+        mover->Doors.close_rate = close_speed;
+        mover->Doors.close_delay = door_close_delay;
+        mover->Doors.range = door_max_shift;
+        mover->Doors.range_out = door_max_shift_plug;
+        const std::map<std::string, int>::iterator lookup = DoorTypes.find(IntToDoorTypes[door_open_method]);
+        mover->Doors.type =
+            lookup != DoorTypes.end() ?
+                lookup->second :
+                2;
+        mover->Doors.has_warning = door_closure_warning;
+        mover->Doors.has_autowarning = auto_door_closure_warning;
+        mover->Doors.has_lock = door_blocked;
+
+        bool const remote_door_control {
+                (mover->Doors.open_control == control_t::driver) ||
+                (mover->Doors.open_control == control_t::conductor) || (mover->Doors.open_control == control_t::mixed) };
+        if (door_voltage == -1.0) {
+            door_voltage = remote_door_control ? 24.0 : 0.0;
+        }
+        mover->Doors.voltage = door_voltage;
+        mover->Doors.step_rate = platform_speed;
+        mover->Doors.step_range = platform_max_shift;
+        if (platform_open_method == 0) {//Equals to Shift
+            mover->Doors.step_type = 1;
+        }
+
+        mover->MirrorMaxShift = mirror_max_shift;
+        mover->MirrorVelClose = mirror_vel_close;
+        mover->DoorsOpenWithPermitAfter = door_open_with_permit;
+        mover->DoorsPermitLightBlinking = door_permit_light_blinking;
+    }
 
 
     void TrainDoor::set_close_control(const int p_value) {
@@ -148,39 +209,39 @@ namespace godot {
         return open_control;
     }
 
-    void TrainDoor::set_door_stay_open(const double p_value) {
+    void TrainDoor::set_door_stay_open(const float p_value) {
         door_stay_open = p_value;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_stay_open() const {
+    float TrainDoor::get_door_stay_open() const {
         return door_stay_open;
     }
 
-    void TrainDoor::set_open_speed(const double p_value) {
+    void TrainDoor::set_open_speed(const float p_value) {
         open_speed = p_value;
         _dirty = true;
     }
 
-    double TrainDoor::get_open_speed() const {
+    float TrainDoor::get_open_speed() const {
         return open_speed;
     }
 
-    void TrainDoor::set_close_speed(const double p_value) {
+    void TrainDoor::set_close_speed(const float p_value) {
         close_speed = p_value;
         _dirty = true;
     }
 
-    double TrainDoor::get_close_speed() const {
+    float TrainDoor::get_close_speed() const {
         return close_speed;
     }
 
-    void TrainDoor::set_door_max_shift(const double p_max_shift) {
+    void TrainDoor::set_door_max_shift(const float p_max_shift) {
         door_max_shift = p_max_shift;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_max_shift() const {
+    float TrainDoor::get_door_max_shift() const {
         return door_max_shift;
     }
 
@@ -193,12 +254,21 @@ namespace godot {
         return door_open_method;
     }
 
-    void TrainDoor::set_door_voltage(const double p_voltage) {
+    void TrainDoor::set_door_close_method(const int p_close_method) {
+        door_close_method = p_close_method;
+        _dirty = true;
+    }
+
+    int TrainDoor::get_door_close_method() const {
+        return door_close_method;
+    }
+
+    void TrainDoor::set_door_voltage(const float p_voltage) {
         door_voltage = p_voltage;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_voltage() const {
+    float TrainDoor::get_door_voltage() const {
         return door_voltage;
     }
 
@@ -220,30 +290,30 @@ namespace godot {
         return auto_door_closure_warning;
     }
 
-    void TrainDoor::set_door_open_delay(const double p_open_delay) {
+    void TrainDoor::set_door_open_delay(const float p_open_delay) {
         door_open_delay = p_open_delay;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_open_delay() const {
+    float TrainDoor::get_door_open_delay() const {
         return door_open_delay;
     }
 
-    void TrainDoor::set_door_close_delay(const double p_close_delay) {
+    void TrainDoor::set_door_close_delay(const float p_close_delay) {
         door_close_delay = p_close_delay;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_close_delay() const {
+    float TrainDoor::get_door_close_delay() const {
         return door_close_delay;
     }
 
-    void TrainDoor::set_door_open_with_permit(const double p_holding_time) {
+    void TrainDoor::set_door_open_with_permit(const float p_holding_time) {
         door_open_with_permit = p_holding_time;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_open_with_permit() const {
+    float TrainDoor::get_door_open_with_permit() const {
         return door_open_with_permit;
     }
 
@@ -256,21 +326,21 @@ namespace godot {
         return door_blocked;
     }
 
-    void TrainDoor::set_door_max_shift_plug(const double p_max_shift_plug) {
+    void TrainDoor::set_door_max_shift_plug(const float p_max_shift_plug) {
         door_max_shift = p_max_shift_plug;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_max_shift_plug() const {
+    float TrainDoor::get_door_max_shift_plug() const {
         return door_max_shift;
     }
 
-    void TrainDoor::set_door_permit_list(const int p_permit_list) {
+    void TrainDoor::set_door_permit_list(const std::string& p_permit_list) {
         door_permit_list = p_permit_list;
         _dirty = true;
     }
 
-    int TrainDoor::get_door_permit_list() const {
+    std::string TrainDoor::get_door_permit_list() const {
         return door_permit_list;
     }
 
@@ -292,12 +362,12 @@ namespace godot {
         return door_auto_close_remote;
     }
 
-    void TrainDoor::set_door_auto_close_vel(const double p_vel) {
+    void TrainDoor::set_door_auto_close_vel(const float p_vel) {
         door_auto_close_vel = p_vel;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_auto_close_vel() const {
+    float TrainDoor::get_door_auto_close_vel() const {
         return door_auto_close_vel;
     }
 
@@ -310,31 +380,31 @@ namespace godot {
         return platform_max_speed;
     }
 
-    void TrainDoor::set_door_platform_max_shift(const double p_max_shift) {
+    void TrainDoor::set_door_platform_max_shift(const float p_max_shift) {
         platform_max_shift = p_max_shift;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_platform_max_shift() const {
+    float TrainDoor::get_door_platform_max_shift() const {
         return platform_max_shift;
     }
 
-    void TrainDoor::set_door_platform_speed(const double p_speed) {
+    void TrainDoor::set_door_platform_speed(const float p_speed) {
         platform_speed = p_speed;
         _dirty = true;
     }
 
-    double TrainDoor::get_door_platform_speed() const {
+    float TrainDoor::get_door_platform_speed() const {
         return platform_speed;
     }
 
-    void TrainDoor::set_platform_shift_method(const int p_shift_method) {
-        platform_shift_method = p_shift_method;
+    void TrainDoor::set_platform_open_method(const int p_shift_method) {
+        platform_open_method = p_shift_method;
         _dirty = true;
     }
 
-    int TrainDoor::get_platform_shift_method() const {
-        return platform_shift_method;
+    int TrainDoor::get_platform_open_method() const {
+        return platform_open_method;
     }
 
     void TrainDoor::set_mirror_max_shift(const double p_max_shift) {

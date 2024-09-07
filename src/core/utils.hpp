@@ -1,5 +1,7 @@
 #pragma once
+#include <sstream>
 #include <string>
+#include <vector>
 
 #define ENUM_WITH_COUNT(name, ...) enum class name { __VA_ARGS__, COUNT };
 
@@ -24,4 +26,8 @@ namespace libmaszyna {
         template<typename EnumType>
         std::string enum_to_string();
     }
+    class Utils {
+        public:
+            static std::vector<std::string> split(const std::string &s, const std::string &delimiter);
+    };
 } // namespace libmaszyna

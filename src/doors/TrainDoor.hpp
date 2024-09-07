@@ -5,6 +5,28 @@ namespace godot {
     class TrainController;
     class TrainDoor final : public TrainPart {
             GDCLASS(TrainDoor, TrainPart)
+        private:
+            std::map<std::string, control_t> DoorControls {
+                    {"Passenger", control_t::passenger},
+                    {"AutomaticCtrl", control_t::autonomous},
+                    {"DriverCtrl", control_t::driver},
+                    {"Conductor", control_t::conductor},
+                    {"Mixed", control_t::mixed}};
+            std::map<int, std::string> IntToDoorControls {
+                    {0, "Passenger"}, {1, "AutomaticCtrl"}, {2, "DriverCtrl"}, {3, "Conductor"}, {4, "Mixed"}};
+            std::map<std::string, int> DoorTypes {
+                    {"Shift", 1},
+                    {"Rotate", 2},
+                    {"Fold", 3},
+                    {"Plug", 4},
+            };
+            std::map<int, std::string> IntToDoorTypes {
+                    {1, "Shift"},
+                    {2, "Rotate"},
+                    {3, "Fold"},
+                    {4, "Plug"},
+            };
+
         protected:
             /**
              * Door opening control methods:
@@ -28,22 +50,22 @@ namespace godot {
             /**
              * Time period for which door would stay opened
              */
-            double door_stay_open = 0.0;
+            float door_stay_open = 0.0;
 
             /**
              * Speed of opening the doors
              */
-            double open_speed = 0.0;
+            float open_speed = 0.0;
 
             /**
              * Speed of closing the door
              */
-            double close_speed = 0.0;
+            float close_speed = 0.0;
 
             /**
              * The width (or angle) of the door fully opening
              */
-            double door_max_shift = 0.0;
+            float door_max_shift = 0.0;
 
             /**
              * The type of door (opening method)
@@ -51,9 +73,15 @@ namespace godot {
             int door_open_method = 0.0;
 
             /**
-             * Low voltage circuit voltage required for door control
+             * The type of door (closing method)
              */
-            double door_voltage = 0.0;
+            int door_close_method = 0.0;
+
+            /**
+             * Low voltage circuit voltage required for door control.
+             * -1.0 means that this variable has not been initialized yet
+             */
+            float door_voltage = -1.0;
 
             /**
              * Buzzer before closing the door
@@ -68,17 +96,17 @@ namespace godot {
             /**
              * Door closing delay, in seconds
              */
-            double door_close_delay = 0.0;
+            float door_close_delay = 0.0;
 
             /**
              * Door opening delay, in seconds
              */
-            double door_open_delay = 0.0;
+            float door_open_delay = 0.0;
 
             /**
              * Opening a train door by holding the impulse opening permission button, in seconds of holding the button
              */
-            double door_open_with_permit = 0.0;
+            float door_open_with_permit = 0.0;
 
             /**
              * Is the door blocked
@@ -88,13 +116,13 @@ namespace godot {
             /**
              * The amount of rebound for Plug type doors (rebound-sliding), in meters
              */
-            double door_max_shift_plug = 0.0;
+            float door_max_shift_plug = 0.0;
 
             /**
              * Door programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
              * door operation, 2=right door, 3=all
              */
-            int door_permit_list = door_permit_list_default;
+            std::string door_permit_list = "0|0|0";
 
             /**
              * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
@@ -110,7 +138,7 @@ namespace godot {
             /**
              * The speed at which the door automatically closes, set by default to -1, i.e. no automatic closing.
              */
-            double door_auto_close_vel = -1;
+            float door_auto_close_vel = -1;
 
             /**
              * Docs do not describe this properly. Need to figure this out
@@ -120,20 +148,20 @@ namespace godot {
             /**
              * Offset value in meters or rotation angle for a fully extended step
              */
-            double platform_max_shift = 0.0;
+            float platform_max_shift = 0.0;
 
             /**
              * The speed of the animation step, where 1.0 corresponds to an animation lasting one second, a value of 0.5
              * to two seconds, etc.
              */
-            double platform_speed = 0.0;
+            float platform_speed = 0.0;
 
             /**
              * Platform animation type
              * 0 - Shift
              * 1 - Rot
              */
-            int platform_shift_method = 0;
+            int platform_open_method = 0;
 
             /**
              * Rotation angle for fully extended mirror
@@ -168,48 +196,50 @@ namespace godot {
             int get_close_control() const;
             void set_open_control(int p_value);
             int get_open_control() const;
-            void set_door_stay_open(double p_value);
-            double get_door_stay_open() const;
-            void set_open_speed(double p_value);
-            double get_open_speed() const;
-            void set_close_speed(double p_value);
-            double get_close_speed() const;
-            void set_door_max_shift(double p_max_shift);
-            double get_door_max_shift() const;
+            void set_door_stay_open(float p_value);
+            float get_door_stay_open() const;
+            void set_open_speed(float p_value);
+            float get_open_speed() const;
+            void set_close_speed(float p_value);
+            float get_close_speed() const;
+            void set_door_max_shift(float p_max_shift);
+            float get_door_max_shift() const;
             void set_door_open_method(int p_open_method);
             int get_door_open_method() const;
-            void set_door_voltage(double p_voltage);
-            double get_door_voltage() const;
+            void set_door_close_method(int p_open_method);
+            int get_door_close_method() const;
+            void set_door_voltage(float p_voltage);
+            float get_door_voltage() const;
             void set_door_closure_warning(bool p_closure_warning);
             bool get_door_closure_warning() const;
             void set_auto_door_closure_warning(bool p_auto_closure_warning);
             bool get_auto_door_closure_warning() const;
-            void set_door_open_delay(double p_open_delay);
-            double get_door_open_delay() const;
-            void set_door_close_delay(double p_close_delay);
-            double get_door_close_delay() const;
-            void set_door_open_with_permit(double p_holding_time);
-            double get_door_open_with_permit() const;
+            void set_door_open_delay(float p_open_delay);
+            float get_door_open_delay() const;
+            void set_door_close_delay(float p_close_delay);
+            float get_door_close_delay() const;
+            void set_door_open_with_permit(float p_holding_time);
+            float get_door_open_with_permit() const;
             void set_door_blocked(bool p_blocked);
             bool get_door_blocked() const;
-            void set_door_max_shift_plug(double p_max_shift_plug);
-            double get_door_max_shift_plug() const;
-            void set_door_permit_list(int p_permit_list);
-            int get_door_permit_list() const;
+            void set_door_max_shift_plug(float p_max_shift_plug);
+            float get_door_max_shift_plug() const;
+            void set_door_permit_list(const std::string &p_permit_list);
+            std::string get_door_permit_list() const;
             void set_door_permit_list_default(int p_permit_list_default);
             int get_door_permit_list_default() const;
             void set_door_auto_close_remote(bool p_auto_close);
             bool get_door_auto_close_remote() const;
-            void set_door_auto_close_vel(double p_vel);
-            double get_door_auto_close_vel() const;
+            void set_door_auto_close_vel(float p_vel);
+            float get_door_auto_close_vel() const;
             void set_door_platform_max_speed(double p_max_speed);
             double get_door_platform_max_speed() const;
-            void set_door_platform_max_shift(double p_max_shift);
-            double get_door_platform_max_shift() const;
-            void set_door_platform_speed(double p_speed);
-            double get_door_platform_speed() const;
-            void set_platform_shift_method(int p_shift_method);
-            int get_platform_shift_method() const;
+            void set_door_platform_max_shift(float p_max_shift);
+            float get_door_platform_max_shift() const;
+            void set_door_platform_speed(float p_speed);
+            float get_door_platform_speed() const;
+            void set_platform_open_method(int p_shift_method);
+            int get_platform_open_method() const;
             void set_mirror_max_shift(double p_max_shift);
             double get_mirror_max_shift() const;
             void set_mirror_vel_close(double p_vel_close);

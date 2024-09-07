@@ -1,71 +1,92 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainController" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
-    <brief_description>
-        Base train controller controlling all train systems
-    </brief_description>
-    <description>
-        Base train controller
-    </description>
-    <tutorials>
-    </tutorials>
-    <methods>
-        <method name="get_brake" qualifiers="const">
-            <return type="TrainBrake"/>
-            <description>
-                Returns TrainBrake class instance
-            </description>
-        </method>
-        <method name="get_engine" qualifiers="const">
-            <return type="TrainEngine"/>
-            <description>
-                Returns instance of active TrainEngine class instance
-            </description>
-        </method>
-        <method name="get_mover_state">
-            <return type="Dictionary"/>
-            <description>
-                Returns dictionary of values from iternal mover
-            </description>
-        </method>
-        <method name="get_security_system" qualifiers="const">
-            <return type="TrainSecuritySystem"/>
-            <description>
-                Returns instance of active TrainSecuritySystem class
-            </description>
-        </method>
-        <method name="update_mover" qualifiers="const">
-            <return type="void"/>
-            <description>
-                Updates iternal mover
-            </description>
-        </method>
-    </methods>
-    <members>
-        <member name="dimensions/mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
-            Mass of the train
-        </member>
-        <member name="nominal_battery_voltage" type="float" setter="set_nominal_battery_voltage"
-                getter="get_nominal_battery_voltage" default="0.0">
-            Nominal voltage of the train's battery
-        </member>
-        <member name="parts/brake" type="NodePath" setter="set_brake_path" getter="get_brake_path"
-                default="NodePath(&quot;&quot;)">
-            Path to the active TrainBrake node
-        </member>
-        <member name="parts/engine" type="NodePath" setter="set_engine_path" getter="get_engine_path"
-                default="NodePath(&quot;&quot;)">
-            Path to the active TrainEngine node
-        </member>
-        <member name="parts/security_system" type="NodePath" setter="set_security_system_path"
-                getter="get_security_system_path" default="NodePath(&quot;&quot;)">
-            Path to the active TrainSecuritySystem node
-        </member>
-        <member name="switches/battery_enabled" type="bool" setter="set_battery_enabled" getter="get_battery_enabled"
-                default="false">
-            Is battery enabled
-        </member>
-        <member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
-        </member>
-    </members>
+<class name="TrainController" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Base train controller controlling all train systems
+	</brief_description>
+	<description>
+		Base train controller
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="forwarder_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="forwarder_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mover_state">
+			<return type="Dictionary" />
+			<description>
+				Returns dictionary of values from iternal mover
+			</description>
+		</method>
+		<method name="main_controller_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="main_controller_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="send_command">
+			<return type="void" />
+			<param index="0" name="_unnamed_arg0" type="StringName" />
+			<param index="1" name="_unnamed_arg1" type="Variant" />
+			<param index="2" name="_unnamed_arg2" type="Variant" />
+			<description>
+			</description>
+		</method>
+		<method name="update_mover" qualifiers="const">
+			<return type="void" />
+			<description>
+				Updates iternal mover
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="&quot;&quot;">
+		</member>
+		<member name="dimensions/mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
+			Mass of the train
+		</member>
+		<member name="max_velocity" type="float" setter="set_max_velocity" getter="get_max_velocity" default="0.0">
+		</member>
+		<member name="nominal_battery_voltage" type="float" setter="set_nominal_battery_voltage" getter="get_nominal_battery_voltage" default="0.0">
+			Nominal voltage of the train's battery
+		</member>
+		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
+		</member>
+		<member name="state" type="Dictionary" setter="set_state" getter="get_state" default="{}">
+		</member>
+		<member name="switches/battery_enabled" type="bool" setter="set_battery_enabled" getter="get_battery_enabled" default="false">
+			Is battery enabled
+		</member>
+		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
+		</member>
+	</members>
+	<signals>
+		<signal name="command_received">
+			<param index="0" name="command" type="String" />
+			<param index="1" name="p1" type="Variant" />
+			<param index="2" name="p2" type="Variant" />
+			<description>
+			</description>
+		</signal>
+		<signal name="mover_config_changed">
+			<description>
+			</description>
+		</signal>
+		<signal name="power_changed">
+			<param index="0" name="is_powered" type="bool" />
+			<description>
+			</description>
+		</signal>
+	</signals>
 </class>

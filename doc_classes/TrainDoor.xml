@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainDoor" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="auto_close/remote" type="bool" setter="set_door_auto_close_remote" getter="get_door_auto_close_remote" default="false">
+		</member>
+		<member name="auto_close/vel" type="float" setter="set_door_auto_close_vel" getter="get_door_auto_close_vel" default="-1.0">
+		</member>
+		<member name="auto_closure/warning" type="bool" setter="set_auto_door_closure_warning" getter="get_auto_door_closure_warning" default="false">
+		</member>
+		<member name="blocked" type="bool" setter="set_door_blocked" getter="get_door_blocked" default="false">
+		</member>
+		<member name="close/control" type="int" setter="set_close_control" getter="get_close_control" default="0">
+		</member>
+		<member name="close/delay" type="float" setter="set_door_close_delay" getter="get_door_close_delay" default="0.0">
+		</member>
+		<member name="close/speed" type="float" setter="set_close_speed" getter="get_close_speed" default="0.0">
+		</member>
+		<member name="closure/warning" type="bool" setter="set_door_closure_warning" getter="get_door_closure_warning" default="false">
+		</member>
+		<member name="max_shift" type="float" setter="set_door_max_shift" getter="get_door_max_shift" default="0.0">
+		</member>
+		<member name="max_shift_plug" type="float" setter="set_door_max_shift_plug" getter="get_door_max_shift_plug" default="0.0">
+		</member>
+		<member name="mirror/max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="0.0">
+		</member>
+		<member name="mirror/vel_close" type="float" setter="set_mirror_vel_close" getter="get_mirror_vel_close" default="0.0">
+		</member>
+		<member name="needs_permit" type="bool" setter="set_door_needs_permit" getter="get_door_needs_permit" default="false">
+		</member>
+		<member name="open/control" type="int" setter="set_open_control" getter="get_open_control" default="0">
+		</member>
+		<member name="open/delay" type="float" setter="set_door_open_delay" getter="get_door_open_delay" default="0.0">
+		</member>
+		<member name="open/method" type="int" setter="set_door_open_method" getter="get_door_open_method" default="0">
+		</member>
+		<member name="open/speed" type="float" setter="set_open_speed" getter="get_open_speed" default="0.0">
+		</member>
+		<member name="open/with_permit" type="float" setter="set_door_open_with_permit" getter="get_door_open_with_permit" default="0.0">
+		</member>
+		<member name="permit/default" type="int" setter="set_door_permit_list_default" getter="get_door_permit_list_default" default="1">
+		</member>
+		<member name="permit/light_blinking" type="int" setter="set_door_permit_light_blinking" getter="get_door_permit_light_blinking" default="0">
+		</member>
+		<member name="permit/list" type="int" setter="set_door_permit_list" getter="get_door_permit_list" default="0">
+		</member>
+		<member name="platform/max_shift" type="float" setter="set_door_platform_max_shift" getter="get_door_platform_max_shift" default="0.0">
+		</member>
+		<member name="platform/max_speed" type="float" setter="set_door_platform_max_speed" getter="get_door_platform_max_speed" default="0.0">
+		</member>
+		<member name="platform/speed" type="float" setter="set_door_platform_speed" getter="get_door_platform_speed" default="0.0">
+		</member>
+		<member name="stay_open" type="float" setter="set_door_stay_open" getter="get_door_stay_open" default="0.0">
+		</member>
+		<member name="voltage" type="float" setter="set_door_voltage" getter="get_door_voltage" default="0.0">
+		</member>
+	</members>
+</class>

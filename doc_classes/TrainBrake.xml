@@ -73,8 +73,8 @@
 		</member>
 		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" default="0">
 			/ W / W_Lu_VI / W_Lu_L / W_Lu_XR / K / Kg / Kp / Kss / Kkg / Kkp / Kks / Hikg1 / Hikss / Hikp1 / KE / SW /
-            EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype
-            of combined brake / type of brake valve
+			            EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype
+			            of combined brake / type of brake valve
 		</member>
 	</members>
 </class>

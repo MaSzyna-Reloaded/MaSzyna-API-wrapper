@@ -1,63 +1,132 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="TrainDoor" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		This class is eligible for managing door behavior as well as their low-circuit voltage, platforms, opening, closing and controlling
 	</brief_description>
 	<description>
+		This class simply coordinates door behavior
 	</description>
 	<tutorials>
 	</tutorials>
 	<members>
 		<member name="auto_close/remote" type="bool" setter="set_door_auto_close_remote" getter="get_door_auto_close_remote" default="false">
+			Automatic closing of centrally open doors after a certain period of time.
 		</member>
 		<member name="auto_close/vel" type="float" setter="set_door_auto_close_vel" getter="get_door_auto_close_vel" default="-1.0">
+			The speed at which the automatic door closing occurs, set by default to -1, which means no automatic closing.
 		</member>
 		<member name="auto_closure/warning" type="bool" setter="set_auto_door_closure_warning" getter="get_auto_door_closure_warning" default="false">
+			When the door closing button is pressed, a buzz sound is activated automatically, and when released, the doors close.
 		</member>
 		<member name="blocked" type="bool" setter="set_door_blocked" getter="get_door_blocked" default="false">
-		</member>
-		<member name="close/control" type="int" setter="set_close_control" getter="get_close_control" default="0">
+			Is there a door lock
 		</member>
 		<member name="close/delay" type="float" setter="set_door_close_delay" getter="get_door_close_delay" default="0.0">
+			Door closing delay, in seconds.
+		</member>
+		<member name="close/method" type="int" setter="set_door_close_method" getter="get_door_close_method" default="0">
+			Determines method of closing doors.
+			The following values are valid:
+
+			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
+
+			AutomaticCtrl - doors operate automatically
+
+			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
+
+			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
+
+			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="close/speed" type="float" setter="set_close_speed" getter="get_close_speed" default="0.0">
+			Animation speed for closing doors
 		</member>
 		<member name="closure/warning" type="bool" setter="set_door_closure_warning" getter="get_door_closure_warning" default="false">
+			Only a buzzer (used before closing the doors, like in EN57 EMUs)
 		</member>
 		<member name="max_shift" type="float" setter="set_door_max_shift" getter="get_door_max_shift" default="0.0">
+			Width (or angle) of full door opening
 		</member>
 		<member name="max_shift_plug" type="float" setter="set_door_max_shift_plug" getter="get_door_max_shift_plug" default="0.0">
+			Bounce distance for Plug-type doors (sliding bounce), in meters.
 		</member>
 		<member name="mirror/max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="0.0">
+			Rotation angle for a fully unfolded mirror
 		</member>
 		<member name="mirror/vel_close" type="float" setter="set_mirror_vel_close" getter="get_mirror_vel_close" default="0.0">
+			Vehicle speed at which automatic closure of exterior mirrors occurs
 		</member>
 		<member name="needs_permit" type="bool" setter="set_door_needs_permit" getter="get_door_needs_permit" default="false">
-		</member>
-		<member name="open/control" type="int" setter="set_open_control" getter="get_open_control" default="0">
+			Opening the doors by passengers requires permission from the train driver.
 		</member>
 		<member name="open/delay" type="float" setter="set_door_open_delay" getter="get_door_open_delay" default="0.0">
+			Door opening delay, in seconds.
 		</member>
 		<member name="open/method" type="int" setter="set_door_open_method" getter="get_door_open_method" default="0">
+			Determines method of opening doors.
+			The following values are valid:
+
+			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
+
+			AutomaticCtrl - doors operate automatically
+
+			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
+
+			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
+
+			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="open/speed" type="float" setter="set_open_speed" getter="get_open_speed" default="0.0">
+			Animation speed for opening doors
 		</member>
 		<member name="open/with_permit" type="float" setter="set_door_open_with_permit" getter="get_door_open_with_permit" default="0.0">
+			Opening the train doors by holding down the momentary open permission button for specified number of seconds.
 		</member>
 		<member name="permit/default" type="int" setter="set_door_permit_list_default" getter="get_door_permit_list_default" default="1">
+			By default,
+			the position of the knob is set from the permit/list entry where the positions are numbered starting from 1.
 		</member>
 		<member name="permit/light_blinking" type="int" setter="set_door_permit_light_blinking" getter="get_door_permit_light_blinking" default="0">
+			Flashing of the permission to open the door indicator:
+
+			0 - continuous light
+
+			1 - continuous light when any door is open or any step is extended; flashing only when permission is granted
+
+			2 - continuous light when any door is open; flashing when permission is granted; the position of the step is irrelevant
+
+			3 - flashing regardless of the state of the doors or the position of the step
 		</member>
-		<member name="permit/list" type="int" setter="set_door_permit_list" getter="get_door_permit_list" default="0">
+		<member name="permit/list" type="String" setter="set_door_permit_list" getter="get_door_permit_list" default="&quot;0|0|0&quot;">
+			Door programmer configuration. Number in the range 0-3 where 0=no permissions, 1=permission for left doors,
+			2=permission for right doors, 3=permission for all doors.
+
+			e.g. 1|0|3
 		</member>
 		<member name="platform/max_shift" type="float" setter="set_door_platform_max_shift" getter="get_door_platform_max_shift" default="0.0">
+			Shift value in meters or rotation angle for a fully deployed platform
 		</member>
 		<member name="platform/max_speed" type="float" setter="set_door_platform_max_speed" getter="get_door_platform_max_speed" default="0.0">
+			Maximum speed of opening the platform
+		</member>
+		<member name="platform/open_method" type="int" setter="set_platform_open_method" getter="get_platform_open_method" default="0">
+			Type of animation of the platform
 		</member>
 		<member name="platform/speed" type="float" setter="set_door_platform_speed" getter="get_door_platform_speed" default="0.0">
+			The speed of the animation platform,
+			where 1.0 corresponds to an animation lasting one second, the value 0.5 corresponds to two seconds, etc.
 		</member>
 		<member name="stay_open" type="float" setter="set_door_stay_open" getter="get_door_stay_open" default="0.0">
+			The time for which the automatic doors remain open, in seconds.
 		</member>
-		<member name="voltage" type="float" setter="set_door_voltage" getter="get_door_voltage" default="0.0">
+		<member name="voltage" type="float" setter="set_door_voltage" getter="get_door_voltage" default="-1.0">
+			Voltage of low-voltage circuit required to control doors:
+
+			0 = 0V / mechanical opening
+
+			12 = 12V
+
+			110 = 110V
 		</member>
 	</members>
 </class>

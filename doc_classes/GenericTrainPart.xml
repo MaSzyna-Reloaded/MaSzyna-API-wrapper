@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="GenericTrainPart" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Generic TrainPart
 	</brief_description>
 	<description>
+		Generic TrainPart
 	</description>
 	<tutorials>
 	</tutorials>
@@ -10,11 +12,13 @@
 		<method name="get_train_controller_node">
 			<return type="TrainController" />
 			<description>
+				Returns instance of a TrainController
 			</description>
 		</method>
 		<method name="get_train_state">
 			<return type="Dictionary" />
 			<description>
+				Returns dictionary with data of state for specific train part
 			</description>
 		</method>
 	</methods>

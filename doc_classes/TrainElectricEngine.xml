@@ -31,7 +31,7 @@
 		</member>
 		<member name="power/current_collector/min_main_switch_voltage" type="float" setter="set_min_main_switch_voltage" getter="get_min_main_switch_voltage" default="0.0">
 			The minimum closing voltage of the main switch, in volts.
-            By default, it is 0.5*max_voltage
+			            By default, it is 0.5*max_voltage
 		</member>
 		<member name="power/current_collector/min_pantograph_tank_pressure" type="float" setter="set_min_pantograph_tank_pressure" getter="get_min_pantograph_tank_pressure" default="0.0">
 			Minimum pressure in the Pantograph Tank (PT) to raise the pantograph, in MPa
@@ -43,7 +43,7 @@
 		</member>
 		<member name="power/current_collector/required_main_switch_voltage" type="float" setter="set_required_main_switch_voltage" getter="get_required_main_switch_voltage" default="0.0">
 			Required voltage to switch the main switch on.
-            By default, it is 0.6*max_voltage
+			            By default, it is 0.6*max_voltage
 		</member>
 		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" default="0">
 			Energy source for the power cable

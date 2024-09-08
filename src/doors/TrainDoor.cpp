@@ -3,21 +3,7 @@
 namespace godot {
     TrainDoor::TrainDoor() = default;
 
-    void TrainDoor::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_close_control", "close_control"), &TrainDoor::set_close_control);
-        ClassDB::bind_method(D_METHOD("get_close_control"), &TrainDoor::get_close_control);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "close/control", PROPERTY_HINT_ENUM,
-                        "Passenger,AutomaticCtrl,DriverCtrl,Conductor,Mixed"),
-                "set_close_control", "get_close_control");
-        ClassDB::bind_method(D_METHOD("set_open_control", "open_control"), &TrainDoor::set_open_control);
-        ClassDB::bind_method(D_METHOD("get_open_control"), &TrainDoor::get_open_control);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "open/control", PROPERTY_HINT_ENUM,
-                        "Passenger,AutomaticCtrl,DriverCtrl,Conductor,Mixed"),
-                "set_open_control", "get_open_control");
+    void TrainDoor::_bind_methods() {;
         ClassDB::bind_method(D_METHOD("set_door_stay_open", "open_control"), &TrainDoor::set_door_stay_open);
         ClassDB::bind_method(D_METHOD("get_door_stay_open"), &TrainDoor::get_door_stay_open);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "stay_open"), "set_door_stay_open", "get_door_stay_open");
@@ -32,10 +18,12 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_shift"), "set_door_max_shift", "get_door_max_shift");
         ClassDB::bind_method(D_METHOD("set_door_open_method", "door_open_method"), &TrainDoor::set_door_open_method);
         ClassDB::bind_method(D_METHOD("get_door_open_method"), &TrainDoor::get_door_open_method);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "open/method"), "set_door_open_method", "get_door_open_method");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "open/method", PROPERTY_HINT_ENUM,
+                        "Passenger,AutomaticCtrl,DriverCtrl,Conductor,Mixed"), "set_door_open_method", "get_door_open_method");
         ClassDB::bind_method(D_METHOD("set_door_close_method", "door_close_method"), &TrainDoor::set_door_close_method);
         ClassDB::bind_method(D_METHOD("get_door_close_method"), &TrainDoor::get_door_close_method);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "close/method"), "set_door_close_method", "get_door_close_method");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "close/method", PROPERTY_HINT_ENUM,
+                        "Passenger,AutomaticCtrl,DriverCtrl,Conductor,Mixed"), "set_door_close_method", "get_door_close_method");
         ClassDB::bind_method(D_METHOD("set_door_voltage", "door_voltage"), &TrainDoor::set_door_voltage);
         ClassDB::bind_method(D_METHOD("get_door_voltage"), &TrainDoor::get_door_voltage);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "voltage"), "set_door_voltage", "get_door_voltage");
@@ -189,25 +177,6 @@ namespace godot {
         mover->MirrorVelClose = mirror_vel_close;
         mover->DoorsOpenWithPermitAfter = door_open_with_permit;
         mover->DoorsPermitLightBlinking = door_permit_light_blinking;
-    }
-
-
-    void TrainDoor::set_close_control(const int p_value) {
-        close_control = p_value;
-        _dirty = true;
-    }
-
-    int TrainDoor::get_close_control() const {
-        return close_control;
-    }
-
-    void TrainDoor::set_open_control(const int p_value) {
-        open_control = p_value;
-        _dirty = true;
-    }
-
-    int TrainDoor::get_open_control() const {
-        return open_control;
     }
 
     void TrainDoor::set_door_stay_open(const float p_value) {

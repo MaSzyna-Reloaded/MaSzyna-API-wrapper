@@ -29,7 +29,7 @@ namespace godot {
 
         protected:
             /**
-             * Door opening control methods:
+             * Door opening/closing methods:
              * Passenger - default type if not defined; doors are closed manually, ignoring any remote commands
              * AutomaticCtrl - doors operate automatically
              * DriverCtrl - doors are controlled by the train driver, and respond only to remote commands
@@ -38,14 +38,14 @@ namespace godot {
              */
 
             /**
-             * Door closing control method
+             * The type of door (opening method)
              */
-            int close_control = 0;
+            int door_open_method = 0.0;
 
             /**
-             * Door opening control method
+             * The type of door (closing method)
              */
-            int open_control = 0;
+            int door_close_method = 0.0;
 
             /**
              * Time period for which door would stay opened
@@ -66,16 +66,6 @@ namespace godot {
              * The width (or angle) of the door fully opening
              */
             float door_max_shift = 0.0;
-
-            /**
-             * The type of door (opening method)
-             */
-            int door_open_method = 0.0;
-
-            /**
-             * The type of door (closing method)
-             */
-            int door_close_method = 0.0;
 
             /**
              * Low voltage circuit voltage required for door control.

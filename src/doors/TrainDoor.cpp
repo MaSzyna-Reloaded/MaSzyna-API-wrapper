@@ -73,7 +73,7 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "max_shift_plug"), "set_door_max_shift_plug", "get_door_max_shift_plug");
         ClassDB::bind_method(D_METHOD("set_door_permit_list", "door_permit_list"), &TrainDoor::set_door_permit_list);
         ClassDB::bind_method(D_METHOD("get_door_permit_list"), &TrainDoor::get_door_permit_list);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "permit/list"), "set_door_permit_list", "get_door_permit_list");
+        ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "permit/list"), "set_door_permit_list", "get_door_permit_list");
         ClassDB::bind_method(
                 D_METHOD("set_door_permit_list_default", "door_permit_list_default"),
                 &TrainDoor::set_door_permit_list_default);
@@ -146,9 +146,10 @@ namespace godot {
         mover->Doors.auto_velocity = door_auto_close_vel;
         mover->Doors.auto_include_remote = door_auto_close_remote;
         mover->Doors.permit_needed = door_needs_permit;
-        const auto permit_presets = libmaszyna::Utils::split(door_permit_list, "|");
-        for (std::string const &permit_preset: permit_presets) {
-            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset));;
+        const auto permit_presets = door_permit_list.split("|");
+        for (String const &permit_preset: permit_presets) {
+            std::string permit_preset_s = permit_preset.utf8().get_data();
+            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset_s));;
         }
 
         if (!mover->Doors.permit_presets.empty()) {
@@ -172,8 +173,8 @@ namespace godot {
         mover->Doors.has_lock = door_blocked;
 
         bool const remote_door_control {
-                (mover->Doors.open_control == control_t::driver) ||
-                (mover->Doors.open_control == control_t::conductor) || (mover->Doors.open_control == control_t::mixed) };
+                mover->Doors.open_control == control_t::driver ||
+                mover->Doors.open_control == control_t::conductor || mover->Doors.open_control == control_t::mixed };
         if (door_voltage == -1.0) {
             door_voltage = remote_door_control ? 24.0 : 0.0;
         }
@@ -335,12 +336,12 @@ namespace godot {
         return door_max_shift;
     }
 
-    void TrainDoor::set_door_permit_list(const std::string& p_permit_list) {
+    void TrainDoor::set_door_permit_list(const String& p_permit_list) {
         door_permit_list = p_permit_list;
         _dirty = true;
     }
 
-    std::string TrainDoor::get_door_permit_list() const {
+    String TrainDoor::get_door_permit_list() const {
         return door_permit_list;
     }
 

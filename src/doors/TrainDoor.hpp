@@ -122,7 +122,7 @@ namespace godot {
              * Door programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
              * door operation, 2=right door, 3=all
              */
-            std::string door_permit_list = "0|0|0";
+            String door_permit_list = "0|0|0";
 
             /**
              * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
@@ -224,8 +224,8 @@ namespace godot {
             bool get_door_blocked() const;
             void set_door_max_shift_plug(float p_max_shift_plug);
             float get_door_max_shift_plug() const;
-            void set_door_permit_list(const std::string &p_permit_list);
-            std::string get_door_permit_list() const;
+            void set_door_permit_list(const String &p_permit_list);
+            String get_door_permit_list() const;
             void set_door_permit_list_default(int p_permit_list_default);
             int get_door_permit_list_default() const;
             void set_door_auto_close_remote(bool p_auto_close);

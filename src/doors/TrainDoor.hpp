@@ -50,7 +50,7 @@ namespace godot {
             /**
              * Time period for which door would stay opened
              */
-            float door_stay_open = 0.0;
+            float door_open_time = 0.0;
 
             /**
              * Speed of opening the doors
@@ -112,7 +112,7 @@ namespace godot {
              * Door programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
              * door operation, 2=right door, 3=all
              */
-            String door_permit_list = "0|0|0";
+            Array door_permit_list = Array({"0", "0", "0"});
 
             /**
              * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
@@ -186,8 +186,8 @@ namespace godot {
             int get_close_control() const;
             void set_open_control(int p_value);
             int get_open_control() const;
-            void set_door_stay_open(float p_value);
-            float get_door_stay_open() const;
+            void set_door_open_time(float p_value);
+            float get_door_open_time() const;
             void set_open_speed(float p_value);
             float get_open_speed() const;
             void set_close_speed(float p_value);
@@ -214,8 +214,8 @@ namespace godot {
             bool get_door_blocked() const;
             void set_door_max_shift_plug(float p_max_shift_plug);
             float get_door_max_shift_plug() const;
-            void set_door_permit_list(const String &p_permit_list);
-            String get_door_permit_list() const;
+            void set_door_permit_list(const Array &p_permit_list);
+            Array get_door_permit_list() const;
             void set_door_permit_list_default(int p_permit_list_default);
             int get_door_permit_list_default() const;
             void set_door_auto_close_remote(bool p_auto_close);

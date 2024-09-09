@@ -4,9 +4,9 @@ namespace godot {
     TrainDoor::TrainDoor() = default;
 
     void TrainDoor::_bind_methods() {;
-        ClassDB::bind_method(D_METHOD("set_door_stay_open", "open_control"), &TrainDoor::set_door_stay_open);
-        ClassDB::bind_method(D_METHOD("get_door_stay_open"), &TrainDoor::get_door_stay_open);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "stay_open"), "set_door_stay_open", "get_door_stay_open");
+        ClassDB::bind_method(D_METHOD("set_door_open_time", "open_time"), &TrainDoor::set_door_open_time);
+        ClassDB::bind_method(D_METHOD("get_door_open_time"), &TrainDoor::get_door_open_time);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open_time"), "set_door_open_time", "get_door_open_time");
         ClassDB::bind_method(D_METHOD("set_open_speed", "open_speed"), &TrainDoor::set_open_speed);
         ClassDB::bind_method(D_METHOD("get_open_speed"), &TrainDoor::get_open_speed);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open/speed"), "set_open_speed", "get_open_speed");
@@ -61,7 +61,7 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "max_shift_plug"), "set_door_max_shift_plug", "get_door_max_shift_plug");
         ClassDB::bind_method(D_METHOD("set_door_permit_list", "door_permit_list"), &TrainDoor::set_door_permit_list);
         ClassDB::bind_method(D_METHOD("get_door_permit_list"), &TrainDoor::get_door_permit_list);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "permit/list"), "set_door_permit_list", "get_door_permit_list");
+        ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "permit/list", PROPERTY_HINT_ARRAY_TYPE), "set_door_permit_list", "get_door_permit_list");
         ClassDB::bind_method(
                 D_METHOD("set_door_permit_list_default", "door_permit_list_default"),
                 &TrainDoor::set_door_permit_list_default);
@@ -117,7 +117,33 @@ namespace godot {
                 PropertyInfo(Variant::INT, "permit/light_blinking"), "set_door_permit_light_blinking",
                 "get_door_permit_light_blinking");
     }
-    void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {}
+    void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        state["door/open_control"] = mover->Doors.open_control;
+        state["door/close_control"] = mover->Doors.close_control;
+        state["door/auto_duration"] = mover->Doors.auto_duration;
+        state["door/auto_velocity"] = mover->Doors.auto_velocity;
+        state["door/auto_include_remote"] = mover->Doors.auto_include_remote;
+        state["door/permit_needed"] = mover->Doors.permit_needed;
+        //state["door/permit_presets"] = String(std::string(mover->Doors.permit_presets.begin(), mover->Doors.permit_presets.end()).c_str());
+        state["door/open_speed"] = mover->Doors.open_rate;
+        state["door/open_delay"] = mover->Doors.open_delay;
+        state["door/close_speed"] = mover->Doors.close_rate;
+        state["door/close_delay"] = mover->Doors.close_delay;
+        state["door/range"] = mover->Doors.range;
+        state["door/range_out"] = mover->Doors.range_out;
+        state["door/type"] = mover->Doors.type;
+        state["door/has_warning"] = mover->Doors.has_warning;
+        state["door/has_auto_warning"] = mover->Doors.has_autowarning;
+        state["door/has_lock"] = mover->Doors.has_lock;
+        state["door/voltage"] = mover->Doors.voltage;
+        state["door/step_rate"] = mover->Doors.step_rate;
+        state["door/step_range"] = mover->Doors.step_range;
+        state["door/step_type"] = mover->Doors.step_type;
+        state["door/mirror_max_shift"] = mover->MirrorMaxShift;
+        state["door/mirror_vel_close"] = mover->MirrorVelClose;
+        state["door/open_with_permit_after"] = mover->DoorsOpenWithPermitAfter;
+        state["door/permit_light_blinking"] = mover->DoorsPermitLightBlinking;
+    }
 
     void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {}
 
@@ -130,14 +156,15 @@ namespace godot {
                 DoorControls.find(IntToDoorControls[door_close_method]);
         mover->Doors.close_control =
                 close_method_lookup != DoorControls.end() ? close_method_lookup->second : control_t::passenger;
-        mover->Doors.auto_duration = door_stay_open;
+        mover->Doors.auto_duration = door_open_time;
         mover->Doors.auto_velocity = door_auto_close_vel;
         mover->Doors.auto_include_remote = door_auto_close_remote;
         mover->Doors.permit_needed = door_needs_permit;
-        const auto permit_presets = door_permit_list.split("|");
-        for (String const &permit_preset: permit_presets) {
-            std::string permit_preset_s = permit_preset.utf8().get_data();
-            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset_s));;
+        const String limiter = "|";
+        //@TODO: Figure out why does it crash
+        const String _temp = limiter.join(door_permit_list).utf8().get_data();
+        for (String const &permit_preset: _temp.split(limiter)) {//HACK: Need to iterate through godot::String to avoid errors related to std namespace
+            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset.utf8().get_data()));;
         }
 
         if (!mover->Doors.permit_presets.empty()) {
@@ -179,13 +206,13 @@ namespace godot {
         mover->DoorsPermitLightBlinking = door_permit_light_blinking;
     }
 
-    void TrainDoor::set_door_stay_open(const float p_value) {
-        door_stay_open = p_value;
+    void TrainDoor::set_door_open_time(const float p_value) {
+        door_open_time = p_value;
         _dirty = true;
     }
 
-    float TrainDoor::get_door_stay_open() const {
-        return door_stay_open;
+    float TrainDoor::get_door_open_time() const {
+        return door_open_time;
     }
 
     void TrainDoor::set_open_speed(const float p_value) {
@@ -305,12 +332,12 @@ namespace godot {
         return door_max_shift;
     }
 
-    void TrainDoor::set_door_permit_list(const String& p_permit_list) {
+    void TrainDoor::set_door_permit_list(const Array& p_permit_list) {
         door_permit_list = p_permit_list;
         _dirty = true;
     }
 
-    String TrainDoor::get_door_permit_list() const {
+    Array TrainDoor::get_door_permit_list() const {
         return door_permit_list;
     }
 

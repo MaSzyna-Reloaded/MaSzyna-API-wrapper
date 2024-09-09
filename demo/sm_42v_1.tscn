@@ -45,3 +45,5 @@ ca_max_hold_time = 1.0
 
 [node name="CustomTrainPart" type="GenericTrainPart" parent="."]
 script = ExtResource("1_2wure")
+
+[node name="TrainDoor" type="TrainDoor" parent="."]

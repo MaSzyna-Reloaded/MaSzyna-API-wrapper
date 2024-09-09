@@ -1,3 +1,5 @@
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
 
 namespace godot {
@@ -24,6 +26,8 @@ namespace godot {
                         Variant::ARRAY, "motor_param_table", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT,
                         "TypedArray<Array>"),
                 "set_motor_param_table", "get_motor_param_table");
+        ADD_SIGNAL(MethodInfo("engine_start"));
+        ADD_SIGNAL(MethodInfo("engine_stop"));
     }
 
     void TrainEngine::_do_update_internal_mover(TMoverParameters *mover) {
@@ -51,7 +55,6 @@ namespace godot {
     }
 
     void TrainEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
-        mover->MainSwitch(main_switch_pressed);
         mover->CompressorSwitch(compressor_switch_pressed);
     }
 
@@ -65,6 +68,7 @@ namespace godot {
         state["compressor_allowed"] = mover->CompressorAllow;
         state["engine_power"] = mover->EnginePower;
         state["engine_rpm_count"] = mover->enrot;
+        state["engine_rpm_ratio"] = mover->EngineRPMRatio();
         state["engine_current"] = mover->Im;
         state["engine_damage"] = mover->EngDmgFlag;
         state["main_switch_time"] = mover->MainsInitTimeCountdown;
@@ -101,6 +105,15 @@ namespace godot {
     void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> p_value) {
         motor_param_table.clear();
         motor_param_table.append_array(p_value);
+    }
+
+    void TrainEngine::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        TrainPart::_on_command_received(command, p1, p2);
+        if(train_controller_node != nullptr) {
+            if(command == "main_switch") {
+                train_controller_node->get_mover()->MainSwitch((bool) p1);
+            }
+        }
     }
 
 } // namespace godot

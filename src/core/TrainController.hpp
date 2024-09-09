@@ -7,7 +7,6 @@ namespace godot {
     class TrainBrake;
     class TrainPart;
     class TrainEngine;
-    class TrainSwitch;
     class TrainSecuritySystem;
 
 
@@ -24,7 +23,6 @@ namespace godot {
             Dictionary state;
             Dictionary internal_state;
 
-            bool sw_battery_enabled = false;
             bool is_powered = false;
 
             double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
@@ -58,7 +56,8 @@ namespace godot {
             void _process(double delta) override;
             void _ready() override;
             Dictionary get_mover_state();
-            void send_command(StringName command, Variant p1 = Variant(), Variant p2 = Variant());
+            void receive_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void _on_command_received(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void update_mover() const;
             void _on_train_part_config_changed(TrainPart *part) const;
 
@@ -69,8 +68,6 @@ namespace godot {
             void set_type_name(const String &type_name);
             void set_nominal_battery_voltage(double p_nominal_battery_voltage);
             double get_nominal_battery_voltage() const;
-            void set_battery_enabled(bool p_battery_enabled); //@TODO: Move to TrainPower section
-            bool get_battery_enabled() const;
             void set_mass(double p_mass);
             double get_mass() const;
             void set_power(double p_power);
@@ -82,11 +79,6 @@ namespace godot {
 
             void set_state(Dictionary p_state);
             Dictionary get_state();
-
-            void main_controller_increase();
-            void main_controller_decrease();
-            void forwarder_increase();
-            void forwarder_decrease();
 
             TrainController();
             ~TrainController() override = default;

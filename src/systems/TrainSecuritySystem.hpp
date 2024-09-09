@@ -41,11 +41,10 @@ namespace godot {
             double sound_signal_delay = 0.0;            // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
             double shp_magnet_distance = 0.0;           // MagnetLocation -> SecuritySystem->MagnetLocation
             double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
-            bool reset_pushed = false;
 
         public:
+            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
             // Getters
-            bool get_reset_pushed() const;
             bool get_aware_system_active() const;
             bool get_aware_system_cabsignal() const;
             bool get_aware_system_separate_acknowledge() const;
@@ -59,7 +58,6 @@ namespace godot {
             double get_ca_max_hold_time() const;
 
             // Setters
-            void set_reset_pushed(bool p_state);
             void set_aware_system_active(bool p_state);
             void set_aware_system_cabsignal(bool p_state);
             void set_aware_system_separate_acknowledge(bool p_state);

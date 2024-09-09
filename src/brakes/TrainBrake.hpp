@@ -98,9 +98,6 @@ namespace godot {
             CompressorPower compressor_power = COMPRESSOR_POWER_MAIN; // CompressorPower
             double rig_effectiveness = 0.0;                           // BRE -> BrakeRigEff effectiveness
 
-            double brake_level = 0.0;
-            bool sw_releaser_enabled = false;
-
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
@@ -108,6 +105,7 @@ namespace godot {
 
         public:
             static void _bind_methods();
+            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
 
             void set_valve(TrainBrakeValve p_valve);
             TrainBrakeValve get_valve() const;
@@ -194,12 +192,6 @@ namespace godot {
 
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
-
-            void set_brake_level(double p_value);
-            double get_brake_level();
-
-            void set_sw_releaser_enabled(bool p_value);
-            bool get_sw_releaser_enabled();
 
             TrainBrake();
             ~TrainBrake() override = default;

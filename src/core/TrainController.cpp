@@ -19,14 +19,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
         ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "state"), "set_state", "get_state");
 
-        ClassDB::bind_method(D_METHOD("send_command"), &TrainController::send_command);
+        ClassDB::bind_method(
+                D_METHOD("receive_command", "command", "p1", "p2"), &TrainController::receive_command, DEFVAL(Variant()),
+                DEFVAL(Variant()));
 
         ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainController::get_mover_state);
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
-        ClassDB::bind_method(D_METHOD("main_controller_increase"), &TrainController::main_controller_increase);
-        ClassDB::bind_method(D_METHOD("main_controller_decrease"), &TrainController::main_controller_decrease);
-        ClassDB::bind_method(D_METHOD("forwarder_increase"), &TrainController::forwarder_increase);
-        ClassDB::bind_method(D_METHOD("forwarder_decrease"), &TrainController::forwarder_decrease);
 
         ClassDB::bind_method(
                 D_METHOD("_on_train_part_config_changed"), &TrainController::_on_train_part_config_changed);
@@ -40,8 +38,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_max_velocity"), &TrainController::get_max_velocity);
         ClassDB::bind_method(D_METHOD("set_axle_arrangement"), &TrainController::set_axle_arrangement);
         ClassDB::bind_method(D_METHOD("get_axle_arrangement"), &TrainController::get_axle_arrangement);
-        ClassDB::bind_method(D_METHOD("set_battery_enabled"), &TrainController::set_battery_enabled);
-        ClassDB::bind_method(D_METHOD("get_battery_enabled"), &TrainController::get_battery_enabled);
         ClassDB::bind_method(D_METHOD("set_nominal_battery_voltage"), &TrainController::set_nominal_battery_voltage);
         ClassDB::bind_method(D_METHOD("get_nominal_battery_voltage"), &TrainController::get_nominal_battery_voltage);
 
@@ -58,8 +54,6 @@ namespace godot {
                 PropertyInfo(Variant::NIL, "p2")));
 
         /* FIXME: move to TrainPower section? */
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/battery_enabled"), "set_battery_enabled", "get_battery_enabled");
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "nominal_battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"),
                 "set_nominal_battery_voltage", "get_nominal_battery_voltage");
@@ -186,7 +180,6 @@ namespace godot {
         mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
 
         // FIXME: move to TrainPower
-        mover->Battery = sw_battery_enabled;
         mover->NominalBatteryVoltage = nominal_battery_voltage;
         mover->BatteryVoltage = nominal_battery_voltage;
     }
@@ -205,15 +198,6 @@ namespace godot {
     void TrainController::set_nominal_battery_voltage(const double p_nominal_battery_voltage) {
         nominal_battery_voltage = p_nominal_battery_voltage;
         _dirty_prop = true;
-    }
-
-    void TrainController::set_battery_enabled(const bool p_state) {
-        sw_battery_enabled = p_state;
-        _dirty_prop = true;
-    }
-
-    bool TrainController::get_battery_enabled() const {
-        return sw_battery_enabled;
     }
 
     void TrainController::set_mass(const double p_mass) {
@@ -249,34 +233,6 @@ namespace godot {
 
     String TrainController::get_axle_arrangement() const {
         return axle_arrangement;
-    }
-
-    void TrainController::main_controller_increase() {
-        // FIXME: mover can be null; change to enqueue command
-        if (mover != nullptr) {
-            mover->IncMainCtrl(1);
-        }
-    }
-
-    void TrainController::main_controller_decrease() {
-        // FIXME: mover can be null; change to enqueue command
-        if (mover != nullptr) {
-            mover->DecMainCtrl(1);
-        }
-    }
-
-    void TrainController::forwarder_decrease() {
-        // FIXME: mover can be null; change to enqueue command
-        if (mover != nullptr) {
-            mover->DirectionBackward();
-        }
-    }
-
-    void TrainController::forwarder_increase() {
-        // FIXME: mover can be null; change to enqueue command
-        if (mover != nullptr) {
-            mover->DirectionForward();
-        }
     }
 
     void TrainController::update_mover() const {
@@ -340,8 +296,27 @@ namespace godot {
         return state;
     }
 
-    void TrainController::send_command(StringName command, Variant p1, Variant p2) {
+    void TrainController::receive_command(const StringName &command, const Variant &p1, const Variant &p2) {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
+        _on_command_received(String(command), p1, p2);
     }
 
+    void TrainController::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        if (!mover) {
+            return;
+        }
+        if (command == "battery_enable") {
+            mover->BatterySwitch((bool)p1);
+        } else if(command == "main_controller_increase") {
+            UtilityFunctions::print("main_controller_increase !");
+            mover->IncMainCtrl(1);
+        } else if(command == "main_controller_decrease") {
+            UtilityFunctions::print("main_controller_decrease !");
+            mover->DecMainCtrl(1);
+        } else if(command == "forwarder_increase") {
+            mover->DirectionForward();
+        } else if(command == "forwarder_decrease") {
+            mover->DirectionBackward();
+        }
+    }
 } // namespace godot

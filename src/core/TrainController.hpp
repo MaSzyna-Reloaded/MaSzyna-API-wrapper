@@ -23,12 +23,11 @@ namespace godot {
             Dictionary state;
             Dictionary internal_state;
 
-            bool is_powered = false;
-
             double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
             double mass = 0.0;
             double power = 0.0;
             double max_velocity = 0.0;
+            bool is_powered = false;
             String axle_arrangement = "";
 
             void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts);
@@ -36,6 +35,7 @@ namespace godot {
 
         private:
             void _update_mover_config_if_dirty();
+            void _handle_mover_update();
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -77,7 +77,7 @@ namespace godot {
             void set_axle_arrangement(String p_value);
             String get_axle_arrangement() const;
 
-            void set_state(Dictionary p_state);
+            void set_state(const Dictionary &p_state);
             Dictionary get_state();
 
             TrainController();

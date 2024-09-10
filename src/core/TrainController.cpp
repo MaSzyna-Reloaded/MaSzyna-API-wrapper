@@ -123,6 +123,7 @@ namespace godot {
         initialize_mover();
 
         UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
+
         emit_signal(POWER_CHANGED_SIGNAL, is_powered);
     }
 
@@ -151,9 +152,13 @@ namespace godot {
                 delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mock_location,
                 mock_rotation);
 
+        _handle_mover_update();
+    }
+
+    void TrainController::_handle_mover_update() {
         state.merge(get_mover_state(), true);
 
-        bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
+        const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
         if (is_powered != new_is_powered) {
             is_powered = new_is_powered;
             emit_signal(POWER_CHANGED_SIGNAL, is_powered);
@@ -288,7 +293,7 @@ namespace godot {
         internal_state["controller_main_position"] = mover->MainCtrlPos;
     }
 
-    void TrainController::set_state(const Dictionary p_state) {
+    void TrainController::set_state(const Dictionary &p_state) {
         state = p_state;
     }
 
@@ -297,8 +302,11 @@ namespace godot {
     }
 
     void TrainController::receive_command(const StringName &command, const Variant &p1, const Variant &p2) {
-        emit_signal(COMMAND_RECEIVED, command, p1, p2);
         _on_command_received(String(command), p1, p2);
+        emit_signal(COMMAND_RECEIVED, command, p1, p2);
+        if(mover != nullptr) {
+            _handle_mover_update();
+        }
     }
 
     void TrainController::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {

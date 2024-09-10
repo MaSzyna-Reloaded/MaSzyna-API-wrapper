@@ -45,6 +45,7 @@ namespace godot {
             void _exit_tree() override;
             void _process(double delta) override;
             virtual void _process_mover(double delta);
+            void on_command_received(const String &command, const Variant &p1, const Variant &p2);
             virtual void _on_command_received(const String &command, const Variant &p1, const Variant &p2);
 
             void set_enabled(bool p_value);

@@ -126,6 +126,11 @@ namespace godot {
             bool door_auto_close_remote = false;
 
             /**
+             * Enable the velocity
+             */
+            bool door_auto_close_enabled = false;
+
+            /**
              * The speed at which the door automatically closes, set by default to -1, i.e. no automatic closing.
              */
             float door_auto_close_velocity = -1;
@@ -150,6 +155,7 @@ namespace godot {
              * Platform animation type
              * 0 - Shift
              * 1 - Rot
+             * @TODO: Add enum
              */
             int platform_open_method = 0;
 
@@ -174,6 +180,7 @@ namespace godot {
              * 1 - continuous light when any door is open or any step is extended; flashing only when permission is
              * given 2 - continuous light when any door is open; flashing when permission is given; the step extension
              * status is irrelevant 3 - flashing regardless of the door open status and step extension status
+             * @TODO: Add enum
              */
             int door_permit_light_blinking = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
@@ -222,6 +229,8 @@ namespace godot {
             bool get_door_auto_close_remote() const;
             void set_door_auto_close_velocity(float p_vel);
             float get_door_auto_close_velocity() const;
+            void set_door_auto_close_enabled(bool p_enabled);
+            bool get_door_auto_close_enabled() const;
             void set_door_platform_max_speed(double p_max_speed);
             double get_door_platform_max_speed() const;
             void set_door_platform_max_shift(float p_max_shift);

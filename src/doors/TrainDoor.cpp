@@ -76,10 +76,15 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "auto_close/remote"), "set_door_auto_close_remote",
                 "get_door_auto_close_remote");
         ClassDB::bind_method(
-                D_METHOD("set_door_auto_close_vel", "auto_close_vel"), &TrainDoor::set_door_auto_close_velocity);
+                D_METHOD("set_door_auto_close_velocity", "auto_close_velocity"), &TrainDoor::set_door_auto_close_velocity);
         ClassDB::bind_method(D_METHOD("get_door_auto_close_velocity"), &TrainDoor::get_door_auto_close_velocity);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "auto_close/velocity"), "set_door_auto_close_vel", "get_door_auto_close_vel");
+        PropertyInfo(Variant::FLOAT, "auto_close/velocity"), "set_door_auto_close_velocity", "get_door_auto_close_velocity");
+        ClassDB::bind_method(
+                D_METHOD("set_door_auto_close_enabled", "auto_close_enabled"), &TrainDoor::set_door_auto_close_enabled);
+        ClassDB::bind_method(D_METHOD("get_door_auto_close_enabled"), &TrainDoor::get_door_auto_close_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "auto_close/enabled"), "set_door_auto_close_enabled", "get_door_auto_close_enabled");
         //@TODO: Add bool to enable the velocity instead of setting it to -1 in the inspector
         ClassDB::bind_method(
                 D_METHOD("set_door_platform_max_speed", "platform_max_speed"), &TrainDoor::set_door_platform_max_speed);
@@ -158,7 +163,7 @@ namespace godot {
         mover->Doors.close_control =
                 close_method_lookup != DoorControls.end() ? close_method_lookup->second : control_t::passenger;
         mover->Doors.auto_duration = door_open_time;
-        mover->Doors.auto_velocity = door_auto_close_velocity;
+        mover->Doors.auto_velocity = door_auto_close_enabled ? door_auto_close_velocity : -1.0f;
         mover->Doors.auto_include_remote = door_auto_close_remote;
         mover->Doors.permit_needed = door_needs_permit;
         mover->Doors.permit_presets.clear();
@@ -367,6 +372,15 @@ namespace godot {
 
     float TrainDoor::get_door_auto_close_velocity() const {
         return door_auto_close_velocity;
+    }
+
+    void TrainDoor::set_door_auto_close_enabled(const bool p_enabled) {
+        door_auto_close_enabled = p_enabled;
+        _dirty = true;
+    }
+
+    bool TrainDoor::get_door_auto_close_enabled() const {
+        return door_auto_close_enabled;
     }
 
     void TrainDoor::set_door_platform_max_speed(const double p_max_speed) {

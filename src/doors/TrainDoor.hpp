@@ -128,7 +128,7 @@ namespace godot {
             /**
              * The speed at which the door automatically closes, set by default to -1, i.e. no automatic closing.
              */
-            float door_auto_close_vel = -1;
+            float door_auto_close_velocity = -1;
 
             /**
              * Docs do not describe this properly. Need to figure this out
@@ -220,8 +220,8 @@ namespace godot {
             int get_door_permit_list_default() const;
             void set_door_auto_close_remote(bool p_auto_close);
             bool get_door_auto_close_remote() const;
-            void set_door_auto_close_vel(float p_vel);
-            float get_door_auto_close_vel() const;
+            void set_door_auto_close_velocity(float p_vel);
+            float get_door_auto_close_velocity() const;
             void set_door_platform_max_speed(double p_max_speed);
             double get_door_platform_max_speed() const;
             void set_door_platform_max_shift(float p_max_shift);

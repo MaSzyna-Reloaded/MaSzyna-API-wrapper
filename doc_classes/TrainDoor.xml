@@ -12,7 +12,7 @@
 		<member name="auto_close/remote" type="bool" setter="set_door_auto_close_remote" getter="get_door_auto_close_remote" default="false">
 			Automatic closing of centrally open doors after a certain period of time.
 		</member>
-		<member name="auto_close/vel" type="float" setter="set_door_auto_close_vel" getter="get_door_auto_close_vel" default="-1.0">
+		<member name="auto_close/velocity" type="float" setter="set_door_auto_close_velocity" getter="get_door_auto_close_velocity" default="-1.0">
 			The speed at which the automatic door closing occurs, set by default to -1, which means no automatic closing.
 		</member>
 		<member name="auto_closure/warning" type="bool" setter="set_auto_door_closure_warning" getter="get_auto_door_closure_warning" default="false">

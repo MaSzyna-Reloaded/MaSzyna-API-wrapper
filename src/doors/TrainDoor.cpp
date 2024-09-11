@@ -76,10 +76,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "auto_close/remote"), "set_door_auto_close_remote",
                 "get_door_auto_close_remote");
         ClassDB::bind_method(
-                D_METHOD("set_door_auto_close_vel", "auto_close_vel"), &TrainDoor::set_door_auto_close_vel);
-        ClassDB::bind_method(D_METHOD("get_door_auto_close_vel"), &TrainDoor::get_door_auto_close_vel);
+                D_METHOD("set_door_auto_close_vel", "auto_close_vel"), &TrainDoor::set_door_auto_close_velocity);
+        ClassDB::bind_method(D_METHOD("get_door_auto_close_velocity"), &TrainDoor::get_door_auto_close_velocity);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "auto_close/vel"), "set_door_auto_close_vel", "get_door_auto_close_vel");
+                PropertyInfo(Variant::FLOAT, "auto_close/velocity"), "set_door_auto_close_vel", "get_door_auto_close_vel");
+        //@TODO: Add bool to enable the velocity instead of setting it to -1 in the inspector
         ClassDB::bind_method(
                 D_METHOD("set_door_platform_max_speed", "platform_max_speed"), &TrainDoor::set_door_platform_max_speed);
         ClassDB::bind_method(D_METHOD("get_door_platform_max_speed"), &TrainDoor::get_door_platform_max_speed);
@@ -121,12 +122,12 @@ namespace godot {
         state["door/open_control"] = mover->Doors.open_control;
         state["door/close_control"] = mover->Doors.close_control;
         state["door/auto_duration"] = mover->Doors.auto_duration;
-        state["door/auto_velocity"] = mover->Doors.auto_velocity;
         state["door/auto_include_remote"] = mover->Doors.auto_include_remote;
         state["door/permit_needed"] = mover->Doors.permit_needed;
-        //state["door/permit_presets"] = String(std::string(mover->Doors.permit_presets.begin(), mover->Doors.permit_presets.end()).c_str());
+        state["door/permit_presets"] = String(std::string(mover->Doors.permit_presets.begin(), mover->Doors.permit_presets.end()).c_str());
         state["door/open_speed"] = mover->Doors.open_rate;
         state["door/open_delay"] = mover->Doors.open_delay;
+        state["door/open_time"] = mover->Doors.auto_velocity;
         state["door/close_speed"] = mover->Doors.close_rate;
         state["door/close_delay"] = mover->Doors.close_delay;
         state["door/range"] = mover->Doors.range;
@@ -157,14 +158,14 @@ namespace godot {
         mover->Doors.close_control =
                 close_method_lookup != DoorControls.end() ? close_method_lookup->second : control_t::passenger;
         mover->Doors.auto_duration = door_open_time;
-        mover->Doors.auto_velocity = door_auto_close_vel;
+        mover->Doors.auto_velocity = door_auto_close_velocity;
         mover->Doors.auto_include_remote = door_auto_close_remote;
         mover->Doors.permit_needed = door_needs_permit;
-        const String limiter = "|";
-        //@TODO: Figure out why does it crash
-        const String _temp = limiter.join(door_permit_list).utf8().get_data();
-        for (String const &permit_preset: _temp.split(limiter)) {//HACK: Need to iterate through godot::String to avoid errors related to std namespace
-            mover->Doors.permit_presets.emplace_back(std::stoi(permit_preset.utf8().get_data()));;
+        mover->Doors.permit_presets.clear();
+        for (int i = 0; i < door_permit_list.size(); i++) {
+            if (door_permit_list[i] != Variant()) {
+                mover->Doors.permit_presets.emplace_back(static_cast<int>(door_permit_list[i]));
+            }
         }
 
         if (!mover->Doors.permit_presets.empty()) {
@@ -359,13 +360,13 @@ namespace godot {
         return door_auto_close_remote;
     }
 
-    void TrainDoor::set_door_auto_close_vel(const float p_vel) {
-        door_auto_close_vel = p_vel;
+    void TrainDoor::set_door_auto_close_velocity(const float p_vel) {
+        door_auto_close_velocity = p_vel;
         _dirty = true;
     }
 
-    float TrainDoor::get_door_auto_close_vel() const {
-        return door_auto_close_vel;
+    float TrainDoor::get_door_auto_close_velocity() const {
+        return door_auto_close_velocity;
     }
 
     void TrainDoor::set_door_platform_max_speed(const double p_max_speed) {

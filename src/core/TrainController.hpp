@@ -28,6 +28,11 @@ namespace godot {
             double power = 0.0;
             double max_velocity = 0.0;
             bool is_powered = false;
+            bool radio_enabled = false;
+            int radio_channel = 0;
+            int radio_channel_min = 0;
+            int radio_channel_max = 10;
+
             String axle_arrangement = "";
 
             void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts);
@@ -52,6 +57,7 @@ namespace godot {
             static const char *MOVER_CONFIG_CHANGED_SIGNAL;
             static const char *POWER_CHANGED_SIGNAL;
             static const char *COMMAND_RECEIVED;
+            static const char *RADIO_TOGGLED;
 
             void _process(double delta) override;
             void _ready() override;
@@ -75,6 +81,10 @@ namespace godot {
             void set_max_velocity(double p_value);
             double get_max_velocity() const;
             void set_axle_arrangement(String p_value);
+            int get_radio_channel_min() const;
+            void set_radio_channel_min(const int p_value);
+            int get_radio_channel_max() const;
+            void set_radio_channel_max(const int p_value);
             String get_axle_arrangement() const;
 
             void set_state(const Dictionary &p_state);

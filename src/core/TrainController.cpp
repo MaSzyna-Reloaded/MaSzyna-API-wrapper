@@ -1,6 +1,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <godot_cpp/core/math.hpp>
 
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
@@ -13,6 +14,7 @@ namespace godot {
     const char *TrainController::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
     const char *TrainController::POWER_CHANGED_SIGNAL = "power_changed";
     const char *TrainController::COMMAND_RECEIVED = "command_received";
+    const char *TrainController::RADIO_TOGGLED = "radio_toggled";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_state"), &TrainController::set_state);
@@ -40,15 +42,22 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_axle_arrangement"), &TrainController::get_axle_arrangement);
         ClassDB::bind_method(D_METHOD("set_nominal_battery_voltage"), &TrainController::set_nominal_battery_voltage);
         ClassDB::bind_method(D_METHOD("get_nominal_battery_voltage"), &TrainController::get_nominal_battery_voltage);
+        ClassDB::bind_method(D_METHOD("set_radio_channel_min"), &TrainController::set_radio_channel_min);
+        ClassDB::bind_method(D_METHOD("get_radio_channel_min"), &TrainController::get_radio_channel_min);
+        ClassDB::bind_method(D_METHOD("set_radio_channel_max"), &TrainController::set_radio_channel_min);
+        ClassDB::bind_method(D_METHOD("get_radio_channel_max"), &TrainController::get_radio_channel_min);
 
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dimensions/mass"), "set_mass", "get_mass");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power"), "set_power", "get_power");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_velocity"), "set_max_velocity", "get_max_velocity");
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "axle_arrangement"), "set_axle_arrangement", "get_axle_arrangement");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "radio/channel_min"), "set_radio_channel_min", "get_radio_channel_min");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "radio/channel_max"), "set_radio_channel_max", "get_radio_channel_max");
 
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(POWER_CHANGED_SIGNAL, PropertyInfo(Variant::BOOL, "is_powered")));
+        ADD_SIGNAL(MethodInfo(RADIO_TOGGLED, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(
                 COMMAND_RECEIVED, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -160,8 +169,14 @@ namespace godot {
 
         const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
         if (is_powered != new_is_powered) {
-            is_powered = new_is_powered;
+            is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(POWER_CHANGED_SIGNAL, is_powered);
+        }
+
+        const bool new_radio_enabled = state.get("radio_enabled", false);
+        if(radio_enabled != new_radio_enabled) {
+            radio_enabled = new_radio_enabled; // FIXME: I don't like this
+            emit_signal(RADIO_TOGGLED, new_radio_enabled);
         }
     }
 
@@ -259,6 +274,22 @@ namespace godot {
         return internal_state;
     }
 
+    int TrainController::get_radio_channel_min() const {
+        return radio_channel_min;
+    }
+
+    void TrainController::set_radio_channel_min(const int p_value) {
+        radio_channel_min = p_value;
+    }
+
+    int TrainController::get_radio_channel_max() const {
+        return radio_channel_max;
+    }
+
+    void TrainController::set_radio_channel_max(const int p_value) {
+        radio_channel_max = p_value;
+    }
+
     // ReSharper disable once CppMemberFunctionMayBeStatic
     void TrainController::_do_fetch_state_from_mover(
             TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
@@ -277,6 +308,10 @@ namespace godot {
 
         /* FIXME: move to TrainPower section? */
         internal_state["battery_voltage"] = mover->BatteryVoltage;
+
+        /* FIXME: move to TrainRadio section? */
+        internal_state["radio_enabled"] = mover->Radio;
+        internal_state["radio_chanel"] = radio_channel;
 
         /* FIXME: move to TrainPower section */
         internal_state["power24_voltage"] = mover->Power24vVoltage;
@@ -325,6 +360,14 @@ namespace godot {
             mover->DirectionForward();
         } else if(command == "forwarder_decrease") {
             mover->DirectionBackward();
+        } else if(command == "radio_channel_increase") {
+            radio_channel = Math::clamp(radio_channel+1, radio_channel_min, radio_channel_max);
+        } else if(command == "radio_channel_decrease") {
+            radio_channel = Math::clamp(radio_channel-1, radio_channel_min, radio_channel_max);
+        } else if(command == "radio_channel_set") {
+            radio_channel = Math::clamp((int) p1, radio_channel_min, radio_channel_max);
+        } else if(command == "radio") {
+            mover->Radio = (bool) p1;
         }
     }
 } // namespace godot

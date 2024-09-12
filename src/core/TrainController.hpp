@@ -23,15 +23,16 @@ namespace godot {
             Dictionary state;
             Dictionary internal_state;
 
-            double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
+            double battery_voltage = 0.0; // FIXME: move to TrainPower ?
             double mass = 0.0;
             double power = 0.0;
             double max_velocity = 0.0;
-            bool is_powered = false;
-            bool radio_enabled = false;
             int radio_channel = 0;
             int radio_channel_min = 0;
             int radio_channel_max = 10;
+
+            bool prev_is_powered = false;
+            bool prev_radio_enabled = false;
 
             String axle_arrangement = "";
 
@@ -62,8 +63,10 @@ namespace godot {
             void _process(double delta) override;
             void _ready() override;
             Dictionary get_mover_state();
-            void receive_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void _on_command_received(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void
+            receive_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void
+            _on_command_received(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void update_mover() const;
             void _on_train_part_config_changed(TrainPart *part) const;
 
@@ -72,8 +75,8 @@ namespace godot {
 
             String get_type_name() const;
             void set_type_name(const String &type_name);
-            void set_nominal_battery_voltage(double p_nominal_battery_voltage);
-            double get_nominal_battery_voltage() const;
+            void set_battery_voltage(const double p_value);
+            double get_battery_voltage() const;
             void set_mass(double p_mass);
             double get_mass() const;
             void set_power(double p_power);

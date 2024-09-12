@@ -8,17 +8,6 @@ namespace godot {
     TrainEngine::TrainEngine() = default;
 
     void TrainEngine::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_main_switch_pressed"), &TrainEngine::set_main_switch_pressed);
-        ClassDB::bind_method(D_METHOD("get_main_switch_pressed"), &TrainEngine::get_main_switch_pressed);
-
-        ClassDB::bind_method(D_METHOD("set_compressor_switch_pressed"), &TrainEngine::set_compressor_switch_pressed);
-        ClassDB::bind_method(D_METHOD("get_compressor_switch_pressed"), &TrainEngine::get_compressor_switch_pressed);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/main"), "set_main_switch_pressed", "get_main_switch_pressed");
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/compressor"), "set_compressor_switch_pressed",
-                "get_compressor_switch_pressed");
-
         ClassDB::bind_method(D_METHOD("set_motor_param_table"), &TrainEngine::set_motor_param_table);
         ClassDB::bind_method(D_METHOD("get_motor_param_table"), &TrainEngine::get_motor_param_table);
         ADD_PROPERTY(
@@ -54,9 +43,7 @@ namespace godot {
         }
     }
 
-    void TrainEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
-        mover->CompressorSwitch(compressor_switch_pressed);
-    }
+    void TrainEngine::_do_process_mover(TMoverParameters *mover, const double delta) {}
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         state["Mm"] = mover->Mm;
@@ -80,24 +67,6 @@ namespace godot {
         state["line_breaker_closes_at_no_power"] = mover->LineBreakerClosesOnlyAtNoPowerPos;
     }
 
-    void TrainEngine::set_main_switch_pressed(const bool p_state) {
-        main_switch_pressed = p_state;
-        _dirty = true;
-    }
-
-    bool TrainEngine::get_main_switch_pressed() const {
-        return main_switch_pressed;
-    }
-
-    void TrainEngine::set_compressor_switch_pressed(const bool p_state) {
-        compressor_switch_pressed = p_state;
-        _dirty = true;
-    }
-
-    bool TrainEngine::get_compressor_switch_pressed() const {
-        return compressor_switch_pressed;
-    }
-
     TypedArray<Dictionary> TrainEngine::get_motor_param_table() {
         return motor_param_table;
     }
@@ -109,9 +78,9 @@ namespace godot {
 
     void TrainEngine::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
         TrainPart::_on_command_received(command, p1, p2);
-        if(train_controller_node != nullptr) {
-            if(command == "main_switch") {
-                train_controller_node->get_mover()->MainSwitch((bool) p1);
+        if (train_controller_node != nullptr) {
+            if (command == "main_switch") {
+                train_controller_node->get_mover()->MainSwitch((bool)p1);
             }
         }
     }

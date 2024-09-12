@@ -40,8 +40,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_max_velocity"), &TrainController::get_max_velocity);
         ClassDB::bind_method(D_METHOD("set_axle_arrangement"), &TrainController::set_axle_arrangement);
         ClassDB::bind_method(D_METHOD("get_axle_arrangement"), &TrainController::get_axle_arrangement);
-        ClassDB::bind_method(D_METHOD("set_nominal_battery_voltage"), &TrainController::set_nominal_battery_voltage);
-        ClassDB::bind_method(D_METHOD("get_nominal_battery_voltage"), &TrainController::get_nominal_battery_voltage);
+        ClassDB::bind_method(D_METHOD("set_battery_voltage"), &TrainController::set_battery_voltage);
+        ClassDB::bind_method(D_METHOD("get_battery_voltage"), &TrainController::get_battery_voltage);
         ClassDB::bind_method(D_METHOD("set_radio_channel_min"), &TrainController::set_radio_channel_min);
         ClassDB::bind_method(D_METHOD("get_radio_channel_min"), &TrainController::get_radio_channel_min);
         ClassDB::bind_method(D_METHOD("set_radio_channel_max"), &TrainController::set_radio_channel_min);
@@ -64,8 +64,8 @@ namespace godot {
 
         /* FIXME: move to TrainPower section? */
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "nominal_battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"),
-                "set_nominal_battery_voltage", "get_nominal_battery_voltage");
+                PropertyInfo(Variant::FLOAT, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"), "set_battery_voltage",
+                "get_battery_voltage");
     }
 
     TrainController::TrainController() {
@@ -133,7 +133,7 @@ namespace godot {
 
         UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
 
-        emit_signal(POWER_CHANGED_SIGNAL, is_powered);
+        emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
     }
 
     void TrainController::_update_mover_config_if_dirty() {
@@ -168,14 +168,14 @@ namespace godot {
         state.merge(get_mover_state(), true);
 
         const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
-        if (is_powered != new_is_powered) {
-            is_powered = new_is_powered; // FIXME: I don't like this
-            emit_signal(POWER_CHANGED_SIGNAL, is_powered);
+        if (prev_is_powered != new_is_powered) {
+            prev_is_powered = new_is_powered; // FIXME: I don't like this
+            emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
         }
 
         const bool new_radio_enabled = state.get("radio_enabled", false);
-        if (radio_enabled != new_radio_enabled) {
-            radio_enabled = new_radio_enabled; // FIXME: I don't like this
+        if (prev_radio_enabled != new_radio_enabled) {
+            prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(RADIO_TOGGLED, new_radio_enabled);
         }
     }
@@ -200,8 +200,8 @@ namespace godot {
         mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
 
         // FIXME: move to TrainPower
-        mover->NominalBatteryVoltage = nominal_battery_voltage;
-        mover->BatteryVoltage = nominal_battery_voltage;
+        mover->BatteryVoltage = battery_voltage;
+        mover->NominalBatteryVoltage = battery_voltage; // LoadFIZ_Light
     }
 
     void TrainController::_on_train_part_config_changed(TrainPart *part) const {
@@ -211,12 +211,12 @@ namespace godot {
         part->update_mover();
     }
 
-    double TrainController::get_nominal_battery_voltage() const {
-        return nominal_battery_voltage;
+    double TrainController::get_battery_voltage() const {
+        return battery_voltage;
     }
 
-    void TrainController::set_nominal_battery_voltage(const double p_nominal_battery_voltage) {
-        nominal_battery_voltage = p_nominal_battery_voltage;
+    void TrainController::set_battery_voltage(const double p_value) {
+        battery_voltage = p_value;
         _dirty_prop = true;
     }
 
@@ -290,9 +290,7 @@ namespace godot {
         radio_channel_max = p_value;
     }
 
-    // ReSharper disable once CppMemberFunctionMayBeStatic
-    void TrainController::_do_fetch_state_from_mover(
-            TMoverParameters *mover, Dictionary &state) { // NOLINT(*-convert-member-functions-to-static)
+    void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         internal_state["mass_total"] = mover->TotalMass;
         internal_state["velocity"] = mover->V;
         internal_state["speed"] = mover->Vel;

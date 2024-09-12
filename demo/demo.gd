@@ -52,20 +52,16 @@ func _process(delta: float) -> void:
 
 
 func _on_brake_level_value_changed(value):
-    brake.brake_level = value
-
+    train.receive_command("brake_level_set", value)
 
 func _on_main_decrease_button_up():
-    train.main_controller_decrease()
-
+    train.receive_command("main_controller_decrease")
 
 func _on_main_increase_button_up():
-    train.main_controller_increase()
-
+    train.receive_command("main_controller_increase")
 
 func _on_reverse_button_up():
-    train.forwarder_decrease()
-
+    train.receive_command("forwarder_decrease")
 
 func _on_forward_button_up():
-    train.forwarder_increase()
+    train.receive_command("forwarder_increase")

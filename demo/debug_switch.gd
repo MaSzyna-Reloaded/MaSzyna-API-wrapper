@@ -4,7 +4,7 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _node:Node
+var _controller:TrainController
 
 
 @export var label:String:
@@ -16,18 +16,21 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 
 @export var type:SwitchType = SwitchType.TOGGLE
 
-@export_node_path var node:NodePath:
+@export_node_path("TrainController") var controller:NodePath:
     set(x):
         _dirty = true
-        node = x
+        controller = x
 
-@export var property:String:
+@export var state_property:String:
     set(x):
         _dirty = true
-        property = x
+        state_property = x
+
+@export var command:String
 
 func _ready():
     _dirty = true
+var _t = 0.0
 
 func _process(delta):
     if _dirty:
@@ -41,27 +44,35 @@ func _process(delta):
 
 
         $Label.text = label
-        if not node.is_empty():
-            _node = get_node(node)
-            if _node and property and not _node.get(property) == null:
-                $Switch.disabled = false
-                $Switch.button_pressed = true if _node.get(property) else false
-            else:
-                $Switch.disabled = true
+        if not _controller and not controller.is_empty():
+            _controller = get_node(controller)
+            $Switch.disabled = false
         else:
             $Switch.disabled = true
 
-func _on_switch_toggled(toggled_on):
-    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _node and property:
-        _node.set(property, toggled_on)
+    if not Engine.is_editor_hint():
+        _t += delta
+        if _t > 0.1:
+            _t = 0.0
+            if _controller:
+                if state_property:
+                    var value = _controller.state.get(state_property)
+                    if not value == null:
+                        $Switch.button_pressed = true if value else false
+                else:
+                    $Switch.disabled = false
+            else:
+                $Switch.disabled = true
 
+
+func _on_switch_toggled(toggled_on):
+    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _controller and command:
+        _controller.receive_command(command, toggled_on)
 
 func _on_switch_pressed():
-    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _node and property:
-        _node.set(property, $Switch.button_pressed)
-
+    if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _controller and command:
+        _controller.receive_command(command, $Switch.button_pressed)
 
 func _on_switch_button_up():
     if not type == SwitchType.MONOSTABLE:
-        if _node and property:
-            _node.set(property, $Switch.button_pressed)
+        _controller.receive_command(command, $Switch.button_pressed)

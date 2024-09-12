@@ -17,7 +17,11 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-            enum EmergencyBrakeWarningSignal { SIREN_LOW_TONE, SIREN_HIGH_TONE, WHISTLE };
+            enum EmergencyBrakeWarningSignal {
+                BRAKE_WARNINGSIGNAL_SIREN_LOWTONE,
+                BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE,
+                BRAKE_WARNINGSIGNAL_WHISTLE
+            };
 
             TrainSecuritySystem();
             ~TrainSecuritySystem() override = default;
@@ -31,12 +35,12 @@ namespace godot {
             double aware_delay = 0.0;           // AwareDelay -> SecuritySystem->AwareDelay
             double emergency_brake_delay = 0.0; // EmergencyBrakeDelay -> SecuritySystem->EmergencyBrakeDelay
             EmergencyBrakeWarningSignal emergency_brake_warning_signal =
-                    SIREN_HIGH_TONE;          // EmergencyBrakeWarningSignal ->
-                                              // EmergencyBrakeWarningSignal
-            bool radio_stop = true;           // RadioStop -> SecuritySystem->radiostop_enabled
-            double sound_signal_delay = 0.0;  // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
-            double shp_magnet_distance = 0.0; // MagnetLocation -> SecuritySystem->MagnetLocation
-            double ca_max_hold_time = 0.0;    // MaxHoldTime -> SecuritySystem->MaxHoldTime
+                    BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE; // EmergencyBrakeWarningSignal ->
+                                                        // EmergencyBrakeWarningSignal
+            bool radio_stop = true;                     // RadioStop -> SecuritySystem->radiostop_enabled
+            double sound_signal_delay = 0.0;            // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
+            double shp_magnet_distance = 0.0;           // MagnetLocation -> SecuritySystem->MagnetLocation
+            double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
             bool reset_pushed = false;
 
         public:

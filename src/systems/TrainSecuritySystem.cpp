@@ -79,6 +79,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_reset_pushed"), &TrainSecuritySystem::get_reset_pushed);
         ClassDB::bind_method(D_METHOD("set_reset_pushed"), &TrainSecuritySystem::set_reset_pushed);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "switches/reset"), "set_reset_pushed", "get_reset_pushed");
+
+        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_LOWTONE);
+        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
+        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_WHISTLE);
     }
     // Getters
     bool TrainSecuritySystem::get_reset_pushed() const {
@@ -196,13 +200,13 @@ namespace godot {
         mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
 
         switch (emergency_brake_warning_signal) {
-            case SIREN_LOW_TONE:
+            case BRAKE_WARNINGSIGNAL_SIREN_LOWTONE:
                 mover->EmergencyBrakeWarningSignal = 1;
                 break;
-            case SIREN_HIGH_TONE:
+            case BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE:
                 mover->EmergencyBrakeWarningSignal = 2;
                 break;
-            case WHISTLE:
+            case BRAKE_WARNINGSIGNAL_WHISTLE:
                 mover->EmergencyBrakeWarningSignal = 4;
                 break;
             default:

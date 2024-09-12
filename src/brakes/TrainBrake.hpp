@@ -12,6 +12,49 @@ namespace godot {
     class TrainController;
     class TrainBrake final : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
+        public:
+            enum CompressorPower {
+                COMPRESSOR_POWER_MAIN = 0,
+                COMPRESSOR_POWER_UNUSED = 1,
+                COMPRESSOR_POWER_CONVERTER = 2,
+                COMPRESSOR_POWER_ENGINE,
+                COMPRESSOR_POWER_COUPLER1,
+                COMPRESSOR_POWER_COUPLER2
+            };
+
+            enum TrainBrakeValve {
+                BRAKE_VALVE_NO_VALVE,
+                BRAKE_VALVE_W,
+                BRAKE_VALVE_W_LU_VI,
+                BRAKE_VALVE_W_LU_L,
+                BRAKE_VALVE_W_LU_XR,
+                BRAKE_VALVE_K,
+                BRAKE_VALVE_KG,
+                BRAKE_VALVE_KP,
+                BRAKE_VALVE_KSS,
+                BRAKE_VALVE_KKG,
+                BRAKE_VALVE_KKP,
+                BRAKE_VALVE_KKS,
+                BRAKE_VALVE_HIKG1,
+                BRAKE_VALVE_HIKSS,
+                BRAKE_VALVE_HIKP1,
+                BRAKE_VALVE_KE,
+                BRAKE_VALVE_SW,
+                BRAKE_VALVE_ESTED,
+                BRAKE_VALVE_NEST3,
+                BRAKE_VALVE_EST3,
+                BRAKE_VALVE_LST,
+                BRAKE_VALVE_EST4,
+                BRAKE_VALVE_EST3AL2,
+                BRAKE_VALVE_EP1,
+                BRAKE_VALVE_EP2,
+                BRAKE_VALVE_M483,
+                BRAKE_VALVE_CV1_L_TR,
+                BRAKE_VALVE_CV1,
+                BRAKE_VALVE_CV1_R,
+                BRAKE_VALVE_OTHER
+            };
+
         private:
             const std::unordered_map<TBrakeValve, TBrakeSubSystem> BrakeValveToSubsystemMap = {
                     {TBrakeValve::W, TBrakeSubSystem::ss_W},       {TBrakeValve::W_Lu_L, TBrakeSubSystem::ss_W},
@@ -21,36 +64,39 @@ namespace godot {
                     {TBrakeValve::EP1, TBrakeSubSystem::ss_ESt},   {TBrakeValve::KE, TBrakeSubSystem::ss_KE},
                     {TBrakeValve::CV1, TBrakeSubSystem::ss_Dako},  {TBrakeValve::CV1_L_TR, TBrakeSubSystem::ss_Dako},
                     {TBrakeValve::LSt, TBrakeSubSystem::ss_LSt},   {TBrakeValve::EStED, TBrakeSubSystem::ss_LSt}};
+
             // BrakeValve -> BrakeValve
-            int valve = static_cast<int>(TBrakeValve::NoValve);
-            int friction_elements_per_axle = 1;         // NBpA -> NBpA
-            double max_brake_force = 1;                 // MBF -> MaxBrakeForce
-            int valve_size = 0;                         // Size -> BrakeValveSize
-            double track_brake_force = 0.0;             // TBF -> TrackBrakeForce
-            double max_pressure = 0.0;                  // MaxBP -> MaxBrakePress[3]
-            double max_pressure_aux = 0.0;              // MaxLBP -> MaxBrakePress[0]
-            double max_antislip_pressure = 0.0;         // MaxASBP -> MaxBrakePress[4]
-            double max_pressure_tare = 0.0;             // TareMaxBP -> MaxBrakePress[1]
-            double max_pressure_medium = 0.0;           // MedMaxBP -> MaxBrakePress[2]
-            int cylinders_count = 0;                    // BCN -> BrakeCylNo
-            double cylinder_radius = 0.0;               // BCR -> BrakeCylRadius
-            double cylinder_distance = 0.0;             // BCD -> BrakeCylDist
-            double cylinder_spring_force = 0.0;         // BCS -> BrakeCylSpring
-            double slck_adjustment_force = 0.0;         // BSA -> BrakeSlckAdj
-            double cylinder_gear_ratio = 0.0;           // BCM -> BrakeCylMult[0]
-            double cylinder_gear_ratio_low = 0.0;       // BCMlo -> BrakeCylMult[1]
-            double cylinder_gear_ratio_high = 0.0;      // BCMHi -> BrakeCylMult[2]
-            double pipe_pressure_max = 5.0;             // HiPP -> HighPipePress
-            double pipe_pressure_min = 3.5;             // LoPP -> LowPipePress
-            double main_tank_volume = 0.0;              // Vv -> VeselVolume
-            double aux_tank_volume = 0.0;               // BVV -> BrakeVVolume
-            double compressor_pressure_min = 0.0;       // MinCP -> MinCompressor
-            double compressor_pressure_max = 0.0;       // MaxCP -> MaxCompressor
-            double compressor_pressure_cab_b_min = 0.0; // MinCP_B -> MinCompressor_cabB
-            double compressor_pressure_cab_b_max = 0.0; // MaxCP_B -> MaxCompressor_cabB
-            double compressor_speed = 0.0;              // CompressorSpeed -> CompressorSpeed
-            int compressor_power = 0;                   // CompressorPower
-            double rig_effectiveness = 0.0;             // BRE -> BrakeRigEff effectiveness
+            // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
+            TrainBrakeValve valve = static_cast<TrainBrakeValve>(static_cast<int>(TBrakeValve::NoValve));
+
+            int friction_elements_per_axle = 1;                       // NBpA -> NBpA
+            double max_brake_force = 1;                               // MBF -> MaxBrakeForce
+            int valve_size = 0;                                       // Size -> BrakeValveSize
+            double track_brake_force = 0.0;                           // TBF -> TrackBrakeForce
+            double max_pressure = 0.0;                                // MaxBP -> MaxBrakePress[3]
+            double max_pressure_aux = 0.0;                            // MaxLBP -> MaxBrakePress[0]
+            double max_antislip_pressure = 0.0;                       // MaxASBP -> MaxBrakePress[4]
+            double max_pressure_tare = 0.0;                           // TareMaxBP -> MaxBrakePress[1]
+            double max_pressure_medium = 0.0;                         // MedMaxBP -> MaxBrakePress[2]
+            int cylinders_count = 0;                                  // BCN -> BrakeCylNo
+            double cylinder_radius = 0.0;                             // BCR -> BrakeCylRadius
+            double cylinder_distance = 0.0;                           // BCD -> BrakeCylDist
+            double cylinder_spring_force = 0.0;                       // BCS -> BrakeCylSpring
+            double slck_adjustment_force = 0.0;                       // BSA -> BrakeSlckAdj
+            double cylinder_gear_ratio = 0.0;                         // BCM -> BrakeCylMult[0]
+            double cylinder_gear_ratio_low = 0.0;                     // BCMlo -> BrakeCylMult[1]
+            double cylinder_gear_ratio_high = 0.0;                    // BCMHi -> BrakeCylMult[2]
+            double pipe_pressure_max = 5.0;                           // HiPP -> HighPipePress
+            double pipe_pressure_min = 3.5;                           // LoPP -> LowPipePress
+            double main_tank_volume = 0.0;                            // Vv -> VeselVolume
+            double aux_tank_volume = 0.0;                             // BVV -> BrakeVVolume
+            double compressor_pressure_min = 0.0;                     // MinCP -> MinCompressor
+            double compressor_pressure_max = 0.0;                     // MaxCP -> MaxCompressor
+            double compressor_pressure_cab_b_min = 0.0;               // MinCP_B -> MinCompressor_cabB
+            double compressor_pressure_cab_b_max = 0.0;               // MaxCP_B -> MaxCompressor_cabB
+            double compressor_speed = 0.0;                            // CompressorSpeed -> CompressorSpeed
+            CompressorPower compressor_power = COMPRESSOR_POWER_MAIN; // CompressorPower
+            double rig_effectiveness = 0.0;                           // BRE -> BrakeRigEff effectiveness
 
             double brake_level = 0.0;
             bool sw_releaser_enabled = false;
@@ -61,18 +107,10 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-            enum CompressorPower {
-                COMPRESSOR_POWER_MAIN = 0,
-                COMPRESSOR_POWER_UNUSED = 1,
-                COMPRESSOR_POWER_CONVERTER = 2,
-                COMPRESSOR_POWER_ENGINE,
-                COMPRESSOR_POWER_COUPLER1,
-                COMPRESSOR_POWER_COUPLER2
-            };
             static void _bind_methods();
 
-            void set_valve(int p_valve);
-            int get_valve() const;
+            void set_valve(TrainBrakeValve p_valve);
+            TrainBrakeValve get_valve() const;
             void set_friction_elements_per_axle(int p_friction_elements_per_axle);
             int get_friction_elements_per_axle() const;
 
@@ -151,8 +189,8 @@ namespace godot {
             void set_compressor_speed(double p_compressor_speed);
             double get_compressor_speed() const;
 
-            void set_compressor_power(int p_compressor_power);
-            int get_compressor_power() const;
+            void set_compressor_power(CompressorPower p_compressor_power);
+            CompressorPower get_compressor_power() const;
 
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
@@ -168,3 +206,4 @@ namespace godot {
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)
+VARIANT_ENUM_CAST(TrainBrake::TrainBrakeValve)

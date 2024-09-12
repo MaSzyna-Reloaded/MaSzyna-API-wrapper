@@ -177,6 +177,44 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_sw_releaser_enabled"), &TrainBrake::get_sw_releaser_enabled);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "switches/releaser"), "set_sw_releaser_enabled", "get_sw_releaser_enabled");
+
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_CONVERTER);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_ENGINE);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER1);
+        BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER2);
+
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_NO_VALVE);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_W);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_W_LU_VI);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_W_LU_L);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_W_LU_XR);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_K);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KG);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KP);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KSS);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KKG);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KKP);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KKS);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_HIKG1);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_HIKSS);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_HIKP1);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_KE);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_SW);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_ESTED);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_NEST3);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_EST3);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_LST);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_EST4);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_EST3AL2);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_EP1);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_EP2);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_M483);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1_L_TR);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1_R);
+        BIND_ENUM_CONSTANT(BRAKE_VALVE_OTHER);
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -205,8 +243,11 @@ namespace godot {
 
         /* FIXME:: BrakeValve nie jest tylko enumem
          * jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE ustawi BrakeValve=ESt3
+         * byc moze to powinien ogarnąć importer FIZ
          */
-        mover->BrakeValve = static_cast<TBrakeValve>(valve);
+
+        // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
+        mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve));
 
         auto it = BrakeValveToSubsystemMap.find(mover->BrakeValve);
         mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
@@ -275,12 +316,12 @@ namespace godot {
         }
     }
 
-    void TrainBrake::set_valve(const int p_valve) {
+    void TrainBrake::set_valve(const TrainBrakeValve p_valve) {
         valve = p_valve;
         _dirty = true;
     }
 
-    int TrainBrake::get_valve() const {
+    TrainBrake::TrainBrakeValve TrainBrake::get_valve() const {
         return valve;
     }
 
@@ -516,12 +557,12 @@ namespace godot {
         return compressor_speed;
     }
 
-    void TrainBrake::set_compressor_power(const int p_compressor_power) {
+    void TrainBrake::set_compressor_power(const CompressorPower p_compressor_power) {
         compressor_power = p_compressor_power;
         _dirty = true;
     }
 
-    int TrainBrake::get_compressor_power() const {
+    TrainBrake::CompressorPower TrainBrake::get_compressor_power() const {
         return compressor_power;
     }
 

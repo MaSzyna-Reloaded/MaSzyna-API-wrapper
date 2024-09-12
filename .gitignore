@@ -2,6 +2,7 @@
 /demo/.godot/
 /demo/*.import
 /cmake-build-debug/
+/src/gen/
 CMakeLists.txt
 *.o
 *.os

@@ -142,6 +142,22 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "power/power_cable/steam_pressure"), "set_power_cable_steam_pressure",
                 "get_power_cable_steam_pressure");
+
+        BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_GENERATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_ACCUMULATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_CURRENTCOLLECTOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_POWERCABLE);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_HEATER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_MAIN);
+
+        BIND_ENUM_CONSTANT(POWER_TYPE_NONE);
+        BIND_ENUM_CONSTANT(POWER_TYPE_BIO);
+        BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
+        BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
+        BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
     }
 
     void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -152,8 +168,9 @@ namespace godot {
         state["converter_enabled"] = mover->ConverterFlag;
         state["converted_allowed"] = mover->ConverterAllow;
         state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        state["power_source"] = static_cast<int>(mover->EnginePowerSource.SourceType);
-        state["accumulator/recharge_source"] = static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource);
+        state["power_source"] = static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.SourceType));
+        state["accumulator/recharge_source"] =
+                static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource));
         state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
         state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
         state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
@@ -165,7 +182,8 @@ namespace godot {
         state["current_collector/overvoltage_relay"] = mover->EnginePowerSource.CollectorParameters.OVP;
         state["current_collector/required_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.InsetV;
         state["transducer/input_voltage"] = mover->EnginePowerSource.Transducer.InputVoltage;
-        state["power_cable/source"] = static_cast<int>(mover->EnginePowerSource.RPowerCable.PowerTrans);
+        state["power_cable/source"] =
+                static_cast<TrainPowerType>(static_cast<int>(mover->EnginePowerSource.RPowerCable.PowerTrans));
         state["power_cable/steam_pressure"] = mover->EnginePowerSource.RPowerCable.SteamPressure;
     }
 
@@ -174,21 +192,22 @@ namespace godot {
 
         mover->EnginePowerSource.SourceType = static_cast<TPowerSource>(power_source);
 
-        switch (static_cast<TPowerSource>(power_source)) {
-            case TPowerSource::InternalSource:; //@TODO: Implement mover->EnginePowerSource.PowerType =
-                                                // LoadFIZ_PowerDecode
-            case TPowerSource::Transducer: {
+        switch (power_source) {
+            case TrainPowerSource::POWER_SOURCE_INTERNAL:; //@TODO: Implement
+                                                           // mover->EnginePowerSource.PowerType =
+                                                           // LoadFIZ_PowerDecode
+            case TrainPowerSource::POWER_SOURCE_TRANSDUCER: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
-            case TPowerSource::Generator: {
+            case TrainPowerSource::POWER_SOURCE_GENERATOR: {
                 engine_generator &GeneratorParams{mover->EnginePowerSource.EngineGenerator};
                 // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
             }
-            case TPowerSource::Accumulator: {
+            case TrainElectricEngine::POWER_SOURCE_ACCUMULATOR: {
                 mover->EnginePowerSource.RAccumulator.RechargeSource =
-                        static_cast<TPowerSource>(accumulator_recharge_source);
+                        static_cast<TPowerSource>(static_cast<int>(accumulator_recharge_source));
             }
-            case TPowerSource::CurrentCollector: {
+            case TrainElectricEngine::POWER_SOURCE_CURRENTCOLLECTOR: {
                 mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
                 mover->EnginePowerSource.CollectorParameters.MaxH = max_collector_lifting;
                 mover->EnginePowerSource.CollectorParameters.CSW = collector_sliding_width;
@@ -201,14 +220,15 @@ namespace godot {
                 mover->EnginePowerSource.MaxCurrent = max_current;
                 mover->EnginePowerSource.CollectorParameters.InsetV = required_main_switch_voltage;
             }
-            case TPowerSource::PowerCable: {
-                mover->EnginePowerSource.RPowerCable.PowerTrans = static_cast<TPowerType>(power_cable_power_trans);
+            case TrainElectricEngine::POWER_SOURCE_POWERCABLE: {
+                mover->EnginePowerSource.RPowerCable.PowerTrans =
+                        static_cast<TPowerType>(static_cast<int>(power_cable_power_trans));
                 if (mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }
             }
-            case TPowerSource::Heater: // Not finished on MaSzyna's side
-            case TPowerSource::NotDefined:
+            case TrainElectricEngine::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
+            case TrainElectricEngine::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
     }
@@ -236,12 +256,12 @@ namespace godot {
         return compressor_switch_pressed;
     }
 
-    void TrainElectricEngine::set_engine_power_source(const int p_source) {
+    void TrainElectricEngine::set_engine_power_source(const TrainPowerSource p_source) {
         power_source = p_source;
         _dirty = true;
     }
 
-    int TrainElectricEngine::get_engine_power_source() const {
+    TrainElectricEngine::TrainPowerSource TrainElectricEngine::get_engine_power_source() const {
         return power_source;
     }
 
@@ -353,21 +373,21 @@ namespace godot {
         return transducer_input_voltage;
     }
 
-    void TrainElectricEngine::set_accumulator_recharge_source(const int p_source) {
+    void TrainElectricEngine::set_accumulator_recharge_source(const TrainPowerSource p_source) {
         accumulator_recharge_source = p_source;
         _dirty = true;
     }
 
-    int TrainElectricEngine::get_accumulator_recharge_source() const {
+    TrainElectricEngine::TrainPowerSource TrainElectricEngine::get_accumulator_recharge_source() const {
         return accumulator_recharge_source;
     }
 
-    void TrainElectricEngine::set_power_cable_power_source(const int p_source) {
+    void TrainElectricEngine::set_power_cable_power_source(const TrainPowerType p_source) {
         power_cable_power_trans = p_source;
         _dirty = true;
     }
 
-    int TrainElectricEngine::get_power_cable_power_source() const {
+    TrainElectricEngine::TrainPowerType TrainElectricEngine::get_power_cable_power_source() const {
         return power_cable_power_trans;
     }
 

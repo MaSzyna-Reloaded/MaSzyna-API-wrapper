@@ -46,4 +46,12 @@
 			Is the reset pressed
 		</member>
 	</members>
+	<constants>
+		<constant name="BRAKE_WARNINGSIGNAL_SIREN_LOWTONE" value="0" enum="EmergencyBrakeWarningSignal">
+		</constant>
+		<constant name="BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE" value="1" enum="EmergencyBrakeWarningSignal">
+		</constant>
+		<constant name="BRAKE_WARNINGSIGNAL_WHISTLE" value="2" enum="EmergencyBrakeWarningSignal">
+		</constant>
+	</constants>
 </class>

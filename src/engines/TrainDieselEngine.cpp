@@ -40,8 +40,8 @@ namespace godot {
     void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         TrainEngine::_do_fetch_state_from_mover(mover, state);
 
-        double previous_engine_rpm = (double) state.get("engine_rpm", 0.0);
-        bool previous_main_switch = (bool) state.get("main_switch", false);
+        double previous_engine_rpm = (double)state.get("engine_rpm", 0.0);
+        bool previous_main_switch = (bool)state.get("main_switch", false);
         state["main_switch"] = mover->Mains;
         state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
         state["oil_pump_active"] = mover->OilPump.is_active;
@@ -63,12 +63,11 @@ namespace godot {
         } else if(previous_engine_rpm>0.0001 and ((double) state["engine_rpm"]) < 0.0001) {
             emit_signal("engine_stop");
         }*/
-        if(!previous_main_switch && ((bool) state["main_switch"])) {
+        if (!previous_main_switch && ((bool)state["main_switch"])) {
             emit_signal("engine_start");
-        } else if(previous_main_switch && !((bool) state["main_switch"])) {
+        } else if (previous_main_switch && !((bool)state["main_switch"])) {
             emit_signal("engine_stop");
         }
-
     }
 
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
@@ -147,13 +146,13 @@ namespace godot {
 
     void TrainDieselEngine::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
         TrainEngine::_on_command_received(command, p1, p2);
-        if(train_controller_node == nullptr) {
+        if (train_controller_node == nullptr) {
             return;
         }
-        if(command == "oil_pump") {
-            train_controller_node->get_mover()->OilPumpSwitch((bool) p1);
-        } else if(command == "fuel_pump") {
-            train_controller_node->get_mover()->FuelPumpSwitch((bool) p1);
+        if (command == "oil_pump") {
+            train_controller_node->get_mover()->OilPumpSwitch((bool)p1);
+        } else if (command == "fuel_pump") {
+            train_controller_node->get_mover()->FuelPumpSwitch((bool)p1);
         }
     }
 

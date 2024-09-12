@@ -1,7 +1,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
@@ -22,8 +22,8 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "state"), "set_state", "get_state");
 
         ClassDB::bind_method(
-                D_METHOD("receive_command", "command", "p1", "p2"), &TrainController::receive_command, DEFVAL(Variant()),
-                DEFVAL(Variant()));
+                D_METHOD("receive_command", "command", "p1", "p2"), &TrainController::receive_command,
+                DEFVAL(Variant()), DEFVAL(Variant()));
 
         ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainController::get_mover_state);
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
@@ -174,7 +174,7 @@ namespace godot {
         }
 
         const bool new_radio_enabled = state.get("radio_enabled", false);
-        if(radio_enabled != new_radio_enabled) {
+        if (radio_enabled != new_radio_enabled) {
             radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(RADIO_TOGGLED, new_radio_enabled);
         }
@@ -307,6 +307,7 @@ namespace godot {
         internal_state["axles_count"] = mover->NAxles;
 
         /* FIXME: move to TrainPower section? */
+        internal_state["battery_enabled"] = mover->Battery;
         internal_state["battery_voltage"] = mover->BatteryVoltage;
 
         /* FIXME: move to TrainRadio section? */
@@ -339,7 +340,7 @@ namespace godot {
     void TrainController::receive_command(const StringName &command, const Variant &p1, const Variant &p2) {
         _on_command_received(String(command), p1, p2);
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
-        if(mover != nullptr) {
+        if (mover != nullptr) {
             _handle_mover_update();
         }
     }
@@ -348,26 +349,26 @@ namespace godot {
         if (!mover) {
             return;
         }
-        if (command == "battery_enable") {
+        if (command == "battery") {
             mover->BatterySwitch((bool)p1);
-        } else if(command == "main_controller_increase") {
+        } else if (command == "main_controller_increase") {
             UtilityFunctions::print("main_controller_increase !");
             mover->IncMainCtrl(1);
-        } else if(command == "main_controller_decrease") {
+        } else if (command == "main_controller_decrease") {
             UtilityFunctions::print("main_controller_decrease !");
             mover->DecMainCtrl(1);
-        } else if(command == "forwarder_increase") {
+        } else if (command == "forwarder_increase") {
             mover->DirectionForward();
-        } else if(command == "forwarder_decrease") {
+        } else if (command == "forwarder_decrease") {
             mover->DirectionBackward();
-        } else if(command == "radio_channel_increase") {
-            radio_channel = Math::clamp(radio_channel+1, radio_channel_min, radio_channel_max);
-        } else if(command == "radio_channel_decrease") {
-            radio_channel = Math::clamp(radio_channel-1, radio_channel_min, radio_channel_max);
-        } else if(command == "radio_channel_set") {
-            radio_channel = Math::clamp((int) p1, radio_channel_min, radio_channel_max);
-        } else if(command == "radio") {
-            mover->Radio = (bool) p1;
+        } else if (command == "radio_channel_increase") {
+            radio_channel = Math::clamp(radio_channel + 1, radio_channel_min, radio_channel_max);
+        } else if (command == "radio_channel_decrease") {
+            radio_channel = Math::clamp(radio_channel - 1, radio_channel_min, radio_channel_max);
+        } else if (command == "radio_channel_set") {
+            radio_channel = Math::clamp((int)p1, radio_channel_min, radio_channel_max);
+        } else if (command == "radio") {
+            mover->Radio = (bool)p1;
         }
     }
 } // namespace godot

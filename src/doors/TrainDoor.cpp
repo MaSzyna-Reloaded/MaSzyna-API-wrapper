@@ -85,7 +85,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_door_auto_close_enabled"), &TrainDoor::get_door_auto_close_enabled);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "auto_close/enabled"), "set_door_auto_close_enabled", "get_door_auto_close_enabled");
-        //@TODO: Add bool to enable the velocity instead of setting it to -1 in the inspector
         ClassDB::bind_method(
                 D_METHOD("set_door_platform_max_speed", "platform_max_speed"), &TrainDoor::set_door_platform_max_speed);
         ClassDB::bind_method(D_METHOD("get_door_platform_max_speed"), &TrainDoor::get_door_platform_max_speed);
@@ -94,7 +93,7 @@ namespace godot {
                 "get_door_platform_max_speed");
         ClassDB::bind_method(D_METHOD("set_platform_open_method", "platform_open_method"), &TrainDoor::set_platform_open_method);
         ClassDB::bind_method(D_METHOD("get_platform_open_method"), &TrainDoor::get_platform_open_method);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "platform/open_method", PROPERTY_HINT_ENUM, "Shift,Rot"), "set_platform_open_method", "get_platform_open_method");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "platform/open_method", PROPERTY_HINT_ENUM, "Shift,Rotate"), "set_platform_open_method", "get_platform_open_method");
         ClassDB::bind_method(
                 D_METHOD("set_door_platform_max_shift", "platform_max_shift"), &TrainDoor::set_door_platform_max_shift);
         ClassDB::bind_method(D_METHOD("get_door_platform_max_shift"), &TrainDoor::get_door_platform_max_shift);
@@ -120,7 +119,7 @@ namespace godot {
                 &TrainDoor::set_door_permit_light_blinking);
         ClassDB::bind_method(D_METHOD("get_door_permit_light_blinking"), &TrainDoor::get_door_permit_light_blinking);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "permit/light_blinking"), "set_door_permit_light_blinking",
+                PropertyInfo(Variant::INT, "permit/light_blinking", PROPERTY_HINT_ENUM, "ContinuousLight,FlashingOnPermissionWithStep,FlashingOnPermission,FlashingAlways"), "set_door_permit_light_blinking",
                 "get_door_permit_light_blinking");
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -155,13 +154,13 @@ namespace godot {
 
     void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {
         const std::map<std::string, control_t>::iterator open_method_lookup =
-                DoorControls.find(IntToDoorControls[door_open_method]);
+                door_controls.find(int_too_door_controls[door_open_method]);
         mover->Doors.open_control =
-                open_method_lookup != DoorControls.end() ? open_method_lookup->second : control_t::passenger;
+                open_method_lookup != door_controls.end() ? open_method_lookup->second : control_t::passenger;
         const std::map<std::string, control_t>::iterator close_method_lookup =
-                DoorControls.find(IntToDoorControls[door_close_method]);
+                door_controls.find(int_too_door_controls[door_close_method]);
         mover->Doors.close_control =
-                close_method_lookup != DoorControls.end() ? close_method_lookup->second : control_t::passenger;
+                close_method_lookup != door_controls.end() ? close_method_lookup->second : control_t::passenger;
         mover->Doors.auto_duration = door_open_time;
         mover->Doors.auto_velocity = door_auto_close_enabled ? door_auto_close_velocity : -1.0f;
         mover->Doors.auto_include_remote = door_auto_close_remote;
@@ -184,9 +183,9 @@ namespace godot {
         mover->Doors.close_delay = door_close_delay;
         mover->Doors.range = door_max_shift;
         mover->Doors.range_out = door_max_shift_plug;
-        const std::map<std::string, int>::iterator lookup = DoorTypes.find(IntToDoorTypes[door_open_method]);
+        const std::map<std::string, int>::iterator lookup = door_types.find(int_to_door_types[door_open_method]);
         mover->Doors.type =
-            lookup != DoorTypes.end() ?
+            lookup != door_types.end() ?
                 lookup->second :
                 2;
         mover->Doors.has_warning = door_closure_warning;
@@ -202,7 +201,7 @@ namespace godot {
         mover->Doors.voltage = door_voltage;
         mover->Doors.step_rate = platform_speed;
         mover->Doors.step_range = platform_max_shift;
-        if (platform_open_method == 0) {//Equals to Shift
+        if (platform_open_method == platform_animation_type::shift) {
             mover->Doors.step_type = 1;
         }
 

@@ -6,21 +6,41 @@ namespace godot {
     class TrainDoor final : public TrainPart {
             GDCLASS(TrainDoor, TrainPart)
         private:
-            std::map<std::string, control_t> DoorControls {
+            /**
+             * Flashing of the light indicating permission to open the door on the side:
+             * 0 - continuous light
+             * 1 - continuous light when any door is open or any step is extended; flashing only when permission is
+             * given 2 - continuous light when any door is open; flashing when permission is given; the step extension
+             * status is irrelevant 3 - flashing regardless of the door open status and step extension status
+             */
+            enum permit_lights {
+                continuous_light,
+                flashing_on_permission_with_step,
+                flashing_on_permission,
+                flashing_always
+            };
+
+            /**
+             * Platform animation type
+             * 0 - Shift
+             * 1 - Rot
+             */
+            enum platform_animation_type { shift, rotate };
+            std::map<std::string, control_t> door_controls{
                     {"Passenger", control_t::passenger},
                     {"AutomaticCtrl", control_t::autonomous},
                     {"DriverCtrl", control_t::driver},
                     {"Conductor", control_t::conductor},
                     {"Mixed", control_t::mixed}};
-            std::map<int, std::string> IntToDoorControls {
+            std::map<int, std::string> int_too_door_controls{
                     {0, "Passenger"}, {1, "AutomaticCtrl"}, {2, "DriverCtrl"}, {3, "Conductor"}, {4, "Mixed"}};
-            std::map<std::string, int> DoorTypes {
+            std::map<std::string, int> door_types{
                     {"Shift", 1},
                     {"Rotate", 2},
                     {"Fold", 3},
                     {"Plug", 4},
             };
-            std::map<int, std::string> IntToDoorTypes {
+            std::map<int, std::string> int_to_door_types{
                     {1, "Shift"},
                     {2, "Rotate"},
                     {3, "Fold"},
@@ -155,9 +175,8 @@ namespace godot {
              * Platform animation type
              * 0 - Shift
              * 1 - Rot
-             * @TODO: Add enum
              */
-            int platform_open_method = 0;
+            int platform_open_method = platform_animation_type::shift;
 
             /**
              * Rotation angle for fully extended mirror
@@ -173,26 +192,13 @@ namespace godot {
              * Opening doors by passengers requires the train driver's consent
              */
             bool door_needs_permit = false;
-
-            /**
-             * Flashing of the light indicating permission to open the door on the side:
-             * 0 - continuous light
-             * 1 - continuous light when any door is open or any step is extended; flashing only when permission is
-             * given 2 - continuous light when any door is open; flashing when permission is given; the step extension
-             * status is irrelevant 3 - flashing regardless of the door open status and step extension status
-             * @TODO: Add enum
-             */
-            int door_permit_light_blinking = 0;
+            int door_permit_light_blinking = permit_lights::continuous_light;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
             static void _bind_methods();
-            void set_close_control(int p_value);
-            int get_close_control() const;
-            void set_open_control(int p_value);
-            int get_open_control() const;
             void set_door_open_time(float p_value);
             float get_door_open_time() const;
             void set_open_speed(float p_value);

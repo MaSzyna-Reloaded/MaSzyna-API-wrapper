@@ -168,7 +168,6 @@ layout_mode = 2
 label = "CA/SHP"
 type = 1
 controller = NodePath("../../../../SM42_V1")
-state_property = ""
 command = "security_acknowledge"
 
 [node name="Diesel" type="HFlowContainer" parent="UI/MoverSwitches"]
@@ -212,24 +211,15 @@ text = "Electric"
 [node name="Converter" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Converter"
-controller = NodePath("")
-state_property = ""
-command = ""
 
 [node name="Compressor" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Compressor"
-controller = NodePath("")
-state_property = ""
-command = ""
 
 [node name="Main" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Main"
 type = 0
-controller = NodePath("")
-state_property = ""
-command = ""
 
 [node name="Brakes" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
@@ -246,7 +236,6 @@ layout_mode = 2
 label = "Releaser"
 type = 1
 controller = NodePath("../../../../SM42_V1")
-state_property = ""
 command = "brake_releaser"
 
 [node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]

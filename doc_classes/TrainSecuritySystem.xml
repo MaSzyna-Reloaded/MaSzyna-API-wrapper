@@ -58,11 +58,13 @@
 		<signal name="beeping_changed">
 			<param index="0" name="state" type="bool" />
 			<description>
+				Train security system started or stopped beeping
 			</description>
 		</signal>
 		<signal name="blinking_changed">
 			<param index="0" name="state" type="bool" />
 			<description>
+				Train security system started or stopped blinking
 			</description>
 		</signal>
 	</signals>

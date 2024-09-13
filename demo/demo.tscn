@@ -41,7 +41,7 @@ label = "BrakeCyl Pressure"
 [node name="BrakePipePressure" parent="." instance=ExtResource("3_dosfj")]
 position = Vector2(800, 453)
 start_angle = 130.0
-label = "Przewód główny"
+label = "Main pipe"
 
 [node name="UI" type="VBoxContainer" parent="."]
 layout_mode = 1

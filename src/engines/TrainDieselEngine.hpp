@@ -6,7 +6,7 @@
 namespace godot {
     class TrainController;
 
-    class TrainDieselEngine final : public TrainEngine {
+    class TrainDieselEngine : public TrainEngine {
             GDCLASS(TrainDieselEngine, TrainEngine)
         private:
             static void _bind_methods();
@@ -14,8 +14,7 @@ namespace godot {
             double oil_max_pressure = 0.65;  // OilMaxPressure -> OilPump.pressure_maximum
             double traction_force_max = 0.0; // Ftmax -> Ftmax
 
-            bool sw_fuel_pump_enabled = false;
-            bool sw_oil_pump_enabled = false;
+            TypedArray<Array> wwlist;
 
         protected:
             TEngineType get_engine_type() override;
@@ -33,11 +32,10 @@ namespace godot {
             double get_traction_force_max() const;
             void set_traction_force_max(double value);
 
-            bool get_fuel_pump_enabled() const;
-            void set_fuel_pump_enabled(bool p_state);
+            TypedArray<Array> get_wwlist();
+            void set_wwlist(const TypedArray<Array> p_wwlist);
 
-            bool get_oil_pump_enabled() const;
-            void set_oil_pump_enabled(bool p_state);
+            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
 
             TrainDieselEngine();
             ~TrainDieselEngine() override = default;

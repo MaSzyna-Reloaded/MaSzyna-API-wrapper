@@ -9,8 +9,19 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="switches/main" type="bool" setter="set_main_switch_pressed" getter="get_main_switch_pressed" default="false">
-			Is the main switch on
+		<member name="motor_param_table" type="Dictionary[]" setter="set_motor_param_table" getter="get_motor_param_table" default="[]">
+			[code]MotorParamTable[/code]
+			FIXME: original FIZ file has multiple MotorParamTable sections depending of the engine type. Their values are parsed individually. This property should be a part of a specific train engine.
 		</member>
 	</members>
+	<signals>
+		<signal name="engine_start">
+			<description>
+			</description>
+		</signal>
+		<signal name="engine_stop">
+			<description>
+			</description>
+		</signal>
+	</signals>
 </class>

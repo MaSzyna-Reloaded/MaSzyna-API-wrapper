@@ -9,10 +9,6 @@ namespace godot {
     TrainBrake::TrainBrake() = default;
 
     void TrainBrake::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_brake_level"), &TrainBrake::set_brake_level);
-        ClassDB::bind_method(D_METHOD("get_brake_level"), &TrainBrake::get_brake_level);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "brake_level"), "set_brake_level", "get_brake_level");
-
         ClassDB::bind_method(D_METHOD("set_valve"), &TrainBrake::set_valve);
         ClassDB::bind_method(D_METHOD("get_valve"), &TrainBrake::get_valve);
 
@@ -173,11 +169,6 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "rig_effectiveness"), "set_rig_effectiveness", "get_rig_effectiveness");
 
-        ClassDB::bind_method(D_METHOD("set_sw_releaser_enabled"), &TrainBrake::set_sw_releaser_enabled);
-        ClassDB::bind_method(D_METHOD("get_sw_releaser_enabled"), &TrainBrake::get_sw_releaser_enabled);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/releaser"), "set_sw_releaser_enabled", "get_sw_releaser_enabled");
-
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_CONVERTER);
@@ -223,6 +214,9 @@ namespace godot {
         state["brake_pipe_pressure"] = mover->PipeBrakePress;
         state["pipe_pressure"] = mover->PipePress;
         state["brake_tank_volume"] = mover->Volume;
+        state["brake_controller_position"] = mover->fBrakeCtrlPos;
+        state["brake_controller_min"] = mover->Handle->GetPos(bh_MIN);
+        state["brake_controller_max"] = mover->Handle->GetPos(bh_MAX);
     }
     void TrainBrake::_do_update_internal_mover(TMoverParameters *mover) {
         /* logika z Mover::LoadFiz_Brake */
@@ -304,17 +298,7 @@ namespace godot {
         mover->CompressorPower = compressor_power;
     }
 
-    void TrainBrake::_do_process_mover(TMoverParameters *mover, double delta) {
-        /* update the brake level state */
-        if (mover->Hamulec != nullptr) {
-            if (mover->fBrakeCtrlPos != brake_level) {
-                mover->BrakeLevelSet(brake_level);
-            }
-            if (sw_releaser_enabled != mover->Hamulec->Releaser()) {
-                mover->BrakeReleaser(sw_releaser_enabled ? 1 : 0);
-            }
-        }
-    }
+    void TrainBrake::_do_process_mover(TMoverParameters *mover, double delta) {}
 
     void TrainBrake::set_valve(const TrainBrakeValve p_valve) {
         valve = p_valve;
@@ -575,20 +559,24 @@ namespace godot {
         return rig_effectiveness;
     }
 
-    void TrainBrake::set_brake_level(const double p_value) {
-        brake_level = p_value >= 0.0 ? p_value : 0.0;
+    void TrainBrake::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        TrainPart::_on_command_received(command, p1, p2);
+        if (train_controller_node == nullptr) {
+            return;
+        }
+        TMoverParameters *mover = train_controller_node->get_mover();
+        if (mover->Hamulec == nullptr) {
+            return;
+        }
+        if (command == "brake_releaser") {
+            mover->BrakeReleaser((bool)p1 ? 1 : 0);
+        } else if (command == "brake_level_set") {
+            UtilityFunctions::print("brake_level_set ", (float)p1);
+            mover->BrakeLevelSet((float)p1);
+        } else if (command == "brake_level_increase") {
+            mover->IncBrakeLevel();
+        } else if (command == "brake_level_decrease") {
+            mover->DecBrakeLevel();
+        }
     }
-
-    double TrainBrake::get_brake_level() {
-        return brake_level;
-    }
-
-    void TrainBrake::set_sw_releaser_enabled(bool p_value) {
-        sw_releaser_enabled = p_value;
-    }
-
-    bool TrainBrake::get_sw_releaser_enabled() {
-        return sw_releaser_enabled;
-    }
-
 } // namespace godot

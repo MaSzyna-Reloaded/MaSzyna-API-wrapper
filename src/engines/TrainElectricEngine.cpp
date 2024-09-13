@@ -7,13 +7,6 @@ namespace godot {
     TrainElectricEngine::TrainElectricEngine() = default;
 
     void TrainElectricEngine::_bind_methods() {
-        ClassDB::bind_method(
-                D_METHOD("set_compressor_switch_pressed"), &TrainElectricEngine::set_compressor_switch_pressed);
-        ClassDB::bind_method(
-                D_METHOD("get_compressor_switch_pressed"), &TrainElectricEngine::get_compressor_switch_pressed);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/compressor"), "set_compressor_switch_pressed",
-                "get_compressor_switch_pressed");
 
         ClassDB::bind_method(
                 D_METHOD("set_converter_switch_pressed"), &TrainElectricEngine::set_converter_switch_pressed);

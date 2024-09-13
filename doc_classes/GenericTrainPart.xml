@@ -5,6 +5,15 @@
 	</brief_description>
 	<description>
 		Generic TrainPart
+		This class allows to implement a custom TrainPart in GDScript.
+		You need to implement [method _get_train_part_state] returning a [Dictionary] of the actual state of this train part.
+		You also need to implement [method _process_train_part] if you need to compute a custom behaviour of this train part. Note that [method _process_train_part] is an equivalent of a pure [method _process] surrounded by simple condition:
+		[code]
+		func _process(delta):
+		    if enabled:
+		        _process_train_part(delta)
+		[/code]
+		NOTE: it is safer to stay with overriding [method _process_train_part] for a future compatibility.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -12,13 +21,13 @@
 		<method name="get_train_controller_node">
 			<return type="TrainController" />
 			<description>
-				Returns instance of a TrainController
+				Returns bound [TrainController] instance (may be null)
 			</description>
 		</method>
 		<method name="get_train_state">
 			<return type="Dictionary" />
 			<description>
-				Returns dictionary with data of state for specific train part
+				Returns a [Dictionary] with a current state of the [GenericPart]
 			</description>
 		</method>
 	</methods>

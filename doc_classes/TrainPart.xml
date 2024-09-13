@@ -21,34 +21,47 @@
 				Returns dictionary ov properties with values from iternal mover
 			</description>
 		</method>
+		<method name="on_command_received">
+			<return type="void" />
+			<param index="0" name="_unnamed_arg0" type="String" />
+			<param index="1" name="_unnamed_arg1" type="Variant" />
+			<param index="2" name="_unnamed_arg2" type="Variant" />
+			<description>
+				Handles a command received by [TrainController]
+			</description>
+		</method>
 		<method name="update_mover">
 			<return type="void" />
 			<description>
-				Performs update on an iternal mover
+				Performs update on an iternal mover of [TrainController]
 			</description>
 		</method>
 	</methods>
 	<members>
 		<member name="enabled" type="bool" setter="set_enabled" getter="get_enabled" default="true">
+			If true, this train part will be processed by [TrainController] during updating and fetching a mover's state.
 		</member>
 	</members>
 	<signals>
 		<signal name="config_changed">
 			<description>
-				Emitted when the config has changed
+				Emitted when the internal config has changed
 			</description>
 		</signal>
 		<signal name="enable_changed">
 			<param index="0" name="enabled" type="bool" />
 			<description>
+				Train part status was enabled or disabled
 			</description>
 		</signal>
 		<signal name="train_part_disabled">
 			<description>
+				Train part becomes disabled
 			</description>
 		</signal>
 		<signal name="train_part_enabled">
 			<description>
+				Train part becomes enabled
 			</description>
 		</signal>
 	</signals>

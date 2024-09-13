@@ -6,33 +6,35 @@
 #include "brakes/TrainBrake.hpp"
 #include "core/TrainController.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/TrainPart.hpp"
+#include "engines/TrainDieselElectricEngine.hpp"
 #include "doors/TrainDoor.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
-#include "core/TrainPart.hpp"
-#include "core/TrainSwitch.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 
 using namespace godot;
 
 void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
-    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
-        return;
+    if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
+        // GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
     }
 
-    GDREGISTER_ABSTRACT_CLASS(TrainPart);
-    GDREGISTER_CLASS(GenericTrainPart);
-    GDREGISTER_CLASS(TrainBrake);
-    GDREGISTER_CLASS(TrainDoor);
-    GDREGISTER_ABSTRACT_CLASS(TrainEngine);
-    GDREGISTER_CLASS(TrainDieselEngine);
-    GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
-    GDREGISTER_CLASS(TrainElectricSeriesEngine);
-    GDREGISTER_CLASS(TrainController);
-    GDREGISTER_ABSTRACT_CLASS(TrainSwitch);
-    GDREGISTER_CLASS(TrainSecuritySystem);
+    if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        GDREGISTER_ABSTRACT_CLASS(TrainPart);
+        GDREGISTER_CLASS(GenericTrainPart);
+        GDREGISTER_CLASS(TrainBrake);
+        GDREGISTER_CLASS(TrainDoor);
+        GDREGISTER_ABSTRACT_CLASS(TrainEngine);
+        GDREGISTER_CLASS(TrainDieselEngine);
+        GDREGISTER_CLASS(TrainDieselElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
+        GDREGISTER_CLASS(TrainElectricSeriesEngine);
+        GDREGISTER_CLASS(TrainController);
+        GDREGISTER_CLASS(TrainSecuritySystem);
+    }
 }
 
 void uninitialize_libmaszyna_module(ModuleInitializationLevel p_level) {

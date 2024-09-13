@@ -1,6 +1,5 @@
 #pragma once
 #include "../core/TrainPart.hpp"
-#include "example.h"
 
 namespace godot {
     class TrainController;

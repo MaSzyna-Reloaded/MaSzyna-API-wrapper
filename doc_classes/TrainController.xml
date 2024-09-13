@@ -80,6 +80,11 @@
 				Train power state changed
 			</description>
 		</signal>
+		<signal name="radio_channel_changed">
+			<param index="0" name="channel" type="int" />
+			<description>
+			</description>
+		</signal>
 		<signal name="radio_toggled">
 			<param index="0" name="is_enabled" type="bool" />
 			<description>

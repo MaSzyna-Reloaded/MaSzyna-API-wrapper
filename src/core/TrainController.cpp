@@ -15,6 +15,7 @@ namespace godot {
     const char *TrainController::POWER_CHANGED_SIGNAL = "power_changed";
     const char *TrainController::COMMAND_RECEIVED = "command_received";
     const char *TrainController::RADIO_TOGGLED = "radio_toggled";
+    const char *TrainController::RADIO_CHANNEL_CHANGED = "radio_channel_changed";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_state"), &TrainController::set_state);
@@ -58,6 +59,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(POWER_CHANGED_SIGNAL, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(RADIO_TOGGLED, PropertyInfo(Variant::BOOL, "is_enabled")));
+        ADD_SIGNAL(MethodInfo(RADIO_CHANNEL_CHANGED, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(
                 COMMAND_RECEIVED, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -134,6 +136,7 @@ namespace godot {
         UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
 
         emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
+        emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
     }
 
     void TrainController::_update_mover_config_if_dirty() {
@@ -177,6 +180,12 @@ namespace godot {
         if (prev_radio_enabled != new_radio_enabled) {
             prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(RADIO_TOGGLED, new_radio_enabled);
+        }
+
+        const int new_radio_channel = state.get("radio_channel", 0);
+        if (prev_radio_channel != new_radio_channel) {
+            prev_radio_channel = new_radio_channel; // FIXME: I don't like this
+            emit_signal(RADIO_CHANNEL_CHANGED, new_radio_channel);
         }
     }
 

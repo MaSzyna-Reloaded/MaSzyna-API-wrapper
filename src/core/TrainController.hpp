@@ -33,6 +33,7 @@ namespace godot {
 
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
+            int prev_radio_channel = radio_channel;
 
             String axle_arrangement = "";
 
@@ -59,6 +60,7 @@ namespace godot {
             static const char *POWER_CHANGED_SIGNAL;
             static const char *COMMAND_RECEIVED;
             static const char *RADIO_TOGGLED;
+            static const char *RADIO_CHANNEL_CHANGED;
 
             void _process(double delta) override;
             void _ready() override;

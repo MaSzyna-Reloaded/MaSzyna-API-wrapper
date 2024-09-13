@@ -5,7 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://1v37c7y4cwcx" path="res://gauge.tscn" id="3_dosfj"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://debug_panel.tscn" id="3_p4ciw"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://debug_switch.tscn" id="4_xvhus"]
-[ext_resource type="Script" path="res://powered_train_part.gd" id="6_b3mjp"]
+[ext_resource type="Script" path="res://powered_train_part_example.gd" id="6_2wkl6"]
 
 [node name="Demo" type="Control"]
 layout_mode = 3
@@ -243,8 +243,8 @@ command = "brake_releaser"
 [node name="TestowySilnikElektryczny" parent="SM42_V1" index="1"]
 enabled = false
 
-[node name="TestPoweredTrainPart" type="GenericTrainPart" parent="SM42_V1"]
-script = ExtResource("6_b3mjp")
+[node name="PoweredTrainPart" type="GenericTrainPart" parent="SM42_V1"]
+script = ExtResource("6_2wkl6")
 
 [connection signal="button_up" from="UI/MoverSwitches/General/MainIncrease" to="." method="_on_main_increase_button_up"]
 [connection signal="button_up" from="UI/MoverSwitches/General/MainDecrease" to="." method="_on_main_decrease_button_up"]

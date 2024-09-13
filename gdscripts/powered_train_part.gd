@@ -13,6 +13,7 @@ func _process_train_part(delta):
         call("_process_powered", delta)
     elif not power_avail and has_method("_process_unpowered"):
         call("_process_unpowered", delta)
+    call("_process_regardless_of_power", delta)
 
 
 ## Will be called when low power is available (24V or 110V)
@@ -22,4 +23,9 @@ func _process_powered(delta):
 
 ## Will be called when low power is not available (no 24V nor 110V)
 func _process_unpowered(delta):
+    pass
+
+
+## Will be called regardless of low power supply
+func _process_regardless_of_power(delta):
     pass

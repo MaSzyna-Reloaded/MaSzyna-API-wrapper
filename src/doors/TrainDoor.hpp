@@ -5,6 +5,7 @@ namespace godot {
     class TrainController;
     class TrainDoor final : public TrainPart {
             GDCLASS(TrainDoor, TrainPart)
+
         private:
             std::map<std::string, control_t> door_controls{
                     {"Passenger", control_t::passenger},
@@ -36,26 +37,16 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-            /**
-             * Flashing of the light indicating permission to open the door on the side:
-             * 0 - continuous light
-             * 1 - continuous light when any door is open or any step is extended; flashing only when permission is
-             * given 2 - continuous light when any door is open; flashing when permission is given; the step extension
-             * status is irrelevant 3 - flashing regardless of the door open status and step extension status
-             */
+
             enum PermitLights {
-                CONTINUOUS_LIGHT,
-                FLASHING_ON_PERMISSION_WITH_STEP,
-                FLASHING_ON_PERMISSION,
-                FLASHING_ALWAYS
+                PERMIT_LIGHT_CONTINUOUS_LIGHT,
+                PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,
+                PERMIT_LIGHT_FLASHING_ON_PERMISSION,
+                PERMIT_LIGHT_FLASHING_ALWAYS
             };
 
-            /**
-             * Platform animation type
-             * 0 - Shift
-             * 1 - Rot
-             */
-            enum PlatformAnimationType { SHIFT, ROTATE };
+            enum PlatformAnimationType { PLATFORM_ANIMATION_TYPE_SHIFT, PLATFORM_ANIMATION_TYPE_ROTATE };
+
             static void _bind_methods();
             void set_door_open_time(float p_value);
             float get_door_open_time() const;
@@ -250,14 +241,14 @@ namespace godot {
              * Opening doors by passengers requires the train driver's consent
              */
             bool door_needs_permit = false;
-            PermitLights door_permit_light_blinking = PermitLights::CONTINUOUS_LIGHT;
+            PermitLights door_permit_light_blinking = PermitLights::PERMIT_LIGHT_CONTINUOUS_LIGHT;
 
             /**
              * Platform animation type
              * 0 - Shift
              * 1 - Rot
              */
-            PlatformAnimationType platform_open_method = PlatformAnimationType::SHIFT;
+            PlatformAnimationType platform_open_method = PlatformAnimationType::PLATFORM_ANIMATION_TYPE_SHIFT;
 
             TrainDoor();
             ~TrainDoor() override = default;

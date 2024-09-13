@@ -77,7 +77,7 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_process_mover(TMoverParameters *mover, const double delta) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
             void set_converter_switch_pressed(bool p_state);

@@ -121,6 +121,14 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::INT, "permit/light_blinking", PROPERTY_HINT_ENUM, "ContinuousLight,FlashingOnPermissionWithStep,FlashingOnPermission,FlashingAlways"), "set_door_permit_light_blinking",
                 "get_door_permit_light_blinking");
+
+        BIND_ENUM_CONSTANT(PermitLights::CONTINUOUS_LIGHT);
+        BIND_ENUM_CONSTANT(PermitLights::FLASHING_ON_PERMISSION_WITH_STEP);
+        BIND_ENUM_CONSTANT(PermitLights::FLASHING_ON_PERMISSION);
+        BIND_ENUM_CONSTANT(PermitLights::FLASHING_ALWAYS);
+
+        BIND_ENUM_CONSTANT(PlatformAnimationType::SHIFT);
+        BIND_ENUM_CONSTANT(PlatformAnimationType::ROTATE);
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         state["door/open_control"] = mover->Doors.open_control;
@@ -201,7 +209,7 @@ namespace godot {
         mover->Doors.voltage = door_voltage;
         mover->Doors.step_rate = platform_speed;
         mover->Doors.step_range = platform_max_shift;
-        if (platform_open_method == platform_animation_type::shift) {
+        if (platform_open_method == PlatformAnimationType::SHIFT) {
             mover->Doors.step_type = 1;
         }
 
@@ -409,7 +417,7 @@ namespace godot {
         return platform_speed;
     }
 
-    void TrainDoor::set_platform_open_method(const int p_shift_method) {
+    void TrainDoor::set_platform_open_method(const PlatformAnimationType p_shift_method) {
         platform_open_method = p_shift_method;
         _dirty = true;
     }
@@ -445,7 +453,7 @@ namespace godot {
         return door_needs_permit;
     }
 
-    void TrainDoor::set_door_permit_light_blinking(const int p_blinking_mode) {
+    void TrainDoor::set_door_permit_light_blinking(const PermitLights p_blinking_mode) {
         door_permit_light_blinking = p_blinking_mode;
         _dirty = true;
     }

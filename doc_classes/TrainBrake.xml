@@ -10,71 +10,169 @@
 	</tutorials>
 	<members>
 		<member name="brake_force/max" type="float" setter="set_max_brake_force" getter="get_max_brake_force" default="1.0">
-			Sets maximum braking force to the selected value
+			(MBF) Maximum braking force to the selected value
 		</member>
 		<member name="brake_force/track" type="float" setter="set_track_brake_force" getter="get_track_brake_force" default="0.0">
+			(TBF)
 		</member>
 		<member name="brake_level" type="float" setter="set_brake_level" getter="get_brake_level" default="0.0">
 		</member>
-		<member name="compressor/power" type="int" setter="set_compressor_power" getter="get_compressor_power" default="0">
+		<member name="compressor/power" type="int" setter="set_compressor_power" getter="get_compressor_power" enum="TrainBrake.CompressorPower" default="0">
+			(CompressorPower)
 		</member>
 		<member name="compressor/pressure_cab_b_max" type="float" setter="set_compressor_pressure_cab_b_max" getter="get_compressor_pressure_cab_b_max" default="0.0">
+			(MaxCP_B)
 		</member>
 		<member name="compressor/pressure_cab_b_min" type="float" setter="set_compressor_pressure_cab_b_min" getter="get_compressor_pressure_cab_b_min" default="0.0">
+			(MinCP_B)
 		</member>
 		<member name="compressor/pressure_max" type="float" setter="set_compressor_pressure_max" getter="get_compressor_pressure_max" default="0.0">
+			(MaxCP)
 		</member>
 		<member name="compressor/pressure_min" type="float" setter="set_compressor_pressure_min" getter="get_compressor_pressure_min" default="0.0">
+			(MinCP)
 		</member>
 		<member name="compressor/speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed" default="0.0">
+			(CompressorSpeed)
 		</member>
 		<member name="cylinders/count" type="int" setter="set_cylinders_count" getter="get_cylinders_count" default="0">
+			(BCN)
 		</member>
 		<member name="cylinders/distance" type="float" setter="set_cylinder_distance" getter="get_cylinder_distance" default="0.0">
+			(BCD)
 		</member>
 		<member name="cylinders/gear_ratio" type="float" setter="set_cylinder_gear_ratio" getter="get_cylinder_gear_ratio" default="0.0">
+			(BCM)
 		</member>
 		<member name="cylinders/gear_ratio_high" type="float" setter="set_cylinder_gear_ratio_high" getter="get_cylinder_gear_ratio_high" default="0.0">
+			(BCMHi)
 		</member>
 		<member name="cylinders/gear_ratio_low" type="float" setter="set_cylinder_gear_ratio_low" getter="get_cylinder_gear_ratio_low" default="0.0">
+			(BCMLo)
 		</member>
 		<member name="cylinders/radius" type="float" setter="set_cylinder_radius" getter="get_cylinder_radius" default="0.0">
+			(BCR)
 		</member>
 		<member name="cylinders/spring_force" type="float" setter="set_cylinder_spring_force" getter="get_cylinder_spring_force" default="0.0">
+			(BCS)
 		</member>
 		<member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle" getter="get_friction_elements_per_axle" default="1">
+			(NBpA)
 		</member>
 		<member name="max_pressures/antislip" type="float" setter="set_max_antislip_pressure" getter="get_max_antislip_pressure" default="0.0">
+			(MaxASBP)
 		</member>
 		<member name="max_pressures/aux" type="float" setter="set_max_pressure_aux" getter="get_max_pressure_aux" default="0.0">
 		</member>
 		<member name="max_pressures/cylinder" type="float" setter="set_max_pressure" getter="get_max_pressure" default="0.0">
+			(MaxBP)
 		</member>
 		<member name="max_pressures/medium" type="float" setter="set_max_pressure_medium" getter="get_max_pressure_medium" default="0.0">
+			(MedMaxBP)
+
 		</member>
 		<member name="max_pressures/tare" type="float" setter="set_max_pressure_tare" getter="get_max_pressure_tare" default="0.0">
+			(TareMaxBP)
 		</member>
 		<member name="pipe/pressure_max" type="float" setter="set_pipe_pressure_max" getter="get_pipe_pressure_max" default="5.0">
+			(HiPP)
 		</member>
 		<member name="pipe/pressure_min" type="float" setter="set_pipe_pressure_min" getter="get_pipe_pressure_min" default="3.5">
+			(LoPP)
 		</member>
 		<member name="rig_effectiveness" type="float" setter="set_rig_effectiveness" getter="get_rig_effectiveness" default="0.0">
+			(BRE)
 		</member>
 		<member name="slck/adjustment_force" type="float" setter="set_slck_adjustment_force" getter="get_slck_adjustment_force" default="0.0">
+			(BSA)
 		</member>
 		<member name="switches/releaser" type="bool" setter="set_sw_releaser_enabled" getter="get_sw_releaser_enabled" default="false">
 		</member>
 		<member name="tank/volume_aux" type="float" setter="set_aux_tank_volume" getter="get_aux_tank_volume" default="0.0">
+			(BVV)
 		</member>
 		<member name="tank/volume_main" type="float" setter="set_main_tank_volume" getter="get_main_tank_volume" default="0.0">
+			(Vv)
 		</member>
 		<member name="valve/est_size" type="int" setter="set_valve_size" getter="get_valve_size" default="0">
-			Size of the ESt family camshaft valve
+			(Size) Size of the ESt family camshaft valve
 		</member>
-		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" default="0">
-			/ W / W_Lu_VI / W_Lu_L / W_Lu_XR / K / Kg / Kp / Kss / Kkg / Kkp / Kks / Hikg1 / Hikss / Hikp1 / KE / SW /
-			            EStED / NESt3 / ESt3 / LSt / ESt4 / ESt3AL2 / EP1 / EP2 / M483 / CV1_L_TR / CV1 / CV1_R / Other) - Subtype
-			            of combined brake / type of brake valve
+		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" enum="TrainBrake.TrainBrakeValve" default="0">
+			(BrakeValve) Type of a brake valve
 		</member>
 	</members>
+	<constants>
+		<constant name="COMPRESSOR_POWER_MAIN" value="0" enum="CompressorPower">
+		</constant>
+		<constant name="COMPRESSOR_POWER_UNUSED" value="1" enum="CompressorPower">
+		</constant>
+		<constant name="COMPRESSOR_POWER_CONVERTER" value="2" enum="CompressorPower">
+		</constant>
+		<constant name="COMPRESSOR_POWER_ENGINE" value="3" enum="CompressorPower">
+		</constant>
+		<constant name="COMPRESSOR_POWER_COUPLER1" value="4" enum="CompressorPower">
+		</constant>
+		<constant name="COMPRESSOR_POWER_COUPLER2" value="5" enum="CompressorPower">
+		</constant>
+		<constant name="BRAKE_VALVE_NO_VALVE" value="0" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_W" value="1" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_W_LU_VI" value="2" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_W_LU_L" value="3" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_W_LU_XR" value="4" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_K" value="5" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KG" value="6" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KP" value="7" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KSS" value="8" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KKG" value="9" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KKP" value="10" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KKS" value="11" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_HIKG1" value="12" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_HIKSS" value="13" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_HIKP1" value="14" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_KE" value="15" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_SW" value="16" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_ESTED" value="17" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_NEST3" value="18" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_EST3" value="19" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_LST" value="20" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_EST4" value="21" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_EST3AL2" value="22" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_EP1" value="23" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_EP2" value="24" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_M483" value="25" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_CV1_L_TR" value="26" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_CV1" value="27" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_CV1_R" value="28" enum="TrainBrakeValve">
+		</constant>
+		<constant name="BRAKE_VALVE_OTHER" value="29" enum="TrainBrakeValve">
+		</constant>
+	</constants>
 </class>

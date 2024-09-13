@@ -14,3 +14,5 @@ let g:ale_linters = {
 
 set colorcolumn=120
 set textwidth=120
+
+autocmd FileType xml setlocal shiftwidth=4 noexpandtab

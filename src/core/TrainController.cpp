@@ -310,7 +310,7 @@ namespace godot {
 
         /* FIXME: move to TrainRadio section? */
         internal_state["radio_enabled"] = mover->Radio;
-        internal_state["radio_chanel"] = radio_channel;
+        internal_state["radio_channel"] = radio_channel;
 
         /* FIXME: move to TrainPower section */
         internal_state["power24_voltage"] = mover->Power24vVoltage;

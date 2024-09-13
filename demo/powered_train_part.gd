@@ -1,6 +1,10 @@
 extends GenericTrainPart
 class_name PoweredTrainPart
 
+## Example of a customization of based on GenericTrainPart interface.
+## PoweredTrainPart will call [method _process_powered] when low power is
+## available in a train (24V or 110V), [method _process_unpowered] otherwise.
+
 
 func _process_train_part(delta):
     var state = get_train_state()

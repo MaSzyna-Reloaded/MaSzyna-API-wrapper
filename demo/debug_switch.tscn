@@ -7,9 +7,6 @@ offset_right = 106.0
 offset_bottom = 24.0
 size_flags_horizontal = 3
 script = ExtResource("1_7hfja")
-controller = null
-state_property = null
-command = null
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 2

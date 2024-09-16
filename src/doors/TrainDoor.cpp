@@ -129,6 +129,13 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(PLATFORM_ANIMATION_TYPE_SHIFT);
         BIND_ENUM_CONSTANT(PLATFORM_ANIMATION_TYPE_ROTATE);
+
+        BIND_ENUM_CONSTANT(DOOR_SIDE_RIGHT)
+        BIND_ENUM_CONSTANT(DOOR_SIDE_LEFT)
+
+        BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_LOCAL)
+        BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_UNIT)
+        BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_CONSIST)
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         state["door/open_control"] = mover->Doors.open_control;
@@ -158,7 +165,10 @@ namespace godot {
         state["door/permit_light_blinking"] = mover->DoorsPermitLightBlinking;
     }
 
-    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {}
+    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {
+        //@TODO: Add switch for side, handle state and notify properly
+        mover->OperateDoors(static_cast<side>(door_side), true, static_cast<range_t>(notification_range));
+    }
 
     void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {
         const std::map<std::string, control_t>::iterator open_method_lookup =

@@ -37,7 +37,6 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-
             enum PermitLights {
                 PERMIT_LIGHT_CONTINUOUS_LIGHT,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,
@@ -46,6 +45,10 @@ namespace godot {
             };
 
             enum PlatformAnimationType { PLATFORM_ANIMATION_TYPE_SHIFT, PLATFORM_ANIMATION_TYPE_ROTATE };
+
+            enum DoorSide { DOOR_SIDE_RIGHT, DOOR_SIDE_LEFT };
+
+            enum NotificationRange { NOTIFICATION_RANGE_LOCAL, NOTIFICATION_RANGE_UNIT, NOTIFICATION_RANGE_CONSIST };
 
             static void _bind_methods();
             void set_door_open_time(float p_value);
@@ -250,6 +253,15 @@ namespace godot {
              */
             PlatformAnimationType platform_open_method = PlatformAnimationType::PLATFORM_ANIMATION_TYPE_SHIFT;
 
+            /**
+             * Describes side where the doors are placed
+             */
+            DoorSide door_side = DoorSide::DOOR_SIDE_LEFT;
+
+            /**
+             * @TODO: Maybe move to TrainController since it seems to be more generic property?
+             */
+            NotificationRange notification_range = NotificationRange::NOTIFICATION_RANGE_UNIT;
             TrainDoor();
             ~TrainDoor() override = default;
     };
@@ -257,3 +269,5 @@ namespace godot {
 
 VARIANT_ENUM_CAST(TrainDoor::PermitLights)
 VARIANT_ENUM_CAST(TrainDoor::PlatformAnimationType)
+VARIANT_ENUM_CAST(TrainDoor::DoorSide)
+VARIANT_ENUM_CAST(TrainDoor::NotificationRange)

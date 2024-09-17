@@ -51,6 +51,7 @@ namespace godot {
             enum NotificationRange { NOTIFICATION_RANGE_LOCAL, NOTIFICATION_RANGE_UNIT, NOTIFICATION_RANGE_CONSIST };
 
             static void _bind_methods();
+            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
             void set_door_open_time(float p_value);
             float get_door_open_time() const;
             void set_open_speed(float p_value);

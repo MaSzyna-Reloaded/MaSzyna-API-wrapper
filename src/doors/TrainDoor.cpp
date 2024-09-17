@@ -3,7 +3,7 @@
 namespace godot {
     TrainDoor::TrainDoor() = default;
 
-    void TrainDoor::_bind_methods() {;
+    void TrainDoor::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_door_open_time", "open_time"), &TrainDoor::set_door_open_time);
         ClassDB::bind_method(D_METHOD("get_door_open_time"), &TrainDoor::get_door_open_time);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open_time"), "set_door_open_time", "get_door_open_time");
@@ -165,9 +165,19 @@ namespace godot {
         state["door/permit_light_blinking"] = mover->DoorsPermitLightBlinking;
     }
 
-    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {
-        //@TODO: Add switch for side, handle state and notify properly
-        mover->OperateDoors(static_cast<side>(door_side), true, static_cast<range_t>(notification_range));
+    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) { }
+
+    void TrainDoor::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        TrainPart::_on_command_received(command, p1, p2);
+        if (train_controller_node == nullptr) {
+            return;
+        }
+
+        TMoverParameters *mover = train_controller_node->get_mover();
+        std::cout << command.utf8().get_data() << std::endl;
+        if (command == "doors") {
+            mover->OperateDoors(static_cast<side>(door_side), true, static_cast<range_t>(notification_range));
+        }
     }
 
     void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {

@@ -26,8 +26,4 @@ namespace libmaszyna {
         template<typename EnumType>
         std::string enum_to_string();
     }
-    class Utils {
-        public:
-            static std::vector<std::string> split(const std::string &s, const std::string &delimiter);
-    };
 } // namespace libmaszyna

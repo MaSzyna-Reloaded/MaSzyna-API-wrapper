@@ -9,38 +9,19 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="forwarder_decrease">
-			<return type="void" />
-			<description>
-			</description>
-		</method>
-		<method name="forwarder_increase">
-			<return type="void" />
-			<description>
-			</description>
-		</method>
 		<method name="get_mover_state">
 			<return type="Dictionary" />
 			<description>
 				Returns dictionary of values from iternal mover
 			</description>
 		</method>
-		<method name="main_controller_decrease">
+		<method name="receive_command">
 			<return type="void" />
+			<param index="0" name="command" type="StringName" />
+			<param index="1" name="p1" type="Variant" default="null" />
+			<param index="2" name="p2" type="Variant" default="null" />
 			<description>
-			</description>
-		</method>
-		<method name="main_controller_increase">
-			<return type="void" />
-			<description>
-			</description>
-		</method>
-		<method name="send_command">
-			<return type="void" />
-			<param index="0" name="_unnamed_arg0" type="StringName" />
-			<param index="1" name="_unnamed_arg1" type="Variant" />
-			<param index="2" name="_unnamed_arg2" type="Variant" />
-			<description>
+				Schedules a command to be processed by train and it's parts.
 			</description>
 		</method>
 		<method name="update_mover" qualifiers="const">
@@ -52,23 +33,31 @@
 	</methods>
 	<members>
 		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="&quot;&quot;">
+			[code]Wheels:Axle[/code]
+		</member>
+		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
+			[code]Light:LMaxVoltage[/code]
 		</member>
 		<member name="dimensions/mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
-			Mass of the train
+			[code]Param.M[/code] Mass of the train
 		</member>
 		<member name="max_velocity" type="float" setter="set_max_velocity" getter="get_max_velocity" default="0.0">
-		</member>
-		<member name="nominal_battery_voltage" type="float" setter="set_nominal_battery_voltage" getter="get_nominal_battery_voltage" default="0.0">
-			Nominal voltage of the train's battery
+			[code]Param.Vmax[/code]
 		</member>
 		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
+			[code]Param.PWR[/code]
+		</member>
+		<member name="radio/channel_max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="0">
+			Maximum radio channel number
+		</member>
+		<member name="radio/channel_min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="0">
+			Minimum radio channel number
 		</member>
 		<member name="state" type="Dictionary" setter="set_state" getter="get_state" default="{}">
-		</member>
-		<member name="switches/battery_enabled" type="bool" setter="set_battery_enabled" getter="get_battery_enabled" default="false">
-			Is battery enabled
+			Actual state of the train
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
+			Train type name 
 		</member>
 	</members>
 	<signals>
@@ -77,15 +66,29 @@
 			<param index="1" name="p1" type="Variant" />
 			<param index="2" name="p2" type="Variant" />
 			<description>
+				Train received a command
 			</description>
 		</signal>
 		<signal name="mover_config_changed">
 			<description>
+				Train internal configuration changed
 			</description>
 		</signal>
 		<signal name="power_changed">
 			<param index="0" name="is_powered" type="bool" />
 			<description>
+				Train power state changed
+			</description>
+		</signal>
+		<signal name="radio_channel_changed">
+			<param index="0" name="channel" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="radio_toggled">
+			<param index="0" name="is_enabled" type="bool" />
+			<description>
+				Train radio switched on or off
 			</description>
 		</signal>
 	</signals>

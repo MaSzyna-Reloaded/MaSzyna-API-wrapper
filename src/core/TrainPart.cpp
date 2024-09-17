@@ -6,6 +6,7 @@
 
 namespace godot {
     void TrainPart::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("on_command_received"), &TrainPart::on_command_received);
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &TrainPart::emit_config_changed_signal);
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainPart::update_mover);
         ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainPart::get_mover_state);
@@ -26,6 +27,9 @@ namespace godot {
         /* Dear Lord, prevent it from running in the editor. Thanks~ UwU */
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
+        }
+        if (train_controller_node != nullptr) {
+            train_controller_node->connect(TrainController::COMMAND_RECEIVED, Callable(this, "on_command_received"));
         }
         _dirty = true;
     }
@@ -141,5 +145,13 @@ namespace godot {
 
     bool TrainPart::get_enabled() {
         return enabled;
+    }
+
+    void TrainPart::on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        _on_command_received(command, p1, p2);
+        update_mover();
+    }
+    
+    void TrainPart::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
     }
 } // namespace godot

@@ -9,6 +9,9 @@
 	<tutorials>
 	</tutorials>
 	<members>
+		<member name="auto_close/enabled" type="bool" setter="set_door_auto_close_enabled" getter="get_door_auto_close_enabled" default="false">
+			Enables auto closing doors after a certain period of time
+		</member>
 		<member name="auto_close/remote" type="bool" setter="set_door_auto_close_remote" getter="get_door_auto_close_remote" default="false">
 			Automatic closing of centrally open doors after a certain period of time.
 		</member>
@@ -27,15 +30,10 @@
 		<member name="close/method" type="int" setter="set_door_close_method" getter="get_door_close_method" default="0">
 			Determines method of closing doors.
 			The following values are valid:
-
 			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
-
 			AutomaticCtrl - doors operate automatically
-
 			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
-
 			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
-
 			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="close/speed" type="float" setter="set_close_speed" getter="get_close_speed" default="0.0">
@@ -65,15 +63,10 @@
 		<member name="open/method" type="int" setter="set_door_open_method" getter="get_door_open_method" default="0">
 			Determines method of opening doors.
 			The following values are valid:
-
 			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
-
 			AutomaticCtrl - doors operate automatically
-
 			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
-
 			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
-
 			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="open/speed" type="float" setter="set_open_speed" getter="get_open_speed" default="0.0">
@@ -82,22 +75,20 @@
 		<member name="open/with_permit" type="float" setter="set_door_open_with_permit" getter="get_door_open_with_permit" default="0.0">
 			Opening the train doors by holding down the momentary open permission button for specified number of seconds.
 		</member>
+		<member name="open_time" type="float" setter="set_door_open_time" getter="get_door_open_time" default="0.0">
+		</member>
 		<member name="permit/default" type="int" setter="set_door_permit_list_default" getter="get_door_permit_list_default" default="1">
 			By default,
 			the position of the knob is set from the permit/list entry where the positions are numbered starting from 1.
 		</member>
 		<member name="permit/light_blinking" type="int" setter="set_door_permit_light_blinking" getter="get_door_permit_light_blinking" default="0">
 			Flashing of the permission to open the door indicator:
-
 			0 - continuous light
-
 			1 - continuous light when any door is open or any step is extended; flashing only when permission is granted
-
 			2 - continuous light when any door is open; flashing when permission is granted; the position of the step is irrelevant
-
 			3 - flashing regardless of the state of the doors or the position of the step
 		</member>
-		<member name="permit/list" type="String" setter="set_door_permit_list" getter="get_door_permit_list" default="&quot;0|0|0&quot;">
+		<member name="permit/list" type="Array" setter="set_door_permit_list" getter="get_door_permit_list" default="[&quot;0&quot;, &quot;0&quot;, &quot;0&quot;]">
 			Door programmer configuration. Number in the range 0-3 where 0=no permissions, 1=permission for left doors,
 			2=permission for right doors, 3=permission for all doors.
 
@@ -116,17 +107,25 @@
 			The speed of the animation platform,
 			where 1.0 corresponds to an animation lasting one second, the value 0.5 corresponds to two seconds, etc.
 		</member>
-		<member name="stay_open" type="float" setter="set_door_stay_open" getter="get_door_stay_open" default="0.0">
-			The time for which the automatic doors remain open, in seconds.
-		</member>
 		<member name="voltage" type="float" setter="set_door_voltage" getter="get_door_voltage" default="-1.0">
 			Voltage of low-voltage circuit required to control doors:
-
 			0 = 0V / mechanical opening
-
 			12 = 12V
-
 			110 = 110V
 		</member>
 	</members>
+	<constants>
+		<constant name="PERMIT_LIGHT_CONTINUOUS_LIGHT" value="0" enum="PermitLights">
+		</constant>
+		<constant name="PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP" value="1" enum="PermitLights">
+		</constant>
+		<constant name="PERMIT_LIGHT_FLASHING_ON_PERMISSION" value="2" enum="PermitLights">
+		</constant>
+		<constant name="PERMIT_LIGHT_FLASHING_ALWAYS" value="3" enum="PermitLights">
+		</constant>
+		<constant name="PLATFORM_ANIMATION_TYPE_SHIFT" value="0" enum="PlatformAnimationType">
+		</constant>
+		<constant name="PLATFORM_ANIMATION_TYPE_ROTATE" value="1" enum="PlatformAnimationType">
+		</constant>
+	</constants>
 </class>

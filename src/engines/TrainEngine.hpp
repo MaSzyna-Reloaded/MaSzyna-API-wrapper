@@ -10,7 +10,7 @@ namespace godot {
             GDCLASS(TrainEngine, TrainPart)
         public:
             static void _bind_methods();
-            bool main_switch_pressed = false;
+            TypedArray<Dictionary> motor_param_table;
 
         protected:
             virtual TEngineType get_engine_type() = 0;
@@ -19,8 +19,9 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-            void set_main_switch_pressed(bool p_state);
-            bool get_main_switch_pressed() const;
+            TypedArray<Dictionary> get_motor_param_table();
+            void set_motor_param_table(const TypedArray<Dictionary> p_wwlist);
+            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
 
             TrainEngine();
             ~TrainEngine() override = default;

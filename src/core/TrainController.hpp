@@ -7,7 +7,6 @@ namespace godot {
     class TrainBrake;
     class TrainPart;
     class TrainEngine;
-    class TrainSwitch;
     class TrainSecuritySystem;
 
 
@@ -24,19 +23,26 @@ namespace godot {
             Dictionary state;
             Dictionary internal_state;
 
-            bool sw_battery_enabled = false;
-            bool is_powered = false;
-
-            double nominal_battery_voltage = 0.0; // FIXME: move to TrainPower ?
+            double battery_voltage = 0.0; // FIXME: move to TrainPower ?
             double mass = 0.0;
             double power = 0.0;
             double max_velocity = 0.0;
+            int radio_channel = 0;
+            int radio_channel_min = 0;
+            int radio_channel_max = 10;
+
+            bool prev_is_powered = false;
+            bool prev_radio_enabled = false;
+            int prev_radio_channel = radio_channel;
+
             String axle_arrangement = "";
 
             void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts);
             void _connect_signals_to_train_part(TrainPart *part);
 
+        private:
             void _update_mover_config_if_dirty();
+            void _handle_mover_update();
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -53,11 +59,16 @@ namespace godot {
             static const char *MOVER_CONFIG_CHANGED_SIGNAL;
             static const char *POWER_CHANGED_SIGNAL;
             static const char *COMMAND_RECEIVED;
+            static const char *RADIO_TOGGLED;
+            static const char *RADIO_CHANNEL_CHANGED;
 
             void _process(double delta) override;
             void _ready() override;
             Dictionary get_mover_state();
-            void send_command(StringName command, Variant p1 = Variant(), Variant p2 = Variant());
+            void
+            receive_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void
+            _on_command_received(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void update_mover() const;
             void _on_train_part_config_changed(TrainPart *part) const;
 
@@ -66,10 +77,8 @@ namespace godot {
 
             String get_type_name() const;
             void set_type_name(const String &type_name);
-            void set_nominal_battery_voltage(double p_nominal_battery_voltage);
-            double get_nominal_battery_voltage() const;
-            void set_battery_enabled(bool p_battery_enabled); //@TODO: Move to TrainPower section
-            bool get_battery_enabled() const;
+            void set_battery_voltage(const double p_value);
+            double get_battery_voltage() const;
             void set_mass(double p_mass);
             double get_mass() const;
             void set_power(double p_power);
@@ -77,15 +86,14 @@ namespace godot {
             void set_max_velocity(double p_value);
             double get_max_velocity() const;
             void set_axle_arrangement(String p_value);
+            int get_radio_channel_min() const;
+            void set_radio_channel_min(const int p_value);
+            int get_radio_channel_max() const;
+            void set_radio_channel_max(const int p_value);
             String get_axle_arrangement() const;
 
-            void set_state(Dictionary p_state);
+            void set_state(const Dictionary &p_state);
             Dictionary get_state();
-
-            void main_controller_increase();
-            void main_controller_decrease();
-            void forwarder_increase();
-            void forwarder_decrease();
 
             TrainController();
             ~TrainController() override = default;

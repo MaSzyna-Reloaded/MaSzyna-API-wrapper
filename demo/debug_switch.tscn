@@ -16,8 +16,6 @@ size_flags_horizontal = 3
 layout_mode = 2
 size_flags_horizontal = 10
 disabled = true
-toggle_mode = false
-action_mode = 0
 
 [connection signal="button_up" from="Switch" to="." method="_on_switch_button_up"]
 [connection signal="pressed" from="Switch" to="." method="_on_switch_pressed"]

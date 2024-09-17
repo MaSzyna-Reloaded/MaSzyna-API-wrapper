@@ -1,10 +1,11 @@
-[gd_scene load_steps=6 format=3 uid="uid://djqacw65swdqc"]
+[gd_scene load_steps=7 format=3 uid="uid://djqacw65swdqc"]
 
 [ext_resource type="Script" path="res://demo.gd" id="1_76ghk"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://sm_42v_1.tscn" id="2_t8uqe"]
 [ext_resource type="PackedScene" path="res://gauge.tscn" id="3_dosfj"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://debug_panel.tscn" id="3_p4ciw"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://debug_switch.tscn" id="4_xvhus"]
+[ext_resource type="Script" path="res://powered_train_part_example.gd" id="6_2wkl6"]
 
 [node name="Demo" type="Control"]
 layout_mode = 3
@@ -31,6 +32,16 @@ label = "Engine Current"
 position = Vector2(400, 453)
 start_angle = 140.0
 label = "Oil Pressure"
+
+[node name="BrakeCylinderPressure" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(600, 453)
+start_angle = 140.0
+label = "BrakeCyl Pressure"
+
+[node name="BrakePipePressure" parent="." instance=ExtResource("3_dosfj")]
+position = Vector2(800, 453)
+start_angle = 130.0
+label = "Main pipe"
 
 [node name="UI" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -131,8 +142,9 @@ text = "General"
 [node name="Battery" parent="UI/MoverSwitches/General" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Battery"
-node = NodePath("../../../../SM42_V1")
-property = "switches/battery_enabled"
+controller = NodePath("../../../../SM42_V1")
+state_property = "battery_enabled"
+command = "battery"
 
 [node name="MainIncrease" type="Button" parent="UI/MoverSwitches/General"]
 layout_mode = 2
@@ -161,8 +173,8 @@ text = "Security"
 layout_mode = 2
 label = "CA/SHP"
 type = 1
-node = NodePath("../../../../SM42_V1/TrainSecuritySystem")
-property = "switches/reset"
+controller = NodePath("../../../../SM42_V1")
+command = "security_acknowledge"
 
 [node name="Diesel" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
@@ -175,22 +187,25 @@ text = "Diesel"
 layout_mode = 2
 label = "Oil Pump"
 type = 1
-node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
-property = "switches/oil_pump_enabled"
+controller = NodePath("../../../../SM42_V1")
+state_property = "oil_pump_active"
+command = "oil_pump"
 
 [node name="FuelPump" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Fuel Pump"
 type = 1
-node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
-property = "switches/fuel_pump_enabled"
+controller = NodePath("../../../../SM42_V1")
+state_property = "fuel_pump_active"
+command = "fuel_pump"
 
 [node name="Main" parent="UI/MoverSwitches/Diesel" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Main"
 type = 0
-node = NodePath("../../../../SM42_V1/StonkaDieselEngine")
-property = "switches/main"
+controller = NodePath("../../../../SM42_V1")
+state_property = "main_switch"
+command = "main_switch"
 
 [node name="Electric" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
@@ -202,21 +217,15 @@ text = "Electric"
 [node name="Converter" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Converter"
-node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
-property = "switches/converter"
 
 [node name="Compressor" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Compressor"
-node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
-property = "switches/compressor"
 
 [node name="Main" parent="UI/MoverSwitches/Electric" instance=ExtResource("4_xvhus")]
 layout_mode = 2
 label = "Main"
 type = 0
-node = NodePath("../../../../SM42_V1/TestowySilnikElektryczny")
-property = "switches/main"
 
 [node name="Brakes" type="HFlowContainer" parent="UI/MoverSwitches"]
 layout_mode = 2
@@ -232,11 +241,16 @@ layout_mode = 2
 layout_mode = 2
 label = "Releaser"
 type = 1
-node = NodePath("../../../../SM42_V1/Brake")
-property = "switches/releaser"
+controller = NodePath("../../../../SM42_V1")
+command = "brake_releaser"
 
 [node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]
-switches/battery_enabled = true
+
+[node name="TestowySilnikElektryczny" parent="SM42_V1" index="1"]
+enabled = false
+
+[node name="PoweredTrainPart" type="GenericTrainPart" parent="SM42_V1"]
+script = ExtResource("6_2wkl6")
 
 [connection signal="button_up" from="UI/MoverSwitches/General/MainIncrease" to="." method="_on_main_increase_button_up"]
 [connection signal="button_up" from="UI/MoverSwitches/General/MainDecrease" to="." method="_on_main_decrease_button_up"]

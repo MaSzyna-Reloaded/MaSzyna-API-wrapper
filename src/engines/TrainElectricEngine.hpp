@@ -74,14 +74,16 @@ namespace godot {
             TrainPowerType power_cable_power_trans = TrainPowerType::POWER_TYPE_NONE;
             float power_cable_steam_pressure = 0;
             //@TODO: Implement bitmask for PhysicalLayout
+
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_process_mover(TMoverParameters *mover, const double delta) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
             void set_converter_switch_pressed(bool p_state);
             bool get_converter_switch_pressed() const;
+
             void set_compressor_switch_pressed(bool p_state);
             bool get_compressor_switch_pressed() const;
             void set_engine_power_source(TrainPowerSource p_source);

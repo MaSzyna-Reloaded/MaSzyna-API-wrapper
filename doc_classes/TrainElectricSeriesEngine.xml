@@ -10,9 +10,11 @@
 	</tutorials>
 	<members>
 		<member name="nominal_voltage" type="float" setter="set_nominal_voltage" getter="get_nominal_voltage" default="0.0">
+			[code]Engine:Volt[/code]
 			Rated voltage of the motor, in volts
 		</member>
 		<member name="winding_resistance" type="float" setter="set_winding_resistance" getter="get_winding_resistance" default="0.0">
+			[code]Engine:WindingRes[/code]
 			Motor winding resistance, in ohms
 		</member>
 	</members>

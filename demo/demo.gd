@@ -13,19 +13,13 @@ var _t:float = 0.0
 func _ready() -> void:
     $%TrainName.text = "%s (type: %s)" % [train.name, train.type_name]
 
+
 func draw_dictionary(dict: Dictionary, target: DebugPanel):
     var lines = []
     for k in dict.keys():
         lines.append("%s=%s" % [k, dict[k]])
     target.text = "\n".join(lines)
 
-
-func get_state_by_path(path):
-    var _p = train.get_node(path) as TrainPart
-    if _p:
-        return _p.get_mover_state()
-    else:
-        return {}
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta: float) -> void:
@@ -53,26 +47,24 @@ func _process(delta: float) -> void:
         draw_dictionary(security_state, $%DebugSecurity)
         draw_dictionary(door_state, %DebugDoor)
 
-        $EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1500.0
-        $EngineCurrent.value = engine_state.get("engine_current", 0.0) / 700.0
+        $EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1400.0
+        $EngineCurrent.value = engine_state.get("engine_current", 0.0) / 1500.0
         $OilPressure.value = engine_state.get("oil_pump_pressure", 0.0)
+        $BrakeCylinderPressure.value = brake_state.get("brake_air_pressure", 0.0) / brake_state.get("brake_tank_volume", 1.0)
+        $BrakePipePressure.value = brake_state.get("pipe_pressure", 0.0)  / 10.0
 
 
 func _on_brake_level_value_changed(value):
-    brake.brake_level = value
-
+    train.receive_command("brake_level_set", value)
 
 func _on_main_decrease_button_up():
-    train.main_controller_decrease()
-
+    train.receive_command("main_controller_decrease")
 
 func _on_main_increase_button_up():
-    train.main_controller_increase()
-
+    train.receive_command("main_controller_increase")
 
 func _on_reverse_button_up():
-    train.forwarder_decrease()
-
+    train.receive_command("forwarder_decrease")
 
 func _on_forward_button_up():
-    train.forwarder_increase()
+    train.receive_command("forwarder_increase")

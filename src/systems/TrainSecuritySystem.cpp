@@ -76,18 +76,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_ca_max_hold_time"), &TrainSecuritySystem::set_ca_max_hold_time);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "ca_max_hold_time"), "set_ca_max_hold_time", "get_ca_max_hold_time");
 
-        ClassDB::bind_method(D_METHOD("get_reset_pushed"), &TrainSecuritySystem::get_reset_pushed);
-        ClassDB::bind_method(D_METHOD("set_reset_pushed"), &TrainSecuritySystem::set_reset_pushed);
-        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "switches/reset"), "set_reset_pushed", "get_reset_pushed");
+        ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
+        ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
 
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_LOWTONE);
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
         BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_WHISTLE);
     }
     // Getters
-    bool TrainSecuritySystem::get_reset_pushed() const {
-        return reset_pushed;
-    }
     bool TrainSecuritySystem::get_aware_system_active() const {
         return aware_system_active;
     }
@@ -123,10 +119,6 @@ namespace godot {
     }
 
     // Setters
-    void TrainSecuritySystem::set_reset_pushed(bool p_state) {
-        reset_pushed = p_state;
-        _dirty = true;
-    }
     void TrainSecuritySystem::set_aware_system_active(bool p_state) {
         aware_system_active = p_state;
         _dirty = true;
@@ -173,6 +165,8 @@ namespace godot {
     }
 
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        const bool prev_beeping = state["beeping"];
+        const bool prev_blinking = state["blinking"];
         state["beeping"] = mover->SecuritySystem.is_beeping();
         state["blinking"] = mover->SecuritySystem.is_blinking();
         state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
@@ -182,6 +176,13 @@ namespace godot {
         state["braking"] = mover->SecuritySystem.is_braking();
         state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
         state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
+
+        if (prev_blinking != (bool)state["blinking"]) {
+            emit_signal("blinking_changed", state["blinking"]);
+        }
+        if (prev_beeping != (bool)state["beeping"]) {
+            emit_signal("beeping_changed", state["beeping"]);
+        }
     }
 
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {
@@ -216,16 +217,24 @@ namespace godot {
     }
 
     void TrainSecuritySystem::_do_process_mover(TMoverParameters *mover, const double delta) {
-        /* handle acknowledge button press/release */
+    }
 
-        if (reset_pushed && !mover->SecuritySystem.pressed) {
-            mover->SecuritySystem.acknowledge_press();
-        } else if (!reset_pushed && mover->SecuritySystem.pressed) {
-            mover->SecuritySystem.acknowledge_release();
+    void TrainSecuritySystem::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
+        TrainPart::_on_command_received(command, p1, p2);
+
+        if(train_controller_node == nullptr) {
+            return;
         }
-
-        /* FIXME: remove it when TMoverParameters::ComputeMovement() will be called
-                  in TrainController::_do_process_mover() */
-        mover->SecuritySystemCheck(delta);
+        TMoverParameters *mover = train_controller_node->get_mover();
+        if(!mover) {
+            return;
+        }
+        if(command == "security_acknowledge") {
+            if((bool) p1) {
+                mover->SecuritySystem.acknowledge_press();
+            } else {
+                mover->SecuritySystem.acknowledge_release();
+            }
+        }
     }
 } // namespace godot

@@ -174,7 +174,6 @@ namespace godot {
         }
 
         TMoverParameters *mover = train_controller_node->get_mover();
-        std::cout << command.utf8().get_data() << std::endl;
         if (command == "doors") {
             side _side = side::left;
             range_t _range_t = range_t::unit;
@@ -182,12 +181,16 @@ namespace godot {
                 _side = side::left;
             } else if (p1 == "right") {
                 _side == side::right;
+            } else {
+                return;
             }
 
             if (p2 == "open") {
                 mover->OperateDoors(_side, true, _range_t);
-            } else {
+            } else if (p2 == "close") {
                 mover->OperateDoors(_side, false, _range_t);
+            } else {
+                return;
             }
         }
     }

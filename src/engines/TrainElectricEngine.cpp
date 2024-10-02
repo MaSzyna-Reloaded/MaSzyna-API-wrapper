@@ -8,14 +8,6 @@ namespace godot {
 
     void TrainElectricEngine::_bind_methods() {
 
-        ClassDB::bind_method(
-                D_METHOD("set_converter_switch_pressed"), &TrainElectricEngine::set_converter_switch_pressed);
-        ClassDB::bind_method(
-                D_METHOD("get_converter_switch_pressed"), &TrainElectricEngine::get_converter_switch_pressed);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "switches/converter"), "set_converter_switch_pressed",
-                "get_converter_switch_pressed");
-
         ClassDB::bind_method(D_METHOD("set_engine_power_source"), &TrainElectricEngine::set_engine_power_source);
         ClassDB::bind_method(D_METHOD("get_engine_power_source"), &TrainElectricEngine::get_engine_power_source);
         ADD_PROPERTY(
@@ -136,6 +128,9 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "power/power_cable/steam_pressure"), "set_power_cable_steam_pressure",
                 "get_power_cable_steam_pressure");
 
+        ClassDB::bind_method(D_METHOD("compressor", "enabled"), &TrainElectricEngine::compressor);
+        ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
+
         BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
         BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
         BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
@@ -226,28 +221,30 @@ namespace godot {
         }
     }
 
-    void TrainElectricEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
-        TrainEngine::_do_process_mover(mover, delta);
-
-        mover->ConverterSwitch(converter_switch_pressed);
-        mover->CompressorSwitch(compressor_switch_pressed);
+    void TrainElectricEngine::converter(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->ConverterSwitch(p_enabled);
     }
 
-    void TrainElectricEngine::set_converter_switch_pressed(const bool p_state) {
-        converter_switch_pressed = p_state;
+    void TrainElectricEngine::compressor(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->CompressorSwitch(p_enabled);
     }
 
-    bool TrainElectricEngine::get_converter_switch_pressed() const {
-        return converter_switch_pressed;
+    void TrainElectricEngine::_register_commands() {
+        TrainEngine::_register_commands();
+        register_command("converter", Callable(this, "converter"));
+        register_command("compressor", Callable(this, "compressor"));
     }
 
-    void TrainElectricEngine::set_compressor_switch_pressed(const bool p_state) {
-        compressor_switch_pressed = p_state;
+    void TrainElectricEngine::_unregister_commands() {
+        TrainEngine::_unregister_commands();
+        unregister_command("converter", Callable(this, "converter"));
+        unregister_command("compressor", Callable(this, "compressor"));
     }
 
-    bool TrainElectricEngine::get_compressor_switch_pressed() const {
-        return compressor_switch_pressed;
-    }
 
     void TrainElectricEngine::set_engine_power_source(const TrainPowerSource p_source) {
         power_source = p_source;

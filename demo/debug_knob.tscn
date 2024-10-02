@@ -1,0 +1,18 @@
+[gd_scene load_steps=2 format=3 uid="uid://ddag4vhhuox0t"]
+
+[ext_resource type="Script" path="res://debug_knob.gd" id="1_an08j"]
+
+[node name="DebugKnob" type="HBoxContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+script = ExtResource("1_an08j")
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 2
+
+[node name="SpinBox" type="SpinBox" parent="."]
+layout_mode = 2
+max_value = 1.0
+step = 0.1
+
+[connection signal="value_changed" from="SpinBox" to="." method="_on_spin_box_value_changed"]

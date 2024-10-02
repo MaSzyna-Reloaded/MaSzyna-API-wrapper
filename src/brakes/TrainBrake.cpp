@@ -5,10 +5,10 @@
 #include "../core/TrainController.hpp"
 
 namespace godot {
-
     TrainBrake::TrainBrake() = default;
 
     void TrainBrake::_bind_methods() {
+
         ClassDB::bind_method(D_METHOD("set_valve"), &TrainBrake::set_valve);
         ClassDB::bind_method(D_METHOD("get_valve"), &TrainBrake::get_valve);
 
@@ -176,6 +176,12 @@ namespace godot {
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER1);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_COUPLER2);
 
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_MIN);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_MAX);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_DRIVE);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_FULL);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_POSITION_EMERGENCY);
+
         BIND_ENUM_CONSTANT(BRAKE_VALVE_NO_VALVE);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_W);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_W_LU_VI);
@@ -206,18 +212,108 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1_R);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_OTHER);
+
+        ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &TrainBrake::brake_releaser);
+        ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &TrainBrake::brake_level_set);
+        ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &TrainBrake::brake_level_set_position);
+        ClassDB::bind_method(
+                D_METHOD("brake_level_set_position_str", "position"), &TrainBrake::brake_level_set_position_str);
+        ClassDB::bind_method(D_METHOD("brake_level_increase"), &TrainBrake::brake_level_increase);
+        ClassDB::bind_method(D_METHOD("brake_level_decrease"), &TrainBrake::brake_level_decrease);
+    }
+
+    void TrainBrake::_register_commands() {
+        register_command("brake_releaser", Callable(this, "brake_releaser"));
+        register_command("brake_level_set", Callable(this, "brake_level_set"));
+        register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
+        register_command("brake_level_increase", Callable(this, "brake_level_increase"));
+        register_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+    }
+
+    void TrainBrake::_unregister_commands() {
+        unregister_command("brake_releaser", Callable(this, "brake_releaser"));
+        unregister_command("brake_level_set", Callable(this, "brake_level_set"));
+        unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
+        unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
+        unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+    }
+
+    void TrainBrake::brake_releaser(const bool p_pressed) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->BrakeReleaser(p_pressed ? 1 : 0);
+    }
+
+    void TrainBrake::brake_level_set(const float p_level) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        float level = CLAMP(p_level, 0.0, 1.0);
+        float brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        float brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        float brake_controller_pos = brake_controller_min + level * (brake_controller_max - brake_controller_min);
+        mover->BrakeLevelSet(brake_controller_pos);
+    }
+
+    void TrainBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        auto it = BrakeHandlePositionMap.find(p_position);
+        if (it != BrakeHandlePositionMap.end()) {
+            mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
+        } else {
+            log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
+        }
+    }
+
+    void TrainBrake::brake_level_set_position_str(const String &p_position) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        auto it = BrakeHandlePositionStringMap.find(std::string(p_position.utf8()));
+        if (it != BrakeHandlePositionStringMap.end()) {
+            mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
+        } else {
+            log_error("Unhandled brake level position: " + p_position);
+        }
+    }
+
+    void TrainBrake::brake_level_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->IncBrakeLevel();
+    }
+
+    void TrainBrake::brake_level_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->DecBrakeLevel();
+    }
+
+    void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
+        if (mover->Handle == nullptr) {
+            return;
+        }
+        config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
+        config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        float brake_controller_pos = mover->fBrakeCtrlPos;
+        float brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        float brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        float brake_controller_pos_normalized = 0.0;
+        if (brake_controller_max != brake_controller_min) {
+            brake_controller_pos_normalized =
+                    (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);
+        }
         state["brake_air_pressure"] = mover->BrakePress;
         state["brake_loco_pressure"] = mover->LocBrakePress;
         state["brake_pipe_pressure"] = mover->PipeBrakePress;
         state["pipe_pressure"] = mover->PipePress;
         state["brake_tank_volume"] = mover->Volume;
-        state["brake_controller_position"] = mover->fBrakeCtrlPos;
-        state["brake_controller_min"] = mover->Handle->GetPos(bh_MIN);
-        state["brake_controller_max"] = mover->Handle->GetPos(bh_MAX);
+        state["brake_controller_position"] = brake_controller_pos;
+        state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
     }
+
     void TrainBrake::_do_update_internal_mover(TMoverParameters *mover) {
         /* logika z Mover::LoadFiz_Brake */
         // FIXME: logika nie jest jeszcze w pelni przeniesiona z LoadFIZ_Brake
@@ -297,8 +393,6 @@ namespace godot {
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
     }
-
-    void TrainBrake::_do_process_mover(TMoverParameters *mover, double delta) {}
 
     void TrainBrake::set_valve(const TrainBrakeValve p_valve) {
         valve = p_valve;
@@ -557,26 +651,5 @@ namespace godot {
 
     double TrainBrake::get_rig_effectiveness() const {
         return rig_effectiveness;
-    }
-
-    void TrainBrake::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
-        TrainPart::_on_command_received(command, p1, p2);
-        if (train_controller_node == nullptr) {
-            return;
-        }
-        TMoverParameters *mover = train_controller_node->get_mover();
-        if (mover->Hamulec == nullptr) {
-            return;
-        }
-        if (command == "brake_releaser") {
-            mover->BrakeReleaser((bool)p1 ? 1 : 0);
-        } else if (command == "brake_level_set") {
-            UtilityFunctions::print("brake_level_set ", (float)p1);
-            mover->BrakeLevelSet((float)p1);
-        } else if (command == "brake_level_increase") {
-            mover->IncBrakeLevel();
-        } else if (command == "brake_level_decrease") {
-            mover->DecBrakeLevel();
-        }
     }
 } // namespace godot

@@ -8,6 +8,15 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="main_switch">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate main switch
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="motor_param_table" type="Dictionary[]" setter="set_motor_param_table" getter="get_motor_param_table" default="[]">
 			[code]MotorParamTable[/code]

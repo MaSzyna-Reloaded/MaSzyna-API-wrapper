@@ -8,6 +8,42 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="brake_level_decrease">
+			<return type="void" />
+			<description>
+				Decrease brake level by one position
+			</description>
+		</method>
+		<method name="brake_level_increase">
+			<return type="void" />
+			<description>
+				Increase brake level by one position
+			</description>
+		</method>
+		<method name="brake_level_set">
+			<return type="void" />
+			<param index="0" name="level" type="float" />
+			<description>
+				Set brake level between 0.0 and 1.0. 
+				See also [method brake_level_set_position].
+			</description>
+		</method>
+		<method name="brake_level_set_position">
+			<return type="void" />
+			<param index="0" name="position" type="int" enum="TrainBrake.BrakeHandlePosition" />
+			<description>
+				Set brake level position by using predefined value
+			</description>
+		</method>
+		<method name="brake_releaser">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate brake releaser
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="brake_force/max" type="float" setter="set_max_brake_force" getter="get_max_brake_force" default="1.0">
 			[code]Brake:MBF[/code]
@@ -111,6 +147,16 @@
 		<constant name="COMPRESSOR_POWER_COUPLER1" value="4" enum="CompressorPower">
 		</constant>
 		<constant name="COMPRESSOR_POWER_COUPLER2" value="5" enum="CompressorPower">
+		</constant>
+		<constant name="BRAKE_HANDLE_POSITION_MIN" value="0" enum="BrakeHandlePosition">
+		</constant>
+		<constant name="BRAKE_HANDLE_POSITION_MAX" value="1" enum="BrakeHandlePosition">
+		</constant>
+		<constant name="BRAKE_HANDLE_POSITION_DRIVE" value="2" enum="BrakeHandlePosition">
+		</constant>
+		<constant name="BRAKE_HANDLE_POSITION_FULL" value="3" enum="BrakeHandlePosition">
+		</constant>
+		<constant name="BRAKE_HANDLE_POSITION_EMERGENCY" value="4" enum="BrakeHandlePosition">
 		</constant>
 		<constant name="BRAKE_VALVE_NO_VALVE" value="0" enum="TrainBrakeValve">
 		</constant>

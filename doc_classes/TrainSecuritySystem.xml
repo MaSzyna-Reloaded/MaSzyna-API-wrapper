@@ -8,6 +8,16 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="security_acknowledge">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Enable or disable security acknowledge signal.
+				Leaving this option on for a longer period of time will first trigger the alarm and then the emergency brakes will be activated after a while.
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="aware_delay" type="float" setter="set_aware_delay" getter="get_aware_delay" default="0.0">
 			[code]Security:AwareDelay[/code]

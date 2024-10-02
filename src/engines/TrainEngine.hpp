@@ -16,12 +16,14 @@ namespace godot {
             virtual TEngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_process_mover(TMoverParameters *mover, double delta) override;
+            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _register_commands() override;
+            void _unregister_commands() override;
 
         public:
             TypedArray<Dictionary> get_motor_param_table();
             void set_motor_param_table(const TypedArray<Dictionary> p_wwlist);
-            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
+            void main_switch(const bool p_enabled);
 
             TrainEngine();
             ~TrainEngine() override = default;

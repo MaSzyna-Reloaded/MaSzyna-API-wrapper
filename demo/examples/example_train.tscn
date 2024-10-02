@@ -1,0 +1,12 @@
+[gd_scene format=3 uid="uid://clt6kosjdfdfx"]
+
+[node name="ExampleTrain" type="TrainController"]
+train_id = "exampletrain"
+battery_voltage = 110.0
+
+[node name="Brake" type="TrainBrake" parent="."]
+process_priority = 1
+
+[node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
+
+[node name="TrainDieselElectricEngine" type="TrainDieselElectricEngine" parent="."]

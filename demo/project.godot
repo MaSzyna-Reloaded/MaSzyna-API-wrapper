@@ -14,3 +14,18 @@ config/name="LibMaszyna Demo"
 run/main_scene="res://demo.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+Console="*res://addons/libmaszyna/console.gd"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/libmaszyna/plugin.cfg")
+
+[input]
+
+brake_level_set={
+"deadzone": 0.5,
+"events": []
+}

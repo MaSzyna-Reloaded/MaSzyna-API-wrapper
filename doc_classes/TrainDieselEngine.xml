@@ -8,6 +8,22 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="fuel_pump">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate fuel pump
+			</description>
+		</method>
+		<method name="oil_pump">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate oil pump
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="Ftmax" type="float" setter="set_traction_force_max" getter="get_traction_force_max" default="0.0">
 			[code]Engine:Ftmax[/code]

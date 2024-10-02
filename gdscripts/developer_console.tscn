@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dgm10m7u26drx"]
+
+[ext_resource type="Script" path="res://addons/libmaszyna/developer_console.gd" id="1_vako3"]
+
+[node name="DeveloperConsole" type="Node"]
+script = ExtResource("1_vako3")

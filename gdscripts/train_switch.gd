@@ -94,6 +94,9 @@ func _ready():
     self.switch_position_changed.connect(self._on_switch_position_changed)
 
 func _input(event):
+    if Console.is_visible():
+        return
+
     if action_increase:
         if event.is_action_pressed(action_increase, false, true):
             switch_position += 1
@@ -157,6 +160,8 @@ func _on_switch_position_changed(previous, current):
         _sound.stream = sound_override[current-1]
     elif current < 0 and -current <= sound_override_negative.size():
         _sound.stream = sound_override_negative[-current-1]
+    elif current == 0:
+        _sound.stream = null
     else:
         _sound.stream = sound_increase_stream if current > previous else sound_decrease_stream
 
@@ -168,9 +173,9 @@ func _handle_position_change(prev, current) -> int:
     if _controller:
         var cmd = command_increase if current > prev else command_decrease
         if cmd:
-            _controller.receive_command(cmd, true)
+            _controller.send_command(cmd)
         if command_set:
-            _controller.receive_command(command_set, current)
+            _controller.send_command(command_set, current)
 
     if state_property:
         return _controller.state.get(state_property, current)

@@ -2,10 +2,10 @@ extends Control
 
 var _t:float = 0.0
 
-@onready var train = $SM42_V1
-@onready var brake = $SM42_V1/Brake
-@onready var engine = $SM42_V1/StonkaDieselEngine
-@onready var security = $SM42_V1/TrainSecuritySystem
+@onready var train = $SM42
+@onready var brake = $SM42/Brake
+@onready var engine = $SM42/StonkaDieselEngine
+@onready var security = $SM42/TrainSecuritySystem
 
 
 # Called when the node enters the scene tree for the first time.
@@ -27,10 +27,8 @@ func _process(delta: float) -> void:
     if(_t>0.1):
         _t = 0
 
-        var train_state = train.get_mover_state()
+        var train_state = train.get_state()
         var bv = train_state.get("battery_voltage")
-
-        $%CustomTrainPartCount.text = "%s" % train.state.get("custom_train_part_calls")
 
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
@@ -52,16 +50,20 @@ func _process(delta: float) -> void:
 
 
 func _on_brake_level_value_changed(value):
-    train.receive_command("brake_level_set", value)
+    TrainSystem.broadcast_command("brake_level_set", value, null)
 
 func _on_main_decrease_button_up():
-    train.receive_command("main_controller_decrease")
+    train.send_command("main_controller_decrease")
 
 func _on_main_increase_button_up():
-    train.receive_command("main_controller_increase")
+    train.send_command("main_controller_increase")
 
 func _on_reverse_button_up():
-    train.receive_command("forwarder_decrease")
+    train.send_command("direction_decrease")
 
 func _on_forward_button_up():
-    train.receive_command("forwarder_increase")
+    train.send_command("direction_increase")
+
+
+func _on_sm_42_mover_initialized():
+    print("Mover initialized. Train config: ", $SM42.config)

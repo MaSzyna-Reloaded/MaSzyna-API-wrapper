@@ -1,7 +1,0 @@
-[gd_scene format=3 uid="uid://clt6kosjdfdfx"]
-
-[node name="ExampleTrain" type="TrainController"]
-parts/brake = NodePath("Brake")
-
-[node name="Brake" type="TrainBrake" parent="."]
-process_priority = 1

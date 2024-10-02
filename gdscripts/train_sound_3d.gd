@@ -21,10 +21,8 @@ func _process(_delta):
         if state_property and _train:
             _should_play = true if _train.state.get(state_property, false) else false
             if _should_play and not playing:
-                print(self, " PLAY!")
                 play()
             elif not _should_play and playing:
-                print(self, " STOP!")
                 stop()
     if _dirty:
         _dirty = false

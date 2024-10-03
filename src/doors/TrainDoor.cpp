@@ -1,4 +1,5 @@
 #include "TrainDoor.hpp"
+#include "utility_functions.hpp"
 
 namespace godot {
     TrainDoor::TrainDoor() = default;
@@ -136,6 +137,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_LOCAL)
         BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_UNIT)
         BIND_ENUM_CONSTANT(NOTIFICATION_RANGE_CONSIST)
+
+        BIND_ENUM_CONSTANT(DOOR_STATE_CLOSE)
+        BIND_ENUM_CONSTANT(DOOR_STATE_OPEN)
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         state["door/open_control"] = mover->Doors.open_control;
@@ -175,24 +179,23 @@ namespace godot {
 
         TMoverParameters *mover = train_controller_node->get_mover();
         if (command == "doors") {
-            side _side = side::left;
-            range_t _range_t = range_t::unit;
-            if (p1 == "left") {
-                _side = side::left;
-            } else if (p1 == "right") {
-                _side == side::right;
-            } else {
+            constexpr range_t _range_t = range_t::unit;
+            const int param_side = p1;
+            const int param_state = p2;
+            if (param_side >= 2 || param_side <= 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
                 return;
             }
 
-            if (p2 == "open") {
-                mover->OperateDoors(_side, true, _range_t);
-            } else if (p2 == "close") {
-                mover->OperateDoors(_side, false, _range_t);
-            } else {
+            if (param_state >= 2 || param_state <= 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #2) is out of range");
                 return;
             }
+
+            mover->OperateDoors(static_cast<side>(param_side), param_state, _range_t);
+            return;
         }
+        UtilityFunctions::push_error("[MaSzyna::Doors] Unknown command: " + command);
     }
 
     void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {

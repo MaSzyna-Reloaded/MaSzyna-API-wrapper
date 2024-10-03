@@ -48,6 +48,8 @@ namespace godot {
 
             enum DoorSide { DOOR_SIDE_RIGHT, DOOR_SIDE_LEFT };
 
+            enum DoorState { DOOR_STATE_CLOSE, DOOR_STATE_OPEN };
+
             enum NotificationRange { NOTIFICATION_RANGE_LOCAL, NOTIFICATION_RANGE_UNIT, NOTIFICATION_RANGE_CONSIST };
 
             static void _bind_methods();
@@ -272,3 +274,4 @@ VARIANT_ENUM_CAST(TrainDoor::PermitLights)
 VARIANT_ENUM_CAST(TrainDoor::PlatformAnimationType)
 VARIANT_ENUM_CAST(TrainDoor::DoorSide)
 VARIANT_ENUM_CAST(TrainDoor::NotificationRange)
+VARIANT_ENUM_CAST(TrainDoor::DoorState)

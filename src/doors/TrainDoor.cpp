@@ -1,5 +1,5 @@
 #include "TrainDoor.hpp"
-#include "utility_functions.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     TrainDoor::TrainDoor() = default;

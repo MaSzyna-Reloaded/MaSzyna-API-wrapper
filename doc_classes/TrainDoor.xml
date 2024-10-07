@@ -27,14 +27,8 @@
 		<member name="close/delay" type="float" setter="set_door_close_delay" getter="get_door_close_delay" default="0.0">
 			Door closing delay, in seconds.
 		</member>
-		<member name="close/method" type="int" setter="set_door_close_method" getter="get_door_close_method" default="0">
+		<member name="close/method" type="int" setter="set_door_close_method" getter="get_door_close_method" enum="TrainDoor.DoorControls" default="0">
 			Determines method of closing doors.
-			The following values are valid:
-			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
-			AutomaticCtrl - doors operate automatically
-			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
-			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
-			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="close/speed" type="float" setter="set_close_speed" getter="get_close_speed" default="0.0">
 			Animation speed for closing doors
@@ -60,14 +54,8 @@
 		<member name="open/delay" type="float" setter="set_door_open_delay" getter="get_door_open_delay" default="0.0">
 			Door opening delay, in seconds.
 		</member>
-		<member name="open/method" type="int" setter="set_door_open_method" getter="get_door_open_method" default="0">
+		<member name="open/method" type="int" setter="set_door_open_method" getter="get_door_open_method" enum="TrainDoor.DoorControls" default="0">
 			Determines method of opening doors.
-			The following values are valid:
-			Passenger - default type when no definition is provided; doors are manually closed, ignoring any remote commands
-			AutomaticCtrl - doors operate automatically
-			DriverCtrl - doors are controlled by the driver of the train and only respond to remote commands
-			Conductor - doors are controlled by the conductor of the train and only respond to remote commands
-			Mixed - doors can be closed both manually and remotely
 		</member>
 		<member name="open/speed" type="float" setter="set_open_speed" getter="get_open_speed" default="0.0">
 			Animation speed for opening doors
@@ -76,17 +64,13 @@
 			Opening the train doors by holding down the momentary open permission button for specified number of seconds.
 		</member>
 		<member name="open_time" type="float" setter="set_door_open_time" getter="get_door_open_time" default="0.0">
+			Time period for which door would stay opened
 		</member>
 		<member name="permit/default" type="int" setter="set_door_permit_list_default" getter="get_door_permit_list_default" default="1">
-			By default,
-			the position of the knob is set from the permit/list entry where the positions are numbered starting from 1.
+			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1.
 		</member>
 		<member name="permit/light_blinking" type="int" setter="set_door_permit_light_blinking" getter="get_door_permit_light_blinking" default="0">
-			Flashing of the permission to open the door indicator:
-			0 - continuous light
-			1 - continuous light when any door is open or any step is extended; flashing only when permission is granted
-			2 - continuous light when any door is open; flashing when permission is granted; the position of the step is irrelevant
-			3 - flashing regardless of the state of the doors or the position of the step
+			Configuration of the permission light on the door
 		</member>
 		<member name="permit/list" type="Array" setter="set_door_permit_list" getter="get_door_permit_list" default="[&quot;0&quot;, &quot;0&quot;, &quot;0&quot;]">
 			Door programmer configuration. Number in the range 0-3 where 0=no permissions, 1=permission for left doors,
@@ -107,25 +91,88 @@
 			The speed of the animation platform,
 			where 1.0 corresponds to an animation lasting one second, the value 0.5 corresponds to two seconds, etc.
 		</member>
-		<member name="voltage" type="float" setter="set_door_voltage" getter="get_door_voltage" default="-1.0">
-			Voltage of low-voltage circuit required to control doors:
-			0 = 0V / mechanical opening
-			12 = 12V
-			110 = 110V
+		<member name="type" type="int" setter="set_door_type" getter="get_door_type" enum="TrainDoor.DoorType" default="2">
+			Type of doors
+		</member>
+		<member name="voltage" type="int" setter="set_door_voltage" getter="get_door_voltage" enum="TrainDoor.DoorVoltage" default="0">
+			Voltage of low-voltage circuit required to control doors.
 		</member>
 	</members>
 	<constants>
 		<constant name="PERMIT_LIGHT_CONTINUOUS_LIGHT" value="0" enum="PermitLights">
+			Continuous light
 		</constant>
 		<constant name="PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP" value="1" enum="PermitLights">
+			Continuous light when any door is open or any step is extended; flashing only when permission is granted
 		</constant>
 		<constant name="PERMIT_LIGHT_FLASHING_ON_PERMISSION" value="2" enum="PermitLights">
+			Continuous light when any door is open; flashing when permission is granted; the position of the step is irrelevant
 		</constant>
 		<constant name="PERMIT_LIGHT_FLASHING_ALWAYS" value="3" enum="PermitLights">
+			Permission light is flashing regardless of the state of the doors or the position of the step
 		</constant>
 		<constant name="PLATFORM_ANIMATION_TYPE_SHIFT" value="0" enum="PlatformAnimationType">
+			The platform's animation consist of shifting the platform
 		</constant>
 		<constant name="PLATFORM_ANIMATION_TYPE_ROTATE" value="1" enum="PlatformAnimationType">
+			The platform's animation consist of rotating the platform
+		</constant>
+		<constant name="DOOR_SIDE_RIGHT" value="0" enum="DoorSide">
+			Indicates that doors are on the right side of the train
+		</constant>
+		<constant name="DOOR_SIDE_LEFT" value="1" enum="DoorSide">
+			Indicates that doors are on the left side of the train
+		</constant>
+		<constant name="NOTIFICATION_RANGE_LOCAL" value="0" enum="NotificationRange">
+		</constant>
+		<constant name="NOTIFICATION_RANGE_UNIT" value="1" enum="NotificationRange">
+		</constant>
+		<constant name="NOTIFICATION_RANGE_CONSIST" value="2" enum="NotificationRange">
+		</constant>
+		<constant name="DOOR_STATE_CLOSE" value="0" enum="DoorState">
+			Closed state of doors
+		</constant>
+		<constant name="DOOR_STATE_OPEN" value="1" enum="DoorState">
+			Opened state of doors
+		</constant>
+		<constant name="DOOR_CONTROLS_PASSENGER" value="0" enum="DoorControls">
+			Default type when no definition is provided; doors are manually closed/opened, ignoring any remote commands
+		</constant>
+		<constant name="DOOR_CONTROLS_AUTOMATIC" value="2" enum="DoorControls">
+			Doors do operate automatically
+		</constant>
+		<constant name="DOOR_CONTROLS_DRIVER" value="1" enum="DoorControls">
+			Doors are controlled by the driver of the train and only respond to remote commands
+		</constant>
+		<constant name="DOOR_CONTROLS_CONDUCTOR" value="3" enum="DoorControls">
+			Doors are controlled by the conductor of the train and only respond to remote commands
+		</constant>
+		<constant name="DOOR_CONTROLS_MIXED" value="4" enum="DoorControls">
+			Doors can be closed both manually and remotely
+		</constant>
+		<constant name="DOOR_VOLTAGE_0" value="0" enum="DoorVoltage">
+			0V is required in the low voltage circuit. Doors are opened manually
+		</constant>
+		<constant name="DOOR_VOLTAGE_12" value="12" enum="DoorVoltage">
+			12V are required in the low-voltage circuit to control the doors
+		</constant>
+		<constant name="DOOR_VOLTAGE_24" value="24" enum="DoorVoltage">
+			24V are required in the low voltage circuit to control the doors
+		</constant>
+		<constant name="DOOR_VOLTAGE_112" value="112" enum="DoorVoltage">
+			112V are required in the low voltage circuit to control the doors
+		</constant>
+		<constant name="DOOR_TYPE_SHIFT" value="1" enum="DoorType">
+			Sliding/shifting door type
+		</constant>
+		<constant name="DOOR_TYPE_ROTATE" value="2" enum="DoorType">
+			Rotating door type, default value
+		</constant>
+		<constant name="DOOR_TYPE_FOLD" value="3" enum="DoorType">
+			Pivot-folding door type
+		</constant>
+		<constant name="DOOR_TYPE_PLUG" value="4" enum="DoorType">
+			Pivot-sliding door type
 		</constant>
 	</constants>
 </class>

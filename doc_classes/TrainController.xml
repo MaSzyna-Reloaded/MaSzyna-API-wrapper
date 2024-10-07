@@ -57,7 +57,7 @@
 			Actual state of the train
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
-			Train type name 
+			Train type name
 		</member>
 	</members>
 	<signals>

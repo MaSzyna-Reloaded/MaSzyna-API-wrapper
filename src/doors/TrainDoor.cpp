@@ -5,6 +5,10 @@ namespace godot {
     TrainDoor::TrainDoor() = default;
 
     void TrainDoor::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("set_door_type", "type"), &TrainDoor::set_door_type);
+        ClassDB::bind_method(D_METHOD("get_door_type"), &TrainDoor::get_door_type);
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "type", PROPERTY_HINT_ENUM,
+                        "Shift,Rotate,Fold,Plug"), "set_door_type", "get_door_type");
         ClassDB::bind_method(D_METHOD("set_door_open_time", "open_time"), &TrainDoor::set_door_open_time);
         ClassDB::bind_method(D_METHOD("get_door_open_time"), &TrainDoor::get_door_open_time);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open_time"), "set_door_open_time", "get_door_open_time");
@@ -27,7 +31,8 @@ namespace godot {
                         "Passenger,AutomaticCtrl,DriverCtrl,Conductor,Mixed"), "set_door_close_method", "get_door_close_method");
         ClassDB::bind_method(D_METHOD("set_door_voltage", "door_voltage"), &TrainDoor::set_door_voltage);
         ClassDB::bind_method(D_METHOD("get_door_voltage"), &TrainDoor::get_door_voltage);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "voltage"), "set_door_voltage", "get_door_voltage");
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "voltage", PROPERTY_HINT_ENUM,
+                        "0,12,24,112"), "set_door_voltage", "get_door_voltage");
         ClassDB::bind_method(
                 D_METHOD("set_door_closure_warning", "door_closure_warning"), &TrainDoor::set_door_closure_warning);
         ClassDB::bind_method(D_METHOD("get_door_closure_warning"), &TrainDoor::get_door_closure_warning);
@@ -140,6 +145,22 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(DOOR_STATE_CLOSE)
         BIND_ENUM_CONSTANT(DOOR_STATE_OPEN)
+
+        BIND_ENUM_CONSTANT(DOOR_CONTROLS_PASSENGER)
+        BIND_ENUM_CONSTANT(DOOR_CONTROLS_AUTOMATIC)
+        BIND_ENUM_CONSTANT(DOOR_CONTROLS_DRIVER)
+        BIND_ENUM_CONSTANT(DOOR_CONTROLS_CONDUCTOR)
+        BIND_ENUM_CONSTANT(DOOR_CONTROLS_MIXED)
+
+        BIND_ENUM_CONSTANT(DOOR_VOLTAGE_0)
+        BIND_ENUM_CONSTANT(DOOR_VOLTAGE_12)
+        BIND_ENUM_CONSTANT(DOOR_VOLTAGE_24)
+        BIND_ENUM_CONSTANT(DOOR_VOLTAGE_112)
+
+        BIND_ENUM_CONSTANT(DOOR_TYPE_SHIFT)
+        BIND_ENUM_CONSTANT(DOOR_TYPE_ROTATE)
+        BIND_ENUM_CONSTANT(DOOR_TYPE_FOLD)
+        BIND_ENUM_CONSTANT(DOOR_TYPE_PLUG)
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         state["door/open_control"] = mover->Doors.open_control;
@@ -199,14 +220,8 @@ namespace godot {
     }
 
     void TrainDoor::_do_update_internal_mover(TMoverParameters *mover) {
-        const std::map<std::string, control_t>::iterator open_method_lookup =
-                door_controls.find(int_too_door_controls[door_open_method]);
-        mover->Doors.open_control =
-                open_method_lookup != door_controls.end() ? open_method_lookup->second : control_t::passenger;
-        const std::map<std::string, control_t>::iterator close_method_lookup =
-                door_controls.find(int_too_door_controls[door_close_method]);
-        mover->Doors.close_control =
-                close_method_lookup != door_controls.end() ? close_method_lookup->second : control_t::passenger;
+        mover->Doors.open_control = static_cast<control_t>(door_open_method);
+        mover->Doors.close_control = static_cast<control_t>(door_close_method);
         mover->Doors.auto_duration = door_open_time;
         mover->Doors.auto_velocity = door_auto_close_enabled ? door_auto_close_velocity : -1.0f;
         mover->Doors.auto_include_remote = door_auto_close_remote;
@@ -223,27 +238,21 @@ namespace godot {
             mover->Doors.permit_preset =
                     std::min<int>(mover->Doors.permit_presets.size(), mover->Doors.permit_preset) - 1;
         }
+
         mover->Doors.open_rate = open_speed;
         mover->Doors.open_delay = door_open_delay;
         mover->Doors.close_rate = close_speed;
         mover->Doors.close_delay = door_close_delay;
         mover->Doors.range = door_max_shift;
-        mover->Doors.range_out = door_max_shift_plug;
-        const std::map<std::string, int>::iterator lookup = door_types.find(int_to_door_types[door_open_method]);
-        mover->Doors.type =
-            lookup != door_types.end() ?
-                lookup->second :
-                2;
+        mover->Doors.range_out = door_max_shift_plug;;
+        mover->Doors.type = door_type;
         mover->Doors.has_warning = door_closure_warning;
         mover->Doors.has_autowarning = auto_door_closure_warning;
         mover->Doors.has_lock = door_blocked;
-
         bool const remote_door_control {
                 mover->Doors.open_control == control_t::driver ||
                 mover->Doors.open_control == control_t::conductor || mover->Doors.open_control == control_t::mixed };
-        if (door_voltage == -1.0) {
-            door_voltage = remote_door_control ? 24.0 : 0.0;
-        }
+        door_voltage = remote_door_control ? DoorVoltage::DOOR_VOLTAGE_24 : DoorVoltage::DOOR_VOLTAGE_0;
         mover->Doors.voltage = door_voltage;
         mover->Doors.step_rate = platform_speed;
         mover->Doors.step_range = platform_max_shift;
@@ -255,6 +264,15 @@ namespace godot {
         mover->MirrorVelClose = mirror_vel_close;
         mover->DoorsOpenWithPermitAfter = door_open_with_permit;
         mover->DoorsPermitLightBlinking = door_permit_light_blinking;
+    }
+
+    void TrainDoor::set_door_type(const DoorType p_door_type) {
+        door_type = p_door_type;
+        _dirty = true;
+    }
+
+    TrainDoor::DoorType TrainDoor::get_door_type() const {
+        return door_type;
     }
 
     void TrainDoor::set_door_open_time(const float p_value) {
@@ -293,30 +311,30 @@ namespace godot {
         return door_max_shift;
     }
 
-    void TrainDoor::set_door_open_method(const int p_open_method) {
+    void TrainDoor::set_door_open_method(const DoorControls p_open_method) {
         door_open_method = p_open_method;
         _dirty = true;
     }
 
-    int TrainDoor::get_door_open_method() const {
+    TrainDoor::DoorControls TrainDoor::get_door_open_method() const {
         return door_open_method;
     }
 
-    void TrainDoor::set_door_close_method(const int p_close_method) {
+    void TrainDoor::set_door_close_method(const DoorControls p_close_method) {
         door_close_method = p_close_method;
         _dirty = true;
     }
 
-    int TrainDoor::get_door_close_method() const {
+    TrainDoor::DoorControls TrainDoor::get_door_close_method() const {
         return door_close_method;
     }
 
-    void TrainDoor::set_door_voltage(const float p_voltage) {
+    void TrainDoor::set_door_voltage(const DoorVoltage p_voltage) {
         door_voltage = p_voltage;
         _dirty = true;
     }
 
-    float TrainDoor::get_door_voltage() const {
+    TrainDoor::DoorVoltage TrainDoor::get_door_voltage() const {
         return door_voltage;
     }
 

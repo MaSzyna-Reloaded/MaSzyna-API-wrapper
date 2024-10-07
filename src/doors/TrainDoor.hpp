@@ -6,31 +6,6 @@ namespace godot {
     class TrainDoor final : public TrainPart {
             GDCLASS(TrainDoor, TrainPart)
 
-        private:
-            std::map<std::string, control_t> door_controls{
-                    {"Passenger", control_t::passenger},
-                    {"AutomaticCtrl", control_t::autonomous},
-                    {"DriverCtrl", control_t::driver},
-                    {"Conductor", control_t::conductor},
-                    {"Mixed", control_t::mixed}};
-
-            std::map<int, std::string> int_too_door_controls{
-                    {0, "Passenger"}, {1, "AutomaticCtrl"}, {2, "DriverCtrl"}, {3, "Conductor"}, {4, "Mixed"}};
-
-            std::map<std::string, int> door_types{
-                    {"Shift", 1},
-                    {"Rotate", 2},
-                    {"Fold", 3},
-                    {"Plug", 4},
-            };
-
-            std::map<int, std::string> int_to_door_types{
-                    {1, "Shift"},
-                    {2, "Rotate"},
-                    {3, "Fold"},
-                    {4, "Plug"},
-            };
-
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
@@ -52,8 +27,22 @@ namespace godot {
 
             enum NotificationRange { NOTIFICATION_RANGE_LOCAL, NOTIFICATION_RANGE_UNIT, NOTIFICATION_RANGE_CONSIST };
 
+            enum DoorControls {
+                DOOR_CONTROLS_PASSENGER = control_t::passenger,
+                DOOR_CONTROLS_AUTOMATIC = control_t::autonomous,
+                DOOR_CONTROLS_DRIVER = control_t::driver,
+                DOOR_CONTROLS_CONDUCTOR = control_t::conductor,
+                DOOR_CONTROLS_MIXED = control_t::mixed
+            };
+
+            enum DoorVoltage { DOOR_VOLTAGE_0 = 0, DOOR_VOLTAGE_12 = 12, DOOR_VOLTAGE_24 = 24, DOOR_VOLTAGE_112 = 112 };
+
+            enum DoorType { DOOR_TYPE_SHIFT = 1, DOOR_TYPE_ROTATE = 2, DOOR_TYPE_FOLD = 3, DOOR_TYPE_PLUG = 4 };
+
             static void _bind_methods();
             void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
+            void set_door_type(DoorType p_door_type);
+            DoorType get_door_type() const;
             void set_door_open_time(float p_value);
             float get_door_open_time() const;
             void set_open_speed(float p_value);
@@ -62,12 +51,12 @@ namespace godot {
             float get_close_speed() const;
             void set_door_max_shift(float p_max_shift);
             float get_door_max_shift() const;
-            void set_door_open_method(int p_open_method);
-            int get_door_open_method() const;
-            void set_door_close_method(int p_close_method);
-            int get_door_close_method() const;
-            void set_door_voltage(float p_voltage);
-            float get_door_voltage() const;
+            void set_door_open_method(DoorControls p_open_method);
+            DoorControls get_door_open_method() const;
+            void set_door_close_method(DoorControls p_close_method);
+            DoorControls get_door_close_method() const;
+            void set_door_voltage(DoorVoltage p_voltage);
+            DoorVoltage get_door_voltage() const;
             void set_door_closure_warning(bool p_closure_warning);
             bool get_door_closure_warning() const;
             void set_auto_door_closure_warning(bool p_auto_closure_warning);
@@ -109,25 +98,16 @@ namespace godot {
             void set_door_permit_light_blinking(PermitLights p_blinking_mode);
             int get_door_permit_light_blinking() const;
 
-
-            /**
-             * Door opening/closing methods:
-             * Passenger - default type if not defined; doors are closed manually, ignoring any remote commands
-             * AutomaticCtrl - doors operate automatically
-             * DriverCtrl - doors are controlled by the train driver, and respond only to remote commands
-             * Conductor - doors are controlled by the train manager, and respond only to remote commands
-             * Mixed - doors can be closed both manually and remotely
-             */
-
+            DoorType door_type = DoorType::DOOR_TYPE_ROTATE;
             /**
              * The type of door (opening method)
              */
-            int door_open_method = 0.0;
+            DoorControls door_open_method = DoorControls::DOOR_CONTROLS_PASSENGER;
 
             /**
              * The type of door (closing method)
              */
-            int door_close_method = 0.0;
+            DoorControls door_close_method = DoorControls::DOOR_CONTROLS_PASSENGER;
 
             /**
              * Time period for which door would stay opened
@@ -151,9 +131,8 @@ namespace godot {
 
             /**
              * Low voltage circuit voltage required for door control.
-             * -1.0 means that this variable has not been initialized yet
              */
-            float door_voltage = -1.0;
+            DoorVoltage door_voltage = DoorVoltage::DOOR_VOLTAGE_0;
 
             /**
              * Buzzer before closing the door
@@ -251,18 +230,16 @@ namespace godot {
 
             /**
              * Platform animation type
-             * 0 - Shift
-             * 1 - Rot
              */
             PlatformAnimationType platform_open_method = PlatformAnimationType::PLATFORM_ANIMATION_TYPE_SHIFT;
 
             /**
-             * Describes side where the doors are placed
+             * Describes the side where the doors are placed
              */
             DoorSide door_side = DoorSide::DOOR_SIDE_LEFT;
 
             /**
-             * @TODO: Maybe move to TrainController since it seems to be more generic property?
+             * @TODO: Maybe move to TrainController since it seems to be more generic property? It is not used there anyways
              */
             NotificationRange notification_range = NotificationRange::NOTIFICATION_RANGE_UNIT;
             TrainDoor();
@@ -275,3 +252,6 @@ VARIANT_ENUM_CAST(TrainDoor::PlatformAnimationType)
 VARIANT_ENUM_CAST(TrainDoor::DoorSide)
 VARIANT_ENUM_CAST(TrainDoor::NotificationRange)
 VARIANT_ENUM_CAST(TrainDoor::DoorState)
+VARIANT_ENUM_CAST(TrainDoor::DoorControls)
+VARIANT_ENUM_CAST(TrainDoor::DoorVoltage)
+VARIANT_ENUM_CAST(TrainDoor::DoorType)

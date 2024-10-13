@@ -163,29 +163,15 @@ namespace godot {
         BIND_ENUM_CONSTANT(DOOR_TYPE_PLUG)
     }
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        state["door/open_control"] = mover->Doors.open_control;
-        state["door/close_control"] = mover->Doors.close_control;
-        state["door/auto_duration"] = mover->Doors.auto_duration;
-        state["door/auto_include_remote"] = mover->Doors.auto_include_remote;
-        state["door/permit_needed"] = mover->Doors.permit_needed;
-        state["door/permit_presets"] = String(std::string(mover->Doors.permit_presets.begin(), mover->Doors.permit_presets.end()).c_str());
-        state["door/open_speed"] = mover->Doors.open_rate;
-        state["door/open_delay"] = mover->Doors.open_delay;
-        state["door/open_time"] = mover->Doors.auto_velocity;
-        state["door/close_speed"] = mover->Doors.close_rate;
-        state["door/close_delay"] = mover->Doors.close_delay;
-        state["door/range"] = mover->Doors.range;
-        state["door/range_out"] = mover->Doors.range_out;
-        state["door/type"] = mover->Doors.type;
         state["door/has_warning"] = mover->Doors.has_warning;
         state["door/has_auto_warning"] = mover->Doors.has_autowarning;
         state["door/has_lock"] = mover->Doors.has_lock;
+        state["door/is_locked"] = mover->Doors.is_locked;
         state["door/voltage"] = mover->Doors.voltage;
         state["door/step_rate"] = mover->Doors.step_rate;
         state["door/step_range"] = mover->Doors.step_range;
         state["door/step_type"] = mover->Doors.step_type;
-        state["door/mirror_max_shift"] = mover->MirrorMaxShift;
-        state["door/mirror_vel_close"] = mover->MirrorVelClose;
+        state["door/step_enabled"] = mover->Doors.step_enabled;
         state["door/open_with_permit_after"] = mover->DoorsOpenWithPermitAfter;
         state["door/permit_light_blinking"] = mover->DoorsPermitLightBlinking;
     }
@@ -199,8 +185,7 @@ namespace godot {
         }
 
         TMoverParameters *mover = train_controller_node->get_mover();
-        if (command == "doors") {
-            constexpr range_t _range_t = range_t::unit;
+        if (command == "operate_doors") {
             const int param_side = p1;
             const int param_state = p2;
             if (param_side >= 2 || param_side <= 0) {
@@ -213,8 +198,38 @@ namespace godot {
                 return;
             }
 
-            mover->OperateDoors(static_cast<side>(param_side), param_state, _range_t);
+            mover->OperateDoors(static_cast<side>(param_side), param_state);
             return;
+        }
+
+        if (command == "permit_doors") {
+            const int param_side = p1;
+            const int param_state = p2;
+            if (param_side >= 2 || param_side <= 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
+                return;
+            }
+
+            if (param_state >= 2 || param_state <= 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #2) is out of range");
+                return;
+            }
+            mover->PermitDoors(static_cast<side>(param_side), param_state);
+        }
+
+        if (command == "lock_doors") {
+            const int param_side = p1;
+            if (param_side >= 2 || param_side <= 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
+                return;
+            }
+
+            if (p2) {
+                UtilityFunctions::push_warning("[MaSzyna::Doors] Parameter (argument #2) is redundant in \"lock_doors\" command.");
+                return;
+            }
+
+            mover->LockDoors(param_side);
         }
         UtilityFunctions::push_error("[MaSzyna::Doors] Unknown command: " + command);
     }

@@ -57,10 +57,10 @@ namespace godot {
             DoorControls get_door_close_method() const;
             void set_door_voltage(DoorVoltage p_voltage);
             DoorVoltage get_door_voltage() const;
-            void set_door_closure_warning(bool p_closure_warning);
-            bool get_door_closure_warning() const;
-            void set_auto_door_closure_warning(bool p_auto_closure_warning);
-            bool get_auto_door_closure_warning() const;
+            void set_door_close_warning(bool p_close_warning);
+            bool get_door_close_warning() const;
+            void set_auto_door_close_warning(bool p_auto_close_warning);
+            bool get_auto_door_close_warning() const;
             void set_door_open_delay(float p_open_delay);
             float get_door_open_delay() const;
             void set_door_close_delay(float p_close_delay);
@@ -93,8 +93,8 @@ namespace godot {
             double get_mirror_max_shift() const;
             void set_mirror_vel_close(double p_vel_close);
             double get_mirror_vel_close() const;
-            void set_door_needs_permit(bool p_needs_permit);
-            bool get_door_needs_permit() const;
+            void set_door_permit_required(bool p_permit_required);
+            bool get_door_permit_required() const;
             void set_door_permit_light_blinking(PermitLights p_blinking_mode);
             int get_door_permit_light_blinking() const;
 
@@ -137,12 +137,12 @@ namespace godot {
             /**
              * Buzzer before closing the door
              */
-            bool door_closure_warning = false;
+            bool door_close_warning = false;
 
             /**
              * When you press the door closing button, a buzzer is activated, when you release it, the door closes
              */
-            bool auto_door_closure_warning = false;
+            bool auto_door_close_warning = false;
 
             /**
              * Door closing delay, in seconds
@@ -192,9 +192,9 @@ namespace godot {
             bool door_auto_close_enabled = false;
 
             /**
-             * The speed at which the door automatically closes, set by default to -1, i.e. no automatic closing.
+             * The speed at which the door automatically closes
              */
-            float door_auto_close_velocity = -1;
+            float door_auto_close_velocity = 0;
 
             /**
              * Docs do not describe this properly. Need to figure this out
@@ -225,7 +225,11 @@ namespace godot {
             /**
              * Opening doors by passengers requires the train driver's consent
              */
-            bool door_needs_permit = false;
+            bool door_permit_required = false;
+
+            /**
+             * Blinking permit light
+             */
             PermitLights door_permit_light_blinking = PermitLights::PERMIT_LIGHT_CONTINUOUS_LIGHT;
 
             /**
@@ -239,7 +243,8 @@ namespace godot {
             DoorSide door_side = DoorSide::DOOR_SIDE_LEFT;
 
             /**
-             * @TODO: Maybe move to TrainController since it seems to be more generic property? It is not used there anyways
+             * @TODO: Maybe move to TrainController since it seems to be more generic property? It is not used there
+             * anyways
              */
             NotificationRange notification_range = NotificationRange::NOTIFICATION_RANGE_UNIT;
             TrainDoor();

@@ -11,7 +11,7 @@ namespace godot {
                         "Shift,Rotate,Fold,Plug"), "set_door_type", "get_door_type");
         ClassDB::bind_method(D_METHOD("set_door_open_time", "open_time"), &TrainDoor::set_door_open_time);
         ClassDB::bind_method(D_METHOD("get_door_open_time"), &TrainDoor::get_door_open_time);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open_time"), "set_door_open_time", "get_door_open_time");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open/time"), "set_door_open_time", "get_door_open_time");
         ClassDB::bind_method(D_METHOD("set_open_speed", "open_speed"), &TrainDoor::set_open_speed);
         ClassDB::bind_method(D_METHOD("get_open_speed"), &TrainDoor::get_open_speed);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open/speed"), "set_open_speed", "get_open_speed");
@@ -32,19 +32,19 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_door_voltage", "door_voltage"), &TrainDoor::set_door_voltage);
         ClassDB::bind_method(D_METHOD("get_door_voltage"), &TrainDoor::get_door_voltage);
         ADD_PROPERTY(PropertyInfo(Variant::INT, "voltage", PROPERTY_HINT_ENUM,
-                        "0,12,24,112"), "set_door_voltage", "get_door_voltage");
+                        "0V,12V,24V,112V"), "set_door_voltage", "get_door_voltage");
         ClassDB::bind_method(
-                D_METHOD("set_door_closure_warning", "door_closure_warning"), &TrainDoor::set_door_closure_warning);
-        ClassDB::bind_method(D_METHOD("get_door_closure_warning"), &TrainDoor::get_door_closure_warning);
+                D_METHOD("set_door_close_warning", "door_close_warning"), &TrainDoor::set_door_close_warning);
+        ClassDB::bind_method(D_METHOD("get_door_close_warning"), &TrainDoor::get_door_close_warning);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "closure/warning"), "set_door_closure_warning", "get_door_closure_warning");
+                PropertyInfo(Variant::BOOL, "close/warning"), "set_door_close_warning", "get_door_close_warning");
         ClassDB::bind_method(
-                D_METHOD("set_auto_door_closure_warning", "auto_door_closure_warning"),
-                &TrainDoor::set_auto_door_closure_warning);
-        ClassDB::bind_method(D_METHOD("get_auto_door_closure_warning"), &TrainDoor::get_auto_door_closure_warning);
+                D_METHOD("set_auto_door_close_warning", "auto_door_close_warning"),
+                &TrainDoor::set_auto_door_close_warning);
+        ClassDB::bind_method(D_METHOD("get_auto_door_close_warning"), &TrainDoor::get_auto_door_close_warning);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "auto_closure/warning"), "set_auto_door_closure_warning",
-                "get_auto_door_closure_warning");
+                PropertyInfo(Variant::BOOL, "auto_close/warning"), "set_auto_door_close_warning",
+                "get_auto_door_close_warning");
         ClassDB::bind_method(D_METHOD("set_door_open_delay", "door_open_delay"), &TrainDoor::set_door_open_delay);
         ClassDB::bind_method(D_METHOD("get_door_open_delay"), &TrainDoor::get_door_open_delay);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "open/delay"), "set_door_open_delay", "get_door_open_delay");
@@ -117,9 +117,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_mirror_vel_close", "mirror_vel_close"), &TrainDoor::set_mirror_vel_close);
         ClassDB::bind_method(D_METHOD("get_mirror_vel_close"), &TrainDoor::get_mirror_vel_close);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "mirror/vel_close"), "set_mirror_vel_close", "get_mirror_vel_close");
-        ClassDB::bind_method(D_METHOD("set_door_needs_permit", "needs_permit"), &TrainDoor::set_door_needs_permit);
-        ClassDB::bind_method(D_METHOD("get_door_needs_permit"), &TrainDoor::get_door_needs_permit);
-        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "needs_permit"), "set_door_needs_permit", "get_door_needs_permit");
+        ClassDB::bind_method(D_METHOD("set_door_permit_required", "permit_required"), &TrainDoor::set_door_permit_required);
+        ClassDB::bind_method(D_METHOD("get_door_permit_required"), &TrainDoor::get_door_permit_required);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "permit/required"), "set_door_permit_required", "get_door_permit_required");
         ClassDB::bind_method(
                 D_METHOD("set_door_permit_light_blinking", "blinking_mode"),
                 &TrainDoor::set_door_permit_light_blinking);
@@ -240,7 +240,7 @@ namespace godot {
         mover->Doors.auto_duration = door_open_time;
         mover->Doors.auto_velocity = door_auto_close_enabled ? door_auto_close_velocity : -1.0f;
         mover->Doors.auto_include_remote = door_auto_close_remote;
-        mover->Doors.permit_needed = door_needs_permit;
+        mover->Doors.permit_needed = door_permit_required;
         mover->Doors.permit_presets.clear();
         for (int i = 0; i < door_permit_list.size(); i++) {
             if (door_permit_list[i] != Variant()) {
@@ -261,8 +261,8 @@ namespace godot {
         mover->Doors.range = door_max_shift;
         mover->Doors.range_out = door_max_shift_plug;;
         mover->Doors.type = door_type;
-        mover->Doors.has_warning = door_closure_warning;
-        mover->Doors.has_autowarning = auto_door_closure_warning;
+        mover->Doors.has_warning = door_close_warning;
+        mover->Doors.has_autowarning = auto_door_close_warning;
         mover->Doors.has_lock = door_blocked;
         bool const remote_door_control {
                 mover->Doors.open_control == control_t::driver ||
@@ -353,22 +353,22 @@ namespace godot {
         return door_voltage;
     }
 
-    void TrainDoor::set_door_closure_warning(const bool p_closure_warning) {
-        door_closure_warning = p_closure_warning;
+    void TrainDoor::set_door_close_warning(const bool p_close_warning) {
+        door_close_warning = p_close_warning;
         _dirty = true;
     }
 
-    bool TrainDoor::get_door_closure_warning() const {
-        return door_closure_warning;
+    bool TrainDoor::get_door_close_warning() const {
+        return door_close_warning;
     }
 
-    void TrainDoor::set_auto_door_closure_warning(const bool p_auto_closure_warning) {
-        auto_door_closure_warning = p_auto_closure_warning;
+    void TrainDoor::set_auto_door_close_warning(const bool p_auto_close_warning) {
+        auto_door_close_warning = p_auto_close_warning;
         _dirty = true;
     }
 
-    bool TrainDoor::get_auto_door_closure_warning() const {
-        return auto_door_closure_warning;
+    bool TrainDoor::get_auto_door_close_warning() const {
+        return auto_door_close_warning;
     }
 
     void TrainDoor::set_door_open_delay(const float p_open_delay) {
@@ -515,13 +515,13 @@ namespace godot {
         return mirror_vel_close;
     }
 
-    void TrainDoor::set_door_needs_permit(const bool p_needs_permit) {
-        door_needs_permit = p_needs_permit;
+    void TrainDoor::set_door_permit_required(const bool p_permit_required) {
+        door_permit_required = p_permit_required;
         _dirty = true;
     }
 
-    bool TrainDoor::get_door_needs_permit() const {
-        return door_needs_permit;
+    bool TrainDoor::get_door_permit_required() const {
+        return door_permit_required;
     }
 
     void TrainDoor::set_door_permit_light_blinking(const PermitLights p_blinking_mode) {

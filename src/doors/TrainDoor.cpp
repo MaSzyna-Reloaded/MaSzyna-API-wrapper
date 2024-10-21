@@ -162,7 +162,11 @@ namespace godot {
         BIND_ENUM_CONSTANT(DOOR_TYPE_FOLD)
         BIND_ENUM_CONSTANT(DOOR_TYPE_PLUG)
     }
+
     void TrainDoor::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        const auto left_door = mover->Doors.instances[side::left];
+        const auto right_door = mover->Doors.instances[side::right];
+
         state["door/has_warning"] = mover->Doors.has_warning;
         state["door/has_auto_warning"] = mover->Doors.has_autowarning;
         state["door/has_lock"] = mover->Doors.has_lock;
@@ -174,6 +178,40 @@ namespace godot {
         state["door/step_enabled"] = mover->Doors.step_enabled;
         state["door/open_with_permit_after"] = mover->DoorsOpenWithPermitAfter;
         state["door/permit_light_blinking"] = mover->DoorsPermitLightBlinking;
+
+        state["door/left/open_permit"] = left_door.open_permit;
+        state["door/left/local_open"] = left_door.local_open;
+        state["door/left/local_close"] = left_door.local_close;
+        state["door/left/remote_open"] = left_door.remote_open;
+        state["door/left/remote_close"] = left_door.remote_close;
+        state["door/left/close_delay"] = left_door.close_delay;
+        state["door/left/open_delay"] = left_door.open_delay;
+        state["door/left/position"] = left_door.position;
+        state["door/left/step_position"] = left_door.step_position;
+        state["door/left/is_closed"] = left_door.is_closed;
+        state["door/left/is_door_closed"] = left_door.is_door_closed;
+        state["door/left/is_closing"] = left_door.is_closing;
+        state["door/left/is_opening"] = left_door.is_opening;
+        state["door/left/is_open"] = left_door.is_open;
+        state["door/left/step_unfolding"] = left_door.step_unfolding;
+        state["door/left/step_folding"] = left_door.step_folding;
+
+        state["door/right/open_permit"] = right_door.open_permit;
+        state["door/right/local_open"] = right_door.local_open;
+        state["door/right/local_close"] = right_door.local_close;
+        state["door/right/remote_open"] = right_door.remote_open;
+        state["door/right/remote_close"] = right_door.remote_close;
+        state["door/right/close_delay"] = right_door.close_delay;
+        state["door/right/open_delay"] = right_door.open_delay;
+        state["door/right/position"] = right_door.position;
+        state["door/right/step_position"] = right_door.step_position;
+        state["door/right/is_closed"] = right_door.is_closed;
+        state["door/right/is_door_closed"] = right_door.is_door_closed;
+        state["door/right/is_closing"] = right_door.is_closing;
+        state["door/right/is_opening"] = right_door.is_opening;
+        state["door/right/is_open"] = right_door.is_open;
+        state["door/right/step_unfolding"] = right_door.step_unfolding;
+        state["door/right/step_folding"] = right_door.step_folding;
     }
 
     void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) { }

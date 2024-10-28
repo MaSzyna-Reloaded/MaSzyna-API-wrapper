@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://demo.gd" id="1_76ghk"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://sm_42v_1.tscn" id="2_t8uqe"]
-[ext_resource type="PackedScene" path="res://gauge.tscn" id="3_dosfj"]
+[ext_resource type="PackedScene" uid="uid://1v37c7y4cwcx" path="res://gauge.tscn" id="3_dosfj"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://debug_panel.tscn" id="3_p4ciw"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://debug_switch.tscn" id="4_xvhus"]
 [ext_resource type="Script" path="res://powered_train_part_example.gd" id="6_2wkl6"]
@@ -19,26 +19,31 @@ size_flags_vertical = 3
 script = ExtResource("1_76ghk")
 
 [node name="EngineRPM" parent="." instance=ExtResource("3_dosfj")]
+visible = false
 position = Vector2(0, 453)
 start_angle = 140.0
 label = "Engine RPM"
 
 [node name="EngineCurrent" parent="." instance=ExtResource("3_dosfj")]
+visible = false
 position = Vector2(200, 453)
 start_angle = 140.0
 label = "Engine Current"
 
 [node name="OilPressure" parent="." instance=ExtResource("3_dosfj")]
+visible = false
 position = Vector2(400, 453)
 start_angle = 140.0
 label = "Oil Pressure"
 
 [node name="BrakeCylinderPressure" parent="." instance=ExtResource("3_dosfj")]
+visible = false
 position = Vector2(600, 453)
 start_angle = 140.0
 label = "BrakeCyl Pressure"
 
 [node name="BrakePipePressure" parent="." instance=ExtResource("3_dosfj")]
+visible = false
 position = Vector2(800, 453)
 start_angle = 130.0
 label = "Main pipe"
@@ -244,10 +249,54 @@ type = 1
 controller = NodePath("../../../../SM42_V1")
 command = "brake_releaser"
 
+[node name="Doors" type="HFlowContainer" parent="UI/MoverSwitches"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="UI/MoverSwitches/Doors"]
+layout_mode = 2
+text = "Doors
+"
+
+[node name="LeftDoorsOpen" parent="UI/MoverSwitches/Doors" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Open left doors"
+controller = NodePath("../../../../SM42_V1")
+command = "doors_left_toggle"
+
+[node name="RightDoorsOpen" parent="UI/MoverSwitches/Doors" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Open right doors"
+controller = NodePath("../../../../SM42_V1")
+command = "doors_right_toggle"
+
+[node name="LeftDoorsPermit" parent="UI/MoverSwitches/Doors" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Permit left doors"
+controller = NodePath("../../../../SM42_V1")
+command = "doors_left_permit_toggle"
+
+[node name="RightDoorsPermit" parent="UI/MoverSwitches/Doors" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Permit right doors"
+controller = NodePath("../../../../SM42_V1")
+command = "doors_right_permit_toggle"
+
+[node name="DoorLock" parent="UI/MoverSwitches/Doors" instance=ExtResource("4_xvhus")]
+layout_mode = 2
+label = "Lock doors"
+controller = NodePath("../../../../SM42_V1")
+command = "doors_lock_toggle"
+
 [node name="SM42_V1" parent="." instance=ExtResource("2_t8uqe")]
 
 [node name="TestowySilnikElektryczny" parent="SM42_V1" index="1"]
 enabled = false
+
+[node name="TrainDoor" parent="SM42_V1" index="5"]
+type = 3
+open/method = 2
+close/method = 2
+voltage = 2
 
 [node name="PoweredTrainPart" type="GenericTrainPart" parent="SM42_V1"]
 script = ExtResource("6_2wkl6")

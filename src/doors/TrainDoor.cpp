@@ -223,52 +223,62 @@ namespace godot {
         }
 
         TMoverParameters *mover = train_controller_node->get_mover();
-        if (command == "operate_doors") {
-            const int param_side = p1;
-            const int param_state = p2;
-            if (param_side >= 2 || param_side <= 0) {
+        if (command == "doors_left_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
                 UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
                 return;
             }
 
-            if (param_state >= 2 || param_state <= 0) {
-                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #2) is out of range");
-                return;
-            }
-
-            mover->OperateDoors(static_cast<side>(param_side), param_state);
+            mover->OperateDoors(side::left, param_state);
             return;
         }
 
-        if (command == "permit_doors") {
-            const int param_side = p1;
-            const int param_state = p2;
-            if (param_side >= 2 || param_side <= 0) {
+        if (command == "doors_right_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
                 UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
                 return;
             }
 
-            if (param_state >= 2 || param_state <= 0) {
-                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #2) is out of range");
-                return;
-            }
-            mover->PermitDoors(static_cast<side>(param_side), param_state);
+            mover->OperateDoors(side::right, param_state);
+            return;
         }
 
-        if (command == "lock_doors") {
-            const int param_side = p1;
-            if (param_side >= 2 || param_side <= 0) {
+
+        if (command == "doors_lock_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
                 UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
                 return;
             }
 
-            if (p2) {
-                UtilityFunctions::push_warning("[MaSzyna::Doors] Parameter (argument #2) is redundant in \"lock_doors\" command.");
+            mover->LockDoors(param_state);
+            return;
+        }
+
+        if (command == "doors_left_permit_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
                 return;
             }
 
-            mover->LockDoors(param_side);
+            mover->PermitDoors(side::left, param_state);
+            return;
         }
+
+        if (command == "doors_right_permit_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
+                return;
+            }
+
+            mover->PermitDoors(side::right, param_state);
+            return;
+        }
+
         UtilityFunctions::push_error("[MaSzyna::Doors] Unknown command: " + command);
     }
 

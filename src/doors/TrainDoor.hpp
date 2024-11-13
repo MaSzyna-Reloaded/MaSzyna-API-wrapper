@@ -115,14 +115,14 @@ namespace godot {
             float door_open_time = 0.0;
 
             /**
-             * Speed of opening the doors
+             * Speed of opening the doors. Default value from iternal mover
              */
-            float open_speed = 0.0;
+            float open_speed = 1.0;
 
             /**
-             * Speed of closing the door
+             * Speed of closing the door. Default value from iternal mover
              */
-            float close_speed = 0.0;
+            float close_speed = 1.0;
 
             /**
              * The width (or angle) of the door fully opening
@@ -145,12 +145,12 @@ namespace godot {
             bool auto_door_close_warning = false;
 
             /**
-             * Door closing delay, in seconds
+             * Door closing delay, in seconds. Default value from iternal mover
              */
             float door_close_delay = 0.0;
 
             /**
-             * Door opening delay, in seconds
+             * Door opening delay, in seconds. Default value from iternal mover
              */
             float door_open_delay = 0.0;
 
@@ -177,9 +177,9 @@ namespace godot {
 
             /**
              * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
-             * from 1
+             * from 1. Default value from iternal mover
              */
-            int door_permit_list_default = 1;
+            int door_permit_list_default = -1;
 
             /**
              * Automatic closing of centrally opened doors after time has elapsed
@@ -192,9 +192,9 @@ namespace godot {
             bool door_auto_close_enabled = false;
 
             /**
-             * The speed at which the door automatically closes
+             * The speed at which the door automatically closes. Default value from iternal mover
              */
-            float door_auto_close_velocity = 0;
+            float door_auto_close_velocity = -1.0;
 
             /**
              * Docs do not describe this properly. Need to figure this out

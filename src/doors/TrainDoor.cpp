@@ -223,6 +223,8 @@ namespace godot {
         }
 
         TMoverParameters *mover = train_controller_node->get_mover();
+        //@TODO: Implement TMoverParameters::ChangeDoorControlMode(bool const State, range_t const Notify)
+        //@TODO: Implement TMoverParameters::update_doors(double const Deltatime)
         if (command == "doors_left_toggle") {
             const int param_state = p1;
             if (param_state > 1 || param_state < 0) {
@@ -276,6 +278,17 @@ namespace godot {
             }
 
             mover->PermitDoors(side::right, param_state);
+            return;
+        }
+
+        if (command == "doors_step_permit_toggle") {
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] Side parameter (argument #1) is out of range");
+                return;
+            }
+
+            mover->PermitDoorStep(param_state);
             return;
         }
 

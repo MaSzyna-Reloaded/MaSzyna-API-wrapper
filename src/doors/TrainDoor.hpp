@@ -98,59 +98,63 @@ namespace godot {
             void set_door_permit_light_blinking(PermitLights p_blinking_mode);
             int get_door_permit_light_blinking() const;
 
+            /**
+             * Type of the door. Default value from internal mover
+             *
+             */
             DoorType door_type = DoorType::DOOR_TYPE_ROTATE;
             /**
-             * The type of door (opening method)
+             * The type of door (opening method). Default value from internal mover
              */
             DoorControls door_open_method = DoorControls::DOOR_CONTROLS_PASSENGER;
 
             /**
-             * The type of door (closing method)
+             * The type of door (closing method). Default value from internal mover
              */
             DoorControls door_close_method = DoorControls::DOOR_CONTROLS_PASSENGER;
 
             /**
-             * Time period for which door would stay opened
+             * Time period for which door would stay opened. Default value from internal mover
              */
-            float door_open_time = 0.0;
+            float door_open_time = -1.0f;
 
             /**
-             * Speed of opening the doors. Default value from iternal mover
+             * Speed of opening the doors. Default value from internal mover
              */
-            float open_speed = 1.0;
+            float open_speed = 1.0f;
 
             /**
-             * Speed of closing the door. Default value from iternal mover
+             * Speed of closing the door. Default value from internal mover
              */
-            float close_speed = 1.0;
+            float close_speed = 1.0f;
 
             /**
-             * The width (or angle) of the door fully opening
+             * The width (or angle) of the door fully opening. Default value from internal mover
              */
-            float door_max_shift = 0.0;
+            float door_max_shift = 0.0f;
 
             /**
-             * Low voltage circuit voltage required for door control.
+             * Low voltage circuit voltage required for door control. Default value from internal mover
              */
             DoorVoltage door_voltage = DoorVoltage::DOOR_VOLTAGE_0;
 
             /**
-             * Buzzer before closing the door
+             * Buzzer before closing the door. Default value from internal mover
              */
             bool door_close_warning = false;
 
             /**
-             * When you press the door closing button, a buzzer is activated, when you release it, the door closes
+             * When you press the door closing button, a buzzer is activated, when you release it, the door closes. Default value from internal mover
              */
             bool auto_door_close_warning = false;
 
             /**
-             * Door closing delay, in seconds. Default value from iternal mover
+             * Door closing delay, in seconds. Default value from internal mover
              */
             float door_close_delay = 0.0;
 
             /**
-             * Door opening delay, in seconds. Default value from iternal mover
+             * Door opening delay, in seconds. Default value from internal mover
              */
             float door_open_delay = 0.0;
 
@@ -160,14 +164,14 @@ namespace godot {
             float door_open_with_permit = 0.0;
 
             /**
-             * Is the door blocked
+             * Is the door blocked. Default value from internal mover
              */
             bool door_blocked = false;
 
             /**
-             * The amount of rebound for Plug type doors (rebound-sliding), in meters
+             * The amount of rebound for Plug type doors (rebound-sliding), in meters. Default value from internal mover
              */
-            float door_max_shift_plug = 0.0;
+            float door_max_shift_plug = 0.0f;
 
             /**
              * Door programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
@@ -177,7 +181,7 @@ namespace godot {
 
             /**
              * The default knob position is from the set defined by the door_permit_list entry; positions are numbered
-             * from 1. Default value from iternal mover
+             * from 1. Default value from internal mover
              */
             int door_permit_list_default = -1;
 
@@ -192,9 +196,9 @@ namespace godot {
             bool door_auto_close_enabled = false;
 
             /**
-             * The speed at which the door automatically closes. Default value from iternal mover
+             * The speed at which the door automatically closes. Default value from internal mover
              */
-            float door_auto_close_velocity = -1.0;
+            float door_auto_close_velocity = -1.0f;
 
             /**
              * Docs do not describe this properly. Need to figure this out
@@ -202,15 +206,15 @@ namespace godot {
             double platform_max_speed = 0.0;
 
             /**
-             * Offset value in meters or rotation angle for a fully extended step
+             * Offset value in meters or rotation angle for a fully extended step. Default value from internal mover
              */
-            float platform_max_shift = 0.0;
+            float platform_max_shift = 0.0f;
 
             /**
              * The speed of the animation step, where 1.0 corresponds to an animation lasting one second, a value of 0.5
-             * to two seconds, etc.
+             * to two seconds, etc. Default value from internal mover
              */
-            float platform_speed = 0.0;
+            float platform_speed = 0.5f;
 
             /**
              * Rotation angle for fully extended mirror
@@ -223,12 +227,12 @@ namespace godot {
             double mirror_vel_close = 0.0;
 
             /**
-             * Opening doors by passengers requires the train driver's consent
+             * Opening doors by passengers requires the train driver's consent. Default value from internal mover
              */
             bool door_permit_required = false;
 
             /**
-             * Blinking permit light
+             * Blinking permit light. Default value from internal mover
              */
             PermitLights door_permit_light_blinking = PermitLights::PERMIT_LIGHT_CONTINUOUS_LIGHT;
 

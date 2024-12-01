@@ -214,7 +214,9 @@ namespace godot {
         state["door/right/step_folding"] = right_door.step_folding;
     }
 
-    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) { }
+    void TrainDoor::_do_process_mover(TMoverParameters *mover, double delta) {
+        mover->update_doors(delta); //działaj plz qwp
+    }
 
     void TrainDoor::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
         TrainPart::_on_command_received(command, p1, p2);

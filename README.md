@@ -2,9 +2,9 @@
 ## About the project
 This C++ GDExtension for Godot Engine 4.3 offers a simplified interface to the MaSzyna train simulator API. Tailored for the MaSzyna Reloaded project, it enables developers to construct train components using Godot's Node-based system, providing a visual and intuitive approach to train creation and management. Key features include:
 
-- Custom Node-based Classes: Create train elements using Godot's familiar Node system.
+- Custom Node-based Classes: Create train elements using our premade and integrated classes based on Godot's familiar Node system.
 - Parameter Customization: Fine-tune train parameters directly within the Godot editor.
-- Simplified Integration: Seamlessly integrate the MaSzyna simulator into your Godot projects.
+- Simplified Integration: Seamlessly integrate the MaSzyna simulator physics into your Godot projects.
 - Enhanced Debugging: Streamline the debugging process for your train simulations.
 ## Code style
 ### General

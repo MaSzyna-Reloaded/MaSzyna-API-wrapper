@@ -225,8 +225,27 @@ namespace godot {
         }
 
         TMoverParameters *mover = train_controller_node->get_mover();
-        //@TODO: Implement TMoverParameters::ChangeDoorControlMode(bool const State, range_t const Notify)
-        //@TODO: Implement TMoverParameters::update_doors(double const Deltatime)
+
+        if (command == "doors_change_control_mode") {
+            //@TODO: add support for changing range_t param
+            const int param_state = p1;
+            if (param_state > 1 || param_state < 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #1) is out of range");
+                return;
+            }
+            mover->ChangeDoorControlMode(param_state);
+        }
+
+        if (command == "doors_change_permit_preset") {
+            //@TODO: add support for changing range_t param
+            const int param_change = p1;
+            if (param_change > 1 || param_change < 0) {
+                UtilityFunctions::push_error("[MaSzyna::Doors] State parameter (argument #1) is out of range");
+                return;
+            }
+            mover->ChangeDoorPermitPreset(param_change);
+        }
+
         if (command == "doors_left_toggle") {
             const int param_state = p1;
             if (param_state > 1 || param_state < 0) {

@@ -57,7 +57,7 @@
 			Actual state of the train
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
-			Train type name 
+			Train type name
 		</member>
 	</members>
 	<signals>
@@ -78,6 +78,11 @@
 			<param index="0" name="is_powered" type="bool" />
 			<description>
 				Train power state changed
+			</description>
+		</signal>
+		<signal name="radio_channel_changed">
+			<param index="0" name="channel" type="int" />
+			<description>
 			</description>
 		</signal>
 		<signal name="radio_toggled">

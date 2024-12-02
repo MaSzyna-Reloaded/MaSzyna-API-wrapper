@@ -16,7 +16,9 @@ jobs:
       - uses: actions/cache/restore@v4
         id: cache-restore
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-windows
 
       - name: Docker build Windows x86_64
@@ -35,7 +37,9 @@ jobs:
       - uses: actions/cache/save@v4
         id: cache
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-windows
 
   build-debug-linux:
@@ -49,7 +53,9 @@ jobs:
       - uses: actions/cache/restore@v4
         id: cache-restore
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-linux
 
       - name: Docker build Linux x86_64
@@ -68,7 +74,9 @@ jobs:
       - uses: actions/cache/save@v4
         id: cache
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-linux
 
   build-debug-android:
@@ -82,7 +90,9 @@ jobs:
       - uses: actions/cache/restore@v4
         id: cache-restore
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-android
 
       - name: Docker build Android x86_64
@@ -109,5 +119,7 @@ jobs:
       - uses: actions/cache/save@v4
         id: cache
         with:
-          path: godot-cpp/bin
+          path: |
+            godot-cpp/bin
+            .sconsign.dblite
           key: cache-godot-cpp-android

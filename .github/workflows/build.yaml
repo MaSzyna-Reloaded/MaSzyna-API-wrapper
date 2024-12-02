@@ -17,11 +17,11 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-godot-
             ${{ runner.os }}-
 
       - name: Docker build Windows x86_64
@@ -41,7 +41,7 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp
 
@@ -57,11 +57,11 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-godot-
             ${{ runner.os }}-
 
       - name: Docker build Linux x86_64
@@ -81,7 +81,7 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp
 
@@ -97,11 +97,11 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-build-
+            ${{ runner.os }}-godot-
             ${{ runner.os }}-
 
       - name: Docker build Android x86_64
@@ -129,6 +129,6 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin
+            godot-cpp/bin/
             .sconsign.dblite
           key: ${{ runner.os }}-godot-cpp

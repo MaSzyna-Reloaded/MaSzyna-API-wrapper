@@ -19,10 +19,10 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-windows-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-godot-
-            ${{ runner.os }}-
+            ${{ runner.os }}-windows-godot-
+            ${{ runner.os }}-windows-
 
       - name: Docker build Windows x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -43,7 +43,7 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-windows-godot-cpp
 
   build-debug-linux:
     runs-on: ubuntu-20.04
@@ -59,10 +59,10 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-linux-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-godot-
-            ${{ runner.os }}-
+            ${{ runner.os }}-linux-godot-
+            ${{ runner.os }}-linux-
 
       - name: Docker build Linux x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -83,7 +83,7 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-linux-godot-cpp
 
   build-debug-android:
     runs-on: ubuntu-20.04
@@ -99,10 +99,10 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-android-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-godot-
-            ${{ runner.os }}-
+            ${{ runner.os }}-android-godot-
+            ${{ runner.os }}-android-
 
       - name: Docker build Android x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -131,4 +131,4 @@ jobs:
           path: |
             godot-cpp/bin/
             .sconsign.dblite
-          key: ${{ runner.os }}-godot-cpp
+          key: ${{ runner.os }}-android-godot-cpp

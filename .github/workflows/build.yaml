@@ -13,6 +13,12 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-windows
+
       - name: Docker build Windows x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
           docker compose run windows_x86_64
@@ -26,6 +32,12 @@ jobs:
           name: windows-debug
           path: bin/windows
 
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-windows
+
   build-debug-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -33,6 +45,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-linux
 
       - name: Docker build Linux x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -47,6 +65,12 @@ jobs:
           name: linux-debug
           path: bin/linux
 
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-linux
+
   build-debug-android:
     runs-on: ubuntu-20.04
     steps:
@@ -54,6 +78,12 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-android
 
       - name: Docker build Android x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -75,3 +105,9 @@ jobs:
         with:
           name: android-debug
           path: bin/android
+
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: godot-cpp/bin
+          key: cache-godot-cpp-android

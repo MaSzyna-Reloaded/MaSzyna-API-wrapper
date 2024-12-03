@@ -17,7 +17,7 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-windows-godot-cpp
           restore-keys: |
@@ -41,7 +41,7 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-windows-godot-cpp
 
@@ -57,7 +57,7 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-linux-godot-cpp
           restore-keys: |
@@ -81,7 +81,7 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-linux-godot-cpp
 
@@ -97,7 +97,7 @@ jobs:
         id: cache-restore
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-android-godot-cpp
           restore-keys: |
@@ -129,6 +129,6 @@ jobs:
         id: cache
         with:
           path: |
-            godot-cpp/bin/
+            godot-cpp/
             .sconsign.dblite
           key: ${{ runner.os }}-android-godot-cpp

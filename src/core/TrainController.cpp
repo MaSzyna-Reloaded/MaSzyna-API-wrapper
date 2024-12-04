@@ -198,7 +198,6 @@ namespace godot {
                 register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 break;
             case NOTIFICATION_EXIT_TREE:
-                TrainSystem::get_instance()->unregister_train(this->get_train_id());
                 unregister_command("battery", Callable(this, "battery"));
                 unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -208,6 +207,7 @@ namespace godot {
                 unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+                TrainSystem::get_instance()->unregister_train(this->get_train_id());
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();

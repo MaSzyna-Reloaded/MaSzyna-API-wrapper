@@ -36,6 +36,7 @@ customs = ["custom.py"]
 customs = [os.path.abspath(path) for path in customs]
 
 opts = Variables(customs, ARGUMENTS)
+opts.Add("maszyna_debug", help="Enable internal debug mode", default="yes")
 opts.Add(
     BoolVariable(
         key="compiledb",
@@ -90,6 +91,9 @@ if env["target"] in ["editor", "template_debug"]:
         print("Not including class reference as we're targeting a pre-4.3 baseline.")
 
 
+if env["maszyna_debug"].lower() == "yes":
+    env.Append(CPPDEFINES=["LIBMASZYNA_DEBUG_ENABLED"])
+
 if env["target"] in ("debug", "template_debug"):
     env.Append(CPPDEFINES=["DEBUG_MODE"])
 else:
@@ -112,19 +116,22 @@ if platform in ("macos", "ios"):
 
 # Build
 
-library = env.SharedLibrary(target_bin_path, source=sources)
+commands = []
 
-copy_bin_to_project = env.InstallAs(
-    os.path.join(projectdir, "bin", libname, platform, file), source=library
-)
+if sources:
+    library = env.SharedLibrary(target_bin_path, source=sources)
 
-copy_addons_to_project = env.Install(
-    os.path.join(projectdir, "addons", libname), source=addon_files
-)
+    copy_bin_to_project = env.InstallAs(
+        os.path.join(projectdir, "bin", libname, platform, file), source=library
+    )
 
 commands = []
 
 if sources:
+    copy_addons_to_project = env.Install(
+        os.path.join(projectdir, "addons", libname), source=addon_files
+    )
+
     copy_gut_framework_to_project = env.Command(
         os.path.join(projectdir, "addons", "gut"),
         os.path.join("vendor", "gut", "addons", "gut"),
@@ -134,17 +141,14 @@ if sources:
     commands += [
         library,
         copy_bin_to_project,
+        copy_gut_framework_to_project,
     ]
 
     if os.path.islink(addons_dst_path):
-        print(f"⚠️ Symlink detected at {addons_dst_path}. Skipping Install().")
+        print(f"[!] Symlink detected at {addons_dst_path}. Skipping Install().")
     else:
-        commands.append(
-            env.Install(
-                os.path.join(projectdir, "addons", "libmaszyna"), source=addon_files
-            )
-        )
-        print(f"✅ Files will be installed from {addons_src_path} to {addons_dst_path}")
+        commands.append(copy_addons_to_project)
+        print(f"Files will be installed from {addons_src_path} to {addons_dst_path}")
 
 
 if localEnv.get("compiledb", False):

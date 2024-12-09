@@ -30,7 +30,7 @@ func _process(delta: float) -> void:
         var train_state = train.get_state()
         var bv = train_state.get("battery_voltage")
 
-        $%BatteryProgressBar.value = bv
+        $UI/Header/BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
 
         var security_state = security.get_mover_state()

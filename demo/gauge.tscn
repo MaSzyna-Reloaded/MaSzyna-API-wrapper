@@ -36,6 +36,7 @@ offset_top = 75.0
 offset_right = 123.0
 offset_bottom = 78.0
 grow_vertical = 2
+rotation = 4.71239
 texture = SubResource("CanvasTexture_883b5")
 
 [node name="Label" type="Label" parent="."]

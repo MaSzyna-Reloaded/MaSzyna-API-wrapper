@@ -160,7 +160,7 @@ namespace godot {
         /* switch_physics() raczej trzeba zostawic */
         mover->switch_physics(true);
 
-        UtilityFunctions::print("[MaSzyna::TMoverParameters] Mover initialized successfully");
+        DEBUG("[MaSzyna::TMoverParameters] Mover initialized successfully");
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 

@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://sm_42v_1.gd" id="1_vib8j"]
 
 [node name="SM42v1" type="TrainController"]
+train_id = "sm42v1"
 type_name = "6d"
 dimensions/mass = 74000.0
 power = 590.0

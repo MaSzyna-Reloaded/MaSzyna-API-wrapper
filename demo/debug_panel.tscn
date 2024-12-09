@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://br6moafqr8ykn"]
 
 [ext_resource type="Script" path="res://debug_panel.gd" id="1_7xna6"]
-[ext_resource type="Texture2D" uid="uid://6lsf2giat1da" path="res://icons/search.png" id="2_s0ly2"]
+[ext_resource type="Texture2D" uid="uid://cocm2ypm5qjg0" path="res://icons/search.png" id="2_s0ly2"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kvppn"]
 content_margin_left = 10.0

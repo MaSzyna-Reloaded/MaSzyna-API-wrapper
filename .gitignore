@@ -3,6 +3,7 @@
 /demo/*.import
 /cmake-build-debug/
 /src/gen/
+/docs/vendor
 CMakeLists.txt
 *.o
 *.os

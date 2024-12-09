@@ -1,4 +1,4 @@
-.PHONY=docs compile
+.PHONY=docs compile docs-server docs-install
 .DEFAULT_GOAL =compile
 
 docs:
@@ -7,3 +7,9 @@ docs:
 
 compile:
 	scons
+
+docs-install:
+	cd docs && make install
+
+docs-server:
+	cd docs && make runserver

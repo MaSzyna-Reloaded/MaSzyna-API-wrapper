@@ -1,5 +1,5 @@
 @tool
-extends Node2D
+extends Control
 
 @export var value = 0.0:
     set(x):

@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://sm_42v_1.gd" id="1_vib8j"]
 
 [node name="SM42v1" type="TrainController"]
+train_id = "sm42v1"
 type_name = "6d"
 dimensions/mass = 74000.0
 power = 590.0
@@ -60,3 +61,15 @@ emergency_brake_delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
+
+[node name="TrainDoors" type="TrainDoors" parent="."]
+open/time = 3.0
+max_shift = 3.0
+open/method = 2
+close/method = 2
+voltage = 3
+open/delay = 0.5
+close/delay = 3.0
+has_lock = true
+max_shift_plug = 3.0
+platform/max_shift = 3.0

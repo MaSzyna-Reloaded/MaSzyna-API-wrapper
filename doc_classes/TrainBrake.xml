@@ -36,6 +36,12 @@
 				Set brake level position by using predefined value
 			</description>
 		</method>
+		<method name="brake_level_set_position_str">
+			<return type="void" />
+			<param index="0" name="position" type="String" />
+			<description>
+			</description>
+		</method>
 		<method name="brake_releaser">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />

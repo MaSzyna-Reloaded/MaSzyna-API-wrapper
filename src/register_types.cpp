@@ -7,6 +7,7 @@
 
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/LogSystem.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
@@ -20,6 +21,7 @@
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
+LogSystem *log_system_singleton = nullptr;
 
 void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
@@ -38,9 +40,12 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
+        GDREGISTER_CLASS(LogSystem);
 
         train_system_singleton = memnew(TrainSystem);
+        log_system_singleton = memnew(LogSystem);
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
+        Engine::get_singleton()->register_singleton("LogSystem", log_system_singleton);
     }
 }
 
@@ -51,6 +56,7 @@ void uninitialize_libmaszyna_module(ModuleInitializationLevel p_level) {
 
     if (train_system_singleton) {
         Engine::get_singleton()->unregister_singleton("TrainSystem");
+        Engine::get_singleton()->unregister_singleton("LogSystem");
         // memdelete(train_system_singleton);
         // train_system_singleton = nullptr;
     }

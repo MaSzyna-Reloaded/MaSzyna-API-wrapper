@@ -66,4 +66,4 @@ func _on_forward_button_up():
 
 
 func _on_sm_42_mover_initialized():
-    print("Mover initialized. Train config: ", $SM42.config)
+    print("Mover initialized. Tra``in config: ", $SM42.config)

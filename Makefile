@@ -4,6 +4,5 @@
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
 
-
 compile:
 	scons

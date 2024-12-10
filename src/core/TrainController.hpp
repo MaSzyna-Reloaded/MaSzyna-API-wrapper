@@ -14,7 +14,7 @@ namespace godot {
     class TrainController final : public Node {
             GDCLASS(TrainController, Node)
         private:
-            TMoverParameters *mover;
+            TMoverParameters *mover{};
             String train_id = "";
 
             double initial_velocity = 0.0;

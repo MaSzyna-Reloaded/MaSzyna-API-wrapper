@@ -2,6 +2,8 @@
 #include <string>
 #include <vector>
 
+#include "utils.hpp"
+
 namespace libmaszyna {
     namespace utils {
         template<typename EnumType>

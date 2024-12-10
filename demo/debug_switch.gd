@@ -59,6 +59,7 @@ func _process(delta):
                     var value = _controller.state.get(state_property)
                     if not value == null:
                         $Switch.button_pressed = true if value else false
+                        $Switch.modulate = Color.GREEN if value else Color.WHITE
                 else:
                     $Switch.disabled = false
             else:

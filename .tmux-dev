@@ -1,0 +1,18 @@
+#!/bin/sh 
+
+
+tmux new-session -d
+tmux send-keys "vim" C-m
+tmux rename-window 'code'
+
+tmux new-window
+tmux send-keys "make watch-and-compile" C-m
+tmux rename-window 'shell'
+
+tmux new-window
+tmux rename-window 'other'
+
+tmux select-window -t :=0
+tmux select-pane -D
+
+tmux -2 attach-session -d 

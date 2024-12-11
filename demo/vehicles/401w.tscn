@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://d3bqaxs80et01"]
+
+[node name="401W" type="LegacyWagon" unique_id=1385549383]
+axle_arrangement = "2'2'"
+drag_coefficient = 0.1
+mass = 20100.0
+max_velocity = 100.0
+length = 14.04
+width = 3.04
+height = 3.235
+
+[node name="Coupler" type="LegacyBufferCouplerModule" parent="." unique_id=1677556398]
+coupler/type = 1
+buffer/stiffness_k = 9000.0
+buffer/max_compression_tolerance = 0.12
+buffer/max_tension_tolerance = 350.0
+coupler/stiffness_k = 4500.0
+coupler/max_compression_tolerance = 0.15
+coupler/max_tension_tolerance = 780.0
+damping_beta = 0.52
+allowed_flag = 3
+buffer_location = 2

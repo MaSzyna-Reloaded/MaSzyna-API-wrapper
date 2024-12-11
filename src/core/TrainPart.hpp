@@ -1,9 +1,9 @@
 #pragma once
 #include "./GameLog.hpp"
+#include "./LegacyRailVehicleModule.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include <functional>
-#include <godot_cpp/classes/node.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
     if ((mover_ptr) == nullptr) {                                                                                      \
@@ -11,21 +11,19 @@
     }
 
 namespace godot {
-    class TrainPart : public Node {
-            GDCLASS(TrainPart, Node)
+    class TrainPart : public LegacyRailVehicleModule {
+            GDCLASS(TrainPart, LegacyRailVehicleModule)
         public:
             static void _bind_methods();
 
         private:
-            Dictionary state;
             bool _commands_registered = false;
 
         protected:
             void _notification(int p_what);
             bool enabled = true;
             bool enabled_changed = false;
-            bool _dirty = false;
-            TrainController *train_controller_node;
+            TrainController *train_controller_node = nullptr;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -53,11 +51,9 @@ namespace godot {
             virtual void _register_commands();
             virtual void _unregister_commands();
 
-            TMoverParameters *get_mover();
-
         public:
+            ~TrainPart() override = default;
             void _process(double delta) override;
-            virtual void _process_mover(double delta);
 
             void register_command(const String &command, const Callable &callback);
             void unregister_command(const String &command, const Callable &callback);
@@ -76,12 +72,6 @@ namespace godot {
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
              * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
             // void initialize_mover(TrainController *train_controller_node);
-
-            /* High level method for updating the state of the Mover */
-            void update_mover();
-
-            /* High level method for getting the state of the Mover */
-            Dictionary get_mover_state();
             void emit_config_changed_signal();
     };
 } // namespace godot

@@ -1,0 +1,7 @@
+[gd_scene format=3 uid="uid://biomi670w2b4h"]
+
+[ext_resource type="Script" uid="uid://bmjb426apnsos" path="res://hud/legacy_railvehicle_debug_panel.gd" id="1_ipv8v"]
+
+[node name="LegacyRailvehicleDebugPanel" type="Container" unique_id=420678609]
+script = ExtResource("1_ipv8v")
+metadata/_custom_type_script = "uid://bkwi32wa1iq70"

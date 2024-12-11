@@ -1,16 +1,19 @@
 [gd_scene format=3 uid="uid://bsp43pawp632n"]
 
 [ext_resource type="Script" uid="uid://bjjgkykr4c718" path="res://demo_3d.gd" id="1_ut343"]
+[ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://hud/panel.tscn" id="2_esmlu"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
+[ext_resource type="Script" uid="uid://bmjb426apnsos" path="res://hud/legacy_railvehicle_debug_panel.gd" id="3_qg2pq"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
+[ext_resource type="Script" uid="uid://brwkvfoy75fiw" path="res://addons/libmaszyna/track_3d.gd" id="14_h4vb7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s18ef"]
 shader = ExtResource("2_ydn4r")
@@ -56,6 +59,33 @@ adjustment_enabled = true
 
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
+
+[node name="DebugPanelSM42" parent="." unique_id=1530772746 instance=ExtResource("2_esmlu")]
+offset_left = 24.0
+offset_top = 8.0
+offset_right = 270.0
+offset_bottom = 408.0
+script = ExtResource("3_qg2pq")
+controller_path = NodePath("../SM42-099/SM42-099/SM42v1")
+title = "SM42"
+
+[node name="DebugPanelWagon1" parent="." unique_id=629689876 instance=ExtResource("2_esmlu")]
+offset_left = 293.0
+offset_top = 8.0
+offset_right = 539.0
+offset_bottom = 408.0
+script = ExtResource("3_qg2pq")
+controller_path = NodePath("../SM42-099/Wagon1/401W")
+title = "Wagon1"
+
+[node name="DebugPanelWagon2" parent="." unique_id=159015149 instance=ExtResource("2_esmlu")]
+offset_left = 556.0
+offset_top = 12.0
+offset_right = 802.0
+offset_bottom = 412.0
+script = ExtResource("3_qg2pq")
+controller_path = NodePath("../SM42-099/Wagon2/401W")
+title = "Wagon2"
 
 [node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=282874346]
 visible = false
@@ -115,9 +145,15 @@ sky_texture_offset = Vector2(0.49, 0.005)
 sky_texture_scale = Vector2(0.547, 0.865)
 sky_energy = 0.85
 
+[node name="DebugTrack" type="Node3D" parent="." unique_id=79258348]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -12.701162)
+script = ExtResource("14_h4vb7")
+track_id = "debug"
+length = 10000000.0
+
 [node name="Player" parent="." unique_id=1342508122 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
-controlled_vehicle_path = NodePath("../SM42-099")
+controlled_vehicle_path = NodePath("../SM42-099/SM42-099")
 
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.069304, -5.63989)
@@ -141,7 +177,7 @@ directional_shadow_max_distance = 300.0
 environment = SubResource("Environment_jrns0")
 
 [node name="SM42-099" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -16.3318, 0, -13.7746)
+start_track_offset = 100.0
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)

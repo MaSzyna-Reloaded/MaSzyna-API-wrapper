@@ -1,8 +1,8 @@
 [configuration]
 
 entry_symbol = "libmaszyna_library_init"
-compatibility_minimum = "4.4"
-reloadable = true
+compatibility_minimum = "4.6"
+reloadable = false
 
 [libraries]
 

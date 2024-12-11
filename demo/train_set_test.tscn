@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://cwt2b1a17637y"]
+
+[ext_resource type="Script" uid="uid://c44dby0vw2sro" path="res://train_set_test.gd" id="1_6a7jl"]
+
+[node name="TrainSetTest" type="Node2D" unique_id=1620349970]
+script = ExtResource("1_6a7jl")

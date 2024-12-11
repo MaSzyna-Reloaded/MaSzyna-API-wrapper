@@ -1,3 +1,4 @@
+#include "../core/GameLog.hpp"
 #include "TrainDoors.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -72,28 +73,18 @@ namespace godot {
         BIND_ENUM_CONSTANT(TYPE_PLUG)
     }
 
-    void TrainDoors::_register_commands() {
-        register_command("doors_next_permit_preset", Callable(this, "next_permit_preset"));
-        register_command("doors_previous_permit_preset", Callable(this, "previous_permit_preset"));
-        register_command("doors_permit_step", Callable(this, "permit_step"));
-        register_command("doors_left_permit", Callable(this, "permit_left_doors"));
-        register_command("doors_right_permit", Callable(this, "permit_right_doors"));
-        register_command("doors_left", Callable(this, "operate_left_doors"));
-        register_command("doors_right", Callable(this, "operate_right_doors"));
-        register_command("doors_lock", Callable(this, "door_lock"));
-        register_command("doors_remote_control", Callable(this, "door_remote_control"));
-    }
-
-    void TrainDoors::_unregister_commands() {
-        unregister_command("doors_next_permit_preset", Callable(this, "next_permit_preset"));
-        unregister_command("doors_previous_permit_preset", Callable(this, "previous_permit_preset"));
-        unregister_command("doors_permit_step", Callable(this, "permit_step"));
-        unregister_command("doors_left_permit", Callable(this, "permit_left_doors"));
-        unregister_command("doors_right_permit", Callable(this, "permit_right_doors"));
-        unregister_command("doors_left", Callable(this, "operate_left_doors"));
-        unregister_command("doors_right", Callable(this, "operate_right_doors"));
-        unregister_command("doors_lock", Callable(this, "door_lock"));
-        unregister_command("doors_remote_control", Callable(this, "door_remote_control"));
+    TypedArray<TrainCommand> TrainDoors::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("doors_next_permit_preset", Callable(this, "next_permit_preset")));
+        commands.append(make_train_command("doors_previous_permit_preset", Callable(this, "previous_permit_preset")));
+        commands.append(make_train_command("doors_permit_step", Callable(this, "permit_step")));
+        commands.append(make_train_command("doors_left_permit", Callable(this, "permit_left_doors")));
+        commands.append(make_train_command("doors_right_permit", Callable(this, "permit_right_doors")));
+        commands.append(make_train_command("doors_left", Callable(this, "operate_left_doors")));
+        commands.append(make_train_command("doors_right", Callable(this, "operate_right_doors")));
+        commands.append(make_train_command("doors_lock", Callable(this, "door_lock")));
+        commands.append(make_train_command("doors_remote_control", Callable(this, "door_remote_control")));
+        return commands;
     }
 
     void TrainDoors::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
@@ -192,13 +183,13 @@ namespace godot {
         if (door_controls_map.find(open_method) != door_controls_map.end()) {
             p_mover->Doors.open_control = door_controls_map.at(open_method);
         } else {
-            log_error("Unhandled door open controls position: " + String::num(open_method));
+            GameLog::get_instance()->error("Unhandled door open controls position: " + String::num(open_method));
         }
 
         if (door_controls_map.find(close_method) != door_controls_map.end()) {
             p_mover->Doors.close_control = door_controls_map.at(close_method);
         } else {
-            log_error("Unhandled door close controls position: " + String::num(close_method));
+            GameLog::get_instance()->error("Unhandled door close controls position: " + String::num(close_method));
         }
 
         p_mover->Doors.auto_duration = open_time;
@@ -228,7 +219,7 @@ namespace godot {
         if (door_type_map.find(type) != door_type_map.end()) {
             p_mover->Doors.type = door_type_map.at(type);
         } else {
-            log_error("Unhandled door type: " + String::num(type));
+            GameLog::get_instance()->error("Unhandled door type: " + String::num(type));
         }
 
         p_mover->Doors.has_warning = close_warning;

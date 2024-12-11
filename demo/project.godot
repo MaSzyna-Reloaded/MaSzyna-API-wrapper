@@ -29,15 +29,14 @@ run/disable_stderr.release=true
 
 [autoload]
 
-MaszynaEnvironment="*uid://3nkx0u4dgdws"
-Console="*uid://d046w0soh2iou"
-AudioStreamManager="*uid://cp8sgfk334adm"
-UserSettings="*uid://dd2pj6a7hturn"
+MaszynaEnvironment="*res://addons/libmaszyna/environment/maszyna_environment.gd"
+Console="*res://addons/libmaszyna/console/console.gd"
+AudioStreamManager="*res://addons/libmaszyna/sound/audio_stream_manager.gd"
+UserSettings="*res://addons/libmaszyna/settings/user_settings.gd"
 
 [debug]
 
-settings/stdout/verbose_stdout=true
-file_logging/log_path="user://logs/app.log"
+file_logging/log_path="user://app.log"
 
 [display]
 

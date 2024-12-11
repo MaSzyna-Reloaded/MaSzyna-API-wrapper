@@ -49,35 +49,31 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_model_skin", "track_id", "sleeper_model_skin"),
                 &TrackRenderingServer::set_sleeper_model_skin);
-        ClassDB::bind_method(
-                D_METHOD("set_sleeper_mesh", "track_id", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
+        ClassDB::bind_method(D_METHOD("set_sleeper_mesh", "track_id", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
         ClassDB::bind_method(D_METHOD("get_sleeper_mesh", "track_id"), &TrackRenderingServer::get_sleeper_mesh);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_texture", "track_id", "path"), &TrackRenderingServer::set_ballast_texture);
 
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_height", "track_id", "height"), &TrackRenderingServer::set_sleeper_height);
-        ClassDB::bind_method(
-                D_METHOD("get_sleeper_height", "track_id"), &TrackRenderingServer::get_sleeper_height);
+        ClassDB::bind_method(D_METHOD("get_sleeper_height", "track_id"), &TrackRenderingServer::get_sleeper_height);
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_spacing", "track_id", "spacing"), &TrackRenderingServer::set_sleeper_spacing);
-        ClassDB::bind_method(
-                D_METHOD("get_sleeper_spacing", "track_id"), &TrackRenderingServer::get_sleeper_spacing);
+        ClassDB::bind_method(D_METHOD("get_sleeper_spacing", "track_id"), &TrackRenderingServer::get_sleeper_spacing);
         ClassDB::bind_method(
                 D_METHOD("set_rail_spacing", "track_id", "spacing"), &TrackRenderingServer::set_rail_spacing);
         ClassDB::bind_method(D_METHOD("get_rail_spacing", "track_id"), &TrackRenderingServer::get_rail_spacing);
+        ClassDB::bind_method(D_METHOD("set_rail_height", "track_id", "height"), &TrackRenderingServer::set_rail_height);
+        ClassDB::bind_method(D_METHOD("get_rail_height", "track_id"), &TrackRenderingServer::get_rail_height);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_height", "track_id", "height"), &TrackRenderingServer::set_ballast_height);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_height", "track_id"), &TrackRenderingServer::get_ballast_height);
+        ClassDB::bind_method(D_METHOD("get_ballast_height", "track_id"), &TrackRenderingServer::get_ballast_height);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_offset", "track_id", "offset"), &TrackRenderingServer::set_ballast_offset);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_offset", "track_id"), &TrackRenderingServer::get_ballast_offset);
+        ClassDB::bind_method(D_METHOD("get_ballast_offset", "track_id"), &TrackRenderingServer::get_ballast_offset);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_uv_scale", "track_id", "scale"), &TrackRenderingServer::set_ballast_uv_scale);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_uv_scale", "track_id"), &TrackRenderingServer::get_ballast_uv_scale);
+        ClassDB::bind_method(D_METHOD("get_ballast_uv_scale", "track_id"), &TrackRenderingServer::get_ballast_uv_scale);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_width_tiling", "track_id", "tiling"),
                 &TrackRenderingServer::set_ballast_width_tiling);
@@ -90,8 +86,7 @@ namespace godot {
                 D_METHOD("get_ballast_length_tiling", "track_id"), &TrackRenderingServer::get_ballast_length_tiling);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_enabled", "track_id", "enabled"), &TrackRenderingServer::set_ballast_enabled);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_enabled", "track_id"), &TrackRenderingServer::get_ballast_enabled);
+        ClassDB::bind_method(D_METHOD("get_ballast_enabled", "track_id"), &TrackRenderingServer::get_ballast_enabled);
 
         ClassDB::bind_method(D_METHOD("get_instance_rid", "track_id"), &TrackRenderingServer::get_instance_rid);
         ClassDB::bind_method(
@@ -108,7 +103,7 @@ namespace godot {
     }
 
     TrackRenderingServer::~TrackRenderingServer() {
-        for (KeyValue<int64_t, TrackState> &entry : tracks) {
+        for (KeyValue<int64_t, TrackState> &entry: tracks) {
             _free_track_rids(entry.value);
         }
         tracks.clear();
@@ -141,7 +136,8 @@ namespace godot {
         return state;
     }
 
-    void TrackRenderingServer::_apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const {
+    void
+    TrackRenderingServer::_apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const {
         RenderingServer::get_singleton()->instance_geometry_set_material_override(
                 p_instance, p_material.is_valid() ? p_material->get_rid() : RID());
     }
@@ -315,8 +311,7 @@ namespace godot {
         rs->instance_geometry_set_shader_parameter(
                 state->sleeper_multimesh_instance, "sleeper_height", state->sleeper_height);
         const float safe_spacing = state->sleeper_spacing > 0.001f ? state->sleeper_spacing : 0.001f;
-        rs->instance_geometry_set_shader_parameter(
-                state->sleeper_multimesh_instance, "sleeper_spacing", safe_spacing);
+        rs->instance_geometry_set_shader_parameter(state->sleeper_multimesh_instance, "sleeper_spacing", safe_spacing);
         if (state->sleeper_material.is_valid()) {
             state->sleeper_material->set_shader_parameter("path_points", p_points);
             state->sleeper_material->set_shader_parameter("path_quats", p_quats);
@@ -325,8 +320,7 @@ namespace godot {
         if (state->sleeper_multimesh.is_valid() && state->sleeper_mesh.is_valid()) {
             const int count = static_cast<int>(std::floor(safe_length / safe_spacing));
             if (count > 0) {
-                rs->multimesh_allocate_data(
-                        state->sleeper_multimesh, count, RenderingServer::MULTIMESH_TRANSFORM_3D);
+                rs->multimesh_allocate_data(state->sleeper_multimesh, count, RenderingServer::MULTIMESH_TRANSFORM_3D);
                 rs->multimesh_set_visible_instances(state->sleeper_multimesh, -1);
                 for (int i = 0; i < count; i++) {
                     rs->multimesh_instance_set_transform(state->sleeper_multimesh, i, Transform3D());
@@ -351,8 +345,7 @@ namespace godot {
         _reload_sleeper_model(p_track_id, *state);
     }
 
-    void TrackRenderingServer::set_sleeper_model_skin(
-            const int64_t p_track_id, const String &p_sleeper_model_skin) {
+    void TrackRenderingServer::set_sleeper_model_skin(const int64_t p_track_id, const String &p_sleeper_model_skin) {
         TrackState *state = get_track_state(p_track_id);
         ERR_FAIL_NULL(state);
 
@@ -413,7 +406,7 @@ namespace godot {
         bool found_transparent = false;
         std::vector<Ref<E3DSubModel>> stack;
         stack.reserve(submodels.size());
-        for (const Variant &submodel : submodels) {
+        for (const Variant &submodel: submodels) {
             stack.emplace_back(submodel);
         }
 
@@ -431,7 +424,7 @@ namespace godot {
             }
 
             TypedArray<E3DSubModel> children = sm->get_submodels();
-            for (const Variant &child : children) {
+            for (const Variant &child: children) {
                 stack.emplace_back(child);
             }
         }
@@ -565,8 +558,7 @@ namespace godot {
 
         bool should_generate = state->internal_ballast_mesh.is_null();
         if (!should_generate) {
-            if (std::abs(old_length - p_length) > 1.0f ||
-                std::abs(old_height - state->ballast_height) > 0.001f ||
+            if (std::abs(old_length - p_length) > 1.0f || std::abs(old_height - state->ballast_height) > 0.001f ||
                 std::abs(old_offset - state->ballast_offset) > 0.001f ||
                 std::abs(old_w_tiling - state->ballast_width_tiling) > 0.001f ||
                 std::abs(old_l_tiling - state->ballast_length_tiling) > 0.001f) {
@@ -581,10 +573,10 @@ namespace godot {
         const int steps = std::max(2, static_cast<int>(std::floor(p_length / p_curve_precision)));
 
         PackedVector2Array ballast_poly;
-        ballast_poly.push_back(Vector2(-1.25f, 0.0f));
-        ballast_poly.push_back(Vector2(1.25f, 0.0f));
-        ballast_poly.push_back(Vector2(2.0f, -state->ballast_height));
-        ballast_poly.push_back(Vector2(-2.0f, -state->ballast_height));
+        ballast_poly.push_back(Vector2(-1.25f, state->ballast_height));
+        ballast_poly.push_back(Vector2(1.25f, state->ballast_height));
+        ballast_poly.push_back(Vector2(2.0f, 0.0f));
+        ballast_poly.push_back(Vector2(-2.0f, 0.0f));
 
         PackedVector3Array vertices;
         PackedVector3Array normals;
@@ -651,7 +643,8 @@ namespace godot {
     }
 
     void TrackRenderingServer::update_rail_mesh(
-            const int64_t p_track_id, const float p_length, const float p_rail_spacing, const float p_curve_precision) {
+            const int64_t p_track_id, const float p_length, const float p_rail_spacing, const float p_rail_height,
+            const float p_curve_precision) {
         TrackState *state = get_track_state(p_track_id);
         ERR_FAIL_NULL(state);
 
@@ -661,14 +654,17 @@ namespace godot {
 
         float old_length = 0.0f;
         float old_spacing = 0.0f;
+        float old_height = 0.0f;
         if (state->internal_rail_mesh.is_valid()) {
             old_length = state->internal_rail_mesh->get_meta("length", 0.0f);
             old_spacing = state->internal_rail_mesh->get_meta("rail_spacing", 0.0f);
+            old_height = state->internal_rail_mesh->get_meta("rail_height", 0.0f);
         }
 
         bool should_generate = state->internal_rail_mesh.is_null();
         if (!should_generate) {
-            if (std::abs(old_length - p_length) > 1.0f || std::abs(old_spacing - p_rail_spacing) > 0.001f) {
+            if (std::abs(old_length - p_length) > 1.0f || std::abs(old_spacing - p_rail_spacing) > 0.001f ||
+                std::abs(old_height - p_rail_height) > 0.001f) {
                 should_generate = true;
             }
         }
@@ -711,7 +707,8 @@ namespace godot {
                 for (int j = 0; j < poly_size; j++) {
                     const Vector2 p = rail_poly[j];
                     const float x_pos = (static_cast<float>(side) * offset) + (p.x * static_cast<float>(side));
-                    vertices.push_back(Vector3(x_pos, p.y, z));
+                    vertices.push_back(Vector3(
+                            x_pos, p.y + state->ballast_height + state->sleeper_height - state->rail_height, z));
                     normals.push_back(Vector3(p.x, p.y - 0.08f, 0.0f).normalized());
                     uvs.push_back(Vector2(static_cast<float>(j) / static_cast<float>(poly_size - 1), v_u));
                 }
@@ -762,6 +759,7 @@ namespace godot {
         state->internal_rail_mesh = new_mesh;
         state->internal_rail_mesh->set_meta("length", p_length);
         state->internal_rail_mesh->set_meta("rail_spacing", p_rail_spacing);
+        state->internal_rail_mesh->set_meta("rail_height", p_rail_height);
         state->rail_mesh = state->internal_rail_mesh->get_rid();
         RenderingServer::get_singleton()->instance_set_base(state->rail_mesh_instance, state->rail_mesh);
     }
@@ -803,6 +801,19 @@ namespace godot {
         const TrackState *state = get_track_state(p_track_id);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->rail_spacing;
+    }
+
+    void TrackRenderingServer::set_rail_height(const int64_t p_track_id, const float p_height) {
+        TrackState *state = get_track_state(p_track_id);
+        ERR_FAIL_NULL(state);
+        state->rail_height = p_height;
+        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+    }
+
+    float TrackRenderingServer::get_rail_height(const int64_t p_track_id) const {
+        const TrackState *state = get_track_state(p_track_id);
+        ERR_FAIL_NULL_V(state, 0.0f);
+        return state->rail_height;
     }
 
     void TrackRenderingServer::set_ballast_height(const int64_t p_track_id, const float p_height) {

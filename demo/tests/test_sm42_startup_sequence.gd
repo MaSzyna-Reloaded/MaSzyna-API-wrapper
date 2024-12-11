@@ -1,9 +1,15 @@
 extends MaszynaGutTest
 
-var train: TrainController
+const RAIL_VEHICLE_3D = preload("res://addons/libmaszyna/rail_vehicle_3d.gd")
+
+var train: RailVehicle3D
 
 func before_each():
-    train = load("res://tests/sm42_controller.tscn").instantiate()
+    var controller:TrainController = load("res://tests/sm42_controller.tscn").instantiate()
+    train = RAIL_VEHICLE_3D.new() as RailVehicle3D
+    train.controller_path = NodePath(controller.name)
+    train.train_id = "TestTrain"
+    train.add_child(controller)
     add_child(train)
     await wait_idle_frames(2)
     train.send_command("battery", true)

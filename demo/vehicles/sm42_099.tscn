@@ -1,0 +1,38 @@
+[gd_scene format=3 uid="uid://ny4n6hhynsd4"]
+
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_m2356"]
+[ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/cabin.tscn" id="2_fd6gs"]
+[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/fiz.tscn" id="3_a5dx7"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_ek1qp"]
+size = Vector3(2.9455566, 3.8098755, 13.81691)
+
+[node name="SM42-907" type="Node3D" unique_id=2022996241]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+script = ExtResource("1_m2356")
+controller_path = NodePath("SM42v1")
+front_bogie_path = NodePath("SM42-907/baza/ostoja/bogie1")
+rear_bogie_path = NodePath("SM42-907/baza/ostoja/bogie2")
+powered_wheel_paths = Array[NodePath]([NodePath("SM42-907/baza/ostoja/bogie1/wheel01"), NodePath("SM42-907/baza/ostoja/bogie1/wheel02"), NodePath("SM42-907/baza/ostoja/bogie2/wheel03"), NodePath("SM42-907/baza/ostoja/bogie2/wheel04")])
+cabin_scene = ExtResource("2_fd6gs")
+low_poly_cabin_path = NodePath("SM42-907-LowPolyCab")
+
+[node name="SM42v1" parent="." unique_id=433994401 instance=ExtResource("3_a5dx7")]
+
+[node name="SM42-907" type="E3DModelInstance" parent="." unique_id=1761636383]
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da"
+skins = ["6d-907"]
+exclude_node_names = ["cien"]
+submodels_aabb = AABB(-1.5978377, -1.0894207, -7.50629, 3.1975832, 5.4746947, 15.018351)
+
+[node name="SM42-907-LowPolyCab" type="E3DModelInstance" parent="." unique_id=895527231]
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da_interior"
+skins = ["6d-907"]
+exclude_node_names = ["cien"]
+submodels_aabb = AABB(-1.4508098, 1.2607, -3.924, 2.9026198, 2.93835, 2.20054)
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1676706806]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.029907236, 2.1289368, 0.049171407)
+shape = SubResource("BoxShape3D_ek1qp")

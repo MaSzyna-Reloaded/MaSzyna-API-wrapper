@@ -1,11 +1,18 @@
 extends MaszynaGutTest
 
-var train: TrainController
+const RAIL_VEHICLE_3D = preload("res://addons/libmaszyna/rail_vehicle_3d.gd")
+
+var train: RailVehicle3D
+var controller: TrainController
 
 func before_each():
-    train = TrainController.new()
+    train = RAIL_VEHICLE_3D.new() as RailVehicle3D
+    controller = TrainController.new()
+    controller.name = "Controller"
+    controller.battery_voltage = 110.0
+    train.controller_path = NodePath("Controller")
     train.train_id = "TestTrain"
-    train.battery_voltage = 110.0
+    train.add_child(controller)
     add_child(train)
 
 func after_each():
@@ -27,7 +34,7 @@ func test_not_enabling_battery_when_battery_voltage_is_zero():
     #
     # This is not how tests should be written, but it shows how to handle similar cases.
 
-    train.battery_voltage = 0.0
+    controller.battery_voltage = 0.0
     await wait_idle_frames(2)
 
     train.send_command("battery", true)

@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="VirtualTrack" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_axis" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="offset" type="float" default="0.0" />
+			<description>
+			</description>
+		</method>
+		<method name="get_next_track_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="get_previous_track_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="get_world_position" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="length" type="float" setter="" getter="get_length">
+		</member>
+		<member name="rid" type="RID" setter="" getter="get_rid">
+		</member>
+		<member name="start_point" type="Vector3" setter="" getter="get_start_point">
+		</member>
+		<member name="track_id" type="String" setter="" getter="get_track_id">
+		</member>
+	</members>
+</class>

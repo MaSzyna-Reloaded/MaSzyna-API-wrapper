@@ -98,15 +98,11 @@ namespace godot {
         p_state["spring_brake/cylinder_pressure"] = p_mover->SpringBrake.SBP;
     }
 
-    void TrainSpringBrake::_register_commands() {
-        register_command("set_spring_brake_active", Callable(this, "set_spring_brake_active"));
-        register_command("set_spring_brake_enabled", Callable(this, "set_spring_brake_enabled"));
-        register_command("spring_brake_release", Callable(this, "spring_brake_release"));
-    }
-
-    void TrainSpringBrake::_unregister_commands() {
-        unregister_command("set_spring_brake_active", Callable(this, "set_spring_brake_active"));
-        unregister_command("set_spring_brake_enabled", Callable(this, "set_spring_brake_enabled"));
-        unregister_command("spring_brake_release", Callable(this, "spring_brake_release"));
+    TypedArray<TrainCommand> TrainSpringBrake::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("set_spring_brake_active", Callable(this, "set_spring_brake_active")));
+        commands.append(make_train_command("set_spring_brake_enabled", Callable(this, "set_spring_brake_enabled")));
+        commands.append(make_train_command("spring_brake_release", Callable(this, "spring_brake_release")));
+        return commands;
     }
 } // namespace godot

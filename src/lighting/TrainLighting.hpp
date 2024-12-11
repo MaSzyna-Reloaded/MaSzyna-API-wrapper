@@ -18,11 +18,10 @@ namespace godot {
             static void _bind_methods();
             TypedArray<LightListItem> light_position_list;
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            TypedArray<TrainCommand> get_supported_commands() override;
         public:
             static const char* selector_position_changed_signal;
             MAKE_MEMBER_GS_DIRTY(int, selector_position, 0);

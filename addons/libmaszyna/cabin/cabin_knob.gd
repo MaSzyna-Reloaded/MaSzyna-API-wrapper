@@ -86,15 +86,15 @@ func _process_tool(delta):
     if _handle_actions and action_increase:
         if Input.is_action_pressed(action_increase, true):
             var new_value = clampf(value + step * delta, value_min, value_max)
-            if not new_value == value and _controller and command:
-                _controller.send_command(command, new_value)
+            if not new_value == value and _vehicle and command:
+                _vehicle.send_command(command, new_value)
             value = new_value
 
     if _handle_actions and action_decrease:
         if Input.is_action_pressed(action_decrease, true):
             var new_value = clampf(value - step * delta, value_min, value_max)
-            if not new_value == value and _controller and command:
-                _controller.send_command(command, value)
+            if not new_value == value and _vehicle and command:
+                _vehicle.send_command(command, value)
             value = new_value
 
     _t += delta

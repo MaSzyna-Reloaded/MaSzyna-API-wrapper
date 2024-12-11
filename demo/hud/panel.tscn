@@ -18,7 +18,7 @@ border_width_right = 1
 border_width_bottom = 1
 border_color = Color(0.160034, 0.223886, 0.359375, 1)
 
-[node name="DebugPanel" type="VBoxContainer"]
+[node name="DebugPanel" type="VBoxContainer" unique_id=629689876]
 custom_minimum_size = Vector2(0, 400)
 offset_right = 258.0
 offset_bottom = 369.0
@@ -50,16 +50,17 @@ custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
 size_flags_horizontal = 8
 size_flags_vertical = 4
+focus_mode = 1
 
 [node name="HFlowContainer" type="HFlowContainer" parent="PanelContainer/HBoxContainer" unique_id=382919766]
 layout_mode = 2
 
-[node name="DebugPanel" type="PanelContainer" parent="."]
+[node name="DebugPanel" type="PanelContainer" parent="." unique_id=342346362]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_kvppn")
 
-[node name="RichTextLabel" type="RichTextLabel" parent="DebugPanel"]
+[node name="RichTextLabel" type="RichTextLabel" parent="DebugPanel" unique_id=1348182787]
 layout_mode = 2
 focus_mode = 2
 theme_override_font_sizes/normal_font_size = 12

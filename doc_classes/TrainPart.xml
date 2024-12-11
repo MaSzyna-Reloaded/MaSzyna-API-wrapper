@@ -9,15 +9,6 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="broadcast_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Broadcast command to all trains (including the train, which part belongs to)
-			</description>
-		</method>
 		<method name="emit_config_changed_signal">
 			<return type="void" />
 			<description>
@@ -30,67 +21,14 @@
 				Returns dictionary ov properties with values from iternal mover
 			</description>
 		</method>
-		<method name="log">
-			<return type="void" />
-			<param index="0" name="loglevel" type="int" enum="GameLog.LogLevel" />
-			<param index="1" name="line" type="String" />
+		<method name="get_supported_commands">
+			<return type="TrainCommand[]" />
 			<description>
-				Logs a message
 			</description>
 		</method>
-		<method name="log_debug">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
+		<method name="get_train_controller_node" qualifiers="const">
+			<return type="TrainController" />
 			<description>
-				Logs a debug message. See [GameLog.LogLevel].
-			</description>
-		</method>
-		<method name="log_error">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
-			<description>
-				Logs an error message. See [GameLog.LogLevel].
-			</description>
-		</method>
-		<method name="log_info">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
-			<description>
-				Logs an info message. See [GameLog.LogLevel].
-			</description>
-		</method>
-		<method name="log_warning">
-			<return type="void" />
-			<param index="0" name="line" type="String" />
-			<description>
-				Logs a warning message. See [GameLog.LogLevel].
-			</description>
-		</method>
-		<method name="register_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
-			<description>
-				Registers command for train controlled by this node.
-				This is a shortcut for [method TrainSystem.register_command].
-			</description>
-		</method>
-		<method name="send_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
-			<description>
-				Sends command to the train, which part belongs to.
-			</description>
-		</method>
-		<method name="unregister_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
-			<description>
-				Removes command of a train controlled by this node from the registry.
-				This is a shortcut for [method TrainSystem.unregister_command].
 			</description>
 		</method>
 		<method name="update_mover">

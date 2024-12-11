@@ -93,15 +93,10 @@ namespace godot {
         mover->FuelPumpSwitch(p_enabled);
     }
 
-    void TrainDieselEngine::_register_commands() {
-        TrainEngine::_register_commands();
-        register_command("oil_pump", Callable(this, "oil_pump"));
-        register_command("fuel_pump", Callable(this, "fuel_pump"));
-    }
-
-    void TrainDieselEngine::_unregister_commands() {
-        TrainEngine::_unregister_commands();
-        unregister_command("oil_pump", Callable(this, "oil_pump"));
-        unregister_command("fuel_pump", Callable(this, "fuel_pump"));
+    TypedArray<TrainCommand> TrainDieselEngine::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainEngine::get_supported_commands();
+        commands.append(make_train_command("oil_pump", Callable(this, "oil_pump")));
+        commands.append(make_train_command("fuel_pump", Callable(this, "fuel_pump")));
+        return commands;
     }
 } // namespace godot

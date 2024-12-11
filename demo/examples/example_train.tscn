@@ -1,7 +1,13 @@
-[gd_scene format=3 uid="uid://clt6kosjdfdfx"]
+[gd_scene load_steps=2 format=3 uid="uid://clt6kosjdfdfx"]
 
-[node name="ExampleTrain" type="TrainController"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_u5wes"]
+
+[node name="ExampleTrain" type="Node3D"]
+script = ExtResource("1_u5wes")
 train_id = "exampletrain"
+controller_path = NodePath("TrainController")
 
-[node name="Brake" type="TrainBrake" parent="."]
+[node name="TrainController" type="TrainController" parent="."]
+
+[node name="Brake" type="TrainBrake" parent="TrainController"]
 process_priority = 1

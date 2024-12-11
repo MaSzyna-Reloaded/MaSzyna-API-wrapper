@@ -4,23 +4,25 @@
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
-[ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_rrc65"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
 [ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
 [ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="3_rrc65"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
-[ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
-[ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="12_m0qth"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
-[ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="15_rrc65"]
+[ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="15_rrc65"]
+[ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="16_hgm1p"]
+[ext_resource type="Script" uid="uid://bocodruvp5emd" path="res://addons/libmaszyna/train_set_3d.gd" id="16_l04v0"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
+[ext_resource type="PackedScene" uid="uid://uti524tqq1kf" path="res://vehicles/401w.tscn" id="17_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://trainsets/sm42_demo_trainset.tscn" id="19_6m450"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s18ef"]
 shader = ExtResource("2_ydn4r")
@@ -83,10 +85,10 @@ point_count = 5
 [sub_resource type="Curve3D" id="Curve3D_rrc65"]
 bake_interval = 0.1
 _data = {
-"points": PackedVector3Array(0, 0, 0, 1.1770676, 0, -46.7242, -28.74, 0, 300, 0, 0, 0, 0, 0, 0, -25.37695, 0, 166.50227, -0.114873014, 0, 1.8130357, 0.13763739, 0, -2.172325, -25.246233, 0, 161.31343, -0.28505298, 0, 2.1579351, 0.34607038, 0, -2.6198547, -24.655928, 0, 155.12242, -0.4241746, 0, 2.608348, 0, 0, 0, -23.444, 0, 147.67),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+"points": PackedVector3Array(0, 0, 0, -1.588137, 0, -41.003998, -28.74, 0, 300, -1.7360743, 0, 40.998, 0.35415033, 0, -8.363383, -33.277534, 0, 182.84572, -1.740632, 0, 6.2264476, 0.99383736, 0, -3.5550742, -22.86727, 0, 161.31343, 0.20185573, 0, 4.7752013, 0, 0, 0, -23.444, 0, 147.67),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
 }
-point_count = 5
+point_count = 4
 
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
@@ -220,7 +222,7 @@ metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 clip_contents = true
 layout_mode = 2
 
-[node name="DebugMenuFPS" parent="." unique_id=901825413 instance=ExtResource("2_rrc65")]
+[node name="DebugMenuFPS" parent="." unique_id=901825413 instance=ExtResource("5_vl0kb")]
 visible = false
 
 [node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=282874346]
@@ -280,11 +282,11 @@ sky_energy = 0.85
 
 [node name="Player" parent="." unique_id=1342508122 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
-controlled_vehicle_path = NodePath("../SM42-099")
+controlled_vehicle_path = NodePath("../SM42-907 Trainset/SM42-907")
 
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)
 material_override = ExtResource("2_imrpy")
+use_collision = true
 size = Vector3(5000, 0.1, 5000)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=2092751958]
@@ -303,14 +305,21 @@ directional_shadow_max_distance = 300.0
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1272131009]
 environment = SubResource("Environment_jrns0")
 
-[node name="SM42-099" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
-transform = Transform3D(-0.9996828, 0, 0.02518662, 0, 1, 0, -0.02518662, 0, -0.9996828, -25.735577, 0.16, 180.73814)
+[node name="SM42-907 Trainset" parent="." unique_id=1097042846 instance=ExtResource("19_6m450")]
+start_track_offset = 100.0
+
+[node name="SM42-907" parent="SM42-907 Trainset" index="0" unique_id=13773796]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -33.656265, 0, 200.13808)
+
+[node name="Wagon1" parent="SM42-907 Trainset" index="1" unique_id=149723671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.48581, 0, 214.27658)
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
 
 [node name="TEM2" parent="." unique_id=1971513606 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
+train_id = &"tem2"
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1593258065]
 
@@ -384,32 +393,34 @@ transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979
 [node name="Podklady betonowe" type="E3DModelInstance" parent="Dekoracje" unique_id=1594870762]
 data_path = "/dynamic/pkp/res_v1"
 model_filename = "podklady_betonowe"
+submodels_aabb = AABB(-1.3, 1.22, -9.30024, 2.6, 1.53972, 18.59989)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.25, 110.46942)
 
 [node name="Podklady" type="E3DModelInstance" parent="Dekoracje" unique_id=1290469893]
 data_path = "/dynamic/pkp/res_v1"
 model_filename = "podklady"
+submodels_aabb = AABB(-1.3226001, 1.3, -9.10519, 2.6676002, 1.2, 18.21549)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1914241, -1.3300041, 89.100494)
 
-[node name="MaszynaTrack3D" type="Path3D" parent="." unique_id=665070806]
+[node name="MaszynaTrack3D" type="Path3D" parent="." unique_id=473161416]
 process_thread_group = 2
 process_thread_group_order = 0
 process_thread_messages = 0
 curve = SubResource("Curve3D_esmlu")
-script = ExtResource("12_m0qth")
+script = ExtResource("15_rrc65")
+track_id = "straight"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
-sleeper_height = -0.25
 ballast_texture = "tory/podsypka-2"
-ballast_offset = -0.1
+ballast_height = 0.475
 min_turn_radius = 70.0
 previous_track = NodePath("../MaszynaTrack3D3")
+metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 
 [node name="MaszynaSwitch3D" type="Node3D" parent="." unique_id=364459163 node_paths=PackedStringArray("straight_track", "diverging_track", "common_track")]
 transform = Transform3D(-0.16263713, 0, -0.98668593, 0, 1, 0, 0.98668593, 0, -0.16263713, -18.468254, -0.04, 122.02463)
-script = ExtResource("15_rrc65")
-state = 1
+script = ExtResource("16_hgm1p")
 straight_track = NodePath("../MaszynaTrack3D")
 diverging_track = NodePath("../MaszynaTrack3D2")
 common_track = NodePath("../MaszynaTrack3D3")
@@ -417,28 +428,37 @@ metadata/_custom_type_script = "uid://bami2gx4l6pyl"
 
 [node name="MaszynaTrack3D2" type="Path3D" parent="." unique_id=1426965910]
 curve = SubResource("Curve3D_qg2pq")
-script = ExtResource("12_m0qth")
+script = ExtResource("15_rrc65")
+track_id = "diverging"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
-sleeper_height = -0.25
 ballast_texture = "tory/podsypka-2"
-ballast_offset = -0.1
 previous_track = NodePath("../MaszynaTrack3D3")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 
 [node name="MaszynaTrack3D3" type="Path3D" parent="." unique_id=1077451802]
 curve = SubResource("Curve3D_rrc65")
-script = ExtResource("12_m0qth")
+script = ExtResource("15_rrc65")
+track_id = "approach"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
-sleeper_height = -0.25
 ballast_texture = "tory/podsypka-2"
-ballast_offset = -0.1
 next_track = NodePath("../MaszynaSwitch3D")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
+
+[node name="TrainSet3D" type="Node3D" parent="." unique_id=1422434460]
+script = ExtResource("16_l04v0")
+start_track_id = "approach"
+start_track_offset = 30.0
+metadata/_custom_type_script = "uid://bocodruvp5emd"
+
+[node name="401W" parent="TrainSet3D" unique_id=173667047 instance=ExtResource("17_lsqkb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.370731, 0, 270.0453)
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]
+
+[editable path="SM42-907 Trainset"]

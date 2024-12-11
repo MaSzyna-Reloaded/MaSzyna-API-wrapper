@@ -1104,18 +1104,17 @@ namespace Maszyna {
                         : std::numeric_limits<double>::max()); // shouldn't ever get here but, eh
     }
 
-    /*
-        // *************************************************************************************************
-        // Q: 20160716
-        // Wykrywanie kolizji
-        // *************************************************************************************************
-        void TMoverParameters::CollisionDetect(int const End, double const dt) {
+    // *************************************************************************************************
+    // Q: 20160716
+    // Wykrywanie kolizji
+    // *************************************************************************************************
+    void TMoverParameters::CollisionDetect(int const End, double const dt) {
                 if (Neighbours[End].vehicle == nullptr) {
                     return;
             } // shouldn't normally happen but, eh
 
             auto &coupler{Couplers[End]};
-            auto *othervehicle{Neighbours[End].vehicle->MoverParameters};
+            auto *othervehicle{Neighbours[End].vehicle};
             auto const otherend{Neighbours[End].vehicle_end};
             auto &othercoupler{othervehicle->Couplers[otherend]};
 
@@ -1153,24 +1152,21 @@ namespace Maszyna {
                         if ((coupler.CouplingFlag == coupling::faux ||
                              (true == TestFlag(othervehicle->DamageFlag,
                                                dtrain_out)))) { // HACK: limit excessive speed derailment checks to
-       vehicles
-                                                                // which aren't part of the same consist
+                                                                // vehicles which aren't part of the same consist
                             auto const safevelocitylimit{15.0};
+                            auto const selfvx{std::cos(Rot.Rz) * V};
+                            auto const selfvy{std::sin(Rot.Rz) * V};
+                            auto const othervx{std::cos(othervehicle->Rot.Rz) * othervehicle->V};
+                            auto const othervy{std::sin(othervehicle->Rot.Rz) * othervehicle->V};
                             auto const velocitydifference{
-                                    glm::length(glm::angleAxis(Rot.Rz, glm::dvec3{0, 1, 0}) * V -
-                                                glm::angleAxis(othervehicle->Rot.Rz, glm::dvec3{0, 1, 0}) *
-                                                        othervehicle->V) *
-                                    3.6}; // m/s -> km/h
+                                    hypot(selfvx - othervx, selfvy - othervy) * 3.6}; // m/s -> km/h
 
                                 if (velocitydifference > safevelocitylimit) {
                                         // HACK: crude estimation for potential derail, will take place with velocity
                                         // difference > 15 km/h adjusted for vehicle mass ratio
                                         if ((false == TestFlag(DamageFlag, dtrain_out)) ||
                                             (false == TestFlag(othervehicle->DamageFlag, dtrain_out))) {
-
-                                            //WriteLog("Bad driving: " + Name + " and " + othervehicle->Name +
-                                                     " collided with velocity " + to_string(velocitydifference, 0) +
-                                                     " km/h");
+                                            // Legacy logging was disabled here in the wrapper build.
                                     }
 
                                         if (velocitydifference >
@@ -1203,8 +1199,7 @@ namespace Maszyna {
                     othervehicle->V = othervehiclevelocity;
                     //        }
             }
-        }
-    */
+    }
 
     void TMoverParameters::damage_coupler(int const End) {
 
@@ -1387,7 +1382,7 @@ namespace Maszyna {
                                                    // ale jesli jest kolizja (zas. zach. pedu) to...}
                 for (int b = 0; b < 2; b++)
                         if (Couplers[b].CheckCollision) {
-                            // CollisionDetect(b, dt); // zmienia niejawnie AccS, V !!!
+                            CollisionDetect(b, dt); // zmienia niejawnie AccS, V !!!
                     }
 
         } // liczone dL, predkosc i przyspieszenie
@@ -4493,22 +4488,17 @@ namespace Maszyna {
                     (CabActive != 0) || (Vel > 0.0001) || (std::fabs(AccS) > 0.0001) || (LastSwitchingTime < 5) ||
                     (TrainType == dt_EZT) || (TrainType == dt_DMU)};
 
-            /* FIXME: GODOT
             auto const movingvehicleahead{
                     (Neighbours[end::front].vehicle != nullptr) &&
-                    ((Neighbours[end::front].vehicle->MoverParameters->Vel > 0.0001) ||
-                     (std::fabs(Neighbours[end::front].vehicle->MoverParameters->AccS) > 0.0001))};
+                    ((Neighbours[end::front].vehicle->Vel > 0.0001) ||
+                     (std::fabs(Neighbours[end::front].vehicle->AccS) > 0.0001))};
 
             auto const movingvehiclebehind{
                     (Neighbours[end::rear].vehicle != nullptr) &&
-                    ((Neighbours[end::rear].vehicle->MoverParameters->Vel > 0.0001) ||
-                     (std::fabs(Neighbours[end::rear].vehicle->MoverParameters->AccS) > 0.0001))};
-                     */
+                    ((Neighbours[end::rear].vehicle->Vel > 0.0001) ||
+                     (std::fabs(Neighbours[end::rear].vehicle->AccS) > 0.0001))};
 
-            /* FIXME: GODOT
             auto const calculatephysics{vehicleisactive || movingvehicleahead || movingvehiclebehind};
-            */
-            auto const calculatephysics{vehicleisactive};
 
             switch_physics(calculatephysics);
         }
@@ -4596,7 +4586,6 @@ namespace Maszyna {
         }
         nrot_eps = (fabs(nrot) - (old_nrot)) / dt;
         // doliczenie sił z innych pojazdów
-        /* FIXME: GODOT
         for (int end = end::front; end <= end::rear; ++end) {
                 if (Neighbours[end].vehicle != nullptr) {
                     Couplers[end].CForce = CouplerForce(end, dt);
@@ -4605,7 +4594,6 @@ namespace Maszyna {
                     Couplers[end].CForce = 0;
                 }
         }
-        */
 
         FStand += Fb;
         // doliczenie składowej stycznej grawitacji
@@ -4778,8 +4766,6 @@ namespace Maszyna {
         return adhesion;
     }
 
-    /* GODOT
-
     // *************************************************************************************************
     // Q: 20160713
     // Obliczanie sił dzialających na sprzęgach
@@ -4787,7 +4773,7 @@ namespace Maszyna {
     double TMoverParameters::CouplerForce(int const End, double dt) {
 
         auto &coupler{Couplers[End]};
-        auto *othervehicle{Neighbours[End].vehicle->MoverParameters};
+        auto *othervehicle{Neighbours[End].vehicle};
         auto const otherend{Neighbours[End].vehicle_end};
         auto &othercoupler{othervehicle->Couplers[otherend]};
 
@@ -4924,7 +4910,6 @@ namespace Maszyna {
 
         return CF;
     }
-    */
 
     // *************************************************************************************************
     // Q: 20160714

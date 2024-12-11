@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://ny4n6hhynsd4"]
+
+[ext_resource type="Script" uid="uid://cxpfum6pheqtt" path="res://addons/libmaszyna/train_3d.gd" id="1_m2356"]
+[ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/cabin.tscn" id="2_fd6gs"]
+[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/fiz.tscn" id="3_a5dx7"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
+size = Vector3(4.5332, 4.72223, 17.0549)
+
+[node name="SM42-907" type="Node3D" unique_id=2022996241]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+script = ExtResource("1_m2356")
+controller_path = NodePath("SM42v1")
+cabin_scene = ExtResource("2_fd6gs")
+low_poly_cabin_path = NodePath("SM42-907-LowPolyCab")
+metadata/_custom_type_script = "uid://cxpfum6pheqtt"
+
+[node name="SM42v1" parent="." unique_id=433994401 instance=ExtResource("3_a5dx7")]
+
+[node name="SM42-907" type="E3DModelInstance" parent="." unique_id=1761636383]
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da"
+skins = ["6d-907"]
+exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5978377, -1.0894207, -7.50629, 3.1975832, 5.4746947, 15.018351)
+
+[node name="SM42-907-LowPolyCab" type="E3DModelInstance" parent="." unique_id=895527231]
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da_interior"
+skins = ["6d-907"]
+exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.4508098, 1.2607, -3.924, 2.9026198, 2.93835, 2.20054)
+
+[node name="Area3D" type="Area3D" parent="." unique_id=585090803]
+monitoring = false
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=771965425]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
+shape = SubResource("BoxShape3D_uljbo")

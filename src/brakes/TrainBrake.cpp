@@ -109,20 +109,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("brake_level_decrease"), &TrainBrake::brake_level_decrease);
     }
 
-    void TrainBrake::_register_commands() {
-        register_command("brake_releaser", Callable(this, "brake_releaser"));
-        register_command("brake_level_set", Callable(this, "brake_level_set"));
-        register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
-        register_command("brake_level_increase", Callable(this, "brake_level_increase"));
-        register_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
-    }
-
-    void TrainBrake::_unregister_commands() {
-        unregister_command("brake_releaser", Callable(this, "brake_releaser"));
-        unregister_command("brake_level_set", Callable(this, "brake_level_set"));
-        unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
-        unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
-        unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+    TypedArray<TrainCommand> TrainBrake::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("brake_releaser", Callable(this, "brake_releaser")));
+        commands.append(make_train_command("brake_level_set", Callable(this, "brake_level_set")));
+        commands.append(make_train_command("brake_level_set_position", Callable(this, "brake_level_set_position_str")));
+        commands.append(make_train_command("brake_level_increase", Callable(this, "brake_level_increase")));
+        commands.append(make_train_command("brake_level_decrease", Callable(this, "brake_level_decrease")));
+        return commands;
     }
 
     void TrainBrake::brake_releaser(const bool p_pressed) {

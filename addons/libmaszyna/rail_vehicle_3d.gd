@@ -41,6 +41,7 @@ var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
 var _t:float = 0.0
+var _invalid_velocity_reported: bool = false
 
 
 func enter_cabin(player:MaszynaPlayer):
@@ -178,11 +179,28 @@ func _process(delta):
         _t = 0.0
         _update_head_display()
 
+
+func _physics_process(delta: float) -> void:
     if not Engine.is_editor_hint():
         if _controller:
-            position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+            var track_rid := _controller.get_track_rid()
+            var track_offset := float(_controller.get_track_offset())
+            var movement_delta := float(_controller.state.get("movement_delta", 0.0))
+            var track := TrackManager.get_track(track_rid)
+            if track != null and is_finite(track_offset) and is_finite(movement_delta):
+                _invalid_velocity_reported = false
+                global_position = TrackManager.get_track_position(track_rid, track_offset) + track.get_axis() * movement_delta
+                _controller.set_track_offset(track_offset + movement_delta)
+                _controller.set_mover_location(global_position)
+            elif track_rid != RID() and not _invalid_velocity_reported:
+                _invalid_velocity_reported = true
+                push_error(
+                    "RailVehicle3D '%s': controller '%s' produced invalid track state." %
+                    [name, _controller.name]
+                )
 
 func _ready() -> void:
+    set_physics_process(true)
     _needs_head_display_update = true
     _dirty = true
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)

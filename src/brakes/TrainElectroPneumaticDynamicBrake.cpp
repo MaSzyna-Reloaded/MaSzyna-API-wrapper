@@ -25,16 +25,11 @@ namespace godot {
         p_state["dcemued/ep_fuse"] = p_mover->EpFuse;
     }
 
-    void TrainElectroPneumaticDynamicBrake::_register_commands() {
-        register_command("set_ep_brake_force", Callable(this, "set_ep_brake_force"));
-        register_command("switch_ep_fuse", Callable(this, "switch_ep_fuse"));
-        TrainPart::_register_commands();
-    }
-
-    void TrainElectroPneumaticDynamicBrake::_unregister_commands() {
-        unregister_command("set_ep_brake_force", Callable(this, "set_ep_brake_force"));
-        unregister_command("switch_ep_fuse", Callable(this, "switch_ep_fuse"));
-        TrainPart::_unregister_commands();
+    TypedArray<TrainCommand> TrainElectroPneumaticDynamicBrake::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("set_ep_brake_force", Callable(this, "set_ep_brake_force")));
+        commands.append(make_train_command("switch_ep_fuse", Callable(this, "switch_ep_fuse")));
+        return commands;
     }
 
     void TrainElectroPneumaticDynamicBrake::_do_update_internal_mover(TMoverParameters *p_mover) {

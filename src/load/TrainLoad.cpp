@@ -47,11 +47,7 @@ namespace godot {
         TrainPart::_do_fetch_config_from_mover(p_mover, p_config);
     }
 
-    void TrainLoad::_register_commands() {
-        TrainPart::_register_commands();
-    }
-
-    void TrainLoad::_unregister_commands() {
-        TrainPart::_unregister_commands();
+    TypedArray<TrainCommand> TrainLoad::get_supported_commands() {
+        return TrainPart::get_supported_commands();
     }
 } // namespace godot

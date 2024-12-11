@@ -1,0 +1,19 @@
+[gd_scene format=3 uid="uid://bcxtf08c2yqx4"]
+
+[ext_resource type="Script" uid="uid://bocodruvp5emd" path="res://addons/libmaszyna/train_set_3d.gd" id="1_uwj4h"]
+[ext_resource type="PackedScene" uid="uid://ny4n6hhynsd4" path="res://vehicles/sm42_099.tscn" id="2_m8hf2"]
+[ext_resource type="PackedScene" uid="uid://uti524tqq1kf" path="res://vehicles/401w.tscn" id="5_n7ime"]
+
+[node name="SM42-907 Trainset" type="Node3D" unique_id=1097042846]
+script = ExtResource("1_uwj4h")
+start_track_id = "debug"
+
+[node name="SM42-907" parent="." unique_id=13773796 instance=ExtResource("2_m8hf2")]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
+train_id = &"sm42"
+
+[node name="Wagon1" parent="." unique_id=149723671 instance=ExtResource("5_n7ime")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.139999)
+
+[node name="Wagon2" parent="." unique_id=1655419086 instance=ExtResource("5_n7ime")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 28.18)

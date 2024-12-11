@@ -59,16 +59,11 @@ namespace godot {
         TrainPart::_do_fetch_config_from_mover(p_mover, p_config);
     }
 
-    void TrainLighting::_register_commands() {
-        register_command("increase_light_selector_position", Callable(this, "increase_light_selector_position"));
-        register_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
-        TrainPart::_register_commands();
-    }
-
-    void TrainLighting::_unregister_commands() {
-        unregister_command("increase_light_selector_position", Callable(this, "increase_light_selector_position"));
-        unregister_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
-        TrainPart::_unregister_commands();
+    TypedArray<TrainCommand> TrainLighting::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("increase_light_selector_position", Callable(this, "increase_light_selector_position")));
+        commands.append(make_train_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position")));
+        return commands;
     }
 
     void TrainLighting::increase_light_selector_position() {

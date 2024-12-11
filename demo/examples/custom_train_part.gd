@@ -1,13 +1,17 @@
 extends GenericTrainPart
+class_name CustomTrainPart
 
 var _total_time = 0.0
+@export var some_public_prop:float = 0.0
 
 var state = {
     "custom_train_part_calls": 0,
 }
 
-func _enter_tree():
-    register_command("custom_command", self._handle_custom_command)
+func _get_supported_commands():
+    return [
+        TrainCommand.create("custom_command", self._handle_custom_command),
+    ]
 
 func _handle_custom_command(p1, p2):
     log_warning("CUSTOM COMMAND HERE")

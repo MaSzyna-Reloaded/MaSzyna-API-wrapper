@@ -1,7 +1,5 @@
 [gd_scene format=3 uid="uid://b6ivbg5gvvxao"]
 
-[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0
 
@@ -114,13 +112,12 @@ saturation_current = 49.0
 
 [node name="SM42v1" type="TrainController" unique_id=1082540440]
 train_id = "TestTrain"
-type_name = "6d"
-mass = 74000.0
 power = 590.0
-max_velocity = 90.0
-axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
-script = ExtResource("1_vib8j")
+type_name = "6d"
+axle_arrangement = "Bo'Bo'"
+mass = 74000.0
+max_velocity = 90.0
 
 [node name="Brake" type="TrainBrake" parent="." unique_id=1554328118]
 valve/type = 20

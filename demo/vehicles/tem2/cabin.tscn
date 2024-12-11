@@ -1,6 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://dwcx6807obsgm"]
+[gd_scene format=3 uid="uid://dwcx6807obsgm"]
 
-[ext_resource type="Script" uid="uid://bhoad6heiil6t" path="res://vehicles/tem2/tem2_cabin.gd" id="1_w5uim"]
+[ext_resource type="Script" uid="uid://bhoad6heiil6t" path="res://vehicles/tem2/cabin.gd" id="1_w5uim"]
 
 [node name="Tem2Cabin" type="Node3D"]
 script = ExtResource("1_w5uim")

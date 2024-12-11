@@ -20,11 +20,10 @@ namespace godot {
             void switch_ep_fuse(bool p_value);
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override {};
-            void _register_commands() override;
-            void _unregister_commands() override;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override {};
+            TypedArray<TrainCommand> get_supported_commands() override;
         private:
             MAKE_MEMBER_GS_NR(CouplerCheck, coupler_check, CouplerCheck::NONE);
             MAKE_MEMBER_GS(float, ed_braking_ep_delay, 0.0f);

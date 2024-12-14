@@ -16,4 +16,7 @@ For a better reference see: for [windows](https://docs.godotengine.org/en/4.3/co
 |----------------|----------------------|---------|-------|--------|---------|-----|--------------|-----------------|
 | dev            | 4.3                  | ✅       | ✅       | ❌       | ❌       | ❌       | C++ 11       | 24.06 |
 
+### Documentation
+Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/
+
 If you have found any bug, have a suggestion or want to join us - feel free to open an [issue](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/issues) or start a [discussion](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/discussions)!

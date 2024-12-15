@@ -14,7 +14,7 @@ For a better reference see: for [windows](https://docs.godotengine.org/en/4.3/co
 ### Compability
 | Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android | iOS | C++ Standard | MaSzyna Version |
 |----------------|----------------------|---------|-------|--------|---------|-----|--------------|-----------------|
-| dev            | 4.3                  | ✅       | ✅       | ❌       | ❌       | ❌       | C++ 11       | 24.06 |
+| dev            | 4.3                  | ✅       | ✅       | ❌       | ❌       | ❌       | C++ 17       | 24.06 |
 
 ### Documentation
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

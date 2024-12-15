@@ -1,6 +1,6 @@
 ## Code style
 > [!IMPORTANT]  
-> All classes do live in the `godot` namespace   
+> Exported/All classes used in Godot do live in the `godot` namespace   
 > Your linter must be compatible with code style defined in `.clang-format`
 ### Naming
 1. Function naming: `snake_case`
@@ -25,7 +25,7 @@ void set_door_open(bool p_state) {
 ```
 ```gdscript
 func _process(delta):
-    return delta*2
+    return delta * 2
 ```
 ### Classes
 1. Explicit privacy declarations

@@ -67,12 +67,12 @@ func _process(delta):
 
 func _on_switch_toggled(toggled_on):
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _controller and command:
-        _controller.receive_command(command, toggled_on)
+        _controller.send_command(command, toggled_on)
 
 func _on_switch_pressed():
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _controller and command:
-        _controller.receive_command(command, $Switch.button_pressed)
+        _controller.send_command(command, $Switch.button_pressed)
 
 func _on_switch_button_up():
     if not type == SwitchType.MONOSTABLE:
-        _controller.receive_command(command, $Switch.button_pressed)
+        _controller.send_command(command, $Switch.button_pressed)

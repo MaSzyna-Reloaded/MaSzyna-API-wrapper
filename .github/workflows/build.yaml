@@ -1,5 +1,5 @@
 name: docker-build
-# This workflow represents a set of basic End-to-End tests
+
 on:
   pull_request:
   workflow_dispatch:
@@ -12,6 +12,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-windows-godot-cpp
+          restore-keys: |
+            ${{ runner.os }}-windows-godot-
+            ${{ runner.os }}-windows-
 
       - name: Docker build Windows x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -26,6 +37,14 @@ jobs:
           name: windows-debug
           path: bin/windows
 
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-windows-godot-cpp
+
   build-debug-linux:
     runs-on: ubuntu-20.04
     steps:
@@ -33,6 +52,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-linux-godot-cpp
+          restore-keys: |
+            ${{ runner.os }}-linux-godot-
+            ${{ runner.os }}-linux-
 
       - name: Docker build Linux x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -47,6 +77,14 @@ jobs:
           name: linux-debug
           path: bin/linux
 
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-linux-godot-cpp
+
   build-debug-android:
     runs-on: ubuntu-20.04
     steps:
@@ -54,6 +92,17 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
+
+      - uses: actions/cache/restore@v4
+        id: cache-restore
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-android-godot-cpp
+          restore-keys: |
+            ${{ runner.os }}-android-godot-
+            ${{ runner.os }}-android-
 
       - name: Docker build Android x86_64
         run: sudo chmod 777 docker-storage/entrypoint.sh |
@@ -75,3 +124,11 @@ jobs:
         with:
           name: android-debug
           path: bin/android
+
+      - uses: actions/cache/save@v4
+        id: cache
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: ${{ runner.os }}-android-godot-cpp

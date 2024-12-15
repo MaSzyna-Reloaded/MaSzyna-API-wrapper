@@ -7,12 +7,24 @@
 #include <unordered_map>
 #include "../core/TrainPart.hpp"
 
+#define ASSERT_MOVER_BRAKE(mover_ptr, ...)                                                                             \
+    if ((mover_ptr) == nullptr || mover_ptr->Hamulec == nullptr) {                                                     \
+        return __VA_ARGS__;                                                                                            \
+    }
 
 namespace godot {
     class TrainController;
     class TrainBrake final : public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
         public:
+            enum BrakeHandlePosition {
+                BRAKE_HANDLE_POSITION_MIN = 0,
+                BRAKE_HANDLE_POSITION_MAX = 1,
+                BRAKE_HANDLE_POSITION_DRIVE = 2,
+                BRAKE_HANDLE_POSITION_FULL = 3,
+                BRAKE_HANDLE_POSITION_EMERGENCY = 4,
+            };
+
             enum CompressorPower {
                 COMPRESSOR_POWER_MAIN = 0,
                 COMPRESSOR_POWER_UNUSED = 1,
@@ -56,6 +68,17 @@ namespace godot {
             };
 
         private:
+            const std::unordered_map<BrakeHandlePosition, int> BrakeHandlePositionMap = {
+                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MIN, Maszyna::bh_MIN},
+                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MAX, Maszyna::bh_MAX},
+                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_DRIVE, Maszyna::bh_RP},
+                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_FULL, Maszyna::bh_FB},
+                    {BrakeHandlePosition::BRAKE_HANDLE_POSITION_EMERGENCY, Maszyna::bh_EB},
+            };
+            const std::unordered_map<std::string, int> BrakeHandlePositionStringMap = {
+                    {"min", Maszyna::bh_MIN}, {"max", Maszyna::bh_MAX},      {"drive", Maszyna::bh_RP},
+                    {"full", Maszyna::bh_FB}, {"emergency", Maszyna::bh_EB},
+            };
             const std::unordered_map<TBrakeValve, TBrakeSubSystem> BrakeValveToSubsystemMap = {
                     {TBrakeValve::W, TBrakeSubSystem::ss_W},       {TBrakeValve::W_Lu_L, TBrakeSubSystem::ss_W},
                     {TBrakeValve::W_Lu_VI, TBrakeSubSystem::ss_W}, {TBrakeValve::W_Lu_XR, TBrakeSubSystem::ss_W},
@@ -101,14 +124,16 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_process_mover(TMoverParameters *mover, double delta) override;
+            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _register_commands() override;
+            void _unregister_commands() override;
 
         public:
             static void _bind_methods();
-            void _on_command_received(const String &command, const Variant &p1, const Variant &p2) override;
 
             void set_valve(TrainBrakeValve p_valve);
             TrainBrakeValve get_valve() const;
+
             void set_friction_elements_per_axle(int p_friction_elements_per_axle);
             int get_friction_elements_per_axle() const;
 
@@ -193,9 +218,17 @@ namespace godot {
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
 
+            void brake_releaser(const bool p_pressed);
+            void brake_level_set(const float p_level);
+            void brake_level_set_position(const BrakeHandlePosition p_position);
+            void brake_level_set_position_str(const String &p_position);
+            void brake_level_increase();
+            void brake_level_decrease();
+
             TrainBrake();
             ~TrainBrake() override = default;
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)
 VARIANT_ENUM_CAST(TrainBrake::TrainBrakeValve)
+VARIANT_ENUM_CAST(TrainBrake::BrakeHandlePosition)

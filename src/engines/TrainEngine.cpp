@@ -10,6 +10,7 @@ namespace godot {
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_motor_param_table"), &TrainEngine::set_motor_param_table);
         ClassDB::bind_method(D_METHOD("get_motor_param_table"), &TrainEngine::get_motor_param_table);
+        ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::ARRAY, "motor_param_table", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT,
@@ -43,9 +44,9 @@ namespace godot {
         }
     }
 
-    void TrainEngine::_do_process_mover(TMoverParameters *mover, const double delta) {}
-
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        bool previous_main_switch = static_cast<bool>(state.get("main_switch_enabled", false));
+        state["main_switch_enabled"] = mover->Mains;
         state["Mm"] = mover->Mm;
         state["Mw"] = mover->Mw;
         state["Fw"] = mover->Fw;
@@ -65,6 +66,16 @@ namespace godot {
         state["line_breaker_delay"] = mover->CtrlDelay;
         state["line_breaker_initial_delay"] = mover->InitialCtrlDelay;
         state["line_breaker_closes_at_no_power"] = mover->LineBreakerClosesOnlyAtNoPowerPos;
+
+        if (!previous_main_switch && (static_cast<bool>(state["main_switch_enabled"]))) {
+            emit_signal("engine_start");
+        } else if (previous_main_switch && !(static_cast<bool>(state["main_switch_enabled"]))) {
+            emit_signal("engine_stop");
+        }
+    }
+
+    void TrainEngine::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
+        config["main_controller_position_max"] = mover->MainCtrlPosNo;
     }
 
     TypedArray<Dictionary> TrainEngine::get_motor_param_table() {
@@ -76,13 +87,18 @@ namespace godot {
         motor_param_table.append_array(p_value);
     }
 
-    void TrainEngine::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
-        TrainPart::_on_command_received(command, p1, p2);
-        if (train_controller_node != nullptr) {
-            if (command == "main_switch") {
-                train_controller_node->get_mover()->MainSwitch((bool)p1);
-            }
-        }
+    void TrainEngine::main_switch(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->MainSwitch(p_enabled);
+    }
+
+    void TrainEngine::_register_commands() {
+        register_command("main_switch", Callable(this, "main_switch"));
+    }
+
+    void TrainEngine::_unregister_commands() {
+        unregister_command("main_switch", Callable(this, "main_switch"));
     }
 
 } // namespace godot

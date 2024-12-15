@@ -1,6 +1,5 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=2 format=3 uid="uid://c5hi8nsm1d2hb"]
 
-[ext_resource type="Script" path="res://custom_train_part.gd" id="1_2wure"]
 [ext_resource type="Script" path="res://sm_42v_1.gd" id="1_vib8j"]
 
 [node name="SM42v1" type="TrainController"]
@@ -30,10 +29,6 @@ compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
 
-[node name="TestowySilnikElektryczny" type="TrainElectricSeriesEngine" parent="."]
-nominal_voltage = 11000.0
-winding_resistance = 200.0
-
 [node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
 oil_pump/pressure_minimum = 0.15
 Ftmax = 228000.0
@@ -61,6 +56,3 @@ emergency_brake_delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
-
-[node name="CustomTrainPart" type="GenericTrainPart" parent="."]
-script = ExtResource("1_2wure")

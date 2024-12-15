@@ -75,6 +75,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_ca_max_hold_time"), &TrainSecuritySystem::get_ca_max_hold_time);
         ClassDB::bind_method(D_METHOD("set_ca_max_hold_time"), &TrainSecuritySystem::set_ca_max_hold_time);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "ca_max_hold_time"), "set_ca_max_hold_time", "get_ca_max_hold_time");
+        ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::security_acknowledge);
 
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
@@ -177,10 +178,10 @@ namespace godot {
         state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
         state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
 
-        if (prev_blinking != (bool)state["blinking"]) {
+        if (prev_blinking != static_cast<bool>(state["blinking"])) {
             emit_signal("blinking_changed", state["blinking"]);
         }
-        if (prev_beeping != (bool)state["beeping"]) {
+        if (prev_beeping != static_cast<bool>(state["beeping"])) {
             emit_signal("beeping_changed", state["beeping"]);
         }
     }
@@ -216,25 +217,21 @@ namespace godot {
         }
     }
 
-    void TrainSecuritySystem::_do_process_mover(TMoverParameters *mover, const double delta) {
+    void TrainSecuritySystem::_register_commands() {
+        register_command("security_acknowledge", Callable(this, "security_acknowledge"));
     }
 
-    void TrainSecuritySystem::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
-        TrainPart::_on_command_received(command, p1, p2);
+    void TrainSecuritySystem::_unregister_commands() {
+        unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
+    }
 
-        if(train_controller_node == nullptr) {
-            return;
-        }
-        TMoverParameters *mover = train_controller_node->get_mover();
-        if(!mover) {
-            return;
-        }
-        if(command == "security_acknowledge") {
-            if((bool) p1) {
-                mover->SecuritySystem.acknowledge_press();
-            } else {
-                mover->SecuritySystem.acknowledge_release();
-            }
+    void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        if (p_enabled) {
+            mover->SecuritySystem.acknowledge_press();
+        } else {
+            mover->SecuritySystem.acknowledge_release();
         }
     }
 } // namespace godot

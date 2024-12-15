@@ -8,6 +8,22 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="compressor">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate compressor
+			</description>
+		</method>
+		<method name="converter">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+				Operate converter
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainElectricEngine.TrainPowerSource" default="0">
 			Power source for recharging the accumulator
@@ -56,9 +72,6 @@
 		</member>
 		<member name="power/transducer/input_voltage" type="float" setter="set_transducer_input_voltage" getter="get_transducer_input_voltage" default="0.0">
 			Input voltage for the transducer
-		</member>
-		<member name="switches/converter" type="bool" setter="set_converter_switch_pressed" getter="get_converter_switch_pressed" default="false">
-			Is the converter on
 		</member>
 	</members>
 	<constants>

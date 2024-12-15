@@ -3,6 +3,7 @@
 /demo/*.import
 /cmake-build-debug/
 /src/gen/
+/docs/vendor
 CMakeLists.txt
 *.o
 *.os
@@ -20,3 +21,5 @@ docker-storage/MacOSX14.5.sdk.tar.xz
 /platform
 /modules
 *.macos
+CMakeFiles/
+compile_commands.json

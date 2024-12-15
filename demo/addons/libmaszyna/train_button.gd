@@ -70,6 +70,9 @@ func _ready():
     connect("pushed_changed", self._on_pushed_changed)
 
 func _input(event):
+    if Console.is_visible():
+        return
+
     if action:
         if monostable:
 
@@ -118,10 +121,10 @@ func _on_pushed_changed():
 
     if _controller:
         if controller_mode == ControllerMode.OnOff:
-            _controller.receive_command(controller_property, pushed)
+            _controller.send_command(controller_property, pushed)
         elif pushed and controller_mode == ControllerMode.On:
-            _controller.receive_command(controller_property, true)
+            _controller.send_command(controller_property, true)
         elif pushed and controller_mode == ControllerMode.Off:
-            _controller.receive_command(controller_property, false)
+            _controller.send_command(controller_property, false)
 
     _play_sound()

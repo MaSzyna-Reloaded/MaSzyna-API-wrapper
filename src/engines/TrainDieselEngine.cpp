@@ -27,6 +27,8 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("set_wwlist"), &TrainDieselEngine::set_wwlist);
         ClassDB::bind_method(D_METHOD("get_wwlist"), &TrainDieselEngine::get_wwlist);
+        ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &TrainDieselEngine::fuel_pump);
+        ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &TrainDieselEngine::oil_pump);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::ARRAY, "wwlist", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "TypedArray<Array>"),
@@ -40,9 +42,6 @@ namespace godot {
     void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         TrainEngine::_do_fetch_state_from_mover(mover, state);
 
-        double previous_engine_rpm = (double)state.get("engine_rpm", 0.0);
-        bool previous_main_switch = (bool)state.get("main_switch", false);
-        state["main_switch"] = mover->Mains;
         state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
         state["oil_pump_active"] = mover->OilPump.is_active;
         state["oil_pump_disabled"] = mover->OilPump.is_disabled;
@@ -57,17 +56,6 @@ namespace godot {
         state["diesel_power"] = mover->dizel_Power;
         state["diesel_torque"] = mover->dizel_Torque;
         state["diesel_fill"] = mover->dizel_fill;
-        /*
-        if(!previous_engine_rpm and ((double) state["engine_rpm"])>0) {
-            emit_signal("engine_start");
-        } else if(previous_engine_rpm>0.0001 and ((double) state["engine_rpm"]) < 0.0001) {
-            emit_signal("engine_stop");
-        }*/
-        if (!previous_main_switch && ((bool)state["main_switch"])) {
-            emit_signal("engine_start");
-        } else if (previous_main_switch && !((bool)state["main_switch"])) {
-            emit_signal("engine_stop");
-        }
     }
 
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
@@ -102,10 +90,6 @@ namespace godot {
                 mover->SST[i].Pmax = std::min(mover->SST[i].Pmax, std::pow(mover->SST[i].Umax, 2) / 47.6);
             }
         }
-    }
-
-    void TrainDieselEngine::_do_process_mover(TMoverParameters *mover, const double delta) {
-        TrainEngine::_do_process_mover(mover, delta);
     }
 
     double TrainDieselEngine::get_oil_min_pressure() const {
@@ -144,16 +128,27 @@ namespace godot {
         wwlist.append_array(p_wwlist);
     }
 
-    void TrainDieselEngine::_on_command_received(const String &command, const Variant &p1, const Variant &p2) {
-        TrainEngine::_on_command_received(command, p1, p2);
-        if (train_controller_node == nullptr) {
-            return;
-        }
-        if (command == "oil_pump") {
-            train_controller_node->get_mover()->OilPumpSwitch((bool)p1);
-        } else if (command == "fuel_pump") {
-            train_controller_node->get_mover()->FuelPumpSwitch((bool)p1);
-        }
+    void TrainDieselEngine::oil_pump(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->OilPumpSwitch(p_enabled);
     }
 
+    void TrainDieselEngine::fuel_pump(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->FuelPumpSwitch(p_enabled);
+    }
+
+    void TrainDieselEngine::_register_commands() {
+        TrainEngine::_register_commands();
+        register_command("oil_pump", Callable(this, "oil_pump"));
+        register_command("fuel_pump", Callable(this, "fuel_pump"));
+    }
+
+    void TrainDieselEngine::_unregister_commands() {
+        TrainEngine::_unregister_commands();
+        unregister_command("oil_pump", Callable(this, "oil_pump"));
+        unregister_command("fuel_pump", Callable(this, "fuel_pump"));
+    }
 } // namespace godot

@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://dhir05gi7u6by"]
+
+[ext_resource type="Script" path="res://examples/powered_train_part_example.gd" id="1_1fn40"]
+[ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/developer_console.tscn" id="1_vsgvw"]
+[ext_resource type="PackedScene" uid="uid://clt6kosjdfdfx" path="res://examples/example_train.tscn" id="2_ep4dj"]
+
+[node name="CustomPoweredTrainPart" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DeveloperConsole" parent="." instance=ExtResource("1_vsgvw")]
+visible = true
+
+[node name="train1" parent="." instance=ExtResource("2_ep4dj")]
+train_id = "train1"
+
+[node name="PoweredTrainPart" type="GenericTrainPart" parent="train1"]
+script = ExtResource("1_1fn40")

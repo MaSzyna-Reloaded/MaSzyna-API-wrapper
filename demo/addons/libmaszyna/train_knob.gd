@@ -65,18 +65,19 @@ var _value_normalized = 0.0
 
 func _process(delta):
 
-    if action_increase:
+    if action_increase and not Console.is_visible():
         if Input.is_action_pressed(action_increase, true):
-            value += step * delta
-            if _controller and command:
-                _controller.receive_command(command, value)
+            var new_value = clampf(value + step * delta, value_min, value_max)
+            if not new_value == value and _controller and command:
+                _controller.send_command(command, new_value)
+            value = new_value
 
-
-    if action_decrease:
+    if action_decrease and not Console.is_visible():
         if Input.is_action_pressed(action_decrease, true):
-            value -= step * delta
-            if _controller and command:
-                _controller.receive_command(command, value)
+            var new_value = clampf(value - step * delta, value_min, value_max)
+            if not new_value == value and _controller and command:
+                _controller.send_command(command, value)
+            value = new_value
 
     _t += delta
     if _t > 0.05:

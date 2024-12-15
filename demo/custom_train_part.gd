@@ -1,6 +1,8 @@
 extends GenericTrainPart
+class_name CustomTrainPart
 
 var _total_time = 0.0
+@export var some_public_prop:float = 0.0
 
 var state = {
     "custom_train_part_calls": 0,

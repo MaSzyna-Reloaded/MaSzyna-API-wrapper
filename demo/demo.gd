@@ -28,14 +28,17 @@ func _process(delta: float) -> void:
         _t = 0
 
         var train_state = train.get_state()
-        var bv = train_state.get("battery_voltage")
+        var bv = train_state.get("battery_voltage", 0.0)
 
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
 
-        var security_state = security.get_mover_state()
-        var brake_state = brake.get_mover_state()
-        var engine_state = engine.get_mover_state()
+        #var security_state = security.get_mover_state()
+        #var brake_state = brake.get_mover_state()
+        #var engine_state = engine.get_mover_state()
+        var security_state = train_state
+        var brake_state = train_state
+        var engine_state = train_state
 
         draw_dictionary(engine_state, $%DebugEngine)
         draw_dictionary(train_state, $%DebugTrain)

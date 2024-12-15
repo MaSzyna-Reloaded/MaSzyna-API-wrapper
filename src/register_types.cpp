@@ -7,8 +7,10 @@
 
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/RailVehicle.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
+#include "core/TrainSet.hpp"
 #include "core/TrainSystem.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
 #include "engines/TrainDieselEngine.hpp"
@@ -29,6 +31,8 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
+        GDREGISTER_CLASS(RailVehicle);
+        GDREGISTER_CLASS(TrainSet);
         GDREGISTER_CLASS(TrainBrake);
         GDREGISTER_ABSTRACT_CLASS(TrainEngine);
         GDREGISTER_CLASS(TrainDieselEngine);

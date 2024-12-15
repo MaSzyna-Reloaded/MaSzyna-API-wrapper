@@ -1,17 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=7 format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" path="res://sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" path="res://custom_train_part.gd" id="1_wq48c"]
 
-[node name="SM42v1" type="TrainController"]
-type_name = "6d"
-dimensions/mass = 74000.0
-power = 590.0
-max_velocity = 90.0
-axle_arrangement = "Bo'Bo'"
-battery_voltage = 110.0
-script = ExtResource("1_vib8j")
-
-[node name="Brake" type="TrainBrake" parent="."]
+[sub_resource type="TrainBrake" id="TrainBrake_71hh7"]
 valve/type = 20
 friction_elements_per_axle = 4
 brake_force/max = 85.0
@@ -29,11 +21,7 @@ compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
 
-[node name="TestowySilnikElektryczny" type="TrainElectricSeriesEngine" parent="."]
-nominal_voltage = 11000.0
-winding_resistance = 200.0
-
-[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
+[sub_resource type="TrainDieselElectricEngine" id="TrainDieselElectricEngine_txhkx"]
 oil_pump/pressure_minimum = 0.15
 Ftmax = 228000.0
 wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0, 0, 140, 180], [496.0, 50.0, 156.0, 846.0, 0, 140, 180], [496.0, 90.0, 194.0, 1065.0, 0, 140, 180], [496.0, 135.0, 240.0, 1260.0, 0, 140, 180], [568.0, 182.0, 293.0, 1428.0, 25, 150, 200], [640.0, 234.0, 353.0, 1571.0, 50, 160, 235], [712, 286, 420, 1688, 80, 200, 270], [784, 348, 494, 1780, 100, 235, 305], [856, 408, 575, 1845, 130, 300, 370], [928, 474, 664, 1886, 150, 360, 410], [1000, 540, 760, 1900, 170, 450, 490]])
@@ -53,10 +41,22 @@ motor_param_table = Array[Dictionary]([{
 "misat": 183.3
 }])
 
-[node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
+[sub_resource type="TrainSecuritySystem" id="TrainSecuritySystem_rj282"]
 aware_system/active = true
 aware_delay = 60.0
 emergency_brake_delay = 2.5
-sound_signal_delay = 2.5
-shp_magnet_distance = 3.0
-ca_max_hold_time = 1.0
+
+[sub_resource type="GenericTrainPart" id="GenericTrainPart_rir5s"]
+script = ExtResource("1_wq48c")
+some_public_prop = 0.0
+
+[node name="SM42v1" type="TrainController"]
+train_parts = Array[TrainPart]([SubResource("TrainBrake_71hh7"), SubResource("TrainDieselElectricEngine_txhkx"), SubResource("TrainSecuritySystem_rj282"), SubResource("GenericTrainPart_rir5s")])
+train_id = "sm42v1"
+type_name = "6d"
+dimensions/mass = 74000.0
+power = 590.0
+max_velocity = 90.0
+axle_arrangement = "Bo'Bo'"
+battery_voltage = 110.0
+script = ExtResource("1_vib8j")

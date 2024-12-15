@@ -23,6 +23,15 @@ namespace godot {
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
         ClassDB::bind_method(D_METHOD("get_config"), &TrainController::get_config);
+        ClassDB::bind_method(D_METHOD("get_train_parts"), &TrainController::get_train_parts);
+        ClassDB::bind_method(D_METHOD("set_train_parts", "parts"), &TrainController::set_train_parts);
+
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::ARRAY, "train_parts", PROPERTY_HINT_TYPE_STRING,
+                        String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":TrainPart"),
+                "set_train_parts", "get_train_parts");
+
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::DICTIONARY, "state", PROPERTY_HINT_NONE, "",
@@ -187,6 +196,13 @@ namespace godot {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
                 TrainSystem::get_instance()->register_train(this->get_train_id(), this);
+                for (int i = 0; i < train_parts.size(); i++) {
+                    Ref<TrainPart> train_part = train_parts[i];
+                    if (train_part.is_valid()) {
+                        train_part->_init(this);
+                    }
+                }
+
                 register_command("battery", Callable(this, "battery"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -225,6 +241,14 @@ namespace godot {
              */
             emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
 
+            for (int i = 0; i < train_parts.size(); i++) {
+                Ref<TrainPart> train_part = train_parts[i];
+                if (train_part.is_valid()) {
+                    train_part->update_mover();
+                }
+            }
+
+
             _dirty = false;
             _dirty_prop = true; // sforsowanie odswiezenia stanu lokalnych propsow
         }
@@ -236,6 +260,14 @@ namespace godot {
     }
 
     void TrainController::_process_mover(const double delta) {
+
+        for (int i = 0; i < train_parts.size(); i++) {
+            Ref<TrainPart> train_part = train_parts[i];
+            if (train_part.is_valid()) {
+                train_part->_process_mover(mover, delta);
+            }
+        }
+
         TLocation mock_location;
         TRotation mock_rotation;
         mover->ComputeTotalForce(delta);
@@ -431,6 +463,10 @@ namespace godot {
         return state;
     }
 
+    Dictionary &TrainController::_get_state_internal() {
+        return state;
+    }
+
     void TrainController::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
     }
@@ -481,5 +517,21 @@ namespace godot {
 
     void TrainController::radio(const bool p_enabled) {
         mover->Radio = p_enabled;
+    }
+
+    TypedArray<TrainPart> TrainController::get_train_parts() const {
+        return train_parts;
+    }
+
+    void TrainController::set_train_parts(const TypedArray<TrainPart> &p_train_parts) {
+        train_parts = p_train_parts;
+        for (int i = 0; i < train_parts.size(); i++) {
+            TrainPart *part = Object::cast_to<TrainPart>(train_parts[i]);
+            if (part) {
+                part->_init(this); // Przekaż wskaźnik kontrolera
+            } else {
+                UtilityFunctions::print("Invalid TrainPart found in train_parts array.");
+            }
+        }
     }
 } // namespace godot

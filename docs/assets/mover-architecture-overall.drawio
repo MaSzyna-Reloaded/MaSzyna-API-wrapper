@@ -1,0 +1,185 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0" version="25.0.3">
+  <diagram name="Strona-1" id="UPooGF9k_uu9rrmqkXPJ">
+    <mxGraphModel grid="1" page="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-2" value="TrainControllerNode" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;swimlaneFillColor=default;" vertex="1" parent="1">
+          <mxGeometry x="70" y="150" width="250" height="370" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-6" value="Current Train State" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="20" y="310" width="210" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-7" value="&lt;b&gt;Configuration&lt;br&gt;&lt;/b&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;verticalAlign=top;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="20" y="40" width="210" height="240" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-11" value="TrainEngineNode" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="42.5" y="70" width="165" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-12" value="TrainBrakesNode" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="42.5" y="120" width="165" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-13" value="TrainSecuritySystemNode" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="42.5" y="170" width="165" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-24" value="..." style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-2">
+          <mxGeometry x="42.5" y="220" width="165" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-16" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="230" as="sourcePoint" />
+            <mxPoint x="620" y="230" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-19" value="update mover configuration / re-initialization" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-6MQm6If_Y8gjnEfGJLI-16">
+          <mxGeometry x="0.0867" y="-2" relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-17" value="" style="endArrow=classic;html=1;rounded=0;exitX=1;exitY=0.25;exitDx=0;exitDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="200" as="sourcePoint" />
+            <mxPoint x="620" y="200" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-18" value="Instantiate" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="-6MQm6If_Y8gjnEfGJLI-17">
+          <mxGeometry x="0.2133" y="-2" relative="1" as="geometry">
+            <mxPoint x="-22" y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-21" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="620" y="360" as="sourcePoint" />
+            <mxPoint x="320" y="360" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="-6MQm6If_Y8gjnEfGJLI-22" value="read current state" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="-6MQm6If_Y8gjnEfGJLI-21">
+          <mxGeometry x="-0.0533" y="-4" relative="1" as="geometry">
+            <mxPoint x="2" y="-6" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-1" value="TrainSystem" style="swimlane;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;swimlaneFillColor=default;startSize=50;" vertex="1" parent="1">
+          <mxGeometry x="70" y="680" width="720" height="170" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-2" value="Trains Registry" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-1">
+          <mxGeometry x="30" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-3" value="Commands Registry" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-1">
+          <mxGeometry x="170" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-4" value="Commands dispatcher" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-1">
+          <mxGeometry x="310" y="70" width="120" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-7" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.125;entryY=-0.006;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="180" y="520" as="sourcePoint" />
+            <mxPoint x="180" y="679" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-8" value="Register command" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-7">
+          <mxGeometry x="-0.2703" y="1" relative="1" as="geometry">
+            <mxPoint x="-1" y="-8" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-5" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.125;entryY=-0.006;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="110" y="520" as="sourcePoint" />
+            <mxPoint x="110" y="678.98" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-6" value="Register train" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-5">
+          <mxGeometry x="-0.2703" y="1" relative="1" as="geometry">
+            <mxPoint x="2" y="47" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-9" value="Train / Cabin / UART / Other" style="shape=umlActor;verticalLabelPosition=top;verticalAlign=bottom;html=1;outlineConnect=0;labelPosition=center;align=center;" vertex="1" parent="1">
+          <mxGeometry x="530" y="470" width="30" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-21" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="500" y="560" as="sourcePoint" />
+            <mxPoint x="500" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-22" value="Send commands" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-21">
+          <mxGeometry x="0.3455" y="-1" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-23" value="" style="endArrow=none;html=1;rounded=0;startArrow=classic;startFill=1;endFill=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="544.5" y="560" as="sourcePoint" />
+            <mxPoint x="544.5" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-24" value="Get states" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-23">
+          <mxGeometry x="0.3455" y="-1" relative="1" as="geometry">
+            <mxPoint y="-34" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-25" value="High Level Train API" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="630" y="610" width="160" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-26" value="" style="endArrow=classic;html=1;rounded=0;exitX=0;exitY=0.75;exitDx=0;exitDy=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="620" y="280" as="sourcePoint" />
+            <mxPoint x="320" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-27" value="read config properties" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-26">
+          <mxGeometry x="-0.0533" y="-4" relative="1" as="geometry">
+            <mxPoint x="2" y="-6" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-29" value="" style="endArrow=none;html=1;rounded=0;startArrow=classic;startFill=1;endFill=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="590" y="560" as="sourcePoint" />
+            <mxPoint x="590" y="670" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-30" value="Get config props" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="7xDiGvQQU-fY2eDn7IEy-29">
+          <mxGeometry x="0.3455" y="-1" relative="1" as="geometry">
+            <mxPoint x="1" y="16" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-31" value="" style="endArrow=none;dashed=1;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="410" y="540" as="sourcePoint" />
+            <mxPoint x="760" y="540" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-36" value="Train Node-based API" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="70" y="100" width="250" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="7xDiGvQQU-fY2eDn7IEy-37" value="Legacy Behavior System Impl." style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1;fillColor=#f5f5f5;fontColor=#333333;strokeColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="620" y="100" width="140" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="fKL8XUaDp9jy2jeK3_ru-1" value="&lt;div&gt;original&lt;/div&gt;&lt;div&gt;physics&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Mover.c&lt;/b&gt;&lt;br&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" vertex="1" parent="1">
+          <mxGeometry x="620" y="160" width="140" height="210" as="geometry" />
+        </mxCell>
+        <mxCell id="fKL8XUaDp9jy2jeK3_ru-2" value="" style="endArrow=classic;html=1;rounded=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="320" y="334.5" as="sourcePoint" />
+            <mxPoint x="620" y="334.5" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fKL8XUaDp9jy2jeK3_ru-3" value="actions / operation" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="fKL8XUaDp9jy2jeK3_ru-2">
+          <mxGeometry x="0.0867" y="-2" relative="1" as="geometry">
+            <mxPoint y="-12" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fKL8XUaDp9jy2jeK3_ru-4" value="" style="endArrow=classic;html=1;rounded=0;entryX=0.125;entryY=-0.006;entryDx=0;entryDy=0;entryPerimeter=0;" edge="1" parent="1">
+          <mxGeometry width="50" height="50" relative="1" as="geometry">
+            <mxPoint x="250" y="521" as="sourcePoint" />
+            <mxPoint x="250" y="680" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="fKL8XUaDp9jy2jeK3_ru-5" value="Broadcast command&lt;br&gt;or send to other train" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" connectable="0" vertex="1" parent="fKL8XUaDp9jy2jeK3_ru-4">
+          <mxGeometry x="-0.2703" y="1" relative="1" as="geometry">
+            <mxPoint y="31" as="offset" />
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

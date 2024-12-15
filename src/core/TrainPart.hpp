@@ -1,6 +1,6 @@
 #pragma once
 #include <functional>
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/resource.hpp>
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 
@@ -10,19 +10,18 @@
     }
 
 namespace godot {
-    class TrainPart : public Node {
-            GDCLASS(TrainPart, Node)
+    class TrainPart : public Resource {
+            GDCLASS(TrainPart, Resource)
         public:
             static void _bind_methods();
 
         private:
-            Dictionary state;
             bool _commands_registered = false;
 
         protected:
             void _notification(int p_what);
             bool enabled = true;
-            bool enabled_changed = false;
+            bool enabled_changed = true;
             bool _dirty = false;
             TrainController *train_controller_node;
 
@@ -55,8 +54,7 @@ namespace godot {
             TMoverParameters *get_mover();
 
         public:
-            void _process(double delta) override;
-            virtual void _process_mover(double delta);
+            void _process_mover(TMoverParameters *mover, double delta);
 
             void register_command(const String &command, const Callable &callback);
             void unregister_command(const String &command, const Callable &callback);
@@ -80,9 +78,10 @@ namespace godot {
             void update_mover();
 
             /* High level method for getting the state of the Mover */
-            Dictionary get_mover_state();
             TrainPart();
             ~TrainPart() override = default;
+            void _init(TrainController *p_train_controller);
+            void _cleanup();
             void emit_config_changed_signal();
     };
 } // namespace godot

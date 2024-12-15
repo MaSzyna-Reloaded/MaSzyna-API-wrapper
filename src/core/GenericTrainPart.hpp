@@ -19,8 +19,8 @@ namespace godot {
 
         public:
             TrainController *get_train_controller_node();
-            void _process_mover(double delta) override;
             virtual void _process_train_part(double delta);
+            void _process(const double delta);
             virtual Dictionary _get_train_part_state();
             Dictionary get_train_state();
 

@@ -118,6 +118,11 @@ cabin_a/head_light = true
 cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
+[sub_resource type="NotDefinedPowerSource" id="NotDefinedPowerSource_co0a4"]
+power_type = 3
+
+[sub_resource type="NotDefinedPowerSource" id="NotDefinedPowerSource_q72bf"]
+
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"
 type_name = "6d"
@@ -186,5 +191,10 @@ source/generator/engine = 0
 [node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]
 
 [node name="TrainLoad" type="TrainLoad" parent="."]
+
+[node name="TrainHeatingSystem" type="TrainHeatingSystem" parent="."]
+
+power_source = SubResource("NotDefinedPowerSource_co0a4")
+alternative_power_source = SubResource("NotDefinedPowerSource_q72bf")
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

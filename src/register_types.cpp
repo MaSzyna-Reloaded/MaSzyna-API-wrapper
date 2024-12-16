@@ -21,6 +21,7 @@
 #include "resources/lighting/LightListItem.hpp"
 #include "resources/load/LoadListItem.hpp"
 #include "systems/TrainSecuritySystem.hpp"
+#include "systems/heating/TrainHeatingSystem.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -52,15 +53,20 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
+        GDREGISTER_CLASS(TrainHeatingSystem);
         GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(TrainLighting)
+        GDREGISTER_CLASS(TrainLighting);
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
-        GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(TrainLoad)
-        GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(LightListItem);
+        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake);
+        GDREGISTER_CLASS(TrainLoad);
+        GDREGISTER_CLASS(LoadListItem);
+        GDREGISTER_ABSTRACT_CLASS(PowerSource);
+        GDREGISTER_CLASS(InternalPowerSource);
+        GDREGISTER_CLASS(NotDefinedPowerSource);
+        GDREGISTER_CLASS(TransducerPowerSource);
 
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);

@@ -29,17 +29,17 @@ namespace godot {
         train_controller_node->get_state().merge(internal_state, true);
     };
 
-    TrainController *GenericTrainPart::get_train_controller_node() {
+    TrainController *GenericTrainPart::get_train_controller_node() const {
         return train_controller_node;
     }
 
-    Dictionary GenericTrainPart::get_train_state() {
+    Dictionary GenericTrainPart::get_train_state() const {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_state();
-        } else {
-            UtilityFunctions::push_error("GenericTrainPart has no train controller node");
-            return Dictionary();
         }
+        //TODO: Replace this with LogSystem->error
+        UtilityFunctions::push_error("GenericTrainPart has no train controller node");
+        return {};
     }
 
 } // namespace godot

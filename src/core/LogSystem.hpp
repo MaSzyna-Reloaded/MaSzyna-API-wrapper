@@ -5,8 +5,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/string.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
-#include <map>
 
 #ifdef DEBUG_ENABLED
 #if defined(_MSC_VER)
@@ -29,15 +27,15 @@
 
 namespace godot {
 
-    class LogSystem : public RefCounted {
+    class LogSystem final : public RefCounted {
             GDCLASS(LogSystem, RefCounted);
 
         private:
         public:
             static const char *LOG_UPDATED_SIGNAL;
 
-            inline static LogSystem *get_instance() {
-                return dynamic_cast<LogSystem *>(godot::Engine::get_singleton()->get_singleton("LogSystem"));
+            static LogSystem *get_instance() {
+                return dynamic_cast<LogSystem *>(Engine::get_singleton()->get_singleton("LogSystem"));
             }
 
             enum LogLevel {
@@ -50,7 +48,7 @@ namespace godot {
             LogSystem();
             ~LogSystem() override = default;
 
-            void log(const LogLevel level, const String &line);
+            void log(LogLevel level, const String &line);
             void debug(const String &line);
             void info(const String &line);
             void warning(const String &line);

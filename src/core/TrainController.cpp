@@ -8,7 +8,6 @@
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/TrainEngine.hpp"
-#include "../systems/TrainSecuritySystem.hpp"
 
 namespace godot {
 
@@ -106,9 +105,8 @@ namespace godot {
                 "get_battery_voltage");
     }
 
-    TrainController::TrainController() {
+    TrainController::TrainController() = default;
         // FIXME: move to _init or _ready signal?
-    }
 
     TMoverParameters *TrainController::get_mover() const {
         return mover;
@@ -125,9 +123,9 @@ namespace godot {
                 new_id = "train";
             }
             return new_id;
-        } else {
-            return train_id;
         }
+
+        return train_id;
     }
 
     void TrainController::initialize_mover() {
@@ -172,15 +170,15 @@ namespace godot {
         return type_name;
     }
 
-    void TrainController::register_command(const String &command, const Callable &callable) {
+    void TrainController::register_command(const String &command, const Callable &callable) const {
         TrainSystem::get_instance()->register_command(get_train_id(), command, callable);
     }
 
-    void TrainController::unregister_command(const String &command, const Callable &callable) {
+    void TrainController::unregister_command(const String &command, const Callable &callable) const {
         TrainSystem::get_instance()->unregister_command(get_train_id(), command, callable);
     }
 
-    void TrainController::_notification(int p_what) {
+    void TrainController::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -216,8 +214,13 @@ namespace godot {
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
                 break;
+            default:
+                DEBUG("TrainController::_ready() not implemented notification type");
+
         }
     }
+
+    void TrainController::_collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts) {}
 
     void TrainController::_update_mover_config_if_dirty() {
         if (_dirty) {
@@ -297,7 +300,7 @@ namespace godot {
         mover->NominalBatteryVoltage = battery_voltage; // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) const {
+    void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
         config["axles_powered_count"] = mover->NPoweredAxles;
         config["axles_count"] = mover->NAxles;
     }
@@ -338,13 +341,15 @@ namespace godot {
         return max_velocity;
     }
 
-    void TrainController::set_axle_arrangement(String p_value) {
+    void TrainController::set_axle_arrangement(const String &p_value) {
         axle_arrangement = p_value;
     }
 
     String TrainController::get_axle_arrangement() const {
         return axle_arrangement;
     }
+
+    void TrainController::set_state(const Dictionary &p_state) {}
 
     void TrainController::update_mover() {
         TMoverParameters *mover = get_mover();
@@ -427,6 +432,8 @@ namespace godot {
         emit_signal(CONFIG_CHANGED);
     }
 
+    void TrainController::set_config_property(String &key, Variant &p_value) {}
+
     Dictionary TrainController::get_state() {
         return state;
     }
@@ -439,39 +446,39 @@ namespace godot {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }
 
-    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) {
+    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) const {
         TrainSystem::get_instance()->send_command(this->get_train_id(), String(command), p1, p2);
     }
 
-    void TrainController::battery(const bool p_enabled) {
+    void TrainController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
     }
 
-    void TrainController::main_controller_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+    void TrainController::main_controller_increase(const int p_step) const {
+        const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
-    void TrainController::main_controller_decrease(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+    void TrainController::main_controller_decrease(const int p_step) const {
+        const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
-    void TrainController::direction_increase() {
+    void TrainController::direction_increase() const {
         mover->DirectionForward();
     }
 
-    void TrainController::direction_decrease() {
+    void TrainController::direction_decrease() const {
         mover->DirectionBackward();
     }
 
     void TrainController::radio_channel_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
     }
 
     void TrainController::radio_channel_decrease(const int p_step) {
-        int step = p_step ? p_step : 1;
+        const int step = p_step ? p_step : 1;
         radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
     }
 
@@ -479,7 +486,7 @@ namespace godot {
         radio_channel = Math::clamp(p_channel, radio_channel_min, radio_channel_max);
     }
 
-    void TrainController::radio(const bool p_enabled) {
+    void TrainController::radio(const bool p_enabled) const {
         mover->Radio = p_enabled;
     }
 } // namespace godot

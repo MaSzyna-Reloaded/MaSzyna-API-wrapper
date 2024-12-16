@@ -238,26 +238,26 @@ namespace godot {
         unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
     }
 
-    void TrainBrake::brake_releaser(const bool p_pressed) {
+    void TrainBrake::brake_releaser(const bool p_pressed) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
-    void TrainBrake::brake_level_set(const float p_level) {
+    void TrainBrake::brake_level_set(const float p_level) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        float level = CLAMP(p_level, 0.0, 1.0);
-        float brake_controller_min = mover->Handle->GetPos(bh_MIN);
-        float brake_controller_max = mover->Handle->GetPos(bh_MAX);
-        float brake_controller_pos = brake_controller_min + level * (brake_controller_max - brake_controller_min);
+        const float level = CLAMP(p_level, 0.0, 1.0);
+        const float brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        const float brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        const float brake_controller_pos = brake_controller_min + level * (brake_controller_max - brake_controller_min);
         mover->BrakeLevelSet(brake_controller_pos);
     }
 
-    void TrainBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
+    void TrainBrake::brake_level_set_position(const BrakeHandlePosition p_position) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        auto it = BrakeHandlePositionMap.find(p_position);
+        const auto it = BrakeHandlePositionMap.find(p_position);
         if (it != BrakeHandlePositionMap.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
@@ -265,10 +265,10 @@ namespace godot {
         }
     }
 
-    void TrainBrake::brake_level_set_position_str(const String &p_position) {
+    void TrainBrake::brake_level_set_position_str(const String &p_position) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        auto it = BrakeHandlePositionStringMap.find(std::string(p_position.utf8()));
+        const auto it = BrakeHandlePositionStringMap.find(std::string(p_position.utf8()));
         if (it != BrakeHandlePositionStringMap.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
@@ -276,13 +276,13 @@ namespace godot {
         }
     }
 
-    void TrainBrake::brake_level_increase() {
+    void TrainBrake::brake_level_increase() const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->IncBrakeLevel();
     }
 
-    void TrainBrake::brake_level_decrease() {
+    void TrainBrake::brake_level_decrease() const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->DecBrakeLevel();
@@ -297,9 +297,9 @@ namespace godot {
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        float brake_controller_pos = mover->fBrakeCtrlPos;
-        float brake_controller_min = mover->Handle->GetPos(bh_MIN);
-        float brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        const float brake_controller_pos = mover->fBrakeCtrlPos;
+        const float brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        const float brake_controller_max = mover->Handle->GetPos(bh_MAX);
         float brake_controller_pos_normalized = 0.0;
         if (brake_controller_max != brake_controller_min) {
             brake_controller_pos_normalized =
@@ -339,7 +339,7 @@ namespace godot {
         // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
         mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve));
 
-        auto it = BrakeValveToSubsystemMap.find(mover->BrakeValve);
+        const auto it = BrakeValveToSubsystemMap.find(mover->BrakeValve);
         mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
 
         mover->NBpA = friction_elements_per_axle;

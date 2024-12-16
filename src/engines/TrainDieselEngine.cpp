@@ -73,9 +73,9 @@ namespace godot {
 
         /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
-        const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
+        constexpr int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
         mover->MainCtrlPosNo = wwlist.size() - 1;
-        for (int i = 0; i < std::min(_max, (int)wwlist.size()); i++) {
+        for (int i = 0; i < std::min(_max, static_cast<int>(wwlist.size())); i++) {
             Array row = wwlist[i];
             mover->DElist[i].RPM = row[0];
             mover->DElist[i].GenPower = row[1];
@@ -123,18 +123,18 @@ namespace godot {
         return wwlist;
     }
 
-    void TrainDieselEngine::set_wwlist(const TypedArray<Array> p_wwlist) {
+    void TrainDieselEngine::set_wwlist(const TypedArray<Array>& p_wwlist) {
         wwlist.clear();
         wwlist.append_array(p_wwlist);
     }
 
-    void TrainDieselEngine::oil_pump(const bool p_enabled) {
+    void TrainDieselEngine::oil_pump(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->OilPumpSwitch(p_enabled);
     }
 
-    void TrainDieselEngine::fuel_pump(const bool p_enabled) {
+    void TrainDieselEngine::fuel_pump(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->FuelPumpSwitch(p_enabled);

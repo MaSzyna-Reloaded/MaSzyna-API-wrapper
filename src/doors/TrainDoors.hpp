@@ -104,15 +104,15 @@ namespace godot {
             void set_permit_light_blinking(PermitLight p_blinking_mode);
             PermitLight get_permit_light_blinking() const;
 
-            void permit_step(const bool p_state);
-            void permit_doors(const Side p_side, const bool p_state);
-            void permit_left_doors(const bool p_state);
-            void permit_right_doors(const bool p_state);
-            void operate_doors(const Side p_side, const bool p_state);
-            void operate_left_doors(const bool p_state);
-            void operate_right_doors(const bool p_state);
-            void door_lock(const bool p_state);
-            void door_remote_control(const bool p_state);
+            void permit_step(bool p_state);
+            void permit_doors(Side p_side, bool p_state);
+            void permit_left_doors(bool p_state);
+            void permit_right_doors(bool p_state);
+            void operate_doors(Side p_side, bool p_state);
+            void operate_left_doors(bool p_state);
+            void operate_right_doors(bool p_state);
+            void door_lock(bool p_state);
+            void door_remote_control(bool p_state);
             void next_permit_preset();
             void previous_permit_preset();
 

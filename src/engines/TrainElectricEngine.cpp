@@ -221,13 +221,13 @@ namespace godot {
         }
     }
 
-    void TrainElectricEngine::converter(const bool p_enabled) {
+    void TrainElectricEngine::converter(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ConverterSwitch(p_enabled);
     }
 
-    void TrainElectricEngine::compressor(const bool p_enabled) {
+    void TrainElectricEngine::compressor(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->CompressorSwitch(p_enabled);

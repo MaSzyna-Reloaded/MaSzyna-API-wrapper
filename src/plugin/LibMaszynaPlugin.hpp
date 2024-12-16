@@ -5,11 +5,10 @@
 
 #include <godot_cpp/classes/editor_plugin.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
-class LibMaszynaPlugin : public EditorPlugin {
+class LibMaszynaPlugin final : public EditorPlugin {
         GDCLASS(LibMaszynaPlugin, EditorPlugin);
 
     public:
@@ -17,13 +16,13 @@ class LibMaszynaPlugin : public EditorPlugin {
         LibMaszynaPlugin();
 
         // Destructor
-        ~LibMaszynaPlugin();
+        ~LibMaszynaPlugin() override;
 
-        virtual String get_name() const override {
+        static String get_name() {
             return "LibMaszynaPlugin";
         }
-        virtual void edit(Object *p_node) override;
-        virtual bool handles(Object *p_node) const override;
+        void _edit(Object *p_node) override;
+        bool _handles(Object *p_node) const override;
 
     protected:
         // Bind methods

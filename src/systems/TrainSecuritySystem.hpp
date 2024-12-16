@@ -5,7 +5,7 @@
 
 
 namespace godot {
-    class TrainSecuritySystem : public TrainPart {
+    class TrainSecuritySystem final : public TrainPart {
             GDCLASS(TrainSecuritySystem, TrainPart)
 
             static void _bind_methods();
@@ -44,7 +44,7 @@ namespace godot {
             double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
 
         public:
-            void security_acknowledge(const bool p_enabled);
+            void security_acknowledge(bool p_enabled);
 
             // Getters
             bool get_aware_system_active() const;

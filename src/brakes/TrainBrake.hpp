@@ -218,12 +218,12 @@ namespace godot {
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
 
-            void brake_releaser(const bool p_pressed);
-            void brake_level_set(const float p_level);
-            void brake_level_set_position(const BrakeHandlePosition p_position);
-            void brake_level_set_position_str(const String &p_position);
-            void brake_level_increase();
-            void brake_level_decrease();
+            void brake_releaser(bool p_pressed) const;
+            void brake_level_set(float p_level) const;
+            void brake_level_set_position(BrakeHandlePosition p_position) const;
+            void brake_level_set_position_str(const String &p_position) const;
+            void brake_level_increase() const;
+            void brake_level_decrease() const;
 
             TrainBrake();
             ~TrainBrake() override = default;

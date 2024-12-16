@@ -35,10 +35,10 @@ namespace godot {
             void set_traction_force_max(double value);
 
             TypedArray<Array> get_wwlist();
-            void set_wwlist(const TypedArray<Array> p_wwlist);
+            void set_wwlist(const TypedArray<Array> &p_wwlist);
 
-            void oil_pump(const bool p_enabled);
-            void fuel_pump(const bool p_enabled);
+            void oil_pump(const bool p_enabled) const;
+            void fuel_pump(const bool p_enabled) const;
 
             TrainDieselEngine();
             ~TrainDieselEngine() override = default;

@@ -1,5 +1,6 @@
 #include "../core/TrainController.hpp"
 #include "./TrainSystem.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     const char *TrainSystem::TRAIN_LOG_UPDATED_SIGNAL = "train_log_updated";

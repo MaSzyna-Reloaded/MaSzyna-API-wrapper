@@ -21,9 +21,9 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
-            TypedArray<Dictionary> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<Dictionary> p_wwlist);
-            void main_switch(const bool p_enabled);
+            TypedArray<Dictionary> get_motor_param_table() const;
+            void set_motor_param_table(const TypedArray<Dictionary>& p_wwlist);
+            void main_switch(bool p_enabled) const;
 
             TrainEngine();
             ~TrainEngine() override = default;

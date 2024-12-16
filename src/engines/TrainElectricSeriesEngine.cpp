@@ -33,7 +33,7 @@ namespace godot {
         return winding_resistance;
     }
 
-    void TrainElectricSeriesEngine::set_winding_resistance(double value) {
+    void TrainElectricSeriesEngine::set_winding_resistance(const double value) {
         winding_resistance = value;
         _dirty = true;
     }
@@ -42,7 +42,7 @@ namespace godot {
         return nominal_voltage;
     }
 
-    void TrainElectricSeriesEngine::set_nominal_voltage(double value) {
+    void TrainElectricSeriesEngine::set_nominal_voltage(const double value) {
         nominal_voltage = value;
         _dirty = true;
     }

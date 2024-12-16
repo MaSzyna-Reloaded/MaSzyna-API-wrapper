@@ -1,5 +1,4 @@
 #pragma once
-#include <functional>
 #include <godot_cpp/classes/node.hpp>
 #include "./LogSystem.hpp"
 #include "./TrainSystem.hpp"
@@ -21,7 +20,7 @@ namespace godot {
             bool _commands_registered = false;
 
         protected:
-            void _notification(int p_what);
+            void _notification(int p_what) override;
             bool enabled = true;
             bool enabled_changed = false;
             bool _dirty = false;
@@ -53,24 +52,25 @@ namespace godot {
             virtual void _register_commands();
             virtual void _unregister_commands();
 
-            TMoverParameters *get_mover();
+            [[nodiscard]] TMoverParameters *get_mover() const;
 
         public:
             void _process(double delta) override;
             virtual void _process_mover(double delta);
 
-            void register_command(const String &command, const Callable &callback);
-            void unregister_command(const String &command, const Callable &callback);
-            void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void log(const LogSystem::LogLevel level, const String &line);
-            void log_debug(const String &line);
-            void log_info(const String &line);
-            void log_warning(const String &line);
-            void log_error(const String &line);
+            void register_command(const String &command, const Callable &callback) const;
+            void unregister_command(const String &command, const Callable &callback) const;
+            void
+            send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            static void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void log(LogSystem::LogLevel level, const String &line) const;
+            void log_debug(const String &line) const;
+            void log_info(const String &line) const;
+            void log_warning(const String &line) const;
+            void log_error(const String &line) const;
 
             void set_enabled(bool p_value);
-            bool get_enabled();
+            [[nodiscard]] bool get_enabled() const;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),

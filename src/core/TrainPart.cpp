@@ -38,12 +38,11 @@ namespace godot {
     void TrainPart::_register_commands() {};
     void TrainPart::_unregister_commands() {};
 
-    TMoverParameters *TrainPart::get_mover() {
+    TMoverParameters *TrainPart::get_mover() const {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_mover();
-        } else {
-            return nullptr;
         }
+        return nullptr;
     }
 
     void TrainPart::_notification(int p_what) {
@@ -80,35 +79,36 @@ namespace godot {
                 }
                 train_controller_node = nullptr;
             } break;
+            default:;
         }
     }
 
-    void TrainPart::log(const LogSystem::LogLevel level, const String &line) {
+    void TrainPart::log(const LogSystem::LogLevel level, const String &line) const {
         if (train_controller_node != nullptr) {
             TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
         }
     }
-    void TrainPart::log_debug(const String &line) {
+    void TrainPart::log_debug(const String &line) const {
         log(LogSystem::LogLevel::LOGLEVEL_DEBUG, line);
     }
 
-    void TrainPart::log_info(const String &line) {
+    void TrainPart::log_info(const String &line) const {
         log(LogSystem::LogLevel::LOGLEVEL_INFO, line);
     }
 
-    void TrainPart::log_warning(const String &line) {
+    void TrainPart::log_warning(const String &line) const {
         log(LogSystem::LogLevel::LOGLEVEL_WARNING, line);
     }
 
-    void TrainPart::log_error(const String &line) {
+    void TrainPart::log_error(const String &line) const {
         log(LogSystem::LogLevel::LOGLEVEL_ERROR, line);
     }
 
-    void TrainPart::register_command(const String &command, const Callable &callback) {
+    void TrainPart::register_command(const String &command, const Callable &callback) const {
         TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), command, callback);
     }
 
-    void TrainPart::unregister_command(const String &command, const Callable &callback) {
+    void TrainPart::unregister_command(const String &command, const Callable &callback) const {
         TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), command, callback);
     }
 
@@ -164,8 +164,7 @@ namespace godot {
 
     void TrainPart::update_mover() {
         if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
+            if (TMoverParameters *mover = train_controller_node->get_mover(); mover != nullptr) {
                 _do_update_internal_mover(mover);
                 Dictionary new_config;
                 _do_fetch_config_from_mover(mover, new_config);
@@ -183,8 +182,7 @@ namespace godot {
             return state;
         }
         if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
+            if (TMoverParameters *mover = train_controller_node->get_mover(); mover != nullptr) {
                 _do_fetch_state_from_mover(mover, state);
             } else {
                 UtilityFunctions::push_warning("TrainPart::get_mover_state() failed: internal mover not initialized");
@@ -201,11 +199,11 @@ namespace godot {
         _dirty = true;
     }
 
-    bool TrainPart::get_enabled() {
+    bool TrainPart::get_enabled() const {
         return enabled;
     }
 
-    void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) {
+    void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) const {
         if (train_controller_node != nullptr) {
             TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), command, p1, p2);
         }

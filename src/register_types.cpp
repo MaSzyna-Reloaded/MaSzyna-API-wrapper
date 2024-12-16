@@ -6,6 +6,7 @@
 
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/StateProxy.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
@@ -39,6 +40,7 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
+        GDREGISTER_CLASS(StateProxy);
 
         train_system_singleton = memnew(TrainSystem);
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);

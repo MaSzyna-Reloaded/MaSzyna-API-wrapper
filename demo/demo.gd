@@ -7,7 +7,7 @@ var _t:float = 0.0
 @onready var engine = $SM42/StonkaDieselEngine
 @onready var security = $SM42/TrainSecuritySystem
 @onready var doors = $SM42/TrainDoors
-
+@onready var battery_progress_bar = $%BatteryProgressBar
 
 const rich_print_loglevel_colors = {
     LogSystem.LogLevel.DEBUG: "#777",
@@ -56,7 +56,7 @@ func _process(delta: float) -> void:
         _t = 0
 
         var train_state = train.get_state()
-        var bv = train_state.get("battery_voltage")
+        var bv = train_state.get("battery_voltage", 0)
 
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]

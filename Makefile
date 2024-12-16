@@ -1,5 +1,5 @@
-.PHONY=docs compile watch-and-compile docs-server docs-install cleanup
-.DEFAULT_GOAL =compile
+.PHONY: docs compile watch-and-compile docs-server docs-install cleanup
+.DEFAULT_GOAL = compile
 
 docs:
 	cd demo && godot --doctool .. --gdextension-docs

@@ -3,6 +3,7 @@
 
 namespace godot {
     class GenericTrainPart final : public TrainPart {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(GenericTrainPart, TrainPart)
 
         private:

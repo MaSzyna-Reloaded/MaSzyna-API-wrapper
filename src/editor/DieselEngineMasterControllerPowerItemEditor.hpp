@@ -2,7 +2,6 @@
 #define DIESEL_ENGINE_MASTER_CONTROLLER_POWER_ITEM_EDITOR_H
 
 #include <godot_cpp/classes/editor_property.hpp>
-#include <godot_cpp/classes/h_box_container.hpp>
 #include <godot_cpp/classes/label.hpp>
 #include <godot_cpp/classes/spin_box.hpp>
 #include <godot_cpp/classes/v_box_container.hpp>
@@ -11,7 +10,8 @@
 
 using namespace godot;
 
-class DieselEngineMasterControllerPowerItemEditor : public EditorProperty {
+class DieselEngineMasterControllerPowerItemEditor final : public EditorProperty {
+        // NOLINTNEXTLINE(modernize-use-auto)
         GDCLASS(DieselEngineMasterControllerPowerItemEditor, EditorProperty);
 
     private:
@@ -32,7 +32,7 @@ class DieselEngineMasterControllerPowerItemEditor : public EditorProperty {
 
     public:
         DieselEngineMasterControllerPowerItemEditor();
-        ~DieselEngineMasterControllerPowerItemEditor();
+        ~DieselEngineMasterControllerPowerItemEditor() override;
 
         void _update_property() override;
         void _set_read_only(bool p_read_only) override;

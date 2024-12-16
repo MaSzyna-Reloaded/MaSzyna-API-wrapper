@@ -64,14 +64,6 @@
 				Returns the current state of the train
 			</description>
 		</method>
-		<method name="global_log">
-			<return type="void" />
-			<param index="0" name="loglevel" type="int" enum="TrainSystem.TrainLogLevel" />
-			<param index="1" name="line" type="String" />
-			<description>
-				Logs a global message
-			</description>
-		</method>
 		<method name="is_command_supported">
 			<return type="bool" />
 			<param index="0" name="command" type="String" />
@@ -82,7 +74,7 @@
 		<method name="log">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
-			<param index="1" name="loglevel" type="int" enum="TrainSystem.TrainLogLevel" />
+			<param index="1" name="loglevel" type="int" enum="LogSystem.LogLevel" />
 			<param index="2" name="line" type="String" />
 			<description>
 				Logs message related to a train
@@ -135,13 +127,6 @@
 		</method>
 	</methods>
 	<signals>
-		<signal name="log_updated">
-			<param index="0" name="loglevel" type="int" />
-			<param index="1" name="line" type="String" />
-			<description>
-				Emitted on a new global log message
-			</description>
-		</signal>
 		<signal name="train_log_updated">
 			<param index="0" name="train" type="String" />
 			<param index="1" name="loglevel" type="int" />
@@ -151,14 +136,4 @@
 			</description>
 		</signal>
 	</signals>
-	<constants>
-		<constant name="TRAINLOGLEVEL_DEBUG" value="0" enum="TrainLogLevel">
-		</constant>
-		<constant name="TRAINLOGLEVEL_INFO" value="1" enum="TrainLogLevel">
-		</constant>
-		<constant name="TRAINLOGLEVEL_WARNING" value="2" enum="TrainLogLevel">
-		</constant>
-		<constant name="TRAINLOGLEVEL_ERROR" value="3" enum="TrainLogLevel">
-		</constant>
-	</constants>
 </class>

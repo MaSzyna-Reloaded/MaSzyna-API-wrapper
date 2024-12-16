@@ -46,9 +46,9 @@ func console_list_train_commands():
     Console.print_line("%s" % "\n".join(commands))
 
 func console_print_log(loglevel, line):
-    if loglevel >= LogSystem.LogLevel.LOGLEVEL_ERROR:
+    if loglevel >= LogSystem.LogLevel.ERROR:
         Console.print_line("[color=red]%s[/color]" % [line])
-    elif loglevel == LogSystem.LogLevel.LOGLEVEL_WARNING:
+    elif loglevel == LogSystem.LogLevel.WARNING:
         Console.print_line("[color=orange]%s[/color]" % [line])
     else:
         Console.print_line("%s" % [line])

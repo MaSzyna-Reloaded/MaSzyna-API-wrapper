@@ -28,6 +28,7 @@
 namespace godot {
 
     class LogSystem final : public RefCounted {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(LogSystem, RefCounted);
 
         private:
@@ -39,10 +40,10 @@ namespace godot {
             }
 
             enum LogLevel {
-                LOGLEVEL_DEBUG = 0,
-                LOGLEVEL_INFO,
-                LOGLEVEL_WARNING,
-                LOGLEVEL_ERROR,
+                DEBUG = 0,
+                INFO,
+                WARNING,
+                ERROR,
             };
 
             LogSystem();

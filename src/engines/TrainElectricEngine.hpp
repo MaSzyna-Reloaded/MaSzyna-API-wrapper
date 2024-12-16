@@ -6,6 +6,7 @@ namespace godot {
     class TrainController;
 
     class TrainElectricEngine : public TrainEngine {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainElectricEngine, TrainEngine)
         public:
             enum TrainPowerSource {
@@ -114,8 +115,8 @@ namespace godot {
             void set_power_cable_steam_pressure(float p_pressure);
             float get_power_cable_steam_pressure() const;
 
-            void compressor(const bool p_enabled) const;
-            void converter(const bool p_enabled) const;
+            void compressor(bool p_enabled) const;
+            void converter(bool p_enabled) const;
             void _register_commands() override;
             void _unregister_commands() override;
     };

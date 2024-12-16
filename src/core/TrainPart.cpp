@@ -1,6 +1,5 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
@@ -89,19 +88,19 @@ namespace godot {
         }
     }
     void TrainPart::log_debug(const String &line) const {
-        log(LogSystem::LogLevel::LOGLEVEL_DEBUG, line);
+        log(LogSystem::LogLevel::DEBUG, line);
     }
 
     void TrainPart::log_info(const String &line) const {
-        log(LogSystem::LogLevel::LOGLEVEL_INFO, line);
+        log(LogSystem::LogLevel::INFO, line);
     }
 
     void TrainPart::log_warning(const String &line) const {
-        log(LogSystem::LogLevel::LOGLEVEL_WARNING, line);
+        log(LogSystem::LogLevel::WARNING, line);
     }
 
     void TrainPart::log_error(const String &line) const {
-        log(LogSystem::LogLevel::LOGLEVEL_ERROR, line);
+        log(LogSystem::LogLevel::ERROR, line);
     }
 
     void TrainPart::register_command(const String &command, const Callable &callback) const {
@@ -164,16 +163,17 @@ namespace godot {
 
     void TrainPart::update_mover() {
         if (train_controller_node != nullptr) {
-            if (TMoverParameters *mover = train_controller_node->get_mover(); mover != nullptr) {
+            TMoverParameters *mover = train_controller_node->get_mover();
+            if (mover != nullptr) {
                 _do_update_internal_mover(mover);
                 Dictionary new_config;
                 _do_fetch_config_from_mover(mover, new_config);
                 train_controller_node->update_config(new_config);
             } else {
-                UtilityFunctions::push_warning("TrainPart::update_mover() failed: internal mover not initialized");
+                log_warning("TrainPart::update_mover() failed: internal mover not initialized");
             }
         } else {
-            UtilityFunctions::push_warning("TrainPart::update_mover() failed: missing train controller node");
+            log_warning("TrainPart::update_mover() failed: missing train controller node");
         }
     }
 
@@ -182,13 +182,14 @@ namespace godot {
             return state;
         }
         if (train_controller_node != nullptr) {
-            if (TMoverParameters *mover = train_controller_node->get_mover(); mover != nullptr) {
+            TMoverParameters *mover = train_controller_node->get_mover();
+            if (mover != nullptr) {
                 _do_fetch_state_from_mover(mover, state);
             } else {
-                UtilityFunctions::push_warning("TrainPart::get_mover_state() failed: internal mover not initialized");
+                log_warning("TrainPart::get_mover_state() failed: internal mover not initialized");
             }
         } else {
-            UtilityFunctions::push_warning("TrainPart::get_mover_state() failed: missing train controller node");
+            log_warning("TrainPart::get_mover_state() failed: missing train controller node");
         }
         return state;
     }
@@ -209,6 +210,8 @@ namespace godot {
         }
     }
 
+    //ReSharper disable once CppMemberFunctionMayBeStatic
+    //NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     void TrainPart::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }

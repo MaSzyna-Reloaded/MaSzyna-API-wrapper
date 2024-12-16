@@ -1,5 +1,4 @@
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
 
 namespace godot {
@@ -45,7 +44,7 @@ namespace godot {
     }
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        bool previous_main_switch = static_cast<bool>(state.get("main_switch_enabled", false));
+        const bool previous_main_switch = state.get("main_switch_enabled", false);
         state["main_switch_enabled"] = mover->Mains;
         state["Mm"] = mover->Mm;
         state["Mw"] = mover->Mw;

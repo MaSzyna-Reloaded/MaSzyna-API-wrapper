@@ -7,6 +7,7 @@
 namespace godot {
     class TrainController;
     class TrainEngine : public TrainPart {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainEngine, TrainPart)
         public:
             static void _bind_methods();
@@ -22,7 +23,7 @@ namespace godot {
 
         public:
             TypedArray<Dictionary> get_motor_param_table() const;
-            void set_motor_param_table(const TypedArray<Dictionary>& p_wwlist);
+            void set_motor_param_table(const TypedArray<Dictionary> &p_wwlist);
             void main_switch(bool p_enabled) const;
 
             TrainEngine();

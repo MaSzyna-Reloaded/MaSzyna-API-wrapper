@@ -215,7 +215,7 @@ namespace godot {
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
                 break;
             default:
-                DEBUG("TrainController::_ready() not implemented notification type");
+                break;
 
         }
     }
@@ -300,7 +300,7 @@ namespace godot {
         mover->NominalBatteryVoltage = battery_voltage; // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) {
         config["axles_powered_count"] = mover->NPoweredAxles;
         config["axles_count"] = mover->NAxles;
     }
@@ -442,6 +442,8 @@ namespace godot {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
     }
 
+    //ReSharper disable once CppMemberFunctionMayBeStatic
+    //NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     void TrainController::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }

@@ -13,6 +13,7 @@ namespace godot {
     class TrainController;
 
     class TrainSystem final : public RefCounted {
+            //NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainSystem, RefCounted);
 
         private:
@@ -41,13 +42,13 @@ namespace godot {
 
             void register_command(const String &train_id, const String &command, const Callable &callback);
             void unregister_command(const String &train_id, const String &command, const Callable &callback);
-            Array get_supported_commands();
-            Array get_registered_trains();
+            Array get_supported_commands() const;
+            Array get_registered_trains() const;
             void send_command(
                     const String &train_id, const String &command, const Variant &p1 = Variant(),
                     const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            bool is_command_supported(const String &command);
+            bool is_command_supported(const String &command) const;
 
             void log(const String &train_id, LogSystem::LogLevel level, const String &line);
 

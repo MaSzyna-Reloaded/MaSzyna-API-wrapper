@@ -3,6 +3,7 @@
 
 namespace godot {
     class TrainDieselElectricEngine final : public TrainDieselEngine {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainDieselElectricEngine, TrainDieselEngine)
 
         private:

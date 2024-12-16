@@ -1,5 +1,4 @@
 #include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
@@ -261,7 +260,7 @@ namespace godot {
         if (it != BrakeHandlePositionMap.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
-            log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
+            log_error("Unhandled brake level position: " + String::num(p_position));
         }
     }
 

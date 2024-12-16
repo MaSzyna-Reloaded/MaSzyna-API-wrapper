@@ -15,6 +15,7 @@
 namespace godot {
     class TrainController;
     class TrainBrake final : public TrainPart {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainBrake, TrainPart)
         public:
             enum BrakeHandlePosition {

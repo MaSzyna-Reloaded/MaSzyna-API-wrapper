@@ -9,6 +9,7 @@
 using namespace godot;
 
 class LibMaszynaPlugin final : public EditorPlugin {
+        // NOLINTNEXTLINE(modernize-use-auto)
         GDCLASS(LibMaszynaPlugin, EditorPlugin);
 
     public:

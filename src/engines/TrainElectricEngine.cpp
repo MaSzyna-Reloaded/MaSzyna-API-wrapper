@@ -156,9 +156,9 @@ namespace godot {
         state["converter_enabled"] = mover->ConverterFlag;
         state["converted_allowed"] = mover->ConverterAllow;
         state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        state["power_source"] = static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.SourceType));
+        state["power_source"] = static_cast<int>(mover->EnginePowerSource.SourceType);
         state["accumulator/recharge_source"] =
-                static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource));
+                static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource);
         state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
         state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
         state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;

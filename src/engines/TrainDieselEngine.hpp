@@ -7,6 +7,7 @@ namespace godot {
     class TrainController;
 
     class TrainDieselEngine : public TrainEngine {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainDieselEngine, TrainEngine)
         private:
             static void _bind_methods();
@@ -37,8 +38,8 @@ namespace godot {
             TypedArray<Array> get_wwlist();
             void set_wwlist(const TypedArray<Array> &p_wwlist);
 
-            void oil_pump(const bool p_enabled) const;
-            void fuel_pump(const bool p_enabled) const;
+            void oil_pump(bool p_enabled) const;
+            void fuel_pump(bool p_enabled) const;
 
             TrainDieselEngine();
             ~TrainDieselEngine() override = default;

@@ -12,6 +12,7 @@ namespace godot {
 
 
     class TrainController final : public Node {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
@@ -55,7 +56,7 @@ namespace godot {
             Dictionary get_mover_state();
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *mover) const;
-            static void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config);
+            static void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config);
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
             void _process_mover(double delta);
 
@@ -73,8 +74,10 @@ namespace godot {
             void update_config(const Dictionary &p_config);
             static void set_config_property(String &key, Variant &p_value);
             void _process(double delta) override;
-            void _notification(int p_what) override;
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            // ReSharper disable once CppHidingFunction
+            void _notification(int p_what);
+            void
+            send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -85,8 +88,9 @@ namespace godot {
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
             void emit_command_received_signal(
-            const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            static void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+                    const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+
+            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void register_command(const String &command, const Callable &callable) const;
             void unregister_command(const String &command, const Callable &callable) const;
             void update_state();
@@ -98,7 +102,7 @@ namespace godot {
             String get_train_id() const;
             void set_train_id(const String &p_train_id);
             String get_type_name() const;
-            void set_type_name(const String &type_name);
+            void set_type_name(const String &p_type_name);
             void set_battery_voltage(double p_value);
             double get_battery_voltage() const;
             void set_mass(double p_mass);

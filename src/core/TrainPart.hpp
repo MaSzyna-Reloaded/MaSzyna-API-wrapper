@@ -11,6 +11,7 @@
 
 namespace godot {
     class TrainPart : public Node {
+            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainPart, Node)
         public:
             static void _bind_methods();
@@ -20,7 +21,8 @@ namespace godot {
             bool _commands_registered = false;
 
         protected:
-            void _notification(int p_what) override;
+            // ReSharper disable once CppHidingFunction
+            void _notification(int p_what);
             bool enabled = true;
             bool enabled_changed = false;
             bool _dirty = false;
@@ -62,7 +64,7 @@ namespace godot {
             void unregister_command(const String &command, const Callable &callback) const;
             void
             send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
-            static void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void log(LogSystem::LogLevel level, const String &line) const;
             void log_debug(const String &line) const;
             void log_info(const String &line) const;

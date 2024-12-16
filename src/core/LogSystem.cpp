@@ -11,10 +11,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("error", "line"), &LogSystem::error);
         ADD_SIGNAL(MethodInfo(
                 LOG_UPDATED_SIGNAL, PropertyInfo(Variant::INT, "loglevel"), PropertyInfo(Variant::STRING, "line")));
-        BIND_ENUM_CONSTANT(LOGLEVEL_DEBUG);
-        BIND_ENUM_CONSTANT(LOGLEVEL_INFO);
-        BIND_ENUM_CONSTANT(LOGLEVEL_WARNING);
-        BIND_ENUM_CONSTANT(LOGLEVEL_ERROR);
+        BIND_ENUM_CONSTANT(DEBUG);
+        BIND_ENUM_CONSTANT(INFO);
+        BIND_ENUM_CONSTANT(WARNING);
+        BIND_ENUM_CONSTANT(ERROR);
     }
 
     LogSystem::LogSystem() = default;
@@ -24,19 +24,19 @@ namespace godot {
     }
 
     void LogSystem::debug(const String &line) {
-        log(LogLevel::LOGLEVEL_DEBUG, line);
+        log(LogLevel::DEBUG, line);
     }
 
     void LogSystem::info(const String &line) {
-        log(LogLevel::LOGLEVEL_INFO, line);
+        log(LogLevel::INFO, line);
     }
 
     void LogSystem::warning(const String &line) {
-        log(LogLevel::LOGLEVEL_WARNING, line);
+        log(LogLevel::WARNING, line);
     }
 
     void LogSystem::error(const String &line) {
-        log(LogLevel::LOGLEVEL_ERROR, line);
+        log(LogLevel::ERROR, line);
     }
 
 } // namespace godot

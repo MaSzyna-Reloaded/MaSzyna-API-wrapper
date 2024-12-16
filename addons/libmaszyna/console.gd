@@ -13,6 +13,7 @@ var pause_enabled := false
 
 signal console_opened
 signal console_closed
+signal console_toggled
 signal console_unknown_command
 
 
@@ -200,6 +201,7 @@ func set_visible(visible:bool) -> void:
         get_tree().paused = was_paused_already || pause_enabled
         line_edit.grab_focus()
         console_opened.emit()
+        console_toggled.emit(true)
     else:
         control.anchor_bottom = 1.0
         scroll_to_bottom()
@@ -207,6 +209,7 @@ func set_visible(visible:bool) -> void:
         if (pause_enabled && !was_paused_already):
             get_tree().paused = false
         console_closed.emit()
+        console_toggled.emit(false)
 
 
 func is_visible():

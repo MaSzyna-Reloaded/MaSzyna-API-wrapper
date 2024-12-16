@@ -6,7 +6,7 @@
 namespace godot {
     class TrainController;
 
-    class TrainElectricSeriesEngine final : public TrainElectricEngine {
+    class TrainElectricSeriesEngine: public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
         public:
             static void _bind_methods();
@@ -18,13 +18,10 @@ namespace godot {
             void _do_update_internal_mover(TMoverParameters *mover) override;
 
         public:
-            double get_nominal_voltage() const;
+            [[nodiscard]] double get_nominal_voltage() const;
             void set_nominal_voltage(double value);
 
-            double get_winding_resistance() const;
+            [[nodiscard]] double get_winding_resistance() const;
             void set_winding_resistance(double value);
-
-            TrainElectricSeriesEngine();
-            ~TrainElectricSeriesEngine() override = default;
     };
 } // namespace godot

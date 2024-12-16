@@ -36,7 +36,7 @@ namespace godot {
         public:
             static const char *LOG_UPDATED_SIGNAL;
 
-            inline static LogSystem *get_instance() {
+            static LogSystem *get_instance() {
                 return dynamic_cast<LogSystem *>(godot::Engine::get_singleton()->get_singleton("LogSystem"));
             }
 
@@ -47,10 +47,7 @@ namespace godot {
                 ERROR,
             };
 
-            LogSystem();
-            ~LogSystem() override = default;
-
-            void log(const LogLevel level, const String &line);
+            void log(LogLevel level, const String &line);
             void debug(const String &line);
             void info(const String &line);
             void warning(const String &line);

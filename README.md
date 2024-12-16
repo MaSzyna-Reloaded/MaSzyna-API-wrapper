@@ -33,6 +33,11 @@ Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/
 
 If you have found any bug, have a suggestion or want to join us - feel free to open an [issue](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/issues) or start a [discussion](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/discussions)!
 
+### Code Quality
+
+#### Qodana
+FIles on PRs are scanned by Qodana. All it's reports are published [here](https://qodana.cloud/projects/ARjJ6)
+
 ### Testing
 
 #### Testing locally

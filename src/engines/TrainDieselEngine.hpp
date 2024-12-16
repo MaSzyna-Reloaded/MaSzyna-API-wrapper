@@ -25,22 +25,19 @@ namespace godot {
 
 
         public:
-            double get_oil_min_pressure() const;
+            [[nodiscard]] double get_oil_min_pressure() const;
             void set_oil_min_pressure(double value);
 
-            double get_oil_max_pressure() const;
+            [[nodiscard]] double get_oil_max_pressure() const;
             void set_oil_max_pressure(double value);
 
-            double get_traction_force_max() const;
+            [[nodiscard]] double get_traction_force_max() const;
             void set_traction_force_max(double value);
 
             TypedArray<Array> get_wwlist();
-            void set_wwlist(const TypedArray<Array> p_wwlist);
+            void set_wwlist(const TypedArray<Array>& p_wwlist);
 
-            void oil_pump(const bool p_enabled);
-            void fuel_pump(const bool p_enabled);
-
-            TrainDieselEngine();
-            ~TrainDieselEngine() override = default;
+            void oil_pump(bool p_enabled);
+            void fuel_pump(bool p_enabled);
     };
 } // namespace godot

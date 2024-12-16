@@ -17,8 +17,6 @@ namespace godot {
         BIND_ENUM_CONSTANT(ERROR);
     }
 
-    LogSystem::LogSystem() = default;
-
     void LogSystem::log(const LogLevel level, const String &line) {
         emit_signal(LOG_UPDATED_SIGNAL, level, line);
     }

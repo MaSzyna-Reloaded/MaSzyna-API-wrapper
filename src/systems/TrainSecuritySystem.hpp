@@ -1,8 +1,7 @@
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "../core/TrainPart.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
-
+#include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class TrainSecuritySystem : public TrainPart {
@@ -24,9 +23,6 @@ namespace godot {
                 BRAKE_WARNINGSIGNAL_WHISTLE
             };
 
-            TrainSecuritySystem();
-            ~TrainSecuritySystem() override = default;
-
         private:
             bool aware_system_active = false;
             bool aware_system_cabsignal = false;
@@ -44,20 +40,20 @@ namespace godot {
             double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
 
         public:
-            void security_acknowledge(const bool p_enabled);
+            void security_acknowledge(bool p_enabled);
 
             // Getters
-            bool get_aware_system_active() const;
-            bool get_aware_system_cabsignal() const;
-            bool get_aware_system_separate_acknowledge() const;
-            bool get_aware_system_sifa() const;
-            double get_aware_delay() const;
-            double get_emergency_brake_delay() const;
-            EmergencyBrakeWarningSignal get_emergency_brake_warning_signal() const;
-            bool get_radio_stop() const;
-            double get_sound_signal_delay() const;
-            double get_shp_magnet_distance() const;
-            double get_ca_max_hold_time() const;
+            [[nodiscard]] bool get_aware_system_active() const;
+            [[nodiscard]] bool get_aware_system_cabsignal() const;
+            [[nodiscard]] bool get_aware_system_separate_acknowledge() const;
+            [[nodiscard]] bool get_aware_system_sifa() const;
+            [[nodiscard]] double get_aware_delay() const;
+            [[nodiscard]] double get_emergency_brake_delay() const;
+            [[nodiscard]] EmergencyBrakeWarningSignal get_emergency_brake_warning_signal() const;
+            [[nodiscard]] bool get_radio_stop() const;
+            [[nodiscard]] double get_sound_signal_delay() const;
+            [[nodiscard]] double get_shp_magnet_distance() const;
+            [[nodiscard]] double get_ca_max_hold_time() const;
 
             // Setters
             void set_aware_system_active(bool p_state);

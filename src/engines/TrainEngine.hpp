@@ -1,7 +1,7 @@
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "../core/TrainPart.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
+#include <godot_cpp/classes/node.hpp>
 
 
 namespace godot {
@@ -22,10 +22,7 @@ namespace godot {
 
         public:
             TypedArray<Dictionary> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<Dictionary> p_wwlist);
-            void main_switch(const bool p_enabled);
-
-            TrainEngine();
-            ~TrainEngine() override = default;
+            void set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table);
+            void main_switch(bool p_enabled);
     };
 } // namespace godot

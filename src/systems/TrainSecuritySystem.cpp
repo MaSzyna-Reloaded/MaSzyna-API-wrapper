@@ -1,12 +1,9 @@
+#include "TrainSecuritySystem.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainSecuritySystem.hpp"
-
 namespace godot {
-    TrainSecuritySystem::TrainSecuritySystem() = default;
-
     void TrainSecuritySystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_aware_system_active"), &TrainSecuritySystem::get_aware_system_active);
         ClassDB::bind_method(D_METHOD("set_aware_system_active"), &TrainSecuritySystem::set_aware_system_active);
@@ -120,47 +117,47 @@ namespace godot {
     }
 
     // Setters
-    void TrainSecuritySystem::set_aware_system_active(bool p_state) {
+    void TrainSecuritySystem::set_aware_system_active(const bool p_state) {
         aware_system_active = p_state;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_aware_system_cabsignal(bool p_state) {
+    void TrainSecuritySystem::set_aware_system_cabsignal(const bool p_state) {
         aware_system_cabsignal = p_state;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_aware_system_separate_acknowledge(bool p_state) {
+    void TrainSecuritySystem::set_aware_system_separate_acknowledge(const bool p_state) {
         aware_system_separate_acknowledge = p_state;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_aware_system_sifa(bool p_state) {
+    void TrainSecuritySystem::set_aware_system_sifa(const bool p_state) {
         aware_system_sifa = p_state;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_aware_delay(double value) {
+    void TrainSecuritySystem::set_aware_delay(const double value) {
         aware_delay = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_emergency_brake_delay(double value) {
+    void TrainSecuritySystem::set_emergency_brake_delay(const double value) {
         emergency_brake_delay = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_emergency_brake_warning_signal(EmergencyBrakeWarningSignal value) {
+    void TrainSecuritySystem::set_emergency_brake_warning_signal(const EmergencyBrakeWarningSignal value) {
         emergency_brake_warning_signal = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_radio_stop(bool value) {
+    void TrainSecuritySystem::set_radio_stop(const bool value) {
         radio_stop = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_sound_signal_delay(double value) {
+    void TrainSecuritySystem::set_sound_signal_delay(const double value) {
         sound_signal_delay = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_shp_magnet_distance(double value) {
+    void TrainSecuritySystem::set_shp_magnet_distance(const double value) {
         shp_magnet_distance = value;
         _dirty = true;
     }
-    void TrainSecuritySystem::set_ca_max_hold_time(double value) {
+    void TrainSecuritySystem::set_ca_max_hold_time(const double value) {
         ca_max_hold_time = value;
         _dirty = true;
     }

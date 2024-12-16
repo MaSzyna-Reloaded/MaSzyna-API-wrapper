@@ -1,12 +1,8 @@
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     class TrainController;
-
-    TrainEngine::TrainEngine() = default;
-
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_motor_param_table"), &TrainEngine::set_motor_param_table);
         ClassDB::bind_method(D_METHOD("get_motor_param_table"), &TrainEngine::get_motor_param_table);
@@ -27,8 +23,8 @@ namespace godot {
         mover->GroundRelay = true;
         mover->NoVoltRelay = true;
         mover->OvervoltageRelay = true;
-        mover->DamageFlag = false;
-        mover->EngDmgFlag = false;
+        mover->DamageFlag = 0;
+        mover->EngDmgFlag = 0;
         mover->ConvOvldFlag = false;
         /* end testing */
 
@@ -82,9 +78,9 @@ namespace godot {
         return motor_param_table;
     }
 
-    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> p_value) {
+    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table) {
         motor_param_table.clear();
-        motor_param_table.append_array(p_value);
+        motor_param_table.append_array(p_motor_param_table);
     }
 
     void TrainEngine::main_switch(const bool p_enabled) {

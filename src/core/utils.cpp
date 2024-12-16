@@ -1,8 +1,7 @@
+#include "utils.hpp"
 #include <sstream>
 #include <string>
 #include <vector>
-
-#include "utils.hpp"
 
 namespace libmaszyna {
     namespace utils {

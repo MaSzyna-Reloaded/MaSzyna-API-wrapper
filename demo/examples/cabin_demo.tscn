@@ -1,0 +1,120 @@
+[gd_scene load_steps=12 format=3 uid="uid://b2gqnpyxsbpkv"]
+
+[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="1_b8jw8"]
+[ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="1_ebs3d"]
+[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_o1540"]
+[ext_resource type="Shader" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_x8lk3"]
+[ext_resource type="Script" path="res://addons/libmaszyna/player/free_camera.gd" id="3_xr1tx"]
+[ext_resource type="Script" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="4_n50b0"]
+[ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="8_1ye4a"]
+[ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="8_ac5ka"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_yo2ou"]
+shader = ExtResource("2_x8lk3")
+shader_parameter/sky_offset = Vector2(0.49, 0.005)
+shader_parameter/exposure = 0.575
+shader_parameter/tint_color = Color(1, 1, 1, 1)
+shader_parameter/sun_color = Color(10, 8, 1, 1)
+shader_parameter/sun_sunset_color = Color(10, 0, 0, 1)
+shader_parameter/sun_size = 0.2
+shader_parameter/sun_blur = 10.0
+shader_parameter/sky_scale = Vector2(0.547, 0.865)
+
+[sub_resource type="Sky" id="Sky_pybda"]
+sky_material = SubResource("ShaderMaterial_yo2ou")
+
+[sub_resource type="Environment" id="Environment_y62w3"]
+resource_local_to_scene = true
+background_mode = 2
+sky = SubResource("Sky_pybda")
+tonemap_mode = 3
+tonemap_white = 6.44
+ssr_enabled = true
+ssao_enabled = true
+ssil_enabled = true
+sdfgi_enabled = true
+sdfgi_min_cell_size = 0.488281
+glow_enabled = true
+glow_intensity = 0.9
+glow_strength = 0.98
+glow_bloom = 0.08
+glow_hdr_threshold = 0.08
+fog_enabled = true
+fog_mode = 1
+fog_sun_scatter = 0.4
+fog_density = 0.1736
+fog_sky_affect = 0.4
+fog_depth_curve = 1.1487
+fog_depth_end = 67.0
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.029
+volumetric_fog_anisotropy = 0.49
+volumetric_fog_length = 2.8
+volumetric_fog_detail_spread = 3.95852
+volumetric_fog_sky_affect = 0.405
+volumetric_fog_temporal_reprojection_amount = 0.99
+adjustment_enabled = true
+
+[node name="CabinDemo" type="Node3D"]
+
+[node name="SM42v1" parent="." instance=ExtResource("1_b8jw8")]
+
+[node name="SM42Cabin" parent="." instance=ExtResource("8_1ye4a")]
+controller_path = NodePath("../SM42v1")
+
+[node name="Buda" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_o1540")
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da"
+skins = ["6d-907"]
+head_display_node_path = null
+
+[node name="Environment" type="Node" parent="."]
+
+[node name="DeveloperConsole" parent="Environment" instance=ExtResource("1_ebs3d")]
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Environment"]
+transform = Transform3D(-0.666529, 0.334317, 0.666311, 0.728995, 0.479221, 0.488788, -0.1559, 0.811529, -0.56313, 5.83027, -6.14961, 0)
+light_color = Color(0.929688, 0.848771, 0.817108, 1)
+light_energy = 3.414
+light_indirect_energy = 2.675
+light_volumetric_fog_energy = 11.811
+shadow_enabled = true
+directional_shadow_split_1 = 0.032
+directional_shadow_split_2 = 0.1
+directional_shadow_split_3 = 0.3
+directional_shadow_blend_splits = true
+directional_shadow_max_distance = 300.0
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="Environment"]
+environment = SubResource("Environment_y62w3")
+
+[node name="Camera3D" type="Camera3D" parent="Environment"]
+transform = Transform3D(0.937281, -0.0875449, 0.337402, 0, 0.967948, 0.251151, -0.348575, -0.235399, 0.907239, 0.785838, 3.45703, 3.02634)
+script = ExtResource("3_xr1tx")
+velocity_multiplier = 0.2
+
+[node name="MaszynaEnvironmentNode" type="Node" parent="Environment"]
+script = ExtResource("4_n50b0")
+world_environment = NodePath("../WorldEnvironment")
+sky_texture_offset = Vector2(0.49, 0.005)
+sky_texture_scale = Vector2(0.547, 0.865)
+sky_energy = 0.575
+
+[node name="LoadingScreen" parent="." instance=ExtResource("8_ac5ka")]

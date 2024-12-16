@@ -1,0 +1,433 @@
+[gd_scene load_steps=14 format=3 uid="uid://do3s7mkbpv7es"]
+
+[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
+[ext_resource type="Script" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
+[ext_resource type="PackedScene" uid="uid://djl581jijicpq" path="res://addons/libmaszyna/cabin/cabin_command.tscn" id="66_epgva"]
+[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_gauge.gd" id="67_fryen"]
+[ext_resource type="PackedScene" uid="uid://cfj82gn1nfl36" path="res://addons/libmaszyna/cabin/cabin_gauge.tscn" id="68_g4w65"]
+[ext_resource type="PackedScene" uid="uid://c0toij1foexq6" path="res://addons/libmaszyna/cabin/cabin_button.tscn" id="69_feumc"]
+[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_switch.gd" id="70_sdo5w"]
+[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_knob.gd" id="71_h1qpq"]
+[ext_resource type="PackedScene" uid="uid://cmluhfe2vkxcc" path="res://addons/libmaszyna/cabin/cabin_switch.tscn" id="72_a07r6"]
+[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
+[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
+[ext_resource type="Texture2D" uid="uid://wf2pbnu62pgl" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
+[ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
+
+[node name="SM42Cabin" type="Node3D"]
+script = ExtResource("1_bffp8")
+camera_position_path = NodePath("CameraPosition")
+
+[node name="Cabin" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_6k4j1")
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da_kabina"
+
+[node name="Commands" type="Node" parent="."]
+
+[node name="BrakeLevelSet_Drive" parent="Commands" instance=ExtResource("66_epgva")]
+action_name = "brake_level_drive"
+command = "brake_level_set_position"
+command_param = "drive"
+
+[node name="Gauges" type="Node3D" parent="."]
+
+[node name="EngineRPM" type="Node3D" parent="Gauges"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0178885, 3.15643, 1.98876)
+script = ExtResource("67_fryen")
+mesh_rotation = Vector3(0, 0.151, 0)
+state_property = "engine_rpm"
+target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/obrot01")
+
+[node name="Speed" type="Node3D" parent="Gauges"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0178885, 3.15643, 1.98876)
+script = ExtResource("67_fryen")
+mesh_rotation = Vector3(0, 2.4, 0)
+state_property = "speed"
+target_mesh_path = NodePath("../../Cabin/banan/hasler/speedknob")
+
+[node name="OilPressure" type="Node3D" parent="Gauges"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.422279, 3.02141, 2.00855)
+script = ExtResource("67_fryen")
+mesh_rotation = Vector3(0, -200, 0)
+state_property = "oil_pump_pressure"
+target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/cyl04")
+
+[node name="PrzewodGlowny" parent="Gauges" instance=ExtResource("68_g4w65")]
+max_value = 10.0
+mesh_rotation = Vector3(0, 270, 0)
+state_property = "pipe_pressure"
+target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/cyl03")
+
+[node name="BrakeCyl" parent="Gauges" instance=ExtResource("68_g4w65")]
+max_value = 10.0
+max_angle = 272.0
+mesh_rotation = Vector3(0, 272, 0)
+state_property = "brake_air_pressure"
+max_state_property = "brake_tank_volume"
+target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/cyl06")
+
+[node name="Switches" type="Node3D" parent="."]
+
+[node name="DeviesLight" parent="Switches" instance=ExtResource("69_feumc")]
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy24")
+command = "devices_light"
+state_property = "devices_light_enabled"
+mesh_rotation = Vector3(0, -85, 0)
+action = "devices_light_toggle"
+
+[node name="RoofLight" parent="Switches" instance=ExtResource("69_feumc")]
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy22")
+command = "roof_light"
+state_property = "roof_light_enabled"
+mesh_rotation = Vector3(0, -85, 0)
+action = "cabin_light_toggle"
+
+[node name="FuelPump" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/pompka_paliwa")
+command = "fuel_pump"
+state_property = "fuel_pump_active"
+mesh_rotation = Vector3(0, -85, 0)
+action = "fuel_pump_toggle"
+
+[node name="OilPump" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy17")
+command = "oil_pump"
+state_property = "oil_pump_active"
+mesh_rotation = Vector3(0, -85, 0)
+action = "oil_pump_toggle"
+
+[node name="SecurityAcknowledge" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/czuw_shp")
+command = "security_acknowledge"
+mesh_position = Vector3(0, 0, -0.006)
+action = "security_acknowledge"
+
+[node name="BrakeReleaser" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/odl")
+command = "brake_releaser"
+mesh_position = Vector3(0, 0, -0.004)
+action = "brake_release"
+
+[node name="Start" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/start")
+command = "main_switch"
+controller_mode = 1
+mesh_position = Vector3(0, 0, -0.004)
+action = "main_switch_on"
+
+[node name="Stop" parent="Switches" instance=ExtResource("69_feumc")]
+monostable = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/stop")
+command = "main_switch"
+controller_mode = 2
+mesh_position = Vector3(0, 0, -0.004)
+action = "main_switch_off"
+
+[node name="RadioToggle" parent="Switches" instance=ExtResource("69_feumc")]
+visible = false
+mesh_path = NodePath("../../Cabin/banan/radio/swr-wl")
+command = "radio"
+state_property = "radio_enabled"
+mesh_position = Vector3(0, 0, -0.004)
+action = "radio_toggle"
+
+[node name="Reverser" type="Node3D" parent="Switches"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.260549, 2.8678, 2.4544)
+script = ExtResource("70_sdo5w")
+switch_min_position = -1
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/kier")
+command_increase = "direction_increase"
+command_decrease = "direction_decrease"
+state_property = "direction"
+mesh_rotation = Vector3(0, -30, 0)
+action_increase = "direction_increase"
+action_decrease = "direction_decrease"
+
+[node name="Zasadniczy" type="Node3D" parent="Switches"]
+transform = Transform3D(-0.22677, 0, 0.973948, 0, 1, 0, -0.973948, 0, -0.22677, 1.26591, 2.97955, 2.3353)
+script = ExtResource("71_h1qpq")
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/zasadniczy")
+command = "brake_level_set"
+state_property = "brake_controller_position_normalized"
+mesh_rotation = Vector3(0, 120, 0)
+action_increase = "brake_level_increase"
+action_decrease = "brake_level_decrease"
+
+[node name="MainController" parent="Switches" instance=ExtResource("72_a07r6")]
+switch_max_position = 11
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pomocniczy/nastawnik")
+command_increase = "main_controller_increase"
+command_decrease = "main_controller_decrease"
+state_property = "controller_main_position"
+mesh_rotation = Vector3(0, 15, 0)
+action_increase = "main_controller_increase"
+action_decrease = "main_controller_decrease"
+
+[node name="Battery" parent="Switches" instance=ExtResource("69_feumc")]
+command = "battery"
+state_property = "battery_enabled"
+action = "battery_toggle"
+controller_path = NodePath("../../../SM42v1")
+
+[node name="Lights" type="Node3D" parent="."]
+
+[node name="RoofLight" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.671019, 0.739562, 0.0527488, 8.19564e-08, -0.0711437, 0.997466, 0.741441, -0.669318, -0.0477388, 0.0180681, 3.9919, 2.8865)
+light_color = Color(0.960938, 0.881759, 0.75824, 1)
+light_energy = 0.411
+light_volumetric_fog_energy = 16.235
+light_size = 1.0
+light_specular = 5.297
+spot_range = 2.785
+spot_attenuation = 1.44
+spot_angle = 63.62
+spot_angle_attenuation = 1.27456
+script = ExtResource("73_lxu5b")
+state_property = "roof_light_enabled"
+light_energy_on = 0.411
+
+[node name="RadioPowerLed" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.487651, 2.78811, 2.62152)
+light_color = Color(0.00769043, 0.046875, 0.0119762, 1)
+light_energy = 0.007
+light_size = 0.49
+light_specular = 2.593
+omni_range = 0.14
+omni_attenuation = 1.316
+script = ExtResource("74_q8ngl")
+state_property = "radio_powered"
+light_energy_on = 0.396
+animation_speed = 100.0
+
+[node name="RadioPowerLed2" type="OmniLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907595, -0.0104695, 0.00153279, 0.973012, 0.230748, 0.0103964, -0.230751, 0.972957, 0.715, 3.009, 2.036)
+light_color = Color(0.344238, 0.631599, 0.9375, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+light_specular = 0.0
+omni_range = 0.052
+omni_attenuation = 2.164
+script = ExtResource("74_q8ngl")
+state_property = "radio_powered"
+light_energy_on = 0.002
+
+[node name="DeviceLight1" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, -0.0886833, 3.20948, 1.94735)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight2" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, 0.0841957, 3.20948, 1.94752)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight3" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, 0.376934, 3.24047, 1.93445)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight5" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, 0.521681, 3.24047, 1.93445)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight4" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, 0.229699, 3.21728, 1.93445)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight6" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0104857, -0.15218, 0.988297, -0.000696268, -0.988352, -0.152181, 0.670892, 3.21882, 1.93445)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight11" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(-0.999945, -0.000907594, 0.0104694, -0.0104856, 0.15218, -0.988297, -0.000696268, -0.988352, -0.152181, 0.991721, 3.09631, 1.92514)
+light_color = Color(0.0111694, 0.714844, 0.0221643, 1)
+light_energy = 0.002
+light_indirect_energy = 0.525
+light_size = 0.573
+spot_range = 0.22
+spot_attenuation = 1.46
+spot_angle = 53.87
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight7" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0103584, -0.253071, 0.967392, -0.00177152, -0.967447, -0.253066, -0.21773, 3.21163, 1.94631)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight8" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0103584, -0.253071, 0.967392, -0.00177152, -0.967447, -0.253066, -0.322201, 3.21163, 1.94631)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight9" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0103584, -0.253071, 0.967392, -0.00177152, -0.967447, -0.253066, -0.440302, 3.21163, 1.94631)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="DeviceLight10" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.999945, 0.000907607, -0.0104695, 0.0103584, -0.253071, 0.967392, -0.00177152, -0.967447, -0.253066, -0.546264, 3.21163, 1.94631)
+light_color = Color(0.808594, 0.518647, 0.06633, 1)
+light_energy = 0.007
+light_indirect_energy = 0.525
+light_size = 0.078
+spot_range = 0.564628
+spot_attenuation = 1.41
+spot_angle = 66.0275
+script = ExtResource("73_lxu5b")
+state_property = "devices_light_enabled"
+light_energy_on = 0.002
+
+[node name="CzuwakOmni1" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.900154, 0.155718, -0.406786, -0.0599979, -0.880682, -0.469892, -0.43142, 0.447382, -0.783407, 0.689291, 3.31268, 1.88082)
+light_color = Color(0.960938, 0.506832, 0.349091, 1)
+light_energy = 0.2
+light_volumetric_fog_energy = 16.0
+light_projector = ExtResource("75_p8gfg")
+light_size = 0.696
+light_specular = 2.014
+shadow_enabled = true
+spot_range = 2.129
+spot_attenuation = 1.98
+spot_angle = 69.32
+script = ExtResource("73_lxu5b")
+light_energy_on = 0.2
+
+[node name="CzuwakOmni2" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.868601, -0.116307, 0.481669, 0.134029, -0.880682, -0.454352, 0.477041, 0.459208, -0.749373, -0.68228, 3.31988, 1.87836)
+light_color = Color(0.960938, 0.506832, 0.349091, 1)
+light_energy = 0.2
+light_volumetric_fog_energy = 16.0
+light_projector = ExtResource("75_p8gfg")
+light_size = 0.696
+light_specular = 2.014
+shadow_enabled = true
+spot_range = 2.129
+spot_attenuation = 2.02
+spot_angle = 69.32
+script = ExtResource("73_lxu5b")
+light_energy_on = 0.2
+
+[node name="CzuwakOmni3" type="SpotLight3D" parent="Lights"]
+transform = Transform3D(0.739002, 0.0915089, -0.667459, 8.04663e-07, 0.990732, 0.135831, 0.673703, -0.10038, 0.732153, 0.0450159, 3.88586, 3.70396)
+light_color = Color(0.960938, 0.506832, 0.349091, 1)
+light_energy = 0.2
+light_volumetric_fog_energy = 16.0
+light_projector = ExtResource("75_p8gfg")
+light_size = 0.696
+light_specular = 2.014
+shadow_enabled = true
+spot_range = 12.86
+spot_attenuation = 1.96
+spot_angle = 69.32
+script = ExtResource("73_lxu5b")
+light_energy_on = 0.2
+
+[node name="Czuwak" parent="Lights" instance=ExtResource("76_djwot")]
+transform = Transform3D(0.997974, -0.0455378, 0.0444316, 0, 0.698359, 0.715747, -0.0636228, -0.714297, 0.696945, -0.0587103, 3.1026, 2.18974)
+state_property = "blinking"
+target_path = NodePath("../../Cabin/banan/podloga_glowna/czuwak_on")
+
+[node name="CameraPosition" type="Marker3D" parent="."]
+transform = Transform3D(0.951606, -0.0088377, 0.307195, 0, 0.999586, 0.0287572, -0.307322, -0.0273655, 0.951212, 0.822875, 3.36325, 3.44209)
+
+[connection signal="blink" from="Lights/Czuwak" to="." method="_on_czuwak_blink"]

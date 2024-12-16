@@ -17,6 +17,8 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
+#include "parsers/maszyna_parser.hpp"
+
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
@@ -28,6 +30,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);

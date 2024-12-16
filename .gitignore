@@ -19,11 +19,13 @@ CMakeLists.txt
 **/compile_commands.json
 
 # Godot-specific files
+*.import
+/bin/
 /demo/.godot/
-/demo/**/*.import
 /demo/addons/gut
 /demo/addons/libmaszyna
 /demo/bin
+/src/gen/
 /doc
 /modules
 /platform

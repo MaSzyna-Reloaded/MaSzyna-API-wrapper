@@ -7,7 +7,10 @@ var _t:float = 0.0
 @onready var engine = $SM42/StonkaDieselEngine
 @onready var security = $SM42/TrainSecuritySystem
 @onready var doors = $SM42/TrainDoors
+@onready var battery_progress_bar = $%BatteryProgressBar
 
+@onready var FORWARD = $UI/MoverSwitches/General/HBoxContainer2/Forward
+@onready var REVERSE = $UI/MoverSwitches/General/HBoxContainer2/Reverse
 
 const rich_print_loglevel_colors = {
     LogSystem.LogLevel.DEBUG: "#777",
@@ -56,7 +59,7 @@ func _process(delta: float) -> void:
         _t = 0
 
         var train_state = train.get_state()
-        var bv = train_state.get("battery_voltage")
+        var bv = train_state.get("battery_voltage", 0)
 
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
@@ -72,23 +75,10 @@ func _process(delta: float) -> void:
         draw_dictionary(security_state, $%DebugSecurity)
         draw_dictionary(door_state, %DebugDoor)
 
-        $UI/Gauges/EngineRPM.value = engine_state.get("engine_rpm", 0.0) / 1400.0
-        $UI/Gauges/EngineCurrent.value = engine_state.get("engine_current", 0.0) / 1500.0
-        $UI/Gauges/OilPressure.value = engine_state.get("oil_pump_pressure", 0.0)
-        $UI/Gauges/BrakeCylinderPressure.value = brake_state.get("brake_air_pressure", 0.0) / brake_state.get("brake_tank_volume", 1.0)
-        $UI/Gauges/BrakePipePressure.value = brake_state.get("pipe_pressure", 0.0)  / 10.0
-        $UI/Gauges/Speed.value = train_state.get("speed", 0.0) / 100.0
-        $%SecurityLight.enabled = true if train_state.get("blinking") else false
-        $%SHPLight.enabled = true if train_state.get("cabsignal_blinking") else false
-        $"%DoorsLocked".enabled = true if train_state.get("doors_locked") else false
-        $%Forward.modulate = Color.GREEN if train_state.get("direction", 0) > 0 else Color.WHITE
-        $%Reverse.modulate = Color.GREEN if train_state.get("direction", 0) < 0 else Color.WHITE
-        $"%MainCtrlPos".text = str(train_state.get("controller_main_position", 0))
 
-        $"%LeftDoorsOpenLight".color_active = Color.ORANGE if train_state.get("doors_left_operating") else Color.LIME_GREEN
-        $"%LeftDoorsOpenLight".enabled = train_state.get("doors_left_open") or train_state.get("doors_left_operating")
-        $"%RightDoorsOpenLight".color_active = Color.ORANGE if train_state.get("doors_right_operating") else Color.LIME_GREEN
-        $"%RightDoorsOpenLight".enabled = train_state.get("doors_right_open") or train_state.get("doors_right_operating")
+        $UI/MoverSwitches/General/HBoxContainer/MainCtrlPos.text = str(train_state.get("controller_main_position", 0))
+
+
 
 func _on_brake_level_value_changed(value):
     TrainSystem.broadcast_command("brake_level_set", value, null)

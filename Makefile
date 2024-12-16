@@ -10,9 +10,17 @@ cleanup:
 	rm -rf demo/bin
 
 
-compile:
-	scons
+compile-debug:
+	scons target=template_debug
 
+compile-release:
+	scons target=template_release
+
+compile-all: compile-debug compile-release
+
+cross-compile-release:
+	scons target=template_release platform=linux
+	scons target=template_release platform=windows
 
 docs-install:
 	cd docs && make install

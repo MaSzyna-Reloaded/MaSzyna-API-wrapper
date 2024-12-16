@@ -1,0 +1,10 @@
+Materials glass.tres, grass.tres, ice.tres, lava.tres, marble.tres, sand.tres,
+wet_concrete.tres, together with related textures, comes from
+"Procedural Materials Demo".
+
+License: MIT 
+https://github.com/godotengine/godot-demo-projects/blob/master/LICENSE.md)
+
+Sources:
+* https://github.com/godotengine/godot-demo-projects
+* https://godotengine.org/asset-library/asset/2749

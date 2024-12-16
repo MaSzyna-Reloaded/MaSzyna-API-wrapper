@@ -1,6 +1,5 @@
-#@tool
-extends Node3D
-class_name TrainKnob
+extends BaseCabinTool3D
+class_name CabinKnob
 
 signal value_changed()
 
@@ -20,15 +19,11 @@ enum ControllerMode { OnOff, On, Off }
         mesh_path = x
         _mesh = null
         _dirty = true
-@export_node_path("TrainController") var controller_path:NodePath = "":
-    set(x):
-        controller_path = x
-        _controller = null
-        _dirty = true
+
 @export var command = ""
 @export var state_property = ""
-@export var state_min_property = ""
-@export var state_max_property = ""
+@export var config_min_property = ""
+@export var config_max_property = ""
 
 @export var mesh_position:Vector3 = Vector3.ZERO:
     set(x):
@@ -49,7 +44,6 @@ enum ControllerMode { OnOff, On, Off }
 @export var action_decrease = ""
 
 var _mesh:MeshInstance3D
-var _controller:TrainController
 var _mesh_original_rotation:Vector3 = Vector3.ZERO
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
@@ -57,22 +51,30 @@ var _target_mesh_rotation:Vector3 = Vector3.ZERO
 var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
-var _dirty = false
+
 var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 var _t = 0.0
 var _value_normalized = 0.0
+var _handle_actions:bool = true
 
-func _process(delta):
+func _ready():
+    if not Engine.is_editor_hint() and Console:
+        Console.console_toggled.connect(_on_console_toggle)
 
-    if action_increase and not Console.is_visible():
+func _on_console_toggle(console_visible):
+    _handle_actions = not console_visible
+
+func _process_tool(delta):
+
+    if _handle_actions and action_increase:
         if Input.is_action_pressed(action_increase, true):
             var new_value = clampf(value + step * delta, value_min, value_max)
             if not new_value == value and _controller and command:
                 _controller.send_command(command, new_value)
             value = new_value
 
-    if action_decrease and not Console.is_visible():
+    if _handle_actions and action_decrease:
         if Input.is_action_pressed(action_decrease, true):
             var new_value = clampf(value - step * delta, value_min, value_max)
             if not new_value == value and _controller and command:
@@ -83,10 +85,10 @@ func _process(delta):
     if _t > 0.05:
         _t = 0.0
         if _controller:
-            if state_min_property:
-                value_min = _controller.state.get(state_min_property, value_min)
-            if state_max_property:
-                value_max = _controller.state.get(state_max_property, value_max)
+            if config_min_property:
+                value_min = _controller.config.get(config_min_property, value_min)
+            if config_max_property:
+                value_max = _controller.config.get(config_max_property, value_max)
             if state_property:
                 value = _controller.state.get(state_property, value)
 
@@ -98,20 +100,6 @@ func _process(delta):
     _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * speed)
     _current_position = _current_position.lerp(_target_mesh_position, delta * speed)
 
-    if _dirty:
-        _dirty = false
-
-        if not _mesh and mesh_path:
-            _mesh = get_node(mesh_path)
-            if _mesh:
-                #global_position = _mesh.global_position
-                _mesh_original_rotation = _mesh.rotation_degrees
-                _mesh_original_basis = _mesh.transform.basis
-                _mesh_original_position = _mesh.position
-
-        if controller_path and not _controller:
-            _controller = get_node(controller_path)
-
     if _mesh:
         #_mesh.rotation_degrees = _mesh_original_rotation + _current_rotation
 
@@ -122,3 +110,12 @@ func _process(delta):
         _mesh.transform.basis = new_basis
 
         _mesh.position = _mesh_original_position + _current_position
+
+
+func _process_dirty(delta):
+    if not _mesh and mesh_path:
+        _mesh = get_node(mesh_path)
+        if _mesh:
+            _mesh_original_rotation = _mesh.rotation_degrees
+            _mesh_original_basis = _mesh.transform.basis
+            _mesh_original_position = _mesh.position

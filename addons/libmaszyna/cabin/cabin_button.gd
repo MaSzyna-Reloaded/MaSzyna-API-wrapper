@@ -1,6 +1,5 @@
-#@tool
-extends Node3D
-class_name TrainButton
+extends BaseCabinTool3D
+class_name CabinButton
 
 signal pushed_changed()
 signal button_pushed()
@@ -25,13 +24,9 @@ enum ControllerMode { OnOff, On, Off }
         mesh_path = x
         _mesh = null
         _dirty = true
-@export_node_path("TrainController") var controller_path:NodePath = "":
-    set(x):
-        controller_path = x
-        _controller = null
-        _dirty = true
-@export var controller_property = ""
 
+@export var command = ""
+@export var state_property = ""
 @export var controller_mode:ControllerMode = ControllerMode.OnOff
 @export var mesh_position:Vector3 = Vector3.ZERO:
     set(x):
@@ -54,20 +49,20 @@ enum ControllerMode { OnOff, On, Off }
 @export var action = ""
 
 var _mesh:MeshInstance3D
-var _controller:TrainController
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
 var _target_mesh_rotation:Vector3 = Vector3.ZERO
 var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
-var _dirty = false
+
 var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 func _ready():
     add_child(_sound)
     _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
+
 
 func _input(event):
     if Console.is_visible():
@@ -84,20 +79,20 @@ func _input(event):
             if event.is_action_pressed(action, false, true):
                 pushed = not pushed
 
-func _process(delta):
+func _process_dirty(delta):
+    if not _mesh and mesh_path:
+        _mesh = get_node(mesh_path)
+        if _mesh:
+            global_position = _mesh.global_position
+            _mesh_original_basis = _mesh.transform.basis
+            _mesh_original_position = _mesh.position
 
-    if _dirty:
-        _dirty = false
+    if state_property and _controller:
+        pushed = _controller.state.get(state_property, pushed)
+    else:
+        pushed = false
 
-        if not _mesh and mesh_path:
-            _mesh = get_node(mesh_path)
-            if _mesh:
-                global_position = _mesh.global_position
-                _mesh_original_basis = _mesh.transform.basis
-                _mesh_original_position = _mesh.position
-        if controller_path and not _controller:
-            _controller = get_node(controller_path)
-
+func _process_tool(delta):
     _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * speed)
     _current_position = _current_position.lerp(_target_mesh_position, delta * speed)
 
@@ -121,10 +116,10 @@ func _on_pushed_changed():
 
     if _controller:
         if controller_mode == ControllerMode.OnOff:
-            _controller.send_command(controller_property, pushed)
+            _controller.send_command(command, pushed)
         elif pushed and controller_mode == ControllerMode.On:
-            _controller.send_command(controller_property, true)
+            _controller.send_command(command, true)
         elif pushed and controller_mode == ControllerMode.Off:
-            _controller.send_command(controller_property, false)
+            _controller.send_command(command, false)
 
     _play_sound()

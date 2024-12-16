@@ -106,10 +106,6 @@ namespace godot {
                 "get_battery_voltage");
     }
 
-    TrainController::TrainController() {
-        // FIXME: move to _init or _ready signal?
-    }
-
     TMoverParameters *TrainController::get_mover() const {
         return mover;
     }
@@ -180,7 +176,7 @@ namespace godot {
         TrainSystem::get_instance()->unregister_command(get_train_id(), command, callable);
     }
 
-    void TrainController::_notification(int p_what) {
+    void TrainController::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -216,6 +212,9 @@ namespace godot {
 
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
+                break;
+            default:
+                DEBUG("TrainController::_ready() This notification type is not implemented");
                 break;
         }
     }
@@ -339,7 +338,7 @@ namespace godot {
         return max_velocity;
     }
 
-    void TrainController::set_axle_arrangement(String p_value) {
+    void TrainController::set_axle_arrangement(const String &p_value) {
         axle_arrangement = p_value;
     }
 
@@ -452,12 +451,12 @@ namespace godot {
     }
 
     void TrainController::main_controller_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
     void TrainController::main_controller_decrease(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
@@ -470,12 +469,12 @@ namespace godot {
     }
 
     void TrainController::radio_channel_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
     }
 
     void TrainController::radio_channel_decrease(const int p_step) {
-        int step = p_step ? p_step : 1;
+        const int step = (p_step != 0) ? p_step : 1;
         radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
     }
 

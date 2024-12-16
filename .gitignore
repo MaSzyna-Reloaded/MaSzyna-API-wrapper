@@ -15,6 +15,7 @@ CMakeLists.txt
 *.dll
 *.so
 *.a
+*.d
 Info.plist
 *.import
 .sconsign.dblite
@@ -27,4 +28,13 @@ docker-storage/MacOSX14.5.sdk.tar.xz
 /modules
 *.macos
 CMakeFiles/
-compile_commands.json
+/demo/e3d-test
+godot-cpp/CMakeFiles/
+/.ninja_log
+/.ninja_deps
+/build.ninja
+/godot-cpp/cmake_install.cmake
+/compile_commands.json
+/CMakeCache.txt
+/.cmake/
+/build/compile_commands.json

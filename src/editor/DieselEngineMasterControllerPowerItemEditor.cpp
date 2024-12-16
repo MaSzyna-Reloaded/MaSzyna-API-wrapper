@@ -1,4 +1,5 @@
 #include "DieselEngineMasterControllerPowerItemEditor.hpp"
+#include <godot_cpp/classes/h_box_container.hpp>
 
 
 DieselEngineMasterControllerPowerItemEditor::DieselEngineMasterControllerPowerItemEditor() {
@@ -58,38 +59,34 @@ DieselEngineMasterControllerPowerItemEditor::DieselEngineMasterControllerPowerIt
     current_max_container->add_child(current_max_spin_box);
 }
 
-void DieselEngineMasterControllerPowerItemEditor::_set_read_only(bool p_read_only) {
+void DieselEngineMasterControllerPowerItemEditor::_set_read_only(const bool p_read_only) {
     voltage_max_spin_box->set_editable(!p_read_only);
     current_max_spin_box->set_editable(!p_read_only);
     rpm_spin_box->set_editable(!p_read_only);
     generator_power_spin_box->set_editable(!p_read_only);
 }
 
-DieselEngineMasterControllerPowerItemEditor::~DieselEngineMasterControllerPowerItemEditor() {
-    // Destructor
-}
-
-void DieselEngineMasterControllerPowerItemEditor::_on_rpm_changed(double value) {
+void DieselEngineMasterControllerPowerItemEditor::_on_rpm_changed(const double value) {
     emit_changed(get_edited_property(), value);
 }
 
-void DieselEngineMasterControllerPowerItemEditor::_on_generator_power_changed(double value) {
+void DieselEngineMasterControllerPowerItemEditor::_on_generator_power_changed(const double value) {
     emit_changed(get_edited_property(), value);
 }
 
-void DieselEngineMasterControllerPowerItemEditor::_on_voltage_max_changed(double value) {
+void DieselEngineMasterControllerPowerItemEditor::_on_voltage_max_changed(const double value) {
     emit_changed(get_edited_property(), value);
 }
 
-void DieselEngineMasterControllerPowerItemEditor::_on_current_max_changed(double value) {
+void DieselEngineMasterControllerPowerItemEditor::_on_current_max_changed(const double value) {
     emit_changed(get_edited_property(), value);
 }
 
 void DieselEngineMasterControllerPowerItemEditor::_update_property() {
-    Variant edited_object = get_edited_object();
+    const Variant edited_object = get_edited_object();
     if (edited_object.get_type() == Variant::OBJECT) {
-        Object *obj = edited_object.operator Object *();
-        if (obj) {
+        const Object *obj = edited_object.operator Object *();
+        if (obj != nullptr) {
             Dictionary data = obj->get(get_edited_property());
             rpm_spin_box->set_value(data["rpm"]);
             generator_power_spin_box->set_value(data["generator_power"]);

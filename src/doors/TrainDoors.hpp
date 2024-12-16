@@ -45,9 +45,6 @@ namespace godot {
                 CONTROLS_MIXED,
             };
 
-            TrainDoors();
-            ~TrainDoors() override = default;
-
             static void _bind_methods();
             void set_type(Type p_type);
             Type get_type() const;
@@ -104,15 +101,15 @@ namespace godot {
             void set_permit_light_blinking(PermitLight p_blinking_mode);
             PermitLight get_permit_light_blinking() const;
 
-            void permit_step(const bool p_state);
-            void permit_doors(const Side p_side, const bool p_state);
-            void permit_left_doors(const bool p_state);
-            void permit_right_doors(const bool p_state);
-            void operate_doors(const Side p_side, const bool p_state);
-            void operate_left_doors(const bool p_state);
-            void operate_right_doors(const bool p_state);
-            void door_lock(const bool p_state);
-            void door_remote_control(const bool p_state);
+            void permit_step(bool p_state);
+            void permit_doors(Side p_side, bool p_state);
+            void permit_left_doors(bool p_state);
+            void permit_right_doors(bool p_state);
+            void operate_doors(Side p_side, bool p_state);
+            void operate_left_doors(bool p_state);
+            void operate_right_doors(bool p_state);
+            void door_lock(bool p_state);
+            void door_remote_control(bool p_state);
             void next_permit_preset();
             void previous_permit_preset();
 
@@ -161,22 +158,22 @@ namespace godot {
             /**
              * Time period for which door would stay opened. Default value from internal mover
              */
-            float open_time = -1.0f;
+            float open_time = -1.0F;
 
             /**
              * Speed of opening the doors. Default value from internal mover
              */
-            float open_speed = 1.0f;
+            float open_speed = 1.0F;
 
             /**
              * Speed of closing the door. Default value from internal mover
              */
-            float close_speed = 1.0f;
+            float close_speed = 1.0F;
 
             /**
              * The width (or angle) of the door fully opening. Default value from internal mover
              */
-            float max_shift = 0.5f;
+            float max_shift = 0.5F;
 
             /**
              * Low voltage circuit voltage required for door control. Default value from internal mover
@@ -207,7 +204,7 @@ namespace godot {
             /**
              * Opening a train door by holding the impulse opening permission button, in seconds of holding the button
              */
-            float open_with_permit = -1.0f;
+            float open_with_permit = -1.0F;
 
             /**
              * Is doors has lock.
@@ -217,7 +214,7 @@ namespace godot {
             /**
              * The amount of rebound for Plug type doors (rebound-sliding), in meters. Default value from internal mover
              */
-            float max_shift_plug = 0.1f;
+            float max_shift_plug = 0.1F;
 
             /**
              * TrainDoors programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
@@ -239,7 +236,7 @@ namespace godot {
             /**
              * The speed at which the door automatically closes. Default value from internal mover
              */
-            float auto_close_velocity = -1.0f;
+            float auto_close_velocity = -1.0F;
 
             /**
              * Docs do not describe this properly. Need to figure this out
@@ -249,13 +246,13 @@ namespace godot {
             /**
              * Offset value in meters or rotation angle for a fully extended step. Default value from internal mover
              */
-            float platform_max_shift = 0.0f;
+            float platform_max_shift = 0.0F;
 
             /**
              * The speed of the animation step, where 1.0 corresponds to an animation lasting one second, a value of 0.5
              * to two seconds, etc. Default value from internal mover
              */
-            float platform_speed = 0.5f;
+            float platform_speed = 0.5F;
 
             /**
              * Rotation angle for fully extended mirror

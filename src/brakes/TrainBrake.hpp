@@ -1,11 +1,7 @@
-//
-// Created by karol on 25.08.2024.
-//
-
 #pragma once
+#include "../core/TrainPart.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
-#include "../core/TrainPart.hpp"
 
 #define ASSERT_MOVER_BRAKE(mover_ptr, ...)                                                                             \
     if ((mover_ptr) == nullptr || mover_ptr->Hamulec == nullptr) {                                                     \
@@ -218,15 +214,12 @@ namespace godot {
             void set_rig_effectiveness(double p_rig_effectiveness);
             double get_rig_effectiveness() const;
 
-            void brake_releaser(const bool p_pressed);
-            void brake_level_set(const float p_level);
-            void brake_level_set_position(const BrakeHandlePosition p_position);
+            void brake_releaser(bool p_pressed);
+            void brake_level_set(float p_level);
+            void brake_level_set_position(BrakeHandlePosition p_position);
             void brake_level_set_position_str(const String &p_position);
             void brake_level_increase();
             void brake_level_decrease();
-
-            TrainBrake();
-            ~TrainBrake() override = default;
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)

@@ -1,11 +1,8 @@
+#include "TrainElectricEngine.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 
-#include "TrainElectricEngine.hpp"
-
 namespace godot {
-    TrainElectricEngine::TrainElectricEngine() = default;
-
     void TrainElectricEngine::_bind_methods() {
 
         ClassDB::bind_method(D_METHOD("set_engine_power_source"), &TrainElectricEngine::set_engine_power_source);

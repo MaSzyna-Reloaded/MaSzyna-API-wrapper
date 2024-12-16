@@ -1,0 +1,182 @@
+[gd_scene load_steps=5 format=3 uid="uid://laujatulc22"]
+
+[ext_resource type="Script" path="res://hud/mover_switches.gd" id="1_khm1i"]
+[ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://hud/switch.tscn" id="1_vladt"]
+[ext_resource type="PackedScene" uid="uid://dy8wkx8wr4gjf" path="res://hud/button.tscn" id="2_qbcao"]
+[ext_resource type="PackedScene" uid="uid://ddag4vhhuox0t" path="res://hud/knob.tscn" id="3_j1mtt"]
+
+[node name="MoverSwitches" type="HBoxContainer"]
+size_flags_vertical = 3
+script = ExtResource("1_khm1i")
+
+[node name="General" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="General"]
+layout_mode = 2
+text = "General"
+
+[node name="Battery" parent="General" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Battery"
+state_property = "battery_enabled"
+command = "battery"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="General"]
+layout_mode = 2
+
+[node name="Forward" parent="General/HBoxContainer2" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Forward"
+command = "direction_increase"
+
+[node name="Reverse" parent="General/HBoxContainer2" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Backward"
+command = "direction_decrease"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="General"]
+layout_mode = 2
+
+[node name="MainIncrease" parent="General/HBoxContainer" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Main +"
+command = "main_controller_increase"
+
+[node name="MainDecrease" parent="General/HBoxContainer" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Main -"
+command = "main_controller_decrease"
+
+[node name="MainCtrlPos" type="Label" parent="General/HBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Security" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Security"]
+layout_mode = 2
+text = "Security"
+
+[node name="CA_SHP_Reset" parent="Security" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "CA/SHP"
+type = 1
+command = "security_acknowledge"
+
+[node name="Diesel" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Diesel"]
+layout_mode = 2
+text = "Diesel"
+
+[node name="OilPump" parent="Diesel" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Oil Pump"
+type = 1
+state_property = "oil_pump_active"
+command = "oil_pump"
+
+[node name="FuelPump" parent="Diesel" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Fuel Pump"
+type = 1
+state_property = "fuel_pump_active"
+command = "fuel_pump"
+
+[node name="Main" parent="Diesel" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Main"
+type = 0
+state_property = "main_switch_enabled"
+command = "main_switch"
+
+[node name="Brakes" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Brakes"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Brakes"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Brakes"]
+layout_mode = 2
+
+[node name="Drive" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Drive"
+command = "brake_level_set_position"
+command_argument = "drive"
+
+[node name="Full" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Full"
+command = "brake_level_set_position"
+command_argument = "full"
+
+[node name="Emergency" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Emergency"
+command = "brake_level_set_position"
+command_argument = "emergency"
+
+[node name="Level" parent="Brakes/VBoxContainer" instance=ExtResource("3_j1mtt")]
+layout_mode = 2
+label = "Level"
+step = 0.05
+state_property = "brake_controller_position_normalized"
+command = "brake_level_set"
+
+[node name="BrakeLevel" type="SpinBox" parent="Brakes/VBoxContainer"]
+layout_mode = 2
+max_value = 1.0
+step = 0.01
+
+[node name="Releaser" parent="Brakes/VBoxContainer" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Releaser"
+type = 1
+command = "brake_releaser"
+
+[node name="Doors" type="HFlowContainer" parent="."]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="Doors"]
+layout_mode = 2
+text = "Doors"
+
+[node name="LeftDoorsOpen" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Open left doors"
+command = "doors_left"
+
+[node name="RightDoorsOpen" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Open right doors"
+command = "doors_right"
+
+[node name="LeftDoorsPermit" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Permit left doors"
+state_property = "doors/left/open_permit"
+command = "doors_left_permit"
+
+[node name="RightDoorsPermit" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Permit right doors"
+state_property = "doors/right/open_permit"
+command = "doors_right_permit"
+
+[node name="DoorLock" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Lock doors"
+state_property = "doors/lock_enabled"
+command = "doors_lock"
+
+[node name="DoorStepPermit" parent="Doors" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "Permit Step"
+state_property = "doors/step_enabled"
+command = "doors_permit_step"

@@ -18,6 +18,8 @@
 #include "engines/TrainEngine.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 
+#include "parsers/maszyna_parser.hpp"
+
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
@@ -29,6 +31,7 @@ void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);

@@ -1,0 +1,87 @@
+[gd_scene load_steps=4 format=3 uid="uid://e8tfpu8xl6ps"]
+
+[ext_resource type="PackedScene" uid="uid://1v37c7y4cwcx" path="res://hud/gauge.tscn" id="1_irtlh"]
+[ext_resource type="Script" path="res://hud/mover_gauges.gd" id="1_mxntq"]
+[ext_resource type="PackedScene" uid="uid://c4f4ti7sfn87w" path="res://hud/light.tscn" id="2_rwq8g"]
+
+[node name="Gauges" type="HFlowContainer"]
+offset_right = 960.0
+offset_bottom = 332.0
+size_flags_vertical = 3
+script = ExtResource("1_mxntq")
+
+[node name="EngineRPM" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+size_flags_vertical = 1
+start_angle = 120.0
+label = "Engine RPM"
+
+[node name="EngineCurrent" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 120.0
+label = "Engine Current"
+
+[node name="OilPressure" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 120.0
+label = "Oil Pressure"
+
+[node name="BrakeCylinderPressure" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 120.0
+label = "Brake Cyl Pressure"
+
+[node name="BrakePipePressure" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 140.0
+label = "Brake Pipe Pressure"
+
+[node name="Speed" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 120.0
+label = "Speed"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="Lights1" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="SecurityLight" parent="VBoxContainer/Lights1" instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0.988281, 0.138977, 0, 1)
+label = "CA"
+blink_interval = 0.25
+
+[node name="SHPLight" parent="VBoxContainer/Lights1" instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0.988281, 0.138977, 0, 1)
+label = "SHP"
+blink_interval = 0.25
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="DoorsLocked" parent="VBoxContainer/HBoxContainer" instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0.90625, 0.488525, 0, 1)
+label = "Doors Locked"
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="LeftDoorsOpenLight" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0, 0.679688, 0.090271, 1)
+label = "Left Doors Open"
+
+[node name="RightDoorsOpenLight" parent="VBoxContainer/HBoxContainer2" instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0, 0.679688, 0.090271, 1)
+label = "Right Doors Open"

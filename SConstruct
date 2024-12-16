@@ -79,6 +79,7 @@ sources = (
     + Glob("src/systems/*.cpp")
     + Glob("src/brakes/*.cpp")
     + Glob("src/types/*.cpp")
+    + Glob("src/parsers/*.cpp")
 )
 
 if env["target"] in ["editor", "template_debug"]:
@@ -101,15 +102,24 @@ else:
 
 # Paths
 
-addon_files = Glob("addons/libmaszyna/*")
+
+def get_subdirs(abs_path_dir):
+    subdirs = [
+        name
+        for name in os.listdir(abs_path_dir)
+        if os.path.isdir(os.path.join(abs_path_dir, name)) and name[0] != "."
+    ]
+    subdirs.sort()
+    return subdirs
+
 
 suffix = env["suffix"]
 shlib_suffix = env["SHLIBSUFFIX"]
 file = f"{libname}{suffix}{shlib_suffix}"
 platform = env["platform"]
 target_bin_path = os.path.join("bin", platform, file)
-addons_src_path = os.path.join("addons", "libmaszyna")
-addons_dst_path = os.path.join("demo", "addons", "libmaszyna")
+addons_src_path = os.path.join("addons", libname)
+addons_dst_path = os.path.join("demo", "addons", libname)
 
 if platform in ("macos", "ios"):
     file = os.path.join(f"{platform}.framework", f"{libname}.{platform}")
@@ -118,18 +128,11 @@ if platform in ("macos", "ios"):
 
 commands = []
 
-if sources:
+if os.path.exists("src") and sources:
     library = env.SharedLibrary(target_bin_path, source=sources)
 
     copy_bin_to_project = env.InstallAs(
         os.path.join(projectdir, "bin", libname, platform, file), source=library
-    )
-
-commands = []
-
-if sources:
-    copy_addons_to_project = env.Install(
-        os.path.join(projectdir, "addons", libname), source=addon_files
     )
 
     copy_gut_framework_to_project = env.Command(
@@ -144,11 +147,38 @@ if sources:
         copy_gut_framework_to_project,
     ]
 
+    if not os.path.exists(addons_dst_path):
+        os.makedirs(addons_dst_path, exist_ok=True)
+
     if os.path.islink(addons_dst_path):
         print(f"[!] Symlink detected at {addons_dst_path}. Skipping Install().")
     else:
-        commands.append(copy_addons_to_project)
-        print(f"Files will be installed from {addons_src_path} to {addons_dst_path}")
+        addon_files = Glob(os.path.join(addons_src_path, "*"))
+
+        # FIXME: I'm not sure about cleaning the addons_dst_path (shutil.rmtree)
+        #
+        # If enabled, it could break the running Godot Editor
+        # during (re)build of the scons project.
+        #
+        # If commented out, the env.Install() will not remove files deleted
+        # in addons_src_path. The addons_dst_path may differ.
+        #
+        # Maybe there is a better approach: to find removed files in addons/ and
+        # remove them one by one from addons_dst_path? To complicated for me.
+        #
+        # shutil.rmtree(addons_dst_path)
+
+        commands.append(env.Install(addons_dst_path, source=addon_files))
+
+        for addon_subdir in get_subdirs(addons_src_path):
+            subdir_dst_path = os.path.join(addons_dst_path, addon_subdir)
+            commands.append(
+                env.Install(
+                    source=Glob(os.path.join(addons_src_path, addon_subdir, "*")),
+                )
+            )
+
+        print(f"✅ Files will be installed from {addons_src_path} to {addons_dst_path}")
 
 
 if localEnv.get("compiledb", False):

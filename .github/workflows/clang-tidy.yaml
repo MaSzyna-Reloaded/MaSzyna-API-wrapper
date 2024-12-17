@@ -25,7 +25,7 @@ jobs:
         with:
           config_file: ".clang-tidy"
           exclude: "demo/"
-          include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp"
+          include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp/,src/godot_cpp/"
 
       # Uploads an artefact containing clang_fixes.json
       - uses: ZedThree/clang-tidy-review/upload@v0.20.1

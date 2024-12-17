@@ -13,6 +13,8 @@ CMakeLists.txt
 *.dll
 *.so
 *.a
+*.apk
+*.apk.idsig
 Info.plist
 *.import
 .sconsign.dblite

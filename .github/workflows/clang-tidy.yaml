@@ -9,6 +9,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       # Optionally generate compile_commands.json
 
@@ -16,6 +18,7 @@ jobs:
         id: review
         with:
           config_file: ".clang-tidy"
+          exclude: "demo/, godot-cpp/"
 
       # Uploads an artefact containing clang_fixes.json
       - uses: ZedThree/clang-tidy-review/upload@v0.14.0

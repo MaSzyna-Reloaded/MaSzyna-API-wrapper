@@ -140,7 +140,7 @@ namespace godot {
         _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+        mover->CheckLocomotiveParameters(false, 0); // FIXME: brakujace parametery
 
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
@@ -211,6 +211,7 @@ namespace godot {
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
+                update_state();
                 DEBUG("TrainController::_ready() signals connected to train parts");
 
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
@@ -353,6 +354,9 @@ namespace godot {
             Dictionary new_config;
             _do_fetch_config_from_mover(mover, new_config);
             update_config(new_config);
+
+            /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
+            mover->CheckLocomotiveParameters(false, 0); // FIXME: brakujace parametery
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }

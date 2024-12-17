@@ -3,9 +3,11 @@
 /demo/*.import
 /demo/bin
 /demo/addons/libmaszyna
+/demo/addons/gut
 /cmake-build-debug/
 /src/gen/
 /docs/vendor
+/vendor
 CMakeLists.txt
 *.o
 *.obj

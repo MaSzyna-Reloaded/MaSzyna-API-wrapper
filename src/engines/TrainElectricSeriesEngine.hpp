@@ -7,7 +7,6 @@ namespace godot {
     class TrainController;
 
     class TrainElectricSeriesEngine final : public TrainElectricEngine {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
         public:
             static void _bind_methods();

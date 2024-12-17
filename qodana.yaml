@@ -1,0 +1,19 @@
+#-------------------------------------------------------------------------------#
+#               Qodana analysis is configured by qodana.yaml file               #
+#             https://www.jetbrains.com/help/qodana/qodana-yaml.html            #
+#-------------------------------------------------------------------------------#
+version: "1.0"
+profile:
+  name: qodana.starter
+fixesStrategy: cleanup
+bootstrap: mkdir -p build; cd build;cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DQODANA_BUILD=ON .. || true
+linter: jetbrains/qodana-clang:2024.2-eap-clang18
+include:
+  - name: bugprone-infinite-loop
+  - name: VulnerableLibrariesGlobal
+  - name: llvm-include-order
+  - name: readability-make-member-function-const
+exclude:
+  - name: All
+    paths:
+      - godot-cpp

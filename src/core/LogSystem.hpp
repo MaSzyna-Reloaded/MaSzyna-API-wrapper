@@ -28,7 +28,6 @@
 namespace godot {
 
     class LogSystem final : public RefCounted {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(LogSystem, RefCounted);
 
         private:

@@ -6,7 +6,6 @@ namespace godot {
     class TrainController;
 
     class TrainElectricEngine : public TrainEngine {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainElectricEngine, TrainEngine)
         public:
             enum TrainPowerSource {

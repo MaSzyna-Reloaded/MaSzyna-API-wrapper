@@ -3,7 +3,6 @@
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 #include "register_types.h"
-
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"

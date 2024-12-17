@@ -7,6 +7,8 @@
 *.obj
 *.os
 *.so
+*.apk
+*.apk.idsig
 CMakeCache.txt
 CMakeLists.txt
 /build.ninja

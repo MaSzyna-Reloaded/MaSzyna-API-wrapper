@@ -16,7 +16,7 @@ jobs:
       - name: Fix godot-cpp directory
         run: |
           mkdir src/godot_cpp
-          mv godot-cpp/* src/godot_cpp/
+          cp -r godot-cpp src/godot_cpp
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:

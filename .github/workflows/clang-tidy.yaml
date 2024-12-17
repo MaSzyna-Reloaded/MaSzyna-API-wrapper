@@ -12,7 +12,7 @@ jobs:
 
       # Optionally generate compile_commands.json
 
-      - uses: ZedThree/clang-tidy-review@v0.14.0
+      - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:
           config_file: ".clang-tidy"

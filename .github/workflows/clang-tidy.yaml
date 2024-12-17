@@ -13,7 +13,10 @@ jobs:
           submodules: recursive
 
       # Optionally generate compile_commands.json
-
+      - name: Fix godot-cpp directory
+        run: |
+          apt install mmv
+          mmv -r godot-cpp godot_cpp
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:

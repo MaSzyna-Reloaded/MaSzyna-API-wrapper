@@ -17,16 +17,18 @@ jobs:
         run: |
           cd ${{ github.workspace }}
           mkdir src/godot_cpp
-          cp -r godot-cpp src/godot_cpp
+          mkdir godot_cpp
+          cp -r godot-cpp/ src/godot_cpp/
+          cp -r godot-cpp/ godot_cpp/
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:
           config_file: ".clang-tidy"
           exclude: "demo/"
-          include: "godot-cpp/*, godot_cpp/*, *.[ch]pp, *.h, src/*"
+          include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp"
 
       # Uploads an artefact containing clang_fixes.json
-      - uses: ZedThree/clang-tidy-review/upload@v0.14.0
+      - uses: ZedThree/clang-tidy-review/upload@v0.20.1
         id: upload-review
 
       # If there are any comments, fail the check

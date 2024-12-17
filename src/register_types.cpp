@@ -1,9 +1,4 @@
-#include <gdextension_interface.h>
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/core/defs.hpp>
-#include <godot_cpp/godot.hpp>
 #include "register_types.h"
-
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
@@ -17,13 +12,17 @@
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
 #include "systems/TrainSecuritySystem.hpp"
+#include <gdextension_interface.h>
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
 LogSystem *log_system_singleton = nullptr;
 
-void initialize_libmaszyna_module(ModuleInitializationLevel p_level) {
+void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
         // GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
     }
@@ -55,7 +54,7 @@ void uninitialize_libmaszyna_module(ModuleInitializationLevel p_level) {
         return;
     }
 
-    if (train_system_singleton) {
+    if (train_system_singleton != nullptr) {
         Engine::get_singleton()->unregister_singleton("TrainSystem");
         Engine::get_singleton()->unregister_singleton("LogSystem");
         // memdelete(train_system_singleton);

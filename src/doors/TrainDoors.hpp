@@ -4,7 +4,6 @@
 namespace godot {
     class TrainController;
     class TrainDoors final : public TrainPart {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainDoors, TrainPart)
 
         protected:

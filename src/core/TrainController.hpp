@@ -12,7 +12,6 @@ namespace godot {
 
 
     class TrainController final : public Node {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};

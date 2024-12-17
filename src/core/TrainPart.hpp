@@ -11,7 +11,6 @@
 
 namespace godot {
     class TrainPart : public Node {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainPart, Node)
         public:
             static void _bind_methods();

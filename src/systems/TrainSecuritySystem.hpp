@@ -6,7 +6,6 @@
 
 namespace godot {
     class TrainSecuritySystem final : public TrainPart {
-            // NOLINTNEXTLINE(modernize-use-auto)
             GDCLASS(TrainSecuritySystem, TrainPart)
 
             static void _bind_methods();

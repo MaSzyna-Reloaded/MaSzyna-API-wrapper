@@ -1,0 +1,20 @@
+Checks: [
+  "bugprone-*",
+  "cppcoreguidelines-*",
+  "llvm-*",
+  "performance-*",
+  "readability-*",
+  "clang-analyzer-core.*",
+  "clang-analyzer-cplusplus.*",
+  "clang-analyzer-nullability.*",
+  "-clang-diagnostic-error",
+  "-modernize-use-auto",
+  "bugprone-narrowing-conversions",
+  "bugprone-easily-swappable-parameters",
+  "bugprone-switch-missing-default-case",
+  "bugprone-reserved-identifier",
+  "bugprone-macro-parentheses",
+  "-cppcoreguidelines-pro-type-union-access",
+  "-llvm-else-after-return",
+]
+WarningsAsErrors: "*"

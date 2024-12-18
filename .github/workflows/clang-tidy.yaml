@@ -1,6 +1,5 @@
 name: clang-tidy-review
 
-# You can be more specific, but it currently only works on pull requests
 on: [pull_request]
 
 jobs:
@@ -12,9 +11,8 @@ jobs:
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:
-          config_file: ".clang-tidy-actions"
+          config_file: ".github/workflows/.clang-tidy"
           exclude: "demo/"
-          include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp/,src/godot_cpp/"
 
       # Uploads an artefact containing clang_fixes.json
       - uses: ZedThree/clang-tidy-review/upload@v0.20.1

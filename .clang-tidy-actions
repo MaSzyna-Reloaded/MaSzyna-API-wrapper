@@ -1,1 +1,0 @@
-Checks: '-modernize-use-auto,-clang-diagnostic-error,-readability-identifier-length,-misc-include-cleaner'

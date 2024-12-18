@@ -11,8 +11,8 @@ linter: jetbrains/qodana-clang:2024.2-eap-clang18
 include:
   - name: bugprone-infinite-loop
   - name: VulnerableLibrariesGlobal
-    paths:
-      - src/
+  - name: llvm-include-order
+  - name: readability-make-member-function-const
 exclude:
   - name: All
     paths:

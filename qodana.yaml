@@ -12,6 +12,8 @@ include:
   - name: modernize-use-nodiscard
   - name: bugprone-infinite-loop
   - name: VulnerableLibrariesGlobal
+    paths:
+      - src/
 exclude:
   - name: All
     paths:

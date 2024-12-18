@@ -12,3 +12,9 @@ include:
   - name: modernize-use-nodiscard
   - name: bugprone-infinite-loop
   - name: VulnerableLibrariesGlobal
+exclude:
+  - name: All
+    paths:
+      - godot-cpp/src
+      - godot-cpp/gen
+      - godot-cpp/include

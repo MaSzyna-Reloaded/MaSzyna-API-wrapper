@@ -15,4 +15,4 @@ include:
 exclude:
   - name: All
     paths:
-      - godot-cpp/src
+      - godot-cpp/src/godot.cpp

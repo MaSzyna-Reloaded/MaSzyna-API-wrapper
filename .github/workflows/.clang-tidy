@@ -1,1 +1,4 @@
-Checks: '*,-modernize-use-auto,-readability-identifier-length,-misc-include-cleaner'
+Checks: '*,-modernize-use-auto,
+        -modernize-use-trailing-return-type,-llvm-header-guard,
+        -fuchsia-default-argument-declarations,-readability-identifier-length,
+        -misc-include-cleaner'

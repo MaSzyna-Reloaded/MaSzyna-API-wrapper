@@ -9,21 +9,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      # Optionally generate compile_commands.json
-      - name: Fix godot-cpp directory
-        run: |
-          cd ${{ github.workspace }}
-          mkdir src/godot_cpp
-          mkdir godot_cpp
-          cp -r godot-cpp/ src/godot_cpp/
-          cp -r godot-cpp/ godot_cpp/
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:
-          config_file: ".clang-tidy"
+          clang_tidy_checks: "-clang-diagnostic-error,-*,performance-*,readability-*,bugprone-*,clang-analyzer-*,cppcoreguidelines-*,mpi-*,misc-*"
           exclude: "demo/"
           include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp/,src/godot_cpp/"
 

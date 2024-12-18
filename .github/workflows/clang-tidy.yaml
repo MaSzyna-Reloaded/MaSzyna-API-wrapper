@@ -12,7 +12,7 @@ jobs:
       - uses: ZedThree/clang-tidy-review@v0.20.1
         id: review
         with:
-          clang_tidy_checks: "-clang-diagnostic-error,-*,performance-*,readability-*,bugprone-*,clang-analyzer-*,cppcoreguidelines-*,mpi-*,misc-*"
+          config_file: ".clang-tidy-actions"
           exclude: "demo/"
           include: "*.[ch],*.[ch]xx,*.[ch]pp,*.[ch]++,*.cc,*.hh,godot-cpp/,godot_cpp/,src/godot_cpp/"
 

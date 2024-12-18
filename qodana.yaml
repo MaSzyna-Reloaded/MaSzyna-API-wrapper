@@ -16,5 +16,3 @@ exclude:
   - name: All
     paths:
       - godot-cpp/src
-      - godot-cpp/gen
-      - godot-cpp/include

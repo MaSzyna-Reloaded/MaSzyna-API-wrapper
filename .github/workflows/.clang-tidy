@@ -2,4 +2,4 @@ Checks: '*,-modernize-use-auto,
         -modernize-use-trailing-return-type,-llvm-header-guard,
         -fuchsia-default-argument-declarations,-readability-identifier-length,
         -misc-include-cleaner,-altera-unroll-loops,bugprone-easily-swappable-parameters,
-        -readability-convert-member-functions-to-static,-llvmlibc-*'
+        -readability-convert-member-functions-to-static'

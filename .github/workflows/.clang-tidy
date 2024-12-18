@@ -1,4 +1,4 @@
 Checks: '*,-modernize-use-auto,
         -modernize-use-trailing-return-type,-llvm-header-guard,
         -fuchsia-default-argument-declarations,-readability-identifier-length,
-        -misc-include-cleaner,-llvmlibc-*,-altera-unroll-loops'
+        -misc-include-cleaner,-altera-unroll-loops,-llvmlibc-*'

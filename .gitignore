@@ -6,13 +6,13 @@
 /cmake-build-debug/
 /src/gen/
 /docs/vendor
-CMakeLists.txt
 *.o
 *.obj
 *.os
 *.dll
 *.so
 *.a
+*.d
 Info.plist
 *.import
 .sconsign.dblite

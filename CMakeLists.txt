@@ -9,10 +9,15 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib/${CMAKE_GENERATOR_PLA
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_GENERATOR_PLATFORM})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin/${CMAKE_GENERATOR_PLATFORM})
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+option(QODANA_BUILD "If the build is for Qodana CI/CD" OFF)
 
 AUX_SOURCE_DIRECTORY(src SRCES)
-
-#add_subdirectory(godot-cpp)
+if (NOT QODANA_BUILD) #Qodana will run inspection on godot-cpp too. We don't need that
+    message("Not building for Qodana")
+    add_subdirectory(godot-cpp)
+else ()
+    message("Building for Qodana")
+endif()
 include_directories(src)
 
 add_library(maszyna SHARED ${SRCES})

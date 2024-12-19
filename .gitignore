@@ -31,8 +31,6 @@ godot-cpp/CMakeFiles/
 /.ninja_deps
 /build.ninja
 /godot-cpp/cmake_install.cmake
-/.cmake/api/v1/query/toolchains-v1
-/.cmake/api/v1/query/codemodel-v2
 /compile_commands.json
-/.cmake/api/v1/query/cmakeFiles-v1
-/.cmake/api/v1/query/cache-v2
+/CMakeCache.txt
+/.cmake/

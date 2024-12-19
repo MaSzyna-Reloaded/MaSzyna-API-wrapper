@@ -1,5 +1,0 @@
-Checks: '*,-modernize-use-auto,-hicpp-*,-cppcoreguidelines-pro-type-reinterpret-cast,-cppcoreguidelines-pro-type-const-cast,
-        -modernize-use-trailing-return-type,-llvm-header-guard,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-hicpp-no-array-decay,
-        -fuchsia-default-arguments-*,-readability-identifier-length,
-        -misc-include-cleaner,-altera-unroll-loops,-bugprone-easily-swappable-parameters,
-        -readability-convert-member-functions-to-static,-llvmlibc-*,-google-default-arguments,-cert-*,-cppcoreguidelines-pro-bounds-array-to-pointer-decay,-bugprone-narrowing-conversions,-llvm-namespace-comment,-readability-implicit-bool-conversion'

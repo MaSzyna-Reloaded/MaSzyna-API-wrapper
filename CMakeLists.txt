@@ -12,7 +12,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 AUX_SOURCE_DIRECTORY(src SRCES)
 
-add_subdirectory(godot-cpp)
+#add_subdirectory(godot-cpp)
 include_directories(src)
 
 add_library(maszyna SHARED ${SRCES})

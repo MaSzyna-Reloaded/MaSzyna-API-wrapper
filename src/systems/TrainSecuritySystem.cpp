@@ -1,6 +1,5 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include "TrainSecuritySystem.hpp"
 
@@ -88,33 +87,43 @@ namespace godot {
     bool TrainSecuritySystem::get_aware_system_active() const {
         return aware_system_active;
     }
+
     bool TrainSecuritySystem::get_aware_system_cabsignal() const {
         return aware_system_cabsignal;
     }
+
     bool TrainSecuritySystem::get_aware_system_separate_acknowledge() const {
         return aware_system_separate_acknowledge;
     }
+
     bool TrainSecuritySystem::get_aware_system_sifa() const {
         return aware_system_sifa;
     }
+
     double TrainSecuritySystem::get_aware_delay() const {
         return aware_delay;
     }
+
     double TrainSecuritySystem::get_emergency_brake_delay() const {
         return emergency_brake_delay;
     }
+
     TrainSecuritySystem::EmergencyBrakeWarningSignal TrainSecuritySystem::get_emergency_brake_warning_signal() const {
         return emergency_brake_warning_signal;
     }
+
     bool TrainSecuritySystem::get_radio_stop() const {
         return radio_stop;
     }
+
     double TrainSecuritySystem::get_sound_signal_delay() const {
         return sound_signal_delay;
     }
+
     double TrainSecuritySystem::get_shp_magnet_distance() const {
         return shp_magnet_distance;
     }
+
     double TrainSecuritySystem::get_ca_max_hold_time() const {
         return ca_max_hold_time;
     }
@@ -124,42 +133,52 @@ namespace godot {
         aware_system_active = p_state;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_aware_system_cabsignal(bool p_state) {
         aware_system_cabsignal = p_state;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_aware_system_separate_acknowledge(bool p_state) {
         aware_system_separate_acknowledge = p_state;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_aware_system_sifa(bool p_state) {
         aware_system_sifa = p_state;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_aware_delay(double value) {
         aware_delay = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_emergency_brake_delay(double value) {
         emergency_brake_delay = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_emergency_brake_warning_signal(EmergencyBrakeWarningSignal value) {
         emergency_brake_warning_signal = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_radio_stop(bool value) {
         radio_stop = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_sound_signal_delay(double value) {
         sound_signal_delay = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_shp_magnet_distance(double value) {
         shp_magnet_distance = value;
         _dirty = true;
     }
+
     void TrainSecuritySystem::set_ca_max_hold_time(double value) {
         ca_max_hold_time = value;
         _dirty = true;
@@ -181,9 +200,11 @@ namespace godot {
         if (prev_blinking != static_cast<bool>(state["blinking"])) {
             emit_signal("blinking_changed", state["blinking"]);
         }
+
         if (prev_beeping != static_cast<bool>(state["beeping"])) {
             emit_signal("beeping_changed", state["beeping"]);
         }
+
     }
 
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {
@@ -225,7 +246,7 @@ namespace godot {
         unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
     }
 
-    void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {
+    void TrainSecuritySystem::security_acknowledge(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         if (p_enabled) {

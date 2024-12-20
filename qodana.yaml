@@ -5,7 +5,7 @@
 version: "1.0"
 profile:
   name: qodana.starter
-fixesStrategy: apply
+fixesStrategy: cleanup
 bootstrap: mkdir -p build; cd build;cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DQODANA_BUILD=ON .. || true
 linter: jetbrains/qodana-clang:2024.2-eap-clang18
 include:

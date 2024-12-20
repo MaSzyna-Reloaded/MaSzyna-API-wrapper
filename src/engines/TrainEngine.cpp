@@ -1,5 +1,4 @@
 #include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
 
 namespace godot {
@@ -33,8 +32,8 @@ namespace godot {
         /* end testing */
 
         /* motor param table */
-        const int _max = Maszyna::MotorParametersArraySize;
-        for (int i = 0; i < std::min(_max, (int)motor_param_table.size()); i++) {
+        constexpr int _max = Maszyna::MotorParametersArraySize;
+        for (int i = 0; i < std::min(_max, static_cast<int>(motor_param_table.size())); i++) {
             mover->MotorParam[i].mIsat = motor_param_table[i].get("misat");
             mover->MotorParam[i].fi = motor_param_table[i].get("fi");
             mover->MotorParam[i].mfi = motor_param_table[i].get("mfi");
@@ -45,7 +44,7 @@ namespace godot {
     }
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        bool previous_main_switch = static_cast<bool>(state.get("main_switch_enabled", false));
+        const bool previous_main_switch = state.get("main_switch_enabled", false);
         state["main_switch_enabled"] = mover->Mains;
         state["Mm"] = mover->Mm;
         state["Mw"] = mover->Mw;
@@ -78,16 +77,16 @@ namespace godot {
         config["main_controller_position_max"] = mover->MainCtrlPosNo;
     }
 
-    TypedArray<Dictionary> TrainEngine::get_motor_param_table() {
+    TypedArray<Dictionary> TrainEngine::get_motor_param_table() const {
         return motor_param_table;
     }
 
-    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> p_value) {
+    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary>& p_wwlist) {
         motor_param_table.clear();
-        motor_param_table.append_array(p_value);
+        motor_param_table.append_array(p_wwlist);
     }
 
-    void TrainEngine::main_switch(const bool p_enabled) {
+    void TrainEngine::main_switch(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->MainSwitch(p_enabled);

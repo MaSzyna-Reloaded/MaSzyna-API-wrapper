@@ -24,6 +24,7 @@ jobs:
         uses: JetBrains/qodana-action@v2024.2.3
         with:
           pr-mode: false
+          push-fixes: pull-request
         env:
           QODANA_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJwcm9qZWN0IjoiQVJqSjYiLCJvcmdhbml6YXRpb24iOiJBYUc3RCIsInRva2VuIjoicDJNWVcifQ.myd_bOxtnHr9gwQr7d6-FlvO7n_T6RwIH20H40XYTQ0'
           QODANA_ENDPOINT: 'https://qodana.cloud'

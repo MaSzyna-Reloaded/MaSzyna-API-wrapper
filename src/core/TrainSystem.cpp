@@ -1,5 +1,6 @@
 #include "../core/TrainController.hpp"
 #include "./TrainSystem.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     const char *TrainSystem::TRAIN_LOG_UPDATED_SIGNAL = "train_log_updated";
@@ -34,30 +35,30 @@ namespace godot {
                 PropertyInfo(Variant::INT, "loglevel"), PropertyInfo(Variant::STRING, "line")));
     }
 
-    TrainSystem::TrainSystem() {}
+    TrainSystem::TrainSystem() = default;
 
     int TrainSystem::get_train_count() const {
         return trains.size();
     }
 
     bool TrainSystem::is_train_registered(const String &train_id) const {
-        auto it = trains.find(train_id);
+        const std::map<String, TrainController *>::const_iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             return false;
-        } else {
-            return true;
         }
+
+        return true;
     }
 
     TrainController *TrainSystem::get_train(const String &train_id) {
-        auto it = trains.find(train_id);
+        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             return nullptr;
-        } else {
-            return it->second;
         }
+
+        return it->second;
     }
 
     Dictionary TrainSystem::get_train_state(const String &train_id) {
@@ -77,19 +78,20 @@ namespace godot {
     }
 
     Dictionary TrainSystem::get_all_config_properties(const String &train_id) {
-        auto it = trains.find(train_id);
+        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered in");
-            UtilityFunctions::push_error("Train is not registered: ", train_id);
-            return Dictionary();
+            UtilityFunctions::push_error("Train is no{}: ", train_id);
+            return {};
         }
-        TrainController *train = it->second;
+
+        const TrainController *train = it->second;
         return train->get_config();
     }
 
     Variant TrainSystem::get_config_property(const String &train_id, const String &property_name) {
-        Dictionary props = get_all_config_properties(train_id);
+        const Dictionary props = get_all_config_properties(train_id);
         return props.get(property_name, "");
     }
 
@@ -116,7 +118,7 @@ namespace godot {
         }
 
         if (!commands.has(command)) {
-            Dictionary _trains;
+            const Dictionary _trains;
             commands[command] = _trains;
         }
 
@@ -150,6 +152,7 @@ namespace godot {
                 UtilityFunctions::push_error("Command ", command, " is not registered for train ", train_id);
                 return;
             }
+
             _trains.erase(train_id);
             if (_trains.size() == 0) {
                 commands.erase(command);
@@ -164,7 +167,7 @@ namespace godot {
             return;
         }
 
-        Array command_keys = static_cast<Array>(commands.keys());
+        Array command_keys = commands.keys();
         Array commands_to_remove;
 
         for (int i = 0; i < command_keys.size(); i++) {
@@ -186,15 +189,15 @@ namespace godot {
         DEBUG("Unregistered train %s", train_id);
     }
 
-    bool TrainSystem::is_command_supported(const String &command) {
+    bool TrainSystem::is_command_supported(const String &command) const {
         return commands.has(command);
     }
 
-    Array TrainSystem::get_supported_commands() {
+    Array TrainSystem::get_supported_commands() const {
         return commands.keys();
     }
 
-    Array TrainSystem::get_registered_trains() {
+    Array TrainSystem::get_registered_trains() const {
         Array train_names;
         for (const auto &pair: trains) {
             train_names.append(pair.first);

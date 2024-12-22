@@ -1,7 +1,8 @@
+#pragma once
 #include "TrainDieselEngine.hpp"
 
 namespace godot {
-    class TrainDieselElectricEngine : public TrainDieselEngine {
+    class TrainDieselElectricEngine final : public TrainDieselEngine {
             GDCLASS(TrainDieselElectricEngine, TrainDieselEngine)
 
         private:

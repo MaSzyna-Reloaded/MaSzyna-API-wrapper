@@ -1,4 +1,3 @@
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainDoors.hpp"
 
 namespace godot {
@@ -220,63 +219,63 @@ namespace godot {
         state["doors_right_step_operating"] = right_door.step_folding || right_door.step_unfolding;
     }
 
-    void TrainDoors::_do_process_mover(TMoverParameters *mover, double delta) {
+    void TrainDoors::_do_process_mover(TMoverParameters *mover, const double delta) {
         mover->update_doors(delta);
     }
 
-    void TrainDoors::next_permit_preset() {
+    void TrainDoors::next_permit_preset() const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorPermitPreset(1);
     }
 
-    void TrainDoors::previous_permit_preset() {
+    void TrainDoors::previous_permit_preset() const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorPermitPreset(-1);
     }
 
-    void TrainDoors::permit_step(const bool p_state) {
+    void TrainDoors::permit_step(const bool p_state) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoorStep(p_state);
     }
 
-    void TrainDoors::permit_doors(const Side p_side, const bool p_state) {
+    void TrainDoors::permit_doors(const Side p_side, const bool p_state) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
     }
 
-    void TrainDoors::permit_left_doors(const bool p_state) {
+    void TrainDoors::permit_left_doors(const bool p_state) const {
         this->permit_doors(Side::SIDE_LEFT, p_state);
     }
 
-    void TrainDoors::permit_right_doors(const bool p_state) {
+    void TrainDoors::permit_right_doors(const bool p_state) const {
         this->permit_doors(Side::SIDE_RIGHT, p_state);
     }
 
-    void TrainDoors::operate_doors(const Side p_side, const bool p_state) {
+    void TrainDoors::operate_doors(const Side p_side, const bool p_state) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->OperateDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
     }
 
-    void TrainDoors::operate_left_doors(const bool p_state) {
+    void TrainDoors::operate_left_doors(const bool p_state) const {
         this->operate_doors(Side::SIDE_LEFT, p_state);
     }
 
-    void TrainDoors::operate_right_doors(const bool p_state) {
+    void TrainDoors::operate_right_doors(const bool p_state) const {
         this->operate_doors(Side::SIDE_RIGHT, p_state);
     }
 
-    void TrainDoors::door_lock(const bool p_state) {
+    void TrainDoors::door_lock(const bool p_state) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->LockDoors(p_state);
     }
 
-    void TrainDoors::door_remote_control(const bool p_state) {
+    void TrainDoors::door_remote_control(const bool p_state) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorControlMode(p_state);
@@ -286,13 +285,13 @@ namespace godot {
         if (doorControlsMap.find(open_method) != doorControlsMap.end()) {
             mover->Doors.open_control = doorControlsMap.at(open_method);
         } else {
-            log_error("Unhandled door open controls position: " + String::num(static_cast<int>(open_method)));
+            log_error("Unhandled door open controls position: " + String::num(open_method));
         }
 
         if (doorControlsMap.find(close_method) != doorControlsMap.end()) {
             mover->Doors.close_control = doorControlsMap.at(close_method);
         } else {
-            log_error("Unhandled door close controls position: " + String::num(static_cast<int>(close_method)));
+            log_error("Unhandled door close controls position: " + String::num(close_method));
         }
 
         mover->Doors.auto_duration = open_time;
@@ -322,7 +321,7 @@ namespace godot {
         if (doorTypeMap.find(type) != doorTypeMap.end()) {
             mover->Doors.type = doorTypeMap.at(type);
         } else {
-            log_error("Unhandled door type: " + String::num(static_cast<int>(type)));
+            log_error("Unhandled door type: " + String::num(type));
         }
 
         mover->Doors.has_warning = close_warning;

@@ -156,9 +156,9 @@ namespace godot {
         state["converter_enabled"] = mover->ConverterFlag;
         state["converted_allowed"] = mover->ConverterAllow;
         state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        state["power_source"] = static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.SourceType));
+        state["power_source"] = static_cast<int>(mover->EnginePowerSource.SourceType);
         state["accumulator/recharge_source"] =
-                static_cast<TrainPowerSource>(static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource));
+                static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource);
         state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
         state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
         state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
@@ -221,13 +221,13 @@ namespace godot {
         }
     }
 
-    void TrainElectricEngine::converter(const bool p_enabled) {
+    void TrainElectricEngine::converter(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ConverterSwitch(p_enabled);
     }
 
-    void TrainElectricEngine::compressor(const bool p_enabled) {
+    void TrainElectricEngine::compressor(const bool p_enabled) const {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->CompressorSwitch(p_enabled);

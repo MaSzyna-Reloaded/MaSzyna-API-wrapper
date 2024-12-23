@@ -1,6 +1,5 @@
-#@tool
-extends Node3D
-class_name TrainSwitch
+extends BaseCabinTool3D
+class_name CabinSwitch
 
 signal switch_position_changed(previous_position, new_position)
 signal switch_pushed()
@@ -40,11 +39,7 @@ enum ControllerMode { OnOff, On, Off }
         mesh_path = x
         _mesh = null
         _dirty = true
-@export_node_path("TrainController") var controller_path:NodePath = "":
-    set(x):
-        controller_path = x
-        _controller = null
-        _dirty = true
+
 
 @export var command_increase = ""
 @export var command_decrease = ""
@@ -78,23 +73,30 @@ enum ControllerMode { OnOff, On, Off }
 @export var action_toggle = ""
 
 var _mesh:MeshInstance3D
-var _controller:TrainController
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
 var _target_mesh_rotation:Vector3 = Vector3.ZERO
 var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
-var _dirty = false
+
 var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
+var _handle_actions:bool = true
 
 func _ready():
     add_child(_sound)
     _sound.max_distance = sound_max_distance
     self.switch_position_changed.connect(self._on_switch_position_changed)
 
+    if not Engine.is_editor_hint() and Console:
+        Console.console_toggled.connect(_on_console_toggle)
+
+func _on_console_toggle(console_visible):
+    _handle_actions = not console_visible
+
+
 func _input(event):
-    if Console.is_visible():
+    if not _handle_actions:
         return
 
     if action_increase:
@@ -117,23 +119,23 @@ func _input(event):
             switch_position = switch_reset_position
 
 
-func _process(delta):
-    if _dirty:
-        _target_mesh_position = switch_position * mesh_position
-        _target_mesh_rotation = switch_position * mesh_rotation
+func _process_dirty(delta):
+    _target_mesh_position = switch_position * mesh_position
+    _target_mesh_rotation = switch_position * mesh_rotation
 
-        _dirty = false
+    _dirty = false
 
-        if not _mesh and mesh_path:
-            _mesh = get_node(mesh_path)
-            if _mesh:
-                global_position = _mesh.global_position
-                _mesh_original_basis = _mesh.transform.basis
-                _mesh_original_position = _mesh.position
-        if controller_path and not _controller:
-            _controller = get_node(controller_path)
+    if not _mesh and mesh_path:
+        _mesh = get_node(mesh_path)
+        if _mesh:
+            global_position = _mesh.global_position
+            _mesh_original_basis = _mesh.transform.basis
+            _mesh_original_position = _mesh.position
+    if controller_path and not _controller:
+        _controller = get_node(controller_path)
 
 
+func _process_tool(delta):
     _current_rotation = _current_rotation.lerp(_target_mesh_rotation, delta * animation_speed)
     _current_position = _current_position.lerp(_target_mesh_position, delta * animation_speed)
 
@@ -177,7 +179,7 @@ func _handle_position_change(prev, current) -> int:
         if command_set:
             _controller.send_command(command_set, current)
 
-    if state_property:
+    if state_property and _controller:
         return _controller.state.get(state_property, current)
     else:
         return current

@@ -1,0 +1,200 @@
+[gd_scene load_steps=3 format=3 uid="uid://dqwt31s3qnglp"]
+
+[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_pes3o"]
+[ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://vehicles/impuls/impuls_head_display.tres" id="2_iawif"]
+
+[node name="Impuls" type="Node3D"]
+
+[node name="Impuls-024a" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.57609, 0, 0)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "main/36wea-a_kd"
+skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+exclude_node_names = ["cien"]
+head_display_material = ExtResource("2_iawif")
+head_display_node_path = NodePath("banan/banan/tablice_relacyjne")
+
+[node name="Impuls-024a_LowPolyCab" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.57609, 0, 0)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "low_poly_int/int_36wea_kd-a"
+skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null
+
+[node name="Impuls-024b" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.576, 0, 18.525)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "main/31wea-b_kd"
+skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null
+
+[node name="Impuls-024b_LowPolyInt" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1.576, 0, 18.525)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "low_poly_int/int_36wea_kd-b"
+skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null
+
+[node name="Impuls-024c" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.576, 0, 34.4186)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "main/31wea-c_kd"
+skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null
+
+[node name="Impuls-024c_LowPolyInt" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.576, 0, 34.4186)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "low_poly_int/int_36wea_kd-b"
+skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null
+
+[node name="Impuls-024d" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.576, 0, 52.9294)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "main/31wea-d_kd"
+skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+exclude_node_names = ["cien"]
+head_display_material = ExtResource("2_iawif")
+head_display_node_path = NodePath("banan/tablice_relacyjne")
+
+[node name="Impuls-024d_LowPolyCab" type="VisualInstance3D" parent="."]
+_import_path = NodePath("")
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 1.576, 0, 52.9294)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("1_pes3o")
+data_path = "/dynamic/pkp/impuls_v1"
+model_filename = "low_poly_int/int_36wea_kd-c"
+skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+exclude_node_names = ["cien"]
+head_display_node_path = null

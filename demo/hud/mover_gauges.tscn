@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://e8tfpu8xl6ps"]
 
 [ext_resource type="PackedScene" uid="uid://1v37c7y4cwcx" path="res://hud/gauge.tscn" id="1_irtlh"]
-[ext_resource type="Script" path="res://hud/mover_gauges.gd" id="1_mxntq"]
+[ext_resource type="Script" uid="uid://d10tm07c48tc0" path="res://hud/mover_gauges.gd" id="1_mxntq"]
 [ext_resource type="PackedScene" uid="uid://c4f4ti7sfn87w" path="res://hud/light.tscn" id="2_rwq8g"]
 
 [node name="Gauges" type="HFlowContainer"]

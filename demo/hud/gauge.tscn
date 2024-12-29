@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://1v37c7y4cwcx"]
 
-[ext_resource type="Script" path="res://hud/gauge.gd" id="1_l2s17"]
-[ext_resource type="Shader" path="res://hud/gauge.gdshader" id="1_rywa7"]
+[ext_resource type="Script" uid="uid://bdap33dbwm1u3" path="res://hud/gauge.gd" id="1_l2s17"]
+[ext_resource type="Shader" uid="uid://7h3dyh4jssfp" path="res://hud/gauge.gdshader" id="1_rywa7"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_xghqt"]
 shader = ExtResource("1_rywa7")

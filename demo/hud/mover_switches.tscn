@@ -1,6 +1,6 @@
 [gd_scene load_steps=5 format=3 uid="uid://laujatulc22"]
 
-[ext_resource type="Script" path="res://hud/mover_switches.gd" id="1_khm1i"]
+[ext_resource type="Script" uid="uid://j6xb7ouqx61g" path="res://hud/mover_switches.gd" id="1_khm1i"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://hud/switch.tscn" id="1_vladt"]
 [ext_resource type="PackedScene" uid="uid://dy8wkx8wr4gjf" path="res://hud/button.tscn" id="2_qbcao"]
 [ext_resource type="PackedScene" uid="uid://ddag4vhhuox0t" path="res://hud/knob.tscn" id="3_j1mtt"]

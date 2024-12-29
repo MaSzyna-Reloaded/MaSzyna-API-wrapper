@@ -1,7 +1,9 @@
-[gd_scene load_steps=14 format=3 uid="uid://do3s7mkbpv7es"]
+[gd_scene load_steps=54 format=3 uid="uid://do3s7mkbpv7es"]
 
 [ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
 [ext_resource type="Script" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
+[ext_resource type="Script" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]
+[ext_resource type="Script" path="res://addons/libmaszyna/sound/train_sound_3d.gd" id="15_df5xj"]
 [ext_resource type="PackedScene" uid="uid://djl581jijicpq" path="res://addons/libmaszyna/cabin/cabin_command.tscn" id="66_epgva"]
 [ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_gauge.gd" id="67_fryen"]
 [ext_resource type="PackedScene" uid="uid://cfj82gn1nfl36" path="res://addons/libmaszyna/cabin/cabin_gauge.tscn" id="68_g4w65"]
@@ -13,6 +15,196 @@
 [ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
 [ext_resource type="Texture2D" uid="uid://yotc63fvboyh" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
 [ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
+
+[sub_resource type="AudioStream" id="AudioStream_hwnyj"]
+script = ExtResource("7_lbg33")
+file_path = "sm42czuwak"
+loop = true
+
+[sub_resource type="AudioStream" id="AudioStream_ii5lq"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203e_light_shp_start"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_xhr6w"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203e_light_shp_stop"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_ffwa0"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_left_white_light_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_hgbvq"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_left_white_light_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_burd0"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_pmvef"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_2hxr7"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_3t6f6"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_ym8rb"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_qeyam"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_switch_lights_cabin_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_tir1f"]
+script = ExtResource("7_lbg33")
+file_path = "20786_4e_119_button_shp_1_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_h2c58"]
+script = ExtResource("7_lbg33")
+file_path = "20786_4e_119_button_shp_1_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_5cke3"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_releaser_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_05d8o"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_releaser_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_p1s5s"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_ws_1_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_4cuxf"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_ws_1_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_54m4i"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_ws_of_2_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_4kcv5"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203E_button_ws_of_2_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_bfhgf"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203e_button_radio_3_on"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_gspxv"]
+script = ExtResource("7_lbg33")
+file_path = "20786_203e_button_radio_3_of"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_gg4oe"]
+script = ExtResource("7_lbg33")
+file_path = "20786_reverser_6d_inc_v2"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_q0xq1"]
+script = ExtResource("7_lbg33")
+file_path = "20786_reverser_6d_dec_v1"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_k7rjm"]
+script = ExtResource("7_lbg33")
+file_path = "20786_reverser_6d_inc_v1"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_8gobu"]
+script = ExtResource("7_lbg33")
+file_path = "20786_manual_brake_6d_dec_0"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_sll0g"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_0"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_cq0wk"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_1"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_ahs16"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_2"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_crabo"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_3"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_vxhgt"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_5"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_jjum7"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_6"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_q12ke"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_7"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_da2wi"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_3"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_jnhcs"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_1"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_uphul"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_5"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_5tgnj"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_0"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_xwpqo"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_2"
+loop = false
+
+[sub_resource type="AudioStream" id="AudioStream_xgtr2"]
+script = ExtResource("7_lbg33")
+file_path = "20786_control_6d_6"
+loop = false
 
 [node name="SM42Cabin" type="Node3D"]
 script = ExtResource("1_bffp8")
@@ -38,6 +230,20 @@ layers = 1
 script = ExtResource("1_6k4j1")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
+
+[node name="Buzzer" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(0.999125, -0.0128957, 0.0397967, 0, 0.951302, 0.30826, -0.0418339, -0.30799, 0.950469, -0.988872, 2.80983, 2.49681)
+stream = SubResource("AudioStream_hwnyj")
+script = ExtResource("15_df5xj")
+state_property = "beeping"
+
+[node name="AlerterLightOn" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
+stream = SubResource("AudioStream_ii5lq")
+
+[node name="AlerterLightOff" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
+stream = SubResource("AudioStream_xhr6w")
 
 [node name="Commands" type="Node" parent="."]
 
@@ -86,40 +292,55 @@ target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/cyl06")
 [node name="Switches" type="Node3D" parent="."]
 
 [node name="DeviesLight" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999609, 0.0164182, -0.0226356, 0, 0.809485, 0.587141, 0.027963, -0.586911, 0.809168, -0.131001, 2.99968, 2.2417)
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy24")
 command = "devices_light"
 state_property = "devices_light_enabled"
 mesh_rotation = Vector3(0, -85, 0)
+sound_on = SubResource("AudioStream_ffwa0")
+sound_off = SubResource("AudioStream_hgbvq")
 action = "devices_light_toggle"
 
 [node name="RoofLight" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999889, 0.00358736, -0.0144371, 0, 0.970488, 0.241149, 0.0148761, -0.241122, 0.970381, -0.0800086, 2.99968, 2.24417)
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy22")
 command = "roof_light"
 state_property = "roof_light_enabled"
 mesh_rotation = Vector3(0, -85, 0)
+sound_on = SubResource("AudioStream_burd0")
+sound_off = SubResource("AudioStream_pmvef")
 action = "cabin_light_toggle"
 
 [node name="FuelPump" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.996349, -0.0256081, 0.0814447, 0, 0.953956, 0.299946, -0.0853757, -0.298851, 0.950473, 0.219126, 2.99231, 2.34069)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/pompka_paliwa")
 command = "fuel_pump"
 state_property = "fuel_pump_active"
 mesh_rotation = Vector3(0, -85, 0)
+sound_on = SubResource("AudioStream_2hxr7")
+sound_off = SubResource("AudioStream_3t6f6")
 action = "fuel_pump_toggle"
 
 [node name="OilPump" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999157, 0.0166647, -0.0375098, 0, 0.913869, 0.406009, 0.0410451, -0.405667, 0.913099, 0.0726701, 3.01034, 2.33282)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pulpit_duzy/przodreflprawy17")
 command = "oil_pump"
 state_property = "oil_pump_active"
 mesh_rotation = Vector3(0, -85, 0)
+sound_on = SubResource("AudioStream_ym8rb")
+sound_off = SubResource("AudioStream_qeyam")
 action = "oil_pump_toggle"
 
 [node name="SecurityAcknowledge" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999976, -0.00325316, 0.00613007, 0, 0.883321, 0.468769, -0.0069398, -0.468757, 0.8833, 0.803523, 2.97298, 2.4885)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/czuw_shp")
 command = "security_acknowledge"
 mesh_position = Vector3(0, 0, -0.006)
+sound_on = SubResource("AudioStream_tir1f")
+sound_off = SubResource("AudioStream_h2c58")
 action = "security_acknowledge"
 
 [node name="BrakeReleaser" parent="Switches" instance=ExtResource("69_feumc")]
@@ -127,33 +348,44 @@ monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/odl")
 command = "brake_releaser"
 mesh_position = Vector3(0, 0, -0.004)
+sound_on = SubResource("AudioStream_5cke3")
+sound_off = SubResource("AudioStream_05d8o")
 action = "brake_release"
 
 [node name="Start" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.996416, 0.0396522, -0.0747185, 0, 0.883321, 0.468768, 0.0845882, -0.467088, 0.880155, -0.0449095, 2.94281, 2.08425)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/start")
 command = "main_switch"
 controller_mode = 1
 mesh_position = Vector3(0, 0, -0.004)
+sound_on = SubResource("AudioStream_p1s5s")
+sound_off = SubResource("AudioStream_4cuxf")
 action = "main_switch_on"
 
 [node name="Stop" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999936, -0.00277359, 0.0109576, 0, 0.969427, 0.245382, -0.0113032, -0.245366, 0.969365, 0.0232396, 2.96006, 2.08687)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/stop")
 command = "main_switch"
 controller_mode = 2
 mesh_position = Vector3(0, 0, -0.004)
+sound_on = SubResource("AudioStream_54m4i")
+sound_off = SubResource("AudioStream_4kcv5")
 action = "main_switch_off"
 
 [node name="RadioToggle" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.995566, -0.00607763, 0.093871, 0, 0.997911, 0.0646092, -0.0940675, -0.0643227, 0.993486, 0.489931, 2.79296, 2.62626)
 mesh_path = NodePath("../../Cabin/banan/radio/swr-wl")
 command = "radio"
 state_property = "radio_enabled"
 mesh_position = Vector3(0, 0, -0.004)
+sound_on = SubResource("AudioStream_bfhgf")
+sound_off = SubResource("AudioStream_gspxv")
 action = "radio_toggle"
 
 [node name="Reverser" type="Node3D" parent="Switches"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.260549, 2.8678, 2.4544)
+transform = Transform3D(0.998289, 0.0302963, -0.0500164, 0, 0.855324, 0.518093, 0.0584765, -0.517206, 0.853861, 0.747439, 2.89025, 2.30261)
 script = ExtResource("70_sdo5w")
 switch_min_position = -1
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/kier")
@@ -161,6 +393,9 @@ command_increase = "direction_increase"
 command_decrease = "direction_decrease"
 state_property = "direction"
 mesh_rotation = Vector3(0, -30, 0)
+sound_increase_stream = SubResource("AudioStream_gg4oe")
+sound_decrease_stream = SubResource("AudioStream_q0xq1")
+sound_neutral_position_stream = SubResource("AudioStream_k7rjm")
 action_increase = "direction_increase"
 action_decrease = "direction_decrease"
 
@@ -175,12 +410,16 @@ action_increase = "brake_level_increase"
 action_decrease = "brake_level_decrease"
 
 [node name="MainController" parent="Switches" instance=ExtResource("72_a07r6")]
+transform = Transform3D(0.999877, -0.00636055, 0.0143167, 0, 0.913869, 0.406009, -0.015666, -0.405959, 0.913757, 0.629557, 2.7611, 2.36947)
 switch_max_position = 11
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/pomocniczy/nastawnik")
 command_increase = "main_controller_increase"
 command_decrease = "main_controller_decrease"
 state_property = "controller_main_position"
 mesh_rotation = Vector3(0, 15, 0)
+sound_increase_stream = SubResource("AudioStream_8gobu")
+sound_decrease_stream = SubResource("AudioStream_sll0g")
+sound_override = Array[AudioStream]([SubResource("AudioStream_cq0wk"), SubResource("AudioStream_ahs16"), SubResource("AudioStream_crabo"), SubResource("AudioStream_vxhgt"), SubResource("AudioStream_jjum7"), SubResource("AudioStream_q12ke"), SubResource("AudioStream_da2wi"), SubResource("AudioStream_jnhcs"), SubResource("AudioStream_uphul"), SubResource("AudioStream_5tgnj"), SubResource("AudioStream_xwpqo"), SubResource("AudioStream_xgtr2")])
 action_increase = "main_controller_increase"
 action_decrease = "main_controller_decrease"
 

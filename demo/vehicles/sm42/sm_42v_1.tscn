@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://c5hi8nsm1d2hb"]
 
-[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+[ext_resource type="Script" uid="uid://cc4sx2jrsold3" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" uid="uid://cy2aecn2wfkk4" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
 
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"

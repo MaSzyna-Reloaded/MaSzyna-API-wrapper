@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://gr0lw1vyf240"]
 
 [ext_resource type="PackedScene" uid="uid://laujatulc22" path="res://hud/mover_switches.tscn" id="1_77c1y"]
-[ext_resource type="Script" path="res://hud/debug_hud.gd" id="1_ht8he"]
+[ext_resource type="Script" uid="uid://8ppetijsdms0" path="res://hud/debug_hud.gd" id="1_ht8he"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="2_hy386"]
 
 [node name="DebugHUD" type="HBoxContainer"]

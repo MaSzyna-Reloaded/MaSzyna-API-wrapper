@@ -36,6 +36,7 @@ E3DNodesInstancer="*res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd"
 UserSettings="*res://addons/libmaszyna/settings/user_settings.gd"
 SceneryResourceLoader="*res://addons/libmaszyna/scenery/scenery_resource_loader.gd"
 E3DModelInstanceManager="*res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd"
+AudioStreamManager="*res://addons/libmaszyna/sound/audio_stream_manager.gd"
 
 [debug]
 

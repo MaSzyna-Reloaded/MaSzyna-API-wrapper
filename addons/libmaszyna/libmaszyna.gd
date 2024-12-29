@@ -33,6 +33,7 @@ func _enter_tree():
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
     add_autoload_singleton("E3DModelInstanceManager", "res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd")
+    add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -64,6 +65,7 @@ func _exit_tree():
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
 
+    remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("E3DModelInstanceManager")
     remove_autoload_singleton("UserSettings")
     remove_autoload_singleton("E3DNodesInstancer")

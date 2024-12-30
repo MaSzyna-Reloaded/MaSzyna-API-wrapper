@@ -23,7 +23,8 @@ jobs:
       - name: 'Prepare Codebase'
         run: |
           sudo chmod +x ./ci/qodana/generate_cmakelists.sh
-          ./ci/qodana/generate_cmakelists.sh
+          cd ci/qodana/
+          ./generate_cmakelists.sh
       - name: 'Qodana Scan'
         uses: JetBrains/qodana-action@v2024.3.4
         with:

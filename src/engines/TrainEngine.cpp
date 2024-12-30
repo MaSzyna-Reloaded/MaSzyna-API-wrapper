@@ -78,9 +78,9 @@ namespace godot {
         return motor_param_table;
     }
 
-    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> &p_wwlist) {
+    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table) {
         motor_param_table.clear();
-        motor_param_table.append_array(p_wwlist);
+        motor_param_table.append_array(p_motor_param_table);
     }
 
     void TrainEngine::main_switch(const bool p_enabled) {

@@ -247,7 +247,7 @@ namespace godot {
         const float level = CLAMP(p_level, 0.0, 1.0);
         const float brake_controller_min = mover->Handle->GetPos(bh_MIN);
         const float brake_controller_max = mover->Handle->GetPos(bh_MAX);
-        const float brake_controller_pos = brake_controller_min + level * (brake_controller_max - brake_controller_min);
+        const float brake_controller_pos = brake_controller_min + (level * (brake_controller_max - brake_controller_min));
         mover->BrakeLevelSet(brake_controller_pos);
     }
 

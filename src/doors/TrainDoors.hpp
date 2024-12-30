@@ -72,7 +72,7 @@ namespace godot {
             float get_close_delay() const;
             void set_open_with_permit(float p_holding_time);
             float get_open_with_permit() const;
-            void set_has_lock(bool p_blocked);
+            void set_has_lock(bool p_has_lock);
             bool get_has_lock() const;
             void set_max_shift_plug(float p_max_shift_plug);
             float get_max_shift_plug() const;

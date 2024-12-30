@@ -465,8 +465,8 @@ namespace godot {
         return open_with_permit;
     }
 
-    void TrainDoors::set_has_lock(const bool p_lock) {
-        has_lock = p_lock;
+    void TrainDoors::set_has_lock(const bool p_has_lock) {
+        has_lock = p_has_lock;
         _dirty = true;
     }
 

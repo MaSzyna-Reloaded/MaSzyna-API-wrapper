@@ -4,7 +4,7 @@
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
-    class TrainSecuritySystem final : public TrainPart {
+    class TrainSecuritySystem : public TrainPart {
             GDCLASS(TrainSecuritySystem, TrainPart)
 
             static void _bind_methods();

@@ -22,7 +22,7 @@ namespace godot {
 
         public:
             TypedArray<Dictionary> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<Dictionary> &p_wwlist);
+            void set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table);
             void main_switch(bool p_enabled);
     };
 } // namespace godot

@@ -121,9 +121,9 @@ namespace godot {
                 new_id = "train";
             }
             return new_id;
-        } else {
-            return train_id;
         }
+
+        return train_id;
     }
 
     void TrainController::initialize_mover() {

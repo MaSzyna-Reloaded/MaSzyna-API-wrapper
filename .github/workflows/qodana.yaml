@@ -29,7 +29,6 @@ jobs:
         with:
           pr-mode: false
           args: --linter,jetbrains/qodana-clang:2024.3-eap-clang18
-          fail-threshold: 0
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: 'https://qodana.cloud'

@@ -7,6 +7,7 @@ profile:
   name: qodana.starter
 fixesStrategy: apply
 bootstrap: mkdir -p build; cd build;cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCODECHECK_BUILD=ON .. || true
+failThreshold: 0
 linter: jetbrains/qodana-clang:2024.2-eap-clang18
 include:
   - name: VulnerableLibrariesGlobal

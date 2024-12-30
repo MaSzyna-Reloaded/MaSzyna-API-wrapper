@@ -10,7 +10,7 @@
 
 using namespace godot;
 
-class DieselEngineMasterControllerPowerItemEditor final : public EditorProperty {
+class DieselEngineMasterControllerPowerItemEditor: public EditorProperty {
         GDCLASS(DieselEngineMasterControllerPowerItemEditor, EditorProperty);
 
     private:

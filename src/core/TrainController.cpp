@@ -213,9 +213,7 @@ namespace godot {
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
                 break;
-            default:
-                DEBUG("TrainController::_ready() This notification type is not implemented");
-                break;
+            default:;
         }
     }
 

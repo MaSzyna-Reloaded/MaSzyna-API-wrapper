@@ -8,7 +8,7 @@
 
 using namespace godot;
 
-class LibMaszynaPlugin final : public EditorPlugin {
+class LibMaszynaPlugin: public EditorPlugin {
         GDCLASS(LibMaszynaPlugin, EditorPlugin);
 
     public:

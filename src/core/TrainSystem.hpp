@@ -12,7 +12,7 @@ namespace godot {
 
     class TrainController;
 
-    class TrainSystem final : public RefCounted {
+    class TrainSystem : public RefCounted {
             GDCLASS(TrainSystem, RefCounted);
 
         private:

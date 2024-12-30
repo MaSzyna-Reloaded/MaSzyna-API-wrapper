@@ -11,7 +11,7 @@ namespace godot {
     class TrainSystem;
 
 
-    class TrainController final : public Node {
+    class TrainController: public Node {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};

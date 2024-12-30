@@ -79,9 +79,7 @@ namespace godot {
                 }
                 train_controller_node = nullptr;
             } break;
-            default:
-                DEBUG("TrainController::_ready() This notification type is not implemented");
-                break;
+            default:;
         }
     }
 

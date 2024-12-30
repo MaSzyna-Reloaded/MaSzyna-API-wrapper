@@ -31,6 +31,7 @@ Checks: [
   "-performance-enum-size",
   "-*-non-private-member-variables-in-classes",
   "-*-enum-initial-value",
-  "-*-pro-bounds-constant-array-index"
+  "-*-pro-bounds-constant-array-index",
+  "-readability-uppercase-literal-suffix"
 ]
 WarningsAsErrors: "*"

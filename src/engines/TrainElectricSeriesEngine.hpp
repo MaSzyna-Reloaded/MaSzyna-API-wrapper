@@ -6,7 +6,7 @@
 namespace godot {
     class TrainController;
 
-    class TrainElectricSeriesEngine final : public TrainElectricEngine {
+    class TrainElectricSeriesEngine: public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
         public:
             static void _bind_methods();

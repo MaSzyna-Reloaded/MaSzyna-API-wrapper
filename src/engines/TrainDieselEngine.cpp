@@ -1,13 +1,9 @@
-#include <godot_cpp/classes/engine.hpp>
+#include "TrainDieselEngine.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "TrainDieselEngine.hpp"
-
 namespace godot {
-    TrainDieselEngine::TrainDieselEngine() = default;
-
     void TrainDieselEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_oil_min_pressure"), &TrainDieselEngine::get_oil_min_pressure);
         ClassDB::bind_method(D_METHOD("set_oil_min_pressure", "value"), &TrainDieselEngine::set_oil_min_pressure);
@@ -73,9 +69,9 @@ namespace godot {
 
         /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
-        const int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
+        constexpr int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
         mover->MainCtrlPosNo = wwlist.size() - 1;
-        for (int i = 0; i < std::min(_max, (int)wwlist.size()); i++) {
+        for (int i = 0; i < std::min(_max, static_cast<int>(wwlist.size())); i++) {
             Array row = wwlist[i];
             mover->DElist[i].RPM = row[0];
             mover->DElist[i].GenPower = row[1];
@@ -96,7 +92,7 @@ namespace godot {
         return oil_min_pressure;
     }
 
-    void TrainDieselEngine::set_oil_min_pressure(double value) {
+    void TrainDieselEngine::set_oil_min_pressure(const double value) {
         oil_min_pressure = value;
         _dirty = true;
     }
@@ -105,7 +101,7 @@ namespace godot {
         return oil_max_pressure;
     }
 
-    void TrainDieselEngine::set_oil_max_pressure(double value) {
+    void TrainDieselEngine::set_oil_max_pressure(const double value) {
         oil_max_pressure = value;
         _dirty = true;
     }
@@ -114,7 +110,7 @@ namespace godot {
         return traction_force_max;
     }
 
-    void TrainDieselEngine::set_traction_force_max(double value) {
+    void TrainDieselEngine::set_traction_force_max(const double value) {
         traction_force_max = value;
         _dirty = true;
     }
@@ -123,7 +119,7 @@ namespace godot {
         return wwlist;
     }
 
-    void TrainDieselEngine::set_wwlist(const TypedArray<Array> p_wwlist) {
+    void TrainDieselEngine::set_wwlist(const TypedArray<Array>& p_wwlist) {
         wwlist.clear();
         wwlist.append_array(p_wwlist);
     }

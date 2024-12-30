@@ -1,6 +1,6 @@
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "../maszyna/McZapkie/MOVER.h"
+#include <godot_cpp/classes/node.hpp>
 
 
 namespace godot {
@@ -11,7 +11,7 @@ namespace godot {
     class TrainSystem;
 
 
-    class TrainController final : public Node {
+    class TrainController: public Node {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
@@ -41,9 +41,7 @@ namespace godot {
 
             String axle_arrangement = "";
 
-            void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts);
-
-        private:
+            void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
 
@@ -71,19 +69,19 @@ namespace godot {
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
-            void set_config_property(String &key, Variant &p_value);
+            void set_config_property(String &key, Variant &p_value) {};
             void _process(double delta) override;
             void _notification(int p_what);
             void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void battery(const bool p_enabled);
-            void main_controller_increase(const int p_step = 1);
-            void main_controller_decrease(const int p_step = 1);
+            void battery(bool p_enabled);
+            void main_controller_increase(int p_step = 1);
+            void main_controller_decrease(int p_step = 1);
             void direction_increase();
             void direction_decrease();
-            void radio(const bool p_enabled);
-            void radio_channel_set(const int p_channel);
-            void radio_channel_increase(const int step = 1);
-            void radio_channel_decrease(const int step = 1);
+            void radio(bool p_enabled);
+            void radio_channel_set(int p_channel);
+            void radio_channel_increase(int step = 1);
+            void radio_channel_decrease(int step = 1);
             void emit_command_received_signal(
                     const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
@@ -99,7 +97,7 @@ namespace godot {
             void set_train_id(const String &train_id);
             String get_type_name() const;
             void set_type_name(const String &type_name);
-            void set_battery_voltage(const double p_value);
+            void set_battery_voltage(double p_value);
             double get_battery_voltage() const;
             void set_mass(double p_mass);
             double get_mass() const;
@@ -107,18 +105,15 @@ namespace godot {
             double get_power() const;
             void set_max_velocity(double p_value);
             double get_max_velocity() const;
-            void set_axle_arrangement(String p_value);
+            void set_axle_arrangement(const String &p_value);
             int get_radio_channel_min() const;
-            void set_radio_channel_min(const int p_value);
+            void set_radio_channel_min(int p_value);
             int get_radio_channel_max() const;
-            void set_radio_channel_max(const int p_value);
+            void set_radio_channel_max(int p_value);
             String get_axle_arrangement() const;
 
-            void set_state(const Dictionary &p_state);
+            void set_state(const Dictionary &p_state) {};
             Dictionary get_state();
-
-            TrainController();
-            ~TrainController() override = default;
     };
 
 } // namespace godot

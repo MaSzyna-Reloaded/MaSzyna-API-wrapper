@@ -1,5 +1,5 @@
+#pragma once
 #include <godot_cpp/core/binder_common.hpp>
-#include <godot_cpp/core/gdvirtual.gen.inc>
 
 #include "TrainPart.hpp"
 
@@ -23,8 +23,5 @@ namespace godot {
             virtual void _process_train_part(double delta);
             virtual Dictionary _get_train_part_state();
             Dictionary get_train_state();
-
-            GenericTrainPart();
-            ~GenericTrainPart() override = default;
     };
 } // namespace godot

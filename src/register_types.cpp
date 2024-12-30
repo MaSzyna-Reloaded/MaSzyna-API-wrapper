@@ -1,9 +1,4 @@
-#include <gdextension_interface.h>
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/core/defs.hpp>
-#include <godot_cpp/godot.hpp>
 #include "register_types.h"
-
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
@@ -17,6 +12,10 @@
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
 #include "systems/TrainSecuritySystem.hpp"
+#include <gdextension_interface.h>
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 

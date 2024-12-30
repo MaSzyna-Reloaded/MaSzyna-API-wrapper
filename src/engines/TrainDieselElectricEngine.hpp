@@ -1,7 +1,8 @@
+#pragma once
 #include "TrainDieselEngine.hpp"
 
 namespace godot {
-    class TrainDieselElectricEngine : public TrainDieselEngine {
+    class TrainDieselElectricEngine: public TrainDieselEngine {
             GDCLASS(TrainDieselElectricEngine, TrainDieselEngine)
 
         private:
@@ -9,9 +10,5 @@ namespace godot {
 
         protected:
             TEngineType get_engine_type() override;
-
-        public:
-            TrainDieselElectricEngine();
-            ~TrainDieselElectricEngine() override = default;
     };
 } // namespace godot

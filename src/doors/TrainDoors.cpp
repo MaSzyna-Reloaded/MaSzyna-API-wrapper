@@ -1,8 +1,7 @@
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainDoors.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    TrainDoors::TrainDoors() = default;
 
     void TrainDoors::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_type", "type"), &TrainDoors::set_type);
@@ -215,12 +214,12 @@ namespace godot {
         state["doors_right_remote_open"] = right_door.remote_open;
         state["doors_right_position"] = right_door.position;
         state["doors_right_position_normalized"] = right_door.position / max_shift;
-        state["doors_right_operating"] = right_door.is_opening | right_door.is_closing;
+        state["doors_right_operating"] = static_cast<int>(right_door.is_opening) | static_cast<int>(right_door.is_closing);
         state["doors_right_step_position"] = right_door.step_position;
         state["doors_right_step_operating"] = right_door.step_folding || right_door.step_unfolding;
     }
 
-    void TrainDoors::_do_process_mover(TMoverParameters *mover, double delta) {
+    void TrainDoors::_do_process_mover(TMoverParameters *mover, const double delta) {
         mover->update_doors(delta);
     }
 
@@ -466,8 +465,8 @@ namespace godot {
         return open_with_permit;
     }
 
-    void TrainDoors::set_has_lock(const bool p_lock) {
-        has_lock = p_lock;
+    void TrainDoors::set_has_lock(const bool p_has_lock) {
+        has_lock = p_has_lock;
         _dirty = true;
     }
 

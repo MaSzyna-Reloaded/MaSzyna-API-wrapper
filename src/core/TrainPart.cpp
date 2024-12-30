@@ -1,9 +1,9 @@
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/node.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void TrainPart::_bind_methods() {
@@ -34,19 +34,18 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("train_part_disabled"));
     }
 
-    TrainPart::TrainPart() = default;
     void TrainPart::_register_commands() {};
     void TrainPart::_unregister_commands() {};
 
     TMoverParameters *TrainPart::get_mover() {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_mover();
-        } else {
-            return nullptr;
         }
+
+        return nullptr;
     }
 
-    void TrainPart::_notification(int p_what) {
+    void TrainPart::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -80,6 +79,7 @@ namespace godot {
                 }
                 train_controller_node = nullptr;
             } break;
+            default:;
         }
     }
 
@@ -116,7 +116,7 @@ namespace godot {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_process(double delta) {
+    void TrainPart::_process(const double delta) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -147,7 +147,7 @@ namespace godot {
         }
     }
 
-    void TrainPart::_process_mover(double delta) {
+    void TrainPart::_process_mover(const double delta) {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
@@ -158,7 +158,6 @@ namespace godot {
     }
 
     void TrainPart::_do_process_mover(TMoverParameters *mover, double delta) {}
-
     void TrainPart::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {};
     void TrainPart::_do_update_internal_mover(TMoverParameters *mover) {};
 
@@ -195,7 +194,7 @@ namespace godot {
         return state;
     }
 
-    void TrainPart::set_enabled(bool p_value) {
+    void TrainPart::set_enabled(const bool p_value) {
         enabled_changed = (enabled != p_value);
         enabled = p_value;
         _dirty = true;

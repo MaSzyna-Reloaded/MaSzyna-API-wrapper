@@ -11,7 +11,7 @@
 [ext_resource type="PackedScene" uid="uid://cmluhfe2vkxcc" path="res://addons/libmaszyna/cabin/cabin_switch.tscn" id="72_a07r6"]
 [ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
 [ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
-[ext_resource type="Texture2D" uid="uid://wf2pbnu62pgl" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
+[ext_resource type="Texture2D" uid="uid://yotc63fvboyh" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
 [ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
 
 [node name="SM42Cabin" type="Node3D"]
@@ -146,7 +146,6 @@ mesh_position = Vector3(0, 0, -0.004)
 action = "main_switch_off"
 
 [node name="RadioToggle" parent="Switches" instance=ExtResource("69_feumc")]
-visible = false
 mesh_path = NodePath("../../Cabin/banan/radio/swr-wl")
 command = "radio"
 state_property = "radio_enabled"
@@ -210,16 +209,12 @@ light_energy_on = 0.411
 
 [node name="RadioPowerLed" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.487651, 2.78811, 2.62152)
-light_color = Color(0.00769043, 0.046875, 0.0119762, 1)
+light_color = Color(0, 0.738281, 0.121986, 1)
 light_energy = 0.007
-light_size = 0.49
-light_specular = 2.593
-omni_range = 0.14
-omni_attenuation = 1.316
+omni_range = 0.1
 script = ExtResource("74_q8ngl")
 state_property = "radio_powered"
-light_energy_on = 0.396
-animation_speed = 100.0
+light_energy_on = 0.05
 
 [node name="RadioPowerLed2" type="OmniLight3D" parent="Lights"]
 transform = Transform3D(0.999945, 0.000907595, -0.0104695, 0.00153279, 0.973012, 0.230748, 0.0103964, -0.230751, 0.972957, 0.715, 3.009, 2.036)

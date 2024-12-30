@@ -129,11 +129,17 @@ func get_controller() -> TrainController:
         return null
 
 func _update_head_display():
-    if is_inside_tree() and head_display_node_path:
-        var node:MeshInstance3D = get_node_or_null(head_display_node_path)
-        if node:
-            node.material_override = head_display_material
+    if is_inside_tree():
+        if head_display_node_path:
+            var node:MeshInstance3D = get_node_or_null(head_display_node_path)
+            if node:
+                node.material_override = head_display_material
+                _needs_head_display_update = false
+            else:
+                _needs_head_display_update = false
+        else:
             _needs_head_display_update = false
+
 
 func _process(delta):
     if _dirty:
@@ -148,6 +154,7 @@ func _process(delta):
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
+        _t = 0.0
         _update_head_display()
 
     if not Engine.is_editor_hint():

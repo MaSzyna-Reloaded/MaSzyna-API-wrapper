@@ -51,9 +51,10 @@ func enter_cabin(player:MaszynaPlayer):
         return
 
     if controller_path:
-        var controller = get_node(controller_path)
+        var controller:TrainController = get_node(controller_path)
         if controller:
             _cabin.controller_path = controller.get_path()
+            controller.occupied = true
 
     # The sequence of adding, removing, hiding, showing nodes is very important
     # to reduce visual artifacts
@@ -105,6 +106,11 @@ func enter_cabin(player:MaszynaPlayer):
     _cabin.visible = true
 
 func leave_cabin(player:Node):
+    if controller_path:
+        var controller:TrainController = get_node(controller_path)
+        if controller:
+            _cabin.controller_path = controller.get_path()
+            controller.occupied = false
     if low_poly_cabin_path:
         var low_poly_cabin = get_node(low_poly_cabin_path)
         if low_poly_cabin:

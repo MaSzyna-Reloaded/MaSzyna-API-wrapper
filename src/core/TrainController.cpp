@@ -14,6 +14,7 @@ namespace godot {
 
     const char *TrainController::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
     const char *TrainController::MOVER_INITIALIZED_SIGNAL = "mover_initialized";
+    const char *TrainController::STATE_CHANGED = "state_changed";
     const char *TrainController::POWER_CHANGED_SIGNAL = "power_changed";
     const char *TrainController::COMMAND_RECEIVED = "command_received";
     const char *TrainController::RADIO_TOGGLED = "radio_toggled";
@@ -22,12 +23,11 @@ namespace godot {
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
+        ClassDB::bind_method(D_METHOD("set_state", "state"), &TrainController::set_state);
+        ClassDB::bind_method(D_METHOD("get_occupied"), &TrainController::get_occupied);
+        ClassDB::bind_method(D_METHOD("set_occupied", "occupied"), &TrainController::set_occupied);
         ClassDB::bind_method(D_METHOD("get_config"), &TrainController::get_config);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::DICTIONARY, "state", PROPERTY_HINT_NONE, "",
-                        PROPERTY_USAGE_READ_ONLY | PROPERTY_USAGE_DEFAULT),
-                "", "get_state");
+        ADD_PROPERTY(PropertyInfo(Variant::DICTIONARY, "state"), "set_state", "get_state");
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::DICTIONARY, "config", PROPERTY_HINT_NONE, "",
@@ -59,7 +59,6 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
-        ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
         ClassDB::bind_method(D_METHOD("set_train_id"), &TrainController::set_train_id);
@@ -82,6 +81,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_radio_channel_max"), &TrainController::get_radio_channel_min);
 
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "occupied"), "set_occupied", "get_occupied");
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dimensions/mass"), "set_mass", "get_mass");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power"), "set_power", "get_power");
@@ -92,6 +92,7 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(MOVER_INITIALIZED_SIGNAL));
+        ADD_SIGNAL(MethodInfo(STATE_CHANGED));
         ADD_SIGNAL(MethodInfo(POWER_CHANGED_SIGNAL, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(RADIO_TOGGLED, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(RADIO_CHANNEL_CHANGED, PropertyInfo(Variant::INT, "channel")));
@@ -207,7 +208,6 @@ namespace godot {
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
-                update_state();
                 DEBUG("TrainController::_ready() signals connected to train parts");
 
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
@@ -233,7 +233,18 @@ namespace godot {
         }
     }
 
+    void TrainController::set_occupied(const bool p_occupied) {
+        occupied = p_occupied;
+    }
+
+    bool TrainController::get_occupied() const {
+        return occupied;
+    }
+
     void TrainController::_process_mover(const double delta) {
+        if (!occupied) {
+            return;
+        }
         TLocation mock_location;
         TRotation mock_rotation;
         mover->ComputeTotalForce(delta);
@@ -245,13 +256,12 @@ namespace godot {
         _handle_mover_update();
     }
 
-    void TrainController::update_state() {
-        _handle_mover_update();
-    }
-
     void TrainController::_handle_mover_update() {
         state.merge(get_mover_state(), true);
+        mark_state_changed();
+    }
 
+    void TrainController::_on_state_changed() {
         const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
@@ -279,6 +289,12 @@ namespace godot {
 
         _update_mover_config_if_dirty();
         _process_mover(delta);
+
+        if (state_changed) {
+            state_changed = false;
+            emit_signal(STATE_CHANGED);
+            _on_state_changed();
+        }
     }
 
     void TrainController::_do_update_internal_mover(TMoverParameters *mover) const {
@@ -363,6 +379,7 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         if (mover != nullptr) {
             _do_fetch_state_from_mover(mover, state);
+            mark_state_changed();
         } else {
             UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
         }
@@ -432,6 +449,11 @@ namespace godot {
         return state;
     }
 
+    void TrainController::set_state(const Dictionary &p_state) {
+        state = p_state;
+        mark_state_changed();
+    }
+
     void TrainController::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
     }
@@ -482,5 +504,9 @@ namespace godot {
 
     void TrainController::radio(const bool p_enabled) {
         mover->Radio = p_enabled;
+    }
+
+    void TrainController::mark_state_changed() {
+        state_changed = true;
     }
 } // namespace godot

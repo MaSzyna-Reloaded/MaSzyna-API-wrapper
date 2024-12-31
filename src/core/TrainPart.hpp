@@ -49,6 +49,7 @@ namespace godot {
             virtual void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config);
 
             virtual void _do_process_mover(TMoverParameters *mover, double delta);
+            virtual void _do_initialize_train_controller(TrainController *train_controller);
 
             virtual void _register_commands();
             virtual void _unregister_commands();

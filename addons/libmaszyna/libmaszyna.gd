@@ -23,6 +23,8 @@ func _enter_tree():
 
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
+    add_autoload_singleton("PlayerSystem", "res://addons/libmaszyna/player/player_system.gd")
+    add_autoload_singleton("MultiPlayerManager", "res://addons/libmaszyna/player/multiplayer_manager.gd")
     add_autoload_singleton("SceneryResourceLoader", "res://addons/libmaszyna/scenery/scenery_resource_loader.gd")
     add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
@@ -52,6 +54,10 @@ func _enter_tree():
     user_settings_dock = user_settings_dock_scene.instantiate()
     add_control_to_dock(DOCK_SLOT_RIGHT_UL, user_settings_dock)
 
+    # MOVE TO USER SETTINGS!
+    add_custom_project_setting("maszyna/game/multiplayer/host", "127.0.0.1", TYPE_STRING)
+    add_custom_project_setting("maszyna/game/multiplayer/port", 9797, TYPE_INT)
+
 
 func _exit_tree():
     remove_control_from_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
@@ -64,6 +70,8 @@ func _exit_tree():
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
 
+    remove_autoload_singleton("PlayerSystem")
+    remove_autoload_singleton("MultiPlayerManager")
     remove_autoload_singleton("E3DModelInstanceManager")
     remove_autoload_singleton("UserSettings")
     remove_autoload_singleton("E3DNodesInstancer")

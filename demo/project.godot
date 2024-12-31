@@ -36,6 +36,8 @@ E3DNodesInstancer="*res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd"
 UserSettings="*res://addons/libmaszyna/settings/user_settings.gd"
 SceneryResourceLoader="*res://addons/libmaszyna/scenery/scenery_resource_loader.gd"
 E3DModelInstanceManager="*res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd"
+PlayerSystem="*res://addons/libmaszyna/player/player_system.gd"
+MultiPlayerManager="*res://addons/libmaszyna/player/multiplayer_manager.gd"
 
 [debug]
 
@@ -43,8 +45,7 @@ file_logging/log_path="user://logs/app.log"
 
 [display]
 
-window/size/mode=3
-window/size/initial_position_type=3
+window/size/mode.release=3
 
 [editor_plugins]
 

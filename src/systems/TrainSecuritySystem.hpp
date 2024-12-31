@@ -13,6 +13,8 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_initialize_train_controller(TrainController *train_controller) override;
+            void _on_train_controller_state_changed();
             void _register_commands() override;
             void _unregister_commands() override;
 
@@ -38,6 +40,9 @@ namespace godot {
             double sound_signal_delay = 0.0;            // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
             double shp_magnet_distance = 0.0;           // MagnetLocation -> SecuritySystem->MagnetLocation
             double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
+
+            bool prev_beeping = false;
+            bool prev_blinking = false;
 
         public:
             void security_acknowledge(bool p_enabled);

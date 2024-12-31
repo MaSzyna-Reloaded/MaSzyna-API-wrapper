@@ -73,6 +73,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_ca_max_hold_time"), &TrainSecuritySystem::set_ca_max_hold_time);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "ca_max_hold_time"), "set_ca_max_hold_time", "get_ca_max_hold_time");
         ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::security_acknowledge);
+        ClassDB::bind_method(
+                D_METHOD("_on_train_controller_state_changed"),
+                &TrainSecuritySystem::_on_train_controller_state_changed);
 
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
@@ -163,8 +166,6 @@ namespace godot {
     }
 
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        const bool prev_beeping = state["beeping"];
-        const bool prev_blinking = state["blinking"];
         state["beeping"] = mover->SecuritySystem.is_beeping();
         state["blinking"] = mover->SecuritySystem.is_blinking();
         state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
@@ -174,13 +175,6 @@ namespace godot {
         state["braking"] = mover->SecuritySystem.is_braking();
         state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
         state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
-
-        if (prev_blinking != static_cast<bool>(state["blinking"])) {
-            emit_signal("blinking_changed", state["blinking"]);
-        }
-        if (prev_beeping != static_cast<bool>(state["beeping"])) {
-            emit_signal("beeping_changed", state["beeping"]);
-        }
     }
 
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {
@@ -230,5 +224,23 @@ namespace godot {
         } else {
             mover->SecuritySystem.acknowledge_release();
         }
+    }
+
+    void TrainSecuritySystem::_do_initialize_train_controller(TrainController *train_controller) {
+        train_controller->connect(TrainController::STATE_CHANGED, Callable(this, "_on_train_controller_state_changed"));
+    }
+
+    void TrainSecuritySystem::_on_train_controller_state_changed() {
+        Dictionary state = train_controller_node->get_state();
+
+        if (prev_blinking != static_cast<bool>(state["blinking"])) {
+            emit_signal("blinking_changed", state["blinking"]);
+        }
+        if (prev_beeping != static_cast<bool>(state["beeping"])) {
+            emit_signal("beeping_changed", state["beeping"]);
+        }
+
+        prev_beeping = state["beeping"];
+        prev_blinking = state["blinking"];
     }
 } // namespace godot

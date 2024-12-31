@@ -36,6 +36,7 @@ namespace godot {
 
     void TrainPart::_register_commands() {};
     void TrainPart::_unregister_commands() {};
+    void TrainPart::_do_initialize_train_controller(TrainController *train_controller) {};
 
     TMoverParameters *TrainPart::get_mover() {
         if (train_controller_node != nullptr) {
@@ -62,6 +63,7 @@ namespace godot {
                 if (train_controller_node != nullptr) {
                     train_controller_node->connect(
                             TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                    _do_initialize_train_controller(train_controller_node);
                 }
                 if (enabled) {
                     _register_commands();
@@ -127,7 +129,7 @@ namespace godot {
             _dirty = false;
         }
 
-        if (enabled) {
+        if (enabled && train_controller_node->get_occupied()) {
             _process_mover(delta);
         }
 
@@ -153,6 +155,7 @@ namespace godot {
             if (mover != nullptr) {
                 _do_process_mover(mover, delta);
                 train_controller_node->get_state().merge(get_mover_state(), true);
+                train_controller_node->mark_state_changed();
             }
         }
     }

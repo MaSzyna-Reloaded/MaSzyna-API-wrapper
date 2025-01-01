@@ -115,7 +115,7 @@ namespace godot {
 
         private:
             // Maszyna Mover has no consts for voltages
-            const std::map<Voltage, int> voltageMap = {
+            const std::map<Voltage, float> voltageMap = {
                     {VOLTAGE_0, 0}, {VOLTAGE_12, 12}, {VOLTAGE_24, 24}, {VOLTAGE_112, 112}};
 
             // Maszyna Mover has no consts for door types

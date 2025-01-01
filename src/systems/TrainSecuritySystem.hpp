@@ -43,17 +43,17 @@ namespace godot {
             void security_acknowledge(bool p_enabled);
 
             // Getters
-            [[nodiscard]] bool get_aware_system_active() const;
-            [[nodiscard]] bool get_aware_system_cabsignal() const;
-            [[nodiscard]] bool get_aware_system_separate_acknowledge() const;
-            [[nodiscard]] bool get_aware_system_sifa() const;
-            [[nodiscard]] double get_aware_delay() const;
-            [[nodiscard]] double get_emergency_brake_delay() const;
-            [[nodiscard]] EmergencyBrakeWarningSignal get_emergency_brake_warning_signal() const;
-            [[nodiscard]] bool get_radio_stop() const;
-            [[nodiscard]] double get_sound_signal_delay() const;
-            [[nodiscard]] double get_shp_magnet_distance() const;
-            [[nodiscard]] double get_ca_max_hold_time() const;
+            bool get_aware_system_active() const;
+            bool get_aware_system_cabsignal() const;
+            bool get_aware_system_separate_acknowledge() const;
+            bool get_aware_system_sifa() const;
+            double get_aware_delay() const;
+            double get_emergency_brake_delay() const;
+            EmergencyBrakeWarningSignal get_emergency_brake_warning_signal() const;
+            bool get_radio_stop() const;
+            double get_sound_signal_delay() const;
+            double get_shp_magnet_distance() const;
+            double get_ca_max_hold_time() const;
 
             // Setters
             void set_aware_system_active(bool p_state);

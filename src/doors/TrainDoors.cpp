@@ -308,7 +308,7 @@ namespace godot {
         if (!mover->Doors.permit_presets.empty()) {
             mover->Doors.permit_preset = permit_list_default;
             mover->Doors.permit_preset =
-                    std::min<int>(mover->Doors.permit_presets.size(), mover->Doors.permit_preset) - 1;
+                    std::min<int>(static_cast<int>(mover->Doors.permit_presets.size()), mover->Doors.permit_preset) - 1;
         }
 
         mover->Doors.open_rate = open_speed;

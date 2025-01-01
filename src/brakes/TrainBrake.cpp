@@ -241,13 +241,13 @@ namespace godot {
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
-    void TrainBrake::brake_level_set(const float p_level) {
+    void TrainBrake::brake_level_set(const double p_level) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        const float level = CLAMP(p_level, 0.0, 1.0);
-        const float brake_controller_min = mover->Handle->GetPos(bh_MIN);
-        const float brake_controller_max = mover->Handle->GetPos(bh_MAX);
-        const float brake_controller_pos = brake_controller_min + (level * (brake_controller_max - brake_controller_min));
+        const double level = CLAMP(p_level, 0.0, 1.0);
+        const double brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        const double brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        const double brake_controller_pos = brake_controller_min + (level * (brake_controller_max - brake_controller_min));
         mover->BrakeLevelSet(brake_controller_pos);
     }
 
@@ -295,10 +295,10 @@ namespace godot {
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        const float brake_controller_pos = mover->fBrakeCtrlPos;
-        const float brake_controller_min = mover->Handle->GetPos(bh_MIN);
-        const float brake_controller_max = mover->Handle->GetPos(bh_MAX);
-        float brake_controller_pos_normalized = 0.0;
+        const double brake_controller_pos = mover->fBrakeCtrlPos;
+        const double brake_controller_min = mover->Handle->GetPos(bh_MIN);
+        const double brake_controller_max = mover->Handle->GetPos(bh_MAX);
+        double brake_controller_pos_normalized = 0.0;
         if (brake_controller_max != brake_controller_min) {
             brake_controller_pos_normalized =
                     (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);

@@ -28,9 +28,9 @@ namespace godot {
 
             void register_train(const String &train_id, TrainController *train);
             void unregister_train(const String &train_id);
-            [[nodiscard]] bool is_train_registered(const String &train_id) const;
+            bool is_train_registered(const String &train_id) const;
             TrainController *get_train(const String &train_id);
-            [[nodiscard]] int get_train_count() const;
+            int get_train_count() const;
 
             Variant get_config_property(const String &train_id, const String &property_name);
             Dictionary get_all_config_properties(const String &train_id);

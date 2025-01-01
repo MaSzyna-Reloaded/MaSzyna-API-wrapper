@@ -215,7 +215,7 @@ namespace godot {
             double get_rig_effectiveness() const;
 
             void brake_releaser(bool p_pressed);
-            void brake_level_set(float p_level);
+            void brake_level_set(double p_level);
             void brake_level_set_position(BrakeHandlePosition p_position);
             void brake_level_set_position_str(const String &p_position);
             void brake_level_increase();

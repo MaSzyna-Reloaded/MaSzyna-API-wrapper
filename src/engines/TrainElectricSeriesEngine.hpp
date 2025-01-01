@@ -18,10 +18,10 @@ namespace godot {
             void _do_update_internal_mover(TMoverParameters *mover) override;
 
         public:
-            [[nodiscard]] double get_nominal_voltage() const;
+            double get_nominal_voltage() const;
             void set_nominal_voltage(double value);
 
-            [[nodiscard]] double get_winding_resistance() const;
+            double get_winding_resistance() const;
             void set_winding_resistance(double value);
     };
 } // namespace godot

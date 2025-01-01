@@ -70,8 +70,9 @@ namespace godot {
         /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
         constexpr int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
-        mover->MainCtrlPosNo = wwlist.size() - 1;
-        for (int i = 0; i < std::min(_max, static_cast<int>(wwlist.size())); i++) {
+        const int wwlist_size = static_cast<int>(wwlist.size());
+        mover->MainCtrlPosNo = wwlist_size - 1;
+        for (int i = 0; i < std::min(_max, wwlist_size); i++) {
             Array row = wwlist[i];
             mover->DElist[i].RPM = row[0];
             mover->DElist[i].GenPower = row[1];
@@ -92,7 +93,7 @@ namespace godot {
         return oil_min_pressure;
     }
 
-    void TrainDieselEngine::set_oil_min_pressure(const double value) {
+    void TrainDieselEngine::set_oil_min_pressure(const float value) {
         oil_min_pressure = value;
         _dirty = true;
     }
@@ -101,7 +102,7 @@ namespace godot {
         return oil_max_pressure;
     }
 
-    void TrainDieselEngine::set_oil_max_pressure(const double value) {
+    void TrainDieselEngine::set_oil_max_pressure(const float value) {
         oil_max_pressure = value;
         _dirty = true;
     }

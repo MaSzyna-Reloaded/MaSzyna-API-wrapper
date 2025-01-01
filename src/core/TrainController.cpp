@@ -1,14 +1,12 @@
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/core/math.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
-
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/TrainEngine.hpp"
-#include "../systems/TrainSecuritySystem.hpp"
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/gd_extension.hpp>
+#include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
 
@@ -292,7 +290,7 @@ namespace godot {
 
         // FIXME: move to TrainPower
         mover->BatteryVoltage = battery_voltage;
-        mover->NominalBatteryVoltage = battery_voltage; // LoadFIZ_Light
+        mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
     void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) const {

@@ -79,8 +79,8 @@ namespace godot {
             void direction_decrease();
             void radio(bool p_enabled);
             void radio_channel_set(int p_channel);
-            void radio_channel_increase(int step = 1);
-            void radio_channel_decrease(int step = 1);
+            void radio_channel_increase(int p_step = 1);
+            void radio_channel_decrease(int p_step = 1);
             void emit_command_received_signal(
                     const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());

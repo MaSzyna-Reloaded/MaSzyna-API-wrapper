@@ -5,7 +5,7 @@
 
 [node name="Tem2Cabin" type="Node3D"]
 script = ExtResource("1_w5uim")
-camera_position_path = NodePath("Marker3D")
+driver_position = Vector3(-1.04938, 3.26692, -5.38975)
 
 [node name="E3DModelInstance" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -27,6 +27,3 @@ layers = 1
 script = ExtResource("2_6c6uo")
 data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "kabina-tem2a"
-
-[node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(-0.996348, 0.0186954, -0.0833112, 0, 0.975734, 0.218959, 0.0853831, 0.21816, -0.972171, -1.04938, 3.26692, -5.38975)

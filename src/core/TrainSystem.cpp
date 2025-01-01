@@ -190,8 +190,8 @@ namespace godot {
 
     Array TrainSystem::get_registered_trains() {
         Array train_names;
-        for (const auto &pair: trains) {
-            train_names.append(pair.first);
+        for (const auto &[first, second]: trains) {
+            train_names.append(first);
         }
         return train_names;
     }
@@ -216,9 +216,7 @@ namespace godot {
                 return;
             }
 
-            Callable c = _trains[train_id];
-
-            if (c.is_valid()) {
+            if (Callable c = _trains[train_id]; c.is_valid()) {
                 Array args;
                 int arg_required = 0;
                 if (p1.get_type() != Variant::NIL) {

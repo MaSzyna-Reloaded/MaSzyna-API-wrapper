@@ -1,5 +1,4 @@
 #pragma once
-#include <sstream>
 #include <string>
 
 #define ENUM_WITH_COUNT(name, ...) enum class name { __VA_ARGS__, COUNT };
@@ -20,9 +19,7 @@
 #define M_2_PI 0.636619772367581343076
 #endif
 
-namespace libmaszyna {
-    namespace utils {
-        template<typename EnumType>
-        std::string enum_to_string();
-    } // namespace utils
-} // namespace libmaszyna
+namespace libmaszyna::utils {
+    template<typename EnumType>
+    std::string enum_to_string();
+} // namespace libmaszyna::utils

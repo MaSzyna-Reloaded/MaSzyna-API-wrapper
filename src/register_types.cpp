@@ -1,4 +1,3 @@
-#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
@@ -11,13 +10,13 @@
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
+#include "parsers/maszyna_parser.hpp"
+#include "register_types.h"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
-
-#include "parsers/maszyna_parser.hpp"
 
 using namespace godot;
 
@@ -52,7 +51,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 }
 
-void uninitialize_libmaszyna_module(ModuleInitializationLevel p_level) {
+void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
@@ -68,7 +67,7 @@ void uninitialize_libmaszyna_module(ModuleInitializationLevel p_level) {
 extern "C" {
     // Initialization.
     GDExtensionBool GDE_EXPORT libmaszyna_library_init(
-            GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library,
+            const GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library,
             GDExtensionInitialization *r_initialization) {
         const GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
 

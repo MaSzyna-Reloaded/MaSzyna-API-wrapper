@@ -13,7 +13,6 @@ transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 
 script = ExtResource("1_iiqbf")
 controller_path = NodePath("SM42v1")
 cabin_scene = ExtResource("2_htu7b")
-cabin_rotate_180deg = true
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
 
 [node name="SM42v1" parent="." instance=ExtResource("3_vuhlb")]

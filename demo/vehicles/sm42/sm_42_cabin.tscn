@@ -208,7 +208,10 @@ loop = false
 
 [node name="SM42Cabin" type="Node3D"]
 script = ExtResource("1_bffp8")
-camera_position_path = NodePath("CameraPosition")
+camera_bound_min = Vector3(-1.65, 1.8, -3.4)
+camera_bound_max = Vector3(1.65, 2.05, -2.83)
+camera_bound_enabled = true
+driver_position = Vector3(-0.99, 3.454, -3.311)
 
 [node name="Cabin" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -220,7 +223,7 @@ process_thread_group = 0
 physics_interpolation_mode = 0
 auto_translate_mode = 0
 editor_description = ""
-transform = Transform3D(-1, 0, -1.50996e-07, 0, 1, 0, 1.50996e-07, 0, -1, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 rotation_edit_mode = 0
 rotation_order = 2
 top_level = false
@@ -253,6 +256,7 @@ command = "brake_level_set_position"
 command_param = "drive"
 
 [node name="Gauges" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="EngineRPM" type="Node3D" parent="Gauges"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0178885, 3.15643, 1.98876)
@@ -290,6 +294,7 @@ max_state_property = "brake_tank_volume"
 target_mesh_path = NodePath("../../Cabin/banan/podloga_glowna/cyl06")
 
 [node name="Switches" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="DeviesLight" parent="Switches" instance=ExtResource("69_feumc")]
 transform = Transform3D(0.999609, 0.0164182, -0.0226356, 0, 0.809485, 0.587141, 0.027963, -0.586911, 0.809168, -0.131001, 2.99968, 2.2417)
@@ -344,6 +349,7 @@ sound_off = SubResource("AudioStream_h2c58")
 action = "security_acknowledge"
 
 [node name="BrakeReleaser" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.983577, -0.0735428, 0.164826, 0, 0.913221, 0.407465, -0.180489, -0.400773, 0.898223, 0.662463, 2.95732, 2.4515)
 monostable = true
 mesh_path = NodePath("../../Cabin/banan/podloga_glowna/odl")
 command = "brake_releaser"
@@ -424,12 +430,14 @@ action_increase = "main_controller_increase"
 action_decrease = "main_controller_decrease"
 
 [node name="Battery" parent="Switches" instance=ExtResource("69_feumc")]
+transform = Transform3D(0.999722, 0.00711453, -0.0225018, 0, 0.953477, 0.301467, 0.0235997, -0.301383, 0.953211, -0.491953, 2.9605, 2.31912)
 command = "battery"
 state_property = "battery_enabled"
 action = "battery_toggle"
 controller_path = NodePath("../../../SM42v1")
 
 [node name="Lights" type="Node3D" parent="."]
+transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="RoofLight" type="SpotLight3D" parent="Lights"]
 transform = Transform3D(0.671019, 0.739562, 0.0527488, 8.19564e-08, -0.0711437, 0.997466, 0.741441, -0.669318, -0.0477388, 0.0180681, 3.9919, 2.8865)
@@ -660,8 +668,5 @@ light_energy_on = 0.2
 transform = Transform3D(0.997974, -0.0455378, 0.0444316, 0, 0.698359, 0.715747, -0.0636228, -0.714297, 0.696945, -0.0587103, 3.1026, 2.18974)
 state_property = "blinking"
 target_path = NodePath("../../Cabin/banan/podloga_glowna/czuwak_on")
-
-[node name="CameraPosition" type="Marker3D" parent="."]
-transform = Transform3D(0.951606, -0.0088377, 0.307195, 0, 0.999586, 0.0287572, -0.307322, -0.0273655, 0.951212, 0.822875, 3.36325, 3.44209)
 
 [connection signal="blink" from="Lights/Czuwak" to="." method="_on_czuwak_blink"]

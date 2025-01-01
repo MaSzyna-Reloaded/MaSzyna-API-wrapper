@@ -10,7 +10,7 @@ radius = 2.0
 script = ExtResource("1_t4mm8")
 
 [node name="Camera3D" type="Camera3D" parent="."]
-fov = 50.4
+fov = 45.0
 script = ExtResource("1_iuonp")
 deceleration = 70
 

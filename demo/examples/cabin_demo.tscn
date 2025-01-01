@@ -83,7 +83,6 @@ script = ExtResource("1_o1540")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
-head_display_node_path = null
 
 [node name="Environment" type="Node" parent="."]
 

@@ -55,3 +55,6 @@ namespace godot {
     }
 }
 ```
+
+### Conversions
+Always use `static_cast<type>`, don't use C-style cast

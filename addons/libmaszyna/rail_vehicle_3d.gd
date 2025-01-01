@@ -76,10 +76,24 @@ func enter_cabin(player:MaszynaPlayer):
 
         # and add the cam to the cabin
         _cabin.add_child(_camera)
+        _camera.bound_enabled = _cabin.camera_bound_enabled
+        _camera.bound_min = _cabin.camera_bound_min
+        _camera.bound_max = _cabin.camera_bound_max
+
+        # https://github.com/eu07/maszyna/blob/d187ce6b12fab1825c0c92c1346e7ecda401a440/Train.cpp#L9204
+        _camera.bound_min.y += 0.5  # these "magic" values comes from the original source
+        _camera.bound_max.y += 1.8  # (see link above)
 
         # then apply camera transforms
         if cabin_enter_camera_transform:
             _camera.global_transform = cabin_enter_camera_transform
+
+            # FIXME: there is something strange with some cabin's rotation
+            if cabin_rotate_180deg:
+                _camera.global_basis = global_basis
+            else:
+                _camera.global_basis = global_basis.rotated(Vector3.UP, deg_to_rad(180))
+
         else:
             _camera.position = Vector3(0, 3, 0)
 
@@ -112,7 +126,7 @@ func leave_cabin(player:Node):
     var cam_trn = _camera.global_transform
     _cabin.remove_child(_camera)
     player.add_child(_camera)
-
+    _camera.bound_enabled = false
     _camera.global_transform = cam_trn
     _camera.global_transform.origin = self.global_transform.origin + Vector3(5, 0, 0)
     _camera.global_transform.origin.y += 1.75

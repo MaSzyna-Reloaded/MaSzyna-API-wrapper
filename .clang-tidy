@@ -36,5 +36,5 @@ Checks: "bugprone-*,
   -llvm-header-guard,
   -llvm-else-after-return,
   -*-unhandled-self-assignment,
-  *-return-braced-init-list"
+  -*-return-braced-init-list"
 WarningsAsErrors: "*"

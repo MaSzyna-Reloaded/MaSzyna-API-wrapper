@@ -8,17 +8,19 @@ var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
 
-@export_node_path("Marker3D") var camera_position_path:NodePath = NodePath("")
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
             _dirty = true
             controller_path = x
 
+@export var camera_bound_min = Vector3.ZERO
+@export var camera_bound_max = Vector3.ZERO
+@export var camera_bound_enabled:bool = false
+@export var driver_position = Vector3.ZERO
+
 func get_camera_transform():
-    var marker:Marker3D = get_node(camera_position_path)
-    if marker:
-        return marker.global_transform
+    return global_transform.translated_local(driver_position)
 
 func _propagate_train_controller(node: Node, controller: TrainController):
     for child in node.get_children():

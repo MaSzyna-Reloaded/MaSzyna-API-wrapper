@@ -25,6 +25,10 @@ class_name FreeCamera3D
     set(x):
         deceleration = clampf(x, 0, 1000)
 @export var velocity_multiplier:float = 1.0
+
+@export var bound_min = Vector3.ZERO
+@export var bound_max = Vector3.ZERO
+@export var bound_enabled:bool = false
 # Mouse state
 var _mouse_position = Vector2(0.0, 0.0)
 
@@ -109,8 +113,12 @@ func _update_movement(delta):
         _velocity = _direction * Vector3.ONE * 10 * velocity_multiplier * accel * delta
 
     # Checks if we should bother translating the camera
-
-    translate(_velocity * delta)
+    var new_position = transform.translated_local(_velocity * delta).origin
+    if bound_enabled:
+        new_position.x = clamp(new_position.x, bound_min.x, bound_max.x)
+        new_position.y = clamp(new_position.y, bound_min.y, bound_max.y)
+        new_position.z = clamp(new_position.z, bound_min.z, bound_max.z)
+    position = new_position
 
 # Updates mouse look
 func _update_mouselook(mouse_delta):

@@ -5,7 +5,7 @@
 
 [node name="ImpulsCabin" type="Node3D"]
 script = ExtResource("1_fa3e3")
-camera_position_path = NodePath("Marker3D")
+driver_position = Vector3(-0.509006, 2.62038, 8.10148)
 
 [node name="E3DModelInstance" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -50,6 +50,3 @@ data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-a"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cab0", "cab1"]
-
-[node name="Marker3D" type="Marker3D" parent="."]
-transform = Transform3D(-0.997055, 0.000867139, -0.0766839, 0, 0.999936, 0.0113072, 0.0766888, 0.0112739, -0.996991, -0.509006, 2.62038, 8.10148)

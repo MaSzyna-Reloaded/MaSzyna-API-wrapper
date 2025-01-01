@@ -21,12 +21,12 @@ namespace godot {
     }
 
     MaszynaParser::MaszynaParser() {
-        meta.push_back(Dictionary());
+        meta.emplace_back();
     }
 
     void MaszynaParser::initialize(const PackedByteArray &buffer) {
         this->buffer = buffer;
-        length = buffer.size();
+        length = static_cast<int>(buffer.size());
         cursor = 0;
     }
 
@@ -40,13 +40,13 @@ namespace godot {
     String MaszynaParser::get_line() {
         PackedByteArray subbuf;
         while (!eof_reached()) {
-            int c = get8();
+            const int c = get8();
             if (c == 10 || c == 13) {
                 break;
             }
             subbuf.append(c);
         }
-        return String::utf8((const char *)subbuf.ptr(), subbuf.size());
+        return subbuf.get_string_from_utf8();
     }
 
     bool MaszynaParser::eof_reached() {
@@ -58,7 +58,7 @@ namespace godot {
     }
 
     bool MaszynaParser::as_bool(const String &token) {
-        String lower = token.to_lower();
+        const String lower = token.to_lower();
         return lower == "yes" || lower == "on" || lower == "1" || lower == "true" || lower == "vis";
     }
 
@@ -66,24 +66,23 @@ namespace godot {
         return Vector3(tokens[0], tokens[1], tokens[2]);
     }
 
-    Array MaszynaParser::get_tokens(int num, const Array &stop) {
+    Array MaszynaParser::get_tokens(const int num, const Array &stop) {
         Array tokens;
-        String token;
         bool maybe_comment = false;
         bool maybe_endcomment = false;
 
         while (tokens.size() < num && !eof_reached()) {
-            token = "";
+            String token = "";
 
             while (!eof_reached()) {
-                char c = (char)get8();
+                char c = static_cast<char>(get8());
                 bool skip = false;
 
                 if (c == '/') {
                     if (maybe_comment) {
                         // Line comment detected
                         while (!eof_reached() && c != '\n' && c != '\r') {
-                            c = (char)get8();
+                            c = static_cast<char>(get8());
                         }
                         skip = true;
                     } else {
@@ -96,7 +95,7 @@ namespace godot {
                         maybe_endcomment = false;
                         // Block comment detected
                         while (!eof_reached()) {
-                            c = (char)get8();
+                            c = static_cast<char>(get8());
                             if (c == '*') {
                                 maybe_endcomment = true;
                             } else if (c == '/' && maybe_endcomment) {
@@ -143,17 +142,15 @@ namespace godot {
     }
 
     Vector3 MaszynaParser::next_vector3(const Array &stop) {
-        Array tokens = get_tokens(3, stop);
+        const Array tokens = get_tokens(3, stop);
         return as_vector3(tokens);
     }
 
     Array
     MaszynaParser::get_tokens_until(const String &token, const Array &stop = Array::make(" ", '\t', '\n', '\r', ';')) {
         Array tokens;
-
         while (!eof_reached()) {
-            String upcoming_token = next_token(stop);
-            if (!upcoming_token.is_empty()) {
+            if (String upcoming_token = next_token(stop); !upcoming_token.is_empty()) {
                 tokens.append(upcoming_token);
                 if (upcoming_token == token) {
                     break;
@@ -167,15 +164,10 @@ namespace godot {
 
     Array MaszynaParser::parse() {
         Array result;
-
         while (!eof_reached()) {
-            String token = next_token();
-
-            if (handlers.has(token)) {
-                Callable callback = handlers[token];
-                if (callback.is_valid()) {
-                    Array parsed = callback.call();
-                    if (parsed.size() > 0) {
+            if (String token = next_token(); handlers.has(token)) {
+                if (Callable callback = handlers[token]; callback.is_valid()) {
+                    if (Array parsed = callback.call(); parsed.size() > 0) {
                         result.append_array(parsed);
                     }
                 }
@@ -201,6 +193,6 @@ namespace godot {
 
     void MaszynaParser::clear_metadata() {
         meta.clear();
-        meta.push_back(Dictionary());
+        meta.emplace_back();
     }
 } // namespace godot

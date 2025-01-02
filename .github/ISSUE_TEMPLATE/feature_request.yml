@@ -4,6 +4,7 @@ labels: [
   "enhancement"
 ]
 body:
+  - type: textarea
     attributes:
       label: "Summary"
       description: Provide a brief explanation of the feature

@@ -28,7 +28,7 @@ git submodule update --init --recursive
 For build system setup plase, take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
 ### Compiling
 ```bash
-scons platform=android arch=[x86|x86_64|armv7|armv8] target=[target_release|target_debug]
+scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|template_debug]
 ```
 ### Compability
 

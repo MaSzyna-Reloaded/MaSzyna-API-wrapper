@@ -30,6 +30,7 @@ jobs:
         uses: JetBrains/qodana-action@v2024.3.4
         with:
           pr-mode: false
+          upload-result: true
           post-pr-comment: false
           args: --linter,jetbrains/qodana-clang:2024.3-eap-clang18
         env:

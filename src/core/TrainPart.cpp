@@ -60,8 +60,11 @@ namespace godot {
                     p = p->get_parent();
                 }
                 if (train_controller_node != nullptr) {
-                    train_controller_node->connect(
+                    const Error con = train_controller_node->connect(
                             TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                    if (con != OK) {
+                        log_warning("TrainPart::notification(NOTIFICATION_ENTER_TREE) failed with error code " + String::num(con));
+                    }
                 }
                 if (enabled) {
                     _register_commands();

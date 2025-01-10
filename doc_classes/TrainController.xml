@@ -4,8 +4,8 @@
 		Base train controller controlling all train systems
 	</brief_description>
 	<description>
-		Base train controller node. Allows to build behaviour of the train by adding child nodes of the [TrainPart] class.
-		When node is added to the scene tree, the train is automatically registered in the [TrainSystem] with an unique identifier [member TrainController.train_id].
+		Base train controller node. Allows building behavior of the train by adding child nodes of the [TrainPart] class.
+		When node is added to the scene tree, the train is automatically registered in the [TrainSystem] with a unique identifier [member TrainController.train_id].
 	</description>
 	<tutorials>
 	</tutorials>

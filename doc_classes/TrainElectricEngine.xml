@@ -25,10 +25,11 @@
 		</method>
 	</methods>
 	<members>
-		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainElectricEngine.TrainPowerSource" default="0">
+		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainEngine.TrainPowerSource" default="0">
 			Power source for recharging the accumulator
 		</member>
 		<member name="power/current_collector/collector_sliding_width" type="float" setter="set_csw" getter="get_csw" default="0.0">
+			Sliding width of the current collector
 		</member>
 		<member name="power/current_collector/max_collector_lifting" type="float" setter="set_max_collector_lifting" getter="get_max_collector_lifting" default="0.0">
 			Maximum collector lifting, in meters.
@@ -56,52 +57,23 @@
 			NUmber of collectors on the train
 		</member>
 		<member name="power/current_collector/overvoltage_relay" type="bool" setter="set_overvoltage_relay" getter="get_overvoltage_relay" default="false">
+			Overvoltage relay for the current collector as a power source. Voltage higher than allowed will turn the relay off if this parameter is set to [code]true[/code]
 		</member>
 		<member name="power/current_collector/required_main_switch_voltage" type="float" setter="set_required_main_switch_voltage" getter="get_required_main_switch_voltage" default="0.0">
 			Required voltage to switch the main switch on.
 			            By default, it is 0.6*max_voltage
 		</member>
-		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" enum="TrainElectricEngine.TrainPowerType" default="0">
+		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" enum="TrainEngine.TrainPowerType" default="0">
 			Energy source for the power cable
 		</member>
 		<member name="power/power_cable/steam_pressure" type="float" setter="set_power_cable_steam_pressure" getter="get_power_cable_steam_pressure" default="0.0">
 			Steam pressure in the power cable. Applies only when the energy source for the power cable is steam
 		</member>
-		<member name="power/source" type="int" setter="set_engine_power_source" getter="get_engine_power_source" enum="TrainElectricEngine.TrainPowerSource" default="0">
+		<member name="power/source" type="int" setter="set_engine_power_source" getter="get_engine_power_source" enum="TrainEngine.TrainPowerSource" default="0">
 			Energy source for the engine
 		</member>
 		<member name="power/transducer/input_voltage" type="float" setter="set_transducer_input_voltage" getter="get_transducer_input_voltage" default="0.0">
 			Input voltage for the transducer
 		</member>
 	</members>
-	<constants>
-		<constant name="POWER_SOURCE_NOT_DEFINED" value="0" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_INTERNAL" value="1" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_TRANSDUCER" value="2" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_GENERATOR" value="3" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_ACCUMULATOR" value="4" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_CURRENTCOLLECTOR" value="5" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_POWERCABLE" value="6" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_HEATER" value="7" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_SOURCE_MAIN" value="8" enum="TrainPowerSource">
-		</constant>
-		<constant name="POWER_TYPE_NONE" value="0" enum="TrainPowerType">
-		</constant>
-		<constant name="POWER_TYPE_BIO" value="1" enum="TrainPowerType">
-		</constant>
-		<constant name="POWER_TYPE_MECH" value="2" enum="TrainPowerType">
-		</constant>
-		<constant name="POWER_TYPE_ELECTRIC" value="3" enum="TrainPowerType">
-		</constant>
-		<constant name="POWER_TYPE_STEAM" value="4" enum="TrainPowerType">
-		</constant>
-	</constants>
 </class>

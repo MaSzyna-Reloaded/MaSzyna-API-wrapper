@@ -26,11 +26,82 @@
 	<signals>
 		<signal name="engine_start">
 			<description>
+				Engine has started
 			</description>
 		</signal>
 		<signal name="engine_stop">
 			<description>
+				Engine has stopped
 			</description>
 		</signal>
 	</signals>
+	<constants>
+		<constant name="POWER_SOURCE_NOT_DEFINED" value="0" enum="TrainPowerSource">
+			Undefined power source
+		</constant>
+		<constant name="POWER_SOURCE_INTERNAL" value="1" enum="TrainPowerSource">
+			Internal power source
+		</constant>
+		<constant name="POWER_SOURCE_TRANSDUCER" value="2" enum="TrainPowerSource">
+			Transducer as a power source
+		</constant>
+		<constant name="POWER_SOURCE_GENERATOR" value="3" enum="TrainPowerSource">
+			Generator as a power source
+		</constant>
+		<constant name="POWER_SOURCE_ACCUMULATOR" value="4" enum="TrainPowerSource">
+			Accumulator as a power source
+		</constant>
+		<constant name="POWER_SOURCE_CURRENTCOLLECTOR" value="5" enum="TrainPowerSource">
+			Current collector as a power source
+		</constant>
+		<constant name="POWER_SOURCE_POWERCABLE" value="6" enum="TrainPowerSource">
+			Power cable as a power source
+		</constant>
+		<constant name="POWER_SOURCE_HEATER" value="7" enum="TrainPowerSource">
+			Heater as a power source
+		</constant>
+		<constant name="POWER_SOURCE_MAIN" value="8" enum="TrainPowerSource">
+			Main power source
+		</constant>
+		<constant name="POWER_TYPE_NONE" value="0" enum="TrainPowerType">
+			No power
+		</constant>
+		<constant name="POWER_TYPE_BIO" value="1" enum="TrainPowerType">
+			Bio power
+		</constant>
+		<constant name="POWER_TYPE_MECH" value="2" enum="TrainPowerType">
+			Mechanical power
+		</constant>
+		<constant name="POWER_TYPE_ELECTRIC" value="3" enum="TrainPowerType">
+			Electric power
+		</constant>
+		<constant name="POWER_TYPE_STEAM" value="4" enum="TrainPowerType">
+			Steam power
+		</constant>
+		<constant name="ENGINE_TYPE_NONE" value="0" enum="TrainEngineType">
+			No engine
+		</constant>
+		<constant name="ENGINE_TYPE_DUMB" value="1" enum="TrainEngineType">
+			Simplified model of the engine/railcar
+		</constant>
+		<constant name="ENGINE_TYPE_WHEELS_DRIVEN" value="2" enum="TrainEngineType">
+		</constant>
+		<constant name="ENGINE_TYPE_ELECTRIC_SERIES_MOTOR" value="3" enum="TrainEngineType">
+			Electric motor with resistive starting
+		</constant>
+		<constant name="ENGINE_TYPE_ELECTRIC_INDUCTION_MOTOR" value="4" enum="TrainEngineType">
+			Asynchronous electric motor with a frequency converter drive
+		</constant>
+		<constant name="ENGINE_TYPE_DIESEL" value="5" enum="TrainEngineType">
+			Diesel engine with a mechanical transmission
+		</constant>
+		<constant name="ENGINE_TYPE_STEAM" value="6" enum="TrainEngineType">
+			Steam engine
+		</constant>
+		<constant name="ENGINE_TYPE_DIESEL_ELECTRIC" value="7" enum="TrainEngineType">
+			Diesel engine with an electric transmission
+		</constant>
+		<constant name="ENGINE_TYPE_MAIN" value="8" enum="TrainEngineType">
+		</constant>
+	</constants>
 </class>

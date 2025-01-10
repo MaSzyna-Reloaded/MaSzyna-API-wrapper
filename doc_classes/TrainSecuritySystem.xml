@@ -80,10 +80,13 @@
 	</signals>
 	<constants>
 		<constant name="BRAKE_WARNINGSIGNAL_SIREN_LOWTONE" value="0" enum="EmergencyBrakeWarningSignal">
+			Train horn with the low tone
 		</constant>
 		<constant name="BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE" value="1" enum="EmergencyBrakeWarningSignal">
+			Train horn with the high tone
 		</constant>
 		<constant name="BRAKE_WARNINGSIGNAL_WHISTLE" value="2" enum="EmergencyBrakeWarningSignal">
+			Train whistle
 		</constant>
 	</constants>
 </class>

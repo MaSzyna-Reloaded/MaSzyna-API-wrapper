@@ -1,14 +1,12 @@
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/core/math.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
-
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/TrainEngine.hpp"
-#include "../systems/TrainSecuritySystem.hpp"
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/gd_extension.hpp>
+#include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
 
@@ -106,10 +104,6 @@ namespace godot {
                 "get_battery_voltage");
     }
 
-    TrainController::TrainController() {
-        // FIXME: move to _init or _ready signal?
-    }
-
     TMoverParameters *TrainController::get_mover() const {
         return mover;
     }
@@ -125,9 +119,9 @@ namespace godot {
                 new_id = "train";
             }
             return new_id;
-        } else {
-            return train_id;
         }
+
+        return train_id;
     }
 
     void TrainController::initialize_mover() {
@@ -160,7 +154,7 @@ namespace godot {
         /* switch_physics() raczej trzeba zostawic */
         mover->switch_physics(true);
 
-        UtilityFunctions::print("[MaSzyna::TMoverParameters] Mover initialized successfully");
+        DEBUG("[MaSzyna::TMoverParameters] Mover initialized successfully");
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
@@ -180,7 +174,7 @@ namespace godot {
         TrainSystem::get_instance()->unregister_command(get_train_id(), command, callable);
     }
 
-    void TrainController::_notification(int p_what) {
+    void TrainController::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -198,7 +192,6 @@ namespace godot {
                 register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 break;
             case NOTIFICATION_EXIT_TREE:
-                TrainSystem::get_instance()->unregister_train(this->get_train_id());
                 unregister_command("battery", Callable(this, "battery"));
                 unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -208,14 +201,17 @@ namespace godot {
                 unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+                TrainSystem::get_instance()->unregister_train(this->get_train_id());
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
-                UtilityFunctions::print("TrainController::_ready() signals connected to train parts");
+                update_state();
+                DEBUG("TrainController::_ready() signals connected to train parts");
 
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
                 break;
+            default:;
         }
     }
 
@@ -294,7 +290,7 @@ namespace godot {
 
         // FIXME: move to TrainPower
         mover->BatteryVoltage = battery_voltage;
-        mover->NominalBatteryVoltage = battery_voltage; // LoadFIZ_Light
+        mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
     void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) const {
@@ -338,7 +334,7 @@ namespace godot {
         return max_velocity;
     }
 
-    void TrainController::set_axle_arrangement(String p_value) {
+    void TrainController::set_axle_arrangement(const String &p_value) {
         axle_arrangement = p_value;
     }
 
@@ -353,6 +349,9 @@ namespace godot {
             Dictionary new_config;
             _do_fetch_config_from_mover(mover, new_config);
             update_config(new_config);
+
+            /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
+            mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }
@@ -448,12 +447,12 @@ namespace godot {
     }
 
     void TrainController::main_controller_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
     void TrainController::main_controller_decrease(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
@@ -466,12 +465,12 @@ namespace godot {
     }
 
     void TrainController::radio_channel_increase(const int p_step) {
-        int step = p_step > 0 ? p_step : 1;
+        const int step = p_step > 0 ? p_step : 1;
         radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
     }
 
     void TrainController::radio_channel_decrease(const int p_step) {
-        int step = p_step ? p_step : 1;
+        const int step = (p_step != 0) ? p_step : 1;
         radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
     }
 

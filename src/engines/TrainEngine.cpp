@@ -1,12 +1,8 @@
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include "TrainEngine.hpp"
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     class TrainController;
-
-    TrainEngine::TrainEngine() = default;
-
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_motor_param_table"), &TrainEngine::set_motor_param_table);
         ClassDB::bind_method(D_METHOD("get_motor_param_table"), &TrainEngine::get_motor_param_table);
@@ -18,49 +14,23 @@ namespace godot {
                 "set_motor_param_table", "get_motor_param_table");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
-
-        BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_GENERATOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_ACCUMULATOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_CURRENTCOLLECTOR);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_POWERCABLE);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_HEATER);
-        BIND_ENUM_CONSTANT(POWER_SOURCE_MAIN);
-
-        BIND_ENUM_CONSTANT(POWER_TYPE_NONE);
-        BIND_ENUM_CONSTANT(POWER_TYPE_BIO);
-        BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
-        BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
-        BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
-
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_NONE);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_DUMB);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_WHEELS_DRIVEN);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_ELECTRIC_SERIES_MOTOR);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_ELECTRIC_INDUCTION_MOTOR);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_DIESEL);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_STEAM);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_DIESEL_ELECTRIC);
-        BIND_ENUM_CONSTANT(ENGINE_TYPE_MAIN);
     }
 
     void TrainEngine::_do_update_internal_mover(TMoverParameters *mover) {
-        mover->EngineType = static_cast<TEngineType>(get_engine_type());
+        mover->EngineType = get_engine_type();
 
         /* FIXME: for testing purposes */
         mover->GroundRelay = true;
         mover->NoVoltRelay = true;
         mover->OvervoltageRelay = true;
-        mover->DamageFlag = false;
-        mover->EngDmgFlag = false;
+        mover->DamageFlag = 0;
+        mover->EngDmgFlag = 0;
         mover->ConvOvldFlag = false;
         /* end testing */
 
         /* motor param table */
-        constexpr int _max = Maszyna::MotorParametersArraySize;
-        for (int i = 0; i < std::min(_max, static_cast<int>(motor_param_table.size())); i++) {
+        const int _max = Maszyna::MotorParametersArraySize;
+        for (int i = 0; i < std::min(_max, (int)motor_param_table.size()); i++) {
             mover->MotorParam[i].mIsat = motor_param_table[i].get("misat");
             mover->MotorParam[i].fi = motor_param_table[i].get("fi");
             mover->MotorParam[i].mfi = motor_param_table[i].get("mfi");
@@ -71,7 +41,7 @@ namespace godot {
     }
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        const bool previous_main_switch = state.get("main_switch_enabled", false);
+        bool previous_main_switch = static_cast<bool>(state.get("main_switch_enabled", false));
         state["main_switch_enabled"] = mover->Mains;
         state["Mm"] = mover->Mm;
         state["Mw"] = mover->Mw;
@@ -104,13 +74,13 @@ namespace godot {
         config["main_controller_position_max"] = mover->MainCtrlPosNo;
     }
 
-    TypedArray<Dictionary> TrainEngine::get_motor_param_table() const {
+    TypedArray<Dictionary> TrainEngine::get_motor_param_table() {
         return motor_param_table;
     }
 
-    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary>& p_wwlist) {
+    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table) {
         motor_param_table.clear();
-        motor_param_table.append_array(p_wwlist);
+        motor_param_table.append_array(p_motor_param_table);
     }
 
     void TrainEngine::main_switch(const bool p_enabled) {

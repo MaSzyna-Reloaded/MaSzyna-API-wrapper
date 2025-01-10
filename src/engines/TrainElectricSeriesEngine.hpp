@@ -6,7 +6,7 @@
 namespace godot {
     class TrainController;
 
-    class TrainElectricSeriesEngine final : public TrainElectricEngine {
+    class TrainElectricSeriesEngine: public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
         public:
             static void _bind_methods();
@@ -23,8 +23,5 @@ namespace godot {
 
             double get_winding_resistance() const;
             void set_winding_resistance(double value);
-
-            TrainElectricSeriesEngine();
-            ~TrainElectricSeriesEngine() override = default;
     };
 } // namespace godot

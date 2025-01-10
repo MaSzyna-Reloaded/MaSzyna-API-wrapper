@@ -32,7 +32,7 @@
 		</method>
 		<method name="log">
 			<return type="void" />
-			<param index="0" name="loglevel" type="int" enum="TrainSystem.TrainLogLevel" />
+			<param index="0" name="loglevel" type="int" enum="LogSystem.LogLevel" />
 			<param index="1" name="line" type="String" />
 			<description>
 				Logs a message
@@ -42,28 +42,28 @@
 			<return type="void" />
 			<param index="0" name="line" type="String" />
 			<description>
-				Logs a debug message. See [TrainLogLevel].
+				Logs a debug message. See [LogSystem.LogLevel].
 			</description>
 		</method>
 		<method name="log_error">
 			<return type="void" />
 			<param index="0" name="line" type="String" />
 			<description>
-				Logs an error message. See [TrainLogLevel].
+				Logs an error message. See [LogSystem.LogLevel].
 			</description>
 		</method>
 		<method name="log_info">
 			<return type="void" />
 			<param index="0" name="line" type="String" />
 			<description>
-				Logs an info message. See [TrainLogLevel].
+				Logs an info message. See [LogSystem.LogLevel].
 			</description>
 		</method>
 		<method name="log_warning">
 			<return type="void" />
 			<param index="0" name="line" type="String" />
 			<description>
-				Logs a warning message. See [TrainLogLevel].
+				Logs a warning message. See [LogSystem.LogLevel].
 			</description>
 		</method>
 		<method name="register_command">

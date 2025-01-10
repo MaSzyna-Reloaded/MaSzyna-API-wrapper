@@ -40,7 +40,6 @@
 			<return type="void" />
 			<param index="0" name="position" type="String" />
 			<description>
-				Sets brake lever to given position
 			</description>
 		</method>
 		<method name="brake_releaser">
@@ -156,22 +155,16 @@
 		<constant name="COMPRESSOR_POWER_COUPLER2" value="5" enum="CompressorPower">
 		</constant>
 		<constant name="BRAKE_HANDLE_POSITION_MIN" value="0" enum="BrakeHandlePosition">
-			Minimal position of the brake handle
 		</constant>
 		<constant name="BRAKE_HANDLE_POSITION_MAX" value="1" enum="BrakeHandlePosition">
-			Maximal position of the brake handle
 		</constant>
 		<constant name="BRAKE_HANDLE_POSITION_DRIVE" value="2" enum="BrakeHandlePosition">
-			Driving position of the brake handle
 		</constant>
 		<constant name="BRAKE_HANDLE_POSITION_FULL" value="3" enum="BrakeHandlePosition">
-			"Full braking" position of the brake handle
 		</constant>
 		<constant name="BRAKE_HANDLE_POSITION_EMERGENCY" value="4" enum="BrakeHandlePosition">
-			"Emergency braking" position of the brake handle
 		</constant>
 		<constant name="BRAKE_VALVE_NO_VALVE" value="0" enum="TrainBrakeValve">
-			No brake handle
 		</constant>
 		<constant name="BRAKE_VALVE_W" value="1" enum="TrainBrakeValve">
 		</constant>
@@ -230,7 +223,6 @@
 		<constant name="BRAKE_VALVE_CV1_R" value="28" enum="TrainBrakeValve">
 		</constant>
 		<constant name="BRAKE_VALVE_OTHER" value="29" enum="TrainBrakeValve">
-			Other brake handle
 		</constant>
 	</constants>
 </class>

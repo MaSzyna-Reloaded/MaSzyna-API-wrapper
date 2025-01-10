@@ -1,0 +1,109 @@
+[gd_scene load_steps=7 format=3 uid="uid://djqacw65swdqc"]
+
+[ext_resource type="Script" path="res://examples/mover_demo.gd" id="1_hbfy1"]
+[ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_j25qa"]
+[ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://hud/panel.tscn" id="3_pdcrj"]
+[ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="4_4bpxo"]
+[ext_resource type="PackedScene" uid="uid://laujatulc22" path="res://hud/mover_switches.tscn" id="5_vg5os"]
+[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="6_7bum4"]
+
+[node name="Demo" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("1_hbfy1")
+
+[node name="DeveloperConsole" parent="." instance=ExtResource("2_j25qa")]
+
+[node name="UI" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 1.02
+offset_bottom = 0.039917
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="Header" type="HBoxContainer" parent="UI"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TrainName" type="Label" parent="UI/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="BatteryLabel" type="Label" parent="UI/Header"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "Battery"
+
+[node name="BatteryProgressBar" type="ProgressBar" parent="UI/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+tooltip_text = "Battery"
+max_value = 110.0
+show_percentage = false
+
+[node name="BatteryValue" type="Label" parent="UI/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Title" type="Label" parent="UI/Header"]
+layout_mode = 2
+size_flags_horizontal = 10
+text = "MaSzyna MOVER TESTER"
+horizontal_alignment = 2
+
+[node name="DebugPanels" type="HFlowContainer" parent="UI"]
+layout_mode = 2
+
+[node name="DebugDoor" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Door"
+
+[node name="DebugEngine" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Engine"
+
+[node name="DebugSecurity" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Security"
+
+[node name="DebugBrake" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Brake"
+
+[node name="DebugTrain" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
+unique_name_in_owner = true
+layout_mode = 2
+title = "Train"
+
+[node name="Gauges" parent="UI" instance=ExtResource("4_4bpxo")]
+layout_mode = 2
+train_controller = NodePath("../../SM42")
+
+[node name="MoverSwitches" parent="UI" instance=ExtResource("5_vg5os")]
+layout_mode = 2
+train_controller = NodePath("../../SM42")
+
+[node name="SM42" parent="." instance=ExtResource("6_7bum4")]
+train_id = "sm42"
+
+[connection signal="mover_initialized" from="SM42" to="." method="_on_sm_42_mover_initialized"]
+
+[editable path="UI/MoverSwitches"]
+[editable path="SM42"]

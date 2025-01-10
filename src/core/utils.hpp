@@ -19,9 +19,7 @@
 #define M_2_PI 0.636619772367581343076
 #endif
 
-namespace libmaszyna {
-    namespace utils {
-        template<typename EnumType>
-        std::string enum_to_string();
-    }
-} // namespace libmaszyna
+namespace libmaszyna::utils {
+    template<typename EnumType>
+    std::string enum_to_string();
+} // namespace libmaszyna::utils

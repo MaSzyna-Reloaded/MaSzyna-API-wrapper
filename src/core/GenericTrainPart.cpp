@@ -1,12 +1,9 @@
+#include "GenericTrainPart.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
-#include "GenericTrainPart.hpp"
-
 namespace godot {
-    GenericTrainPart::GenericTrainPart() = default;
-
     void GenericTrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_train_controller_node"), &GenericTrainPart::get_train_controller_node);
         ClassDB::bind_method(D_METHOD("get_train_state"), &GenericTrainPart::get_train_state);
@@ -36,10 +33,9 @@ namespace godot {
     Dictionary GenericTrainPart::get_train_state() {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_state();
-        } else {
-            UtilityFunctions::push_error("GenericTrainPart has no train controller node");
-            return Dictionary();
         }
+        UtilityFunctions::push_error("GenericTrainPart has no train controller node");
+        return {};
     }
 
 } // namespace godot

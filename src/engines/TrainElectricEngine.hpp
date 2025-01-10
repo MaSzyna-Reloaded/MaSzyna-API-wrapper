@@ -8,6 +8,25 @@ namespace godot {
     class TrainElectricEngine : public TrainEngine {
             GDCLASS(TrainElectricEngine, TrainEngine)
         public:
+            enum TrainPowerSource {
+                POWER_SOURCE_NOT_DEFINED,
+                POWER_SOURCE_INTERNAL,
+                POWER_SOURCE_TRANSDUCER,
+                POWER_SOURCE_GENERATOR,
+                POWER_SOURCE_ACCUMULATOR,
+                POWER_SOURCE_CURRENTCOLLECTOR,
+                POWER_SOURCE_POWERCABLE,
+                POWER_SOURCE_HEATER,
+                POWER_SOURCE_MAIN
+            };
+
+            enum TrainPowerType {
+                POWER_TYPE_NONE,
+                POWER_TYPE_BIO,
+                POWER_TYPE_MECH,
+                POWER_TYPE_ELECTRIC,
+                POWER_TYPE_STEAM
+            };
 
             static void _bind_methods();
             TrainPowerSource power_source = static_cast<TrainPowerSource>(static_cast<int>(TPowerSource::NotDefined));
@@ -83,10 +102,7 @@ namespace godot {
             void set_required_main_switch_voltage(float p_required_main_switch_voltage);
             float get_required_main_switch_voltage() const;
             void set_csw(float p_csw);
-
-            TrainElectricEngine();
-            ~TrainElectricEngine() override = default;
-            void set_transducer_input_voltage(float p_required_main_switch_voltage);
+            void set_transducer_input_voltage(float p_transducer_input_voltage);
             float get_transducer_input_voltage() const;
             void set_accumulator_recharge_source(TrainPowerSource p_source);
             TrainPowerSource get_accumulator_recharge_source() const;
@@ -94,10 +110,11 @@ namespace godot {
             TrainPowerType get_power_cable_power_source() const;
             void set_power_cable_steam_pressure(float p_pressure);
             float get_power_cable_steam_pressure() const;
-
             void compressor(bool p_enabled);
             void converter(bool p_enabled);
             void _register_commands() override;
             void _unregister_commands() override;
     };
 } // namespace godot
+VARIANT_ENUM_CAST(TrainElectricEngine::TrainPowerSource);
+VARIANT_ENUM_CAST(TrainElectricEngine::TrainPowerType);

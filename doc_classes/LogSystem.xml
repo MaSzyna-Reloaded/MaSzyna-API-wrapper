@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="LogSystem" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Application-wide generic logger
+	</brief_description>
+	<description>
+		Application-wide generic logger
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="debug">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs message at DEBUG level. See [enum LogSystem.LogLevel].
+			</description>
+		</method>
+		<method name="error">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs message at ERROR level. See [enum LogSystem.LogLevel].
+			</description>
+		</method>
+		<method name="info">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs message at INFO level. See [enum LogSystem.LogLevel].
+			</description>
+		</method>
+		<method name="log">
+			<return type="void" />
+			<param index="0" name="loglevel" type="int" enum="LogLevel" />
+			<param index="1" name="line" type="String" />
+			<description>
+				Logs message at specified level
+			</description>
+		</method>
+		<method name="warning">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs message at WARNING level. See [enum LogSystem.LogLevel].
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="log_updated">
+			<param index="0" name="loglevel" type="int" />
+			<param index="1" name="line" type="String" />
+			<description>
+				Emitted on a log message
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="LogLevel::DEBUG" value="0" enum="LogLevel">
+			Debug level
+		</constant>
+		<constant name="LogLevel::INFO" value="1" enum="LogLevel">
+			Info level
+		</constant>
+		<constant name="LogLevel::WARNING" value="2" enum="LogLevel">
+			Warning level
+		</constant>
+		<constant name="LogLevel::ERROR" value="3" enum="LogLevel">
+			Error level
+		</constant>
+	</constants>
+</class>

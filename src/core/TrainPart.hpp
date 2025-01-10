@@ -1,8 +1,9 @@
 #pragma once
-#include <functional>
-#include <godot_cpp/classes/node.hpp>
+#include "./LogSystem.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
+#include <functional>
+#include <godot_cpp/classes/node.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
     if ((mover_ptr) == nullptr) {                                                                                      \
@@ -62,7 +63,7 @@ namespace godot {
             void unregister_command(const String &command, const Callable &callback);
             void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void log(const TrainSystem::TrainLogLevel level, const String &line);
+            void log(LogSystem::LogLevel level, const String &line);
             void log_debug(const String &line);
             void log_info(const String &line);
             void log_warning(const String &line);
@@ -81,8 +82,6 @@ namespace godot {
 
             /* High level method for getting the state of the Mover */
             Dictionary get_mover_state();
-            TrainPart();
-            ~TrainPart() override = default;
             void emit_config_changed_signal();
     };
 } // namespace godot

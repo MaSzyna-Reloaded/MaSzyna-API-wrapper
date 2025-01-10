@@ -1,24 +1,49 @@
-/venv/
-/demo/.godot/
-/demo/*.import
-/cmake-build-debug/
-/src/gen/
-CMakeLists.txt
-*.o
-*.os
-*.dll
-*.so
+# Build artifacts
 *.a
-Info.plist
-*.import
-.sconsign.dblite
+*.d
+*.dll
 *.dylib
-/.idea/
-*tmp
-docker-storage/MacOSX14.5.sdk.tar.xz
+*.o
+*.obj
+*.os
+*.so
+CMakeCache.txt
+CMakeLists.txt
+/build.ninja
+/.cmake/
+**/CMakeFiles/
+/cmake-build-debug/
+/.ninja_deps
+/.ninja_log
+/godot-cpp/cmake_install.cmake
+**/compile_commands.json
+
+# Godot-specific files
+*.import
+/bin/
+/demo/.godot/
+/demo/addons/gut
+/demo/addons/libmaszyna
+/demo/bin
+/src/gen/
 /doc
-/platform
 /modules
+/platform
 *.macos
 
-CMakeFiles/
+# IDE and OS-specific files
+/.idea/
+Info.plist
+.sconsign.dblite
+
+# Vendor and generated files
+/docs/vendor
+/src/gen/
+/vendor
+
+# Virtual environments
+/venv/
+
+# Other temporary files
+*tmp
+docker-storage/MacOSX14.5.sdk.tar.xz

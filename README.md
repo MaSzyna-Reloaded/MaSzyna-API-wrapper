@@ -14,18 +14,27 @@ This C++ GDExtension for Godot Engine offers a simplified interface to the MaSzy
 1. Install Python 3
 2. Install scons using `pip install scons`
 3. Install [MinGW-w64](https://mingw-w64.org/)
-For a better reference see: for [windows](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_windows.html) and for [linux](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_linuxbsd.html)
 4. Clone the repository and checkout submodules
+
+For a better reference see: for [windows](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_windows.html) and for [linux](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_linuxbsd.html)
+
 ```
 git clone <url>
 git submodule update --init --recursive
 ```
 
+### Android development
+#### Setup the build system   
+For build system setup plase, take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
+### Compiling
+```bash
+scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|template_debug]
+```
 ### Compability
 
-| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android | iOS | C++ Standard | MaSzyna Version |
-|----------------|----------------------|---------|-------|--------|---------|-----|--------------|-----------------|
-| dev            | 4.3                  | ✅       | ✅       | ❌       | ❌       | ❌       | C++ 17       | 24.06 |
+| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android | Android Target API Level | iOS | C++ Standard | MaSzyna Version |
+|----------------|----------------------|---------|-------|--------|---------|--------------------------|-----|--------------|-----------------|
+| dev            | 4.3                  | ✅       | ✅       | ❌       | ✅      | 34 | ❌       | C++ 17       | 24.06 |
 
 ### Documentation
 
@@ -36,7 +45,7 @@ If you have found any bug, have a suggestion or want to join us - feel free to o
 ### Code Quality
 
 #### Qodana
-FIles on PRs are scanned by Qodana. All it's reports are published [here](https://qodana.cloud/projects/ARjJ6)
+Files on PRs are scanned by Qodana. All it's reports are published [here](https://qodana.cloud/projects/ARjJ6)
 
 ### Testing
 

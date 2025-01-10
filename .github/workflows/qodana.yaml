@@ -30,6 +30,7 @@ jobs:
         uses: JetBrains/qodana-action@v2024.3.4
         with:
           pr-mode: false
+          post-pr-comment: false
           args: --linter,jetbrains/qodana-clang:2024.3-eap-clang18
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}

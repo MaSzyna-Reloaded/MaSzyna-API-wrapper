@@ -4,6 +4,7 @@ labels: [
   "enhancement"
 ]
 body:
+  - type: textarea
     attributes:
       label: "Summary"
       description: Provide a brief explanation of the feature
@@ -13,7 +14,7 @@ body:
   - type: textarea
     id: full_descrtiption
     attributes:
-      label: "Full descriptions"
-      placeholder: Describe the feature, add mockups if needed.
+      label: "Full description"
+      placeholder: Describe the feature. Add mockups or attachments if needed.
     validations:
       required: true

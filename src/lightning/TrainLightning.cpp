@@ -1,13 +1,6 @@
-//
-// Created by karol on 03.12.2024.
-//
-
 #include "TrainLightning.hpp"
 
 namespace godot {
-
-    TrainLightning::TrainLightning() = default;
-
     void TrainLightning::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_light_source", "light_source"), &TrainLightning::set_light_source);
         ClassDB::bind_method(D_METHOD("get_light_source"), &TrainLightning::get_light_source);
@@ -84,21 +77,21 @@ namespace godot {
         TrainPart::_unregister_commands();
     }
 
-    void TrainLightning::set_light_source(const TrainEngine::TrainPowerSource p_light_source) {
+    void TrainLightning::set_light_source(const TrainElectricEngine::TrainPowerSource p_light_source) {
         light_source = p_light_source;
         _dirty = true;
     }
 
-    TrainEngine::TrainPowerSource TrainLightning::get_light_source() const {
+    TrainElectricEngine::TrainPowerSource TrainLightning::get_light_source() const {
         return light_source;
     }
 
-    void TrainLightning::set_generator_engine(const TrainEngine::TrainEngineType p_generator_engine) {
+    void TrainLightning::set_generator_engine(const TEngineType p_generator_engine) {
         generator_engine = p_generator_engine;
         _dirty = true;
     }
 
-    TrainEngine::TrainEngineType TrainLightning::get_generator_engine() const {
+    TEngineType TrainLightning::get_generator_engine() const {
         return generator_engine;
     }
 
@@ -111,12 +104,12 @@ namespace godot {
         return max_accumulator_voltage;
     }
 
-    void TrainLightning::set_alternative_light_source(const TrainEngine::TrainPowerSource p_light_source) {
+    void TrainLightning::set_alternative_light_source(const TrainElectricEngine::TrainPowerSource p_light_source) {
         alternative_light_source = p_light_source;
         _dirty = true;
     }
 
-    TrainEngine::TrainPowerSource TrainLightning::get_alternative_light_source() const {
+    TrainElectricEngine::TrainPowerSource TrainLightning::get_alternative_light_source() const {
         return alternative_light_source;
     }
 
@@ -138,12 +131,12 @@ namespace godot {
         return alternative_max_voltage;
     }
 
-    void TrainLightning::set_accumulator_recharge_source(const TrainEngine::TrainPowerSource p_accumulator_recharge_source) {
+    void TrainLightning::set_accumulator_recharge_source(const TrainElectricEngine::TrainPowerSource p_accumulator_recharge_source) {
         accumulator_recharge_source = p_accumulator_recharge_source;
         _dirty = true;
     }
 
-    TrainEngine::TrainPowerSource TrainLightning::get_accumulator_recharge_source() const {
+    TrainElectricEngine::TrainPowerSource TrainLightning::get_accumulator_recharge_source() const {
         return accumulator_recharge_source;
     }
 

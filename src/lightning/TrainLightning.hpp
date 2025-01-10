@@ -3,9 +3,9 @@
 //
 
 #pragma once
-#include <godot_cpp/classes/node.hpp>
 #include "../core/TrainPart.hpp"
-#include "../engines/TrainEngine.hpp"
+#include "../engines/TrainElectricEngine.hpp"
+#include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class TrainController;
@@ -24,11 +24,11 @@ namespace godot {
             /**
              * Generator for light power. Default value taken from internal mover
              */
-            TrainEngine::TrainPowerSource light_source = TrainEngine::TrainPowerSource::POWER_SOURCE_GENERATOR;
+            TrainElectricEngine::TrainPowerSource light_source = TrainElectricEngine::TrainPowerSource::POWER_SOURCE_GENERATOR;
             /**
              * Engine type of the generator
              */
-            TrainEngine::TrainEngineType generator_engine = TrainEngine::TrainEngineType::ENGINE_TYPE_MAIN;
+            TEngineType generator_engine = TEngineType::Main;
             /**
              * Accumulator capacity for an alternative light source. Default value from internal mover
              */
@@ -36,7 +36,7 @@ namespace godot {
             /**
              * Alternative generator for light power. Default value taken from internal mover
              */
-            TrainEngine::TrainPowerSource alternative_light_source = TrainEngine::TrainPowerSource::POWER_SOURCE_ACCUMULATOR;
+            TrainElectricEngine::TrainPowerSource alternative_light_source = TrainElectricEngine::TrainPowerSource::POWER_SOURCE_ACCUMULATOR;
             /**
              * Accumulator capacity for an alternative light power source. Default value from internal mover
              */
@@ -48,23 +48,21 @@ namespace godot {
             /**
              * Accumulator recharge source for an alternative light power source. Default value from internal mover
              */
-            TrainEngine::TrainPowerSource accumulator_recharge_source = TrainEngine::TrainPowerSource::POWER_SOURCE_GENERATOR;
-            TrainLightning();
-            ~TrainLightning() override = default;
+            TrainElectricEngine::TrainPowerSource accumulator_recharge_source = TrainElectricEngine::TrainPowerSource::POWER_SOURCE_GENERATOR;
 
-            void set_light_source(TrainEngine::TrainPowerSource p_light_source);
-            TrainEngine::TrainPowerSource get_light_source() const;
-            void set_generator_engine(TrainEngine::TrainEngineType p_generator_engine);
-            TrainEngine::TrainEngineType get_generator_engine() const;
+            void set_light_source(TrainElectricEngine::TrainPowerSource p_light_source);
+            TrainElectricEngine::TrainPowerSource get_light_source() const;
+            void set_generator_engine(TEngineType p_generator_engine);
+            TEngineType get_generator_engine() const;
             void set_max_accumulator_voltage(double p_max_accumulator_voltage);
             double get_max_accumulator_voltage() const;
-            void set_alternative_light_source(TrainEngine::TrainPowerSource p_light_source);
-            TrainEngine::TrainPowerSource get_alternative_light_source() const;
+            void set_alternative_light_source(TrainElectricEngine::TrainPowerSource p_light_source);
+            TrainElectricEngine::TrainPowerSource get_alternative_light_source() const;
             void set_alternative_max_voltage(double p_max_accumulator_voltage);
             double get_alternative_max_voltage() const;
             void set_alternative_light_capacity(double p_max_accumulator_voltage);
             double get_alternative_light_capacity() const;
-            void set_accumulator_recharge_source(TrainEngine::TrainPowerSource p_accumulator_recharge_source);
-            TrainEngine::TrainPowerSource get_accumulator_recharge_source() const;
+            void set_accumulator_recharge_source(TrainElectricEngine::TrainPowerSource p_accumulator_recharge_source);
+            TrainElectricEngine::TrainPowerSource get_accumulator_recharge_source() const;
     };
 } // namespace godot

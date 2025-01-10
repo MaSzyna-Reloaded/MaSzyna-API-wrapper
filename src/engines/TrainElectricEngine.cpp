@@ -127,6 +127,22 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &TrainElectricEngine::compressor);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
+
+        BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_GENERATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_ACCUMULATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_CURRENTCOLLECTOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_POWERCABLE);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_HEATER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_MAIN);
+
+        BIND_ENUM_CONSTANT(POWER_TYPE_NONE);
+        BIND_ENUM_CONSTANT(POWER_TYPE_BIO);
+        BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
+        BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
+        BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
     }
 
     void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {

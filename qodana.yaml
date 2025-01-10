@@ -11,7 +11,3 @@ failThreshold: 0
 linter: jetbrains/qodana-clang:2024.3-eap-clang18
 include:
   - name: VulnerableLibrariesGlobal
-exclude:
-  - name: All
-    paths:
-      - godot-cpp

@@ -1,7 +1,3 @@
-//
-// Created by karol on 03.12.2024.
-//
-
 #pragma once
 #include "../core/TrainPart.hpp"
 #include "../engines/TrainElectricEngine.hpp"

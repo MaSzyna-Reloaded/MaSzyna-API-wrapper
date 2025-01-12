@@ -1,0 +1,7 @@
+[gd_resource type="MotorParameter" format=3 uid="uid://ndt20qyqslfj"]
+
+[resource]
+mfi = 15.0
+mIsat = 183.3
+fi = 2000.0
+Isat = 49.0

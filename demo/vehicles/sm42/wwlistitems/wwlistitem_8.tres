@@ -1,0 +1,10 @@
+[gd_resource type="WWListItem" format=3 uid="uid://budvxv838n2nc"]
+
+[resource]
+rpm = 784.0
+max_power = 348.0
+max_voltage = 494.0
+max_current = 1780.0
+min_wakeup_voltage = 100.0
+max_wakeup_voltage = 235.0
+max_wakeup_power = 305.0

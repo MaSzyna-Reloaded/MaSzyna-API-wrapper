@@ -37,9 +37,10 @@
 			[code]Engine:OilMinPressure[/code]
 			Minimum oil pressure required for the engine to start
 		</member>
-		<member name="wwlist" type="Array[]" setter="set_wwlist" getter="get_wwlist" default="[]">
+		<member name="wwlist" type="WWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 			[code]Engine::WWList[/code]
-			Diesel engine characterisics table. Each item describes a main controller position starting from 0.
+			Diesel engine characteristics table.
+			Each item describes a main controller position starting from 0.
 		</member>
 	</members>
 </class>

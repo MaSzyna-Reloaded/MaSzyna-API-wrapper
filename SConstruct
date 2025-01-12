@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+ #!/usr/bin/env python
 import os
 
 from SCons.Script import (  # pylint: disable=no-name-in-module
@@ -80,6 +80,7 @@ sources = (
     + Glob("src/brakes/*.cpp")
     + Glob("src/types/*.cpp")
     + Glob("src/parsers/*.cpp")
+    + Glob("src/resources/engines/*.cpp")
 )
 
 if env["target"] in ["editor", "template_debug"]:

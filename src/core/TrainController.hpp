@@ -11,7 +11,7 @@ namespace godot {
     class TrainSystem;
 
 
-    class TrainController: public Node {
+    class TrainController : public Node {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
@@ -59,6 +59,26 @@ namespace godot {
 
 
         public:
+            enum TrainPowerSource {
+                POWER_SOURCE_NOT_DEFINED,
+                POWER_SOURCE_INTERNAL,
+                POWER_SOURCE_TRANSDUCER,
+                POWER_SOURCE_GENERATOR,
+                POWER_SOURCE_ACCUMULATOR,
+                POWER_SOURCE_CURRENTCOLLECTOR,
+                POWER_SOURCE_POWERCABLE,
+                POWER_SOURCE_HEATER,
+                POWER_SOURCE_MAIN
+            };
+
+            enum TrainPowerType {
+                POWER_TYPE_NONE,
+                POWER_TYPE_BIO,
+                POWER_TYPE_MECH,
+                POWER_TYPE_ELECTRIC,
+                POWER_TYPE_STEAM
+            };
+
             static const char *MOVER_CONFIG_CHANGED_SIGNAL;
             static const char *MOVER_INITIALIZED_SIGNAL;
             static const char *POWER_CHANGED_SIGNAL;
@@ -110,5 +130,7 @@ namespace godot {
             String get_axle_arrangement() const;
             Dictionary get_state();
     };
-
 } // namespace godot
+
+VARIANT_ENUM_CAST(TrainController::TrainPowerSource);
+VARIANT_ENUM_CAST(TrainController::TrainPowerType);

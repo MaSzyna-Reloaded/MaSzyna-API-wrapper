@@ -4,7 +4,9 @@
 		Application-wide generic logger
 	</brief_description>
 	<description>
-		Application-wide generic logger
+		This class provides a simple, application-wide logging system.
+		It allows logging messages at different severity levels and emitting signals when log messages are generated.
+		This is useful for debugging, monitoring application behavior, and providing informative output during runtime.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -32,7 +34,7 @@
 		</method>
 		<method name="log">
 			<return type="void" />
-			<param index="0" name="loglevel" type="int" enum="LogLevel" />
+			<param index="0" name="loglevel" type="int" enum="LogSystem.LogLevel" />
 			<param index="1" name="line" type="String" />
 			<description>
 				Logs message at specified level
@@ -56,17 +58,17 @@
 		</signal>
 	</signals>
 	<constants>
-		<constant name="LogLevel::DEBUG" value="0" enum="LogLevel">
-			Debug level
+		<constant name="DEBUG" value="0" enum="LogLevel">
+			Debug level log messages.
 		</constant>
-		<constant name="LogLevel::INFO" value="1" enum="LogLevel">
-			Info level
+		<constant name="INFO" value="1" enum="LogLevel">
+			Informational level log messages.
 		</constant>
-		<constant name="LogLevel::WARNING" value="2" enum="LogLevel">
-			Warning level
+		<constant name="WARNING" value="2" enum="LogLevel">
+			Warning level log messages.
 		</constant>
-		<constant name="LogLevel::ERROR" value="3" enum="LogLevel">
-			Error level
+		<constant name="ERROR" value="3" enum="LogLevel">
+			Error level log messages.
 		</constant>
 	</constants>
 </class>

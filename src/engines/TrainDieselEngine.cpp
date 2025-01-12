@@ -27,7 +27,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &TrainDieselEngine::oil_pump);
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::ARRAY, "wwlist", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "TypedArray<Array>"),
+                        Variant::ARRAY, "wwlist", PROPERTY_HINT_TYPE_STRING, String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":WWListItem", PROPERTY_USAGE_DEFAULT, "TypedArray<WWListItem>"),
                 "set_wwlist", "get_wwlist");
     }
 
@@ -68,21 +68,25 @@ namespace godot {
         mover->Ftmax = traction_force_max;
 
         /* FIXME: move to TrainDieselElectricEngine */
-        /* tablica rezystorow rozr. WWList aka DEList aka TDESchemeTable */
+        /* tablica rezystorow rozr. (eng. Starting resistor array) WWList aka DEList aka TDESchemeTable */
         constexpr int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
         const int wwlist_size = static_cast<int>(wwlist.size());
         mover->MainCtrlPosNo = wwlist_size - 1;
         for (int i = 0; i < std::min(_max, wwlist_size); i++) {
-            Array row = wwlist[i];
-            mover->DElist[i].RPM = row[0];
-            mover->DElist[i].GenPower = row[1];
-            mover->DElist[i].Umax = row[2];
-            mover->DElist[i].Imax = row[3];
-            if (row.size() == 7) {
-                mover->SST[i].Umin = row[4];
-                mover->SST[i].Umax = row[5];
-                mover->SST[i].Pmax = row[6];
+            const Ref<WWListItem> &row = wwlist[i];
+            if (row == nullptr || !row.is_valid() || row.is_null()) {
+                UtilityFunctions::push_warning("[TrainDieselEngine]: wwlist property is null at index " + String::num(i));
+                return;
+            }
 
+            mover->DElist[i].RPM = row->rpm;
+            mover->DElist[i].GenPower = row->max_power;
+            mover->DElist[i].Umax = row->max_voltage;
+            mover->DElist[i].Imax = row->max_current;
+            if (row->has_shunting) {
+                mover->SST[i].Umin = row->min_wakeup_voltage;
+                mover->SST[i].Umax = row->max_wakeup_voltage;
+                mover->SST[i].Pmax = row->max_wakeup_power;
                 mover->SST[i].Pmin = std::sqrt(std::pow(mover->SST[i].Umin, 2) / 47.6);
                 mover->SST[i].Pmax = std::min(mover->SST[i].Pmax, std::pow(mover->SST[i].Umax, 2) / 47.6);
             }
@@ -116,11 +120,11 @@ namespace godot {
         _dirty = true;
     }
 
-    TypedArray<Array> TrainDieselEngine::get_wwlist() {
+    TypedArray<WWListItem> TrainDieselEngine::get_wwlist() {
         return wwlist;
     }
 
-    void TrainDieselEngine::set_wwlist(const TypedArray<Array>& p_wwlist) {
+    void TrainDieselEngine::set_wwlist(const TypedArray<WWListItem>& p_wwlist) {
         wwlist.clear();
         wwlist.append_array(p_wwlist);
     }

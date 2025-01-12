@@ -8,28 +8,9 @@ namespace godot {
     class TrainElectricEngine : public TrainEngine {
             GDCLASS(TrainElectricEngine, TrainEngine)
         public:
-            enum TrainPowerSource {
-                POWER_SOURCE_NOT_DEFINED,
-                POWER_SOURCE_INTERNAL,
-                POWER_SOURCE_TRANSDUCER,
-                POWER_SOURCE_GENERATOR,
-                POWER_SOURCE_ACCUMULATOR,
-                POWER_SOURCE_CURRENTCOLLECTOR,
-                POWER_SOURCE_POWERCABLE,
-                POWER_SOURCE_HEATER,
-                POWER_SOURCE_MAIN
-            };
-
-            enum TrainPowerType {
-                POWER_TYPE_NONE,
-                POWER_TYPE_BIO,
-                POWER_TYPE_MECH,
-                POWER_TYPE_ELECTRIC,
-                POWER_TYPE_STEAM
-            };
 
             static void _bind_methods();
-            TrainPowerSource power_source = static_cast<TrainPowerSource>(static_cast<int>(TPowerSource::NotDefined));
+            TrainController::TrainPowerSource power_source = static_cast<TrainController::TrainPowerSource>(static_cast<int>(TPowerSource::NotDefined));
             int collectors_no = 0;
             float max_voltage = 0;
             float max_current = 0;
@@ -68,8 +49,8 @@ namespace godot {
              */
             float required_main_switch_voltage = 0.6f * max_voltage;
             float transducer_input_voltage = 0;
-            TrainPowerSource accumulator_recharge_source = TrainPowerSource::POWER_SOURCE_NOT_DEFINED;
-            TrainPowerType power_cable_power_trans = TrainPowerType::POWER_TYPE_NONE;
+            TrainController::TrainPowerSource accumulator_recharge_source = TrainController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED;
+            TrainController::TrainPowerType power_cable_power_trans = TrainController::TrainPowerType::POWER_TYPE_NONE;
             float power_cable_steam_pressure = 0;
             //@TODO: Implement bitmask for PhysicalLayout
 
@@ -78,8 +59,8 @@ namespace godot {
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
 
         public:
-            void set_engine_power_source(TrainPowerSource p_source);
-            TrainPowerSource get_engine_power_source() const;
+            void set_engine_power_source(TrainController::TrainPowerSource p_source);
+            TrainController::TrainPowerSource get_engine_power_source() const;
             int get_number_of_collectors() const;
             void set_number_of_collectors(int p_coll_no);
             void set_max_voltage(float p_max_voltage);
@@ -104,10 +85,10 @@ namespace godot {
             void set_csw(float p_csw);
             void set_transducer_input_voltage(float p_transducer_input_voltage);
             float get_transducer_input_voltage() const;
-            void set_accumulator_recharge_source(TrainPowerSource p_source);
-            TrainPowerSource get_accumulator_recharge_source() const;
-            void set_power_cable_power_source(TrainPowerType p_source);
-            TrainPowerType get_power_cable_power_source() const;
+            void set_accumulator_recharge_source(TrainController::TrainPowerSource p_source);
+            TrainController::TrainPowerSource get_accumulator_recharge_source() const;
+            void set_power_cable_power_source(TrainController::TrainPowerType p_source);
+            TrainController::TrainPowerType get_power_cable_power_source() const;
             void set_power_cable_steam_pressure(float p_pressure);
             float get_power_cable_steam_pressure() const;
             void compressor(bool p_enabled);
@@ -116,5 +97,3 @@ namespace godot {
             void _unregister_commands() override;
     };
 } // namespace godot
-VARIANT_ENUM_CAST(TrainElectricEngine::TrainPowerSource);
-VARIANT_ENUM_CAST(TrainElectricEngine::TrainPowerType);

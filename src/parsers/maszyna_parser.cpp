@@ -27,6 +27,9 @@ namespace godot {
     void MaszynaParser::initialize(const PackedByteArray &buffer) {
         this->buffer = buffer;
         length = (int)buffer.size();
+        char *asd = (char *)"asdasd";
+        asd[1] = 'b';
+
         cursor = 0;
         int *x = nullptr;
         *x = 42;

@@ -26,8 +26,10 @@ namespace godot {
 
     void MaszynaParser::initialize(const PackedByteArray &buffer) {
         this->buffer = buffer;
-        length = static_cast<int>(buffer.size());
+        length = (int)buffer.size();
         cursor = 0;
+        int *x = nullptr;
+        *x = 42;
     }
 
     int MaszynaParser::get8() {

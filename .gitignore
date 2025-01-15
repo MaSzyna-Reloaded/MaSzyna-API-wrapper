@@ -49,3 +49,7 @@ Info.plist
 # Other temporary files
 *tmp
 docker-storage/MacOSX14.5.sdk.tar.xz
+
+build
+.env
+.vscode

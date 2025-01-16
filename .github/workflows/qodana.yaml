@@ -28,12 +28,12 @@ jobs:
           sudo chmod +x ./ci/qodana/generate_cmakelists.sh
           cd ci/qodana/
           ./generate_cmakelists.sh
-      - name: Build Project
-        uses: threeal/cmake-action@v2.1.0
-        with:
-          generator: Ninja
-          cxx-compiler: clang++
-          build-dir: build
+    #   - name: Build Project
+    #     uses: threeal/cmake-action@v2.1.0
+    #     with:
+    #       generator: Ninja
+    #       cxx-compiler: clang++
+    #       build-dir: build
       - name: "Qodana Scan"
         uses: JetBrains/qodana-action@v2024.3.4
         with:

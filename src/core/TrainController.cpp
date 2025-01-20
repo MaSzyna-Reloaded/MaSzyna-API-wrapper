@@ -125,9 +125,10 @@ namespace godot {
     }
 
     void TrainController::initialize_mover() {
-        mover = new TMoverParameters(
-                this->initial_velocity, std::string(this->type_name.utf8().ptr()),
-                std::string(this->get_name().left(this->get_name().length()).utf8().ptr()), this->cabin_number);
+        const auto initial_vel = this->initial_velocity;
+        const auto type_name = std::string(this->type_name.utf8().ptr());
+        const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
+        mover = std::make_unique<TMoverParameters>(initial_vel, type_name, name, this->cabin_number).release();
 
         _dirty = true;
         _dirty_prop = true;
@@ -256,14 +257,13 @@ namespace godot {
             emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
         }
 
-        const bool new_radio_enabled = state.get("radio_enabled", false) && new_is_powered;
-        if (prev_radio_enabled != new_radio_enabled) {
+        if (const bool new_radio_enabled = state.get("radio_enabled", false) && new_is_powered;
+            prev_radio_enabled != new_radio_enabled) {
             prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(RADIO_TOGGLED, new_radio_enabled);
         }
 
-        const int new_radio_channel = state.get("radio_channel", 0);
-        if (prev_radio_channel != new_radio_channel) {
+        if (const int new_radio_channel = state.get("radio_channel", 0); prev_radio_channel != new_radio_channel) {
             prev_radio_channel = new_radio_channel; // FIXME: I don't like this
             emit_signal(RADIO_CHANNEL_CHANGED, new_radio_channel);
         }
@@ -293,7 +293,7 @@ namespace godot {
         mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) const {
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
         config["axles_powered_count"] = mover->NPoweredAxles;
         config["axles_count"] = mover->NAxles;
     }
@@ -343,8 +343,7 @@ namespace godot {
     }
 
     void TrainController::update_mover() {
-        TMoverParameters *mover = get_mover();
-        if (mover != nullptr) {
+        if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_update_internal_mover(mover);
             Dictionary new_config;
             _do_fetch_config_from_mover(mover, new_config);
@@ -358,8 +357,7 @@ namespace godot {
     }
 
     Dictionary TrainController::get_mover_state() {
-        TMoverParameters *mover = get_mover();
-        if (mover != nullptr) {
+        if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_fetch_state_from_mover(mover, state);
         } else {
             UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");

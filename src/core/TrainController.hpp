@@ -53,7 +53,7 @@ namespace godot {
             Dictionary get_mover_state();
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *mover) const;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) const;
+            void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
             void _process_mover(double delta);
 

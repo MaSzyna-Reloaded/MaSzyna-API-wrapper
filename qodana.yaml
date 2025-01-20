@@ -6,12 +6,11 @@ version: "1.0"
 profile:
   name: qodana.starter
 fixesStrategy: apply
-bootstrap: mkdir -p build; cd build;cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCODECHECK_BUILD=ON .. || true
+bootstrap: >-
+  cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCODECHECK_BUILD=ON;
+  cmake --build build --parallel $(nproc);
+  python3 ci/qodana/filter-cc.py
 failThreshold: 0
 linter: jetbrains/qodana-clang:2024.3-eap-clang18
 include:
   - name: VulnerableLibrariesGlobal
-exclude:
-  - name: All
-    paths:
-      - godot-cpp

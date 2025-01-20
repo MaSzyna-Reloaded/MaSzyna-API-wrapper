@@ -35,7 +35,7 @@ namespace godot {
     }
 
     int TrainSystem::get_train_count() const {
-        return trains.size();
+        return static_cast<int>(trains.size());
     }
 
     bool TrainSystem::is_train_registered(const String &train_id) const {
@@ -218,22 +218,23 @@ namespace godot {
 
             if (Callable c = _trains[train_id]; c.is_valid()) {
                 Array args;
-                int arg_required = 0;
-                if (p1.get_type() != Variant::NIL) {
-                    arg_required++;
-                }
-                if (p2.get_type() != Variant::NIL) {
-                    arg_required++;
-                }
-                int argc = c.get_argument_count();
+                int argc = static_cast<int>(c.get_argument_count());
                 if (argc > 0) {
                     args.append(p1);
                 }
                 if (argc > 1) {
                     args.append(p2);
                 }
-                c.callv(args);
+                const Variant _call = c.callv(args);
 #if DEBUG_MODE
+                int arg_required = 0;
+                if (p1.get_type() != Variant::NIL) {
+                    arg_required++;
+                }
+
+                if (p2.get_type() != Variant::NIL) {
+                    arg_required++;
+                }
                 log(train_id, LogSystem::LogLevel::DEBUG,
                     "received command " + command + "(" + String(", ").join(args) + ")");
                 if (arg_required != argc) {

@@ -1,20 +1,24 @@
-[gd_scene load_steps=54 format=3 uid="uid://do3s7mkbpv7es"]
+[gd_scene load_steps=56 format=3 uid="uid://do3s7mkbpv7es"]
 
-[ext_resource type="Script" uid="uid://phluwq0am26v" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
+[ext_resource type="Script" uid="uid://bqsfgq68lpfrq" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
 [ext_resource type="Script" uid="uid://fi23qlrohins" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
-[ext_resource type="Script" uid="uid://behqrb3p0tdly" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]
-[ext_resource type="Script" uid="uid://bs0nap0pjb8iy" path="res://addons/libmaszyna/sound/train_sound_3d.gd" id="15_df5xj"]
+[ext_resource type="SteamAudioMaterial" uid="uid://cqx8833t2v8mo" path="res://addons/godot-steam-audio/materials/metal_material.tres" id="2_mu6ha"]
+[ext_resource type="Script" uid="uid://7bpc844pmbte" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]
+[ext_resource type="Script" uid="uid://wsmgmakn8qey" path="res://addons/libmaszyna/sound/train_sound_3d.gd" id="15_df5xj"]
 [ext_resource type="PackedScene" uid="uid://djl581jijicpq" path="res://addons/libmaszyna/cabin/cabin_command.tscn" id="66_epgva"]
-[ext_resource type="Script" uid="uid://dt0v5w1k7cli0" path="res://addons/libmaszyna/cabin/cabin_gauge.gd" id="67_fryen"]
+[ext_resource type="Script" uid="uid://btdveli205aph" path="res://addons/libmaszyna/cabin/cabin_gauge.gd" id="67_fryen"]
 [ext_resource type="PackedScene" uid="uid://cfj82gn1nfl36" path="res://addons/libmaszyna/cabin/cabin_gauge.tscn" id="68_g4w65"]
 [ext_resource type="PackedScene" uid="uid://c0toij1foexq6" path="res://addons/libmaszyna/cabin/cabin_button.tscn" id="69_feumc"]
-[ext_resource type="Script" uid="uid://cjhucdcf4owtj" path="res://addons/libmaszyna/cabin/cabin_switch.gd" id="70_sdo5w"]
-[ext_resource type="Script" uid="uid://ckqq5p82brvoi" path="res://addons/libmaszyna/cabin/cabin_knob.gd" id="71_h1qpq"]
+[ext_resource type="Script" uid="uid://dc75fisk26rgj" path="res://addons/libmaszyna/cabin/cabin_switch.gd" id="70_sdo5w"]
+[ext_resource type="Script" uid="uid://bvd0rnjuq42cq" path="res://addons/libmaszyna/cabin/cabin_knob.gd" id="71_h1qpq"]
 [ext_resource type="PackedScene" uid="uid://cmluhfe2vkxcc" path="res://addons/libmaszyna/cabin/cabin_switch.tscn" id="72_a07r6"]
-[ext_resource type="Script" uid="uid://daht5vld5vxc0" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
-[ext_resource type="Script" uid="uid://cycqfqmxiggv3" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
+[ext_resource type="Script" uid="uid://c7xus01bqhp80" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
+[ext_resource type="Script" uid="uid://cld37tmv7kbn5" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
 [ext_resource type="Texture2D" uid="uid://ccawkq6p3mt2x" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
 [ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_4hnq2"]
+size = Vector3(0.899231, 0.001, 1.96355)
 
 [sub_resource type="AudioStream" id="AudioStream_hwnyj"]
 script = ExtResource("7_lbg33")
@@ -208,7 +212,56 @@ loop = false
 
 [node name="SM42Cabin" type="Node3D"]
 script = ExtResource("1_bffp8")
-camera_position_path = NodePath("CameraPosition")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.00260782, 1.8507, 2.83403)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
+
+[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0192704, 4.06684, 2.86043)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D2"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
+
+[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(0.975519, 0.219914, 0, -0.219914, 0.975519, 0, 0, 0, 1, 0.815264, 3.97345, 2.86043)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D3"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
+
+[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(0.974405, -0.224799, -9.65956e-06, 0.224799, 0.974405, -1.94241e-05, 1.37748e-05, 1.67588e-05, 1, -0.769699, 3.97345, 2.86043)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D4"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
+
+[node name="CollisionShape3D5" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(-0.00563836, -0.999984, 1.68329e-05, 0.999984, -0.00563836, -1.36841e-05, 1.37748e-05, 1.67588e-05, 1, -1.46213, 2.47616, 2.81469)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D5"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
+
+[node name="CollisionShape3D6" type="CollisionShape3D" parent="Area3D"]
+transform = Transform3D(-0.00120527, -0.999999, 1.6772e-05, 0.999999, -0.00120527, -1.37586e-05, 1.37748e-05, 1.67588e-05, 1, 1.48962, 2.47616, 2.81469)
+shape = SubResource("BoxShape3D_4hnq2")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D6"]
+material = ExtResource("2_mu6ha")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00260782, 0.0590701, 0.396572)
 
 [node name="Cabin" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -231,19 +284,22 @@ script = ExtResource("1_6k4j1")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
 
-[node name="Buzzer" type="AudioStreamPlayer3D" parent="."]
+[node name="Buzzer" type="SteamAudioPlayer" parent="."]
 transform = Transform3D(0.999125, -0.0128957, 0.0397967, 0, 0.951302, 0.30826, -0.0418339, -0.30799, 0.950469, -0.988872, 2.80983, 2.49681)
 stream = SubResource("AudioStream_hwnyj")
+panning_strength = 0.0
 script = ExtResource("15_df5xj")
 state_property = "beeping"
 
-[node name="AlerterLightOn" type="AudioStreamPlayer3D" parent="."]
+[node name="AlerterLightOn" type="SteamAudioPlayer" parent="."]
 transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
 stream = SubResource("AudioStream_ii5lq")
+panning_strength = 0.0
 
-[node name="AlerterLightOff" type="AudioStreamPlayer3D" parent="."]
+[node name="AlerterLightOff" type="SteamAudioPlayer" parent="."]
 transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
 stream = SubResource("AudioStream_xhr6w")
+panning_strength = 0.0
 
 [node name="Commands" type="Node" parent="."]
 

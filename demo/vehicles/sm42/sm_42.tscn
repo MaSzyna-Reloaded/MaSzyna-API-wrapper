@@ -6,7 +6,7 @@
 [ext_resource type="Script" uid="uid://bqsfgq68lpfrq" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_c88oy"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
-size = Vector3(4.5332, 4.72223, 17.0549)
+size = Vector3(2.67932, 4.72223, 13.9419)
 
 [node name="SM42-099" type="Node3D"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -68,7 +68,7 @@ exclude_node_names = ["cien"]
 monitoring = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0164261, 1.97558, 0.172673)
 shape = SubResource("BoxShape3D_uljbo")
 
 [node name="401W-1" type="VisualInstance3D" parent="."]

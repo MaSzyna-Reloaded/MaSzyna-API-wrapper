@@ -1,4 +1,4 @@
-extends AudioStreamPlayer3D
+extends SteamAudioPlayer
 class_name TrainSound3D
 
 @export var state_property = ""
@@ -13,6 +13,13 @@ var _dirty = false
 var _train = null
 var _should_play = false
 
+func _ready() -> void: 
+    self.distance_attenuation = true
+    self.air_absorption = true
+    self.occlusion = true
+    self.reflection = true
+    self.emission_angle_enabled = true
+    self.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
 
 func _process(_delta):
     _t += _delta

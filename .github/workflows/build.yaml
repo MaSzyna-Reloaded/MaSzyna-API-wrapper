@@ -8,7 +8,7 @@ jobs:
   build-windows:
     strategy:
       matrix:
-        arch: [x86_64, x86_32]
+        arch: [x86_64]
         target: [template_debug]
     runs-on: ubuntu-latest
     steps:
@@ -54,7 +54,7 @@ jobs:
   build-linux:
     strategy:
       matrix:
-        arch: [x86_64, x86_32]
+        arch: [x86_64]
         target: [template_debug]
     runs-on: ubuntu-latest
     steps:
@@ -100,7 +100,7 @@ jobs:
   build-android:
     strategy:
       matrix:
-        arch: [x86_64, x86_32, arm64, arm32]
+        arch: [x86_64, arm64]
         target: [template_debug]
     runs-on: ubuntu-latest
     steps:

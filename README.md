@@ -36,7 +36,8 @@ scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|te
 | Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version |
 |----------------|----------------------|---------|-------|--------|--------------------------|-----|--------------|-----------------|
 | 25.08.2024     | 4.3                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
-| 11.04.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
+| 11.03.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
+| 22.05.2025     | 4.4                  | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
 ### Documentation
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

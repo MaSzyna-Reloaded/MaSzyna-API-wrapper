@@ -4,8 +4,10 @@
 		Base train controller controlling all train systems
 	</brief_description>
 	<description>
-		Base train controller node. Allows to build behaviour of the train by adding child nodes of the [TrainPart] class.
-		When node is added to the scene tree, the train is automatically registered in the [TrainSystem] with an unique identifier [member TrainController.train_id].
+		Base train controller node.
+		It allows building behaviour of the train by adding child nodes of the [TrainPart] class.
+		When node is added to the scene tree,
+		the train is automatically registered in the [TrainSystem] with an unique identifier [member TrainController.train_id].
 	</description>
 	<tutorials>
 	</tutorials>
@@ -199,4 +201,48 @@
 			</description>
 		</signal>
 	</signals>
+	<constants>
+		<constant name="POWER_SOURCE_NOT_DEFINED" value="0" enum="TrainPowerSource">
+			Indicates that the power source is not defined.
+		</constant>
+		<constant name="POWER_SOURCE_INTERNAL" value="1" enum="TrainPowerSource">
+			Represents an internal power source (e.g., battery).
+		</constant>
+		<constant name="POWER_SOURCE_TRANSDUCER" value="2" enum="TrainPowerSource">
+			Represents a power source via transducer.
+		</constant>
+		<constant name="POWER_SOURCE_GENERATOR" value="3" enum="TrainPowerSource">
+			Represents a power source via generator.
+		</constant>
+		<constant name="POWER_SOURCE_ACCUMULATOR" value="4" enum="TrainPowerSource">
+			Represents a power source via accumulator.
+		</constant>
+		<constant name="POWER_SOURCE_CURRENTCOLLECTOR" value="5" enum="TrainPowerSource">
+			Represents a power source via current collector.
+		</constant>
+		<constant name="POWER_SOURCE_POWERCABLE" value="6" enum="TrainPowerSource">
+			Represents a power source via power cable.
+		</constant>
+		<constant name="POWER_SOURCE_HEATER" value="7" enum="TrainPowerSource">
+			Represents a power source via heater.
+		</constant>
+		<constant name="POWER_SOURCE_MAIN" value="8" enum="TrainPowerSource">
+			Represents the main power source.
+		</constant>
+		<constant name="POWER_TYPE_NONE" value="0" enum="TrainPowerType">
+			Indicates no power type.
+		</constant>
+		<constant name="POWER_TYPE_BIO" value="1" enum="TrainPowerType">
+			Represents bio fuel power.
+		</constant>
+		<constant name="POWER_TYPE_MECH" value="2" enum="TrainPowerType">
+			Represents mechanical power.
+		</constant>
+		<constant name="POWER_TYPE_ELECTRIC" value="3" enum="TrainPowerType">
+			Represents electric power.
+		</constant>
+		<constant name="POWER_TYPE_STEAM" value="4" enum="TrainPowerType">
+			Represents steam power.
+		</constant>
+	</constants>
 </class>

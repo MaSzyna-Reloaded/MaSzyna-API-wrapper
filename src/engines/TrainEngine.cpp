@@ -9,8 +9,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::ARRAY, "motor_param_table", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT,
-                        "TypedArray<Array>"),
+                        Variant::ARRAY, "motor_param_table", PROPERTY_HINT_TYPE_STRING, String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":MotorParameter", PROPERTY_USAGE_DEFAULT,
+                        "TypedArray<MotorParameter>"),
                 "set_motor_param_table", "get_motor_param_table");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
@@ -29,19 +29,25 @@ namespace godot {
         /* end testing */
 
         /* motor param table */
-        const int _max = Maszyna::MotorParametersArraySize;
-        for (int i = 0; i < std::min(_max, (int)motor_param_table.size()); i++) {
-            mover->MotorParam[i].mIsat = motor_param_table[i].get("misat");
-            mover->MotorParam[i].fi = motor_param_table[i].get("fi");
-            mover->MotorParam[i].mfi = motor_param_table[i].get("mfi");
-            mover->MotorParam[i].Isat = motor_param_table[i].get("isat");
-            mover->MPTRelay[i].Iup = motor_param_table[i].get("iup");
-            mover->MPTRelay[i].Idown = motor_param_table[i].get("idown");
+        constexpr int _max = Maszyna::MotorParametersArraySize;
+        for (int i = 0; i < std::min(_max, static_cast<int>(motor_param_table.size())); i++) {
+            const Ref<MotorParameter> &row = motor_param_table[i];
+            if (row == nullptr || !row.is_valid() || row.is_null()) {
+                UtilityFunctions::push_warning("[TrainEngine]: motor_param_table property is null at index " + String::num(i));
+                return;
+            }
+
+            mover->MotorParam[i].mIsat = row->mIsat;
+            mover->MotorParam[i].fi = row->fi;
+            mover->MotorParam[i].mfi = row->mfi;
+            mover->MotorParam[i].Isat = row->Isat;
+            mover->MPTRelay[i].Iup = row->shunting_up;//bocznikowanie
+            mover->MPTRelay[i].Idown = row->shunting_down;//bocznikowanie;
         }
     }
 
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        bool previous_main_switch = static_cast<bool>(state.get("main_switch_enabled", false));
+        const bool previous_main_switch = (state.get("main_switch_enabled", false));
         state["main_switch_enabled"] = mover->Mains;
         state["Mm"] = mover->Mm;
         state["Mw"] = mover->Mw;
@@ -74,11 +80,11 @@ namespace godot {
         config["main_controller_position_max"] = mover->MainCtrlPosNo;
     }
 
-    TypedArray<Dictionary> TrainEngine::get_motor_param_table() {
+    TypedArray<MotorParameter> TrainEngine::get_motor_param_table() {
         return motor_param_table;
     }
 
-    void TrainEngine::set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table) {
+    void TrainEngine::set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table) {
         motor_param_table.clear();
         motor_param_table.append_array(p_motor_param_table);
     }
@@ -96,5 +102,4 @@ namespace godot {
     void TrainEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
     }
-
 } // namespace godot

@@ -5,8 +5,12 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-debug-windows:
-    runs-on: ubuntu-20.04
+  build-windows:
+    strategy:
+      matrix:
+        arch: [x86_64, x86_32]
+        target: [template_release]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -19,34 +23,39 @@ jobs:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-windows-godot-cpp
+          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-windows-godot-
-            ${{ runner.os }}-windows-
+            ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-
+            ${{ matrix.target }}-windows-${{ matrix.arch }}
 
-      - name: Docker build Windows x86_64
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run windows_x86_64
-
-      - name: Docker build Windows x86_32
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run windows_x86_32
+      - name: Docker build Windows ${{ matrix.arch }}
+        run: sudo chmod 777 ci/docker/entrypoint.sh |
+          docker compose run windows_${{ matrix.arch }} ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: windows-debug
+          name: lib-windows-${{ matrix.target }}-${{ matrix.arch }}
           path: bin/windows
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-windows-${{ matrix.target }}-${{ matrix.arch }}
+          path: build/windows
+
       - uses: actions/cache/save@v4
         id: cache
         with:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-windows-godot-cpp
+          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
 
-  build-debug-linux:
-    runs-on: ubuntu-20.04
+  build-linux:
+    strategy:
+      matrix:
+        arch: [x86_64, x86_32]
+        target: [template_release]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -59,34 +68,39 @@ jobs:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-linux-godot-cpp
+          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-linux-godot-
-            ${{ runner.os }}-linux-
+            ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-
+            ${{ matrix.target }}-linux-${{ matrix.arch }}-
 
-      - name: Docker build Linux x86_64
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run linux_x86_64
-
-      - name: Docker build Linux x86_32
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run linux_x86_32
+      - name: Docker build Linux ${{ matrix.arch }}
+        run: sudo chmod 777 ci/docker/entrypoint.sh |
+          docker compose run linux_${{ matrix.arch }} ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: linux-debug
+          name: lib-linux-${{ matrix.target }}-${{ matrix.arch }}
           path: bin/linux
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-linux-${{ matrix.target }}-${{ matrix.arch }}
+          path: build/linux
+
       - uses: actions/cache/save@v4
         id: cache
         with:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-linux-godot-cpp
+          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
 
-  build-debug-android:
-    runs-on: ubuntu-20.04
+  build-android:
+    strategy:
+      matrix:
+        arch: [x86_64, x86_32, arm64, arm32]
+        target: [template_release]
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,31 +113,24 @@ jobs:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-android-godot-cpp
+          key: ${{ matrix.target }}-android-godot-cpp
           restore-keys: |
-            ${{ runner.os }}-android-godot-
-            ${{ runner.os }}-android-
+            ${{ matrix.target }}-android-${{ matrix.arch }}-godot-
+            ${{ matrix.target }}-android-
 
-      - name: Docker build Android x86_64
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run android_x86_64
-
-      - name: Docker build Android x86_32
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run android_x86_32
-
-      - name: Docker build Android arm64
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run android_arm64
-
-      - name: Docker build Android arm32
-        run: sudo chmod 777 docker-storage/entrypoint.sh |
-          docker compose run android_arm32
+      - name: Docker build Android ${{ matrix.arch }}
+        run: sudo chmod 777 ci/docker/entrypoint.sh |
+          docker compose run android_${{ matrix.arch }} ${{ matrix.target }}
 
       - uses: actions/upload-artifact@v4
         with:
-          name: android-debug
+          name: lib-android-${{ matrix.target }}-${{ matrix.arch }}
           path: bin/android
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: game-android-${{ matrix.target }}-${{ matrix.arch }}
+          path: build/android
 
       - uses: actions/cache/save@v4
         id: cache
@@ -131,4 +138,4 @@ jobs:
           path: |
             godot-cpp/
             .sconsign.dblite
-          key: ${{ runner.os }}-android-godot-cpp
+          key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp

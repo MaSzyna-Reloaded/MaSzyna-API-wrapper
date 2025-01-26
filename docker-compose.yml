@@ -1,64 +1,80 @@
 services:
   windows_x86_64:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: windows_x86_64
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p windows -a x86_64
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p windows -a x86_64 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   windows_x86_32:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: windows_x86_32
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p windows -a x86_32
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p windows -a x86_32 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   linux_x86_64:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: linux_x86_64
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p linux -a x86_64
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p linux -a x86_64 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   linux_x86_32:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: linux_x86_32
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p linux -a x86_32
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p linux -a x86_32 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   android_x86_64:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: android_x86_64
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a x86_64
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p android -a x86_64 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   android_x86_32:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: android_x86_32
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a x86_32
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p android -a x86_32 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   android_arm64:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: android_arm64
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a arm64
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p android -a arm64 -t $TARGET
     volumes:
       - type: bind
         source: ./
         target: /var/maszyna
   android_arm32:
+    environment:
+      - ${TARGET:-template_debug}
     image: jezsonic/build-tools:latest
     container_name: android_arm32
-    entrypoint: /var/maszyna/docker-storage/entrypoint.sh -p android -a arm32
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -p android -a arm32 -t $TARGET
     volumes:
       - type: bind
         source: ./

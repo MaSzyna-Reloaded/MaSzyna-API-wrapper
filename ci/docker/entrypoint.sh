@@ -10,7 +10,7 @@ do
     esac
 done
 echo "Building Dynamic-linked library for host platform"
-scons target="$target"
+scons target="template_debug"
 echo "Creating Dynamic-linked libraries for $target build..."
 scons platform="$platform" arch="$arch" target="$target"
 mkdir -p "build/${platform}"

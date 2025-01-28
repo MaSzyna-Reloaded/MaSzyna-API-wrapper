@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-lib-windows:
+  build-windows:
     strategy:
       matrix:
         arch: [x86_64, x86_32]
@@ -50,7 +50,7 @@ jobs:
             .sconsign.dblite
           key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
 
-  build-lib-linux:
+  build-linux:
     strategy:
       matrix:
         arch: [x86_64, x86_32]
@@ -95,7 +95,7 @@ jobs:
             .sconsign.dblite
           key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
 
-  build-lib-android:
+  build-android:
     strategy:
       matrix:
         arch: [x86_64, x86_32, arm64, arm32]

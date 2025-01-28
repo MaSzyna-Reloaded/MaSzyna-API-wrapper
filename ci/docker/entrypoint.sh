@@ -25,6 +25,8 @@ else
     target_file_name="$target_file_name.zip"
 fi
 
+echo "Importing Godot project..."
+(godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import
 if [ "$target" = "template_release" ]; then
     cd demo && godot --headless --export-release "$export_preset" "../build/${platform}/${target_file_name}"
 else

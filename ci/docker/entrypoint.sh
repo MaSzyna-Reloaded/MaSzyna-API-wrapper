@@ -9,8 +9,6 @@ do
         t) target=${OPTARG};;
     esac
 done
-echo "Installing dependencies..."
-apt install -y openjdk-17-jdk openjdk-17-jre libncurses5-dev libncursesw5-dev curl unzip zip libssl-dev lzma-dev libxml2-dev zlib1g-dev scons g++-mingw-w64-x86-64 gcc-mingw-w64 git-all build-essential cmake gcc-multilib g++-multilib libc6-dev-i386 g++-mingw-w64-i686
 echo "Creating Dynamic-linked libraries for $target build..."
 scons platform="$platform" arch="$arch" target="$target"
 mkdir -p "build/${platform}"

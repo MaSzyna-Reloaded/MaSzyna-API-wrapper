@@ -9,6 +9,8 @@ do
         t) target=${OPTARG};;
     esac
 done
+echo "Building Dynamic-linked library for host platform"
+scons target="$target"
 echo "Creating Dynamic-linked libraries for $target build..."
 scons platform="$platform" arch="$arch" target="$target"
 mkdir -p "build/${platform}"

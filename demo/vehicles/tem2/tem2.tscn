@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://xh8isp1j28uj"]
+[gd_scene load_steps=20 format=3 uid="uid://xh8isp1j28uj"]
 
 [ext_resource type="Script" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
 [ext_resource type="PackedScene" uid="uid://dwcx6807obsgm" path="res://vehicles/tem2/tem2_cabin.tscn" id="2_nt307"]
@@ -7,6 +7,127 @@
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
 size = Vector3(4.5332, 4.72223, 17.0549)
+
+[sub_resource type="WWListItem" id="WWListItem_w7fy5"]
+rpm = 496.0
+
+[sub_resource type="WWListItem" id="WWListItem_j7m6u"]
+rpm = 496.0
+max_power = 20.0
+max_voltage = 125.0
+max_current = 600.0
+has_shunting = true
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_w1qdg"]
+rpm = 496.0
+max_power = 50.0
+max_voltage = 156.0
+max_current = 846.0
+has_shunting = true
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_wk0d4"]
+rpm = 496.0
+max_power = 90.0
+max_voltage = 194.0
+max_current = 1065.0
+has_shunting = true
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_ndnpm"]
+rpm = 496.0
+max_power = 135.0
+max_voltage = 240.0
+max_current = 1260.0
+has_shunting = true
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_ye3f5"]
+rpm = 568.0
+max_power = 182.0
+max_voltage = 293.0
+max_current = 1428.0
+has_shunting = true
+min_wakeup_voltage = 25.0
+max_wakeup_voltage = 150.0
+max_wakeup_power = 200.0
+
+[sub_resource type="WWListItem" id="WWListItem_ljbq7"]
+rpm = 640.0
+max_power = 234.0
+max_voltage = 353.0
+max_current = 1571.0
+has_shunting = true
+min_wakeup_voltage = 50.0
+max_wakeup_voltage = 160.0
+max_wakeup_power = 235.0
+
+[sub_resource type="WWListItem" id="WWListItem_wnj0o"]
+rpm = 712.0
+max_power = 286.0
+max_voltage = 420.0
+max_current = 1688.0
+has_shunting = true
+min_wakeup_voltage = 80.0
+max_wakeup_voltage = 200.0
+max_wakeup_power = 270.0
+
+[sub_resource type="WWListItem" id="WWListItem_qwjcl"]
+rpm = 784.0
+max_power = 348.0
+max_voltage = 494.0
+max_current = 1780.0
+has_shunting = true
+min_wakeup_voltage = 100.0
+max_wakeup_voltage = 235.0
+max_wakeup_power = 305.0
+
+[sub_resource type="WWListItem" id="WWListItem_4li30"]
+rpm = 856.0
+max_power = 408.0
+max_voltage = 575.0
+max_current = 1845.0
+has_shunting = true
+min_wakeup_voltage = 130.0
+max_wakeup_voltage = 300.0
+max_wakeup_power = 370.0
+
+[sub_resource type="WWListItem" id="WWListItem_or38i"]
+rpm = 928.0
+max_power = 474.0
+max_voltage = 664.0
+max_current = 1886.0
+has_shunting = true
+min_wakeup_voltage = 150.0
+max_wakeup_voltage = 360.0
+max_wakeup_power = 410.0
+
+[sub_resource type="WWListItem" id="WWListItem_lwfur"]
+rpm = 1000.0
+max_power = 540.0
+max_voltage = 760.0
+max_current = 1900.0
+has_shunting = true
+min_wakeup_voltage = 170.0
+max_wakeup_voltage = 450.0
+max_wakeup_power = 490.0
+
+[sub_resource type="MotorParameter" id="MotorParameter_l4x0r"]
+mfi = 17.567
+mIsat = 64.0
+fi = 1500.0
+Isat = 15.0
+
+[sub_resource type="MotorParameter" id="MotorParameter_374xt"]
+mfi = 15.0
+mIsat = 183.3
+fi = 2000.0
+Isat = 49.0
 
 [node name="TEM2" type="Node3D"]
 script = ExtResource("1_ra284")
@@ -100,22 +221,8 @@ rig_effectiveness = 0.85
 oil_pump/pressure_minimum = 0.16
 oil_pump/pressure_maximum = 0.3
 Ftmax = 228000.0
-wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0, 0, 140, 180], [496.0, 50.0, 156.0, 846.0, 0, 140, 180], [496.0, 90.0, 194.0, 1065.0, 0, 140, 180], [496.0, 135.0, 240.0, 1260.0, 0, 140, 180], [568.0, 182.0, 293.0, 1428.0, 25, 150, 200], [640.0, 234.0, 353.0, 1571.0, 50, 160, 235], [712, 286, 420, 1688, 80, 200, 270], [784, 348, 494, 1780, 100, 235, 305], [856, 408, 575, 1845, 130, 300, 370], [928, 474, 664, 1886, 150, 360, 410], [1000, 540, 760, 1900, 170, 450, 490]])
-motor_param_table = Array[Dictionary]([{
-"fi": 1500.0,
-"idown": 0.0,
-"isat": 15.0,
-"iup": 0.0,
-"mfi": 17.567,
-"misat": 64.0
-}, {
-"fi": 2000.0,
-"idown": 0.0,
-"isat": 49.0,
-"iup": 0.0,
-"mfi": 15.0,
-"misat": 183.3
-}])
+wwlist = Array[WWListItem]([SubResource("WWListItem_w7fy5"), SubResource("WWListItem_j7m6u"), SubResource("WWListItem_w1qdg"), SubResource("WWListItem_wk0d4"), SubResource("WWListItem_ndnpm"), SubResource("WWListItem_ye3f5"), SubResource("WWListItem_ljbq7"), SubResource("WWListItem_wnj0o"), SubResource("WWListItem_qwjcl"), SubResource("WWListItem_4li30"), SubResource("WWListItem_or38i"), SubResource("WWListItem_lwfur")])
+motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_l4x0r"), SubResource("MotorParameter_374xt")])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="TEM2Controller"]
 aware_system/active = true

@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaszynaParser" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Parser for .e3d MaSzyna files. Reads meshes and creates them in Godot.
+	</brief_description>
+	<description>
+		This class provides a parser for the ".e3d" MaSzyna's file format. It reads mesh data from these files and generates corresponding mesh objects suitable for use within the Godot game engine. The parser uses a token-based approach for efficient processing of the input file. It uses helper methods for low-level data reading, token manipulation, and higher-level mesh data extraction. The parser also supports a metadata stack for handling nested structures in the input file and allows registering custom handlers for specific tokens.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="as_bool">
+			<return type="bool" />
+			<param index="0" name="token" type="String" />
+			<description>
+				Converts a token to a boolean value.
+			</description>
+		</method>
+		<method name="as_vector3">
+			<return type="Vector3" />
+			<param index="0" name="tokens" type="Array" />
+			<description>
+				Converts an array of tokens to a Vector3.
+			</description>
+		</method>
+		<method name="clear_metadata">
+			<return type="void" />
+			<description>
+				Clears the internal metadata stack.
+			</description>
+		</method>
+		<method name="eof_reached">
+			<return type="bool" />
+			<description>
+				Checks if the end of the file has been reached.
+			</description>
+		</method>
+		<method name="get8">
+			<return type="int" />
+			<description>
+				Reads and returns a single byte from the input stream.
+			</description>
+		</method>
+		<method name="get_line">
+			<return type="String" />
+			<description>
+				Reads and returns the next line from the input stream.
+			</description>
+		</method>
+		<method name="get_parsed_metadata">
+			<return type="Dictionary" />
+			<description>
+				Returns the currently parsed metadata.
+			</description>
+		</method>
+		<method name="get_tokens">
+			<return type="Array" />
+			<param index="0" name="num" type="int" />
+			<param index="1" name="stop" type="Array" />
+			<description>
+				Reads and returns a specified number of tokens.
+			</description>
+		</method>
+		<method name="get_tokens_until">
+			<return type="Array" />
+			<param index="0" name="token" type="String" />
+			<param index="1" name="stop" type="Array" />
+			<description>
+				Reads tokens until a specified token is encountered.
+			</description>
+		</method>
+		<method name="initialize">
+			<return type="void" />
+			<param index="0" name="buffer" type="PackedByteArray" />
+			<description>
+				Initializes the parser with the file data.
+			</description>
+		</method>
+		<method name="next_token">
+			<return type="String" />
+			<param index="0" name="stop" type="Array" />
+			<description>
+				Reads and returns the next token.
+			</description>
+		</method>
+		<method name="next_vector3">
+			<return type="Vector3" />
+			<param index="0" name="stop" type="Array" />
+			<description>
+				Reads and returns the next Vector3.
+			</description>
+		</method>
+		<method name="parse">
+			<return type="Array" />
+			<description>
+				Parses the entire file and returns the extracted mesh data.
+			</description>
+		</method>
+		<method name="pop_metadata">
+			<return type="Dictionary" />
+			<description>
+				Pops and returns metadata from the stack.
+			</description>
+		</method>
+		<method name="push_metadata">
+			<return type="void" />
+			<description>
+				Pushes metadata onto the stack.
+			</description>
+		</method>
+		<method name="register_handler">
+			<return type="void" />
+			<param index="0" name="token" type="String" />
+			<param index="1" name="callback" type="Callable" />
+			<description>
+				Registers a custom handler for a specific token.
+			</description>
+		</method>
+	</methods>
+</class>

@@ -1,9 +1,0 @@
-[gd_resource type="WWListItem" format=3 uid="uid://0dfcr1ndjfbo"]
-
-[resource]
-rpm = 496.0
-max_power = 50.0
-max_voltage = 156.0
-max_current = 840.0
-max_wakeup_voltage = 140.0
-max_wakeup_power = 180.0

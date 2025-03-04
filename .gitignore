@@ -40,7 +40,6 @@ Info.plist
 
 # Vendor and generated files
 /docs/vendor
-/src/gen/
 /vendor
 
 # Virtual environments
@@ -49,3 +48,6 @@ Info.plist
 # Other temporary files
 *tmp
 docker-storage/MacOSX14.5.sdk.tar.xz
+
+build
+.env

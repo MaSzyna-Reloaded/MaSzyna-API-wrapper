@@ -156,6 +156,7 @@ change_vehicle={
 
 [rendering]
 
+textures/vram_compression/import_etc2_astc=true
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
 anti_aliasing/quality/msaa_3d=2
@@ -167,7 +168,3 @@ sky_texture={
 "type": "sampler2D",
 "value": ""
 }
-
-[rendering]
-
-textures/vram_compression/import_etc2_astc=true

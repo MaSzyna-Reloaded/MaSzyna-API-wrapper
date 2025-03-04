@@ -29,4 +29,4 @@ COPY demo ./demo
 # IMPORTANT!
 # Godot will only work on the third try :)
 # First run ends with segfault, second - will generate caches; and the third one will run tests :)
-CMD (godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit
+    CMD (godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://ddag4vhhuox0t"]
 
-[ext_resource type="Script" path="res://hud/knob.gd" id="1_an08j"]
+[ext_resource type="Script" uid="uid://b285sg5jqauaj" path="res://hud/knob.gd" id="1_an08j"]
 
 [node name="DebugKnob" type="HBoxContainer"]
 offset_right = 40.0

@@ -32,9 +32,10 @@ scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|te
 ```
 ### Compability
 
-| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android | Android Target API Level | iOS | C++ Standard | MaSzyna Version |
-|----------------|----------------------|---------|-------|--------|---------|--------------------------|-----|--------------|-----------------|
-| dev            | 4.3                  | ✅       | ✅       | ❌       | ✅      | 34 | ❌       | C++ 17       | 24.06 |
+| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version |
+|----------------|----------------------|---------|-------|--------|--------------------------|-----|--------------|-----------------|
+| 25.08.2024            | 4.3                  | ✅       | ✅       | ❌       | ✅ (Target API Level: 34)| ❌   | C++ 17       | 24.06 |
+| 11.04.2025            | 4.4                  | ✅       | ✅       | ❌      | ✅ (Target API Level: 34)| ❌       | C++ 17       | 24.06 |
 
 ### Documentation
 

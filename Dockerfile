@@ -5,9 +5,9 @@ FROM barichello/godot-ci:4.3
 WORKDIR /app
 
 RUN apt update -y && apt install -y scons g++
-RUN wget https://github.com/godotengine/godot-cpp/archive/refs/tags/godot-4.3-stable.tar.gz
-RUN tar -xf godot-4.3-stable.tar.gz
-RUN mv godot-cpp-godot-4.3-stable godot-cpp
+RUN wget https://github.com/godotengine/godot-cpp/archive/refs/tags/godot-4.4-stable.tar.gz
+RUN tar -xf godot-4.4-stable.tar.gz
+RUN mv godot-cpp-godot-4.4-stable godot-cpp
 
 RUN wget https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.tar.gz
 RUN tar -xf v9.3.0.tar.gz

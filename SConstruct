@@ -102,6 +102,22 @@ else:
 
 # Paths
 
+suffix = ""
+if env["maszyna_debug"].lower() == "yes":
+    env.Append(CPPDEFINES=["LIBMASZYNA_DEBUG_ENABLED"])
+
+if env["target"] in ("debug", "template_debug"):
+    suffix += ".debug"
+    env.Append(CPPDEFINES=["DEBUG_MODE"])
+else:
+    env.Append(CPPDEFINES=["RELEASE_MODE"])
+
+if env["arch"] in ("x86_64"):
+    suffix += ".64"
+elif env["arch"] not in ("x86_32"):
+    suffix += "." + env["arch"]
+# Paths
+
 
 def get_subdirs(abs_path_dir):
     subdirs = [
@@ -113,17 +129,12 @@ def get_subdirs(abs_path_dir):
     return subdirs
 
 
-suffix = env["suffix"]
 shlib_suffix = env["SHLIBSUFFIX"]
 file = f"{libname}{suffix}{shlib_suffix}"
 platform = env["platform"]
 target_bin_path = os.path.join("bin", platform, file)
 addons_src_path = os.path.join("addons", libname)
 addons_dst_path = os.path.join("demo", "addons", libname)
-
-if platform in ("macos", "ios"):
-    file = os.path.join(f"{platform}.framework", f"{libname}.{platform}")
-
 # Build
 
 commands = []

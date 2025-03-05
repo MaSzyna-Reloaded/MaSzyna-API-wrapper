@@ -4,7 +4,7 @@
 		Basic class of the train part.
 	</brief_description>
 	<description>
-		A base class for creating a specialized behaviours of the train. Provides shortcuts for most important methods.
+		A base class for creating a specialized behaviors of the train. Provides shortcuts for most important methods.
 	</description>
 	<tutorials>
 	</tutorials>

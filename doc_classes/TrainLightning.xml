@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainLightning" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Class responsible for a lightning system in a train. Works together with engines and accumulators in trains
+	</brief_description>
+	<description>
+		Class responsible for a lightning system in a train
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="light/alternative/capacity" type="float" setter="set_alternative_light_capacity" getter="get_alternative_light_capacity" default="24.0">
+			Capacity of accumulator for the alternative power source for lights
+		</member>
+		<member name="light/alternative/max_voltage" type="float" setter="set_alternative_max_voltage" getter="get_alternative_max_voltage" default="24.0">
+			Max voltage of the accumulator for the alternative power source for lights
+		</member>
+		<member name="light/alternative/source" type="int" setter="set_alternative_light_source" getter="get_alternative_light_source" enum="TrainEngine.TrainPowerSource" default="4">
+			Alternative power source for lights
+		</member>
+		<member name="light/source" type="int" setter="set_light_source" getter="get_light_source" enum="TrainEngine.TrainPowerSource" default="3">
+			Primary power source for lights
+		</member>
+		<member name="source/accumulator/max_voltage" type="float" setter="set_max_accumulator_voltage" getter="get_max_accumulator_voltage" default="0.0">
+			Max accumulator voltage for the primary power source for lights
+		</member>
+		<member name="source/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainEngine.TrainPowerSource" default="3">
+			Accumulator recharge source both for primary and alternative power sources
+		</member>
+		<member name="source/generator/engine" type="int" setter="set_generator_engine" getter="get_generator_engine" enum="TrainEngine.TrainEngineType" default="8">
+			Engine for the generator both for primary and alternative power sources
+		</member>
+	</members>
+</class>

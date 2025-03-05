@@ -42,8 +42,9 @@ jobs:
           name: game-windows-${{ matrix.target }}-${{ matrix.arch }}
           path: build/windows
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v4.2.2
         id: cache
+        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
@@ -87,8 +88,9 @@ jobs:
           name: game-linux-${{ matrix.target }}-${{ matrix.arch }}
           path: build/linux
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v4.2.2
         id: cache
+        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
@@ -132,8 +134,9 @@ jobs:
           name: game-android-${{ matrix.target }}-${{ matrix.arch }}
           path: build/android
 
-      - uses: actions/cache/save@v4
+      - uses: actions/cache/save@v4.2.2
         id: cache
+        if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/

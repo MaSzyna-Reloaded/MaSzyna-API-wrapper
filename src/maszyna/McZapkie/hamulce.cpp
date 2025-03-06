@@ -12,18 +12,12 @@ http://mozilla.org/MPL/2.0/.
    Copyright (C) 2007-2014 Maciej Cierniak
    */
 
-#ifndef __GNUC__
-#include "stdafx.h"
-#else
-#include <cmath>
-#endif
 #include "hamulce.h"
-
-#include <algorithm>
-#include <memory>
-#include <stdexcept>
-#include <typeinfo>
 #include "../utilities.h"
+#include <algorithm>
+#include <cmath>
+#include <memory>
+#include <typeinfo>
 
 namespace Maszyna {
     //---FUNKCJE OGOLNE---

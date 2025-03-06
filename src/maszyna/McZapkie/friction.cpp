@@ -12,12 +12,8 @@ http://mozilla.org/MPL/2.0/.
    Copyright (C) 2007-2013 Maciej Cierniak
    */
 
-#ifndef __GNUC__
-#include "stdafx.h"
-#else
-#include <cmath>
-#endif
 #include "friction.h"
+#include <cmath>
 
 namespace Maszyna {
 

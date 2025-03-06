@@ -12,12 +12,8 @@ http://mozilla.org/MPL/2.0/.
    Copyright (C) 2007-2014 Maciej Cierniak
    */
 
-#ifndef __GNUC__
-#include "stdafx.h"
-#else
-#include <cmath>
-#endif
 #include "Oerlikon_ESt.h"
+#include <cmath>
 
 #include <string>
 

@@ -5,7 +5,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/string.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <map>
 
 namespace godot {

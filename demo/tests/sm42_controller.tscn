@@ -1,6 +1,6 @@
 [gd_scene load_steps=16 format=3 uid="uid://b6ivbg5gvvxao"]
 
-[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0

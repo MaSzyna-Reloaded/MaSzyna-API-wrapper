@@ -14,7 +14,7 @@ config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
 run/main_scene="res://demo_3d.tscn"
 run/print_header=false
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/features=PackedStringArray("4.4", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
 boot_splash/show_image=false
 boot_splash/image="res://splash.png"
@@ -26,6 +26,7 @@ run/disable_stderr.release=true
 [autoload]
 
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
+SceneryResourceLoader="*res://addons/libmaszyna/scenery/scenery_resource_loader.gd"
 MaszynaEnvironment="*res://addons/libmaszyna/environment/maszyna_environment.gd"
 Console="*res://addons/libmaszyna/console/console.gd"
 MaterialManager="*res://addons/libmaszyna/materials/material_manager.gd"
@@ -34,12 +35,12 @@ E3DParser="*res://addons/libmaszyna/e3d/e3d_parser.gd"
 E3DModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 E3DNodesInstancer="*res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd"
 UserSettings="*res://addons/libmaszyna/settings/user_settings.gd"
-SceneryResourceLoader="*res://addons/libmaszyna/scenery/scenery_resource_loader.gd"
 E3DModelInstanceManager="*res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd"
 AudioStreamManager="*res://addons/libmaszyna/sound/audio_stream_manager.gd"
 
 [debug]
 
+settings/stdout/verbose_stdout=true
 file_logging/log_path="user://logs/app.log"
 
 [display]
@@ -157,9 +158,9 @@ change_vehicle={
 [rendering]
 
 textures/vram_compression/import_etc2_astc=true
+anti_aliasing/quality/msaa_3d=1
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
-anti_aliasing/quality/msaa_3d=2
 anti_aliasing/quality/screen_space_aa=1
 
 [shader_globals]

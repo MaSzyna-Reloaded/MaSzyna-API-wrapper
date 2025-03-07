@@ -1,9 +1,9 @@
 [gd_scene load_steps=20 format=3 uid="uid://xh8isp1j28uj"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
 [ext_resource type="PackedScene" uid="uid://dwcx6807obsgm" path="res://vehicles/tem2/tem2_cabin.tscn" id="2_nt307"]
-[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_q4wpc"]
-[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="4_tujep"]
+[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_q4wpc"]
+[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="4_tujep"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
 size = Vector3(4.5332, 4.72223, 17.0549)

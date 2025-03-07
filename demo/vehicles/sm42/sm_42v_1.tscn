@@ -1,7 +1,7 @@
 [gd_scene load_steps=17 format=3 uid="uid://c5hi8nsm1d2hb"]
 
-[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
 
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0

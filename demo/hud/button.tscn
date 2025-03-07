@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dy8wkx8wr4gjf"]
 
-[ext_resource type="Script" path="res://hud/button.gd" id="1_e1dhy"]
+[ext_resource type="Script" uid="uid://eerusu12lp80" path="res://hud/button.gd" id="1_e1dhy"]
 
 [node name="DebugButton" type="Button"]
 anchors_preset = 15

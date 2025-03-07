@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://dwcx6807obsgm"]
 
-[ext_resource type="Script" path="res://vehicles/tem2/tem2_cabin.gd" id="1_w5uim"]
-[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_6c6uo"]
+[ext_resource type="Script" uid="uid://bhoad6heiil6t" path="res://vehicles/tem2/tem2_cabin.gd" id="1_w5uim"]
+[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_6c6uo"]
 
 [node name="Tem2Cabin" type="Node3D"]
 script = ExtResource("1_w5uim")

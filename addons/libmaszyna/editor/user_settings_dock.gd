@@ -64,7 +64,6 @@ func call_func_with_message_window(title: String, message: String, callable: Cal
     # Yes, must be deferred call here.
     do_call.call_deferred()
 
-
 func _on_line_edit_text_changed(new_text):
     UserSettings.save_maszyna_game_dir(new_text)
 

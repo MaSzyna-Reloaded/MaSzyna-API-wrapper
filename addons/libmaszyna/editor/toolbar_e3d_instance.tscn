@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://unrm26h4mwk4"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/editor/toolbar_e3d_instance.gd" id="1_h4jha"]
+[ext_resource type="Script" uid="uid://bpk0y7dkvuqq8" path="res://addons/libmaszyna/editor/toolbar_e3d_instance.gd" id="1_h4jha"]
 
 [node name="ToolbarE3dInstance" type="HBoxContainer"]
 anchors_preset = 15

@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3 uid="uid://dmhikrkk2qsjl"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/player/free_camera.gd" id="1_iuonp"]
-[ext_resource type="Script" path="res://addons/libmaszyna/player/player.gd" id="1_t4mm8"]
+[ext_resource type="Script" uid="uid://cqet31gklr3sb" path="res://addons/libmaszyna/player/free_camera.gd" id="1_iuonp"]
+[ext_resource type="Script" uid="uid://dc3kl1adyw5y0" path="res://addons/libmaszyna/player/player.gd" id="1_t4mm8"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mexgx"]
 radius = 2.0

@@ -1,6 +1,6 @@
 [gd_scene load_steps=7 format=3 uid="uid://djqacw65swdqc"]
 
-[ext_resource type="Script" path="res://examples/mover_demo.gd" id="1_hbfy1"]
+[ext_resource type="Script" uid="uid://ccuksauqx4qmn" path="res://examples/mover_demo.gd" id="1_hbfy1"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_j25qa"]
 [ext_resource type="PackedScene" uid="uid://br6moafqr8ykn" path="res://hud/panel.tscn" id="3_pdcrj"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="4_4bpxo"]

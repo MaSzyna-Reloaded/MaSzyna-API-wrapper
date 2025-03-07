@@ -277,7 +277,6 @@ func _create_submodel(submodel):
 
     if submodel.get("name"):
         obj.name = submodel["name"]
-
         # Model3d.cpp TSubModel::BinInit() from the original exe
         if obj.name.begins_with("Light_On"):
             obj.visible = false

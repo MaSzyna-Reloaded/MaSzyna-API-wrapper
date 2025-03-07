@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://cno8d0tylykmu"]
 
-[ext_resource type="Script" path="res://vehicles/impuls/impuls_cabin_a.gd" id="1_fa3e3"]
-[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_ytbcc"]
+[ext_resource type="Script" uid="uid://76jsq4dvtdbf" path="res://vehicles/impuls/impuls_cabin_a.gd" id="1_fa3e3"]
+[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_ytbcc"]
 
 [node name="ImpulsCabin" type="Node3D"]
 script = ExtResource("1_fa3e3")

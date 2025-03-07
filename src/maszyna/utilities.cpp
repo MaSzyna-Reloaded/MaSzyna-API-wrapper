@@ -13,14 +13,13 @@ Copyright (C) 2007-2014 Maciej Cierniak
 */
 // #include "stdafx.h"
 
+#include "utilities.h"
 #include <algorithm>
 #include <iomanip>
 #include <random>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unordered_map>
-
-#include "utilities.h"
 
 #define RANDOM_ENGINE_TYPE std::mt19937
 #define LOCAL_RANDOM_ENGINE_TYPE std::mt19937

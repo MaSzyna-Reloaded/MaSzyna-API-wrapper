@@ -7,13 +7,11 @@
 http://mozilla.org/MPL/2.0/.
 */
 
+#include "../utilities.h"
 #include "MOVER.h"
-// #include "stdafx.h"
+#include "Oerlikon_ESt.h"
 #include <cassert>
 #include <cmath>
-
-#include "../utilities.h"
-#include "Oerlikon_ESt.h"
 
 // FIXME: GODOT? Debug flag?
 #define DebugModeFlag false

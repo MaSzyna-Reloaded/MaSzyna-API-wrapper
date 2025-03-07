@@ -1,7 +1,117 @@
-[gd_scene load_steps=3 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=17 format=3 uid="uid://c5hi8nsm1d2hb"]
 
-[ext_resource type="Script" uid="uid://cc4sx2jrsold3" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" uid="uid://cy2aecn2wfkk4" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+
+[sub_resource type="WWListItem" id="WWListItem_tqpff"]
+rpm = 496.0
+
+[sub_resource type="WWListItem" id="WWListItem_083b8"]
+rpm = 496.0
+max_power = 20.0
+max_voltage = 125.0
+max_current = 600.0
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_0r5q0"]
+rpm = 496.0
+max_power = 50.0
+max_voltage = 156.0
+max_current = 840.0
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_vjhrb"]
+rpm = 496.0
+max_power = 90.0
+max_voltage = 194.0
+max_current = 1065.0
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_6sfix"]
+rpm = 496.0
+max_power = 135.0
+max_voltage = 240.0
+max_current = 1260.0
+max_wakeup_voltage = 140.0
+max_wakeup_power = 180.0
+
+[sub_resource type="WWListItem" id="WWListItem_jxcvy"]
+rpm = 568.0
+max_power = 182.0
+max_voltage = 293.0
+max_current = 1428.0
+min_wakeup_voltage = 25.0
+max_wakeup_voltage = 150.0
+max_wakeup_power = 200.0
+
+[sub_resource type="WWListItem" id="WWListItem_q4qj4"]
+rpm = 640.0
+max_power = 234.0
+max_voltage = 353.0
+max_current = 1571.0
+min_wakeup_voltage = 50.0
+max_wakeup_voltage = 160.0
+max_wakeup_power = 235.0
+
+[sub_resource type="WWListItem" id="WWListItem_p5gw0"]
+rpm = 712.0
+max_power = 286.0
+max_voltage = 420.0
+max_current = 1688.0
+min_wakeup_voltage = 80.0
+max_wakeup_voltage = 200.0
+max_wakeup_power = 270.0
+
+[sub_resource type="WWListItem" id="WWListItem_laio0"]
+rpm = 784.0
+max_power = 348.0
+max_voltage = 494.0
+max_current = 1780.0
+min_wakeup_voltage = 100.0
+max_wakeup_voltage = 235.0
+max_wakeup_power = 305.0
+
+[sub_resource type="WWListItem" id="WWListItem_qppya"]
+rpm = 856.0
+max_power = 408.0
+max_voltage = 575.0
+max_current = 1845.0
+min_wakeup_voltage = 130.0
+max_wakeup_voltage = 300.0
+max_wakeup_power = 370.0
+
+[sub_resource type="WWListItem" id="WWListItem_65frr"]
+rpm = 928.0
+max_power = 474.0
+max_voltage = 664.0
+max_current = 1886.0
+min_wakeup_voltage = 150.0
+max_wakeup_voltage = 360.0
+max_wakeup_power = 410.0
+
+[sub_resource type="WWListItem" id="WWListItem_e4rmd"]
+rpm = 1000.0
+max_power = 540.0
+max_voltage = 760.0
+max_current = 1900.0
+min_wakeup_voltage = 170.0
+max_wakeup_voltage = 450.0
+max_wakeup_power = 490.0
+
+[sub_resource type="MotorParameter" id="MotorParameter_210ku"]
+mfi = 17.567
+mIsat = 64.0
+fi = 1500.0
+Isat = 15.0
+
+[sub_resource type="MotorParameter" id="MotorParameter_ewrnx"]
+mfi = 15.0
+mIsat = 183.3
+fi = 2000.0
+Isat = 49.0
 
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"
@@ -34,22 +144,8 @@ rig_effectiveness = 0.85
 [node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
 oil_pump/pressure_minimum = 0.15
 Ftmax = 228000.0
-wwlist = Array[Array]([[496.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], [496.0, 20.0, 125.0, 600.0, 0, 140, 180], [496.0, 50.0, 156.0, 846.0, 0, 140, 180], [496.0, 90.0, 194.0, 1065.0, 0, 140, 180], [496.0, 135.0, 240.0, 1260.0, 0, 140, 180], [568.0, 182.0, 293.0, 1428.0, 25, 150, 200], [640.0, 234.0, 353.0, 1571.0, 50, 160, 235], [712, 286, 420, 1688, 80, 200, 270], [784, 348, 494, 1780, 100, 235, 305], [856, 408, 575, 1845, 130, 300, 370], [928, 474, 664, 1886, 150, 360, 410], [1000, 540, 760, 1900, 170, 450, 490]])
-motor_param_table = Array[Dictionary]([{
-"fi": 1500.0,
-"idown": 0.0,
-"isat": 15.0,
-"iup": 0.0,
-"mfi": 17.567,
-"misat": 64.0
-}, {
-"fi": 2000.0,
-"idown": 0.0,
-"isat": 49.0,
-"iup": 0.0,
-"mfi": 15.0,
-"misat": 183.3
-}])
+wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
+motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
 aware_system/active = true

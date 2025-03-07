@@ -1,6 +1,7 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
 #include "TrainEngine.hpp"
+#include "resources/engines/WWListItem.hpp"
 
 
 namespace godot {
@@ -14,7 +15,7 @@ namespace godot {
             float oil_max_pressure = 0.65;  // OilMaxPressure -> OilPump.pressure_maximum
             double traction_force_max = 0.0; // Ftmax -> Ftmax
 
-            TypedArray<Array> wwlist;
+            TypedArray<WWListItem> wwlist;
 
         protected:
             TEngineType get_engine_type() override;
@@ -34,8 +35,8 @@ namespace godot {
             double get_traction_force_max() const;
             void set_traction_force_max(double value);
 
-            TypedArray<Array> get_wwlist();
-            void set_wwlist(const TypedArray<Array>& p_wwlist);
+            TypedArray<WWListItem> get_wwlist();
+            void set_wwlist(const TypedArray<WWListItem> &p_wwlist);
 
             void oil_pump(bool p_enabled);
             void fuel_pump(bool p_enabled);

@@ -1,4 +1,3 @@
-#include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
@@ -102,6 +101,23 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"), "set_battery_voltage",
                 "get_battery_voltage");
+
+
+        BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_TRANSDUCER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_GENERATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_ACCUMULATOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_CURRENTCOLLECTOR);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_POWERCABLE);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_HEATER);
+        BIND_ENUM_CONSTANT(POWER_SOURCE_MAIN);
+
+        BIND_ENUM_CONSTANT(POWER_TYPE_NONE);
+        BIND_ENUM_CONSTANT(POWER_TYPE_BIO);
+        BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
+        BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
+        BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
     }
 
     TMoverParameters *TrainController::get_mover() const {

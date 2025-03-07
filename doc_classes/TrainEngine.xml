@@ -18,7 +18,7 @@
 		</method>
 	</methods>
 	<members>
-		<member name="motor_param_table" type="Dictionary[]" setter="set_motor_param_table" getter="get_motor_param_table" default="[]">
+		<member name="motor_param_table" type="MotorParameter[]" setter="set_motor_param_table" getter="get_motor_param_table" default="[]">
 			[code]MotorParamTable[/code]
 			FIXME: original FIZ file has multiple MotorParamTable sections depending of the engine type. Their values are parsed individually. This property should be a part of a specific train engine.
 		</member>
@@ -26,10 +26,12 @@
 	<signals>
 		<signal name="engine_start">
 			<description>
+				Emitted when the engine has started
 			</description>
 		</signal>
 		<signal name="engine_stop">
 			<description>
+				Emitted when the engine has stopped
 			</description>
 		</signal>
 	</signals>

@@ -1,8 +1,8 @@
 #pragma once
 #include "../core/TrainPart.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
+#include "resources/engines/MotorParameter.hpp"
 #include <godot_cpp/classes/node.hpp>
-
 
 namespace godot {
     class TrainController;
@@ -10,7 +10,7 @@ namespace godot {
             GDCLASS(TrainEngine, TrainPart)
         public:
             static void _bind_methods();
-            TypedArray<Dictionary> motor_param_table;
+            TypedArray<MotorParameter> motor_param_table;
 
         protected:
             virtual TEngineType get_engine_type() = 0;
@@ -21,8 +21,8 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
-            TypedArray<Dictionary> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<Dictionary> &p_motor_param_table);
+            TypedArray<MotorParameter> get_motor_param_table();
+            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
             void main_switch(bool p_enabled);
     };
 } // namespace godot

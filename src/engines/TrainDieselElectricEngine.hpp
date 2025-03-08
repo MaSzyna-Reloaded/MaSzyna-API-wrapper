@@ -9,6 +9,6 @@ namespace godot {
             static void _bind_methods();
 
         protected:
-            TEngineType get_engine_type() override;
+            TrainEngine::EngineType get_engine_type() override;
     };
 } // namespace godot

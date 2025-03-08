@@ -79,6 +79,46 @@ namespace godot {
                 POWER_TYPE_STEAM
             };
 
+            const std::map<TrainPowerSource, TPowerSource> power_source_map = {
+                    {TrainPowerSource::POWER_SOURCE_NOT_DEFINED, TPowerSource::NotDefined},
+                    {TrainPowerSource::POWER_SOURCE_INTERNAL, TPowerSource::InternalSource},
+                    {TrainPowerSource::POWER_SOURCE_TRANSDUCER, TPowerSource::Transducer},
+                    {TrainPowerSource::POWER_SOURCE_GENERATOR, TPowerSource::Generator},
+                    {TrainPowerSource::POWER_SOURCE_ACCUMULATOR, TPowerSource::Accumulator},
+                    {TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR, TPowerSource::CurrentCollector},
+                    {TrainPowerSource::POWER_SOURCE_POWERCABLE, TPowerSource::PowerCable},
+                    {TrainPowerSource::POWER_SOURCE_HEATER, TPowerSource::Heater},
+                    {TrainPowerSource::POWER_SOURCE_MAIN, TPowerSource::Main}
+            };
+
+            const std::map<TPowerSource, TrainPowerSource> tpower_source_map = {
+                {TPowerSource::NotDefined, TrainPowerSource::POWER_SOURCE_NOT_DEFINED},
+                {TPowerSource::InternalSource, TrainPowerSource::POWER_SOURCE_INTERNAL},
+                {TPowerSource::Transducer, TrainPowerSource::POWER_SOURCE_TRANSDUCER},
+                {TPowerSource::Generator, TrainPowerSource::POWER_SOURCE_GENERATOR},
+                {TPowerSource::Accumulator, TrainPowerSource::POWER_SOURCE_ACCUMULATOR},
+                {TPowerSource::CurrentCollector, TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR},
+                {TPowerSource::PowerCable, TrainPowerSource::POWER_SOURCE_POWERCABLE},
+                {TPowerSource::Heater, TrainPowerSource::POWER_SOURCE_HEATER},
+                {TPowerSource::Main, TrainPowerSource::POWER_SOURCE_MAIN}
+            };
+
+            const std::map<TrainPowerType, TPowerType> power_type_map = {
+                    {TrainPowerType::POWER_TYPE_NONE, TPowerType::NoPower},
+                    {TrainPowerType::POWER_TYPE_BIO, TPowerType::BioPower},
+                    {TrainPowerType::POWER_TYPE_MECH, TPowerType::MechPower},
+                    {TrainPowerType::POWER_TYPE_ELECTRIC, TPowerType::ElectricPower},
+                    {TrainPowerType::POWER_TYPE_STEAM, TPowerType::SteamPower}
+            };
+
+            const std::map<TPowerType, TrainPowerType> tpower_type_map = {
+                    {TPowerType::NoPower, TrainPowerType::POWER_TYPE_NONE},
+                    {TPowerType::BioPower, TrainPowerType::POWER_TYPE_BIO},
+                    {TPowerType::MechPower, TrainPowerType::POWER_TYPE_MECH},
+                    {TPowerType::ElectricPower, TrainPowerType::POWER_TYPE_ELECTRIC},
+                    {TPowerType::SteamPower, TrainPowerType::POWER_TYPE_STEAM}
+            };
+
             static const char *MOVER_CONFIG_CHANGED_SIGNAL;
             static const char *MOVER_INITIALIZED_SIGNAL;
             static const char *POWER_CHANGED_SIGNAL;

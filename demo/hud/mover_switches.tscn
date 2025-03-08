@@ -52,6 +52,19 @@ command = "main_controller_decrease"
 unique_name_in_owner = true
 layout_mode = 2
 
+[node name="HBoxContainer3" type="HBoxContainer" parent="General"]
+layout_mode = 2
+
+[node name="LightsIncrease" parent="General/HBoxContainer3" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Light selector +"
+command = "increase_light_selector_position"
+
+[node name="LightsDecrease" parent="General/HBoxContainer3" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Light selector -"
+command = "decrease_light_selector_position"
+
 [node name="Security" type="HFlowContainer" parent="."]
 layout_mode = 2
 

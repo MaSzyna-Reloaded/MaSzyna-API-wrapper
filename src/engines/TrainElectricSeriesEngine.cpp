@@ -15,8 +15,8 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "winding_resistance"), "set_winding_resistance", "get_winding_resistance");
     }
 
-    TEngineType TrainElectricSeriesEngine::get_engine_type() {
-        return TEngineType::ElectricSeriesMotor;
+    TrainEngine::EngineType TrainElectricSeriesEngine::get_engine_type() {
+        return TrainEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 
     void TrainElectricSeriesEngine::_do_update_internal_mover(TMoverParameters *mover) {

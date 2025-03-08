@@ -137,9 +137,8 @@ namespace godot {
         state["converter_enabled"] = mover->ConverterFlag;
         state["converted_allowed"] = mover->ConverterAllow;
         state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        state["power_source"] = static_cast<int>(mover->EnginePowerSource.SourceType);
-        state["accumulator/recharge_source"] =
-                static_cast<int>(mover->EnginePowerSource.RAccumulator.RechargeSource);
+        state["power_source"] = _controller->tpower_source_map.at(mover->EnginePowerSource.SourceType);
+        state["accumulator/recharge_source"] = _controller->tpower_source_map.at(mover->EnginePowerSource.RAccumulator.RechargeSource);
         state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
         state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
         state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
@@ -151,20 +150,20 @@ namespace godot {
         state["current_collector/overvoltage_relay"] = mover->EnginePowerSource.CollectorParameters.OVP;
         state["current_collector/required_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.InsetV;
         state["transducer/input_voltage"] = mover->EnginePowerSource.Transducer.InputVoltage;
-        state["power_cable/source"] =
-                static_cast<int>(mover->EnginePowerSource.RPowerCable.PowerTrans);
+        state["power_cable/source"] = _controller->tpower_type_map.at(mover->EnginePowerSource.RPowerCable.PowerTrans);
         state["power_cable/steam_pressure"] = mover->EnginePowerSource.RPowerCable.SteamPressure;
     }
 
     void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *mover) {
         TrainEngine::_do_update_internal_mover(mover);
-
-        mover->EnginePowerSource.SourceType = static_cast<TPowerSource>(power_source);
+        mover->EnginePowerSource.SourceType = _controller->power_source_map.at(power_source);
 
         switch (power_source) {
-            case TrainController::POWER_SOURCE_INTERNAL:; //@TODO: Implement
-                                                           // mover->EnginePowerSource.PowerType =
-                                                           // LoadFIZ_PowerDecode
+            case TrainController::POWER_SOURCE_INTERNAL: {
+                const std::map<TrainController::TrainPowerType, TPowerType>::const_iterator lookup =
+                        _controller->power_type_map.find(power_cable_power_trans);
+                mover->EnginePowerSource.PowerType = lookup != _controller->power_type_map.end() ? lookup->second : TPowerType::NoPower;
+            }
             case TrainController::POWER_SOURCE_TRANSDUCER: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
@@ -174,7 +173,7 @@ namespace godot {
             }
             case TrainController::POWER_SOURCE_ACCUMULATOR: {
                 mover->EnginePowerSource.RAccumulator.RechargeSource =
-                        static_cast<TPowerSource>(static_cast<int>(accumulator_recharge_source));
+                        _controller->power_source_map.at(accumulator_recharge_source);
             }
             case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
                 mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
@@ -191,7 +190,7 @@ namespace godot {
             }
             case TrainController::POWER_SOURCE_POWERCABLE: {
                 mover->EnginePowerSource.RPowerCable.PowerTrans =
-                        static_cast<TPowerType>(static_cast<int>(power_cable_power_trans));
+                    _controller->power_type_map.at(power_cable_power_trans);
                 if (mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }

@@ -7,10 +7,12 @@ namespace godot {
 
     class TrainElectricEngine : public TrainEngine {
             GDCLASS(TrainElectricEngine, TrainEngine)
-        public:
+        private:
+            const TrainController *_controller = memnew(TrainController);
 
+        public:
             static void _bind_methods();
-            TrainController::TrainPowerSource power_source = static_cast<TrainController::TrainPowerSource>(static_cast<int>(TPowerSource::NotDefined));
+            TrainController::TrainPowerSource power_source = TrainController::POWER_SOURCE_NOT_DEFINED;
             int collectors_no = 0;
             float max_voltage = 0;
             float max_current = 0;
@@ -49,16 +51,10 @@ namespace godot {
              */
             float required_main_switch_voltage = 0.6f * max_voltage;
             float transducer_input_voltage = 0;
-            TrainController::TrainPowerSource accumulator_recharge_source = TrainController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED;
+            TrainController::TrainPowerSource accumulator_recharge_source =
+                    TrainController::TrainPowerSource::POWER_SOURCE_NOT_DEFINED;
             TrainController::TrainPowerType power_cable_power_trans = TrainController::TrainPowerType::POWER_TYPE_NONE;
             float power_cable_steam_pressure = 0;
-            //@TODO: Implement bitmask for PhysicalLayout
-
-        protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-
-        public:
             void set_engine_power_source(TrainController::TrainPowerSource p_source);
             TrainController::TrainPowerSource get_engine_power_source() const;
             int get_number_of_collectors() const;
@@ -95,5 +91,10 @@ namespace godot {
             void converter(bool p_enabled);
             void _register_commands() override;
             void _unregister_commands() override;
+            //@TODO: Implement bitmask for PhysicalLayout
+
+        protected:
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
     };
 } // namespace godot

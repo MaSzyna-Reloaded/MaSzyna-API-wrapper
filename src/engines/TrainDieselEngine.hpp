@@ -18,7 +18,7 @@ namespace godot {
             TypedArray<WWListItem> wwlist;
 
         protected:
-            TEngineType get_engine_type() override;
+            EngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _register_commands() override;

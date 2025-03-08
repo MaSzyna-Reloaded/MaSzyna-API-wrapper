@@ -9,11 +9,26 @@ namespace godot {
     class TrainEngine : public TrainPart {
             GDCLASS(TrainEngine, TrainPart)
         public:
+            enum EngineType {
+                ENGINE_TYPE_NONE,
+                ENGINE_TYPE_DUMB,
+                ENGINE_TYPE_WHEELS_DRIVEN,
+                ENGINE_TYPE_ELECTRIC_SERIES_MOTOR,
+                ENGINE_TYPE_ELECTRIC_INDUCTION_MOTOR,
+                ENGINE_TYPE_DIESEL,
+                ENGINE_TYPE_STEAM,
+                ENGINE_TYPE_DIESEL_ELECTRIC,
+                ENGINE_TYPE_MAIN
+            };
+
+            TypedArray<MotorParameter> get_motor_param_table();
+            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
+            void main_switch(bool p_enabled);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 
         protected:
-            virtual TEngineType get_engine_type() = 0;
+            virtual EngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
@@ -21,8 +36,7 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
-            TypedArray<MotorParameter> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
-            void main_switch(bool p_enabled);
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(TrainEngine::EngineType);

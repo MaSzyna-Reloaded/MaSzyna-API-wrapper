@@ -9,7 +9,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, x86_32]
-        target: [template_release, template_debug]
+        target: [template_debug]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -55,7 +55,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, x86_32]
-        target: [template_release, template_debug]
+        target: [template_debug]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -101,7 +101,7 @@ jobs:
     strategy:
       matrix:
         arch: [x86_64, x86_32, arm64, arm32]
-        target: [template_release]
+        target: [template_debug]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

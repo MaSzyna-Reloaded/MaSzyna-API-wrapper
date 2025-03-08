@@ -10,9 +10,9 @@ do
     esac
 done
 echo "Building Dynamic-linked library for host platform"
-scons target="template_debug"
+scons target="template_debug" || exit 1
 echo "Creating Dynamic-linked libraries for $target build..."
-scons platform="$platform" arch="$arch" target="$target"
+scons platform="$platform" arch="$arch" target="$target" || exit 1
 mkdir -p "build/${platform}"
 export_preset="${platform}_${arch}"
 target_file_name="reloaded_${export_preset}"
@@ -28,9 +28,9 @@ fi
 echo "Importing Godot project..."
 (godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import
 if [ "$target" = "template_release" ]; then
-    cd demo && godot --headless --export-release "$export_preset" "../build/${platform}/${target_file_name}"
+    cd demo && godot --headless --export-release "$export_preset" "../build/${platform}/${target_file_name}" || exit 1
 else
-    cd demo && godot --headless --export-debug "$export_preset" "../build/${platform}/${target_file_name}"
+    cd demo && godot --headless --export-debug "$export_preset" "../build/${platform}/${target_file_name}" || exit 1
 fi
 
 if [ $unzip = "true" ]; then

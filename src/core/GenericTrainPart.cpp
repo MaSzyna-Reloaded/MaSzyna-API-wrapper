@@ -7,8 +7,8 @@ namespace godot {
     void GenericTrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_train_controller_node"), &GenericTrainPart::get_train_controller_node);
         ClassDB::bind_method(D_METHOD("get_train_state"), &GenericTrainPart::get_train_state);
-        BIND_VIRTUAL_METHOD(GenericTrainPart, _process_train_part);
-        BIND_VIRTUAL_METHOD(GenericTrainPart, _get_train_part_state);
+        BIND_VIRTUAL_METHOD(GenericTrainPart, _process_train_part, 2);
+        BIND_VIRTUAL_METHOD(GenericTrainPart, _get_train_part_state, 1);
     }
 
     void GenericTrainPart::_do_update_internal_mover(TMoverParameters *mover) {};

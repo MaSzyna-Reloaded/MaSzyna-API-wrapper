@@ -24,18 +24,19 @@ git submodule update --init --recursive
 ```
 
 ### Android development
-#### Setup the build system   
-For build system setup plase, take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
+#### Set up the build system   
+For build system setup,
+please take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
 ### Compiling
 ```bash
 scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|template_debug]
 ```
-### Compability
+### Compatibility
 
-| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android | Android Target API Level | iOS | C++ Standard | MaSzyna Version |
-|----------------|----------------------|---------|-------|--------|---------|--------------------------|-----|--------------|-----------------|
-| dev            | 4.3                  | ✅       | ✅       | ❌       | ✅      | 34 | ❌       | C++ 17       | 24.06 |
-
+| Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version |
+|----------------|----------------------|---------|-------|--------|--------------------------|-----|--------------|-----------------|
+| 25.08.2024     | 4.3                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
+| 11.04.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 ### Documentation
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

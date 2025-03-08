@@ -1,7 +1,7 @@
 [gd_scene load_steps=7 format=3 uid="uid://dqwt31s3qnglp"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_4abai"]
-[ext_resource type="Script" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_pes3o"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_4abai"]
+[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_pes3o"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://vehicles/impuls/impuls_head_display.tres" id="2_iawif"]
 [ext_resource type="PackedScene" uid="uid://cno8d0tylykmu" path="res://vehicles/impuls/impuls_cabin_a.tscn" id="2_tivfr"]
 

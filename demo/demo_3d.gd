@@ -14,6 +14,8 @@ func _update_render_settings():
     world3d.environment.ssao_enabled = UserSettings.get_setting("render", "ssao_enabled", true)
     world3d.environment.ssil_enabled = UserSettings.get_setting("render", "ssil_enabled", true)
     world3d.environment.ssr_enabled = UserSettings.get_setting("render", "ssr_enabled", true)
+    viewport.anisotropic_filtering_level = UserSettings.get_setting("render", "anisotropic_filtering_level", 2)
+    viewport.msaa_3d = UserSettings.get_setting("render", "msaa_3d", 2)
     DisplayServer.window_set_vsync_mode(
         DisplayServer.VSYNC_ENABLED
         if UserSettings.get_setting("window", "vsync_enabled", true)

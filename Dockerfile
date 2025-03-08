@@ -1,13 +1,13 @@
 # Dockerfile
-FROM barichello/godot-ci:4.3
+FROM barichello/godot-ci:4.4
 
 # Set working directory
 WORKDIR /app
 
 RUN apt update -y && apt install -y scons g++
-RUN wget https://github.com/godotengine/godot-cpp/archive/refs/tags/godot-4.3-stable.tar.gz
-RUN tar -xf godot-4.3-stable.tar.gz
-RUN mv godot-cpp-godot-4.3-stable godot-cpp
+RUN wget https://github.com/godotengine/godot-cpp/archive/refs/tags/godot-4.4-stable.tar.gz
+RUN tar -xf godot-4.4-stable.tar.gz
+RUN mv godot-cpp-godot-4.4-stable godot-cpp
 
 RUN wget https://github.com/bitwes/Gut/archive/refs/tags/v9.3.0.tar.gz
 RUN tar -xf v9.3.0.tar.gz
@@ -29,4 +29,4 @@ COPY demo ./demo
 # IMPORTANT!
 # Godot will only work on the third try :)
 # First run ends with segfault, second - will generate caches; and the third one will run tests :)
-    CMD (godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit
+CMD (godot --path demo --headless --import || exit 0) &&  godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit

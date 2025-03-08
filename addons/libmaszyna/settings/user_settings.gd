@@ -13,6 +13,10 @@ var config = ConfigFile.new()
 var DEFAULTS = {
     "maszyna": {
         "game_dir": ".",
+    },
+    "render": {
+        "msaa_3d": RenderingServer.VIEWPORT_MSAA_4X,
+        "anisotropic_filtering_level": RenderingServer.VIEWPORT_ANISOTROPY_4X
     }
 }
 

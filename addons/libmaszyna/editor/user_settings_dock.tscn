@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://cpnfrm4urr642"]
+[gd_scene load_steps=4 format=3 uid="uid://cpnfrm4urr642"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/editor/user_settings_dock.gd" id="1_c24dg"]
-[ext_resource type="Script" path="res://addons/libmaszyna/editor/user_settings_check_button.gd" id="2_2cs74"]
+[ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/editor/user_settings_dock.gd" id="1_c24dg"]
+[ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/editor/user_settings_check_button.gd" id="2_2cs74"]
+[ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/editor/user_settings_dropdown.gd" id="3_hwkpe"]
 
 [node name="Maszyna Settings" type="PanelContainer"]
 anchors_preset = 15
@@ -25,6 +26,7 @@ text = "Game Folder"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+text = "d:/Games/MaSzyna/"
 
 [node name="Browse" type="Button" parent="VBoxContainer/GameDirSection"]
 layout_mode = 2
@@ -71,6 +73,7 @@ layout_mode = 2
 
 [node name="SDFGI" type="CheckButton" parent="VBoxContainer/HBoxContainer5"]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "sdfgi_enabled"
@@ -86,6 +89,7 @@ layout_mode = 2
 
 [node name="SSIL" type="CheckButton" parent="VBoxContainer/HBoxContainer6"]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "ssil_enabled"
@@ -117,6 +121,7 @@ layout_mode = 2
 
 [node name="SSR" type="CheckButton" parent="VBoxContainer/HBoxContainer8"]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "ssr_enabled"
@@ -132,6 +137,7 @@ layout_mode = 2
 
 [node name="VolumetricFog" type="CheckButton" parent="VBoxContainer/HBoxContainer4"]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "volumetric_fog_enabled"
@@ -156,19 +162,70 @@ layout_mode = 2
 text = "E3D Alpha Transparency
 "
 
-[node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2
 
-[node name="VSync" type="CheckButton" parent="VBoxContainer/HBoxContainer10"]
+[node name="VSync" type="CheckButton" parent="VBoxContainer/HBoxContainer11"]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "window"
 key = "vsync_enabled"
 default = true
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer10"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer11"]
 layout_mode = 2
 text = "VSync"
+
+[node name="HBoxContainer12" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer12"]
+layout_mode = 2
+selected = 2
+item_count = 4
+popup/item_0/text = "Disabled"
+popup/item_0/id = 0
+popup/item_1/text = "x2"
+popup/item_1/id = 1
+popup/item_2/text = "x4"
+popup/item_2/id = 2
+popup/item_3/text = "x8"
+popup/item_3/id = 3
+script = ExtResource("3_hwkpe")
+section = "render"
+key = "msaa_3d"
+
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer12"]
+layout_mode = 2
+text = "MSAA level"
+
+[node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer10"]
+layout_mode = 2
+selected = 2
+item_count = 6
+popup/item_0/text = "Disabled"
+popup/item_0/id = 0
+popup/item_1/text = "x2"
+popup/item_1/id = 1
+popup/item_2/text = "x4"
+popup/item_2/id = 2
+popup/item_3/text = "x8"
+popup/item_3/id = 3
+popup/item_4/text = "x16"
+popup/item_4/id = 4
+popup/item_5/text = "Max"
+popup/item_5/id = 5
+script = ExtResource("3_hwkpe")
+section = "render"
+key = "anisotropic_filtering_level"
+
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer10"]
+layout_mode = 2
+text = "Anisotropic filtering level"
 
 [node name="InfoMessageWindow" type="Window" parent="."]
 unique_name_in_owner = true

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://djl581jijicpq"]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/cabin/cabin_command.gd" id="1_8wubd"]
+[ext_resource type="Script" uid="uid://dvmp4jpa1j5nw" path="res://addons/libmaszyna/cabin/cabin_command.gd" id="1_8wubd"]
 
 [node name="CabinCommand" type="Node"]
 script = ExtResource("1_8wubd")

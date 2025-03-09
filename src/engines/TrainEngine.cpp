@@ -14,10 +14,20 @@ namespace godot {
                 "set_motor_param_table", "get_motor_param_table");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
+
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_NONE);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_DUMB);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_WHEELS_DRIVEN);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_ELECTRIC_SERIES_MOTOR);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_ELECTRIC_INDUCTION_MOTOR);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_DIESEL);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_STEAM);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_DIESEL_ELECTRIC);
+        BIND_ENUM_CONSTANT(ENGINE_TYPE_MAIN);
     }
 
     void TrainEngine::_do_update_internal_mover(TMoverParameters *mover) {
-        mover->EngineType = get_engine_type();
+        mover->EngineType = static_cast<TEngineType>(get_engine_type());
 
         /* FIXME: for testing purposes */
         mover->GroundRelay = true;

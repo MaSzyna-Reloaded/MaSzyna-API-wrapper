@@ -14,7 +14,7 @@ namespace godot {
             double winding_resistance = 0.0; // WindingRes -> WindingRes
 
         protected:
-            TEngineType get_engine_type() override;
+            EngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *mover) override;
 
         public:

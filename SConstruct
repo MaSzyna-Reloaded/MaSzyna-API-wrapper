@@ -80,7 +80,9 @@ sources = (
     + Glob("src/brakes/*.cpp")
     + Glob("src/types/*.cpp")
     + Glob("src/parsers/*.cpp")
+    + Glob("src/lightning/*.cpp")
     + Glob("src/resources/engines/*.cpp")
+    + Glob("src/resources/lightning/*.cpp")
 )
 
 if env["target"] in ["editor", "template_debug"]:

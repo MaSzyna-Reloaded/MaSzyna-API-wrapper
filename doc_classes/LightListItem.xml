@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="LightListItem" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Item for light selector indicating which lights it should light up
+	</brief_description>
+	<description>
+		Item for light selector indicating which lights it should light up. It applies to the cabin where the selector is located at
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="head_light" type="bool" setter="set_head_light" getter="get_head_light" default="false">
+			Turns head light on or off
+		</member>
+		<member name="left_red_signal" type="bool" setter="set_left_red_signal" getter="get_left_red_signal" default="false">
+			Turns red signal on the left on or off
+		</member>
+		<member name="left_white_signal" type="bool" setter="set_left_white_signal" getter="get_left_white_signal" default="false">
+			Turns white signal on the left on or off
+		</member>
+		<member name="right_red_signal" type="bool" setter="set_right_red_signal" getter="get_right_red_signal" default="false">
+			Turns red signal on the right on or off
+		</member>
+		<member name="right_white_signal" type="bool" setter="set_right_white_signal" getter="get_right_white_signal" default="false">
+			Turns white signal on the right on or off
+		</member>
+	</members>
+</class>

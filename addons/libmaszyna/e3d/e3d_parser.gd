@@ -295,7 +295,14 @@ func _create_submodel(submodel):
                 obj.name = "banan"
             obj.transform = submodel["matrix"]
             return obj
-
+        E3DSubModel.SubModelType.FREE_SPOTLIGHT:
+            obj.transform = submodel["matrix"]
+            obj.name = submodel["name"]
+            obj.visibility_light = submodel["visibility_light_threshold"]
+            obj.lights_on_threshold = submodel["lights_on_threshold"]
+            obj.diffuse_color = submodel["diffuse_color"]
+            obj.self_illumination = submodel["selfillum_color"]
+            return obj
         E3DSubModel.SubModelType.GL_TRIANGLES:
             var _vc = submodel["vertices"].size()
             var _nc = submodel["normals"].size()

@@ -10,10 +10,12 @@
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
+#include "lightning/TrainLightning.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
+#include "resources/lightning/LightListItem.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
@@ -44,9 +46,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
+        GDREGISTER_CLASS(TrainLightning)
         GDREGISTER_CLASS(LogSystem);
         GDREGISTER_CLASS(WWListItem);
-        GDREGISTER_CLASS(MotorParameter)
+        GDREGISTER_CLASS(MotorParameter);
+        GDREGISTER_CLASS(LightListItem)
 
         train_system_singleton = memnew(TrainSystem);
         log_system_singleton = memnew(LogSystem);

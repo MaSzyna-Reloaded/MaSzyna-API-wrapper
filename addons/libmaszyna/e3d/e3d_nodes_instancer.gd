@@ -56,7 +56,11 @@ func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubMo
         E3DSubModel.SubModelType.TRANSFORM:
             obj = Node3D.new()
             obj.name = submodel.name
-
+        E3DSubModel.SubModelType.FREE_SPOTLIGHT:
+            obj = SpotLight3D.new()
+            obj.name = submodel.name
+            obj.shadow_enabled = true
+            obj.distance_fade_enabled = true
         E3DSubModel.SubModelType.GL_TRIANGLES:
             var is_name_excluded = target_node.exclude_node_names.any(
                     func(name): return submodel.name == name

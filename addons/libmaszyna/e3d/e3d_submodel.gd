@@ -13,7 +13,7 @@ enum SubModelType {
     GL_QUAD_STRIP,
     GL_POLYGON,
     TRANSFORM = 256,
-    FREE_SPOTLIGHT,
+    FREE_SPOTLIGHT = 257,
     STARS,
 }
 

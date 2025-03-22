@@ -114,10 +114,15 @@ func get_texture(texture_path):
     return load_texture("", texture_path)
 
 
-func load_texture(model_path, material_name, global:bool=true) -> Texture:
+func load_texture(model_path, material_name, global:bool=true) -> ImageTexture:
     var project_data_dir = UserSettings.get_maszyna_game_dir()
+    var _unknown_tex_img = _unknown_texture.get_image()
+    _unknown_texture = ImageTexture.create_from_image(_unknown_tex_img)
     var data_dir = project_data_dir if project_data_dir else ""
-
+    if (project_data_dir.ends_with("\\")):
+        project_data_dir = project_data_dir.trim_suffix("\\")
+    if (project_data_dir.ends_with("/")):
+        project_data_dir = project_data_dir.trim_suffix("/")
     var im = Image.new()
 
     var possible_paths = [
@@ -138,10 +143,11 @@ func load_texture(model_path, material_name, global:bool=true) -> Texture:
 
     if _textures.has(final_path):
         return _textures.get(final_path)
-
-    var res = ResourceLoader.load(final_path)
-    if res:
-        return res
+    var file = FileAccess.open(final_path, FileAccess.READ_WRITE)
+    var res: Error = im.load_dds_from_buffer(file.get_buffer(file.get_length()))
+    file.close()
+    if res == OK:
+        return ImageTexture.create_from_image(im)
     else:
         push_error("Error loading texture \"" + final_path + "\" ")
         return _unknown_texture

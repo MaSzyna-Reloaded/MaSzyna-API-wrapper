@@ -101,7 +101,7 @@ namespace godot {
             MAKE_MEMBER_GS(float, open_with_permit, -1.0f);
             MAKE_MEMBER_GS_DIRTY(bool, has_lock, false);
             MAKE_MEMBER_GS(float, max_shift_plug, 0.1f);
-            MAKE_MEMBER_GS(Array, permit_list, Array({"0", "0", "0"}));
+            MAKE_MEMBER_GS(Array, permit_list, Array::make(0, 0, 0));
             MAKE_MEMBER_GS(int, permit_list_default, 1);
             MAKE_MEMBER_GS(bool, auto_close_remote, false);
             MAKE_MEMBER_GS(float, auto_close_velocity, -1.0f);

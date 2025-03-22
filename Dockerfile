@@ -1,10 +1,8 @@
 # Dockerfile
-FROM barichello/godot-ci:4.4
+FROM jezsonic/build-tools:4.5.stable
 
 # Set working directory
 WORKDIR /app
-
-RUN apt update -y && apt install -y scons g++
 
 COPY godot-cpp godot-cpp
 COPY vendor vendor

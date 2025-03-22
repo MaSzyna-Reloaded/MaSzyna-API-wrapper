@@ -38,7 +38,8 @@ scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|te
 | 25.08.2024     | 4.3                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 | 11.03.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 | 22.05.2025     | 4.4                  | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
-### Documentation
+| 30.09.2025     | 4.5                  | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
+### Documentation 
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/
 
@@ -47,7 +48,7 @@ If you have found any bug, have a suggestion or want to join us - feel free to o
 ### Code Quality
 
 #### Qodana
-Files on PRs are scanned by Qodana. All it's reports are published [here](https://qodana.cloud/projects/ARjJ6)
+Files on PRs are scanned by Qodana. All its reports are published [here](https://qodana.cloud/projects/ARjJ6)
 
 ### Testing
 

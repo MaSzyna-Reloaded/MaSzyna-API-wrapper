@@ -14,7 +14,6 @@ func after_each():
     train.free()
 
 func test_successful_enabling_oil_pump():
-    print(train.state)
     train.send_command("oil_pump", true)
     await wait_idle_frames(2)
     assert_true(train.state["oil_pump_active"], "Oil pump should be active")
@@ -60,7 +59,7 @@ func test_successful_moving_on():
     train.send_command("fuel_pump", false)
     train.send_command("main_switch", true)
     await wait_seconds(5)
-    train.send_command("direction_increase", true)
+    train.send_command("direction_increase")
     train.send_command("main_controller_increase", true)
     await wait_seconds(1)
     train.send_command("main_controller_increase", true)

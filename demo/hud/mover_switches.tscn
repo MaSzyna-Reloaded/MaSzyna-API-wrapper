@@ -29,13 +29,11 @@ layout_mode = 2
 layout_mode = 2
 text = "Forward"
 command = "direction_increase"
-covnert_argument_to_bool = false
 
 [node name="Reverse" parent="General/HBoxContainer2" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Backward"
 command = "direction_decrease"
-covnert_argument_to_bool = false
 
 [node name="HBoxContainer" type="HBoxContainer" parent="General"]
 layout_mode = 2
@@ -44,13 +42,11 @@ layout_mode = 2
 layout_mode = 2
 text = "Main +"
 command = "main_controller_increase"
-covnert_argument_to_bool = false
 
 [node name="MainDecrease" parent="General/HBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Main -"
 command = "main_controller_decrease"
-covnert_argument_to_bool = false
 
 [node name="MainCtrlPos" type="Label" parent="General/HBoxContainer"]
 unique_name_in_owner = true
@@ -63,13 +59,11 @@ layout_mode = 2
 layout_mode = 2
 text = "Light selector +"
 command = "increase_light_selector_position"
-covnert_argument_to_bool = false
 
 [node name="LightsDecrease" parent="General/HBoxContainer3" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Light selector -"
 command = "decrease_light_selector_position"
-covnert_argument_to_bool = false
 
 [node name="HBoxContainer4" type="HBoxContainer" parent="General"]
 layout_mode = 2
@@ -79,14 +73,12 @@ layout_mode = 2
 text = "Spring brake: On"
 command = "set_spring_brake_active"
 command_argument = "true"
-covnert_argument_to_bool = true
 
 [node name="SpringBrakeDeactivate" parent="General/HBoxContainer4" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: Off"
 command = "set_spring_brake_active"
 command_argument = "false"
-covnert_argument_to_bool = true
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="General"]
 layout_mode = 2
@@ -96,14 +88,12 @@ layout_mode = 2
 text = "Spring brake: Enable"
 command = "set_spring_brake_enabled"
 command_argument = "true"
-covnert_argument_to_bool = true
 
 [node name="SpringBrakeDisable" parent="General/HBoxContainer5" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: Disable"
 command = "set_spring_brake_enabled"
 command_argument = "false"
-covnert_argument_to_bool = true
 
 [node name="Security" type="HFlowContainer" parent="."]
 layout_mode = 2
@@ -175,21 +165,18 @@ layout_mode = 2
 text = "Drive"
 command = "brake_level_set_position"
 command_argument = "drive"
-covnert_argument_to_bool = false
 
 [node name="Full" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Full"
 command = "brake_level_set_position"
 command_argument = "full"
-covnert_argument_to_bool = false
 
 [node name="Emergency" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Emergency"
 command = "brake_level_set_position"
 command_argument = "emergency"
-covnert_argument_to_bool = false
 
 [node name="Level" parent="Brakes/VBoxContainer" instance=ExtResource("3_j1mtt")]
 layout_mode = 2

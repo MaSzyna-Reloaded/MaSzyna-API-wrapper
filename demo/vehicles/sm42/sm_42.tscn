@@ -189,3 +189,17 @@ data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
 exclude_node_names = ["cien"]
+
+[node name="EngineSound" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.02685e-07, 2.15794, 1.17458)
+doppler_tracking = 2
+
+[node name="EngineSound2" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.02685e-07, 2.15794, 1.17458)
+volume_db = -80.0
+doppler_tracking = 2
+
+[node name="TrainSound" type="TrainSound" parent="."]
+sound_root_path = "/home/DoS/Stuff/MaSzyna/sounds/"
+
+[connection signal="sound_ended" from="TrainSound" to="." method="_on_train_sound_sound_ended"]

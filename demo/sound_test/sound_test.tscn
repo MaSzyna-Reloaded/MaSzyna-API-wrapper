@@ -1,0 +1,34 @@
+[gd_scene load_steps=2 format=3 uid="uid://cwp1mmvpvwe8j"]
+
+[ext_resource type="Script" uid="uid://dyuueod22jh2y" path="res://sound_test/sound_test.gd" id="1_yfcgh"]
+
+[node name="SoundTest" type="Node3D"]
+script = ExtResource("1_yfcgh")
+
+[node name="HSlider" type="HSlider" parent="."]
+offset_right = 1144.0
+offset_bottom = 16.0
+max_value = 1500.0
+ticks_on_borders = true
+
+[node name="TrainSound" type="TrainSound" parent="."]
+max_volume_db = -20.0
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1.80832)
+current = true
+
+[node name="AudioStreamPlayer3D2" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(-0.99878, 0, -0.0493728, 0, 1, 0, 0.0493728, 0, -0.99878, 0, 0, 0)
+volume_db = -80.0
+emission_angle_enabled = true
+
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
+transform = Transform3D(-0.985313, 0, 0.17076, 0, 1, 0, -0.17076, 0, -0.985313, 0.504956, 0, 0)
+emission_angle_enabled = true
+
+[node name="Label" type="Label" parent="."]
+offset_left = 19.0
+offset_top = 18.0
+offset_right = 59.0
+offset_bottom = 41.0

@@ -147,12 +147,14 @@ environment = SubResource("Environment_jrns0")
 
 [node name="SM42-099" parent="." instance=ExtResource("11_8gidn")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -16.3318, 0, -13.7746)
+MIN_VOLUME_DB = null
 
 [node name="Impuls" parent="." instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
 
 [node name="TEM2" parent="." instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
+MIN_VOLUME_DB = null
 
 [node name="Dekoracje" type="Node3D" parent="."]
 

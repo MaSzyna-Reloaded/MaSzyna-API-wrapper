@@ -14,7 +14,7 @@
 [ext_resource type="PackedScene" uid="uid://cmluhfe2vkxcc" path="res://addons/libmaszyna/cabin/cabin_switch.tscn" id="72_a07r6"]
 [ext_resource type="Script" uid="uid://brxp2te1tebgk" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
 [ext_resource type="Script" uid="uid://bw876lucal3mo" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
-[ext_resource type="Texture2D" uid="uid://dd07eqxpfad6y" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
+[ext_resource type="Texture2D" uid="uid://cycwf1avry6mk" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
 [ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
 
 [sub_resource type="AudioStream" id="AudioStream_hwnyj"]

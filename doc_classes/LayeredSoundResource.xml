@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="LayeredSoundResource" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A resource for holding configuration for layered vehicle sounds.
+	</brief_description>
+	<description>
+		This resource defines how different sounds (starting, main loop, ending) are played and modulated based on parameters like speed or other vehicle states.
+		It allows configuring sound mapping, pitch, volume, cross-fading, and other properties for complex sound setups.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_next_sound">
+			<return type="String" />
+			<description>
+				Retrieves the relative file path for the next sound from the [code]sound_table[/code] according to the currently played one.
+			</description>
+		</method>
+		<method name="get_previous_sound">
+			<return type="String" />
+			<description>
+				Retrieves the relative file path for the previous sound from the [code]sound_table[/code] according to the currently played one.
+			</description>
+		</method>
+		<method name="get_sound_file_path">
+			<return type="String" />
+			<param index="0" name="sound_table_index" type="int" />
+			<description>
+				Retrieves the sound file path from the [code]sound_table[/code] associated with the given index [code]property_value[/code].
+			</description>
+		</method>
+		<method name="get_sound_next_pitch">
+			<return type="String" />
+			<description>
+				Retrieves the relative pitch for the next sound from [code]pitch_table[/code] according to the currently played sounds.
+			</description>
+		</method>
+		<method name="get_sound_pitch">
+			<return type="String" />
+			<param index="0" name="pitch_table_index" type="int" />
+			<description>
+				Retrieves the pitch value from the [code]pitch_table[/code] associated with the given index [code]property_value[/code].
+			</description>
+		</method>
+		<method name="get_sound_previous_pitch">
+			<return type="String" />
+			<description>
+				Retrieves the relative pitch for the previous sound from [code]pitch_table[/code] according to the currently played sounds.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="amplitude_factor" type="float" setter="set_amplitude_factor" getter="get_amplitude_factor" default="0.0">
+			The factor by which the sound's amplitude (volume) is multiplied. A value of 1.0 means no change.
+		</member>
+		<member name="amplitude_offset" type="float" setter="set_amplitude_offset" getter="get_amplitude_offset" default="0.0">
+			An offset added to the sound's amplitude (volume) after applying the [code]amplitude_factor[/code].
+		</member>
+		<member name="cross_fade" type="float" setter="set_cross_fade" getter="get_cross_fade" default="0.0">
+			The duration in seconds for cross-fading between sounds when switching or modulating.
+		</member>
+		<member name="ending_sounds" type="String[]" setter="set_ending_sounds" getter="get_ending_sounds" default="[]">
+			An array of file paths for sounds to be played when the sound sequence ends (e.g., engine shutting down).
+		</member>
+		<member name="force_preload" type="bool" setter="set_force_preload" getter="get_force_preload" default="false" experimental="">
+			If [code]true[/code], forces the preloading of associated sound files to potentially reduce latency at the cost of higher initial memory usage.
+		</member>
+		<member name="frequency_factor" type="float" setter="set_frequency_factor" getter="get_frequency_factor" default="0.0">
+			The factor by which the sound's frequency (pitch) is multiplied. A value of 1.0 means no change.
+		</member>
+		<member name="frequency_offset" type="float" setter="set_frequency_offset" getter="get_frequency_offset" default="0.0">
+			An offset added to the sound's frequency (pitch) after applying the [code]frequency_factor[/code].
+		</member>
+		<member name="main_sounds" type="String[]" setter="set_main_sounds" getter="get_main_sounds" default="[]">
+			An array of file paths for the main looping sounds (e.g., the engine running loop).
+		</member>
+		<member name="offset" type="Vector3" setter="set_offset" getter="get_offset" default="Vector3(0, 0, 0)">
+			The positional offset of the sound source relative to the parent node (e.g., the [AudioStreamPlayer3D] using this resource).
+		</member>
+		<member name="pitch_table" type="Dictionary" setter="set_pitch_table" getter="get_pitch_table" default="{}">
+			A dictionary mapping indices or keys to pitch scale values for corresponding sounds in the [code]sound_table[/code]. Used for dynamic pitch adjustments based on state.
+		</member>
+		<member name="pitch_variation" type="float" setter="set_pitch_variation" getter="get_pitch_variation" default="0.0">
+			The amount of random variation applied to the pitch scale.
+		</member>
+		<member name="range" type="float" setter="set_range" getter="get_range" default="0.0">
+			Nominal sound range, in meters. A value of -1 disables spatial positioning, making the sound the same in every point, equally in every channel.
+		</member>
+		<member name="sound_table" type="Dictionary" setter="set_sound_table" getter="get_sound_table" default="{}">
+			A dictionary mapping indices or keys to sound file paths. Used for dynamically selecting sounds based on state.
+		</member>
+		<member name="starting_sounds" type="String[]" setter="set_starting_sounds" getter="get_starting_sounds" default="[]">
+			An array of file paths for sounds to be played when the sound sequence starts (e.g., engine starting up).
+		</member>
+	</members>
+</class>

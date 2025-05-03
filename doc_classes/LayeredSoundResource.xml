@@ -75,7 +75,7 @@
 			An array of file paths for the main looping sounds (e.g., the engine running loop).
 		</member>
 		<member name="offset" type="Vector3" setter="set_offset" getter="get_offset" default="Vector3(0, 0, 0)">
-			The positional offset of the sound source relative to the parent node (e.g., the AudioStreamPlayer3D using this resource).
+			The positional offset of the sound source relative to the parent node (e.g., the [AudioStreamPlayer3D] using this resource).
 		</member>
 		<member name="pitch_table" type="Dictionary" setter="set_pitch_table" getter="get_pitch_table" default="{}">
 			A dictionary mapping indices or keys to pitch scale values for corresponding sounds in the [code]sound_table[/code]. Used for dynamic pitch adjustments based on state.

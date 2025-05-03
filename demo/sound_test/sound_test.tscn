@@ -10,7 +10,10 @@ amplitude_factor = 0.8
 amplitude_offset = 1.2
 sound_table = {
 495: &"697_sm42-idle-1.ogg",
-600: &"697_sm42-idle-2.ogg"
+600: &"697_sm42-idle-2.ogg",
+700: &"697_sm42-idle-3.ogg",
+850: &"697_sm42-idle-4.ogg",
+1000: &"697_sm42-idle-5.ogg"
 }
 pitch_table = {
 495: 495
@@ -27,7 +30,7 @@ script = ExtResource("1_yfcgh")
 layout_mode = 0
 offset_right = 1144.0
 offset_bottom = 16.0
-max_value = 115.0
+max_value = 1500.0
 ticks_on_borders = true
 
 [node name="TrainSound" type="TrainSound" parent="."]
@@ -41,3 +44,10 @@ current = true
 volume_db = -80.0
 
 [node name="AudioStreamPlayer3D" type="AudioStreamPlayer2D" parent="."]
+
+[node name="Label" type="Label" parent="."]
+layout_mode = 0
+offset_left = 19.0
+offset_top = 18.0
+offset_right = 59.0
+offset_bottom = 41.0

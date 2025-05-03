@@ -1,3 +1,4 @@
+#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
@@ -19,14 +20,18 @@
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
 #include "parsers/maszyna_parser.hpp"
-#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
 #include "resources/load/LoadListItem.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
+#include "models/MaterialManager.hpp"
+#include "models/MaterialParser.hpp"
+#include "resources/sound/LayeredSoundResource.hpp"
+#include "sound/TrainSound.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
+#include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -76,8 +81,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(TrainLighting)
+        GDREGISTER_CLASS(TrainLighting);
         GDREGISTER_CLASS(GameLog);
+        GDREGISTER_CLASS(TrainSound);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
@@ -88,6 +94,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainLoad)
         GDREGISTER_CLASS(LoadListItem)
         GDREGISTER_CLASS(TrainBuffCoupl)
+        GDREGISTER_CLASS(LayeredSoundResource);
 
         // E3D
         GDREGISTER_CLASS(E3DModel);
@@ -182,16 +189,16 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 }
 
 extern "C" {
-    // Initialization.
-    GDExtensionBool GDE_EXPORT libmaszyna_library_init(
-            const GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library,
-            GDExtensionInitialization *r_initialization) {
-        const GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
+// Initialization.
+GDExtensionBool GDE_EXPORT libmaszyna_library_init(
+        const GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library,
+        GDExtensionInitialization *r_initialization) {
+    const GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
 
-        init_obj.register_initializer(initialize_libmaszyna_module);
-        init_obj.register_terminator(uninitialize_libmaszyna_module);
-        init_obj.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
+    init_obj.register_initializer(initialize_libmaszyna_module);
+    init_obj.register_terminator(uninitialize_libmaszyna_module);
+    init_obj.set_minimum_library_initialization_level(MODULE_INITIALIZATION_LEVEL_SCENE);
 
-        return init_obj.init();
-    }
+    return init_obj.init();
+}
 }

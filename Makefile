@@ -15,7 +15,7 @@ cleanup:
 
 
 compile-debug:
-	cmake -B build-debug -DGODOTCPP_TARGET=template_debug
+	cmake -B build-debug -DGODOTCPP_TARGET=template_debug -DGODOTCPP_USE_HOT_RELOAD=ON
 	cmake --build build-debug
 
 

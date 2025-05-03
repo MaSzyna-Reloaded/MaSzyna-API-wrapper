@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainSound" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Helper node for managing layered train sounds with cached stream loading and smooth crossfading between layers.
+	</brief_description>
+	<description>
+		TrainSound coordinates AudioStream playback for vehicles using data from [LayeredSoundResource].
+		Given a numeric parameter (for example, speed or throttle), it selects two adjacent layers from the resource's
+		[member LayeredSoundResource.sound_table], assigns their streams to two [AudioStreamPlayer3D] nodes, and performs an equal-power crossfade
+		between them within a configurable threshold window.
+
+		The node caches decoded [AudioStream] resources per file path, supports WAV/OGG/MP3, and can automatically
+		create a secondary [AudioStreamPlayer3D] if a second player is not provided. Use [member sound_root_path] to set
+		the base directory for relative sound file paths defined in [LayeredSoundResource]. The path must end with a trailing "/".
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_audio_stream_for_file">
+			<return type="AudioStream" />
+			<param index="0" name="file_path" type="String" />
+			<param index="1" name="loop" type="bool" />
+			<description>
+				Loads (and caches) an [AudioStream] for the given absolute [code]file_path[/code].
+				Supports [code].wav[/code], [code].ogg[/code], and [code].mp3[/code] files. When [code]loop[/code] is [code]true[/code],
+				looping is enabled on the created stream. If the file is missing or the extension is not supported,
+				the function returns [code]null[/code] and reports an error or warning to the console.
+			</description>
+		</method>
+		<method name="pause_all" qualifiers="const">
+			<return type="void" />
+			<description>
+				Pauses every stream
+			</description>
+		</method>
+		<method name="resume_all" qualifiers="const">
+			<return type="void" />
+			<description>
+				Resumes every stream
+			</description>
+		</method>
+		<method name="stop_all" qualifiers="const">
+			<return type="void" />
+			<description>
+				Stops every stream
+			</description>
+		</method>
+		<method name="update_audio_streams_and_volumes" experimental="">
+			<return type="void" />
+			<param index="0" name="param_values" type="float" />
+			<param index="1" name="layered_sound_data" type="LayeredSoundResource" />
+			<param index="2" name="player" type="AudioStreamPlayer3D" />
+			<param index="3" name="player_2" type="AudioStreamPlayer3D" />
+			<description>
+				Assigns streams to the provided players and updates their volumes according to [code]param_values[/code].
+				The method looks up the two adjacent keys in [member LayeredSoundResource.sound_table] that bound the
+				current value, loads their streams from [member sound_root_path] + relative path, and assigns them to
+				[code]player[/code] and [code]player_2[/code] (alternating which player holds the lower/higher layer to reduce stream swapping).
+				If [code]player_2[/code] is [code]null[/code], the node creates and reuses an internal child [AudioStreamPlayer3D].
+
+				Volumes are set using an equal-power crossfade inside the threshold window defined by
+				[member LayeredSoundResource.cross_fade] (as a percent).
+
+				[b]Notes:[/b]
+				• If the upper layer does not exist (at the top of the range), the second player is stopped and cleared.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="max_volume_db" type="float" setter="set_max_volume_db" getter="get_max_volume_db" default="0.0">
+			Target volume in decibels used for the currently active layer during crossfading and when a single layer is active.
+		</member>
+		<member name="min_volume_db" type="float" setter="set_min_volume_db" getter="get_min_volume_db" default="-80.0">
+			Floor volume in decibels used for the inactive layer during crossfading (effectively muted by default).
+		</member>
+		<member name="sound_root_path" type="String" setter="set_sound_root_path" getter="get_sound_root_path" default="&quot;&quot;">
+			Base directory for sound files used by this node. Paths in [LayeredSoundResource] are treated as relative
+			to this directory. The directory doesn't have to end with "/" as this is handled later by iternal logic.
+		</member>
+	</members>
+	<signals>
+		<signal name="sound_ended">
+			<description>
+				Emitted when the last stream from [layered_sound_data] was played
+			</description>
+		</signal>
+	</signals>
+</class>

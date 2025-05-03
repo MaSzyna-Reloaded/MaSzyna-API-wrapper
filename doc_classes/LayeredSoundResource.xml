@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="LayeredSoundResource" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="amplitude_factor" type="float" setter="set_amplitude_factor" getter="get_amplitude_factor" default="1.0">
+		</member>
+		<member name="amplitude_offset" type="float" setter="set_amplitude_offset" getter="get_amplitude_offset" default="0.0">
+		</member>
+		<member name="cross_fade" type="float" setter="set_cross_fade" getter="get_cross_fade" default="0.0">
+		</member>
+		<member name="ending_sounds" type="String[]" setter="set_ending_sounds" getter="get_ending_sounds" default="[]">
+		</member>
+		<member name="frequency_factor" type="float" setter="set_frequency_factor" getter="get_frequency_factor" default="1.0">
+		</member>
+		<member name="frequency_offset" type="float" setter="set_frequency_offset" getter="get_frequency_offset" default="0.0">
+		</member>
+		<member name="main_sounds" type="String[]" setter="set_main_sounds" getter="get_main_sounds" default="[]">
+		</member>
+		<member name="offset" type="Vector3" setter="set_offset" getter="get_offset" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="pitch_table" type="Dictionary" setter="set_pitch_table" getter="get_pitch_table" default="{}">
+		</member>
+		<member name="pitch_variation" type="float" setter="set_pitch_variation" getter="get_pitch_variation" default="2.41908e-312">
+		</member>
+		<member name="range" type="float" setter="set_range" getter="get_range" default="1.06811e-306">
+		</member>
+		<member name="sound_table" type="Dictionary" setter="set_sound_table" getter="get_sound_table" default="{}">
+		</member>
+		<member name="starting_sounds" type="String[]" setter="set_starting_sounds" getter="get_starting_sounds" default="[]">
+		</member>
+	</members>
+</class>

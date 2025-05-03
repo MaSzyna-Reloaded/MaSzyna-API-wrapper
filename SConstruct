@@ -96,6 +96,8 @@ sources = (
     + Glob("src/lighting/*.cpp")
     + Glob("src/resources/engines/*.cpp")
     + Glob("src/resources/lighting/*.cpp")
+    + Glob("src/resources/sound/*.cpp")
+    + Glob("src/sound/*.cpp")
 )
 
 if env["target"] in ["editor", "template_debug"]:

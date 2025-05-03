@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainSound" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_audio_stream_for_file">
+			<return type="AudioStream" />
+			<param index="0" name="file_path" type="String" />
+			<param index="1" name="loop" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="play">
+			<return type="void" />
+			<param index="0" name="type" type="String" />
+			<param index="1" name="file_path" type="String" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="battery/sounds" type="LayeredSoundResource" setter="set_battery_sounds" getter="get_battery_sounds">
+		</member>
+		<member name="battery/stream_player" type="NodePath" setter="set_battery_stream_player" getter="get_battery_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/acc/sounds" type="LayeredSoundResource" setter="set_brake_acc_sounds" getter="get_brake_acc_sounds">
+		</member>
+		<member name="brake/acc/stream_player" type="NodePath" setter="set_brake_acc_stream_player" getter="get_brake_acc_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/cylinder/dec/sounds" type="LayeredSoundResource" setter="set_brake_cylinder_dec_sounds" getter="get_brake_cylinder_dec_sounds">
+		</member>
+		<member name="brake/cylinder/dec/stream_player" type="NodePath" setter="set_brake_cylinder_dec_stream_player" getter="get_brake_cylinder_dec_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/cylinder/inc/sounds" type="LayeredSoundResource" setter="set_brake_cylinder_inc_sounds" getter="get_brake_cylinder_inc_sounds">
+		</member>
+		<member name="brake/cylinder/inc/stream_player" type="NodePath" setter="set_brake_cylinder_inc_stream_player" getter="get_brake_cylinder_inc_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/hose/attach/sounds" type="LayeredSoundResource" setter="set_brake_hose_attach_sounds" getter="get_brake_hose_attach_sounds">
+		</member>
+		<member name="brake/hose/attach/stream_player" type="NodePath" setter="set_brake_hose_attach_stream_player" getter="get_brake_hose_attach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/hose/detach/sounds" type="LayeredSoundResource" setter="set_brake_hose_detach_sounds" getter="get_brake_hose_detach_sounds">
+		</member>
+		<member name="brake/hose/detach/stream_player" type="NodePath" setter="set_brake_hose_detach_stream_player" getter="get_brake_hose_detach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="brake/sounds" type="LayeredSoundResource" setter="set_brake_sounds" getter="get_brake_sounds">
+		</member>
+		<member name="brake/stream_player" type="NodePath" setter="set_brake_stream_player" getter="get_brake_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="compressor/sounds" type="LayeredSoundResource" setter="set_compressor_sounds" getter="get_compressor_sounds">
+		</member>
+		<member name="compressor/stream_player" type="NodePath" setter="set_compressor_stream_player" getter="get_compressor_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="control/attach/sounds" type="LayeredSoundResource" setter="set_control_attach_sounds" getter="get_control_attach_sounds">
+		</member>
+		<member name="control/attach/stream_player" type="NodePath" setter="set_control_attach_stream_player" getter="get_control_attach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="control/detach/sounds" type="LayeredSoundResource" setter="set_control_detach_sounds" getter="get_control_detach_sounds">
+		</member>
+		<member name="control/detach/stream_player" type="NodePath" setter="set_control_detach_stream_player" getter="get_control_detach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="converter/sounds" type="LayeredSoundResource" setter="set_converter_sounds" getter="get_converter_sounds">
+		</member>
+		<member name="converter/stream_player" type="NodePath" setter="set_converter_stream_player" getter="get_converter_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="curve/sounds" type="LayeredSoundResource" setter="set_curve_sounds" getter="get_curve_sounds">
+		</member>
+		<member name="curve/stream_player" type="NodePath" setter="set_curve_stream_player" getter="get_curve_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="departure_signal/sounds" type="LayeredSoundResource" setter="set_departure_signal_sounds" getter="get_departure_signal_sounds">
+		</member>
+		<member name="departure_signal/stream_player" type="NodePath" setter="set_departure_signal_stream_player" getter="get_departure_signal_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="derail/sounds" type="LayeredSoundResource" setter="set_derail_sounds" getter="get_derail_sounds">
+		</member>
+		<member name="derail/stream_player" type="NodePath" setter="set_derail_stream_player" getter="get_derail_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="diesel_inc/sounds" type="LayeredSoundResource" setter="set_diesel_inc_sounds" getter="get_diesel_inc_sounds">
+		</member>
+		<member name="diesel_inc/stream_player" type="NodePath" setter="set_diesel_inc_stream_player" getter="get_diesel_inc_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/close/sounds" type="LayeredSoundResource" setter="set_door_close_sounds" getter="get_door_close_sounds">
+		</member>
+		<member name="door/close/stream_player" type="NodePath" setter="set_door_close_stream_player" getter="get_door_close_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/lock/sounds" type="LayeredSoundResource" setter="set_door_lock_sounds" getter="get_door_lock_sounds">
+		</member>
+		<member name="door/lock/stream_player" type="NodePath" setter="set_door_lock_stream_player" getter="get_door_lock_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/open/sounds" type="LayeredSoundResource" setter="set_door_open_sounds" getter="get_door_open_sounds">
+		</member>
+		<member name="door/open/stream_player" type="NodePath" setter="set_door_open_stream_player" getter="get_door_open_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/permit/sounds" type="LayeredSoundResource" setter="set_door_permit_sounds" getter="get_door_permit_sounds">
+		</member>
+		<member name="door/permit/stream_player" type="NodePath" setter="set_door_permit_stream_player" getter="get_door_permit_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/run_lock/sounds" type="LayeredSoundResource" setter="set_door_run_lock_sounds" getter="get_door_run_lock_sounds">
+		</member>
+		<member name="door/run_lock/stream_player" type="NodePath" setter="set_door_run_lock_stream_player" getter="get_door_run_lock_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/step/close/sounds" type="LayeredSoundResource" setter="set_door_step_close_sounds" getter="get_door_step_close_sounds">
+		</member>
+		<member name="door/step/close/stream_player" type="NodePath" setter="set_door_step_close_stream_player" getter="get_door_step_close_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="door/step/open/sounds" type="LayeredSoundResource" setter="set_door_step_open_sounds" getter="get_door_step_open_sounds">
+		</member>
+		<member name="door/step/open/stream_player" type="NodePath" setter="set_door_step_open_stream_player" getter="get_door_step_open_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="emergency_brake/sounds" type="LayeredSoundResource" setter="set_emergency_brake_sounds" getter="get_emergency_brake_sounds">
+		</member>
+		<member name="emergency_brake/stream_player" type="NodePath" setter="set_emergency_brake_stream_player" getter="get_emergency_brake_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="engine/sounds" type="LayeredSoundResource" setter="set_engine_sounds" getter="get_engine_sounds">
+			Returns sound data assigned for engine sounds
+		</member>
+		<member name="engine/stream_player" type="NodePath" setter="set_engine_stream_player" getter="get_engine_stream_player" default="NodePath(&quot;&quot;)">
+			Returns NodePath to AudioStreamPlayer3D assigned for engine sounds
+		</member>
+		<member name="ep_brake/dec/sounds" type="LayeredSoundResource" setter="set_ep_brake_dec_sounds" getter="get_ep_brake_dec_sounds">
+		</member>
+		<member name="ep_brake/dec/stream_player" type="NodePath" setter="set_ep_brake_dec_stream_player" getter="get_ep_brake_dec_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="ep_brake/inc/sounds" type="LayeredSoundResource" setter="set_ep_brake_inc_sounds" getter="get_ep_brake_inc_sounds">
+		</member>
+		<member name="ep_brake/inc/stream_player" type="NodePath" setter="set_ep_brake_inc_stream_player" getter="get_ep_brake_inc_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="ep_ctrl_value/sounds" type="LayeredSoundResource" setter="set_ep_ctrl_value_sounds" getter="get_ep_ctrl_value_sounds">
+		</member>
+		<member name="ep_ctrl_value/stream_player" type="NodePath" setter="set_ep_ctrl_value_stream_player" getter="get_ep_ctrl_value_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="fuel_pump/sounds" type="LayeredSoundResource" setter="set_fuel_pump_sounds" getter="get_fuel_pump_sounds">
+		</member>
+		<member name="fuel_pump/stream_player" type="NodePath" setter="set_fuel_pump_stream_player" getter="get_fuel_pump_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="gangway/attach/sounds" type="LayeredSoundResource" setter="set_gangway_attach_sounds" getter="get_gangway_attach_sounds">
+		</member>
+		<member name="gangway/attach/stream_player" type="NodePath" setter="set_gangway_attach_stream_player" getter="get_gangway_attach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="gangway/detach/sounds" type="LayeredSoundResource" setter="set_gangway_detach_sounds" getter="get_gangway_detach_sounds">
+		</member>
+		<member name="gangway/detach/stream_player" type="NodePath" setter="set_gangway_detach_stream_player" getter="get_gangway_detach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="heater/sounds" type="LayeredSoundResource" setter="set_heater_sounds" getter="get_heater_sounds">
+		</member>
+		<member name="heater/stream_player" type="NodePath" setter="set_heater_stream_player" getter="get_heater_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="heating/attach/sounds" type="LayeredSoundResource" setter="set_heating_attach_sounds" getter="get_heating_attach_sounds">
+		</member>
+		<member name="heating/attach/stream_player" type="NodePath" setter="set_heating_attach_stream_player" getter="get_heating_attach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="heating/detach/sounds" type="LayeredSoundResource" setter="set_heating_detach_sounds" getter="get_heating_detach_sounds">
+		</member>
+		<member name="heating/detach/stream_player" type="NodePath" setter="set_heating_detach_stream_player" getter="get_heating_detach_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="horn/high/sounds" type="LayeredSoundResource" setter="set_horn_high_sounds" getter="get_horn_high_sounds">
+		</member>
+		<member name="horn/high/stream_player" type="NodePath" setter="set_horn_high_stream_player" getter="get_horn_high_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="horn/low/sounds" type="LayeredSoundResource" setter="set_horn_low_sounds" getter="get_horn_low_sounds">
+		</member>
+		<member name="horn/low/stream_player" type="NodePath" setter="set_horn_low_stream_player" getter="get_horn_low_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+	</members>
+</class>

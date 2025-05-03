@@ -21,6 +21,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="preload_files">
+			<return type="void" />
+			<param index="0" name="base_game_dir" type="String" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="battery/sounds" type="LayeredSoundResource" setter="set_battery_sounds" getter="get_battery_sounds">
@@ -166,4 +172,12 @@
 		<member name="horn/low/stream_player" type="NodePath" setter="set_horn_low_stream_player" getter="get_horn_low_stream_player" default="NodePath(&quot;&quot;)">
 		</member>
 	</members>
+	<signals>
+		<signal name="preload_progress_update">
+			<param index="0" name="current_step" type="int" />
+			<param index="1" name="all_steps" type="int" />
+			<description>
+			</description>
+		</signal>
+	</signals>
 </class>

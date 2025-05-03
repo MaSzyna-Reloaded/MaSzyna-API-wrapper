@@ -12,7 +12,7 @@ namespace godot {
             TypedArray<String> starting_sounds;
             TypedArray<String> main_sounds;
             TypedArray<String> ending_sounds;
-            double range;
+            double range = 0.0;
             struct {
                     double factor = 1.0;
                     double offset = 0;
@@ -23,8 +23,8 @@ namespace godot {
             int current_pitch = 0;
             Dictionary sound_table;
             Dictionary pitch_table;
-            double pitch_variation;
-            double cross_fade;
+            double pitch_variation = 0.0;
+            double cross_fade = 0.0;
             bool force_preload = true;
 
             String get_next_sound();

@@ -29,7 +29,7 @@ namespace godot {
             double max_wakeup_voltage = 0.0;
 
             /**
-             * power with maximum wake-up
+             * power with maximum wake-upq
              */
             double max_wakeup_power = 0.0;
 

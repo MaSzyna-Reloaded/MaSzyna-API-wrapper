@@ -23,7 +23,15 @@
 		</method>
 		<method name="preload_files">
 			<return type="void" />
-			<param index="0" name="base_game_dir" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="update_audio_streams_and_volumes">
+			<return type="void" />
+			<param index="0" name="param_values" type="float" />
+			<param index="1" name="layered_sound_data" type="LayeredSoundResource" />
+			<param index="2" name="player_1" type="AudioStreamPlayer3D" />
+			<param index="3" name="player_2" type="AudioStreamPlayer3D" />
 			<description>
 			</description>
 		</method>
@@ -170,6 +178,12 @@
 		<member name="horn/low/sounds" type="LayeredSoundResource" setter="set_horn_low_sounds" getter="get_horn_low_sounds">
 		</member>
 		<member name="horn/low/stream_player" type="NodePath" setter="set_horn_low_stream_player" getter="get_horn_low_stream_player" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="max_volume_db" type="float" setter="set_max_volume_db" getter="get_max_volume_db" default="0.0">
+		</member>
+		<member name="min_volume_db" type="float" setter="set_min_volume_db" getter="get_min_volume_db" default="-80.0">
+		</member>
+		<member name="sound_root_path" type="String" setter="set_sound_root_path" getter="get_sound_root_path" default="&quot;&quot;">
 		</member>
 	</members>
 	<signals>

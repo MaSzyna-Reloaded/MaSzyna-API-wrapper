@@ -65,7 +65,7 @@ func _update_audio_streams_and_volumes(param_value: float, audio_map: Dictionary
         if (crossfade_threshold_percent > 100 || crossfade_threshold_percent < 0):
             push_error("[TrainSound] Crossfade treshold must be within a range between 0 and 100")
             return
-        var crossfade_start = param_min + (param_max - param_min) * (crossfade_threshold_percent / 100.0)
+        var crossfade_start = param_min + (param_max - param_min) * ((1-crossfade_threshold_percent) / 100.0)
         if (param_value > crossfade_start):
             progress = clamp(inverse_lerp(param_min, param_max, param_value), 0.0, 1.0)
             var vol_min_linear: float = 1.0 - progress

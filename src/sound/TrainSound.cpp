@@ -1320,10 +1320,6 @@ namespace godot {
         Array sorted_parameter_keys = layered_sound_data->sound_table.keys();
         Dictionary audio_map = layered_sound_data->sound_table;
         int crossfade_threshold_percent = layered_sound_data->cross_fade;
-//        AudioStreamPlayer3D* player_1 = get_node<AudioStreamPlayer3D>(player_1_path);
-//        AudioStreamPlayer3D* player_2 = get_node<AudioStreamPlayer3D>(player_2_path);
-//        player_2->set_stream(nullptr);
-//        player_2->stop();
         if (SOUND_ROOT_PATH == "") {
             UtilityFunctions::push_error("[TrainSound] Sound root path not set!");
             return;

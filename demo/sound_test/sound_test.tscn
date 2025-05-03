@@ -18,7 +18,6 @@ sound_table = {
 pitch_table = {
 495: 495
 }
-pitch_variation = 9.97338e-313
 cross_fade = 90.0
 
 [node name="SoundTest" type="Control"]
@@ -34,6 +33,7 @@ max_value = 1500.0
 ticks_on_borders = true
 
 [node name="TrainSound" type="TrainSound" parent="."]
+max_volume_db = -20.0
 engine/sounds = SubResource("LayeredSoundResource_yfcgh")
 engine/stream_player = NodePath("../AudioStreamPlayer3D")
 

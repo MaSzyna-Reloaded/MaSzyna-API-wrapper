@@ -16,12 +16,14 @@ amplitude_factor = 0.8
 amplitude_offset = 1.2
 sound_table = {
 495: &"697_sm42-idle-1.ogg",
-600: &"697_sm42-idle-2.ogg"
+600: &"697_sm42-idle-2.ogg",
+700: &"697_sm42-idle-3.ogg",
+850: &"697_sm42-idle-4.ogg",
+1000: &"697_sm42-idle-5.ogg"
 }
 pitch_table = {
 495: 495
 }
-pitch_variation = 4.34778e-322
 cross_fade = 90.0
 
 [node name="SM42-099" type="Node3D"]
@@ -208,9 +210,11 @@ doppler_tracking = 2
 
 [node name="EngineSound2" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.02685e-07, 2.15794, 1.17458)
+volume_db = -20.0
 doppler_tracking = 2
 
 [node name="TrainSound" type="TrainSound" parent="."]
+sound_root_path = "d:/Games/MaSzyna/sounds/"
 engine/sounds = SubResource("LayeredSoundResource_e1eq6")
 engine/stream_player = NodePath("../EngineSound")
 

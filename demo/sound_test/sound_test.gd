@@ -14,7 +14,7 @@ func _process(delta: float) -> void:
     $Label.text = "RPM: %s" % rpm
     _update_audio_streams_and_volumes(rpm, engine_sounds.sound_table, engine_sounds.sound_table.keys(), engine_sounds.cross_fade)
 
-func _update_audio_streams_and_volumes(param_value: float, audio_map: Dictionary, sorted_parameter_keys: Array, crossfade_treshold_percent: int):
+func _update_audio_streams_and_volumes(param_value: float, audio_map: Dictionary, sorted_parameter_keys: Array, crossfade_threshold_percent: int):
     if sorted_parameter_keys.size() == 0: return
     var idx_min = -1
     for i in range(sorted_parameter_keys.size() - 1, -1, -1):
@@ -62,15 +62,16 @@ func _update_audio_streams_and_volumes(param_value: float, audio_map: Dictionary
 
     var progress: float = 0.0
     if stream_max != null and param_max > param_min:
-        if (crossfade_treshold_percent > 100 || crossfade_treshold_percent < 0):
+        if (crossfade_threshold_percent > 100 || crossfade_threshold_percent < 0):
             push_error("[TrainSound] Crossfade treshold must be within a range between 0 and 100")
             return
-        var crossfade_start_rpm = param_min + (param_max - param_min) * (crossfade_treshold_percent / 100.0)
-        progress = clamp(inverse_lerp(param_min, param_max, param_value), 0.0, 1.0)
-        var vol_min_linear: float = 1.0 - progress
-        var vol_max_linear: float = progress
-        p_min.volume_db = linear_to_db(vol_min_linear)
-        p_max.volume_db = linear_to_db(vol_max_linear)
+        var crossfade_start = param_min + (param_max - param_min) * (crossfade_threshold_percent / 100.0)
+        if (param_value > crossfade_start):
+            progress = clamp(inverse_lerp(param_min, param_max, param_value), 0.0, 1.0)
+            var vol_min_linear: float = 1.0 - progress
+            var vol_max_linear: float = progress
+            p_min.volume_db = linear_to_db(vol_min_linear)
+            p_max.volume_db = linear_to_db(vol_max_linear)
     else:
         p_min.volume_db = MAX_VOLUME_DB
         p_max.volume_db = MIN_VOLUME_DB

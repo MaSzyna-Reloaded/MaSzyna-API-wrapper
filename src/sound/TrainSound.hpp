@@ -17,6 +17,16 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            float MAX_VOLUME_DB = 0.0;
+            float MIN_VOLUME_DB = -80.0;
+            String SOUND_ROOT_PATH = "";
+            void set_max_volume_db(float max_volume_db);
+            float get_max_volume_db();
+            void set_min_volume_db(float min_volume_db);
+            float get_min_volume_db();
+            void set_sound_root_path(String sound_root_path);
+            String get_sound_root_path();
+            void update_audio_streams_and_volumes(double param_value, Ref<LayeredSoundResource> layered_sound_data, AudioStreamPlayer3D* player_1, AudioStreamPlayer3D* player_2);//const NodePath &player_1_path, const NodePath &player_2_path);
             struct SoundDefinition {
                     Ref<LayeredSoundResource> sounds;
                     NodePath audio_stream_player;
@@ -337,6 +347,6 @@ namespace godot {
             NodePath get_braking_resistor_ventilator_stream_player();
             Ref<AudioStream> get_audio_stream_for_file(const String &p_file_path, bool p_loop = false);
             void play(const String &p_type, const String &p_file_path);
-            void preload_files(const String& p_base_game_dir);
+            void preload_files();
     };
 } // namespace godot

@@ -3,6 +3,7 @@
 #include <godot_cpp/classes/audio_stream_ogg_vorbis.hpp>
 #include <godot_cpp/classes/audio_stream_wav.hpp>
 #include <godot_cpp/classes/file_access.hpp>
+#include <utility>
 
 namespace godot {
     const char *TrainSound::PRELOAD_PROGRESS_UPDATE = "preload_progress_update";
@@ -15,8 +16,14 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "min_volume_db"), "set_min_volume_db", "get_min_volume_db");
         ClassDB::bind_method(D_METHOD("set_sound_root_path", "path"), &TrainSound::set_sound_root_path);
         ClassDB::bind_method(D_METHOD("get_sound_root_path"), &TrainSound::get_sound_root_path);
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "sound_root_path", PROPERTY_HINT_DIR), "set_sound_root_path", "get_sound_root_path");
-        ClassDB::bind_method(D_METHOD("update_audio_streams_and_volumes", "param_values", "layered_sound_data", "player_1", "player_2"), &TrainSound::update_audio_streams_and_volumes);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::STRING, "sound_root_path", PROPERTY_HINT_DIR), "set_sound_root_path",
+                "get_sound_root_path");
+        ClassDB::bind_method(
+                D_METHOD(
+                        "update_audio_streams_and_volumes", "param_values", "layered_sound_data", "player_1",
+                        "player_2"),
+                &TrainSound::update_audio_streams_and_volumes);
         ClassDB::bind_method(D_METHOD("preload_files"), &TrainSound::preload_files);
         ADD_SIGNAL(MethodInfo(
                 PRELOAD_PROGRESS_UPDATE, PropertyInfo(Variant::INT, "current_step"),
@@ -1310,16 +1317,17 @@ namespace godot {
                 UtilityFunctions::print_verbose(
                         "[TrainSound] Preloading: Preloading " + String(std::to_string(_sounds_array.size()).c_str()) +
                         " indexes for sound definition no. " + String(std::to_string(i).c_str()) + "...");
-                get_audio_stream_for_file(
-                        SOUND_ROOT_PATH +
-                        String(_sounds_array[j]));
+                get_audio_stream_for_file(SOUND_ROOT_PATH + String(_sounds_array[j]));
             }
         }
     }
-    void TrainSound::update_audio_streams_and_volumes(double param_value, Ref<LayeredSoundResource> layered_sound_data, AudioStreamPlayer3D* player_1, AudioStreamPlayer3D* player_2) {//const NodePath &player_1_path, const NodePath &player_2_path) {
+
+    void TrainSound::update_audio_streams_and_volumes(
+            double param_value, const Ref<LayeredSoundResource> &layered_sound_data, AudioStreamPlayer3D *player_1,
+            AudioStreamPlayer3D *player_2) {
         Array sorted_parameter_keys = layered_sound_data->sound_table.keys();
         Dictionary audio_map = layered_sound_data->sound_table;
-        int crossfade_threshold_percent = layered_sound_data->cross_fade;
+        double crossfade_threshold_percent = layered_sound_data->cross_fade;
         if (SOUND_ROOT_PATH == "") {
             UtilityFunctions::push_error("[TrainSound] Sound root path not set!");
             return;
@@ -1370,8 +1378,8 @@ namespace godot {
             param_max = param_min + 1;
         }
 
-        AudioStreamPlayer3D* p_min = nullptr;
-        AudioStreamPlayer3D* p_max = nullptr;
+        AudioStreamPlayer3D *p_min = nullptr;
+        AudioStreamPlayer3D *p_max = nullptr;
         if (idx_min % 2 == 0) {
             p_min = player_1;
             p_max = player_2;
@@ -1383,16 +1391,22 @@ namespace godot {
         if (p_min->get_stream() != stream_min) {
             p_min->set_stream(stream_min);
             p_min->set_max_distance(static_cast<float>(layered_sound_data->range));
-            UtilityFunctions::print_verbose("Assigned stream_min (" + stream_min->get_path().get_file() + ") to " + p_min->get_name());
-            if (!p_min->is_playing()) p_min->play();
+            UtilityFunctions::print_verbose(
+                    "Assigned stream_min (" + stream_min->get_path().get_file() + ") to " + p_min->get_name());
+            if (!p_min->is_playing()) {
+                p_min->play();
+            }
         }
 
         if (stream_max != nullptr) {
             if (p_max->get_stream() != stream_max) {
                 p_max->set_stream(stream_max);
                 p_max->set_max_distance(static_cast<float>(layered_sound_data->range));
-                UtilityFunctions::print_verbose("Assigned stream_max (" + stream_max->get_path().get_file() + ") to " + p_max->get_name());
-                if (!p_max->is_playing()) p_max->play();
+                UtilityFunctions::print_verbose(
+                        "Assigned stream_max (" + stream_max->get_path().get_file() + ") to " + p_max->get_name());
+                if (!p_max->is_playing()) {
+                    p_max->play();
+                }
             }
         } else {
             if (p_max->get_stream() != nullptr) {
@@ -1405,17 +1419,19 @@ namespace godot {
         double progress = 0.0;
         if (stream_max != nullptr && param_max > param_min) {
             if (crossfade_threshold_percent > 100 || crossfade_threshold_percent < 0) {
-                UtilityFunctions::push_error("[TrainSound] Crossfade threshold must be within a range between 0 and 100");
+                UtilityFunctions::push_error(
+                        "[TrainSound] Crossfade threshold must be within a range between 0 and 100");
                 return;
             }
 
-            double crossfade_start = param_min + (param_max - param_min) * (crossfade_threshold_percent / 100.0);
+            double crossfade_start = param_min + ((param_max - param_min) * (crossfade_threshold_percent / 100.0));
             if (param_value >= crossfade_start) {
+                //Thanks a lot for help, LeD
                 progress = Math::clamp(Math::inverse_lerp(param_min, param_max, param_value), 0.0, 1.0);
                 double vol_min_linear = 1.0 - progress;
                 double vol_max_linear = progress;
-                p_min->set_volume_db(UtilityFunctions::linear_to_db(vol_min_linear));
-                p_max->set_volume_db(UtilityFunctions::linear_to_db(vol_max_linear));
+                p_min->set_volume_db(static_cast<float>(UtilityFunctions::linear_to_db(vol_min_linear)));
+                p_max->set_volume_db(static_cast<float>(UtilityFunctions::linear_to_db(vol_max_linear)));
             }
         } else {
             p_min->set_volume_db(MAX_VOLUME_DB);
@@ -1438,6 +1454,6 @@ namespace godot {
         return MIN_VOLUME_DB;
     }
     void TrainSound::set_sound_root_path(String sound_root_path) {
-        SOUND_ROOT_PATH = sound_root_path;
+        SOUND_ROOT_PATH = std::move(sound_root_path);
     }
 } // namespace godot

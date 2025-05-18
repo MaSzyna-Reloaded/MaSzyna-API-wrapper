@@ -26,7 +26,7 @@ namespace godot {
             float get_min_volume_db();
             void set_sound_root_path(String sound_root_path);
             String get_sound_root_path();
-            void update_audio_streams_and_volumes(double param_value, Ref<LayeredSoundResource> layered_sound_data, AudioStreamPlayer3D* player_1, AudioStreamPlayer3D* player_2);//const NodePath &player_1_path, const NodePath &player_2_path);
+            void update_audio_streams_and_volumes(double param_value, const Ref<LayeredSoundResource>& layered_sound_data, AudioStreamPlayer3D* player_1, AudioStreamPlayer3D* player_2);//const NodePath &player_1_path, const NodePath &player_2_path);
             struct SoundDefinition {
                     Ref<LayeredSoundResource> sounds;
                     NodePath audio_stream_player;

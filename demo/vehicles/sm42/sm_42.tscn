@@ -221,7 +221,6 @@ doppler_tracking = 2
 [node name="TrainSound" type="TrainSound" parent="."]
 sound_root_path = "d:/Games/MaSzyna/sounds/"
 engine/sounds = SubResource("LayeredSoundResource_e1eq6")
-engine/stream_player = NodePath("../EngineSound")
 
 [node name="HSlider" type="HSlider" parent="."]
 offset_right = 421.0
@@ -229,5 +228,4 @@ offset_bottom = 16.0
 max_value = 600.0
 ticks_on_borders = true
 
-[connection signal="preload_progress_update" from="TrainSound" to="." method="_on_train_sound_preload_progress_update"]
 [connection signal="value_changed" from="HSlider" to="." method="_on_h_slider_value_changed"]

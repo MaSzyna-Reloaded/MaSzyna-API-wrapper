@@ -35,7 +35,6 @@ ticks_on_borders = true
 [node name="TrainSound" type="TrainSound" parent="."]
 max_volume_db = -20.0
 engine/sounds = SubResource("LayeredSoundResource_yfcgh")
-engine/stream_player = NodePath("../AudioStreamPlayer3D")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 current = true

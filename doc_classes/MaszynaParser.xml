@@ -29,7 +29,7 @@
 				Clears the internal metadata stack.
 			</description>
 		</method>
-		<method name="eof_reached">
+		<method name="eof_reached" qualifiers="const">
 			<return type="bool" />
 			<description>
 				Checks if the end of the file has been reached.

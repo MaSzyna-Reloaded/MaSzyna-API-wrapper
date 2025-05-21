@@ -13,7 +13,7 @@ namespace godot {
         BIND_PROPERTY(Variant::BOOL, "aware_system_sifa", "aware_system/sifa", &TrainSecuritySystem::set_aware_system_sifa, &TrainSecuritySystem::get_aware_system_sifa, "state");
         BIND_PROPERTY(Variant::FLOAT, "aware_delay", "aware_delay", &TrainSecuritySystem::set_aware_delay, &TrainSecuritySystem::get_aware_delay, "delay");
         BIND_PROPERTY(Variant::FLOAT, "emergency_brake_delay", "emergency_brake/delay", &TrainSecuritySystem::set_emergency_brake_delay, &TrainSecuritySystem::get_emergency_brake_delay, "delay");
-        BIND_PROPERTY_W_HINT(Variant::INT, "emergency_brake_warning_signal", "emergency_brake/warning_signal", &TrainSecuritySystem::set_brake_warning_signal, &TrainSecuritySystem::get_brake_warning_signal, "signal", PROPERTY_HINT_ENUM, "SIREN_LOW_TONE,SIREN_HIGH_TONE,WHISTLE");
+        BIND_PROPERTY_W_HINT(Variant::INT, "emergency_signal", "emergency_signal", &TrainSecuritySystem::set_emergency_signal, &TrainSecuritySystem::get_emergency_signal, "signal", PROPERTY_HINT_ENUM, "SIREN_LOW_TONE,SIREN_HIGH_TONE,WHISTLE");
         BIND_PROPERTY(Variant::BOOL, "radio_stop_enabled", "radio_stop/enabled", &TrainSecuritySystem::set_radio_stop_enabled, &TrainSecuritySystem::get_radio_stop_enabled, "state");
         BIND_PROPERTY(Variant::FLOAT, "sound_signal_delay", "sound_signal_delay", &TrainSecuritySystem::set_sound_signal_delay, &TrainSecuritySystem::get_sound_signal_delay, "delay");
         BIND_PROPERTY(Variant::FLOAT, "shp_magnet_distance", "shp_magnet_distance", &TrainSecuritySystem::set_shp_magnet_distance, &TrainSecuritySystem::get_shp_magnet_distance, "distance");
@@ -22,9 +22,9 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
 
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_LOWTONE);
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_WHISTLE);
+        BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_SIREN_LOW_TONE);
+        BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_SIREN_HIGH_TONE);
+        BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_WHISTLE);
     }
 
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -43,6 +43,7 @@ namespace godot {
         if (prev_blinking != static_cast<bool>(state["blinking"])) {
             emit_signal("blinking_changed", state["blinking"]);
         }
+
         if (prev_beeping != static_cast<bool>(state["beeping"])) {
             emit_signal("beeping_changed", state["beeping"]);
         }
@@ -63,14 +64,14 @@ namespace godot {
         mover->SecuritySystem.MagnetLocation = shp_magnet_distance;
         mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
 
-        switch (brake_warning_signal) {
-            case BRAKE_WARNINGSIGNAL_SIREN_LOWTONE:
+        switch (emergency_signal) {
+            case EMERGENCY_SIGNAL_SIREN_LOW_TONE:
                 mover->EmergencyBrakeWarningSignal = 1;
                 break;
-            case BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE:
+            case EMERGENCY_SIGNAL_SIREN_HIGH_TONE:
                 mover->EmergencyBrakeWarningSignal = 2;
                 break;
-            case BRAKE_WARNINGSIGNAL_WHISTLE:
+            case EMERGENCY_SIGNAL_WHISTLE:
                 mover->EmergencyBrakeWarningSignal = 4;
                 break;
             default:
@@ -90,7 +91,7 @@ namespace godot {
     void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (p_enabled) {
+        if (enabled) {
             mover->SecuritySystem.acknowledge_press();
         } else {
             mover->SecuritySystem.acknowledge_release();

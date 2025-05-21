@@ -30,15 +30,15 @@ namespace godot {
                 VOLTAGE_112,
             };
             enum Type {
-                TYPE_SHIFT,
+                TYPE_SHIFT = 0,
                 TYPE_ROTATE,
                 TYPE_FOLD,
                 TYPE_PLUG,
             };
-            enum PlatformType { PLATFORM_TYPE_SHIFT, PLATFORM_TYPE_ROTATE };
+            enum PlatformType { PLATFORM_TYPE_SHIFT = 0, PLATFORM_TYPE_ROTATE };
 
             enum Controls {
-                CONTROLS_PASSENGER,
+                CONTROLS_PASSENGER = 0,
                 CONTROLS_AUTOMATIC,
                 CONTROLS_DRIVER,
                 CONTROLS_CONDUCTOR,
@@ -115,8 +115,8 @@ namespace godot {
 
         private:
             // Maszyna Mover has no consts for voltages
-            const std::map<Voltage, float> voltageMap = {//@FIXME: MSVC complains about float <-> int conversion and possible data loss. See parser for reference
-                    {VOLTAGE_0, 0}, {VOLTAGE_12, 12}, {VOLTAGE_24, 24}, {VOLTAGE_112, 112}};
+            const std::map<Voltage, float> voltageMap = {
+                    {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_112, 112.0f}};
 
             // Maszyna Mover has no consts for door types
             const std::map<Type, int> doorTypeMap = {{TYPE_SHIFT, 1}, {TYPE_ROTATE, 2}, {TYPE_FOLD, 3}, {TYPE_PLUG, 4}};
@@ -220,7 +220,7 @@ namespace godot {
              * TrainDoors programmer configuration. Number in the range of 0-3 where 0=no permissions, 1=allows left
              * door operation, 2=right door, 3=all
              */
-            Array permit_list = Array({"0", "0", "0"});
+            Array permit_list = Array::make(0, 0, 0);
 
             /**
              * The default knob position is from the set defined by the permit_list entry; positions are numbered
@@ -279,7 +279,7 @@ namespace godot {
             /**
              * Describes the side where the doors are placed
              */
-            Side side = Side::SIDE_LEFT;
+            TrainDoors::Side side = Side::SIDE_LEFT;
     };
 } // namespace godot
 

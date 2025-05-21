@@ -80,13 +80,19 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
+var _sound:SteamAudioPlayer = SteamAudioPlayer.new()
 var _handle_actions:bool = true
 var _t:float = 0.0
 var _setup_phase:bool = true
 
 func _ready():
     add_child(_sound)
+    _sound.distance_attenuation = true
+    _sound.air_absorption = true
+    _sound.occlusion = true
+    _sound.reflection = true
+    _sound.emission_angle_enabled = true
+    _sound.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
     _sound.max_distance = sound_max_distance
     self.switch_position_changed.connect(self._on_switch_position_changed)
 

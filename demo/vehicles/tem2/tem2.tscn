@@ -1,8 +1,9 @@
-[gd_scene load_steps=20 format=3 uid="uid://xh8isp1j28uj"]
+[gd_scene load_steps=21 format=3 uid="uid://xh8isp1j28uj"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
 [ext_resource type="PackedScene" uid="uid://dwcx6807obsgm" path="res://vehicles/tem2/tem2_cabin.tscn" id="2_nt307"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_q4wpc"]
+[ext_resource type="SteamAudioMaterial" uid="uid://cqx8833t2v8mo" path="res://addons/godot-steam-audio/materials/metal_material.tres" id="4_ah6qb"]
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="4_tujep"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
@@ -188,6 +189,9 @@ monitoring = false
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
 shape = SubResource("BoxShape3D_kol4m")
+
+[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D"]
+material = ExtResource("4_ah6qb")
 
 [node name="TEM2Controller" type="TrainController" parent="."]
 train_id = "tem2"

@@ -119,16 +119,16 @@ max_wakeup_voltage = 450.0
 max_wakeup_power = 490.0
 
 [sub_resource type="MotorParameter" id="MotorParameter_l4x0r"]
-mfi = 17.567
-mIsat = 64.0
-fi = 1500.0
-Isat = 15.0
+voltage_constant_multiplier = 17.567
+saturation_current_multiplier = 64.0
+voltage_constant = 1500.0
+saturation_current = 15.0
 
 [sub_resource type="MotorParameter" id="MotorParameter_374xt"]
-mfi = 15.0
-mIsat = 183.3
-fi = 2000.0
-Isat = 49.0
+voltage_constant_multiplier = 15.0
+saturation_current_multiplier = 183.3
+voltage_constant = 2000.0
+saturation_current = 49.0
 
 [node name="TEM2" type="Node3D"]
 script = ExtResource("1_ra284")
@@ -196,7 +196,7 @@ material = ExtResource("4_ah6qb")
 [node name="TEM2Controller" type="TrainController" parent="."]
 train_id = "tem2"
 type_name = "tem2"
-dimensions/mass = 116000.0
+mass = 116000.0
 power = 780.0
 max_velocity = 90.0
 axle_arrangement = "Bo'Bo'"
@@ -207,16 +207,16 @@ script = ExtResource("4_tujep")
 valve/type = 20
 friction_elements_per_axle = 4
 brake_force/max = 85.0
-max_pressures/cylinder = 4.0
-max_pressures/antislip = 1.8
-cylinders/count = 4
-cylinders/radius = 0.114
-cylinders/distance = 0.05
-cylinders/gear_ratio = 6.68
+max_cylinder_pressure = 4.0
+max_antislip_pressure = 1.8
+cylinder/count = 4
+cylinder/radius = 0.114
+cylinder/distance = 0.05
+cylinder/gear_ratio = 6.68
 tank/volume_main = 0.8
 tank/volume_aux = 200.0
-compressor/pressure_min = 7.0
-compressor/pressure_max = 8.0
+compressor/cab_a/min_pressure = 7.0
+compressor/cab_a/max_pressure = 8.0
 compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
@@ -224,14 +224,14 @@ rig_effectiveness = 0.85
 [node name="DieselEngine" type="TrainDieselElectricEngine" parent="TEM2Controller"]
 oil_pump/pressure_minimum = 0.16
 oil_pump/pressure_maximum = 0.3
-Ftmax = 228000.0
+maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_w7fy5"), SubResource("WWListItem_j7m6u"), SubResource("WWListItem_w1qdg"), SubResource("WWListItem_wk0d4"), SubResource("WWListItem_ndnpm"), SubResource("WWListItem_ye3f5"), SubResource("WWListItem_ljbq7"), SubResource("WWListItem_wnj0o"), SubResource("WWListItem_qwjcl"), SubResource("WWListItem_4li30"), SubResource("WWListItem_or38i"), SubResource("WWListItem_lwfur")])
 motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_l4x0r"), SubResource("MotorParameter_374xt")])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="TEM2Controller"]
 aware_system/active = true
 aware_delay = 60.0
-emergency_brake_delay = 2.5
+emergency_brake/delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0

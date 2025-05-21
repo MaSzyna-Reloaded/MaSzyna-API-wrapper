@@ -33,8 +33,16 @@ namespace godot {
                     {MAIN, TEngineType::Main}
             };
 
-            TypedArray<MotorParameter> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
+
+            TypedArray<MotorParameter> get_motor_param_table() {
+                return motor_param_table;
+            }
+
+            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table) {
+                motor_param_table.clear();
+                motor_param_table.append_array(p_motor_param_table);
+            }
+
             void main_switch(bool p_enabled);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;

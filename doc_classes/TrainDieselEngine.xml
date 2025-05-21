@@ -25,7 +25,7 @@
 		</method>
 	</methods>
 	<members>
-		<member name="Ftmax" type="float" setter="set_traction_force_max" getter="get_traction_force_max" default="0.0">
+		<member name="maximum_traction_force" type="float" setter="set_maximum_traction_force" getter="get_maximum_traction_force" default="0.0">
 			[code]Engine:Ftmax[/code]
 			Maximum traction force, in kN
 		</member>

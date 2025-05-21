@@ -35,4 +35,33 @@
 			</description>
 		</signal>
 	</signals>
+	<constants>
+		<constant name="NONE" value="0" enum="EngineType">
+			No engine is on the train/vehicle
+		</constant>
+		<constant name="DUMB" value="1" enum="EngineType">
+			Dumb
+		</constant>
+		<constant name="WHEELS_DRIVEN" value="2" enum="EngineType">
+			Wheels driven
+		</constant>
+		<constant name="ELECTRIC_SERIES_MOTOR" value="3" enum="EngineType">
+			Electric series motor
+		</constant>
+		<constant name="ELECTRIC_INDUCTION_MOTOR" value="4" enum="EngineType">
+			Electric induction motor
+		</constant>
+		<constant name="DIESEL" value="5" enum="EngineType">
+			Diesel engine
+		</constant>
+		<constant name="STEAM" value="6" enum="EngineType">
+			Steam engine
+		</constant>
+		<constant name="DIESEL_ELECTRIC" value="7" enum="EngineType">
+			Diesel-electric engine
+		</constant>
+		<constant name="MAIN" value="8" enum="EngineType">
+			Main
+		</constant>
+	</constants>
 </class>

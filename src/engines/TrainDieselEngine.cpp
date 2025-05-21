@@ -31,8 +31,8 @@ namespace godot {
                 "set_wwlist", "get_wwlist");
     }
 
-    TEngineType TrainDieselEngine::get_engine_type() {
-        return TEngineType::DieselEngine;
+    TrainEngine::EngineType TrainDieselEngine::get_engine_type() {
+        return TrainEngine::EngineType::DIESEL;
     }
 
     void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {

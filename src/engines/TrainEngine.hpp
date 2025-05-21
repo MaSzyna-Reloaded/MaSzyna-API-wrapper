@@ -9,11 +9,38 @@ namespace godot {
     class TrainEngine : public TrainPart {
             GDCLASS(TrainEngine, TrainPart)
         public:
+            enum EngineType {
+                NONE,
+                DUMB,
+                WHEELS_DRIVEN,
+                ELECTRIC_SERIES_MOTOR,
+                ELECTRIC_INDUCTION_MOTOR,
+                DIESEL,
+                STEAM,
+                DIESEL_ELECTRIC,
+                MAIN
+            };
+
+            const std::map<EngineType, TEngineType> engine_type_map = {
+                    {NONE, TEngineType::None},
+                    {DUMB, TEngineType::Dumb},
+                    {WHEELS_DRIVEN, TEngineType::WheelsDriven},
+                    {ELECTRIC_SERIES_MOTOR, TEngineType::ElectricSeriesMotor},
+                    {ELECTRIC_INDUCTION_MOTOR, TEngineType::ElectricInductionMotor},
+                    {DIESEL, TEngineType::DieselEngine},
+                    {STEAM, TEngineType::SteamEngine},
+                    {DIESEL_ELECTRIC, TEngineType::DieselElectric},
+                    {MAIN, TEngineType::Main}
+            };
+
+            TypedArray<MotorParameter> get_motor_param_table();
+            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
+            void main_switch(bool p_enabled);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 
         protected:
-            virtual TEngineType get_engine_type() = 0;
+            virtual EngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
@@ -21,8 +48,7 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
-            TypedArray<MotorParameter> get_motor_param_table();
-            void set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table);
-            void main_switch(bool p_enabled);
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(TrainEngine::EngineType);

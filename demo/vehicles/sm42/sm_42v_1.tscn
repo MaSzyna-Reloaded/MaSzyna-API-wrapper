@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=18 format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
@@ -113,6 +113,11 @@ mIsat = 183.3
 fi = 2000.0
 Isat = 49.0
 
+[sub_resource type="LightListItem" id="LightListItem_ss4tc"]
+cabin_a/head_light = true
+cabin_a/left/white_signal = true
+cabin_a/right/white_signal = true
+
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"
 type_name = "6d"
@@ -169,3 +174,11 @@ platform/max_shift = 3.0
 
 [node name="CabinInteriorLights" type="GenericTrainPart" parent="."]
 script = ExtResource("2_qmqy7")
+
+[node name="TrainLightning" type="TrainLighting" parent="."]
+lights/wrap_selector = true
+lights/list = Array[LightListItem]([SubResource("LightListItem_ss4tc")])
+light/source = 4
+source/generator/engine = 0
+
+[connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

@@ -47,7 +47,7 @@
 			[code]Security:EmergencyBrakeDelay[/code]
 			Time from sound signal activation to emergency brake activation in seconds.
 		</member>
-		<member name="emergency_brake_warning_signal" type="int" setter="set_emergency_brake_warning_signal" getter="get_emergency_brake_warning_signal" enum="TrainSecuritySystem.EmergencyBrakeWarningSignal" default="1">
+		<member name="emergency_brake_warning_signal" type="int" setter="set_emergency_brake_warning_signal" getter="get_emergency_brake_warning_signal" enum="TrainSecuritySystem.EBrakeWarningSignal" default="1">
 			[code]Security:EmergencyBrakeWarningSignal[/code]
 			Definition of optional, automatic activation of the vehicle siren during emergency braking implementation
 		</member>
@@ -79,11 +79,11 @@
 		</signal>
 	</signals>
 	<constants>
-		<constant name="BRAKE_WARNINGSIGNAL_SIREN_LOWTONE" value="0" enum="EmergencyBrakeWarningSignal">
+		<constant name="SIREN_LOW_TONE" value="0" enum="EBrakeWarningSignal">
 		</constant>
-		<constant name="BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE" value="1" enum="EmergencyBrakeWarningSignal">
+		<constant name="SIREN_HIGH_TONE" value="1" enum="EBrakeWarningSignal">
 		</constant>
-		<constant name="BRAKE_WARNINGSIGNAL_WHISTLE" value="2" enum="EmergencyBrakeWarningSignal">
+		<constant name="WHISTLE" value="2" enum="EBrakeWarningSignal">
 		</constant>
 	</constants>
 </class>

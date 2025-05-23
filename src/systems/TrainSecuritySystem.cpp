@@ -4,163 +4,63 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    // clang-format off
     void TrainSecuritySystem::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_aware_system_active"), &TrainSecuritySystem::get_aware_system_active);
-        ClassDB::bind_method(D_METHOD("set_aware_system_active"), &TrainSecuritySystem::set_aware_system_active);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "aware_system/active"), "set_aware_system_active",
-                "get_aware_system_active");
+        ClassDB::bind_method(D_METHOD("get_aware_system_active"), &TrainSecuritySystem::GetAwareSystemActive);
+        ClassDB::bind_method(D_METHOD("set_aware_system_active"), &TrainSecuritySystem::SetAwareSystemActive);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "aware_system/active"), "set_aware_system_active","get_aware_system_active");
 
-        ClassDB::bind_method(D_METHOD("get_aware_system_cabsignal"), &TrainSecuritySystem::get_aware_system_cabsignal);
-        ClassDB::bind_method(D_METHOD("set_aware_system_cabsignal"), &TrainSecuritySystem::set_aware_system_cabsignal);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "aware_system/cabsignal"), "set_aware_system_cabsignal",
-                "get_aware_system_cabsignal");
+        ClassDB::bind_method(D_METHOD("get_aware_system_cabsignal"), &TrainSecuritySystem::GetAwareSystemCabinSignalEnabled);
+        ClassDB::bind_method(D_METHOD("set_aware_system_cabsignal"), &TrainSecuritySystem::SetAwareSystemCabinSignalEnabled);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "aware_system/cabsignal"), "set_aware_system_cabsignal","get_aware_system_cabsignal");
 
-        ClassDB::bind_method(
-                D_METHOD("get_aware_system_separate_acknowledge"),
-                &TrainSecuritySystem::get_aware_system_separate_acknowledge);
-        ClassDB::bind_method(
-                D_METHOD("set_aware_system_separate_acknowledge"),
-                &TrainSecuritySystem::set_aware_system_separate_acknowledge);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "aware_system/separate_acknowledge"),
-                "set_aware_system_separate_acknowledge", "get_aware_system_separate_acknowledge");
+        ClassDB::bind_method(D_METHOD("get_aware_system_separate_acknowledge"),&TrainSecuritySystem::GetAwareSystemSeparateAcknowledge);
+        ClassDB::bind_method(D_METHOD("set_aware_system_separate_acknowledge"),&TrainSecuritySystem::SetAwareSystemSeparateAcknowledge);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "aware_system/separate_acknowledge"),"set_aware_system_separate_acknowledge", "get_aware_system_separate_acknowledge");
 
-        ClassDB::bind_method(D_METHOD("get_aware_system_sifa"), &TrainSecuritySystem::get_aware_system_sifa);
-        ClassDB::bind_method(D_METHOD("set_aware_system_sifa"), &TrainSecuritySystem::set_aware_system_sifa);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "aware_system/sifa"), "set_aware_system_sifa", "get_aware_system_sifa");
+        ClassDB::bind_method(D_METHOD("get_aware_system_sifa"), &TrainSecuritySystem::GetAwareSystemSifaAvailable);
+        ClassDB::bind_method(D_METHOD("set_aware_system_sifa"), &TrainSecuritySystem::SetAwareSystemSifaAvailable);
+        ADD_PROPERTY(PropertyInfo(Variant::BOOL, "aware_system/sifa"), "set_aware_system_sifa", "get_aware_system_sifa");
 
-        ClassDB::bind_method(D_METHOD("get_aware_delay"), &TrainSecuritySystem::get_aware_delay);
-        ClassDB::bind_method(D_METHOD("set_aware_delay"), &TrainSecuritySystem::set_aware_delay);
+        ClassDB::bind_method(D_METHOD("get_aware_delay"), &TrainSecuritySystem::GetAwareDelay);
+        ClassDB::bind_method(D_METHOD("set_aware_delay"), &TrainSecuritySystem::SetAwareDelay);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "aware_delay"), "set_aware_delay", "get_aware_delay");
 
-        ClassDB::bind_method(D_METHOD("get_emergency_brake_delay"), &TrainSecuritySystem::get_emergency_brake_delay);
-        ClassDB::bind_method(D_METHOD("set_emergency_brake_delay"), &TrainSecuritySystem::set_emergency_brake_delay);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "emergency_brake_delay"), "set_emergency_brake_delay",
-                "get_emergency_brake_delay");
+        ClassDB::bind_method(D_METHOD("get_emergency_brake_delay"), &TrainSecuritySystem::GetEmergencyBrakeDelay);
+        ClassDB::bind_method(D_METHOD("set_emergency_brake_delay"), &TrainSecuritySystem::SetEmergencyBrakeDelay);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "emergency_brake_delay"), "set_emergency_brake_delay","get_emergency_brake_delay");
 
-        ClassDB::bind_method(
-                D_METHOD("get_emergency_brake_warning_signal"),
-                &TrainSecuritySystem::get_emergency_brake_warning_signal);
-        ClassDB::bind_method(
-                D_METHOD("set_emergency_brake_warning_signal"),
-                &TrainSecuritySystem::set_emergency_brake_warning_signal);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "emergency_brake_warning_signal", PROPERTY_HINT_ENUM,
-                        "SIREN_LOW_TONE,SIREN_HIGH_TONE,WHISTLE"),
-                "set_emergency_brake_warning_signal", "get_emergency_brake_warning_signal");
+        ClassDB::bind_method(D_METHOD("get_emergency_brake_warning_signal"),&TrainSecuritySystem::GetBrakeWarningSignalType);
+        ClassDB::bind_method(D_METHOD("set_emergency_brake_warning_signal"),&TrainSecuritySystem::SetBrakeWarningSignalType);
+        ADD_PROPERTY(PropertyInfo(Variant::INT, "emergency_brake_warning_signal", PROPERTY_HINT_ENUM,"SIREN_LOW_TONE,SIREN_HIGH_TONE,WHISTLE"),"set_emergency_brake_warning_signal", "get_emergency_brake_warning_signal");
 
-        ClassDB::bind_method(D_METHOD("get_radio_stop"), &TrainSecuritySystem::get_radio_stop);
-        ClassDB::bind_method(D_METHOD("set_radio_stop"), &TrainSecuritySystem::set_radio_stop);
+        ClassDB::bind_method(D_METHOD("get_radio_stop"), &TrainSecuritySystem::GetRadioStopEnabled);
+        ClassDB::bind_method(D_METHOD("set_radio_stop"), &TrainSecuritySystem::SetRadioStopEnabled);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "radio_stop"), "set_radio_stop", "get_radio_stop");
 
-        ClassDB::bind_method(D_METHOD("get_sound_signal_delay"), &TrainSecuritySystem::get_sound_signal_delay);
-        ClassDB::bind_method(D_METHOD("set_sound_signal_delay", "value"), &TrainSecuritySystem::set_sound_signal_delay);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "sound_signal_delay"), "set_sound_signal_delay", "get_sound_signal_delay");
+        ClassDB::bind_method(D_METHOD("get_sound_signal_delay"), &TrainSecuritySystem::GetSoundSignalDelay);
+        ClassDB::bind_method(D_METHOD("set_sound_signal_delay", "value"), &TrainSecuritySystem::SetSoundSignalDelay);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "sound_signal_delay"), "set_sound_signal_delay", "get_sound_signal_delay");
 
-        ClassDB::bind_method(D_METHOD("get_shp_magnet_distance"), &TrainSecuritySystem::get_shp_magnet_distance);
-        ClassDB::bind_method(D_METHOD("set_shp_magnet_distance"), &TrainSecuritySystem::set_shp_magnet_distance);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "shp_magnet_distance"), "set_shp_magnet_distance",
-                "get_shp_magnet_distance");
+        ClassDB::bind_method(D_METHOD("get_shp_magnet_distance"), &TrainSecuritySystem::GetShpMagnetDistance);
+        ClassDB::bind_method(D_METHOD("set_shp_magnet_distance"), &TrainSecuritySystem::SetShpMagnetDistance);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "shp_magnet_distance"), "set_shp_magnet_distance","get_shp_magnet_distance");
 
-        ClassDB::bind_method(D_METHOD("get_ca_max_hold_time"), &TrainSecuritySystem::get_ca_max_hold_time);
-        ClassDB::bind_method(D_METHOD("set_ca_max_hold_time"), &TrainSecuritySystem::set_ca_max_hold_time);
+        ClassDB::bind_method(D_METHOD("get_ca_max_hold_time"), &TrainSecuritySystem::GetAwareSystemMaxHoldTime);
+        ClassDB::bind_method(D_METHOD("set_ca_max_hold_time"), &TrainSecuritySystem::SetAwareSystemMaxHoldTime);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "ca_max_hold_time"), "set_ca_max_hold_time", "get_ca_max_hold_time");
-        ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::security_acknowledge);
+
+        ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::SetSecurityAcknowledgeEnabled);
 
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
 
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_LOWTONE);
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
-        BIND_ENUM_CONSTANT(BRAKE_WARNINGSIGNAL_WHISTLE);
+        BIND_ENUM_CONSTANT(SIREN_LOW_TONE);
+        BIND_ENUM_CONSTANT(SIREN_HIGH_TONE);
+        BIND_ENUM_CONSTANT(WHISTLE);
     }
-    // Getters
-    bool TrainSecuritySystem::get_aware_system_active() const {
-        return aware_system_active;
-    }
-    bool TrainSecuritySystem::get_aware_system_cabsignal() const {
-        return aware_system_cabsignal;
-    }
-    bool TrainSecuritySystem::get_aware_system_separate_acknowledge() const {
-        return aware_system_separate_acknowledge;
-    }
-    bool TrainSecuritySystem::get_aware_system_sifa() const {
-        return aware_system_sifa;
-    }
-    double TrainSecuritySystem::get_aware_delay() const {
-        return aware_delay;
-    }
-    double TrainSecuritySystem::get_emergency_brake_delay() const {
-        return emergency_brake_delay;
-    }
-    TrainSecuritySystem::EmergencyBrakeWarningSignal TrainSecuritySystem::get_emergency_brake_warning_signal() const {
-        return emergency_brake_warning_signal;
-    }
-    bool TrainSecuritySystem::get_radio_stop() const {
-        return radio_stop;
-    }
-    double TrainSecuritySystem::get_sound_signal_delay() const {
-        return sound_signal_delay;
-    }
-    double TrainSecuritySystem::get_shp_magnet_distance() const {
-        return shp_magnet_distance;
-    }
-    double TrainSecuritySystem::get_ca_max_hold_time() const {
-        return ca_max_hold_time;
-    }
+    // clang-format on
 
-    // Setters
-    void TrainSecuritySystem::set_aware_system_active(const bool p_state) {
-        aware_system_active = p_state;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_aware_system_cabsignal(const bool p_state) {
-        aware_system_cabsignal = p_state;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_aware_system_separate_acknowledge(const bool p_state) {
-        aware_system_separate_acknowledge = p_state;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_aware_system_sifa(const bool p_state) {
-        aware_system_sifa = p_state;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_aware_delay(const double value) {
-        aware_delay = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_emergency_brake_delay(const double value) {
-        emergency_brake_delay = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_emergency_brake_warning_signal(const EmergencyBrakeWarningSignal value) {
-        emergency_brake_warning_signal = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_radio_stop(const bool value) {
-        radio_stop = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_sound_signal_delay(const double value) {
-        sound_signal_delay = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_shp_magnet_distance(const double value) {
-        shp_magnet_distance = value;
-        _dirty = true;
-    }
-    void TrainSecuritySystem::set_ca_max_hold_time(const double value) {
-        ca_max_hold_time = value;
-        _dirty = true;
-    }
 
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         const bool prev_beeping = state["beeping"];
@@ -178,6 +78,7 @@ namespace godot {
         if (prev_blinking != static_cast<bool>(state["blinking"])) {
             emit_signal("blinking_changed", state["blinking"]);
         }
+
         if (prev_beeping != static_cast<bool>(state["beeping"])) {
             emit_signal("beeping_changed", state["beeping"]);
         }
@@ -186,26 +87,26 @@ namespace godot {
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {
         mover->SecuritySystem.set_enabled(enabled);
 
-        mover->SecuritySystem.vigilance_enabled = aware_system_active;
-        mover->SecuritySystem.cabsignal_enabled = aware_system_cabsignal;
-        mover->SecuritySystem.separate_acknowledge = aware_system_separate_acknowledge;
-        mover->SecuritySystem.is_sifa = aware_system_sifa;
+        mover->SecuritySystem.vigilance_enabled = m_bAwareSystemActive;
+        mover->SecuritySystem.cabsignal_enabled = m_bAwareSystemCabinSignalEnabled;
+        mover->SecuritySystem.separate_acknowledge = m_bAwareSystemSeparateAcknowledge;
+        mover->SecuritySystem.is_sifa = m_bAwareSystemSifaAvailable;
 
-        mover->SecuritySystem.AwareDelay = aware_delay;
-        mover->SecuritySystem.EmergencyBrakeDelay = emergency_brake_delay;
-        mover->SecuritySystem.radiostop_enabled = radio_stop;
-        mover->SecuritySystem.SoundSignalDelay = sound_signal_delay;
-        mover->SecuritySystem.MagnetLocation = shp_magnet_distance;
-        mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
+        mover->SecuritySystem.AwareDelay = m_dAwareDelay;
+        mover->SecuritySystem.EmergencyBrakeDelay = m_CurrentBrakeWarningSignal;
+        mover->SecuritySystem.radiostop_enabled = m_bRadioStopEnabled;
+        mover->SecuritySystem.SoundSignalDelay = m_dSoundSignalDelay;
+        mover->SecuritySystem.MagnetLocation = m_dShpMagnetDistance;
+        mover->SecuritySystem.MaxHoldTime = m_dAwareSystemMaxHoldTime;
 
-        switch (emergency_brake_warning_signal) {
-            case BRAKE_WARNINGSIGNAL_SIREN_LOWTONE:
+        switch (m_CurrentBrakeWarningSignal) {
+            case SIREN_LOW_TONE:
                 mover->EmergencyBrakeWarningSignal = 1;
                 break;
-            case BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE:
+            case SIREN_HIGH_TONE:
                 mover->EmergencyBrakeWarningSignal = 2;
                 break;
-            case BRAKE_WARNINGSIGNAL_WHISTLE:
+            case WHISTLE:
                 mover->EmergencyBrakeWarningSignal = 4;
                 break;
             default:
@@ -222,10 +123,10 @@ namespace godot {
         unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
     }
 
-    void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {
+    void TrainSecuritySystem::SetSecurityAcknowledgeEnabled(const bool enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (p_enabled) {
+        if (enabled) {
             mover->SecuritySystem.acknowledge_press();
         } else {
             mover->SecuritySystem.acknowledge_release();

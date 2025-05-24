@@ -10,31 +10,31 @@ namespace godot {
 
             double shunting_up = 0.0;
             double shunting_down = 0.0;
-            double mfi = 0.0;
-            double mIsat = 0.0;
-            double mfi0 = 0.0; // aproksymacja M(I) silnika} {dla dizla mIsat=przekladnia biegu
-            double fi = 0.0;
-            double Isat = 0.0;
-            double fi0 = 0.0; // aproksymacja E(n)=fi*n}    {dla dizla fi, mfi: predkosci przelozenia biegu <->
+            double voltage_constant_multiplier = 0.0;
+            double saturation_current_multiplier = 0.0;
+            double initial_voltage_constant_multiplier = 0.0;
+            double voltage_constant = 0.0;
+            double saturation_current = 0.0;
+            double initial_voltage_constant = 0.0;
             bool auto_switch = false;
 
             void set_shunting_up(double p_shunting_up);
             void set_shunting_down(double p_shunting_down);
-            void set_mfi(double p_mfi);
-            void set_mIsat(double p_mIsat);
-            void set_mfi0(double p_mfi0);
-            void set_fi(double p_fi);
-            void set_Isat(double p_Isat);
-            void set_fi0(double p_fi0);
+            void set_voltage_constant_multiplier(double p_voltage_constant_multiplier);
+            void set_saturation_current_multiplier(double p_saturation_current_multiplier);
+            void set_initial_voltage_constant_multiplier(double p_initial_voltage_constant_multiplier);
+            void set_voltage_constant(double p_voltage_constant);
+            void set_saturation_current(double p_saturation_current);
+            void set_initial_voltage_constant(double p_initial_voltage_constant);
+            double get_initial_voltage_constant() const;
             void set_auto_switch(bool p_auto_switch);
             double get_shunting_up() const;
             double get_shunting_down() const;
-            double get_mfi() const;
-            double get_mIsat() const;
-            double get_mfi0() const;
-            double get_fi() const;
-            double get_Isat() const;
-            double get_fi0() const;
+            double get_voltage_constant_multiplier() const;
+            double get_saturation_current_multiplier() const;
+            double get_initial_voltage_constant_multiplier() const;
+            double get_voltage_constant() const;
+            double get_saturation_current() const;
             bool get_auto_switch() const;
     };
 } // namespace godot

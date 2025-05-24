@@ -47,10 +47,10 @@ namespace godot {
                 return;
             }
 
-            mover->MotorParam[i].mIsat = row->mIsat;
-            mover->MotorParam[i].fi = row->fi;
-            mover->MotorParam[i].mfi = row->mfi;
-            mover->MotorParam[i].Isat = row->Isat;
+            mover->MotorParam[i].mIsat = row->saturation_current_multiplier;
+            mover->MotorParam[i].fi = row->voltage_constant;
+            mover->MotorParam[i].mfi = row->voltage_constant_multiplier;
+            mover->MotorParam[i].Isat = row->saturation_current;
             mover->MPTRelay[i].Iup = row->shunting_up;//bocznikowanie
             mover->MPTRelay[i].Idown = row->shunting_down;//bocznikowanie;
         }

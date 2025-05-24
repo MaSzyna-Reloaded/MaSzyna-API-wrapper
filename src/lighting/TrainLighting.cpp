@@ -1,12 +1,10 @@
 #include "TrainLighting.hpp"
-
+#include "macros.hpp"
 namespace godot {
     const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
 
     void TrainLighting::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_head_light_color", "color"), &TrainLighting::set_head_light_color);
-        ClassDB::bind_method(D_METHOD("get_head_light_color"), &TrainLighting::get_head_light_color);
-        ADD_PROPERTY(PropertyInfo(Variant::COLOR, "head_light/color"), "set_head_light_color", "get_head_light_color");
+        BIND_PROPERTY(Variant::COLOR, "head_light_color", "head_light/color", &TrainLighting::set_head_light_color, &TrainLighting::get_head_light_color, "color");
         ClassDB::bind_method(D_METHOD("set_head_light_dimming_multiplier", "multiplier"), &TrainLighting::set_dimming_multiplier);
         ClassDB::bind_method(D_METHOD("get_head_light_dimming_multiplier"), &TrainLighting::get_dimming_multiplier);
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "head_light/dimming_multiplier"), "set_head_light_dimming_multiplier", "get_head_light_dimming_multiplier");
@@ -66,42 +64,10 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "source/accumulator/max_voltage"), "set_max_accumulator_voltage",
                 "get_max_accumulator_voltage");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_light_source", "light_source"),
-                &TrainLighting::set_alternative_light_source);
-        ClassDB::bind_method(D_METHOD("get_alternative_light_source"), &TrainLighting::get_alternative_light_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "light/alternative/source", PROPERTY_HINT_ENUM,
-                        "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
-                        "Main"),
-                "set_alternative_light_source", "get_alternative_light_source");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_max_voltage", "alternative_max_voltage"),
-                &TrainLighting::set_alternative_max_voltage);
-        ClassDB::bind_method(D_METHOD("get_alternative_max_voltage"), &TrainLighting::get_alternative_max_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "light/alternative/max_voltage"), "set_alternative_max_voltage",
-                "get_alternative_max_voltage");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_light_capacity", "light_source"),
-                &TrainLighting::set_alternative_light_capacity);
-        ClassDB::bind_method(
-                D_METHOD("get_alternative_light_capacity"), &TrainLighting::get_alternative_light_capacity);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "light/alternative/capacity"), "set_alternative_light_capacity",
-                "get_alternative_light_capacity");
-        ClassDB::bind_method(
-                D_METHOD("set_accumulator_recharge_source", "recharge_source"),
-                &TrainLighting::set_accumulator_recharge_source);
-        ClassDB::bind_method(
-                D_METHOD("get_accumulator_recharge_source"), &TrainLighting::get_accumulator_recharge_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "source/accumulator/recharge_source", PROPERTY_HINT_ENUM,
-                        "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
-                        "Main"),
-                "set_accumulator_recharge_source", "get_accumulator_recharge_source");
+        BIND_PROPERTY_W_HINT(Variant::INT, "alternative_light_source", "light/alternative/source", &TrainLighting::set_alternative_light_source, &TrainLighting::get_alternative_light_source, "source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+        BIND_PROPERTY(Variant::FLOAT, "alternative_max_voltage", "light/alternative/max_voltage", &TrainLighting::set_alternative_max_voltage, &TrainLighting::get_alternative_max_voltage, "max_voltage");
+        BIND_PROPERTY(Variant::FLOAT, "alternative_light_capacity", "light/alternative/capacity", &TrainLighting::set_alternative_light_capacity, &TrainLighting::get_alternative_light_capacity, "capacity");
+        BIND_PROPERTY_W_HINT(Variant::INT, "accumulator_recharge_source", "source/accumulator/recharge_source", &TrainLighting::set_accumulator_recharge_source, &TrainLighting::get_accumulator_recharge_source, "recharge_source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
         ClassDB::bind_method(D_METHOD("increase_light_selector_position"), &TrainLighting::increase_light_selector_position);
         ClassDB::bind_method(D_METHOD("decrease_light_selector_position"), &TrainLighting::decrease_light_selector_position);
         ADD_SIGNAL(MethodInfo(SELECTOR_POSITION_CHANGED_SIGNAL, PropertyInfo(Variant::INT, "position")));

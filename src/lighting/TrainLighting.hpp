@@ -100,8 +100,8 @@ namespace godot {
             int get_selector_position() const;
             void set_head_light_color(Color p_head_light_color);
             Color get_head_light_color() const;
-            void set_dimming_multiplier(double p_dimming_multiplier);
-            double get_dimming_multiplier() const;
+            void set_dimmed_multiplier(double p_dimming_multiplier);
+            double get_dimmed_multiplier() const;
             void set_normal_multiplier(double p_normal_multiplier);
             double get_normal_multiplier() const;
             void set_high_beam_dimmed_multiplier(double p_high_beam_dimmed_multiplier);

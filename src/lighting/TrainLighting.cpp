@@ -57,13 +57,7 @@ namespace godot {
                         "None,Dumb,WheelsDriven,ElectricSeriesMotor,ElectricInductionMotor,DieselEngine,SteamEngine,"
                         "DieselElectric,Main"),
                 "set_generator_engine", "get_generator_engine");
-        ClassDB::bind_method(
-                D_METHOD("set_max_accumulator_voltage", "max_accumulator_voltage"),
-                &TrainLighting::set_max_accumulator_voltage);
-        ClassDB::bind_method(D_METHOD("get_max_accumulator_voltage"), &TrainLighting::get_max_accumulator_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "source/accumulator/max_voltage"), "set_max_accumulator_voltage",
-                "get_max_accumulator_voltage");
+        BIND_PROPERTY(Variant::FLOAT, "max_accumulator_voltage", "source/accumulator/max_voltage", &TrainLighting::set_max_accumulator_voltage, &TrainLighting::get_max_accumulator_voltage, "max_voltage");
         BIND_PROPERTY_W_HINT(Variant::INT, "alternative_light_source", "light/alternative/source", &TrainLighting::set_alternative_light_source, &TrainLighting::get_alternative_light_source, "source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
         BIND_PROPERTY(Variant::FLOAT, "alternative_max_voltage", "light/alternative/max_voltage", &TrainLighting::set_alternative_max_voltage, &TrainLighting::get_alternative_max_voltage, "max_voltage");
         BIND_PROPERTY(Variant::FLOAT, "alternative_light_capacity", "light/alternative/capacity", &TrainLighting::set_alternative_light_capacity, &TrainLighting::get_alternative_light_capacity, "capacity");

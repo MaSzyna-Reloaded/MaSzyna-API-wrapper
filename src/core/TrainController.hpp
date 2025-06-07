@@ -1,5 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 
@@ -15,31 +16,19 @@ namespace godot {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
-            String train_id = "";
-
             double initial_velocity = 0.0;
             int cabin_number = 0;
-            String type_name = "";
             void initialize_mover();
             bool _dirty = false;      // Refreshes all elements
             bool _dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
-
-            double battery_voltage = 0.0; // FIXME: move to TrainPower ?
-            double mass = 0.0;
-            double power = 0.0;
-            double max_velocity = 0.0;
             int radio_channel = 0;
-            int radio_channel_min = 0;
-            int radio_channel_max = 10;
 
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
-
-            String axle_arrangement = "";
 
             void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts) {};
             void _update_mover_config_if_dirty();
@@ -150,24 +139,15 @@ namespace godot {
             void update_mover();
             TMoverParameters *get_mover() const;
             static void _bind_methods();
-            String get_train_id() const;
-            void set_train_id(const String &train_id);
-            String get_type_name() const;
-            void set_type_name(const String &type_name);
-            void set_battery_voltage(double p_value);
-            double get_battery_voltage() const;
-            void set_mass(double p_mass);
-            double get_mass() const;
-            void set_power(double p_power);
-            double get_power() const;
-            void set_max_velocity(double p_value);
-            double get_max_velocity() const;
-            void set_axle_arrangement(const String &p_value);
-            int get_radio_channel_min() const;
-            void set_radio_channel_min(int p_value);
-            int get_radio_channel_max() const;
-            void set_radio_channel_max(int p_value);
-            String get_axle_arrangement() const;
+            MAKE_MEMBER_GS(String, train_id, "");
+            MAKE_MEMBER_GS(String, type_name, "");
+            MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
+            MAKE_MEMBER_GS(double, mass, 0.0);
+            MAKE_MEMBER_GS(double, power, 0.0);
+            MAKE_MEMBER_GS(double, max_velocity, 0.0);
+            MAKE_MEMBER_GS(String, axle_arrangement, "");
+            MAKE_MEMBER_GS(int, radio_channel_min, 0);
+            MAKE_MEMBER_GS(int, radio_channel_max, 0);
             Dictionary get_state();
     };
 } // namespace godot

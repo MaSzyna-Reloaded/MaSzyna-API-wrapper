@@ -5,166 +5,35 @@
 
 namespace godot {
     void TrainBrake::_bind_methods() {
-
-        ClassDB::bind_method(D_METHOD("set_valve"), &TrainBrake::set_valve);
-        ClassDB::bind_method(D_METHOD("get_valve"), &TrainBrake::get_valve);
-
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "valve/type", PROPERTY_HINT_ENUM,
-                        "NoValve,W,W_Lu_VI,W_Lu_L,W_Lu_XR,K,Kg,Kp,Kss,Kkg,Kkp,Kks,Hikg1,Hikss,Hikp1,KE,SW,"
-                        "EStED,NESt3,ESt3,LSt,ESt4,ESt3AL2,EP1,EP2,M483,CV1_L_TR,CV1,CV1_R,Other"),
-                "set_valve", "get_valve");
-        ClassDB::bind_method(
-                D_METHOD("set_friction_elements_per_axle", "friction_elements_per_axle"),
-                &TrainBrake::set_friction_elements_per_axle);
-        ClassDB::bind_method(D_METHOD("get_friction_elements_per_axle"), &TrainBrake::get_friction_elements_per_axle);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "friction_elements_per_axle"), "set_friction_elements_per_axle",
-                "get_friction_elements_per_axle");
-
-        ClassDB::bind_method(D_METHOD("set_max_brake_force"), &TrainBrake::set_max_brake_force);
-        ClassDB::bind_method(D_METHOD("get_max_brake_force"), &TrainBrake::get_max_brake_force);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "brake_force/max"), "set_max_brake_force", "get_max_brake_force");
-
-        ClassDB::bind_method(D_METHOD("set_valve_size"), &TrainBrake::set_valve_size);
-        ClassDB::bind_method(D_METHOD("get_valve_size"), &TrainBrake::get_valve_size);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "valve/est_size"), "set_valve_size", "get_valve_size");
-
-        ClassDB::bind_method(D_METHOD("set_track_brake_force"), &TrainBrake::set_track_brake_force);
-        ClassDB::bind_method(D_METHOD("get_track_brake_force"), &TrainBrake::get_track_brake_force);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "brake_force/track"), "set_track_brake_force", "get_track_brake_force");
-        ClassDB::bind_method(D_METHOD("set_max_pressure"), &TrainBrake::set_max_pressure);
-        ClassDB::bind_method(D_METHOD("get_max_pressure"), &TrainBrake::get_max_pressure);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_pressures/cylinder"), "set_max_pressure", "get_max_pressure");
-
-        ClassDB::bind_method(D_METHOD("set_max_pressure_aux"), &TrainBrake::set_max_pressure_aux);
-        ClassDB::bind_method(D_METHOD("get_max_pressure_aux"), &TrainBrake::get_max_pressure_aux);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_pressures/aux"), "set_max_pressure_aux", "get_max_pressure_aux");
-
-        ClassDB::bind_method(D_METHOD("set_max_pressure_tare"), &TrainBrake::set_max_pressure_tare);
-        ClassDB::bind_method(D_METHOD("get_max_pressure_tare"), &TrainBrake::get_max_pressure_tare);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "max_pressures/tare"), "set_max_pressure_tare", "get_max_pressure_tare");
-
-        ClassDB::bind_method(D_METHOD("set_max_pressure_medium"), &TrainBrake::set_max_pressure_medium);
-        ClassDB::bind_method(D_METHOD("get_max_pressure_medium"), &TrainBrake::get_max_pressure_medium);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "max_pressures/medium"), "set_max_pressure_medium",
-                "get_max_pressure_medium");
-
-        ClassDB::bind_method(D_METHOD("set_max_antislip_pressure"), &TrainBrake::set_max_antislip_pressure);
-        ClassDB::bind_method(D_METHOD("get_max_antislip_pressure"), &TrainBrake::get_max_antislip_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "max_pressures/antislip"), "set_max_antislip_pressure",
-                "get_max_antislip_pressure");
-
-        ClassDB::bind_method(D_METHOD("set_cylinders_count"), &TrainBrake::set_cylinders_count);
-        ClassDB::bind_method(D_METHOD("get_cylinders_count"), &TrainBrake::get_cylinders_count);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "cylinders/count"), "set_cylinders_count", "get_cylinders_count");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_radius"), &TrainBrake::set_cylinder_radius);
-        ClassDB::bind_method(D_METHOD("get_cylinder_radius"), &TrainBrake::get_cylinder_radius);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "cylinders/radius"), "set_cylinder_radius", "get_cylinder_radius");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_distance"), &TrainBrake::set_cylinder_distance);
-        ClassDB::bind_method(D_METHOD("get_cylinder_distance"), &TrainBrake::get_cylinder_distance);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinders/distance"), "set_cylinder_distance", "get_cylinder_distance");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_spring_force"), &TrainBrake::set_cylinder_spring_force);
-        ClassDB::bind_method(D_METHOD("get_cylinder_spring_force"), &TrainBrake::get_cylinder_spring_force);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinders/spring_force"), "set_cylinder_spring_force",
-                "get_cylinder_spring_force");
-
-        ClassDB::bind_method(D_METHOD("set_slck_adjustment_force"), &TrainBrake::set_slck_adjustment_force);
-        ClassDB::bind_method(D_METHOD("get_slck_adjustment_force"), &TrainBrake::get_slck_adjustment_force);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "slck/adjustment_force"), "set_slck_adjustment_force",
-                "get_slck_adjustment_force");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_gear_ratio"), &TrainBrake::set_cylinder_gear_ratio);
-        ClassDB::bind_method(D_METHOD("get_cylinder_gear_ratio"), &TrainBrake::get_cylinder_gear_ratio);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinders/gear_ratio"), "set_cylinder_gear_ratio",
-                "get_cylinder_gear_ratio");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_gear_ratio_low"), &TrainBrake::set_cylinder_gear_ratio_low);
-        ClassDB::bind_method(D_METHOD("get_cylinder_gear_ratio_low"), &TrainBrake::get_cylinder_gear_ratio_low);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinders/gear_ratio_low"), "set_cylinder_gear_ratio_low",
-                "get_cylinder_gear_ratio_low");
-
-        ClassDB::bind_method(D_METHOD("set_cylinder_gear_ratio_high"), &TrainBrake::set_cylinder_gear_ratio_high);
-        ClassDB::bind_method(D_METHOD("get_cylinder_gear_ratio_high"), &TrainBrake::get_cylinder_gear_ratio_high);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinders/gear_ratio_high"), "set_cylinder_gear_ratio_high",
-                "get_cylinder_gear_ratio_high");
-
-        ClassDB::bind_method(D_METHOD("set_pipe_pressure_min"), &TrainBrake::set_pipe_pressure_min);
-        ClassDB::bind_method(D_METHOD("get_pipe_pressure_min"), &TrainBrake::get_pipe_pressure_min);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "pipe/pressure_min"), "set_pipe_pressure_min", "get_pipe_pressure_min");
-
-        ClassDB::bind_method(D_METHOD("set_pipe_pressure_max"), &TrainBrake::set_pipe_pressure_max);
-        ClassDB::bind_method(D_METHOD("get_pipe_pressure_max"), &TrainBrake::get_pipe_pressure_max);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "pipe/pressure_max"), "set_pipe_pressure_max", "get_pipe_pressure_max");
-
-        ClassDB::bind_method(D_METHOD("set_main_tank_volume"), &TrainBrake::set_main_tank_volume);
-        ClassDB::bind_method(D_METHOD("get_main_tank_volume"), &TrainBrake::get_main_tank_volume);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "tank/volume_main"), "set_main_tank_volume", "get_main_tank_volume");
-
-        ClassDB::bind_method(D_METHOD("set_aux_tank_volume"), &TrainBrake::set_aux_tank_volume);
-        ClassDB::bind_method(D_METHOD("get_aux_tank_volume"), &TrainBrake::get_aux_tank_volume);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "tank/volume_aux"), "set_aux_tank_volume", "get_aux_tank_volume");
-
-        ClassDB::bind_method(D_METHOD("set_compressor_pressure_min"), &TrainBrake::set_compressor_pressure_min);
-        ClassDB::bind_method(D_METHOD("get_compressor_pressure_min"), &TrainBrake::get_compressor_pressure_min);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "compressor/pressure_min"), "set_compressor_pressure_min",
-                "get_compressor_pressure_min");
-
-        ClassDB::bind_method(D_METHOD("set_compressor_pressure_max"), &TrainBrake::set_compressor_pressure_max);
-        ClassDB::bind_method(D_METHOD("get_compressor_pressure_max"), &TrainBrake::get_compressor_pressure_max);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "compressor/pressure_max"), "set_compressor_pressure_max",
-                "get_compressor_pressure_max");
-
-        ClassDB::bind_method(
-                D_METHOD("set_compressor_pressure_cab_b_min"), &TrainBrake::set_compressor_pressure_cab_b_min);
-        ClassDB::bind_method(
-                D_METHOD("get_compressor_pressure_cab_b_min"), &TrainBrake::get_compressor_pressure_cab_b_min);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "compressor/pressure_cab_b_min"), "set_compressor_pressure_cab_b_min",
-                "get_compressor_pressure_cab_b_min");
-
-        ClassDB::bind_method(
-                D_METHOD("set_compressor_pressure_cab_b_max"), &TrainBrake::set_compressor_pressure_cab_b_max);
-        ClassDB::bind_method(
-                D_METHOD("get_compressor_pressure_cab_b_max"), &TrainBrake::get_compressor_pressure_cab_b_max);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "compressor/pressure_cab_b_max"), "set_compressor_pressure_cab_b_max",
-                "get_compressor_pressure_cab_b_max");
-
-        ClassDB::bind_method(D_METHOD("set_compressor_speed"), &TrainBrake::set_compressor_speed);
-        ClassDB::bind_method(D_METHOD("get_compressor_speed"), &TrainBrake::get_compressor_speed);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "compressor/speed"), "set_compressor_speed", "get_compressor_speed");
-
-        ClassDB::bind_method(D_METHOD("set_compressor_power"), &TrainBrake::set_compressor_power);
-        ClassDB::bind_method(D_METHOD("get_compressor_power"), &TrainBrake::get_compressor_power);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "compressor/power", PROPERTY_HINT_ENUM,
-                        "Main,UNUSED,Converter,Engine,Coupler1,Coupler2"),
-                "set_compressor_power", "get_compressor_power");
-
-        ClassDB::bind_method(D_METHOD("set_rig_effectiveness"), &TrainBrake::set_rig_effectiveness);
-        ClassDB::bind_method(D_METHOD("get_rig_effectiveness"), &TrainBrake::get_rig_effectiveness);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "rig_effectiveness"), "set_rig_effectiveness", "get_rig_effectiveness");
+        BIND_PROPERTY_W_HINT(Variant::INT, "valve_type", "valve/type", &TrainBrake::set_valve_type, &TrainBrake::get_valve_type, "valve_type", PROPERTY_HINT_ENUM, "NoValve,W,W_Lu_VI,W_Lu_L,W_Lu_XR,K,Kg,Kp,Kss,Kkg,Kkp,Kks,Hikg1,Hikss,Hikp1,KE,SW,EStED,NESt3,ESt3,LSt,ESt4,ESt3AL2,EP1,EP2,M483,CV1_L_TR,CV1,CV1_R,Other")
+        BIND_PROPERTY(Variant::INT, "friction_elements_per_axle", "friction_elements_per_axle", &TrainBrake::set_friction_elements_per_axle, &TrainBrake::get_friction_elements_per_axle, "friction_elements_per_axle");
+        BIND_PROPERTY(Variant::FLOAT, "max_brake_force", "brake_force/max", &TrainBrake::set_max_brake_force, &TrainBrake::get_max_brake_force, "max_brake_force");
+        BIND_PROPERTY(Variant::INT, "est_valve_size", "est_valve/size", &TrainBrake::set_valve_size, &TrainBrake::get_valve_size, "valve_size");
+        BIND_PROPERTY(Variant::FLOAT, "traction_brake_force", "brake_force/traction", &TrainBrake::set_traction_brake_force, &TrainBrake::get_traction_brake_force, "traction_brake_force");
+        BIND_PROPERTY(Variant::FLOAT, "max_cylinder_pressure", "max_cylinder_pressure", &TrainBrake::set_max_cyl_pressure, &TrainBrake::get_max_cyl_pressure, "max_cylinder_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "max_aux_pressure", "max_aux_pressure", &TrainBrake::set_max_aux_pressure, &TrainBrake::get_max_aux_pressure, "max_aux_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "max_tare_pressure", "max_tare_pressure", &TrainBrake::set_max_tare_pressure, &TrainBrake::get_max_tare_pressure, "max_tare_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "max_medium_pressure", "max_medium_pressure", &TrainBrake::set_max_medium_pressure, &TrainBrake::get_max_medium_pressure, "max_medium_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "max_antislip_pressure", "max_antislip_pressure", &TrainBrake::set_max_antislip_pressure, &TrainBrake::get_max_antislip_pressure, "max_antislip_pressure");
+        BIND_PROPERTY(Variant::INT, "cylinder_count", "cylinder/count", &TrainBrake::set_cyl_count, &TrainBrake::get_cyl_count, "cylinder_count");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_radius", "cylinder/radius", &TrainBrake::set_cyl_radius, &TrainBrake::get_cyl_radius, "cylinder_radius");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_distance", "cylinder/distance", &TrainBrake::set_cyl_distance, &TrainBrake::get_cyl_distance, "cylinder_distance");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_spring_force", "cylinder/spring_force", &TrainBrake::set_cyl_spring_force, &TrainBrake::get_cyl_spring_force, "cylinder_spring_force");
+        BIND_PROPERTY(Variant::FLOAT, "piston_stroke_adjuster_resistance", "piston_stroke/adjuster_resistance", &TrainBrake::set_piston_stroke_adjuster_resistance, &TrainBrake::get_piston_stroke_adjuster_resistance, "");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio", "cylinder/gear_ratio", &TrainBrake::set_cyl_gear_ratio, &TrainBrake::get_cyl_gear_ratio, "cylinder_gear_ratio");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_low", "cylinder/gear_ratio_low", &TrainBrake::set_cyl_gear_ratio_low, &TrainBrake::get_cyl_gear_ratio_low, "cylinder_gear_ratio_low");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_high", "cylinder/gear_ratio_high", &TrainBrake::set_cyl_gear_ratio_high, &TrainBrake::get_cyl_gear_ratio_high, "cylinder_gear_ratio_high");
+        BIND_PROPERTY(Variant::FLOAT, "pipe_pressure_min", "pipe/pressure_min", &TrainBrake::set_pipe_pressure_min, &TrainBrake::get_pipe_pressure_min, "pipe_pressure_min");
+        BIND_PROPERTY(Variant::FLOAT, "pipe_pressure_max", "pipe/pressure_max", &TrainBrake::set_pipe_pressure_max, &TrainBrake::get_pipe_pressure_max, "pipe_pressure_max");
+        BIND_PROPERTY(Variant::FLOAT, "main_tank_volume", "tank/volume_main", &TrainBrake::set_main_tank_volume, &TrainBrake::get_main_tank_volume, "main_tank_volume");
+        BIND_PROPERTY(Variant::FLOAT, "aux_tank_volume", "tank/volume_aux", &TrainBrake::set_aux_tank_volume, &TrainBrake::get_aux_tank_volume, "aux_tank_volume");
+        BIND_PROPERTY(Variant::FLOAT, "compressor_pressure_cab_a_min", "compressor/cab_a/min_pressure", &TrainBrake::set_compressor_pressure_cab_a_min, &TrainBrake::get_compressor_pressure_cab_a_min, "compressor_pressure_min");
+        BIND_PROPERTY(Variant::FLOAT, "compressor_pressure_cab_a_max", "compressor/cab_a/max_pressure", &TrainBrake::set_compressor_pressure_cab_a_max, &TrainBrake::get_compressor_pressure_cab_a_max, "compressor_pressure_max");
+        BIND_PROPERTY(Variant::FLOAT, "compressor_pressure_cab_b_min", "compressor/cab_b/min_pressure", &TrainBrake::set_compressor_pressure_cab_b_min, &TrainBrake::get_compressor_pressure_cab_b_min, "compressor_pressure_min");
+        BIND_PROPERTY(Variant::FLOAT, "compressor_pressure_cab_b_max", "compressor/cab_b/max_pressure", &TrainBrake::set_compressor_pressure_cab_b_max, &TrainBrake::get_compressor_pressure_cab_b_max, "compressor_pressure_max");
+        BIND_PROPERTY(Variant::FLOAT, "compressor_speed", "compressor/speed", &TrainBrake::set_compressor_speed, &TrainBrake::get_compressor_speed, "compressor_speed");
+        BIND_PROPERTY_W_HINT(Variant::INT, "compressor_power", "compressor/power", &TrainBrake::set_compressor_power, &TrainBrake::get_compressor_power, "compressor_power", PROPERTY_HINT_ENUM, "Main,Unused,Converter,Engine,Coupler1,Coupler2");
+        BIND_PROPERTY(Variant::FLOAT, "rig_effectiveness", "rig_effectiveness", &TrainBrake::set_rig_effectiveness, &TrainBrake::get_rig_effectiveness, "rig_effectiveness");
 
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
@@ -335,40 +204,41 @@ namespace godot {
          */
 
         // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
-        mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve));
+        mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve_type));
 
-        const auto it = BrakeValveToSubsystemMap.find(mover->BrakeValve);
+        const std::unordered_map<TBrakeValve, TBrakeSubSystem>::const_iterator it =
+                BrakeValveToSubsystemMap.find(mover->BrakeValve);
         mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
 
         mover->NBpA = friction_elements_per_axle;
         mover->MaxBrakeForce = max_brake_force;
         mover->BrakeValveSize = valve_size;
-        mover->TrackBrakeForce = track_brake_force * 1000.0;
-        mover->MaxBrakePress[3] = max_pressure;
-        if (max_pressure > 0.0) {
-            mover->BrakeCylNo = cylinders_count;
+        mover->TrackBrakeForce = traction_brake_force * 1000.0;
+        mover->MaxBrakePress[3] = max_cyl_pressure;
+        if (max_cyl_pressure > 0.0) {
+            mover->BrakeCylNo = cyl_count;
 
-            if (cylinders_count > 0) {
-                mover->MaxBrakePress[0] = max_pressure_aux < 0.01 ? max_pressure : max_pressure_aux;
-                mover->MaxBrakePress[1] = max_pressure_tare;
-                mover->MaxBrakePress[2] = max_pressure_medium;
+            if (cyl_count > 0) {
+                mover->MaxBrakePress[0] = max_aux_pressure < 0.01 ? max_cyl_pressure : max_aux_pressure;
+                mover->MaxBrakePress[1] = max_tare_pressure;
+                mover->MaxBrakePress[2] = max_medium_pressure;
                 mover->MaxBrakePress[4] = max_antislip_pressure < 0.01 ? 0.0 : max_antislip_pressure;
 
-                mover->BrakeCylRadius = cylinder_radius;
-                mover->BrakeCylDist = cylinder_distance;
-                mover->BrakeCylSpring = cylinder_spring_force;
-                mover->BrakeSlckAdj = slck_adjustment_force;
+                mover->BrakeCylRadius = cyl_radius;
+                mover->BrakeCylDist = cyl_distance;
+                mover->BrakeCylSpring = cyl_spring_force;
+                mover->BrakeSlckAdj = piston_stroke_adjuster_resistance;
                 mover->BrakeRigEff = rig_effectiveness;
 
-                mover->BrakeCylMult[0] = cylinder_gear_ratio;
-                mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
-                mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
+                mover->BrakeCylMult[0] = cyl_gear_ratio;
+                mover->BrakeCylMult[1] = cyl_gear_ratio_low;
+                mover->BrakeCylMult[2] = cyl_gear_ratio_high;
 
-                mover->P2FTrans = 100 * M_PI * std::pow(cylinder_radius, 2);
+                mover->P2FTrans = 100 * M_PI * std::pow(cyl_radius, 2);
 
-                mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_pressure_tare > 0.0) ? 1 : 0;
+                mover->LoadFlag = (cyl_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
 
-                mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinders_count;
+                mover->BrakeVolume = M_PI * std::pow(cyl_radius, 2) * cyl_distance * cyl_count;
                 mover->BrakeVVolume = aux_tank_volume;
 
                 // TODO: mover->BrakeMethod
@@ -384,270 +254,11 @@ namespace godot {
         mover->HighPipePress = pipe_pressure_max;
         mover->LowPipePress = pipe_pressure_min;
         mover->VeselVolume = main_tank_volume;
-        mover->MinCompressor = compressor_pressure_min;
-        mover->MaxCompressor = compressor_pressure_max;
+        mover->MinCompressor = compressor_pressure_cab_a_min;
+        mover->MaxCompressor = compressor_pressure_cab_a_max;
         mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
         mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
-    }
-
-    void TrainBrake::set_valve(const TrainBrakeValve p_valve) {
-        valve = p_valve;
-        _dirty = true;
-    }
-
-    TrainBrake::TrainBrakeValve TrainBrake::get_valve() const {
-        return valve;
-    }
-
-    void TrainBrake::set_friction_elements_per_axle(const int p_friction_elements_per_axle) {
-        friction_elements_per_axle = p_friction_elements_per_axle;
-        _dirty = true;
-    }
-
-    int TrainBrake::get_friction_elements_per_axle() const {
-        return friction_elements_per_axle;
-    }
-
-    void TrainBrake::set_max_brake_force(const double p_max_brake_force) {
-        max_brake_force = p_max_brake_force;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_brake_force() const {
-        return max_brake_force;
-    }
-
-    void TrainBrake::set_valve_size(const int p_valve_size) {
-        valve_size = p_valve_size;
-        _dirty = true;
-    }
-
-    int TrainBrake::get_valve_size() const {
-        return valve_size;
-    }
-
-    void TrainBrake::set_track_brake_force(const double p_track_brake_force) {
-        track_brake_force = p_track_brake_force;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_track_brake_force() const {
-        return track_brake_force;
-    }
-
-    void TrainBrake::set_max_pressure(const double p_max_pressure) {
-        max_pressure = p_max_pressure;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_pressure() const {
-        return max_pressure;
-    }
-
-    void TrainBrake::set_max_pressure_aux(const double p_value) {
-        max_pressure_aux = p_value;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_pressure_aux() const {
-        return max_pressure_aux;
-    }
-
-    void TrainBrake::set_max_pressure_tare(const double p_value) {
-        max_pressure_tare = p_value;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_pressure_tare() const {
-        return max_pressure_tare;
-    }
-
-    void TrainBrake::set_max_pressure_medium(const double p_value) {
-        max_pressure_medium = p_value;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_pressure_medium() const {
-        return max_pressure_medium;
-    }
-
-    void TrainBrake::set_max_antislip_pressure(const double p_max_antislip_pressure) {
-        max_antislip_pressure = p_max_antislip_pressure;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_max_antislip_pressure() const {
-        return max_antislip_pressure;
-    }
-
-    void TrainBrake::set_cylinders_count(const int p_cylinders_count) {
-        cylinders_count = p_cylinders_count;
-        _dirty = true;
-    }
-
-    int TrainBrake::get_cylinders_count() const {
-        return cylinders_count;
-    }
-
-    void TrainBrake::set_cylinder_radius(const double p_cylinder_radius) {
-        cylinder_radius = p_cylinder_radius;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_cylinder_radius() const {
-        return cylinder_radius;
-    }
-
-    void TrainBrake::set_cylinder_distance(const double p_cylinder_distance) {
-        cylinder_distance = p_cylinder_distance;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_cylinder_distance() const {
-        return cylinder_distance;
-    }
-
-    void TrainBrake::set_cylinder_spring_force(const double p_cylinder_spring_force) {
-        cylinder_spring_force = p_cylinder_spring_force;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_cylinder_spring_force() const {
-        return cylinder_spring_force;
-    }
-
-    void TrainBrake::set_slck_adjustment_force(const double p_slck_adjustment_force) {
-        slck_adjustment_force = p_slck_adjustment_force;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_slck_adjustment_force() const {
-        return slck_adjustment_force;
-    }
-
-    void TrainBrake::set_cylinder_gear_ratio(const double p_cylinder_gear_ratio) {
-        cylinder_gear_ratio = p_cylinder_gear_ratio;
-    }
-
-    double TrainBrake::get_cylinder_gear_ratio() const {
-        return cylinder_gear_ratio;
-    }
-
-    void TrainBrake::set_cylinder_gear_ratio_low(const double p_cylinder_gear_ratio_low) {
-        cylinder_gear_ratio_low = p_cylinder_gear_ratio_low;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_cylinder_gear_ratio_low() const {
-        return cylinder_gear_ratio_low;
-    }
-
-    void TrainBrake::set_cylinder_gear_ratio_high(const double p_cylinder_gear_ratio_high) {
-        cylinder_gear_ratio_high = p_cylinder_gear_ratio_high;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_cylinder_gear_ratio_high() const {
-        return cylinder_gear_ratio_high;
-    }
-
-    void TrainBrake::set_pipe_pressure_max(const double p_pipe_pressure_max) {
-        pipe_pressure_max = p_pipe_pressure_max;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_pipe_pressure_max() const {
-        return pipe_pressure_max;
-    }
-
-    void TrainBrake::set_pipe_pressure_min(const double p_pipe_pressure_min) {
-        pipe_pressure_min = std::max(3.5, p_pipe_pressure_min); // MOVER LoadFiz_Brake
-        _dirty = true;
-    }
-
-    double TrainBrake::get_pipe_pressure_min() const {
-        return pipe_pressure_min;
-    }
-    void TrainBrake::set_main_tank_volume(const double p_main_tank_volume) {
-        main_tank_volume = p_main_tank_volume;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_main_tank_volume() const {
-        return main_tank_volume;
-    }
-
-    void TrainBrake::set_aux_tank_volume(const double p_aux_tank_volume) {
-        aux_tank_volume = p_aux_tank_volume;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_aux_tank_volume() const {
-        return aux_tank_volume;
-    }
-
-    void TrainBrake::set_compressor_pressure_min(const double p_compressor_pressure_min) {
-        compressor_pressure_min = p_compressor_pressure_min;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_compressor_pressure_min() const {
-        return compressor_pressure_min;
-    }
-
-    void TrainBrake::set_compressor_pressure_max(const double p_compressor_pressure_max) {
-        compressor_pressure_max = p_compressor_pressure_max;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_compressor_pressure_max() const {
-        return compressor_pressure_max;
-    }
-
-    void TrainBrake::set_compressor_pressure_cab_b_min(const double p_compressor_pressure_cab_b_min) {
-        compressor_pressure_cab_b_min = p_compressor_pressure_cab_b_min;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_compressor_pressure_cab_b_min() const {
-        return compressor_pressure_cab_b_min;
-    }
-
-    void TrainBrake::set_compressor_pressure_cab_b_max(const double p_compressor_pressure_cab_b_max) {
-        compressor_pressure_cab_b_max = p_compressor_pressure_cab_b_max;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_compressor_pressure_cab_b_max() const {
-        return compressor_pressure_cab_b_max;
-    }
-
-    void TrainBrake::set_compressor_speed(const double p_compressor_speed) {
-        compressor_speed = p_compressor_speed;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_compressor_speed() const {
-        return compressor_speed;
-    }
-
-    void TrainBrake::set_compressor_power(const CompressorPower p_compressor_power) {
-        compressor_power = p_compressor_power;
-        _dirty = true;
-    }
-
-    TrainBrake::CompressorPower TrainBrake::get_compressor_power() const {
-        return compressor_power;
-    }
-
-    void TrainBrake::set_rig_effectiveness(const double p_rig_effectiveness) {
-        rig_effectiveness = p_rig_effectiveness;
-        _dirty = true;
-    }
-
-    double TrainBrake::get_rig_effectiveness() const {
-        return rig_effectiveness;
     }
 } // namespace godot

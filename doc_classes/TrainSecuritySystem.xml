@@ -43,15 +43,15 @@
 			[code]Security:MaxHoldTime[/code]
 			The duration of holding down the CA [b]dead man's[/b] button, after which warning lights are turned on.
 		</member>
-		<member name="emergency_brake_delay" type="float" setter="set_emergency_brake_delay" getter="get_emergency_brake_delay" default="0.0">
+		<member name="emergency_brake/delay" type="float" setter="set_emergency_brake_delay" getter="get_emergency_brake_delay" default="0.0">
 			[code]Security:EmergencyBrakeDelay[/code]
 			Time from sound signal activation to emergency brake activation in seconds.
 		</member>
-		<member name="emergency_brake_warning_signal" type="int" setter="set_emergency_brake_warning_signal" getter="get_emergency_brake_warning_signal" enum="TrainSecuritySystem.EmergencyBrakeWarningSignal" default="1">
+		<member name="emergency_brake/warning_signal" type="int" setter="set_emergency_brake_warning_signal" getter="get_emergency_brake_warning_signal" enum="TrainSecuritySystem.EmergencyBrakeWarningSignal" default="1">
 			[code]Security:EmergencyBrakeWarningSignal[/code]
 			Definition of optional, automatic activation of the vehicle siren during emergency braking implementation
 		</member>
-		<member name="radio_stop" type="bool" setter="set_radio_stop" getter="get_radio_stop" default="true">
+		<member name="radio_stop/enabled" type="bool" setter="set_radio_stop_enabled" getter="get_radio_stop_enabled" default="false">
 			[code]Security:RadioStop[/code]
 			Definition of the operation of the Radio-Stop signal.
 		</member>

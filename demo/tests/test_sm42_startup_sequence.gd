@@ -1,6 +1,5 @@
 extends MaszynaGutTest
 
-
 var train: TrainController
 
 func before_each():
@@ -15,6 +14,7 @@ func after_each():
     train.free()
 
 func test_successful_enabling_oil_pump():
+    print(train.state)
     train.send_command("oil_pump", true)
     await wait_idle_frames(2)
     assert_true(train.state["oil_pump_active"], "Oil pump should be active")

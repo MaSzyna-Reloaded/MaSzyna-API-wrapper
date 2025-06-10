@@ -183,4 +183,6 @@ source/generator/engine = 0
 
 [node name="TrainElectroPneumaticDynamicBrake" type="TrainElectroPneumaticDynamicBrake" parent="."]
 
+[node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]
+
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

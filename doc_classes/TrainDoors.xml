@@ -125,7 +125,7 @@
 			Width (or angle) of full door opening.
 			Note that the original simulator is using the same value for both sides. When both are provided, the simulator will use [code]DoorMaxShiftR[/code] for both sides.
 		</member>
-		<member name="max_shift_plug" type="float" setter="set_max_shift_plug" getter="get_max_shift_plug" default="0.5">
+		<member name="max_shift_plug" type="float" setter="set_max_shift_plug" getter="get_max_shift_plug" default="0.1">
 			[code]Doors:DoorMaxShiftPlug[/code]
 			Bounce distance for Plug-type doors (sliding bounce), in meters
 		</member>
@@ -157,6 +157,10 @@
 			[code]Doors:DoorOpenWithPermit[/code]
 			Opening the train doors by holding down the momentary open permission button for specified number of seconds
 		</member>
+		<member name="permit/default" type="int" setter="set_permit_default" getter="get_permit_default" default="1">
+			[code]Doors:DoorPermitListDefault[/code]
+			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1
+		</member>
 		<member name="permit/light_blinking" type="int" setter="set_permit_light_blinking" getter="get_permit_light_blinking" enum="TrainDoors.PermitLight" default="0">
 			[code]Doors:DoorsPermitLightBlinking[/code]
 			Configuration of the permission light on the door
@@ -170,10 +174,6 @@
 			2 - Permission for right-sided doors
 			3 - Permission for both-sided doors
 			[/codeblocks]
-		</member>
-		<member name="permit/list_default" type="int" setter="set_permit_list_default" getter="get_permit_list_default" default="1">
-			[code]Doors:DoorPermitListDefault[/code]
-			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1
 		</member>
 		<member name="permit/required" type="bool" setter="set_permit_required" getter="get_permit_required" default="false">
 			[code]Doors:DoorNeedPermit[/code]

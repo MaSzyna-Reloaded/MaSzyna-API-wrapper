@@ -101,21 +101,21 @@ max_wakeup_voltage = 450.0
 max_wakeup_power = 490.0
 
 [sub_resource type="MotorParameter" id="MotorParameter_210ku"]
-mfi = 17.567
-mIsat = 64.0
-fi = 1500.0
-Isat = 15.0
+voltage_constant_multiplier = 17.567
+saturation_current_multiplier = 64.0
+voltage_constant = 1500.0
+saturation_current = 15.0
 
 [sub_resource type="MotorParameter" id="MotorParameter_ewrnx"]
-mfi = 15.0
-mIsat = 183.3
-fi = 2000.0
-Isat = 49.0
+voltage_constant_multiplier = 15.0
+saturation_current_multiplier = 183.3
+voltage_constant = 2000.0
+saturation_current = 49.0
 
 [node name="SM42v1" type="TrainController"]
 train_id = "TestTrain"
 type_name = "6d"
-dimensions/mass = 74000.0
+mass = 74000.0
 power = 590.0
 max_velocity = 90.0
 axle_arrangement = "Bo'Bo'"
@@ -126,30 +126,30 @@ script = ExtResource("1_vib8j")
 valve/type = 20
 friction_elements_per_axle = 4
 brake_force/max = 85.0
-max_pressures/cylinder = 4.0
-max_pressures/antislip = 1.8
-cylinders/count = 4
-cylinders/radius = 0.114
-cylinders/distance = 0.05
-cylinders/gear_ratio = 6.68
+max_cylinder_pressure = 4.0
+max_antislip_pressure = 1.8
+cylinder/count = 4
+cylinder/radius = 0.114
+cylinder/distance = 0.05
+cylinder/gear_ratio = 6.68
 tank/volume_main = 0.8
 tank/volume_aux = 200.0
-compressor/pressure_min = 7.0
-compressor/pressure_max = 8.0
+compressor/cab_a/min_pressure = 7.0
+compressor/cab_a/max_pressure = 8.0
 compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
 
 [node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
 oil_pump/pressure_minimum = 0.15
-Ftmax = 228000.0
+maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
 motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
 aware_system/active = true
 aware_delay = 60.0
-emergency_brake_delay = 2.5
+emergency_brake/delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0

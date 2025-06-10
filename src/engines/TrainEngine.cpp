@@ -1,17 +1,13 @@
 #include "TrainEngine.hpp"
+#include "macros.hpp"
+
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     class TrainController;
     void TrainEngine::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_motor_param_table"), &TrainEngine::set_motor_param_table);
-        ClassDB::bind_method(D_METHOD("get_motor_param_table"), &TrainEngine::get_motor_param_table);
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::ARRAY, "motor_param_table", PROPERTY_HINT_TYPE_STRING, String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":MotorParameter", PROPERTY_USAGE_DEFAULT,
-                        "TypedArray<MotorParameter>"),
-                "set_motor_param_table", "get_motor_param_table");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(Variant::ARRAY, "motor_param_table", "motor_param_table", &TrainEngine::set_motor_param_table, &TrainEngine::get_motor_param_table, "motor_param_table", PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
 
@@ -47,12 +43,12 @@ namespace godot {
                 return;
             }
 
-            mover->MotorParam[i].mIsat = row->mIsat;
-            mover->MotorParam[i].fi = row->fi;
-            mover->MotorParam[i].mfi = row->mfi;
-            mover->MotorParam[i].Isat = row->Isat;
-            mover->MPTRelay[i].Iup = row->shunting_up;//bocznikowanie
-            mover->MPTRelay[i].Idown = row->shunting_down;//bocznikowanie;
+            mover->MotorParam[i].mIsat = row->get_saturation_current_multiplier();
+            mover->MotorParam[i].fi = row->get_voltage_constant();
+            mover->MotorParam[i].mfi = row->get_voltage_constant_multiplier();
+            mover->MotorParam[i].Isat = row->get_saturation_current();
+            mover->MPTRelay[i].Iup = row->get_shunting_up();//bocznikowanie
+            mover->MPTRelay[i].Idown = row->get_shunting_down();//bocznikowanie;
         }
     }
 
@@ -88,15 +84,6 @@ namespace godot {
 
     void TrainEngine::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
         config["main_controller_position_max"] = mover->MainCtrlPosNo;
-    }
-
-    TypedArray<MotorParameter> TrainEngine::get_motor_param_table() {
-        return motor_param_table;
-    }
-
-    void TrainEngine::set_motor_param_table(const TypedArray<MotorParameter> &p_motor_param_table) {
-        motor_param_table.clear();
-        motor_param_table.append_array(p_motor_param_table);
     }
 
     void TrainEngine::main_switch(const bool p_enabled) {

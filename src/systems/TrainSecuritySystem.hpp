@@ -1,12 +1,13 @@
 #pragma once
 #include "../core/TrainPart.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
+#include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class TrainSecuritySystem : public TrainPart {
             GDCLASS(TrainSecuritySystem, TrainPart)
-
+        private:
             static void _bind_methods();
             friend class TSecuritySystem;
 
@@ -23,50 +24,19 @@ namespace godot {
                 BRAKE_WARNINGSIGNAL_WHISTLE
             };
 
-        private:
-            bool aware_system_active = false;
-            bool aware_system_cabsignal = false;
-            bool aware_system_separate_acknowledge = false;
-            bool aware_system_sifa = false;
-
-            double aware_delay = 0.0;           // AwareDelay -> SecuritySystem->AwareDelay
-            double emergency_brake_delay = 0.0; // EmergencyBrakeDelay -> SecuritySystem->EmergencyBrakeDelay
-            EmergencyBrakeWarningSignal emergency_brake_warning_signal =
-                    BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE; // EmergencyBrakeWarningSignal ->
-                                                        // EmergencyBrakeWarningSignal
-            bool radio_stop = true;                     // RadioStop -> SecuritySystem->radiostop_enabled
-            double sound_signal_delay = 0.0;            // SoundSignalDelay -> SecuritySystem->SoundSignalDelay
-            double shp_magnet_distance = 0.0;           // MagnetLocation -> SecuritySystem->MagnetLocation
-            double ca_max_hold_time = 0.0;              // MaxHoldTime -> SecuritySystem->MaxHoldTime
-
-        public:
             void security_acknowledge(bool p_enabled);
 
-            // Getters
-            bool get_aware_system_active() const;
-            bool get_aware_system_cabsignal() const;
-            bool get_aware_system_separate_acknowledge() const;
-            bool get_aware_system_sifa() const;
-            double get_aware_delay() const;
-            double get_emergency_brake_delay() const;
-            EmergencyBrakeWarningSignal get_emergency_brake_warning_signal() const;
-            bool get_radio_stop() const;
-            double get_sound_signal_delay() const;
-            double get_shp_magnet_distance() const;
-            double get_ca_max_hold_time() const;
-
-            // Setters
-            void set_aware_system_active(bool p_state);
-            void set_aware_system_cabsignal(bool p_state);
-            void set_aware_system_separate_acknowledge(bool p_state);
-            void set_aware_system_sifa(bool p_state);
-            void set_aware_delay(double value);
-            void set_emergency_brake_delay(double value);
-            void set_emergency_brake_warning_signal(EmergencyBrakeWarningSignal value);
-            void set_radio_stop(bool value);
-            void set_sound_signal_delay(double value);
-            void set_shp_magnet_distance(double value);
-            void set_ca_max_hold_time(double value);
+            MAKE_MEMBER_GS(bool, aware_system_active, false);
+            MAKE_MEMBER_GS(bool, aware_system_cab_signal, false);
+            MAKE_MEMBER_GS(bool, aware_system_separate_acknowledge, false);
+            MAKE_MEMBER_GS(bool, aware_system_sifa, false);
+            MAKE_MEMBER_GS(double, aware_delay, 0.0);
+            MAKE_MEMBER_GS(double, emergency_brake_delay, 0.0);
+            MAKE_MEMBER_GS_DIRTY(bool, radio_stop_enabled, false);
+            MAKE_MEMBER_GS(double, sound_signal_delay, 0.0);
+            MAKE_MEMBER_GS(double, shp_magnet_distance, 0.0);
+            MAKE_MEMBER_GS(double, ca_max_hold_time, 0.0);
+            MAKE_MEMBER_GS_NR(EmergencyBrakeWarningSignal, brake_warning_signal, EmergencyBrakeWarningSignal::BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainSecuritySystem::EmergencyBrakeWarningSignal)

@@ -133,7 +133,7 @@
 			Returns a dictionary with all config properties of the train.
 			This is a shortcut for iterating over [method TrainSystem.get_supported_config_properties] to read each from [method TrainSystem.get_config_property].
 		</member>
-		<member name="dimensions/mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
+		<member name="mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
 			[code]Param.M[/code] Mass of the train
 		</member>
 		<member name="max_velocity" type="float" setter="set_max_velocity" getter="get_max_velocity" default="0.0">
@@ -142,16 +142,16 @@
 		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
 			[code]Param.PWR[/code]
 		</member>
-		<member name="radio/channel_max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="0">
+		<member name="radio_channel/max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="0">
 			Maximum radio channel number
 		</member>
-		<member name="radio/channel_min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="0">
+		<member name="radio_channel/min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="0">
 			Minimum radio channel number
 		</member>
 		<member name="state" type="Dictionary" setter="" getter="get_state" default="{}">
 			Actual state of the train
 		</member>
-		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;train&quot;">
+		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
 			Unique identifier of the train. See [method TrainSystem.register_train].
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">

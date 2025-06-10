@@ -55,63 +55,68 @@
 			[code]Brake:MBF[/code]
 			Maximum braking force to the selected value
 		</member>
-		<member name="brake_force/track" type="float" setter="set_track_brake_force" getter="get_track_brake_force" default="0.0">
+		<member name="brake_force/traction" type="float" setter="set_traction_brake_force" getter="get_traction_brake_force" default="0.0">
 			[code]Brake:TBF[/code]
+		</member>
+		<member name="compressor/cab_a/max_pressure" type="float" setter="set_compressor_pressure_cab_a_max" getter="get_compressor_pressure_cab_a_max" default="0.0">
+			[code]Brake:MaxCP[/code]
+		</member>
+		<member name="compressor/cab_a/min_pressure" type="float" setter="set_compressor_pressure_cab_a_min" getter="get_compressor_pressure_cab_a_min" default="0.0">
+			[code]Brake:MinCP[/code]
+		</member>
+		<member name="compressor/cab_b/max_pressure" type="float" setter="set_compressor_pressure_cab_b_max" getter="get_compressor_pressure_cab_b_max" default="0.0">
+			[code]Brake:MaxCP_B[/code]
+		</member>
+		<member name="compressor/cab_b/min_pressure" type="float" setter="set_compressor_pressure_cab_b_min" getter="get_compressor_pressure_cab_b_min" default="0.0">
+			[code]Brake:MinCP_B[/code]
 		</member>
 		<member name="compressor/power" type="int" setter="set_compressor_power" getter="get_compressor_power" enum="TrainBrake.CompressorPower" default="0">
 			[code]Brake:CompressorPower[/code]
 		</member>
-		<member name="compressor/pressure_cab_b_max" type="float" setter="set_compressor_pressure_cab_b_max" getter="get_compressor_pressure_cab_b_max" default="0.0">
-			[code]Brake:MaxCP_B[/code]
-		</member>
-		<member name="compressor/pressure_cab_b_min" type="float" setter="set_compressor_pressure_cab_b_min" getter="get_compressor_pressure_cab_b_min" default="0.0">
-			[code]Brake:MinCP_B[/code]
-		</member>
-		<member name="compressor/pressure_max" type="float" setter="set_compressor_pressure_max" getter="get_compressor_pressure_max" default="0.0">
-			[code]Brake:MaxCP[/code]
-		</member>
-		<member name="compressor/pressure_min" type="float" setter="set_compressor_pressure_min" getter="get_compressor_pressure_min" default="0.0">
-			[code]Brake:MinCP[/code]
-		</member>
 		<member name="compressor/speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed" default="0.0">
 			[code]Brake:CompressorSpeed[/code]
 		</member>
-		<member name="cylinders/count" type="int" setter="set_cylinders_count" getter="get_cylinders_count" default="0">
+		<member name="cylinder/count" type="int" setter="set_cylinder_count" getter="get_cylinder_count" default="0">
 			[code]Brake:BCN[/code]
 		</member>
-		<member name="cylinders/distance" type="float" setter="set_cylinder_distance" getter="get_cylinder_distance" default="0.0">
+		<member name="cylinder/distance" type="float" setter="set_cylinder_distance" getter="get_cylinder_distance" default="0.0">
 			[code]Brake:BCD[/code]
 		</member>
-		<member name="cylinders/gear_ratio" type="float" setter="set_cylinder_gear_ratio" getter="get_cylinder_gear_ratio" default="0.0">
+		<member name="cylinder/gear_ratio" type="float" setter="set_cylinder_gear_ratio" getter="get_cylinder_gear_ratio" default="0.0">
 			[code]Brake:BCM[/code]
 		</member>
-		<member name="cylinders/gear_ratio_high" type="float" setter="set_cylinder_gear_ratio_high" getter="get_cylinder_gear_ratio_high" default="0.0">
+		<member name="cylinder/gear_ratio_high" type="float" setter="set_cylinder_gear_ratio_high" getter="get_cylinder_gear_ratio_high" default="0.0">
 			[code]Brake:BCMHi[/code]
 		</member>
-		<member name="cylinders/gear_ratio_low" type="float" setter="set_cylinder_gear_ratio_low" getter="get_cylinder_gear_ratio_low" default="0.0">
+		<member name="cylinder/gear_ratio_low" type="float" setter="set_cylinder_gear_ratio_low" getter="get_cylinder_gear_ratio_low" default="0.0">
 			[code]Brake:BCMLo[/code]
 		</member>
-		<member name="cylinders/radius" type="float" setter="set_cylinder_radius" getter="get_cylinder_radius" default="0.0">
+		<member name="cylinder/radius" type="float" setter="set_cylinder_radius" getter="get_cylinder_radius" default="0.0">
 			[code]Brake:BCR[/code]
 		</member>
-		<member name="cylinders/spring_force" type="float" setter="set_cylinder_spring_force" getter="get_cylinder_spring_force" default="0.0">
+		<member name="cylinder/spring_force" type="float" setter="set_cylinder_spring_force" getter="get_cylinder_spring_force" default="0.0">
 			[code]Brake:BCS[/code]
+		</member>
+		<member name="est_valve/size" type="int" setter="set_est_valve_size" getter="get_est_valve_size" default="0">
+			[code]Brake:Size[/code]
+			Size of the ESt family camshaft valve
 		</member>
 		<member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle" getter="get_friction_elements_per_axle" default="1">
 			[code]Brake:NBpA[/code]
 		</member>
-		<member name="max_pressures/antislip" type="float" setter="set_max_antislip_pressure" getter="get_max_antislip_pressure" default="0.0">
+		<member name="max_antislip_pressure" type="float" setter="set_max_antislip_pressure" getter="get_max_antislip_pressure" default="0.0">
 			[code]Brake:MaxASBP[/code]
 		</member>
-		<member name="max_pressures/aux" type="float" setter="set_max_pressure_aux" getter="get_max_pressure_aux" default="0.0">
+		<member name="max_aux_pressure" type="float" setter="set_max_aux_pressure" getter="get_max_aux_pressure" default="0.0">
+			Maximum auxiliary pressure
 		</member>
-		<member name="max_pressures/cylinder" type="float" setter="set_max_pressure" getter="get_max_pressure" default="0.0">
+		<member name="max_cylinder_pressure" type="float" setter="set_max_cylinder_pressure" getter="get_max_cylinder_pressure" default="0.0">
 			[code]Brake:MaxBP[/code]
 		</member>
-		<member name="max_pressures/medium" type="float" setter="set_max_pressure_medium" getter="get_max_pressure_medium" default="0.0">
+		<member name="max_medium_pressure" type="float" setter="set_max_medium_pressure" getter="get_max_medium_pressure" default="0.0">
 			[code]Brake:MedMaxBP[/code]
 		</member>
-		<member name="max_pressures/tare" type="float" setter="set_max_pressure_tare" getter="get_max_pressure_tare" default="0.0">
+		<member name="max_tare_pressure" type="float" setter="set_max_tare_pressure" getter="get_max_tare_pressure" default="0.0">
 			[code]Brake:TareMaxBP[/code]
 		</member>
 		<member name="pipe/pressure_max" type="float" setter="set_pipe_pressure_max" getter="get_pipe_pressure_max" default="5.0">
@@ -120,11 +125,11 @@
 		<member name="pipe/pressure_min" type="float" setter="set_pipe_pressure_min" getter="get_pipe_pressure_min" default="3.5">
 			[code]Brake:LoPP[/code]
 		</member>
+		<member name="piston_stroke/adjuster_resistance" type="float" setter="set_piston_stroke_adjuster_resistance" getter="get_piston_stroke_adjuster_resistance" default="0.0">
+			[code]Brake:BSA[/code]
+		</member>
 		<member name="rig_effectiveness" type="float" setter="set_rig_effectiveness" getter="get_rig_effectiveness" default="0.0">
 			[code]Brake:BRE[/code]
-		</member>
-		<member name="slck/adjustment_force" type="float" setter="set_slck_adjustment_force" getter="get_slck_adjustment_force" default="0.0">
-			[code]Brake:BSA[/code]
 		</member>
 		<member name="tank/volume_aux" type="float" setter="set_aux_tank_volume" getter="get_aux_tank_volume" default="0.0">
 			[code]Brake:BVV[/code]
@@ -132,11 +137,7 @@
 		<member name="tank/volume_main" type="float" setter="set_main_tank_volume" getter="get_main_tank_volume" default="0.0">
 			[code]Brake:Vv[/code]
 		</member>
-		<member name="valve/est_size" type="int" setter="set_valve_size" getter="get_valve_size" default="0">
-			[code]Brake:Size[/code]
-			Size of the ESt family camshaft valve
-		</member>
-		<member name="valve/type" type="int" setter="set_valve" getter="get_valve" enum="TrainBrake.TrainBrakeValve" default="0">
+		<member name="valve/type" type="int" setter="set_valve_type" getter="get_valve_type" enum="TrainBrake.TrainBrakeValve" default="0">
 			[code]Brake:BrakeValve[/code]
 			Type of a brake valve
 		</member>

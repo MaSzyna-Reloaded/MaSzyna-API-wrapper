@@ -25,19 +25,21 @@
 		<member name="head_light/color" type="Color" setter="set_head_light_color" getter="get_head_light_color" default="Color(255, 255, 255, 1)">
 			Color of the headlights
 		</member>
-		<member name="head_light/dimming_multiplier" type="float" setter="set_head_light_dimming_multiplier" getter="get_head_light_dimming_multiplier" default="0.6">
+		<member name="head_light/dimmed_multiplier" type="float" setter="set_head_light_dimmed_multiplier" getter="get_head_light_dimmed_multiplier" default="0.6">
 			Multiplier of dimmed headlights intensity
 		</member>
-		<member name="head_light/high_beam/dimming_multiplier" type="float" setter="set_high_beam_dimmed_multiplier" getter="get_high_beam_dimmed_multiplier" default="2.5">
+		<member name="head_light/high_beam/dimmed_multiplier" type="float" setter="set_high_beam_dimmed_multiplier" getter="get_high_beam_dimmed_multiplier" default="2.5">
 			Multiplier of dimmed high beam headlights intensity
 		</member>
-		<member name="head_light/high_beam/normal_multiplier" type="float" setter="set_high_beam_multiplier" getter="get_high_beam_multiplier" default="2.8">
+		<member name="head_light/high_beam/normal_multiplier" type="float" setter="set_high_beam_normal_multiplier" getter="get_high_beam_normal_multiplier" default="2.8">
 			Multiplier of high beam headlights intensity
 		</member>
 		<member name="head_light/normal_multiplier" type="float" setter="set_head_light_normal_multiplier" getter="get_head_light_normal_multiplier" default="1.0">
 			Multiplier of headlights intensity
 		</member>
-		<member name="light/alternative/capacity" type="float" setter="set_alternative_light_capacity" getter="get_alternative_light_capacity" default="24.0">
+		<member name="instrument_type" type="int" setter="set_instrument_type" getter="get_instrument_type" default="0">
+		</member>
+		<member name="light/alternative/capacity" type="float" setter="set_alternative_light_capacity" getter="get_alternative_light_capacity" default="495.0">
 			Specifies the capacity of the alternative light source, typically measured in units like Ampere-hours (Ah). Represents the total amount of energy the alternative light source can store
 		</member>
 		<member name="light/alternative/max_voltage" type="float" setter="set_alternative_max_voltage" getter="get_alternative_max_voltage" default="24.0">
@@ -49,13 +51,13 @@
 		<member name="light/source" type="int" setter="set_light_source" getter="get_light_source" enum="TrainController.TrainPowerSource" default="3">
 			An integer representing the power source, defined by the TrainController.TrainPowerSource enumeration
 		</member>
+		<member name="lights/default_selector_position" type="int" setter="set_lights_default_selector_position" getter="get_lights_default_selector_position" default="0">
+			An integer representing the default position of the light selector
+		</member>
 		<member name="lights/list" type="LightListItem[]" setter="set_light_position_list" getter="get_light_position_list" default="[]">
 			An array of LightListItem objects, each representing a light configuration for one selector position
 		</member>
-		<member name="lights/selector_default_position" type="int" setter="set_lights_selector_default_position" getter="get_lights_selector_default_position" default="0">
-			An integer representing the default position of the light selector
-		</member>
-		<member name="lights/selector_position" type="int" setter="set_light_selector_position" getter="get_light_selector_position" default="0">
+		<member name="lights/selector_position" type="int" setter="set_lights_selector_position" getter="get_lights_selector_position" default="0">
 			An integer representing the current position of the light selector
 		</member>
 		<member name="lights/wrap_selector" type="bool" setter="set_wrap_light_selector" getter="get_wrap_light_selector" default="false">

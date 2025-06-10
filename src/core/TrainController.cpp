@@ -59,33 +59,16 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
-        ClassDB::bind_method(D_METHOD("set_train_id"), &TrainController::set_train_id);
-        ClassDB::bind_method(D_METHOD("get_train_id"), &TrainController::get_train_id);
-        ClassDB::bind_method(D_METHOD("set_type_name"), &TrainController::set_type_name);
-        ClassDB::bind_method(D_METHOD("get_type_name"), &TrainController::get_type_name);
-        ClassDB::bind_method(D_METHOD("set_mass"), &TrainController::set_mass);
-        ClassDB::bind_method(D_METHOD("get_mass"), &TrainController::get_mass);
-        ClassDB::bind_method(D_METHOD("set_power"), &TrainController::set_power);
-        ClassDB::bind_method(D_METHOD("get_power"), &TrainController::get_power);
-        ClassDB::bind_method(D_METHOD("set_max_velocity"), &TrainController::set_max_velocity);
-        ClassDB::bind_method(D_METHOD("get_max_velocity"), &TrainController::get_max_velocity);
-        ClassDB::bind_method(D_METHOD("set_axle_arrangement"), &TrainController::set_axle_arrangement);
-        ClassDB::bind_method(D_METHOD("get_axle_arrangement"), &TrainController::get_axle_arrangement);
-        ClassDB::bind_method(D_METHOD("set_battery_voltage"), &TrainController::set_battery_voltage);
-        ClassDB::bind_method(D_METHOD("get_battery_voltage"), &TrainController::get_battery_voltage);
-        ClassDB::bind_method(D_METHOD("set_radio_channel_min"), &TrainController::set_radio_channel_min);
-        ClassDB::bind_method(D_METHOD("get_radio_channel_min"), &TrainController::get_radio_channel_min);
-        ClassDB::bind_method(D_METHOD("set_radio_channel_max"), &TrainController::set_radio_channel_min);
-        ClassDB::bind_method(D_METHOD("get_radio_channel_max"), &TrainController::get_radio_channel_min);
-
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "type_name"), "set_type_name", "get_type_name");
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "dimensions/mass"), "set_mass", "get_mass");
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "power"), "set_power", "get_power");
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "max_velocity"), "set_max_velocity", "get_max_velocity");
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "axle_arrangement"), "set_axle_arrangement", "get_axle_arrangement");
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "radio/channel_min"), "set_radio_channel_min", "get_radio_channel_min");
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "radio/channel_max"), "set_radio_channel_max", "get_radio_channel_max");
+        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
+        BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainController::set_type_name, &TrainController::get_type_name, "type_name");
+        BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
+        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
+        BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity, &TrainController::get_max_velocity, "max_velocity");
+        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainController::set_axle_arrangement, &TrainController::get_axle_arrangement, "axle_arrangement");
+        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
+        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
+        /* FIXME: move to TrainPower section? */
+        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
 
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(MOVER_INITIALIZED_SIGNAL));
@@ -96,12 +79,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 COMMAND_RECEIVED, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
-
-        /* FIXME: move to TrainPower section? */
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1"), "set_battery_voltage",
-                "get_battery_voltage");
-
 
         BIND_ENUM_CONSTANT(POWER_SOURCE_NOT_DEFINED);
         BIND_ENUM_CONSTANT(POWER_SOURCE_INTERNAL);
@@ -124,27 +101,11 @@ namespace godot {
         return mover;
     }
 
-    void TrainController::set_train_id(const String &p_train_id) {
-        train_id = p_train_id;
-    }
-
-    String TrainController::get_train_id() const {
-        if (train_id.is_empty()) {
-            String new_id = get_name().to_lower();
-            if (new_id.is_empty()) {
-                new_id = "train";
-            }
-            return new_id;
-        }
-
-        return train_id;
-    }
-
     void TrainController::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
-        const auto type_name = std::string(this->type_name.utf8().ptr());
+        const auto _type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
-        mover = std::make_unique<TMoverParameters>(initial_vel, type_name, name, this->cabin_number).release();
+        mover = std::make_unique<TMoverParameters>(initial_vel, _type_name, name, this->cabin_number).release();
 
         _dirty = true;
         _dirty_prop = true;
@@ -175,20 +136,12 @@ namespace godot {
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
-    void TrainController::set_type_name(const String &p_type_name) {
-        type_name = p_type_name;
-    }
-
-    String TrainController::get_type_name() const {
-        return type_name;
-    }
-
     void TrainController::register_command(const String &command, const Callable &callable) {
-        TrainSystem::get_instance()->register_command(get_train_id(), command, callable);
+        TrainSystem::get_instance()->register_command(train_id, command, callable);
     }
 
     void TrainController::unregister_command(const String &command, const Callable &callable) {
-        TrainSystem::get_instance()->unregister_command(get_train_id(), command, callable);
+        TrainSystem::get_instance()->unregister_command(train_id, command, callable);
     }
 
     void TrainController::_notification(const int p_what) {
@@ -197,7 +150,7 @@ namespace godot {
         }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
-                TrainSystem::get_instance()->register_train(this->get_train_id(), this);
+                TrainSystem::get_instance()->register_train(train_id, this);
                 register_command("battery", Callable(this, "battery"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -218,7 +171,7 @@ namespace godot {
                 unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                TrainSystem::get_instance()->unregister_train(this->get_train_id());
+                TrainSystem::get_instance()->unregister_train(train_id);
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
@@ -314,50 +267,6 @@ namespace godot {
         config["axles_count"] = mover->NAxles;
     }
 
-    double TrainController::get_battery_voltage() const {
-        return battery_voltage;
-    }
-
-    void TrainController::set_battery_voltage(const double p_value) {
-        battery_voltage = p_value;
-        _dirty_prop = true;
-    }
-
-    void TrainController::set_mass(const double p_mass) {
-        mass = p_mass;
-        _dirty_prop = true;
-    }
-
-    double TrainController::get_mass() const {
-        return mass;
-    }
-
-    void TrainController::set_power(const double p_power) {
-        power = p_power;
-        _dirty_prop = true;
-    }
-
-    double TrainController::get_power() const {
-        return power;
-    }
-
-    void TrainController::set_max_velocity(const double p_value) {
-        max_velocity = p_value;
-        _dirty_prop = true;
-    }
-
-    double TrainController::get_max_velocity() const {
-        return max_velocity;
-    }
-
-    void TrainController::set_axle_arrangement(const String &p_value) {
-        axle_arrangement = p_value;
-    }
-
-    String TrainController::get_axle_arrangement() const {
-        return axle_arrangement;
-    }
-
     void TrainController::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_update_internal_mover(mover);
@@ -379,22 +288,6 @@ namespace godot {
             UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
         }
         return internal_state;
-    }
-
-    int TrainController::get_radio_channel_min() const {
-        return radio_channel_min;
-    }
-
-    void TrainController::set_radio_channel_min(const int p_value) {
-        radio_channel_min = p_value;
-    }
-
-    int TrainController::get_radio_channel_max() const {
-        return radio_channel_max;
-    }
-
-    void TrainController::set_radio_channel_max(const int p_value) {
-        radio_channel_max = p_value;
     }
 
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
@@ -453,7 +346,7 @@ namespace godot {
     }
 
     void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) {
-        TrainSystem::get_instance()->send_command(this->get_train_id(), String(command), p1, p2);
+        TrainSystem::get_instance()->send_command(train_id, String(command), p1, p2);
     }
 
     void TrainController::battery(const bool p_enabled) {

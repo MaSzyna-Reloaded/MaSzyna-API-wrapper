@@ -1,34 +1,18 @@
 #include "TrainDieselEngine.hpp"
+#include "macros.hpp"
+
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void TrainDieselEngine::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_oil_min_pressure"), &TrainDieselEngine::get_oil_min_pressure);
-        ClassDB::bind_method(D_METHOD("set_oil_min_pressure", "value"), &TrainDieselEngine::set_oil_min_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "oil_pump/pressure_minimum"), "set_oil_min_pressure",
-                "get_oil_min_pressure");
-
-        ClassDB::bind_method(D_METHOD("get_oil_max_pressure"), &TrainDieselEngine::get_oil_max_pressure);
-        ClassDB::bind_method(D_METHOD("set_oil_max_pressure", "value"), &TrainDieselEngine::set_oil_max_pressure);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "oil_pump/pressure_maximum"), "set_oil_max_pressure",
-                "get_oil_max_pressure");
-
-        ClassDB::bind_method(D_METHOD("get_traction_force_max"), &TrainDieselEngine::get_traction_force_max);
-        ClassDB::bind_method(D_METHOD("set_traction_force_max", "value"), &TrainDieselEngine::set_traction_force_max);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "Ftmax"), "set_traction_force_max", "get_traction_force_max");
-
-        ClassDB::bind_method(D_METHOD("set_wwlist"), &TrainDieselEngine::set_wwlist);
-        ClassDB::bind_method(D_METHOD("get_wwlist"), &TrainDieselEngine::get_wwlist);
+        BIND_PROPERTY(Variant::FLOAT, "oil_min_pressure", "oil_pump/pressure_minimum", &TrainDieselEngine::set_oil_min_pressure, &TrainDieselEngine::get_oil_min_pressure, "oil_min_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "oil_max_pressure", "oil_pump/pressure_maximum", &TrainDieselEngine::set_oil_max_pressure, &TrainDieselEngine::get_oil_max_pressure, "oil_max_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "maximum_traction_force", "maximum_traction_force", &TrainDieselEngine::set_traction_force_max, &TrainDieselEngine::get_traction_force_max, "maximum_traction_force");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(Variant::ARRAY, "wwlist", "wwlist", &TrainDieselEngine::set_wwlist, &TrainDieselEngine::get_wwlist, "wwlist", PROPERTY_HINT_TYPE_STRING, "WWListItem");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &TrainDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &TrainDieselEngine::oil_pump);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::ARRAY, "wwlist", PROPERTY_HINT_TYPE_STRING, String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":WWListItem", PROPERTY_USAGE_DEFAULT, "TypedArray<WWListItem>"),
-                "set_wwlist", "get_wwlist");
     }
 
     TrainEngine::EngineType TrainDieselEngine::get_engine_type() {
@@ -79,54 +63,18 @@ namespace godot {
                 return;
             }
 
-            mover->DElist[i].RPM = row->rpm;
-            mover->DElist[i].GenPower = row->max_power;
-            mover->DElist[i].Umax = row->max_voltage;
-            mover->DElist[i].Imax = row->max_current;
-            if (row->has_shunting) {
-                mover->SST[i].Umin = row->min_wakeup_voltage;
-                mover->SST[i].Umax = row->max_wakeup_voltage;
-                mover->SST[i].Pmax = row->max_wakeup_power;
+            mover->DElist[i].RPM = row->get_rpm();
+            mover->DElist[i].GenPower = row->get_max_power();
+            mover->DElist[i].Umax = row->get_max_voltage();
+            mover->DElist[i].Imax = row->get_max_current();
+            if (row->get_has_shunting()) {
+                mover->SST[i].Umin = row->get_min_wakeup_voltage();
+                mover->SST[i].Umax = row->get_max_wakeup_voltage();
+                mover->SST[i].Pmax = row->get_max_wakeup_power();
                 mover->SST[i].Pmin = std::sqrt(std::pow(mover->SST[i].Umin, 2) / 47.6);
                 mover->SST[i].Pmax = std::min(mover->SST[i].Pmax, std::pow(mover->SST[i].Umax, 2) / 47.6);
             }
         }
-    }
-
-    double TrainDieselEngine::get_oil_min_pressure() const {
-        return oil_min_pressure;
-    }
-
-    void TrainDieselEngine::set_oil_min_pressure(const float value) {
-        oil_min_pressure = value;
-        _dirty = true;
-    }
-
-    double TrainDieselEngine::get_oil_max_pressure() const {
-        return oil_max_pressure;
-    }
-
-    void TrainDieselEngine::set_oil_max_pressure(const float value) {
-        oil_max_pressure = value;
-        _dirty = true;
-    }
-
-    double TrainDieselEngine::get_traction_force_max() const {
-        return traction_force_max;
-    }
-
-    void TrainDieselEngine::set_traction_force_max(const double value) {
-        traction_force_max = value;
-        _dirty = true;
-    }
-
-    TypedArray<WWListItem> TrainDieselEngine::get_wwlist() {
-        return wwlist;
-    }
-
-    void TrainDieselEngine::set_wwlist(const TypedArray<WWListItem>& p_wwlist) {
-        wwlist.clear();
-        wwlist.append_array(p_wwlist);
     }
 
     void TrainDieselEngine::oil_pump(const bool p_enabled) {

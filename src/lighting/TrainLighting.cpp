@@ -1,107 +1,24 @@
 #include "TrainLighting.hpp"
-
 namespace godot {
     const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
 
-    void TrainLighting::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_head_light_color", "color"), &TrainLighting::set_head_light_color);
-        ClassDB::bind_method(D_METHOD("get_head_light_color"), &TrainLighting::get_head_light_color);
-        ADD_PROPERTY(PropertyInfo(Variant::COLOR, "head_light/color"), "set_head_light_color", "get_head_light_color");
-        ClassDB::bind_method(D_METHOD("set_head_light_dimming_multiplier", "multiplier"), &TrainLighting::set_dimming_multiplier);
-        ClassDB::bind_method(D_METHOD("get_head_light_dimming_multiplier"), &TrainLighting::get_dimming_multiplier);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "head_light/dimming_multiplier"), "set_head_light_dimming_multiplier", "get_head_light_dimming_multiplier");
-        ClassDB::bind_method(D_METHOD("set_head_light_normal_multiplier", "multiplier"), &TrainLighting::set_normal_multiplier);
-        ClassDB::bind_method(D_METHOD("get_head_light_normal_multiplier"), &TrainLighting::get_normal_multiplier);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "head_light/normal_multiplier"), "set_head_light_normal_multiplier", "get_head_light_normal_multiplier");
-        ClassDB::bind_method(D_METHOD("set_high_beam_dimmed_multiplier", "multiplier"), &TrainLighting::set_high_beam_dimmed_multiplier);
-        ClassDB::bind_method(D_METHOD("get_high_beam_dimmed_multiplier"), &TrainLighting::get_high_beam_dimmed_multiplier);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "head_light/high_beam/dimming_multiplier"), "set_high_beam_dimmed_multiplier", "get_high_beam_dimmed_multiplier");
-        ClassDB::bind_method(D_METHOD("set_high_beam_multiplier", "multiplier"), &TrainLighting::set_high_beam_multiplier);
-        ClassDB::bind_method(D_METHOD("get_high_beam_multiplier"), &TrainLighting::get_high_beam_multiplier);
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "head_light/high_beam/normal_multiplier"), "set_high_beam_multiplier", "get_high_beam_multiplier");
-        ClassDB::bind_method(
-                D_METHOD("set_lights_selector_default_position", "position"), &TrainLighting::set_default_selector_position);
-        ClassDB::bind_method(D_METHOD("get_lights_selector_default_position"), &TrainLighting::get_default_selector_position);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "lights/selector_default_position"),
-                "set_lights_selector_default_position", "get_lights_selector_default_position");
-        ClassDB::bind_method(D_METHOD("set_light_selector_position", "light_selector_position"), &TrainLighting::set_selector_position);
-        ClassDB::bind_method(D_METHOD("get_light_selector_position"), &TrainLighting::get_selector_position);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "lights/selector_position"),
-                "set_light_selector_position", "get_light_selector_position");
-        ClassDB::bind_method(
-                D_METHOD("set_wrap_light_selector", "wrap"), &TrainLighting::set_wrap_light_selector);
-        ClassDB::bind_method(D_METHOD("get_wrap_light_selector"), &TrainLighting::get_wrap_light_selector);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "lights/wrap_selector"),
-                "set_wrap_light_selector", "get_wrap_light_selector");
-        ClassDB::bind_method(D_METHOD("set_light_position_list", "light_position_list"), &TrainLighting::set_light_position_list);
-        ClassDB::bind_method(D_METHOD("get_light_position_list"), &TrainLighting::get_light_position_list);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::ARRAY, "lights/list", PROPERTY_HINT_TYPE_STRING, String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":LightListItem", PROPERTY_USAGE_DEFAULT, "TypedArray<LightListItem>"),
-                "set_light_position_list", "get_light_position_list");
-
-        ClassDB::bind_method(D_METHOD("set_light_source", "light_source"), &TrainLighting::set_light_source);
-        ClassDB::bind_method(D_METHOD("get_light_source"), &TrainLighting::get_light_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "light/source", PROPERTY_HINT_ENUM,
-                        "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
-                        "Main"),
-                "set_light_source", "get_light_source");
-        ClassDB::bind_method(
-                D_METHOD("set_generator_engine", "generator_engine"), &TrainLighting::set_generator_engine);
-        ClassDB::bind_method(D_METHOD("get_generator_engine"), &TrainLighting::get_generator_engine);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "source/generator/engine", PROPERTY_HINT_ENUM,
-                        "None,Dumb,WheelsDriven,ElectricSeriesMotor,ElectricInductionMotor,DieselEngine,SteamEngine,"
-                        "DieselElectric,Main"),
-                "set_generator_engine", "get_generator_engine");
-        ClassDB::bind_method(
-                D_METHOD("set_max_accumulator_voltage", "max_accumulator_voltage"),
-                &TrainLighting::set_max_accumulator_voltage);
-        ClassDB::bind_method(D_METHOD("get_max_accumulator_voltage"), &TrainLighting::get_max_accumulator_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "source/accumulator/max_voltage"), "set_max_accumulator_voltage",
-                "get_max_accumulator_voltage");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_light_source", "light_source"),
-                &TrainLighting::set_alternative_light_source);
-        ClassDB::bind_method(D_METHOD("get_alternative_light_source"), &TrainLighting::get_alternative_light_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "light/alternative/source", PROPERTY_HINT_ENUM,
-                        "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
-                        "Main"),
-                "set_alternative_light_source", "get_alternative_light_source");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_max_voltage", "alternative_max_voltage"),
-                &TrainLighting::set_alternative_max_voltage);
-        ClassDB::bind_method(D_METHOD("get_alternative_max_voltage"), &TrainLighting::get_alternative_max_voltage);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "light/alternative/max_voltage"), "set_alternative_max_voltage",
-                "get_alternative_max_voltage");
-        ClassDB::bind_method(
-                D_METHOD("set_alternative_light_capacity", "light_source"),
-                &TrainLighting::set_alternative_light_capacity);
-        ClassDB::bind_method(
-                D_METHOD("get_alternative_light_capacity"), &TrainLighting::get_alternative_light_capacity);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "light/alternative/capacity"), "set_alternative_light_capacity",
-                "get_alternative_light_capacity");
-        ClassDB::bind_method(
-                D_METHOD("set_accumulator_recharge_source", "recharge_source"),
-                &TrainLighting::set_accumulator_recharge_source);
-        ClassDB::bind_method(
-                D_METHOD("get_accumulator_recharge_source"), &TrainLighting::get_accumulator_recharge_source);
-        ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "source/accumulator/recharge_source", PROPERTY_HINT_ENUM,
-                        "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,"
-                        "Main"),
-                "set_accumulator_recharge_source", "get_accumulator_recharge_source");
+    void TrainLighting::_bind_methods() {BIND_PROPERTY(Variant::COLOR, "head_light_color", "head_light/color", &TrainLighting::set_head_light_color, &TrainLighting::get_head_light_color, "color");
+    BIND_PROPERTY(Variant::FLOAT, "head_light_dimmed_multiplier", "head_light/dimmed_multiplier", &TrainLighting::set_dimming_multiplier, &TrainLighting::get_dimming_multiplier, "multiplier");
+    BIND_PROPERTY(Variant::FLOAT, "head_light_normal_multiplier", "head_light/normal_multiplier", &TrainLighting::set_normal_multiplier, &TrainLighting::get_normal_multiplier, "multiplier");
+    BIND_PROPERTY(Variant::FLOAT, "high_beam_dimmed_multiplier", "head_light/high_beam/dimmed_multiplier", &TrainLighting::set_high_beam_dimmed_multiplier, &TrainLighting::get_high_beam_dimmed_multiplier, "multiplier");
+    BIND_PROPERTY(Variant::FLOAT, "high_beam_normal_multiplier", "head_light/high_beam/normal_multiplier", &TrainLighting::set_high_beam_multiplier, &TrainLighting::get_high_beam_multiplier, "multiplier");
+    BIND_PROPERTY(Variant::INT, "lights_default_selector_position", "lights/default_selector_position", &TrainLighting::set_default_selector_position, &TrainLighting::get_default_selector_position, "default_selector_position");
+    BIND_PROPERTY(Variant::INT, "lights_selector_position", "lights/selector_position", &TrainLighting::set_selector_position, &TrainLighting::get_selector_position, "selector_position");
+    BIND_PROPERTY(Variant::BOOL, "wrap_light_selector", "lights/wrap_selector", &TrainLighting::set_wrap_light_selector, &TrainLighting::get_wrap_light_selector, "wrap_selector");
+    BIND_PROPERTY_W_HINT_RES_ARRAY(Variant::ARRAY, "light_position_list", "lights/list", &TrainLighting::set_light_position_list, &TrainLighting::get_light_position_list, "light_position_list", PROPERTY_HINT_TYPE_STRING, "LighListItem");
+    BIND_PROPERTY_W_HINT(Variant::INT, "light_source", "light/source", &TrainLighting::set_light_source, &TrainLighting::get_light_source, "source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+    BIND_PROPERTY_W_HINT(Variant::INT, "generator_engine", "source/generator/engine", &TrainLighting::set_generator_engine, &TrainLighting::get_generator_engine, "generator_engine", PROPERTY_HINT_ENUM, "None,Dumb,WheelsDriven,ElectricSeriesMotor,ElectricInductionMotor,DieselEngine,SteamEngine,DieselElectric,Main");
+    BIND_PROPERTY(Variant::FLOAT, "max_accumulator_voltage", "source/accumulator/max_voltage", &TrainLighting::set_max_accumulator_voltage, &TrainLighting::get_max_accumulator_voltage, "max_voltage");
+    BIND_PROPERTY_W_HINT(Variant::INT, "alternative_light_source", "light/alternative/source", &TrainLighting::set_alternative_light_source, &TrainLighting::get_alternative_light_source, "source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+    BIND_PROPERTY(Variant::FLOAT, "alternative_max_voltage", "light/alternative/max_voltage", &TrainLighting::set_alternative_max_voltage, &TrainLighting::get_alternative_max_voltage, "max_voltage");
+    BIND_PROPERTY(Variant::FLOAT, "alternative_light_capacity", "light/alternative/capacity", &TrainLighting::set_alternative_light_capacity, &TrainLighting::get_alternative_light_capacity, "capacity");
+    BIND_PROPERTY_W_HINT(Variant::INT, "accumulator_recharge_source", "source/accumulator/recharge_source", &TrainLighting::set_accumulator_recharge_source, &TrainLighting::get_accumulator_recharge_source, "recharge_source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
+    BIND_PROPERTY(Variant::INT, "instrument_type", "instrument_type", &TrainLighting::set_instrument_light_type, &TrainLighting::get_instrument_light_type, "instrument_type");
         ClassDB::bind_method(D_METHOD("increase_light_selector_position"), &TrainLighting::increase_light_selector_position);
         ClassDB::bind_method(D_METHOD("decrease_light_selector_position"), &TrainLighting::decrease_light_selector_position);
         ADD_SIGNAL(MethodInfo(SELECTOR_POSITION_CHANGED_SIGNAL, PropertyInfo(Variant::INT, "position")));
@@ -140,153 +57,6 @@ namespace godot {
         unregister_command("increase_light_selector_position", Callable(this, "increase_light_selector_position"));
         unregister_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
         TrainPart::_unregister_commands();
-    }
-
-    void TrainLighting::set_light_source(const TrainController::TrainPowerSource p_light_source) {
-        light_source = p_light_source;
-        _dirty = true;
-    }
-
-    TrainController::TrainPowerSource TrainLighting::get_light_source() const {
-        return light_source;
-    }
-
-    void TrainLighting::set_generator_engine(const TrainEngine::EngineType p_generator_engine) {
-        generator_engine = p_generator_engine;
-        _dirty = true;
-    }
-
-    TrainEngine::EngineType TrainLighting::get_generator_engine() const {
-        return generator_engine;
-    }
-
-    void TrainLighting::set_max_accumulator_voltage(const double p_max_accumulator_voltage) {
-        max_accumulator_voltage = p_max_accumulator_voltage;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_max_accumulator_voltage() const {
-        return max_accumulator_voltage;
-    }
-
-    void TrainLighting::set_alternative_light_source(const TrainController::TrainPowerSource p_light_source) {
-        alternative_light_source = p_light_source;
-        _dirty = true;
-    }
-
-    TrainController::TrainPowerSource TrainLighting::get_alternative_light_source() const {
-        return alternative_light_source;
-    }
-
-    void TrainLighting::set_alternative_max_voltage(const double p_max_accumulator_voltage) {
-        max_accumulator_voltage = p_max_accumulator_voltage;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_alternative_max_voltage() const {
-        return alternative_max_voltage;
-    }
-
-    void TrainLighting::set_alternative_light_capacity(const double p_max_accumulator_voltage) {
-        max_accumulator_voltage = p_max_accumulator_voltage;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_alternative_light_capacity() const {
-        return alternative_max_voltage;
-    }
-
-    void TrainLighting::set_accumulator_recharge_source(
-            const TrainController::TrainPowerSource p_accumulator_recharge_source) {
-        accumulator_recharge_source = p_accumulator_recharge_source;
-        _dirty = true;
-    }
-
-    TrainController::TrainPowerSource TrainLighting::get_accumulator_recharge_source() const {
-        return accumulator_recharge_source;
-    }
-
-    void TrainLighting::set_light_position_list(const TypedArray<LightListItem> &p_light_position_list) {
-        light_position_list.clear();
-        light_position_list.append_array(p_light_position_list);
-        _dirty = true;
-    }
-
-    TypedArray<LightListItem> TrainLighting::get_light_position_list() const {
-        return light_position_list;
-    }
-
-    void TrainLighting::set_wrap_light_selector(const bool p_wrap_light_selector) {
-        wrap_light_selector = p_wrap_light_selector;
-        _dirty = true;
-    }
-
-    bool TrainLighting::get_wrap_light_selector() const {
-        return wrap_light_selector;
-    }
-
-    void TrainLighting::set_default_selector_position(const int p_selector_position) {
-        default_selector_position = p_selector_position;
-        _dirty = true;
-    }
-
-    int TrainLighting::get_default_selector_position() const {
-        return default_selector_position;
-    }
-
-    void TrainLighting::set_selector_position(const int p_selector_position) {
-        selector_position = p_selector_position;
-        emit_signal(SELECTOR_POSITION_CHANGED_SIGNAL, p_selector_position);
-        _dirty = true;
-    }
-
-    int TrainLighting::get_selector_position() const {
-        return selector_position;
-    }
-
-    void TrainLighting::set_head_light_color(const Color p_head_light_color) {
-        head_light_color = p_head_light_color;
-        _dirty = true;
-    }
-
-    Color TrainLighting::get_head_light_color() const {
-        return head_light_color;
-    }
-
-    void TrainLighting::set_dimming_multiplier(const double p_dimming_multiplier) {
-        dimming_multiplier = p_dimming_multiplier;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_dimming_multiplier() const {
-        return dimming_multiplier;
-    }
-
-    void TrainLighting::set_normal_multiplier(const double p_normal_multiplier) {
-        normal_multiplier = p_normal_multiplier;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_normal_multiplier() const {
-        return normal_multiplier;
-    }
-
-    void TrainLighting::set_high_beam_dimmed_multiplier(const double p_high_beam_dimmed_multiplier) {
-        high_beam_dimmed_multiplier = p_high_beam_dimmed_multiplier;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_high_beam_dimmed_multiplier() const {
-        return high_beam_dimmed_multiplier;
-    }
-
-    void TrainLighting::set_high_beam_multiplier(const double p_high_beam_multiplier) {
-        high_beam_multiplier = p_high_beam_multiplier;
-        _dirty = true;
-    }
-
-    double TrainLighting::get_high_beam_multiplier() const {
-        return high_beam_multiplier;
     }
 
     void TrainLighting::increase_light_selector_position() {

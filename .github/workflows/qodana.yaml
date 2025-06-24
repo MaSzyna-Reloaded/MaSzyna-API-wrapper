@@ -34,7 +34,7 @@ jobs:
           pr-mode: false
           upload-result: true
           post-pr-comment: false
-          args: --linter,jetbrains/qodana-clang:2025.1
+          args: --linter,jetbrains/qodana-cpp:2025.1-eap
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: "https://qodana.cloud"

@@ -11,6 +11,6 @@ bootstrap: >-
   cmake --build build --parallel $(nproc);
   python3 ci/qodana/filter-cc.py
 failThreshold: 0
-linter: jetbrains/qodana-clang:2024.3-eap-clang18
+linter: jetbrains/qodana-cpp:2025.1-eap-clang18
 include:
   - name: VulnerableLibrariesGlobal

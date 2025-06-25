@@ -29,12 +29,12 @@ jobs:
           cd ci/qodana/
           ./generate_cmakelists.sh
       - name: "Qodana Scan"
-        uses: JetBrains/qodana-action@v2024.3.4
+        uses: JetBrains/qodana-action@v2025.1.1
         with:
-          pr-mode: false
+          pr-mode: true
           upload-result: true
           post-pr-comment: false
-          args: --linter,jetbrains/qodana-clang:2024.3-eap-clang18
+          args: --property=project.open.type=Gradle
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: "https://qodana.cloud"

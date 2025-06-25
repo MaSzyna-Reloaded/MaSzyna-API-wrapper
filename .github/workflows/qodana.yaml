@@ -34,7 +34,7 @@ jobs:
           pr-mode: false
           upload-result: true
           post-pr-comment: false
-          args: --property project.open.type=Gradle
+          args: --property=project.open.type=Gradle
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
           QODANA_ENDPOINT: "https://qodana.cloud"

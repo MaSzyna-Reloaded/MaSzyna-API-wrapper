@@ -23,7 +23,7 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 18 all
-          sudo apt-get install -y clang-tidy-18 python3-scons python3-pip
+          sudo apt-get install -y clang-tidy-18 scons
           pip3 install pyyaml --break-system-packages # run-clang-tidy.py needs pyyaml
 
       - name: Generate compilation database

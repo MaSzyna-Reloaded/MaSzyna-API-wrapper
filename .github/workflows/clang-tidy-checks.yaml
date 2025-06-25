@@ -25,9 +25,15 @@ jobs:
           sudo ./llvm.sh 18 all
           sudo apt-get install -y clang-tidy-18 scons python3
           pip3 install pyyaml --break-system-packages # run-clang-tidy.py needs pyyaml
-
-      - name: Generate compilation database
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+      - name: Generate Compilation database
         run: |
+          sudo chmod +x ./ci/qodana/generate_cmakelists.sh
+          cd ci/qodana/
+          ./generate_cmakelists.sh
+          cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCODECHECK_BUILD=ON;
+          cmake --build build --parallel $(nproc);
           python3 ci/qodana/filter-cc.py
 
       - name: Run clang-tidy

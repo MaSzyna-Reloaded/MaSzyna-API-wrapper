@@ -32,6 +32,7 @@ jobs:
           sudo chmod +x ./ci/qodana/generate_cmakelists.sh
           cd ci/qodana/
           ./generate_cmakelists.sh
+          cd ../../
           cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCODECHECK_BUILD=ON;
           cmake --build build --parallel $(nproc);
           python3 ci/qodana/filter-cc.py

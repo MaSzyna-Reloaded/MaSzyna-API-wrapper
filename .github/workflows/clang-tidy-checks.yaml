@@ -1,0 +1,138 @@
+name: Clang-Tidy Checks
+
+on:
+  pull_request:
+    branches: [ main ] # Adjust if your main branch has a different name
+
+jobs:
+  tidy:
+    name: Run clang-tidy
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # Required for SCons to determine the version
+          fetch-depth: 0
+          submodules: 'recursive'
+
+      - name: Install LLVM and Clang
+        shell: bash
+        run: |
+          wget https://apt.llvm.org/llvm.sh
+          chmod +x llvm.sh
+          sudo ./llvm.sh 18 all
+          sudo apt-get install -y clang-tidy-18 python3-scons python3-pip
+          pip3 install pyyaml --break-system-packages # run-clang-tidy.py needs pyyaml
+
+      - name: Generate compilation database
+        run: |
+          scons compiledb=yes platform=linux target=template_debug arch=x86_64 -j$(nproc)
+          # SCons might place it in a build directory, let's ensure it's in the root
+          if [ -f build/compile_commands.json ]; then
+            mv build/compile_commands.json .
+          elif [ -f compile_commands.json ]; then
+            echo "compile_commands.json already in root."
+          else
+            echo "compile_commands.json not found!"
+            exit 1
+          fi
+
+      - name: Run clang-tidy
+        id: run_tidy
+        run: |
+          # run-clang-tidy-18.py might not be in PATH by default from llvm.sh
+          # Find it explicitly. It's often in /usr/lib/llvm-18/share/clang/
+          # Or use clang-tidy-18 directly with a find command
+          # For now, let's try to find run-clang-tidy-18.py
+          RUN_CLANG_TIDY_PY=$(find /usr/lib/llvm-18/share/clang/ -name run-clang-tidy.py | head -n 1)
+          if [ -z "$RUN_CLANG_TIDY_PY" ]; then
+            echo "run-clang-tidy.py not found in common LLVM paths."
+            # Fallback: find source files and run clang-tidy-18 directly
+            # This is a simplified version; might need refinement for include paths if not using compile_commands.json
+            echo "Falling back to direct clang-tidy-18 invocation."
+            SOURCE_FILES=$(find src -name '*.cpp' -o -name '*.hpp')
+            echo "::set-output name=report::$(clang-tidy-18 -p=. --quiet $SOURCE_FILES)"
+          else
+            echo "Using $RUN_CLANG_TIDY_PY"
+            # The output of run-clang-tidy.py is suitable for parsing
+            # We add --quiet to reduce noise, but errors will still be printed
+            echo "report<<EOF" >> $GITHUB_OUTPUT
+            $RUN_CLANG_TIDY_PY -p . -j $(nproc) --quiet 'src/**/*.cpp' 'src/**/*.hpp' || true
+            echo "EOF" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true # We want to process the output even if tidy finds issues
+
+      - name: Process clang-tidy output
+        id: process_tidy_output
+        shell: python
+        run: |
+          import os
+          import sys
+          sys.path.append(os.path.join(os.environ['GITHUB_WORKSPACE'], '.github/scripts'))
+          from parse_tidy_output import parse_clang_tidy_output, format_issues_as_markdown_table
+
+          tidy_report = os.environ.get('CLANG_TIDY_REPORT', '')
+          if not tidy_report:
+              # Fallback for older actions runner or if output is empty
+              tidy_report = '${{ steps.run_tidy.outputs.report }}'
+
+          parsed_issues = parse_clang_tidy_output(tidy_report)
+          markdown_table = format_issues_as_markdown_table(parsed_issues)
+
+          # Escape for multiline output
+          markdown_table = markdown_table.replace('%', '%25')
+          markdown_table = markdown_table.replace('\n', '%0A')
+          markdown_table = markdown_table.replace('\r', '%0D')
+
+          print(f"::set-output name=markdown_table::{markdown_table}")
+        env:
+          CLANG_TIDY_REPORT: ${{ steps.run_tidy.outputs.report }}
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const output = `${{ steps.process_tidy_output.outputs.markdown_table }}`;
+            const MAX_COMMENT_LENGTH = 65536; // GitHub API limit for comment length
+            let currentComment = "";
+            let commentBody = `## Clang-Tidy Results\n\n${output}`;
+
+            if (commentBody.length > MAX_COMMENT_LENGTH) {
+              // Truncate and add a message
+              const truncatedMessage = "\n\n... (message truncated due to length)";
+              commentBody = commentBody.substring(0, MAX_COMMENT_LENGTH - truncatedMessage.length) + truncatedMessage;
+            }
+
+            // Check for existing comments by this action
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const botComment = comments.find(comment =>
+              comment.user.login === 'github-actions[bot]' &&
+              comment.body.includes('## Clang-Tidy Results')
+            );
+
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }

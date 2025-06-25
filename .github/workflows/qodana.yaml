@@ -16,7 +16,7 @@ jobs:
       checks: write
       security-events: write
     steps:
-      - uses: actions/checkout@v4  
+      - uses: actions/checkout@v4
         with:
           submodules: recursive
           ref: ${{ github.event.pull_request.head.sha }} # to check out the actual pull request commit, not the merge commit
@@ -29,15 +29,12 @@ jobs:
           cd ci/qodana/
           ./generate_cmakelists.sh
       - name: "Qodana Scan"
-        uses: JetBrains/qodana-action@v2024.3.4
+        uses: JetBrains/qodana-action@v2025.1.1
         with:
           pr-mode: false
           upload-result: true
           post-pr-comment: false
-          args: --linter,jetbrains/qodana-clang:latest
-        env:
-          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
-          QODANA_ENDPOINT: "https://qodana.cloud"
+          args: --linter,jetbrains/qodana-cpp:2025.1-eap-clang18
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json

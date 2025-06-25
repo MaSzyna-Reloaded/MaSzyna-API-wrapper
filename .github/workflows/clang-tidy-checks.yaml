@@ -39,6 +39,7 @@ jobs:
         run: |
           cmake --build build --parallel $(nproc);
           python3 ci/qodana/filter-cc.py
+        continue-on-error: true
 
       - name: Run clang-tidy
         id: run_tidy

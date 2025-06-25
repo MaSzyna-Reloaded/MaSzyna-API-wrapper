@@ -23,21 +23,12 @@ jobs:
           wget https://apt.llvm.org/llvm.sh
           chmod +x llvm.sh
           sudo ./llvm.sh 18 all
-          sudo apt-get install -y clang-tidy-18 scons
+          sudo apt-get install -y clang-tidy-18 scons python3
           pip3 install pyyaml --break-system-packages # run-clang-tidy.py needs pyyaml
 
       - name: Generate compilation database
         run: |
-          scons compiledb=yes platform=linux target=template_debug arch=x86_64 -j$(nproc)
-          # SCons might place it in a build directory, let's ensure it's in the root
-          if [ -f build/compile_commands.json ]; then
-            mv build/compile_commands.json .
-          elif [ -f compile_commands.json ]; then
-            echo "compile_commands.json already in root."
-          else
-            echo "compile_commands.json not found!"
-            exit 1
-          fi
+          python3 ci/qodana/filter-cc.py
 
       - name: Run clang-tidy
         id: run_tidy

@@ -34,7 +34,9 @@ jobs:
           pr-mode: false
           upload-result: true
           post-pr-comment: false
-          args: --linter,jetbrains/qodana-cpp:2025.1-eap-clang18
+        env:
+          QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
+          QODANA_ENDPOINT: "https://qodana.cloud"
       - uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json

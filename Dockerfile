@@ -1,5 +1,5 @@
 # Dockerfile
-FROM barichello/godot-ci:4.4
+FROM barichello/godot-ci:4.5
 
 # Set working directory
 WORKDIR /app

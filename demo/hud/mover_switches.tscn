@@ -16,7 +16,7 @@ layout_mode = 2
 layout_mode = 2
 text = "General"
 
-[node name="Battery" parent="General" instance=ExtResource("1_vladt")]
+[node name="Battery2" parent="General" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Battery"
 state_property = "battery_enabled"
@@ -116,6 +116,19 @@ text = "Brakes"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Brakes"]
 layout_mode = 2
+
+[node name="EPFuse" parent="Brakes/VBoxContainer" instance=ExtResource("1_vladt")]
+layout_mode = 2
+label = "EP Fuse"
+state_property = "dcemued/ep_fuse"
+command = "switch_ep_fuse"
+
+[node name="EPLevel" parent="Brakes/VBoxContainer" instance=ExtResource("3_j1mtt")]
+layout_mode = 2
+label = "EP Level"
+step = 0.05
+state_property = "dcemued/ep_force"
+command = "set_ep_brake_force"
 
 [node name="Drive" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2

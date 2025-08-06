@@ -1,4 +1,5 @@
 #include "brakes/TrainBrake.hpp"
+#include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
 #include "core/TrainController.hpp"
@@ -51,6 +52,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
+        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
 
         train_system_singleton = memnew(TrainSystem);
         log_system_singleton = memnew(LogSystem);

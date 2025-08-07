@@ -155,3 +155,5 @@ shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
 
 [node name="TrainElectroPneumaticDynamicBrake" type="TrainElectroPneumaticDynamicBrake" parent="."]
+
+[node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]

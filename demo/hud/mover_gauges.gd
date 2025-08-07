@@ -39,10 +39,13 @@ func _process(delta):
     $OilPressure.value = state.get("oil_pump_pressure", 0.0)
     $BrakeCylinderPressure.value = state.get("brake_air_pressure", 0.0) / state.get("brake_tank_volume", 1.0)
     $BrakePipePressure.value = state.get("pipe_pressure", 0.0)  / 10.0
+    $SpringBrakePressure.value = state.get("spring_brake/cylinder_pressure", 0.0)  / 10.0
     $Speed.value = state.get("speed", 0.0) / 100.0
     $%SecurityLight.enabled = true if state.get("blinking") else false
     $%SHPLight.enabled = true if state.get("cabsignal_blinking") else false
     $"%DoorsLocked".enabled = true if state.get("doors_locked") else false
+    $VBoxContainer/HBoxContainer3/SpringBrakeActive.enabled = true if state.get("spring_brake/active") else false
+    $VBoxContainer/HBoxContainer3/SpringBrakeEnabled.enabled = true if state.get("spring_brake/shut_off") else false
 
     LeftDoorsOpenLight.color_active = Color.ORANGE if state.get("doors_left_operating") else Color.LIME_GREEN
     LeftDoorsOpenLight.enabled = state.get("doors_left_open") or state.get("doors_left_operating")

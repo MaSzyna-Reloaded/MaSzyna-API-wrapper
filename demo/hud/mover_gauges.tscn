@@ -36,10 +36,18 @@ layout_mode = 2
 start_angle = 140.0
 label = "Brake Pipe Pressure"
 
+[node name="SpringBrakePressure" parent="." instance=ExtResource("1_irtlh")]
+layout_mode = 2
+start_angle = 120.0
+label = "Spring Brake Cyl. Pressure"
+
 [node name="Speed" parent="." instance=ExtResource("1_irtlh")]
 layout_mode = 2
 start_angle = 120.0
 label = "Speed"
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="."]
+layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="."]
 custom_minimum_size = Vector2(300, 0)
@@ -85,3 +93,16 @@ unique_name_in_owner = true
 layout_mode = 2
 color_active = Color(0, 0.679688, 0.090271, 1)
 label = "Right Doors Open"
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="SpringBrakeEnabled" parent="VBoxContainer/HBoxContainer3" instance=ExtResource("2_rwq8g")]
+layout_mode = 2
+color_active = Color(0, 0.679688, 0.090271, 1)
+label = "Spring brake enabled"
+
+[node name="SpringBrakeActive" parent="VBoxContainer/HBoxContainer3" instance=ExtResource("2_rwq8g")]
+layout_mode = 2
+color_active = Color(0, 0.679688, 0.090271, 1)
+label = "Spring brake active"

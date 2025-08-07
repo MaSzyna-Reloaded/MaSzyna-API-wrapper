@@ -1,4 +1,5 @@
 #include "brakes/TrainBrake.hpp"
+#include "brakes/TrainSpringBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
@@ -38,6 +39,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);
+        GDREGISTER_CLASS(TrainSpringBrake);
         GDREGISTER_CLASS(TrainDoors);
         GDREGISTER_ABSTRACT_CLASS(TrainEngine);
         GDREGISTER_CLASS(TrainDieselEngine);

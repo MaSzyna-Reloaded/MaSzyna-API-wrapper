@@ -185,4 +185,6 @@ source/generator/engine = 0
 
 [node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]
 
+[node name="TrainLoad" type="TrainLoad" parent="."]
+
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

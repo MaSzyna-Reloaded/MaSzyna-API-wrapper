@@ -1,6 +1,7 @@
+#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
-#include "brakes/TrainSpringBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
+#include "brakes/TrainSpringBrake.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
 #include "core/TrainController.hpp"
@@ -13,16 +14,17 @@
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
 #include "lighting/TrainLighting.hpp"
+#include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
-#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
+#include "resources/load/LoadListItem.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
+#include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
-#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
@@ -55,6 +57,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
         GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(TrainLoad)
+        GDREGISTER_CLASS(LoadListItem)
 
         train_system_singleton = memnew(TrainSystem);
         log_system_singleton = memnew(LogSystem);

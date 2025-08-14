@@ -5,8 +5,8 @@
 	</brief_description>
 	<description>
 		Spring brake is used to secure the vehicle after switching off.
-        There is a spring in the cylinder that, due to the loss of air from the system, tightens so that the brake is still braked
-        The spring brake is loosened by filling the cylinders with air
+		        There is a spring in the cylinder that, due to the loss of air from the system, tightens so that the brake is still braked
+		        The spring brake is loosened by filling the cylinders with air
 	</description>
 	<tutorials>
 	</tutorials>
@@ -15,20 +15,20 @@
 			<return type="void" />
 			<param index="0" name="active" type="bool" />
 			<description>
-                Activates spring brake
+				Activates spring brake
 			</description>
 		</method>
 		<method name="set_spring_brake_enabled">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
-                Enables spring brake to be controlled from specific vehicle/cabin
+				Enables spring brake to be controlled from specific vehicle/cabin
 			</description>
 		</method>
 		<method name="spring_brake_release">
 			<return type="void" />
 			<description>
-                Releases spring brake
+				Releases spring brake
 			</description>
 		</method>
 	</methods>

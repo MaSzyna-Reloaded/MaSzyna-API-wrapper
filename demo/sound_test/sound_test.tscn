@@ -1,24 +1,6 @@
-[gd_scene load_steps=3 format=3 uid="uid://cwp1mmvpvwe8j"]
+[gd_scene load_steps=2 format=3 uid="uid://cwp1mmvpvwe8j"]
 
 [ext_resource type="Script" uid="uid://dyuueod22jh2y" path="res://sound_test/sound_test.gd" id="1_yfcgh"]
-
-[sub_resource type="LayeredSoundResource" id="LayeredSoundResource_yfcgh"]
-starting_sounds = Array[String](["697_sm42-start-v2.ogg", ""])
-ending_sounds = Array[String](["697_sm42-stop.ogg"])
-range = 150.0
-amplitude_factor = 0.8
-amplitude_offset = 1.2
-sound_table = {
-495: &"697_sm42-idle-1.ogg",
-600: &"697_sm42-idle-2.ogg",
-700: &"697_sm42-idle-3.ogg",
-850: &"697_sm42-idle-4.ogg",
-1000: &"697_sm42-idle-5.ogg"
-}
-pitch_table = {
-495: 495
-}
-cross_fade = 90.0
 
 [node name="SoundTest" type="Control"]
 layout_mode = 3
@@ -34,15 +16,14 @@ ticks_on_borders = true
 
 [node name="TrainSound" type="TrainSound" parent="."]
 max_volume_db = -20.0
-engine/sounds = SubResource("LayeredSoundResource_yfcgh")
 
 [node name="Camera3D" type="Camera3D" parent="."]
 current = true
 
-[node name="AudioStreamPlayer3D2" type="AudioStreamPlayer2D" parent="."]
+[node name="AudioStreamPlayer3D2" type="AudioStreamPlayer3D" parent="."]
 volume_db = -80.0
 
-[node name="AudioStreamPlayer3D" type="AudioStreamPlayer2D" parent="."]
+[node name="AudioStreamPlayer3D" type="AudioStreamPlayer3D" parent="."]
 
 [node name="Label" type="Label" parent="."]
 layout_mode = 0

@@ -9,24 +9,6 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(2.67932, 4.72223, 13.9419)
 
-[sub_resource type="LayeredSoundResource" id="LayeredSoundResource_e1eq6"]
-starting_sounds = Array[String](["697_sm42-start-v2.ogg", ""])
-ending_sounds = Array[String](["697_sm42-stop.ogg"])
-range = 150.0
-amplitude_factor = 0.8
-amplitude_offset = 1.2
-sound_table = {
-495: &"697_sm42-idle-1.ogg",
-600: &"697_sm42-idle-2.ogg",
-700: &"697_sm42-idle-3.ogg",
-850: &"697_sm42-idle-4.ogg",
-1000: &"697_sm42-idle-5.ogg"
-}
-pitch_table = {
-495: 495
-}
-cross_fade = 90.0
-
 [node name="SM42-099" type="Node3D"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 script = ExtResource("1_iiqbf")
@@ -219,8 +201,6 @@ volume_db = -20.0
 doppler_tracking = 2
 
 [node name="TrainSound" type="TrainSound" parent="."]
-sound_root_path = "d:/Games/MaSzyna/sounds/"
-engine/sounds = SubResource("LayeredSoundResource_e1eq6")
 
 [node name="HSlider" type="HSlider" parent="."]
 offset_right = 421.0

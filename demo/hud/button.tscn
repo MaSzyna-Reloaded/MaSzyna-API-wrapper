@@ -10,6 +10,5 @@ grow_horizontal = 2
 grow_vertical = 2
 disabled = true
 script = ExtResource("1_e1dhy")
-covnert_argument_to_bool = null
 
 [connection signal="pressed" from="." to="." method="_on_pressed"]

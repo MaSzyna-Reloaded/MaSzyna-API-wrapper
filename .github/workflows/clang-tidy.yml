@@ -1,0 +1,137 @@
+name: clang-tidy
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  clang-tidy:
+    name: Run clang-tidy and upload report
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install LLVM (clang/clang-tidy) with cache
+        uses: KyleMayes/install-llvm-action@v2
+        with:
+          version: "18"
+
+      - name: Generate CMakeLists.txt via helper script
+        run: |
+          # Run from ci/docker so the script writes to ../../CMakeLists.txt (project root)
+          sudo chmod +x ./ci/generate_cmakelists.sh
+          cd ci/
+          ./generate_cmakelists.sh
+
+      - name: Configure CMake and generate compile_commands.json
+        run: |
+          cmake -S . -B build -DCODECHECK_BUILD=ON -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+          python ci/filter-cc.py
+      - name: Run clang-tidy
+        id: run
+        shell: bash
+        run: |
+          set -o pipefail
+          # Collect sources (mirror Makefile exclusions)
+          mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \
+            -not -path "src/maszyna/*" -not -path "src/gen/*" -not -path "godot-cpp")
+
+          echo "Running clang-tidy on ${#FILES[@]} files"
+
+          : > clang-tidy.log
+          : > clang-tidy-errors.log
+
+          # Run clang-tidy for each file, appending to a single log
+          for f in "${FILES[@]}"; do
+            echo "=== ${f} ===" | tee -a clang-tidy.log
+            # Use project-local .clang-tidy implicitly
+            if ! clang-tidy -p build --quiet --fix-notes -header-filter=^src/ "$f" 2>>clang-tidy-errors.log | tee -a clang-tidy.log; then
+              echo "clang-tidy reported non-zero status for $f" >> clang-tidy-errors.log
+            fi
+          done
+
+          # Save a simple status for later steps
+          issues=$(grep -E "^[^=][^=]*:[0-9]+:[0-9]+: (warning|error): .* \[[^]]+\]" clang-tidy.log | grep -v -E "godot[-_]?cpp" | wc -l || true)
+          echo "issues=$issues" >> $GITHUB_OUTPUT
+
+      - name: Build Markdown table report
+        run: |
+          {
+            echo "# Clang-Tidy Report"
+            echo
+            echo "Generated on: $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+            echo
+            echo "Configuration: .clang-tidy"
+            echo
+            echo "Total issues: ${{ steps.run.outputs.issues }}"
+            echo
+            echo "| File | Line | Column | Severity | Check | Message |"
+            echo "|------|------|--------|----------|-------|---------|"
+            # Parse lines like: path:line:col: severity: message [check]
+            # Exclude any header lines (like === file ===)
+            grep -E "^[^=][^=]*:[0-9]+:[0-9]+: (warning|error): .* \[[^]]+\]" clang-tidy.log | \
+              grep -v -E "godot[-_]?cpp" | \
+              awk '
+                function html_escape(s){gsub(/\|/ ,"\\|", s); gsub(/\\\\/ ,"\\\\\\\\", s); return s}
+                {
+                  match($0, /^([^:]+):([0-9]+):([0-9]+): ([a-z]+): (.*) \[([^\]]+)\]$/, m)
+                  if (m[0] != "") {
+                    file=m[1]; line=m[2]; col=m[3]; sev=m[4]; msg=m[5]; chk=m[6]
+                    # Escape vertical bars to keep markdown table intact
+                    gsub(/\|/, "\\|", file)
+                    gsub(/\|/, "\\|", msg)
+                    printf("| %s | %s | %s | %s | %s | %s |\n", file, line, col, sev, chk, msg)
+                  }
+                }
+              '
+            echo
+            echo "\n<details><summary>Raw clang-tidy log</summary>\n\n\n````\n"
+            sed 's/`/\x60/g' clang-tidy.log
+            echo "\n````\n\n</details>"
+          } > clang-tidy-report.md
+
+      - name: Post annotations to GitHub
+        if: always()
+        run: |
+          # Parse clang-tidy log and create GitHub annotations
+          grep -E "^[^=][^=]*:[0-9]+:[0-9]+: (warning|error): .* \[[^]]+\]" clang-tidy.log | \
+          grep -v -E "godot[-_]?cpp" | \
+          awk '
+            function esc(s) {
+              gsub(/%/, "%25", s); gsub(/\r/, "%0D", s); gsub(/\n/, "%0A", s);
+              return s
+            }
+            {
+              match($0, /^([^:]+):([0-9]+):([0-9]+): ([a-z]+): (.*) \[([^\]]+)\]$/, m)
+              if (m[0] != "") {
+                file=m[1]; line=m[2]; col=m[3]; sev=m[4]; msg=m[5]; chk=m[6]
+                level="warning"
+                printf("::%s file=%s,line=%s,col=%s,title=clang-tidy (%s)::%s\n",
+                       level, file, line, col, chk, esc(msg))
+              }
+            }'
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-report
+          path: |
+            clang-tidy.log
+            clang-tidy-errors.log
+            clang-tidy-report.md
+          if-no-files-found: warn
+
+      - name: Fail on issues
+        if: ${{ steps.run.outputs.issues != '0' }}
+        run: |
+          echo "clang-tidy found ${{ steps.run.outputs.issues }} issue(s). See artifact for details." >&2
+          exit 1

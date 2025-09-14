@@ -47,4 +47,4 @@ echo "cmake_minimum_required(VERSION 3.25)
           message(\"\${dirlist} found...\")
           add_library(maszyna SHARED \${SRCES})
           target_link_libraries(maszyna PUBLIC godot-cpp)
-      endif()" > ../../CMakeLists.txt
+      endif()" > ../CMakeLists.txt

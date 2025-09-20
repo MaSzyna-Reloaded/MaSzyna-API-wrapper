@@ -30,8 +30,10 @@ TrainSystem *train_system_singleton = nullptr;
 LogSystem *log_system_singleton = nullptr;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
+    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
+
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-        // GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
+//         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
@@ -64,6 +66,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 }
 
 void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
+    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");;
+
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }

@@ -120,12 +120,12 @@ namespace godot {
             void update_config(const Dictionary &p_config);
             void _process(double delta) override;
             void _notification(int p_what);
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void battery(bool p_enabled);
-            void main_controller_increase(int p_step = 1);
-            void main_controller_decrease(int p_step = 1);
-            void direction_increase();
-            void direction_decrease();
+            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            void battery(bool p_enabled) const;
+            void main_controller_increase(int p_step = 1) const;
+            void main_controller_decrease(int p_step = 1) const;
+            void direction_increase() const;
+            void direction_decrease() const;
             void radio(bool p_enabled);
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);

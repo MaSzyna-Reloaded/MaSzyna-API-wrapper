@@ -15,16 +15,14 @@ func _update_render_settings():
     world3d.environment.ssil_enabled = UserSettings.get_setting("render", "ssil_enabled", true)
     world3d.environment.ssr_enabled = UserSettings.get_setting("render", "ssr_enabled", true)
     viewport.anisotropic_filtering_level = UserSettings.get_setting("render", "anisotropic_filtering_level", 2)
+    viewport.screen_space_aa = UserSettings.get_setting("render", "screen_space_aa", Viewport.SCREEN_SPACE_AA_FXAA)
     viewport.msaa_3d = UserSettings.get_setting("render", "msaa_3d", 2)
+    viewport.fsr_sharpness = UserSettings.get_setting("render", "fsr_sharpness", 0.2)
+    world3d.environment.glow_enabled = true
     DisplayServer.window_set_vsync_mode(
         DisplayServer.VSYNC_ENABLED
         if UserSettings.get_setting("window", "vsync_enabled", true)
         else DisplayServer.VSYNC_DISABLED
-    )
-    viewport.screen_space_aa = (
-        viewport.SCREEN_SPACE_AA_FXAA
-        if UserSettings.get_setting("render", "fxaa_enabled", true)
-        else viewport.SCREEN_SPACE_AA_DISABLED
     )
 
 func _ready():

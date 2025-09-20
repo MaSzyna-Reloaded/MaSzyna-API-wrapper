@@ -49,7 +49,7 @@ namespace godot {
         return subbuf.get_string_from_utf8();
     }
 
-    bool MaszynaParser::eof_reached() {
+    bool MaszynaParser::eof_reached() const {
         return cursor >= length;
     }
 
@@ -124,8 +124,8 @@ namespace godot {
 
             if (!token.is_empty()) {
                 Array keys = parameters.keys();
-                for (int i = 0; i < keys.size(); ++i) {
-                    String param = keys[i];
+                for (const auto & key : keys) {
+                    String param = key;
                     String value = parameters[param];
                     token = token.replace("(" + param + ")", value);
                 }

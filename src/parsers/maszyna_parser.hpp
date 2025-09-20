@@ -6,6 +6,7 @@
 #include <godot_cpp/variant/packed_byte_array.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/vector3.hpp>
+#include <vector>
 
 namespace godot {
     class MaszynaParser : public Object {
@@ -28,7 +29,7 @@ namespace godot {
             // void _create_instance(const PackedByteArray &buffer);
             int get8();
             String get_line();
-            bool eof_reached();
+            bool eof_reached() const;
             void register_handler(const String &token, const Callable &callback);
             bool as_bool(const String &token);
             Vector3 as_vector3(const Array &tokens);

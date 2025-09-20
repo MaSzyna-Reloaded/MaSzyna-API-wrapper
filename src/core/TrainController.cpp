@@ -345,29 +345,29 @@ namespace godot {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }
 
-    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) {
+    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) const {
         TrainSystem::get_instance()->send_command(train_id, String(command), p1, p2);
     }
 
-    void TrainController::battery(const bool p_enabled) {
+    void TrainController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
     }
 
-    void TrainController::main_controller_increase(const int p_step) {
+    void TrainController::main_controller_increase(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
-    void TrainController::main_controller_decrease(const int p_step) {
+    void TrainController::main_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
-    void TrainController::direction_increase() {
+    void TrainController::direction_increase() const {
         mover->DirectionForward();
     }
 
-    void TrainController::direction_decrease() {
+    void TrainController::direction_decrease() const {
         mover->DirectionBackward();
     }
 

@@ -1,3 +1,4 @@
+#include "../core/utils.hpp"
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -10,19 +11,19 @@ namespace godot {
         BIND_PROPERTY(Variant::FLOAT, "max_brake_force", "brake_force/max", &TrainBrake::set_max_brake_force, &TrainBrake::get_max_brake_force, "max_brake_force");
         BIND_PROPERTY(Variant::INT, "est_valve_size", "est_valve/size", &TrainBrake::set_valve_size, &TrainBrake::get_valve_size, "valve_size");
         BIND_PROPERTY(Variant::FLOAT, "traction_brake_force", "brake_force/traction", &TrainBrake::set_traction_brake_force, &TrainBrake::get_traction_brake_force, "traction_brake_force");
-        BIND_PROPERTY(Variant::FLOAT, "max_cylinder_pressure", "max_cylinder_pressure", &TrainBrake::set_max_cyl_pressure, &TrainBrake::get_max_cyl_pressure, "max_cylinder_pressure");
+        BIND_PROPERTY(Variant::FLOAT, "max_cylinder_pressure", "max_cylinder_pressure", &TrainBrake::set_max_cylinder_pressure, &TrainBrake::get_max_cylinder_pressure, "max_cylinder_pressure");
         BIND_PROPERTY(Variant::FLOAT, "max_aux_pressure", "max_aux_pressure", &TrainBrake::set_max_aux_pressure, &TrainBrake::get_max_aux_pressure, "max_aux_pressure");
         BIND_PROPERTY(Variant::FLOAT, "max_tare_pressure", "max_tare_pressure", &TrainBrake::set_max_tare_pressure, &TrainBrake::get_max_tare_pressure, "max_tare_pressure");
         BIND_PROPERTY(Variant::FLOAT, "max_medium_pressure", "max_medium_pressure", &TrainBrake::set_max_medium_pressure, &TrainBrake::get_max_medium_pressure, "max_medium_pressure");
         BIND_PROPERTY(Variant::FLOAT, "max_antislip_pressure", "max_antislip_pressure", &TrainBrake::set_max_antislip_pressure, &TrainBrake::get_max_antislip_pressure, "max_antislip_pressure");
-        BIND_PROPERTY(Variant::INT, "cylinder_count", "cylinder/count", &TrainBrake::set_cyl_count, &TrainBrake::get_cyl_count, "cylinder_count");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_radius", "cylinder/radius", &TrainBrake::set_cyl_radius, &TrainBrake::get_cyl_radius, "cylinder_radius");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_distance", "cylinder/distance", &TrainBrake::set_cyl_distance, &TrainBrake::get_cyl_distance, "cylinder_distance");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_spring_force", "cylinder/spring_force", &TrainBrake::set_cyl_spring_force, &TrainBrake::get_cyl_spring_force, "cylinder_spring_force");
+        BIND_PROPERTY(Variant::INT, "cylinder_count", "cylinder/count", &TrainBrake::set_cylinder_count, &TrainBrake::get_cylinder_count, "cylinder_count");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_radius", "cylinder/radius", &TrainBrake::set_cylinder_radius, &TrainBrake::get_cylinder_radius, "cylinder_radius");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_distance", "cylinder/distance", &TrainBrake::set_cylinder_distance, &TrainBrake::get_cylinder_distance, "cylinder_distance");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_spring_force", "cylinder/spring_force", &TrainBrake::set_cylinder_spring_force, &TrainBrake::get_cylinder_spring_force, "cylinder_spring_force");
         BIND_PROPERTY(Variant::FLOAT, "piston_stroke_adjuster_resistance", "piston_stroke/adjuster_resistance", &TrainBrake::set_piston_stroke_adjuster_resistance, &TrainBrake::get_piston_stroke_adjuster_resistance, "");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio", "cylinder/gear_ratio", &TrainBrake::set_cyl_gear_ratio, &TrainBrake::get_cyl_gear_ratio, "cylinder_gear_ratio");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_low", "cylinder/gear_ratio_low", &TrainBrake::set_cyl_gear_ratio_low, &TrainBrake::get_cyl_gear_ratio_low, "cylinder_gear_ratio_low");
-        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_high", "cylinder/gear_ratio_high", &TrainBrake::set_cyl_gear_ratio_high, &TrainBrake::get_cyl_gear_ratio_high, "cylinder_gear_ratio_high");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio", "cylinder/gear_ratio", &TrainBrake::set_cylinder_gear_ratio, &TrainBrake::get_cylinder_gear_ratio, "cylinder_gear_ratio");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_low", "cylinder/gear_ratio_low", &TrainBrake::set_cylinder_gear_ratio_low, &TrainBrake::get_cylinder_gear_ratio_low, "cylinder_gear_ratio_low");
+        BIND_PROPERTY(Variant::FLOAT, "cylinder_gear_ratio_high", "cylinder/gear_ratio_high", &TrainBrake::set_cylinder_gear_ratio_high, &TrainBrake::get_cylinder_gear_ratio_high, "cylinder_gear_ratio_high");
         BIND_PROPERTY(Variant::FLOAT, "pipe_pressure_min", "pipe/pressure_min", &TrainBrake::set_pipe_pressure_min, &TrainBrake::get_pipe_pressure_min, "pipe_pressure_min");
         BIND_PROPERTY(Variant::FLOAT, "pipe_pressure_max", "pipe/pressure_max", &TrainBrake::set_pipe_pressure_max, &TrainBrake::get_pipe_pressure_max, "pipe_pressure_max");
         BIND_PROPERTY(Variant::FLOAT, "main_tank_volume", "tank/volume_main", &TrainBrake::set_main_tank_volume, &TrainBrake::get_main_tank_volume, "main_tank_volume");
@@ -34,6 +35,16 @@ namespace godot {
         BIND_PROPERTY(Variant::FLOAT, "compressor_speed", "compressor/speed", &TrainBrake::set_compressor_speed, &TrainBrake::get_compressor_speed, "compressor_speed");
         BIND_PROPERTY_W_HINT(Variant::INT, "compressor_power", "compressor/power", &TrainBrake::set_compressor_power, &TrainBrake::get_compressor_power, "compressor_power", PROPERTY_HINT_ENUM, "Main,Unused,Converter,Engine,Coupler1,Coupler2");
         BIND_PROPERTY(Variant::FLOAT, "rig_effectiveness", "rig_effectiveness", &TrainBrake::set_rig_effectiveness, &TrainBrake::get_rig_effectiveness, "rig_effectiveness");
+        BIND_PROPERTY_W_HINT(Variant::INT, "brake_method", "brake/method", &TrainBrake::set_brake_method, &TrainBrake::get_brake_method, "brake_method", PROPERTY_HINT_ENUM, "P10-Bg,P10-Bgu,FR513,FR510,Cosid,P10yBg,P10yBgu,Disk1,Disk1+Mg,Disk2");
+        BIND_PROPERTY(Variant::FLOAT, "rapid_transfer", "rapid/transfer", &TrainBrake::set_rapid_transfer, &TrainBrake::get_rapid_transfer, "rapid_transfer");
+        BIND_PROPERTY(Variant::FLOAT, "rapid_switching_speed", "rapid/switching_speed", &TrainBrake::set_rapid_switching_speed, &TrainBrake::get_rapid_switching_speed, "rapid_switching_speed");
+        BIND_PROPERTY(Variant::FLOAT, "air_leak_multiplier", "air_leak_multiplier", &TrainBrake::set_air_leak_multiplier, &TrainBrake::get_air_leak_multiplier, "air_leak_multiplier")
+        BIND_PROPERTY(Variant::BOOL, "compressor_tank_valve_active", "compressor/tank_valve_active", &TrainBrake::set_compressor_tank_valve_active, &TrainBrake::get_compressor_tank_valve_active, "compressor_tank_valve_active")
+        BIND_PROPERTY(Variant::FLOAT, "lower_emergency_closing_pressure", "compressor/lower_emergency_closing_pressure", &TrainBrake::set_lower_emergency_closing_pressure, &TrainBrake::get_lower_emergency_closing_pressure, "lower_emergency_closing_pressure")
+        BIND_PROPERTY(Variant::FLOAT, "higher_emergency_closing_pressure", "compressor/higher_emergency_closing_pressure", &TrainBrake::set_higher_emergency_closing_pressure, &TrainBrake::get_higher_emergency_closing_pressure, "higher_emergency_closing_pressure")
+        BIND_PROPERTY(Variant::FLOAT, "main_pipe_blocking_pressure", "main_pipe/blocking_pressure", &TrainBrake::set_main_pipe_blocking_pressure, &TrainBrake::get_main_pipe_blocking_pressure, "main_pipe_blocking_pressure")
+        BIND_PROPERTY(Variant::FLOAT, "main_pipe_unblocking_pressure", "main_pipe/unblocking_pressure", &TrainBrake::set_main_pipe_unblocking_pressure, &TrainBrake::get_main_pipe_unblocking_pressure, "main_pipe_unblocking_pressure")
+        BIND_PROPERTY(Variant::FLOAT, "main_pipe_minimum_unblocking_handle_position", "main_pipe/minimum_unblocking_handle_position", &TrainBrake::set_main_pipe_minimum_unblocking_handle_position, &TrainBrake::get_main_pipe_minimum_unblocking_handle_position, "main_pipe_minimum_unblocking_handle_position")
 
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
@@ -79,6 +90,16 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1_R);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_OTHER);
 
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Bgu);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Bg);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_D1);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_D2);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_FR513);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_Cosid);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10yBg);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10yBgu);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
+
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &TrainBrake::brake_releaser);
         ClassDB::bind_method(D_METHOD("brake_level_set", "level"), &TrainBrake::brake_level_set);
         ClassDB::bind_method(D_METHOD("brake_level_set_position", "position"), &TrainBrake::brake_level_set_position);
@@ -123,8 +144,8 @@ namespace godot {
     void TrainBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        const auto it = BrakeHandlePositionMap.find(p_position);
-        if (it != BrakeHandlePositionMap.end()) {
+        if (const std::unordered_map<BrakeHandlePosition, int>::const_iterator it = BrakeHandlePositionMap.find(
+                p_position); it != BrakeHandlePositionMap.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
             log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
@@ -183,8 +204,6 @@ namespace godot {
 
     void TrainBrake::_do_update_internal_mover(TMoverParameters *mover) {
         /* logika z Mover::LoadFiz_Brake */
-        // FIXME: logika nie jest jeszcze w pelni przeniesiona z LoadFIZ_Brake
-
         mover->BrakeSystem = TBrakeSystem::Pneumatic;    // BrakeSystem
         mover->BrakeCtrlPosNo = 6;                       // BCPN
         mover->BrakeDelay[0] = 15;                       // BDelay1
@@ -198,9 +217,10 @@ namespace godot {
         mover->LocalBrake = TLocalBrake::PneumaticBrake; // LocalBrake
         mover->MBrake = true;                            // ManualBrake
 
-        /* FIXME:: BrakeValve nie jest tylko enumem
-         * jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE ustawi BrakeValve=ESt3
-         * byc moze to powinien ogarnąć importer FIZ
+        /* FIXME: BrakeValve nie jest tylko enumem, jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE ustawi BrakeValve=ESt3. Powinien to ogarnąć importer FIZ
+         *
+         * Whoever thought making BrakeValve half-enum, half-parser-voodoo was a good idea
+         * condemned everyone else to cargo-cult their bugs. Thanks a lot, dear original MaSzyna code authors.
          */
 
         // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
@@ -210,46 +230,48 @@ namespace godot {
                 BrakeValveToSubsystemMap.find(mover->BrakeValve);
         mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
 
-        mover->NBpA = friction_elements_per_axle;
+        mover->NBpA = CLAMP<int, int, int>(friction_elements_per_axle, 0, 4);
         mover->MaxBrakeForce = max_brake_force;
         mover->BrakeValveSize = valve_size;
         mover->TrackBrakeForce = traction_brake_force * 1000.0;
-        mover->MaxBrakePress[3] = max_cyl_pressure;
-        if (max_cyl_pressure > 0.0) {
-            mover->BrakeCylNo = cyl_count;
+        mover->MaxBrakePress[3] = max_cylinder_pressure;
+        if (max_cylinder_pressure > 0.0) {
+            mover->BrakeCylNo = cylinder_count;
 
-            if (cyl_count > 0) {
-                mover->MaxBrakePress[0] = max_aux_pressure < 0.01 ? max_cyl_pressure : max_aux_pressure;
+            if (cylinder_count > 0) {
+                mover->MaxBrakePress[0] = max_aux_pressure < 0.01 ? max_cylinder_pressure : max_aux_pressure;
                 mover->MaxBrakePress[1] = max_tare_pressure;
                 mover->MaxBrakePress[2] = max_medium_pressure;
                 mover->MaxBrakePress[4] = max_antislip_pressure < 0.01 ? 0.0 : max_antislip_pressure;
 
-                mover->BrakeCylRadius = cyl_radius;
-                mover->BrakeCylDist = cyl_distance;
-                mover->BrakeCylSpring = cyl_spring_force;
+                mover->BrakeCylRadius = cylinder_radius;
+                mover->BrakeCylDist = cylinder_distance;
+                mover->BrakeCylSpring = cylinder_spring_force;
                 mover->BrakeSlckAdj = piston_stroke_adjuster_resistance;
                 mover->BrakeRigEff = rig_effectiveness;
 
-                mover->BrakeCylMult[0] = cyl_gear_ratio;
-                mover->BrakeCylMult[1] = cyl_gear_ratio_low;
-                mover->BrakeCylMult[2] = cyl_gear_ratio_high;
+                mover->BrakeCylMult[0] = cylinder_gear_ratio;
+                mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
+                mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
 
-                mover->P2FTrans = 100 * M_PI * std::pow(cyl_radius, 2);
+                mover->P2FTrans = 100 * M_PI * std::pow(cylinder_radius, 2);
 
-                mover->LoadFlag = (cyl_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
+                mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
 
-                mover->BrakeVolume = M_PI * std::pow(cyl_radius, 2) * cyl_distance * cyl_count;
+                mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinder_count;
                 mover->BrakeVVolume = aux_tank_volume;
 
-                // TODO: mover->BrakeMethod
-                mover->BrakeMethod = 0;
-
-                // TODO: RM -> mover->RapidMult
-                // TODO: RV -> mover->RapidVel
-                mover->RapidMult = 1;
-                mover->RapidVel = 55;
+                const std::unordered_map<BrakeMethod, int>::const_iterator lookup;
+                mover->BrakeMethod = lookup != BrakeMethodMap.find(brake_method) ? brake_method : 0;
+                mover->BrakeMethod = brake_method;
+                mover->RapidMult = rapid_transfer;
+                mover->RapidVel = rapid_switching_speed;
             }
+        } else {
+            mover->P2FTrans = 0;
         }
+
+        mover->CntrlPipePress = 5 + 0.001 * (libmaszyna::utils::random(0, 10) - libmaszyna::utils::random(0, 10));
         /* PipePress i HighPipePress musza byc skopiowane */
         mover->HighPipePress = pipe_pressure_max;
         mover->LowPipePress = pipe_pressure_min;
@@ -258,7 +280,41 @@ namespace godot {
         mover->MaxCompressor = compressor_pressure_cab_a_max;
         mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
         mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
+
+        mover->CompressorTankValve = compressor_tank_valve_active;
+        mover->EmergencyValveOff = lower_emergency_closing_pressure;
+        mover->EmergencyValveOn = higher_emergency_closing_pressure;
+
+        //@TODO: Figure out and implement equivalents for UniversalBrakeButtonFlag
+
+        mover->LockPipeOn = main_pipe_blocking_pressure;
+        mover->LockPipeOff = main_pipe_unblocking_pressure;
+        mover->HandleUnlock = main_pipe_minimum_unblocking_handle_position;
+        mover->EmergencyCutsOffHandle = false; //@TODO: Figure out wtf is this
+
         mover->CompressorSpeed = compressor_speed;
         mover->CompressorPower = compressor_power;
+
+        //According to the original code - the parameter is provided in the form of a multiplier, where 1.0 means the default rate of 0.01
+        mover->AirLeakRate = air_leak_multiplier*0.01;
+
+        //By default, this should be set to true if an engine type is diesel or diesel-electric and false, otherwise
+        // this action should be performed by FIZ parser
+        mover->ReleaserEnabledOnlyAtNoPowerPos = releaser_enabled_only_at_no_power_pos;
+        if (mover->MinCompressor_cabB > 0.0) {
+            mover->MinCompressor_cabA = mover->MinCompressor;
+            mover->CabDependentCompressor = true;
+        }
+        else {
+            mover->MinCompressor_cabB = mover->MinCompressor;
+        }
+        if (mover->MaxCompressor_cabB > 0.0)
+        {
+            mover->MaxCompressor_cabA = mover->MaxCompressor;
+            mover->CabDependentCompressor = true;
+        }
+        else {
+            mover->MaxCompressor_cabB = mover->MaxCompressor;
+        }
     }
 } // namespace godot

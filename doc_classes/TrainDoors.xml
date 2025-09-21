@@ -165,7 +165,7 @@
 			[code]Doors:DoorsPermitLightBlinking[/code]
 			Configuration of the permission light on the door
 		</member>
-		<member name="permit/list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[&quot;0&quot;, &quot;0&quot;, &quot;0&quot;]">
+		<member name="permit/list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[0, 0, 0]">
 			[code]Doors:DoorPermitList[/code]
 			Door programmer configuration
 			[codeblocks]

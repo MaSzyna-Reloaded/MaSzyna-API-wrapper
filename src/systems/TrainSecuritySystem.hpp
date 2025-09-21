@@ -18,10 +18,10 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
-            enum EmergencyBrakeWarningSignal {
-                BRAKE_WARNINGSIGNAL_SIREN_LOWTONE,
-                BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE,
-                BRAKE_WARNINGSIGNAL_WHISTLE
+            enum EmergencySignal {
+                EMERGENCY_SIGNAL_SIREN_LOW_TONE,
+                EMERGENCY_SIGNAL_SIREN_HIGH_TONE,
+                EMERGENCY_SIGNAL_WHISTLE
             };
 
             void security_acknowledge(bool p_enabled);
@@ -36,7 +36,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, sound_signal_delay, 0.0);
             MAKE_MEMBER_GS(double, shp_magnet_distance, 0.0);
             MAKE_MEMBER_GS(double, ca_max_hold_time, 0.0);
-            MAKE_MEMBER_GS_NR(EmergencyBrakeWarningSignal, brake_warning_signal, EmergencyBrakeWarningSignal::BRAKE_WARNINGSIGNAL_SIREN_HIGHTONE);
+            MAKE_MEMBER_GS_NR(EmergencySignal, emergency_signal, EmergencySignal::EMERGENCY_SIGNAL_SIREN_HIGH_TONE);
     };
 } // namespace godot
-VARIANT_ENUM_CAST(TrainSecuritySystem::EmergencyBrakeWarningSignal)
+VARIANT_ENUM_CAST(TrainSecuritySystem::EmergencySignal)

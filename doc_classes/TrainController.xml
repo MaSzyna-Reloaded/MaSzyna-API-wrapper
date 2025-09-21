@@ -12,7 +12,7 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="battery">
+		<method name="battery" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
@@ -28,26 +28,26 @@
 				Broadcasts command to all trains (including self)
 			</description>
 		</method>
-		<method name="direction_decrease">
+		<method name="direction_decrease" qualifiers="const">
 			<return type="void" />
 			<description>
 				Increase direction by one step
 			</description>
 		</method>
-		<method name="direction_increase">
+		<method name="direction_increase" qualifiers="const">
 			<return type="void" />
 			<description>
 				Decrease direction by one step
 			</description>
 		</method>
-		<method name="main_controller_decrease">
+		<method name="main_controller_decrease" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="step" type="int" default="1" />
 			<description>
 				Decrease main controller position
 			</description>
 		</method>
-		<method name="main_controller_increase">
+		<method name="main_controller_increase" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="step" type="int" default="1" />
 			<description>
@@ -84,7 +84,7 @@
 				This is a shortcut for [method TrainSystem.register_command].
 			</description>
 		</method>
-		<method name="send_command">
+		<method name="send_command" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="command" type="StringName" />
 			<param index="1" name="p1" type="Variant" default="null" />

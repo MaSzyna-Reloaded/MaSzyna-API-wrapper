@@ -14,6 +14,36 @@ namespace godot {
     class TrainBrake: public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
         public:
+            /**
+             * @enum BrakeMethod
+             * Enumeration representing various brake methods used in train systems.
+             */
+            enum BrakeMethod {
+                BRAKE_METHOD_P10Bgu,
+                BRAKE_METHOD_P10Bg,
+                BRAKE_METHOD_D1,
+                BRAKE_METHOD_D2,
+                BRAKE_METHOD_FR513,
+                BRAKE_METHOD_Cosid,
+                BRAKE_METHOD_P10yBg,
+                BRAKE_METHOD_P10yBgu,
+                BRAKE_METHOD_FR510,
+                BRAKE_METHOD_D1MG,
+            };
+
+            const std::unordered_map<BrakeMethod, int> BrakeMethodMap = {
+                {BrakeMethod::BRAKE_METHOD_P10Bgu, 1},
+                {BrakeMethod::BRAKE_METHOD_P10Bg, 2},
+                {BrakeMethod::BRAKE_METHOD_D1, 9},
+                {BrakeMethod::BRAKE_METHOD_D2, 10},
+                {BrakeMethod::BRAKE_METHOD_FR513, 11},
+                {BrakeMethod::BRAKE_METHOD_Cosid, 12},
+                {BrakeMethod::BRAKE_METHOD_P10yBg, 14},
+                {BrakeMethod::BRAKE_METHOD_P10yBgu, 16},
+                {BrakeMethod::BRAKE_METHOD_FR510, 17},
+                {BrakeMethod::BRAKE_METHOD_D1MG, 137},
+            };
+
             enum BrakeHandlePosition {
                 BRAKE_HANDLE_POSITION_MIN = 0,
                 BRAKE_HANDLE_POSITION_MAX = 1,
@@ -90,19 +120,19 @@ namespace godot {
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
             MAKE_MEMBER_GS(double, max_brake_force, 1.0);
             MAKE_MEMBER_GS(double, traction_brake_force, 0.0);
-            MAKE_MEMBER_GS(double, max_cyl_pressure, 0.0);
+            MAKE_MEMBER_GS(double, max_cylinder_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_aux_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_antislip_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_tare_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_medium_pressure, 0.0);
-            MAKE_MEMBER_GS(int, cyl_count, 0);
-            MAKE_MEMBER_GS(double, cyl_radius, 0.0);
-            MAKE_MEMBER_GS(double, cyl_distance, 0.0);
-            MAKE_MEMBER_GS(double, cyl_spring_force, 0.0);
+            MAKE_MEMBER_GS(int, cylinder_count, 0);
+            MAKE_MEMBER_GS(double, cylinder_radius, 0.0);
+            MAKE_MEMBER_GS(double, cylinder_distance, 0.0);
+            MAKE_MEMBER_GS(double, cylinder_spring_force, 0.0);
             MAKE_MEMBER_GS(double, piston_stroke_adjuster_resistance, 0.0);
-            MAKE_MEMBER_GS(double, cyl_gear_ratio, 0.0);
-            MAKE_MEMBER_GS(double, cyl_gear_ratio_low, 0.0);
-            MAKE_MEMBER_GS(double, cyl_gear_ratio_high, 0.0);
+            MAKE_MEMBER_GS(double, cylinder_gear_ratio, 0.0);
+            MAKE_MEMBER_GS(double, cylinder_gear_ratio_low, 0.0);
+            MAKE_MEMBER_GS(double, cylinder_gear_ratio_high, 0.0);
             MAKE_MEMBER_GS(double, pipe_pressure_max, 5.0);
             MAKE_MEMBER_GS(double, pipe_pressure_min, 3.5);
             MAKE_MEMBER_GS(double, main_tank_volume, 0.0);
@@ -112,8 +142,20 @@ namespace godot {
             MAKE_MEMBER_GS(double, compressor_pressure_cab_b_min, 0.0);
             MAKE_MEMBER_GS(double, compressor_pressure_cab_b_max, 0.0);
             MAKE_MEMBER_GS(double, compressor_speed, 0.0);
+            MAKE_MEMBER_GS(double, rapid_transfer, 1.0);
+            MAKE_MEMBER_GS(double, rapid_switching_speed, 55.0);
             MAKE_MEMBER_GS_NR(CompressorPower, compressor_power, COMPRESSOR_POWER_MAIN);
+            MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_P10Bgu);
             MAKE_MEMBER_GS(double, rig_effectiveness, 0.0);
+            MAKE_MEMBER_GS(double, air_leak_multiplier, 1.0);
+
+            MAKE_MEMBER_GS(bool, compressor_tank_valve_active, false);
+            MAKE_MEMBER_GS(double, lower_emergency_closing_pressure, -1.0);
+            MAKE_MEMBER_GS(double, higher_emergency_closing_pressure, -1.0);
+            MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, 0.0);
+            MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
+            MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);
+            MAKE_MEMBER_GS(bool, releaser_enabled_only_at_no_power_pos, false)
 
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
@@ -135,3 +177,4 @@ namespace godot {
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)
 VARIANT_ENUM_CAST(TrainBrake::TrainBrakeValve)
 VARIANT_ENUM_CAST(TrainBrake::BrakeHandlePosition)
+VARIANT_ENUM_CAST(TrainBrake::BrakeMethod)

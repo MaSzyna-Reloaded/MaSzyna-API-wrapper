@@ -26,7 +26,6 @@ CMakeLists.txt
 /demo/.godot/
 /demo/addons/gut
 /demo/addons/libmaszyna
-/demo/addons/godot-steam-audio
 /demo/bin
 /src/gen/
 /doc

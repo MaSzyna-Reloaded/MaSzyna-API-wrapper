@@ -1,7 +1,5 @@
  #!/usr/bin/env python
 import os
-import urllib.request
-import zipfile
 
 from SCons.Script import (  # pylint: disable=no-name-in-module
     Variables,
@@ -17,17 +15,6 @@ from SCons.Script import (  # pylint: disable=no-name-in-module
 )
 
 from SCons.Errors import UserError
-
-extract_dir = "vendor/godot-steam-audio"
-if not os.path.exists(extract_dir):
-    print(f"Downloading godot-steam-audio binaries...")
-    url = "https://github.com/stechyo/godot-steam-audio/releases/download/0.3.0/godot-steam-audio-v0.3.0.zip"
-
-    zip_path, _ = urllib.request.urlretrieve(url)
-    with zipfile.ZipFile(zip_path, "r") as f:
-        f.extractall(extract_dir)
-else:
-    print(f"godot-steam-audio binaries detected, skipping install...")
 
 
 def normalize_path(val, _env):
@@ -168,16 +155,10 @@ if os.path.exists("src") and sources:
         Copy("$TARGET", "$SOURCE"),
     )
 
-    copy_godot_steam_audio_to_project = env.Command(
-        os.path.join(projectdir, "addons", "godot-steam-audio"),
-        os.path.join("vendor", "godot-steam-audio", "addons", "godot-steam-audio"),
-        Copy("$TARGET", "$SOURCE"),    )
-
     commands += [
         library,
         copy_bin_to_project,
         copy_gut_framework_to_project,
-        copy_godot_steam_audio_to_project
     ]
 
     if not os.path.exists(addons_dst_path):

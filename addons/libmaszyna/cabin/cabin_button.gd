@@ -59,16 +59,10 @@ var _t:float = 0.0
 
 var _enabled:bool = true
 var _setup_phase:bool = true
-var _sound:SteamAudioPlayer = SteamAudioPlayer.new()
+var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 func _ready():
     add_child(_sound)
-    _sound.distance_attenuation = true
-    _sound.air_absorption = true
-    _sound.occlusion = true
-    _sound.reflection = true
-    _sound.emission_angle_enabled = true
-    _sound.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
     _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
     controller_changed.connect(_update_state)

@@ -52,7 +52,7 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 
-var _sound:SteamAudioPlayer = SteamAudioPlayer.new()
+var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 var _t = 0.0
 var _value_normalized = 0.0
@@ -75,12 +75,6 @@ func _update_state():
         _target_mesh_rotation = mesh_rotation * _value_normalized
 
 func _ready():
-    _sound.distance_attenuation = true
-    _sound.air_absorption = true
-    _sound.occlusion = true
-    _sound.reflection = true
-    _sound.emission_angle_enabled = true
-    _sound.doppler_tracking = AudioStreamPlayer3D.DOPPLER_TRACKING_PHYSICS_STEP
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
     controller_changed.connect(_update_state)

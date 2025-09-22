@@ -1,9 +1,0 @@
-[gd_resource type="AudioBusLayout" format=3 uid="uid://bq07s7heaqfrr"]
-
-[resource]
-bus/1/name = &"old_cabin_switches"
-bus/1/solo = false
-bus/1/mute = false
-bus/1/bypass_fx = false
-bus/1/volume_db = -0.301591
-bus/1/send = &"Master"

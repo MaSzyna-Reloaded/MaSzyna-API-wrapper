@@ -1,13 +1,12 @@
-[gd_scene load_steps=7 format=3 uid="uid://bcxtf08c2yqx4"]
+[gd_scene load_steps=6 format=3 uid="uid://bcxtf08c2yqx4"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="3_vuhlb"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_c88oy"]
-[ext_resource type="SteamAudioMaterial" uid="uid://cqx8833t2v8mo" path="res://addons/godot-steam-audio/materials/metal_material.tres" id="5_n7ime"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
-size = Vector3(2.67932, 4.72223, 13.9419)
+size = Vector3(4.5332, 4.72223, 17.0549)
 
 [node name="SM42-099" type="Node3D"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -68,12 +67,8 @@ exclude_node_names = ["cien"]
 monitoring = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0164261, 1.97558, 0.172673)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
 shape = SubResource("BoxShape3D_uljbo")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D"]
-material = ExtResource("5_n7ime")
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0164261, -1.97558, -0.172673)
 
 [node name="401W-1" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")

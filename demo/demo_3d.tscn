@@ -349,7 +349,5 @@ script = ExtResource("4_drlsl")
 data_path = "models/kolejowe"
 model_filename = "klamoty_naprawcze"
 
-[node name="SteamAudioConfig" type="SteamAudioConfig" parent="."]
-
 [connection signal="fadein_finished" from="LoadingScreen" to="." method="_on_loading_screen_fadein_finished"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

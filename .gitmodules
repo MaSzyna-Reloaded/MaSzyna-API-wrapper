@@ -5,3 +5,6 @@
 [submodule "vendor/gut"]
 	path = vendor/gut
 	url = https://github.com/bitwes/Gut.git
+[submodule "godot-steam-audio"]
+	path = godot-steam-audio
+	url = https://github.com/stechyo/godot-steam-audio.git

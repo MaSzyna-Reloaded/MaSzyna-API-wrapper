@@ -257,7 +257,7 @@ script = ExtResource("1_6k4j1")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
 
-[node name="Buzzer" type="SteamAudioPlayer" parent="."]
+[node name="Buzzer" type="AudioStreamPlayer3D" parent="."]
 distance_attenuation = true
 air_absorption = true
 reflection = true
@@ -270,7 +270,7 @@ doppler_tracking = 2
 script = ExtResource("15_df5xj")
 state_property = "beeping"
 
-[node name="AlerterLightOn" type="SteamAudioPlayer" parent="."]
+[node name="AlerterLightOn" type="AudioStreamPlayer3D" parent="."]
 distance_attenuation = true
 min_attenuation_distance = 10.0
 air_absorption = true
@@ -283,7 +283,7 @@ panning_strength = 0.0
 emission_angle_enabled = true
 doppler_tracking = 2
 
-[node name="AlerterLightOff" type="SteamAudioPlayer" parent="."]
+[node name="AlerterLightOff" type="AudioStreamPlayer3D" parent="."]
 distance_attenuation = true
 air_absorption = true
 reflection = true

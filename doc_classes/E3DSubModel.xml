@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DSubModel" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<constants>
+		<constant name="GL_POINTS" value="0" enum="SubModelType">
+		</constant>
+		<constant name="GL_LINES" value="1" enum="SubModelType">
+		</constant>
+		<constant name="GL_LINE_STRIP" value="2" enum="SubModelType">
+		</constant>
+		<constant name="GL_LINE_LOOP" value="3" enum="SubModelType">
+		</constant>
+		<constant name="GL_TRIANGLES" value="4" enum="SubModelType">
+		</constant>
+		<constant name="GL_TRIANGLE_STRIP" value="5" enum="SubModelType">
+		</constant>
+		<constant name="GL_TRIANGLE_FAN" value="6" enum="SubModelType">
+		</constant>
+		<constant name="GL_QUADS" value="7" enum="SubModelType">
+		</constant>
+		<constant name="GL_QUAD_STRIP" value="8" enum="SubModelType">
+		</constant>
+		<constant name="GL_POLYGON" value="9" enum="SubModelType">
+		</constant>
+		<constant name="TRANSFORM" value="256" enum="SubModelType">
+		</constant>
+		<constant name="FREE_SPOTLIGHT" value="257" enum="SubModelType">
+		</constant>
+		<constant name="STARS" value="258" enum="SubModelType">
+		</constant>
+		<constant name="NONE" value="0" enum="AnimationType">
+		</constant>
+		<constant name="ROTATE_VEC" value="1" enum="AnimationType">
+		</constant>
+		<constant name="ROTATE_XYZ" value="2" enum="AnimationType">
+		</constant>
+		<constant name="MOVE" value="3" enum="AnimationType">
+		</constant>
+		<constant name="JUMP_SECONDS" value="4" enum="AnimationType">
+		</constant>
+		<constant name="JUMP_MINUTES" value="5" enum="AnimationType">
+		</constant>
+		<constant name="JUMP_HOURS" value="6" enum="AnimationType">
+		</constant>
+		<constant name="JUMP_HOURS24" value="7" enum="AnimationType">
+		</constant>
+		<constant name="SECONDS" value="8" enum="AnimationType">
+		</constant>
+		<constant name="MINUTES" value="9" enum="AnimationType">
+		</constant>
+		<constant name="HOURS" value="10" enum="AnimationType">
+		</constant>
+		<constant name="HOURS24" value="11" enum="AnimationType">
+		</constant>
+		<constant name="BILLBOARD" value="12" enum="AnimationType">
+		</constant>
+		<constant name="WIND" value="13" enum="AnimationType">
+		</constant>
+		<constant name="SKY" value="14" enum="AnimationType">
+		</constant>
+		<constant name="DIGITAL" value="15" enum="AnimationType">
+		</constant>
+		<constant name="DIGICLK" value="16" enum="AnimationType">
+		</constant>
+		<constant name="UNDEFINED" value="17" enum="AnimationType">
+		</constant>
+		<constant name="IK" value="256" enum="AnimationType">
+		</constant>
+		<constant name="IK1" value="257" enum="AnimationType">
+		</constant>
+		<constant name="IK2" value="258" enum="AnimationType">
+		</constant>
+		<constant name="UNKNOWN" value="-1" enum="AnimationType">
+		</constant>
+	</constants>
+</class>

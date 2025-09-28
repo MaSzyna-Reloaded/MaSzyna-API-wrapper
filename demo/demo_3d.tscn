@@ -174,9 +174,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/stacje/"
-model_filename = "dworzec_olkusz"
-skins = ["dworzec_olkusz_lhs"]
 
 [node name="Dworzec Sosnowiec" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -196,9 +193,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/stacje/"
-model_filename = "dworzec_sosnowiec_porabka"
-skins = ["dworzec_sosnowiec_porabka"]
 
 [node name="Nastawnia Sochaczew" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -218,9 +212,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/sochaczew/"
-model_filename = "nastawnia"
-skins = ["dworzec_sosnowiec_porabka"]
 
 [node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -240,9 +231,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/przemysl/kopalnie"
-model_filename = "szyb_kleofas_gigant"
-skins = ["dworzec_sosnowiec_porabka"]
 
 [node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -262,8 +250,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/przemysl/kopalnie/kwk_staszic"
-model_filename = "szyb_ii"
 
 [node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -283,8 +269,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/otoczenie/obiekty_stacyjne"
-model_filename = "terenpkp"
 
 [node name="Parkomat" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -304,8 +288,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/miejskie"
-model_filename = "parkomat_rozi_macius9551"
 
 [node name="Skrzynka" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -325,8 +307,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/miejskie"
-model_filename = "skrzynka_tel_rozi_macius9551"
 
 [node name="Klamoty" type="VisualInstance3D" parent="Dekoracje"]
 _import_path = NodePath("")
@@ -346,10 +326,7 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_drlsl")
-data_path = "models/kolejowe"
-model_filename = "klamoty_naprawcze"
 
 [node name="SteamAudioConfig" type="SteamAudioConfig" parent="."]
 
-[connection signal="fadein_finished" from="LoadingScreen" to="." method="_on_loading_screen_fadein_finished"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

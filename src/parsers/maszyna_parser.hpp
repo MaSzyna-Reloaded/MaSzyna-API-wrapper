@@ -27,7 +27,7 @@ namespace godot {
             MaszynaParser();
             void initialize(const PackedByteArray &buffer);
             // void _create_instance(const PackedByteArray &buffer);
-            int get8();
+            int64_t get8();
             String get_line();
             bool eof_reached() const;
             void register_handler(const String &token, const Callable &callback);

@@ -1,4 +1,4 @@
-class_name MaszynaMaterial
+#class_name MaszynaMaterial
 
 func _parse_texture_path(path:String):
     var _parts = path.split(":")

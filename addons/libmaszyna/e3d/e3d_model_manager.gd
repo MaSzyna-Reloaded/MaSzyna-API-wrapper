@@ -23,7 +23,7 @@ func _set_owner_recursive(node, new_owner):
 
 func load_model(data_path:String, filename: String) -> E3DModel:
     var output:E3DModel
-    var path = UserSettings.get_maszyna_game_dir() + "/" + data_path + "/" + filename + ".e3d"
+    var path = UserSettings.get_maszyna_game_dir() + "" + data_path + "/" + filename + ".e3d"
 
     # check users cache
     var cached_path = E3D_CACHE_PATH+"/"+data_path+"__"+filename+".res"

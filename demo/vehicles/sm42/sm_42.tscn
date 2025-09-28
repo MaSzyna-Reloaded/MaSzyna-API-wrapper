@@ -15,30 +15,14 @@ controller_path = NodePath("SM42v1")
 cabin_scene = ExtResource("2_htu7b")
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
 
-[node name="SM42v1" parent="." instance=ExtResource("3_vuhlb")]
-
-[node name="SM42-099" type="VisualInstance3D" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_c88oy")
+[node name="SM42-099" type="E3DModelInstance" parent="."]
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
+
+[node name="SM42v1" parent="." instance=ExtResource("3_vuhlb")]
 
 [node name="SM42-099-LowPolyCab" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -58,10 +42,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/sm42_v1"
-model_filename = "6da_interior"
-skins = ["6d-907"]
-exclude_node_names = ["cien"]
 
 [node name="Area3D" type="Area3D" parent="."]
 monitoring = false
@@ -88,10 +68,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/401w_v2"
-model_filename = "main/401w"
-skins = ["5217,1", "5217,2"]
-exclude_node_names = ["cien"]
 
 [node name="401W-2" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -111,10 +87,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/401w_v2"
-model_filename = "main/401w"
-skins = ["5217,1", "5217,2"]
-exclude_node_names = ["cien"]
 
 [node name="401W-3" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -134,10 +106,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/401w_v2"
-model_filename = "main/401w"
-skins = ["5217,1", "5217,2"]
-exclude_node_names = ["cien"]
 
 [node name="401W-4" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -157,10 +125,6 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/401w_v2"
-model_filename = "main/401w"
-skins = ["5217,1", "5217,2"]
-exclude_node_names = ["cien"]
 
 [node name="401W-5" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")
@@ -180,7 +144,3 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
-data_path = "/dynamic/pkp/401w_v2"
-model_filename = "main/401w"
-skins = ["5217,1", "5217,2"]
-exclude_node_names = ["cien"]

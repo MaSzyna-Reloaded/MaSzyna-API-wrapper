@@ -25,12 +25,9 @@ run/disable_stderr.release=true
 
 [autoload]
 
-MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 SceneryResourceLoader="*res://addons/libmaszyna/scenery/scenery_resource_loader.gd"
 MaszynaEnvironment="*res://addons/libmaszyna/environment/maszyna_environment.gd"
 Console="*res://addons/libmaszyna/console/console.gd"
-MaterialManager="*res://addons/libmaszyna/materials/material_manager.gd"
-MaterialParser="*res://addons/libmaszyna/materials/material_parser.gd"
 E3DParser="*res://addons/libmaszyna/e3d/e3d_parser.gd"
 E3DModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 E3DNodesInstancer="*res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd"

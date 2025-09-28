@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaszynaMaterial" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="albedo_texture_path" type="String" setter="set_albedo_texture_path" getter="get_albedo_texture_path" default="&quot;&quot;">
+		</member>
+		<member name="autumn_albedo_texture_path" type="String" setter="set_autumn_albedo_texture_path" getter="get_autumn_albedo_texture_path" default="&quot;&quot;">
+		</member>
+		<member name="normal_texture_path" type="String" setter="set_normal_texture_path" getter="get_normal_texture_path" default="&quot;&quot;">
+		</member>
+		<member name="shader" type="String" setter="set_shader" getter="get_shader" default="&quot;&quot;">
+		</member>
+		<member name="shadow_rank" type="int" setter="set_shadow_rank" getter="get_shadow_rank" default="0">
+		</member>
+		<member name="winter_albedo_texture_path" type="String" setter="set_winter_albedo_texture_path" getter="get_winter_albedo_texture_path" default="&quot;&quot;">
+		</member>
+		<member name="winter_normal_texture_path" type="String" setter="set_winter_normal_texture_path" getter="get_winter_normal_texture_path" default="&quot;&quot;">
+		</member>
+	</members>
+</class>

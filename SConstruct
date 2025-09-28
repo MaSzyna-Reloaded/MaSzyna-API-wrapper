@@ -85,6 +85,11 @@ sources = (
     + Glob("src/resources/engines/*.cpp")
     + Glob("src/resources/lighting/*.cpp")
     + Glob("src/resources/load/*.cpp")
+    + Glob("src/resources/material/*.cpp")
+    + Glob("src/models/*.cpp")
+    + Glob("src/settings/*.cpp")
+    + Glob("src/models/e3d/*.cpp")
+    + Glob("src/models/e3d/instance/*.cpp")
 )
 
 if env["target"] in ["editor", "template_debug"]:

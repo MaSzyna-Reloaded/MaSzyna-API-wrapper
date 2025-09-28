@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaterialManager" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_material">
+			<return type="StandardMaterial3D" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_path" type="String" />
+			<param index="2" name="transparent" type="int" enum="MaterialManager.Transparency" default="0" />
+			<param index="3" name="is_sky" type="bool" default="false" />
+			<param index="4" name="diffuse_color" type="Color" default="Color(1, 1, 1, 1)" />
+			<description>
+			</description>
+		</method>
+		<method name="get_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="texture_path" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="load_submodel_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="load_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<param index="2" name="global" type="bool" default="true" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="Disabled" value="0" enum="Transparency">
+		</constant>
+		<constant name="Alpha" value="1" enum="Transparency">
+		</constant>
+		<constant name="AlphaScissor" value="2" enum="Transparency">
+		</constant>
+	</constants>
+</class>

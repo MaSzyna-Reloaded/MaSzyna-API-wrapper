@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ActionQueue" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="add_item">
+			<return type="void" />
+			<param index="0" name="callable" type="Callable" />
+			<param index="1" name="title" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="clear">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="get_finished_items" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_queue_size" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="is_running" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="start">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="action_finished">
+			<description>
+			</description>
+		</signal>
+		<signal name="action_requested">
+			<description>
+			</description>
+		</signal>
+		<signal name="queue_error">
+			<param index="0" name="error" type="String" />
+			<param index="1" name="index" type="int" />
+			<param index="2" name="title" type="String" />
+			<description>
+			</description>
+		</signal>
+		<signal name="queue_finished">
+			<description>
+			</description>
+		</signal>
+	</signals>
+</class>

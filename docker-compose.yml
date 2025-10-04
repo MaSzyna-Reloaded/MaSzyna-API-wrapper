@@ -1,4 +1,14 @@
 services:
+  unit_tests:
+    environment:
+      - ${TARGET:-template_debug}
+    image: jezsonic/build-tools:4.5.stable
+    container_name: unit_tests
+    entrypoint: /var/maszyna/ci/docker/entrypoint.sh -t template_debug -u true
+    volumes:
+      - type: bind
+        source: ./
+        target: /var/maszyna
   windows_x86_64:
     environment:
       - ${TARGET:-template_debug}

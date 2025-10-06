@@ -18,6 +18,9 @@
 	<tutorials>
 	</tutorials>
 	<members>
+		<member name="accepted_loads" type="String[]" setter="set_accepted_loads" getter="get_accepted_loads" default="[]">
+			Type of cargo (pantstate — start with the pantograph raised on the electric locomotive).
+		</member>
 		<member name="load_list" type="LoadListItem[]" setter="set_load_list" getter="get_load_list" default="[]">
 			List of [code]LoadListItem[/code] resources specifying load parameters for each car separately
 		</member>
@@ -26,6 +29,12 @@
 		</member>
 		<member name="load_unit" type="int" setter="set_load_unit" getter="get_load_unit" enum="TrainLoad.LoadUnit" default="0">
 			Type of load unit being used (tons or pieces).
+		</member>
+		<member name="max_load" type="float" setter="set_max_load" getter="get_max_load" default="0.0">
+			Maximum amount of cargo load
+		</member>
+		<member name="minimum_load_offsets" type="float[]" setter="set_minimum_load_offsets" getter="get_minimum_load_offsets" default="[]">
+			Offset, in meters, of the cargo model at minimum loading. A negative value means a downward offset. If there are more cargos than offset values, the last specified value will be used for the remaining cargos.
 		</member>
 		<member name="overload_factor" type="float" setter="set_overload_factor" getter="get_overload_factor" default="0.0">
 			Percentage of vehicle's overload possibility (total number of places/number of seats)

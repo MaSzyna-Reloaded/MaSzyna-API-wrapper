@@ -24,6 +24,9 @@ namespace godot {
             };
 
             MAKE_MEMBER_GS_NR(LoadUnit, load_unit, LoadUnit::LOAD_UNIT_TONS);
+            MAKE_MEMBER_GS_NR(TypedArray<String>, accepted_loads, TypedArray<String>());
+            MAKE_MEMBER_GS_NR(TypedArray<float>, minimum_load_offsets, TypedArray<float>())
+            MAKE_MEMBER_GS(float, max_load, 0.0f);
             MAKE_MEMBER_GS(double, overload_factor, 0.0f);
             MAKE_MEMBER_GS(float, load_speed, 0.0f);
             MAKE_MEMBER_GS(float, unload_speed, 0.0f);

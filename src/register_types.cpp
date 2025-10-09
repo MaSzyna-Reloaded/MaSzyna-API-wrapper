@@ -2,6 +2,7 @@
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
+#include "buffers/TrainBuffer.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/LogSystem.hpp"
 #include "core/TrainController.hpp"
@@ -22,9 +23,9 @@
 #include "resources/load/LoadListItem.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
@@ -61,6 +62,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
         GDREGISTER_CLASS(TrainLoad)
         GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(TrainBuffer)
 
         train_system_singleton = memnew(TrainSystem);
         log_system_singleton = memnew(LogSystem);

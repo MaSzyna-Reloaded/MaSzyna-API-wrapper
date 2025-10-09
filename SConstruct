@@ -89,6 +89,7 @@ sources = (
     + Glob("src/core/*.cpp")
     + Glob("src/doors/*.cpp")
     + Glob("src/engines/*.cpp")
+    + Glob("src/buffers/*.cpp")
     + Glob("src/systems/*.cpp")
     + Glob("src/brakes/*.cpp")
     + Glob("src/types/*.cpp")

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainBuffer" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Represents a buffer and coupler assembly for a train vehicle. Exposes mechanical stiffness, tolerances, damping, and coupling capabilities to Godot and the underlying MaSzyna mover.
+	</brief_description>
+	<description>
+		TrainBuffer models the mechanical interface between two rail vehicles: the buffers and the coupler. It provides configurable parameters for buffer/coupler stiffness, compression and tension tolerances, and a damping factor used by the simulation. It also declares which services can pass through a given coupling (mechanical, brake pipe, MU control, power, etc.) using bit-mask flags.
+
+		Use this node as a child of a TrainController to configure how a vehicle couples to others and what connections are established when coupled. The properties are exported to the mover configuration so they can be consumed by the original MaSzyna simulation layer.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="allowed_flag" type="int" setter="set_allowed_flag" getter="get_allowed_flag" default="0">
+			Bit mask of coupler services and pass-throughs supported by this buffer/coupler. Combine values of [enum AllowedFlagBits].
+			Note: 24V/110V/3x400V electrical lines ([constant ALLOWED_ELEC_24V], [constant ALLOWED_ELEC_110V], [constant ALLOWED_ELEC_3x400V]) are only valid together with [constant ALLOWED_FIXED_COUPLING_LOCK].
+		</member>
+		<member name="automatic_flag" type="int" setter="set_automatic_flag" getter="get_automatic_flag" default="0">
+			Bit mask of coupler services that should be connected automatically when an automatic coupler latches. Use values from [enum AllowedFlagBits].
+		</member>
+		<member name="buffer/max_compression_tolerance" type="float" setter="set_buffer_max_compression_tolerance" getter="get_buffer_max_compression_tolerance" default="0.1">
+			Maximum buffer compression travel before the buffer bottoms out, in meters. Typical values are small (e.g. 0.02–0.10 m).
+		</member>
+		<member name="buffer/max_tension_tolerance" type="float" setter="set_buffer_max_tension_tolerance" getter="get_buffer_max_tension_tolerance" default="1000.0">
+			Maximum tensile force the buffer can sustain before the connection fails, in kN.
+		</member>
+		<member name="buffer/stiffness_k" type="float" setter="set_buffer_stiffness_k" getter="get_buffer_stiffness_k" default="1.0">
+			Linear stiffness of the buffer spring, in kN/m. Higher values make the buffer stiffer under compression.
+		</member>
+		<member name="control_type" type="String" setter="set_control_type" getter="get_control_type" default="&quot;&quot;">
+			Text identifier of the multiple-unit control system. Two vehicles can connect MU control only if their control_type matches.
+		</member>
+		<member name="coupler/max_compression_tolerance" type="float" setter="set_coupler_max_compression_tolerance" getter="get_coupler_max_compression_tolerance" default="0.1">
+			Maximum coupler compression travel before hard stop, in meters.
+		</member>
+		<member name="coupler/max_tension_tolerance" type="float" setter="set_coupler_max_tension_tolerance" getter="get_coupler_max_tension_tolerance" default="1000.0">
+			Maximum tensile force the coupler can sustain before it fails, in kN.
+		</member>
+		<member name="coupler/stiffness_k" type="float" setter="set_coupler_stiffness_k" getter="get_coupler_stiffness_k" default="1.0">
+			Linear stiffness of the coupler in tension/compression, in kN/m. Applies when a coupler is present.
+		</member>
+		<member name="coupler/type" type="int" setter="set_coupler_type" getter="get_coupler_type" enum="TrainBuffer.CouplerType" default="0">
+			Type of mechanical coupler mounted on this end. Determines how forces are transmitted and which defaults/limits apply.
+		</member>
+		<member name="damping_beta" type="float" setter="set_damping_beta" getter="get_damping_beta" default="0.0">
+			Dimensionless damping coefficient applied to buffer/coupler relative motion. Higher values reduce oscillations but may make the system feel stiffer.
+		</member>
+		<member name="power_coupling" type="int" setter="set_power_coupling" getter="get_power_coupling" default="128">
+			Bit mask describing which coupling type(s) must be present for electrical power to be transferred to the adjacent vehicle. Defaults to [constant ALLOWED_FIXED_COUPLING_LOCK] (solid coupling).
+		</member>
+		<member name="power_flag" type="int" setter="set_power_flag" getter="get_power_flag" default="0">
+			Bit mask of electrical lines carried by a solid coupling. Combine values from [enum PowerFlagBits] (e.g., 24V, 110V, 3x400V).
+		</member>
+	</members>
+	<constants>
+		<constant name="COUPLER_TYPE_AUTOMATIC" value="0" enum="CouplerType">
+			Automatic (self-latching) coupler.
+		</constant>
+		<constant name="COUPLER_TYPE_SCREW" value="1" enum="CouplerType">
+			Screw-type coupler.
+		</constant>
+		<constant name="COUPLER_TYPE_CHAIN" value="2" enum="CouplerType">
+			Chain coupler.
+		</constant>
+		<constant name="COUPLER_TYPE_BARE" value="3" enum="CouplerType">
+			No coupler (bare end); cannot couple.
+		</constant>
+		<constant name="COUPLER_TYPE_ARTICULATED" value="4" enum="CouplerType">
+			Articulated connection (semi-permanent joint between vehicle sections).
+		</constant>
+		<constant name="ALLOWED_MECHANICAL" value="1" enum="AllowedFlagBits">
+			Mechanical coupler present and can be connected.
+		</constant>
+		<constant name="ALLOWED_BRAKE_PIPE" value="2" enum="AllowedFlagBits">
+			Brake pipe connection available.
+		</constant>
+		<constant name="ALLOWED_MULTIPLE_CONTROL" value="4" enum="AllowedFlagBits">
+			Multiple-unit (MU) control cable available.
+		</constant>
+		<constant name="ALLOWED_HIGH_VOLTAGE" value="8" enum="AllowedFlagBits">
+			High-voltage cables available.
+		</constant>
+		<constant name="ALLOWED_PASSAGE" value="16" enum="AllowedFlagBits">
+			Inter-vehicle passage (gangway) available.
+		</constant>
+		<constant name="ALLOWED_AIR_8_BAR" value="32" enum="AllowedFlagBits">
+			8 bar air line available (auxiliary air).
+		</constant>
+		<constant name="ALLOWED_HEATING" value="64" enum="AllowedFlagBits">
+			Heating line available.
+		</constant>
+		<constant name="ALLOWED_FIXED_COUPLING_LOCK" value="128" enum="AllowedFlagBits">
+			Uncoupling lock / fixed (semi-permanent) coupling.
+		</constant>
+		<constant name="ALLOWED_ELEC_24V" value="256" enum="AllowedFlagBits">
+			24 V electrical line available (requires [constant ALLOWED_FIXED_COUPLING_LOCK]).
+		</constant>
+		<constant name="ALLOWED_ELEC_110V" value="512" enum="AllowedFlagBits">
+			110 V electrical line available (requires [constant ALLOWED_FIXED_COUPLING_LOCK]).
+		</constant>
+		<constant name="ALLOWED_ELEC_3x400V" value="1024" enum="AllowedFlagBits">
+			3×400 V three-phase electrical line available (requires [constant ALLOWED_FIXED_COUPLING_LOCK]).
+		</constant>
+		<constant name="POWER_24V" value="256" enum="PowerFlagBits">
+			24 V supply transferred through the fixed coupling.
+		</constant>
+		<constant name="POWER_110V" value="512" enum="PowerFlagBits">
+			110 V supply transferred through the fixed coupling.
+		</constant>
+		<constant name="POWER_3x400V" value="1024" enum="PowerFlagBits">
+			3×400 V three-phase supply transferred through the fixed coupling.
+		</constant>
+	</constants>
+</class>

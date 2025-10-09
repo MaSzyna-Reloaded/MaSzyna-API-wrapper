@@ -1,7 +1,7 @@
-#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
+#include "buffers/TrainBuffCoupl.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/TrainController.hpp"
@@ -16,6 +16,7 @@
 #include "lighting/TrainLighting.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
@@ -73,18 +74,19 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake);
-        GDREGISTER_CLASS(TrainLoad);
-        GDREGISTER_CLASS(LoadListItem);
         GDREGISTER_CLASS(MaterialParser);
         GDREGISTER_CLASS(MaterialManager);
         GDREGISTER_CLASS(MaszynaMaterial);
+        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(TrainLoad)
+        GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(TrainBuffCoupl)
 
         if (!is_doctool_mode()) {
             train_system_singleton = memnew(TrainSystem);
             game_log_singleton = memnew(GameLog);
             material_manager_singleton = memnew(MaterialManager);
-            
+
             Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
             Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
             Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);

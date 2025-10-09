@@ -95,6 +95,19 @@ text = "Spring brake: Disable"
 command = "set_spring_brake_enabled"
 command_argument = "false"
 
+[node name="HBoxContainer6" type="HBoxContainer" parent="General"]
+layout_mode = 2
+
+[node name="Couple" parent="General/HBoxContainer6" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Couple"
+command = "buffer_couple"
+
+[node name="Decouple" parent="General/HBoxContainer6" instance=ExtResource("2_qbcao")]
+layout_mode = 2
+text = "Decouple"
+command = "buffer_decouple"
+
 [node name="Security" type="HFlowContainer" parent="." unique_id=176203822]
 layout_mode = 2
 

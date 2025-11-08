@@ -3,7 +3,6 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <map>
@@ -32,12 +31,11 @@ namespace godot {
     class LogSystem : public RefCounted {
             GDCLASS(LogSystem, RefCounted);
 
-        private:
         public:
             static const char *LOG_UPDATED_SIGNAL;
 
             static LogSystem *get_instance() {
-                return dynamic_cast<LogSystem *>(godot::Engine::get_singleton()->get_singleton("LogSystem"));
+                return dynamic_cast<LogSystem *>(Engine::get_singleton()->get_singleton("LogSystem"));
             }
 
             enum LogLevel {

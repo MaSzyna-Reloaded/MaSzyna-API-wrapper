@@ -2,8 +2,6 @@
 #include "./TrainSystem.hpp"
 
 namespace godot {
-    const char *TrainSystem::TRAIN_LOG_UPDATED_SIGNAL = "train_log_updated";
-
     void TrainSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
@@ -29,9 +27,6 @@ namespace godot {
                 D_METHOD("unregister_command", "train_id", "command", "callable"), &TrainSystem::unregister_command);
         ClassDB::bind_method(D_METHOD("get_train_state", "train_id"), &TrainSystem::get_train_state);
         ClassDB::bind_method(D_METHOD("log", "train_id", "loglevel", "line"), &TrainSystem::log);
-        ADD_SIGNAL(MethodInfo(
-                TRAIN_LOG_UPDATED_SIGNAL, PropertyInfo(Variant::STRING, "train"),
-                PropertyInfo(Variant::INT, "loglevel"), PropertyInfo(Variant::STRING, "line")));
     }
 
     int TrainSystem::get_train_count() const {
@@ -88,24 +83,21 @@ namespace godot {
     }
 
     void TrainSystem::log(const String &train_id, const LogSystem::LogLevel level, const String &line) {
-        emit_signal("train_log_updated", train_id, level, line);
         LogSystem::get_instance()->log(level, vformat(String("%s: %s"), train_id, line));
     }
 
     void TrainSystem::register_train(const String &train_id, TrainController *train) {
         if (is_train_registered(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is already registered!");
-            UtilityFunctions::push_error("Train is already registered: ", train_id);
+            log(train_id, LogSystem::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[train_id] = train;
-            DEBUG("Registered train %s", train_id);
+            log(train_id, LogSystem::DEBUG, "Registered train");
         }
     }
 
     void TrainSystem::register_command(const String &train_id, const String &command, const Callable &callback) {
         if (!is_train_registered(train_id)) {
             log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered in");
-            UtilityFunctions::push_error("Train is not registered: ", train_id);
             return;
         }
 
@@ -117,7 +109,6 @@ namespace godot {
 
         if ((static_cast<Dictionary>(commands[command])).has(train_id)) {
             log(train_id, LogSystem::LogLevel::ERROR, "Command is already registered: " + command);
-            UtilityFunctions::push_error("Command ", command, " is already registered for train ", train_id);
             return;
         }
 
@@ -128,20 +119,17 @@ namespace godot {
     void TrainSystem::unregister_command(const String &train_id, const String &command, const Callable &callback) {
         if (!is_train_registered(train_id)) {
             log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
-            UtilityFunctions::push_error("Train is not registered: ", train_id);
             return;
         }
 
         if (!is_command_supported(command)) {
-            LogSystem::get_instance()->error("Cannot unregister unknown command: " + command);
-            UtilityFunctions::push_error("Cannot unregister unknown command: ", command);
+            log(train_id, LogSystem::LogLevel::ERROR, "Cannot unregister unknown command: " + command);
         }
 
         if (commands.has(command)) {
             Dictionary _trains = static_cast<Dictionary>(commands[command]);
             if (!_trains.has(train_id)) {
                 log(train_id, LogSystem::LogLevel::ERROR, "Command is not registered: " + command);
-                UtilityFunctions::push_error("Command ", command, " is not registered for train ", train_id);
                 return;
             }
             _trains.erase(train_id);
@@ -154,15 +142,14 @@ namespace godot {
     void TrainSystem::unregister_train(const String &train_id) {
         if (!is_train_registered(train_id)) {
             log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
-            UtilityFunctions::push_error("Train is not registered: ", train_id);
             return;
         }
 
         Array command_keys = commands.keys();
         Array commands_to_remove;
 
-        for (int i = 0; i < command_keys.size(); i++) {
-            String command = command_keys[i];
+        for (const auto & command_key : command_keys) {
+            String command = command_key;
             Dictionary _trains = commands[command];
             if (_trains.has(train_id)) {
                 _trains.erase(train_id);
@@ -172,8 +159,8 @@ namespace godot {
             }
         }
 
-        for (int i = 0; i < commands_to_remove.size(); i++) {
-            commands.erase(commands_to_remove[i]);
+        for (const auto & i : commands_to_remove) {
+            commands.erase(i);
         }
 
         trains.erase(train_id);
@@ -202,7 +189,6 @@ namespace godot {
 
         if (it == trains.end()) {
             log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
-            UtilityFunctions::push_error("Train is not registered: ", train_id);
             return;
         }
         TrainController *train = it->second;
@@ -212,13 +198,12 @@ namespace godot {
 
             if (!_trains.has(train_id)) {
                 log(train_id, LogSystem::LogLevel::WARNING, "train cannot handle command: " + command);
-                UtilityFunctions::push_warning("Train \"", train_id, "\" cannot handle command \"", command, "\"");
                 return;
             }
 
-            if (Callable c = _trains[train_id]; c.is_valid()) {
+            if (const Callable c = _trains[train_id]; c.is_valid()) {
                 Array args;
-                int argc = static_cast<int>(c.get_argument_count());
+                const int argc = static_cast<int>(c.get_argument_count());
                 if (argc > 0) {
                     args.append(p1);
                 }
@@ -235,16 +220,17 @@ namespace godot {
                 if (p2.get_type() != Variant::NIL) {
                     arg_required++;
                 }
+
                 log(train_id, LogSystem::LogLevel::DEBUG,
-                    "received command " + command + "(" + String(", ").join(args) + ")");
+                    "Received command " + command + "(" + String(", ").join(args) + ")");
                 if (arg_required != argc) {
-                    UtilityFunctions::push_warning(
-                            "Method ", c.get_object(), "::", c.get_method(), " should handle ", arg_required,
-                            " arguments, but it has ", argc);
+                    log(train_id, LogSystem::LogLevel::WARNING,
+                            "Method " + String(c.get_object()->get_class()) + "::" + String(c.get_method().get_basename()) + " should handle " + String::num_int64(arg_required) +
+                            " arguments, but it has " + String::num_int64(arg_required));
                 }
 #endif
             } else {
-                UtilityFunctions::push_error("Callable ", c, " is invalid");
+                log(train_id, LogSystem::LogLevel::ERROR, "Callable " + String(c.get_method().get_basename()) + " is invalid");
             }
         } else {
             log(train_id, LogSystem::LogLevel::ERROR, "Unknown command: " + command);

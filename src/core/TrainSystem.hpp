@@ -19,8 +19,6 @@ namespace godot {
             Dictionary commands;
 
         public:
-            static const char *TRAIN_LOG_UPDATED_SIGNAL;
-
             static TrainSystem *get_instance() {
                 return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
             }

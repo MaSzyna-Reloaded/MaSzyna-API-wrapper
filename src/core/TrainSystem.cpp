@@ -53,7 +53,7 @@ namespace godot {
         TrainController *train = get_train(train_id);
 
         if (train == nullptr) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             UtilityFunctions::push_error("Train is not registered: ", train_id);
             Dictionary empty;
             return empty;
@@ -69,7 +69,7 @@ namespace godot {
         const std::map<String, TrainController *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered in");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered in");
             UtilityFunctions::push_error("Train is not registered: ", train_id);
             return {};
         }
@@ -82,22 +82,22 @@ namespace godot {
         return props.get(property_name, "");
     }
 
-    void TrainSystem::log(const String &train_id, const LogSystem::LogLevel level, const String &line) {
-        LogSystem::get_instance()->log(level, vformat(String("%s: %s"), train_id, line));
+    void TrainSystem::log(const String &train_id, const GameLog::LogLevel level, const String &line) {
+        GameLog::get_instance()->log(level, vformat(String("%s: %s"), train_id, line));
     }
 
     void TrainSystem::register_train(const String &train_id, TrainController *train) {
         if (is_train_registered(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is already registered");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[train_id] = train;
-            log(train_id, LogSystem::DEBUG, "Registered train");
+            log(train_id, GameLog::DEBUG, "Registered train");
         }
     }
 
     void TrainSystem::register_command(const String &train_id, const String &command, const Callable &callback) {
         if (!is_train_registered(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered in");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered in");
             return;
         }
 
@@ -108,7 +108,7 @@ namespace godot {
 
 
         if ((static_cast<Dictionary>(commands[command])).has(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Command is already registered: " + command);
+            log(train_id, GameLog::LogLevel::ERROR, "Command is already registered: " + command);
             return;
         }
 
@@ -118,18 +118,18 @@ namespace godot {
 
     void TrainSystem::unregister_command(const String &train_id, const String &command, const Callable &callback) {
         if (!is_train_registered(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             return;
         }
 
         if (!is_command_supported(command)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Cannot unregister unknown command: " + command);
+            log(train_id, GameLog::LogLevel::ERROR, "Cannot unregister unknown command: " + command);
         }
 
         if (commands.has(command)) {
             Dictionary _trains = static_cast<Dictionary>(commands[command]);
             if (!_trains.has(train_id)) {
-                log(train_id, LogSystem::LogLevel::ERROR, "Command is not registered: " + command);
+                log(train_id, GameLog::LogLevel::ERROR, "Command is not registered: " + command);
                 return;
             }
             _trains.erase(train_id);
@@ -141,7 +141,7 @@ namespace godot {
 
     void TrainSystem::unregister_train(const String &train_id) {
         if (!is_train_registered(train_id)) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             return;
         }
 
@@ -188,7 +188,7 @@ namespace godot {
         const std::map<String, TrainController *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
-            log(train_id, LogSystem::LogLevel::ERROR, "Train is not registered");
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             return;
         }
         TrainController *train = it->second;
@@ -197,7 +197,7 @@ namespace godot {
             Dictionary _trains = static_cast<Dictionary>(commands[command]);
 
             if (!_trains.has(train_id)) {
-                log(train_id, LogSystem::LogLevel::WARNING, "train cannot handle command: " + command);
+                log(train_id, GameLog::LogLevel::WARNING, "train cannot handle command: " + command);
                 return;
             }
 
@@ -221,19 +221,19 @@ namespace godot {
                     arg_required++;
                 }
 
-                log(train_id, LogSystem::LogLevel::DEBUG,
+                log(train_id, GameLog::LogLevel::DEBUG,
                     "Received command " + command + "(" + String(", ").join(args) + ")");
                 if (arg_required != argc) {
-                    log(train_id, LogSystem::LogLevel::WARNING,
+                    log(train_id, GameLog::LogLevel::WARNING,
                             "Method " + String(c.get_object()->get_class()) + "::" + String(c.get_method().get_basename()) + " should handle " + String::num_int64(arg_required) +
                             " arguments, but it has " + String::num_int64(arg_required));
                 }
 #endif
             } else {
-                log(train_id, LogSystem::LogLevel::ERROR, "Callable " + String(c.get_method().get_basename()) + " is invalid");
+                log(train_id, GameLog::LogLevel::ERROR, "Callable " + String(c.get_method().get_basename()) + " is invalid");
             }
         } else {
-            log(train_id, LogSystem::LogLevel::ERROR, "Unknown command: " + command);
+            log(train_id, GameLog::LogLevel::ERROR, "Unknown command: " + command);
             ERR_PRINT("[" + train_id + "] Unknown command: " + command);
         }
 
@@ -243,7 +243,7 @@ namespace godot {
 
     void TrainSystem::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
         if (!is_command_supported(command)) {
-            LogSystem::get_instance()->error("Unknown command: " + command);
+            GameLog::get_instance()->error("Unknown command: " + command);
             ERR_PRINT("Unknown command: " + command);
             return;
         }

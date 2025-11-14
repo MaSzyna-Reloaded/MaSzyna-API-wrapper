@@ -28,14 +28,14 @@
 
 namespace godot {
 
-    class LogSystem : public RefCounted {
-            GDCLASS(LogSystem, RefCounted);
+    class GameLog : public RefCounted {
+            GDCLASS(GameLog, RefCounted);
 
         public:
             static const char *LOG_UPDATED_SIGNAL;
 
-            static LogSystem *get_instance() {
-                return dynamic_cast<LogSystem *>(Engine::get_singleton()->get_singleton("LogSystem"));
+            static GameLog *get_instance() {
+                return dynamic_cast<GameLog *>(Engine::get_singleton()->get_singleton("GameLog"));
             }
 
             enum LogLevel {
@@ -55,4 +55,4 @@ namespace godot {
             static void _bind_methods();
     };
 } // namespace godot
-VARIANT_ENUM_CAST(LogSystem::LogLevel)
+VARIANT_ENUM_CAST(GameLog::LogLevel)

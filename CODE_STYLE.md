@@ -58,3 +58,7 @@ namespace godot {
 
 ### Conversions
 Always use `static_cast<type>`, don't use C-style cast
+
+### Logging
+For dev logging, use and only Godot's built-in methods.  
+For in-game logging, use `GameLog` but be aware that it'll only post log messages to the Dev console or anything else connected to it's `log_updated` signal. It won't print logs to the Godot's console

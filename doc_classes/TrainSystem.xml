@@ -74,7 +74,7 @@
 		<method name="log">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
-			<param index="1" name="loglevel" type="int" enum="LogSystem.LogLevel" />
+			<param index="1" name="loglevel" type="int" enum="GameLog.LogLevel" />
 			<param index="2" name="line" type="String" />
 			<description>
 				Logs message related to a train

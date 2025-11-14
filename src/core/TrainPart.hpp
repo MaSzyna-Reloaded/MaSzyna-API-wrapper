@@ -1,5 +1,5 @@
 #pragma once
-#include "./LogSystem.hpp"
+#include "./GameLog.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include <functional>
@@ -63,7 +63,7 @@ namespace godot {
             void unregister_command(const String &command, const Callable &callback);
             void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void log(LogSystem::LogLevel level, const String &line);
+            void log(GameLog::LogLevel level, const String &line);
             void log_debug(const String &line);
             void log_info(const String &line);
             void log_warning(const String &line);

@@ -86,25 +86,25 @@ namespace godot {
         }
     }
 
-    void TrainPart::log(const LogSystem::LogLevel level, const String &line) {
+    void TrainPart::log(const GameLog::LogLevel level, const String &line) {
         if (train_controller_node != nullptr) {
             TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
         }
     }
     void TrainPart::log_debug(const String &line) {
-        log(LogSystem::LogLevel::DEBUG, line);
+        log(GameLog::LogLevel::DEBUG, line);
     }
 
     void TrainPart::log_info(const String &line) {
-        log(LogSystem::LogLevel::INFO, line);
+        log(GameLog::LogLevel::INFO, line);
     }
 
     void TrainPart::log_warning(const String &line) {
-        log(LogSystem::LogLevel::WARNING, line);
+        log(GameLog::LogLevel::WARNING, line);
     }
 
     void TrainPart::log_error(const String &line) {
-        log(LogSystem::LogLevel::ERROR, line);
+        log(GameLog::LogLevel::ERROR, line);
     }
 
     void TrainPart::register_command(const String &command, const Callable &callback) {

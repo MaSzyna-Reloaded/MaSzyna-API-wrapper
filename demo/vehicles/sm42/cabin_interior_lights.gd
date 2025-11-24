@@ -1,4 +1,4 @@
-extends GenericTrainPart
+extends TrainPartNode
 
 var roof_light_enabled:bool = false
 var devices_light_enabled:bool = false
@@ -6,7 +6,7 @@ var _powered:bool = false
 var _state = {}
 
 func _ready():
-    var train = get_train_controller_node()
+    var train = get_train_node()
     train.power_changed.connect(_on_power_changed)
     train.register_command("roof_light", set_roof_light)
     train.register_command("devices_light", set_devices_light)

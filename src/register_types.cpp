@@ -7,6 +7,7 @@
 #include "core/TrainController.hpp"
 #include "core/TrainNode.hpp"
 #include "core/TrainPart.hpp"
+#include "core/TrainPartNode.hpp"
 #include "core/TrainSystem.hpp"
 #include "doors/TrainDoors.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
@@ -62,6 +63,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(EntityNode);
         GDREGISTER_CLASS(EntityRegistry);
         GDREGISTER_CLASS(TrainNode);
+        GDREGISTER_CLASS(TrainPartNode);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_CLASS(TrainLighting)

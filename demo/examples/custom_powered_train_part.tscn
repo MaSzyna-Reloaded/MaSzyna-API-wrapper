@@ -18,5 +18,5 @@ visible = true
 [node name="train1" parent="." instance=ExtResource("2_ep4dj")]
 train_id = "train1"
 
-[node name="PoweredTrainPart" type="GenericTrainPart" parent="train1"]
-script = ExtResource("1_1fn40")
+[node name="PoweredTrainPart" type="TrainPartNode" parent="train1"]
+train_part = ExtResource("1_1fn40")

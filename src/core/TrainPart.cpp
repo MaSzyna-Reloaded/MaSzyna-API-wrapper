@@ -146,4 +146,12 @@ namespace godot {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }
 
+    void TrainPart::set_train_node(TrainNode *p_train_node) {
+        train_controller_node = p_train_node;
+    }
+
+    TrainNode *TrainPart::get_train_node() const {
+        return train_controller_node;
+    }
+
 } // namespace godot

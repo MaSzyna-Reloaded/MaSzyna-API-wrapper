@@ -21,6 +21,8 @@ class EntityNode : public Node {
         void set_components(const TypedArray<Ref<Component>> &p_components);
         TypedArray<Ref<Component>> get_components() const;
 
+        bool add_component(const Ref<Component> &p_component);
+
         TypedArray<Ref<Component>> find_components(const StringName &p_capability) const;
         Ref<Component> get_component_by_index(const StringName &p_capability, int64_t p_index = 0) const;
         Ref<Component> get_component(const StringName &p_capability, const StringName &p_instance_id) const;

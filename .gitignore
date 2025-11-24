@@ -11,6 +11,7 @@
 *.apk.idsig
 CMakeCache.txt
 CMakeLists.txt
+/.cache
 /build.ninja
 /.cmake/
 **/CMakeFiles/

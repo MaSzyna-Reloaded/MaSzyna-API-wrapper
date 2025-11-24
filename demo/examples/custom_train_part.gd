@@ -1,4 +1,4 @@
-extends GenericTrainPart
+extends TrainPartNode
 
 var _total_time = 0.0
 
@@ -7,7 +7,8 @@ var state = {
 }
 
 func _enter_tree():
-    register_command("custom_command", self._handle_custom_command)
+    #register_command("custom_command", self._handle_custom_command)
+    pass
 
 func _handle_custom_command(p1, p2):
     log_warning("CUSTOM COMMAND HERE")

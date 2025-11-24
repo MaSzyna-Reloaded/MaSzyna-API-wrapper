@@ -1,4 +1,4 @@
-extends PoweredTrainPart
+extends TrainPartNode
 var _t = 0.0
 
 

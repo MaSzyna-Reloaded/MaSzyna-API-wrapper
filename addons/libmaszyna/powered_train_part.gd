@@ -1,4 +1,4 @@
-extends GenericTrainPart
+extends TrainPartNode
 class_name PoweredTrainPart
 
 ## Example of a customization based on a GenericTrainPart interface.
@@ -8,7 +8,8 @@ class_name PoweredTrainPart
 var locked = false
 
 func _enter_tree():
-    register_command("lock_power", self._on_lock_power)
+    #register_command("lock_power", self._on_lock_power)
+    pass
 
 
 func _process_train_part(delta):

@@ -50,14 +50,19 @@ StringName EntityNode::get_entity_id() const {
     return entity.is_null() ? StringName() : entity->get_entity_id();
 }
 
-void EntityNode::set_components(const TypedArray<Ref<Component>> &p_components) {
-    ensure_entity();
-    entity->set_components(p_components);
-}
+    void EntityNode::set_components(const TypedArray<Ref<Component>> &p_components) {
+        ensure_entity();
+        entity->set_components(p_components);
+    }
 
-TypedArray<Ref<Component>> EntityNode::get_components() const {
-    return entity.is_null() ? TypedArray<Ref<Component>>() : entity->get_components();
-}
+    bool EntityNode::add_component(const Ref<Component> &p_component) {
+        ensure_entity();
+        return entity->add_component(p_component);
+    }
+
+    TypedArray<Ref<Component>> EntityNode::get_components() const {
+        return entity.is_null() ? TypedArray<Ref<Component>>() : entity->get_components();
+    }
 
 TypedArray<Ref<Component>> EntityNode::find_components(const StringName &p_capability) const {
     return entity.is_null() ? TypedArray<Ref<Component>>() : entity->find_components(p_capability);

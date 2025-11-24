@@ -13,6 +13,11 @@
 #include "engines/TrainElectricEngine.hpp"
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
+#include "godot-ecs/CapabilityRegistry.hpp"
+#include "godot-ecs/Component.hpp"
+#include "godot-ecs/Entity.hpp"
+#include "godot-ecs/EntityRegistry.hpp"
+#include "godot-ecs/EntityNode.hpp"
 #include "lighting/TrainLighting.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
@@ -50,6 +55,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainDieselElectricEngine);
         GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
+        GDREGISTER_CLASS(CapabilityRegistry);
+        GDREGISTER_CLASS(Component);
+        GDREGISTER_CLASS(Entity);
+        GDREGISTER_CLASS(EntityNode);
+        GDREGISTER_CLASS(EntityRegistry);
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);

@@ -1,5 +1,5 @@
 #pragma once
-#include "./LogSystem.hpp"
+#include "./GameLog.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -19,8 +19,6 @@ namespace godot {
             Dictionary commands;
 
         public:
-            static const char *TRAIN_LOG_UPDATED_SIGNAL;
-
             static TrainSystem *get_instance() {
                 return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
             }
@@ -45,7 +43,7 @@ namespace godot {
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             bool is_command_supported(const String &command);
 
-            void log(const String &train_id, LogSystem::LogLevel level, const String &line);
+            void log(const String &train_id, GameLog::LogLevel level, const String &line);
 
             Dictionary get_train_state(const String &train_id);
 

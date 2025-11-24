@@ -18,7 +18,7 @@ func _ready() -> void:
     Console.add_command("prop", self.console_get_config_value, ["train", "property"], 2, "Get train config property")
     Console.add_command("props", self.console_get_config_properties, ["train"], 1, "List train config properties")
 
-    LogSystem.log_updated.connect(self.console_print_log)
+    GameLog.log_updated.connect(self.console_print_log)
 
 func console_get_config_value(train, property):
     Console.print_line("%s" % TrainSystem.get_config_property(train, property))
@@ -46,9 +46,9 @@ func console_list_train_commands():
     Console.print_line("%s" % "\n".join(commands))
 
 func console_print_log(loglevel, line):
-    if loglevel >= LogSystem.LogLevel.ERROR:
+    if loglevel >= GameLog.LogLevel.ERROR:
         Console.print_line("[color=red]%s[/color]" % [line])
-    elif loglevel == LogSystem.LogLevel.WARNING:
+    elif loglevel == GameLog.LogLevel.WARNING:
         Console.print_line("[color=orange]%s[/color]" % [line])
     else:
         Console.print_line("%s" % [line])

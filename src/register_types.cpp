@@ -2,8 +2,8 @@
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
+#include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
-#include "core/LogSystem.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
@@ -22,14 +22,14 @@
 #include "resources/load/LoadListItem.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
-LogSystem *log_system_singleton = nullptr;
+GameLog *game_log_singleton = nullptr;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
@@ -54,7 +54,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_CLASS(TrainLighting)
-        GDREGISTER_CLASS(LogSystem);
+        GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
@@ -63,9 +63,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(LoadListItem)
 
         train_system_singleton = memnew(TrainSystem);
-        log_system_singleton = memnew(LogSystem);
+        game_log_singleton = memnew(GameLog);
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
-        Engine::get_singleton()->register_singleton("LogSystem", log_system_singleton);
+        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
     }
 }
 
@@ -78,7 +78,7 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (train_system_singleton != nullptr) {
         Engine::get_singleton()->unregister_singleton("TrainSystem");
-        Engine::get_singleton()->unregister_singleton("LogSystem");
+        Engine::get_singleton()->unregister_singleton("GameLog");
         // memdelete(train_system_singleton);
         // train_system_singleton = nullptr;
     }

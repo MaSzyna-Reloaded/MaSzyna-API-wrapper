@@ -13,21 +13,21 @@ var _t:float = 0.0
 @onready var REVERSE = $UI/MoverSwitches/General/HBoxContainer2/Reverse
 
 const rich_print_loglevel_colors = {
-    LogSystem.LogLevel.DEBUG: "#777",
-    LogSystem.LogLevel.ERROR: "red",
-    LogSystem.LogLevel.WARNING: "orange",
+    GameLog.LogLevel.DEBUG: "#777",
+    GameLog.LogLevel.ERROR: "red",
+    GameLog.LogLevel.WARNING: "orange",
     }
 
 const loglevel_names = {
-    LogSystem.LogLevel.DEBUG: "DEBUG",
-    LogSystem.LogLevel.INFO: "INFO",
-    LogSystem.LogLevel.WARNING: "WARNING",
-    LogSystem.LogLevel.ERROR: "ERROR",
+    GameLog.LogLevel.DEBUG: "DEBUG",
+    GameLog.LogLevel.INFO: "INFO",
+    GameLog.LogLevel.WARNING: "WARNING",
+    GameLog.LogLevel.ERROR: "ERROR",
     }
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
     $%TrainName.text = "%s (type: %s)" % [train.name, train.type_name]
-    LogSystem.log_updated.connect(print_log_entry_to_godot_console)
+    GameLog.log_updated.connect(print_log_entry_to_godot_console)
 
 
 func _colorize_loglevel(loglevel, line):

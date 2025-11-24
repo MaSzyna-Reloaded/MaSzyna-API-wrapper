@@ -74,7 +74,7 @@
 		<method name="log">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
-			<param index="1" name="loglevel" type="int" enum="LogSystem.LogLevel" />
+			<param index="1" name="loglevel" type="int" enum="GameLog.LogLevel" />
 			<param index="2" name="line" type="String" />
 			<description>
 				Logs message related to a train
@@ -126,14 +126,4 @@
 			</description>
 		</method>
 	</methods>
-	<signals>
-		<signal name="train_log_updated">
-			<param index="0" name="train" type="String" />
-			<param index="1" name="loglevel" type="int" />
-			<param index="2" name="line" type="String" />
-			<description>
-				Emitted on a new train log message
-			</description>
-		</signal>
-	</signals>
 </class>

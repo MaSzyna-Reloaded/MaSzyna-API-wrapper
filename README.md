@@ -39,6 +39,7 @@ scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|te
 | 11.03.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 | 22.05.2025     | 4.4                  | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
 | 30.09.2025     | 4.5                  | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
+| 30.11.2025     | 4.5.x                | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
 ### Documentation 
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

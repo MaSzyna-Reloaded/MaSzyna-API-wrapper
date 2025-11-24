@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="GameLog" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Application-wide logger for general purpose. Use it to write messages to the game's debug console. For development-only logs, prefer Godot's built-in functions such as push_error(), push_warning(), print(), and print_rich().
+	</brief_description>
+	<description>
+		Provides a simple, application-wide logging system with severity levels and a signal that emits whenever a new log line is produced.
+		
+		GameLog is available as an Engine singleton named "GameLog", so you can access the same instance from anywhere in scripts. For example, in GDScript:
+		
+		[codeblock]
+		GameLog.info("Scenario initialized")
+		GameLog.warning("Low FPS detected")
+		GameLog.error("Failed to load route")
+		GameLog.debug("Loaded config in %s ms" % load_time)
+		[/codeblock]
+		
+		Use this logger to output information relevant to the game runtime and to subscribe to log updates. For ad-hoc development diagnostics or editor-time messages, use Godot's built-in logging helpers (push_error, push_warning, print, print_rich).
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="debug">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs a message at DEBUG level. See [enum GameLog.LogLevel].
+				[codeblock]
+				GameLog.debug("Loaded config in %s ms" % load_time)
+				[/codeblock]
+			</description>
+		</method>
+		<method name="error">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs a message at ERROR level. See [enum GameLog.LogLevel].
+				[codeblock]
+				GameLog.error("Failed to load route: %s" % err)
+				[/codeblock]
+			</description>
+		</method>
+		<method name="info">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs a message at INFO level. See [enum GameLog.LogLevel].
+				[codeblock]
+				GameLog.info("Scenario initialized")
+				[/codeblock]
+			</description>
+		</method>
+		<method name="log">
+			<return type="void" />
+			<param index="0" name="loglevel" type="int" enum="GameLog.LogLevel" />
+			<param index="1" name="line" type="String" />
+			<description>
+				Logs a message at the specified level.
+				[codeblock]
+				GameLog.log(GameLog.LogLevel.WARNING, "Low FPS detected")
+				[/codeblock]
+			</description>
+		</method>
+		<method name="warning">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+				Logs a message at WARNING level. See [enum GameLog.LogLevel].
+				[codeblock]
+				GameLog.warning("Battery voltage low")
+				[/codeblock]
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="log_updated">
+			<param index="0" name="loglevel" type="int" />
+			<param index="1" name="line" type="String" />
+			<description>
+				Emitted whenever a new log message is produced.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="DEBUG" value="0" enum="LogLevel">
+			Debug-level log messages.
+		</constant>
+		<constant name="INFO" value="1" enum="LogLevel">
+			Informational log messages.
+		</constant>
+		<constant name="WARNING" value="2" enum="LogLevel">
+			Warning-level log messages.
+		</constant>
+		<constant name="ERROR" value="3" enum="LogLevel">
+			Error-level log messages.
+		</constant>
+	</constants>
+</class>

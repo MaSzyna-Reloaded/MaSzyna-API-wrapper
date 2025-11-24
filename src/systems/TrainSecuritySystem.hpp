@@ -24,6 +24,7 @@ namespace godot {
                 EMERGENCY_SIGNAL_WHISTLE
             };
 
+            TrainSecuritySystem();
             void security_acknowledge(bool p_enabled);
 
             MAKE_MEMBER_GS(bool, aware_system_active, false);

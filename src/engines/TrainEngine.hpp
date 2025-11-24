@@ -8,6 +8,7 @@ namespace godot {
     class TrainEngine : public TrainPart {
             GDCLASS(TrainEngine, TrainPart)
         public:
+            TrainEngine();
             enum EngineType {
                 NONE,
                 DUMB,

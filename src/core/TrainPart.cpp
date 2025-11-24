@@ -1,11 +1,13 @@
 #include "./TrainSystem.hpp"
 #include "TrainNode.hpp"
 #include "TrainPart.hpp"
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainPart::TrainPart() {
+        set_capability(StringName());
+    }
+
     void TrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &TrainPart::emit_config_changed_signal);
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainPart::register_command);
@@ -45,47 +47,6 @@ namespace godot {
         return nullptr;
     }
 
-    void TrainPart::_notification(const int p_what) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE: {
-                Node *p = get_parent();
-                while (p != nullptr) {
-                    train_controller_node = Object::cast_to<TrainNode>(p);
-                    if (train_controller_node != nullptr) {
-                        break;
-                    }
-                    p = p->get_parent();
-                }
-                if (train_controller_node != nullptr) {
-                    const Error con = train_controller_node->connect(
-                            TrainNode::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
-                    if (con != OK) {
-                        log_warning("TrainPart::notification(NOTIFICATION_ENTER_TREE) failed with error code " + String::num(con));
-                    }
-                }
-                if (enabled) {
-                    _register_commands();
-                    _commands_registered = true;
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE: {
-                if (get_enabled()) {
-                    _unregister_commands();
-                    _commands_registered = false;
-                }
-                if (train_controller_node != nullptr) {
-                    train_controller_node->disconnect(
-                            TrainNode::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
-                }
-                train_controller_node = nullptr;
-            } break;
-            default:;
-        }
-    }
-
     void TrainPart::log(const GameLog::LogLevel level, const String &line) {
         if (train_controller_node != nullptr) {
             TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
@@ -119,43 +80,11 @@ namespace godot {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_process(const double delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        if (_dirty) {
-            // emit_config_changed_signal();
-            update_mover();
-            _dirty = false;
-        }
-
-        if (enabled) {
-            _process_mover(delta);
-        }
-
-        if (enabled_changed) {
-            enabled_changed = false;
-            if (enabled && !_commands_registered) {
-                log_debug("Registering commands for train part " + get_name());
-                _register_commands();
-                _commands_registered = true;
-            } else if (!enabled && _commands_registered) {
-                log_debug("Unregistering commands for train part " + get_name());
-                _unregister_commands();
-                _commands_registered = false;
-            }
-            emit_signal("enable_changed", enabled);
-            emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
-        }
-    }
-
     void TrainPart::_process_mover(const double delta) {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_process_mover(mover, delta);
-                train_controller_node->get_state().merge(get_mover_state(), true);
             }
         }
     }
@@ -165,18 +94,18 @@ namespace godot {
     void TrainPart::_do_update_internal_mover(TMoverParameters *mover) {};
 
     void TrainPart::update_mover() {
-        if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
-                _do_update_internal_mover(mover);
-                Dictionary new_config;
-                _do_fetch_config_from_mover(mover, new_config);
-                train_controller_node->update_config(new_config);
-            } else {
-                UtilityFunctions::push_warning("TrainPart::update_mover() failed: internal mover not initialized");
-            }
-        } else {
+        if (train_controller_node == nullptr) {
             UtilityFunctions::push_warning("TrainPart::update_mover() failed: missing train controller node");
+            return;
+        }
+        TMoverParameters *mover = train_controller_node->get_mover();
+        if (mover != nullptr) {
+            _do_update_internal_mover(mover);
+            Dictionary new_config;
+            _do_fetch_config_from_mover(mover, new_config);
+            train_controller_node->update_config(new_config);
+        } else {
+            UtilityFunctions::push_warning("TrainPart::update_mover() failed: internal mover not initialized");
         }
     }
 

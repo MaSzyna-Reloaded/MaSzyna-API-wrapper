@@ -23,6 +23,7 @@ namespace godot {
 
 
         public:
+            TrainDieselEngine();
             TypedArray<WWListItem> get_wwlist() {
                 return wwlist;
             }

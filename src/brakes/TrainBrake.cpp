@@ -5,6 +5,10 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainBrake::TrainBrake() {
+        set_capability("brakes");
+    }
+
     void TrainBrake::_bind_methods() {
         BIND_PROPERTY_W_HINT(Variant::INT, "valve_type", "valve/type", &TrainBrake::set_valve_type, &TrainBrake::get_valve_type, "valve_type", PROPERTY_HINT_ENUM, "NoValve,W,W_Lu_VI,W_Lu_L,W_Lu_XR,K,Kg,Kp,Kss,Kkg,Kkp,Kks,Hikg1,Hikss,Hikp1,KE,SW,EStED,NESt3,ESt3,LSt,ESt4,ESt3AL2,EP1,EP2,M483,CV1_L_TR,CV1,CV1_R,Other")
         BIND_PROPERTY(Variant::INT, "friction_elements_per_axle", "friction_elements_per_axle", &TrainBrake::set_friction_elements_per_axle, &TrainBrake::get_friction_elements_per_axle, "friction_elements_per_axle");

@@ -6,6 +6,11 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainDieselEngine::TrainDieselEngine() {
+        set_capability("engine");
+        set_type_id("diesel");
+    }
+
     void TrainDieselEngine::_bind_methods() {
         BIND_PROPERTY(Variant::FLOAT, "oil_min_pressure", "oil_pump/pressure_minimum", &TrainDieselEngine::set_oil_min_pressure, &TrainDieselEngine::get_oil_min_pressure, "oil_min_pressure");
         BIND_PROPERTY(Variant::FLOAT, "oil_max_pressure", "oil_pump/pressure_maximum", &TrainDieselEngine::set_oil_max_pressure, &TrainDieselEngine::get_oil_max_pressure, "oil_max_pressure");

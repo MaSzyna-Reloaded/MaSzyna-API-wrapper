@@ -3,6 +3,10 @@
 
 namespace godot {
 
+    TrainDoors::TrainDoors() {
+        set_capability("doors");
+    }
+
     void TrainDoors::_bind_methods() {
         BIND_PROPERTY_W_HINT(Variant::INT, "type", "type", &TrainDoors::set_type, &TrainDoors::get_type, "type", PROPERTY_HINT_ENUM, "Shift,Rotate,Fold,Plug");
         BIND_PROPERTY(Variant::FLOAT, "open_time", "open/time", &TrainDoors::set_open_time, &TrainDoors::get_open_time, "open_time");

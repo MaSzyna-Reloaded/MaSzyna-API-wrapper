@@ -8,6 +8,7 @@ namespace godot {
     class TrainElectroPneumaticDynamicBrake: public TrainPart {
         GDCLASS(TrainElectroPneumaticDynamicBrake, TrainPart)
         public:
+            TrainElectroPneumaticDynamicBrake();
             static void _bind_methods();
             enum CouplerCheck {
                 None = 0,

@@ -3,7 +3,7 @@
 #include "macros.hpp"
 namespace godot {
     class TrainSpringBrake: public TrainPart {
-        GDCLASS(TrainSpringBrake, TrainPart);
+            GDCLASS(TrainSpringBrake, TrainPart);
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
@@ -12,6 +12,7 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
+            TrainSpringBrake();
             static void _bind_methods();
             MAKE_MEMBER_GS(float, spring_actuator_chamber_volume, 1.0f);
             MAKE_MEMBER_GS(float, max_spring_actuator_filling_force, 0.0f);

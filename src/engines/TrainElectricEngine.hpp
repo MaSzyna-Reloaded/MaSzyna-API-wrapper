@@ -11,6 +11,7 @@ namespace godot {
             const TrainNode *_controller = memnew(TrainNode);
 
         public:
+            TrainElectricEngine();
             static void _bind_methods();
             TrainNode::TrainPowerSource power_source = TrainNode::POWER_SOURCE_NOT_DEFINED;
             MAKE_MEMBER_GS(int, collectors_no, 0);

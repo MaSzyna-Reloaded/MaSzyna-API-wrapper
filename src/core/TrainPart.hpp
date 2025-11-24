@@ -2,8 +2,8 @@
 #include "./GameLog.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainNode.hpp"
+#include "godot-ecs/Component.hpp"
 #include <functional>
-#include <godot_cpp/classes/node.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
     if ((mover_ptr) == nullptr) {                                                                                      \
@@ -11,21 +11,21 @@
     }
 
 namespace godot {
-    class TrainPart : public Node {
-            GDCLASS(TrainPart, Node)
+    class TrainPart : public Component {
+            GDCLASS(TrainPart, Component)
         public:
             static void _bind_methods();
+            TrainPart();
 
         private:
             Dictionary state;
             bool _commands_registered = false;
 
         protected:
-            void _notification(int p_what);
             bool enabled = true;
             bool enabled_changed = false;
             bool _dirty = false;
-            TrainNode *train_controller_node;
+            TrainNode *train_controller_node = nullptr;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -56,7 +56,6 @@ namespace godot {
             TMoverParameters *get_mover();
 
         public:
-            void _process(double delta) override;
             virtual void _process_mover(double delta);
 
             void register_command(const String &command, const Callable &callback);
@@ -83,5 +82,8 @@ namespace godot {
             /* High level method for getting the state of the Mover */
             Dictionary get_mover_state();
             void emit_config_changed_signal();
+
+            void set_train_node(TrainNode *p_train_node);
+            TrainNode *get_train_node() const;
     };
 } // namespace godot

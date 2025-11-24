@@ -1,5 +1,8 @@
 #include "TrainLighting.hpp"
 namespace godot {
+    TrainLighting::TrainLighting() {
+        set_capability("lighting");
+    }
     const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
 
     void TrainLighting::_bind_methods() {BIND_PROPERTY(Variant::COLOR, "head_light_color", "head_light/color", &TrainLighting::set_head_light_color, &TrainLighting::get_head_light_color, "color");

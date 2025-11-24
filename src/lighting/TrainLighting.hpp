@@ -21,6 +21,7 @@ namespace godot {
             void _register_commands() override;
             void _unregister_commands() override;
         public:
+            TrainLighting();
             static const char* SELECTOR_POSITION_CHANGED_SIGNAL;
             MAKE_MEMBER_GS_DIRTY(int, selector_position, 0);
             MAKE_MEMBER_GS(bool, wrap_light_selector, false);

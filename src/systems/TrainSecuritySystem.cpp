@@ -6,6 +6,10 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainSecuritySystem::TrainSecuritySystem() {
+        set_capability("security");
+    }
+
     void TrainSecuritySystem::_bind_methods() {
         BIND_PROPERTY(Variant::BOOL, "aware_system_active", "aware_system/active", &TrainSecuritySystem::set_aware_system_active, &TrainSecuritySystem::get_aware_system_active, "state");
         BIND_PROPERTY(Variant::BOOL, "aware_system_cabsignal", "aware_system/cabsignal", &TrainSecuritySystem::set_aware_system_cab_signal, &TrainSecuritySystem::get_aware_system_cab_signal, "state");

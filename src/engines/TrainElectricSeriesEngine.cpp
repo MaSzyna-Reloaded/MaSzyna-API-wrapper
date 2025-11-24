@@ -6,6 +6,11 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainElectricSeriesEngine::TrainElectricSeriesEngine() {
+        set_capability("engine");
+        set_type_id("electric_series");
+    }
+
     void TrainElectricSeriesEngine::_bind_methods() {
         BIND_PROPERTY(Variant::FLOAT, "nominal_voltage", "nominal_voltage", &TrainElectricSeriesEngine::set_nominal_voltage, &TrainElectricSeriesEngine::get_nominal_voltage, "nominal_voltage");
         BIND_PROPERTY(Variant::FLOAT, "winding_resistance", "winding_resistance", &TrainElectricSeriesEngine::set_winding_resistance, &TrainElectricSeriesEngine::get_winding_resistance, "winding_resistance");

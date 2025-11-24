@@ -15,6 +15,7 @@ namespace godot {
             void _unregister_commands() override;
 
         public:
+            TrainDoors();
             enum PermitLight {
                 PERMIT_LIGHT_CONTINUOUS,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,

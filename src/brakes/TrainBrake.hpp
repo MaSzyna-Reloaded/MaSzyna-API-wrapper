@@ -13,6 +13,7 @@ namespace godot {
     class TrainBrake: public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
         public:
+            TrainBrake();
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.

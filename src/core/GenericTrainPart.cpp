@@ -1,6 +1,5 @@
 #include "GenericTrainPart.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
-#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -21,9 +20,10 @@ namespace godot {
     };
     void GenericTrainPart::_process_mover(const double delta) {
         call("_process_train_part", delta);
-        // FIXME: this should not be called each frame, but only when state changes
         internal_state = call("_get_train_part_state");
-        train_controller_node->get_state().merge(internal_state, true);
+        if (train_controller_node != nullptr) {
+            train_controller_node->update_state();
+        }
     };
 
     TrainNode *GenericTrainPart::get_train_controller_node() {

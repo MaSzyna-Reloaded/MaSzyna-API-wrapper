@@ -1,6 +1,11 @@
 #include "TrainElectroPneumaticDynamicBrake.hpp"
 
 namespace godot {
+    TrainElectroPneumaticDynamicBrake::TrainElectroPneumaticDynamicBrake() {
+        set_capability("brakes");
+        set_type_id("epd");
+    }
+
     void TrainElectroPneumaticDynamicBrake::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_ep_brake_force", "value"), &TrainElectroPneumaticDynamicBrake::set_ep_brake_force);
         ClassDB::bind_method(D_METHOD("switch_ep_fuse", "value"), &TrainElectroPneumaticDynamicBrake::switch_ep_fuse);

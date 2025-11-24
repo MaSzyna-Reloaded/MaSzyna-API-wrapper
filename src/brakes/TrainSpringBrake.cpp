@@ -1,6 +1,11 @@
 #include "TrainSpringBrake.hpp"
 
 namespace godot {
+    TrainSpringBrake::TrainSpringBrake() {
+        set_capability("brakes");
+        set_type_id("spring");
+    }
+
     void TrainSpringBrake::_bind_methods() {
         BIND_PROPERTY(
                 Variant::FLOAT, "spring_actuator_chamber_volume", "spring/actuator/chamber_volume",

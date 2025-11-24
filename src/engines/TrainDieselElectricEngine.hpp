@@ -10,5 +10,8 @@ namespace godot {
 
         protected:
             TrainEngine::EngineType get_engine_type() override;
+
+        public:
+            TrainDieselElectricEngine();
     };
 } // namespace godot

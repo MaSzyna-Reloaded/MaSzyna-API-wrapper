@@ -5,6 +5,11 @@
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
+    TrainElectricEngine::TrainElectricEngine() {
+        set_capability("engine");
+        set_type_id("electric");
+    }
+
     void TrainElectricEngine::_bind_methods() {
         BIND_PROPERTY_W_HINT(Variant::INT, "engine_power_source", "power/source", &TrainElectricEngine::set_engine_power_source, &TrainElectricEngine::get_engine_power_source, "power_source", PROPERTY_HINT_ENUM, "NotDefined,InternalSource,Transducer,Generator,Accumulator,CurrentCollector,PowerCable,Heater,Main");
         BIND_PROPERTY(Variant::INT, "number_of_collectors", "power/current_collector/number_of_collectors", &TrainElectricEngine::set_collectors_no, &TrainElectricEngine::get_collectors_no, "number_of_collectors");

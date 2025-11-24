@@ -1,7 +1,7 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
 #include "macros.hpp"
-#include <godot_cpp/classes/node.hpp>
+#include "godot-ecs/EntityNode.hpp"
 
 
 namespace godot {
@@ -12,8 +12,8 @@ namespace godot {
     class TrainSystem;
 
 
-    class TrainController : public Node {
-            GDCLASS(TrainController, Node)
+    class TrainController : public EntityNode {
+            GDCLASS(TrainController, EntityNode)
         private:
             TMoverParameters *mover{};
             double initial_velocity = 0.0;

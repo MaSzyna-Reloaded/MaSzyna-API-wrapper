@@ -4,8 +4,6 @@
 #include "macros.hpp"
 
 namespace godot {
-    class TrainController;
-
     class TrainElectricSeriesEngine: public TrainElectricEngine {
             GDCLASS(TrainElectricSeriesEngine, TrainElectricEngine)
         public:

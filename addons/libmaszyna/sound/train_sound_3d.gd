@@ -2,7 +2,7 @@ extends SteamAudioPlayer
 class_name TrainSound3D
 
 @export var state_property = ""
-@export_node_path("TrainController") var controller_path = NodePath(""):
+@export_node_path("TrainNode") var controller_path = NodePath(""):
     set(x):
         controller_path = x
         _dirty = true
@@ -13,7 +13,7 @@ var _dirty = false
 var _train = null
 var _should_play = false
 
-func _ready() -> void: 
+func _ready() -> void:
     self.distance_attenuation = true
     self.air_absorption = true
     self.occlusion = true

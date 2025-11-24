@@ -19,16 +19,16 @@
 	</tutorials>
 	<methods>
 		<method name="get_train_controller_node">
-			<return type="TrainController" />
+			<return type="TrainNode" />
 			<description>
-				Returns bound [TrainController] instance (may be null)
+				Returns bound [TrainNode] instance (may be null)
 			</description>
 		</method>
 		<method name="get_train_state">
 			<return type="Dictionary" />
 			<description>
-				Returns a [Dictionary] with a current state of the [TrainController].
-				This is a shortcut for [method TrainController.get_state] and [method TrainSystem.get_train_state].
+				Returns a [Dictionary] with a current state of the [TrainNode].
+				This is a shortcut for [method TrainNode.get_state] and [method TrainSystem.get_train_state].
 			</description>
 		</method>
 	</methods>

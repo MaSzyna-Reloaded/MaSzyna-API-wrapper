@@ -112,7 +112,7 @@ saturation_current_multiplier = 183.3
 voltage_constant = 2000.0
 saturation_current = 49.0
 
-[node name="SM42v1" type="TrainController"]
+[node name="SM42v1" type="TrainNode"]
 train_id = "TestTrain"
 type_name = "6d"
 mass = 74000.0

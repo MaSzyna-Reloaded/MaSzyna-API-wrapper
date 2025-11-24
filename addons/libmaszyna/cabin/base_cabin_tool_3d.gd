@@ -1,12 +1,12 @@
 extends Node3D
 class_name BaseCabinTool3D
 
-var _controller:TrainController
+var _controller:TrainNode
 var _dirty:bool = false
 
 signal controller_changed
 
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("TrainNode") var controller_path:NodePath = "":
     set(x):
         controller_path = x
         _controller = null

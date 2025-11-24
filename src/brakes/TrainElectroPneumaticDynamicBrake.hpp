@@ -1,11 +1,10 @@
 #pragma once
 #include "../brakes/TrainBrake.hpp"
-#include "../core/TrainController.hpp"
+#include "../core/TrainNode.hpp"
 #include "../macros.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 
 namespace godot {
-    class TrainController;
     class TrainElectroPneumaticDynamicBrake: public TrainPart {
         GDCLASS(TrainElectroPneumaticDynamicBrake, TrainPart)
         public:

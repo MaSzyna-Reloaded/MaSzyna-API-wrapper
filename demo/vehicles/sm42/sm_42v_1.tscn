@@ -118,7 +118,7 @@ cabin_a/head_light = true
 cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
-[node name="SM42v1" type="TrainController"]
+[node name="SM42v1" type="TrainNode"]
 train_id = "sm42v1"
 type_name = "6d"
 mass = 74000.0

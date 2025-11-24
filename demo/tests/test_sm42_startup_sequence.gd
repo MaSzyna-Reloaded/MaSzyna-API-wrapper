@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: TrainNode
 
 func before_each():
     train = load("res://tests/sm42_controller.tscn").instantiate()

@@ -12,7 +12,7 @@ func _ready() -> void:
             _player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed)
 
 func _on_controlled_vehicle_changed():
-    var controller:TrainController
+    var controller:TrainNode
     if _player.controlled_vehicle and _player.controlled_vehicle.controller_path:
         controller = _player.controlled_vehicle.get_controller()
         $MoverSwitches.train_controller = $MoverSwitches.get_path_to(controller)

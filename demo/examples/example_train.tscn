@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://clt6kosjdfdfx"]
 
-[node name="ExampleTrain" type="TrainController"]
+[node name="ExampleTrain" type="TrainNode"]
 train_id = "exampletrain"
 
 [node name="Brake" type="TrainBrake" parent="."]

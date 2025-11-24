@@ -35,7 +35,7 @@
 		<method name="get_registered_trains">
 			<return type="Array" />
 			<description>
-				Return list of registered [TrainController]s.
+				Return list of registered [TrainNode]s.
 			</description>
 		</method>
 		<method name="get_supported_commands">
@@ -93,9 +93,9 @@
 		<method name="register_train">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
-			<param index="1" name="train" type="TrainController" />
+			<param index="1" name="train" type="TrainNode" />
 			<description>
-				Registers a [TrainController] with an unique ID
+				Registers a [TrainNode] with an unique ID
 			</description>
 		</method>
 		<method name="send_command">

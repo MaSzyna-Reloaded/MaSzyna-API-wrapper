@@ -25,7 +25,7 @@
 		</method>
 	</methods>
 	<members>
-		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainController.TrainPowerSource" default="0">
+		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainNode.TrainPowerSource" default="0">
 			Power source for recharging the accumulator
 		</member>
 		<member name="power/current_collector/collector_sliding_width" type="float" setter="set_collector_sliding_width" getter="get_collector_sliding_width" default="0.0">
@@ -62,13 +62,13 @@
 			Required voltage to switch the main switch on.
 			            By default, it is 0.6*max_voltage
 		</member>
-		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" enum="TrainController.TrainPowerType" default="0">
+		<member name="power/power_cable/source" type="int" setter="set_power_cable_power_source" getter="get_power_cable_power_source" enum="TrainNode.TrainPowerType" default="0">
 			Energy source for the power cable
 		</member>
 		<member name="power/power_cable/steam_pressure" type="float" setter="set_power_cable_steam_pressure" getter="get_power_cable_steam_pressure" default="0.0">
 			Steam pressure in the power cable. Applies only when the energy source for the power cable is steam
 		</member>
-		<member name="power/source" type="int" setter="set_engine_power_source" getter="get_engine_power_source" enum="TrainController.TrainPowerSource" default="0">
+		<member name="power/source" type="int" setter="set_engine_power_source" getter="get_engine_power_source" enum="TrainNode.TrainPowerSource" default="0">
 			Energy source for the engine
 		</member>
 		<member name="power/transducer/input_voltage" type="float" setter="set_transducer_input_voltage" getter="get_transducer_input_voltage" default="0.0">

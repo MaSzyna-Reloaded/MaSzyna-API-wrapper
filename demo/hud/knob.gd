@@ -4,7 +4,7 @@ extends Control
 class_name DebugKnob
 
 var _dirty = false
-var _controller:TrainController
+var _controller:TrainNode
 
 
 @export var label:String:
@@ -27,7 +27,7 @@ var _controller:TrainController
         _dirty = true
         step = x
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("TrainNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null

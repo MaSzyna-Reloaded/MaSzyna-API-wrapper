@@ -1,9 +1,9 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: TrainNode
 
 func before_each():
-    train = TrainController.new()
+    train = TrainNode.new()
     train.train_id = "TestTrain"
     train.battery_voltage = 110.0
     add_child(train)

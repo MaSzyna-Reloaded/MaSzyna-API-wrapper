@@ -3,7 +3,7 @@
 #include "macros.hpp"
 
 namespace godot {
-    class TrainController;
+    class TrainNode;
     class TrainDoors: public TrainPart {
             GDCLASS(TrainDoors, TrainPart)
 

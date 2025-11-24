@@ -1,4 +1,4 @@
-#include "../core/TrainController.hpp"
+#include "../core/TrainNode.hpp"
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/TrainEngine.hpp"
@@ -9,17 +9,17 @@
 
 namespace godot {
 
-    const char *TrainController::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
-    const char *TrainController::MOVER_INITIALIZED_SIGNAL = "mover_initialized";
-    const char *TrainController::POWER_CHANGED_SIGNAL = "power_changed";
-    const char *TrainController::COMMAND_RECEIVED = "command_received";
-    const char *TrainController::RADIO_TOGGLED = "radio_toggled";
-    const char *TrainController::RADIO_CHANNEL_CHANGED = "radio_channel_changed";
-    const char *TrainController::CONFIG_CHANGED = "config_changed";
+    const char *TrainNode::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
+    const char *TrainNode::MOVER_INITIALIZED_SIGNAL = "mover_initialized";
+    const char *TrainNode::POWER_CHANGED_SIGNAL = "power_changed";
+    const char *TrainNode::COMMAND_RECEIVED = "command_received";
+    const char *TrainNode::RADIO_TOGGLED = "radio_toggled";
+    const char *TrainNode::RADIO_CHANNEL_CHANGED = "radio_channel_changed";
+    const char *TrainNode::CONFIG_CHANGED = "config_changed";
 
-    void TrainController::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
-        ClassDB::bind_method(D_METHOD("get_config"), &TrainController::get_config);
+    void TrainNode::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("get_state"), &TrainNode::get_state);
+        ClassDB::bind_method(D_METHOD("get_config"), &TrainNode::get_config);
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::DICTIONARY, "state", PROPERTY_HINT_NONE, "",
@@ -32,43 +32,43 @@ namespace godot {
                 "", "get_config");
 
         ClassDB::bind_method(
-                D_METHOD("send_command", "command", "p1", "p2"), &TrainController::send_command, DEFVAL(Variant()),
+                D_METHOD("send_command", "command", "p1", "p2"), &TrainNode::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
 
         ClassDB::bind_method(
-                D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainController::broadcast_command,
+                D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainNode::broadcast_command,
                 DEFVAL(Variant()), DEFVAL(Variant()));
 
 
-        ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainController::register_command);
+        ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainNode::register_command);
         ClassDB::bind_method(
-                D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
-        ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
+                D_METHOD("unregister_command", "command", "callable"), &TrainNode::unregister_command);
+        ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainNode::battery);
         ClassDB::bind_method(
-                D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
+                D_METHOD("main_controller_increase", "step"), &TrainNode::main_controller_increase, DEFVAL(1));
         ClassDB::bind_method(
-                D_METHOD("main_controller_decrease", "step"), &TrainController::main_controller_decrease, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
-        ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
-        ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
+                D_METHOD("main_controller_decrease", "step"), &TrainNode::main_controller_decrease, DEFVAL(1));
+        ClassDB::bind_method(D_METHOD("direction_increase"), &TrainNode::direction_increase);
+        ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainNode::direction_decrease);
+        ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainNode::radio);
         ClassDB::bind_method(
-                D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
+                D_METHOD("radio_channel_increase", "step"), &TrainNode::radio_channel_increase, DEFVAL(1));
         ClassDB::bind_method(
-                D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
-        ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
-        ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
+                D_METHOD("radio_channel_decrease", "step"), &TrainNode::radio_channel_decrease, DEFVAL(1));
+        ClassDB::bind_method(D_METHOD("update_mover"), &TrainNode::update_mover);
+        ClassDB::bind_method(D_METHOD("update_state"), &TrainNode::update_state);
+        ClassDB::bind_method(D_METHOD("update_config"), &TrainNode::update_config);
 
-        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
-        BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainController::set_type_name, &TrainController::get_type_name, "type_name");
-        BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
-        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity, &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainController::set_axle_arrangement, &TrainController::get_axle_arrangement, "axle_arrangement");
-        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainNode::set_train_id, &TrainNode::get_train_id, "train_id");
+        BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainNode::set_type_name, &TrainNode::get_type_name, "type_name");
+        BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainNode::set_mass, &TrainNode::get_mass, "mass");
+        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainNode::set_power, &TrainNode::get_power, "power");
+        BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainNode::set_max_velocity, &TrainNode::get_max_velocity, "max_velocity");
+        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainNode::set_axle_arrangement, &TrainNode::get_axle_arrangement, "axle_arrangement");
+        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainNode::set_radio_channel_min, &TrainNode::get_radio_channel_min, "radio_channel_min");
+        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainNode::set_radio_channel_max, &TrainNode::get_radio_channel_max, "radio_channel_max");
         /* FIXME: move to TrainPower section? */
-        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainNode::set_battery_voltage, &TrainNode::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
 
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(MOVER_INITIALIZED_SIGNAL));
@@ -97,11 +97,11 @@ namespace godot {
         BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
     }
 
-    TMoverParameters *TrainController::get_mover() const {
+    TMoverParameters *TrainNode::get_mover() const {
         return mover;
     }
 
-    void TrainController::initialize_mover() {
+    void TrainNode::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
         const auto _type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
@@ -136,15 +136,15 @@ namespace godot {
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
-    void TrainController::register_command(const String &command, const Callable &callable) {
+    void TrainNode::register_command(const String &command, const Callable &callable) {
         TrainSystem::get_instance()->register_command(train_id, command, callable);
     }
 
-    void TrainController::unregister_command(const String &command, const Callable &callable) {
+    void TrainNode::unregister_command(const String &command, const Callable &callable) {
         TrainSystem::get_instance()->unregister_command(train_id, command, callable);
     }
 
-    void TrainController::_notification(const int p_what) {
+    void TrainNode::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
@@ -176,7 +176,7 @@ namespace godot {
             case NOTIFICATION_READY:
                 initialize_mover();
                 update_state();
-                DEBUG("TrainController::_ready() signals connected to train parts");
+                DEBUG("TrainNode::_ready() signals connected to train parts");
 
                 emit_signal(POWER_CHANGED_SIGNAL, prev_is_powered);
                 emit_signal(RADIO_CHANNEL_CHANGED, prev_radio_channel);
@@ -185,7 +185,7 @@ namespace godot {
         }
     }
 
-    void TrainController::_update_mover_config_if_dirty() {
+    void TrainNode::_update_mover_config_if_dirty() {
         if (_dirty) {
             /* update all train parts
              */
@@ -201,7 +201,7 @@ namespace godot {
         }
     }
 
-    void TrainController::_process_mover(const double delta) {
+    void TrainNode::_process_mover(const double delta) {
         TLocation mock_location;
         TRotation mock_rotation;
         mover->ComputeTotalForce(delta);
@@ -213,11 +213,11 @@ namespace godot {
         _handle_mover_update();
     }
 
-    void TrainController::update_state() {
+    void TrainNode::update_state() {
         _handle_mover_update();
     }
 
-    void TrainController::_handle_mover_update() {
+    void TrainNode::_handle_mover_update() {
         state.merge(get_mover_state(), true);
 
         const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
@@ -238,7 +238,7 @@ namespace godot {
         }
     }
 
-    void TrainController::_process(const double delta) {
+    void TrainNode::_process(const double delta) {
         /* nie daj borze w edytorze */
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
@@ -248,7 +248,7 @@ namespace godot {
         _process_mover(delta);
     }
 
-    void TrainController::_do_update_internal_mover(TMoverParameters *mover) const {
+    void TrainNode::_do_update_internal_mover(TMoverParameters *mover) const {
         mover->Mass = mass;
         mover->Power = power;
         mover->Vmax = max_velocity;
@@ -262,12 +262,12 @@ namespace godot {
         mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
+    void TrainNode::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
         config["axles_powered_count"] = mover->NPoweredAxles;
         config["axles_count"] = mover->NAxles;
     }
 
-    void TrainController::update_mover() {
+    void TrainNode::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_update_internal_mover(mover);
             Dictionary new_config;
@@ -277,20 +277,20 @@ namespace godot {
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
             mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
         } else {
-            UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
+            UtilityFunctions::push_warning("TrainNode::update_mover() failed: internal mover not initialized");
         }
     }
 
-    Dictionary TrainController::get_mover_state() {
+    Dictionary TrainNode::get_mover_state() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_fetch_state_from_mover(mover, state);
         } else {
-            UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
+            UtilityFunctions::push_warning("TrainNode::get_mover_state() failed: internal mover not initialized");
         }
         return internal_state;
     }
 
-    void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+    void TrainNode::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         internal_state["mass_total"] = mover->TotalMass;
         internal_state["velocity"] = mover->V;
         internal_state["speed"] = mover->Vel;
@@ -324,68 +324,68 @@ namespace godot {
         internal_state["controller_main_position"] = mover->MainCtrlPos;
     }
 
-    Dictionary TrainController::get_config() const {
+    Dictionary TrainNode::get_config() const {
         return config;
     }
 
-    void TrainController::update_config(const Dictionary &p_config) {
+    void TrainNode::update_config(const Dictionary &p_config) {
         config.merge(p_config, true);
         emit_signal(CONFIG_CHANGED);
     }
 
-    Dictionary TrainController::get_state() {
+    Dictionary TrainNode::get_state() {
         return state;
     }
 
-    void TrainController::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {
+    void TrainNode::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
     }
 
-    void TrainController::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
+    void TrainNode::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }
 
-    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) const {
+    void TrainNode::send_command(const StringName &command, const Variant &p1, const Variant &p2) const {
         TrainSystem::get_instance()->send_command(train_id, String(command), p1, p2);
     }
 
-    void TrainController::battery(const bool p_enabled) const {
+    void TrainNode::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
     }
 
-    void TrainController::main_controller_increase(const int p_step) const {
+    void TrainNode::main_controller_increase(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->IncMainCtrl(step);
     }
 
-    void TrainController::main_controller_decrease(const int p_step) const {
+    void TrainNode::main_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
     }
 
-    void TrainController::direction_increase() const {
+    void TrainNode::direction_increase() const {
         mover->DirectionForward();
     }
 
-    void TrainController::direction_decrease() const {
+    void TrainNode::direction_decrease() const {
         mover->DirectionBackward();
     }
 
-    void TrainController::radio_channel_increase(const int p_step) {
+    void TrainNode::radio_channel_increase(const int p_step) {
         const int step = p_step > 0 ? p_step : 1;
         radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
     }
 
-    void TrainController::radio_channel_decrease(const int p_step) {
+    void TrainNode::radio_channel_decrease(const int p_step) {
         const int step = (p_step != 0) ? p_step : 1;
         radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
     }
 
-    void TrainController::radio_channel_set(const int p_channel) {
+    void TrainNode::radio_channel_set(const int p_channel) {
         radio_channel = Math::clamp(p_channel, radio_channel_min, radio_channel_max);
     }
 
-    void TrainController::radio(const bool p_enabled) {
+    void TrainNode::radio(const bool p_enabled) {
         mover->Radio = p_enabled;
     }
 } // namespace godot

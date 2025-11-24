@@ -93,6 +93,7 @@ sources = (
     + Glob("src/brakes/*.cpp")
     + Glob("src/types/*.cpp")
     + Glob("src/parsers/*.cpp")
+    + Glob("src/godot-ecs/*.cpp")
     + Glob("src/lighting/*.cpp")
     + Glob("src/load/*.cpp")
     + Glob("src/resources/engines/*.cpp")

@@ -1,4 +1,4 @@
-extends TrainPartNode
+extends TrainPart
 class_name PoweredTrainPart
 
 ## Example of a customization based on a GenericTrainPart interface.
@@ -13,7 +13,7 @@ func _enter_tree():
 
 
 func _process_train_part(delta):
-    var state = get_train_state()
+    var state = get_mover_state()
     var power_avail = state.get("power24_available") or state.get("power110_available")
     if not locked and power_avail and has_method("_process_powered"):
         call("_process_powered", delta)

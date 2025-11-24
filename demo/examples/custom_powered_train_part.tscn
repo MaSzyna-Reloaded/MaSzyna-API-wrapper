@@ -1,8 +1,15 @@
-[gd_scene load_steps=4 format=3 uid="uid://dhir05gi7u6by"]
+[gd_scene load_steps=6 format=3 uid="uid://dhir05gi7u6by"]
 
 [ext_resource type="Script" uid="uid://xht2bkb58aan" path="res://examples/powered_train_part_example.gd" id="1_1fn40"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="1_vsgvw"]
 [ext_resource type="PackedScene" uid="uid://clt6kosjdfdfx" path="res://examples/example_train.tscn" id="2_ep4dj"]
+
+[sub_resource type="TrainBrake" id="TrainBrake_4bl2k"]
+
+[sub_resource type="PoweredTrainPart" id="PoweredTrainPart_7kjbp"]
+capability = &"powered_train_part"
+instance_id = &"powered_example"
+script = ExtResource("1_1fn40")
 
 [node name="CustomPoweredTrainPart" type="Control"]
 layout_mode = 3
@@ -17,6 +24,4 @@ visible = true
 
 [node name="train1" parent="." instance=ExtResource("2_ep4dj")]
 train_id = "train1"
-
-[node name="PoweredTrainPart" type="TrainPartNode" parent="train1"]
-train_part = ExtResource("1_1fn40")
+components = Array[Component]([SubResource("TrainBrake_4bl2k"), SubResource("PoweredTrainPart_7kjbp")])

@@ -1,7 +1,7 @@
-[gd_scene format=3 uid="uid://clt6kosjdfdfx"]
+[gd_scene load_steps=2 format=3 uid="uid://clt6kosjdfdfx"]
+
+[sub_resource type="TrainBrake" id="TrainBrake_68hbg"]
 
 [node name="ExampleTrain" type="TrainNode"]
 train_id = "exampletrain"
-
-[node name="Brake" type="TrainBrake" parent="."]
-process_priority = 1
+components = Array[Component]([SubResource("TrainBrake_68hbg")])

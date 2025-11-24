@@ -1,4 +1,4 @@
-extends TrainPartNode
+extends TrainPart
 
 var _total_time = 0.0
 

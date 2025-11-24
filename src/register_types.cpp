@@ -2,6 +2,7 @@
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
 #include "core/GameLog.hpp"
+#include "core/GenericTrainPart.hpp"
 #include "core/TrainNode.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainPartNode.hpp"
@@ -48,6 +49,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
+        GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);
         GDREGISTER_CLASS(TrainSpringBrake);
         GDREGISTER_CLASS(TrainDoors);

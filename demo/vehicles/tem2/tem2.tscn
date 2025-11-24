@@ -193,7 +193,7 @@ shape = SubResource("BoxShape3D_kol4m")
 [node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D"]
 material = ExtResource("4_ah6qb")
 
-[node name="TEM2Controller" type="TrainController" parent="."]
+[node name="TEM2Controller" type="TrainNode" parent="."]
 train_id = "tem2"
 type_name = "tem2"
 mass = 116000.0

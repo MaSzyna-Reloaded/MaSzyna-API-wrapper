@@ -1,6 +1,6 @@
 #include "../core/utils.hpp"
 #include "../brakes/TrainBrake.hpp"
-#include "../core/TrainController.hpp"
+#include "../core/TrainNode.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 

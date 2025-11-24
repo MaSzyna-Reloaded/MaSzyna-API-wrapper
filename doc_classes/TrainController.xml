@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainController" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainNode" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Base train controller controlling all train systems
 	</brief_description>
@@ -7,7 +7,7 @@
 		Base train controller node.
 		It allows building behaviour of the train by adding child nodes of the [TrainPart] class.
 		When node is added to the scene tree,
-		the train is automatically registered in the [TrainSystem] with an unique identifier [member TrainController.train_id].
+		the train is automatically registered in the [TrainSystem] with an unique identifier [member TrainNode.train_id].
 	</description>
 	<tutorials>
 	</tutorials>

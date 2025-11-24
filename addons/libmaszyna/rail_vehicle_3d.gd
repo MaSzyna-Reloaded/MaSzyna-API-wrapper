@@ -4,7 +4,7 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
-@export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
+@export_node_path("TrainNode") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
             controller_path = x
@@ -39,7 +39,7 @@ var _needs_head_display_update: bool = false
 var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
 var _camera:FreeCamera3D
-var _controller:TrainController
+var _controller:TrainNode
 var _t:float = 0.0
 
 
@@ -136,7 +136,7 @@ func leave_cabin(player:Node):
     _cabin.queue_free()
     _cabin = null
 
-func get_controller() -> TrainController:
+func get_controller() -> TrainNode:
     if controller_path:
         return get_node(controller_path)
     else:

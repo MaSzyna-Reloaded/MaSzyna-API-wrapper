@@ -45,11 +45,11 @@
 		<member name="light/alternative/max_voltage" type="float" setter="set_alternative_max_voltage" getter="get_alternative_max_voltage" default="24.0">
 			Specifies the maximum voltage of the alternative light source can provide
 		</member>
-		<member name="light/alternative/source" type="int" setter="set_alternative_light_source" getter="get_alternative_light_source" enum="TrainController.TrainPowerSource" default="4">
-			An integer representing the alternative power source, defined by the TrainController.TrainPowerSource enumeration
+		<member name="light/alternative/source" type="int" setter="set_alternative_light_source" getter="get_alternative_light_source" enum="TrainNode.TrainPowerSource" default="4">
+			An integer representing the alternative power source, defined by the TrainNode.TrainPowerSource enumeration
 		</member>
-		<member name="light/source" type="int" setter="set_light_source" getter="get_light_source" enum="TrainController.TrainPowerSource" default="3">
-			An integer representing the power source, defined by the TrainController.TrainPowerSource enumeration
+		<member name="light/source" type="int" setter="set_light_source" getter="get_light_source" enum="TrainNode.TrainPowerSource" default="3">
+			An integer representing the power source, defined by the TrainNode.TrainPowerSource enumeration
 		</member>
 		<member name="lights/default_selector_position" type="int" setter="set_lights_default_selector_position" getter="get_lights_default_selector_position" default="0">
 			An integer representing the default position of the light selector
@@ -66,8 +66,8 @@
 		<member name="source/accumulator/max_voltage" type="float" setter="set_max_accumulator_voltage" getter="get_max_accumulator_voltage" default="0.0">
 			Represents the highest voltage the accumulator can reach when fully charged.
 		</member>
-		<member name="source/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainController.TrainPowerSource" default="3">
-			An integer representing the power source, defined by the TrainController.TrainPowerSource enumeration.
+		<member name="source/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainNode.TrainPowerSource" default="3">
+			An integer representing the power source, defined by the TrainNode.TrainPowerSource enumeration.
 		</member>
 		<member name="source/generator/engine" type="int" setter="set_generator_engine" getter="get_generator_engine" enum="TrainEngine.EngineType" default="8">
 			An integer representing the engine type, defined by the TrainEngine.EngineType enumeration

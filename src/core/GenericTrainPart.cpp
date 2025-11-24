@@ -26,7 +26,7 @@ namespace godot {
         train_controller_node->get_state().merge(internal_state, true);
     };
 
-    TrainController *GenericTrainPart::get_train_controller_node() {
+    TrainNode *GenericTrainPart::get_train_controller_node() {
         return train_controller_node;
     }
 

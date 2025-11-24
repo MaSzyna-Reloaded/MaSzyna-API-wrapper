@@ -1,4 +1,4 @@
-extends TrainController
+extends TrainNode
 
 var _powered:bool = false
 

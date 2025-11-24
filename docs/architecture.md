@@ -109,15 +109,15 @@ Assume that there is a custom train composed like this, which has name
 set to `example_train`.
 
 ```
-+ TrainController
++ TrainNode
   +-- TrainPart (with attached script as above)
 ```
 
-Because `TrainController` "knows" the structure, it's script can communicate
+Because `TrainNode` "knows" the structure, it's script can communicate
 with `TrainPart` directly:
 
 ```gdscript
-extends TrainController
+extends TrainNode
 
 func _process(delta):
     if something:

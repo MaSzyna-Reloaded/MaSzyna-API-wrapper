@@ -5,7 +5,6 @@
 #include <godot_cpp/classes/node.hpp>
 
 namespace godot {
-    class TrainController;
     class TrainEngine : public TrainPart {
             GDCLASS(TrainEngine, TrainPart)
         public:

@@ -18,7 +18,7 @@ namespace godot {
             void _do_process_mover(TMoverParameters *mover, double delta) override;
 
         public:
-            TrainController *get_train_controller_node();
+            TrainNode *get_train_controller_node();
             void _process_mover(double delta) override;
             virtual void _process_train_part(double delta);
             virtual Dictionary _get_train_part_state();

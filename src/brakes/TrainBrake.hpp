@@ -10,7 +10,6 @@
     }
 
 namespace godot {
-    class TrainController;
     class TrainBrake: public TrainPart {
             GDCLASS(TrainBrake, TrainPart)
         public:

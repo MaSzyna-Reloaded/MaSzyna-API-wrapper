@@ -5,8 +5,6 @@
 #include "resources/engines/WWListItem.hpp"
 
 namespace godot {
-    class TrainController;
-
     class TrainDieselEngine : public TrainEngine {
             GDCLASS(TrainDieselEngine, TrainEngine)
         private:

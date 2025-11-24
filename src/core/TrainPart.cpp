@@ -1,5 +1,5 @@
 #include "./TrainSystem.hpp"
-#include "TrainController.hpp"
+#include "TrainNode.hpp"
 #include "TrainPart.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -53,7 +53,7 @@ namespace godot {
             case NOTIFICATION_ENTER_TREE: {
                 Node *p = get_parent();
                 while (p != nullptr) {
-                    train_controller_node = Object::cast_to<TrainController>(p);
+                    train_controller_node = Object::cast_to<TrainNode>(p);
                     if (train_controller_node != nullptr) {
                         break;
                     }
@@ -61,7 +61,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     const Error con = train_controller_node->connect(
-                            TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                            TrainNode::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
                     if (con != OK) {
                         log_warning("TrainPart::notification(NOTIFICATION_ENTER_TREE) failed with error code " + String::num(con));
                     }
@@ -78,7 +78,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     train_controller_node->disconnect(
-                            TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                            TrainNode::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
                 }
                 train_controller_node = nullptr;
             } break;

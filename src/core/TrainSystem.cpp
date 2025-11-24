@@ -1,4 +1,4 @@
-#include "../core/TrainController.hpp"
+#include "../core/TrainNode.hpp"
 #include "./TrainSystem.hpp"
 
 namespace godot {
@@ -34,13 +34,13 @@ namespace godot {
     }
 
     bool TrainSystem::is_train_registered(const String &train_id) const {
-        const std::map<String, TrainController *>::const_iterator it = trains.find(train_id);
+        const std::map<String, TrainNode *>::const_iterator it = trains.find(train_id);
 
         return it != trains.end();
     }
 
-    TrainController *TrainSystem::get_train(const String &train_id) {
-        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
+    TrainNode *TrainSystem::get_train(const String &train_id) {
+        const std::map<String, TrainNode *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             return nullptr;
@@ -50,7 +50,7 @@ namespace godot {
     }
 
     Dictionary TrainSystem::get_train_state(const String &train_id) {
-        TrainController *train = get_train(train_id);
+        TrainNode *train = get_train(train_id);
 
         if (train == nullptr) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
@@ -66,14 +66,14 @@ namespace godot {
     }
 
     Dictionary TrainSystem::get_all_config_properties(const String &train_id) {
-        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
+        const std::map<String, TrainNode *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is not registered in");
             UtilityFunctions::push_error("Train is not registered: ", train_id);
             return {};
         }
-        const TrainController *train = it->second;
+        const TrainNode *train = it->second;
         return train->get_config();
     }
 
@@ -86,7 +86,7 @@ namespace godot {
         GameLog::get_instance()->log(level, vformat(String("%s: %s"), train_id, line));
     }
 
-    void TrainSystem::register_train(const String &train_id, TrainController *train) {
+    void TrainSystem::register_train(const String &train_id, TrainNode *train) {
         if (is_train_registered(train_id)) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
@@ -185,13 +185,13 @@ namespace godot {
 
     void
     TrainSystem::send_command(const String &train_id, const String &command, const Variant &p1, const Variant &p2) {
-        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
+        const std::map<String, TrainNode *>::iterator it = trains.find(train_id);
 
         if (it == trains.end()) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             return;
         }
-        TrainController *train = it->second;
+        TrainNode *train = it->second;
         if (is_command_supported(command)) {
 
             Dictionary _trains = static_cast<Dictionary>(commands[command]);

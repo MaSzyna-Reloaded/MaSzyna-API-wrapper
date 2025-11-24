@@ -96,13 +96,13 @@
 		<method name="update_mover">
 			<return type="void" />
 			<description>
-				Performs update on an iternal mover of [TrainController]
+				Performs update on an iternal mover of [TrainNode]
 			</description>
 		</method>
 	</methods>
 	<members>
 		<member name="enabled" type="bool" setter="set_enabled" getter="get_enabled" default="true">
-			If true, this train part will be processed by [TrainController] during updating and fetching a mover's state.
+			If true, this train part will be processed by [TrainNode] during updating and fetching a mover's state.
 		</member>
 	</members>
 	<signals>

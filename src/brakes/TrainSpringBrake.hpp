@@ -2,7 +2,6 @@
 #include "../core/TrainPart.hpp"
 #include "macros.hpp"
 namespace godot {
-    class TrainController;
     class TrainSpringBrake: public TrainPart {
         GDCLASS(TrainSpringBrake, TrainPart);
         protected:

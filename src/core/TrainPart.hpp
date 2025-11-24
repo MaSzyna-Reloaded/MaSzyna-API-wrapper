@@ -1,7 +1,7 @@
 #pragma once
 #include "./GameLog.hpp"
 #include "./TrainSystem.hpp"
-#include "TrainController.hpp"
+#include "TrainNode.hpp"
 #include <functional>
 #include <godot_cpp/classes/node.hpp>
 
@@ -25,7 +25,7 @@ namespace godot {
             bool enabled = true;
             bool enabled_changed = false;
             bool _dirty = false;
-            TrainController *train_controller_node;
+            TrainNode *train_controller_node;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -74,8 +74,8 @@ namespace godot {
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
-             * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
-            // void initialize_mover(TrainController *train_controller_node);
+             * i powinna byc wywolywana z poziomu TrainNode::initialize_mover() */
+            // void initialize_mover(TrainNode *train_controller_node);
 
             /* High level method for updating the state of the Mover */
             void update_mover();

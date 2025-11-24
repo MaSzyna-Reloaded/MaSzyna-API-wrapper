@@ -55,23 +55,23 @@ namespace godot {
         mover->EnginePowerSource.SourceType = _controller->power_source_map.at(power_source);
 
         switch (power_source) {
-            case TrainController::POWER_SOURCE_INTERNAL: {
-                const std::map<TrainController::TrainPowerType, TPowerType>::const_iterator lookup =
+            case TrainNode::POWER_SOURCE_INTERNAL: {
+                const std::map<TrainNode::TrainPowerType, TPowerType>::const_iterator lookup =
                         _controller->power_type_map.find(power_cable_power_source);
                 mover->EnginePowerSource.PowerType = lookup != _controller->power_type_map.end() ? lookup->second : TPowerType::NoPower;
             }
-            case TrainController::POWER_SOURCE_TRANSDUCER: {
+            case TrainNode::POWER_SOURCE_TRANSDUCER: {
                 mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
-            case TrainController::POWER_SOURCE_GENERATOR: {
+            case TrainNode::POWER_SOURCE_GENERATOR: {
                 engine_generator &GeneratorParams{mover->EnginePowerSource.EngineGenerator};
                 // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
             }
-            case TrainController::POWER_SOURCE_ACCUMULATOR: {
+            case TrainNode::POWER_SOURCE_ACCUMULATOR: {
                 mover->EnginePowerSource.RAccumulator.RechargeSource =
                         _controller->power_source_map.at(accumulator_recharge_source);
             }
-            case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
+            case TrainNode::POWER_SOURCE_CURRENTCOLLECTOR: {
                 mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
                 mover->EnginePowerSource.CollectorParameters.MaxH = max_collector_lifting;
                 mover->EnginePowerSource.CollectorParameters.CSW = collector_sliding_width;
@@ -84,15 +84,15 @@ namespace godot {
                 mover->EnginePowerSource.MaxCurrent = max_current;
                 mover->EnginePowerSource.CollectorParameters.InsetV = required_main_switch_voltage;
             }
-            case TrainController::POWER_SOURCE_POWERCABLE: {
+            case TrainNode::POWER_SOURCE_POWERCABLE: {
                 mover->EnginePowerSource.RPowerCable.PowerTrans =
                     _controller->power_type_map.at(power_cable_power_source);
                 if (mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }
             }
-            case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
-            case TrainController::POWER_SOURCE_NOT_DEFINED:;
+            case TrainNode::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
+            case TrainNode::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
     }
@@ -122,12 +122,12 @@ namespace godot {
     }
 
 
-    void TrainElectricEngine::set_engine_power_source(const TrainController::TrainPowerSource p_source) {
+    void TrainElectricEngine::set_engine_power_source(const TrainNode::TrainPowerSource p_source) {
         power_source = p_source;
         _dirty = true;
     }
 
-    TrainController::TrainPowerSource TrainElectricEngine::get_engine_power_source() const {
+    TrainNode::TrainPowerSource TrainElectricEngine::get_engine_power_source() const {
         return power_source;
     }
 } // namespace godot

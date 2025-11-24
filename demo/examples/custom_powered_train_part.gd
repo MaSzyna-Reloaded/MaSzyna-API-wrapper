@@ -1,12 +1,12 @@
 extends Control
 
 func log_to_godot(level, line):
-    if level == LogSystem.INFO or level == LogSystem.DEBUG:
+    if level == GameLog.INFO or level == GameLog.DEBUG:
         print(line)
-    elif level == LogSystem.WARNING:
+    elif level == GameLog.WARNING:
         push_warning(line)
-    elif level == LogSystem.ERROR:
+    elif level == GameLog.ERROR:
         push_error(line)
 
 func _ready():
-    LogSystem.log_updated.connect(log_to_godot)
+    GameLog.log_updated.connect(log_to_godot)

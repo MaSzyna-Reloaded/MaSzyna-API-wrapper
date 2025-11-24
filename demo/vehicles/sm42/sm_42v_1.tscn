@@ -172,7 +172,7 @@ has_lock = true
 max_shift_plug = 3.0
 platform/max_shift = 3.0
 
-[node name="CabinInteriorLights" type="GenericTrainPart" parent="."]
+[node name="CabinInteriorLights" type="TrainPartNode" parent="."]
 script = ExtResource("2_qmqy7")
 
 [node name="TrainLightning" type="TrainLighting" parent="."]

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Component" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_entity" qualifiers="const">
+			<return type="Entity" />
+			<description>
+			</description>
+		</method>
+		<method name="get_property_value" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="property" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_state" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="list_properties" qualifiers="const">
+			<return type="StringName[]" />
+			<description>
+			</description>
+		</method>
+		<method name="on_added_to_entity">
+			<return type="void" />
+			<param index="0" name="entity" type="Entity" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="capability" type="StringName" setter="set_capability" getter="get_capability" default="&amp;&quot;&quot;">
+		</member>
+		<member name="entity_node" type="Node" setter="set_entity_node" getter="get_entity_node">
+		</member>
+		<member name="instance_id" type="StringName" setter="set_instance_id" getter="get_instance_id" default="&amp;&quot;&quot;">
+		</member>
+		<member name="type_id" type="StringName" setter="set_type_id" getter="get_type_id" default="&amp;&quot;&quot;">
+		</member>
+	</members>
+</class>

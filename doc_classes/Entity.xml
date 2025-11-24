@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="Entity" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="add_component">
+			<return type="bool" />
+			<param index="0" name="component" type="Component" />
+			<description>
+			</description>
+		</method>
+		<method name="find_components" qualifiers="const">
+			<return type="Component[]" />
+			<param index="0" name="capability" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_component" qualifiers="const">
+			<return type="Component" />
+			<param index="0" name="capability" type="StringName" />
+			<param index="1" name="instance_id" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_component_by_index" qualifiers="const">
+			<return type="Component" />
+			<param index="0" name="capability" type="StringName" />
+			<param index="1" name="index" type="int" default="0" />
+			<description>
+			</description>
+		</method>
+		<method name="get_property_value" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="property" type="StringName" />
+			<param index="1" name="default" type="Variant" default="null" />
+			<description>
+			</description>
+		</method>
+		<method name="get_state" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="has_capability" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="capability" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="list_capabilities" qualifiers="const">
+			<return type="StringName[]" />
+			<description>
+			</description>
+		</method>
+		<method name="rebuild_property_index">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_component">
+			<return type="void" />
+			<param index="0" name="component" type="Component" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="components" type="Component[]" setter="set_components" getter="get_components" default="[]">
+		</member>
+		<member name="entity_id" type="StringName" setter="set_entity_id" getter="get_entity_id" default="&amp;&quot;&quot;">
+		</member>
+	</members>
+</class>

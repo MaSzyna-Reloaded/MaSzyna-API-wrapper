@@ -46,7 +46,7 @@ void TrainPartNode::_attach_to_train() {
         return;
     }
 
-    train_part->set_train_node(train_node);
+    //train_part->set_train_node(train_node);
     // add component to entity
     train_node->add_component(train_part);
 
@@ -83,14 +83,14 @@ Dictionary TrainPartNode::get_train_state() const {
     return train_part->get_mover_state();
 }
 
-void TrainPartNode::log(const LogSystem::LogLevel level, const String &line) const {
+void TrainPartNode::log(const GameLog::LogLevel level, const String &line) const {
     if (train_part.is_null()) { return; }
     train_part->log(level, line);
 }
 
-void TrainPartNode::log_debug(const String &line) const { log(LogSystem::LogLevel::DEBUG, line); }
-void TrainPartNode::log_info(const String &line) const { log(LogSystem::LogLevel::INFO, line); }
-void TrainPartNode::log_warning(const String &line) const { log(LogSystem::LogLevel::WARNING, line); }
-void TrainPartNode::log_error(const String &line) const { log(LogSystem::LogLevel::ERROR, line); }
+void TrainPartNode::log_debug(const String &line) const { log(GameLog::LogLevel::DEBUG, line); }
+void TrainPartNode::log_info(const String &line) const { log(GameLog::LogLevel::INFO, line); }
+void TrainPartNode::log_warning(const String &line) const { log(GameLog::LogLevel::WARNING, line); }
+void TrainPartNode::log_error(const String &line) const { log(GameLog::LogLevel::ERROR, line); }
 
 } // namespace godot

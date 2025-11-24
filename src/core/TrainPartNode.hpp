@@ -4,7 +4,7 @@
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 
-#include "LogSystem.hpp"
+#include "GameLog.hpp"
 #include "TrainNode.hpp"
 #include "TrainPart.hpp"
 
@@ -22,7 +22,7 @@ class TrainPartNode : public Node {
 
         TrainNode *get_train_node() const;
         Dictionary get_train_state() const;
-        void log(LogSystem::LogLevel level, const String &line) const;
+        void log(GameLog::LogLevel level, const String &line) const;
         void log_debug(const String &line) const;
         void log_info(const String &line) const;
         void log_warning(const String &line) const;

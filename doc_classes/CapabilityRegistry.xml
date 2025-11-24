@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="CapabilityRegistry" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_capability_id" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="capability" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_capability_name" qualifiers="const">
+			<return type="StringName" />
+			<param index="0" name="id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="list_capabilities" qualifiers="const">
+			<return type="StringName[]" />
+			<description>
+			</description>
+		</method>
+		<method name="register_capability">
+			<return type="int" />
+			<param index="0" name="capability" type="StringName" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

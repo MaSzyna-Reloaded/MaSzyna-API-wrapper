@@ -6,4 +6,7 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<members>
+		<member name="type_id" type="StringName" setter="set_type_id" getter="get_type_id" overrides="Component" default="&amp;&quot;dieselelectric&quot;" />
+	</members>
 </class>

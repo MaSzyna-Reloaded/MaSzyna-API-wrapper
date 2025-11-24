@@ -53,11 +53,22 @@ StringName EntityNode::get_entity_id() const {
     void EntityNode::set_components(const TypedArray<Ref<Component>> &p_components) {
         ensure_entity();
         entity->set_components(p_components);
+
+        for (int i = 0; i < p_components.size(); i++) {
+            Ref<Component> comp = p_components[i];
+            if (comp.is_valid()) {
+                comp->set_entity_node(this);
+            }
+        }
     }
 
     bool EntityNode::add_component(const Ref<Component> &p_component) {
         ensure_entity();
-        return entity->add_component(p_component);
+        const bool success = entity->add_component(p_component);
+        if (success) {
+            p_component->set_entity_node(this);
+        }
+        return success;
     }
 
     TypedArray<Ref<Component>> EntityNode::get_components() const {

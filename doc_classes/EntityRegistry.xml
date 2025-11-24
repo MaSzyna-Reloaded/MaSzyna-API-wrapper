@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="EntityRegistry" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_entity" qualifiers="const">
+			<return type="Entity" />
+			<param index="0" name="entity_id" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="list_entities" qualifiers="const">
+			<return type="StringName[]" />
+			<description>
+			</description>
+		</method>
+		<method name="register_entity">
+			<return type="bool" />
+			<param index="0" name="entity" type="Entity" />
+			<description>
+			</description>
+		</method>
+		<method name="unregister_entity">
+			<return type="void" />
+			<param index="0" name="entity_id" type="StringName" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

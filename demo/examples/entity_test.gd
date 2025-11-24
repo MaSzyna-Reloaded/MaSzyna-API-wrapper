@@ -1,6 +1,6 @@
 extends Node2D
 
-@onready var n:EntityNode = $EntityNode
+@onready var train:EntityNode = $Train
 
 func dict_to_str(x:Dictionary):
     var lines = []
@@ -10,6 +10,8 @@ func dict_to_str(x:Dictionary):
 
 
 func _ready():
-    print("Brakes ", n.find_components("brakes"))
-    var brake:Component = n.get_component_by_index("brakes", 0)
-    $Panel/Label.text = dict_to_str(brake.get_state())
+    print("Brakes ", train.find_components("brakes"))
+    var brake:Component = train.get_component_by_index("brakes", 0)
+    if brake:
+        $BrakePanel/Label.text = dict_to_str(brake.get_state())
+    $TrainPanel/Label.text = dict_to_str(train.state)

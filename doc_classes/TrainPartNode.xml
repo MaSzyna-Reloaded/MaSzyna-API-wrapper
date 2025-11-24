@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainPartNode" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_train_node" qualifiers="const">
+			<return type="TrainNode" />
+			<description>
+			</description>
+		</method>
+		<method name="get_train_state" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+		<method name="log" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="loglevel" type="int" enum="LogSystem.LogLevel" />
+			<param index="1" name="line" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="log_debug" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="log_error" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="log_info" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="log_warning" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="line" type="String" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="train_part" type="TrainPart" setter="set_train_part" getter="get_train_part">
+		</member>
+	</members>
+</class>

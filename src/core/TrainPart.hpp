@@ -4,6 +4,7 @@
 #include "TrainNode.hpp"
 #include "godot-ecs/Component.hpp"
 #include <functional>
+#include <godot_cpp/core/object.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
     if ((mover_ptr) == nullptr) {                                                                                      \
@@ -25,7 +26,6 @@ namespace godot {
             bool enabled = true;
             bool enabled_changed = false;
             bool _dirty = false;
-            TrainNode *train_controller_node = nullptr;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -74,7 +74,6 @@ namespace godot {
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
              * i powinna byc wywolywana z poziomu TrainNode::initialize_mover() */
-            // void initialize_mover(TrainNode *train_controller_node);
 
             /* High level method for updating the state of the Mover */
             void update_mover();
@@ -82,8 +81,5 @@ namespace godot {
             /* High level method for getting the state of the Mover */
             Dictionary get_mover_state();
             void emit_config_changed_signal();
-
-            void set_train_node(TrainNode *p_train_node);
-            TrainNode *get_train_node() const;
     };
 } // namespace godot

@@ -28,6 +28,11 @@ void Component::_bind_methods() {
     ClassDB::bind_method(D_METHOD("get_state"), &Component::get_state);
     // append_state is internal; no binding
     ClassDB::bind_method(D_METHOD("on_added_to_entity", "entity"), &Component::on_added_to_entity);
+
+    ClassDB::bind_method(D_METHOD("set_entity_node", "node"), &Component::set_entity_node);
+    ClassDB::bind_method(D_METHOD("get_entity_node"), &Component::get_entity_node);
+    ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "entity_node", PROPERTY_HINT_NODE_TYPE, "Node"), "set_entity_node", "get_entity_node");
+
 }
 
 void Component::set_capability(const StringName &p_capability) {
@@ -131,6 +136,14 @@ void Component::append_state(Dictionary &p_out, const int64_t p_fallback_index) 
 }
 
 void Component::on_added_to_entity(Entity *) {
+}
+
+void Component::set_entity_node(Node *p_node) {
+    entity_node = p_node;
+}
+
+Node *Component::get_entity_node() const {
+    return entity_node;
 }
 
 } // namespace godot

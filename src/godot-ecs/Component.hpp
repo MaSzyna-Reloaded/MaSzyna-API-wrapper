@@ -1,5 +1,6 @@
 #pragma once
 
+#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -26,6 +27,11 @@ class Component : public Resource {
         void set_entity(Entity *p_entity);
         Entity *get_entity() const;
 
+        // Added entity_node setter/getter
+        void set_entity_node(Node *p_node);
+        Node *get_entity_node() const;
+
+
         virtual TypedArray<StringName> list_properties() const;
         virtual Variant get_property_value(const StringName &p_property) const;
         Dictionary get_state() const;
@@ -41,5 +47,7 @@ class Component : public Resource {
         StringName type_id;
         StringName instance_id;
         Entity *entity{nullptr};
+        Node *entity_node{nullptr}; // Added
+
 };
 } // namespace godot

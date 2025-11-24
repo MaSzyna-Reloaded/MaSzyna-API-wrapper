@@ -1,10 +1,7 @@
-#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
 #include "core/GameLog.hpp"
-#include "core/GenericTrainPart.hpp"
-#include "core/TrainController.hpp"
 #include "core/TrainNode.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainPartNode.hpp"
@@ -18,11 +15,12 @@
 #include "godot-ecs/CapabilityRegistry.hpp"
 #include "godot-ecs/Component.hpp"
 #include "godot-ecs/Entity.hpp"
-#include "godot-ecs/EntityRegistry.hpp"
 #include "godot-ecs/EntityNode.hpp"
+#include "godot-ecs/EntityRegistry.hpp"
 #include "lighting/TrainLighting.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
@@ -39,16 +37,17 @@ TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
-
-    if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-//         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
-    }
+    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
+    ;
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        GDREGISTER_CLASS(Component);
+        GDREGISTER_CLASS(Entity);
+        GDREGISTER_CLASS(EntityNode);
+        GDREGISTER_CLASS(TrainNode);
+
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
-        GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);
         GDREGISTER_CLASS(TrainSpringBrake);
         GDREGISTER_CLASS(TrainDoors);
@@ -58,11 +57,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
         GDREGISTER_CLASS(CapabilityRegistry);
-        GDREGISTER_CLASS(Component);
-        GDREGISTER_CLASS(Entity);
-        GDREGISTER_CLASS(EntityNode);
         GDREGISTER_CLASS(EntityRegistry);
-        GDREGISTER_CLASS(TrainNode);
         GDREGISTER_CLASS(TrainPartNode);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
@@ -83,7 +78,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 }
 
 void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");;
+    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");
+    ;
 
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;

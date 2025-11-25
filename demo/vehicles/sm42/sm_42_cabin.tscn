@@ -1,10 +1,9 @@
-[gd_scene load_steps=60 format=3 uid="uid://do3s7mkbpv7es"]
+[gd_scene load_steps=54 format=3 uid="uid://do3s7mkbpv7es"]
 
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
 [ext_resource type="Script" uid="uid://fi23qlrohins" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
 [ext_resource type="Script" uid="uid://cmmb3s07th3xp" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]
 [ext_resource type="Script" uid="uid://blbw51qwvmbue" path="res://addons/libmaszyna/sound/train_sound_3d.gd" id="15_df5xj"]
-[ext_resource type="SteamAudioMaterial" uid="uid://cqx8833t2v8mo" path="res://addons/godot-steam-audio/materials/metal_material.tres" id="16_mu6ha"]
 [ext_resource type="PackedScene" uid="uid://djl581jijicpq" path="res://addons/libmaszyna/cabin/cabin_command.tscn" id="66_epgva"]
 [ext_resource type="Script" uid="uid://c4lj08dvqxvhn" path="res://addons/libmaszyna/cabin/cabin_gauge.gd" id="67_fryen"]
 [ext_resource type="PackedScene" uid="uid://cfj82gn1nfl36" path="res://addons/libmaszyna/cabin/cabin_gauge.tscn" id="68_g4w65"]
@@ -207,21 +206,6 @@ script = ExtResource("7_lbg33")
 file_path = "20786_control_6d_6"
 loop = false
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_mu6ha"]
-size = Vector3(1.50269, 0.378967, 0.191788)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_wwe3j"]
-size = Vector3(1.60795, 1.13485, 0.850833)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_4hnq2"]
-size = Vector3(0.255966, 0.205078, 0.0754242)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_myls2"]
-size = Vector3(2.83954, 1.6886, 0.16748)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_lo85d"]
-size = Vector3(2.97583, 0.341797, 1.48938)
-
 [node name="SM42Cabin" type="Node3D"]
 script = ExtResource("1_bffp8")
 camera_bound_min = Vector3(-1.65, 1.8, -3.4)
@@ -257,42 +241,19 @@ script = ExtResource("1_6k4j1")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
 
-[node name="Buzzer" type="SteamAudioPlayer" parent="."]
-distance_attenuation = true
-air_absorption = true
-reflection = true
+[node name="Buzzer" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(0.999125, -0.0128957, 0.0397967, 0, 0.951302, 0.30826, -0.0418339, -0.30799, 0.950469, -0.988872, 2.80983, 2.49681)
 stream = SubResource("AudioStream_hwnyj")
-attenuation_model = 3
-panning_strength = 0.0
-emission_angle_enabled = true
-doppler_tracking = 2
 script = ExtResource("15_df5xj")
 state_property = "beeping"
 
-[node name="AlerterLightOn" type="SteamAudioPlayer" parent="."]
-distance_attenuation = true
-min_attenuation_distance = 10.0
-air_absorption = true
-air_absorption_model = 1
-reflection = true
+[node name="AlerterLightOn" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
 stream = SubResource("AudioStream_ii5lq")
-attenuation_model = 3
-panning_strength = 0.0
-emission_angle_enabled = true
-doppler_tracking = 2
 
-[node name="AlerterLightOff" type="SteamAudioPlayer" parent="."]
-distance_attenuation = true
-air_absorption = true
-reflection = true
+[node name="AlerterLightOff" type="AudioStreamPlayer3D" parent="."]
 transform = Transform3D(0.991105, -0.0399184, 0.126957, 0, 0.953956, 0.299946, -0.133085, -0.297278, 0.94547, 0.704235, 3.06481, 2.01449)
 stream = SubResource("AudioStream_xhr6w")
-attenuation_model = 3
-panning_strength = 0.0
-emission_angle_enabled = true
-doppler_tracking = 2
 
 [node name="Commands" type="Node" parent="."]
 
@@ -714,42 +675,5 @@ light_energy_on = 0.2
 transform = Transform3D(0.997974, -0.0455378, 0.0444316, 0, 0.698359, 0.715747, -0.0636228, -0.714297, 0.696945, -0.0587103, 3.1026, 2.18974)
 state_property = "blinking"
 target_path = NodePath("../../Cabin/banan/podloga_glowna/czuwak_on")
-
-[node name="Area3D" type="Area3D" parent="."]
-
-[node name="CollisionShape3D2" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.00912553, 3.11785, -1.93609)
-shape = SubResource("BoxShape3D_mu6ha")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D2"]
-material = ExtResource("16_mu6ha")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0421133, 2.37393, -2.15335)
-shape = SubResource("BoxShape3D_wwe3j")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D"]
-material = ExtResource("16_mu6ha")
-
-[node name="radio" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.562448, 2.69742, -2.6078)
-shape = SubResource("BoxShape3D_4hnq2")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/radio"]
-material = ExtResource("16_mu6ha")
-
-[node name="CollisionShape3D3" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.000213623, 2.52089, -3.83724)
-shape = SubResource("BoxShape3D_myls2")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D3"]
-material = ExtResource("16_mu6ha")
-
-[node name="CollisionShape3D4" type="CollisionShape3D" parent="Area3D"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.069458, 1.68179, -3.14416)
-shape = SubResource("BoxShape3D_lo85d")
-
-[node name="SteamAudioDynamicGeometry" type="SteamAudioDynamicGeometry" parent="Area3D/CollisionShape3D4"]
-material = ExtResource("16_mu6ha")
 
 [connection signal="blink" from="Lights/Czuwak" to="." method="_on_czuwak_blink"]

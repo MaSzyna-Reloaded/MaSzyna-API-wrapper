@@ -12,7 +12,8 @@ do
     esac
 done
 echo "Building Dynamic-linked library for host platform"
-scons target="template_debug" || exit 1
+cmake -B build-host -DGODOTCPP_TARGET=template_debug || exit 1
+cmake --build build-host || exit 1
 if [ "$unit_tests" = "true" ]; then
     echo "Running unit tests..."
     (godot --path demo --headless --import || exit 0) && godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml
@@ -20,8 +21,30 @@ if [ "$unit_tests" = "true" ]; then
     exit 0
 fi
 
-echo "Creating Dynamic-linked libraries for $target build..."
-scons platform="$platform" arch="$arch" target="$target" || exit 1
+echo "Creating Dynamic-linked libraries for $target-$platform build..."
+case $platform in
+  "windows")
+    cmake -B build-win64 \
+      -DGODOTCPP_TARGET="$target" \
+      -DGODOTCPP_PLATFORM=windows \
+      -DCMAKE_SYSTEM_NAME=Windows \
+      -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+      -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+      -DCMAKE_SIZEOF_VOID_P=8 || exit 1 #8 for 64bit, 4 for 32
+    cmake --build build-win64 || exit 1 ;;
+  "linux")
+    cmake -B build-linux64 \
+      -DGODOTCPP_TARGET="$target" || exit 1
+    cmake --build build-linux64 || exit 1 ;;
+  "android")
+    cmake -B build-android64 \
+      -DGODOTCPP_PLATFORM=android \
+      -DANDROID_NDK_ROOT=/usr/lib/android-sdk/ndk/28.1.13356709 \
+      -DANDROID_ABI=arm64-v8a -DANDROID_PLATFORM=24 \
+      -DGODOTCPP_TARGET="$target" || exit 1
+    cmake --build build-android64 || exit 1 ;;
+esac
+
 mkdir -p "build/${platform}"
 export_preset="${platform}_${arch}"
 target_file_name="reloaded_${export_preset}"

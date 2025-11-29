@@ -12,11 +12,8 @@ This C++ GDExtension for Godot Engine offers a simplified interface to the MaSzy
 ### Setup
 
 1. Install Python 3
-2. Install scons using `pip install scons`
-3. Install [MinGW-w64](https://mingw-w64.org/)
-4. Clone the repository and checkout submodules
-
-For a better reference see: for [windows](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_windows.html) and for [linux](https://docs.godotengine.org/en/4.3/contributing/development/compiling/compiling_for_linuxbsd.html)
+2. Install CMake 3.30 or newer. CMake will automatically install its dependencies.
+3. Clone the repository and checkout submodules
 
 ```
 git clone <url>
@@ -29,7 +26,28 @@ For build system setup,
 please take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
 ### Compiling
 ```bash
-scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|template_debug]
+	cmake -B build-<platform> \
+          -DGODOTCPP_TARGET="template_release"
+	cmake --build build-<platform>
+```
+
+Example:
+```bash
+	cmake -B build-linux64 \
+          -DGODOTCPP_TARGET="template_release"
+	cmake --build build-linux64
+```
+
+Cross-compiling (for Windows on Linux):
+```bash
+	cmake -B build-win64 \
+          -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64
 ```
 ### Compatibility
 
@@ -39,7 +57,7 @@ scons platform=android arch=[x86|x86_64|armv7|armv8] target=[template_release|te
 | 11.03.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 | 11.04.2025     | 4.4                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
 | 30.09.2025     | 4.5                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06           |
-| 30.11.2025     | 4.5.x                | ✅       | ✅     | ❌      | ❌                        | ❌   | C++ 17       | 24.06           |
+| 30.11.2025     | 4.5.x                | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11    |
 ### Documentation 
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/
@@ -48,8 +66,8 @@ If you have found any bug, have a suggestion or want to join us - feel free to o
 
 ### Code Quality
 
-#### Qodana
-Files on PRs are scanned by Qodana. All its reports are published [here](https://qodana.cloud/projects/ARjJ6)
+#### CI
+Clang-tidy checks are performed on CI. Those will fail automatically and publish results if any warning/error is found
 
 ### Testing
 

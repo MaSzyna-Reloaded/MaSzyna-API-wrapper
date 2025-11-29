@@ -22,7 +22,8 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-win64/
           key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
           restore-keys: |
             ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-
@@ -35,7 +36,7 @@ jobs:
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: lib-windows-${{ matrix.target }}-${{ matrix.arch }}
-          path: bin/windows
+          path: demo/bin/libmaszyna/windows
 
       - uses: actions/upload-artifact@v4.6.2
         with:
@@ -48,7 +49,8 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-win64/
           key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
 
   build-linux:
@@ -68,7 +70,8 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-linux64/
           key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
           restore-keys: |
             ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-
@@ -81,7 +84,7 @@ jobs:
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: lib-linux-${{ matrix.target }}-${{ matrix.arch }}
-          path: bin/linux
+          path: demo/bin/libmaszyna/linux
 
       - uses: actions/upload-artifact@v4.6.2
         with:
@@ -94,7 +97,8 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-linux64/
           key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
 
   build-android:
@@ -114,7 +118,8 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-android64/
           key: ${{ matrix.target }}-android-godot-cpp
           restore-keys: |
             ${{ matrix.target }}-android-${{ matrix.arch }}-godot-
@@ -127,7 +132,7 @@ jobs:
       - uses: actions/upload-artifact@v4.6.2
         with:
           name: lib-android-${{ matrix.target }}-${{ matrix.arch }}
-          path: bin/android
+          path: demo/bin/libmaszyna/android
 
       - uses: actions/upload-artifact@v4.6.2
         with:
@@ -140,5 +145,6 @@ jobs:
         with:
           path: |
             godot-cpp/
-            .sconsign.dblite
+            build-host/
+            build-android64/
           key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp

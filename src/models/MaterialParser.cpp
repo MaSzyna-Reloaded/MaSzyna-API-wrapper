@@ -11,7 +11,8 @@ namespace godot {
 
     Ref<MaszynaMaterial> MaterialParser::parse(const String &model_path, const String &material_path) {
         Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
-        const String final_path = MaterialManager::get_material_path(model_path, material_path);
+        material_manager = memnew(MaterialManager);
+        const String final_path = material_manager->get_material_path(model_path, material_path);
         if (const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ); file.is_valid()) {
             parser = memnew(MaszynaParser);
             parser->initialize(file->get_buffer(static_cast<int64_t>(file->get_length())));

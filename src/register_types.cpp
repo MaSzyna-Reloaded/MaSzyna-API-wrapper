@@ -1,4 +1,3 @@
-#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
@@ -25,6 +24,7 @@
 #include "models/e3d/instance/E3DModelNodesInstancer.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
@@ -32,11 +32,12 @@
 #include "resources/material/MaszynaMaterial.hpp"
 #include "settings/UserSettings.hpp"
 #include "systems/TrainSecuritySystem.hpp"
+
 #include <gdextension_interface.h>
-#include <godot_cpp/godot.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
@@ -47,8 +48,8 @@ E3DModelInstanceManager *model_instance_manager_singleton = nullptr;
 
 static bool is_doctool_mode() {
     const PackedStringArray args = OS::get_singleton()->get_cmdline_args();
-    for (int i = 0; i < args.size(); ++i) {
-        if (args[i] == "--doctool") {
+    for (const auto & arg : args) {
+        if (arg == "--doctool") {
             return true;
         }
     }
@@ -116,6 +117,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         if (!is_doctool_mode()) {
             train_system_singleton = memnew(TrainSystem);
             // log_system_singleton = memnew(LogSystem);
+            log_system_singleton = memnew(LogSystem);
+            material_manager_singleton = memnew(MaterialManager);
             // user_settings_singleton = memnew(UserSettings);
             // action_queue_singleton = memnew(ActionQueue);
             // model_instance_manager_singleton = memnew(E3DModelInstanceManager);
@@ -124,6 +127,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             Engine::get_singleton()->register_singleton("LogSystem", log_system_singleton);
             // Engine::get_singleton()->register_singleton("ActionQueue", action_queue_singleton);
             // Engine::get_singleton()->register_singleton("E3DModelInstanceManager", model_instance_manager_singleton);
+
+            Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
 
             // Engine::get_singleton()->register_singleton("MaterialManager", memnew(MaterialManager));
             // MaterialManager::init();
@@ -165,7 +170,7 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         }
 
         // Explicitly delete instances to avoid leaks during doctool/editor shutdown.
-        if (train_system_singleton) {
+        if (train_system_singleton != nullptr) {
             memdelete(train_system_singleton);
             train_system_singleton = nullptr;
         }
@@ -180,9 +185,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         //     memdelete(user_settings_singleton);
         //     user_settings_singleton = nullptr;
         // }
-        if (log_system_singleton) {
+        if (log_system_singleton != nullptr) {
             memdelete(log_system_singleton);
             log_system_singleton = nullptr;
+        }
+
+        if (material_manager_singleton != nullptr) {
+            memdelete(material_manager_singleton);
+            material_manager_singleton = nullptr;
         }
         // if (action_queue_singleton) {
         //     memdelete(action_queue_singleton);

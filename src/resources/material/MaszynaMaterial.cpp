@@ -4,13 +4,17 @@
 namespace godot {
     MaszynaMaterial::MaszynaMaterial() :
         albedo_texture_path(String(), [this](const String &newVal) {
-                    albedo_texture_path = _parse_texture_path(newVal);
+                    // Do not re-assign to albedo_texture_path here to avoid infinite recursion.
+                    // The value is already set when the callback is called.
+                    // If we need to modify the value, we should do it BEFORE it's set or in a way that doesn't trigger the callback.
+                    // For now, _parse_texture_path handles transparency side-effects.
+                    _parse_texture_path(newVal);
                 }),
     winter_albedo_texture_path(String(), [this](const String &newVal) {
-                    winter_albedo_texture_path = _parse_texture_path(newVal);
+                    _parse_texture_path(newVal);
                 }),
     autumn_albedo_texture_path(String(), [this](const String &newVal) {
-                    autumn_albedo_texture_path = _parse_texture_path(newVal);
+                    _parse_texture_path(newVal);
                 }) {}
 
     void MaszynaMaterial::apply_to_material(StandardMaterial3D *p_material) const {

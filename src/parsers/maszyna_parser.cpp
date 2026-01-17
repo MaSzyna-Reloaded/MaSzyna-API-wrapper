@@ -30,9 +30,9 @@ namespace godot {
         cursor = 0;
     }
 
-    int MaszynaParser::get8() {
+    int64_t MaszynaParser::get8() {
         if (cursor < length) {
-            return buffer[cursor++];
+            return buffer.get(cursor++);
         }
         return -1;
     }
@@ -40,7 +40,7 @@ namespace godot {
     String MaszynaParser::get_line() {
         PackedByteArray subbuf;
         while (!eof_reached()) {
-            const int c = get8();
+            const int64_t c = get8();
             if (c == 10 || c == 13) {
                 break;
             }
@@ -54,7 +54,7 @@ namespace godot {
     }
 
     void MaszynaParser::register_handler(const String &token, const Callable &callback) {
-        handlers[token] = callback;
+        handlers.set(token, callback);
     }
 
     bool MaszynaParser::as_bool(const String &token) {
@@ -63,7 +63,7 @@ namespace godot {
     }
 
     Vector3 MaszynaParser::as_vector3(const Array &tokens) {
-        return Vector3(tokens[0], tokens[1], tokens[2]);
+        return Vector3(tokens.get(0), tokens.get(1), tokens.get(2));
     }
 
     Array MaszynaParser::get_tokens(const int num, const Array &stop) {
@@ -126,7 +126,7 @@ namespace godot {
                 Array keys = parameters.keys();
                 for (const auto & key : keys) {
                     String param = key;
-                    String value = parameters[param];
+                    String value = parameters.get(param, "");
                     token = token.replace("(" + param + ")", value);
                 }
                 tokens.append(token);
@@ -137,8 +137,8 @@ namespace godot {
     }
 
     String MaszynaParser::next_token(const Array &stop = Array::make(" ", '\t', '\n', '\r', ';')) {
-        Array tokens = get_tokens(1, stop);
-        return tokens.size() > 0 ? tokens[0] : "";
+        const Array tokens = get_tokens(1, stop);
+        return tokens.size() > 0 ? tokens.get(0) : "";
     }
 
     Vector3 MaszynaParser::next_vector3(const Array &stop) {
@@ -166,7 +166,7 @@ namespace godot {
         Array result;
         while (!eof_reached()) {
             if (String token = next_token(); handlers.has(token)) {
-                if (Callable callback = handlers[token]; callback.is_valid()) {
+                if (Callable callback = handlers.get(token, ""); callback.is_valid()) {
                     if (Array parsed = callback.call(); parsed.size() > 0) {
                         result.append_array(parsed);
                     }

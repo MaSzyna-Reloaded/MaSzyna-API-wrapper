@@ -7,7 +7,7 @@ var e3d_loader = E3DResourceFormatLoader.new()
 
 var maszyna_environment_node_script = preload("res://addons/libmaszyna/environment/maszyna_environment_node.gd")
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
-#var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
+var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
 
 # Editor plugins
@@ -23,16 +23,16 @@ func _enter_tree():
 
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
-    #add_autoload_singleton("SceneryResourceLoader", "res://addons/libmaszyna/scenery/scenery_resource_loader.gd")
+    add_autoload_singleton("SceneryResourceLoader", "res://addons/libmaszyna/scenery/scenery_resource_loader.gd")
     add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
     #add_autoload_singleton("MaterialManager", "res://addons/libmaszyna/materials/material_manager.gd")
     #add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
-    #add_autoload_singleton("E3DParser", "res://addons/libmaszyna/e3d/e3d_parser.gd")
-    #add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
-    #add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
-    #add_autoload_singleton("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
-    #add_autoload_singleton("E3DModelInstanceManager", "res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd")
+    add_autoload_singleton("E3DParser", "res://addons/libmaszyna/e3d/e3d_parser.gd")
+    add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
+    add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
+    add_autoload_singleton("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
+    add_autoload_singleton("E3DModelInstanceManager", "res://addons/libmaszyna/e3d/e3d_model_instance_manager.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
 
     add_custom_type(
@@ -42,12 +42,12 @@ func _enter_tree():
         maszyna_environment_node_icon,
     )
 
-    #add_custom_type(
-        #"E3DModelInstance",
-        #"VisualInstance3D",
-        #e3d_model_instance_script,
-        #e3d_model_instance_icon,
-    #)
+    add_custom_type(
+        "E3DModelInstance",
+        "VisualInstance3D",
+        e3d_model_instance_script,
+        e3d_model_instance_icon,
+    )
 
     ResourceLoader.add_resource_format_loader(e3d_loader)
     user_settings_dock = user_settings_dock_scene.instantiate()
@@ -66,11 +66,11 @@ func _exit_tree():
     remove_custom_type("MaszynaEnvironmentNode")
 
     remove_autoload_singleton("AudioStreamManager")
-    #remove_autoload_singleton("E3DModelInstanceManager")
-    #remove_autoload_singleton("UserSettings")
-    #remove_autoload_singleton("E3DNodesInstancer")
-    #remove_autoload_singleton("E3DModelManager")
-    #remove_autoload_singleton("E3DParser")
+    remove_autoload_singleton("E3DModelInstanceManager")
+    remove_autoload_singleton("UserSettings")
+    remove_autoload_singleton("E3DNodesInstancer")
+    remove_autoload_singleton("E3DModelManager")
+    remove_autoload_singleton("E3DParser")
     #remove_autoload_singleton("MaterialParser")
     #remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("Console")

@@ -64,7 +64,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
-        GDREGISTER_CLASS(ActionQueue);
+        // GDREGISTER_CLASS(ActionQueue);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
@@ -90,6 +90,13 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(LightListItem);
         GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake);
 
+        // GDREGISTER_RUNTIME_CLASS(E3DModelInstance);
+        // GDREGISTER_CLASS(E3DModelInstanceManager);
+        // GDREGISTER_CLASS(E3DModelNodesInstancer);
+        // GDREGISTER_CLASS(E3DModel);
+        // GDREGISTER_CLASS(E3DModelManager);
+        // GDREGISTER_CLASS(E3DResourceFormatLoader);
+        // GDREGISTER_CLASS(E3DSubModel);
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
@@ -104,19 +111,22 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaterialParser);
         GDREGISTER_CLASS(MaterialManager);
         GDREGISTER_CLASS(MaszynaMaterial);
-        GDREGISTER_CLASS(UserSettings);
+        // GDREGISTER_CLASS(UserSettings);
 
         if (!is_doctool_mode()) {
             train_system_singleton = memnew(TrainSystem);
             // log_system_singleton = memnew(LogSystem);
-            user_settings_singleton = memnew(UserSettings);
-            action_queue_singleton = memnew(ActionQueue);
-            model_instance_manager_singleton = memnew(E3DModelInstanceManager);
+            // user_settings_singleton = memnew(UserSettings);
+            // action_queue_singleton = memnew(ActionQueue);
+            // model_instance_manager_singleton = memnew(E3DModelInstanceManager);
             Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
-            Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);
+            // Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);
             Engine::get_singleton()->register_singleton("LogSystem", log_system_singleton);
-            Engine::get_singleton()->register_singleton("ActionQueue", action_queue_singleton);
-            Engine::get_singleton()->register_singleton("E3DModelInstanceManager", model_instance_manager_singleton);
+            // Engine::get_singleton()->register_singleton("ActionQueue", action_queue_singleton);
+            // Engine::get_singleton()->register_singleton("E3DModelInstanceManager", model_instance_manager_singleton);
+
+            // Engine::get_singleton()->register_singleton("MaterialManager", memnew(MaterialManager));
+            // MaterialManager::init();
         }
     }
 }
@@ -140,18 +150,18 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             if (_singleton->has_singleton("TrainSystem")) {
                 Engine::get_singleton()->unregister_singleton("TrainSystem");
             }
-            if (_singleton->has_singleton("UserSettings")) {
-                Engine::get_singleton()->unregister_singleton("UserSettings");
-            }
+            // if (_singleton->has_singleton("UserSettings")) {
+            //     Engine::get_singleton()->unregister_singleton("UserSettings");
+            // }
             if (_singleton->has_singleton("LogSystem")) {
                 Engine::get_singleton()->unregister_singleton("LogSystem");
             }
-            if (_singleton->has_singleton("ActionQueue")) {
-                Engine::get_singleton()->unregister_singleton("ActionQueue");
-            }
-            if (_singleton->has_singleton("E3DModelInstanceManager")) {
-                Engine::get_singleton()->unregister_singleton("E3DModelInstanceManager");
-            }
+            // if (_singleton->has_singleton("ActionQueue")) {
+            //     Engine::get_singleton()->unregister_singleton("ActionQueue");
+            // }
+            // if (_singleton->has_singleton("E3DModelInstanceManager")) {
+            //     Engine::get_singleton()->unregister_singleton("E3DModelInstanceManager");
+            // }
         }
 
         // Explicitly delete instances to avoid leaks during doctool/editor shutdown.
@@ -159,6 +169,29 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             memdelete(train_system_singleton);
             train_system_singleton = nullptr;
         }
+        // if (const Engine* _singleton = Engine::get_singleton(); _singleton != nullptr) {
+        //     if (_singleton->has_singleton("MaterialManager")) {
+        //         MaterialManager::cleanup();
+        //         memdelete(_singleton->get_singleton("MaterialManager"));
+        //         Engine::get_singleton()->unregister_singleton("MaterialManager");
+        //     }
+        // }
+        // if (user_settings_singleton) {
+        //     memdelete(user_settings_singleton);
+        //     user_settings_singleton = nullptr;
+        // }
+        if (log_system_singleton) {
+            memdelete(log_system_singleton);
+            log_system_singleton = nullptr;
+        }
+        // if (action_queue_singleton) {
+        //     memdelete(action_queue_singleton);
+        //     action_queue_singleton = nullptr;
+        // }
+        // if (model_instance_manager_singleton) {
+        //     memdelete(model_instance_manager_singleton);
+        //     model_instance_manager_singleton = nullptr;
+        // }
         // if (user_settings_singleton) {
         //     memdelete(user_settings_singleton);
         //     user_settings_singleton = nullptr;

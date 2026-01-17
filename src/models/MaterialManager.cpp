@@ -1,51 +1,132 @@
 #include "MaterialManager.hpp"
 #include "MaterialParser.hpp"
-#include <godot_cpp/classes/scene_tree.hpp>
-#include <godot_cpp/classes/window.hpp>
 #include "resources/material/MaszynaMaterial.hpp"
 #include "settings/UserSettings.hpp"
 
-#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/image.hpp>
-#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/class_db.hpp>
 
 
 namespace godot {
-    MaterialManager *MaterialManager::singleton = nullptr;
+    MaterialParser *MaterialManager::parser = nullptr;
+    Ref<StandardMaterial3D> *MaterialManager::_unknown_material = nullptr;
+    Ref<ImageTexture> *MaterialManager::_unknown_texture = nullptr;
+    UserSettings *MaterialManager::user_settings_node = nullptr;
+    Dictionary *MaterialManager::_textures = nullptr;
+    Dictionary *MaterialManager::_materials = nullptr;
+    bool MaterialManager::use_alpha_transparency = false;
+    const char *MaterialManager::_transparency_codes[3] = {"0", "a", "s"};
 
     void MaterialManager::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_material", "model_path", "material_path", "transparent", "is_sky", "diffuse_color"), &MaterialManager::get_material, DEFVAL(Transparency::Disabled), DEFVAL(false), DEFVAL(Color(1,1,1)));
-        ClassDB::bind_method(D_METHOD("get_texture", "texture_path"), &MaterialManager::get_texture);
-        ClassDB::bind_method(D_METHOD("load_texture", "model_path", "material_name", "global"), &MaterialManager::load_texture, DEFVAL(true));
-        ClassDB::bind_method(D_METHOD("load_submodel_texture", "model_path", "material_name"), &MaterialManager::load_submodel_texture);
+        ClassDB::bind_static_method(
+                "MaterialManager",
+                D_METHOD("get_material", "model_path", "material_path", "transparent", "is_sky", "diffuse_color"),
+                &MaterialManager::get_material, DEFVAL(Transparency::Disabled), DEFVAL(false), DEFVAL(Color(1, 1, 1)));
+        ClassDB::bind_static_method(
+                "MaterialManager", D_METHOD("get_texture", "texture_path"), &MaterialManager::get_texture);
+        ClassDB::bind_static_method(
+                "MaterialManager", D_METHOD("load_texture", "model_path", "material_name", "global"),
+                &MaterialManager::load_texture, DEFVAL(true));
+        ClassDB::bind_static_method(
+                "MaterialManager", D_METHOD("load_submodel_texture", "model_path", "material_name"),
+                &MaterialManager::load_submodel_texture);
 
-        ClassDB::bind_method(D_METHOD("_clear_cache"), &MaterialManager::_clear_cache);
-        ClassDB::bind_method(D_METHOD("_on_config_changed"), &MaterialManager::_on_config_changed);
+        ClassDB::bind_static_method("MaterialManager", D_METHOD("_clear_cache"), &MaterialManager::_clear_cache);
+        ClassDB::bind_static_method(
+                "MaterialManager", D_METHOD("_on_config_changed"), &MaterialManager::_on_config_changed);
 
         BIND_ENUM_CONSTANT(Disabled);
         BIND_ENUM_CONSTANT(Alpha);
         BIND_ENUM_CONSTANT(AlphaScissor);
     }
 
-    MaterialManager *MaterialManager::get_singleton() {
-        return singleton;
+    void MaterialManager::init() {
+        UtilityFunctions::print("[MaterialManager] Initializing MaterialManager...");
+        if (parser == nullptr) {
+            parser = memnew(MaterialParser);
+        }
+        if (_textures == nullptr) {
+            _textures = memnew(Dictionary);
+        }
+        if (_materials == nullptr) {
+            _materials = memnew(Dictionary);
+        }
+        if (_unknown_texture == nullptr) {
+            _unknown_texture = memnew(Ref<ImageTexture>);
+        }
+        if (_unknown_material == nullptr) {
+            _unknown_material = memnew(Ref<StandardMaterial3D>);
+        }
+        _clear_cache();
+
+        // Try to find UserSettings if it's already registered as a singleton
+        if (Engine::get_singleton()->has_singleton("UserSettings")) {
+            user_settings_node = Object::cast_to<UserSettings>(Engine::get_singleton()->get_singleton("UserSettings"));
+        }
+
+        if (user_settings_node != nullptr) {
+            Object *mm_singleton = Engine::get_singleton()->get_singleton("MaterialManager");
+            user_settings_node->connect(
+                    "config_changed",
+                    Callable(mm_singleton, "_on_config_changed"));
+            user_settings_node->connect(
+                    "cache_clear_requested",
+                    mm_singleton != nullptr ? Callable(mm_singleton, "_clear_cache") : Callable());
+        }
     }
 
-    String MaterialManager::get_material_path(const String &model_name, const String &material_name) const {
-        if (user_settings_node == nullptr) {
-            return "";
+    void MaterialManager::cleanup() {
+        if (_unknown_material != nullptr) {
+            _unknown_material->unref();
+            memdelete(_unknown_material);
+            _unknown_material = nullptr;
         }
-        String project_data_dir = user_settings_node->get_maszyna_game_dir();
+
+        if (_unknown_texture != nullptr) {
+            _unknown_texture->unref();
+            memdelete(_unknown_texture);
+            _unknown_texture = nullptr;
+        }
+
+        if (_textures != nullptr) {
+            memdelete(_textures);
+            _textures = nullptr;
+        }
+        if (_materials != nullptr) {
+            memdelete(_materials);
+            _materials = nullptr;
+        }
+        if (parser != nullptr) {
+            memdelete(parser);
+            parser = nullptr;
+        }
+    }
+
+    String MaterialManager::get_material_path(const String &model_name, const String &material_name) {
+        if (user_settings_node == nullptr) {
+            // Fallback if not initialized or not found
+            if (Engine::get_singleton()->has_singleton("UserSettings")) {
+                user_settings_node =
+                        Object::cast_to<UserSettings>(Engine::get_singleton()->get_singleton("UserSettings"));
+            }
+            if (user_settings_node == nullptr) {
+                return "";
+            }
+        }
+        String project_data_dir = "/home/DoS/Games/SteamLibrary/steamapps/common/MaSzyna/";
         PackedStringArray _possible_paths = {
-            project_data_dir+"/"+model_name+"/"+material_name+".mat",
-            project_data_dir+"/textures/"+model_name+"/"+material_name+".mat",
-            project_data_dir+"/"+material_name+".mat",
-            project_data_dir+"/"+"textures/"+material_name+".mat",
+                project_data_dir + "/" + model_name + "/" + material_name + ".mat",
+                project_data_dir + "/textures/" + model_name + "/" + material_name + ".mat",
+                project_data_dir + "/" + material_name + ".mat",
+                project_data_dir + "/" + "textures/" + material_name + ".mat",
         };
 
-        for (String _file: _possible_paths) {
+        for (auto _file : _possible_paths) {
             if (FileAccess::file_exists(_file)) {
                 return _file;
             }
@@ -54,58 +135,17 @@ namespace godot {
         return "";
     }
 
-    MaterialManager::MaterialManager() {
-        parser = memnew(MaterialParser);
-        user_settings_node = nullptr; // Will be set on enter tree when SceneTree is available
-        ERR_FAIL_COND(singleton != nullptr);
-        singleton = this;
-        // Defer loading of fallback resources to when they are actually needed
-        // or when the node enters the scene tree. This avoids touching the RenderingServer
-        // during doctool/editor headless runs and prevents shutdown errors.
-    }
-
-    MaterialManager::~MaterialManager() {
-        // Ensure we drop refs before the RenderingServer is torn down.
-        _unknown_material.unref();
-        _unknown_texture.unref();
-        ERR_FAIL_COND(singleton != this);
-        singleton = nullptr;
-        memdelete(parser);
-    }
-
-    void MaterialManager::_notification(const int p_what) {
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE: {
-                // SceneTree should be available now; acquire UserSettings if not set
-                if (user_settings_node == nullptr && get_tree() && get_tree()->get_root()) {
-                    user_settings_node = get_tree()->get_root()->get_node<UserSettings>("UserSettings");
-                }
-                _clear_cache(); // Initial setup
-                if (user_settings_node) {
-                    // Assuming UserSettings is an autoload singleton
-                    user_settings_node->connect("config_changed", callable_mp(this, &MaterialManager::_on_config_changed));
-                    user_settings_node->connect("cache_clear_requested", callable_mp(this, &MaterialManager::_clear_cache));
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE:
-            case NOTIFICATION_PREDELETE: {
-                // Drop references to GPU resources as early as possible.
-                _unknown_material.unref();
-                _unknown_texture.unref();
-                _textures.clear();
-                _materials.clear();
-            } break;
-            default: ;
-        }
-    }
-
     void MaterialManager::_clear_cache() {
-        _textures.clear();
-        _materials.clear();
-        use_alpha_transparency = false; //UserSettings::get_setting("e3d", "use_alpha_transparency", "false");
-        if (user_settings_node) {
-            Variant v = user_settings_node->call("get_setting", "e3d", "use_alpha_transparency", false);
-            if (v.get_type() != Variant::NIL) {
+        if (_textures != nullptr) {
+            _textures->clear();
+        }
+        if (_materials != nullptr) {
+            _materials->clear();
+        }
+        use_alpha_transparency = false;
+        if (user_settings_node != nullptr) {
+            if (Variant v = user_settings_node->call("get_setting", "e3d", "use_alpha_transparency", false);
+                v.get_type() != Variant::NIL) {
                 use_alpha_transparency = static_cast<bool>(v);
             }
         }
@@ -115,51 +155,63 @@ namespace godot {
         _clear_cache();
     }
 
-    Ref<MaszynaMaterial> MaterialManager::load_material(const String &model_path, const String &material_name) const {
+    Ref<MaszynaMaterial> MaterialManager::load_material(const String &model_path, const String &material_name) {
+        if (parser == nullptr) {
+            parser = memnew(MaterialParser);
+        }
+        UtilityFunctions::print("[MaterialManager]", " Loading material: " + material_name);
         return parser->parse(model_path, material_name);
     }
 
     Ref<StandardMaterial3D> MaterialManager::get_material(
-        const String &model_path,
-        const String &material_path,
-        Transparency transparent,
-        const bool is_sky,
-        const Color &diffuse_color
-    ) {
-        const String _code = model_path + String("/") + material_path + ":t=" + _transparency_codes[transparent] + ":s=" + (is_sky ? "1" : "0");
+            const String &model_path, const String &material_path, Transparency transparent, const bool is_sky,
+            const Color &diffuse_color) {
+        const String _code = model_path + String("/") + material_path + ":t=" + _transparency_codes[transparent] +
+                             ":s=" + (is_sky ? "1" : "0");
 
-        if (_materials.has(_code)) {
-            return _materials[_code];
+        if (_materials != nullptr && _materials->has(_code)) {
+            return _materials->get(_code, "");
         }
 
-        Ref<StandardMaterial3D> _m;
-        _m.instantiate();
-
-        Ref<MaszynaMaterial> _mmat = load_material(model_path, material_path);
-
+        Ref<StandardMaterial3D> _m = memnew(StandardMaterial3D);
+        UtilityFunctions::print("MaterialManager", "Creating material: " + material_path);
+        const Ref<MaszynaMaterial> _mmat = load_material(model_path, material_path);
+        UtilityFunctions::print("MaterialManager", "Loaded material: " + material_path);
         if (_mmat.is_valid()) {
+            UtilityFunctions::print("MaterialManager", "Material is valid: " + material_path);
+
+            UtilityFunctions::print("[MaterialManager] ", "Trying to load normal: " + material_path);
             if (!_mmat->get_albedo_texture_path().is_empty()) {
-                _m->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, load_texture(model_path, _mmat->get_albedo_texture_path()));
+
+                UtilityFunctions::print(
+                        "[MaterialManager] ", "Albedo is NOT empty: " + _mmat->get_albedo_texture_path());
+                _m->set_texture(
+                        BaseMaterial3D::TEXTURE_ALBEDO, load_texture(model_path, _mmat->get_albedo_texture_path()));
             } else {
                 // possibly "COLORED" material
+                UtilityFunctions::print("[MaterialManager] ", "Albedo is empty: " + material_path);
                 _m->set_albedo(diffuse_color);
             }
 
+
+            UtilityFunctions::print("[MaterialManager] ", "Trying to load normal: " + material_path);
             if (const String _normal = _mmat->get_normal_texture_path(); !_normal.is_empty()) {
-                if (const Ref<ImageTexture> normal_tex = load_texture(model_path, _normal); normal_tex.is_valid() && normal_tex->get_image().is_valid()) {
+                if (const Ref<ImageTexture> normal_tex = load_texture(model_path, _normal);
+                    normal_tex.is_valid() && normal_tex->get_image().is_valid()) {
                     const Ref<Image> im = normal_tex->get_image();
                     im->decompress();
                     im->normal_map_to_xy();
                     im->compress(Image::COMPRESS_S3TC, Image::COMPRESS_SOURCE_NORMAL);
-                    Ref<ImageTexture> new_normal_tex;
-                    new_normal_tex.instantiate();
-                    new_normal_tex->create_from_image(im);
+                    const Ref<ImageTexture> new_normal_tex = ImageTexture::create_from_image(im);
                     _m->set_texture(BaseMaterial3D::TEXTURE_NORMAL, new_normal_tex);
                     _m->set_feature(StandardMaterial3D::FEATURE_NORMAL_MAPPING, true);
                     _m->set_normal_scale(-5.0);
                 }
             }
             _mmat->apply_to_material(*_m);
+        } else {
+
+            UtilityFunctions::push_warning("MaterialManager", "Material is NOT valid: " + material_path);
         }
 
         _m->set_alpha_scissor_threshold(0.5); // default
@@ -170,7 +222,7 @@ namespace godot {
             if (const Ref<Image> img = _tex_alpha->get_image(); img.is_valid()) {
                 texture_alpha = img->detect_alpha() != Image::ALPHA_NONE;
             }
-            if(!texture_alpha) {
+            if (!texture_alpha) {
                 texture_alpha = _tex_alpha->has_alpha();
             }
         }
@@ -204,7 +256,9 @@ namespace godot {
             _m->set_flag(StandardMaterial3D::FLAG_DISABLE_AMBIENT_LIGHT, true);
         }
 
-        _materials[_code] = _m;
+        if (_materials != nullptr) {
+            _materials->set(_code, _m);
+        }
         return _m;
     }
 
@@ -212,69 +266,85 @@ namespace godot {
         return load_texture("", texture_path);
     }
 
-    Ref<ImageTexture> MaterialManager::load_texture(const String &model_path, const String &material_name, bool global) {
-        auto ensure_fallback = [&]() {
-            if (!_unknown_texture.is_valid()) {
-                if (ResourceLoader *rl = ResourceLoader::get_singleton()) {
-                    _unknown_texture = rl->load("res://addons/libmaszyna/materials/missing_texture.png");
-                }
-            }
-        };
-        if (user_settings_node == nullptr) {
-            ensure_fallback();
-            return _unknown_texture;
+    Ref<ImageTexture>
+    MaterialManager::load_texture(const String &model_path, const String &material_name, bool global) {
+
+        UtilityFunctions::print("[MaterialManager] ", "Loading texture for: " + model_path + ", " + material_name + "...");
+
+        if (_unknown_texture == nullptr) {
+            _unknown_texture = memnew(Ref<ImageTexture>);
         }
-        String project_data_dir = user_settings_node->call("get_maszyna_game_dir");
+
+        if (_unknown_texture->is_null()) {
+            if (ResourceLoader *rl = ResourceLoader::get_singleton()) {
+                UtilityFunctions::print("[MaterialManager] ", "Loading fallback texture");
+                *_unknown_texture = rl->load("res://addons/libmaszyna/materials/missing_texture.png");
+            }
+        }
+        
+        String project_data_dir;
+        if (user_settings_node != nullptr) {
+            project_data_dir = user_settings_node->get_maszyna_game_dir();
+        }
+        
+        if (project_data_dir.is_empty()) {
+             project_data_dir = "/home/DoS/Games/SteamLibrary/steamapps/common/MaSzyna/";
+        }
 
         if (project_data_dir.ends_with("\\") || project_data_dir.ends_with("/")) {
             project_data_dir = project_data_dir.substr(0, project_data_dir.length() - 1);
         }
 
+        UtilityFunctions::print("[MaterialManager] ", "Searching for texture in: " + project_data_dir);
         PackedStringArray possible_paths;
         possible_paths.push_back(project_data_dir.path_join(model_path).path_join(material_name + String(".dds")));
-        possible_paths.push_back(project_data_dir.path_join("textures").path_join(model_path).path_join(material_name + String(".dds")));
+        possible_paths.push_back(project_data_dir.path_join(model_path).path_join(material_name + String(".dds")));
+        possible_paths.push_back(
+                project_data_dir.path_join(model_path).path_join(material_name + String(".dds")));
         possible_paths.push_back(project_data_dir.path_join(material_name + String(".dds")));
         possible_paths.push_back(project_data_dir.path_join("textures").path_join(material_name + String(".dds")));
 
         String final_path;
         for (int i = 0; i < possible_paths.size(); ++i) {
-            if (FileAccess::file_exists(possible_paths[i])) {
-                final_path = possible_paths[i];
+            UtilityFunctions::print("[MaterialManager] ", "Checking path: " + possible_paths.get(i));
+            if (FileAccess::file_exists(possible_paths.get(i))) {
+                final_path = possible_paths.get(i);
                 break;
             }
         }
 
         if (final_path.is_empty()) {
-            return _unknown_texture;
+            UtilityFunctions::print("[MaterialManager] ", "Using fallback texture");
+            return (_unknown_texture != nullptr) ? *_unknown_texture : Ref<ImageTexture>();
         }
 
-        if (_textures.has(final_path)) {
-            return _textures[final_path];
+        if (_textures != nullptr && _textures->has(final_path)) {
+            return _textures->get(final_path, "");
         }
 
         const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ);
         if (!file.is_valid()) {
             UtilityFunctions::push_error("Error opening texture file: " + final_path);
-            return _unknown_texture;
+            return (_unknown_texture != nullptr) ? *_unknown_texture : Ref<ImageTexture>();
         }
 
-        const PackedByteArray buffer = file->get_buffer(file->get_length());
+        UtilityFunctions::print("MaterialManager", "Loading texture: " + final_path);
+        const PackedByteArray buffer = file->get_buffer(static_cast<int64_t>(file->get_length()));
 
-        Ref<Image> im;
-        im.instantiate();
+        const Ref<Image> im = memnew(Image);
 
         if (const Error res = im->load_dds_from_buffer(buffer); res == OK) {
-            Ref<ImageTexture> tex;
-            tex.instantiate();
-            tex->create_from_image(im);
-            _textures[final_path] = tex;
+            Ref<ImageTexture> tex = ImageTexture::create_from_image(im);
+            if (_textures != nullptr) {
+                _textures->set(final_path, tex);
+            }
             return tex;
         }
         UtilityFunctions::push_error("Error loading texture \"" + final_path + "\" ");
-        return _unknown_texture;
+        return (_unknown_texture != nullptr) ? *_unknown_texture : Ref<ImageTexture>();
     }
 
     Ref<ImageTexture> MaterialManager::load_submodel_texture(const String &model_path, const String &material_name) {
         return load_texture(model_path, material_name, material_name.contains("/"));
     }
-}
+} // namespace godot

@@ -32,7 +32,7 @@ func _update_sky_shader():
 
     var shader_texture
     if sky_texture:
-        shader_texture = MaterialManager.new().get_texture(sky_texture)
+        shader_texture = MaterialManager.get_texture(sky_texture)
     else:
         shader_texture = null
     RenderingServer.global_shader_parameter_set("sky_texture", shader_texture)

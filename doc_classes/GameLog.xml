@@ -5,16 +5,16 @@
 	</brief_description>
 	<description>
 		Provides a simple, application-wide logging system with severity levels and a signal that emits whenever a new log line is produced.
-		
+
 		GameLog is available as an Engine singleton named "GameLog", so you can access the same instance from anywhere in scripts. For example, in GDScript:
-		
+
 		[codeblock]
 		GameLog.info("Scenario initialized")
 		GameLog.warning("Low FPS detected")
 		GameLog.error("Failed to load route")
 		GameLog.debug("Loaded config in %s ms" % load_time)
 		[/codeblock]
-		
+
 		Use this logger to output information relevant to the game runtime and to subscribe to log updates. For ad-hoc development diagnostics or editor-time messages, use Godot's built-in logging helpers (push_error, push_warning, print, print_rich).
 	</description>
 	<tutorials>

@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="MaterialManager" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="MaterialManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Thread-safe manager for MaSzyna materials and textures.
 	</brief_description>
 	<description>
+		The [MaterialManager] is responsible for locating, loading, and caching MaSzyna's material files (.mat) and textures (.dds). It translates these assets into Godot's [StandardMaterial3D] and [ImageTexture] resources. It implements an internal thread-safe cache to optimize performance and prevent duplicate resource creation.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -15,12 +17,30 @@
 			<param index="3" name="is_sky" type="bool" default="false" />
 			<param index="4" name="diffuse_color" type="Color" default="Color(1, 1, 1, 1)" />
 			<description>
+				Retrieves a cached [StandardMaterial3D] or creates a new one by parsing the MaSzyna material definition. Automatically detects alpha transparency from textures and handles special "sky" material properties.
+			</description>
+		</method>
+		<method name="get_material_path">
+			<return type="String" />
+			<param index="0" name="model_name" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+				Searches for a [code].mat[/code] file within the MaSzyna directory structure, checking both model-specific and global texture directories.
 			</description>
 		</method>
 		<method name="get_texture">
 			<return type="ImageTexture" />
 			<param index="0" name="texture_path" type="String" />
 			<description>
+				Loads a texture directly from a given path relative to the MaSzyna root or global texture folders.
+			</description>
+		</method>
+		<method name="load_material">
+			<return type="MaszynaMaterial" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+				Internal helper to parse a [code].mat[/code] file into a [MaszynaMaterial] resource.
 			</description>
 		</method>
 		<method name="load_submodel_texture">
@@ -28,23 +48,27 @@
 			<param index="0" name="model_path" type="String" />
 			<param index="1" name="material_name" type="String" />
 			<description>
+				Loads a texture specifically for a submodel context.
 			</description>
 		</method>
 		<method name="load_texture">
 			<return type="ImageTexture" />
 			<param index="0" name="model_path" type="String" />
 			<param index="1" name="material_name" type="String" />
-			<param index="2" name="global" type="bool" default="true" />
 			<description>
+				Locates and loads a [code].dds[/code] file, converting it into an [ImageTexture]. If the file is not found, a fallback "missing texture" is returned.
 			</description>
 		</method>
 	</methods>
 	<constants>
 		<constant name="Disabled" value="0" enum="Transparency">
+			No transparency.
 		</constant>
 		<constant name="Alpha" value="1" enum="Transparency">
+			Standard alpha blending.
 		</constant>
 		<constant name="AlphaScissor" value="2" enum="Transparency">
+			Alpha scissor (1-bit transparency).
 		</constant>
 	</constants>
 </class>

@@ -1,9 +1,22 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="MaterialParser" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="MaterialParser" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
+		Stateless parser for MaSzyna .mat files.
 	</brief_description>
 	<description>
+		[MaterialParser] provides the logic required to interpret MaSzyna material files. It extracts information such as shader types, albedo (diffuse) texture paths, and normal map paths. It is designed to be stateless and thread-safe, allowing concurrent parsing of multiple material files.
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="parse">
+			<return type="MaszynaMaterial" />
+			<param index="0" name="material_manager" type="MaterialManager" />
+			<param index="1" name="model_path" type="String" />
+			<param index="2" name="material_path" type="String" />
+			<description>
+				Reads and parses the material file at the specified path. Uses the provided [MaterialManager] to resolve file paths. Returns a [MaszynaMaterial] resource containing the parsed properties.
+			</description>
+		</method>
+	</methods>
 </class>

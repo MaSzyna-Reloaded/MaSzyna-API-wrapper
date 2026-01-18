@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <godot_cpp/classes/mutex.hpp>
 
 namespace godot {
     class MaterialParser;
@@ -20,12 +21,13 @@ namespace godot {
         };
 
     private:
-        MaterialParser *parser;
-        Ref<StandardMaterial3D> *_unknown_material;
-        Ref<ImageTexture> *_unknown_texture;
+        Ref<Mutex> mutex;
+        Ref<MaterialParser> parser;
+        Ref<StandardMaterial3D> _unknown_material;
+        Ref<ImageTexture> _unknown_texture;
         UserSettings *user_settings_node;
-        Dictionary *_textures;
-        Dictionary *_materials;
+        Dictionary _textures;
+        Dictionary _materials;
 
         bool use_alpha_transparency;
 

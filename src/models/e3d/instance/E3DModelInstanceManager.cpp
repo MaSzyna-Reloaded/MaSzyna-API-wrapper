@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/worker_thread_pool.hpp>
 #include "models/e3d/E3DModelManager.hpp"
 
 #include <algorithm>
@@ -85,14 +86,14 @@ namespace godot {
                             E3DModelNodesInstancer::instantiate(*_model, *instance, instance->get_editable_in_editor());
                             emit_signal(E3D_LOADED_SIGNAL);
                         };
-
-                        action_queue->add_item(make_lambda_callable(_do_instance), "Creating model");
+                        // We must instantiate nodes on the main thread
+                        action_queue->call_deferred("add_item", make_lambda_callable(_do_instance), "Creating model");
                     } break;
                     default: break;
                 }
             };
         };
 
-        action_queue->add_item(make_lambda_callable(_do_load), "Reloading model");
+        WorkerThreadPool::get_singleton()->add_task(make_lambda_callable(_do_load), true, "Reloading E3D model");
     }
 } //namespace godot

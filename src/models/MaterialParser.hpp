@@ -1,12 +1,12 @@
 #pragma once
 #include "models/MaterialManager.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/ref_counted.hpp>
 
 namespace godot {
     class MaszynaParser;
-    class MaterialParser: public Object {
-        GDCLASS(MaterialParser, Object)
+    class MaterialParser: public RefCounted {
+        GDCLASS(MaterialParser, RefCounted)
         private:
             MaszynaParser *parser;
             MaterialManager *material_manager;
@@ -15,6 +15,6 @@ namespace godot {
         protected:
             static void _bind_methods();
         public:
-            Ref<MaszynaMaterial> parse(const String &model_path, const String &material_path);
+            Ref<MaszynaMaterial> parse(MaterialManager *material_manager, const String &model_path, const String &material_path);
     };
 } //namespace godot

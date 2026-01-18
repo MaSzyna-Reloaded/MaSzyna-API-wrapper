@@ -161,6 +161,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             if (_singleton->has_singleton("LogSystem")) {
                 Engine::get_singleton()->unregister_singleton("LogSystem");
             }
+
+            if (_singleton->has_singleton("MaterialManager")) {
+                Engine::get_singleton()->unregister_singleton("MaterialManager");
+            }
             // if (_singleton->has_singleton("ActionQueue")) {
             //     Engine::get_singleton()->unregister_singleton("ActionQueue");
             // }

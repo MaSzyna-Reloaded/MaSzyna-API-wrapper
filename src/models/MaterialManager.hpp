@@ -52,7 +52,7 @@ namespace godot {
             const Color &diffuse_color = Color(1.0, 1.0, 1.0)
         );
         Ref<ImageTexture> get_texture(const String &texture_path);
-        Ref<ImageTexture> load_texture(const String &model_path, const String &material_name, bool global = true);
+        Ref<ImageTexture> load_texture(const String &model_path, const String &material_name);
         Ref<ImageTexture> load_submodel_texture(const String &model_path, const String &material_name);
     };
 

@@ -47,8 +47,8 @@ namespace godot {
     }
 
     String MaszynaMaterial::_parse_texture_path(const String &texturePath) {
-        PackedStringArray _parts = texturePath.split(":");
-        String _tex = _parts[0];
+        const PackedStringArray _parts = texturePath.split(":");
+        String _tex = _parts.get(0);
         if (_parts.has("t")) {
             transparency = StandardMaterial3D::TRANSPARENCY_ALPHA_SCISSOR;
         }

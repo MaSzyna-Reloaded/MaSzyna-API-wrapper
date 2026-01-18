@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="MaszynaParser" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="MaszynaParser" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
-		Parser for .e3d MaSzyna files. Reads meshes and creates them in Godot.
+		Thread-safe token-based parser for MaSzyna configuration and data files.
 	</brief_description>
 	<description>
-		This class provides a parser for the ".e3d" MaSzyna's file format. It reads mesh data from these files and generates corresponding mesh objects suitable for use within the Godot game engine. The parser uses a token-based approach for efficient processing of the input file. It uses helper methods for low-level data reading, token manipulation, and higher-level mesh data extraction. The parser also supports a metadata stack for handling nested structures in the input file and allows registering custom handlers for specific tokens.
+		This class provides a robust, thread-safe parser for various MaSzyna file formats (such as .e3d and .mat). It uses a token-based approach to scan input buffers, supports line and block comments, and handles parameter substitution. It also features a metadata stack for managing nested data structures during parsing.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -13,44 +13,44 @@
 			<return type="bool" />
 			<param index="0" name="token" type="String" />
 			<description>
-				Converts a token to a boolean value.
+				Converts a string token to a boolean. Returns [code]true[/code] if the token is "yes", "on", "1", "true", or "vis" (case-insensitive).
 			</description>
 		</method>
 		<method name="as_vector3">
 			<return type="Vector3" />
 			<param index="0" name="tokens" type="Array" />
 			<description>
-				Converts an array of tokens to a Vector3.
+				Converts an [Array] of three tokens into a [Vector3].
 			</description>
 		</method>
 		<method name="clear_metadata">
 			<return type="void" />
 			<description>
-				Clears the internal metadata stack.
+				Resets the metadata stack to a single empty dictionary.
 			</description>
 		</method>
 		<method name="eof_reached" qualifiers="const">
 			<return type="bool" />
 			<description>
-				Checks if the end of the file has been reached.
+				Returns [code]true[/code] if the internal cursor has reached the end of the buffer.
 			</description>
 		</method>
 		<method name="get8">
 			<return type="int" />
 			<description>
-				Reads and returns a single byte from the input stream.
+				Reads the next byte from the buffer and advances the cursor. Returns -1 if EOF is reached.
 			</description>
 		</method>
 		<method name="get_line">
 			<return type="String" />
 			<description>
-				Reads and returns the next line from the input stream.
+				Reads and returns the buffer content from the current cursor until the next newline character.
 			</description>
 		</method>
 		<method name="get_parsed_metadata">
 			<return type="Dictionary" />
 			<description>
-				Returns the currently parsed metadata.
+				Returns the dictionary at the top of the metadata stack.
 			</description>
 		</method>
 		<method name="get_tokens">
@@ -58,54 +58,54 @@
 			<param index="0" name="num" type="int" />
 			<param index="1" name="stop" type="Array" />
 			<description>
-				Reads and returns a specified number of tokens.
+				Attempts to read [code]num[/code] tokens from the buffer. Tokens are separated by whitespace or characters in the [code]stop[/code] array. Comments are automatically skipped.
 			</description>
 		</method>
 		<method name="get_tokens_until">
 			<return type="Array" />
 			<param index="0" name="token" type="String" />
-			<param index="1" name="stop" type="Array" />
+			<param index="1" name="stop" type="Array" default="[]" />
 			<description>
-				Reads tokens until a specified token is encountered.
+				Reads tokens until the specified [code]token[/code] is encountered.
 			</description>
 		</method>
 		<method name="initialize">
 			<return type="void" />
 			<param index="0" name="buffer" type="PackedByteArray" />
 			<description>
-				Initializes the parser with the file data.
+				Sets the source data buffer and resets the parser state.
 			</description>
 		</method>
 		<method name="next_token">
 			<return type="String" />
-			<param index="0" name="stop" type="Array" />
+			<param index="0" name="stop" type="Array" default="[]" />
 			<description>
-				Reads and returns the next token.
+				Helper to retrieve the next single token from the buffer.
 			</description>
 		</method>
 		<method name="next_vector3">
 			<return type="Vector3" />
 			<param index="0" name="stop" type="Array" />
 			<description>
-				Reads and returns the next Vector3.
+				Helper to retrieve the next three tokens as a [Vector3].
 			</description>
 		</method>
 		<method name="parse">
 			<return type="Array" />
 			<description>
-				Parses the entire file and returns the extracted mesh data.
+				Starts the main parsing loop, invoking registered handlers for recognized tokens.
 			</description>
 		</method>
 		<method name="pop_metadata">
 			<return type="Dictionary" />
 			<description>
-				Pops and returns metadata from the stack.
+				Removes and returns the top dictionary from the metadata stack.
 			</description>
 		</method>
 		<method name="push_metadata">
 			<return type="void" />
 			<description>
-				Pushes metadata onto the stack.
+				Pushes a new empty dictionary onto the metadata stack.
 			</description>
 		</method>
 		<method name="register_handler">
@@ -113,7 +113,7 @@
 			<param index="0" name="token" type="String" />
 			<param index="1" name="callback" type="Callable" />
 			<description>
-				Registers a custom handler for a specific token.
+				Registers a [Callable] to be executed when the specified [code]token[/code] is encountered during a [method parse] call.
 			</description>
 		</method>
 	</methods>

@@ -13,7 +13,7 @@ namespace godot {
         Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
         const String final_path = material_manager->get_material_path(model_path, material_path);
         if (const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ); file.is_valid()) {
-            parser = memnew(MaszynaParser);
+            MaszynaParser *parser = memnew(MaszynaParser);
             parser->initialize(file->get_buffer(static_cast<int64_t>(file->get_length())));
             const Dictionary data = {};
             TypedArray<Dictionary> current = {data};
@@ -74,7 +74,6 @@ namespace godot {
             material->set_albedo_texture_path(_t1);
             material->set_normal_texture_path(_t2);
             memdelete(parser);
-            parser = nullptr;
         } else {
             material->set_albedo_texture_path(material_path);
         }

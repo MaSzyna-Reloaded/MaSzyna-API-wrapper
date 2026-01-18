@@ -4,9 +4,9 @@
 #include "settings/UserSettings.hpp"
 
 #include <godot_cpp/classes/image_texture.hpp>
+#include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
-#include <godot_cpp/classes/mutex.hpp>
 
 namespace godot {
     class MaterialParser;

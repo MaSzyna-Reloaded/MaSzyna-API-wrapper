@@ -8,8 +8,6 @@ namespace godot {
     class MaterialParser: public RefCounted {
         GDCLASS(MaterialParser, RefCounted)
         private:
-            MaszynaParser *parser;
-            MaterialManager *material_manager;
             const PackedStringArray STOP_KEY = {" ", ";", String::chr(9), String::chr(10), String::chr(13)};
             const PackedStringArray STOP_VALUE = {" ", ";", String::chr(9), String::chr(10), String::chr(13)};
         protected:

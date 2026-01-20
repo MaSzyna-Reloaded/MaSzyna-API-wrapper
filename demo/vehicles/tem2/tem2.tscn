@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
 [ext_resource type="PackedScene" uid="uid://dwcx6807obsgm" path="res://vehicles/tem2/tem2_cabin.tscn" id="2_nt307"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_q4wpc"]
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="4_tujep"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
@@ -136,7 +135,7 @@ cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true
 low_poly_cabin_path = NodePath("TEM2_LowPolyCab")
 
-[node name="TEM2" type="VisualInstance3D" parent="."]
+[node name="TEM2" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -153,13 +152,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("2_q4wpc")
 data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "tem2-122a"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
 
-[node name="TEM2_LowPolyCab" type="VisualInstance3D" parent="."]
+[node name="TEM2_LowPolyCab" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -176,7 +174,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("2_q4wpc")
 data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "lowpoly/int_tem2"
 skins = ["tem2-122"]

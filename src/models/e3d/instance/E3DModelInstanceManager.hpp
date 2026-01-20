@@ -18,10 +18,9 @@ namespace godot {
             E3DModelInstanceManager();
             ~E3DModelInstanceManager() override;
             static const char *INSTANCES_RELOADED_SIGNAL;
-            static const char *E3D_LOADED_SIGNAL;
-            void reload_all();
+            void reload_all() const;
             void register_instance(E3DModelInstance *instance);
             void unregister_instance(E3DModelInstance *instance);
-            void reload_instance(E3DModelInstance *instance);
+            void reload_instance(E3DModelInstance *instance) const;
     };
-}
+} //namespace godot

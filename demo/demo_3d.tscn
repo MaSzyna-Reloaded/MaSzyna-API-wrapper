@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bsp43pawp632n"]
+[gd_scene load_steps=16 format=3 uid="uid://bsp43pawp632n"]
 
 [ext_resource type="Script" uid="uid://bjjgkykr4c718" path="res://demo_3d.gd" id="1_ut343"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
@@ -6,7 +6,6 @@
 [ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="2_n5hjg"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
@@ -83,6 +82,7 @@ text = "Loading..."
 [node name="LoadingScreen" parent="." instance=ExtResource("2_n5hjg")]
 
 [node name="DeveloperConsole" parent="." instance=ExtResource("2_ig825")]
+visible = null
 
 [node name="UserSettingsPanel" type="PanelContainer" parent="."]
 visible = false
@@ -156,198 +156,54 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
 
 [node name="Dekoracje" type="Node3D" parent="."]
 
-[node name="Dworzec Olkusz" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(1, 0, 0, 0, 0.999979, -0.00651009, 0, 0.00651009, 0.999979, 23.6762, -0.0722218, 3.12076)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Dworzec Olkusz" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/stacje/"
 model_filename = "dworzec_olkusz"
 skins = ["dworzec_olkusz_lhs"]
+transform = Transform3D(1, 0, 0, 0, 0.999979, -0.00651009, 0, 0.00651009, 0.999979, 23.6762, -0.0722218, 3.12076)
 
-[node name="Dworzec Sosnowiec" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(-0.996005, -0.000581314, -0.0892923, 0, 0.999979, -0.00651009, 0.0892942, -0.00648409, -0.995984, 21.3481, 0.108946, 32.9385)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Dworzec Sosnowiec" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/stacje/"
 model_filename = "dworzec_sosnowiec_porabka"
 skins = ["dworzec_sosnowiec_porabka"]
+transform = Transform3D(-0.996005, -0.000581314, -0.0892923, 0, 0.999979, -0.00651009, 0.0892942, -0.00648409, -0.995984, 21.3481, 0.108946, 32.9385)
 
-[node name="Nastawnia Sochaczew" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(0.995214, -0.000636179, -0.0977197, -2.73898e-10, 0.999979, -0.00651009, 0.0977218, 0.00647893, 0.995193, 49.2187, -0.199109, 49.3024)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Nastawnia Sochaczew" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/sochaczew/"
 model_filename = "nastawnia"
 skins = ["dworzec_sosnowiec_porabka"]
+transform = Transform3D(0.995214, -0.000636179, -0.0977197, -2.73898e-10, 0.999979, -0.00651009, 0.0977218, 0.00647893, 0.995193, 49.2187, -0.199109, 49.3024)
 
-[node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(-0.00991323, -0.00650977, -0.99993, -3.31827e-10, 0.999979, -0.00651009, 0.999951, -6.45372e-05, -0.00991302, -48.9397, -0.199109, 49.3024)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Szyb Kleofas" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/przemysl/kopalnie"
 model_filename = "szyb_kleofas_gigant"
 skins = ["dworzec_sosnowiec_porabka"]
+transform = Transform3D(-0.00991323, -0.00650977, -0.99993, -3.31827e-10, 0.999979, -0.00651009, 0.999951, -6.45372e-05, -0.00991302, -48.9397, -0.199109, 49.3024)
 
-[node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(0.991685, 0.000837795, 0.128689, -7.01784e-10, 0.999979, -0.00651009, -0.128692, 0.00645596, 0.991664, 69.2926, -0.199109, 92.8501)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="KWK Staszic" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/przemysl/kopalnie/kwk_staszic"
 model_filename = "szyb_ii"
+transform = Transform3D(0.991685, 0.000837795, 0.128689, -7.01784e-10, 0.999979, -0.00651009, -0.128692, 0.00645596, 0.991664, 69.2926, -0.199109, 92.8501)
 
-[node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(-0.989323, -0.000948765, -0.145735, -8.28882e-10, 0.999979, -0.0065101, 0.145738, -0.00644059, -0.989302, 16.5195, -0.199109, -17.7848)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Tabliczka PKP" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/otoczenie/obiekty_stacyjne"
 model_filename = "terenpkp"
+transform = Transform3D(-0.989323, -0.000948765, -0.145735, -8.28882e-10, 0.999979, -0.0065101, 0.145738, -0.00644059, -0.989302, 16.5195, -0.199109, -17.7848)
 
-[node name="Parkomat" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(-0.997577, -0.000452873, -0.0695637, -5.57518e-10, 0.999979, -0.0065101, 0.0695652, -0.00649432, -0.997556, 18.1062, -0.0388117, -10.9422)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Parkomat" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/miejskie"
 model_filename = "parkomat_rozi_macius9551"
+transform = Transform3D(-0.997577, -0.000452873, -0.0695637, -5.57518e-10, 0.999979, -0.0065101, 0.0695652, -0.00649432, -0.997556, 18.1062, -0.0388117, -10.9422)
 
-[node name="Skrzynka" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, 21.1062, -0.0161638, -10.6909)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Skrzynka" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/miejskie"
 model_filename = "skrzynka_tel_rozi_macius9551"
+transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, 21.1062, -0.0161638, -10.6909)
 
-[node name="Klamoty" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, -26.1908, -0.0161638, -13.3744)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
+[node name="Klamoty" type="E3DModelInstance" parent="Dekoracje"]
 data_path = "models/kolejowe"
 model_filename = "klamoty_naprawcze"
+transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, -26.1908, -0.0161638, -13.3744)
 
 [connection signal="fadein_finished" from="LoadingScreen" to="." method="_on_loading_screen_fadein_finished"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

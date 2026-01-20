@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="3_vuhlb"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_c88oy"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(4.5332, 4.72223, 17.0549)
@@ -24,7 +23,7 @@ transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 
 
 [node name="SM42v1" parent="." instance=ExtResource("3_vuhlb")]
 
-[node name="SM42-099-LowPolyCab" type="VisualInstance3D" parent="."]
+[node name="SM42-099-LowPolyCab" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -41,7 +40,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")
 
 [node name="Area3D" type="Area3D" parent="."]
 monitoring = false
@@ -50,7 +48,7 @@ monitoring = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
 shape = SubResource("BoxShape3D_uljbo")
 
-[node name="401W-1" type="VisualInstance3D" parent="."]
+[node name="401W-1" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -67,9 +65,8 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")
 
-[node name="401W-2" type="VisualInstance3D" parent="."]
+[node name="401W-2" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -86,9 +83,8 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")
 
-[node name="401W-3" type="VisualInstance3D" parent="."]
+[node name="401W-3" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -105,9 +101,8 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")
 
-[node name="401W-4" type="VisualInstance3D" parent="."]
+[node name="401W-4" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -124,9 +119,8 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")
 
-[node name="401W-5" type="VisualInstance3D" parent="."]
+[node name="401W-5" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -143,4 +137,3 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("4_c88oy")

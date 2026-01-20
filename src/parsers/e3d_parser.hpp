@@ -22,9 +22,9 @@ namespace godot {
             };
 
             struct Indices {
-                int i1;
-                int i2;
-                int i3;
+                uint32_t i1;
+                uint32_t i2;
+                uint32_t i3;
             };
 
             struct Vertices {
@@ -72,12 +72,12 @@ namespace godot {
 
             static ChunkHeader _read_chunk_header(const Ref<FileAccess> &p_file);
             int u32s(uint32_t value) const;
-            static PackedVector3Array _calculate_normals(PackedVector3Array vertices, PackedInt32Array indices);
+            static PackedVector3Array _calculate_normals(const PackedVector3Array& vertices, const PackedInt32Array& indices);
             SubModelData _read_submodel(const Ref<FileAccess> &p_file, int chunk_size) const;
             std::vector<SubModelData> _parse_file(const Ref<FileAccess> &p_file) const;
-            static Array _buffer_to_strings(const PackedByteArray& p_buffer);
+            static TypedArray<String> _buffer_to_strings(const PackedByteArray& p_buffer);
             static Transform3D _read_matrix(const Ref<FileAccess> &p_file);
-            static E3DSubModel _create_submodel(SubModelData& p_submodel);
+            static Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel);
 
         public:
             Ref<E3DModel> parse(const Ref<FileAccess> &p_file) const;

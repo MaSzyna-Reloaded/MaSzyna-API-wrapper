@@ -1,13 +1,12 @@
 [gd_scene load_steps=3 format=3 uid="uid://cno8d0tylykmu"]
 
 [ext_resource type="Script" uid="uid://76jsq4dvtdbf" path="res://vehicles/impuls/impuls_cabin_a.gd" id="1_fa3e3"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_ytbcc"]
 
 [node name="ImpulsCabin" type="Node3D"]
 script = ExtResource("1_fa3e3")
 driver_position = Vector3(-0.509006, 2.62038, 8.10148)
 
-[node name="E3DModelInstance" type="VisualInstance3D" parent="."]
+[node name="E3DModelInstance" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -24,11 +23,10 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("2_ytbcc")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "kabina_a_kd"
 
-[node name="E3DModelInstance3" type="VisualInstance3D" parent="."]
+[node name="E3DModelInstance3" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -45,7 +43,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("2_ytbcc")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-a"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]

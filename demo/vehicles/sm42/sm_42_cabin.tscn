@@ -1,6 +1,5 @@
 [gd_scene load_steps=54 format=3 uid="uid://do3s7mkbpv7es"]
 
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_6k4j1"]
 [ext_resource type="Script" uid="uid://fi23qlrohins" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
 [ext_resource type="Script" uid="uid://cmmb3s07th3xp" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]
 [ext_resource type="Script" uid="uid://blbw51qwvmbue" path="res://addons/libmaszyna/sound/train_sound_3d.gd" id="15_df5xj"]
@@ -213,7 +212,7 @@ camera_bound_max = Vector3(1.65, 2.05, -2.83)
 camera_bound_enabled = true
 driver_position = Vector3(-0.99, 3.454, -3.311)
 
-[node name="Cabin" type="VisualInstance3D" parent="."]
+[node name="Cabin" type="E3DModelInstance" parent="."]
 _import_path = NodePath("")
 unique_name_in_owner = false
 process_mode = 0
@@ -237,7 +236,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_6k4j1")
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
 

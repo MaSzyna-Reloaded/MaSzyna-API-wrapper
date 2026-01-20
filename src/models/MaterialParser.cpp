@@ -9,7 +9,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("parse", "material_manager", "model_path", "material_path"), &MaterialParser::parse);
     }
 
-    Ref<MaszynaMaterial> MaterialParser::parse(MaterialManager *material_manager, const String &model_path, const String &material_path) {
+    Ref<MaszynaMaterial> MaterialParser::parse(MaterialManager *material_manager, const String &model_path, const String &material_path) const {
         Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
         const String final_path = material_manager->get_material_path(model_path, material_path);
         if (const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ); file.is_valid()) {

@@ -31,29 +31,28 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("save_maszyna_game_dir", "path"), &UserSettings::save_maszyna_game_dir);
         ADD_SIGNAL(MethodInfo(CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(GAME_DIR_CHANGED_SIGNAL));
-        ADD_SIGNAL(MethodInfo(SETTING_CHANGED_SIGNAL, PropertyInfo(Variant::STRING, "section"), PropertyInfo(Variant::STRING, "key")));
+        ADD_SIGNAL(MethodInfo(
+                SETTING_CHANGED_SIGNAL, PropertyInfo(Variant::STRING, "section"),
+                PropertyInfo(Variant::STRING, "key")));
         ADD_SIGNAL(MethodInfo(CACHE_CLEARED_SIGNAL));
         ADD_SIGNAL(MethodInfo(CACHE_CLEAR_REQUESTED_SIGNAL));
         ADD_SIGNAL(MethodInfo(MODELS_RELOAD_REQUESTED_SIGNAL));
     }
 
-    UserSettings::UserSettings()
-        {
-        cfg = memnew(ConfigFile);
-        os = OS::get_singleton();
-
-        // Initialize defaults dictionary
-        {
-            Dictionary maszyna;
-            maszyna["game_dir"] = ".";
-
-            Dictionary render;
-            render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_4X;
-            render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_4X;
-
-            _defaults["maszyna"] = maszyna;
-            _defaults["render"] = render;
+    UserSettings::UserSettings() : os(OS::get_singleton()), cfg(memnew(ConfigFile)) {
+        UtilityFunctions::print("[UserSettings] Initializing UserSettings...");
+        if (os == nullptr) {
+            UtilityFunctions::push_error("[UserSettings] OS singleton is null during initialization!");
         }
+        Dictionary maszyna;
+        maszyna["game_dir"] = ".";
+
+        Dictionary render;
+        render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_4X;
+        render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_4X;
+
+        _defaults["maszyna"] = maszyna;
+        _defaults["render"] = render;
     }
 
     UserSettings::~UserSettings() {
@@ -62,14 +61,24 @@ namespace godot {
     }
 
     String UserSettings::get_maszyna_game_dir() const {
-        // In exported builds outside the editor, always use the current directory
-        if (os->has_feature("release") && !os->has_feature("editor")) {
-            return ".";
-        }
-        if (String dir = cfg->get_value(_game_dir_section, _game_dir_key); dir.length() > 0) {
-            return dir;
-        }
-        return ".";
+        UtilityFunctions::print("[UserSettings] Getting maszyna game directory...");
+        return "/home/DoS/Stuff/Games/MaSzyna/";
+        // if (os == nullptr || cfg == nullptr) {
+        //     UtilityFunctions::push_error("[UserSettings] Error: os or cfg is null!");
+        //     return ".";
+        // }
+        //
+        // UtilityFunctions::print("[UserSettings] OS: " + String(os->get_name()));
+        // UtilityFunctions::print("[UserSettings] Config is not null");
+        //
+        // // In exported builds outside the editor, always use the current directory
+        // if (os->has_feature("release") && !os->has_feature("editor")) {
+        //     return ".";
+        // }
+        // if (String dir = cfg->get_value(_game_dir_section, _game_dir_key); dir.length() > 0) {
+        //     return dir;
+        // }
+        // return ".";
     }
 
     void UserSettings::load_config() {
@@ -82,7 +91,7 @@ namespace godot {
 
     void UserSettings::save_setting(const String &p_section, const String &p_key, const Variant &p_value) {
         const Variant old_value = cfg->get_value(p_section, p_key);
-        cfg->set_value(p_section, p_key, old_value);
+        cfg->set_value(p_section, p_key, p_value);
         cfg->save(config_file_path);
         if (p_value != old_value) {
             emit_signal(SETTING_CHANGED_SIGNAL, p_section, p_key);
@@ -94,11 +103,12 @@ namespace godot {
         }
     }
 
-    Variant UserSettings::get_setting(const String &p_section, const String &p_key, const Variant &p_default_value) const {
+    Variant
+    UserSettings::get_setting(const String &p_section, const String &p_key, const Variant &p_default_value) const {
         return cfg->get_value(p_section, p_key, p_default_value);
     }
 
     void UserSettings::save_maszyna_game_dir(const String &p_path) {
         save_setting(_game_dir_section, _game_dir_key, p_path);
     }
-}
+} // namespace godot

@@ -19,12 +19,13 @@ namespace godot {
         }
     }
 
-    void E3DModelManager::_bind_methods() {}
+    void E3DModelManager::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("clear_cache"), &E3DModelManager::clear_cache);
+        ClassDB::bind_method(D_METHOD("load_model", "data_path", "file_name"), &E3DModelManager::load_model);
+    }
 
-    E3DModelManager::E3DModelManager() {
-        user_settings_node = nullptr; // Will be set when entering the SceneTree
-        loader = memnew(ResourceLoader);
-        saver = memnew(ResourceSaver);
+    E3DModelManager::E3DModelManager() : user_settings_node(nullptr), loader(memnew(ResourceLoader)), saver(memnew(ResourceSaver)) {
+        // Will be set when entering the SceneTree
     }
 
     E3DModelManager::~E3DModelManager() {
@@ -80,13 +81,13 @@ namespace godot {
     Error E3DModelManager::remove_dir_recursively(const String &p_path) {
         PackedStringArray subdirs = DirAccess::get_directories_at(p_path);
 
-        for (String subdir: subdirs) {
+        for (const String& subdir: subdirs) {
             if (const Error err = remove_dir_recursively(p_path + String("/") + subdir); err != OK) {
                 return OK;
             }
         }
 
-        for (String file: DirAccess::get_files_at(p_path)) {
+        for (const String& file: DirAccess::get_files_at(p_path)) {
             if (const Error err = DirAccess::remove_absolute(p_path + String("/") + file); err != OK) {
                 return err;
             }

@@ -134,7 +134,7 @@ namespace godot {
             const String &model_path, const String &material_path, Transparency transparent, const bool is_sky,
             const Color &diffuse_color) {
         const String _code = model_path + String("/") + material_path + ":t=" + _transparency_codes[transparent] +
-                             ":s=" + (is_sky ? "1" : "0");
+                             ":s=" + (is_sky ? "1" : "0") + ":c=" + diffuse_color.to_html();
         mutex->lock();
         if (_materials.has(_code)) {
             Ref<StandardMaterial3D> m = _materials.get(_code, "");
@@ -150,15 +150,12 @@ namespace godot {
 
         if (_mmat.is_valid()) {
             UtilityFunctions::print_verbose("[MaterialManager] ", "Material is valid: " + material_path);
+            _m->set_albedo(diffuse_color);
             if (const String _albedo = _mmat->get_albedo_texture_path(); !_albedo.is_empty()) {
                 UtilityFunctions::print_verbose(
                         "[MaterialManager] ", "Albedo is not empty: " + _albedo);
                 _m->set_texture(
                         BaseMaterial3D::TEXTURE_ALBEDO, load_texture(model_path, _albedo.split(":").get(0)));
-            } else {
-                // possibly "COLORED" material
-                UtilityFunctions::print_verbose("[MaterialManager] ", "Albedo is empty: " + material_path);
-                _m->set_albedo(diffuse_color);
             }
 
 

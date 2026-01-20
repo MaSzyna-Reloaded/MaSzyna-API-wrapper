@@ -40,14 +40,14 @@ namespace godot {
         BIND_ENUM_CONSTANT(UNKNOWN)
     }
 
-    void E3DSubModel::add_child(const E3DSubModel &p_sub_model) {
-        submodels.append(&p_sub_model); //@TODO: Make this memory safe and efficient
+    void E3DSubModel::add_child(const Ref<E3DSubModel> &p_sub_model) {
+        submodels.append(p_sub_model);
     }
 
     void E3DSubModel::set_parent(E3DSubModel *p_sub_model) {
         parent = p_sub_model;
         if (p_sub_model != nullptr) {
-            p_sub_model->add_child(*this); //@TODO: Make this memory safe and efficient
+            p_sub_model->add_child(Ref<E3DSubModel>(this));
         }
     }
 } //namespace godot

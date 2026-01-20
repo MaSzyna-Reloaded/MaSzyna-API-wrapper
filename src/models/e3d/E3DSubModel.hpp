@@ -60,8 +60,8 @@ namespace godot {
             MAKE_MEMBER_GS(float, visibility_light, 0.0)
             MAKE_MEMBER_GS(float, visibility_range_begin, 0.0)
             MAKE_MEMBER_GS(float, visibility_range_end, 0.0)
-            MAKE_MEMBER_GS(Color, diffuse_color, Color(255, 255, 255, 255))
-            MAKE_MEMBER_GS(Color, self_illumination, Color(255, 255, 255, 255))
+            MAKE_MEMBER_GS(Color, diffuse_color, Color(1.0, 1.0, 1.0, 1.0))
+            MAKE_MEMBER_GS(Color, self_illumination, Color(1.0, 1.0, 1.0, 1.0))
             MAKE_MEMBER_GS(bool, material_colored, false)
             MAKE_MEMBER_GS(bool, dynamic_material, false)
             MAKE_MEMBER_GS(int, dynamic_material_index, 0)
@@ -74,7 +74,7 @@ namespace godot {
             MAKE_MEMBER_GS(bool, visible, true)
             MAKE_MEMBER_GS(bool, skip_rendering, false);
 
-            void add_child(const E3DSubModel& p_sub_model);
+            void add_child(const Ref<E3DSubModel>& p_sub_model);
             void set_parent(E3DSubModel* p_sub_model);
     };
 } //namespace godot

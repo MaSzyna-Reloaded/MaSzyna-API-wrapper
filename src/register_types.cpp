@@ -1,6 +1,7 @@
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
+#include "core/ActionQueue.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/TrainController.hpp"
@@ -17,6 +18,14 @@
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "parsers/e3d_parser.hpp"
+#include "models/e3d/E3DModel.hpp"
+#include "models/e3d/E3DSubModel.hpp"
+#include "models/e3d/E3DModelManager.hpp"
+#include "models/e3d/E3DResourceFormatLoader.hpp"
+#include "models/e3d/instance/E3DModelInstanceManager.hpp"
+#include "models/e3d/instance/E3DModelInstance.hpp"
+#include "models/e3d/instance/E3DModelNodesInstancer.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
@@ -27,6 +36,7 @@
 
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
@@ -39,6 +49,7 @@ UserSettings *user_settings_singleton = nullptr;
 // E3DModelInstanceManager *model_instance_manager_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 MaterialManager *material_manager_singleton = nullptr;
+E3DResourceFormatLoader *e3d_loader_singleton = nullptr;
 
 static bool is_doctool_mode() {
     const PackedStringArray args = OS::get_singleton()->get_cmdline_args();
@@ -84,14 +95,30 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaterialManager);
         GDREGISTER_CLASS(MaszynaMaterial);
 
+        // E3D
+        GDREGISTER_CLASS(E3DModel);
+        GDREGISTER_CLASS(E3DSubModel);
+        GDREGISTER_CLASS(E3DModelManager);
+        GDREGISTER_CLASS(E3DModelInstanceManager);
+        GDREGISTER_CLASS(E3DModelInstance);
+        GDREGISTER_CLASS(E3DModelNodesInstancer);
+        GDREGISTER_CLASS(E3DParser);
+        GDREGISTER_CLASS(E3DResourceFormatLoader);
+
+        // Core
+        GDREGISTER_CLASS(ActionQueue);
+
         if (!is_doctool_mode()) {
             train_system_singleton = memnew(TrainSystem);
             game_log_singleton = memnew(GameLog);
             material_manager_singleton = memnew(MaterialManager);
+            e3d_loader_singleton = memnew(E3DResourceFormatLoader);
+
             Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
             Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
             Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
 
+            ResourceLoader::get_singleton()->add_resource_format_loader(e3d_loader_singleton);
         }
     }
 }
@@ -103,11 +130,13 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         return;
     }
 
-    if (train_system_singleton != nullptr) {
-        Engine::get_singleton()->unregister_singleton("TrainSystem");
-        Engine::get_singleton()->unregister_singleton("GameLog");
-    }
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        if (e3d_loader_singleton != nullptr) {
+            ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_loader_singleton);
+            memdelete(e3d_loader_singleton);
+            e3d_loader_singleton = nullptr;
+        }
+
         // Unregister and free singletons we created at initialization.
         if (const Engine* _singleton = Engine::get_singleton(); _singleton != nullptr) {
             if (_singleton->has_singleton("TrainSystem")) {

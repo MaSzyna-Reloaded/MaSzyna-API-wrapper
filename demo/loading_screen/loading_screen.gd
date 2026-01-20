@@ -6,18 +6,18 @@ signal fadein_finished
 func _ready():
     visible = true
     $VBoxContainer.visible = true
-    SceneryResourceLoader.loading_request.connect(_do_update)
-    SceneryResourceLoader.loading_finished.connect(_do_update)
-    SceneryResourceLoader.scenery_loaded.connect(_on_scenery_loaded)
+    ActionQueue.loading_request.connect(_do_update)
+    ActionQueue.loading_finished.connect(_do_update)
+    ActionQueue.scenery_loaded.connect(_on_scenery_loaded)
     $AnimationPlayer.play("fade_in")
 
 func _do_update():
-    $%ProgressBar.value = SceneryResourceLoader.files_loaded
-    $%ProgressBar.max_value = SceneryResourceLoader.files_to_load
-    $%Message.text = SceneryResourceLoader.current_task
+    $%ProgressBar.value = ActionQueue.files_loaded
+    $%ProgressBar.max_value = ActionQueue.files_to_load
+    $%Message.text = ActionQueue.current_task
 
 func _on_scenery_loaded():
-    SceneryResourceLoader.reset()
+    ActionQueue.reset()
     _do_update()
 
     if visible and autoclose_after_load:

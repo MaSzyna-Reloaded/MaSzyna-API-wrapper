@@ -62,7 +62,7 @@ static bool is_doctool_mode() {
 }
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
+    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
 //         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);

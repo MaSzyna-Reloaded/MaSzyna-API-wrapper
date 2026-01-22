@@ -1,4 +1,5 @@
 #!/bin/bash
+rm -f ../CMakeLists.txt
 echo "cmake_minimum_required(VERSION 3.25)
       project(maszyna)
       option(ARCHITECTURE \"x64 or x86 CPU Architecture\" \"x64\")

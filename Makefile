@@ -15,34 +15,63 @@ cleanup:
 
 
 compile-debug:
-	scons target=template_debug
+	cmake -B build-debug -DGODOTCPP_TARGET=template_debug
+	cmake --build build-debug
 
 
 compile-release:
-	scons target=template_release maszyna_debug=off
+	cmake -B build-release -DGODOTCPP_TARGET=template_release
+	cmake --build build-release
 
 
 compile-all: compile-debug compile-release
 
 
 cross-compile-release:
-	scons target=template_release platform=linux maszyna_debug=off
-	scons target=template_release platform=windows maszyna_debug=off
+	cmake -B build-linux64 \
+          -DGODOTCPP_TARGET="template_release"
+	cmake --build build-linux64
+	cmake -B build-win64 \
+          -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64
 
 
 cross-compile-debug:
-	scons target=template_debug platform=linux
-	scons target=template_debug platform=windows
+	cmake -B build-linux64 \
+          -DGODOTCPP_TARGET="template_debug"
+	cmake --build build-linux64
+	cmake -B build-win64 \
+          -DGODOTCPP_TARGET="template_debug" \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64
 
 
 release-linux:
-	scons target=template_release platform=linux maszyna_debug=off
-	cd demo && godot --headless --export-release "Linux" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
+	cmake -B build-linux64 \
+          -DGODOTCPP_TARGET="template_release"
+	cmake --build build-linux64
+	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
 
 
 release-windows:
-	scons target=template_release platform=windows maszyna_debug=off
-	cd demo && godot --headless --export-release "Windows Desktop" ../bin/windows/reloaded.zip && mv ../bin/windows/reloaded.zip ../bin/windows/reloaded-$(GITREV)-$(DATE)-windows.zip
+	cmake -B build-win64 \
+          -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64
+	cd demo && godot --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip && mv ../bin/windows/reloaded.zip ../bin/windows/reloaded-$(GITREV)-$(DATE)-windows.zip
 
 
 release: release-linux release-windows

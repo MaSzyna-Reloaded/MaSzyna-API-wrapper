@@ -27,8 +27,8 @@
 			The shadow rendering priority. Higher values render shadows before lower values.
 		</member>
 		<member name="transparency" type="int" setter="set_transparency" getter="get_transparency" enum="BaseMaterial3D.Transparency" default="2">
-		    The transparency type. Allows setting one of supported transparency types
-        </member>
+			The transparency type. Allows setting one of supported transparency types
+		</member>
 		<member name="winter_albedo_texture_path" type="String" setter="set_winter_albedo_texture_path" getter="get_winter_albedo_texture_path" default="&quot;&quot;">
 			The path to the winter season albedo texture. Overrides the standard albedo texture when winter weather is active.
 		</member>

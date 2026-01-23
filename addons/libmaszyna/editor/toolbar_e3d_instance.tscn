@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://unrm26h4mwk4"]
+[gd_scene format=3 uid="uid://unrm26h4mwk4"]
 
 [ext_resource type="Script" uid="uid://bpk0y7dkvuqq8" path="res://addons/libmaszyna/editor/toolbar_e3d_instance.gd" id="1_h4jha"]
 
-[node name="ToolbarE3dInstance" type="HBoxContainer"]
+[node name="ToolbarE3dInstance" type="HBoxContainer" unique_id=1889642562]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -10,7 +10,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_h4jha")
 
-[node name="Editable" type="CheckButton" parent="."]
+[node name="Editable" type="CheckButton" parent="." unique_id=1047319062]
 layout_mode = 2
 disabled = true
 text = "Edit E3D"

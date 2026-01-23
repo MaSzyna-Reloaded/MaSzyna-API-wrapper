@@ -33,19 +33,13 @@ namespace godot {
 
     void TrainHeatingSystem::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         ASSERT_MOVER(p_mover);
-        power_source->fetch_state(p_mover->HeatingPowerSource, p_config, "heating");
-        alternative_power_source->fetch_state(p_mover->AlterHeatPowerSource, p_config, "alternative_heating");
-    }
-
-    void TrainHeatingSystem::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        ASSERT_MOVER(p_mover);
-        reload_power_source(power_source, p_mover->HeatingPowerSource, p_config);
-        reload_power_source(alternative_power_source, p_mover->AlterHeatPowerSource, p_config);
+        reload_power_source(power_source, p_mover->HeatingPowerSource);
+        reload_power_source(alternative_power_source, p_mover->AlterHeatPowerSource);
         power_source->fetch_config(p_mover->HeatingPowerSource, p_config, "heating");
         alternative_power_source->fetch_config(p_mover->AlterHeatPowerSource, p_config, "alternative_heating");
     }
 
-    void TrainHeatingSystem::reload_power_source(Ref<PowerSource> &ref, const TPowerParameters &src) {
+    void TrainHeatingSystem::reload_power_source(Ref<PowerSource> &ref, TPowerParameters &src) {
         // Note: that changing `ref` is needed, because TMoverParameters::CheckLocomotiveParameters method may change
         // configuration after PowerSource object was created
         // Note 2: in legacy implementation, only HeatingSystem (not alternative) is changed, but this method is used

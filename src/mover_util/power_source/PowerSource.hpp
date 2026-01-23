@@ -5,7 +5,7 @@
 
 namespace godot {
     class PowerSource : public Resource {
-            GDCLASS(PowerSource, Resource)
+            GDCLASS(PowerSource, Resource);
 
         protected:
             static void _bind_methods();
@@ -30,10 +30,6 @@ namespace godot {
 
             /** Updates the MOVER.h representation of the power source */
             virtual void update_config(TPowerParameters &p_power_parameters) const;
-
-            /** Fetches the state of the power source into the Godot state Dictionary. */
-            virtual void
-            fetch_config(const TPowerParameters &p_power_parameters, Dictionary &p_state, const String &p_prefix) const;
 
             /** Fetches the config of the power source into the Godot state Dictionary. */
             virtual void fetch_config(

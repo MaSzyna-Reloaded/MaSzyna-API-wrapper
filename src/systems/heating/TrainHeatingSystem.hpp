@@ -15,7 +15,7 @@ namespace godot {
             static void _bind_methods();
 
             /** internal helper method, possible to abstract out */
-            static void reload_power_source(Ref<PowerSource> &power_source, const TPowerParameters &src);
+            void reload_power_source(Ref<PowerSource> &power_source, TPowerParameters &src);
 
             /** internal Godot signal handler, used to notify HeatingSystem about resource config change */
             void on_power_source_change();

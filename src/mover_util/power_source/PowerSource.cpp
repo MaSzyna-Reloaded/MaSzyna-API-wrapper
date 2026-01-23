@@ -1,4 +1,3 @@
-#include "../../core/LogSystem.hpp"
 #include "Mod.hpp"
 #include "PowerSource.hpp"
 
@@ -15,12 +14,6 @@ namespace godot {
 
     void PowerSource::update_config(TPowerParameters &p_power_parameters) const {
         p_power_parameters.SourceType = get_source_type();
-    }
-
-    void PowerSource::fetch_config(
-            const TPowerParameters &p_power_parameters, godot::Dictionary &p_state,
-            const godot::String &p_prefix) const {
-        // INFO: intentionally empty; nothing to od
     }
 
     void PowerSource::fetch_config(
@@ -58,6 +51,8 @@ namespace godot {
                 return PowerSource::ElectricPower;
             case TPowerType::SteamPower:
                 return PowerSource::SteamPower;
+            default:
+                return PowerSource::NoPower;
         }
     }
 

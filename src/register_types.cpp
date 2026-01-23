@@ -1,7 +1,7 @@
-#include "register_types.h"
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
 #include "brakes/TrainSpringBrake.hpp"
+#include "buffers/TrainBuffCoupl.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/TrainController.hpp"
@@ -16,6 +16,7 @@
 #include "lighting/TrainLighting.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
@@ -61,6 +62,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
         GDREGISTER_CLASS(TrainLoad)
         GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(TrainBuffCoupl)
 
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);

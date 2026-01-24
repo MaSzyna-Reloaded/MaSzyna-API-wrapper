@@ -57,6 +57,18 @@ public:                                                                         
         name = value;                                                                                                  \
     }
 
+#define MAKE_MEMBER_GS_NR_DIRTY(type, name, default_value)                                                             \
+private:                                                                                                               \
+    type name = default_value;                                                                                         \
+                                                                                                                       \
+public:                                                                                                                \
+    type get_##name() const {                                                                                          \
+        return name;                                                                                                   \
+    }                                                                                                                  \
+    void set_##name(type value) {                                                                                      \
+        name = value;                                                                                                  \
+        _dirty = true;                                                                                                 \
+    }
 
 /**
  * Generates Godot setters and getters with the desired property using the following:

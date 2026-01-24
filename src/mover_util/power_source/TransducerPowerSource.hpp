@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../macros.hpp"
 #include "PowerSource.hpp"
 
 namespace godot {
@@ -10,20 +11,16 @@ namespace godot {
             GDCLASS(TransducerPowerSource, PowerSource)
 
             // TODO: check default value
-            double input_voltage = 0.0f;
+            MAKE_MEMBER_GS(double, input_voltage, 0.0f);
 
         protected:
             static void _bind_methods();
-            TPowerSource get_source_type() const override;
 
         public:
-            void update_config(TPowerParameters &p_power_parameters) const override;
-            void fetch_config(
-                    const TPowerParameters &p_power_parameters, godot::Dictionary &state,
-                    const godot::String &prefix) const override;
-
-            // GETTERS AND SETTERS
-            double get_input_voltage() const;
-            void set_input_voltage(double p_input_voltage);
+            virtual void update_config(TPowerParameters &params, TMoverParameters &mover) const override;
+            virtual void
+            fetch_config(const TPowerParameters &params, Dictionary &state, const String &prefix) const override;
+            virtual void
+            fetch_state(const TPowerParameters &params, Dictionary &state, const String &prefix) const override;
     };
 } // namespace godot

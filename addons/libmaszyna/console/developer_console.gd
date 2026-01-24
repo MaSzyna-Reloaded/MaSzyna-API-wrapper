@@ -57,4 +57,9 @@ func console_get_train_state(train, key=null):
     var out = TrainSystem.get_train_state(train)
     if key:
         out = out.get(key)
-    Console.print_line("%s" % [out])
+    print(typeof(out))
+    var d = out as Dictionary
+
+    for k in d:
+        var v = d[k]
+        Console.print_line("%s: %s" % [k, v])

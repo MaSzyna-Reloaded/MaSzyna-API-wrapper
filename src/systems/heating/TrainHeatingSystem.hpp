@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../core/TrainPart.hpp"
+#include "../../macros.hpp"
 #include "../../maszyna/McZapkie/MOVER.h"
 #include "../../mover_util/power_source/Mod.hpp"
 #include <godot_cpp/classes/node.hpp>
@@ -9,8 +10,8 @@ namespace godot {
     class TrainHeatingSystem : public TrainPart {
             GDCLASS(TrainHeatingSystem, TrainPart)
 
-            Ref<PowerSource> power_source;
-            Ref<PowerSource> alternative_power_source;
+            MAKE_MEMBER_GS_NR_DIRTY(Ref<PowerSource>, power_source, Ref<PowerSource>());
+            MAKE_MEMBER_GS_NR_DIRTY(Ref<PowerSource>, alternative_power_source, Ref<PowerSource>());
 
             static void _bind_methods();
 
@@ -29,12 +30,6 @@ namespace godot {
         public:
             void _enter_tree() override;
             void _ready() override;
-
-            // GODOT GETTERS AND SETTERS
-            void set_power_source(Ref<PowerSource> p_power_source);
-            Ref<PowerSource> get_power_source() const;
-            void set_alternative_power_source(Ref<PowerSource> p_alternative_power_source);
-            Ref<PowerSource> get_alternative_power_source() const;
     };
 
 } // namespace godot

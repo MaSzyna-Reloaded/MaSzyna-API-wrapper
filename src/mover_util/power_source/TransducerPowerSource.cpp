@@ -18,5 +18,10 @@ namespace godot {
         state[prefix + String("/source_type")] = to_string(TPowerSource::Transducer);
         state[prefix + String("/input_voltage")] = input_voltage;
     }
+
+    void
+    TransducerPowerSource::fetch_state(const TPowerParameters &params, Dictionary &state, const String &prefix) const {
+        // Transducer has no dynamic state
+    }
     // TODO: changing voltage will be probably dirty
 } // namespace godot

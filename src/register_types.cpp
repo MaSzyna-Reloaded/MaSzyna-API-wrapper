@@ -67,6 +67,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(InternalPowerSource);
         GDREGISTER_CLASS(NotDefinedPowerSource);
         GDREGISTER_CLASS(TransducerPowerSource);
+        GDREGISTER_CLASS(GeneratorPowerSource);
 
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);

@@ -23,10 +23,10 @@ namespace godot {
             };
 
             MAKE_MEMBER_GS_NR(GeneratorType, generator_type, GeneratorType::None);
-            MAKE_MEMBER_GS(double, min_voltage, 0.0);
-            MAKE_MEMBER_GS(double, max_voltage, 0.0);
-            MAKE_MEMBER_GS(double, min_rpm, 0.0);
-            MAKE_MEMBER_GS(double, max_rpm, 0.0);
+            MAKE_MEMBER_GS(double, generator_min_voltage, 0.0);
+            MAKE_MEMBER_GS(double, generator_max_voltage, 0.0);
+            MAKE_MEMBER_GS(double, generator_min_rpm, 0.0);
+            MAKE_MEMBER_GS(double, generator_max_rpm, 0.0);
 
         protected:
             static void _bind_methods();

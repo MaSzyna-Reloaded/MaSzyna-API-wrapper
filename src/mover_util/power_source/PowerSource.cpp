@@ -4,6 +4,16 @@
 namespace godot {
 
     void PowerSource::_bind_methods() {
+        BIND_PROPERTY(
+                Variant::FLOAT, "max_voltage", "max_voltage", &PowerSource::set_max_voltage,
+                &PowerSource::get_max_voltage, "max voltage");
+        BIND_PROPERTY(
+                Variant::FLOAT, "max_current", "max_current", &PowerSource::set_max_current,
+                &PowerSource::get_max_current, "max current");
+        BIND_PROPERTY(
+                Variant::FLOAT, "int_r", "int_r", &PowerSource::set_int_r, &PowerSource::get_int_r,
+                "internal resistance (????)");
+
         BIND_ENUM_CONSTANT(NoPower)
         BIND_ENUM_CONSTANT(BioPower)
         BIND_ENUM_CONSTANT(MechPower)

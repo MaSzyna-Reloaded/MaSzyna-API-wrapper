@@ -3,9 +3,11 @@
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
 
-[sub_resource type="InternalPowerSource" id="InternalPowerSource_ss4tc"]
+[sub_resource type="TransducerPowerSource" id="TransducerPowerSource_ss4tc"]
+input_voltage = 5.0
 
-[sub_resource type="NotDefinedPowerSource" id="NotDefinedPowerSource_3nj8v"]
+[sub_resource type="InternalPowerSource" id="InternalPowerSource_3nj8v"]
+power_type = 1
 
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"
@@ -74,7 +76,7 @@ source/generator/engine = 0
 [node name="TrainLoad" type="TrainLoad" parent="."]
 
 [node name="TrainHeatingSystem" type="TrainHeatingSystem" parent="."]
-power_source = SubResource("InternalPowerSource_ss4tc")
-alternative_power_source = SubResource("NotDefinedPowerSource_3nj8v")
+power_source = SubResource("TransducerPowerSource_ss4tc")
+alternative_power_source = SubResource("InternalPowerSource_3nj8v")
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

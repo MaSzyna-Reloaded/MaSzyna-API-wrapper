@@ -28,6 +28,7 @@ namespace godot {
         alternative_power_source->fetch_config(p_mover->AlterHeatPowerSource, p_config, "alternative_heating");
     }
 
+
     void TrainHeatingSystem::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         ASSERT_MOVER(p_mover);
         power_source->fetch_state(p_mover->HeatingPowerSource, p_config, "heating");

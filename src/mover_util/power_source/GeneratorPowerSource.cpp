@@ -1,6 +1,34 @@
 #include "GeneratorPowerSource.hpp"
 
 namespace godot {
+
+    String to_string(godot::GeneratorPowerSource::GeneratorType t) {
+        switch (t) {
+            case GeneratorPowerSource::GeneratorType::ElectricSeriesMotor:
+                return "ElectricSeriesMotor";
+            case GeneratorPowerSource::GeneratorType::DieselEngine:
+                return "DieselEngine";
+            case GeneratorPowerSource::GeneratorType::SteamEngine:
+                return "SteamEngine";
+            case GeneratorPowerSource::GeneratorType::WheelsDriven:
+                return "WheelsDriven";
+            case GeneratorPowerSource::GeneratorType::Dumb:
+                return "Dumb";
+            case GeneratorPowerSource::GeneratorType::DieselElectric:
+                return "DieselElectric";
+            case GeneratorPowerSource::GeneratorType::DumbDE:
+                return "DumbDE";
+            case GeneratorPowerSource::GeneratorType::ElectricInductionMotor:
+                return "ElectricInductionMotor";
+            case GeneratorPowerSource::GeneratorType::Main:
+                return "Main";
+            case GeneratorPowerSource::GeneratorType::None:
+                return "None";
+            default:
+                return "ERR_Unknown";
+        }
+    }
+
     void GeneratorPowerSource::_bind_methods() {
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "type", "type", &GeneratorPowerSource::set_generator_type,
@@ -55,11 +83,16 @@ namespace godot {
 
     void GeneratorPowerSource::fetch_config(const TPowerParameters &params, Dictionary &state, const String &prefix) const {
         PowerSource::fetch_config(params, state, prefix);
+        state[prefix + String("/type")] = ::godot::to_string(generator_type);
     }
 
     void GeneratorPowerSource::fetch_state(const TPowerParameters &params, Dictionary &state, const String &prefix) const {
         PowerSource::fetch_state(params, state, prefix);
-        state[prefix + String("/engine_rpm")] = params.EngineGenerator.engine_revolutions;
+        if (nullptr == params.EngineGenerator.engine_revolutions) {
+            state[prefix + String("/engine_rpm")] = "nullptr!";
+        } else {
+            state[prefix + String("/engine_rpm")] = *params.EngineGenerator.engine_revolutions;
+        }
         state[prefix + String("/engine_voltage")] = params.EngineGenerator.voltage;
     }
 } // namespace godot

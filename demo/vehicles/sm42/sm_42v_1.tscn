@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene load_steps=20 format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
@@ -118,6 +118,19 @@ cabin_a/head_light = true
 cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
+[sub_resource type="GeneratorPowerSource" id="GeneratorPowerSource_ss4tc"]
+type = 8
+voltage/min = 9.0
+voltage/max = 2.0
+max_voltage = 10.0
+max_current = 2.0
+
+[sub_resource type="InternalPowerSource" id="InternalPowerSource_3nj8v"]
+power_type = 2
+max_voltage = 10.0
+max_current = 5.0
+int_r = 0.02
+
 [node name="SM42v1" type="TrainController"]
 train_id = "sm42v1"
 type_name = "6d"
@@ -186,5 +199,9 @@ source/generator/engine = 0
 [node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]
 
 [node name="TrainLoad" type="TrainLoad" parent="."]
+
+[node name="TrainHeatingSystem" type="TrainHeatingSystem" parent="."]
+power_source = SubResource("GeneratorPowerSource_ss4tc")
+alternative_power_source = SubResource("InternalPowerSource_3nj8v")
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

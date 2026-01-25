@@ -4,24 +4,24 @@ namespace godot {
     void TransducerPowerSource::_bind_methods() {
         // TODO: Should be double?
         BIND_PROPERTY(
-                Variant::FLOAT, "input_voltage", "input_voltage", &TransducerPowerSource::get_input_voltage,
-                &TransducerPowerSource::set_input_voltage, "input_voltage");
+                Variant::FLOAT, "input_voltage", "input_voltage", &TransducerPowerSource::set_input_voltage,
+                &TransducerPowerSource::get_input_voltage, "input_voltage");
     };
 
     void TransducerPowerSource::update_config(TPowerParameters &params, TMoverParameters &mover) const {
-        params.SourceType = TPowerSource::Transducer;
+        PowerSource::update_config(params, mover);
         params.Transducer.InputVoltage = input_voltage;
     }
 
     void
     TransducerPowerSource::fetch_config(const TPowerParameters &params, Dictionary &state, const String &prefix) const {
-        state[prefix + String("/source_type")] = to_string(TPowerSource::Transducer);
+        PowerSource::fetch_config(params, state, prefix);
         state[prefix + String("/input_voltage")] = input_voltage;
     }
 
     void
     TransducerPowerSource::fetch_state(const TPowerParameters &params, Dictionary &state, const String &prefix) const {
-        // Transducer has no dynamic state
+        PowerSource::fetch_state(params, state, prefix);
+        // TODO: changing voltage will be probably dirty
     }
-    // TODO: changing voltage will be probably dirty
 } // namespace godot

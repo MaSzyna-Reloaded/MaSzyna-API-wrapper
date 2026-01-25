@@ -9,6 +9,9 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            virtual TPowerSource get_source_type() const override {
+                return TPowerSource::NotDefined;
+            }
             void update_config(TPowerParameters &p_power_parameters, TMoverParameters &p_mover) const override;
             void fetch_config(
                     const TPowerParameters &p_power_parameters, godot::Dictionary &p_config,

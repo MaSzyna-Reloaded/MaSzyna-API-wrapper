@@ -32,6 +32,9 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            virtual TPowerSource get_source_type() const override {
+                return TPowerSource::Generator;
+            }
             void update_config(TPowerParameters &params, TMoverParameters &mover) const override;
             void fetch_config(const TPowerParameters &params, Dictionary &state, const String &prefix) const override;
             void fetch_state(const TPowerParameters &params, Dictionary &state, const String &prefix) const override;

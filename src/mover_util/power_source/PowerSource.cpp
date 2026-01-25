@@ -23,6 +23,7 @@ namespace godot {
     }
 
     void PowerSource::update_config(TPowerParameters &p_power_parameters, TMoverParameters &p_mover) const {
+        p_power_parameters.SourceType = get_source_type();
         p_power_parameters.MaxCurrent = max_current;
         p_power_parameters.MaxVoltage = max_voltage;
         p_power_parameters.IntR = int_r;

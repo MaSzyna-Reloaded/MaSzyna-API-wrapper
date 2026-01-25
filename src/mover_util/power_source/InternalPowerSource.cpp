@@ -10,6 +10,7 @@ namespace godot {
     };
 
     void InternalPowerSource::update_config(TPowerParameters &p_power_parameters, TMoverParameters &p_mover) const {
+        PowerSource::update_config(p_power_parameters, p_mover);
         p_power_parameters.SourceType = TPowerSource::InternalSource;
         p_power_parameters.PowerType = PowerSource::cast(power_type);
     }
@@ -23,6 +24,7 @@ namespace godot {
 
     void InternalPowerSource::fetch_state(
             const TPowerParameters &p_power_parameters, Dictionary &state, const String &prefix) const {
+        PowerSource::fetch_state(p_power_parameters, state, prefix);
         // No dynamic state to fetch for Internal power source
     }
 

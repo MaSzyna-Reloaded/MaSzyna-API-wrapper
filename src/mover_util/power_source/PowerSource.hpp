@@ -19,6 +19,8 @@ namespace godot {
         public:
             static constexpr char const *const POWER_SOURCE_CHANGED = "power_source_changed";
 
+            virtual TPowerSource get_source_type() const = 0;
+
             static TPowerType cast(PowerType p);
             static String to_string(PowerType p);
             static String to_string(TPowerSource p);

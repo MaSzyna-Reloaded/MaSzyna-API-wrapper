@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaterialParser" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Parses MaSzyna material files and creates [MaszynaMaterial] resources.
+	</brief_description>
+	<description>
+		[MaterialParser] is responsible for reading and parsing MaSzyna material definition files (.mat format). It extracts material properties such as shader configuration, texture paths for diffuse and normal maps, and creates corresponding [MaszynaMaterial] resource objects. The parser handles the MaSzyna material file format and populates the appropriate texture paths based on the file's contents.
+
+		This class is typically used internally by [MaterialManager] but can also be used directly to parse material files.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="parse">
+			<return type="MaszynaMaterial" />
+			<param index="0" name="material_manager" type="MaterialManager" />
+			<param index="1" name="model_path" type="String" />
+			<param index="2" name="material_path" type="String" />
+			<description>
+				Parses a MaSzyna material file and returns a [MaszynaMaterial] resource. The [param material_manager] is used to resolve the full file path. If the material file cannot be found, returns a material with the [param material_path] as the albedo texture.
+			</description>
+		</method>
+	</methods>
+</class>

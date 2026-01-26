@@ -20,16 +20,31 @@
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
 #include "resources/load/LoadListItem.hpp"
+#include "resources/material/MaszynaMaterial.hpp"
+#include "models/MaterialManager.hpp"
+#include "models/MaterialParser.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/godot.hpp>
 
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
+MaterialManager* material_manager_singleton = nullptr;
+
+static bool is_doctool_mode() {
+    const PackedStringArray args = OS::get_singleton()->get_cmdline_args();
+    for (const auto & arg : args) {
+        if (arg == "--doctool") {
+            return true;
+        }
+    }
+    return false;
+}
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
@@ -58,14 +73,22 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(TrainLoad)
-        GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake);
+        GDREGISTER_CLASS(TrainLoad);
+        GDREGISTER_CLASS(LoadListItem);
+        GDREGISTER_CLASS(MaterialParser);
+        GDREGISTER_CLASS(MaterialManager);
+        GDREGISTER_CLASS(MaszynaMaterial);
 
-        train_system_singleton = memnew(TrainSystem);
-        game_log_singleton = memnew(GameLog);
-        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
-        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
+        if (!is_doctool_mode()) {
+            train_system_singleton = memnew(TrainSystem);
+            game_log_singleton = memnew(GameLog);
+            material_manager_singleton = memnew(MaterialManager);
+            
+            Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
+            Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
+            Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
+        }
     }
 }
 
@@ -76,11 +99,18 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         return;
     }
 
-    if (train_system_singleton != nullptr) {
-        Engine::get_singleton()->unregister_singleton("TrainSystem");
-        Engine::get_singleton()->unregister_singleton("GameLog");
-        // memdelete(train_system_singleton);
-        // train_system_singleton = nullptr;
+    if (!is_doctool_mode()) {
+        if (train_system_singleton != nullptr) {
+            Engine::get_singleton()->unregister_singleton("TrainSystem");
+        }
+
+        if (game_log_singleton != nullptr) {
+            Engine::get_singleton()->unregister_singleton("GameLog");
+        }
+
+        if (material_manager_singleton != nullptr) {
+            Engine::get_singleton()->unregister_singleton("MaterialManager");
+        }
     }
 }
 

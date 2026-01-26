@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaterialManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A manager class for loading and caching materials and textures from MaSzyna models.
+	</brief_description>
+	<description>
+		[MaterialManager] is responsible for loading MaSzyna materials and textures, converting them to Godot's [StandardMaterial3D] format, and providing caching for performance optimization. It handles texture loading, normal map processing, and transparency detection. The class is thread-safe with mutex-protected caching and supports seasonal texture variations through the [MaszynaMaterial] resource type.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_material">
+			<return type="StandardMaterial3D" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_path" type="String" />
+			<param index="2" name="transparent" type="int" enum="MaterialManager.Transparency" default="0" />
+			<param index="3" name="is_sky" type="bool" default="false" />
+			<param index="4" name="diffuse_color" type="Color" default="Color(1, 1, 1, 1)" />
+			<description>
+				Gets or creates a [StandardMaterial3D] for the specified model and material. Results are cached for performance. Automatically loads albedo and normal textures, detects alpha channel, and applies the transparency mode. If [param is_sky] is true, configures the material with unshaded rendering.
+			</description>
+		</method>
+		<method name="get_material_path">
+			<return type="String" />
+			<param index="0" name="model_name" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="get_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="texture_path" type="String" />
+			<description>
+				Loads a texture from the given absolute or relative path. This is a convenience method that calls [method load_texture] with an empty model path.
+			</description>
+		</method>
+		<method name="load_material">
+			<return type="MaszynaMaterial" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="load_submodel_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+				Loads a texture for a submodel, searching in submodel-specific directories. Used when a model has child models with their own textures.
+			</description>
+		</method>
+		<method name="load_texture">
+			<return type="ImageTexture" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_name" type="String" />
+			<description>
+				Loads a texture from the model's material directory. If [param global] is true, also searches in the global textures directory. Returns a placeholder texture if the file cannot be found.
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="Disabled" value="0" enum="Transparency">
+			No transparency - material renders as fully opaque.
+		</constant>
+		<constant name="Alpha" value="1" enum="Transparency">
+			Full alpha blending - smooth transparency with depth sorting.
+		</constant>
+		<constant name="AlphaScissor" value="2" enum="Transparency">
+			Alpha scissor/clip - binary transparency based on a threshold value.
+		</constant>
+	</constants>
+</class>

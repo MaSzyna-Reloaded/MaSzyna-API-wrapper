@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaszynaMaterial" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A material resource for MaSzyna train models with support for seasonal textures and shader configurations.
+	</brief_description>
+	<description>
+		[MaszynaMaterial] is a specialized resource class for managing materials used in MaSzyna train models. It supports dynamic texture loading with seasonal variations (winter and autumn textures), custom shader configurations, and shadow rendering parameters. The material can be applied to Godot's [StandardMaterial3D] objects to automatically configure their properties based on the MaSzyna material definition.
+
+		This class is typically used internally by the [MaterialManager] and [MaterialParser] classes when loading models from MaSzyna format files, but can also be created and configured programmatically.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="albedo_texture_path" type="String" setter="set_albedo_texture_path" getter="get_albedo_texture_path" default="&quot;&quot;">
+			The path to the albedo (color) texture for the material. Can include modifiers like ":t" to enable alpha scissor transparency.
+		</member>
+		<member name="autumn_albedo_texture_path" type="String" setter="set_autumn_albedo_texture_path" getter="get_autumn_albedo_texture_path" default="&quot;&quot;">
+			The path to the autumn season albedo texture. Overrides the standard albedo texture when autumn weather is active.
+		</member>
+		<member name="normal_texture_path" type="String" setter="set_normal_texture_path" getter="get_normal_texture_path" default="&quot;&quot;">
+			The path to the normal map texture for surface detail and lighting calculations.
+		</member>
+		<member name="shader" type="String" setter="set_shader" getter="get_shader" default="&quot;&quot;">
+			The shader configuration name. Supported values include "shadowlessnormalmap" (no shadows), "sunlessnormalmap" (no direct sun shadows), or empty string for standard shader.
+		</member>
+		<member name="shadow_rank" type="int" setter="set_shadow_rank" getter="get_shadow_rank" default="0">
+			The shadow rendering priority. Higher values render shadows before lower values.
+		</member>
+		<member name="transparency" type="int" setter="set_transparency" getter="get_transparency" enum="BaseMaterial3D.Transparency" default="2">
+		    The transparency type. Allows setting one of supported transparency types
+        </member>
+		<member name="winter_albedo_texture_path" type="String" setter="set_winter_albedo_texture_path" getter="get_winter_albedo_texture_path" default="&quot;&quot;">
+			The path to the winter season albedo texture. Overrides the standard albedo texture when winter weather is active.
+		</member>
+		<member name="winter_normal_texture_path" type="String" setter="set_winter_normal_texture_path" getter="get_winter_normal_texture_path" default="&quot;&quot;">
+			The path to the winter season normal map texture. Overrides the standard normal texture when winter weather is active.
+		</member>
+	</members>
+</class>

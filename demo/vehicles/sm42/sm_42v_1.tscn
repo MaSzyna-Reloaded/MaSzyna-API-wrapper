@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
@@ -118,7 +118,7 @@ cabin_a/head_light = true
 cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
-[node name="SM42v1" type="TrainController"]
+[node name="SM42v1" type="TrainController" unique_id=2029372200]
 train_id = "sm42v1"
 type_name = "6d"
 mass = 74000.0
@@ -128,7 +128,7 @@ axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
 script = ExtResource("1_vib8j")
 
-[node name="Brake" type="TrainBrake" parent="."]
+[node name="Brake" type="TrainBrake" parent="." unique_id=588434163]
 valve/type = 20
 friction_elements_per_axle = 4
 brake_force/max = 85.0
@@ -146,13 +146,13 @@ compressor/speed = 0.057
 compressor/power = 3
 rig_effectiveness = 0.85
 
-[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="."]
+[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="." unique_id=1998930943]
 oil_pump/pressure_minimum = 0.15
 maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
 motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
 
-[node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="."]
+[node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="." unique_id=888453964]
 aware_system/active = true
 aware_delay = 60.0
 emergency_brake/delay = 2.5
@@ -160,7 +160,7 @@ sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
 
-[node name="TrainDoors" type="TrainDoors" parent="."]
+[node name="TrainDoors" type="TrainDoors" parent="." unique_id=1972367549]
 open/time = 3.0
 max_shift = 3.0
 open/method = 2
@@ -172,19 +172,19 @@ has_lock = true
 max_shift_plug = 3.0
 platform/max_shift = 3.0
 
-[node name="CabinInteriorLights" type="GenericTrainPart" parent="."]
+[node name="CabinInteriorLights" type="GenericTrainPart" parent="." unique_id=1668337540]
 script = ExtResource("2_qmqy7")
 
-[node name="TrainLightning" type="TrainLighting" parent="."]
+[node name="TrainLightning" type="TrainLighting" parent="." unique_id=1232836093]
 lights/wrap_selector = true
 lights/list = Array[LightListItem]([SubResource("LightListItem_ss4tc")])
 light/source = 4
 source/generator/engine = 0
 
-[node name="TrainElectroPneumaticDynamicBrake" type="TrainElectroPneumaticDynamicBrake" parent="."]
+[node name="TrainElectroPneumaticDynamicBrake" type="TrainElectroPneumaticDynamicBrake" parent="." unique_id=444721737]
 
-[node name="TrainSpringBrake" type="TrainSpringBrake" parent="."]
+[node name="TrainSpringBrake" type="TrainSpringBrake" parent="." unique_id=1394463130]
 
-[node name="TrainLoad" type="TrainLoad" parent="."]
+[node name="TrainLoad" type="TrainLoad" parent="." unique_id=829257758]
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

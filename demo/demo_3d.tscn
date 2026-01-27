@@ -1,4 +1,4 @@
-[gd_scene load_steps=17 format=3 uid="uid://bsp43pawp632n"]
+[gd_scene format=3 uid="uid://bsp43pawp632n"]
 
 [ext_resource type="Script" uid="uid://bjjgkykr4c718" path="res://demo_3d.gd" id="1_ut343"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
@@ -37,31 +37,21 @@ ssr_enabled = true
 ssao_enabled = true
 ssil_enabled = true
 sdfgi_enabled = true
-sdfgi_min_cell_size = 0.488281
 glow_enabled = true
-glow_intensity = 0.9
-glow_bloom = 0.08
-glow_hdr_threshold = 0.29
 fog_enabled = true
-fog_mode = 1
-fog_sun_scatter = 0.4
-fog_density = 0.1736
 fog_sky_affect = 0.4
-fog_depth_curve = 1.1487
-fog_depth_end = 67.0
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.029
-volumetric_fog_anisotropy = 0.49
-volumetric_fog_length = 2.8
-volumetric_fog_detail_spread = 3.95852
+volumetric_fog_anisotropy = 0.9
+volumetric_fog_length = 0.5
+volumetric_fog_detail_spread = 5.598199
 volumetric_fog_sky_affect = 0.405
-volumetric_fog_temporal_reprojection_amount = 0.99
 adjustment_enabled = true
 
-[node name="Demo3D" type="Node3D"]
+[node name="Demo3D" type="Node3D" unique_id=598546957]
 script = ExtResource("1_ut343")
 
-[node name="LoadingLabel" type="VBoxContainer" parent="."]
+[node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=337717684]
 visible = false
 anchors_preset = 3
 anchor_left = 1.0
@@ -73,18 +63,18 @@ offset_top = -40.0
 grow_horizontal = 0
 grow_vertical = 0
 
-[node name="Label" type="Label" parent="LoadingLabel"]
+[node name="Label" type="Label" parent="LoadingLabel" unique_id=1515757586]
 layout_mode = 2
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_font_sizes/font_size = 36
 text = "Loading..."
 
-[node name="LoadingScreen" parent="." instance=ExtResource("2_n5hjg")]
+[node name="LoadingScreen" parent="." unique_id=785219485 instance=ExtResource("2_n5hjg")]
 
-[node name="DeveloperConsole" parent="." instance=ExtResource("2_ig825")]
+[node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]
 
-[node name="UserSettingsPanel" type="PanelContainer" parent="."]
+[node name="UserSettingsPanel" type="PanelContainer" parent="." unique_id=1242102357]
 visible = false
 anchors_preset = 5
 anchor_left = 0.5
@@ -96,10 +86,10 @@ offset_bottom = 206.0
 grow_horizontal = 2
 size_flags_horizontal = 3
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UserSettingsPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UserSettingsPanel" unique_id=1324972957]
 layout_mode = 2
 
-[node name="GameDirNotSet" type="Label" parent="UserSettingsPanel/VBoxContainer"]
+[node name="GameDirNotSet" type="Label" parent="UserSettingsPanel/VBoxContainer" unique_id=811810530]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.832245, 0.0664062, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
@@ -107,29 +97,29 @@ theme_override_font_sizes/font_size = 26
 text = "MaSzyna game folder data is not set or invalid."
 horizontal_alignment = 1
 
-[node name="Maszyna Settings" parent="UserSettingsPanel/VBoxContainer" instance=ExtResource("4_dyl8i")]
+[node name="Maszyna Settings" parent="UserSettingsPanel/VBoxContainer" unique_id=1669941723 instance=ExtResource("4_dyl8i")]
 layout_mode = 2
 
-[node name="DebugHUD" parent="." instance=ExtResource("5_vl0kb")]
+[node name="DebugHUD" parent="." unique_id=1282244848 instance=ExtResource("5_vl0kb")]
 player_path = NodePath("../Player")
 
-[node name="MaszynaEnvironmentNode" type="Node" parent="."]
+[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1228891371]
 script = ExtResource("2_py6pt")
 world_environment = NodePath("../WorldEnvironment")
 sky_texture_offset = Vector2(0.49, 0.005)
 sky_texture_scale = Vector2(0.547, 0.865)
 sky_energy = 0.85
 
-[node name="Player" parent="." instance=ExtResource("13_nxmm0")]
+[node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
 controlled_vehicle_path = NodePath("../SM42-099")
 
-[node name="Ground" type="CSGBox3D" parent="."]
+[node name="Ground" type="CSGBox3D" parent="." unique_id=1903537021]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.069304, -5.63989)
 material_override = ExtResource("2_imrpy")
 size = Vector3(5000, 0.1, 5000)
 
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="."]
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=786641912]
 transform = Transform3D(-0.846557, 0.01871, 0.531969, 0.393589, 0.694835, 0.601906, -0.358369, 0.718925, -0.595582, 5.83027, -6.14961, 0)
 light_color = Color(0.929688, 0.848771, 0.817108, 1)
 light_energy = 2.34
@@ -142,22 +132,21 @@ directional_shadow_split_3 = 0.3
 directional_shadow_blend_splits = true
 directional_shadow_max_distance = 300.0
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2040205312]
 environment = SubResource("Environment_jrns0")
 
-[node name="SM42-099" parent="." instance=ExtResource("11_8gidn")]
+[node name="SM42-099" parent="." unique_id=194333198 instance=ExtResource("11_8gidn")]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, -16.3318, 0, -13.7746)
 
-[node name="Impuls" parent="." instance=ExtResource("12_hsov8")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
+[node name="Impuls" parent="." unique_id=2111644575 instance=ExtResource("12_hsov8")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.021647027, -0.019251347, -4.3020163)
 
-[node name="TEM2" parent="." instance=ExtResource("13_fe5ju")]
+[node name="TEM2" parent="." unique_id=803954038 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
 
-[node name="Dekoracje" type="Node3D" parent="."]
+[node name="Dekoracje" type="Node3D" parent="." unique_id=1893813040]
 
-[node name="Dworzec Olkusz" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Dworzec Olkusz" type="VisualInstance3D" parent="Dekoracje" unique_id=228197153]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -178,8 +167,7 @@ data_path = "models/stacje/"
 model_filename = "dworzec_olkusz"
 skins = ["dworzec_olkusz_lhs"]
 
-[node name="Dworzec Sosnowiec" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Dworzec Sosnowiec" type="VisualInstance3D" parent="Dekoracje" unique_id=1386451553]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -200,8 +188,7 @@ data_path = "models/stacje/"
 model_filename = "dworzec_sosnowiec_porabka"
 skins = ["dworzec_sosnowiec_porabka"]
 
-[node name="Nastawnia Sochaczew" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Nastawnia Sochaczew" type="VisualInstance3D" parent="Dekoracje" unique_id=2113648551]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -222,8 +209,7 @@ data_path = "models/sochaczew/"
 model_filename = "nastawnia"
 skins = ["dworzec_sosnowiec_porabka"]
 
-[node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje" unique_id=723025036]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -244,8 +230,7 @@ data_path = "models/przemysl/kopalnie"
 model_filename = "szyb_kleofas_gigant"
 skins = ["dworzec_sosnowiec_porabka"]
 
-[node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje" unique_id=230588431]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -265,8 +250,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/przemysl/kopalnie/kwk_staszic"
 model_filename = "szyb_ii"
 
-[node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje" unique_id=2055300724]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -286,8 +270,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/otoczenie/obiekty_stacyjne"
 model_filename = "terenpkp"
 
-[node name="Parkomat" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Parkomat" type="VisualInstance3D" parent="Dekoracje" unique_id=969128519]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -307,8 +290,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/miejskie"
 model_filename = "parkomat_rozi_macius9551"
 
-[node name="Skrzynka" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Skrzynka" type="VisualInstance3D" parent="Dekoracje" unique_id=204687938]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -328,8 +310,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/miejskie"
 model_filename = "skrzynka_tel_rozi_macius9551"
 
-[node name="Klamoty" type="VisualInstance3D" parent="Dekoracje"]
-_import_path = NodePath("")
+[node name="Klamoty" type="VisualInstance3D" parent="Dekoracje" unique_id=2091251360]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0

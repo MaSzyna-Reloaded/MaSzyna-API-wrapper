@@ -59,7 +59,7 @@ jobs:
           for f in "${FILES[@]}"; do
             echo "=== ${f} ===" | tee -a clang-tidy.log
             # Use project-local .clang-tidy implicitly
-            if ! sudo clang-tidy -p build --quiet --fix-notes -header-filter=^src/ "$f" 2>>clang-tidy-errors.log | tee -a clang-tidy.log; then
+            if ! sudo clang-tidy -p build -extra-arg=-std=c++17 --quiet --fix-notes -header-filter=^src/ "$f" 2>>clang-tidy-errors.log | tee -a clang-tidy.log; then
               echo "clang-tidy reported non-zero status for $f" >> clang-tidy-errors.log
             fi
           done

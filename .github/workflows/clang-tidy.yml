@@ -7,7 +7,7 @@ on:
 jobs:
   clang-tidy:
     name: Run clang-tidy and upload report
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,7 +40,6 @@ jobs:
         id: run
         shell: bash
         run: |
-          sudo echo "deb https://security.ubuntu.com/ubuntu focal-security main universe" > sudo /etc/apt/sources.list.d/ubuntu-focal-sources.list
           sudo apt update
           sudo apt install libncurses5-dev
           set -o pipefail

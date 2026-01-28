@@ -48,6 +48,8 @@ namespace godot {
         for (const auto & i : submodels) {
             // Extract E3DSubModel from the array safely.
             Ref<E3DSubModel> submodel_ref = i;
+
+            //FIXME
             if (!submodel_ref.is_valid()) {
                 continue;
             }

@@ -1,8 +1,8 @@
 #include "E3DModelInstance.hpp"
 #include "E3DModelInstanceManager.hpp"
 #include "E3DNodesInstancer.hpp"
-#include "helpers/lambda.hpp"
 #include "core/ActionQueue.hpp"
+#include "helpers/lambda.hpp"
 
 #include "models/e3d/E3DModelManager.hpp"
 #include <godot_cpp/classes/engine.hpp>
@@ -51,7 +51,7 @@ namespace godot {
         if (instance == nullptr) {
             return;
         }
-        if (const __gnu_cxx::__normal_iterator<E3DModelInstance **, std::vector<E3DModelInstance *>> it =
+        if (const auto it =
                     std::remove(_instances.begin(), _instances.end(), instance);
             it != _instances.end()) {
             _instances.erase(it, _instances.end());

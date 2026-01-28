@@ -21,7 +21,7 @@ namespace godot {
     }
 
     int E3DParser::u32s(const uint32_t value) const {
-        return (static_cast<int>(value) + MAX_31B) % MAX_32B - MAX_31B; // NOLINT(*-math-missing-parentheses)
+        return static_cast<int>((static_cast<int64_t>(value) + MAX_31B) % MAX_32B - MAX_31B); // NOLINT(*-math-missing-parentheses)
     }
 
     PackedVector3Array

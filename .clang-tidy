@@ -40,6 +40,9 @@ Checks: "bugprone-*,
   -llvm-header-guard,
   -llvm-else-after-return,
   -*-unhandled-self-assignment,
-  *-use-enum-class,
+  -*-use-enum-class,
+  -*-use-ranges,
+  -readability-else-after-return,
+  -cppcoreguidelines-pro-bounds-to-array-pointer-decay,
   -*-return-braced-init-list"
 WarningsAsErrors: "*"

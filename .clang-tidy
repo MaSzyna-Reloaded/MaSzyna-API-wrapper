@@ -40,5 +40,6 @@ Checks: "bugprone-*,
   -llvm-header-guard,
   -llvm-else-after-return,
   -*-unhandled-self-assignment,
+  *-use-enum-class,
   -*-return-braced-init-list"
 WarningsAsErrors: "*"

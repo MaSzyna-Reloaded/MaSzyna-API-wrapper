@@ -40,6 +40,7 @@ jobs:
         id: run
         shell: bash
         run: |
+          apt install libncurses5
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \

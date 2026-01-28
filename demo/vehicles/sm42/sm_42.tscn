@@ -24,6 +24,10 @@ transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 
 [node name="SM42v1" parent="." unique_id=1455578546 instance=ExtResource("3_vuhlb")]
 
 [node name="SM42-099-LowPolyCab" type="E3DModelInstance" parent="." unique_id=1193341103]
+data_path = "/dynamic/pkp/sm42_v1"
+model_filename = "6da_interior"
+skins = ["6d-907"]
+exclude_node_names = ["cien"]
 
 [node name="Area3D" type="Area3D" parent="." unique_id=1640565415]
 monitoring = false

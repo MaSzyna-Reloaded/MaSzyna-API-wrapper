@@ -45,7 +45,6 @@ jobs:
           sudo apt update
           sudo apt-get install -y libtinfo5
           sudo apt install libncurses5-dev
-          ls -l /usr/lib64/libncurses*
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \

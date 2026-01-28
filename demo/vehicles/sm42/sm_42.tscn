@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bcxtf08c2yqx4"]
+[gd_scene format=3 uid="uid://bcxtf08c2yqx4"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
@@ -7,133 +7,62 @@
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(4.5332, 4.72223, 17.0549)
 
-[node name="SM42-099" type="Node3D"]
+[node name="SM42-099" type="Node3D" unique_id=175206164]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 script = ExtResource("1_iiqbf")
 controller_path = NodePath("SM42v1")
 cabin_scene = ExtResource("2_htu7b")
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
 
-[node name="SM42-099" type="E3DModelInstance" parent="."]
+[node name="SM42-099" type="E3DModelInstance" parent="." unique_id=1179593253]
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="SM42v1" parent="." instance=ExtResource("3_vuhlb")]
+[node name="SM42v1" parent="." unique_id=1455578546 instance=ExtResource("3_vuhlb")]
 
-[node name="SM42-099-LowPolyCab" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
+[node name="SM42-099-LowPolyCab" type="E3DModelInstance" parent="." unique_id=1193341103]
 
-[node name="Area3D" type="Area3D" parent="."]
+[node name="Area3D" type="Area3D" parent="." unique_id=1640565415]
 monitoring = false
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1929153407]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
 shape = SubResource("BoxShape3D_uljbo")
 
-[node name="401W-1" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
+[node name="401W-1" type="E3DModelInstance" parent="." unique_id=1847775187]
+data_path = "/dynamic/pkp/401w_v2"
+model_filename = "main/401w"
+skins = ["5217,1", "5217,2"]
+exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -70.1831)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
 
-[node name="401W-2" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
+[node name="401W-2" type="E3DModelInstance" parent="." unique_id=1756948398]
+data_path = "/dynamic/pkp/401w_v2"
+model_filename = "main/401w"
+skins = ["5217,1", "5217,2"]
+exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -56.1651)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
 
-[node name="401W-3" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
+[node name="401W-3" type="E3DModelInstance" parent="." unique_id=899671606]
+data_path = "/dynamic/pkp/401w_v2"
+model_filename = "main/401w"
+skins = ["5217,1", "5217,2"]
+exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -42.1591)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
 
-[node name="401W-4" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
+[node name="401W-4" type="E3DModelInstance" parent="." unique_id=1439083964]
+data_path = "/dynamic/pkp/401w_v2"
+model_filename = "main/401w"
+skins = ["5217,1", "5217,2"]
+exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -28.1431)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
 
-[node name="401W-5" type="E3DModelInstance" parent="."]
-_import_path = NodePath("")
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
+[node name="401W-5" type="E3DModelInstance" parent="." unique_id=651222395]
+data_path = "/dynamic/pkp/401w_v2"
+model_filename = "main/401w"
+skins = ["5217,1", "5217,2"]
+exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -14.1341)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1

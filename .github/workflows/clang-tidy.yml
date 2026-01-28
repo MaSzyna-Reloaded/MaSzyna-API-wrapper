@@ -41,6 +41,9 @@ jobs:
         shell: bash
         run: |
           sudo apt update
+          sudo add-apt-repository universe
+          sudo apt update
+          sudo apt-get install -y libtinfo5
           sudo apt install libncurses5-dev
           ls -l /usr/lib64/libncurses*
           set -o pipefail

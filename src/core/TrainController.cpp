@@ -8,6 +8,15 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    TrainController::~TrainController() {
+        state.clear();
+        config.clear();
+        internal_state.clear();
+        if (mover != nullptr) {
+            delete mover;
+            mover = nullptr;
+        }
+    }
 
     const char *TrainController::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
     const char *TrainController::MOVER_INITIALIZED_SIGNAL = "mover_initialized";

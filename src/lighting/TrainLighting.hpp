@@ -10,9 +10,12 @@ namespace godot {
     class TrainLighting : public TrainPart {
             GDCLASS(TrainLighting, TrainPart);
 
+        public:
+            TrainLighting();
+            ~TrainLighting() override;
+
         private:
             static void _bind_methods();
-            const TrainController *_controller = memnew(TrainController);
             TypedArray<LightListItem> light_position_list;
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;

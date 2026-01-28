@@ -11,16 +11,17 @@ namespace godot {
 
     class TrainController;
 
-    class TrainSystem : public RefCounted {
-            GDCLASS(TrainSystem, RefCounted);
+    class TrainSystem : public Object {
+            GDCLASS(TrainSystem, Object);
 
         private:
             std::map<String, TrainController *> trains;
             Dictionary commands;
 
         public:
+            ~TrainSystem() override;
             static TrainSystem *get_instance() {
-                return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
+                return dynamic_cast<TrainSystem *>(Engine::get_singleton()->get_singleton("TrainSystem"));
             }
 
             void register_train(const String &train_id, TrainController *train);

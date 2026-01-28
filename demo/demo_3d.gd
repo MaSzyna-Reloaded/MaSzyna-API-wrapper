@@ -30,9 +30,6 @@ func _ready():
     UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
     UserSettings.config_changed.connect(_update_render_settings)
     _update_render_settings()
-    SceneryResourceLoader.enabled = false
-    SceneryResourceLoader.loading_request.connect(_on_loading_started)
-    SceneryResourceLoader.scenery_loaded.connect(_on_loading_finished)
 
 func _on_loading_started():
     $LoadingLabel.visible = true
@@ -52,7 +49,3 @@ func _input(event):
 func _on_user_settings_panel_visibility_changed():
     var game_dir = UserSettings.get_maszyna_game_dir()
     $UserSettingsPanel/VBoxContainer/GameDirNotSet.visible = not game_dir or FileAccess.file_exists(game_dir)
-
-
-func _on_loading_screen_fadein_finished() -> void:
-    SceneryResourceLoader.enabled = true

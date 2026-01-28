@@ -25,10 +25,18 @@ namespace godot {
         meta.emplace_back();
     }
 
-    void MaszynaParser::initialize(const PackedByteArray &buffer) {
+    MaszynaParser::~MaszynaParser() {
+        handlers.clear();
+        parameters.clear();
+        meta.clear();
+        buffer.clear();
+        mutex.unref();
+    }
+
+    void MaszynaParser::initialize(const PackedByteArray &p_buffer) {
         mutex->lock();
-        this->buffer = buffer;
-        length = static_cast<int>(buffer.size());
+        this->buffer = p_buffer;
+        length = static_cast<int>(p_buffer.size());
         cursor = 0;
         mutex->unlock();
     }

@@ -26,8 +26,6 @@ namespace godot {
     }
 
     E3DModelManager::E3DModelManager() : user_settings_node(nullptr), loader(memnew(ResourceLoader)), saver(memnew(ResourceSaver)) {
-
-
         if (game_dir == "") {
             Ref<ConfigFile> _config = memnew(ConfigFile);
             _config.instantiate();

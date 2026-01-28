@@ -43,6 +43,7 @@ Checks: "bugprone-*,
   -*-use-enum-class,
   -*-use-ranges,
   -readability-else-after-return,
-  -cppcoreguidelines-pro-bounds-to-array-pointer-decay,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -*-return-braced-init-list"
 WarningsAsErrors: "*"

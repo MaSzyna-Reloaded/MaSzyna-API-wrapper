@@ -41,8 +41,11 @@ jobs:
         shell: bash
         run: |
           sudo apt update
-          sudo apt upgrade
-          sudo apt install libncurses5
+          sudo dpkg --print-architecture 
+          sudo dpkg --print-foreign-architectures
+          sudo dpkg --add-architecture i386
+          sudo add-apt-repository universe
+          sudo apt install libncurses5 libncurses5:i386
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \

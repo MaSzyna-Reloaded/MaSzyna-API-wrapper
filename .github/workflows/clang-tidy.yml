@@ -42,7 +42,7 @@ jobs:
         run: |
           sudo echo "deb https://security.ubuntu.com/ubuntu focal-security main universe" > sudo /etc/apt/sources.list.d/ubuntu-focal-sources.list
           sudo apt update
-          sudo apt install libncurses5
+          sudo apt install libncurses5-dev
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \

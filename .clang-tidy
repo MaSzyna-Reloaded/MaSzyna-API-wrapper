@@ -46,5 +46,6 @@ Checks: "bugprone-*,
   -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
   -cppcoreguidelines-pro-type-cstyle-cast,
+  -readability-redundant-declaration,
   -*-return-braced-init-list"
 WarningsAsErrors: "*"

@@ -49,7 +49,7 @@ namespace libmaszyna::utils {
              * @param callbackFn Callback function taking no arguments
              */
             ObservableValue(const T& initialValue, std::function<void()> callbackFn)
-                : value_(initialValue), callback_([fn = std::move(callbackFn)](const T&) { if (fn) fn(); }) {}
+                : value_(initialValue), callback_([fn = std::move(callbackFn)](const T&) { if (fn) { fn(); } }) {}
 
             /**
              * ObservableValue watches any change to the variable it declares and calls the provided callback as it changes

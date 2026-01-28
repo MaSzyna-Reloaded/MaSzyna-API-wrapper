@@ -45,7 +45,7 @@ jobs:
           sudo dpkg --print-foreign-architectures
           sudo dpkg --add-architecture i386
           sudo add-apt-repository universe
-          sudo apt install libtinfo5
+          sudo apt install clang-tidy
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \

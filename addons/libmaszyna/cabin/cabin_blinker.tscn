@@ -2,9 +2,9 @@
 
 [ext_resource type="Script" uid="uid://ccmsi0wq5sq3s" path="res://addons/libmaszyna/cabin/cabin_blinker.gd" id="1_q1beh"]
 
-[node name="Blinker" type="Node3D" unique_id=212943250]
+[node name="Blinker" type="Node3D" unique_id=447458378]
 script = ExtResource("1_q1beh")
 
-[node name="Timer" type="Timer" parent="." unique_id=114747919]
+[node name="Timer" type="Timer" parent="." unique_id=666450899]
 
 [connection signal="timeout" from="Timer" to="." method="_on_timer_timeout"]

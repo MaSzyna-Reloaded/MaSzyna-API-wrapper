@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://djqacw65swdqc"]
+[gd_scene load_steps=7 format=3 uid="uid://djqacw65swdqc"]
 
 [ext_resource type="Script" uid="uid://ccuksauqx4qmn" path="res://examples/mover_demo.gd" id="1_hbfy1"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_j25qa"]
@@ -7,7 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://laujatulc22" path="res://hud/mover_switches.tscn" id="5_vg5os"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="6_7bum4"]
 
-[node name="Demo" type="Control" unique_id=1843221546]
+[node name="Demo" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -18,9 +18,9 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_hbfy1")
 
-[node name="DeveloperConsole" parent="." unique_id=956064767 instance=ExtResource("2_j25qa")]
+[node name="DeveloperConsole" parent="." instance=ExtResource("2_j25qa")]
 
-[node name="UI" type="VBoxContainer" parent="." unique_id=91857460]
+[node name="UI" type="VBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = -1
 anchor_right = 1.0
@@ -31,21 +31,21 @@ grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
-[node name="Header" type="HBoxContainer" parent="UI" unique_id=711074471]
+[node name="Header" type="HBoxContainer" parent="UI"]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TrainName" type="Label" parent="UI/Header" unique_id=794720092]
+[node name="TrainName" type="Label" parent="UI/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 0
 
-[node name="BatteryLabel" type="Label" parent="UI/Header" unique_id=798195162]
+[node name="BatteryLabel" type="Label" parent="UI/Header"]
 layout_mode = 2
 size_flags_horizontal = 0
 text = "Battery"
 
-[node name="BatteryProgressBar" type="ProgressBar" parent="UI/Header" unique_id=437801902]
+[node name="BatteryProgressBar" type="ProgressBar" parent="UI/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
@@ -54,53 +54,53 @@ tooltip_text = "Battery"
 max_value = 110.0
 show_percentage = false
 
-[node name="BatteryValue" type="Label" parent="UI/Header" unique_id=829232401]
+[node name="BatteryValue" type="Label" parent="UI/Header"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="Title" type="Label" parent="UI/Header" unique_id=976416075]
+[node name="Title" type="Label" parent="UI/Header"]
 layout_mode = 2
 size_flags_horizontal = 10
 text = "MaSzyna MOVER TESTER"
 horizontal_alignment = 2
 
-[node name="DebugPanels" type="HFlowContainer" parent="UI" unique_id=105784666]
+[node name="DebugPanels" type="HFlowContainer" parent="UI"]
 layout_mode = 2
 
-[node name="DebugDoor" parent="UI/DebugPanels" unique_id=21064788 instance=ExtResource("3_pdcrj")]
+[node name="DebugDoor" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
 unique_name_in_owner = true
 layout_mode = 2
 title = "Door"
 
-[node name="DebugEngine" parent="UI/DebugPanels" unique_id=1691294425 instance=ExtResource("3_pdcrj")]
+[node name="DebugEngine" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
 unique_name_in_owner = true
 layout_mode = 2
 title = "Engine"
 
-[node name="DebugSecurity" parent="UI/DebugPanels" unique_id=245666883 instance=ExtResource("3_pdcrj")]
+[node name="DebugSecurity" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
 unique_name_in_owner = true
 layout_mode = 2
 title = "Security"
 
-[node name="DebugBrake" parent="UI/DebugPanels" unique_id=916046018 instance=ExtResource("3_pdcrj")]
+[node name="DebugBrake" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
 unique_name_in_owner = true
 layout_mode = 2
 title = "Brake"
 
-[node name="DebugTrain" parent="UI/DebugPanels" unique_id=183917546 instance=ExtResource("3_pdcrj")]
+[node name="DebugTrain" parent="UI/DebugPanels" instance=ExtResource("3_pdcrj")]
 unique_name_in_owner = true
 layout_mode = 2
 title = "Train"
 
-[node name="Gauges" parent="UI" unique_id=896597401 instance=ExtResource("4_4bpxo")]
+[node name="Gauges" parent="UI" instance=ExtResource("4_4bpxo")]
 layout_mode = 2
 train_controller = NodePath("../../SM42")
 
-[node name="MoverSwitches" parent="UI" unique_id=394670291 instance=ExtResource("5_vg5os")]
+[node name="MoverSwitches" parent="UI" instance=ExtResource("5_vg5os")]
 layout_mode = 2
 train_controller = NodePath("../../SM42")
 
-[node name="SM42" parent="." unique_id=1178158982 instance=ExtResource("6_7bum4")]
+[node name="SM42" parent="." instance=ExtResource("6_7bum4")]
 train_id = "sm42"
 
 [connection signal="mover_initialized" from="SM42" to="." method="_on_sm_42_mover_initialized"]

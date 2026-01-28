@@ -9,8 +9,8 @@
 #include <godot_cpp/core/memory.hpp>
 namespace godot {
     Ref<Material> E3DNodesInstancer::_colored_material;
-    Node3D *E3DNodesInstancer::_create_submodel_instance(
-            const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
+    Node3D *
+    E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
         if (submodel.get_skip_rendering()) {
             return nullptr;
         }
@@ -24,7 +24,8 @@ namespace godot {
             }
 
             case E3DSubModel::GL_TRIANGLES: {
-                if (const bool is_name_excluded = p_target_node.get_exclude_node_names().has(submodel.get_name()); !is_name_excluded) {
+                if (const bool is_name_excluded = p_target_node.get_exclude_node_names().has(submodel.get_name());
+                    !is_name_excluded) {
                     MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
                     mesh_instance->set_name(StringName(submodel.get_name()));
                     mesh_instance->set_mesh(submodel.get_mesh());
@@ -35,21 +36,22 @@ namespace godot {
                     return mesh_instance;
                 }
             }
-            default: ;
+            default:;
         }
         return nullptr;
     }
 
     void E3DNodesInstancer::_do_add_submodels(
-            const E3DModelInstance &p_target_node, Node3D* parent, const TypedArray<E3DSubModel>& submodels, const bool editable) {
+            const E3DModelInstance &p_target_node, Node3D *parent, const TypedArray<E3DSubModel> &submodels,
+            const bool editable) {
         if (parent == nullptr) {
             return;
         }
-        for (const auto & i : submodels) {
+        for (const auto &i: submodels) {
             // Extract E3DSubModel from the array safely.
             Ref<E3DSubModel> submodel_ref = i;
 
-            //FIXME
+            // FIXME
             if (!submodel_ref.is_valid()) {
                 continue;
             }
@@ -68,16 +70,16 @@ namespace godot {
             parent->add_child(child, false, internal);
 
             // Apply transform AFTER adding to the tree (important especially on Windows)
-            if (Node3D *child3d = cast_to<Node3D>(child); submodel_ref->has_method("get_transform") && child3d != nullptr) {
-                // ReSharper disable once CppDFAUnreachableCode
+            if (Node3D *child3d = cast_to<Node3D>(child); child3d != nullptr) { // submodel_ref->has_method("get_transform") was removed; It caused the if
+                                      // condition not to be met
                 child3d->set_transform(submodel->get_transform());
             }
 
             // In editor, set owner depending on editability
             if ((Engine::get_singleton() != nullptr) && Engine::get_singleton()->is_editor_hint()) {
                 // Prefer using the same owner as the target node for editable; otherwise, no explicit owner
-                if (Node *owner = editable ? p_target_node.get_owner() : nullptr; (owner != nullptr) && child != nullptr) {
-                    // ReSharper disable once CppDFAUnreachableCode
+                if (Node *owner = editable ? p_target_node.get_owner() : nullptr;
+                    (owner != nullptr) && child != nullptr) {
                     child->set_owner(owner);
                 }
             }
@@ -107,7 +109,9 @@ namespace godot {
             if (const int idx = submodel.get_dynamic_material_index(); skins.size() > idx) {
                 material_name = skins.get(idx);
             } else {
-                UtilityFunctions::push_warning("Model " + p_target_node.get_name() + " has less skins than dynamic material index " + String::num_int64(idx));
+                UtilityFunctions::push_warning(
+                        "Model " + p_target_node.get_name() + " has less skins than dynamic material index " +
+                        String::num_int64(idx));
             }
         }
 
@@ -127,7 +131,8 @@ namespace godot {
                 }
             }
         } else {
-            mat = mm->get_material(p_target_node.get_data_path(), material_name, transparency, false, submodel.get_diffuse_color());
+            mat = mm->get_material(
+                    p_target_node.get_data_path(), material_name, transparency, false, submodel.get_diffuse_color());
         }
 
         if (mat.is_valid()) {
@@ -136,14 +141,18 @@ namespace godot {
     }
 
     void E3DNodesInstancer::_bind_methods() {
-        ClassDB::bind_static_method("E3DNodesInstancer", D_METHOD("instantiate", "model", "target_node", "editable"), &E3DNodesInstancer::instantiate);
+        ClassDB::bind_static_method(
+                "E3DNodesInstancer", D_METHOD("instantiate", "model", "target_node", "editable"),
+                &E3DNodesInstancer::instantiate);
     }
 
     Ref<Material> E3DNodesInstancer::get_colored_material() {
         if (!_colored_material.is_valid()) {
             if ((Engine::get_singleton() != nullptr) && !Engine::get_singleton()->is_editor_hint()) {
                 const String path = "res://addons/libmaszyna/e3d/colored.material";
-                if (const Ref<Material> res = ResourceLoader::get_singleton()->load(path, "Material", ResourceLoader::CACHE_MODE_REUSE); res.is_valid()) {
+                if (const Ref<Material> res =
+                            ResourceLoader::get_singleton()->load(path, "Material", ResourceLoader::CACHE_MODE_REUSE);
+                    res.is_valid()) {
                     _colored_material = res;
                 }
             }
@@ -151,7 +160,8 @@ namespace godot {
         return _colored_material;
     }
 
-    void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
+    void
+    E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
         if (p_target_node == nullptr) {
             return;
         }

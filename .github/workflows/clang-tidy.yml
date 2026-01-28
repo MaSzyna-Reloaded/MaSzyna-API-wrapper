@@ -40,7 +40,7 @@ jobs:
         id: run
         shell: bash
         run: |
-          echo "deb https://security.ubuntu.com/ubuntu focal-security main universe" > /etc/apt/sources.list.d/ubuntu-focal-sources.list
+          sudo echo "deb https://security.ubuntu.com/ubuntu focal-security main universe" > /etc/apt/sources.list.d/ubuntu-focal-sources.list
           sudo apt update
           sudo apt install clang-tidy
           set -o pipefail

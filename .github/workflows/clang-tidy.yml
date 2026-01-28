@@ -40,6 +40,8 @@ jobs:
         id: run
         shell: bash
         run: |
+          sudo apt update
+          sudo apt upgrade
           sudo apt install libncurses5
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)

@@ -40,11 +40,8 @@ jobs:
         id: run
         shell: bash
         run: |
+          echo "deb https://security.ubuntu.com/ubuntu focal-security main universe" > /etc/apt/sources.list.d/ubuntu-focal-sources.list
           sudo apt update
-          sudo dpkg --print-architecture 
-          sudo dpkg --print-foreign-architectures
-          sudo dpkg --add-architecture i386
-          sudo add-apt-repository universe
           sudo apt install clang-tidy
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)

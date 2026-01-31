@@ -61,7 +61,7 @@ namespace godot {
     }
 
     void E3DModelInstance::_reload() {
-        if (E3DModelInstanceManager *manager = _get_manager()) {
+        if (const E3DModelInstanceManager *manager = _get_manager()) {
             manager->reload_instance(this);
         }
     }

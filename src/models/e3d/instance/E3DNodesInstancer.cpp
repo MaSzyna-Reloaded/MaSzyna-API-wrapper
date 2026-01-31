@@ -7,10 +7,10 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node3d.hpp>
 #include <godot_cpp/core/memory.hpp>
+
 namespace godot {
     Ref<Material> E3DNodesInstancer::_colored_material;
-    Node3D *
-    E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
+    Node3D * E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
         if (submodel.get_skip_rendering()) {
             return nullptr;
         }
@@ -48,13 +48,13 @@ namespace godot {
             return;
         }
         for (const auto &i: submodels) {
-            // Extract E3DSubModel from the array safely.
             Ref<E3DSubModel> submodel_ref = i;
+            UtilityFunctions::print_verbose("E3DNodesInstancer::_do_add_submodels: processing submodel " + submodel_ref->get_name() + " for " + p_target_node.get_name() + "/" + parent->get_name());
 
             // FIXME
-            if (!submodel_ref.is_valid()) {
-                continue;
-            }
+            // if (!submodel_ref.is_valid()) {
+            //     continue;
+            // }
             const E3DSubModel *submodel = submodel_ref.ptr();
             if (submodel == nullptr) {
                 continue;
@@ -65,26 +65,23 @@ namespace godot {
                 continue;
             }
 
-            // Choose internal mode: editable -> disabled (regular child), non-editable -> internal back
             const InternalMode internal = editable ? Node::INTERNAL_MODE_DISABLED : Node::INTERNAL_MODE_BACK;
             parent->add_child(child, false, internal);
 
             // Apply transform AFTER adding to the tree (important especially on Windows)
-            if (Node3D *child3d = cast_to<Node3D>(child); child3d != nullptr) { // submodel_ref->has_method("get_transform") was removed; It caused the if
-                                      // condition not to be met
-                child3d->set_transform(submodel->get_transform());
-            }
+            child->set_transform(submodel->get_transform());
+            // if (Node3D *child3d = cast_to<Node3D>(child); child3d != nullptr) { // submodel_ref->has_method("get_transform") was removed; It caused the if
+            //                           // condition not to be met
+            //     child3d->set_transform(submodel->get_transform());
+            // }
 
-            // In editor, set owner depending on editability
             if ((Engine::get_singleton() != nullptr) && Engine::get_singleton()->is_editor_hint()) {
-                // Prefer using the same owner as the target node for editable; otherwise, no explicit owner
                 if (Node *owner = editable ? p_target_node.get_owner() : nullptr;
-                    (owner != nullptr) && child != nullptr) {
+                    owner != nullptr) {
                     child->set_owner(owner);
                 }
             }
 
-            // Recurse into submodels
             if (TypedArray<E3DSubModel> children = submodel->get_submodels(); children.size() > 0) {
                 _do_add_submodels(p_target_node, child, children, editable);
             }
@@ -123,13 +120,13 @@ namespace godot {
         Ref<Material> mat;
         if (submodel.get_material_colored()) {
             mat = get_colored_material();
-            if (mat.is_valid()) {
-                // Since it's a shared material, we might need to duplicate it if we want per-instance colors,
-                // but usually vertex colors are used.
-                if (const Ref<StandardMaterial3D> sm = mat; sm.is_valid()) {
-                    sm->set_albedo(submodel.get_diffuse_color());
-                }
-            }
+            const Ref<StandardMaterial3D> sm = mat;
+            sm->set_albedo(submodel.get_diffuse_color());
+            // if (mat.is_valid()) {
+            //     if (const Ref<StandardMaterial3D> sm = mat; sm.is_valid()) {
+            //         sm->set_albedo(submodel.get_diffuse_color());
+            //     }
+            // }
         } else {
             mat = mm->get_material(
                     p_target_node.get_data_path(), material_name, transparency, false, submodel.get_diffuse_color());
@@ -160,23 +157,24 @@ namespace godot {
         return _colored_material;
     }
 
-    void
-    E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
+    void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
         if (p_target_node == nullptr) {
             return;
         }
+
         const int32_t child_count = p_target_node->get_child_count(true);
         for (int32_t i = child_count - 1; i >= 0; --i) {
             Node *child = p_target_node->get_child(i, true);
             if (child == nullptr) {
                 continue;
             }
-            // Detach from the scene tree immediately and free safely.
+
             p_target_node->remove_child(child);
             child->queue_free();
         }
 
         if (p_model.is_valid()) {
+            UtilityFunctions::print_verbose("E3DNodesInstancer::instantiate: adding submodels for " + p_target_node->get_name());
             _do_add_submodels(*p_target_node, p_target_node, p_model->get_submodels(), editable);
         }
     }

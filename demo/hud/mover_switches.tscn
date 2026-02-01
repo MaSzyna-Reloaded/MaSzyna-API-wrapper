@@ -1,237 +1,250 @@
-[gd_scene format=3 uid="uid://laujatulc22"]
+[gd_scene load_steps=5 format=3 uid="uid://laujatulc22"]
 
 [ext_resource type="Script" uid="uid://cyuyraig8yxc" path="res://hud/mover_switches.gd" id="1_khm1i"]
 [ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://hud/switch.tscn" id="1_vladt"]
 [ext_resource type="PackedScene" uid="uid://dy8wkx8wr4gjf" path="res://hud/button.tscn" id="2_qbcao"]
 [ext_resource type="PackedScene" uid="uid://ddag4vhhuox0t" path="res://hud/knob.tscn" id="3_j1mtt"]
 
-[node name="MoverSwitches" type="HBoxContainer" unique_id=339320426]
+[node name="MoverSwitches" type="HBoxContainer"]
 size_flags_vertical = 3
 script = ExtResource("1_khm1i")
 
-[node name="General" type="HFlowContainer" parent="." unique_id=1285486844]
+[node name="General" type="HFlowContainer" parent="."]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="General" unique_id=60872803]
+[node name="Label" type="Label" parent="General"]
 layout_mode = 2
 text = "General"
 
-[node name="Battery2" parent="General" unique_id=1031787286 instance=ExtResource("1_vladt")]
+[node name="Battery2" parent="General" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Battery"
 state_property = "battery_enabled"
 command = "battery"
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="General" unique_id=251685054]
+[node name="HBoxContainer2" type="HBoxContainer" parent="General"]
 layout_mode = 2
 
-[node name="Forward" parent="General/HBoxContainer2" unique_id=1483744598 instance=ExtResource("2_qbcao")]
+[node name="Forward" parent="General/HBoxContainer2" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Forward"
 command = "direction_increase"
+covnert_argument_to_bool = false
 
-[node name="Reverse" parent="General/HBoxContainer2" unique_id=2091739000 instance=ExtResource("2_qbcao")]
+[node name="Reverse" parent="General/HBoxContainer2" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Backward"
 command = "direction_decrease"
+covnert_argument_to_bool = false
 
-[node name="HBoxContainer" type="HBoxContainer" parent="General" unique_id=852991503]
+[node name="HBoxContainer" type="HBoxContainer" parent="General"]
 layout_mode = 2
 
-[node name="MainIncrease" parent="General/HBoxContainer" unique_id=76479498 instance=ExtResource("2_qbcao")]
+[node name="MainIncrease" parent="General/HBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Main +"
 command = "main_controller_increase"
+covnert_argument_to_bool = false
 
-[node name="MainDecrease" parent="General/HBoxContainer" unique_id=1555303172 instance=ExtResource("2_qbcao")]
+[node name="MainDecrease" parent="General/HBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Main -"
 command = "main_controller_decrease"
+covnert_argument_to_bool = false
 
-[node name="MainCtrlPos" type="Label" parent="General/HBoxContainer" unique_id=326791865]
+[node name="MainCtrlPos" type="Label" parent="General/HBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="General" unique_id=1356500360]
+[node name="HBoxContainer3" type="HBoxContainer" parent="General"]
 layout_mode = 2
 
-[node name="LightsIncrease" parent="General/HBoxContainer3" unique_id=1937226329 instance=ExtResource("2_qbcao")]
+[node name="LightsIncrease" parent="General/HBoxContainer3" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Light selector +"
 command = "increase_light_selector_position"
+covnert_argument_to_bool = false
 
-[node name="LightsDecrease" parent="General/HBoxContainer3" unique_id=1702639036 instance=ExtResource("2_qbcao")]
+[node name="LightsDecrease" parent="General/HBoxContainer3" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Light selector -"
 command = "decrease_light_selector_position"
+covnert_argument_to_bool = false
 
-[node name="HBoxContainer4" type="HBoxContainer" parent="General" unique_id=1681608652]
+[node name="HBoxContainer4" type="HBoxContainer" parent="General"]
 layout_mode = 2
 
-[node name="SpringBrakeActivate" parent="General/HBoxContainer4" unique_id=262499799 instance=ExtResource("2_qbcao")]
+[node name="SpringBrakeActivate" parent="General/HBoxContainer4" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: On"
 command = "set_spring_brake_active"
 command_argument = "true"
+covnert_argument_to_bool = true
 
-[node name="SpringBrakeDeactivate" parent="General/HBoxContainer4" unique_id=526765782 instance=ExtResource("2_qbcao")]
+[node name="SpringBrakeDeactivate" parent="General/HBoxContainer4" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: Off"
 command = "set_spring_brake_active"
 command_argument = "false"
+covnert_argument_to_bool = true
 
-[node name="HBoxContainer5" type="HBoxContainer" parent="General" unique_id=2055977280]
+[node name="HBoxContainer5" type="HBoxContainer" parent="General"]
 layout_mode = 2
 
-[node name="SpringBrakeEnable" parent="General/HBoxContainer5" unique_id=1817438112 instance=ExtResource("2_qbcao")]
+[node name="SpringBrakeEnable" parent="General/HBoxContainer5" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: Enable"
 command = "set_spring_brake_enabled"
 command_argument = "true"
+covnert_argument_to_bool = true
 
-[node name="SpringBrakeDisable" parent="General/HBoxContainer5" unique_id=110025536 instance=ExtResource("2_qbcao")]
+[node name="SpringBrakeDisable" parent="General/HBoxContainer5" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Spring brake: Disable"
 command = "set_spring_brake_enabled"
 command_argument = "false"
+covnert_argument_to_bool = true
 
-[node name="Security" type="HFlowContainer" parent="." unique_id=176203822]
+[node name="Security" type="HFlowContainer" parent="."]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Security" unique_id=1347421778]
+[node name="Label" type="Label" parent="Security"]
 layout_mode = 2
 text = "Security"
 
-[node name="CA_SHP_Reset" parent="Security" unique_id=946022722 instance=ExtResource("1_vladt")]
+[node name="CA_SHP_Reset" parent="Security" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "CA/SHP"
 type = 1
 command = "security_acknowledge"
 
-[node name="Diesel" type="HFlowContainer" parent="." unique_id=1978544548]
+[node name="Diesel" type="HFlowContainer" parent="."]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Diesel" unique_id=860134821]
+[node name="Label" type="Label" parent="Diesel"]
 layout_mode = 2
 text = "Diesel"
 
-[node name="OilPump" parent="Diesel" unique_id=147082081 instance=ExtResource("1_vladt")]
+[node name="OilPump" parent="Diesel" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Oil Pump"
 type = 1
 state_property = "oil_pump_active"
 command = "oil_pump"
 
-[node name="FuelPump" parent="Diesel" unique_id=1508457149 instance=ExtResource("1_vladt")]
+[node name="FuelPump" parent="Diesel" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Fuel Pump"
 type = 1
 state_property = "fuel_pump_active"
 command = "fuel_pump"
 
-[node name="Main" parent="Diesel" unique_id=1647544102 instance=ExtResource("1_vladt")]
+[node name="Main" parent="Diesel" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Main"
 type = 0
 state_property = "main_switch_enabled"
 command = "main_switch"
 
-[node name="Brakes" type="HFlowContainer" parent="." unique_id=285370667]
+[node name="Brakes" type="HFlowContainer" parent="."]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Brakes" unique_id=2073071209]
+[node name="Label" type="Label" parent="Brakes"]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "Brakes"
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Brakes" unique_id=269252679]
+[node name="VBoxContainer" type="VBoxContainer" parent="Brakes"]
 layout_mode = 2
 
-[node name="EPFuse" parent="Brakes/VBoxContainer" unique_id=1679341982 instance=ExtResource("1_vladt")]
+[node name="EPFuse" parent="Brakes/VBoxContainer" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "EP Fuse"
 state_property = "dcemued/ep_fuse"
 command = "switch_ep_fuse"
 
-[node name="EPLevel" parent="Brakes/VBoxContainer" unique_id=538369926 instance=ExtResource("3_j1mtt")]
+[node name="EPLevel" parent="Brakes/VBoxContainer" instance=ExtResource("3_j1mtt")]
 layout_mode = 2
 label = "EP Level"
 step = 0.05
 state_property = "dcemued/ep_force"
 command = "set_ep_brake_force"
 
-[node name="Drive" parent="Brakes/VBoxContainer" unique_id=1247507865 instance=ExtResource("2_qbcao")]
+[node name="Drive" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Drive"
 command = "brake_level_set_position"
 command_argument = "drive"
+covnert_argument_to_bool = false
 
-[node name="Full" parent="Brakes/VBoxContainer" unique_id=1745993826 instance=ExtResource("2_qbcao")]
+[node name="Full" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Full"
 command = "brake_level_set_position"
 command_argument = "full"
+covnert_argument_to_bool = false
 
-[node name="Emergency" parent="Brakes/VBoxContainer" unique_id=1616408736 instance=ExtResource("2_qbcao")]
+[node name="Emergency" parent="Brakes/VBoxContainer" instance=ExtResource("2_qbcao")]
 layout_mode = 2
 text = "Emergency"
 command = "brake_level_set_position"
 command_argument = "emergency"
+covnert_argument_to_bool = false
 
-[node name="Level" parent="Brakes/VBoxContainer" unique_id=610189844 instance=ExtResource("3_j1mtt")]
+[node name="Level" parent="Brakes/VBoxContainer" instance=ExtResource("3_j1mtt")]
 layout_mode = 2
 label = "Level"
 step = 0.05
 state_property = "brake_controller_position_normalized"
 command = "brake_level_set"
 
-[node name="BrakeLevel" type="SpinBox" parent="Brakes/VBoxContainer" unique_id=178796767]
+[node name="BrakeLevel" type="SpinBox" parent="Brakes/VBoxContainer"]
 layout_mode = 2
 max_value = 1.0
 step = 0.01
 
-[node name="Releaser" parent="Brakes/VBoxContainer" unique_id=786192513 instance=ExtResource("1_vladt")]
+[node name="Releaser" parent="Brakes/VBoxContainer" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Releaser"
 type = 1
 command = "brake_releaser"
 
-[node name="Doors" type="HFlowContainer" parent="." unique_id=1748786254]
+[node name="Doors" type="HFlowContainer" parent="."]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="Doors" unique_id=6458345]
+[node name="Label" type="Label" parent="Doors"]
 layout_mode = 2
 text = "Doors"
 
-[node name="LeftDoorsOpen" parent="Doors" unique_id=2079426602 instance=ExtResource("1_vladt")]
+[node name="LeftDoorsOpen" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Open left doors"
 command = "doors_left"
 
-[node name="RightDoorsOpen" parent="Doors" unique_id=274404426 instance=ExtResource("1_vladt")]
+[node name="RightDoorsOpen" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Open right doors"
 command = "doors_right"
 
-[node name="LeftDoorsPermit" parent="Doors" unique_id=236065208 instance=ExtResource("1_vladt")]
+[node name="LeftDoorsPermit" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Permit left doors"
 state_property = "doors/left/open_permit"
 command = "doors_left_permit"
 
-[node name="RightDoorsPermit" parent="Doors" unique_id=2065874538 instance=ExtResource("1_vladt")]
+[node name="RightDoorsPermit" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Permit right doors"
 state_property = "doors/right/open_permit"
 command = "doors_right_permit"
 
-[node name="DoorLock" parent="Doors" unique_id=1730048993 instance=ExtResource("1_vladt")]
+[node name="DoorLock" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Lock doors"
 state_property = "doors/lock_enabled"
 command = "doors_lock"
 
-[node name="DoorStepPermit" parent="Doors" unique_id=657163167 instance=ExtResource("1_vladt")]
+[node name="DoorStepPermit" parent="Doors" instance=ExtResource("1_vladt")]
 layout_mode = 2
 label = "Permit Step"
 state_property = "doors/step_enabled"

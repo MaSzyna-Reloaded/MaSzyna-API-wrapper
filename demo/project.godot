@@ -16,7 +16,6 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="res://demo_3d.tscn"
 run/print_header=false
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
@@ -29,16 +28,10 @@ run/disable_stderr.release=true
 
 [autoload]
 
-MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
-SceneryResourceLoader="*uid://bgkb12fiqj2y2"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
-E3DParser="*uid://d08el7q5iodf4"
-E3DModelManager="*uid://b2v733o52i40x"
-E3DNodesInstancer="*uid://dl44jll5gimwi"
-UserSettings="*uid://dd2pj6a7hturn"
-E3DModelInstanceManager="*uid://bt2jcd405kweg"
 AudioStreamManager="*uid://cp8sgfk334adm"
+UserSettings="*uid://dd2pj6a7hturn"
 
 [debug]
 
@@ -159,7 +152,6 @@ change_vehicle={
 
 [rendering]
 
-rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=1
 environment/volumetric_fog/volume_size=96

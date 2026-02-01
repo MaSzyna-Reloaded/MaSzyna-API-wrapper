@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://dmhikrkk2qsjl"]
+[gd_scene load_steps=4 format=3 uid="uid://dmhikrkk2qsjl"]
 
 [ext_resource type="Script" uid="uid://cqet31gklr3sb" path="res://addons/libmaszyna/player/free_camera.gd" id="1_iuonp"]
 [ext_resource type="Script" uid="uid://dc3kl1adyw5y0" path="res://addons/libmaszyna/player/player.gd" id="1_t4mm8"]
@@ -6,15 +6,15 @@
 [sub_resource type="SphereShape3D" id="SphereShape3D_mexgx"]
 radius = 2.0
 
-[node name="Player" type="Node3D" unique_id=1819896729]
+[node name="Player" type="Node3D"]
 script = ExtResource("1_t4mm8")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=2023831069]
+[node name="Camera3D" type="Camera3D" parent="."]
 fov = 45.0
 script = ExtResource("1_iuonp")
 deceleration = 70
 
-[node name="RailVehicleDetector" type="ShapeCast3D" parent="Camera3D" unique_id=626357363]
+[node name="RailVehicleDetector" type="ShapeCast3D" parent="Camera3D"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.88708)
 shape = SubResource("SphereShape3D_mexgx")
 target_position = Vector3(0, 0, 0)

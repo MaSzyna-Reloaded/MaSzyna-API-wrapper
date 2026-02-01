@@ -40,5 +40,12 @@ Checks: "bugprone-*,
   -llvm-header-guard,
   -llvm-else-after-return,
   -*-unhandled-self-assignment,
+  -*-use-enum-class,
+  -*-use-ranges,
+  -readability-else-after-return,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -readability-redundant-declaration,
   -*-return-braced-init-list"
 WarningsAsErrors: "*"

@@ -7,7 +7,7 @@ on:
 jobs:
   clang-tidy:
     name: Run clang-tidy and upload report
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,6 +40,11 @@ jobs:
         id: run
         shell: bash
         run: |
+          sudo apt update
+          sudo add-apt-repository universe
+          sudo apt update
+          sudo apt-get install -y libtinfo5
+          sudo apt install libncurses5-dev
           set -o pipefail
           # Collect sources (mirror Makefile exclusions)
           mapfile -t FILES < <(find src/ \( -name "*.cpp" -o -name "*.hpp" -o -name "*.cc" -o -name "*.cxx" -o -name "*.c" -o -name "*.h" \) \
@@ -54,7 +59,7 @@ jobs:
           for f in "${FILES[@]}"; do
             echo "=== ${f} ===" | tee -a clang-tidy.log
             # Use project-local .clang-tidy implicitly
-            if ! clang-tidy -p build --quiet --fix-notes -header-filter=^src/ "$f" 2>>clang-tidy-errors.log | tee -a clang-tidy.log; then
+            if ! sudo clang-tidy -p build -extra-arg=-std=c++17 --quiet --fix-notes -header-filter=^src/ "$f" 2>>clang-tidy-errors.log | tee -a clang-tidy.log; then
               echo "clang-tidy reported non-zero status for $f" >> clang-tidy-errors.log
             fi
           done

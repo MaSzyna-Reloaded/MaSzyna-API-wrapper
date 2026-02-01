@@ -1,16 +1,16 @@
-[gd_scene format=3 uid="uid://ddag4vhhuox0t"]
+[gd_scene load_steps=2 format=3 uid="uid://ddag4vhhuox0t"]
 
 [ext_resource type="Script" uid="uid://b285sg5jqauaj" path="res://hud/knob.gd" id="1_an08j"]
 
-[node name="DebugKnob" type="HBoxContainer" unique_id=700336505]
+[node name="DebugKnob" type="HBoxContainer"]
 offset_right = 40.0
 offset_bottom = 40.0
 script = ExtResource("1_an08j")
 
-[node name="Label" type="Label" parent="." unique_id=1349015093]
+[node name="Label" type="Label" parent="."]
 layout_mode = 2
 
-[node name="SpinBox" type="SpinBox" parent="." unique_id=2135562369]
+[node name="SpinBox" type="SpinBox" parent="."]
 layout_mode = 2
 max_value = 1.0
 step = 0.1

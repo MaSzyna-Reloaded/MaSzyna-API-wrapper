@@ -11,6 +11,12 @@ signal cache_cleared
 var config_file_path = "user://settings.cfg"
 var config = ConfigFile.new()
 var DEFAULTS = {
+    "e3d": {
+      #Auto generation features are highly experimental, might be useful for future editor. Only turnable by manually editing settings file
+      "auto_generate_normal": false,
+      "auto_generate_metallic": false,
+      "auto_generate_height": false  
+    },
     "maszyna": {
         "game_dir": ".",
     },

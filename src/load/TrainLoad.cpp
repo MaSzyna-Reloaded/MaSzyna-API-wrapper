@@ -1,6 +1,12 @@
 #include "TrainLoad.hpp"
 
 namespace godot {
+    TrainLoad::~TrainLoad() {
+        load_list.clear();
+        accepted_loads.clear();
+        minimum_load_offsets.clear();
+    }
+
     void TrainLoad::_bind_methods() {
         BIND_PROPERTY_W_HINT_RES_ARRAY(Variant::ARRAY, "load_list", "load_list", &TrainLoad::set_load_list, &TrainLoad::get_load_list, "load_list", PROPERTY_HINT_ARRAY_TYPE, "LoadListItem")
         BIND_PROPERTY_W_HINT(Variant::INT, "load_unit", "load_unit", &TrainLoad::set_load_unit, &TrainLoad::get_load_unit, "load_unit", PROPERTY_HINT_ENUM, "Tons,Pieces");

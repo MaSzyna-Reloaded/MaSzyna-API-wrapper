@@ -11,13 +11,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="parse">
+		<method name="parse" qualifiers="const">
 			<return type="MaszynaMaterial" />
-			<param index="0" name="material_manager" type="MaterialManager" />
-			<param index="1" name="model_path" type="String" />
-			<param index="2" name="material_path" type="String" />
+			<param index="0" name="material_path" type="String" />
+			<param index="1" name="material_name" type="String" />
 			<description>
-				Parses a MaSzyna material file and returns a [MaszynaMaterial] resource. The [param material_manager] is used to resolve the full file path. If the material file cannot be found, returns a material with the [param material_path] as the albedo texture.
+				Parses a MaSzyna material file and returns a [MaszynaMaterial] resource. The [param material_manager] is used to resolve the full file path. If the material file cannot be found, returns a material with the [param material_name] as the albedo texture.
 			</description>
 		</method>
 	</methods>

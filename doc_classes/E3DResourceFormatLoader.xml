@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DResourceFormatLoader" inherits="ResourceFormatLoader" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Resource loader for MaSzyna E3D model files.
+	</brief_description>
+	<description>
+		[E3DResourceFormatLoader] is a specialized [ResourceFormatLoader] that allows Godot's [ResourceLoader] to recognize and load [code].e3d[/code] files. When a [code].e3d[/code] file is requested, this loader uses the internal [E3DParser] to read the binary data and construct a corresponding [E3DModel] resource hierarchy. This enables native integration of MaSzyna models into the Godot editor and runtime.
+	</description>
+	<tutorials>
+	</tutorials>
+</class>

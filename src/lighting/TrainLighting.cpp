@@ -2,6 +2,14 @@
 namespace godot {
     const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
 
+    TrainLighting::TrainLighting() {
+        train_controller_node = nullptr;
+    }
+
+    TrainLighting::~TrainLighting() {
+        light_position_list.clear();
+    }
+
     void TrainLighting::_bind_methods() {BIND_PROPERTY(Variant::COLOR, "head_light_color", "head_light/color", &TrainLighting::set_head_light_color, &TrainLighting::get_head_light_color, "color");
     BIND_PROPERTY(Variant::FLOAT, "head_light_dimmed_multiplier", "head_light/dimmed_multiplier", &TrainLighting::set_dimming_multiplier, &TrainLighting::get_dimming_multiplier, "multiplier");
     BIND_PROPERTY(Variant::FLOAT, "head_light_normal_multiplier", "head_light/normal_multiplier", &TrainLighting::set_normal_multiplier, &TrainLighting::get_normal_multiplier, "multiplier");
@@ -31,16 +39,20 @@ namespace godot {
         mover->LightsWrap = wrap_light_selector;
         mover->LightsDefPos = default_selector_position;
         mover->LightPower = 0; //LightPower is used there but declared in the Param section in the .fiz file
-        mover->LightPowerSource.SourceType = _controller->power_source_map.at(light_source);
-        mover->AlterLightPowerSource.SourceType = _controller->power_source_map.at(alternative_light_source);
+        if (train_controller_node != nullptr) {
+            mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
+            mover->AlterLightPowerSource.SourceType = train_controller_node->power_source_map.at(alternative_light_source);
+        }
         mover->LightsPos = selector_position;
     }
 
     void TrainLighting::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
         ASSERT_MOVER(mover);
-        state["light_position"] = mover->LightsPosNo;
-        state["light_power"] = mover->LightPower;
-        state["power_source"] = _controller->tpower_source_map.at(mover->LightPowerSource.SourceType);
+        state.set("light_position", mover->LightsPosNo);
+        state.set("light_power", mover->LightPower);
+        if (train_controller_node != nullptr) {
+            state.set("power_source", train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType));
+        }
     }
 
     void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {

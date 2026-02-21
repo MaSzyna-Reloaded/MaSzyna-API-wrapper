@@ -6,6 +6,8 @@
 namespace godot {
     class TrainLoad : public TrainPart {
         GDCLASS(TrainLoad, TrainPart)
+        public:
+            ~TrainLoad() override;
         private:
             static void _bind_methods();
             TypedArray<LoadListItem> load_list;

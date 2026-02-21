@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="ResourceCache" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Global singleton for memory and persistent disk caching of resources.
+	</brief_description>
+	<description>
+		[ResourceCache] provides a centralized, thread-safe system for caching resources used by the MaSzyna API Wrapper. It maintains an in-memory dictionary for fast access and a persistent disk cache in [code]user://cache/[/code] for long-term storage. Resources are identified by their original source paths and organized into subdirectories based on their type. Disk cache files are stored as Godot-native [code].res[/code] files with MD5-hashed filenames to ensure cross-platform compatibility and avoid path length issues.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="clear" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="dir" type="int" enum="ResourceCache.ResourceCacheDir" />
+			<description>
+				Clears both the memory cache and the persistent disk cache for the specified subdirectory.
+			</description>
+		</method>
+		<method name="clear_all" qualifiers="static">
+			<return type="void" />
+			<description>
+				Clears the entire memory cache and all persistent disk cache subdirectories.
+			</description>
+		</method>
+		<method name="get" qualifiers="static">
+			<return type="Resource" />
+			<param index="0" name="path" type="String" />
+			<param index="1" name="dir" type="int" enum="ResourceCache.ResourceCacheDir" />
+			<description>
+				Attempts to retrieve a resource from the cache. It first checks the memory cache, and if not found, attempts to load it from the persistent disk cache. Returns an invalid [Ref] if the resource is not cached.
+			</description>
+		</method>
+		<method name="has" qualifiers="static">
+			<return type="bool" />
+			<param index="0" name="path" type="String" />
+			<param index="1" name="dir" type="int" enum="ResourceCache.ResourceCacheDir" />
+			<description>
+				Returns [code]true[/code] if the resource exists in either the memory cache or the persistent disk cache.
+			</description>
+		</method>
+		<method name="remove" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="path" type="String" />
+			<param index="1" name="dir" type="int" enum="ResourceCache.ResourceCacheDir" />
+			<description>
+				Removes the specified resource from both the memory cache and the persistent disk cache.
+			</description>
+		</method>
+		<method name="set" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="path" type="String" />
+			<param index="1" name="resource" type="Resource" />
+			<param index="2" name="dir" type="int" enum="ResourceCache.ResourceCacheDir" />
+			<description>
+				Stores the given resource in the memory cache and serializes it to the persistent disk cache in the specified subdirectory.
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="RESOURCE_CACHE_DIR_MODELS" value="0" enum="ResourceCacheDir">
+			Cache directory for 3D models (stored in [code]user://cache/models/[/code]).
+		</constant>
+		<constant name="RESOURCE_CACHE_DIR_TEXTURES" value="1" enum="ResourceCacheDir">
+			Cache directory for textures and images (stored in [code]user://cache/textures/[/code]).
+		</constant>
+		<constant name="RESOURCE_CACHE_DIR_SOUNDS" value="2" enum="ResourceCacheDir">
+			Cache directory for audio resources (stored in [code]user://cache/sounds/[/code]).
+		</constant>
+	</constants>
+</class>

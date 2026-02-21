@@ -4,11 +4,34 @@
 		A manager class for loading and caching materials and textures from MaSzyna models.
 	</brief_description>
 	<description>
-		[MaterialManager] is responsible for loading MaSzyna materials and textures, converting them to Godot's [StandardMaterial3D] format, and providing caching for performance optimization. It handles texture loading, normal map processing, and transparency detection. The class is thread-safe with mutex-protected caching and supports seasonal texture variations through the [MaszynaMaterial] resource type.
+		[MaterialManager] is responsible for loading MaSzyna materials and textures, converting them to Godot's [StandardMaterial3D] format, and providing caching for performance optimization. It handles texture loading, normal map processing, and transparency detection. The class is thread-safe and utilizes [ResourceCache] for both memory and persistent disk caching.
 	</description>
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="generate_heightmap_from_albedo" qualifiers="static">
+			<return type="Image" />
+			<param index="0" name="albedo" type="Image" />
+			<description>
+				Generates a grayscale heightmap [Image] from the provided albedo texture. It converts the image to the [code]L8[/code] format and applies contrast adjustments to make it suitable for height mapping.
+			</description>
+		</method>
+		<method name="generate_metallic_from_albedo" qualifiers="static">
+			<return type="Image" />
+			<param index="0" name="albedo" type="Image" />
+			<param index="1" name="threshold" type="float" default="0.5" />
+			<description>
+				Generates a metallic map [Image] by thresholding the brightness of the provided albedo. Pixels with brightness values above the [param threshold] are treated as metallic (white), while others are treated as non-metallic (black).
+			</description>
+		</method>
+		<method name="generate_normal_from_albedo" qualifiers="static">
+			<return type="Image" />
+			<param index="0" name="albedo" type="Image" />
+			<param index="1" name="strength" type="float" default="1.0" />
+			<description>
+				Generates a normal map [Image] from the albedo texture using a Sobel-like filter. It first generates an internal heightmap and then converts it to a normal map with the specified [param strength].
+			</description>
+		</method>
 		<method name="get_material">
 			<return type="StandardMaterial3D" />
 			<param index="0" name="model_path" type="String" />
@@ -17,7 +40,7 @@
 			<param index="3" name="is_sky" type="bool" default="false" />
 			<param index="4" name="diffuse_color" type="Color" default="Color(1, 1, 1, 1)" />
 			<description>
-				Gets or creates a [StandardMaterial3D] for the specified model and material. Results are cached for performance. Automatically loads albedo and normal textures, detects alpha channel, and applies the transparency mode. If [param is_sky] is true, configures the material with unshaded rendering.
+				Gets or creates a [StandardMaterial3D] for the specified model and material. Results are cached in memory for performance. The method automatically loads albedo and normal textures, performs transparency detection (alpha channel check), and applies the requested [param transparent] mode. If [param is_sky] is true, the material is configured for unshaded rendering.
 			</description>
 		</method>
 		<method name="get_material_path">
@@ -25,13 +48,14 @@
 			<param index="0" name="model_name" type="String" />
 			<param index="1" name="material_name" type="String" />
 			<description>
+				Searches for a material file ([code].mat[/code]) associated with the given model and material name across multiple possible directories (local model folder, global textures folder, etc.) and returns the first valid absolute path found.
 			</description>
 		</method>
 		<method name="get_texture">
 			<return type="ImageTexture" />
 			<param index="0" name="texture_path" type="String" />
 			<description>
-				Loads a texture from the given absolute or relative path. This is a convenience method that calls [method load_texture] with an empty model path.
+				Loads a texture from the given path. This is a convenience method that calls [method load_texture] with an empty model path.
 			</description>
 		</method>
 		<method name="load_material">
@@ -39,14 +63,7 @@
 			<param index="0" name="model_path" type="String" />
 			<param index="1" name="material_name" type="String" />
 			<description>
-			</description>
-		</method>
-		<method name="load_submodel_texture">
-			<return type="ImageTexture" />
-			<param index="0" name="model_path" type="String" />
-			<param index="1" name="material_name" type="String" />
-			<description>
-				Loads a texture for a submodel, searching in submodel-specific directories. Used when a model has child models with their own textures.
+				Parses a MaSzyna material file ([code].mat[/code]) and returns its representation as a [MaszynaMaterial] resource.
 			</description>
 		</method>
 		<method name="load_texture">
@@ -54,7 +71,7 @@
 			<param index="0" name="model_path" type="String" />
 			<param index="1" name="material_name" type="String" />
 			<description>
-				Loads a texture from the model's material directory. If [param global] is true, also searches in the global textures directory. Returns a placeholder texture if the file cannot be found.
+				Searches for and loads a texture (preferring [code].dds[/code] format). This method utilizes [ResourceCache] to manage memory and persistent disk caching. If the texture is not found, a fallback placeholder is returned.
 			</description>
 		</method>
 	</methods>

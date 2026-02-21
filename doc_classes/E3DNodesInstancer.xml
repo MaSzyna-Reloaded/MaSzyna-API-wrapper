@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DNodesInstancer" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Utility class for converting E3DModel resources into a hierarchy of Godot nodes.
+	</brief_description>
+	<description>
+		[E3DNodesInstancer] provides functionality to take an [E3DModel] resource and instantiate its structure as real [Node3D] objects in the scene tree. It recursively traverses the [E3DSubModel] hierarchy, creating [MeshInstance3D] nodes for parts with geometry and [Node3D] nodes for transformation-only parts. It also applies materials using the [MaterialManager] and configures node properties like visibility and transformations to match the MaSzyna model definition.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="instantiate" qualifiers="static">
+			<return type="void" />
+			<param index="0" name="model" type="E3DModel" />
+			<param index="1" name="target_node" type="E3DModelInstance" />
+			<param index="2" name="editable" type="bool" />
+			<description>
+				Instantiates the provided [param model] as a child hierarchy under [param target_node]. If [param editable] is [code]true[/code], the created nodes are owned by the current scene, allowing them to be visible and editable in the Godot editor.
+			</description>
+		</method>
+	</methods>
+</class>

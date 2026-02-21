@@ -14,6 +14,8 @@ namespace godot {
 
     class TrainController : public Node {
             GDCLASS(TrainController, Node)
+        public:
+            ~TrainController() override;
         private:
             TMoverParameters *mover{};
             double initial_velocity = 0.0;

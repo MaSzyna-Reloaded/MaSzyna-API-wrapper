@@ -29,6 +29,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("log", "train_id", "loglevel", "line"), &TrainSystem::log);
     }
 
+    TrainSystem::~TrainSystem() {
+        commands.clear();
+        trains.clear();
+    }
+
     int TrainSystem::get_train_count() const {
         return static_cast<int>(trains.size());
     }

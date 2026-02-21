@@ -25,7 +25,6 @@ namespace libmaszyna::utils {
     std::string enum_to_string();
     template<typename Type_>
     Type_ interpolate(Type_ const &First, Type_ const &Second, double const Factor) {
-
         return static_cast<Type_>((First * (1.0 - Factor)) + (Second * Factor));
     }
 
@@ -50,7 +49,7 @@ namespace libmaszyna::utils {
              * @param callbackFn Callback function taking no arguments
              */
             ObservableValue(const T& initialValue, std::function<void()> callbackFn)
-                : value_(initialValue), callback_([fn = std::move(callbackFn)](const T&) { if (fn) fn(); }) {}
+                : value_(initialValue), callback_([fn = std::move(callbackFn)](const T&) { if (fn) { fn(); } }) {}
 
             /**
              * ObservableValue watches any change to the variable it declares and calls the provided callback as it changes

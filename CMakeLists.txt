@@ -1,5 +1,7 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 SET(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_EXTENSIONS ON)
+set(CMAKE_COLOR_DIAGNOSTICS ON)
 # Do not hard‑force a generator; allow users to select one suitable for cross‑compiling.
 # Silence unused variable warning when specified from toolchain
 IF (CMAKE_C_COMPILER)

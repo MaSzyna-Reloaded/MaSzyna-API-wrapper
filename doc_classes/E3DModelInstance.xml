@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DModelInstance" inherits="VisualInstance3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A 3D node that represents an instance of a MaSzyna E3D model in the scene.
+	</brief_description>
+	<description>
+		[E3DModelInstance] is the primary node used to display MaSzyna models within Godot. It takes a model filename and a data path, loads the corresponding [E3DModel] resource via the [E3DModelManager], and instantiates its geometry into the scene tree using the selected [enum Instancer] strategy. It handles complex model features like hierarchical submodels, seasonal textures, and dynamic material updates.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="data_path" type="String" setter="set_data_path" getter="get_data_path" default="&quot;&quot;">
+			The relative directory path within the MaSzyna game directory where the model and its textures are located.
+		</member>
+		<member name="default_aabb_size" type="Vector3" setter="set_default_aabb_size" getter="get_default_aabb_size" default="Vector3(1, 1, 1)">
+			The default size used for the Axis-Aligned Bounding Box (AABB) if the model geometry is not yet loaded or is empty.
+		</member>
+		<member name="editable_in_editor" type="bool" setter="set_editable_in_editor" getter="get_editable_in_editor" default="false">
+			If [code]true[/code], the nodes created during instantiation will be set as editable in the Godot editor, allowing for manual adjustment of submodel properties.
+		</member>
+		<member name="exclude_node_names" type="Array" setter="set_exclude_node_names" getter="get_exclude_node_names" default="[]">
+			A list of submodel names that should be excluded from the instantiation process.
+		</member>
+		<member name="instancer" type="int" setter="set_instancer" getter="get_instancer" enum="E3DModelInstance.Instancer" default="1">
+			The strategy used to convert the [E3DModel] resource into scene tree nodes.
+		</member>
+		<member name="model_filename" type="String" setter="set_model_filename" getter="get_model_filename" default="&quot;&quot;">
+			The filename of the [code].e3d[/code] model to load (without the extension).
+		</member>
+		<member name="skins" type="Array" setter="set_skins" getter="get_skins" default="[]">
+			A list of alternative texture sets or skins that can be applied to the model.
+		</member>
+		<member name="submodels_aabb" type="AABB" setter="set_submodels_aabb" getter="get_submodels_aabb" default="AABB(0, 0, 0, 0, 0, 0)">
+			The calculated bounding box encompassing all submodels within this instance.
+		</member>
+	</members>
+	<signals>
+		<signal name="e3d_loaded">
+			<description>
+				Emitted when the model has been successfully loaded and its node hierarchy has been instantiated.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="INSTANCER_NODES" value="1" enum="Instancer">
+			Standard instancer that creates a hierarchy of [MeshInstance3D] and [Node3D] objects.
+		</constant>
+		<constant name="INSTANCER_EDITABLE_NODES" value="2" enum="Instancer">
+			Similar to [code]INSTANCER_NODES[/code], but specifically configures nodes to be editable within the Godot editor.
+		</constant>
+		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
+			Experimental instancer designed for higher performance with reduced node overhead.
+		</constant>
+	</constants>
+</class>

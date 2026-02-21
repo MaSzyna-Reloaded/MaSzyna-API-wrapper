@@ -6,13 +6,14 @@
 
 namespace godot {
     void MaterialParser::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("parse", "material_manager", "model_path", "material_path"), &MaterialParser::parse);
+        ClassDB::bind_method(D_METHOD("parse", "material_path", "material_name"), &MaterialParser::parse);
     }
 
-    Ref<MaszynaMaterial> MaterialParser::parse(MaterialManager *material_manager, const String &model_path, const String &material_path) {
+    Ref<MaszynaMaterial> MaterialParser::parse(const String &material_path, const String &material_name) const {
+        UtilityFunctions::print_verbose("[MaterialParser] Parsing material: " + material_path);
         Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
-        const String final_path = material_manager->get_material_path(model_path, material_path);
-        if (const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ); file.is_valid()) {
+        if (const Ref<FileAccess> file = FileAccess::open(material_path, FileAccess::READ); file.is_valid()) {
+            UtilityFunctions::print_verbose("[MaterialParser] Opening material file: " + material_path);
             MaszynaParser *parser = memnew(MaszynaParser);
             parser->initialize(file->get_buffer(static_cast<int64_t>(file->get_length())));
             const Dictionary data = {};
@@ -62,12 +63,12 @@ namespace godot {
             auto _t2 = data.get("texture_normalmap", data.get("texture2", ""));
 
             if (_t1.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + final_path + ") are not supported!");
+                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + material_path + ") are not supported!");
                 _t1 = _t1.get(0);
             }
 
             if (_t2.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + final_path + ") are not supported!");
+                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + material_path + ") are not supported!");
                 _t2 = _t2.get(0);
             }
 
@@ -75,7 +76,7 @@ namespace godot {
             material->set_normal_texture_path(_t2);
             memdelete(parser);
         } else {
-            material->set_albedo_texture_path(material_path);
+            material->set_albedo_texture_path(material_name);
         }
         return material;
     }

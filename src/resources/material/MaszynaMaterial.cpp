@@ -51,4 +51,4 @@ namespace godot {
 
         return _tex;
     }
-}
+} //namespace godot

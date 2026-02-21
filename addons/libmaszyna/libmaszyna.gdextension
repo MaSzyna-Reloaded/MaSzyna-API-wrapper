@@ -24,3 +24,7 @@ android.debug.x86_64 = "res://bin/libmaszyna/android/libmaszyna.debug.64.so"
 android.release.x86_64 = "res://bin/libmaszyna/android/libmaszyna.64.so"
 android.debug.arm64 = "res://bin/libmaszyna/android/libmaszyna.debug.arm64.so"
 android.release.arm64 = "res://bin/libmaszyna/android/libmaszyna.arm64.so"
+
+[icons]
+
+E3DModelInstance = "res://addons/libmaszyna/e3d/e3d_model_instance.png"

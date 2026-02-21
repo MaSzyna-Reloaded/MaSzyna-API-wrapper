@@ -9,6 +9,8 @@ namespace godot {
 
     class TrainDieselEngine : public TrainEngine {
             GDCLASS(TrainDieselEngine, TrainEngine)
+        public:
+            ~TrainDieselEngine() override;
         private:
             static void _bind_methods();
             MAKE_MEMBER_GS(float, oil_min_pressure, 0.0);

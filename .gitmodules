@@ -1,7 +1,7 @@
 [submodule "godot-cpp"]
 	path = godot-cpp
 	url = https://github.com/godotengine/godot-cpp.git
-	branch = 4.3
+	branch = master
 [submodule "vendor/gut"]
 	path = vendor/gut
 	url = https://github.com/bitwes/Gut.git

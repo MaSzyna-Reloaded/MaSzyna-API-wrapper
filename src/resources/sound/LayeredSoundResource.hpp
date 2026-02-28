@@ -1,6 +1,7 @@
 #pragma once
 #include "macros.hpp"
 
+#include <godot_cpp/classes/audio_stream_player3d.hpp>
 #include <godot_cpp/classes/resource.hpp>
 
 namespace godot {
@@ -26,6 +27,9 @@ namespace godot {
             MAKE_MEMBER_GS(float, pitch_variation, 0.0)
             MAKE_MEMBER_GS(float, cross_fade, 0.0)
             MAKE_MEMBER_GS(bool, force_preload, false)
+
+            MAKE_MEMBER_GS(NodePath, audio_stream_player_1, NodePath())
+            MAKE_MEMBER_GS(NodePath, audio_stream_player_2, NodePath())
 
             String get_sound_pitch(int property_value);
             String get_sound_file_path(int property_value);

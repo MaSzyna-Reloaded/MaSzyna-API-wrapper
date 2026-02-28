@@ -59,6 +59,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_force_preload", "force_preload"), &LayeredSoundResource::set_force_preload);
         ClassDB::bind_method(D_METHOD("get_force_preload"), &LayeredSoundResource::get_force_preload);
         ADD_PROPERTY(PropertyInfo(Variant::BOOL, "force_preload"), "set_force_preload", "get_force_preload");
+
+        ClassDB::bind_method(D_METHOD("get_audio_stream_player_1"), &LayeredSoundResource::get_audio_stream_player_1);
+        ClassDB::bind_method(D_METHOD("set_audio_stream_player_1", "player"), &LayeredSoundResource::set_audio_stream_player_1);
+        ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "audio_stream_player_1"), "set_audio_stream_player_1", "get_audio_stream_player_1");
+
+        ClassDB::bind_method(D_METHOD("get_audio_stream_player_2"), &LayeredSoundResource::get_audio_stream_player_2);
+        ClassDB::bind_method(D_METHOD("set_audio_stream_player_2", "player"), &LayeredSoundResource::set_audio_stream_player_2);
+        ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "audio_stream_player_2"), "set_audio_stream_player_2", "get_audio_stream_player_2");
     }
     TypedArray<String> LayeredSoundResource::get_starting_sounds() {
         return starting_sounds;

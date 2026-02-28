@@ -98,6 +98,8 @@ TARGET_INCLUDE_DIRECTORIES(${LIBNAME} SYSTEM PRIVATE
         ${godot-cpp_SOURCE_DIR}/include
         ${godot-cpp_SOURCE_DIR}/gen/include
         ${godot-cpp_BINARY_DIR}/gen/include
+        ${CMAKE_CURRENT_BINARY_DIR}/godot-cpp/gen/include
+        ${PROJECT_SOURCE_DIR}/gen/include
 )
 TARGET_SOURCES(${LIBNAME} PRIVATE)
 

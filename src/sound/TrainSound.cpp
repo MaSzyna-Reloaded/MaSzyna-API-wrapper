@@ -10,8 +10,12 @@ namespace godot {
     const char *TrainSound::SOUND_ENDED_SIGNAL = "sound_ended";
 
     void TrainSound::_bind_methods() {
-        BIND_PROPERTY(Variant::FLOAT, "max_volume_db", "max_volume_db", &TrainSound::set_max_volume_db, &TrainSound::get_max_volume_db, "max_volume_db");
-        BIND_PROPERTY(Variant::FLOAT, "min_volume_db", "min_volume_db", &TrainSound::set_min_volume_db, &TrainSound::get_min_volume_db, "min_volume_db");
+        BIND_PROPERTY(
+                Variant::FLOAT, "max_volume_db", "max_volume_db", &TrainSound::set_max_volume_db,
+                &TrainSound::get_max_volume_db, "max_volume_db");
+        BIND_PROPERTY(
+                Variant::FLOAT, "min_volume_db", "min_volume_db", &TrainSound::set_min_volume_db,
+                &TrainSound::get_min_volume_db, "min_volume_db");
         ClassDB::bind_method(D_METHOD("set_sound_root_path", "path"), &TrainSound::set_sound_root_path);
         ClassDB::bind_method(D_METHOD("get_sound_root_path"), &TrainSound::get_sound_root_path);
         ADD_PROPERTY(
@@ -19,25 +23,90 @@ namespace godot {
                 "get_sound_root_path");
         ClassDB::bind_method(
                 D_METHOD(
-                        "update_audio_streams_and_volumes", "param_values", "layered_sound_data", "player",
-                        "player_2"),
+                        "update_audio_streams_and_volumes", "param_values", "layered_sound_data", "player", "player_2"),
                 &TrainSound::update_audio_streams_and_volumes);
         ClassDB::bind_method(
-        D_METHOD("get_audio_stream_for_file", "file_path", "loop"), &TrainSound::get_audio_stream_for_file);
+                D_METHOD("get_audio_stream_for_file", "file_path", "loop"), &TrainSound::get_audio_stream_for_file);
         ADD_SIGNAL(MethodInfo(SOUND_ENDED_SIGNAL));
         ClassDB::bind_method(D_METHOD("stop_all"), &TrainSound::stop_all);
         ClassDB::bind_method(D_METHOD("pause_all"), &TrainSound::pause_all);
         ClassDB::bind_method(D_METHOD("resume_all"), &TrainSound::resume_all);
 
         ClassDB::bind_method(D_METHOD("play_sound", "name"), &TrainSound::play_sound);
+        ClassDB::bind_method(D_METHOD("play_sound_type", "type"), &TrainSound::play_sound_type);
         ClassDB::bind_method(D_METHOD("stop_sound", "name"), &TrainSound::stop_sound);
+        ClassDB::bind_method(D_METHOD("stop_sound_type", "type"), &TrainSound::stop_sound_type);
         ClassDB::bind_method(D_METHOD("update_sound", "name", "param_value"), &TrainSound::update_sound);
+        ClassDB::bind_method(D_METHOD("update_sound_type", "type", "param_value"), &TrainSound::update_sound_type);
         ClassDB::bind_method(D_METHOD("_on_player_finished", "sound_name"), &TrainSound::_on_player_finished);
 
-        #define BIND_SOUND_PROPERTY(name) \
-            ClassDB::bind_method(D_METHOD("get_" #name), &TrainSound::get_##name); \
-            ClassDB::bind_method(D_METHOD("set_" #name, "res"), &TrainSound::set_##name); \
-            ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "sounds/" #name, PROPERTY_HINT_RESOURCE_TYPE, "LayeredSoundResource"), "set_" #name, "get_" #name);
+        BIND_ENUM_CONSTANT(SOUND_BATTERY);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE_ACC);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE_CYLINDER_INC);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE_CYLINDER_DEC);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE_HOSE_ATTACH);
+        BIND_ENUM_CONSTANT(SOUND_BRAKE_HOSE_DETACH);
+        BIND_ENUM_CONSTANT(SOUND_COMPRESSOR);
+        BIND_ENUM_CONSTANT(SOUND_CONTROL_ATTACH);
+        BIND_ENUM_CONSTANT(SOUND_CONTROL_DETACH);
+        BIND_ENUM_CONSTANT(SOUND_CONVERTER);
+        BIND_ENUM_CONSTANT(SOUND_CURVE);
+        BIND_ENUM_CONSTANT(SOUND_DEPARTURE_SIGNAL);
+        BIND_ENUM_CONSTANT(SOUND_DERAIL);
+        BIND_ENUM_CONSTANT(SOUND_DIESEL_INC);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_CLOSE);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_OPEN);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_LOCK);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_STEP_OPEN);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_STEP_CLOSE);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_RUN_LOCK);
+        BIND_ENUM_CONSTANT(SOUND_DOOR_PERMIT);
+        BIND_ENUM_CONSTANT(SOUND_EMERGENCY_BRAKE);
+        BIND_ENUM_CONSTANT(SOUND_ENGINE);
+        BIND_ENUM_CONSTANT(SOUND_EP_BRAKE_INC);
+        BIND_ENUM_CONSTANT(SOUND_EP_BRAKE_DEC);
+        BIND_ENUM_CONSTANT(SOUND_EP_CTRL_VALUE);
+        BIND_ENUM_CONSTANT(SOUND_FUEL_PUMP);
+        BIND_ENUM_CONSTANT(SOUND_GANGWAY_ATTACH);
+        BIND_ENUM_CONSTANT(SOUND_GANGWAY_DETACH);
+        BIND_ENUM_CONSTANT(SOUND_HEATER);
+        BIND_ENUM_CONSTANT(SOUND_HEATING_ATTACH);
+        BIND_ENUM_CONSTANT(SOUND_HEATING_DETACH);
+        BIND_ENUM_CONSTANT(SOUND_HORN_HIGH);
+        BIND_ENUM_CONSTANT(SOUND_HORN_LOW);
+        BIND_ENUM_CONSTANT(SOUND_WHISTLE);
+        BIND_ENUM_CONSTANT(SOUND_INVERTER);
+        BIND_ENUM_CONSTANT(SOUND_LOADING);
+        BIND_ENUM_CONSTANT(SOUND_MAIN_HOSE_ATTACH);
+        BIND_ENUM_CONSTANT(SOUND_MAIN_HOSE_DETACH);
+        BIND_ENUM_CONSTANT(SOUND_MOTOR_BLOWER);
+        BIND_ENUM_CONSTANT(SOUND_PANTOGRAPH_UP);
+        BIND_ENUM_CONSTANT(SOUND_PANTOGRAPH_DOWN);
+        BIND_ENUM_CONSTANT(SOUND_SAND);
+        BIND_ENUM_CONSTANT(SOUND_SMALL_COMPRESSOR);
+        BIND_ENUM_CONSTANT(SOUND_START_JOLT);
+        BIND_ENUM_CONSTANT(SOUND_TRACTION_MOTOR);
+        BIND_ENUM_CONSTANT(SOUND_TRACTION_MOTOR_AC);
+        BIND_ENUM_CONSTANT(SOUND_TRANSMISSION);
+        BIND_ENUM_CONSTANT(SOUND_TURBO);
+        BIND_ENUM_CONSTANT(SOUND_VENTILATOR);
+        BIND_ENUM_CONSTANT(SOUND_UN_BRAKE);
+        BIND_ENUM_CONSTANT(SOUND_UN_LOADING);
+        BIND_ENUM_CONSTANT(SOUND_WHEEL_FLAT);
+        BIND_ENUM_CONSTANT(SOUND_WHEEL_CLATTER);
+        BIND_ENUM_CONSTANT(SOUND_WATER_PUMP);
+        BIND_ENUM_CONSTANT(SOUND_WATER_HEATER);
+        BIND_ENUM_CONSTANT(SOUND_COMPRESSOR_IDLE);
+        BIND_ENUM_CONSTANT(SOUND_BRAKING_RESISTOR_VENTILATOR);
+        BIND_ENUM_CONSTANT(SOUND_COUNT);
+
+#define BIND_SOUND_PROPERTY(name)                                                                                      \
+    ClassDB::bind_method(D_METHOD("get_" #name), &TrainSound::get_##name);                                             \
+    ClassDB::bind_method(D_METHOD("set_" #name, "res"), &TrainSound::set_##name);                                      \
+    ADD_PROPERTY(                                                                                                      \
+            PropertyInfo(Variant::OBJECT, "sounds/" #name, PROPERTY_HINT_RESOURCE_TYPE, "LayeredSoundResource"),       \
+            "set_" #name, "get_" #name);
 
         ADD_GROUP("Sounds", "sounds/");
         BIND_SOUND_PROPERTY(battery) BIND_SOUND_PROPERTY(brake) BIND_SOUND_PROPERTY(brake_acc)
@@ -76,71 +145,86 @@ namespace godot {
             _setup_sound_definitions();
         }
         if (what == NOTIFICATION_PREDELETE) {
-            // The scene tree will free children automatically; just clear raw pointers to avoid dangling references.
-            auto_player_1 = nullptr;
-            auto_player_2 = nullptr;
-            for (auto &pair : sound_definitions) {
-                pair.second.player_1 = nullptr;
-                pair.second.player_2 = nullptr;
-            }
+            // The scene tree will free children automatically.
             stream_cache.clear();
         }
     }
 
     void TrainSound::stop_all() const {
-        if (auto_player_1 != nullptr) {
-            auto_player_1->stop();
-        }
-        if (auto_player_2 != nullptr) {
-            auto_player_2->stop();
-        }
-        for (const auto &[fst, snd] : sound_definitions) {
-            if (snd.player_1 != nullptr) { snd.player_1->stop();
-}
-            if (snd.player_2 != nullptr) { snd.player_2->stop();
-}
+        for (const auto &[fst, snd]: sound_definitions) {
+            if (!snd.resource.is_valid()) {
+                continue;
+            }
+            if (!snd.resource->get_audio_stream_player_1().is_empty()) {
+                if (AudioStreamPlayer3D *p1 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_1())) {
+                    p1->stop();
+                }
+            }
+            if (!snd.resource->get_audio_stream_player_2().is_empty()) {
+                if (AudioStreamPlayer3D *p2 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_2())) {
+                    p2->stop();
+                }
+            }
         }
     }
 
     void TrainSound::pause_all() const {
-        if (auto_player_1 != nullptr) {
-            auto_player_1->set_stream_paused(true);
-        }
-        if (auto_player_2 != nullptr) {
-            auto_player_2->set_stream_paused(true);
-        }
-        for (const auto &[fst, snd] : sound_definitions) {
-            if (snd.player_1 != nullptr) { snd.player_1->set_stream_paused(true);
-}
-            if (snd.player_2 != nullptr) { snd.player_2->set_stream_paused(true);
-}
+        for (const auto &[fst, snd]: sound_definitions) {
+            if (!snd.resource.is_valid()) {
+                continue;
+            }
+            if (!snd.resource->get_audio_stream_player_1().is_empty()) {
+                if (AudioStreamPlayer3D *p1 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_1())) {
+                    p1->set_stream_paused(true);
+                }
+            }
+            if (!snd.resource->get_audio_stream_player_2().is_empty()) {
+                if (AudioStreamPlayer3D *p2 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_2())) {
+                    p2->set_stream_paused(true);
+                }
+            }
         }
     }
 
     void TrainSound::resume_all() const {
-        if (auto_player_1 != nullptr) {
-            auto_player_1->set_stream_paused(false);
-        }
-        if (auto_player_2 != nullptr) {
-            auto_player_2->set_stream_paused(false);
-        }
-        for (const auto &[fst, snd] : sound_definitions) {
-            if (snd.player_1 != nullptr) { snd.player_1->set_stream_paused(false);
-}
-            if (snd.player_2 != nullptr) { snd.player_2->set_stream_paused(false);
-}
+        for (const auto &[fst, snd]: sound_definitions) {
+            if (!snd.resource.is_valid()) {
+                continue;
+            }
+            if (!snd.resource->get_audio_stream_player_1().is_empty()) {
+                if (AudioStreamPlayer3D *p1 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_1())) {
+                    p1->set_stream_paused(false);
+                }
+            }
+            if (!snd.resource->get_audio_stream_player_2().is_empty()) {
+                if (AudioStreamPlayer3D *p2 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_2())) {
+                    p2->set_stream_paused(false);
+                }
+            }
         }
     }
 
     void TrainSound::play_sound(const StringName &p_name) {
-        if (sound_definitions.count(p_name) == 0u) { return;
-}
+        if (sound_definitions.count(p_name) == 0u) {
+            return;
+        }
         SoundDefinition &def = sound_definitions[p_name];
-        if (!def.resource.is_valid()) { return;
-}
+        if (!def.resource.is_valid()) {
+            return;
+        }
+
+        AudioStreamPlayer3D *p1 = nullptr;
+        if (!def.resource->get_audio_stream_player_1().is_empty()) {
+            p1 = get_node<AudioStreamPlayer3D>(def.resource->get_audio_stream_player_1());
+        }
+
+        if (p1 == nullptr) {
+            UtilityFunctions::push_error("[TrainSound] Primary player is not assigned for sound: ", p_name);
+            return;
+        }
 
         if (def.state == STATE_STOPPED) {
-    const TypedArray<String> starters = def.resource->get_starting_sounds();
+            const TypedArray<String> starters = def.resource->get_starting_sounds();
             if (starters.size() > 0) {
                 // Pick a starting sound
                 const String starter_file = starters.get(UtilityFunctions::randi() % starters.size());
@@ -148,10 +232,10 @@ namespace godot {
                 const Ref<AudioStream> stream = get_audio_stream_for_file(full_path, false);
                 if (stream.is_valid()) {
                     def.state = STATE_STARTING;
-                    def.player_1->set_stream(stream);
-                    def.player_1->set_max_distance(def.resource->get_range());
-                    def.player_1->set_volume_db(max_volume_db);
-                    def.player_1->play();
+                    p1->set_stream(stream);
+                    p1->set_max_distance(def.resource->get_range());
+                    p1->set_volume_db(max_volume_db);
+                    p1->play();
                     return;
                 }
             }
@@ -161,46 +245,98 @@ namespace godot {
         }
     }
 
+    void TrainSound::play_sound_type(const SoundType p_type) {
+        play_sound(_get_sound_name_from_type(p_type));
+    }
+
     void TrainSound::stop_sound(const StringName &p_name) {
-        if (!sound_definitions.count(p_name)) return;
+        if (sound_definitions.count(p_name) == 0u) {
+            return;
+        }
         SoundDefinition &def = sound_definitions[p_name];
-        if (!def.resource.is_valid()) return;
+        if (!def.resource.is_valid()) {
+            return;
+        }
+
+        AudioStreamPlayer3D *p1 = nullptr;
+        if (!def.resource->get_audio_stream_player_1().is_empty()) {
+            p1 = get_node<AudioStreamPlayer3D>(def.resource->get_audio_stream_player_1());
+        }
+        AudioStreamPlayer3D *p2 = nullptr;
+        if (!def.resource->get_audio_stream_player_2().is_empty()) {
+            p2 = get_node<AudioStreamPlayer3D>(def.resource->get_audio_stream_player_2());
+        }
+
+        if (p1 == nullptr) {
+            return;
+        }
 
         if (def.state == STATE_PLAYING || def.state == STATE_STARTING) {
             TypedArray<String> enders = def.resource->get_ending_sounds();
             if (enders.size() > 0) {
-                String ender_file = enders[UtilityFunctions::randi() % enders.size()];
-                String full_path = sound_root_path + (sound_root_path.ends_with("/") ? "" : "/") + ender_file;
-                Ref<AudioStream> stream = get_audio_stream_for_file(full_path, false);
+                const String ender_file = enders[UtilityFunctions::randi() % enders.size()];
+                const String full_path = sound_root_path + (sound_root_path.ends_with("/") ? "" : "/") + ender_file;
+                const Ref<AudioStream> stream = get_audio_stream_for_file(full_path, false);
                 if (stream.is_valid()) {
                     def.state = STATE_ENDING;
-                    def.player_1->stop();
-                    def.player_2->stop();
-                    def.player_1->set_stream(stream);
-                    def.player_1->set_max_distance(def.resource->get_range());
-                    def.player_1->set_volume_db(max_volume_db);
-                    def.player_1->play();
+                    p1->stop();
+                    if (p2) {
+                        p2->stop();
+                    }
+                    p1->set_stream(stream);
+                    p1->set_max_distance(def.resource->get_range());
+                    p1->set_volume_db(max_volume_db);
+                    p1->play();
                     return;
                 }
             }
             def.state = STATE_STOPPED;
-            def.player_1->stop();
-            def.player_2->stop();
+            p1->stop();
+            if (p2) {
+                p2->stop();
+            }
         }
+    }
+
+    void TrainSound::stop_sound_type(SoundType p_type) {
+        stop_sound(_get_sound_name_from_type(p_type));
     }
 
     void TrainSound::update_sound(const StringName &p_name, double p_param_value) {
-        if (!sound_definitions.count(p_name)) return;
-        SoundDefinition &def = sound_definitions[p_name];
-        if (!def.resource.is_valid()) return;
+        if (sound_definitions.count(p_name) == 0u) {
+            return;
+        }
+        const SoundDefinition &def = sound_definitions[p_name];
+        if (!def.resource.is_valid()) {
+            return;
+        }
 
         if (def.state == STATE_PLAYING) {
-            update_audio_streams_and_volumes(p_param_value, def.resource, def.player_1, def.player_2);
+            AudioStreamPlayer3D *p1 = nullptr;
+            if (!def.resource->get_audio_stream_player_1().is_empty()) {
+                p1 = get_node<AudioStreamPlayer3D>(def.resource->get_audio_stream_player_1());
+            }
+            AudioStreamPlayer3D *p2 = nullptr;
+            if (!def.resource->get_audio_stream_player_2().is_empty()) {
+                p2 = get_node<AudioStreamPlayer3D>(def.resource->get_audio_stream_player_2());
+            }
+
+            if (p1 == nullptr) {
+                return;
+            }
+
+            update_audio_streams_and_volumes(p_param_value, def.resource, p1, p2);
         }
     }
 
-    void TrainSound::_on_player_finished(StringName p_sound_name) {
-        if (!sound_definitions.count(p_sound_name)) return;
+    void TrainSound::update_sound_type(SoundType p_type, double p_param_value) {
+        update_sound(_get_sound_name_from_type(p_type), p_param_value);
+    }
+
+    void TrainSound::_on_player_finished(const StringName &p_sound_name) {
+        if (sound_definitions.count(p_sound_name) == 0u) {
+            return;
+        }
         SoundDefinition &def = sound_definitions[p_sound_name];
 
         if (def.state == STATE_STARTING) {
@@ -215,17 +351,15 @@ namespace godot {
 
     void TrainSound::_setup_sound_definitions() {
         // This is called when the node enters the tree.
-        // We create players for each definition that has a resource.
-        for (auto &pair : sound_definitions) {
-            if (pair.second.player_1 == nullptr) {
-                pair.second.player_1 = memnew(AudioStreamPlayer3D);
-                pair.second.player_1->set_name(String(pair.first) + "_player_1");
-                add_child(pair.second.player_1);
-                pair.second.player_1->connect("finished", Callable(this, "_on_player_finished").bind(pair.first));
-
-                pair.second.player_2 = memnew(AudioStreamPlayer3D);
-                pair.second.player_2->set_name(String(pair.first) + "_player_2");
-                add_child(pair.second.player_2);
+        // We no longer create players automatically.
+        // We check if players can be resolved from NodePaths in resources and connect finished signals.
+        for (auto &[fst, snd]: sound_definitions) {
+            if (snd.resource.is_valid() && !snd.resource->get_audio_stream_player_1().is_empty()) {
+                if (AudioStreamPlayer3D *p1 = get_node<AudioStreamPlayer3D>(snd.resource->get_audio_stream_player_1())) {
+                    if (!p1->is_connected("finished", Callable(this, "_on_player_finished").bind(fst))) {
+                        p1->connect("finished", Callable(this, "_on_player_finished").bind(fst));
+                    }
+                }
             }
         }
     }
@@ -242,6 +376,131 @@ namespace godot {
         sound_definitions[p_name].name = p_name;
         if (is_inside_tree()) {
             _setup_sound_definitions();
+        }
+    }
+
+    StringName TrainSound::_get_sound_name_from_type(const SoundType p_type) {
+        switch (p_type) {
+            case SOUND_BATTERY:
+                return "battery";
+            case SOUND_BRAKE:
+                return "brake";
+            case SOUND_BRAKE_ACC:
+                return "brake_acc";
+            case SOUND_BRAKE_CYLINDER_INC:
+                return "brake_cylinder_inc";
+            case SOUND_BRAKE_CYLINDER_DEC:
+                return "brake_cylinder_dec";
+            case SOUND_BRAKE_HOSE_ATTACH:
+                return "brake_hose_attach";
+            case SOUND_BRAKE_HOSE_DETACH:
+                return "brake_hose_detach";
+            case SOUND_COMPRESSOR:
+                return "compressor";
+            case SOUND_CONTROL_ATTACH:
+                return "control_attach";
+            case SOUND_CONTROL_DETACH:
+                return "control_detach";
+            case SOUND_CONVERTER:
+                return "converter";
+            case SOUND_CURVE:
+                return "curve";
+            case SOUND_DEPARTURE_SIGNAL:
+                return "departure_signal";
+            case SOUND_DERAIL:
+                return "derail";
+            case SOUND_DIESEL_INC:
+                return "diesel_inc";
+            case SOUND_DOOR_CLOSE:
+                return "door_close";
+            case SOUND_DOOR_OPEN:
+                return "door_open";
+            case SOUND_DOOR_LOCK:
+                return "door_lock";
+            case SOUND_DOOR_STEP_OPEN:
+                return "door_step_open";
+            case SOUND_DOOR_STEP_CLOSE:
+                return "door_step_close";
+            case SOUND_DOOR_RUN_LOCK:
+                return "door_run_lock";
+            case SOUND_DOOR_PERMIT:
+                return "door_permit";
+            case SOUND_EMERGENCY_BRAKE:
+                return "emergency_brake";
+            case SOUND_ENGINE:
+                return "engine";
+            case SOUND_EP_BRAKE_INC:
+                return "ep_brake_inc";
+            case SOUND_EP_BRAKE_DEC:
+                return "ep_brake_dec";
+            case SOUND_EP_CTRL_VALUE:
+                return "ep_ctrl_value";
+            case SOUND_FUEL_PUMP:
+                return "fuel_pump";
+            case SOUND_GANGWAY_ATTACH:
+                return "gangway_attach";
+            case SOUND_GANGWAY_DETACH:
+                return "gangway_detach";
+            case SOUND_HEATER:
+                return "heater";
+            case SOUND_HEATING_ATTACH:
+                return "heating_attach";
+            case SOUND_HEATING_DETACH:
+                return "heating_detach";
+            case SOUND_HORN_HIGH:
+                return "horn_high";
+            case SOUND_HORN_LOW:
+                return "horn_low";
+            case SOUND_WHISTLE:
+                return "whistle";
+            case SOUND_INVERTER:
+                return "inverter";
+            case SOUND_LOADING:
+                return "loading";
+            case SOUND_MAIN_HOSE_ATTACH:
+                return "main_hose_attach";
+            case SOUND_MAIN_HOSE_DETACH:
+                return "main_hose_detach";
+            case SOUND_MOTOR_BLOWER:
+                return "motor_blower";
+            case SOUND_PANTOGRAPH_UP:
+                return "pantograph_up";
+            case SOUND_PANTOGRAPH_DOWN:
+                return "pantograph_down";
+            case SOUND_SAND:
+                return "sand";
+            case SOUND_SMALL_COMPRESSOR:
+                return "small_compressor";
+            case SOUND_START_JOLT:
+                return "start_jolt";
+            case SOUND_TRACTION_MOTOR:
+                return "traction_motor";
+            case SOUND_TRACTION_MOTOR_AC:
+                return "traction_motor_ac";
+            case SOUND_TRANSMISSION:
+                return "transmission";
+            case SOUND_TURBO:
+                return "turbo";
+            case SOUND_VENTILATOR:
+                return "ventilator";
+            case SOUND_UN_BRAKE:
+                return "un_brake";
+            case SOUND_UN_LOADING:
+                return "un_loading";
+            case SOUND_WHEEL_FLAT:
+                return "wheel_flat";
+            case SOUND_WHEEL_CLATTER:
+                return "wheel_clatter";
+            case SOUND_WATER_PUMP:
+                return "water_pump";
+            case SOUND_WATER_HEATER:
+                return "water_heater";
+            case SOUND_COMPRESSOR_IDLE:
+                return "compressor_idle";
+            case SOUND_BRAKING_RESISTOR_VENTILATOR:
+                return "braking_resistor_ventilator";
+            default:
+                return "";
         }
     }
 
@@ -285,7 +544,6 @@ namespace godot {
     void TrainSound::update_audio_streams_and_volumes(
             const double param_value, const Ref<LayeredSoundResource> &layered_sound_data, AudioStreamPlayer3D *player,
             AudioStreamPlayer3D *player_2) {
-        auto_player_1 = player;
         Array sorted_parameter_keys = layered_sound_data->get_sound_table().keys();
         sorted_parameter_keys.sort(); // Ensure keys are sorted for correct range finding
 
@@ -307,17 +565,9 @@ namespace godot {
             return;
         }
 
-        // Lazily create secondary player if not provided
         if (player_2 == nullptr) {
-            if (auto_player_2 == nullptr) {
-                auto_player_2 = memnew(AudioStreamPlayer3D);
-                add_child(auto_player_2);
-                UtilityFunctions::print_verbose(
-                        "[TrainSound] Created secondary AudioStreamPlayer3D automatically as a child node.");
-            }
-            player_2 = auto_player_2;
-        } else {
-            auto_player_2 = player_2;
+            UtilityFunctions::push_error("[TrainSound] Secondary player is not assigned for crossfade.");
+            return;
         }
 
         int idx_min = -1;
@@ -333,7 +583,7 @@ namespace godot {
         }
 
         const Variant key_min = sorted_parameter_keys[idx_min];
-        const int param_min = static_cast<int>(key_min);
+        const int param_min = key_min;
         if (!audio_map.has(key_min)) {
             UtilityFunctions::push_error("[TrainSound] Key ", key_min, " not found in audio_map");
             return;
@@ -345,7 +595,7 @@ namespace godot {
         String file_path_max;
         Ref<AudioStream> stream_max;
         if (const int idx_max = idx_min + 1; idx_max < sorted_parameter_keys.size()) {
-            const Variant key_max = sorted_parameter_keys[idx_max];
+            const Variant& key_max = sorted_parameter_keys[idx_max];
             param_max = static_cast<int>(key_max);
             if (!audio_map.has(key_max)) {
                 UtilityFunctions::push_error("[TrainSound] Key ", key_max, " not found in audio_map");
@@ -404,9 +654,9 @@ namespace godot {
                 }
             }
             // Apply pitch for p_max
-            const Variant key_max = sorted_parameter_keys[idx_min + 1];
-            double base_pitch_max =
-                    pitch_table.has(key_max) ? static_cast<double>(pitch_table[key_max]) : static_cast<double>(param_max);
+            const Variant &key_max = sorted_parameter_keys[idx_min + 1];
+            double base_pitch_max = pitch_table.has(key_max) ? static_cast<double>(pitch_table[key_max])
+                                                             : static_cast<double>(param_max);
             if (Math::is_zero_approx(base_pitch_max)) {
                 base_pitch_max = 1.0;
             }
@@ -429,7 +679,7 @@ namespace godot {
                 return;
             }
 
-            // Compute crossfade window based on threshold percent
+            // Compute a crossfade window based on threshold percent
             const double width = (param_max - param_min) * (crossfade_threshold_percent / 100.0);
             // Anchor the crossfade at the top of the range, so blending happens as we approach the next layer
             const double crossfade_end = param_max;
@@ -458,6 +708,4 @@ namespace godot {
             p_max->set_volume_db(min_volume_db);
         }
     }
-
-
 } // namespace godot

@@ -13,9 +13,6 @@ namespace godot {
 
         private:
             std::map<String, Ref<AudioStream>> stream_cache;
-            // Lazily created secondary player when not provided by caller
-            AudioStreamPlayer3D *auto_player_1 = nullptr;
-            AudioStreamPlayer3D *auto_player_2 = nullptr;
         protected:
             static const char *SOUND_ENDED_SIGNAL;
             static void _bind_methods();
@@ -29,10 +26,71 @@ namespace godot {
                 STATE_ENDING
             };
 
+            enum SoundType {
+                SOUND_BATTERY,
+                SOUND_BRAKE,
+                SOUND_BRAKE_ACC,
+                SOUND_BRAKE_CYLINDER_INC,
+                SOUND_BRAKE_CYLINDER_DEC,
+                SOUND_BRAKE_HOSE_ATTACH,
+                SOUND_BRAKE_HOSE_DETACH,
+                SOUND_COMPRESSOR,
+                SOUND_CONTROL_ATTACH,
+                SOUND_CONTROL_DETACH,
+                SOUND_CONVERTER,
+                SOUND_CURVE,
+                SOUND_DEPARTURE_SIGNAL,
+                SOUND_DERAIL,
+                SOUND_DIESEL_INC,
+                SOUND_DOOR_CLOSE,
+                SOUND_DOOR_OPEN,
+                SOUND_DOOR_LOCK,
+                SOUND_DOOR_STEP_OPEN,
+                SOUND_DOOR_STEP_CLOSE,
+                SOUND_DOOR_RUN_LOCK,
+                SOUND_DOOR_PERMIT,
+                SOUND_EMERGENCY_BRAKE,
+                SOUND_ENGINE,
+                SOUND_EP_BRAKE_INC,
+                SOUND_EP_BRAKE_DEC,
+                SOUND_EP_CTRL_VALUE,
+                SOUND_FUEL_PUMP,
+                SOUND_GANGWAY_ATTACH,
+                SOUND_GANGWAY_DETACH,
+                SOUND_HEATER,
+                SOUND_HEATING_ATTACH,
+                SOUND_HEATING_DETACH,
+                SOUND_HORN_HIGH,
+                SOUND_HORN_LOW,
+                SOUND_WHISTLE,
+                SOUND_INVERTER,
+                SOUND_LOADING,
+                SOUND_MAIN_HOSE_ATTACH,
+                SOUND_MAIN_HOSE_DETACH,
+                SOUND_MOTOR_BLOWER,
+                SOUND_PANTOGRAPH_UP,
+                SOUND_PANTOGRAPH_DOWN,
+                SOUND_SAND,
+                SOUND_SMALL_COMPRESSOR,
+                SOUND_START_JOLT,
+                SOUND_TRACTION_MOTOR,
+                SOUND_TRACTION_MOTOR_AC,
+                SOUND_TRANSMISSION,
+                SOUND_TURBO,
+                SOUND_VENTILATOR,
+                SOUND_UN_BRAKE,
+                SOUND_UN_LOADING,
+                SOUND_WHEEL_FLAT,
+                SOUND_WHEEL_CLATTER,
+                SOUND_WATER_PUMP,
+                SOUND_WATER_HEATER,
+                SOUND_COMPRESSOR_IDLE,
+                SOUND_BRAKING_RESISTOR_VENTILATOR,
+                SOUND_COUNT
+            };
+
             struct SoundDefinition {
                     Ref<LayeredSoundResource> resource;
-                    AudioStreamPlayer3D *player_1 = nullptr;
-                    AudioStreamPlayer3D *player_2 = nullptr;
                     SoundState state = STATE_STOPPED;
                     StringName name;
             };
@@ -40,16 +98,19 @@ namespace godot {
         private:
             std::map<StringName, SoundDefinition> sound_definitions;
             void _setup_sound_definitions();
-            void _on_player_finished(StringName p_sound_name);
+            void _on_player_finished(const StringName& p_sound_name);
 
         public:
             void stop_all() const;
             void pause_all() const;
             void resume_all() const;
-            
+
             void play_sound(const StringName &p_name);
+            void play_sound_type(SoundType p_type);
             void stop_sound(const StringName &p_name);
+            void stop_sound_type(SoundType p_type);
             void update_sound(const StringName &p_name, double p_param_value);
+            void update_sound_type(SoundType p_type, double p_param_value);
 
             MAKE_MEMBER_GS(String, sound_root_path, "")
             MAKE_MEMBER_GS(float, max_volume_db, 0.0)
@@ -98,5 +159,9 @@ namespace godot {
         private:
             Ref<LayeredSoundResource> _get_sound_resource(const StringName &p_name) const;
             void _set_sound_resource(const StringName &p_name, const Ref<LayeredSoundResource> &p_res);
+
+            static StringName _get_sound_name_from_type(SoundType p_type);
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(godot::TrainSound::SoundType);

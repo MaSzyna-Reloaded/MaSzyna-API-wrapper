@@ -3,9 +3,30 @@
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="3_vuhlb"]
+[ext_resource type="Script" uid="uid://d2xps25eoq4uu" path="res://vehicles/sm42/train_sound.gd" id="4_e1eq6"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(4.5332, 4.72223, 17.0549)
+
+[sub_resource type="LayeredSoundResource" id="LayeredSoundResource_n0h2q"]
+range = 150.0
+sound_table = {
+495: "697_sm42-idle-1.ogg",
+600: "697_sm42-idle-2.ogg",
+700: "697_sm42-idle-3.ogg",
+850: "697_sm42-idle-4.ogg",
+1000: "697_sm42-idle-5.ogg"
+}
+pitch_table = {
+495: 495,
+600: 600,
+700: 700,
+850: 850,
+1000: 1000
+}
+cross_fade = 90.0
+audio_stream_player_1 = NodePath("../EngineSound")
+audio_stream_player_2 = NodePath("../EngineSound2")
 
 [node name="SM42-099" type="Node3D" unique_id=1967816975]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -80,6 +101,6 @@ volume_db = -80.0
 doppler_tracking = 2
 
 [node name="TrainSound" type="TrainSound" parent="." unique_id=842815973]
-sound_root_path = "/home/DoS/Stuff/MaSzyna/sounds/"
-
-[connection signal="sound_ended" from="TrainSound" to="." method="_on_train_sound_sound_ended"]
+sound_root_path = "/home/DoS/Games/SteamLibrary/steamapps/common/MaSzyna/sounds/"
+sounds/engine = SubResource("LayeredSoundResource_n0h2q")
+script = ExtResource("4_e1eq6")

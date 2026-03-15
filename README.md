@@ -59,6 +59,7 @@ Cross-compiling (for Windows on Linux):
 | 30.09.2025     | 4.5                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06               |
 | 30.11.2025     | 4.5.x                | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11        |
 | 27.01.2026     | 4.6                  | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
+| 15.06.2026     | 4.7.x                | ✅       | ✅     | ❌      | ✅ (Target API Level: 34) | ❌   | C++ 17       | 24.06, 25.11, 26.01 |
 ### Documentation 
 
 Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/

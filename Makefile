@@ -4,6 +4,11 @@
 GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
 
+#Helper for CLion so it would see generated bindings
+generate-bindings:
+	cmake -B cmake-build-debug
+	cmake --build cmake-build-debug --target generate_bindings
+
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
 

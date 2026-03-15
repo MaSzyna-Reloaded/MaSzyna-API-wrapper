@@ -9,7 +9,7 @@
 #include <godot_cpp/core/memory.hpp>
 
 namespace godot {
-    Ref<Material> E3DNodesInstancer::_colored_material;
+    Ref<Material> *E3DNodesInstancer::_colored_material_ref_ptr = nullptr;
     Node3D * E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
         if (submodel.get_skip_rendering()) {
             return nullptr;
@@ -129,19 +129,27 @@ namespace godot {
     }
 
     void E3DNodesInstancer::cleanup() {
-        _colored_material.unref();
+        if (_colored_material_ref_ptr != nullptr) {
+            _colored_material_ref_ptr->unref();
+            memdelete(_colored_material_ref_ptr);
+            _colored_material_ref_ptr = nullptr;
+        }
     }
 
     Ref<Material> E3DNodesInstancer::get_colored_material() {
-        if (!_colored_material.is_valid()) {
+        if (_colored_material_ref_ptr == nullptr) {
+            _colored_material_ref_ptr = memnew(Ref<Material>);
+        }
+
+        if (!_colored_material_ref_ptr->is_valid()) {
             if ((Engine::get_singleton() != nullptr) && !Engine::get_singleton()->is_editor_hint()) {
                 const String path = "res://addons/libmaszyna/e3d/colored.material";
                 if (const Ref<Material> res = ResourceLoader::get_singleton()->load(path, "Material", ResourceLoader::CACHE_MODE_REUSE); res.is_valid()) {
-                    _colored_material = res;
+                    *_colored_material_ref_ptr = res;
                 }
             }
         }
-        return _colored_material;
+        return *_colored_material_ref_ptr;
     }
 
     void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {

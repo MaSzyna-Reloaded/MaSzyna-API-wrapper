@@ -9,7 +9,7 @@ namespace godot {
     class E3DNodesInstancer : public Node {
         GDCLASS(E3DNodesInstancer, Node)
         private:
-            static Ref<Material> _colored_material;
+            static Ref<Material> *_colored_material_ref_ptr;
             static Node3D *_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &submodel);
             static void _do_add_submodels(
                     const E3DModelInstance &p_target_node, Node3D *parent, const TypedArray<E3DSubModel> &submodels,

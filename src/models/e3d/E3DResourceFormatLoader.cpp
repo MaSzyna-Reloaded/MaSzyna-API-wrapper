@@ -12,7 +12,7 @@ namespace godot {
     }
 
     bool E3DResourceFormatLoader::_handles_type(const StringName &p_type) const {
-        return p_type == StringName("E3DModel");
+        return p_type == static_cast<StringName>("E3DModel");
     }
 
     String E3DResourceFormatLoader::_get_resource_type(const String &p_path) const {

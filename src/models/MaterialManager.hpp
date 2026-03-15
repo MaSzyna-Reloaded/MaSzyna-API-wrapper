@@ -19,6 +19,7 @@ namespace godot {
             Ref<ImageTexture> _unknown_texture;
             Object *user_settings_node = nullptr;
             Dictionary _materials;
+            HashMap<String, String> _texture_resolution_cache;
 
             bool use_alpha_transparency = false;
             bool auto_generate_normal = false;

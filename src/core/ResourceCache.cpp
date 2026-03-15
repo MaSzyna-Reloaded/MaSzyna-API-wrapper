@@ -34,9 +34,8 @@ namespace godot {
         if (singleton == this) {
             singleton = nullptr;
         }
-        Array keys = _cache.keys();
-        for (int i = 0; i < keys.size(); i++) {
-            Ref<Resource> res = _cache[keys.get(i)];
+        for (const KeyValue<String, Ref<Resource>> &E : _cache) {
+            Ref<Resource> res = E.value;
             if (res.is_valid()) {
                 if (E3DModel *model = cast_to<E3DModel>(res.ptr())) {
                     model->clear();
@@ -62,7 +61,7 @@ namespace godot {
 
     String ResourceCache::_get_cache_path(const String &p_path, const ResourceCacheDir p_dir) {
         String cache_dir = "user://cache/" + _get_dir_name(p_dir);
-        return cache_dir + "/" + p_path.md5_text() + ".res";
+        return cache_dir + "/" + p_path.simplify_path().md5_text() + ".res";
     }
 
     bool ResourceCache::has(const String &p_path, const ResourceCacheDir p_dir) {
@@ -70,14 +69,16 @@ namespace godot {
             return false;
         }
 
+        const String path = p_path.simplify_path();
+
         singleton->_mutex->lock();
-        if (singleton->_cache.has(p_path)) {
+        if (singleton->_cache.has(path)) {
             singleton->_mutex->unlock();
             return true;
         }
         singleton->_mutex->unlock();
 
-        return FileAccess::file_exists(_get_cache_path(p_path, p_dir));
+        return FileAccess::file_exists(_get_cache_path(path, p_dir));
     }
 
     Ref<Resource> ResourceCache::get(const String &p_path, const ResourceCacheDir p_dir) {
@@ -85,27 +86,31 @@ namespace godot {
             return Ref<Resource>();
         }
 
+        const String path = p_path.simplify_path();
+
         singleton->_mutex->lock();
-        if (singleton->_cache.has(p_path)) {
-            Ref<Resource> res = singleton->_cache.get(p_path, Ref<Resource>());
+        if (singleton->_cache.has(path)) {
+            Ref<Resource> res = singleton->_cache.get(path);
             singleton->_mutex->unlock();
+            UtilityFunctions::print_verbose("[ResourceCache] Cache hit (memory): " + path);
             return res;
         }
         singleton->_mutex->unlock();
 
-        const String cache_path = _get_cache_path(p_path, p_dir);
+        const String cache_path = _get_cache_path(path, p_dir);
         if (FileAccess::file_exists(cache_path)) {
             UtilityFunctions::print_verbose(
-                    "[ResourceCache] Loading from disk: " + cache_path + " (original: " + p_path + ")");
+                    "[ResourceCache] Loading from disk: " + cache_path + " (original: " + path + ")");
             Ref<Resource> res = ResourceLoader::get_singleton()->load(cache_path);
             if (res.is_valid()) {
                 singleton->_mutex->lock();
-                singleton->_cache.set(p_path, res);
+                singleton->_cache.insert(path, res);
                 singleton->_mutex->unlock();
                 return res;
             }
         }
 
+        UtilityFunctions::print_verbose("[ResourceCache] Cache miss: " + path);
         return Ref<Resource>();
     }
 
@@ -114,11 +119,13 @@ namespace godot {
             return;
         }
 
+        const String path = p_path.simplify_path();
+
         singleton->_mutex->lock();
-        singleton->_cache.set(p_path, p_resource);
+        singleton->_cache.insert(path, p_resource);
         singleton->_mutex->unlock();
 
-        const String cache_path = _get_cache_path(p_path, p_dir);
+        const String cache_path = _get_cache_path(path, p_dir);
         const String cache_dir = cache_path.get_base_dir();
 
         if (!DirAccess::dir_exists_absolute(cache_dir)) {
@@ -129,7 +136,7 @@ namespace godot {
         if (err != OK) {
             UtilityFunctions::push_error("[ResourceCache] Failed to save cache: " + cache_path);
         } else {
-            UtilityFunctions::print_verbose("[ResourceCache] Saved to disk: " + cache_path);
+            UtilityFunctions::print_verbose("[ResourceCache] Saved to disk: " + cache_path + " (original: " + path + ")");
         }
     }
 
@@ -138,11 +145,13 @@ namespace godot {
             return;
         }
 
+        const String path = p_path.simplify_path();
+
         singleton->_mutex->lock();
-        singleton->_cache.erase(p_path);
+        singleton->_cache.erase(path);
         singleton->_mutex->unlock();
 
-        const String cache_path = _get_cache_path(p_path, p_dir);
+        const String cache_path = _get_cache_path(path, p_dir);
         if (FileAccess::file_exists(cache_path)) {
             DirAccess::remove_absolute(cache_path);
         }

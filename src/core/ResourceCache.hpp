@@ -1,10 +1,10 @@
 #pragma once
 
+#include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/class_db.hpp>
-#include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/string.hpp>
 
 namespace godot {
@@ -21,8 +21,9 @@ public:
 
 private:
     static ResourceCache *singleton;
-    Dictionary _cache;
+    HashMap<String, Ref<Resource>> _cache;
     Ref<Mutex> _mutex;
+
 
     static String _get_dir_name(ResourceCacheDir p_dir);
     static String _get_cache_path(const String &p_path, ResourceCacheDir p_dir);

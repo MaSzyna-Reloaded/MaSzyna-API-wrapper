@@ -75,5 +75,9 @@ func _notification(what: int) -> void:
         NOTIFICATION_READY:
             _e3d_instances = []
             _find_e3d_instances(self, _e3d_instances)
-            for obj in _e3d_instances:
-                obj.e3d_loaded.connect(_on_e3d_loaded)
+            if _e3d_instances.is_empty():
+                _cabin_ready = true
+                cabin_ready.emit()
+            else:
+                for obj in _e3d_instances:
+                    obj.e3d_loaded.connect(_on_e3d_loaded)

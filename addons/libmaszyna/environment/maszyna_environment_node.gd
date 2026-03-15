@@ -26,10 +26,16 @@ class_name MaszynaEnvironmentNode
         _update_sky_shader()
 
 
+var _last_sky_texture: String = ""
+
 func _update_sky_shader():
     if not is_node_ready():
         return
 
+    if _last_sky_texture == sky_texture:
+        return
+
+    _last_sky_texture = sky_texture
     var shader_texture
     if sky_texture:
         shader_texture = MaterialManager.get_texture(sky_texture)

@@ -108,17 +108,17 @@ namespace godot {
 
         if (!commands.has(command)) {
             const Dictionary _trains;
-            commands[command] = _trains;
+            commands.set(command, _trains);
         }
 
 
-        if ((static_cast<Dictionary>(commands[command])).has(train_id)) {
+        if ((static_cast<Dictionary>(commands.get(command, Dictionary()))).has(train_id)) {
             log(train_id, GameLog::LogLevel::ERROR, "Command is already registered: " + command);
             return;
         }
 
-        Dictionary _trains = commands[command];
-        _trains[train_id] = callback;
+        Dictionary _trains = commands.get(command, Dictionary());
+        _trains.set(train_id, callback);
     }
 
     void TrainSystem::unregister_command(const String &train_id, const String &command, const Callable &callback) {
@@ -132,7 +132,7 @@ namespace godot {
         }
 
         if (commands.has(command)) {
-            Dictionary _trains = static_cast<Dictionary>(commands[command]);
+            Dictionary _trains = static_cast<Dictionary>(commands.get(command, Dictionary()));
             if (!_trains.has(train_id)) {
                 log(train_id, GameLog::LogLevel::ERROR, "Command is not registered: " + command);
                 return;
@@ -155,7 +155,7 @@ namespace godot {
 
         for (const auto & command_key : command_keys) {
             String command = command_key;
-            Dictionary _trains = commands[command];
+            Dictionary _trains = commands.get(command, Dictionary());
             if (_trains.has(train_id)) {
                 _trains.erase(train_id);
             }
@@ -199,14 +199,14 @@ namespace godot {
         TrainController *train = it->second;
         if (is_command_supported(command)) {
 
-            Dictionary _trains = static_cast<Dictionary>(commands[command]);
+            Dictionary _trains = static_cast<Dictionary>(commands.get(command, Dictionary()));
 
             if (!_trains.has(train_id)) {
                 log(train_id, GameLog::LogLevel::WARNING, "train cannot handle command: " + command);
                 return;
             }
 
-            if (const Callable c = _trains[train_id]; c.is_valid()) {
+            if (const Callable c = _trains.get(train_id, Callable()); c.is_valid()) {
                 Array args;
                 const int argc = static_cast<int>(c.get_argument_count());
                 if (argc > 0) {

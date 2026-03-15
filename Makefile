@@ -5,6 +5,11 @@ GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 
+#Helper for CLion so it would see generated bindings
+generate-bindings:
+	cmake -B cmake-build-debug
+	cmake --build cmake-build-debug --target generate_bindings
+
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
 

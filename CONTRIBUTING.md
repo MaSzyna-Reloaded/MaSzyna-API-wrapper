@@ -6,11 +6,11 @@ You first need to create a fork of this repository to commit your changes to it.
 ## Choose a base branch
 Before starting development, you need to know which branch to base your modifications/additions on. When in doubt, use `main`.
 
-| Type of change                | Branch prefix | Branches              |
-| :------------------           |:---------:| ---------------------:|
-| Development work              | `dev`     | `main`                |
-| Bug fixes                     | `fix`     | `main`                |
-| New features                  | `feature` | `main`                |
+| Type of change   | Branch prefix | Branches |
+|:-----------------|:-------------:|---------:|
+| Development work |     `dev`     |   `main` |
+| Bug fixes        |     `fix`     |   `main` |
+| New features     |   `feature`   |   `main` |
 
 ```sh
 # Switch to the desired branch

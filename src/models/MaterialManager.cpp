@@ -23,6 +23,7 @@ namespace godot {
                 &MaterialManager::get_material, DEFVAL(Transparency::Disabled), DEFVAL(false), DEFVAL(Color(1, 1, 1)));
         ClassDB::bind_method(D_METHOD("get_texture", "texture_path"), &MaterialManager::get_texture);
         ClassDB::bind_method(D_METHOD("load_texture", "model_path", "material_name"), &MaterialManager::load_texture);
+        ClassDB::bind_method(D_METHOD("reload_settings"), &MaterialManager::reload_settings);
 
         ClassDB::bind_static_method(
                 get_class_static(), D_METHOD("generate_heightmap_from_albedo", "albedo"),
@@ -80,6 +81,7 @@ namespace godot {
     void MaterialManager::_clear_cache() {
         mutex->lock();
         _materials.clear();
+        _texture_resolution_cache.clear();
         ResourceCache::clear(ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
 
         Ref<ConfigFile> _config;
@@ -89,6 +91,7 @@ namespace godot {
             auto_generate_normal = _config->get_value("e3d", "auto_generate_normal", false);
             auto_generate_metallic = _config->get_value("e3d", "auto_generate_metallic", false);
             auto_generate_height = _config->get_value("e3d", "auto_generate_height", false);
+
             if (OS::get_singleton()->has_feature("release") && !OS::get_singleton()->has_feature("editor")) {
                 game_dir = ".";
             } else {
@@ -141,7 +144,6 @@ namespace godot {
         if (_mmat.is_valid()) {
             UtilityFunctions::print_verbose("[MaterialManager] Material is valid: " + material_path);
             if (const String _albedo = _mmat->get_albedo_texture_path(); !_albedo.is_empty()) {
-                UtilityFunctions::print_verbose("[MaterialManager] Albedo is not empty: " + _albedo);
                 const Ref<ImageTexture> albedo_tex = load_texture(model_path, _albedo.split(":").get(0));
                 _m->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, albedo_tex);
 
@@ -268,29 +270,34 @@ namespace godot {
         return load_texture("", texture_path);
     }
 
+    void MaterialManager::reload_settings() {
+        _clear_cache();
+    }
+
     Ref<ImageTexture> MaterialManager::load_texture(const String &model_path, const String &material_name) {
-        UtilityFunctions::print_verbose(
-                "[MaterialManager] Loading texture for: " + model_path + ", " + material_name + "...");
+        const String resolution_key = model_path + String(":") + material_name;
 
-        if (_unknown_texture.is_null()) {
-            _unknown_texture.instantiate(); // Create a new ImageTexture
-        }
+        mutex->lock();
+        if (_texture_resolution_cache.has(resolution_key)) {
+            const String path = _texture_resolution_cache.get(resolution_key);
+            mutex->unlock();
 
-        static bool fallback_loaded = false;
-        if (!fallback_loaded) {
-            if (ResourceLoader *rl = ResourceLoader::get_singleton()) {
-                UtilityFunctions::print_verbose("[MaterialManager] Loading fallback texture");
-                _unknown_texture = rl->load("res://addons/libmaszyna/materials/missing_texture.png");
-                fallback_loaded = true;
+            if (path.is_empty()) {
+                return _unknown_texture;
             }
+
+            Ref<Resource> cached_res = ResourceCache::get(path, ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
+            if (cached_res.is_valid()) {
+                return cached_res;
+            }
+        } else {
+            mutex->unlock();
         }
 
         if (game_dir.ends_with("\\") || game_dir.ends_with("/")) {
             game_dir = game_dir.substr(0, game_dir.length() - 1);
         }
 
-
-        UtilityFunctions::print_verbose("[MaterialManager] Searching for texture in: " + game_dir);
         const PackedStringArray possible_paths = {
                 game_dir + "/" + model_path + "/" + material_name + ".dds",
                 game_dir + "/textures/" + model_path + "/" + material_name + ".dds",
@@ -302,18 +309,23 @@ namespace godot {
         for (int i = 0; i < possible_paths.size(); ++i) {
             if (FileAccess::file_exists(possible_paths.get(i))) {
                 final_path = possible_paths.get(i);
-                UtilityFunctions::print_verbose("[MaterialManager] Found in: " + possible_paths.get(i));
                 break;
-            }
-
-            if (i == possible_paths.size() - 1) {
-                UtilityFunctions::print_verbose("[MaterialManager] Texture ", material_name, " not found");
             }
         }
 
+        mutex->lock();
+        _texture_resolution_cache.insert(resolution_key, final_path);
+        mutex->unlock();
 
         if (final_path.is_empty()) {
-            UtilityFunctions::print_verbose("[MaterialManager] Using fallback texture");
+            UtilityFunctions::print_verbose("[MaterialManager] Texture ", material_name, " not found");
+            if (_unknown_texture.is_null()) {
+                _unknown_texture.instantiate(); // Create a new ImageTexture
+                if (ResourceLoader *rl = ResourceLoader::get_singleton()) {
+                    UtilityFunctions::print_verbose("[MaterialManager] Loading fallback texture");
+                    _unknown_texture = rl->load("res://addons/libmaszyna/materials/missing_texture.png");
+                }
+            }
             return _unknown_texture;
         }
 
@@ -322,9 +334,13 @@ namespace godot {
             return cached_res;
         }
 
+        UtilityFunctions::print_verbose(
+                "[MaterialManager] Loading texture for: " + model_path + ", " + material_name + "...");
+        UtilityFunctions::print_verbose("[MaterialManager] Found in: " + final_path);
+        UtilityFunctions::print_verbose("[MaterialManager] Cache miss for: " + final_path + ". Loading from file...");
         const Ref<FileAccess> file = FileAccess::open(final_path, FileAccess::READ);
         if (!file.is_valid()) {
-            UtilityFunctions::push_error("Error opening texture file: " + final_path);
+            UtilityFunctions::push_error("[MaterialManager] Error opening texture file: " + final_path);
             return _unknown_texture;
         }
 
@@ -337,7 +353,7 @@ namespace godot {
             return tex;
         }
 
-
+        UtilityFunctions::push_error("[MaterialManager] Failed to load DDS from buffer: " + final_path);
         return _unknown_texture;
     }
 

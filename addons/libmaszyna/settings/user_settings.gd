@@ -15,7 +15,7 @@ var DEFAULTS = {
       #Auto generation features are highly experimental, might be useful for future editor. Only turnable by manually editing settings file
       "auto_generate_normal": false,
       "auto_generate_metallic": false,
-      "auto_generate_height": false  
+      "auto_generate_height": false
     },
     "maszyna": {
         "game_dir": ".",
@@ -51,6 +51,11 @@ func save_setting(section: String, key: String, value):
     if not old_value == value:
         setting_changed.emit(section, key)
         config_changed.emit()
+        
+        # Trigger C++ managers reload if they exist
+        if Engine.has_singleton("MaterialManager"):
+            Engine.get_singleton("MaterialManager").reload_settings()
+            
         if section == MASZYNA_GAMEDIR_SECTION and key == MASZYNA_GAMEDIR_KEY:
             game_dir_changed.emit()
 

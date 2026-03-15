@@ -18,6 +18,7 @@ namespace godot {
             bool _pending_model_scheduled = false;
             Ref<Mutex> _mutex;
             Ref<E3DModel> _pending_model;
+            Ref<E3DModel> _model;
         protected:
             static void _bind_methods();
         public:
@@ -41,8 +42,11 @@ namespace godot {
             MAKE_MEMBER_OBSERVABLE_GS_NR(Instancer, instancer)
             MAKE_MEMBER_OBSERVABLE_GS(AABB, submodels_aabb)
             MAKE_MEMBER_OBSERVABLE_GS(bool, editable_in_editor)
+            MAKE_MEMBER_GS(float, vehicle_length, 0.0f)
+            MAKE_MEMBER_GS(Array, bogie_nodes, Array())
             
             void _instantiate_children(const Ref<E3DModel> &p_model);
+            Ref<E3DModel> get_model() const { return _model; }
     };
 } //namespace godot
 

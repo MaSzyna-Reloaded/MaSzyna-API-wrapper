@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrackRenderer" inherits="StaticBody3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		A high-performance C++ track rendering engine for libmaszyna.
+	</brief_description>
+	<description>
+		[TrackRenderer] is a specialized node designed for efficient rendering of railway tracks. It uses the [RenderingServer] directly to manage geometry instances, bypassing the SceneTree overhead. It supports GPU-based vertex deformation for rails, multimesh instancing for sleepers, and dynamically generated ballast geometry. It also provides server-side collision generation for performance-critical track segments.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_ballast_mesh_instance" qualifiers="const">
+			<return type="RID" />
+			<description>
+				Returns the [RID] of the ballast mesh instance managed by the [RenderingServer].
+			</description>
+		</method>
+		<method name="get_instance_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+				Returns the [RID] of the rail mesh instance (alias for [method get_rail_mesh_instance]).
+			</description>
+		</method>
+		<method name="get_rail_mesh_instance" qualifiers="const">
+			<return type="RID" />
+			<description>
+				Returns the [RID] of the rail mesh instance managed by the [RenderingServer].
+			</description>
+		</method>
+		<method name="get_sleeper_mesh" qualifiers="const">
+			<return type="Mesh" />
+			<description>
+				Returns the [Mesh] currently used for sleepers.
+			</description>
+		</method>
+		<method name="get_sleeper_multimesh_instance" qualifiers="const">
+			<return type="RID" />
+			<description>
+				Returns the [RID] of the sleeper multimesh instance managed by the [RenderingServer].
+			</description>
+		</method>
+		<method name="set_ballast_texture">
+			<return type="void" />
+			<param index="0" name="path" type="String" />
+			<description>
+				Sets the texture for the ballast by its path relative to the MaSzyna game directory.
+			</description>
+		</method>
+		<method name="set_sleeper_e3d">
+			<return type="void" />
+			<param index="0" name="instance" type="Object" />
+			<description>
+				Links this renderer to an [E3DModelInstance] to extract its mesh and use it as a template for sleepers.
+			</description>
+		</method>
+		<method name="set_sleeper_mesh">
+			<return type="void" />
+			<param index="0" name="mesh" type="Mesh" />
+			<description>
+				Directly sets the [Mesh] to be used for sleeper instances.
+			</description>
+		</method>
+		<method name="update_ballast_mesh">
+			<return type="void" />
+			<param index="0" name="length" type="float" />
+			<param index="1" name="curve_precision" type="float" />
+			<description>
+				Regenerates the ballast geometry based on the provided track [param length] and [param curve_precision].
+			</description>
+		</method>
+		<method name="update_rail_mesh">
+			<return type="void" />
+			<param index="0" name="length" type="float" />
+			<param index="1" name="rail_spacing" type="float" />
+			<param index="2" name="curve_precision" type="float" />
+			<description>
+				Regenerates the rail geometry (Vignoles profile) based on the provided [param length], [param rail_spacing] (gauge), and [param curve_precision].
+			</description>
+		</method>
+		<method name="update_track_data">
+			<return type="void" />
+			<param index="0" name="points" type="PackedVector4Array" />
+			<param index="1" name="quats" type="PackedVector4Array" />
+			<param index="2" name="length" type="float" />
+			<description>
+				Uploads path data ([param points] and [param quats]) to the GPU for real-time vertex deformation of rails and placement of sleepers.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="ballast_enabled" type="bool" setter="set_ballast_enabled" getter="is_ballast_enabled" default="true">
+			If [code]true[/code], the ballast geometry is rendered.
+		</member>
+		<member name="ballast_height" type="float" setter="set_ballast_height" getter="get_ballast_height" default="0.4">
+			The vertical height (thickness) of the ballast bed.
+		</member>
+		<member name="ballast_length_tiling" type="float" setter="set_ballast_length_tiling" getter="get_ballast_length_tiling" default="1.0">
+			Tiling factor for the ballast texture along the track length.
+		</member>
+		<member name="ballast_material" type="ShaderMaterial" setter="set_ballast_material" getter="get_ballast_material">
+			The [ShaderMaterial] used for ballast rendering.
+		</member>
+		<member name="ballast_offset" type="float" setter="set_ballast_offset" getter="get_ballast_offset" default="-0.05">
+			Vertical offset of the ballast bed relative to the track curve.
+		</member>
+		<member name="ballast_uv_scale" type="float" setter="set_ballast_uv_scale" getter="get_ballast_uv_scale" default="1.0">
+			Global UV scaling for the ballast texture.
+		</member>
+		<member name="ballast_width_tiling" type="float" setter="set_ballast_width_tiling" getter="get_ballast_width_tiling" default="1.0">
+			Tiling factor for the ballast texture across the track width.
+		</member>
+		<member name="collision_enabled" type="bool" setter="set_collision_enabled" getter="is_collision_enabled" default="true">
+			If [code]true[/code], physical collision geometry for the rails is generated in the [PhysicsServer3D].
+		</member>
+		<member name="rail_material" type="ShaderMaterial" setter="set_rail_material" getter="get_rail_material">
+			The [ShaderMaterial] used for rail rendering.
+		</member>
+		<member name="rail_spacing" type="float" setter="set_rail_spacing" getter="get_rail_spacing" default="1.6">
+			The distance between the two rails (track gauge).
+		</member>
+		<member name="sleeper_height" type="float" setter="set_sleeper_height" getter="get_sleeper_height" default="-0.25">
+			Vertical offset for the sleepers.
+		</member>
+		<member name="sleeper_material" type="ShaderMaterial" setter="set_sleeper_material" getter="get_sleeper_material">
+			The [ShaderMaterial] used for sleeper rendering.
+		</member>
+		<member name="sleeper_spacing" type="float" setter="set_sleeper_spacing" getter="get_sleeper_spacing" default="1.0">
+			Longitudinal spacing between individual sleepers.
+		</member>
+	</members>
+</class>

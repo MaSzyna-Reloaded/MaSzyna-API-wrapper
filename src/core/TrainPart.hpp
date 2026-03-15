@@ -14,6 +14,7 @@ namespace godot {
     class TrainPart : public Node {
             GDCLASS(TrainPart, Node)
         public:
+            ~TrainPart() override;
             static void _bind_methods();
 
         private:

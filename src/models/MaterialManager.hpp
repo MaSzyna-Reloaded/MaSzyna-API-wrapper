@@ -1,12 +1,15 @@
 #pragma once
 
 #include "MaterialParser.hpp"
+#include "macros.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
+#include <godot_cpp/templates/hash_map.hpp>
 
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/standard_material3d.hpp>
+#include <vector>
 
 namespace godot {
     class MaterialManager : public Object {
@@ -18,13 +21,16 @@ namespace godot {
             Ref<StandardMaterial3D> _unknown_material;
             Ref<ImageTexture> _unknown_texture;
             Object *user_settings_node = nullptr;
+
             Dictionary _materials;
+            HashMap<String, String> _texture_resolution_cache;
 
             bool use_alpha_transparency = false;
             bool auto_generate_normal = false;
             bool auto_generate_metallic = false;
             bool auto_generate_height = false;
 
+        private:
             const char *_transparency_codes[3] = {"0", "a", "s"};
 
             void _clear_cache();
@@ -37,6 +43,8 @@ namespace godot {
             ~MaterialManager() override;
             enum Transparency { Disabled, Alpha, AlphaScissor };
             String get_material_path(const String &model_name, const String &material_name);
+
+            void reload_settings();
 
             Ref<MaszynaMaterial> load_material(const String &model_path, const String &material_name);
             Ref<StandardMaterial3D> get_material(

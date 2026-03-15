@@ -34,9 +34,14 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("train_part_disabled"));
     }
 
+    TrainPart::~TrainPart() {
+        state.clear();
+    }
+
     void TrainPart::_register_commands() {};
     void TrainPart::_unregister_commands() {};
 
+    // ReSharper disable once CppMemberFunctionMayBeConst
     TMoverParameters *TrainPart::get_mover() {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_mover();
@@ -72,7 +77,7 @@ namespace godot {
                 }
             } break;
             case NOTIFICATION_EXIT_TREE: {
-                if (get_enabled()) {
+                if (_commands_registered) {
                     _unregister_commands();
                     _commands_registered = false;
                 }

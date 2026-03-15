@@ -22,9 +22,16 @@ namespace godot {
 
     void E3DModelManager::_bind_methods() {
         ClassDB::bind_method(D_METHOD("load_model", "data_path", "file_name"), &E3DModelManager::load_model);
+        ClassDB::bind_method(D_METHOD("reload_settings"), &E3DModelManager::reload_settings);
     }
 
     E3DModelManager::E3DModelManager() : user_settings_node(nullptr) {
+        reload_settings();
+        // Will be set when entering the SceneTree
+    }
+
+    void E3DModelManager::reload_settings() {
+        ResourceCache::clear(ResourceCache::RESOURCE_CACHE_DIR_MODELS);
         Ref<ConfigFile> _config;
         _config.instantiate();
         if (_config->load("user://settings.cfg") == OK) {
@@ -36,7 +43,6 @@ namespace godot {
         } else {
             game_dir = ".";
         }
-        // Will be set when entering the SceneTree
     }
 
     Ref<E3DModel> E3DModelManager::load_model(const String &data_path, const String &file_name) {

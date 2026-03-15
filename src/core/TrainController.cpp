@@ -331,6 +331,8 @@ namespace godot {
         internal_state["train_damage"] = mover->DamageFlag;
         internal_state["controller_second_position"] = mover->ScndCtrlPos;
         internal_state["controller_main_position"] = mover->MainCtrlPos;
+        internal_state["wheel_rotation"] = mover->nrot;
+        internal_state["slipping_wheels"] = mover->SlippingWheels;
     }
 
     Dictionary TrainController::get_config() const {

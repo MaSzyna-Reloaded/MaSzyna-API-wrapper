@@ -18,6 +18,7 @@
 #include "load/TrainLoad.hpp"
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
+#include "models/TrackRenderer.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
@@ -26,7 +27,6 @@
 #include "resources/load/LoadListItem.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
 #include "systems/TrainSecuritySystem.hpp"
-#include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -37,115 +37,142 @@
 
 using namespace godot;
 
-TrainSystem *train_system_singleton = nullptr;
-ResourceCache *resource_cache_singleton = nullptr;
-GameLog *game_log_singleton = nullptr;
-MaterialManager* material_manager_singleton = nullptr;
-Ref<E3DResourceFormatLoader> e3d_loader_singleton;
-E3DModelInstanceManager *e3d_model_instance_manager_singleton = nullptr;
+static TrainSystem *train_system_singleton = nullptr;
+static ResourceCache *resource_cache_singleton = nullptr;
+static GameLog *game_log_singleton = nullptr;
+static MaterialManager *material_manager_singleton = nullptr;
+static E3DModelInstanceManager *e3d_model_instance_manager_singleton = nullptr;
+static Ref<E3DResourceFormatLoader> *e3d_loader_singleton = nullptr;
 
 static bool is_doctool_mode() {
+    static bool doctool_mode = false;
+    static bool checked = false;
+    if (checked) {
+        return doctool_mode;
+    }
+
     const PackedStringArray args = OS::get_singleton()->get_cmdline_args();
-    for (const auto & arg : args) {
+    for (const auto &arg : args) {
         if (arg == "--doctool") {
-            return true;
+            doctool_mode = true;
+            break;
         }
     }
-    return false;
+    checked = true;
+    return doctool_mode;
 }
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
-
-    if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-//         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
+    if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
+        return;
     }
 
-    if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
-        GDREGISTER_CLASS(MaszynaParser);
-        GDREGISTER_ABSTRACT_CLASS(TrainPart);
-        GDREGISTER_CLASS(GenericTrainPart);
-        GDREGISTER_CLASS(TrainBrake);
-        GDREGISTER_CLASS(TrainSpringBrake);
-        GDREGISTER_CLASS(TrainDoors);
-        GDREGISTER_ABSTRACT_CLASS(TrainEngine);
-        GDREGISTER_CLASS(TrainDieselEngine);
-        GDREGISTER_CLASS(TrainDieselElectricEngine);
-        GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
-        GDREGISTER_CLASS(TrainElectricSeriesEngine);
-        GDREGISTER_CLASS(TrainController);
-        GDREGISTER_CLASS(TrainSecuritySystem);
-        GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(TrainLighting)
-        GDREGISTER_CLASS(GameLog);
-        GDREGISTER_CLASS(WWListItem);
-        GDREGISTER_CLASS(MotorParameter);
-        GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(MaterialParser);
-        GDREGISTER_CLASS(MaterialManager);
-        GDREGISTER_CLASS(MaszynaMaterial);
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(TrainLoad)
-        GDREGISTER_CLASS(LoadListItem)
-        GDREGISTER_CLASS(TrainBuffCoupl)
+    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
 
-        // E3D
-        GDREGISTER_CLASS(E3DModel);
-        GDREGISTER_CLASS(E3DSubModel);
-        GDREGISTER_CLASS(E3DModelManager);
-        GDREGISTER_CLASS(E3DModelInstanceManager);
-        GDREGISTER_CLASS(E3DModelInstance);
-        GDREGISTER_CLASS(E3DNodesInstancer);
-        GDREGISTER_CLASS(E3DParser);
-        GDREGISTER_CLASS(E3DResourceFormatLoader);
+    // 1. Core and Resources (Leaf classes)
+    GDREGISTER_CLASS(GameLog);
+    GDREGISTER_CLASS(WWListItem);
+    GDREGISTER_CLASS(MotorParameter);
+    GDREGISTER_CLASS(LightListItem);
+    GDREGISTER_CLASS(LoadListItem);
+    GDREGISTER_CLASS(MaszynaMaterial);
 
-        // Core
-        GDREGISTER_CLASS(ResourceCache)
+    // 2. Parsers
+    GDREGISTER_CLASS(MaszynaParser);
+    GDREGISTER_CLASS(MaterialParser);
+    GDREGISTER_CLASS(E3DParser);
 
-        if (!is_doctool_mode()) {
-            train_system_singleton = memnew(TrainSystem);
-            resource_cache_singleton = memnew(ResourceCache);
-            game_log_singleton = memnew(GameLog);
-            material_manager_singleton = memnew(MaterialManager);
-            e3d_model_instance_manager_singleton = memnew(E3DModelInstanceManager);
-            e3d_loader_singleton.instantiate();
+    // 3. E3D Foundation
+    GDREGISTER_CLASS(E3DModel);
+    GDREGISTER_CLASS(E3DSubModel);
+    GDREGISTER_CLASS(E3DModelManager);
+    GDREGISTER_CLASS(E3DNodesInstancer);
+    GDREGISTER_CLASS(E3DResourceFormatLoader);
 
-            Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
-            Engine::get_singleton()->register_singleton("ResourceCache", resource_cache_singleton);
-            Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
-            Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
-            Engine::get_singleton()->register_singleton("E3DModelInstanceManager", e3d_model_instance_manager_singleton);
-            ResourceLoader::get_singleton()->add_resource_format_loader(e3d_loader_singleton);
-        }
+    // 4. Base classes and abstractions
+    GDREGISTER_ABSTRACT_CLASS(TrainPart);
+    GDREGISTER_CLASS(GenericTrainPart);
+    GDREGISTER_ABSTRACT_CLASS(TrainEngine);
+    GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
+    GDREGISTER_CLASS(TrackRenderer);
+
+    // 5. Functional Train Parts
+    GDREGISTER_CLASS(TrainBrake);
+    GDREGISTER_CLASS(TrainSpringBrake);
+    GDREGISTER_CLASS(TrainDoors);
+    GDREGISTER_CLASS(TrainDieselEngine);
+    GDREGISTER_CLASS(TrainDieselElectricEngine);
+    GDREGISTER_CLASS(TrainElectricSeriesEngine);
+    GDREGISTER_CLASS(TrainController);
+    GDREGISTER_CLASS(TrainSecuritySystem);
+    GDREGISTER_CLASS(TrainLighting);
+    GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake);
+    GDREGISTER_CLASS(TrainLoad);
+    GDREGISTER_CLASS(TrainBuffCoupl);
+
+    // 6. Systems and Managers
+    GDREGISTER_CLASS(TrainSystem);
+    GDREGISTER_CLASS(MaterialManager);
+    GDREGISTER_CLASS(ResourceCache);
+    GDREGISTER_CLASS(E3DModelInstanceManager);
+    GDREGISTER_CLASS(E3DModelInstance);
+
+    if (!is_doctool_mode()) {
+        train_system_singleton = memnew(TrainSystem);
+        resource_cache_singleton = memnew(ResourceCache);
+        game_log_singleton = memnew(GameLog);
+        material_manager_singleton = memnew(MaterialManager);
+        e3d_model_instance_manager_singleton = memnew(E3DModelInstanceManager);
+        e3d_loader_singleton = memnew(Ref<E3DResourceFormatLoader>);
+        e3d_loader_singleton->instantiate();
+
+        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
+        Engine::get_singleton()->register_singleton("ResourceCache", resource_cache_singleton);
+        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
+        Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
+        Engine::get_singleton()->register_singleton("E3DModelInstanceManager", e3d_model_instance_manager_singleton);
+        ResourceLoader::get_singleton()->add_resource_format_loader(*e3d_loader_singleton);
     }
 }
 
 void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");;
-
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
-    if (Engine *_singleton = Engine::get_singleton(); !is_doctool_mode() && _singleton != nullptr) {
-        if (train_system_singleton != nullptr) {
-            _singleton->unregister_singleton("TrainSystem");
-        }
 
-        if (resource_cache_singleton != nullptr) {
-            _singleton->unregister_singleton("ResourceCache");
-        }
+    UtilityFunctions::print("[libmaszyna] De-initializing libmaszyna module on level " + String::num(p_level) + "...");
 
-        if (game_log_singleton != nullptr) {
-            _singleton->unregister_singleton("GameLog");
-        }
+    E3DNodesInstancer::cleanup();
 
-        if (material_manager_singleton != nullptr) {
-            _singleton->unregister_singleton("MaterialManager");
-        }
+    Engine *engine = Engine::get_singleton();
 
-        if (_singleton->has_singleton("E3DModelInstanceManager")) {
-            _singleton->unregister_singleton("E3DModelInstanceManager");
+    if (engine != nullptr && !is_doctool_mode()) {
+        if (engine->has_singleton("TrainSystem")) {
+            engine->unregister_singleton("TrainSystem");
         }
+        if (engine->has_singleton("ResourceCache")) {
+            engine->unregister_singleton("ResourceCache");
+        }
+        if (engine->has_singleton("GameLog")) {
+            engine->unregister_singleton("GameLog");
+        }
+        if (engine->has_singleton("MaterialManager")) {
+            engine->unregister_singleton("MaterialManager");
+        }
+        if (engine->has_singleton("E3DModelInstanceManager")) {
+            engine->unregister_singleton("E3DModelInstanceManager");
+        }
+    }
+
+    if (e3d_loader_singleton != nullptr) {
+        if (e3d_loader_singleton->is_valid()) {
+            if (ResourceLoader::get_singleton() != nullptr) {
+                ResourceLoader::get_singleton()->remove_resource_format_loader(*e3d_loader_singleton);
+            }
+            e3d_loader_singleton->unref();
+        }
+        memdelete(e3d_loader_singleton);
+        e3d_loader_singleton = nullptr;
     }
 
     if (train_system_singleton != nullptr) {
@@ -173,12 +200,7 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_model_instance_manager_singleton = nullptr;
     }
 
-    if (e3d_loader_singleton.is_valid()) {
-        ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_loader_singleton);
-        e3d_loader_singleton.unref();
-    }
-
-    E3DNodesInstancer::cleanup();
+    UtilityFunctions::print("[libmaszyna] Module de-initialized successfully.");
 }
 
 extern "C" {

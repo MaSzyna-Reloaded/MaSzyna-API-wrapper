@@ -18,6 +18,7 @@
 #include "load/TrainLoad.hpp"
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
+#include "models/TrackRenderer.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
@@ -66,6 +67,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);
+        GDREGISTER_CLASS(TrackRenderer);
         GDREGISTER_CLASS(TrainSpringBrake);
         GDREGISTER_CLASS(TrainDoors);
         GDREGISTER_ABSTRACT_CLASS(TrainEngine);

@@ -41,6 +41,7 @@ namespace godot {
             MAKE_MEMBER_OBSERVABLE_GS_NR(Instancer, instancer)
             MAKE_MEMBER_OBSERVABLE_GS(AABB, submodels_aabb)
             MAKE_MEMBER_OBSERVABLE_GS(bool, editable_in_editor)
+            MAKE_MEMBER_GS(Array, bogie_nodes, Array())
             
             void _instantiate_children(const Ref<E3DModel> &p_model);
     };

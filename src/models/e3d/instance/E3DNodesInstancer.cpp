@@ -62,6 +62,14 @@ namespace godot {
             const InternalMode internal = editable ? Node::INTERNAL_MODE_DISABLED : Node::INTERNAL_MODE_BACK;
             parent->add_child(child, false, internal);
 
+            // Extract bogies
+            String name = child->get_name().to_lower();
+            if (name.contains("wozek") || name.contains("wózek") || name.contains("bogie")) {
+                Array bogie_nodes = p_target_node.get_bogie_nodes();
+                bogie_nodes.append(child);
+                // We don't need to call set_bogie_nodes because it's the same Array object
+            }
+
             // Apply transform AFTER adding to the tree (important especially on Windows)
             child->set_transform(submodel->get_transform());
 
@@ -161,6 +169,8 @@ namespace godot {
         }
 
         if (p_model.is_valid()) {
+            Array bogie_nodes = p_target_node->get_bogie_nodes();
+            bogie_nodes.clear();
             _do_add_submodels(*p_target_node, p_target_node, p_model->get_submodels(), editable);
         }
     }

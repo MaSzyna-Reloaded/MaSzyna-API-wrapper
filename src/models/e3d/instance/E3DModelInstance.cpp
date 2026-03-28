@@ -37,6 +37,7 @@ namespace godot {
         BIND_PROPERTY_W_HINT(Variant::INT, "instancer", "instancer", &E3DModelInstance::set_instancer, &E3DModelInstance::get_instancer, "instancer", PROPERTY_HINT_ENUM, "Optimized,Nodes,Editable nodes");
         BIND_PROPERTY(Variant::AABB, "submodels_aabb", "submodels_aabb", &E3DModelInstance::set_submodels_aabb, &E3DModelInstance::get_submodels_aabb, "submodels_aabb");
         BIND_PROPERTY(Variant::BOOL, "editable_in_editor", "editable_in_editor", &E3DModelInstance::set_editable_in_editor, &E3DModelInstance::get_editable_in_editor, "editable_in_editor");
+        BIND_PROPERTY(Variant::ARRAY, "bogie_nodes", "bogie_nodes", &E3DModelInstance::set_bogie_nodes, &E3DModelInstance::get_bogie_nodes, "bogie_nodes");
 
         BIND_ENUM_CONSTANT(INSTANCER_NODES);
         BIND_ENUM_CONSTANT(INSTANCER_EDITABLE_NODES);

@@ -5,6 +5,8 @@ extends EditorPlugin
 
 var maszyna_environment_node_script = preload("res://addons/libmaszyna/environment/maszyna_environment_node.gd")
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
+var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
+var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
 
 # Editor plugins
 
@@ -31,6 +33,20 @@ func _enter_tree():
         maszyna_environment_node_icon,
     )
 
+    add_custom_type(
+        "MaszynaTrack3D",
+        "Path3D",
+        maszyna_track_3d_script,
+        null
+    )
+
+    add_custom_type(
+        "MaszynaSwitch3D",
+        "Node3D",
+        maszyna_switch_3d_script,
+        null
+    )
+
     user_settings_dock = user_settings_dock_scene.instantiate()
     add_control_to_dock(DOCK_SLOT_RIGHT_UL, user_settings_dock)
 
@@ -45,6 +61,8 @@ func _exit_tree():
         user_settings_dock.queue_free()
 
     remove_custom_type("MaszynaEnvironmentNode")
+    remove_custom_type("MaszynaTrack3D")
+    remove_custom_type("MaszynaSwitch3D")
 
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("Console")

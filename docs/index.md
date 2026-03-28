@@ -29,6 +29,7 @@ Resposibilities of the core:
 
 * [Overall architecture](architecture)
 * [Wrapping the original MaSzyna physics](wrapping-mover)
+* [Track rendering system](track-rendering)
 
 ## Knowledge base
 

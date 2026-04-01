@@ -85,6 +85,14 @@ var _wheel_nodes: Array[Node3D] = []
 var _wheel_angles: Array[float] = [] # Current rotation angle for each wheel
 var _rest_transforms: Dictionary = {} # Stores Node -> Transform3D relative to RailVehicle3D root
 var _local_rest_bases: Dictionary = {} # Stores Node -> Basis (local)
+var _physics_body: RID
+var _physics_shape: RID
+@export var physics_box_size: Vector3 = Vector3(3.0, 4.0, 15.0):
+    set(x):
+        physics_box_size = x
+        if _is_physics_registered and _physics_shape.is_valid():
+            PhysicsServer3D.shape_set_data(_physics_shape, physics_box_size * 0.5)
+var _is_physics_registered: bool = false
 
 
 # Calculate Transform3D relative to RailVehicle3D root using ONLY local transforms
@@ -336,12 +344,13 @@ func _process(delta):
             var b1 = _bogie_nodes[0]
             var b2 = _bogie_nodes[1]
             
-            # 1. Update bogies FIRST
-            _update_attached_nodes([b1, b2])
+            # 1. Calculate theoretical global transforms of bogies FIRST without displacing the parent
+            var t1 = _get_node_track_transform(b1)
+            var t2 = _get_node_track_transform(b2)
             
-            # 2. Position car based on bogies
-            var p1 = b1.global_position
-            var p2 = b2.global_position
+            # 2. Position car based on theoretical bogies' tracks
+            var p1 = t1.origin
+            var p2 = t2.origin
             
             # Design-time local positions of bogies (to find the car's center relative to them)
             var rb1_z = _rest_transforms[b1].origin.z
@@ -368,7 +377,7 @@ func _process(delta):
                 car_z = -car_z
                 
             # For the Up vector, we can average the bogies' Up vectors or use the track's Up at car_pos
-            var car_up = (b1.global_transform.basis.y + b2.global_transform.basis.y).normalized()
+            var car_up = (t1.basis.y + t2.basis.y).normalized()
             
             # Construct the car's global transform
             # Godot uses Y-up, -Z forward (MaSzyna uses -Z forward too in E3D, but here we align to track)
@@ -379,22 +388,24 @@ func _process(delta):
             
             var car_gt = Transform3D(car_basis, car_pos)
             
-            for node in _car_nodes:
-                var rest_t = _rest_transforms.get(node)
-                if not rest_t:
-                    rest_t = _get_relative_transform(node)
-                    _rest_transforms[node] = rest_t
-                # Remove Z from rest transform because we already accounted for bogie-to-car-center distance
-                var rest_t_no_z = rest_t
-                rest_t_no_z.origin.z = 0
-                node.global_transform = car_gt * rest_t_no_z
-                
+            # Apply the global transform to the parent (self).
+            self.global_transform = car_gt
+
+            # Now explicitly update bogies so they rotate to follow the track curve
+            _update_attached_nodes([b1, b2])
+
             _animate_wheels(delta)
+
+            if _is_physics_registered and _physics_body.is_valid():
+                PhysicsServer3D.body_set_state(_physics_body, PhysicsServer3D.BODY_STATE_TRANSFORM, self.global_transform)
         else:
             # Fallback to legacy single-point snapping if not exactly 2 bogies
             _update_attached_nodes(_car_nodes)
             _update_attached_nodes(_bogie_nodes)
             _animate_wheels(delta)
+
+            if _is_physics_registered and _physics_body.is_valid():
+                PhysicsServer3D.body_set_state(_physics_body, PhysicsServer3D.BODY_STATE_TRANSFORM, self.global_transform)
     else:
         _animate_wheels(delta)
 
@@ -440,6 +451,47 @@ func _animate_wheels(delta: float):
         # Apply rotation relative to its local rest basis around the local X axis
         wheel.transform.basis = rest_basis * Basis(Vector3.RIGHT, _wheel_angles[i])
 
+
+func _get_node_track_transform(node: Node3D) -> Transform3D:
+    var rest_t = _rest_transforms.get(node)
+    if not rest_t:
+        rest_t = _get_relative_transform(node)
+        _rest_transforms[node] = rest_t
+
+    var dz = rest_t.origin.z
+    var target_dist = distance_on_track + dz
+    var current_track = _track
+
+    var max_traversals = 5
+    while max_traversals > 0:
+        var length = current_track.curve.get_baked_length()
+        if target_dist < 0:
+            var prev = _get_next_connected_track(current_track, false)
+            if prev:
+                target_dist += prev.curve.get_baked_length()
+                current_track = prev
+                max_traversals -= 1
+                continue
+        elif target_dist > length:
+            var next = _get_next_connected_track(current_track, true)
+            if next:
+                target_dist -= length
+                current_track = next
+                max_traversals -= 1
+                continue
+        break
+
+    var ct = current_track.global_transform * current_track.curve.sample_baked_with_rotation(target_dist)
+    var target_basis = ct.basis
+    if not track_reverse:
+        target_basis = target_basis.rotated(target_basis.y.normalized(), PI)
+
+    if current_track.has_method("get_rail_top_vertical_offset"):
+        ct.origin += target_basis.y.normalized() * current_track.get_rail_top_vertical_offset()
+
+    var rest_t_no_z = rest_t
+    rest_t_no_z.origin.z = 0
+    return Transform3D(target_basis, ct.origin) * rest_t_no_z
 
 func _update_attached_nodes(nodes: Array):
     for node in nodes:
@@ -496,3 +548,22 @@ func _ready() -> void:
         if child.has_signal("e3d_loaded"):
             if not child.e3d_loaded.is_connected(_on_e3d_loaded):
                 child.e3d_loaded.connect(_on_e3d_loaded)
+
+    if not Engine.is_editor_hint():
+        _physics_body = PhysicsServer3D.body_create()
+        PhysicsServer3D.body_set_mode(_physics_body, PhysicsServer3D.BODY_MODE_KINEMATIC)
+        _physics_shape = PhysicsServer3D.box_shape_create()
+        PhysicsServer3D.shape_set_data(_physics_shape, physics_box_size * 0.5) # Half-extents
+        PhysicsServer3D.body_add_shape(_physics_body, _physics_shape)
+        PhysicsServer3D.body_set_space(_physics_body, get_world_3d().space)
+        _is_physics_registered = true
+
+func _exit_tree() -> void:
+    if _is_physics_registered:
+        if _physics_body.is_valid():
+            PhysicsServer3D.free_rid(_physics_body)
+            _physics_body = RID()
+        if _physics_shape.is_valid():
+            PhysicsServer3D.free_rid(_physics_shape)
+            _physics_shape = RID()
+        _is_physics_registered = false

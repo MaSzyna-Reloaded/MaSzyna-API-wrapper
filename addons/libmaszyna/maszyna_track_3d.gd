@@ -153,19 +153,7 @@ func _update_track():
 
 func _update_rail_mesh(length: float):
     if length < 0.1: return
-    
-    var should_generate = _rail_mesh == null
-    if _rail_mesh:
-        var old_length = _rail_mesh.get_meta("length", 0.0)
-        var old_spacing = _rail_mesh.get_meta("rail_spacing", 0.0)
-        if abs(old_length - length) > 1.0 or abs(old_spacing - rail_spacing) > 0.001:
-            should_generate = true
-        
-    if should_generate:
-         _generate_template_mesh(length)
-         if _rail_mesh:
-             _rail_mesh.set_meta("length", length)
-             _rail_mesh.set_meta("rail_spacing", rail_spacing)
+    _generate_template_mesh(length)
 
 func _apply_3_point_logic_optimized():
     if not curve or curve.point_count < 2: return
@@ -248,60 +236,8 @@ func _prepare_path_data() -> Dictionary:
     }
 
 func _generate_template_mesh(length: float):
-    var rail_poly = [
-        Vector2(-0.075, 0.0), Vector2(0.075, 0.0), Vector2(0.075, 0.015), Vector2(0.02, 0.03),
-        Vector2(0.02, 0.12), Vector2(0.04, 0.13), Vector2(0.04, 0.16), Vector2(-0.04, 0.16),
-        Vector2(-0.04, 0.13), Vector2(-0.02, 0.12), Vector2(-0.02, 0.03), Vector2(-0.075, 0.015),
-    ]
-    
-    var steps = max(2, floor(length / curve_precision))
-    var vertices = PackedVector3Array()
-    var normals = PackedVector3Array()
-    var uvs = PackedVector2Array()
-    var indices = PackedInt32Array()
-    var offset = rail_spacing * 0.5
-    
-    var poly_size = rail_poly.size()
-    
-    for i in range(steps + 1):
-        var z = (float(i) / steps) * length
-        var v_u = float(i) / steps * length
-        for side in [-1, 1]:
-            for j in range(poly_size):
-                var p = rail_poly[j]
-                var x_pos = (side * offset) + (p.x * side)
-                vertices.append(Vector3(x_pos, p.y, z))
-                normals.append(Vector3(p.x, p.y - 0.08, 0.0).normalized())
-                uvs.append(Vector2(float(j) / (poly_size - 1), v_u))
-                
-    var v_per_step = poly_size * 2
-    for i in range(steps):
-        for side_idx in range(2):
-            var side_off = side_idx * poly_size
-            for j in range(poly_size):
-                var next_j = (j + 1) % poly_size
-                var curr = i * v_per_step + side_off + j
-                var next = i * v_per_step + side_off + next_j
-                var step_curr = (i + 1) * v_per_step + side_off + j
-                var step_next = (i + 1) * v_per_step + side_off + next_j
-                if side_idx == 1:
-                    indices.append(curr); indices.append(next); indices.append(step_curr)
-                    indices.append(next); indices.append(step_next); indices.append(step_curr)
-                else:
-                    indices.append(curr); indices.append(step_curr); indices.append(next)
-                    indices.append(next); indices.append(step_curr); indices.append(step_next)
-
-    var arrays = []; arrays.resize(Mesh.ARRAY_MAX)
-    arrays[Mesh.ARRAY_VERTEX] = vertices
-    arrays[Mesh.ARRAY_NORMAL] = normals
-    arrays[Mesh.ARRAY_TEX_UV] = uvs
-    arrays[Mesh.ARRAY_INDEX] = indices
-    
-    _rail_mesh = ArrayMesh.new()
-    _rail_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-    _rail_mesh.set_meta("length", length)
-    
-    RenderingServer.instance_set_base(_renderer.get_rail_mesh_instance(), _rail_mesh.get_rid())
+    if _renderer:
+        _renderer.update_rail_mesh(length, rail_spacing, curve_precision)
 
 # Helper to get the RID from the renderer (we should add this to C++)
 func get_rail_instance_rid() -> RID:

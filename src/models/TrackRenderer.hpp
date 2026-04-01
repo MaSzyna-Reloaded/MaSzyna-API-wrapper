@@ -1,16 +1,18 @@
 #ifndef TRACK_RENDERER_HPP
 #define TRACK_RENDERER_HPP
 
-#include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/static_body3d.hpp>
+#include <godot_cpp/classes/concave_polygon_shape3d.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/multi_mesh.hpp>
 #include <godot_cpp/classes/shader_material.hpp>
+#include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/variant/rid.hpp>
 
 namespace godot {
 
-class TrackRenderer : public Node3D {
-    GDCLASS(TrackRenderer, Node3D)
+class TrackRenderer : public StaticBody3D {
+    GDCLASS(TrackRenderer, StaticBody3D)
 
 private:
     RID scenario;
@@ -18,6 +20,7 @@ private:
     // Rail rendering
     RID rail_mesh_instance;
     RID rail_mesh;
+    Ref<ArrayMesh> internal_rail_mesh;
     Ref<ShaderMaterial> rail_material;
     
     // Sleeper rendering
@@ -35,8 +38,8 @@ private:
     float rail_spacing = 1.6f;
     bool collision_enabled = true;
 
-    RID physics_body;
-    RID physics_shape;
+    uint32_t shape_owner_id = 0;
+    Ref<ConcavePolygonShape3D> physics_shape;
 
     void _update_render_instances();
 
@@ -52,6 +55,7 @@ public:
     void _exit_tree() override;
 
     void update_track_data(const PackedVector4Array &p_points, const PackedVector4Array &p_quats, float p_length);
+    void update_rail_mesh(float length, float rail_spacing, float curve_precision);
     
     void set_rail_material(const Ref<ShaderMaterial> &p_material);
     Ref<ShaderMaterial> get_rail_material() const;

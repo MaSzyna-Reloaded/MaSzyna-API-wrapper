@@ -49,6 +49,55 @@ Cross-compiling (for Windows on Linux):
           -DCMAKE_SIZEOF_VOID_P=8
 	cmake --build build-win64
 ```
+
+#### Makefile
+
+You can use Makefile targets as shortcuts.
+
+For debug compilation:
+
+```
+make compile-debug
+```
+
+or just simply
+
+```
+make
+```
+
+For release compilation:
+
+```
+make compile-release
+```
+
+For cross compilation linux/windows:
+
+```
+make cross-compile-debug
+```
+
+or 
+
+```
+make cross-compile-release
+```
+
+#### Parallel compilation
+
+To enable parallel compilation add `--parallel <num_jobs>` argument to cmake calls, for example:
+
+```bash
+	cmake -B build-linux64 \
+          -DGODOTCPP_TARGET="template_release"
+          --parallel 4
+	cmake --build build-linux64 --parallel 4
+```
+
+If you're using `Makefile`, number of parralel jobs will be set automatically to `<cores count> - 2` for system with at
+least two cores.
+
 ### Compatibility
 
 | Plugin Version | Godot Engine version | Windows | Linux | Mac OS | Android                  | iOS | C++ Standard | MaSzyna Version     |

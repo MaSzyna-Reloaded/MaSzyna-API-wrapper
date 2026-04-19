@@ -3,6 +3,7 @@
 
 GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
+CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
@@ -14,14 +15,25 @@ cleanup:
 	rm -rf demo/addons/gut
 
 
+cleanup-build-debug:
+	rm -rf build-debug
+
+
+cleanup-build-release:
+	rm -rf build-release
+
+
+cleanup-builds: cleanup-build-debug cleanup-build-release
+	
+
 compile-debug:
 	cmake -B build-debug -DGODOTCPP_TARGET=template_debug
-	cmake --build build-debug
+	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
 compile-release:
 	cmake -B build-release -DGODOTCPP_TARGET=template_release
-	cmake --build build-release
+	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
 compile-all: compile-debug compile-release
@@ -30,7 +42,7 @@ compile-all: compile-debug compile-release
 cross-compile-release:
 	cmake -B build-linux64 \
           -DGODOTCPP_TARGET="template_release"
-	cmake --build build-linux64
+	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
           -DGODOTCPP_TARGET="template_release" \
           -DGODOTCPP_PLATFORM=windows \
@@ -38,13 +50,13 @@ cross-compile-release:
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
           -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64
+	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 
 
 cross-compile-debug:
 	cmake -B build-linux64 \
           -DGODOTCPP_TARGET="template_debug"
-	cmake --build build-linux64
+	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_PLATFORM=windows \
@@ -52,13 +64,13 @@ cross-compile-debug:
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
           -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64
+	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 
 
 release-linux:
 	cmake -B build-linux64 \
           -DGODOTCPP_TARGET="template_release"
-	cmake --build build-linux64
+	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
 
 
@@ -70,7 +82,7 @@ release-windows:
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
           -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64
+	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 	cd demo && godot --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip && mv ../bin/windows/reloaded.zip ../bin/windows/reloaded-$(GITREV)-$(DATE)-windows.zip
 
 

@@ -1,0 +1,131 @@
+[gd_resource type="Resource" script_class="SfxEvent" format=3 uid="uid://xehc2ntq4f3w"]
+
+[ext_resource type="Script" uid="uid://bf434i6ru4ch" path="res://addons/gnd_sfx/sfx_automation.gd" id="1_e5ld8"]
+[ext_resource type="Script" uid="uid://bgxtc44e5rb0l" path="res://addons/gnd_sfx/sfx_event.gd" id="2_65bpq"]
+[ext_resource type="Script" uid="uid://boicinkvs7i0h" path="res://addons/gnd_sfx/sfx_track.gd" id="3_6jtqw"]
+[ext_resource type="Script" uid="uid://cmmb3s07th3xp" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="3_70rhc"]
+[ext_resource type="Curve" uid="uid://dphavxwg7ojon" path="res://vehicles/sm42/sounds/fade_in_curve.tres" id="3_wdfhh"]
+[ext_resource type="Curve" uid="uid://snoluwsvvhmu" path="res://vehicles/sm42/sounds/fade_out_curve.tres" id="4_lui7t"]
+
+[sub_resource type="Curve" id="Curve_lui7t"]
+_limits = [0.0, 2.0, 400.0, 1000.0]
+_data = [Vector2(400, 0.84480596), 0.0, 0.0, 0, 0, Vector2(1000, 1.0563203), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="AudioStream" id="AudioStream_idle_1"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-idle-1"
+loop = true
+loop_offset = 0.00124716553287981
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_cgl6l"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_idle_1")
+offset = 405.0
+length = 285.0
+fade_in_curve = ExtResource("3_wdfhh")
+fade_out_curve = ExtResource("4_lui7t")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="AudioStream" id="AudioStream_idle_2"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-idle-2"
+loop = true
+loop_offset = 9.261201814058955
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_3yqc7"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_idle_2")
+offset = 510.0
+length = 280.0
+fade_in_curve = ExtResource("3_wdfhh")
+fade_out_curve = ExtResource("4_lui7t")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="AudioStream" id="AudioStream_idle_3"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-idle-3"
+loop = true
+loop_offset = 6.663605442176871
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_k2yml"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_idle_3")
+offset = 610.0
+length = 330.0
+fade_in_curve = ExtResource("3_wdfhh")
+fade_out_curve = ExtResource("4_lui7t")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="AudioStream" id="AudioStream_idle_4"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-idle-4"
+loop = true
+loop_offset = 5.977414965986394
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_exrhq"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_idle_4")
+offset = 760.0
+length = 330.0
+fade_in_curve = ExtResource("3_wdfhh")
+fade_out_curve = ExtResource("4_lui7t")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="AudioStream" id="AudioStream_idle_5"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-idle-5"
+loop = true
+loop_offset = 2.192766439909297
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_fgxdh"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_idle_5")
+offset = 910.0
+length = 180.0
+fade_in_curve = ExtResource("3_wdfhh")
+fade_out_curve = ExtResource("4_lui7t")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_4aa5h"]
+script = ExtResource("1_e5ld8")
+parameter_name = &"rpm"
+tracks = Array[ExtResource("3_6jtqw")]([SubResource("Resource_cgl6l"), SubResource("Resource_3yqc7"), SubResource("Resource_k2yml"), SubResource("Resource_exrhq"), SubResource("Resource_fgxdh")])
+max_domain = 2000.0
+pitch_curve = SubResource("Curve_lui7t")
+metadata/_custom_type_script = "uid://bf434i6ru4ch"
+
+[sub_resource type="Curve" id="Curve_3yqc7"]
+_limits = [0.0, 1.0, 0.0, 6.0]
+_data = [Vector2(0, 1), 0.0, 0.0, 0, 0, Vector2(6, 0), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="Curve" id="Curve_wdfhh"]
+_limits = [0.0, 2.0, 400.0, 1000.0]
+_data = [Vector2(426.24997, 0.9261576), 0.0, 0.0006427791, 0, 0, Vector2(1000, 1.0563203), 0.00035060642, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="AudioStream" id="AudioStream_start"]
+script = ExtResource("3_70rhc")
+file_path = "697_sm42-start"
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_thgt3"]
+script = ExtResource("3_6jtqw")
+stream = SubResource("AudioStream_start")
+stream_offset = 14.0
+fade_out_curve = SubResource("Curve_3yqc7")
+pitch_curve = SubResource("Curve_wdfhh")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[resource]
+script = ExtResource("2_65bpq")
+tracks = Array[ExtResource("3_6jtqw")]([SubResource("Resource_thgt3")])
+name = &"engine"
+automations = Array[ExtResource("1_e5ld8")]([SubResource("Resource_4aa5h")])
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"

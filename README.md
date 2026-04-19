@@ -137,7 +137,7 @@ git submodule update --init
 Then run tests from the command line (if you have `make` installed, you can use shortcut `make run-tests`):
 
 ```bash
-godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit
+godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/,res://addons/gnd_sfx/tests/ -gexit
 ```
 
 

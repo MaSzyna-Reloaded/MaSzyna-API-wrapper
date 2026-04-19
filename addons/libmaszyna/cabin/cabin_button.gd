@@ -39,8 +39,7 @@ enum ControllerMode { OnOff, On, Off }
         if pushed:
             _target_mesh_rotation = x
 @export var speed = 10.0
-@export var sound_on:AudioStream
-@export var sound_off:AudioStream
+@export var sound_event = "cabin_button"
 @export var sound_max_distance:float = 3.0:
     set(x):
         sound_max_distance = x
@@ -59,17 +58,24 @@ var _t:float = 0.0
 
 var _enabled:bool = true
 var _setup_phase:bool = true
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
+var _sound:SfxPlayer3D = SfxPlayer3D.new()
 
 func _ready():
-    add_child(_sound)
     _sound.max_distance = sound_max_distance
+    _sound.max_tracks = 2
+    var cabin = get_cabin()
+    if cabin:
+        _sound.bank = cabin.sound_bank
     connect("pushed_changed", self._on_pushed_changed)
     controller_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
 
 func _enter_tree():
     _setup_phase = true
+    add_child(_sound)    
+
+func _exit_tree() -> void:
+    remove_child(_sound)
 
 func _on_console_toggled(visible:bool):
     _enabled = not visible
@@ -124,9 +130,10 @@ func _process_tool(delta):
         _mesh.position = _mesh_original_position + _current_position
 
 func _play_sound():
-    _sound.stream = sound_on if pushed else sound_off
-    if _sound.stream:
-        _sound.play()
+    if pushed:
+        _sound.play(sound_event)
+    else:
+        _sound.stop(sound_event)
 
 func _on_pushed_changed():
     if pushed:

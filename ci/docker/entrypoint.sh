@@ -16,7 +16,7 @@ cmake -B build-host -DGODOTCPP_TARGET=template_debug || exit 1
 cmake --build build-host || exit 1
 if [ "$unit_tests" = "true" ]; then
     echo "Running unit tests..."
-    (godot --path demo --headless --import || exit 0) && godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit -gjunit_xml_file=res://test_results.xml
+    (godot --path demo --headless --import || exit 0) && godot --path demo --headless --import && godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/,res://addons/gnd_sfx/tests/ -gexit -gjunit_xml_file=res://test_results.xml
     echo "Unit tests passed!"
     exit 0
 fi

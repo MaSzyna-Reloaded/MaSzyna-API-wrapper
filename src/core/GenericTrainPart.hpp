@@ -16,6 +16,7 @@ namespace godot {
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
             void _do_process_mover(TMoverParameters *mover, double delta) override;
+            void update_state(const Dictionary &state);
 
         public:
             TrainController *get_train_controller_node();

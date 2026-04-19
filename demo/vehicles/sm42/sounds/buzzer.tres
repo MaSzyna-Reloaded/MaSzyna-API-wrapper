@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SfxEvent" format=3 uid="uid://dr6q0ep567inn"]
+
+[ext_resource type="Script" uid="uid://bf434i6ru4ch" path="res://addons/gnd_sfx/sfx_automation.gd" id="1_kxg8o"]
+[ext_resource type="Script" uid="uid://bgxtc44e5rb0l" path="res://addons/gnd_sfx/sfx_event.gd" id="2_ukiyr"]
+[ext_resource type="Script" uid="uid://boicinkvs7i0h" path="res://addons/gnd_sfx/sfx_track.gd" id="3_6v0sr"]
+[ext_resource type="Script" uid="uid://cmmb3s07th3xp" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="4_dbhld"]
+
+[sub_resource type="AudioStream" id="AudioStream_n3jdp"]
+script = ExtResource("4_dbhld")
+file_path = "sm42czuwak"
+loop = true
+metadata/_custom_type_script = "uid://cmmb3s07th3xp"
+
+[sub_resource type="Resource" id="Resource_rjfok"]
+script = ExtResource("3_6v0sr")
+stream = SubResource("AudioStream_n3jdp")
+adsr_enabled = true
+release = 0.2
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[resource]
+script = ExtResource("2_ukiyr")
+tracks = Array[ExtResource("3_6v0sr")]([SubResource("Resource_rjfok")])
+name = &"buzzer"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"

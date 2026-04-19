@@ -18,6 +18,14 @@ func _process_dirty(delta):
 func _process_tool(delta):
     pass
 
+func get_cabin() -> Cabin3D:
+    var node = get_parent()
+    while node:
+        if node is Cabin3D:
+            return node
+        node = node.get_parent()
+    return null
+    
 func _process(delta):
     if _dirty:
         _dirty = false

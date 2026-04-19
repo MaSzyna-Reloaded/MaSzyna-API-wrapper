@@ -13,6 +13,13 @@ class_name MaszynaAudioStream
         if not loop == x:
             loop = x
             _real_stream = null
+            
+@export var loop_offset:float = 0.0:
+    set(x):
+        if not loop_offset == x:
+            loop_offset = x
+            _real_stream = null
+            
 
 var _real_stream:AudioStream
 
@@ -24,7 +31,8 @@ func _get_length() -> float:
 
 func _instantiate_playback() -> AudioStreamPlayback:
     if file_path and not _real_stream:
-        _real_stream = AudioStreamManager.get_stream(file_path, loop)
+        _real_stream = AudioStreamManager.get_stream(file_path, loop, loop_offset)
+        
 
     if _real_stream:
         return _real_stream.instantiate_playback()

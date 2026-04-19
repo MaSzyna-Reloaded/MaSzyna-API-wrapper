@@ -97,6 +97,8 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
         return
 
     var track := TrackManager.get_track_by_name(start_track_id)
+    
+
     if track == null:
         push_error("TrainSet3D: track '%s' is not registered in TrackManager." % start_track_id)
         return
@@ -120,7 +122,8 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
                 break
             current_offset -= _get_spacing(previous_controller, current_controller)
 
-        current_controller.assign_track_rid(track_rid, start_track_id)
+        print("track rid=", track_rid, " start_track_id=", start_track_id)
+        #current_controller.assign_track_rid(track_rid, start_track_id)
         current_controller.set_track_offset(current_offset)
         current_vehicle.global_position = TrackManager.get_track_position(track_rid, current_offset)
         current_controller.set_mover_location(current_vehicle.global_position)

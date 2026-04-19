@@ -289,10 +289,10 @@ func on_text_entered(new_text : String) -> void:
             var arguments := text_split.slice(1)
 
             if arguments.size() < console_commands[text_command].required:
-                print_line("[color=light_coral]	ERROR:[/color] Too few arguments! Required < %d >" % console_commands[text_command].required)
+                print_line("[color=light_coral]    ERROR:[/color] Too few arguments! Required < %d >" % console_commands[text_command].required)
                 return
             elif arguments.size() > console_commands[text_command].arguments.size():
-                print_line("[color=light_coral]	ERROR:[/color] Too many arguments! < %d > Max" % console_commands[text_command].arguments.size())
+                print_line("[color=light_coral]    ERROR:[/color] Too many arguments! < %d > Max" % console_commands[text_command].arguments.size())
                 return
 
             # Functions fail to call if passed the incorrect number of arguments, so fill out with blank strings.
@@ -300,7 +300,7 @@ func on_text_entered(new_text : String) -> void:
             console_commands[text_command].function.callv(arguments)
         else:
             console_unknown_command.emit(text_command)
-            print_line("[color=light_coral]	ERROR:[/color] Command not found.")
+            print_line("[color=light_coral]    ERROR:[/color] Command not found.")
 
     await get_tree().process_frame
     _restore_line_edit_focus()
@@ -356,7 +356,7 @@ func commands_list() -> void:
                 arguments_string += "  [color=cornflower_blue]<" + console_commands[command].arguments[i] + ">[/color]"
             else:
                 arguments_string += "  <" + console_commands[command].arguments[i] + ">"
-        rich_label.append_text("	[color=light_green]%s[/color][color=gray]%s[/color]:   %s\n" % [command, arguments_string, description])
+        rich_label.append_text("    [color=light_green]%s[/color][color=gray]%s[/color]:   %s\n" % [command, arguments_string, description])
     rich_label.append_text("\n")
 
 

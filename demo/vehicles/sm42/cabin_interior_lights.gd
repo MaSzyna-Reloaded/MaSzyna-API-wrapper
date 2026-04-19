@@ -1,4 +1,5 @@
 extends GenericTrainPart
+class_name CabinInteriorLightsModule
 
 var roof_light_enabled:bool = false
 var devices_light_enabled:bool = false

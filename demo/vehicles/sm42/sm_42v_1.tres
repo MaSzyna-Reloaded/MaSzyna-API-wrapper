@@ -1,6 +1,7 @@
 [gd_resource type="TrainController" format=3 uid="uid://bs7sefb2lpw8u"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" uid="uid://bd7e6ncgjphe7" path="res://vehicles/sm42/horns.gd" id="2_naat8"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
 
 [sub_resource type="TrainBrake" id="TrainBrake_brake"]
@@ -199,6 +200,14 @@ allowed_flag = 39
 buffer_location = 2
 resource_name = "TrainBuffer"
 
+[sub_resource type="GenericTrainPart" id="GenericTrainPart_856oe"]
+script = ExtResource("2_qmqy7")
+metadata/_custom_type_script = "uid://b6080q3nwa3xs"
+
+[sub_resource type="GenericTrainPart" id="GenericTrainPart_li3dm"]
+script = ExtResource("2_naat8")
+metadata/_custom_type_script = "uid://bd7e6ncgjphe7"
+
 [resource]
 train_id = "sm42v1"
 power = 590.0
@@ -211,6 +220,6 @@ max_velocity = 90.0
 length = 14.24
 width = 3.17
 height = 4.285
-modules = [SubResource("TrainBrake_brake"), SubResource("TrainDieselElectricEngine_engine"), SubResource("TrainSecuritySystem_security"), SubResource("TrainDoors_doors"), SubResource("GenericTrainPart_cabin_lights"), SubResource("TrainLighting_lighting"), SubResource("TrainElectroPneumaticDynamicBrake_ep"), SubResource("TrainSpringBrake_spring"), SubResource("TrainLoad_load"), SubResource("TrainBuffCoupl_coupler")]
+modules = [SubResource("TrainBrake_brake"), SubResource("TrainDieselElectricEngine_engine"), SubResource("TrainSecuritySystem_security"), SubResource("TrainDoors_doors"), SubResource("GenericTrainPart_cabin_lights"), SubResource("TrainLighting_lighting"), SubResource("TrainElectroPneumaticDynamicBrake_ep"), SubResource("TrainSpringBrake_spring"), SubResource("TrainLoad_load"), SubResource("TrainBuffCoupl_coupler"), SubResource("GenericTrainPart_856oe"), SubResource("GenericTrainPart_li3dm")]
 resource_name = "SM42v1"
 script = ExtResource("1_vib8j")

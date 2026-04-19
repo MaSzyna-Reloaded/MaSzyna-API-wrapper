@@ -28,7 +28,7 @@ func _process(delta):
             _changed = true
 
         if controlled_vehicle_path:
-            controlled_vehicle = get_node(controlled_vehicle_path)
+            controlled_vehicle = get_node(controlled_vehicle_path) as RailVehicle3D
             if controlled_vehicle:
                 controlled_vehicle.enter_cabin(self)
                 last_controlled_vehicle_path = controlled_vehicle_path

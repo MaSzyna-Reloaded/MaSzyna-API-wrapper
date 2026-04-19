@@ -7,8 +7,10 @@ namespace godot {
     void GenericTrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_train_controller_node"), &GenericTrainPart::get_train_controller_node);
         ClassDB::bind_method(D_METHOD("get_train_state"), &GenericTrainPart::get_train_state);
+        ClassDB::bind_method(D_METHOD("update_state"), &GenericTrainPart::update_state);
         BIND_VIRTUAL_METHOD(GenericTrainPart, _process_train_part, 2);
         BIND_VIRTUAL_METHOD(GenericTrainPart, _get_train_part_state, 1);
+        BIND_VIRTUAL_METHOD(GenericTrainPart, _ready, 0);
     }
 
     void GenericTrainPart::_do_update_internal_mover(TMoverParameters *mover) {};
@@ -16,10 +18,16 @@ namespace godot {
     void GenericTrainPart::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {};
     void GenericTrainPart::_do_process_mover(TMoverParameters *mover, double delta) {};
     void GenericTrainPart::_process_train_part(const double delta) {};
+    void GenericTrainPart::_ready() {};
 
     Dictionary GenericTrainPart::_get_train_part_state() {
         return internal_state;
     };
+
+    void GenericTrainPart::update_state(const Dictionary &state) {
+        internal_state.merge(state, true);
+        train_controller_node->get_state().merge(internal_state, true);
+    }
 
     void GenericTrainPart::_process_mover(const double delta) {
         call("_process_train_part", delta);

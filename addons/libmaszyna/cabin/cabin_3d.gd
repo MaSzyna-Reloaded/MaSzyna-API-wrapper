@@ -7,6 +7,8 @@ var _dirty = true
 var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
+var controller: LegacyRailVehicle
+
 
 @export_node_path("RailVehicle3D") var controller_path:NodePath = NodePath(""):
     set(x):
@@ -18,11 +20,16 @@ var _e3d_loaded_count:int = 0
 @export var camera_bound_max = Vector3.ZERO
 @export var camera_bound_enabled:bool = false
 @export var driver_position = Vector3.ZERO
+@export var sound_bank:SfxBank
 
 func get_camera_transform():
     return global_transform.translated_local(driver_position)
 
+func is_cabin_ready() -> bool:
+    return _cabin_ready
+
 func _propagate_train_controller(node: Node, vehicle: RailVehicle3D):
+    self.controller = vehicle.get_controller()
     for child in node.get_children():
         _propagate_train_controller(child, vehicle)
         if "controller_path" in child:

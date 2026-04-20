@@ -23,10 +23,10 @@ namespace libmaszyna::utils {
         return ss.str();
     }
 
-    double random(const double a, const double b) {
+    double random(const double p_a, const double p_b) {
         std::random_device rd;                         // obtain a random number from hardware
         std::mt19937 gen(rd());                        // seed the generator
-        std::uniform_real_distribution<> distr(a, b); // define the range
+        std::uniform_real_distribution<> distr(p_a, p_b); // define the range
         return distr(gen);
     }
 

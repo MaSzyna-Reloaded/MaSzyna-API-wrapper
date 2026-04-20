@@ -20,7 +20,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("load_material", "model_path", "material_name"), &MaterialManager::load_material);
         ClassDB::bind_method(
                 D_METHOD("get_material", "model_path", "material_path", "transparent", "is_sky", "diffuse_color"),
-                &MaterialManager::get_material, DEFVAL(Transparency::Disabled), DEFVAL(false), DEFVAL(Color(1, 1, 1)));
+                &MaterialManager::get_material, DEFVAL(Transparency::DISABLED), DEFVAL(false), DEFVAL(Color(1, 1, 1)));
         ClassDB::bind_method(D_METHOD("get_texture", "texture_path"), &MaterialManager::get_texture);
         ClassDB::bind_method(D_METHOD("load_texture", "model_path", "material_name"), &MaterialManager::load_texture);
 
@@ -34,9 +34,9 @@ namespace godot {
                 get_class_static(), D_METHOD("generate_metallic_from_albedo", "albedo", "threshold"),
                 &MaterialManager::generate_metallic_from_albedo, DEFVAL(0.5f));
 
-        BIND_ENUM_CONSTANT(Disabled);
-        BIND_ENUM_CONSTANT(Alpha);
-        BIND_ENUM_CONSTANT(AlphaScissor);
+        BIND_ENUM_CONSTANT(DISABLED);
+        BIND_ENUM_CONSTANT(ALPHA);
+        BIND_ENUM_CONSTANT(ALPHA_SCISSOR);
     }
 
     MaterialManager::~MaterialManager() {
@@ -54,22 +54,22 @@ namespace godot {
         _clear_cache();
     }
 
-    String MaterialManager::get_material_path(const String &model_name, const String &material_name) {
+    String MaterialManager::get_material_path(const String &p_model_name, const String &p_material_name) {
         if (game_dir.ends_with("\\") || game_dir.ends_with("/")) {
             game_dir = game_dir.substr(0, game_dir.length() - 1);
         }
 
-        PackedStringArray _possible_paths = {
-                game_dir + "/" + model_name + "/" + material_name + ".mat",
-                game_dir + "/textures/" + model_name + "/" + material_name + ".mat",
-                game_dir + "/" + material_name + ".mat",
-                game_dir + "/" + "textures/" + material_name + ".mat",
+        PackedStringArray possible_paths = {
+                game_dir + "/" + p_model_name + "/" + p_material_name + ".mat",
+                game_dir + "/textures/" + p_model_name + "/" + p_material_name + ".mat",
+                game_dir + "/" + p_material_name + ".mat",
+                game_dir + "/" + "textures/" + p_material_name + ".mat",
         };
 
-        for (String _file: _possible_paths) {
-            UtilityFunctions::print_verbose("[MaterialManager] Trying to load material: " + _file);
-            if (FileAccess::file_exists(_file)) {
-                return _file;
+        for (String file: possible_paths) {
+            UtilityFunctions::print_verbose("[MaterialManager] Trying to load material: " + file);
+            if (FileAccess::file_exists(file)) {
+                return file;
             }
         }
 
@@ -82,17 +82,17 @@ namespace godot {
         _materials.clear();
         ResourceCache::clear(ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
 
-        Ref<ConfigFile> _config;
-        _config.instantiate();
-        if (_config->load("user://settings.cfg") == OK) {
-            use_alpha_transparency = _config->get_value("e3d", "use_alpha_transparency", false);
-            auto_generate_normal = _config->get_value("e3d", "auto_generate_normal", false);
-            auto_generate_metallic = _config->get_value("e3d", "auto_generate_metallic", false);
-            auto_generate_height = _config->get_value("e3d", "auto_generate_height", false);
+        Ref<ConfigFile> config;
+        config.instantiate();
+        if (config->load("user://settings.cfg") == OK) {
+            use_alpha_transparency = config->get_value("e3d", "use_alpha_transparency", false);
+            auto_generate_normal = config->get_value("e3d", "auto_generate_normal", false);
+            auto_generate_metallic = config->get_value("e3d", "auto_generate_metallic", false);
+            auto_generate_height = config->get_value("e3d", "auto_generate_height", false);
             if (OS::get_singleton()->has_feature("release") && !OS::get_singleton()->has_feature("editor")) {
                 game_dir = ".";
             } else {
-                game_dir = _config->get_value("maszyna", "game_dir", ".");
+                game_dir = config->get_value("maszyna", "game_dir", ".");
             }
         } else {
             use_alpha_transparency = false;
@@ -101,49 +101,49 @@ namespace godot {
             auto_generate_height = false;
             game_dir = ".";
         }
-        _config.unref();
+        config.unref();
         UtilityFunctions::print_verbose("[MaterialManager] Config loaded. Project data dir: " + game_dir);
         mutex->unlock();
     }
 
-    Ref<MaszynaMaterial> MaterialManager::load_material(const String &model_path, const String &material_name) {
+    Ref<MaszynaMaterial> MaterialManager::load_material(const String &p_model_path, const String &p_material_name) {
         if (parser.is_null()) {
             parser.instantiate();
         }
 
-        return parser->parse(get_material_path(model_path, material_name), material_name);
+        return parser->parse(get_material_path(p_model_path, p_material_name), p_material_name);
     }
 
 
     Ref<StandardMaterial3D> MaterialManager::get_material(
-            const String &model_path, const String &material_path, Transparency transparent, const bool is_sky,
-            const Color &diffuse_color) {
+            const String &p_model_path, const String &p_material_path, Transparency p_transparent, const bool p_is_sky,
+            const Color &p_diffuse_color) {
 
         const char *t_code = "0";
-        if (transparent >= 0 && transparent < 3) {
-            t_code = _transparency_codes[transparent];
+        if (p_transparent >= 0 && p_transparent < 3) {
+            t_code = _transparency_codes[p_transparent];
         }
 
-        const String _code = model_path + String("/") + material_path + ":t=" + t_code + ":s=" + (is_sky ? "1" : "0");
+        const String code = p_model_path + String("/") + p_material_path + ":t=" + t_code + ":s=" + (p_is_sky ? "1" : "0");
         mutex->lock();
-        if (_materials.has(_code)) {
-            Ref<StandardMaterial3D> m = _materials.get(_code, "");
+        if (_materials.has(code)) {
+            Ref<StandardMaterial3D> m = _materials.get(code, "");
             mutex->unlock();
             return m;
         }
 
         mutex->unlock();
-        Ref<StandardMaterial3D> _m = memnew(StandardMaterial3D);
-        UtilityFunctions::print_verbose("[MaterialManager] Creating material: " + material_path);
-        const Ref<MaszynaMaterial> _mmat = load_material(model_path, material_path);
-        UtilityFunctions::print_verbose("[MaterialManager] Loaded material: " + material_path);
+        Ref<StandardMaterial3D> m = memnew(StandardMaterial3D);
+        UtilityFunctions::print_verbose("[MaterialManager] Creating material: " + p_material_path);
+        const Ref<MaszynaMaterial> mmat = load_material(p_model_path, p_material_path);
+        UtilityFunctions::print_verbose("[MaterialManager] Loaded material: " + p_material_path);
 
-        if (_mmat.is_valid()) {
-            UtilityFunctions::print_verbose("[MaterialManager] Material is valid: " + material_path);
-            if (const String _albedo = _mmat->get_albedo_texture_path(); !_albedo.is_empty()) {
-                UtilityFunctions::print_verbose("[MaterialManager] Albedo is not empty: " + _albedo);
-                const Ref<ImageTexture> albedo_tex = load_texture(model_path, _albedo.split(":").get(0));
-                _m->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, albedo_tex);
+        if (mmat.is_valid()) {
+            UtilityFunctions::print_verbose("[MaterialManager] Material is valid: " + p_material_path);
+            if (const String albedo = mmat->get_albedo_texture_path(); !albedo.is_empty()) {
+                UtilityFunctions::print_verbose("[MaterialManager] Albedo is not empty: " + albedo);
+                const Ref<ImageTexture> albedo_tex = load_texture(p_model_path, albedo.split(":").get(0));
+                m->set_texture(BaseMaterial3D::TEXTURE_ALBEDO, albedo_tex);
 
                 if (albedo_tex.is_valid()) {
                     const Ref<Image> albedo_img = albedo_tex->get_image();
@@ -153,24 +153,24 @@ namespace godot {
                             if (metallic_img.is_valid()) {
                                 UtilityFunctions::print_verbose(
                                         "[MaterialManager] Auto-generated and applied metallic texture for: " +
-                                        material_path);
-                                _m->set_texture(
+                                        p_material_path);
+                                m->set_texture(
                                         BaseMaterial3D::TEXTURE_METALLIC,
                                         ImageTexture::create_from_image(metallic_img));
-                                _m->set_metallic(1.0);
+                                m->set_metallic(1.0);
                             }
                         }
 
                         // Auto-generate Normal if not explicitly provided
-                        if (auto_generate_normal && _mmat->get_normal_texture_path().is_empty()) {
+                        if (auto_generate_normal && mmat->get_normal_texture_path().is_empty()) {
                             const Ref<Image> normal_img = generate_normal_from_albedo(albedo_img);
                             if (normal_img.is_valid()) {
                                 UtilityFunctions::print_verbose(
                                         "[MaterialManager] Auto-generated and applied normal texture for: " +
-                                        material_path);
-                                _m->set_texture(
+                                        p_material_path);
+                                m->set_texture(
                                         BaseMaterial3D::TEXTURE_NORMAL, ImageTexture::create_from_image(normal_img));
-                                _m->set_feature(StandardMaterial3D::FEATURE_NORMAL_MAPPING, true);
+                                m->set_feature(StandardMaterial3D::FEATURE_NORMAL_MAPPING, true);
                             }
                         }
 
@@ -180,97 +180,97 @@ namespace godot {
                             if (height_img.is_valid()) {
                                 UtilityFunctions::print_verbose(
                                         "[MaterialManager] Auto-generated and applied height texture for: " +
-                                        material_path);
-                                _m->set_texture(
+                                        p_material_path);
+                                m->set_texture(
                                         BaseMaterial3D::TEXTURE_HEIGHTMAP, ImageTexture::create_from_image(height_img));
-                                _m->set_feature(StandardMaterial3D::FEATURE_HEIGHT_MAPPING, true);
-                                _m->set_heightmap_scale(0.01);
+                                m->set_feature(StandardMaterial3D::FEATURE_HEIGHT_MAPPING, true);
+                                m->set_heightmap_scale(0.01);
                             }
                         }
                     }
                 }
             } else {
                 // possibly "COLORED" material
-                UtilityFunctions::print_verbose("[MaterialManager] Albedo is empty: " + material_path);
-                _m->set_albedo(diffuse_color);
+                UtilityFunctions::print_verbose("[MaterialManager] Albedo is empty: " + p_material_path);
+                m->set_albedo(p_diffuse_color);
             }
 
 
-            UtilityFunctions::print_verbose("[MaterialManager] Trying to load normal: " + material_path);
-            if (const String _normal = _mmat->get_normal_texture_path(); !_normal.is_empty()) {
-                if (const Ref<ImageTexture> normal_tex = load_texture(model_path, _normal.split(":").get(0));
+            UtilityFunctions::print_verbose("[MaterialManager] Trying to load normal: " + p_material_path);
+            if (const String normal = mmat->get_normal_texture_path(); !normal.is_empty()) {
+                if (const Ref<ImageTexture> normal_tex = load_texture(p_model_path, normal.split(":").get(0));
                     normal_tex.is_valid() && normal_tex->get_image().is_valid()) {
                     const Ref<Image> im = normal_tex->get_image();
                     im->decompress();
                     im->normal_map_to_xy();
                     im->compress(Image::COMPRESS_S3TC, Image::COMPRESS_SOURCE_NORMAL);
                     const Ref<ImageTexture> new_normal_tex = ImageTexture::create_from_image(im);
-                    _m->set_texture(BaseMaterial3D::TEXTURE_NORMAL, new_normal_tex);
-                    _m->set_feature(StandardMaterial3D::FEATURE_NORMAL_MAPPING, true);
-                    _m->set_normal_scale(-5.0);
+                    m->set_texture(BaseMaterial3D::TEXTURE_NORMAL, new_normal_tex);
+                    m->set_feature(StandardMaterial3D::FEATURE_NORMAL_MAPPING, true);
+                    m->set_normal_scale(-5.0);
                 }
             }
 
-            _mmat->apply_to_material(_m.ptr());
+            mmat->apply_to_material(m.ptr());
         } else {
-            UtilityFunctions::push_warning("[MaterialManager] Material is not valid: " + material_path);
+            UtilityFunctions::push_warning("[MaterialManager] Material is not valid: " + p_material_path);
         }
 
-        _m->set_alpha_scissor_threshold(0.5); // default
+        m->set_alpha_scissor_threshold(0.5); // default
         // DETECT ALPHA FROM TEXTURE
         bool texture_alpha = false;
-        if (const Ref<Texture2D> _tex_alpha = _m->get_texture(BaseMaterial3D::TEXTURE_ALBEDO); _tex_alpha.is_valid()) {
-            if (const Ref<Image> img = _tex_alpha->get_image(); img.is_valid()) {
+        if (const Ref<Texture2D> tex_alpha = m->get_texture(BaseMaterial3D::TEXTURE_ALBEDO); tex_alpha.is_valid()) {
+            if (const Ref<Image> img = tex_alpha->get_image(); img.is_valid()) {
                 texture_alpha = img->detect_alpha() != Image::ALPHA_NONE;
             }
 
             if (!texture_alpha) {
-                texture_alpha = _tex_alpha->has_alpha();
+                texture_alpha = tex_alpha->has_alpha();
             }
         }
 
         if (texture_alpha) {
             if (use_alpha_transparency) {
-                transparent = Transparency::Alpha;
+                p_transparent = Transparency::ALPHA;
             } else {
-                transparent = Transparency::AlphaScissor;
-                _m->set_alpha_scissor_threshold(0.80); // Who knows...
+                p_transparent = Transparency::ALPHA_SCISSOR;
+                m->set_alpha_scissor_threshold(0.80); // Who knows...
             }
         }
 
         // force transparency and shading
-        switch (transparent) {
-            case Transparency::AlphaScissor:
-                _m->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA_SCISSOR);
+        switch (p_transparent) {
+            case Transparency::ALPHA_SCISSOR:
+                m->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA_SCISSOR);
                 break;
-            case Transparency::Alpha:
-                _m->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA_DEPTH_PRE_PASS);
+            case Transparency::ALPHA:
+                m->set_transparency(StandardMaterial3D::TRANSPARENCY_ALPHA_DEPTH_PRE_PASS);
                 break;
-            case Transparency::Disabled:
+            case Transparency::DISABLED:
                 // default
                 break;
         }
 
-        if (is_sky) {
-            _m->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);
-            _m->set_albedo(Color(0.9, 0.9, 0.9, 0.8));
-            _m->set_flag(StandardMaterial3D::FLAG_DONT_RECEIVE_SHADOWS, true);
-            _m->set_flag(StandardMaterial3D::FLAG_DISABLE_AMBIENT_LIGHT, true);
+        if (p_is_sky) {
+            m->set_shading_mode(BaseMaterial3D::SHADING_MODE_UNSHADED);
+            m->set_albedo(Color(0.9, 0.9, 0.9, 0.8));
+            m->set_flag(StandardMaterial3D::FLAG_DONT_RECEIVE_SHADOWS, true);
+            m->set_flag(StandardMaterial3D::FLAG_DISABLE_AMBIENT_LIGHT, true);
         }
 
         mutex->lock();
-        _materials.set(_code, _m);
+        _materials.set(code, m);
         mutex->unlock();
-        return _m;
+        return m;
     }
 
-    Ref<ImageTexture> MaterialManager::get_texture(const String &texture_path) {
-        return load_texture("", texture_path);
+    Ref<ImageTexture> MaterialManager::get_texture(const String &p_texture_path) {
+        return load_texture("", p_texture_path);
     }
 
-    Ref<ImageTexture> MaterialManager::load_texture(const String &model_path, const String &material_name) {
+    Ref<ImageTexture> MaterialManager::load_texture(const String &p_model_path, const String &p_material_name) {
         UtilityFunctions::print_verbose(
-                "[MaterialManager] Loading texture for: " + model_path + ", " + material_name + "...");
+                "[MaterialManager] Loading texture for: " + p_model_path + ", " + p_material_name + "...");
 
         if (_unknown_texture.is_null()) {
             _unknown_texture.instantiate(); // Create a new ImageTexture
@@ -292,10 +292,10 @@ namespace godot {
 
         UtilityFunctions::print_verbose("[MaterialManager] Searching for texture in: " + game_dir);
         const PackedStringArray possible_paths = {
-                game_dir + "/" + model_path + "/" + material_name + ".dds",
-                game_dir + "/textures/" + model_path + "/" + material_name + ".dds",
-                game_dir + "/" + material_name + ".dds",
-                game_dir + "/" + "textures/" + material_name + ".dds",
+                game_dir + "/" + p_model_path + "/" + p_material_name + ".dds",
+                game_dir + "/textures/" + p_model_path + "/" + p_material_name + ".dds",
+                game_dir + "/" + p_material_name + ".dds",
+                game_dir + "/" + "textures/" + p_material_name + ".dds",
         };
 
         String final_path;
@@ -307,7 +307,7 @@ namespace godot {
             }
 
             if (i == possible_paths.size() - 1) {
-                UtilityFunctions::print_verbose("[MaterialManager] Texture ", material_name, " not found");
+                UtilityFunctions::print_verbose("[MaterialManager] Texture ", p_material_name, " not found");
             }
         }
 

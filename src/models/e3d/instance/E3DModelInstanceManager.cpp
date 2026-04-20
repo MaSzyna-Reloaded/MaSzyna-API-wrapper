@@ -9,9 +9,9 @@
 #include <godot_cpp/classes/window.hpp>
 
 namespace godot {
-    const char *E3DModelInstanceManager::INSTANCES_RELOADED_SIGNAL = "instances_reloaded";
+    const char *E3DModelInstanceManager::instances_reloaded_signal = "instances_reloaded";
     void E3DModelInstanceManager::_bind_methods() {
-        ADD_SIGNAL(MethodInfo(INSTANCES_RELOADED_SIGNAL, PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_RESOURCE_TYPE, "E3DModelInstance")));
+        ADD_SIGNAL(MethodInfo(instances_reloaded_signal, PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_RESOURCE_TYPE, "E3DModelInstance")));
         ClassDB::bind_method(D_METHOD("reload_all"), &E3DModelInstanceManager::reload_all);
         ClassDB::bind_method(D_METHOD("register_instance", "instance"), &E3DModelInstanceManager::register_instance);
         ClassDB::bind_method(D_METHOD("unregister_instance", "instance"), &E3DModelInstanceManager::unregister_instance);
@@ -25,45 +25,45 @@ namespace godot {
             memdelete(model_manager);
             model_manager = nullptr;
         }
-        _instances.clear();
+        instances.clear();
     }
 
     void E3DModelInstanceManager::reload_all() const {
-        for (E3DModelInstance *instance: _instances) {
+        for (E3DModelInstance *instance: instances) {
             if (instance != nullptr) {
                 reload_instance(instance);
             }
         }
     }
 
-    void E3DModelInstanceManager::register_instance(E3DModelInstance *instance) {
-        if (instance == nullptr) {
+    void E3DModelInstanceManager::register_instance(E3DModelInstance *p_instance) {
+        if (p_instance == nullptr) {
             return;
         }
 
-        if (std::find(_instances.begin(), _instances.end(), instance) == _instances.end()) {
-            _instances.push_back(instance);
+        if (std::find(instances.begin(), instances.end(), p_instance) == instances.end()) {
+            instances.push_back(p_instance);
         }
     }
 
-    void E3DModelInstanceManager::unregister_instance(E3DModelInstance *instance) {
-        if (instance == nullptr) {
+    void E3DModelInstanceManager::unregister_instance(E3DModelInstance *p_instance) {
+        if (p_instance == nullptr) {
             return;
         }
 
-        if (const auto it = std::remove(_instances.begin(), _instances.end(), instance); it != _instances.end()) {
-            _instances.erase(it, _instances.end());
+        if (const auto it = std::remove(instances.begin(), instances.end(), p_instance); it != instances.end()) {
+            instances.erase(it, instances.end());
         }
     }
 
-    void E3DModelInstanceManager::reload_instance(E3DModelInstance *instance) const {
-        if (instance == nullptr) {
+    void E3DModelInstanceManager::reload_instance(E3DModelInstance *p_instance) const {
+        if (p_instance == nullptr) {
             return;
         }
 
         const SceneTree *tree = nullptr;
-        if (instance->is_inside_tree()) {
-            tree = instance->get_tree();
+        if (p_instance->is_inside_tree()) {
+            tree = p_instance->get_tree();
         }
 
         const Engine *singleton = Engine::get_singleton();
@@ -78,15 +78,15 @@ namespace godot {
             return;
         }
 
-        const Ref<E3DModel> model = model_manager->load_model(instance->get_data_path(), instance->get_model_filename());
+        const Ref<E3DModel> model = model_manager->load_model(p_instance->get_data_path(), p_instance->get_model_filename());
 
-        switch (instance->get_instancer()) {
+        switch (p_instance->get_instancer()) {
             case E3DModelInstance::INSTANCER_NODES: {
-                UtilityFunctions::print_verbose("[E3DModelInstanceManager] Instantiating nodes for ", instance->get_name());
-                instance->call_deferred("_instantiate_children", model);
+                UtilityFunctions::print_verbose("[E3DModelInstanceManager] Instantiating nodes for ", p_instance->get_name());
+                p_instance->call_deferred("_instantiate_children", model);
             } break;
             default:
-                UtilityFunctions::push_warning("[E3DModelInstanceManager] Unsupported instancer type for ", instance->get_name());
+                UtilityFunctions::push_warning("[E3DModelInstanceManager] Unsupported instancer type for ", p_instance->get_name());
                 break;
         }
     }

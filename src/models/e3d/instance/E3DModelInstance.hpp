@@ -23,7 +23,7 @@ namespace godot {
         protected:
             static void _bind_methods();
         public:
-            static const char *E3D_LOADED_SIGNAL;
+            static const char *e3d_loaded_signal;
             enum Instancer {
                 INSTANCER_OPTIMIZED,
                 INSTANCER_NODES,

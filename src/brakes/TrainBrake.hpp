@@ -19,27 +19,27 @@ namespace godot {
              * Enumeration representing various brake methods used in train systems.
              */
             enum BrakeMethod {
-                BRAKE_METHOD_P10Bgu,
-                BRAKE_METHOD_P10Bg,
+                BRAKE_METHOD_P10_BGU,
+                BRAKE_METHOD_P10_BG,
                 BRAKE_METHOD_D1,
                 BRAKE_METHOD_D2,
                 BRAKE_METHOD_FR513,
-                BRAKE_METHOD_Cosid,
-                BRAKE_METHOD_P10yBg,
-                BRAKE_METHOD_P10yBgu,
+                BRAKE_METHOD_COSID,
+                BRAKE_METHOD_P10Y_BG,
+                BRAKE_METHOD_P10Y_BGU,
                 BRAKE_METHOD_FR510,
                 BRAKE_METHOD_D1MG,
             };
 
-            const std::unordered_map<BrakeMethod, int> BrakeMethodMap = {
-                {BrakeMethod::BRAKE_METHOD_P10Bgu, 1},
-                {BrakeMethod::BRAKE_METHOD_P10Bg, 2},
+            const std::unordered_map<BrakeMethod, int> brake_method_map = {
+                {BrakeMethod::BRAKE_METHOD_P10_BGU, 1},
+                {BrakeMethod::BRAKE_METHOD_P10_BG, 2},
                 {BrakeMethod::BRAKE_METHOD_D1, 9},
                 {BrakeMethod::BRAKE_METHOD_D2, 10},
                 {BrakeMethod::BRAKE_METHOD_FR513, 11},
-                {BrakeMethod::BRAKE_METHOD_Cosid, 12},
-                {BrakeMethod::BRAKE_METHOD_P10yBg, 14},
-                {BrakeMethod::BRAKE_METHOD_P10yBgu, 16},
+                {BrakeMethod::BRAKE_METHOD_COSID, 12},
+                {BrakeMethod::BRAKE_METHOD_P10Y_BG, 14},
+                {BrakeMethod::BRAKE_METHOD_P10Y_BGU, 16},
                 {BrakeMethod::BRAKE_METHOD_FR510, 17},
                 {BrakeMethod::BRAKE_METHOD_D1MG, 137},
             };
@@ -95,18 +95,18 @@ namespace godot {
             };
 
         private:
-            const std::unordered_map<BrakeHandlePosition, int> BrakeHandlePositionMap = {
+            const std::unordered_map<BrakeHandlePosition, int> brake_handle_position_map = {
                     {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MIN, Maszyna::bh_MIN},
                     {BrakeHandlePosition::BRAKE_HANDLE_POSITION_MAX, Maszyna::bh_MAX},
                     {BrakeHandlePosition::BRAKE_HANDLE_POSITION_DRIVE, Maszyna::bh_RP},
                     {BrakeHandlePosition::BRAKE_HANDLE_POSITION_FULL, Maszyna::bh_FB},
                     {BrakeHandlePosition::BRAKE_HANDLE_POSITION_EMERGENCY, Maszyna::bh_EB},
             };
-            const std::unordered_map<std::string, int> BrakeHandlePositionStringMap = {
+            const std::unordered_map<std::string, int> brake_handle_position_string_map = {
                     {"min", Maszyna::bh_MIN}, {"max", Maszyna::bh_MAX}, {"drive", Maszyna::bh_RP},
                     {"full", Maszyna::bh_FB}, {"emergency", Maszyna::bh_EB},
             };
-            const std::unordered_map<TBrakeValve, TBrakeSubSystem> BrakeValveToSubsystemMap = {
+            const std::unordered_map<TBrakeValve, TBrakeSubSystem> brake_valve_to_subsystem_map = {
                     {TBrakeValve::W, TBrakeSubSystem::ss_W},       {TBrakeValve::W_Lu_L, TBrakeSubSystem::ss_W},
                     {TBrakeValve::W_Lu_VI, TBrakeSubSystem::ss_W}, {TBrakeValve::W_Lu_XR, TBrakeSubSystem::ss_W},
                     {TBrakeValve::ESt3, TBrakeSubSystem::ss_ESt},  {TBrakeValve::ESt3AL2, TBrakeSubSystem::ss_ESt},
@@ -145,7 +145,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, rapid_transfer, 1.0);
             MAKE_MEMBER_GS(double, rapid_switching_speed, 55.0);
             MAKE_MEMBER_GS_NR(CompressorPower, compressor_power, COMPRESSOR_POWER_MAIN);
-            MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_P10Bgu);
+            MAKE_MEMBER_GS_NR(BrakeMethod, brake_method, BRAKE_METHOD_P10_BGU);
             MAKE_MEMBER_GS(double, rig_effectiveness, 0.0);
             MAKE_MEMBER_GS(double, air_leak_multiplier, 1.0);
 
@@ -158,9 +158,9 @@ namespace godot {
             MAKE_MEMBER_GS(bool, releaser_enabled_only_at_no_power_pos, false)
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;
 

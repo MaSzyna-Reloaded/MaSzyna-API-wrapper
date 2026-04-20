@@ -76,13 +76,13 @@
 		</method>
 	</methods>
 	<constants>
-		<constant name="Disabled" value="0" enum="Transparency">
+		<constant name="DISABLED" value="0" enum="Transparency">
 			No transparency - material renders as fully opaque.
 		</constant>
-		<constant name="Alpha" value="1" enum="Transparency">
+		<constant name="ALPHA" value="1" enum="Transparency">
 			Full alpha blending - smooth transparency with depth sorting.
 		</constant>
-		<constant name="AlphaScissor" value="2" enum="Transparency">
+		<constant name="ALPHA_SCISSOR" value="2" enum="Transparency">
 			Alpha scissor/clip - binary transparency based on a threshold value.
 		</constant>
 	</constants>

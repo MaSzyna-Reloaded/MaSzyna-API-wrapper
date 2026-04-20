@@ -27,55 +27,55 @@ namespace godot {
         BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_WHISTLE);
     }
 
-    void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        const bool prev_beeping = state["beeping"];
-        const bool prev_blinking = state["blinking"];
-        state["beeping"] = mover->SecuritySystem.is_beeping();
-        state["blinking"] = mover->SecuritySystem.is_blinking();
-        state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
-        state["vigilance_blinking"] = mover->SecuritySystem.is_vigilance_blinking();
-        state["cabsignal_blinking"] = mover->SecuritySystem.is_cabsignal_blinking();
-        state["cabsignal_beeping"] = mover->SecuritySystem.is_cabsignal_beeping();
-        state["braking"] = mover->SecuritySystem.is_braking();
-        state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
-        state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
+    void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        const bool prev_beeping = p_state["beeping"];
+        const bool prev_blinking = p_state["blinking"];
+        p_state["beeping"] = p_mover->SecuritySystem.is_beeping();
+        p_state["blinking"] = p_mover->SecuritySystem.is_blinking();
+        p_state["radiostop_available"] = p_mover->SecuritySystem.radiostop_available();
+        p_state["vigilance_blinking"] = p_mover->SecuritySystem.is_vigilance_blinking();
+        p_state["cabsignal_blinking"] = p_mover->SecuritySystem.is_cabsignal_blinking();
+        p_state["cabsignal_beeping"] = p_mover->SecuritySystem.is_cabsignal_beeping();
+        p_state["braking"] = p_mover->SecuritySystem.is_braking();
+        p_state["engine_blocked"] = p_mover->SecuritySystem.is_engine_blocked();
+        p_state["separate_acknowledge"] = p_mover->SecuritySystem.has_separate_acknowledge();
 
-        if (prev_blinking != static_cast<bool>(state["blinking"])) {
-            emit_signal("blinking_changed", state["blinking"]);
+        if (prev_blinking != static_cast<bool>(p_state["blinking"])) {
+            emit_signal("blinking_changed", p_state["blinking"]);
         }
 
-        if (prev_beeping != static_cast<bool>(state["beeping"])) {
-            emit_signal("beeping_changed", state["beeping"]);
+        if (prev_beeping != static_cast<bool>(p_state["beeping"])) {
+            emit_signal("beeping_changed", p_state["beeping"]);
         }
     }
 
-    void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *mover) {
-        mover->SecuritySystem.set_enabled(enabled);
+    void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *p_mover) {
+        p_mover->SecuritySystem.set_enabled(enabled);
 
-        mover->SecuritySystem.vigilance_enabled = aware_system_active;
-        mover->SecuritySystem.cabsignal_enabled = aware_system_cab_signal;
-        mover->SecuritySystem.separate_acknowledge = aware_system_separate_acknowledge;
-        mover->SecuritySystem.is_sifa = aware_system_sifa;
+        p_mover->SecuritySystem.vigilance_enabled = aware_system_active;
+        p_mover->SecuritySystem.cabsignal_enabled = aware_system_cab_signal;
+        p_mover->SecuritySystem.separate_acknowledge = aware_system_separate_acknowledge;
+        p_mover->SecuritySystem.is_sifa = aware_system_sifa;
 
-        mover->SecuritySystem.AwareDelay = aware_delay;
-        mover->SecuritySystem.EmergencyBrakeDelay = emergency_brake_delay;
-        mover->SecuritySystem.radiostop_enabled = radio_stop_enabled;
-        mover->SecuritySystem.SoundSignalDelay = sound_signal_delay;
-        mover->SecuritySystem.MagnetLocation = shp_magnet_distance;
-        mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
+        p_mover->SecuritySystem.AwareDelay = aware_delay;
+        p_mover->SecuritySystem.EmergencyBrakeDelay = emergency_brake_delay;
+        p_mover->SecuritySystem.radiostop_enabled = radio_stop_enabled;
+        p_mover->SecuritySystem.SoundSignalDelay = sound_signal_delay;
+        p_mover->SecuritySystem.MagnetLocation = shp_magnet_distance;
+        p_mover->SecuritySystem.MaxHoldTime = ca_max_hold_time;
 
         switch (emergency_signal) {
             case EMERGENCY_SIGNAL_SIREN_LOW_TONE:
-                mover->EmergencyBrakeWarningSignal = 1;
+                p_mover->EmergencyBrakeWarningSignal = 1;
                 break;
             case EMERGENCY_SIGNAL_SIREN_HIGH_TONE:
-                mover->EmergencyBrakeWarningSignal = 2;
+                p_mover->EmergencyBrakeWarningSignal = 2;
                 break;
             case EMERGENCY_SIGNAL_WHISTLE:
-                mover->EmergencyBrakeWarningSignal = 4;
+                p_mover->EmergencyBrakeWarningSignal = 4;
                 break;
             default:
-                mover->EmergencyBrakeWarningSignal = 1;
+                p_mover->EmergencyBrakeWarningSignal = 1;
                 break;
         }
     }

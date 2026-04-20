@@ -13,7 +13,7 @@ namespace godot {
         MAKE_MEMBER_GS_NR(String, name, "");
         MAKE_MEMBER_GS_NR(TypedArray<E3DSubModel>, submodels, TypedArray<E3DSubModel>());
 
-        void add_child(const Ref<E3DSubModel>& sub_model);
+        void add_child(const Ref<E3DSubModel>& p_sub_model);
         void clear();
     };
 } // namespace godot

@@ -20,8 +20,8 @@ namespace godot {
         BIND_ENUM_CONSTANT(LOAD_UNIT_PIECES);
     }
 
-    void TrainLoad::_do_update_internal_mover(TMoverParameters *mover) {
-        mover->MaxLoad = max_load;
+    void TrainLoad::_do_update_internal_mover(TMoverParameters *p_mover) {
+        p_mover->MaxLoad = max_load;
         // Build LoadAttributes from accepted_loads with optional per-load minimum offset
         const int loads_count = static_cast<int>(accepted_loads.size());
         const int offsets_count = static_cast<int>(minimum_load_offsets.size());
@@ -32,19 +32,19 @@ namespace godot {
                 // TypedArray<float> element may be represented as real Variant (double)
                 min_offset = static_cast<float>(static_cast<double>(minimum_load_offsets[i]));
             }
-            mover->LoadAttributes.emplace_back(std::string(load_str.utf8().get_data()), min_offset);
+            p_mover->LoadAttributes.emplace_back(std::string(load_str.utf8().get_data()), min_offset);
         }
-        mover->LoadQuantity = load_unit == LOAD_UNIT_TONS ? "tons" : "pieces";
-        mover->LoadSpeed = load_speed;
-        mover->UnLoadSpeed = unload_speed;
-        mover->OverLoadFactor = static_cast<float>(overload_factor);
-        TrainPart::_do_update_internal_mover(mover);
+        p_mover->LoadQuantity = load_unit == LOAD_UNIT_TONS ? "tons" : "pieces";
+        p_mover->LoadSpeed = load_speed;
+        p_mover->UnLoadSpeed = unload_speed;
+        p_mover->OverLoadFactor = static_cast<float>(overload_factor);
+        TrainPart::_do_update_internal_mover(p_mover);
     }
 
-    void TrainLoad::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {}
+    void TrainLoad::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {}
 
-    void TrainLoad::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
-        TrainPart::_do_fetch_config_from_mover(mover, config);
+    void TrainLoad::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        TrainPart::_do_fetch_config_from_mover(p_mover, p_config);
     }
 
     void TrainLoad::_register_commands() {

@@ -21,8 +21,8 @@ namespace godot {
             double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
-            bool _dirty = false;      // Refreshes all elements
-            bool _dirty_prop = false; // Refreshes only TrainController's properties
+            bool dirty = false;      // Refreshes all elements
+            bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
@@ -32,7 +32,7 @@ namespace godot {
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
 
-            void _collect_train_parts(const Node *node, Vector<TrainPart *> &train_parts) {};
+            void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
 
@@ -43,10 +43,10 @@ namespace godot {
 
             Dictionary get_mover_state();
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
-            void _do_update_internal_mover(TMoverParameters *mover) const;
-            void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
-            void _process_mover(double delta);
+            void _do_update_internal_mover(TMoverParameters *p_mover) const;
+            void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state);
+            void _process_mover(double p_delta);
 
 
         public:
@@ -110,19 +110,19 @@ namespace godot {
                     {TPowerType::SteamPower, TrainPowerType::POWER_TYPE_STEAM}
             };
 
-            static const char *MOVER_CONFIG_CHANGED_SIGNAL;
-            static const char *MOVER_INITIALIZED_SIGNAL;
-            static const char *POWER_CHANGED_SIGNAL;
-            static const char *COMMAND_RECEIVED;
-            static const char *RADIO_TOGGLED;
-            static const char *RADIO_CHANNEL_CHANGED;
-            static const char *CONFIG_CHANGED;
+            static const char *mover_config_changed_signal;
+            static const char *mover_initialized_signal;
+            static const char *power_changed_signal;
+            static const char *command_received;
+            static const char *radio_toggled;
+            static const char *radio_channel_changed;
+            static const char *config_changed;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
-            void _process(double delta) override;
+            void _process(double p_delta) override;
             void _notification(int p_what);
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            void send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -133,10 +133,10 @@ namespace godot {
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
             void emit_command_received_signal(
-                    const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void register_command(const String &command, const Callable &callable);
-            void unregister_command(const String &command, const Callable &callable);
+                    const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            void broadcast_command(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            void register_command(const String &p_command, const Callable &p_callable);
+            void unregister_command(const String &p_command, const Callable &p_callable);
             void update_state();
             void update_mover();
             TMoverParameters *get_mover() const;

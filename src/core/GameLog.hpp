@@ -4,7 +4,6 @@
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/string.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <map>
 
 #ifdef LIBMASZYNA_DEBUG
@@ -32,7 +31,7 @@ namespace godot {
             GDCLASS(GameLog, Object);
 
         public:
-            static const char *LOG_UPDATED_SIGNAL;
+            static const char *log_updated_signal;
 
             static GameLog *get_instance() {
                 return dynamic_cast<GameLog *>(Engine::get_singleton()->get_singleton("GameLog"));
@@ -45,11 +44,11 @@ namespace godot {
                 ERROR,
             };
 
-            void log(LogLevel level, const String &line);
-            void debug(const String &line);
-            void info(const String &line);
-            void warning(const String &line);
-            void error(const String &line);
+            void log(LogLevel p_level, const String &p_line);
+            void debug(const String &p_line);
+            void info(const String &p_line);
+            void warning(const String &p_line);
+            void error(const String &p_line);
 
         protected:
             static void _bind_methods();

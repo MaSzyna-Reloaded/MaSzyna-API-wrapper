@@ -20,8 +20,8 @@ namespace godot {
 
         protected:
             EngineType get_engine_type() override;
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
             void _register_commands() override;
             void _unregister_commands() override;
 

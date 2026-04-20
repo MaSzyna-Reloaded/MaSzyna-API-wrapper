@@ -8,9 +8,9 @@ namespace godot {
             GDCLASS(TrainDoors, TrainPart)
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_process_mover(TMoverParameters *mover, double delta) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
 
@@ -61,24 +61,24 @@ namespace godot {
 
         private:
             // Maszyna Mover has no consts for voltages
-            const std::map<Voltage, float> voltageMap = {
+            const std::map<Voltage, float> voltage_map = {
                     {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_112, 112.0f}};
 
             // Maszyna Mover has no consts for door types
-            const std::map<Type, int> doorTypeMap = {{TYPE_SHIFT, 1}, {TYPE_ROTATE, 2}, {TYPE_FOLD, 3}, {TYPE_PLUG, 4}};
+            const std::map<Type, int> door_type_map = {{TYPE_SHIFT, 1}, {TYPE_ROTATE, 2}, {TYPE_FOLD, 3}, {TYPE_PLUG, 4}};
             //
             // Maszyna Mover has no consts for door platform types
-            const std::map<PlatformType, int> doorPlatformTypeMap = {
+            const std::map<PlatformType, int> door_platform_type_map = {
                     {PLATFORM_TYPE_SHIFT, 1}, {PLATFORM_TYPE_ROTATE, 2}};
 
             // Maszyna Mover has no consts for permit lights
-            const std::map<PermitLight, int> doorPermitLightMap = {
+            const std::map<PermitLight, int> door_permit_light_map = {
                     {PERMIT_LIGHT_CONTINUOUS, 0},
                     {PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP, 1},
                     {PERMIT_LIGHT_FLASHING_ON_PERMISSION, 2},
                     {PERMIT_LIGHT_FLASHING_ALWAYS, 3}};
 
-            const std::unordered_map<Controls, Maszyna::control_t> doorControlsMap = {
+            const std::unordered_map<Controls, Maszyna::control_t> door_controls_map = {
                     {Controls::CONTROLS_PASSENGER, Maszyna::control_t::passenger},
                     {Controls::CONTROLS_AUTOMATIC, Maszyna::control_t::autonomous},
                     {Controls::CONTROLS_DRIVER, Maszyna::control_t::driver},

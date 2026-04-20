@@ -11,18 +11,18 @@ namespace godot {
         BIND_PROPERTY(Variant::FLOAT, "electro_pneumatic_brake_delay", "electro_pneumatic/electro_pneumatic_brake_delay", &TrainElectroPneumaticDynamicBrake::set_ed_braking_ep_delay, &TrainElectroPneumaticDynamicBrake::get_ed_braking_ep_delay, "value");
         BIND_PROPERTY(Variant::BOOL, "ep_brake_fuse", "ep_brake_fuse", &TrainElectroPneumaticDynamicBrake::set_ep_brake_fuse, &TrainElectroPneumaticDynamicBrake::get_ep_brake_fuse, "fuse_state");
 
-        BIND_ENUM_CONSTANT(None)
-        BIND_ENUM_CONSTANT(Front)
-        BIND_ENUM_CONSTANT(Back)
+        BIND_ENUM_CONSTANT(NONE)
+        BIND_ENUM_CONSTANT(FRONT)
+        BIND_ENUM_CONSTANT(BACK)
     }
 
-    void TrainElectroPneumaticDynamicBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        state["dcemued/coupler_check"] = mover->DCEMUED_CC;
-        state["dcemued/ed_braking_ep_delay"] = mover->DCEMUED_EP_delay;
-        state["dcemued/ep_max_brake_engagement_speed"] = mover->DCEMUED_EP_max_Vel;
-        state["dcemued/ep_min_regenerative_braking"] = mover->DCEMUED_EP_min_Im;
-        state["dcemued/ep_force"] = mover->EpForce;
-        state["dcemued/ep_fuse"] = mover->EpFuse;
+    void TrainElectroPneumaticDynamicBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        p_state["dcemued/coupler_check"] = p_mover->DCEMUED_CC;
+        p_state["dcemued/ed_braking_ep_delay"] = p_mover->DCEMUED_EP_delay;
+        p_state["dcemued/ep_max_brake_engagement_speed"] = p_mover->DCEMUED_EP_max_Vel;
+        p_state["dcemued/ep_min_regenerative_braking"] = p_mover->DCEMUED_EP_min_Im;
+        p_state["dcemued/ep_force"] = p_mover->EpForce;
+        p_state["dcemued/ep_fuse"] = p_mover->EpFuse;
     }
 
     void TrainElectroPneumaticDynamicBrake::_register_commands() {
@@ -37,12 +37,12 @@ namespace godot {
         TrainPart::_unregister_commands();
     }
 
-    void TrainElectroPneumaticDynamicBrake::_do_update_internal_mover(TMoverParameters *mover) {
-        mover->DCEMUED_CC = coupler_check;
-        mover->DCEMUED_EP_delay = ed_braking_ep_delay;
-        mover->DCEMUED_EP_max_Vel = max_ep_brake_engagement_speed;
-        mover->DCEMUED_EP_min_Im = min_ep_regenerative_braking;
-        mover->EpFuseSwitch(ep_brake_fuse);
+    void TrainElectroPneumaticDynamicBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
+        p_mover->DCEMUED_CC = coupler_check;
+        p_mover->DCEMUED_EP_delay = ed_braking_ep_delay;
+        p_mover->DCEMUED_EP_max_Vel = max_ep_brake_engagement_speed;
+        p_mover->DCEMUED_EP_min_Im = min_ep_regenerative_braking;
+        p_mover->EpFuseSwitch(ep_brake_fuse);
     }
 
     void TrainElectroPneumaticDynamicBrake::set_ep_brake_force(const int p_value) {

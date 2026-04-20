@@ -23,60 +23,60 @@ namespace godot {
         return TrainEngine::EngineType::DIESEL;
     }
 
-    void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        TrainEngine::_do_fetch_state_from_mover(mover, state);
+    void TrainDieselEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        TrainEngine::_do_fetch_state_from_mover(p_mover, p_state);
 
-        state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
-        state["oil_pump_active"] = mover->OilPump.is_active;
-        state["oil_pump_disabled"] = mover->OilPump.is_disabled;
-        state["oil_pump_pressure"] = mover->OilPump.pressure;
+        p_state["engine_rpm"] = p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM();
+        p_state["oil_pump_active"] = p_mover->OilPump.is_active;
+        p_state["oil_pump_disabled"] = p_mover->OilPump.is_disabled;
+        p_state["oil_pump_pressure"] = p_mover->OilPump.pressure;
 
-        state["fuel_pump_active"] = mover->FuelPump.is_active;
-        state["fuel_pump_disabled"] = mover->FuelPump.is_disabled;
+        p_state["fuel_pump_active"] = p_mover->FuelPump.is_active;
+        p_state["fuel_pump_disabled"] = p_mover->FuelPump.is_disabled;
 
-        state["diesel_startup"] = mover->dizel_startup;
-        state["diesel_ignition"] = mover->dizel_ignition;
-        state["diesel_spinup"] = mover->dizel_spinup;
-        state["diesel_power"] = mover->dizel_Power;
-        state["diesel_torque"] = mover->dizel_Torque;
-        state["diesel_fill"] = mover->dizel_fill;
+        p_state["diesel_startup"] = p_mover->dizel_startup;
+        p_state["diesel_ignition"] = p_mover->dizel_ignition;
+        p_state["diesel_spinup"] = p_mover->dizel_spinup;
+        p_state["diesel_power"] = p_mover->dizel_Power;
+        p_state["diesel_torque"] = p_mover->dizel_Torque;
+        p_state["diesel_fill"] = p_mover->dizel_fill;
     }
 
-    void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *mover) {
-        TrainEngine::_do_update_internal_mover(mover);
+    void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
+        TrainEngine::_do_update_internal_mover(p_mover);
 
         // FIXME: test data
-        mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
-        mover->dizel_nmin = 100; // nie wiem skad to sie ustawia, w FIZ stonki nie ma
+        p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
+        p_mover->dizel_nmin = 100; // nie wiem skad to sie ustawia, w FIZ stonki nie ma
         // end test data
 
-        mover->OilPump.pressure_minimum = oil_min_pressure;
-        mover->OilPump.pressure_maximum = oil_max_pressure;
+        p_mover->OilPump.pressure_minimum = oil_min_pressure;
+        p_mover->OilPump.pressure_maximum = oil_max_pressure;
 
-        mover->Ftmax = traction_force_max;
+        p_mover->Ftmax = traction_force_max;
 
         /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. (eng. Starting resistor array) WWList aka DEList aka TDESchemeTable */
-        constexpr int _max = sizeof(mover->DElist) / sizeof(Maszyna::TDEScheme);
+        constexpr int MAX = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
         const int wwlist_size = static_cast<int>(wwlist.size());
-        mover->MainCtrlPosNo = wwlist_size - 1;
-        for (int i = 0; i < std::min(_max, wwlist_size); i++) {
+        p_mover->MainCtrlPosNo = wwlist_size - 1;
+        for (int i = 0; i < std::min(MAX, wwlist_size); i++) {
             const Ref<WWListItem> &row = wwlist[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {
                 UtilityFunctions::push_warning("[TrainDieselEngine]: wwlist property is null at index " + String::num(i));
                 return;
             }
 
-            mover->DElist[i].RPM = row->get_rpm();
-            mover->DElist[i].GenPower = row->get_max_power();
-            mover->DElist[i].Umax = row->get_max_voltage();
-            mover->DElist[i].Imax = row->get_max_current();
+            p_mover->DElist[i].RPM = row->get_rpm();
+            p_mover->DElist[i].GenPower = row->get_max_power();
+            p_mover->DElist[i].Umax = row->get_max_voltage();
+            p_mover->DElist[i].Imax = row->get_max_current();
             if (row->get_has_shunting()) {
-                mover->SST[i].Umin = row->get_min_wakeup_voltage();
-                mover->SST[i].Umax = row->get_max_wakeup_voltage();
-                mover->SST[i].Pmax = row->get_max_wakeup_power();
-                mover->SST[i].Pmin = std::sqrt(std::pow(mover->SST[i].Umin, 2) / 47.6);
-                mover->SST[i].Pmax = std::min(mover->SST[i].Pmax, std::pow(mover->SST[i].Umax, 2) / 47.6);
+                p_mover->SST[i].Umin = row->get_min_wakeup_voltage();
+                p_mover->SST[i].Umax = row->get_max_wakeup_voltage();
+                p_mover->SST[i].Pmax = row->get_max_wakeup_power();
+                p_mover->SST[i].Pmin = std::sqrt(std::pow(p_mover->SST[i].Umin, 2) / 47.6);
+                p_mover->SST[i].Pmax = std::min(p_mover->SST[i].Pmax, std::pow(p_mover->SST[i].Umax, 2) / 47.6);
             }
         }
     }

@@ -3,14 +3,14 @@
 
 namespace godot {
     MaszynaMaterial::MaszynaMaterial() :
-        albedo_texture_path(String(), [this](const String &newVal) {
-                    _parse_texture_path(newVal);
+        albedo_texture_path(String(), [this](const String &p_new_val) {
+                    _parse_texture_path(p_new_val);
                 }),
-    winter_albedo_texture_path(String(), [this](const String &newVal) {
-                    _parse_texture_path(newVal);
+    winter_albedo_texture_path(String(), [this](const String &p_new_val) {
+                    _parse_texture_path(p_new_val);
                 }),
-    autumn_albedo_texture_path(String(), [this](const String &newVal) {
-                    _parse_texture_path(newVal);
+    autumn_albedo_texture_path(String(), [this](const String &p_new_val) {
+                    _parse_texture_path(p_new_val);
                 }) {}
 
     void MaszynaMaterial::apply_to_material(StandardMaterial3D *p_material) const {
@@ -42,13 +42,13 @@ namespace godot {
         BIND_PROPERTY(Variant::INT, "shadow_rank", "shadow_rank", &MaszynaMaterial::set_shadow_rank, &MaszynaMaterial::get_shadow_rank, "shadow_rank");
     }
 
-    String MaszynaMaterial::_parse_texture_path(const String &texturePath) {
-        const PackedStringArray _parts = texturePath.split(":");
-        String _tex = _parts.get(0);
-        if (_parts.has("t")) {
+    String MaszynaMaterial::_parse_texture_path(const String &p_texture_path) {
+        const PackedStringArray parts = p_texture_path.split(":");
+        String tex = parts.get(0);
+        if (parts.has("t")) {
             transparency = StandardMaterial3D::TRANSPARENCY_ALPHA_SCISSOR;
         }
 
-        return _tex;
+        return tex;
     }
 } //namespace godot

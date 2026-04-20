@@ -42,11 +42,11 @@
 		</member>
 	</members>
 	<constants>
-		<constant name="None" value="0" enum="CouplerCheck">
+		<constant name="NONE" value="0" enum="CouplerCheck">
 		</constant>
-		<constant name="Front" value="1" enum="CouplerCheck">
+		<constant name="FRONT" value="1" enum="CouplerCheck">
 		</constant>
-		<constant name="Back" value="2" enum="CouplerCheck">
+		<constant name="BACK" value="2" enum="CouplerCheck">
 		</constant>
 	</constants>
 </class>

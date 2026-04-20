@@ -20,7 +20,7 @@ namespace godot {
         BIND_PROPERTY_W_HINT_RES_ARRAY(Variant::ARRAY, "submodels", "submodels", &E3DModel::set_submodels, &E3DModel::get_submodels, "p_submodels", PROPERTY_HINT_ARRAY_TYPE, "E3DSubModel");
     }
 
-    void E3DModel::add_child(const Ref<E3DSubModel> &sub_model) {
-        submodels.append(sub_model);
+    void E3DModel::add_child(const Ref<E3DSubModel> &p_sub_model) {
+        submodels.append(p_sub_model);
     }
 } // namespace godot

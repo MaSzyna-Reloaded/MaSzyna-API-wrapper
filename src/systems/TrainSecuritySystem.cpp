@@ -91,7 +91,7 @@ namespace godot {
     void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
-        if (enabled) {
+        if (p_enabled) {
             mover->SecuritySystem.acknowledge_press();
         } else {
             mover->SecuritySystem.acknowledge_release();

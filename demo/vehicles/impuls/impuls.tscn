@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://dqwt31s3qnglp"]
+[gd_scene format=3 uid="uid://dqwt31s3qnglp"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_4abai"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://vehicles/impuls/impuls_head_display.tres" id="2_iawif"]
@@ -10,9 +10,9 @@ size = Vector3(5.11954, 4.72223, 21.2475)
 [sub_resource type="BoxShape3D" id="BoxShape3D_3bq8j"]
 size = Vector3(5.11954, 4.72223, 21.2475)
 
-[node name="Impuls" type="Node3D"]
+[node name="Impuls" type="Node3D" unique_id=1841614485]
 
-[node name="Impuls-024a" type="Node3D" parent="."]
+[node name="Impuls-024a" type="Node3D" parent="." unique_id=1258781690]
 script = ExtResource("1_4abai")
 cabin_scene = ExtResource("2_tivfr")
 cabin_rotate_180deg = true
@@ -21,81 +21,97 @@ head_display_e3d_path = NodePath("Impuls-024a")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024a/banan/banan/tablice_relacyjne")
 
-[node name="Impuls-024a" type="E3DModelInstance" parent="Impuls-024a"]
+[node name="Impuls-024a" type="E3DModelInstance" parent="Impuls-024a" unique_id=2044068207]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/36wea-a_kd"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.4632999, -0.02723, -10.77067, 2.9275498, 4.2232, 21.570309)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="Impuls-024a_LowPolyCab" type="E3DModelInstance" parent="Impuls-024a"]
+[node name="Impuls-024a_LowPolyCab" type="E3DModelInstance" parent="Impuls-024a" unique_id=2013949019]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-a"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.40936, 0.70312, -10.7129, 2.81871, 2.60043, 20.2053)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="People_A" type="E3DModelInstance" parent="Impuls-024a"]
+[node name="People_A" type="E3DModelInstance" parent="Impuls-024a" unique_id=209673818]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+instancer = 0
+submodels_aabb = AABB(-1.4108, 0.622076, -9.90763, 2.80946, 2.307424, 15.68935)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="Area3D-A" type="Area3D" parent="Impuls-024a"]
+[node name="Area3D-A" type="Area3D" parent="Impuls-024a" unique_id=960810092]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.326183)
 monitoring = false
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024a/Area3D-A"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024a/Area3D-A" unique_id=1253221807]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0671234, 1.97558, -0.231311)
 shape = SubResource("BoxShape3D_tsk56")
 
-[node name="Impuls-024b" type="Node3D" parent="."]
+[node name="Impuls-024b" type="Node3D" parent="." unique_id=1721230957]
 script = ExtResource("1_4abai")
 head_display_e3d_path = NodePath("Impuls-024b")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024b/banan/tablice_relacyjne")
 
-[node name="Impuls-024b" type="E3DModelInstance" parent="Impuls-024b"]
+[node name="Impuls-024b" type="E3DModelInstance" parent="Impuls-024b" unique_id=643089345]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-b_kd"
 skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.45597, -0.02726, -9.78047, 2.91194, 4.223229, 19.561565)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 18.525)
 
-[node name="Impuls-024b_LowPolyInt" type="E3DModelInstance" parent="Impuls-024b"]
+[node name="Impuls-024b_LowPolyInt" type="E3DModelInstance" parent="Impuls-024b" unique_id=732428790]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-b"
 skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.40936, 0.70312, -8.20413, 2.81871, 2.60043, 16.40423)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 18.525)
 
-[node name="People_B" type="E3DModelInstance" parent="Impuls-024b"]
+[node name="People_B" type="E3DModelInstance" parent="Impuls-024b" unique_id=1316404551]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-b_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+instancer = 0
+submodels_aabb = AABB(-1.3882198, 0.639004, -7.58374, 2.7744298, 2.1666763, 15.09474)
 transform = Transform3D(1, 0, 1.74846e-07, 0, 1, 0, -1.74846e-07, 0, 1, 0, 0, 18.525)
 
-[node name="Impuls-024c" type="Node3D" parent="."]
+[node name="Impuls-024c" type="Node3D" parent="." unique_id=1142102562]
 script = ExtResource("1_4abai")
 head_display_e3d_path = NodePath("Impuls-024c")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024c/banan/tablice_relacyjne")
 
-[node name="Impuls-024c" type="E3DModelInstance" parent="Impuls-024c"]
+[node name="Impuls-024c" type="E3DModelInstance" parent="Impuls-024c" unique_id=727374894]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-c_kd"
 skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.45597, -0.02726, -9.78047, 2.91194, 4.223229, 17.9903)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 34.4186)
 
-[node name="Impuls-024c_LowPolyInt" type="E3DModelInstance" parent="Impuls-024c"]
+[node name="Impuls-024c_LowPolyInt" type="E3DModelInstance" parent="Impuls-024c" unique_id=912833609]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-b"
 skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.40936, 0.70312, -8.20413, 2.81871, 2.60043, 16.40423)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 34.4186)
 
-[node name="Impuls-024d" type="Node3D" parent="."]
+[node name="Impuls-024d" type="Node3D" parent="." unique_id=63744596]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 52.9294)
 script = ExtResource("1_4abai")
 cabin_scene = ExtResource("2_tivfr")
@@ -104,29 +120,35 @@ head_display_e3d_path = NodePath("Impuls-024d")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024d/banan/tablice_relacyjne")
 
-[node name="Impuls-024d" type="E3DModelInstance" parent="Impuls-024d"]
+[node name="Impuls-024d" type="E3DModelInstance" parent="Impuls-024d" unique_id=413612957]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-d_kd"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.46425, -0.02723, -10.70065, 2.9275498, 4.21452, 21.471352)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="Impuls-024d_LowPolyCab" type="E3DModelInstance" parent="Impuls-024d"]
+[node name="Impuls-024d_LowPolyCab" type="E3DModelInstance" parent="Impuls-024d" unique_id=305309543]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-c"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.40935, 0.70312, -9.4924, 2.81871, 2.60043, 20.2053)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="People_A2" type="E3DModelInstance" parent="Impuls-024d"]
+[node name="People_A2" type="E3DModelInstance" parent="Impuls-024d" unique_id=954325314]
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
+instancer = 0
+submodels_aabb = AABB(-1.4108, 0.622076, -9.90763, 2.80946, 2.307424, 15.68935)
 
-[node name="Area3D-A" type="Area3D" parent="Impuls-024d"]
+[node name="Area3D-A" type="Area3D" parent="Impuls-024d" unique_id=850360365]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.326183)
 monitoring = false
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024d/Area3D-A"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024d/Area3D-A" unique_id=217950678]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0671234, 1.97558, -0.231311)
 shape = SubResource("BoxShape3D_3bq8j")

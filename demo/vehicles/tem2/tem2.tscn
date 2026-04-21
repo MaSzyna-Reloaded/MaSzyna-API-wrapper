@@ -1,133 +1,11 @@
 [gd_scene format=3 uid="uid://xh8isp1j28uj"]
 
-[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_ra284"]
-[ext_resource type="Script" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
+[ext_resource type="Script" uid="uid://dfpy1ib33rttc" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
 [ext_resource type="PackedScene" uid="uid://dwcx6807obsgm" path="res://vehicles/tem2/tem2_cabin.tscn" id="2_nt307"]
-[ext_resource type="TrainController" path="res://vehicles/tem2/tem2_controller.tres" id="4_tujep"]
+[ext_resource type="TrainController" uid="uid://o22yvm8bwya6" path="res://vehicles/tem2/tem2_controller.tres" id="4_tujep"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
 size = Vector3(4.5332, 4.72223, 17.0549)
-
-[sub_resource type="WWListItem" id="WWListItem_w7fy5"]
-rpm = 496.0
-
-[sub_resource type="WWListItem" id="WWListItem_j7m6u"]
-rpm = 496.0
-max_power = 20.0
-max_voltage = 125.0
-max_current = 600.0
-has_shunting = true
-max_wakeup_voltage = 140.0
-max_wakeup_power = 180.0
-
-[sub_resource type="WWListItem" id="WWListItem_w1qdg"]
-rpm = 496.0
-max_power = 50.0
-max_voltage = 156.0
-max_current = 846.0
-has_shunting = true
-max_wakeup_voltage = 140.0
-max_wakeup_power = 180.0
-
-[sub_resource type="WWListItem" id="WWListItem_wk0d4"]
-rpm = 496.0
-max_power = 90.0
-max_voltage = 194.0
-max_current = 1065.0
-has_shunting = true
-max_wakeup_voltage = 140.0
-max_wakeup_power = 180.0
-
-[sub_resource type="WWListItem" id="WWListItem_ndnpm"]
-rpm = 496.0
-max_power = 135.0
-max_voltage = 240.0
-max_current = 1260.0
-has_shunting = true
-max_wakeup_voltage = 140.0
-max_wakeup_power = 180.0
-
-[sub_resource type="WWListItem" id="WWListItem_ye3f5"]
-rpm = 568.0
-max_power = 182.0
-max_voltage = 293.0
-max_current = 1428.0
-has_shunting = true
-min_wakeup_voltage = 25.0
-max_wakeup_voltage = 150.0
-max_wakeup_power = 200.0
-
-[sub_resource type="WWListItem" id="WWListItem_ljbq7"]
-rpm = 640.0
-max_power = 234.0
-max_voltage = 353.0
-max_current = 1571.0
-has_shunting = true
-min_wakeup_voltage = 50.0
-max_wakeup_voltage = 160.0
-max_wakeup_power = 235.0
-
-[sub_resource type="WWListItem" id="WWListItem_wnj0o"]
-rpm = 712.0
-max_power = 286.0
-max_voltage = 420.0
-max_current = 1688.0
-has_shunting = true
-min_wakeup_voltage = 80.0
-max_wakeup_voltage = 200.0
-max_wakeup_power = 270.0
-
-[sub_resource type="WWListItem" id="WWListItem_qwjcl"]
-rpm = 784.0
-max_power = 348.0
-max_voltage = 494.0
-max_current = 1780.0
-has_shunting = true
-min_wakeup_voltage = 100.0
-max_wakeup_voltage = 235.0
-max_wakeup_power = 305.0
-
-[sub_resource type="WWListItem" id="WWListItem_4li30"]
-rpm = 856.0
-max_power = 408.0
-max_voltage = 575.0
-max_current = 1845.0
-has_shunting = true
-min_wakeup_voltage = 130.0
-max_wakeup_voltage = 300.0
-max_wakeup_power = 370.0
-
-[sub_resource type="WWListItem" id="WWListItem_or38i"]
-rpm = 928.0
-max_power = 474.0
-max_voltage = 664.0
-max_current = 1886.0
-has_shunting = true
-min_wakeup_voltage = 150.0
-max_wakeup_voltage = 360.0
-max_wakeup_power = 410.0
-
-[sub_resource type="WWListItem" id="WWListItem_lwfur"]
-rpm = 1000.0
-max_power = 540.0
-max_voltage = 760.0
-max_current = 1900.0
-has_shunting = true
-min_wakeup_voltage = 170.0
-max_wakeup_voltage = 450.0
-max_wakeup_power = 490.0
-
-[sub_resource type="MotorParameter" id="MotorParameter_l4x0r"]
-voltage_constant_multiplier = 17.567
-saturation_current_multiplier = 64.0
-voltage_constant = 1500.0
-saturation_current = 15.0
-
-[sub_resource type="MotorParameter" id="MotorParameter_374xt"]
-voltage_constant_multiplier = 15.0
-saturation_current_multiplier = 183.3
-voltage_constant = 2000.0
-saturation_current = 49.0
 
 [node name="TEM2" type="Node3D" unique_id=1789571545]
 script = ExtResource("1_train3d")
@@ -141,6 +19,8 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "tem2-122a"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5676672, -0.057509635, -9.035448, 3.1353345, 4.765074, 17.92368)
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="TEM2_LowPolyCab" type="E3DModelInstance" parent="." unique_id=1160136315]
@@ -148,6 +28,8 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "lowpoly/int_tem2"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5577601, 1.71099, -5.97739, 3.12181, 2.80795, 1.7823896)
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="Area3D" type="Area3D" parent="." unique_id=776248700]

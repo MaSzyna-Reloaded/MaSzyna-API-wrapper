@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://bcxtf08c2yqx4"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
-[ext_resource type="Script" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
+[ext_resource type="Script" uid="uid://dfpy1ib33rttc" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
 [ext_resource type="Script" uid="uid://bocodruvp5emd" path="res://addons/libmaszyna/train_set_3d.gd" id="1_uwj4h"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
-[ext_resource type="TrainController" path="res://vehicles/sm42/sm_42v_1.tres" id="3_vuhlb"]
-[ext_resource type="LegacyWagon" path="res://vehicles/401w.tres" id="5_n7ime"]
+[ext_resource type="TrainController" uid="uid://bs7sefb2lpw8u" path="res://vehicles/sm42/sm_42v_1.tres" id="3_vuhlb"]
+[ext_resource type="LegacyWagon" uid="uid://c6jta3q3h4ho5" path="res://vehicles/401w.tres" id="5_n7ime"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(4.5332, 4.72223, 17.0549)
@@ -26,12 +26,16 @@ data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5978377, -1.0894207, -7.50629, 3.1975832, 5.4746947, 15.018351)
 
 [node name="SM42-099-LowPolyCab" type="E3DModelInstance" parent="SM42-099" unique_id=1411080143]
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_interior"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.4508098, 1.2607, -3.924, 2.9026198, 2.93835, 2.20054)
 
 [node name="Area3D" type="Area3D" parent="SM42-099" unique_id=1817539912]
 monitoring = false
@@ -51,6 +55,8 @@ data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.55, -0.028729022, -7.42709, 3.1, 3.253429, 14.85418)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="Wagon2" type="Node3D" parent="." unique_id=1338643588]
@@ -64,4 +70,6 @@ data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.55, -0.028729022, -7.42709, 3.1, 3.253429, 14.85418)
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)

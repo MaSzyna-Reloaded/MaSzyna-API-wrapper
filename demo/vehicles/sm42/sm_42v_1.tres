@@ -1,7 +1,38 @@
-[gd_resource type="TrainController" load_steps=20 format=3]
+[gd_resource type="TrainController" format=3 uid="uid://bs7sefb2lpw8u"]
 
-[ext_resource type="Script" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
+[ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+
+[sub_resource type="TrainBrake" id="TrainBrake_brake"]
+valve/type = 20
+friction_elements_per_axle = 4
+brake_force/max = 85.0
+max_cylinder_pressure = 4.0
+max_antislip_pressure = 1.8
+cylinder/count = 4
+cylinder/radius = 0.114
+cylinder/distance = 0.05
+cylinder/gear_ratio = 6.68
+tank/volume_main = 0.8
+tank/volume_aux = 200.0
+compressor/cab_a/min_pressure = 7.0
+compressor/cab_a/max_pressure = 8.0
+compressor/speed = 0.057
+compressor/power = 3
+rig_effectiveness = 0.85
+resource_name = "Brake"
+
+[sub_resource type="MotorParameter" id="MotorParameter_210ku"]
+voltage_constant_multiplier = 17.567
+saturation_current_multiplier = 64.0
+voltage_constant = 1500.0
+saturation_current = 15.0
+
+[sub_resource type="MotorParameter" id="MotorParameter_ewrnx"]
+voltage_constant_multiplier = 15.0
+saturation_current_multiplier = 183.3
+voltage_constant = 2000.0
+saturation_current = 49.0
 
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0
@@ -101,60 +132,23 @@ min_wakeup_voltage = 170.0
 max_wakeup_voltage = 450.0
 max_wakeup_power = 490.0
 
-[sub_resource type="MotorParameter" id="MotorParameter_210ku"]
-voltage_constant_multiplier = 17.567
-saturation_current_multiplier = 64.0
-voltage_constant = 1500.0
-saturation_current = 15.0
-
-[sub_resource type="MotorParameter" id="MotorParameter_ewrnx"]
-voltage_constant_multiplier = 15.0
-saturation_current_multiplier = 183.3
-voltage_constant = 2000.0
-saturation_current = 49.0
-
-[sub_resource type="LightListItem" id="LightListItem_ss4tc"]
-cabin_a/head_light = true
-cabin_a/left/white_signal = true
-cabin_a/right/white_signal = true
-
-[sub_resource type="TrainBrake" id="TrainBrake_brake"]
-resource_name = "Brake"
-valve/type = 20
-friction_elements_per_axle = 4
-brake_force/max = 85.0
-max_cylinder_pressure = 4.0
-max_antislip_pressure = 1.8
-cylinder/count = 4
-cylinder/radius = 0.114
-cylinder/distance = 0.05
-cylinder/gear_ratio = 6.68
-tank/volume_main = 0.8
-tank/volume_aux = 200.0
-compressor/cab_a/min_pressure = 7.0
-compressor/cab_a/max_pressure = 8.0
-compressor/speed = 0.057
-compressor/power = 3
-rig_effectiveness = 0.85
-
 [sub_resource type="TrainDieselElectricEngine" id="TrainDieselElectricEngine_engine"]
-resource_name = "StonkaDieselEngine"
 oil_pump/pressure_minimum = 0.15
 maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
 motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
+resource_name = "StonkaDieselEngine"
 
 [sub_resource type="TrainSecuritySystem" id="TrainSecuritySystem_security"]
-resource_name = "TrainSecuritySystem"
 aware_system/active = true
 aware_delay = 60.0
 emergency_brake/delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
+resource_name = "TrainSecuritySystem"
 
 [sub_resource type="TrainDoors" id="TrainDoors_doors"]
-resource_name = "TrainDoors"
 open/time = 3.0
 max_shift = 3.0
 open/method = 2
@@ -165,17 +159,23 @@ close/delay = 3.0
 has_lock = true
 max_shift_plug = 3.0
 platform/max_shift = 3.0
+resource_name = "TrainDoors"
 
 [sub_resource type="GenericTrainPart" id="GenericTrainPart_cabin_lights"]
 resource_name = "CabinInteriorLights"
 script = ExtResource("2_qmqy7")
 
+[sub_resource type="LightListItem" id="LightListItem_ss4tc"]
+cabin_a/head_light = true
+cabin_a/left/white_signal = true
+cabin_a/right/white_signal = true
+
 [sub_resource type="TrainLighting" id="TrainLighting_lighting"]
-resource_name = "TrainLightning"
 lights/wrap_selector = true
 lights/list = Array[LightListItem]([SubResource("LightListItem_ss4tc")])
 light/source = 4
 source/generator/engine = 0
+resource_name = "TrainLightning"
 
 [sub_resource type="TrainElectroPneumaticDynamicBrake" id="TrainElectroPneumaticDynamicBrake_ep"]
 resource_name = "TrainElectroPneumaticDynamicBrake"
@@ -187,7 +187,6 @@ resource_name = "TrainSpringBrake"
 resource_name = "TrainLoad"
 
 [sub_resource type="TrainBuffCoupl" id="TrainBuffCoupl_coupler"]
-resource_name = "TrainBuffer"
 coupler/type = 1
 buffer/stiffness_k = 9200.0
 buffer/max_compression_tolerance = 0.15
@@ -198,9 +197,9 @@ coupler/max_tension_tolerance = 780.0
 damping_beta = 0.58
 allowed_flag = 39
 buffer_location = 2
+resource_name = "TrainBuffer"
 
 [resource]
-resource_name = "SM42v1"
 train_id = "sm42v1"
 power = 590.0
 battery_voltage = 110.0
@@ -212,5 +211,6 @@ max_velocity = 90.0
 length = 14.24
 width = 3.17
 height = 4.285
+modules = [SubResource("TrainBrake_brake"), SubResource("TrainDieselElectricEngine_engine"), SubResource("TrainSecuritySystem_security"), SubResource("TrainDoors_doors"), SubResource("GenericTrainPart_cabin_lights"), SubResource("TrainLighting_lighting"), SubResource("TrainElectroPneumaticDynamicBrake_ep"), SubResource("TrainSpringBrake_spring"), SubResource("TrainLoad_load"), SubResource("TrainBuffCoupl_coupler")]
+resource_name = "SM42v1"
 script = ExtResource("1_vib8j")
-modules = Array[LegacyRailVehicleModule]([SubResource("TrainBrake_brake"), SubResource("TrainDieselElectricEngine_engine"), SubResource("TrainSecuritySystem_security"), SubResource("TrainDoors_doors"), SubResource("GenericTrainPart_cabin_lights"), SubResource("TrainLighting_lighting"), SubResource("TrainElectroPneumaticDynamicBrake_ep"), SubResource("TrainSpringBrake_spring"), SubResource("TrainLoad_load"), SubResource("TrainBuffCoupl_coupler")])

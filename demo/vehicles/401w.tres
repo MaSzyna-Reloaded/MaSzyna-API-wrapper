@@ -1,7 +1,6 @@
-[gd_resource type="LegacyWagon" format=3]
+[gd_resource type="LegacyWagon" format=3 uid="uid://c6jta3q3h4ho5"]
 
 [sub_resource type="LegacyBufferCouplerModule" id="LegacyBufferCouplerModule_coupler"]
-resource_name = "Coupler"
 coupler/type = 1
 buffer/stiffness_k = 9000.0
 buffer/max_compression_tolerance = 0.12
@@ -12,9 +11,9 @@ coupler/max_tension_tolerance = 780.0
 damping_beta = 0.52
 allowed_flag = 3
 buffer_location = 2
+resource_name = "Coupler"
 
 [resource]
-resource_name = "401W"
 axle_arrangement = "2'2'"
 drag_coefficient = 0.1
 mass = 20100.0
@@ -22,4 +21,5 @@ max_velocity = 100.0
 length = 14.04
 width = 3.04
 height = 3.235
-modules = Array[LegacyRailVehicleModule]([SubResource("LegacyBufferCouplerModule_coupler")])
+modules = [SubResource("LegacyBufferCouplerModule_coupler")]
+resource_name = "401W"

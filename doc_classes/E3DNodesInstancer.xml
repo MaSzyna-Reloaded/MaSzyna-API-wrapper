@@ -4,7 +4,7 @@
 		Utility class for converting E3DModel resources into a hierarchy of Godot nodes.
 	</brief_description>
 	<description>
-		[E3DNodesInstancer] provides functionality to take an [E3DModel] resource and instantiate its structure as real [Node3D] objects in the scene tree. It recursively traverses the [E3DSubModel] hierarchy, creating [MeshInstance3D] nodes for parts with geometry and [Node3D] nodes for transformation-only parts. It also applies materials using the [MaterialManager] and configures node properties like visibility and transformations to match the MaSzyna model definition.
+		[E3DNodesInstancer] provides functionality to take an [E3DModel] resource and instantiate its structure as real [Node3D] objects in the scene tree. It recursively traverses the [E3DSubModel] hierarchy, creating [MeshInstance3D] nodes for parts with geometry and [Node3D] nodes for transformation-only parts. It also applies materials using the [MaterialManager] and configures node properties like visibility and transformations to match the MaSzyna model definition. This utility is used by the node-based E3D instancing modes; the optimized mode uses [RenderingServer] directly.
 	</description>
 	<tutorials>
 	</tutorials>

@@ -62,6 +62,7 @@ func _ready() -> void:
     line_edit.anchor_bottom = 0.5
     line_edit.placeholder_text = "Enter \"help\" for instructions"
     line_edit.focus_mode = Control.FOCUS_ALL
+    line_edit.keep_editing_on_text_submit = true
     control.add_child(line_edit)
     line_edit.text_submitted.connect(on_text_entered)
     line_edit.text_changed.connect(on_line_edit_text_changed)
@@ -199,7 +200,7 @@ func set_visible(visible:bool) -> void:
     if (control.visible):
         was_paused_already = get_tree().paused
         get_tree().paused = was_paused_already || pause_enabled
-        line_edit.grab_focus()
+        _restore_line_edit_focus()
         console_opened.emit()
         console_toggled.emit(true)
     else:
@@ -302,9 +303,7 @@ func on_text_entered(new_text : String) -> void:
             print_line("[color=light_coral]	ERROR:[/color] Command not found.")
 
     await get_tree().process_frame
-    #line_edit.edit()
-    line_edit.grab_focus()
-    line_edit.grab_click_focus()
+    _restore_line_edit_focus()
 
 func on_line_edit_text_changed(new_text : String) -> void:
     reset_autocomplete()
@@ -392,3 +391,12 @@ func set_enable_on_release_build(enable : bool):
     if (!enable_on_release_build):
         if (!OS.is_debug_build()):
             disable()
+
+
+func _restore_line_edit_focus() -> void:
+    if not control.visible:
+        return
+
+    line_edit.grab_focus()
+    line_edit.grab_click_focus()
+    line_edit.edit()

@@ -25,6 +25,11 @@ git submodule update --init --recursive
 For build system setup,
 please take a look at [official Godot Engine documentation for Android development](https://docs.godotengine.org/en/4.3/tutorials/export/exporting_for_android.html)
 ### Compiling
+> [!IMPORTANT]
+> If you are using DEBUG macro, you should build CMake project with flag `-DLIBMASZYNA_DEBUG=ON` and then compile it.
+> When using make ,add `LIBMASZYNA_DEBUG=ON` to a command line, i.e. `make compile-debug LIBMASZYNA_DEBUG=ON`. You can
+> also turn off DEBUG using `LIBMASZYNA_DEBUG=OFF`.
+
 ```bash
 	cmake -B build-<platform> \
           -DGODOTCPP_TARGET="template_release"

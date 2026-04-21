@@ -4,6 +4,7 @@
 GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
+LIBMASZYNA_DEBUG:=""
 
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
@@ -27,7 +28,7 @@ cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
 compile-debug:
-	cmake -B build-debug -DGODOTCPP_TARGET=template_debug
+	cmake -B build-debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
@@ -55,7 +56,7 @@ cross-compile-release:
 
 cross-compile-debug:
 	cmake -B build-linux64 \
-          -DGODOTCPP_TARGET="template_debug"
+          -DGODOTCPP_TARGET="template_debug" -DLIBMASZYNA_DEBUG=ON
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
           -DGODOTCPP_TARGET="template_debug" \

@@ -1,10 +1,13 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 SET(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_EXTENSIONS ON)
+SET(CMAKE_COLOR_DIAGNOSTICS ON)
+OPTION(LIBMASZYNA_DEBUG "If the build should contain custom library logger" OFF)
 # Do not hard‑force a generator; allow users to select one suitable for cross‑compiling.
 # Silence unused variable warning when specified from toolchain
 IF (CMAKE_C_COMPILER)
 ENDIF ()
-SET(CMAKE_GENERATOR Ninja)
+
 # Allow selecting platform via -DGODOTCPP_PLATFORM=android|windows|linux|macos|ios|web
 IF (DEFINED GODOTCPP_PLATFORM AND NOT CMAKE_SYSTEM_NAME)
     STRING(TOLOWER "${GODOTCPP_PLATFORM}" _req_platform)
@@ -15,10 +18,10 @@ IF (DEFINED GODOTCPP_PLATFORM AND NOT CMAKE_SYSTEM_NAME)
             # 1) Explicit toolchain file provided by user
             IF (DEFINED ANDROID_NDK_TOOLCHAIN)
                 SET(CMAKE_TOOLCHAIN_FILE "${ANDROID_NDK_TOOLCHAIN}" CACHE FILEPATH "Android NDK toolchain (manual)" FORCE)
-            # 2) NDK root directory provided by user
+                # 2) NDK root directory provided by user
             ELSEIF (DEFINED ANDROID_NDK_ROOT)
                 SET(CMAKE_TOOLCHAIN_FILE "${ANDROID_NDK_ROOT}/build/cmake/android.toolchain.cmake" CACHE FILEPATH "Android NDK toolchain (from ANDROID_NDK_ROOT)" FORCE)
-            # 3) Environment variables commonly used
+                # 3) Environment variables commonly used
             ELSEIF (DEFINED ENV{ANDROID_NDK})
                 SET(CMAKE_TOOLCHAIN_FILE "$ENV{ANDROID_NDK}/build/cmake/android.toolchain.cmake" CACHE FILEPATH "Android NDK toolchain (from ANDROID_NDK)" FORCE)
             ELSEIF (DEFINED ENV{ANDROID_NDK_HOME})
@@ -44,21 +47,21 @@ IF (DEFINED GODOTCPP_PLATFORM AND NOT CMAKE_SYSTEM_NAME)
         ENDIF ()
     ELSEIF (_req_platform STREQUAL "windows")
         # Windows cross‑compile via MinGW (recommended from non‑Windows hosts)
-        IF (NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+        IF (NOT DEFINED CMAKE_TOOLCHAIN_FILE AND NOT CMAKE_HOST_WIN32)
             # Best effort: if cross compilers are present, set them. This must be before project().
             FIND_PROGRAM(MINGW_C "x86_64-w64-mingw32-gcc")
             FIND_PROGRAM(MINGW_CXX "x86_64-w64-mingw32-g++")
             IF (MINGW_C AND MINGW_CXX)
                 SET(CMAKE_SYSTEM_NAME Windows CACHE STRING "" FORCE)
-                SET(CMAKE_C_COMPILER   ${MINGW_C}  CACHE FILEPATH "" FORCE)
+                SET(CMAKE_C_COMPILER ${MINGW_C} CACHE FILEPATH "" FORCE)
                 SET(CMAKE_CXX_COMPILER ${MINGW_CXX} CACHE FILEPATH "" FORCE)
                 MESSAGE(STATUS "Configuring cross‑compile for Windows using MinGW (x86_64).")
-            ELSE()
+            ELSE ()
                 # Fallback: still set system name; user must provide a toolchain or compilers.
                 SET(CMAKE_SYSTEM_NAME Windows CACHE STRING "" FORCE)
                 MESSAGE(WARNING "GODOTCPP_PLATFORM=windows set but no MinGW cross compiler auto‑detected. Provide a toolchain file or set CMAKE_C_COMPILER/CMAKE_CXX_COMPILER.")
             ENDIF ()
-        ELSE()
+        ELSEIF (NOT CMAKE_HOST_WIN32)
             SET(CMAKE_SYSTEM_NAME Windows CACHE STRING "" FORCE)
             MESSAGE(STATUS "Configuring cross‑compile for Windows using specified toolchain: ${CMAKE_TOOLCHAIN_FILE}")
         ENDIF ()
@@ -87,6 +90,12 @@ PROJECT(Maszyna-API-Wrapper
         HOMEPAGE_URL "https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper"
         LANGUAGES CXX
 )
+
+IF (MSVC)
+    # /utf-8: Set source and execution character sets to UTF-8
+    # /bigobj: Increase the number of addressable sections in an .obj file
+    ADD_COMPILE_OPTIONS(/utf-8 /bigobj)
+ENDIF ()
 
 FILE(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS "src/*.cpp" "src/*.hpp")
 
@@ -156,10 +165,27 @@ IF (GODOTCPP_TARGET STREQUAL "template_debug")
     SET(DEBUG_SUFFIX ".debug")
 ENDIF ()
 
+IF (LIBMASZYNA_DEBUG)
+    TARGET_COMPILE_DEFINITIONS(${LIBNAME} PRIVATE LIBMASZYNA_DEBUG)
+ENDIF ()
+
 SET(_OUTPUT_NAME "${LIBNAME}${DEBUG_SUFFIX}${ARCH_SUFFIX}")
 SET(GODOT_PROJECT_BINARY_DIR "${PROJECT_SOURCE_DIR}/${GODOT_PROJECT_DIR}/bin/libmaszyna/${GODOTCPP_PLATFORM}")
 
 SET_TARGET_PROPERTIES(${LIBNAME} PROPERTIES OUTPUT_NAME "${_OUTPUT_NAME}" LIBRARY_OUTPUT_DIRECTORY "${GODOT_PROJECT_BINARY_DIR}")
+
+# For multi-config generators (like Visual Studio), ensure output directory doesn't have a config subfolder
+GET_PROPERTY(IS_MULTI_CONFIG GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+IF (IS_MULTI_CONFIG)
+    FOREACH (CONFIG ${CMAKE_CONFIGURATION_TYPES})
+        STRING(TOUPPER ${CONFIG} CONFIG)
+        SET_TARGET_PROPERTIES(${LIBNAME} PROPERTIES
+                LIBRARY_OUTPUT_DIRECTORY_${CONFIG} "${GODOT_PROJECT_BINARY_DIR}"
+                RUNTIME_OUTPUT_DIRECTORY_${CONFIG} "${GODOT_PROJECT_BINARY_DIR}"
+                ARCHIVE_OUTPUT_DIRECTORY_${CONFIG} "${GODOT_PROJECT_BINARY_DIR}"
+        )
+    ENDFOREACH ()
+ENDIF ()
 
 SET(ADDONS_DEMO_DIR "${PROJECT_SOURCE_DIR}/${GODOT_PROJECT_DIR}/addons")
 ADD_CUSTOM_COMMAND(TARGET ${LIBNAME} POST_BUILD

@@ -1,7 +1,6 @@
 #include "E3DModelInstance.hpp"
 #include "E3DModelInstanceManager.hpp"
 #include "E3DNodesInstancer.hpp"
-#include "helpers/lambda.hpp"
 #include "models/e3d/E3DModelManager.hpp"
 
 #include <algorithm>

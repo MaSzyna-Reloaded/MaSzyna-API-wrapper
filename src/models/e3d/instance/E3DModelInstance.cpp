@@ -1,7 +1,6 @@
 #include "E3DModelInstance.hpp"
 #include "E3DModelInstanceManager.hpp"
 #include "E3DNodesInstancer.hpp"
-#include "helpers/lambda.hpp"
 #include <godot_cpp/classes/engine.hpp>
 
 namespace godot {
@@ -43,7 +42,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(INSTANCER_OPTIMIZED);
 
         ClassDB::bind_method(D_METHOD("_instantiate_children", "model"), &E3DModelInstance::_instantiate_children);
-}
+        ClassDB::bind_method(D_METHOD("_deferred_reload"), &E3DModelInstance::_deferred_reload);
+        ClassDB::bind_method(D_METHOD("_flush_pending_model"), &E3DModelInstance::_flush_pending_model);
+    }
 
     void E3DModelInstance::_notification(const int p_what) {
         switch (p_what) {
@@ -70,13 +71,14 @@ namespace godot {
             return;
         }
         _is_dirty = true;
-        auto _do_reload = [this] {
-            _is_dirty = false;
-            if (const E3DModelInstanceManager *manager = _get_manager()) {
-                manager->reload_instance(this);
-            }
-        };
-        make_lambda_callable(_do_reload).call_deferred();
+        call_deferred("_deferred_reload");
+    }
+
+    void E3DModelInstance::_deferred_reload() {
+        _is_dirty = false;
+        if (const E3DModelInstanceManager *manager = _get_manager()) {
+            manager->reload_instance(this);
+        }
     }
 
     void E3DModelInstance::_instantiate_children(const Ref<E3DModel> &p_model) {
@@ -90,16 +92,16 @@ namespace godot {
             return;
         }
 
-        auto _do_instantiate = [this] {
-            _mutex->lock();
-            const Ref<E3DModel> model = _pending_model;
-            _pending_model_scheduled = false;
-            _mutex->unlock();
+        call_deferred("_flush_pending_model");
+    }
 
-            E3DNodesInstancer::instantiate(model, this, get_editable_in_editor());
-            emit_signal(E3D_LOADED_SIGNAL);
-        };
-        make_lambda_callable(_do_instantiate).call_deferred();
+    void E3DModelInstance::_flush_pending_model() {
+        _mutex->lock();
+        const Ref<E3DModel> model = _pending_model;
+        _pending_model_scheduled = false;
+        _mutex->unlock();
+
+        E3DNodesInstancer::instantiate(model, this, get_editable_in_editor());
+        emit_signal(E3D_LOADED_SIGNAL);
     }
 }//namespace godot
-

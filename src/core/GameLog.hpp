@@ -7,7 +7,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <map>
 
-#ifdef LIBMASZYNA_DEBUG_ENABLED
+#ifdef LIBMASZYNA_DEBUG
 #if defined(_MSC_VER)
 // MSVC doesn't require special handling.
 #define DEBUG(msg, ...)                                                                                                \

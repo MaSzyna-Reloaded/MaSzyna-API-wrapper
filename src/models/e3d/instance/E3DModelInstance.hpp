@@ -13,6 +13,8 @@ namespace godot {
         GDCLASS(E3DModelInstance, VisualInstance3D)
         private:
             void _reload();
+            void _deferred_reload();
+            void _flush_pending_model();
             E3DModelInstanceManager *_get_manager() const;
             bool _is_dirty = false;
             bool _pending_model_scheduled = false;

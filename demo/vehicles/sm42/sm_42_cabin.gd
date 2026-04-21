@@ -5,6 +5,6 @@ func _on_czuwak_blink(state):
     $Lights/CzuwakOmni2.enabled = state
     $Lights/CzuwakOmni3.enabled = state
     if state:
-        $AlerterLightOn.play()
+        $Sounds/AlerterLight.play("alerter_light")
     else:
-        $AlerterLightOff.play()
+        $Sounds/AlerterLight.stop("alerter_light")

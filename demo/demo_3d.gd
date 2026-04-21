@@ -2,6 +2,7 @@ extends Node3D
 
 @onready var world = $WorldEnvironment
 
+
 func _auto_user_settings_visibility():
     var game_dir = UserSettings.get_maszyna_game_dir()
     $UserSettingsPanel.visible = not game_dir or FileAccess.file_exists(game_dir)
@@ -14,8 +15,22 @@ func _update_render_settings():
     world3d.environment.ssao_enabled = UserSettings.get_setting("render", "ssao_enabled", true)
     world3d.environment.ssil_enabled = UserSettings.get_setting("render", "ssil_enabled", true)
     world3d.environment.ssr_enabled = UserSettings.get_setting("render", "ssr_enabled", true)
+    
+    var antialias_mode = UserSettings.get_setting("render", "antialias_mode")
+    match antialias_mode:
+        0:
+            viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+            viewport.use_taa = false
+        1:
+            viewport.use_taa = true
+            viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_DISABLED
+        2:
+            viewport.use_taa = false
+            viewport.screen_space_aa = Viewport.SCREEN_SPACE_AA_FXAA
+            
+        
     viewport.anisotropic_filtering_level = UserSettings.get_setting("render", "anisotropic_filtering_level", 2)
-    viewport.screen_space_aa = UserSettings.get_setting("render", "screen_space_aa", Viewport.SCREEN_SPACE_AA_FXAA)
+
     viewport.msaa_3d = UserSettings.get_setting("render", "msaa_3d", 2)
     viewport.fsr_sharpness = UserSettings.get_setting("render", "fsr_sharpness", 0.2)
     world3d.environment.glow_enabled = true

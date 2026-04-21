@@ -1,20 +1,25 @@
 [gd_scene format=3 uid="uid://bcxtf08c2yqx4"]
 
-[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
-[ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_liqvc"]
+[ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_clokw"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="3_vuhlb"]
+[ext_resource type="Script" uid="uid://uo24v0se8gsf" path="res://addons/gnd_sfx/sfx_player_3d.gd" id="4_n7ime"]
+[ext_resource type="Resource" uid="uid://wi3rnp4pryi0" path="res://vehicles/sm42/sm42_sound_bank.tres" id="5_liqvc"]
+[ext_resource type="Script" uid="uid://ba86u1wfkr52x" path="res://addons/libmaszyna/sound/train_sound_trigger.gd" id="6_clokw"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
-size = Vector3(4.5332, 4.72223, 17.0549)
+[sub_resource type="BoxShape3D" id="BoxShape3D_liqvc"]
+size = Vector3(4.0637207, 3.6567383, 12.690292)
 
-[node name="SM42-099" type="Node3D" unique_id=1967816975]
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
-script = ExtResource("1_iiqbf")
+[node name="SM42-099" type="Node3D" unique_id=1097141795]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
+script = ExtResource("1_liqvc")
 controller_path = NodePath("SM42v1")
-cabin_scene = ExtResource("2_htu7b")
+cabin_scene = ExtResource("2_clokw")
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
+metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="SM42v1" parent="." unique_id=111298649 instance=ExtResource("3_vuhlb")]
+mass = 174000.0
 
 [node name="SM42-099" type="E3DModelInstance" parent="." unique_id=853366110]
 data_path = "/dynamic/pkp/sm42_v1"
@@ -32,8 +37,8 @@ exclude_node_names = ["cien"]
 monitoring = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1381651767]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
-shape = SubResource("BoxShape3D_uljbo")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.3839112, 2.1833436, 0.27777177)
+shape = SubResource("BoxShape3D_liqvc")
 
 [node name="401W-1" type="E3DModelInstance" parent="." unique_id=1515864927]
 data_path = "/dynamic/pkp/401w_v2"
@@ -69,3 +74,48 @@ model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
 exclude_node_names = ["cien"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -14.1341)
+
+[node name="SfxPlayer3D" type="Node3D" parent="." unique_id=1646618549]
+transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, -0.058641274, 1.3523579, 0.6670667)
+script = ExtResource("4_n7ime")
+bank = ExtResource("5_liqvc")
+attenuation_model = 1
+unit_size = 20.0
+max_distance = 100
+playback_effect = &"horn1"
+playback_automation_value = 489.0
+metadata/_custom_type_script = "uid://uo24v0se8gsf"
+
+[node name="OilPump" type="Node" parent="SfxPlayer3D" unique_id=132705259]
+script = ExtResource("6_clokw")
+state_property = "oil_pump_active"
+sound_event = &"oil_pump"
+controller_path = NodePath("../../SM42v1")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Engine" type="Node" parent="SfxPlayer3D" unique_id=381118470]
+script = ExtResource("6_clokw")
+state_property = "engine_rpm"
+trigger_mode = 1
+trigger_threshold_min = 10.0
+trigger_threshold_max = 10000.0
+sound_event = &"engine"
+sound_parameter = &"rpm"
+controller_path = NodePath("../../SM42v1")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Horn1" type="Node" parent="SfxPlayer3D" unique_id=209300178]
+script = ExtResource("6_clokw")
+state_property = "horn"
+trigger_threshold_min = -1.0
+trigger_threshold_max = 0.0
+sound_event = &"horn1"
+controller_path = NodePath("../../SM42v1")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Horn2" type="Node" parent="SfxPlayer3D" unique_id=875255125]
+script = ExtResource("6_clokw")
+state_property = "horn"
+sound_event = &"horn2"
+controller_path = NodePath("../../SM42v1")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"

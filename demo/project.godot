@@ -36,7 +36,6 @@ UserSettings="*uid://dd2pj6a7hturn"
 
 [debug]
 
-settings/stdout/verbose_stdout=true
 file_logging/log_path="user://logs/app.log"
 
 [display]
@@ -44,9 +43,14 @@ file_logging/log_path="user://logs/app.log"
 window/size/mode=3
 window/size/initial_position_type=3
 
+[editor_overrides]
+
+text_editor/behavior/indent/type=1
+text_editor/behavior/indent/size=4
+
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
+enabled=PackedStringArray("res://addons/gnd_sfx/plugin.cfg", "res://addons/gnd_skydome/plugin.cfg", "res://addons/gnd_weather/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
 
 [input]
 
@@ -150,6 +154,16 @@ change_vehicle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194336,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+horn1={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":65,"physical_keycode":0,"key_label":0,"unicode":97,"location":0,"echo":false,"script":null)
+]
+}
+horn2={
+"deadzone": 0.2,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":83,"physical_keycode":0,"key_label":0,"unicode":115,"location":0,"echo":false,"script":null)
+]
+}
 
 [rendering]
 
@@ -164,4 +178,28 @@ anti_aliasing/quality/screen_space_aa=1
 sky_texture={
 "type": "sampler2D",
 "value": ""
+}
+gnd_wind_direction={
+"type": "vec2",
+"value": Vector2(0.8, 0.3)
+}
+gnd_wind_speed={
+"type": "float",
+"value": 1.0
+}
+gnd_wind_strength={
+"type": "float",
+"value": 4.0
+}
+gnd_wind_time={
+"type": "float",
+"value": 0.0
+}
+gnd_wind_turbulence={
+"type": "float",
+"value": 1.0
+}
+gnd_wind_pattern={
+"type": "sampler2D",
+"value": "res://grass/wind_pattern.png"
 }

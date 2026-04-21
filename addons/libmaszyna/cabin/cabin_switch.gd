@@ -193,6 +193,7 @@ func _handle_position_change(prev, current) -> int:
             _controller.send_command(command_set, current)
 
     if state_property and _controller:
-        return _controller.state.get(state_property, current)
+        var state_value = _controller.state.get(state_property, current)
+        return state_value
     else:
         return current

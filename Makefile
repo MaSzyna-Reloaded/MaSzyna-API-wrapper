@@ -126,4 +126,4 @@ docker-run-tests: docker-build-tests
 
 
 run-tests: compile
-	godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit
+	godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/,res://addons/gnd_sfx/tests/ -gexit

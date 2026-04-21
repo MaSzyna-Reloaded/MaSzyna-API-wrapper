@@ -175,6 +175,7 @@ func _process(delta):
         if _controller:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
 
+
 func _ready() -> void:
     _needs_head_display_update = true
     _dirty = true

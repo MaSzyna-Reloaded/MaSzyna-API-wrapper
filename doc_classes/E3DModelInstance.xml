@@ -49,7 +49,7 @@
 			Similar to [code]INSTANCER_NODES[/code], but specifically configures nodes to be editable within the Godot editor.
 		</constant>
 		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
-			Experimental instancer designed for higher performance with reduced node overhead.
+			Instancer that renders E3D submodels through [RenderingServer] directly instead of creating a child [Node3D] hierarchy.
 		</constant>
 	</constants>
 </class>

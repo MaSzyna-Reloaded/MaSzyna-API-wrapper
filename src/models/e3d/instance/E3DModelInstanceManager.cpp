@@ -81,7 +81,12 @@ namespace godot {
         const Ref<E3DModel> model = model_manager->load_model(instance->get_data_path(), instance->get_model_filename());
 
         switch (instance->get_instancer()) {
-            case E3DModelInstance::INSTANCER_NODES: {
+            case E3DModelInstance::INSTANCER_OPTIMIZED: {
+                UtilityFunctions::print_verbose("[E3DModelInstanceManager] Instantiating optimized E3D for ", instance->get_name());
+                instance->call_deferred("_instantiate_children", model);
+            } break;
+            case E3DModelInstance::INSTANCER_NODES:
+            case E3DModelInstance::INSTANCER_EDITABLE_NODES: {
                 UtilityFunctions::print_verbose("[E3DModelInstanceManager] Instantiating nodes for ", instance->get_name());
                 instance->call_deferred("_instantiate_children", model);
             } break;

@@ -1,4 +1,4 @@
-[gd_scene load_steps=54 format=3 uid="uid://do3s7mkbpv7es"]
+[gd_scene format=3 uid="uid://do3s7mkbpv7es"]
 
 [ext_resource type="Script" uid="uid://fi23qlrohins" path="res://vehicles/sm42/sm_42_cabin.gd" id="1_bffp8"]
 [ext_resource type="Script" uid="uid://cmmb3s07th3xp" path="res://addons/libmaszyna/sound/maszyna_audio_stream.gd" id="7_lbg33"]

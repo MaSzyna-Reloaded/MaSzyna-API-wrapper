@@ -3,6 +3,7 @@
 #include "models/e3d/E3DModel.hpp"
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 
 namespace godot {
@@ -20,6 +21,8 @@ namespace godot {
         public:
             static void cleanup();
             static Ref<Material> get_colored_material();
+            static void clear_children(E3DModelInstance *p_target_node);
+            static Ref<Material> resolve_submodel_material(const E3DModelInstance &p_target_node, const E3DSubModel &submodel);
             static void instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, bool editable = false);
     };
 } //namespace godot

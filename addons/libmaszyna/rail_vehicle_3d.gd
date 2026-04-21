@@ -144,16 +144,23 @@ func get_controller() -> LegacyRailVehicle:
         return null
 
 func _update_head_display():
-    if is_inside_tree():
-        if head_display_node_path:
-            var node:MeshInstance3D = get_node_or_null(head_display_node_path)
-            if node:
-                node.material_override = head_display_material
-                _needs_head_display_update = false
-            else:
-                _needs_head_display_update = false
-        else:
+    if not is_inside_tree():
+        return
+
+    if head_display_node_path:
+        var node: MeshInstance3D = get_node_or_null(head_display_node_path)
+        if node:
+            node.material_override = head_display_material
             _needs_head_display_update = false
+            return
+
+    if _head_display_e3d and head_display_node_path and head_display_material:
+        var path_text := String(head_display_node_path)
+        var path_parts := path_text.split("/")
+        if not path_parts.is_empty():
+            var submodel_name := path_parts[path_parts.size() - 1]
+            _head_display_e3d.set_submodel_material_override(submodel_name, head_display_material)
+    _needs_head_display_update = false
 
 
 func _process(delta):

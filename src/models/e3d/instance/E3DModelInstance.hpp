@@ -6,6 +6,11 @@
 
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/visual_instance3d.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/rid.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
+
+#include <vector>
 
 namespace godot {
     class E3DNodesInstancer; // forward declaration
@@ -16,10 +21,23 @@ namespace godot {
             void _deferred_reload();
             void _flush_pending_model();
             E3DModelInstanceManager *_get_manager() const;
+            RID _get_current_scenario() const;
+            void _clear_optimized_instances();
+            void _sync_optimized_instances();
+            void _apply_material_overrides_to_node(Node *node) const;
             bool _is_dirty = false;
             bool _pending_model_scheduled = false;
             Ref<Mutex> _mutex;
             Ref<E3DModel> _pending_model;
+            Ref<E3DModel> _loaded_model;
+            Dictionary _submodel_material_overrides;
+            struct OptimizedInstanceRecord {
+                RID instance_rid;
+                Transform3D local_transform;
+                bool visible;
+                String name;
+            };
+            std::vector<OptimizedInstanceRecord> _optimized_instances;
         protected:
             static void _bind_methods();
         public:
@@ -41,10 +59,14 @@ namespace godot {
             MAKE_MEMBER_OBSERVABLE_GS(Array, skins);
             MAKE_MEMBER_OBSERVABLE_GS(Array, exclude_node_names);
             MAKE_MEMBER_OBSERVABLE_GS_NR(Instancer, instancer)
-            MAKE_MEMBER_OBSERVABLE_GS(AABB, submodels_aabb)
+            MAKE_MEMBER_GS(AABB, submodels_aabb, AABB())
             MAKE_MEMBER_OBSERVABLE_GS(bool, editable_in_editor)
             
+            AABB _get_aabb() const override;
             void _instantiate_children(const Ref<E3DModel> &p_model);
+            void set_submodel_material_override(const String &submodel_name, const Ref<Material> &material);
+            Ref<Material> get_submodel_material_override(const String &submodel_name) const;
+            void clear_submodel_material_override(const String &submodel_name);
     };
 } //namespace godot
 

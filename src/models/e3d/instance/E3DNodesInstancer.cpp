@@ -66,8 +66,7 @@ namespace godot {
             child->set_transform(submodel->get_transform());
 
             if ((Engine::get_singleton() != nullptr) && Engine::get_singleton()->is_editor_hint()) {
-                if (Node *owner = editable ? p_target_node.get_owner() : nullptr;
-                    owner != nullptr) {
+                if (Node *owner = p_target_node.get_owner(); owner != nullptr) {
                     child->set_owner(owner);
                 }
             }
@@ -80,15 +79,23 @@ namespace godot {
 
     void E3DNodesInstancer::_update_submodel_material(
             const E3DModelInstance &p_target_node, Node3D &subnode, const E3DSubModel &submodel) {
-        const String unprefixed_model_path = String("/").join(p_target_node.get_data_path().split("/").slice(1));
         MeshInstance3D *mesh_instance = cast_to<MeshInstance3D>(&subnode);
         if (mesh_instance == nullptr) {
             return;
         }
 
+        const Ref<Material> mat = resolve_submodel_material(p_target_node, submodel);
+        if (mat.is_valid()) {
+            mesh_instance->set_surface_override_material(0, mat);
+        }
+    }
+
+    Ref<Material> E3DNodesInstancer::resolve_submodel_material(
+            const E3DModelInstance &p_target_node, const E3DSubModel &submodel) {
+        const String unprefixed_model_path = String("/").join(p_target_node.get_data_path().split("/").slice(1));
         MaterialManager *mm = cast_to<MaterialManager>(Engine::get_singleton()->get_singleton("MaterialManager"));
         if (mm == nullptr) {
-            return;
+            return Ref<Material>();
         }
 
         String material_name = submodel.get_material_name();
@@ -117,9 +124,7 @@ namespace godot {
             mat = mm->get_material(unprefixed_model_path, material_name, transparency, false, submodel.get_diffuse_color());
         }
 
-        if (mat.is_valid()) {
-            mesh_instance->set_surface_override_material(0, mat);
-        }
+        return mat;
     }
 
     void E3DNodesInstancer::_bind_methods() {
@@ -144,7 +149,7 @@ namespace godot {
         return _colored_material;
     }
 
-    void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
+    void E3DNodesInstancer::clear_children(E3DModelInstance *p_target_node) {
         if (p_target_node == nullptr) {
             return;
         }
@@ -159,6 +164,10 @@ namespace godot {
             p_target_node->remove_child(child);
             child->queue_free();
         }
+    }
+
+    void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool editable) {
+        clear_children(p_target_node);
 
         if (p_model.is_valid()) {
             _do_add_submodels(*p_target_node, p_target_node, p_model->get_submodels(), editable);

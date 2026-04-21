@@ -36,6 +36,7 @@ namespace godot {
 
             void register_command(const String &train_id, const String &command, const Callable &callback);
             void unregister_command(const String &train_id, const String &command, const Callable &callback);
+            void refresh_train_commands(const String &train_id);
             Array get_supported_commands();
             Array get_registered_trains();
             void send_command(

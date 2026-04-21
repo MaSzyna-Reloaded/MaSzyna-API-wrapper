@@ -2,7 +2,7 @@ extends AudioStreamPlayer3D
 class_name TrainSound3D
 
 @export var state_property = ""
-@export_node_path("TrainController") var controller_path = NodePath(""):
+@export_node_path("RailVehicle3D") var controller_path = NodePath(""):
     set(x):
         controller_path = x
         _dirty = true

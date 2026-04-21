@@ -17,12 +17,14 @@ namespace godot {
             void refresh_runtime_signals();
 
         protected:
-            void _notification(int p_what);
             void _notification_after_mover_ready() override;
             bool can_host_commands() const override;
             String get_command_target_id() const override;
             void _do_update_internal_mover(TMoverParameters *mover) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
+            void _enter_tree() override;
+            void _exit_tree() override;
+            void _process(double delta) override;
 
         public:
             enum TrainPowerSource {
@@ -50,7 +52,6 @@ namespace godot {
             static const char *RADIO_TOGGLED;
             static const char *RADIO_CHANNEL_CHANGED;
 
-            void _process(double delta) override;
             const std::map<TrainPowerSource, TPowerSource> power_source_map = {
                     {POWER_SOURCE_NOT_DEFINED, TPowerSource::NotDefined},
                     {POWER_SOURCE_INTERNAL, TPowerSource::InternalSource},
@@ -103,6 +104,8 @@ namespace godot {
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void register_command(const String &command, const Callable &callable);
             void unregister_command(const String &command, const Callable &callable);
+            Dictionary get_supported_commands() override;
+            void refresh_command_registry();
 
             static void _bind_methods();
 

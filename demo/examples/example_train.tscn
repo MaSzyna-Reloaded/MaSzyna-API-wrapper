@@ -1,7 +1,15 @@
-[gd_scene format=3 uid="uid://clt6kosjdfdfx"]
+[gd_scene format=3]
 
-[node name="ExampleTrain" type="TrainController"]
+[sub_resource type="TrainBrake" id="TrainBrake_brake"]
+resource_name = "Brake"
+
+[sub_resource type="TrainController" id="TrainController_example"]
+resource_name = "ExampleTrainController"
 train_id = "exampletrain"
+modules = Array[LegacyRailVehicleModule]([SubResource("TrainBrake_brake")])
 
-[node name="Brake" type="TrainBrake" parent="."]
-process_priority = 1
+[ext_resource type="Script" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
+
+[node name="ExampleTrain" type="Node3D"]
+script = ExtResource("1_train3d")
+controller = SubResource("TrainController_example")

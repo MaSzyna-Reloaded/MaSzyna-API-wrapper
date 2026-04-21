@@ -70,7 +70,7 @@ func _couple_consist() -> void:
                 continue
             print(
                 "TrainSet3D: coupling %s(BACK) -> %s(FRONT)" %
-                [previous_controller.name, controller.name]
+                [previous_controller.get_name(), controller.get_name()]
             )
             previous_controller.couple_back(controller, RailVehicle.FRONT)
 

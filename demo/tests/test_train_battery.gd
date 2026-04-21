@@ -1,11 +1,11 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: Train3D
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    train.battery_voltage = 110.0
+    train = load("res://tests/sm42_controller.tscn").instantiate()
+    train.controller.train_id = "TestTrain"
+    train.controller.battery_voltage = 110.0
     add_child(train)
 
 func after_each():
@@ -27,7 +27,7 @@ func test_not_enabling_battery_when_battery_voltage_is_zero():
     #
     # This is not how tests should be written, but it shows how to handle similar cases.
 
-    train.battery_voltage = 0.0
+    train.get_controller().battery_voltage = 0.0
     await wait_idle_frames(2)
 
     train.send_command("battery", true)

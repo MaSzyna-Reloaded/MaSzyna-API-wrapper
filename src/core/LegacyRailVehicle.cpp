@@ -1,6 +1,5 @@
 #include "../core/GameLog.hpp"
 #include "../core/LegacyRailVehicle.hpp"
-#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -133,36 +132,21 @@ namespace godot {
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
-    void LegacyRailVehicle::_notification(int p_what) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
+    void LegacyRailVehicle::_enter_tree() {}
 
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE:
-                set_process(true);
-                break;
-            case NOTIFICATION_READY:
-                initialize_mover();
-                update_state();
-                _notification_after_mover_ready();
-                break;
-            case NOTIFICATION_EXIT_TREE:
-                set_process(false);
-                if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
-                    track_manager->remove_vehicle(this);
-                }
-                break;
-            default:
-                break;
+    void LegacyRailVehicle::_ready() {
+        initialize_mover();
+        update_state();
+        _notification_after_mover_ready();
+    }
+
+    void LegacyRailVehicle::_exit_tree() {
+        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
+            track_manager->remove_vehicle(this);
         }
     }
 
     void LegacyRailVehicle::_process(const double delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
         _update_mover_config_if_dirty();
         _process_mover(delta);
     }
@@ -367,6 +351,14 @@ namespace godot {
 
         if (!other_legacy) {
             GameLog::get_instance()->error("Cannot sync mover coupling. Other vehicle is not a LegacyRailVehicle.");
+            return;
+        }
+        if (mover == nullptr) {
+            GameLog::get_instance()->error("Cannot sync mover coupling. Self mover is not initialized.");
+            return;
+        }
+        if (other_legacy->get_mover() == nullptr) {
+            GameLog::get_instance()->error("Cannot sync mover coupling. Other mover is not initialized.");
             return;
         }
         const int self_end = to_mover_end(self_side);

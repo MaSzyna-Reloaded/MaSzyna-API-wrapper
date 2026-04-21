@@ -2,11 +2,11 @@ extends Control
 
 var _t:float = 0.0
 
-@onready var train = $SM42
-@onready var brake = $SM42/Brake
-@onready var engine = $SM42/StonkaDieselEngine
-@onready var security = $SM42/TrainSecuritySystem
-@onready var doors = $SM42/TrainDoors
+@onready var train: Train3D = $"SM42/SM42-099"
+@onready var brake = train.find_module("Brake")
+@onready var engine = train.find_module("StonkaDieselEngine")
+@onready var security = train.find_module("TrainSecuritySystem")
+@onready var doors = train.find_module("TrainDoors")
 @onready var battery_progress_bar = $%BatteryProgressBar
 
 @onready var FORWARD = $UI/MoverSwitches/General/HBoxContainer2/Forward
@@ -26,7 +26,7 @@ const loglevel_names = {
     }
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-    $%TrainName.text = "%s (type: %s)" % [train.name, train.type_name]
+    $%TrainName.text = "%s (type: %s)" % [train.get_name(), train.type_name]
     GameLog.log_updated.connect(print_log_entry_to_godot_console)
 
 
@@ -92,4 +92,4 @@ func _on_forward_button_up():
     train.send_command("direction_increase")
 
 func _on_sm_42_mover_initialized():
-    print("Mover initialized. Train config: ", $SM42.config)
+    print("Mover initialized. Train config: ", train.config)

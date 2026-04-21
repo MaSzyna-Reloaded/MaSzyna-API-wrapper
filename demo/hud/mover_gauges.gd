@@ -1,6 +1,6 @@
 extends HFlowContainer
 
-@export_node_path("TrainController") var train_controller:NodePath = NodePath(""):
+@export_node_path("Train3D") var train_controller:NodePath = NodePath(""):
     set(x):
         if not train_controller == x:
             train_controller = x
@@ -10,20 +10,20 @@ extends HFlowContainer
 @onready var LeftDoorsOpenLight = $VBoxContainer/HBoxContainer2/LeftDoorsOpenLight
 @onready var RightDoorsOpenLight = $VBoxContainer/HBoxContainer2/RightDoorsOpenLight
 
-var controller:TrainController
+var controller:Train3D
 
 func _do_update():
     if train_controller:
-        controller = get_node(train_controller)
+        controller = get_node_or_null(train_controller)
     _propagate_train_controller(self, controller)
     modulate = Color.WHITE
     modulate.a = 1.0 if controller else 0.1
 
-func _propagate_train_controller(node: Node, controller: TrainController):
+func _propagate_train_controller(node: Node, controller: Train3D):
     for child in node.get_children():
         _propagate_train_controller(child, controller)
         if "controller" in child:
-            child.controller = child.get_path_to(controller)
+            child.controller = child.get_path_to(controller) if controller else NodePath("")
 
 func _ready():
     _do_update()

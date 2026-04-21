@@ -17,10 +17,10 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            bool _commands_registered = false;
+            Dictionary command_registry;
+            bool collecting_commands = false;
 
         protected:
-            void _notification(int p_what);
             bool enabled = true;
             bool enabled_changed = false;
             TrainController *train_controller_node = nullptr;
@@ -50,10 +50,12 @@ namespace godot {
 
             virtual void _register_commands();
             virtual void _unregister_commands();
+            void _enter_tree() override;
+            void _exit_tree() override;
 
         public:
             ~TrainPart() override = default;
-            void _process(double delta) override;
+            void process(double delta) override;
 
             void register_command(const String &command, const Callable &callback);
             void unregister_command(const String &command, const Callable &callback);
@@ -67,6 +69,7 @@ namespace godot {
 
             void set_enabled(bool p_value);
             bool get_enabled();
+            Dictionary get_supported_commands() override;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),

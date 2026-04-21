@@ -4,20 +4,24 @@
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
 
 namespace godot {
     class LegacyRailVehicleModule;
     class TrainSet;
-    class RailVehicle : public Node {
-            GDCLASS(RailVehicle, Node);
+    class RailVehicle : public Resource {
+            GDCLASS(RailVehicle, Resource);
 
         protected:
             static void _bind_methods();
             Ref<TrainSet> trainset;
             bool _dirty = false;
             bool _dirty_prop = false;
+            Array modules;
+            Node *runtime_host = nullptr;
+            bool runtime_initialized = false;
 
         public:
             String id;
@@ -32,6 +36,11 @@ namespace godot {
         protected:
             virtual void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
+            virtual void _enter_tree();
+            virtual void _ready();
+            virtual void _exit_tree();
+            virtual void _process(double delta);
+            virtual void _physics_process(double delta);
 
         public:
             RailVehicle();
@@ -52,6 +61,15 @@ namespace godot {
             RailVehicle *get_back_vehicle() const;
             Array get_rail_vehicle_modules() const;
             Ref<TrainSet> get_trainset() const;
+            void set_modules(const Array &p_modules);
+            Array get_modules() const;
+            virtual Dictionary get_supported_commands();
+            void enter_tree(Node *p_host);
+            void ready();
+            void exit_tree();
+            void process(double delta);
+            void physics_process(double delta);
+            Node *get_runtime_host() const;
 
             RailVehicle *decouple(int relative_index);
             RailVehicle *uncouple_front();

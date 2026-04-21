@@ -12,11 +12,9 @@ func _ready() -> void:
             _player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed)
 
 func _on_controlled_vehicle_changed():
-    var controller:TrainController
-    if _player.controlled_vehicle and _player.controlled_vehicle.controller_path:
-        controller = _player.controlled_vehicle.get_controller()
-        $MoverSwitches.train_controller = $MoverSwitches.get_path_to(controller)
-        $Gauges.train_controller = $Gauges.get_path_to(controller)
+    if _player.controlled_vehicle is Train3D:
+        $MoverSwitches.train_controller = $MoverSwitches.get_path_to(_player.controlled_vehicle)
+        $Gauges.train_controller = $Gauges.get_path_to(_player.controlled_vehicle)
     else:
         $MoverSwitches.train_controller = NodePath("")
         $Gauges.train_controller = NodePath("")

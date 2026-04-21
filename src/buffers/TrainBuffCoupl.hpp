@@ -9,13 +9,17 @@ namespace godot {
             GDCLASS(TrainBuffCoupl, LegacyBufferCouplerModule);
         private:
             TrainController *train_controller_node = nullptr;
+            Dictionary command_registry;
+            bool collecting_commands = false;
             static void _bind_methods();
         protected:
-            void _notification(int p_what);
+            void _enter_tree() override;
+            void _exit_tree() override;
             void _register_commands();
             void _unregister_commands();
         public:
             void couple();
             void decouple();
+            Dictionary get_supported_commands() override;
     };
 } //namespace godot

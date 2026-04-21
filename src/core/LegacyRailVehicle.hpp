@@ -35,9 +35,12 @@ namespace godot {
             static int to_mover_end(Side side);
 
         protected:
-            void _notification(int p_what);
             void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
+            void _enter_tree() override;
+            void _ready() override;
+            void _exit_tree() override;
+            void _process(double delta) override;
 
             virtual void _do_update_internal_mover(TMoverParameters *mover) const;
             virtual void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;
@@ -50,7 +53,6 @@ namespace godot {
 
         public:
             ~LegacyRailVehicle() override;
-            void _process(double delta) override;
 
             static const char *MOVER_CONFIG_CHANGED_SIGNAL;
             static const char *MOVER_INITIALIZED_SIGNAL;

@@ -1,11 +1,11 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: Train3D
 
 func before_each():
     train = load("res://tests/sm42_controller.tscn").instantiate()
-    train.train_id = "TestTrain"
-    train.battery_voltage = 110.0
+    train.controller.train_id = "TestTrain"
+    train.controller.battery_voltage = 110.0
     add_child(train)
     await wait_idle_frames(2)
 

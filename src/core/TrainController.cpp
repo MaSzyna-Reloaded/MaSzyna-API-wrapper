@@ -1,6 +1,6 @@
 #include "../core/TrainController.hpp"
+#include "../core/LegacyRailVehicleModule.hpp"
 #include "../core/TrainSystem.hpp"
-#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/math.hpp>
 
 namespace godot {
@@ -18,6 +18,8 @@ namespace godot {
                 DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainController::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
+        ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainController::get_supported_commands);
+        ClassDB::bind_method(D_METHOD("refresh_command_registry"), &TrainController::refresh_command_registry);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
         ClassDB::bind_method(D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("main_controller_decrease", "step"), &TrainController::main_controller_decrease, DEFVAL(1));
@@ -118,48 +120,17 @@ namespace godot {
         }
     }
 
-    void TrainController::_notification(int p_what) {
-        LegacyRailVehicle::_notification(p_what);
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
+    void TrainController::_enter_tree() {
+        LegacyRailVehicle::_enter_tree();
+        TrainSystem::get_instance()->register_train(train_id, this);
+    }
 
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE:
-                TrainSystem::get_instance()->register_train(train_id, this);
-                register_command("battery", Callable(this, "battery"));
-                register_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                register_command("direction_increase", Callable(this, "direction_increase"));
-                register_command("direction_decrease", Callable(this, "direction_decrease"));
-                register_command("decouple", Callable(this, "decouple"));
-                register_command("radio", Callable(this, "radio"));
-                register_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                break;
-            case NOTIFICATION_EXIT_TREE:
-                unregister_command("battery", Callable(this, "battery"));
-                unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                unregister_command("direction_increase", Callable(this, "direction_increase"));
-                unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-                unregister_command("decouple", Callable(this, "decouple"));
-                unregister_command("radio", Callable(this, "radio"));
-                unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                TrainSystem::get_instance()->unregister_train(train_id);
-                break;
-            default:
-                break;
-        }
+    void TrainController::_exit_tree() {
+        TrainSystem::get_instance()->unregister_train(train_id);
+        LegacyRailVehicle::_exit_tree();
     }
 
     void TrainController::_process(const double delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
         LegacyRailVehicle::_process(delta);
         refresh_runtime_signals();
     }
@@ -174,6 +145,46 @@ namespace godot {
 
     void TrainController::unregister_command(const String &command, const Callable &callable) {
         TrainSystem::get_instance()->unregister_command(train_id, command, callable);
+    }
+
+    Dictionary TrainController::get_supported_commands() {
+        Dictionary commands;
+        commands["battery"] = Callable(this, "battery");
+        commands["main_controller_increase"] = Callable(this, "main_controller_increase");
+        commands["main_controller_decrease"] = Callable(this, "main_controller_decrease");
+        commands["direction_increase"] = Callable(this, "direction_increase");
+        commands["direction_decrease"] = Callable(this, "direction_decrease");
+        commands["decouple"] = Callable(this, "decouple");
+        commands["radio"] = Callable(this, "radio");
+        commands["radio_channel_set"] = Callable(this, "radio_channel_set");
+        commands["radio_channel_increase"] = Callable(this, "radio_channel_increase");
+        commands["radio_channel_decrease"] = Callable(this, "radio_channel_decrease");
+
+        const Array vehicle_modules = get_rail_vehicle_modules();
+        for (int index = 0; index < vehicle_modules.size(); ++index) {
+            auto *module = Object::cast_to<LegacyRailVehicleModule>(vehicle_modules[index]);
+            if (module == nullptr) {
+                continue;
+            }
+
+            const Dictionary module_commands = module->get_supported_commands();
+            const Array keys = module_commands.keys();
+            for (int key_index = 0; key_index < keys.size(); ++key_index) {
+                const String command_name = keys[key_index];
+                if (commands.has(command_name)) {
+                    TrainSystem::get_instance()->log(
+                            train_id, GameLog::LogLevel::ERROR, "Duplicate command ignored: " + command_name);
+                    continue;
+                }
+                commands[command_name] = module_commands[command_name];
+            }
+        }
+
+        return commands;
+    }
+
+    void TrainController::refresh_command_registry() {
+        TrainSystem::get_instance()->refresh_train_commands(train_id);
     }
 
     void TrainController::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {

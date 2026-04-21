@@ -1,6 +1,6 @@
 [gd_scene load_steps=12 format=3 uid="uid://b2gqnpyxsbpkv"]
 
-[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="1_b8jw8"]
+[ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="1_b8jw8"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="1_ebs3d"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_o1540"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_x8lk3"]
@@ -60,7 +60,7 @@ adjustment_enabled = true
 [node name="SM42v1" parent="." instance=ExtResource("1_b8jw8")]
 
 [node name="SM42Cabin" parent="." instance=ExtResource("8_1ye4a")]
-controller_path = NodePath("../SM42v1")
+controller_path = NodePath("../SM42v1/SM42-099")
 
 [node name="Buda" type="VisualInstance3D" parent="."]
 _import_path = NodePath("")

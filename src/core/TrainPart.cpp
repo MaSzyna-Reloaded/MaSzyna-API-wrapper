@@ -1,8 +1,6 @@
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -58,65 +56,39 @@ namespace godot {
     }
 
     void TrainPart::register_command(const String &command, const Callable &callback) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), command, callback);
-        } else {
-            log_debug("Cannot register command " + command + ": no train_controller_node!");
+        if (collecting_commands) {
+            command_registry[command] = callback;
+            return;
         }
+
+        log_debug("TrainPart::register_command() outside of command collection: " + command);
     }
 
     void TrainPart::unregister_command(const String &command, const Callable &callback) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), command, callback);
-        } else {
-            log_debug("Cannot unregister command " + command + ": no train_controller_node!");
+        if (collecting_commands && command_registry.has(command)) {
+            command_registry.erase(command);
+            return;
         }
+
+        log_debug("TrainPart::unregister_command() outside of command collection: " + command);
     }
 
     void TrainPart::emit_config_changed_signal() {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_notification(int what) {
-        LegacyRailVehicleModule::_notification(what);
-
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        switch (what) {
-            case NOTIFICATION_ENTER_TREE: {
-                Node *parent = get_parent();
-                while (parent != nullptr) {
-                    train_controller_node = Object::cast_to<TrainController>(parent);
-                    if (train_controller_node != nullptr) {
-                        break;
-                    }
-                    parent = parent->get_parent();
-                }
-
-                if (enabled) {
-                    _register_commands();
-                    _commands_registered = true;
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE: {
-                if (enabled) {
-                    _unregister_commands();
-                    _commands_registered = false;
-                }
-
-                train_controller_node = nullptr;
-            } break;
-            default:
-                break;
-        }
+    void TrainPart::_enter_tree() {
+        LegacyRailVehicleModule::_enter_tree();
+        train_controller_node = Object::cast_to<TrainController>(get_legacy_rail_vehicle_node());
     }
 
-    void TrainPart::_process(const double delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
+    void TrainPart::_exit_tree() {
+        train_controller_node = nullptr;
+        LegacyRailVehicleModule::_exit_tree();
+    }
+
+    void TrainPart::process(const double delta) {
+        LegacyRailVehicleModule::process(delta);
 
         if (_dirty) {
             update_mover();
@@ -129,14 +101,8 @@ namespace godot {
 
         if (enabled_changed) {
             enabled_changed = false;
-            if (enabled && !_commands_registered) {
-                log_debug("Registering commands for train part " + get_name());
-                _register_commands();
-                _commands_registered = true;
-            } else if (!enabled && _commands_registered) {
-                log_debug("Unregistering commands for train part " + get_name());
-                _unregister_commands();
-                _commands_registered = false;
+            if (train_controller_node != nullptr) {
+                train_controller_node->refresh_command_registry();
             }
             emit_signal("enable_changed", enabled);
             emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
@@ -165,6 +131,16 @@ namespace godot {
 
     void TrainPart::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
         TrainSystem::get_instance()->broadcast_command(command, p1, p2);
+    }
+
+    Dictionary TrainPart::get_supported_commands() {
+        command_registry.clear();
+        collecting_commands = true;
+        if (enabled) {
+            _register_commands();
+        }
+        collecting_commands = false;
+        return command_registry;
     }
 
 } // namespace godot

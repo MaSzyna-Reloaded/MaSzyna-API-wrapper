@@ -136,7 +136,8 @@ func _process_dirty(delta):
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
     if controller_path and not _controller:
-        _controller = get_node_or_null(controller_path)
+        var vehicle := get_node_or_null(controller_path) as RailVehicle3D
+        _controller = vehicle.get_controller() if vehicle else null
 
 func _process_tool(delta):
     _t += delta

@@ -25,6 +25,7 @@ namespace godot {
                 D_METHOD("register_command", "train_id", "command", "callable"), &TrainSystem::register_command);
         ClassDB::bind_method(
                 D_METHOD("unregister_command", "train_id", "command", "callable"), &TrainSystem::unregister_command);
+        ClassDB::bind_method(D_METHOD("refresh_train_commands", "train_id"), &TrainSystem::refresh_train_commands);
         ClassDB::bind_method(D_METHOD("get_train_state", "train_id"), &TrainSystem::get_train_state);
         ClassDB::bind_method(D_METHOD("log", "train_id", "loglevel", "line"), &TrainSystem::log);
     }
@@ -96,6 +97,7 @@ namespace godot {
             log(train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[train_id] = train;
+            refresh_train_commands(train_id);
             log(train_id, GameLog::DEBUG, "Registered train");
         }
     }
@@ -119,6 +121,7 @@ namespace godot {
 
         Dictionary _trains = commands[command];
         _trains[train_id] = callback;
+        commands[command] = _trains;
     }
 
     void TrainSystem::unregister_command(const String &train_id, const String &command, const Callable &callback) {
@@ -140,6 +143,8 @@ namespace godot {
             _trains.erase(train_id);
             if (_trains.size() == 0) {
                 commands.erase(command);
+            } else {
+                commands[command] = _trains;
             }
         }
     }
@@ -170,6 +175,35 @@ namespace godot {
 
         trains.erase(train_id);
         DEBUG("Unregistered train %s", train_id);
+    }
+
+    void TrainSystem::refresh_train_commands(const String &train_id) {
+        const std::map<String, TrainController *>::iterator it = trains.find(train_id);
+        if (it == trains.end()) {
+            log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
+            return;
+        }
+
+        Array command_keys = commands.keys();
+        for (int i = 0; i < command_keys.size(); ++i) {
+            const String command = command_keys[i];
+            Dictionary command_trains = commands[command];
+            if (command_trains.has(train_id)) {
+                command_trains.erase(train_id);
+            }
+            if (command_trains.is_empty()) {
+                commands.erase(command);
+            } else {
+                commands[command] = command_trains;
+            }
+        }
+
+        const Dictionary supported_commands = it->second->get_supported_commands();
+        const Array keys = supported_commands.keys();
+        for (int i = 0; i < keys.size(); ++i) {
+            const String command_name = keys[i];
+            register_command(train_id, command_name, supported_commands[command_name]);
+        }
     }
 
     bool TrainSystem::is_command_supported(const String &command) {

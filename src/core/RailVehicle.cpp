@@ -13,6 +13,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_front_vehicle"), &RailVehicle::get_front_vehicle);
         ClassDB::bind_method(D_METHOD("get_back_vehicle"), &RailVehicle::get_back_vehicle);
         ClassDB::bind_method(D_METHOD("get_rail_vehicle_modules"), &RailVehicle::get_rail_vehicle_modules);
+        ClassDB::bind_method(D_METHOD("set_modules", "modules"), &RailVehicle::set_modules);
+        ClassDB::bind_method(D_METHOD("get_modules"), &RailVehicle::get_modules);
+        ClassDB::bind_method(D_METHOD("get_supported_commands"), &RailVehicle::get_supported_commands);
+        ClassDB::bind_method(D_METHOD("enter_tree", "host"), &RailVehicle::enter_tree);
+        ClassDB::bind_method(D_METHOD("ready"), &RailVehicle::ready);
+        ClassDB::bind_method(D_METHOD("exit_tree"), &RailVehicle::exit_tree);
+        ClassDB::bind_method(D_METHOD("process", "delta"), &RailVehicle::process);
+        ClassDB::bind_method(D_METHOD("physics_process", "delta"), &RailVehicle::physics_process);
         ClassDB::bind_method(D_METHOD("decouple", "relative_index"), &RailVehicle::decouple);
         ClassDB::bind_method(D_METHOD("uncouple_front"), &RailVehicle::uncouple_front);
         ClassDB::bind_method(D_METHOD("uncouple_back"), &RailVehicle::uncouple_back);
@@ -42,6 +50,12 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "length"), "set_length", "get_length");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "width"), "set_width", "get_width");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "height"), "set_height", "get_height");
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::ARRAY, "modules", PROPERTY_HINT_ARRAY_TYPE,
+                        String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":LegacyRailVehicleModule",
+                        PROPERTY_USAGE_DEFAULT, "Array[LegacyRailVehicleModule]"),
+                "set_modules", "get_modules");
 
         BIND_ENUM_CONSTANT(FRONT);
         BIND_ENUM_CONSTANT(BACK);
@@ -61,6 +75,16 @@ namespace godot {
     String RailVehicle::_to_string() const {
         return String("<RailVehicle({0})>").format(Array::make(get_name()));
     }
+
+    void RailVehicle::_enter_tree() {}
+
+    void RailVehicle::_ready() {}
+
+    void RailVehicle::_exit_tree() {}
+
+    void RailVehicle::_process(const double delta) {}
+
+    void RailVehicle::_physics_process(const double delta) {}
 
     void RailVehicle::couple(RailVehicle *other_vehicle, Side self_side, Side other_side) {
         if (self_side == Side::FRONT && other_side == Side::BACK) {
@@ -103,14 +127,79 @@ namespace godot {
     }
 
     Array RailVehicle::get_rail_vehicle_modules() const {
-        Array modules;
-        const int child_count = get_child_count();
-        for (int i = 0; i < child_count; ++i) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(get_child(i)); module != nullptr) {
-                modules.append(module);
+        return modules;
+    }
+
+    void RailVehicle::set_modules(const Array &p_modules) {
+        modules = p_modules;
+        _dirty = true;
+    }
+
+    Array RailVehicle::get_modules() const {
+        return modules;
+    }
+
+    Dictionary RailVehicle::get_supported_commands() {
+        return {};
+    }
+
+    void RailVehicle::enter_tree(Node *p_host) {
+        runtime_host = p_host;
+        runtime_initialized = false;
+
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                module->enter_tree(this, p_host);
             }
         }
-        return modules;
+
+        _enter_tree();
+    }
+
+    void RailVehicle::ready() {
+        if (runtime_initialized) {
+            return;
+        }
+
+        runtime_initialized = true;
+        _ready();
+
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                module->ready();
+            }
+        }
+    }
+
+    void RailVehicle::exit_tree() {
+        _exit_tree();
+
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                module->exit_tree();
+            }
+        }
+
+        runtime_host = nullptr;
+        runtime_initialized = false;
+    }
+
+    void RailVehicle::process(const double delta) {
+        _process(delta);
+
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                module->process(delta);
+            }
+        }
+    }
+
+    void RailVehicle::physics_process(const double delta) {
+        _physics_process(delta);
+    }
+
+    Node *RailVehicle::get_runtime_host() const {
+        return runtime_host;
     }
 
     RailVehicle *RailVehicle::decouple(const int relative_index) {

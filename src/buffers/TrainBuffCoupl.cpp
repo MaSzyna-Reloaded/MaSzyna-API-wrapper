@@ -1,66 +1,36 @@
 #include "TrainBuffCoupl.hpp"
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/node.hpp>
-
 namespace godot {
     void TrainBuffCoupl::_bind_methods() {
         ClassDB::bind_method(D_METHOD("couple"), &TrainBuffCoupl::couple);
         ClassDB::bind_method(D_METHOD("decouple"), &TrainBuffCoupl::decouple);
     }
 
-    void TrainBuffCoupl::_notification(int p_what) {
-        LegacyBufferCouplerModule::_notification(p_what);
+    void TrainBuffCoupl::_enter_tree() {
+        LegacyBufferCouplerModule::_enter_tree();
+        train_controller_node = Object::cast_to<TrainController>(get_legacy_rail_vehicle_node());
+    }
 
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE: {
-                Node *parent = get_parent();
-                while (parent != nullptr) {
-                    train_controller_node = Object::cast_to<TrainController>(parent);
-                    if (train_controller_node != nullptr) {
-                        break;
-                    }
-                    parent = parent->get_parent();
-                }
-
-                if (train_controller_node != nullptr) {
-                    _register_commands();
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE: {
-                if (train_controller_node != nullptr) {
-                    _unregister_commands();
-                }
-                train_controller_node = nullptr;
-            } break;
-            default:
-                break;
-        }
+    void TrainBuffCoupl::_exit_tree() {
+        train_controller_node = nullptr;
+        LegacyBufferCouplerModule::_exit_tree();
     }
 
     void TrainBuffCoupl::_register_commands() {
-        if (train_controller_node == nullptr) {
-            return;
-        }
-
-        TrainSystem::get_instance()->register_command(
-                train_controller_node->get_train_id(), "buffer_couple", Callable(this, "couple"));
-        TrainSystem::get_instance()->register_command(
-                train_controller_node->get_train_id(), "buffer_decouple", Callable(this, "decouple"));
+        command_registry["buffer_couple"] = Callable(this, "couple");
+        command_registry["buffer_decouple"] = Callable(this, "decouple");
     }
 
     void TrainBuffCoupl::_unregister_commands() {
-        if (train_controller_node == nullptr) {
-            return;
-        }
+        command_registry.erase("buffer_couple");
+        command_registry.erase("buffer_decouple");
+    }
 
-        TrainSystem::get_instance()->unregister_command(
-                train_controller_node->get_train_id(), "buffer_couple", Callable(this, "couple"));
-        TrainSystem::get_instance()->unregister_command(
-                train_controller_node->get_train_id(), "buffer_decouple", Callable(this, "decouple"));
+    Dictionary TrainBuffCoupl::get_supported_commands() {
+        command_registry.clear();
+        collecting_commands = true;
+        _register_commands();
+        collecting_commands = false;
+        return command_registry;
     }
 
     void TrainBuffCoupl::couple() {

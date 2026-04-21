@@ -1,10 +1,11 @@
 [gd_scene format=3 uid="uid://bcxtf08c2yqx4"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_iiqbf"]
+[ext_resource type="Script" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
 [ext_resource type="Script" uid="uid://bocodruvp5emd" path="res://addons/libmaszyna/train_set_3d.gd" id="1_uwj4h"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="2_htu7b"]
-[ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/sm_42v_1.tscn" id="3_vuhlb"]
-[ext_resource type="PackedScene" uid="uid://d3bqaxs80et01" path="res://vehicles/401w.tscn" id="5_n7ime"]
+[ext_resource type="TrainController" path="res://vehicles/sm42/sm_42v_1.tres" id="3_vuhlb"]
+[ext_resource type="LegacyWagon" path="res://vehicles/401w.tres" id="5_n7ime"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
 size = Vector3(4.5332, 4.72223, 17.0549)
@@ -15,12 +16,10 @@ start_track_id = "debug"
 
 [node name="SM42-099" type="Node3D" parent="." unique_id=1967816975]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
-script = ExtResource("1_iiqbf")
-controller_path = NodePath("SM42v1")
+script = ExtResource("1_train3d")
+controller = ExtResource("3_vuhlb")
 cabin_scene = ExtResource("2_htu7b")
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
-
-[node name="SM42v1" parent="SM42-099" unique_id=111298649 instance=ExtResource("3_vuhlb")]
 
 [node name="SM42-099" type="E3DModelInstance" parent="SM42-099" unique_id=853366110]
 data_path = "/dynamic/pkp/sm42_v1"
@@ -44,7 +43,7 @@ shape = SubResource("BoxShape3D_uljbo")
 [node name="Wagon1" type="Node3D" parent="." unique_id=1513434938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.139999)
 script = ExtResource("1_iiqbf")
-controller_path = NodePath("401W")
+controller = ExtResource("5_n7ime")
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="401W-2" type="E3DModelInstance" parent="Wagon1" unique_id=589335020]
@@ -54,15 +53,11 @@ skins = ["5217,1", "5217,2"]
 exclude_node_names = ["cien"]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 
-[node name="401W" parent="Wagon1" unique_id=1385549383 instance=ExtResource("5_n7ime")]
-
 [node name="Wagon2" type="Node3D" parent="." unique_id=1338643588]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 28.18)
 script = ExtResource("1_iiqbf")
-controller_path = NodePath("401W")
+controller = ExtResource("5_n7ime")
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
-
-[node name="401W" parent="Wagon2" unique_id=1489720074 instance=ExtResource("5_n7ime")]
 
 [node name="401W-1" type="E3DModelInstance" parent="Wagon2" unique_id=1515864927]
 data_path = "/dynamic/pkp/401w_v2"

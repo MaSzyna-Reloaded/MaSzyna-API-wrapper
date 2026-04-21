@@ -1,14 +1,14 @@
 extends OmniLight3D
 class_name CabinOmniLight3D
 
-var _controller:TrainController
+var _controller
 
 var _dirty:bool = false
 var _t = 0.0
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("RailVehicle3D") var controller_path:NodePath = "":
     set(x):
         controller_path = x
         _controller = null
@@ -33,7 +33,8 @@ func _process(delta):
     if _dirty:
         _dirty = false
         if not _controller and controller_path:
-            _controller = get_node(controller_path)
+            var vehicle := get_node_or_null(controller_path) as RailVehicle3D
+            _controller = vehicle.get_controller() if vehicle else null
             if _controller:
                 _setup_phase = true
                 _update_state()

@@ -30,6 +30,10 @@ namespace godot {
                         "LegacyRailVehicleModule::initialize() mover init connect failed with error code " +
                         String::num(init_con));
             }
+
+            if (legacy_rail_vehicle->get_mover() != nullptr) {
+                update_mover();
+            }
         }
     }
 

@@ -132,7 +132,13 @@ namespace godot {
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
-    void LegacyRailVehicle::_initialize() {}
+    void LegacyRailVehicle::_initialize() {
+        if (mover == nullptr) {
+            initialize_mover();
+            update_state();
+            _notification_after_mover_initialized();
+        }
+    }
 
     void LegacyRailVehicle::_finalize() {
         if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
@@ -141,12 +147,6 @@ namespace godot {
     }
 
     void LegacyRailVehicle::_update(const double delta) {
-        if (mover == nullptr) {
-            initialize_mover();
-            update_state();
-            _notification_after_mover_initialized();
-        }
-
         _update_mover_config_if_dirty();
         _process_mover(delta);
     }

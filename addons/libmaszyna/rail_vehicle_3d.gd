@@ -163,8 +163,6 @@ func _instantiate_runtime_controller() -> void:
         push_error("RailVehicle3D '%s': controller resource must inherit LegacyRailVehicle." % name)
         return
 
-    _runtime_controller.initialize()
-
 
 func _update_head_display():
     if not is_inside_tree():
@@ -193,8 +191,6 @@ func _process(delta):
             _head_display_e3d = get_node_or_null(head_display_e3d_path)
             if _head_display_e3d:
                 _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
-        if not Engine.is_editor_hint():
-            _instantiate_runtime_controller()
 
     if not Engine.is_editor_hint() and _runtime_controller:
         _runtime_controller.update(delta)
@@ -229,6 +225,8 @@ func _ready() -> void:
 func _enter_tree() -> void:
     if not Engine.is_editor_hint():
         _instantiate_runtime_controller()
+        if _runtime_controller:
+            _runtime_controller.initialize()
 
 
 func _exit_tree() -> void:

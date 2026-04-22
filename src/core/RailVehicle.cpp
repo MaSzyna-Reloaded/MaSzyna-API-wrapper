@@ -158,36 +158,41 @@ namespace godot {
     }
 
     void RailVehicle::initialize() {
-        runtime_initialized = false;
+        if (runtime_initialized) {
+            return;
+        }
+
         _assign_modules_to_vehicle();
+        _initialize();
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
                 module->initialize();
             }
         }
-
-        _initialize();
+        runtime_initialized = true;
     }
 
     void RailVehicle::finalize() {
-        if (runtime_initialized) {
-            runtime_initialized = false;
+        if (!runtime_initialized) {
+            _clear_module_vehicle_references();
+            return;
         }
-
-        _finalize();
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
                 module->finalize();
             }
         }
+
+        _finalize();
+        runtime_initialized = false;
         _clear_module_vehicle_references();
     }
 
     void RailVehicle::update(const double delta) {
         if (!runtime_initialized) {
-            runtime_initialized = true;
+            return;
         }
 
         _update(delta);

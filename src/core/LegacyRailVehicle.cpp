@@ -140,6 +140,15 @@ namespace godot {
         }
     }
 
+    void LegacyRailVehicle::initialize() {
+        RailVehicle::initialize();
+
+        if (mover != nullptr) {
+            mover->CheckLocomotiveParameters(true, 0);
+            update_state();
+        }
+    }
+
     void LegacyRailVehicle::_finalize() {
         if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
             track_manager->remove_vehicle(this);

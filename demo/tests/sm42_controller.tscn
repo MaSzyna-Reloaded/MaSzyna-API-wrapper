@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
-[ext_resource type="Script" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
-[ext_resource type="TrainController" path="res://vehicles/sm42/sm_42v_1.tres" id="2_controller"]
+[ext_resource type="Script" uid="uid://dfpy1ib33rttc" path="res://addons/libmaszyna/train_3d.gd" id="1_train3d"]
+[ext_resource type="TrainController" uid="uid://bs7sefb2lpw8u" path="res://vehicles/sm42/fiz.tres" id="2_controller"]
 
 [node name="SM42v1" type="Node3D"]
 script = ExtResource("1_train3d")

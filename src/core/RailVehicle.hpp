@@ -38,7 +38,6 @@ namespace godot {
             virtual void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _initialize();
-            virtual void _initialize_after_modules();
             virtual void _finalize();
             virtual void _update(double delta);
 

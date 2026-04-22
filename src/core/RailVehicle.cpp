@@ -79,8 +79,6 @@ namespace godot {
 
     void RailVehicle::_initialize() {}
 
-    void RailVehicle::_initialize_after_modules() {}
-
     void RailVehicle::_finalize() {}
 
     void RailVehicle::_update(const double delta) {}
@@ -179,13 +177,8 @@ namespace godot {
             return;
         }
 
-        // Initialization is a single A->Z pass:
-        // create vehicle runtime first, let modules apply their config against the live runtime,
-        // then finish any final vehicle-side initialization.
         DEBUG("RailVehicle::initialize begin vehicle=%s modules=%s", get_name(), modules.size());
         _assign_modules_to_vehicle();
-        DEBUG("RailVehicle::initialize vehicle_initialize_begin vehicle=%s", get_name());
-        _initialize();
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
@@ -200,7 +193,8 @@ namespace godot {
         }
 
         runtime_initialized = true;
-        _initialize_after_modules();
+        DEBUG("RailVehicle::initialize vehicle_initialize_begin vehicle=%s", get_name());
+        _initialize();
         DEBUG("RailVehicle::initialize done vehicle=%s", get_name());
     }
 

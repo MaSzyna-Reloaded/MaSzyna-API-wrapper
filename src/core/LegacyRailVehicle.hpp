@@ -31,7 +31,6 @@ namespace godot {
             double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
-            void _apply_module_mover_config();
             void _handle_mover_update();
             void _sync_mover_neighbours();
             void sync_mover_coupling(RailVehicle *other_vehicle, Side self_side, Side other_side, bool attach);
@@ -41,7 +40,6 @@ namespace godot {
             void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _initialize() override;
-            void _initialize_after_modules() override;
             void _finalize() override;
             void _update(double delta) override;
 

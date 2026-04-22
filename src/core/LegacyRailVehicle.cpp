@@ -106,6 +106,12 @@ namespace godot {
         const auto name = std::string(String(get_name()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_velocity, _type_name, name, cabin_number).release();
 
+        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
+        update_mover();
+        mover->CheckLocomotiveParameters(true, 0);
+        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
+        update_mover();
+
         mover->CabActive = 1;
         mover->CabMaster = true;
         mover->CabOccupied = 1;
@@ -130,23 +136,9 @@ namespace godot {
     void LegacyRailVehicle::_initialize() {
         if (mover == nullptr) {
             initialize_mover();
+            update_state();
+            _notification_after_mover_initialized();
         }
-    }
-
-    void LegacyRailVehicle::_initialize_after_modules() {
-        if (mover == nullptr) {
-            return;
-        }
-
-        // main used a two-pass CheckLocomotiveParameters() because the first pass can
-        // reset mover fields. Re-apply module and vehicle config before the second pass.
-        _apply_module_mover_config();
-        update_mover();
-        _apply_module_mover_config();
-        update_mover();
-        update_state();
-        _notification_after_mover_initialized();
-        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
     }
 
     void LegacyRailVehicle::_finalize() {
@@ -162,14 +154,6 @@ namespace godot {
     void LegacyRailVehicle::_notification_after_mover_initialized() {}
 
     void LegacyRailVehicle::_notification_before_mover_cleanup() {}
-
-    void LegacyRailVehicle::_apply_module_mover_config() {
-        for (int index = 0; index < modules.size(); ++index) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                module->update_mover();
-            }
-        }
-    }
 
     void LegacyRailVehicle::_process_mover(const double delta) {
         // Keep the wrapper-side movement flow analogous to DynObj:
@@ -238,7 +222,6 @@ namespace godot {
             Dictionary new_config;
             _do_fetch_config_from_mover(current_mover, new_config);
             update_config(new_config);
-            current_mover->CheckLocomotiveParameters(true, 0);
         } else {
             UtilityFunctions::push_warning("LegacyRailVehicle::update_mover() failed: internal mover not initialized");
         }

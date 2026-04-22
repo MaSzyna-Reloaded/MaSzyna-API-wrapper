@@ -170,6 +170,7 @@ namespace godot {
                 module->initialize();
             }
         }
+
         runtime_initialized = true;
     }
 

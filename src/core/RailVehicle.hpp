@@ -63,8 +63,8 @@ namespace godot {
             void set_modules(const Array &p_modules);
             Array get_modules() const;
             virtual Dictionary get_supported_commands();
-            void initialize();
-            void finalize();
+            virtual void initialize();
+            virtual void finalize();
             void update(double delta);
 
             RailVehicle *decouple(int relative_index);

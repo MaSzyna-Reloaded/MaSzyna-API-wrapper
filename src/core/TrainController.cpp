@@ -122,11 +122,19 @@ namespace godot {
 
     void TrainController::_initialize() {
         LegacyRailVehicle::_initialize();
+    }
+
+    void TrainController::initialize() {
+        LegacyRailVehicle::initialize();
         TrainSystem::get_instance()->register_train(train_id, this);
     }
 
-    void TrainController::_finalize() {
+    void TrainController::finalize() {
         TrainSystem::get_instance()->unregister_train(train_id);
+        LegacyRailVehicle::finalize();
+    }
+
+    void TrainController::_finalize() {
         LegacyRailVehicle::_finalize();
     }
 

@@ -89,6 +89,8 @@ namespace godot {
                     {TPowerType::SteamPower, POWER_TYPE_STEAM}};
 
             void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            void initialize() override;
+            void finalize() override;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;

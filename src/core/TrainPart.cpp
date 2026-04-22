@@ -34,8 +34,8 @@ namespace godot {
     void TrainPart::_unregister_commands() {};
 
     void TrainPart::log(const GameLog::LogLevel level, const String &line) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
+        if (train_controller.is_valid()) {
+            TrainSystem::get_instance()->log(train_controller->get_train_id(), level, line);
         }
     }
 
@@ -77,32 +77,31 @@ namespace godot {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_enter_tree() {
-        LegacyRailVehicleModule::_enter_tree();
-        train_controller_node = Object::cast_to<TrainController>(get_legacy_rail_vehicle_node());
+    void TrainPart::_initialize() {
+        LegacyRailVehicleModule::_initialize();
+        train_controller = Ref<TrainController>(Object::cast_to<TrainController>(get_rail_vehicle().ptr()));
     }
 
-    void TrainPart::_exit_tree() {
-        train_controller_node = nullptr;
-        LegacyRailVehicleModule::_exit_tree();
+    void TrainPart::_finalize() {
+        train_controller.unref();
+        LegacyRailVehicleModule::_finalize();
     }
 
-    void TrainPart::process(const double delta) {
-        LegacyRailVehicleModule::process(delta);
-
+    void TrainPart::update(const double delta) {
         if (_dirty) {
             update_mover();
             _dirty = false;
         }
 
         if (enabled) {
+            _update(delta);
             _process_mover(delta);
         }
 
         if (enabled_changed) {
             enabled_changed = false;
-            if (train_controller_node != nullptr) {
-                train_controller_node->refresh_command_registry();
+            if (train_controller.is_valid()) {
+                train_controller->refresh_command_registry();
             }
             emit_signal("enable_changed", enabled);
             emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
@@ -124,8 +123,8 @@ namespace godot {
     }
 
     void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), command, p1, p2);
+        if (train_controller.is_valid()) {
+            TrainSystem::get_instance()->send_command(train_controller->get_train_id(), command, p1, p2);
         }
     }
 

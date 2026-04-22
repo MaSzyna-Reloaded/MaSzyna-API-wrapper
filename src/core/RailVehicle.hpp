@@ -2,8 +2,8 @@
 #define RAILVEHICLE_HPP
 
 #include "macros.hpp"
-#include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/object.hpp>
+#include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
@@ -20,8 +20,9 @@ namespace godot {
             bool _dirty = false;
             bool _dirty_prop = false;
             Array modules;
-            Node *runtime_host = nullptr;
             bool runtime_initialized = false;
+            void _assign_modules_to_vehicle();
+            void _clear_module_vehicle_references();
 
         public:
             String id;
@@ -36,11 +37,9 @@ namespace godot {
         protected:
             virtual void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
-            virtual void _enter_tree();
-            virtual void _ready();
-            virtual void _exit_tree();
-            virtual void _process(double delta);
-            virtual void _physics_process(double delta);
+            virtual void _initialize();
+            virtual void _finalize();
+            virtual void _update(double delta);
 
         public:
             RailVehicle();
@@ -64,12 +63,9 @@ namespace godot {
             void set_modules(const Array &p_modules);
             Array get_modules() const;
             virtual Dictionary get_supported_commands();
-            void enter_tree(Node *p_host);
-            void ready();
-            void exit_tree();
-            void process(double delta);
-            void physics_process(double delta);
-            Node *get_runtime_host() const;
+            void initialize();
+            void finalize();
+            void update(double delta);
 
             RailVehicle *decouple(int relative_index);
             RailVehicle *uncouple_front();

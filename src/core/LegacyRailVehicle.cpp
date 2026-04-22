@@ -132,26 +132,26 @@ namespace godot {
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
-    void LegacyRailVehicle::_enter_tree() {}
+    void LegacyRailVehicle::_initialize() {}
 
-    void LegacyRailVehicle::_ready() {
-        initialize_mover();
-        update_state();
-        _notification_after_mover_ready();
-    }
-
-    void LegacyRailVehicle::_exit_tree() {
+    void LegacyRailVehicle::_finalize() {
         if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
             track_manager->remove_vehicle(this);
         }
     }
 
-    void LegacyRailVehicle::_process(const double delta) {
+    void LegacyRailVehicle::_update(const double delta) {
+        if (mover == nullptr) {
+            initialize_mover();
+            update_state();
+            _notification_after_mover_initialized();
+        }
+
         _update_mover_config_if_dirty();
         _process_mover(delta);
     }
 
-    void LegacyRailVehicle::_notification_after_mover_ready() {}
+    void LegacyRailVehicle::_notification_after_mover_initialized() {}
 
     void LegacyRailVehicle::_notification_before_mover_cleanup() {}
 

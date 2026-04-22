@@ -3,18 +3,19 @@
 #include "../core/TrainController.hpp"
 #include "../core/TrainSystem.hpp"
 #include "LegacyBufferCouplerModule.hpp"
+#include <godot_cpp/classes/ref.hpp>
 
 namespace godot {
     class TrainBuffCoupl: public LegacyBufferCouplerModule {
             GDCLASS(TrainBuffCoupl, LegacyBufferCouplerModule);
         private:
-            TrainController *train_controller_node = nullptr;
+            Ref<TrainController> train_controller;
             Dictionary command_registry;
             bool collecting_commands = false;
             static void _bind_methods();
         protected:
-            void _enter_tree() override;
-            void _exit_tree() override;
+            void _initialize() override;
+            void _finalize() override;
             void _register_commands();
             void _unregister_commands();
         public:

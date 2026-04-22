@@ -5,14 +5,14 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("decouple"), &TrainBuffCoupl::decouple);
     }
 
-    void TrainBuffCoupl::_enter_tree() {
-        LegacyBufferCouplerModule::_enter_tree();
-        train_controller_node = Object::cast_to<TrainController>(get_legacy_rail_vehicle_node());
+    void TrainBuffCoupl::_initialize() {
+        LegacyBufferCouplerModule::_initialize();
+        train_controller = Ref<TrainController>(Object::cast_to<TrainController>(get_rail_vehicle().ptr()));
     }
 
-    void TrainBuffCoupl::_exit_tree() {
-        train_controller_node = nullptr;
-        LegacyBufferCouplerModule::_exit_tree();
+    void TrainBuffCoupl::_finalize() {
+        train_controller.unref();
+        LegacyBufferCouplerModule::_finalize();
     }
 
     void TrainBuffCoupl::_register_commands() {
@@ -40,9 +40,9 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (train_controller_node != nullptr) {
+        if (train_controller.is_valid()) {
             TrainSystem::get_instance()->log(
-                    train_controller_node->get_train_id(),
+                    train_controller->get_train_id(),
                     GameLog::LogLevel::WARNING,
                     "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
         }
@@ -55,9 +55,9 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (train_controller_node != nullptr) {
+        if (train_controller.is_valid()) {
             TrainSystem::get_instance()->log(
-                    train_controller_node->get_train_id(),
+                    train_controller->get_train_id(),
                     GameLog::LogLevel::WARNING,
                     "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
         }

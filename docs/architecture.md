@@ -94,11 +94,8 @@ extends TrainPart
 
 var internal_state: bool = false
 
-func _enter_tree():
+func _initialize():
     register_command("operate_custom_part", self.operate_something)
-
-func _exit_tree():
-    unregister_command("operate_custom_part", self.operate_something)
 
 func operate_something(new_state:bool):
     # some logic here
@@ -119,7 +116,7 @@ with `TrainPart` directly:
 ```gdscript
 extends TrainController
 
-func _process(delta):
+func _update(delta):
     if something:
         $TrainPart.operate_something(true)
 ```

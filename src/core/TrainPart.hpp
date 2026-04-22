@@ -4,6 +4,7 @@
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include <functional>
+#include <godot_cpp/classes/ref.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
     if ((mover_ptr) == nullptr) {                                                                                      \
@@ -23,7 +24,7 @@ namespace godot {
         protected:
             bool enabled = true;
             bool enabled_changed = false;
-            TrainController *train_controller_node = nullptr;
+            Ref<TrainController> train_controller;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -50,12 +51,12 @@ namespace godot {
 
             virtual void _register_commands();
             virtual void _unregister_commands();
-            void _enter_tree() override;
-            void _exit_tree() override;
+            void _initialize() override;
+            void _finalize() override;
 
         public:
             ~TrainPart() override = default;
-            void process(double delta) override;
+            void update(double delta) override;
 
             void register_command(const String &command, const Callable &callback);
             void unregister_command(const String &command, const Callable &callback);

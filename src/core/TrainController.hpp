@@ -17,14 +17,14 @@ namespace godot {
             void refresh_runtime_signals();
 
         protected:
-            void _notification_after_mover_ready() override;
+            void _notification_after_mover_initialized() override;
             bool can_host_commands() const override;
             String get_command_target_id() const override;
             void _do_update_internal_mover(TMoverParameters *mover) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
-            void _enter_tree() override;
-            void _exit_tree() override;
-            void _process(double delta) override;
+            void _initialize() override;
+            void _finalize() override;
+            void _update(double delta) override;
 
         public:
             enum TrainPowerSource {

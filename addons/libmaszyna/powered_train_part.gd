@@ -7,11 +7,11 @@ class_name PoweredTrainPart
 
 var locked = false
 
-func _enter_tree():
+func _initialize():
     register_command("lock_power", self._on_lock_power)
 
 
-func _process_train_part(delta):
+func _update(delta):
     var state = get_train_state()
     var power_avail = state.get("power24_available") or state.get("power110_available")
     if not locked and power_avail and has_method("_process_powered"):

@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/classes/resource.hpp>
 #include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/core/object_id.hpp>
 #include <godot_cpp/variant/array.hpp>
 
 namespace godot {
@@ -23,11 +24,12 @@ namespace godot {
             bool runtime_initialized = false;
             void _assign_modules_to_vehicle();
             void _clear_module_vehicle_references();
+            RailVehicle *resolve_vehicle(ObjectID vehicle_id) const;
 
         public:
             String id;
-            RailVehicle *front = {};
-            RailVehicle *back = {};
+            ObjectID front_id;
+            ObjectID back_id;
 
             enum Side {
                 FRONT = 0,

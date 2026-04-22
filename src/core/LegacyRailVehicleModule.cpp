@@ -1,3 +1,4 @@
+#include "GameLog.hpp"
 #include "LegacyRailVehicle.hpp"
 #include "LegacyRailVehicleModule.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -16,6 +17,9 @@ namespace godot {
 
     void LegacyRailVehicleModule::_initialize() {
         if (LegacyRailVehicle *legacy_rail_vehicle = get_legacy_rail_vehicle(); legacy_rail_vehicle != nullptr) {
+            DEBUG(
+                    "LegacyRailVehicleModule::_initialize begin vehicle=%s module_class=%s mover_ready=%s",
+                    legacy_rail_vehicle->get_name(), get_class(), legacy_rail_vehicle->get_mover() != nullptr);
             const Error config_con = legacy_rail_vehicle->connect(
                     LegacyRailVehicle::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
             if (config_con != OK) {
@@ -23,17 +27,12 @@ namespace godot {
                         "LegacyRailVehicleModule::initialize() failed with error code " + String::num(config_con));
             }
 
-            const Error init_con = legacy_rail_vehicle->connect(
-                    LegacyRailVehicle::MOVER_INITIALIZED_SIGNAL, Callable(this, "update_mover"));
-            if (init_con != OK) {
-                UtilityFunctions::push_warning(
-                        "LegacyRailVehicleModule::initialize() mover init connect failed with error code " +
-                        String::num(init_con));
-            }
-
             if (legacy_rail_vehicle->get_mover() != nullptr) {
                 update_mover();
             }
+            DEBUG(
+                    "LegacyRailVehicleModule::_initialize done vehicle=%s module_class=%s mover_ready=%s",
+                    legacy_rail_vehicle->get_name(), get_class(), legacy_rail_vehicle->get_mover() != nullptr);
         }
     }
 
@@ -41,8 +40,6 @@ namespace godot {
         if (LegacyRailVehicle *legacy_rail_vehicle = get_legacy_rail_vehicle(); legacy_rail_vehicle != nullptr) {
             legacy_rail_vehicle->disconnect(
                     LegacyRailVehicle::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
-            legacy_rail_vehicle->disconnect(
-                    LegacyRailVehicle::MOVER_INITIALIZED_SIGNAL, Callable(this, "update_mover"));
         }
     }
 
@@ -57,10 +54,24 @@ namespace godot {
     }
 
     void LegacyRailVehicleModule::initialize() {
+        if (RailVehicle *rail_vehicle_ptr = rail_vehicle.ptr(); rail_vehicle_ptr != nullptr) {
+            DEBUG(
+                    "LegacyRailVehicleModule::initialize vehicle=%s module_class=%s",
+                    rail_vehicle_ptr->get_name(), get_class());
+        } else {
+            DEBUG("LegacyRailVehicleModule::initialize vehicle=<null> module_class=%s", get_class());
+        }
         _initialize();
     }
 
     void LegacyRailVehicleModule::finalize() {
+        if (RailVehicle *rail_vehicle_ptr = rail_vehicle.ptr(); rail_vehicle_ptr != nullptr) {
+            DEBUG(
+                    "LegacyRailVehicleModule::finalize vehicle=%s module_class=%s",
+                    rail_vehicle_ptr->get_name(), get_class());
+        } else {
+            DEBUG("LegacyRailVehicleModule::finalize vehicle=<null> module_class=%s", get_class());
+        }
         _finalize();
         rail_vehicle.unref();
     }
@@ -108,6 +119,9 @@ namespace godot {
         if (LegacyRailVehicle *legacy_rail_vehicle = get_legacy_rail_vehicle(); legacy_rail_vehicle != nullptr) {
             TMoverParameters *mover = legacy_rail_vehicle->get_mover();
             if (mover != nullptr) {
+                DEBUG(
+                        "LegacyRailVehicleModule::update_mover vehicle=%s module_class=%s mover=%s",
+                        legacy_rail_vehicle->get_name(), get_class(), static_cast<const void *>(mover));
                 _do_update_internal_mover(mover);
                 Dictionary new_config;
                 _do_fetch_config_from_mover(mover, new_config);

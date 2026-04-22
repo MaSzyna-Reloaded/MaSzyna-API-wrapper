@@ -28,12 +28,12 @@ namespace godot {
         if (index >= 0) {
             current = get_head();
             for (int i = 0; i < index && current != nullptr; ++i) {
-                current = current->back;
+                current = current->get_back_vehicle();
             }
         } else {
             current = get_tail();
             for (int i = -1; i > index && current != nullptr; --i) {
-                current = current->front;
+                current = current->get_front_vehicle();
             }
         }
         if (current == nullptr) {
@@ -47,23 +47,23 @@ namespace godot {
         RailVehicle *current = get_head();
         while (current != nullptr) {
             result.append(current);
-            current = current->back;
+            current = current->get_back_vehicle();
         }
         return result;
     }
 
     RailVehicle *TrainSet::get_head() const {
         RailVehicle *current = start_vehicle;
-        while (current->front != nullptr) {
-            current = current->front;
+        while (current->get_front_vehicle() != nullptr) {
+            current = current->get_front_vehicle();
         }
         return current;
     }
 
     RailVehicle *TrainSet::get_tail() const {
         RailVehicle *current = start_vehicle;
-        while (current->back != nullptr) {
-            current = current->back;
+        while (current->get_back_vehicle() != nullptr) {
+            current = current->get_back_vehicle();
         }
         return current;
     }

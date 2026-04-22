@@ -35,12 +35,6 @@ func send_command(command_name: StringName, p1: Variant = null, p2: Variant = nu
     if active_controller:
         active_controller.send_command(command_name, p1, p2)
 
-
-func _instantiate_runtime_controller() -> void:
-    super._instantiate_runtime_controller()
-    _bind_train_controller_signals()
-
-
 func _bind_train_controller_signals() -> void:
     if _controller_signals_bound:
         return

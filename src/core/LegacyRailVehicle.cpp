@@ -100,15 +100,10 @@ namespace godot {
     }
 
     void LegacyRailVehicle::initialize_mover() {
+        DEBUG("LegacyRailVehicle::initialize_mover begin vehicle=%s", get_name());
         const auto _type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(String(get_name()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_velocity, _type_name, name, cabin_number).release();
-
-        _dirty = true;
-        _dirty_prop = true;
-        _update_mover_config_if_dirty();
-
-        mover->CheckLocomotiveParameters(true, 0);
 
         _dirty = true;
         _dirty_prop = true;
@@ -122,18 +117,23 @@ namespace godot {
         mover->CabActivisation();
         mover->switch_physics(true);
 
-        if (front != nullptr) {
-            sync_mover_coupling(front, Side::FRONT, front->back == this ? Side::BACK : Side::FRONT, true);
+        if (RailVehicle *front = get_front_vehicle(); front != nullptr) {
+            sync_mover_coupling(
+                    front, Side::FRONT, front->get_back_vehicle() == this ? Side::BACK : Side::FRONT, true);
         }
-        if (back != nullptr) {
-            sync_mover_coupling(back, Side::BACK, back->front == this ? Side::FRONT : Side::BACK, true);
+        if (RailVehicle *back = get_back_vehicle(); back != nullptr) {
+            sync_mover_coupling(
+                    back, Side::BACK, back->get_front_vehicle() == this ? Side::FRONT : Side::BACK, true);
         }
 
+        DEBUG("LegacyRailVehicle::initialize_mover done vehicle=%s", get_name());
         emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
     void LegacyRailVehicle::_initialize() {
         if (mover == nullptr) {
+            // The mover must be initialized only after every module finished its own setup.
+            // This keeps CheckLocomotiveParameters() on the fully configured brake/coupler state.
             initialize_mover();
             update_state();
             _notification_after_mover_initialized();
@@ -196,11 +196,11 @@ namespace godot {
         mover->ComputeTotalForce(delta);
         _movement_delta = mover->ComputeMovement(
                 delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc, mover->Rot);
+        // Runtime movement state must stay inside LegacyRailVehicle.
+        // The scene wrapper should only read the resolved mover position and never feed it back.
+        set_track_offset(current_track_offset + _movement_delta);
+        set_mover_location(track->get_world_position(current_track_offset));
         _external_move_accumulator = 0.0;
-        debug_tick_counter += 1;
-        if ((debug_tick_counter % 20) == 0 &&
-            (front != nullptr || back != nullptr || mover->Couplers[end::front].Connected != nullptr ||
-             mover->Couplers[end::rear].Connected != nullptr)) {}
         _handle_mover_update();
     }
 
@@ -375,9 +375,29 @@ namespace godot {
                 coupling_type = self_coupler.AllowedFlag & other_coupler.AllowedFlag;
             }
 
+            DEBUG(
+                    "LegacyRailVehicle::sync_mover_coupling attach self=%s self_end=%s other=%s other_end=%s "
+                    "self_auto=%s other_auto=%s self_allowed=%s other_allowed=%s self_control=%s other_control=%s "
+                    "coupling_type=%s",
+                    get_name(), self_end, other_legacy->get_name(), other_end,
+                    self_coupler.AutomaticCouplingFlag, other_coupler.AutomaticCouplingFlag,
+                    self_coupler.AllowedFlag, other_coupler.AllowedFlag,
+                    self_coupler.control_type.c_str(), other_coupler.control_type.c_str(), coupling_type);
             const bool attached =
                     mover->Attach(self_end, other_end, other_legacy->get_mover(), coupling_type, true, false);
+            DEBUG(
+                    "LegacyRailVehicle::sync_mover_coupling attach_result self=%s self_end=%s other=%s other_end=%s "
+                    "attached=%s self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
+                    get_name(), self_end, other_legacy->get_name(), other_end, attached,
+                    static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
+                    static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
         } else if (self_coupler.Connected != nullptr) {
+            DEBUG(
+                    "LegacyRailVehicle::sync_mover_coupling dettach self=%s self_end=%s other=%s other_end=%s "
+                    "self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
+                    get_name(), self_end, other_legacy->get_name(), other_end,
+                    static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
+                    static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
             mover->Dettach(self_end);
         }
     }

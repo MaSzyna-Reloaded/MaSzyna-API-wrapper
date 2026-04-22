@@ -1,7 +1,9 @@
+#include "GameLog.hpp"
 #include "LegacyRailVehicleModule.hpp"
 #include "RailVehicle.hpp"
 #include "TrainSet.hpp"
 #include <cstdlib>
+#include <godot_cpp/core/object.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -82,22 +84,27 @@ namespace godot {
     void RailVehicle::_update(const double delta) {}
 
     void RailVehicle::couple(RailVehicle *other_vehicle, Side self_side, Side other_side) {
+        RailVehicle *front = get_front_vehicle();
+        RailVehicle *back = get_back_vehicle();
+        RailVehicle *other_front = other_vehicle != nullptr ? other_vehicle->get_front_vehicle() : nullptr;
+        RailVehicle *other_back = other_vehicle != nullptr ? other_vehicle->get_back_vehicle() : nullptr;
+
         if (self_side == Side::FRONT && other_side == Side::BACK) {
-            if (front != nullptr || other_vehicle->back != nullptr) {
+            if (front != nullptr || other_back != nullptr) {
                 UtilityFunctions::push_error("One of the cars is already coupled.");
                 return;
             }
-            front = other_vehicle;
-            other_vehicle->back = this;
+            front_id = other_vehicle->get_instance_id();
+            other_vehicle->back_id = get_instance_id();
             _on_coupled(other_vehicle, self_side, other_side);
             other_vehicle->_on_coupled(this, other_side, self_side);
         } else if (self_side == Side::BACK && other_side == Side::FRONT) {
-            if (back != nullptr || other_vehicle->front != nullptr) {
+            if (back != nullptr || other_front != nullptr) {
                 UtilityFunctions::push_error("One of the cars is already coupled.");
                 return;
             }
-            back = other_vehicle;
-            other_vehicle->front = this;
+            back_id = other_vehicle->get_instance_id();
+            other_vehicle->front_id = get_instance_id();
             _on_coupled(other_vehicle, self_side, other_side);
             other_vehicle->_on_coupled(this, other_side, self_side);
         } else {
@@ -114,11 +121,11 @@ namespace godot {
     }
 
     RailVehicle *RailVehicle::get_front_vehicle() const {
-        return front;
+        return resolve_vehicle(front_id);
     }
 
     RailVehicle *RailVehicle::get_back_vehicle() const {
-        return back;
+        return resolve_vehicle(back_id);
     }
 
     Array RailVehicle::get_rail_vehicle_modules() const {
@@ -157,38 +164,68 @@ namespace godot {
         }
     }
 
+    RailVehicle *RailVehicle::resolve_vehicle(const ObjectID vehicle_id) const {
+        if (vehicle_id.is_null()) {
+            return nullptr;
+        }
+
+        return Object::cast_to<RailVehicle>(ObjectDB::get_instance(vehicle_id));
+    }
+
     void RailVehicle::initialize() {
         if (runtime_initialized) {
+            DEBUG("RailVehicle::initialize skip vehicle=%s already_initialized=true", get_name());
             return;
         }
 
+        // Initialization must be a single full A->Z pass:
+        // bind modules to this vehicle, let modules push all mover-affecting config,
+        // and only then allow the vehicle to create/finalize runtime state.
+        DEBUG("RailVehicle::initialize begin vehicle=%s modules=%s", get_name(), modules.size());
         _assign_modules_to_vehicle();
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                DEBUG(
+                        "RailVehicle::initialize module_begin vehicle=%s module_index=%s module_class=%s",
+                        get_name(), index, module->get_class());
                 module->initialize();
+                DEBUG(
+                        "RailVehicle::initialize module_done vehicle=%s module_index=%s module_class=%s",
+                        get_name(), index, module->get_class());
             }
         }
 
+        DEBUG("RailVehicle::initialize vehicle_initialize_begin vehicle=%s", get_name());
         _initialize();
         runtime_initialized = true;
+        DEBUG("RailVehicle::initialize done vehicle=%s", get_name());
     }
 
     void RailVehicle::finalize() {
         if (!runtime_initialized) {
+            DEBUG("RailVehicle::finalize skip vehicle=%s already_initialized=false", get_name());
             _clear_module_vehicle_references();
             return;
         }
 
+        DEBUG("RailVehicle::finalize begin vehicle=%s modules=%s", get_name(), modules.size());
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                DEBUG(
+                        "RailVehicle::finalize module_begin vehicle=%s module_index=%s module_class=%s",
+                        get_name(), index, module->get_class());
                 module->finalize();
+                DEBUG(
+                        "RailVehicle::finalize module_done vehicle=%s module_index=%s module_class=%s",
+                        get_name(), index, module->get_class());
             }
         }
 
         _finalize();
         runtime_initialized = false;
         _clear_module_vehicle_references();
+        DEBUG("RailVehicle::finalize done vehicle=%s", get_name());
     }
 
     void RailVehicle::update(const double delta) {
@@ -216,7 +253,7 @@ namespace godot {
         const int steps = std::abs(relative_index) - 1;
 
         for (int index = 0; index < steps; ++index) {
-            target = decouple_front_side ? target->front : target->back;
+            target = decouple_front_side ? target->get_front_vehicle() : target->get_back_vehicle();
             if (target == nullptr) {
                 UtilityFunctions::push_error("RailVehicle::decouple() target vehicle is out of consist bounds.");
                 return nullptr;
@@ -227,13 +264,14 @@ namespace godot {
     }
 
     RailVehicle *RailVehicle::uncouple_front() {
+        RailVehicle *front = get_front_vehicle();
         if (front == nullptr) {
             UtilityFunctions::push_error("No car coupled at the front.");
             return nullptr;
         }
         RailVehicle *uncoupled = front;
-        front->back = nullptr;
-        front = nullptr;
+        front->back_id = ObjectID();
+        front_id = ObjectID();
         _on_uncoupled(uncoupled, Side::FRONT, Side::BACK);
         uncoupled->_on_uncoupled(this, Side::BACK, Side::FRONT);
         return uncoupled;
@@ -244,13 +282,14 @@ namespace godot {
     }
 
     RailVehicle *RailVehicle::uncouple_back() {
+        RailVehicle *back = get_back_vehicle();
         if (back == nullptr) {
             UtilityFunctions::push_error("No car coupled at the back.");
             return nullptr;
         }
         RailVehicle *uncoupled = back;
-        back->front = nullptr;
-        back = nullptr;
+        back->front_id = ObjectID();
+        back_id = ObjectID();
         _on_uncoupled(uncoupled, Side::BACK, Side::FRONT);
         uncoupled->_on_uncoupled(this, Side::FRONT, Side::BACK);
         return uncoupled;

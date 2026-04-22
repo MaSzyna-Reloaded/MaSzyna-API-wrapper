@@ -18,7 +18,6 @@ namespace godot {
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
-            int debug_tick_counter = 0;
             double _external_move_accumulator = 0.0;
             double _movement_delta = 0.0;
             RID current_track_rid;

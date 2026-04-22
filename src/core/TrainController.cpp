@@ -1,3 +1,4 @@
+#include "../core/GameLog.hpp"
 #include "../core/TrainController.hpp"
 #include "../core/LegacyRailVehicleModule.hpp"
 #include "../core/TrainSystem.hpp"
@@ -125,13 +126,20 @@ namespace godot {
     }
 
     void TrainController::initialize() {
+        // Register in TrainSystem only after the full parent initialization completed.
+        // At this point modules and the mover must already be fully initialized.
+        DEBUG("TrainController::initialize begin train_id=%s vehicle=%s", train_id, get_name());
         LegacyRailVehicle::initialize();
+        DEBUG("TrainController::initialize register_train train_id=%s vehicle=%s", train_id, get_name());
         TrainSystem::get_instance()->register_train(train_id, this);
+        DEBUG("TrainController::initialize done train_id=%s vehicle=%s", train_id, get_name());
     }
 
     void TrainController::finalize() {
+        DEBUG("TrainController::finalize begin train_id=%s vehicle=%s", train_id, get_name());
         TrainSystem::get_instance()->unregister_train(train_id);
         LegacyRailVehicle::finalize();
+        DEBUG("TrainController::finalize done train_id=%s vehicle=%s", train_id, get_name());
     }
 
     void TrainController::_finalize() {

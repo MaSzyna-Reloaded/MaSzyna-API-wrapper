@@ -8,6 +8,7 @@ class_name RailVehicle3D
     set(value):
         if controller == value:
             return
+        push_warning(self, " Update controller! ", controller)
         controller = value
         _runtime_controller = null
         _controller_signals_bound = false
@@ -154,15 +155,6 @@ func find_module(module_name: String):
     return null
 
 
-func _instantiate_runtime_controller() -> void:
-    if Engine.is_editor_hint() or _runtime_controller or controller == null:
-        return
-
-    _runtime_controller = controller.duplicate(true) as LegacyRailVehicle
-    if _runtime_controller == null:
-        push_error("RailVehicle3D '%s': controller resource must inherit LegacyRailVehicle." % name)
-        return
-
 
 func _update_head_display():
     if not is_inside_tree():
@@ -192,24 +184,6 @@ func _process(delta):
             if _head_display_e3d:
                 _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
 
-    if not Engine.is_editor_hint() and _runtime_controller:
-        _runtime_controller.update(delta)
-        var track_rid := _runtime_controller.get_track_rid()
-        var track_offset := float(_runtime_controller.get_track_offset())
-        var movement_delta := float(get_state().get("movement_delta", 0.0))
-        var track := TrackManager.get_track(track_rid)
-        if track != null and is_finite(track_offset) and is_finite(movement_delta):
-            _invalid_velocity_reported = false
-            global_position = TrackManager.get_track_position(track_rid, track_offset) + track.get_axis() * movement_delta
-            _runtime_controller.set_track_offset(track_offset + movement_delta)
-            _runtime_controller.set_mover_location(global_position)
-        elif track_rid != RID() and not _invalid_velocity_reported:
-            _invalid_velocity_reported = true
-            push_error(
-                "RailVehicle3D '%s': controller '%s' produced invalid track state." %
-                [name, _runtime_controller.get_name()]
-            )
-
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
         _t = 0.0
@@ -217,16 +191,24 @@ func _process(delta):
 
 
 func _ready() -> void:
+    set_physics_process(true)
     _needs_head_display_update = true
     _dirty = true
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
-
-
-func _enter_tree() -> void:
+    
     if not Engine.is_editor_hint():
-        _instantiate_runtime_controller()
-        if _runtime_controller:
+        if controller:
+            _runtime_controller = controller.duplicate(true) as LegacyRailVehicle
             _runtime_controller.initialize()
+
+
+func _physics_process(delta: float) -> void:
+    if Engine.is_editor_hint():
+        return
+
+    if _runtime_controller:
+        _runtime_controller.update(delta)
+        global_position = _runtime_controller.get_mover_location()
 
 
 func _exit_tree() -> void:

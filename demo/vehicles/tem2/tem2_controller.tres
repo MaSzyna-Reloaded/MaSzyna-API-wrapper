@@ -1,7 +1,5 @@
 [gd_resource type="TrainController" format=3 uid="uid://o22yvm8bwya6"]
 
-[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_controller_script"]
-
 [sub_resource type="TrainBrake" id="TrainBrake_brake"]
 valve/type = 20
 friction_elements_per_axle = 4
@@ -169,4 +167,3 @@ mass = 116000.0
 max_velocity = 90.0
 modules = [SubResource("TrainBrake_brake"), SubResource("TrainDieselElectricEngine_engine"), SubResource("TrainSecuritySystem_security")]
 resource_name = "TEM2Controller"
-script = ExtResource("1_controller_script")

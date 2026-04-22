@@ -9,7 +9,7 @@ func _ready():
     visible = true
     $VBoxContainer.visible = true
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
     var status = ResourceLoader.load_threaded_get_status(SCENE_PATH, progress)
     match status:
         ResourceLoader.THREAD_LOAD_IN_PROGRESS:

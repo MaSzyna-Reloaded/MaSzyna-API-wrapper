@@ -91,6 +91,6 @@ func _on_state_update_timer_timeout():
     if _controller and max_config_property:
         max_value = _controller.config.get(max_state_property, 0.0)
     elif _controller and max_state_property:
-        max_value = _controller.state.get(max_state_property, 0.0)
-    if _controller and state_property:
-        value = _controller.state.get(state_property, 0.0)
+        max_value = _controller.config.get(max_state_property, 0.0)
+    if _vehicle and state_property:
+        value = _vehicle.state.get(state_property, 0.0)

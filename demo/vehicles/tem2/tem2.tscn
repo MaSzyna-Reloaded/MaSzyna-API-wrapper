@@ -9,10 +9,13 @@ size = Vector3(4.5332, 4.72223, 17.0549)
 
 [node name="TEM2" type="Node3D" unique_id=1789571545]
 script = ExtResource("1_train3d")
+train_id = null
 controller = ExtResource("4_tujep")
 cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true
 low_poly_cabin_path = NodePath("TEM2_LowPolyCab")
+head_display_e3d_path = null
+head_display_node_path = null
 
 [node name="TEM2" type="E3DModelInstance" parent="." unique_id=1876231323]
 data_path = "/dynamic/pkp/tem2_v2"

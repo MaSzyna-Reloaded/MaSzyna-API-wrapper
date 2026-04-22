@@ -93,6 +93,17 @@ namespace godot {
     }
 
     void TrainSystem::register_train(const String &train_id, TrainController *train) {
+        if (train_id.is_empty()) {
+            UtilityFunctions::push_error("Train registration requires a non-empty train_id");
+            return;
+        }
+
+        if (train == nullptr) {
+            log(train_id, GameLog::LogLevel::ERROR, "Cannot register null TrainController");
+            UtilityFunctions::push_error("TrainSystem.register_train received null TrainController for: ", train_id);
+            return;
+        }
+
         if (is_train_registered(train_id)) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
@@ -181,6 +192,13 @@ namespace godot {
         const std::map<String, TrainController *>::iterator it = trains.find(train_id);
         if (it == trains.end()) {
             log(train_id, GameLog::LogLevel::ERROR, "Train is not registered");
+            return;
+        }
+
+        if (it->second == nullptr) {
+            log(train_id, GameLog::LogLevel::ERROR, "TrainController is null during command refresh");
+            UtilityFunctions::push_error("TrainSystem.refresh_train_commands received null TrainController for: ", train_id);
+            trains.erase(it);
             return;
         }
 
@@ -277,7 +295,6 @@ namespace godot {
         }
 
         train->update_state();
-        train->emit_command_received_signal(command, p1, p2);
     }
 
     void TrainSystem::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {

@@ -8,11 +8,11 @@ var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
 
-@export_node_path("RailVehicle3D") var controller_path:NodePath = NodePath(""):
+@export_node_path("Train3D") var vehicle_path:NodePath = NodePath(""):
     set(x):
-        if not x == controller_path:
+        if not x == vehicle_path:
             _dirty = true
-            controller_path = x
+            vehicle_path = x
 
 @export var camera_bound_min = Vector3.ZERO
 @export var camera_bound_max = Vector3.ZERO
@@ -25,21 +25,21 @@ func get_camera_transform():
 func _propagate_train_controller(node: Node, vehicle: RailVehicle3D):
     for child in node.get_children():
         _propagate_train_controller(child, vehicle)
-        if "controller_path" in child:
+        if "vehicle_path" in child:
             if vehicle:
-                child.controller_path = child.get_path_to(vehicle)
+                child.vehicle_path = child.get_path_to(vehicle)
             else:
-                child.controller_path = NodePath("")
+                child.vehicle_path = NodePath("")
 
-func set_train_controller(vehicle: RailVehicle3D):
+func set_train(vehicle: Train3D):
     _propagate_train_controller(self, vehicle)
 
 func _process(delta):
     if _dirty:
         _dirty = false
-        if controller_path:
-            var vehicle := get_node_or_null(controller_path) as RailVehicle3D
-            set_train_controller(vehicle)
+        if vehicle_path:
+            var vehicle := get_node_or_null(vehicle_path) as Train3D
+            set_train(vehicle)
 
 # NOTE: EXPERIMENTAL: Automatic handle of `cabin_ready` signal.
 #

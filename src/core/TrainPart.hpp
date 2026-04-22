@@ -68,14 +68,6 @@ namespace godot {
             void log_warning(const String &line);
             void log_error(const String &line);
 
-            void set_enabled(bool p_value);
-            bool get_enabled();
             Dictionary get_supported_commands() override;
-
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
-             * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
-            // void initialize_mover(TrainController *train_controller_node);
-            void emit_config_changed_signal();
     };
 } // namespace godot

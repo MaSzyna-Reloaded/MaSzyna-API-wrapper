@@ -59,7 +59,6 @@ func _collect_consist_members() -> void:
         _vehicles.append(vehicle_3d)
         _controllers.append(controller)
 
-
 func _couple_consist() -> void:
     var previous_controller: LegacyRailVehicle = null
 
@@ -96,12 +95,6 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
         push_error("TrainSet3D: start_track_id is required for consist placement.")
         return
 
-    var track := TrackManager.get_track_by_name(start_track_id)
-    if track == null:
-        push_error("TrainSet3D: track '%s' is not registered in TrackManager." % start_track_id)
-        return
-
-    var track_rid := track.get_rid()
     var current_offset := start_track_offset
     var previous_controller: LegacyRailVehicle = null
 
@@ -120,8 +113,9 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
                 break
             current_offset -= _get_spacing(previous_controller, current_controller)
 
-        current_controller.assign_track_rid(track_rid, start_track_id)
+        current_controller.assign_track(start_track_id)
         current_controller.set_track_offset(current_offset)
+        var track_rid = TrackManager.get_track_by_name(start_track_id)
         current_vehicle.global_position = TrackManager.get_track_position(track_rid, current_offset)
         current_controller.set_mover_location(current_vehicle.global_position)
 

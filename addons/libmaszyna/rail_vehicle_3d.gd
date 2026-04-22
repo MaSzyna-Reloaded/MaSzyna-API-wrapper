@@ -4,14 +4,12 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
-@export var controller: RailVehicle:
+@export var controller: LegacyRailVehicle:
     set(value):
         if controller == value:
             return
-        push_warning(self, " Update controller! ", controller)
         controller = value
         _runtime_controller = null
-        _controller_signals_bound = false
         _dirty = true
 
 @export var cabin_scene: PackedScene
@@ -55,11 +53,13 @@ var _cabin: Cabin3D
 var _camera: FreeCamera3D
 var _runtime_controller: LegacyRailVehicle
 var _t := 0.0
-var _invalid_velocity_reported := false
-var _controller_signals_bound := false
 
 
 func enter_cabin(player: MaszynaPlayer):
+    if cabin_scene == null:
+        push_error("RailVehicle3D.enter_cabin(): cabin_scene is not assigned for '%s'." % name)
+        return
+
     _camera = player.get_camera()
     _cabin = cabin_scene.instantiate() as Cabin3D
     if not _cabin:
@@ -97,7 +97,7 @@ func enter_cabin(player: MaszynaPlayer):
 
     _cabin.cabin_ready.connect(jump_into_cabin)
     add_child(_cabin)
-    _cabin.controller_path = _cabin.get_path_to(self)
+    _cabin.vehicle_path = _cabin.get_path_to(self)
 
     _cabin.global_transform = global_transform
     if cabin_rotate_180deg:
@@ -208,11 +208,11 @@ func _physics_process(delta: float) -> void:
 
     if _runtime_controller:
         _runtime_controller.update(delta)
-        global_position = _runtime_controller.get_mover_location()
+        var mover_location := _runtime_controller.get_mover_location()
+        global_position = mover_location
 
 
 func _exit_tree() -> void:
     if _runtime_controller:
         _runtime_controller.finalize()
         _runtime_controller = null
-        _controller_signals_bound = false

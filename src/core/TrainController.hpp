@@ -14,12 +14,8 @@ namespace godot {
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
             int prev_radio_channel = 0;
-            void refresh_runtime_signals();
 
         protected:
-            void _notification_after_mover_initialized() override;
-            bool can_host_commands() const override;
-            String get_command_target_id() const override;
             void _do_update_internal_mover(TMoverParameters *mover) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
             void _initialize() override;
@@ -27,6 +23,8 @@ namespace godot {
             void _update(double delta) override;
 
         public:
+            ~TrainController() override;
+
             enum TrainPowerSource {
                 POWER_SOURCE_NOT_DEFINED,
                 POWER_SOURCE_INTERNAL,
@@ -46,11 +44,6 @@ namespace godot {
                 POWER_TYPE_ELECTRIC,
                 POWER_TYPE_STEAM
             };
-
-            static const char *POWER_CHANGED_SIGNAL;
-            static const char *COMMAND_RECEIVED;
-            static const char *RADIO_TOGGLED;
-            static const char *RADIO_CHANNEL_CHANGED;
 
             const std::map<TrainPowerSource, TPowerSource> power_source_map = {
                     {POWER_SOURCE_NOT_DEFINED, TPowerSource::NotDefined},
@@ -88,7 +81,6 @@ namespace godot {
                     {TPowerType::ElectricPower, POWER_TYPE_ELECTRIC},
                     {TPowerType::SteamPower, POWER_TYPE_STEAM}};
 
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
             void initialize() override;
             void finalize() override;
             void battery(bool p_enabled) const;
@@ -101,17 +93,10 @@ namespace godot {
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
-            void emit_command_received_signal(
-                    const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void register_command(const String &command, const Callable &callable);
-            void unregister_command(const String &command, const Callable &callable);
             Dictionary get_supported_commands() override;
-            void refresh_command_registry();
 
             static void _bind_methods();
 
-            MAKE_MEMBER_GS(String, train_id, "");
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, battery_voltage, 0.0);
             MAKE_MEMBER_GS(int, radio_channel_min, 0);

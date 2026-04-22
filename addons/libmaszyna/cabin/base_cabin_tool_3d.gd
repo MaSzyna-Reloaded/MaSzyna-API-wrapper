@@ -2,13 +2,14 @@ extends Node3D
 class_name BaseCabinTool3D
 
 var _controller
+var _vehicle:Train3D
 var _dirty:bool = false
 
 signal controller_changed
 
-@export_node_path("RailVehicle3D") var controller_path:NodePath = "":
+@export_node_path("Train3D") var vehicle_path:NodePath = "":
     set(x):
-        controller_path = x
+        vehicle_path = x
         _controller = null
         _dirty = true
 
@@ -21,10 +22,10 @@ func _process_tool(delta):
 func _process(delta):
     if _dirty:
         _dirty = false
-        if not _controller and controller_path:
-            var vehicle := get_node_or_null(controller_path) as RailVehicle3D
-            if vehicle:
-                _controller = vehicle.get_controller()
+        if not _vehicle and vehicle_path:
+            _vehicle = get_node_or_null(vehicle_path) as Train3D
+            if _vehicle:
+                _controller = _vehicle.get_controller()
                 controller_changed.emit()
 
         if has_method("_process_dirty"):

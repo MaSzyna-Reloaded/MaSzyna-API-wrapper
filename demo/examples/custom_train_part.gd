@@ -8,8 +8,11 @@ var state = {
     "custom_train_part_calls": 0,
 }
 
-func _initialize():
-    register_command("custom_command", self._handle_custom_command)
+func _get_supported_commands():
+    return {
+        "custom_command": self._handle_custom_command,    
+    }
+    
 
 func _handle_custom_command(p1, p2):
     log_warning("CUSTOM COMMAND HERE")

@@ -135,9 +135,7 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-    if controller_path and not _controller:
-        var vehicle := get_node_or_null(controller_path) as RailVehicle3D
-        _controller = vehicle.get_controller() if vehicle else null
+
 
 func _process_tool(delta):
     _t += delta
@@ -189,11 +187,11 @@ func _handle_position_change(prev, current) -> int:
     if _controller:
         var cmd = command_increase if current > prev else command_decrease
         if cmd:
-            _controller.send_command(cmd)
+            _vehicle.send_command(cmd)
         if command_set:
-            _controller.send_command(command_set, current)
+            _vehicle.send_command(command_set, current)
 
     if state_property and _controller:
-        return _controller.state.get(state_property, current)
+        return _vehicle.state.get(state_property, current)
     else:
         return current

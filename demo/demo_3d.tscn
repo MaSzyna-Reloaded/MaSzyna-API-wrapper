@@ -182,12 +182,23 @@ environment = SubResource("Environment_jrns0")
 [node name="SM42-099" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
 start_track_offset = 100.0
 
+[node name="SM42-099" parent="SM42-099" index="0" unique_id=1671120130]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -21.305199, 0, -112.701164)
+
+[node name="Wagon1" parent="SM42-099" index="1" unique_id=1030131776]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -98.561165)
+
+[node name="Wagon2" parent="SM42-099" index="2" unique_id=391301707]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -84.521164)
+
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
 
 [node name="TEM2" parent="." unique_id=1971513606 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
+train_id = "tem2"
 controller = null
+head_display_e3d_path = NodePath("")
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1593258065]
 
@@ -259,3 +270,5 @@ submodels_aabb = AABB(-1.27, 0, -5.53571, 2.55484, 0.85, 11.06163)
 transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, -26.1908, -0.0161638, -13.3744)
 
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]
+
+[editable path="SM42-099"]

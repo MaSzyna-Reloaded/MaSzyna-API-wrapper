@@ -5,25 +5,7 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    const char *LegacyRailVehicle::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
-    const char *LegacyRailVehicle::MOVER_INITIALIZED_SIGNAL = "mover_initialized";
-    const char *LegacyRailVehicle::CONFIG_CHANGED = "config_changed";
-
-    LegacyRailVehicle::~LegacyRailVehicle() {
-        _notification_before_mover_cleanup();
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
-            track_manager->remove_vehicle(this);
-        }
-        state.clear();
-        config.clear();
-        internal_state.clear();
-        _d_move_len = 0.0;
-        _applied_move_len = 0.0;
-        if (mover != nullptr) {
-            delete mover;
-            mover = nullptr;
-        }
-    }
+    LegacyRailVehicle::~LegacyRailVehicle() {}
 
     void LegacyRailVehicle::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &LegacyRailVehicle::get_state);
@@ -33,7 +15,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_config"), &LegacyRailVehicle::update_config);
         ClassDB::bind_method(D_METHOD("set_mover_location", "position"), &LegacyRailVehicle::set_mover_location);
         ClassDB::bind_method(D_METHOD("get_mover_location"), &LegacyRailVehicle::get_mover_location);
-        ClassDB::bind_method(D_METHOD("assign_track_rid", "track_rid", "track_id"), &LegacyRailVehicle::assign_track_rid);
         ClassDB::bind_method(D_METHOD("get_track_rid"), &LegacyRailVehicle::get_track_rid);
         ClassDB::bind_method(D_METHOD("assign_track", "track_id"), &LegacyRailVehicle::assign_track);
         ClassDB::bind_method(D_METHOD("get_track_id"), &LegacyRailVehicle::get_track_id);
@@ -62,10 +43,6 @@ namespace godot {
                 &LegacyRailVehicle::get_drag_coefficient, "drag_coefficient");
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "track_id"), "assign_track", "get_track_id");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "track_offset"), "set_track_offset", "get_track_offset");
-
-        ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
-        ADD_SIGNAL(MethodInfo(MOVER_INITIALIZED_SIGNAL));
-        ADD_SIGNAL(MethodInfo(CONFIG_CHANGED));
     }
 
     int LegacyRailVehicle::to_mover_end(const Side side) {
@@ -106,10 +83,8 @@ namespace godot {
         const auto name = std::string(String(get_name()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_velocity, _type_name, name, cabin_number).release();
 
-        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
         update_mover();
         mover->CheckLocomotiveParameters(true, 0);
-        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
         update_mover();
 
         mover->CabActive = 1;
@@ -121,39 +96,29 @@ namespace godot {
         mover->switch_physics(true);
 
         if (RailVehicle *front = get_front_vehicle(); front != nullptr) {
-            sync_mover_coupling(
-                    front, Side::FRONT, front->get_back_vehicle() == this ? Side::BACK : Side::FRONT, true);
+            sync_mover_coupling(front, Side::FRONT, front->get_back_vehicle() == this ? Side::BACK : Side::FRONT, true);
         }
         if (RailVehicle *back = get_back_vehicle(); back != nullptr) {
-            sync_mover_coupling(
-                    back, Side::BACK, back->get_front_vehicle() == this ? Side::FRONT : Side::BACK, true);
+            sync_mover_coupling(back, Side::BACK, back->get_front_vehicle() == this ? Side::FRONT : Side::BACK, true);
         }
 
         DEBUG("LegacyRailVehicle::initialize_mover done vehicle=%s", get_name());
-        emit_signal(MOVER_INITIALIZED_SIGNAL);
     }
 
     void LegacyRailVehicle::_initialize() {
         if (mover == nullptr) {
             initialize_mover();
             update_state();
-            _notification_after_mover_initialized();
         }
     }
 
     void LegacyRailVehicle::_finalize() {
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
-            track_manager->remove_vehicle(this);
-        }
+        TrackManager::get_instance()->remove_vehicle(this);
     }
 
     void LegacyRailVehicle::_update(const double delta) {
         _process_mover(delta);
     }
-
-    void LegacyRailVehicle::_notification_after_mover_initialized() {}
-
-    void LegacyRailVehicle::_notification_before_mover_cleanup() {}
 
     void LegacyRailVehicle::_process_mover(const double delta) {
         // Keep the wrapper-side movement flow analogous to DynObj:
@@ -161,15 +126,14 @@ namespace godot {
         // full applied distance is dMoveLen + ComputeMovement(...).
         mover->dMoveLen = _d_move_len;
 
-        TrackManager *track_manager = TrackManager::get_instance();
-        if (track_manager == nullptr || current_track_rid == RID()) {
+        if (current_track_rid == RID()) {
             _applied_move_len = 0.0;
             _d_move_len = 0.0;
             _handle_mover_update();
             return;
         }
 
-        const Ref<VirtualTrack> track = track_manager->get_track(current_track_rid);
+        const Ref<VirtualTrack> track = TrackManager::get_instance()->get_track(current_track_rid);
         if (track.is_null()) {
             _applied_move_len = 0.0;
             _d_move_len = 0.0;
@@ -207,7 +171,7 @@ namespace godot {
         mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
     }
 
-    void LegacyRailVehicle::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
+    void LegacyRailVehicle::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &p_config) {
         config["axles_powered_count"] = mover->NPoweredAxles;
         config["axles_count"] = mover->NAxles;
         config["length"] = mover->Dim.L;
@@ -218,10 +182,15 @@ namespace godot {
 
     void LegacyRailVehicle::update_mover() {
         if (TMoverParameters *current_mover = get_mover(); current_mover != nullptr) {
+            const Array vehicle_modules = get_rail_vehicle_modules();
+            for (auto module: vehicle_modules) {
+                if (auto *legacy_module = Object::cast_to<LegacyRailVehicleModule>(module)) {
+                    legacy_module->update_mover();
+                }
+            }
+
             _do_update_internal_mover(current_mover);
-            Dictionary new_config;
-            _do_fetch_config_from_mover(current_mover, new_config);
-            update_config(new_config);
+            _do_fetch_config_from_mover(current_mover, config);
         } else {
             UtilityFunctions::push_warning("LegacyRailVehicle::update_mover() failed: internal mover not initialized");
         }
@@ -262,7 +231,6 @@ namespace godot {
 
     void LegacyRailVehicle::update_config(const Dictionary &p_config) {
         config.merge(p_config, true);
-        emit_signal(CONFIG_CHANGED);
     }
 
     void LegacyRailVehicle::update_state() {
@@ -284,17 +252,17 @@ namespace godot {
 
             if (coupler.Connected == nullptr) {
                 neighbour = neighbour_data();
-
-                TrackManager *track_manager = TrackManager::get_instance();
-                if (track_manager == nullptr || current_track_rid == RID()) {
+                if (current_track_rid == RID()) {
                     continue;
                 }
 
                 double track_distance = 0.0;
                 int other_end = -1;
                 LegacyRailVehicle *other_vehicle = end_index == end::front
-                        ? track_manager->get_nearest_vehicle_ahead(this, &track_distance, &other_end)
-                        : track_manager->get_nearest_vehicle_behind(this, &track_distance, &other_end);
+                                                           ? TrackManager::get_instance()->get_nearest_vehicle_ahead(
+                                                                     this, &track_distance, &other_end)
+                                                           : TrackManager::get_instance()->get_nearest_vehicle_behind(
+                                                                     this, &track_distance, &other_end);
                 if (other_vehicle == nullptr) {
                     continue;
                 }
@@ -306,7 +274,8 @@ namespace godot {
 
                 neighbour.vehicle = other_legacy->get_mover();
                 neighbour.vehicle_end = other_end;
-                neighbour.distance = static_cast<float>(track_distance - 0.5 * (mover->Dim.L + neighbour.vehicle->Dim.L));
+                neighbour.distance =
+                        static_cast<float>(track_distance - 0.5 * (mover->Dim.L + neighbour.vehicle->Dim.L));
 
                 if (neighbour.vehicle_end >= end::front && neighbour.vehicle_end <= end::rear) {
                     auto &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
@@ -364,29 +333,25 @@ namespace godot {
                 coupling_type = self_coupler.AllowedFlag & other_coupler.AllowedFlag;
             }
 
-            DEBUG(
-                    "LegacyRailVehicle::sync_mover_coupling attach self=%s self_end=%s other=%s other_end=%s "
-                    "self_auto=%s other_auto=%s self_allowed=%s other_allowed=%s self_control=%s other_control=%s "
-                    "coupling_type=%s",
-                    get_name(), self_end, other_legacy->get_name(), other_end,
-                    self_coupler.AutomaticCouplingFlag, other_coupler.AutomaticCouplingFlag,
-                    self_coupler.AllowedFlag, other_coupler.AllowedFlag,
-                    self_coupler.control_type.c_str(), other_coupler.control_type.c_str(), coupling_type);
+            DEBUG("LegacyRailVehicle::sync_mover_coupling attach self=%s self_end=%s other=%s other_end=%s "
+                  "self_auto=%s other_auto=%s self_allowed=%s other_allowed=%s self_control=%s other_control=%s "
+                  "coupling_type=%s",
+                  get_name(), self_end, other_legacy->get_name(), other_end, self_coupler.AutomaticCouplingFlag,
+                  other_coupler.AutomaticCouplingFlag, self_coupler.AllowedFlag, other_coupler.AllowedFlag,
+                  self_coupler.control_type.c_str(), other_coupler.control_type.c_str(), coupling_type);
             const bool attached =
                     mover->Attach(self_end, other_end, other_legacy->get_mover(), coupling_type, true, false);
-            DEBUG(
-                    "LegacyRailVehicle::sync_mover_coupling attach_result self=%s self_end=%s other=%s other_end=%s "
-                    "attached=%s self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
-                    get_name(), self_end, other_legacy->get_name(), other_end, attached,
-                    static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
-                    static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
+            DEBUG("LegacyRailVehicle::sync_mover_coupling attach_result self=%s self_end=%s other=%s other_end=%s "
+                  "attached=%s self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
+                  get_name(), self_end, other_legacy->get_name(), other_end, attached,
+                  static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
+                  static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
         } else if (self_coupler.Connected != nullptr) {
-            DEBUG(
-                    "LegacyRailVehicle::sync_mover_coupling dettach self=%s self_end=%s other=%s other_end=%s "
-                    "self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
-                    get_name(), self_end, other_legacy->get_name(), other_end,
-                    static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
-                    static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
+            DEBUG("LegacyRailVehicle::sync_mover_coupling dettach self=%s self_end=%s other=%s other_end=%s "
+                  "self_connected=%s self_connected_nr=%s other_connected=%s other_connected_nr=%s",
+                  get_name(), self_end, other_legacy->get_name(), other_end,
+                  static_cast<const void *>(self_coupler.Connected), self_coupler.ConnectedNr,
+                  static_cast<const void *>(other_coupler.Connected), other_coupler.ConnectedNr);
             mover->Dettach(self_end);
         }
     }
@@ -395,12 +360,10 @@ namespace godot {
         current_track_rid = track_rid;
         current_track_id = track_id;
 
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
-            if (track_rid == RID()) {
-                track_manager->remove_vehicle(this);
-            } else {
-                track_manager->register_vehicle(this, track_rid, current_track_id, current_track_offset);
-            }
+        if (track_rid == RID()) {
+            TrackManager::get_instance()->remove_vehicle(this);
+        } else {
+            TrackManager::get_instance()->register_vehicle(this, track_rid, current_track_id, current_track_offset);
         }
     }
 
@@ -410,18 +373,14 @@ namespace godot {
 
     void LegacyRailVehicle::assign_track(const String &track_id) {
         if (track_id.is_empty()) {
-            assign_track_rid(RID(), "");
             return;
         }
 
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
-            const Ref<VirtualTrack> track = track_manager->get_track_by_name(track_id);
-            assign_track_rid(track.is_null() ? RID() : track->get_rid(), track_id);
-            return;
-        }
+        const Ref<VirtualTrack> track = TrackManager::get_instance()->get_track_by_name(track_id);
 
-        current_track_rid = RID();
-        current_track_id = track_id;
+        if (!track.is_null()) {
+            assign_track_rid(track->get_rid(), track_id);
+        }
     }
 
     String LegacyRailVehicle::get_track_id() const {
@@ -431,8 +390,9 @@ namespace godot {
     void LegacyRailVehicle::set_track_offset(const double offset) {
         current_track_offset = offset;
 
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr && current_track_rid != RID()) {
-            track_manager->register_vehicle(this, current_track_rid, current_track_id, current_track_offset);
+        if (current_track_rid != RID()) {
+            TrackManager::get_instance()->register_vehicle(
+                    this, current_track_rid, current_track_id, current_track_offset);
         }
     }
 

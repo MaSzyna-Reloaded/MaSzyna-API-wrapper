@@ -39,12 +39,13 @@ namespace godot {
             return;
         }
 
-        UtilityFunctions::push_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+        UtilityFunctions::push_warning(
+                "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
         if (train_controller.is_valid()) {
-            TrainSystem::get_instance()->log(
-                    train_controller->get_train_id(),
-                    GameLog::LogLevel::WARNING,
-                    "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+            GameLog::get_instance()->log(
+                    GameLog::LogLevel::WARNING, "[TrainBuffCoupl] Coupling is not supported yet as it requires to "
+                                                "handle logic between 2 vehicles simultaneously");
         }
     }
 
@@ -54,12 +55,14 @@ namespace godot {
             return;
         }
 
-        UtilityFunctions::push_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+        UtilityFunctions::push_warning(
+                "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
         if (train_controller.is_valid()) {
-            TrainSystem::get_instance()->log(
-                    train_controller->get_train_id(),
+            GameLog::get_instance()->log(
                     GameLog::LogLevel::WARNING,
-                    "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+                    "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 "
+                    "vehicles simultaneously");
         }
     }
-} //namespace godot
+} // namespace godot

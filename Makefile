@@ -14,6 +14,9 @@ cleanup:
 	rm -rf bin
 	rm -rf demo/bin
 	rm -rf demo/addons/gut
+	rm -rf build-debug/bin
+	rm -rf build-release/bin
+	rm -rf godot-cpp/bin
 
 
 cleanup-build-debug:

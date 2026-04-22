@@ -199,7 +199,6 @@ buffer_location = 2
 resource_name = "TrainBuffer"
 
 [resource]
-train_id = "sm42v1"
 power = 590.0
 battery_voltage = 110.0
 type_name = "6d"

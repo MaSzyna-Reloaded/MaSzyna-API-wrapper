@@ -19,16 +19,16 @@ func _do_update():
     modulate = Color.WHITE
     modulate.a = 1.0 if controller else 0.1
 
-func _propagate_train_controller(node: Node, controller: Train3D):
+func _propagate_train_controller(node: Node, p_controller: Train3D):
     for child in node.get_children():
-        _propagate_train_controller(child, controller)
+        _propagate_train_controller(child, p_controller)
         if "controller" in child:
-            child.controller = child.get_path_to(controller) if controller else NodePath("")
+            child.controller = child.get_path_to(p_controller) if p_controller else NodePath("")
 
 func _ready():
     _do_update()
 
-func _process(delta):
+func _process(_delta):
     if controller:
         var state = controller.state
 

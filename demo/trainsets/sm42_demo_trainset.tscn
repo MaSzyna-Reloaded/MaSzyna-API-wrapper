@@ -10,6 +10,7 @@ start_track_id = "debug"
 
 [node name="SM42-099" parent="." unique_id=1671120130 instance=ExtResource("2_jqsnc")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
+train_id = "sm42"
 
 [node name="Wagon1" parent="." unique_id=1030131776 instance=ExtResource("3_8f8qh")]
 

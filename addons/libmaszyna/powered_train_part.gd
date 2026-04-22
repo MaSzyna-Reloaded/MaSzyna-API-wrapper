@@ -7,9 +7,10 @@ class_name PoweredTrainPart
 
 var locked = false
 
-func _initialize():
-    register_command("lock_power", self._on_lock_power)
-
+func _get_supported_commands():
+    return {
+        "lock_power": self._on_lock_power,
+    }
 
 func _update(delta):
     var state = get_train_state()

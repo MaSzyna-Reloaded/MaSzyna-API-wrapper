@@ -182,13 +182,11 @@ namespace godot {
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                DEBUG(
-                        "RailVehicle::initialize module_begin vehicle=%s module_index=%s module_class=%s",
-                        get_name(), index, module->get_class());
+                DEBUG("RailVehicle::initialize module_begin vehicle=%s module_index=%s module_class=%s", get_name(),
+                      index, module->get_class());
                 module->initialize();
-                DEBUG(
-                        "RailVehicle::initialize module_done vehicle=%s module_index=%s module_class=%s",
-                        get_name(), index, module->get_class());
+                DEBUG("RailVehicle::initialize module_done vehicle=%s module_index=%s module_class=%s", get_name(),
+                      index, module->get_class());
             }
         }
 
@@ -208,13 +206,11 @@ namespace godot {
         DEBUG("RailVehicle::finalize begin vehicle=%s modules=%s", get_name(), modules.size());
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                DEBUG(
-                        "RailVehicle::finalize module_begin vehicle=%s module_index=%s module_class=%s",
-                        get_name(), index, module->get_class());
+                DEBUG("RailVehicle::finalize module_begin vehicle=%s module_index=%s module_class=%s", get_name(),
+                      index, module->get_class());
                 module->finalize();
-                DEBUG(
-                        "RailVehicle::finalize module_done vehicle=%s module_index=%s module_class=%s",
-                        get_name(), index, module->get_class());
+                DEBUG("RailVehicle::finalize module_done vehicle=%s module_index=%s module_class=%s", get_name(), index,
+                      module->get_class());
             }
         }
 

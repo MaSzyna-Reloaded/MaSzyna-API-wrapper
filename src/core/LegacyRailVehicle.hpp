@@ -44,20 +44,14 @@ namespace godot {
             void _update(double delta) override;
 
             virtual void _do_update_internal_mover(TMoverParameters *mover) const;
-            virtual void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;
+            virtual void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config);
             virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
             virtual void _process_mover(double delta);
-            virtual void _notification_after_mover_initialized();
-            virtual void _notification_before_mover_cleanup();
             virtual bool can_host_commands() const;
             virtual String get_command_target_id() const;
 
         public:
             ~LegacyRailVehicle() override;
-
-            static const char *MOVER_CONFIG_CHANGED_SIGNAL;
-            static const char *MOVER_INITIALIZED_SIGNAL;
-            static const char *CONFIG_CHANGED;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);

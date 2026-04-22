@@ -158,7 +158,6 @@ ca_max_hold_time = 1.0
 resource_name = "TrainSecuritySystem"
 
 [resource]
-train_id = "tem2"
 power = 780.0
 battery_voltage = 110.0
 type_name = "tem2"

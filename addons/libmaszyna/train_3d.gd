@@ -2,23 +2,33 @@
 extends RailVehicle3D
 class_name Train3D
 
-signal power_changed(is_powered)
-signal radio_toggled(is_enabled)
-signal radio_channel_changed(channel)
-signal command_received(command, p1, p2)
-signal mover_initialized
-signal mover_config_changed
-signal config_changed
+var _train_registered: bool = false
 
-var train_id: String:
-    get:
-        var active_controller := get_controller() as TrainController
-        return active_controller.get_train_id() if active_controller else ""
+@export var train_id: String
 
-var type_name: String:
-    get:
-        var active_controller := get_controller() as TrainController
-        return active_controller.get_type_name() if active_controller else ""
+func _ready() -> void:
+    super._ready()
+
+    if Engine.is_editor_hint():
+        return
+
+    var active_controller := get_controller()
+    if not train_id:
+        push_warning(self, ": Train3D requires a non-empty train_id before registration")
+        return
+
+    if not active_controller:
+        push_error(self, ": Train3D could not register because TrainController is not available")
+        return
+
+    TrainSystem.register_train(train_id, active_controller)
+    _train_registered = true
+
+    
+func _exit_tree() -> void:
+    if not Engine.is_editor_hint() and train_id:
+        TrainSystem.unregister_train(train_id)
+    super._exit_tree()
 
 
 func get_controller() -> TrainController:
@@ -31,23 +41,5 @@ func get_supported_commands() -> Dictionary:
 
 
 func send_command(command_name: StringName, p1: Variant = null, p2: Variant = null) -> void:
-    var active_controller := get_controller()
-    if active_controller:
-        active_controller.send_command(command_name, p1, p2)
-
-func _bind_train_controller_signals() -> void:
-    if _controller_signals_bound:
-        return
-
-    var active_controller := get_controller()
-    if active_controller == null:
-        return
-
-    _controller_signals_bound = true
-    active_controller.power_changed.connect(func(is_powered): power_changed.emit(is_powered))
-    active_controller.radio_toggled.connect(func(is_enabled): radio_toggled.emit(is_enabled))
-    active_controller.radio_channel_changed.connect(func(channel): radio_channel_changed.emit(channel))
-    active_controller.command_received.connect(func(command_name, p1, p2): command_received.emit(command_name, p1, p2))
-    active_controller.mover_initialized.connect(func(): mover_initialized.emit())
-    active_controller.mover_config_changed.connect(func(): mover_config_changed.emit())
-    active_controller.config_changed.connect(func(): config_changed.emit())
+    if train_id:
+        TrainSystem.send_command(train_id, command_name, p1, p2)

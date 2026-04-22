@@ -34,8 +34,8 @@ namespace godot {
     void TrainPart::_unregister_commands() {};
 
     void TrainPart::log(const GameLog::LogLevel level, const String &line) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
+        if (train_controller != nullptr) {
+            TrainSystem::get_instance()->log(train_controller->get_train_id(), level, line);
         }
     }
 
@@ -77,18 +77,13 @@ namespace godot {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_enter_tree() {
-        LegacyRailVehicleModule::_enter_tree();
-        train_controller_node = Object::cast_to<TrainController>(get_legacy_rail_vehicle_node());
+    void TrainPart::set_rail_vehicle(RailVehicle *p_rail_vehicle) {
+        LegacyRailVehicleModule::set_rail_vehicle(p_rail_vehicle);
+        train_controller = Object::cast_to<TrainController>(get_legacy_rail_vehicle());
     }
 
-    void TrainPart::_exit_tree() {
-        train_controller_node = nullptr;
-        LegacyRailVehicleModule::_exit_tree();
-    }
-
-    void TrainPart::process(const double delta) {
-        LegacyRailVehicleModule::process(delta);
+    void TrainPart::update(const double delta) {
+        LegacyRailVehicleModule::update(delta);
 
         if (_dirty) {
             update_mover();
@@ -101,8 +96,8 @@ namespace godot {
 
         if (enabled_changed) {
             enabled_changed = false;
-            if (train_controller_node != nullptr) {
-                train_controller_node->refresh_command_registry();
+            if (train_controller != nullptr) {
+                train_controller->refresh_command_registry();
             }
             emit_signal("enable_changed", enabled);
             emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
@@ -124,8 +119,8 @@ namespace godot {
     }
 
     void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), command, p1, p2);
+        if (train_controller != nullptr) {
+            TrainSystem::get_instance()->send_command(train_controller->get_train_id(), command, p1, p2);
         }
     }
 
@@ -141,6 +136,10 @@ namespace godot {
         }
         collecting_commands = false;
         return command_registry;
+    }
+
+    TrainController *TrainPart::get_train_controller() const {
+        return train_controller;
     }
 
 } // namespace godot

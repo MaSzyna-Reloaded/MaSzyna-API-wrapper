@@ -32,7 +32,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_config"), &LegacyRailVehicle::update_config);
         ClassDB::bind_method(D_METHOD("set_mover_location", "position"), &LegacyRailVehicle::set_mover_location);
         ClassDB::bind_method(D_METHOD("get_mover_location"), &LegacyRailVehicle::get_mover_location);
-        ClassDB::bind_method(D_METHOD("assign_track_rid", "track_rid", "track_id"), &LegacyRailVehicle::assign_track_rid);
+        ClassDB::bind_method(
+                D_METHOD("assign_track_rid", "track_rid", "track_id"), &LegacyRailVehicle::assign_track_rid);
         ClassDB::bind_method(D_METHOD("get_track_rid"), &LegacyRailVehicle::get_track_rid);
         ClassDB::bind_method(D_METHOD("assign_track", "track_id"), &LegacyRailVehicle::assign_track);
         ClassDB::bind_method(D_METHOD("get_track_id"), &LegacyRailVehicle::get_track_id);
@@ -130,23 +131,22 @@ namespace godot {
         }
 
         emit_signal(MOVER_INITIALIZED_SIGNAL);
+        DEBUG("Mover initialized!");
     }
 
-    void LegacyRailVehicle::_enter_tree() {}
-
-    void LegacyRailVehicle::_ready() {
+    void LegacyRailVehicle::_initialize() {
         initialize_mover();
         update_state();
         _notification_after_mover_ready();
     }
 
-    void LegacyRailVehicle::_exit_tree() {
+    void LegacyRailVehicle::_deinitialize() {
         if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
             track_manager->remove_vehicle(this);
         }
     }
 
-    void LegacyRailVehicle::_process(const double delta) {
+    void LegacyRailVehicle::_update(const double delta) {
         _update_mover_config_if_dirty();
         _process_mover(delta);
     }
@@ -303,9 +303,10 @@ namespace godot {
 
                 double track_distance = 0.0;
                 int other_end = -1;
-                LegacyRailVehicle *other_vehicle = end_index == end::front
-                        ? track_manager->get_nearest_vehicle_ahead(this, &track_distance, &other_end)
-                        : track_manager->get_nearest_vehicle_behind(this, &track_distance, &other_end);
+                LegacyRailVehicle *other_vehicle =
+                        end_index == end::front
+                                ? track_manager->get_nearest_vehicle_ahead(this, &track_distance, &other_end)
+                                : track_manager->get_nearest_vehicle_behind(this, &track_distance, &other_end);
                 if (other_vehicle == nullptr) {
                     continue;
                 }
@@ -317,7 +318,8 @@ namespace godot {
 
                 neighbour.vehicle = other_legacy->get_mover();
                 neighbour.vehicle_end = other_end;
-                neighbour.distance = static_cast<float>(track_distance - 0.5 * (mover->Dim.L + neighbour.vehicle->Dim.L));
+                neighbour.distance =
+                        static_cast<float>(track_distance - 0.5 * (mover->Dim.L + neighbour.vehicle->Dim.L));
 
                 if (neighbour.vehicle_end >= end::front && neighbour.vehicle_end <= end::rear) {
                     auto &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
@@ -422,7 +424,8 @@ namespace godot {
     void LegacyRailVehicle::set_track_offset(const double offset) {
         current_track_offset = offset;
 
-        if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr && current_track_rid != RID()) {
+        if (TrackManager *track_manager = TrackManager::get_instance();
+            track_manager != nullptr && current_track_rid != RID()) {
             track_manager->register_vehicle(this, current_track_rid, current_track_id, current_track_offset);
         }
     }

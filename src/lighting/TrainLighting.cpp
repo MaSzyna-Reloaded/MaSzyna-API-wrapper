@@ -3,7 +3,7 @@ namespace godot {
     const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
 
     TrainLighting::TrainLighting() {
-        train_controller_node = nullptr;
+        train_controller = nullptr;
     }
 
     TrainLighting::~TrainLighting() {
@@ -39,9 +39,9 @@ namespace godot {
         mover->LightsWrap = wrap_light_selector;
         mover->LightsDefPos = default_selector_position;
         mover->LightPower = 0; //LightPower is used there but declared in the Param section in the .fiz file
-        if (train_controller_node != nullptr) {
-            mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
-            mover->AlterLightPowerSource.SourceType = train_controller_node->power_source_map.at(alternative_light_source);
+        if (train_controller != nullptr) {
+            mover->LightPowerSource.SourceType = train_controller->power_source_map.at(light_source);
+            mover->AlterLightPowerSource.SourceType = train_controller->power_source_map.at(alternative_light_source);
         }
         mover->LightsPos = selector_position;
     }
@@ -50,8 +50,8 @@ namespace godot {
         ASSERT_MOVER(mover);
         state.set("light_position", mover->LightsPosNo);
         state.set("light_power", mover->LightPower);
-        if (train_controller_node != nullptr) {
-            state.set("power_source", train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType));
+        if (train_controller != nullptr) {
+            state.set("power_source", train_controller->tpower_source_map.at(mover->LightPowerSource.SourceType));
         }
     }
 

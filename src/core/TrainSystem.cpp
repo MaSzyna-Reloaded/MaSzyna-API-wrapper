@@ -158,7 +158,7 @@ namespace godot {
         Array command_keys = commands.keys();
         Array commands_to_remove;
 
-        for (const auto & command_key : command_keys) {
+        for (const auto &command_key: command_keys) {
             String command = command_key;
             Dictionary _trains = commands[command];
             if (_trains.has(train_id)) {
@@ -169,7 +169,7 @@ namespace godot {
             }
         }
 
-        for (const auto & i : commands_to_remove) {
+        for (const auto &i: commands_to_remove) {
             commands.erase(i);
         }
 
@@ -202,6 +202,7 @@ namespace godot {
         const Array keys = supported_commands.keys();
         for (int i = 0; i < keys.size(); ++i) {
             const String command_name = keys[i];
+            DEBUG(train_id + String(": registering command ") + command_name);
             register_command(train_id, command_name, supported_commands[command_name]);
         }
     }
@@ -264,12 +265,14 @@ namespace godot {
                     "Received command " + command + "(" + String(", ").join(args) + ")");
                 if (arg_required != argc) {
                     log(train_id, GameLog::LogLevel::WARNING,
-                            "Method " + String(c.get_object()->get_class()) + "::" + String(c.get_method().get_basename()) + " should handle " + String::num_int64(arg_required) +
-                            " arguments, but it has " + String::num_int64(arg_required));
+                        "Method " + String(c.get_object()->get_class()) + "::" + String(c.get_method().get_basename()) +
+                                " should handle " + String::num_int64(arg_required) + " arguments, but it has " +
+                                String::num_int64(arg_required));
                 }
 #endif
             } else {
-                log(train_id, GameLog::LogLevel::ERROR, "Callable " + String(c.get_method().get_basename()) + " is invalid");
+                log(train_id, GameLog::LogLevel::ERROR,
+                    "Callable " + String(c.get_method().get_basename()) + " is invalid");
             }
         } else {
             log(train_id, GameLog::LogLevel::ERROR, "Unknown command: " + command);

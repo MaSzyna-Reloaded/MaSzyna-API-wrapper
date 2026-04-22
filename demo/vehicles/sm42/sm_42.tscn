@@ -47,6 +47,51 @@ monitoring = false
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.04553227, 1.9949586, 0.49393514)
 shape = SubResource("BoxShape3D_vasiy")
 
+[node name="SfxPlayer3D" type="Node3D" parent="SM42-099" unique_id=1646618549]
+transform = Transform3D(1, 0, -1.748456e-07, 0, 1, 0, 1.748456e-07, 0, 1, 0.058641333, 1.3523579, -0.6670667)
+script = ExtResource("4_n7ime")
+bank = ExtResource("5_liqvc")
+attenuation_model = 1
+unit_size = 20.0
+max_distance = 100
+playback_effect = &"horn1"
+playback_automation_value = 489.0
+metadata/_custom_type_script = "uid://uo24v0se8gsf"
+
+[node name="OilPump" type="Node" parent="SM42-099/SfxPlayer3D" unique_id=132705259]
+script = ExtResource("6_clokw")
+state_property = "oil_pump_active"
+sound_event = &"oil_pump"
+controller_path = NodePath("../..")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Engine" type="Node" parent="SM42-099/SfxPlayer3D" unique_id=381118470]
+script = ExtResource("6_clokw")
+state_property = "engine_rpm"
+trigger_mode = 1
+trigger_threshold_min = 10.0
+trigger_threshold_max = 10000.0
+sound_event = &"engine"
+sound_parameter = &"rpm"
+controller_path = NodePath("../..")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Horn1" type="Node" parent="SM42-099/SfxPlayer3D" unique_id=209300178]
+script = ExtResource("6_clokw")
+state_property = "horn"
+trigger_threshold_min = -1.0
+trigger_threshold_max = 0.0
+sound_event = &"horn1"
+controller_path = NodePath("../..")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
+[node name="Horn2" type="Node" parent="SM42-099/SfxPlayer3D" unique_id=875255125]
+script = ExtResource("6_clokw")
+state_property = "horn"
+sound_event = &"horn2"
+controller_path = NodePath("../..")
+metadata/_custom_type_script = "uid://ba86u1wfkr52x"
+
 [node name="Wagon1" type="Node3D" parent="." unique_id=1513434938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.139999)
 script = ExtResource("1_iiqbf")
@@ -76,48 +121,3 @@ exclude_node_names = ["cien"]
 instancer = 0
 submodels_aabb = AABB(-1.55, -0.028729022, -7.42709, 3.1, 3.253429, 14.85418)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7.17445e-06, 0, -28.1431)
-
-[node name="SfxPlayer3D" type="Node3D" parent="." unique_id=1646618549]
-transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, -0.058641274, 1.3523579, 0.6670667)
-script = ExtResource("4_n7ime")
-bank = ExtResource("5_liqvc")
-attenuation_model = 1
-unit_size = 20.0
-max_distance = 100
-playback_effect = &"horn1"
-playback_automation_value = 489.0
-metadata/_custom_type_script = "uid://uo24v0se8gsf"
-
-[node name="OilPump" type="Node" parent="SfxPlayer3D" unique_id=132705259]
-script = ExtResource("6_clokw")
-state_property = "oil_pump_active"
-sound_event = &"oil_pump"
-controller_path = NodePath("../../SM42-099")
-metadata/_custom_type_script = "uid://ba86u1wfkr52x"
-
-[node name="Engine" type="Node" parent="SfxPlayer3D" unique_id=381118470]
-script = ExtResource("6_clokw")
-state_property = "engine_rpm"
-trigger_mode = 1
-trigger_threshold_min = 10.0
-trigger_threshold_max = 10000.0
-sound_event = &"engine"
-sound_parameter = &"rpm"
-controller_path = NodePath("../../SM42-099")
-metadata/_custom_type_script = "uid://ba86u1wfkr52x"
-
-[node name="Horn1" type="Node" parent="SfxPlayer3D" unique_id=209300178]
-script = ExtResource("6_clokw")
-state_property = "horn"
-trigger_threshold_min = -1.0
-trigger_threshold_max = 0.0
-sound_event = &"horn1"
-controller_path = NodePath("../../SM42-099")
-metadata/_custom_type_script = "uid://ba86u1wfkr52x"
-
-[node name="Horn2" type="Node" parent="SfxPlayer3D" unique_id=875255125]
-script = ExtResource("6_clokw")
-state_property = "horn"
-sound_event = &"horn2"
-controller_path = NodePath("../../SM42-099")
-metadata/_custom_type_script = "uid://ba86u1wfkr52x"

@@ -6,11 +6,15 @@ var devices_light_enabled:bool = false
 var _powered:bool = false
 var _state = {}
 
-func _ready():
-    var train = get_train_controller_node()
-    train.power_changed.connect(_on_power_changed)
-    train.register_command("roof_light", set_roof_light)
-    train.register_command("devices_light", set_devices_light)
+func _initialize():
+    print("INTERIOR LIGHTS READY")
+    #power_changed.connect(_on_power_changed)
+    
+func _get_supported_commands():
+    return {
+        "roof_light": set_roof_light,
+        "devices_light": set_devices_light,
+        }
 
 func _on_power_changed(train_is_powered):
     _powered = train_is_powered

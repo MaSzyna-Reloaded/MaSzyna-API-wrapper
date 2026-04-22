@@ -96,7 +96,7 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        LegacyRailVehicle *vehicle = get_legacy_rail_vehicle_node();
+        LegacyRailVehicle *vehicle = get_legacy_rail_vehicle();
         if (vehicle == nullptr) {
             return;
         }

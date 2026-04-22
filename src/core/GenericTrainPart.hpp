@@ -17,13 +17,15 @@ namespace godot {
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
             void _do_process_mover(TMoverParameters *mover, double delta) override;
             void update_state(const Dictionary &state);
-            virtual void _ready() override;
+            void _initialize() override;
 
         public:
-            TrainController *get_train_controller_node();
+            TrainController *get_train_controller();
             void _process_mover(double delta) override;
             virtual void _process_train_part(double delta);
             virtual Dictionary _get_train_part_state();
+            Dictionary _get_supported_commands();
+            Dictionary get_supported_commands() override;
             Dictionary get_train_state();
     };
 } // namespace godot

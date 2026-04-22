@@ -10,6 +10,7 @@
 #include "core/LegacyWagon.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/RailVehicle.hpp"
+#include "core/RailVehicleModule.hpp"
 #include "core/TrackManager.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
@@ -71,6 +72,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(MaszynaParser);
+        GDREGISTER_ABSTRACT_CLASS(RailVehicleModule);
         GDREGISTER_ABSTRACT_CLASS(LegacyRailVehicleModule);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);

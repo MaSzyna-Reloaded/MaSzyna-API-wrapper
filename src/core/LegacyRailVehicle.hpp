@@ -37,10 +37,9 @@ namespace godot {
         protected:
             void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
-            void _enter_tree() override;
-            void _ready() override;
-            void _exit_tree() override;
-            void _process(double delta) override;
+            void _initialize() override;
+            void _deinitialize() override;
+            void _update(double delta) override;
 
             virtual void _do_update_internal_mover(TMoverParameters *mover) const;
             virtual void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;

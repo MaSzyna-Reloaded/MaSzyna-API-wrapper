@@ -1,7 +1,7 @@
 #include <cstdlib>
 #include <godot_cpp/variant/utility_functions.hpp>
-#include "LegacyRailVehicleModule.hpp"
 #include "RailVehicle.hpp"
+#include "RailVehicleModule.hpp"
 #include "TrainSet.hpp"
 
 namespace godot {
@@ -16,11 +16,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_modules", "modules"), &RailVehicle::set_modules);
         ClassDB::bind_method(D_METHOD("get_modules"), &RailVehicle::get_modules);
         ClassDB::bind_method(D_METHOD("get_supported_commands"), &RailVehicle::get_supported_commands);
-        ClassDB::bind_method(D_METHOD("enter_tree", "host"), &RailVehicle::enter_tree);
-        ClassDB::bind_method(D_METHOD("ready"), &RailVehicle::ready);
-        ClassDB::bind_method(D_METHOD("exit_tree"), &RailVehicle::exit_tree);
-        ClassDB::bind_method(D_METHOD("process", "delta"), &RailVehicle::process);
-        ClassDB::bind_method(D_METHOD("physics_process", "delta"), &RailVehicle::physics_process);
+        ClassDB::bind_method(D_METHOD("is_initialized"), &RailVehicle::is_initialized);
+        ClassDB::bind_method(D_METHOD("initialize"), &RailVehicle::initialize);
+        ClassDB::bind_method(D_METHOD("deinitialize"), &RailVehicle::deinitialize);
+        ClassDB::bind_method(D_METHOD("update", "delta"), &RailVehicle::update);
         ClassDB::bind_method(D_METHOD("decouple", "relative_index"), &RailVehicle::decouple);
         ClassDB::bind_method(D_METHOD("uncouple_front"), &RailVehicle::uncouple_front);
         ClassDB::bind_method(D_METHOD("uncouple_back"), &RailVehicle::uncouple_back);
@@ -53,8 +52,8 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(
                         Variant::ARRAY, "modules", PROPERTY_HINT_ARRAY_TYPE,
-                        String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":LegacyRailVehicleModule",
-                        PROPERTY_USAGE_DEFAULT, "Array[LegacyRailVehicleModule]"),
+                        String::num(Variant::OBJECT) + "/" + String::num(PROPERTY_HINT_RESOURCE_TYPE) + ":RailVehicleModule",
+                        PROPERTY_USAGE_DEFAULT, "Array[RailVehicleModule]"),
                 "set_modules", "get_modules");
 
         BIND_ENUM_CONSTANT(FRONT);
@@ -76,15 +75,11 @@ namespace godot {
         return String("<RailVehicle({0})>").format(Array::make(get_name()));
     }
 
-    void RailVehicle::_enter_tree() {}
+    void RailVehicle::_initialize() {}
 
-    void RailVehicle::_ready() {}
+    void RailVehicle::_deinitialize() {}
 
-    void RailVehicle::_exit_tree() {}
-
-    void RailVehicle::_process(const double delta) {}
-
-    void RailVehicle::_physics_process(const double delta) {}
+    void RailVehicle::_update(const double delta) {}
 
     void RailVehicle::couple(RailVehicle *other_vehicle, Side self_side, Side other_side) {
         if (self_side == Side::FRONT && other_side == Side::BACK) {
@@ -131,7 +126,27 @@ namespace godot {
     }
 
     void RailVehicle::set_modules(const Array &p_modules) {
+        for (int index = 0; index < modules.size(); ++index) {
+            auto *module = Object::cast_to<RailVehicleModule>(modules[index]);
+            if (module == nullptr) {
+                continue;
+            }
+
+            bool still_present = false;
+            for (int new_index = 0; new_index < p_modules.size(); ++new_index) {
+                if (modules[index] == p_modules[new_index]) {
+                    still_present = true;
+                    break;
+                }
+            }
+
+            if (!still_present) {
+                module->set_rail_vehicle(nullptr);
+            }
+        }
+
         modules = p_modules;
+        _ensure_module_bindings();
         _dirty = true;
     }
 
@@ -143,63 +158,63 @@ namespace godot {
         return {};
     }
 
-    void RailVehicle::enter_tree(Node *p_host) {
-        runtime_host = p_host;
-        runtime_initialized = false;
-
-        for (int index = 0; index < modules.size(); ++index) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                module->enter_tree(this, p_host);
-            }
-        }
-
-        _enter_tree();
+    bool RailVehicle::is_initialized() const {
+        return initialized;
     }
 
-    void RailVehicle::ready() {
-        if (runtime_initialized) {
+    void RailVehicle::_ensure_module_bindings() {
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<RailVehicleModule>(modules[index]); module != nullptr) {
+                if (module->get_rail_vehicle() != this) {
+                    module->set_rail_vehicle(this);
+                }
+            }
+        }
+    }
+
+    void RailVehicle::initialize() {
+        if (initialized) {
             return;
         }
 
-        runtime_initialized = true;
-        _ready();
+        _ensure_module_bindings();
+        initialized = true;
+        _initialize();
 
         for (int index = 0; index < modules.size(); ++index) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                module->ready();
+            if (auto *module = Object::cast_to<RailVehicleModule>(modules[index]); module != nullptr) {
+                module->initialize();
             }
         }
     }
 
-    void RailVehicle::exit_tree() {
-        _exit_tree();
+    void RailVehicle::deinitialize() {
+        if (!initialized) {
+            return;
+        }
 
         for (int index = 0; index < modules.size(); ++index) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                module->exit_tree();
+            if (auto *module = Object::cast_to<RailVehicleModule>(modules[index]); module != nullptr) {
+                module->deinitialize();
             }
         }
 
-        runtime_host = nullptr;
-        runtime_initialized = false;
+        _deinitialize();
+        initialized = false;
     }
 
-    void RailVehicle::process(const double delta) {
-        _process(delta);
+    void RailVehicle::update(const double delta) {
+        _ensure_module_bindings();
+        _update(delta);
 
         for (int index = 0; index < modules.size(); ++index) {
-            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
-                module->process(delta);
+            if (auto *module = Object::cast_to<RailVehicleModule>(modules[index]); module != nullptr) {
+                if (initialized && !module->is_initialized()) {
+                    module->initialize();
+                }
+                module->update(delta);
             }
         }
-    }
-
-    void RailVehicle::physics_process(const double delta) {
-        _physics_process(delta);
-    }
-
-    Node *RailVehicle::get_runtime_host() const {
-        return runtime_host;
     }
 
     RailVehicle *RailVehicle::decouple(const int relative_index) {

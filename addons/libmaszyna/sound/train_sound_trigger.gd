@@ -39,6 +39,7 @@ func _exit_tree() -> void:
 func _check_sound_event():
     if _dirty:
         _dirty = false
+        
         if controller_path and not _train:
             _train = get_node(controller_path) as Train3D
                 

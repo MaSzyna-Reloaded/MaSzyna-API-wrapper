@@ -163,8 +163,7 @@ func _instantiate_runtime_controller() -> void:
         push_error("RailVehicle3D '%s': controller resource must inherit LegacyRailVehicle." % name)
         return
 
-    _runtime_controller.enter_tree(self)
-    _runtime_controller.ready()
+    _runtime_controller.initialize()
 
 
 func _update_head_display():
@@ -198,7 +197,7 @@ func _process(delta):
             _instantiate_runtime_controller()
 
     if not Engine.is_editor_hint() and _runtime_controller:
-        _runtime_controller.process(delta)
+        _runtime_controller.update(delta)
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -211,7 +210,6 @@ func _physics_process(delta: float) -> void:
         return
 
     if _runtime_controller:
-        _runtime_controller.physics_process(delta)
         var track_rid := _runtime_controller.get_track_rid()
         var track_offset := float(_runtime_controller.get_track_offset())
         var movement_delta := float(get_state().get("movement_delta", 0.0))
@@ -244,6 +242,6 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
     if _runtime_controller:
-        _runtime_controller.exit_tree()
+        _runtime_controller.deinitialize()
         _runtime_controller = null
         _controller_signals_bound = false

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LegacyRailVehicle.hpp"
+#include "RailVehicleModule.hpp"
 #include "macros.hpp"
 
 namespace godot {
@@ -22,9 +23,9 @@ namespace godot {
             String get_command_target_id() const override;
             void _do_update_internal_mover(TMoverParameters *mover) const;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
-            void _enter_tree() override;
-            void _exit_tree() override;
-            void _process(double delta) override;
+            void _initialize() override;
+            void _deinitialize() override;
+            void _update(double delta) override;
 
         public:
             enum TrainPowerSource {

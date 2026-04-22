@@ -23,7 +23,7 @@ namespace godot {
         protected:
             bool enabled = true;
             bool enabled_changed = false;
-            TrainController *train_controller_node = nullptr;
+            TrainController *train_controller = nullptr;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
@@ -50,12 +50,11 @@ namespace godot {
 
             virtual void _register_commands();
             virtual void _unregister_commands();
-            void _enter_tree() override;
-            void _exit_tree() override;
 
         public:
             ~TrainPart() override = default;
-            void process(double delta) override;
+            void set_rail_vehicle(RailVehicle *p_rail_vehicle) override;
+            void update(double delta) override;
 
             void register_command(const String &command, const Callable &callback);
             void unregister_command(const String &command, const Callable &callback);
@@ -70,11 +69,12 @@ namespace godot {
             void set_enabled(bool p_value);
             bool get_enabled();
             Dictionary get_supported_commands() override;
+            TrainController *get_train_controller() const;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
              * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
-            // void initialize_mover(TrainController *train_controller_node);
+            // void initialize_mover(TrainController *train_controller);
             void emit_config_changed_signal();
     };
 } // namespace godot

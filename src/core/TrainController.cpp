@@ -1,5 +1,5 @@
 #include "../core/TrainController.hpp"
-#include "../core/LegacyRailVehicleModule.hpp"
+#include "../core/RailVehicleModule.hpp"
 #include "../core/TrainSystem.hpp"
 #include <godot_cpp/core/math.hpp>
 
@@ -120,18 +120,18 @@ namespace godot {
         }
     }
 
-    void TrainController::_enter_tree() {
-        LegacyRailVehicle::_enter_tree();
+    void TrainController::_initialize() {
+        LegacyRailVehicle::_initialize();
         TrainSystem::get_instance()->register_train(train_id, this);
     }
 
-    void TrainController::_exit_tree() {
+    void TrainController::_deinitialize() {
         TrainSystem::get_instance()->unregister_train(train_id);
-        LegacyRailVehicle::_exit_tree();
+        LegacyRailVehicle::_deinitialize();
     }
 
-    void TrainController::_process(const double delta) {
-        LegacyRailVehicle::_process(delta);
+    void TrainController::_update(const double delta) {
+        LegacyRailVehicle::_update(delta);
         refresh_runtime_signals();
     }
 
@@ -162,7 +162,7 @@ namespace godot {
 
         const Array vehicle_modules = get_rail_vehicle_modules();
         for (int index = 0; index < vehicle_modules.size(); ++index) {
-            auto *module = Object::cast_to<LegacyRailVehicleModule>(vehicle_modules[index]);
+            auto *module = Object::cast_to<RailVehicleModule>(vehicle_modules[index]);
             if (module == nullptr) {
                 continue;
             }

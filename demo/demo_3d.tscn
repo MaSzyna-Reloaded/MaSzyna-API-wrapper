@@ -21,25 +21,25 @@
 [ext_resource type="Script" uid="uid://lj2sjiebi4m0" path="res://addons/gnd_sfx/sfx_player.gd" id="16_lsqkb"]
 [ext_resource type="Resource" uid="uid://wi3rnp4pryi0" path="res://vehicles/sm42/sm42_sound_bank.tres" id="17_t705k"]
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_ss847"]
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_h5mje"]
 seed = 10
 
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_g3elc"]
-noise = SubResource("FastNoiseLite_ss847")
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_ss847"]
+noise = SubResource("FastNoiseLite_h5mje")
 seamless = true
 
-[sub_resource type="FastNoiseLite" id="FastNoiseLite_sa6xs"]
+[sub_resource type="FastNoiseLite" id="FastNoiseLite_g3elc"]
 seed = 100
 frequency = 0.008
 
-[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_eihw1"]
-noise = SubResource("FastNoiseLite_sa6xs")
+[sub_resource type="NoiseTexture2D" id="NoiseTexture2D_sa6xs"]
+noise = SubResource("FastNoiseLite_g3elc")
 seamless = true
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_6m450"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_eihw1"]
 shader = ExtResource("9_esmlu")
-shader_parameter/cloud_tex_a = SubResource("NoiseTexture2D_g3elc")
-shader_parameter/cloud_tex_b = SubResource("NoiseTexture2D_eihw1")
+shader_parameter/cloud_tex_a = SubResource("NoiseTexture2D_ss847")
+shader_parameter/cloud_tex_b = SubResource("NoiseTexture2D_sa6xs")
 shader_parameter/lower_sky_color = Color(0.655, 0.706, 0.79, 1)
 shader_parameter/horizon_color = Color(0.832, 0.86, 0.886, 1)
 shader_parameter/zenith_color = Color(0.2373352, 0.4190016, 0.7890625, 1)
@@ -112,19 +112,19 @@ shader_parameter/rendered_time_of_day = 14.638
 shader_parameter/observer_latitude_deg = 52.898
 shader_parameter/cloud_time = 22695.828
 shader_parameter/cloud_wind_direction = Vector2(0.9363292, 0.35112345)
-shader_parameter/cloud_wind_speed = 3.432
+shader_parameter/cloud_wind_speed = 3.690160453334883
 shader_parameter/cloud_motion_time = 0.0
 shader_parameter/cloud_motion_scale = 0.12
 shader_parameter/cloud_evolution_time = 0.0
 shader_parameter/cloud_evolution_strength = 0.18
 shader_parameter/cloud_evolution_scale = 0.018
 
-[sub_resource type="Sky" id="Sky_jchga"]
-sky_material = SubResource("ShaderMaterial_6m450")
+[sub_resource type="Sky" id="Sky_6m450"]
+sky_material = SubResource("ShaderMaterial_eihw1")
 
 [sub_resource type="Environment" id="Environment_jrns0"]
 background_mode = 2
-sky = SubResource("Sky_jchga")
+sky = SubResource("Sky_6m450")
 ambient_light_color = Color(0.91, 0.85, 0.69, 1)
 ambient_light_energy = 1.5
 tonemap_white = 6.44
@@ -156,7 +156,7 @@ volumetric_fog_sky_affect = 0.5275
 volumetric_fog_temporal_reprojection_amount = 0.99
 adjustment_enabled = true
 
-[sub_resource type="CompositorEffect" id="CompositorEffect_h0ltb"]
+[sub_resource type="CompositorEffect" id="CompositorEffect_jchga"]
 resource_local_to_scene = false
 resource_name = ""
 enabled = true
@@ -176,8 +176,8 @@ max_radius = 1.377
 sample_count = 8
 dither_strength = 1.4
 
-[sub_resource type="Compositor" id="Compositor_wfg3h"]
-compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_h0ltb")])
+[sub_resource type="Compositor" id="Compositor_h0ltb"]
+compositor_effects = Array[CompositorEffect]([SubResource("CompositorEffect_jchga")])
 
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
@@ -219,7 +219,7 @@ day_light_energy = 2.0
 rainbow_intensity = 0.05
 clouds_coverage = 0.0
 clouds_wind_direction = Vector2(0.9363292, 0.35112345)
-clouds_wind_strength = 3.432
+clouds_wind_strength = 3.690160453334883
 sun_disk_softness = 4.76
 sun_disk_strength = 2.445
 sun_energy_scale = 0.425
@@ -330,7 +330,7 @@ directional_shadow_max_distance = 300.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1272131009]
 environment = SubResource("Environment_jrns0")
-compositor = SubResource("Compositor_wfg3h")
+compositor = SubResource("Compositor_h0ltb")
 
 [node name="SM42-099" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
 start_track_id = "debug"

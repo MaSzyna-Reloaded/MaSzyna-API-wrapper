@@ -163,7 +163,6 @@ namespace godot {
         }
 
         _assign_modules_to_vehicle();
-        _initialize();
 
         for (int index = 0; index < modules.size(); ++index) {
             if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
@@ -171,6 +170,7 @@ namespace godot {
             }
         }
 
+        _initialize();
         runtime_initialized = true;
     }
 

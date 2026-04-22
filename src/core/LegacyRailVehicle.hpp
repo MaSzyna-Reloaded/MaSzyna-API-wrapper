@@ -58,7 +58,6 @@ namespace godot {
             static const char *CONFIG_CHANGED;
 
             Dictionary get_config() const;
-            void initialize() override;
             void update_config(const Dictionary &p_config);
             Dictionary get_state();
             Dictionary &_get_state_internal();

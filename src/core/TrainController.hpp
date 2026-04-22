@@ -112,8 +112,8 @@ namespace godot {
             static void _bind_methods();
 
             MAKE_MEMBER_GS(String, train_id, "");
-            MAKE_MEMBER_GS_DIRTY(double, power, 0.0);
-            MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0);
+            MAKE_MEMBER_GS(double, power, 0.0);
+            MAKE_MEMBER_GS(double, battery_voltage, 0.0);
             MAKE_MEMBER_GS(int, radio_channel_min, 0);
             MAKE_MEMBER_GS(int, radio_channel_max, 0);
     };

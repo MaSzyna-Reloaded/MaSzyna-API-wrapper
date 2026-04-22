@@ -32,7 +32,7 @@ namespace godot {
             MAKE_MEMBER_GS(bool, aware_system_sifa, false);
             MAKE_MEMBER_GS(double, aware_delay, 0.0);
             MAKE_MEMBER_GS(double, emergency_brake_delay, 0.0);
-            MAKE_MEMBER_GS_DIRTY(bool, radio_stop_enabled, false);
+            MAKE_MEMBER_GS(bool, radio_stop_enabled, false);
             MAKE_MEMBER_GS(double, sound_signal_delay, 0.0);
             MAKE_MEMBER_GS(double, shp_magnet_distance, 0.0);
             MAKE_MEMBER_GS(double, ca_max_hold_time, 0.0);

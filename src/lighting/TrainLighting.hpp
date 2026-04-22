@@ -25,7 +25,7 @@ namespace godot {
             void _unregister_commands() override;
         public:
             static const char* SELECTOR_POSITION_CHANGED_SIGNAL;
-            MAKE_MEMBER_GS_DIRTY(int, selector_position, 0);
+            MAKE_MEMBER_GS(int, selector_position, 0);
             MAKE_MEMBER_GS(bool, wrap_light_selector, false);
             MAKE_MEMBER_GS(int, default_selector_position, 0);
             MAKE_MEMBER_GS_NR(TrainController::TrainPowerSource, light_source, TrainController::TrainPowerSource::POWER_SOURCE_GENERATOR);

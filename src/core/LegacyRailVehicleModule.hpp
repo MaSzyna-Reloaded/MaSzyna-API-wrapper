@@ -14,7 +14,6 @@ namespace godot {
 
         protected:
             Dictionary state;
-            bool _dirty = false;
             Ref<RailVehicle> rail_vehicle;
 
             virtual void _do_update_internal_mover(TMoverParameters *mover);

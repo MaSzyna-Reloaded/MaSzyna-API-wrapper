@@ -88,11 +88,6 @@ namespace godot {
     }
 
     void TrainPart::update(const double delta) {
-        if (_dirty) {
-            update_mover();
-            _dirty = false;
-        }
-
         if (enabled) {
             _update(delta);
             _process_mover(delta);
@@ -115,7 +110,6 @@ namespace godot {
     void TrainPart::set_enabled(bool p_value) {
         enabled_changed = (enabled != p_value);
         enabled = p_value;
-        _dirty = true;
     }
 
     bool TrainPart::get_enabled() {

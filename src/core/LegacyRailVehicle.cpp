@@ -1,5 +1,6 @@
 #include "../core/GameLog.hpp"
 #include "../core/LegacyRailVehicle.hpp"
+#include "../core/LegacyRailVehicleModule.hpp"
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -16,8 +17,8 @@ namespace godot {
         state.clear();
         config.clear();
         internal_state.clear();
-        _external_move_accumulator = 0.0;
-        _movement_delta = 0.0;
+        _d_move_len = 0.0;
+        _applied_move_len = 0.0;
         if (mover != nullptr) {
             delete mover;
             mover = nullptr;
@@ -105,10 +106,6 @@ namespace godot {
         const auto name = std::string(String(get_name()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_velocity, _type_name, name, cabin_number).release();
 
-        _dirty = true;
-        _dirty_prop = true;
-        _update_mover_config_if_dirty();
-
         mover->CabActive = 1;
         mover->CabMaster = true;
         mover->CabOccupied = 1;
@@ -132,12 +129,24 @@ namespace godot {
 
     void LegacyRailVehicle::_initialize() {
         if (mover == nullptr) {
-            // The mover must be initialized only after every module finished its own setup.
-            // This keeps CheckLocomotiveParameters() on the fully configured brake/coupler state.
             initialize_mover();
-            update_state();
-            _notification_after_mover_initialized();
         }
+    }
+
+    void LegacyRailVehicle::_initialize_after_modules() {
+        if (mover == nullptr) {
+            return;
+        }
+
+        // main used a two-pass CheckLocomotiveParameters() because the first pass can
+        // reset mover fields. Re-apply module and vehicle config before the second pass.
+        _apply_module_mover_config();
+        update_mover();
+        _apply_module_mover_config();
+        update_mover();
+        update_state();
+        _notification_after_mover_initialized();
+        emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
     }
 
     void LegacyRailVehicle::_finalize() {
@@ -147,7 +156,6 @@ namespace godot {
     }
 
     void LegacyRailVehicle::_update(const double delta) {
-        _update_mover_config_if_dirty();
         _process_mover(delta);
     }
 
@@ -155,35 +163,32 @@ namespace godot {
 
     void LegacyRailVehicle::_notification_before_mover_cleanup() {}
 
-    void LegacyRailVehicle::_update_mover_config_if_dirty() {
-        if (_dirty) {
-            emit_signal(MOVER_CONFIG_CHANGED_SIGNAL);
-
-            _dirty = false;
-            _dirty_prop = true;
-        }
-
-        if (_dirty_prop) {
-            update_mover();
-            _dirty_prop = false;
+    void LegacyRailVehicle::_apply_module_mover_config() {
+        for (int index = 0; index < modules.size(); ++index) {
+            if (auto *module = Object::cast_to<LegacyRailVehicleModule>(modules[index]); module != nullptr) {
+                module->update_mover();
+            }
         }
     }
 
     void LegacyRailVehicle::_process_mover(const double delta) {
-        mover->dMoveLen = _external_move_accumulator;
+        // Keep the wrapper-side movement flow analogous to DynObj:
+        // dMoveLen is injected into the mover before ComputeMovement(), then the
+        // full applied distance is dMoveLen + ComputeMovement(...).
+        mover->dMoveLen = _d_move_len;
 
         TrackManager *track_manager = TrackManager::get_instance();
         if (track_manager == nullptr || current_track_rid == RID()) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
+            _applied_move_len = 0.0;
+            _d_move_len = 0.0;
             _handle_mover_update();
             return;
         }
 
         const Ref<VirtualTrack> track = track_manager->get_track(current_track_rid);
         if (track.is_null()) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
+            _applied_move_len = 0.0;
+            _d_move_len = 0.0;
             _handle_mover_update();
             return;
         }
@@ -194,13 +199,14 @@ namespace godot {
         mover->RunningTrack = track->get_track_param();
         _sync_mover_neighbours();
         mover->ComputeTotalForce(delta);
-        _movement_delta = mover->ComputeMovement(
+        const double computed_move_len = mover->ComputeMovement(
                 delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc, mover->Rot);
-        // Runtime movement state must stay inside LegacyRailVehicle.
-        // The scene wrapper should only read the resolved mover position and never feed it back.
-        set_track_offset(current_track_offset + _movement_delta);
+        // DynObj applies the full resolved distance, not only the raw ComputeMovement() result.
+        // The wrapper must do the same so track_offset stays analogous to vehicle Move(dDOMoveLen).
+        _applied_move_len = mover->dMoveLen + computed_move_len;
+        set_track_offset(current_track_offset + _applied_move_len);
         set_mover_location(track->get_world_position(current_track_offset));
-        _external_move_accumulator = 0.0;
+        _d_move_len = 0.0;
         _handle_mover_update();
     }
 
@@ -255,7 +261,7 @@ namespace godot {
         internal_state["total_distance"] = mover->DistCounter;
         internal_state["direction"] = mover->DirActive;
         internal_state["damage_flag"] = mover->DamageFlag;
-        internal_state["movement_delta"] = _movement_delta;
+        internal_state["movement_delta"] = _applied_move_len;
         internal_state["track_rid"] = current_track_rid;
         internal_state["track_id"] = current_track_id;
         internal_state["track_offset"] = current_track_offset;

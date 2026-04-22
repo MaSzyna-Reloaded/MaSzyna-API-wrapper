@@ -99,7 +99,7 @@ namespace godot {
             MAKE_MEMBER_GS(float, close_delay, 0.0f);
             MAKE_MEMBER_GS(float, open_delay, 0.0f);
             MAKE_MEMBER_GS(float, open_with_permit, -1.0f);
-            MAKE_MEMBER_GS_DIRTY(bool, has_lock, false);
+            MAKE_MEMBER_GS(bool, has_lock, false);
             MAKE_MEMBER_GS(float, max_shift_plug, 0.1f);
             MAKE_MEMBER_GS(Array, permit_list, Array::make(0, 0, 0));
             MAKE_MEMBER_GS(int, permit_list_default, 1);
@@ -107,10 +107,10 @@ namespace godot {
             MAKE_MEMBER_GS(float, auto_close_velocity, -1.0f);
             MAKE_MEMBER_GS(double, platform_max_speed, 0.0);
             MAKE_MEMBER_GS(float, platform_max_shift, 0.0f);
-            MAKE_MEMBER_GS_DIRTY(float, platform_speed, 0.5f);
+            MAKE_MEMBER_GS(float, platform_speed, 0.5f);
             MAKE_MEMBER_GS(double, mirror_max_shift, 90.0);
             MAKE_MEMBER_GS(double, mirror_close_velocity, 5.0);
-            MAKE_MEMBER_GS_DIRTY(bool, permit_required, false);
+            MAKE_MEMBER_GS(bool, permit_required, false);
             MAKE_MEMBER_GS_NR(PermitLight, permit_light_blinking, PermitLight::PERMIT_LIGHT_CONTINUOUS);
             MAKE_MEMBER_GS_NR(PlatformType, platform_type, PlatformType::PLATFORM_TYPE_ROTATE);
             MAKE_MEMBER_GS_NR(Side, side, Side::SIDE_LEFT);

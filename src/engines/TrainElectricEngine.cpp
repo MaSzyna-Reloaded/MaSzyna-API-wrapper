@@ -124,7 +124,6 @@ namespace godot {
 
     void TrainElectricEngine::set_engine_power_source(const TrainController::TrainPowerSource p_source) {
         power_source = p_source;
-        _dirty = true;
     }
 
     TrainController::TrainPowerSource TrainElectricEngine::get_engine_power_source() const {

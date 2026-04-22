@@ -18,8 +18,12 @@ namespace godot {
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
-            double _external_move_accumulator = 0.0;
-            double _movement_delta = 0.0;
+            // Mirrors DynObj/Mover dMoveLen: distance accumulated outside ComputeMovement()
+            // and injected into the next full movement update.
+            double _d_move_len = 0.0;
+            // Mirrors DynObj dDOMoveLen: the full distance applied in the current frame,
+            // including both the injected dMoveLen and the mover-computed displacement.
+            double _applied_move_len = 0.0;
             RID current_track_rid;
             String current_track_id;
             double current_track_offset = 0.0;
@@ -27,7 +31,7 @@ namespace godot {
             double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
-            void _update_mover_config_if_dirty();
+            void _apply_module_mover_config();
             void _handle_mover_update();
             void _sync_mover_neighbours();
             void sync_mover_coupling(RailVehicle *other_vehicle, Side self_side, Side other_side, bool attach);
@@ -37,6 +41,7 @@ namespace godot {
             void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side) override;
             void _initialize() override;
+            void _initialize_after_modules() override;
             void _finalize() override;
             void _update(double delta) override;
 
@@ -76,7 +81,7 @@ namespace godot {
             static void _bind_methods();
 
             MAKE_MEMBER_GS(String, type_name, "");
-            MAKE_MEMBER_GS_DIRTY(String, axle_arrangement, "");
-            MAKE_MEMBER_GS_DIRTY(float, drag_coefficient, 0.0);
+            MAKE_MEMBER_GS(String, axle_arrangement, "");
+            MAKE_MEMBER_GS(float, drag_coefficient, 0.0);
     };
 } // namespace godot

@@ -18,8 +18,6 @@ namespace godot {
         protected:
             static void _bind_methods();
             Ref<TrainSet> trainset;
-            bool _dirty = false;
-            bool _dirty_prop = false;
             Array modules;
             bool runtime_initialized = false;
             void _assign_modules_to_vehicle();
@@ -40,6 +38,7 @@ namespace godot {
             virtual void _on_coupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _on_uncoupled(RailVehicle *other_vehicle, Side self_side, Side other_side);
             virtual void _initialize();
+            virtual void _initialize_after_modules();
             virtual void _finalize();
             virtual void _update(double delta);
 
@@ -47,11 +46,11 @@ namespace godot {
             RailVehicle();
             ~RailVehicle() override;
 
-            MAKE_MEMBER_GS_DIRTY(float, mass, 0.0);
-            MAKE_MEMBER_GS_DIRTY(float, max_velocity, 0.0);
-            MAKE_MEMBER_GS_DIRTY(float, length, 0.0);
-            MAKE_MEMBER_GS_DIRTY(float, width, 0.0);
-            MAKE_MEMBER_GS_DIRTY(float, height, 0.0);
+            MAKE_MEMBER_GS(float, mass, 0.0);
+            MAKE_MEMBER_GS(float, max_velocity, 0.0);
+            MAKE_MEMBER_GS(float, length, 0.0);
+            MAKE_MEMBER_GS(float, width, 0.0);
+            MAKE_MEMBER_GS(float, height, 0.0);
 
             String _to_string() const;
 

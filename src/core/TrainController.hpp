@@ -15,6 +15,7 @@ namespace godot {
             bool prev_radio_enabled = false;
             int prev_radio_channel = 0;
             void refresh_runtime_signals();
+            StringName train_id;
 
         protected:
             void _notification(int p_what);
@@ -87,7 +88,8 @@ namespace godot {
                     {TPowerType::ElectricPower, POWER_TYPE_ELECTRIC},
                     {TPowerType::SteamPower, POWER_TYPE_STEAM}};
 
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            void
+            send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -103,10 +105,11 @@ namespace godot {
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void register_command(const String &command, const Callable &callable);
             void unregister_command(const String &command, const Callable &callable);
+            void set_train_id(StringName p_train_id);
+            StringName get_train_id() const;
 
             static void _bind_methods();
 
-            MAKE_MEMBER_GS(String, train_id, "");
             MAKE_MEMBER_GS_DIRTY(double, power, 0.0);
             MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0);
             MAKE_MEMBER_GS(int, radio_channel_min, 0);

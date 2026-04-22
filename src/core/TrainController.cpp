@@ -17,23 +17,37 @@ namespace godot {
                 D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainController::broadcast_command,
                 DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainController::register_command);
-        ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
+        ClassDB::bind_method(
+                D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
-        ClassDB::bind_method(D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("main_controller_decrease", "step"), &TrainController::main_controller_decrease, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("main_controller_decrease", "step"), &TrainController::main_controller_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
         ClassDB::bind_method(D_METHOD("decouple", "relative_index"), &TrainController::decouple);
         ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
         ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &TrainController::radio_channel_set);
-        ClassDB::bind_method(D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
 
-        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
-        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
-        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(
+                Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
+                "train_id");
+        BIND_PROPERTY(
+                Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
+        BIND_PROPERTY_W_HINT(
+                Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
+                &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min,
+                &TrainController::get_radio_channel_min, "radio_channel_min");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max,
+                &TrainController::get_radio_channel_max, "radio_channel_max");
 
         ADD_SIGNAL(MethodInfo(POWER_CHANGED_SIGNAL, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(RADIO_TOGGLED, PropertyInfo(Variant::BOOL, "is_enabled")));
@@ -126,7 +140,9 @@ namespace godot {
 
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
-                TrainSystem::get_instance()->register_train(train_id, this);
+                if (!train_id.is_empty()) {
+                    TrainSystem::get_instance()->register_train(train_id, this);
+                }
                 register_command("battery", Callable(this, "battery"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -149,7 +165,9 @@ namespace godot {
                 unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                TrainSystem::get_instance()->unregister_train(train_id);
+                if (!train_id.is_empty()) {
+                    TrainSystem::get_instance()->unregister_train(train_id);
+                }
                 break;
             default:
                 break;
@@ -211,10 +229,25 @@ namespace godot {
     void TrainController::decouple(const int relative_index) {
         if (RailVehicle::decouple(relative_index) == nullptr) {
             TrainSystem::get_instance()->log(
-                    train_id,
-                    GameLog::LogLevel::ERROR,
+                    train_id, GameLog::LogLevel::ERROR,
                     "decouple failed for relative_index=" + String::num_int64(relative_index));
         }
+    }
+
+    void TrainController::set_train_id(const StringName p_train_id) {
+        if (!train_id.is_empty() && !Engine::get_singleton()->is_editor_hint()) {
+            TrainSystem::get_instance()->unregister_train(train_id);
+        }
+
+        train_id = p_train_id;
+
+        if (!train_id.is_empty() && !Engine::get_singleton()->is_editor_hint()) {
+            TrainSystem::get_instance()->register_train(train_id, this);
+        }
+    }
+
+    StringName TrainController::get_train_id() const {
+        return train_id;
     }
 
     void TrainController::radio(const bool p_enabled) {

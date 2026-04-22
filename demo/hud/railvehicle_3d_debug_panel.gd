@@ -1,12 +1,16 @@
+@tool
 extends DebugPanel
 
-@export var controller_path = NodePath("")
+@export_node_path("RailVehicle3D") var vehicle_path = NodePath("")
 
+var _vehicle : RailVehicle3D
 var _controller : LegacyRailVehicle
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-    _controller = get_node_or_null(controller_path) as LegacyRailVehicle
+    _vehicle = get_node_or_null(vehicle_path) as RailVehicle3D
+    if _vehicle:
+        _controller =_vehicle.get_controller()
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

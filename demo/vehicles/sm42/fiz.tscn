@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
-[ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
+[ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/customs/cabin_interior_lights.gd" id="2_qmqy7"]
 
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0
@@ -119,7 +118,6 @@ cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
 [node name="SM42v1" type="TrainController" unique_id=433994401]
-train_id = "sm42v1"
 power = 590.0
 battery_voltage = 110.0
 type_name = "6d"
@@ -130,7 +128,6 @@ max_velocity = 90.0
 length = 14.24
 width = 3.17
 height = 4.285
-script = ExtResource("1_vib8j")
 
 [node name="Brake" type="TrainBrake" parent="." unique_id=1887497176]
 valve/type = 20

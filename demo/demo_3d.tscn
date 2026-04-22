@@ -6,10 +6,10 @@
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
-[ext_resource type="Script" uid="uid://bmjb426apnsos" path="res://hud/legacy_railvehicle_debug_panel.gd" id="3_qg2pq"]
+[ext_resource type="Script" uid="uid://bmjb426apnsos" path="res://hud/railvehicle_3d_debug_panel.gd" id="3_qg2pq"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
-[ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
+[ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://trainsets/sm42_demo_trainset.tscn" id="11_8gidn"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
@@ -66,7 +66,8 @@ offset_top = 8.0
 offset_right = 270.0
 offset_bottom = 408.0
 script = ExtResource("3_qg2pq")
-controller_path = NodePath("../SM42-099/SM42-099/SM42v1")
+vehicle_path = NodePath("../SM42-907/SM42-907")
+text = "[ .. no controller .. ]"
 title = "SM42"
 
 [node name="DebugPanelWagon1" parent="." unique_id=629689876 instance=ExtResource("2_esmlu")]
@@ -75,7 +76,7 @@ offset_top = 8.0
 offset_right = 539.0
 offset_bottom = 408.0
 script = ExtResource("3_qg2pq")
-controller_path = NodePath("../SM42-099/Wagon1/401W")
+vehicle_path = NodePath("../SM42-907/Wagon1")
 title = "Wagon1"
 
 [node name="DebugPanelWagon2" parent="." unique_id=159015149 instance=ExtResource("2_esmlu")]
@@ -84,7 +85,7 @@ offset_top = 12.0
 offset_right = 802.0
 offset_bottom = 412.0
 script = ExtResource("3_qg2pq")
-controller_path = NodePath("../SM42-099/Wagon2/401W")
+vehicle_path = NodePath("../SM42-907/Wagon2")
 title = "Wagon2"
 
 [node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=282874346]
@@ -153,7 +154,7 @@ length = 10000000.0
 
 [node name="Player" parent="." unique_id=1342508122 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
-controlled_vehicle_path = NodePath("../SM42-099/SM42-099")
+controlled_vehicle_path = NodePath("../SM42-907/SM42-907")
 
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.069304, -5.63989)
@@ -176,7 +177,7 @@ directional_shadow_max_distance = 300.0
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1272131009]
 environment = SubResource("Environment_jrns0")
 
-[node name="SM42-099" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
+[node name="SM42-907" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
 start_track_offset = 100.0
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
@@ -255,3 +256,5 @@ submodels_aabb = AABB(-1.27, 0, -5.53571, 2.55484, 0.85, 11.06163)
 transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, -26.1908, -0.0161638, -13.3744)
 
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]
+
+[editable path="SM42-907"]

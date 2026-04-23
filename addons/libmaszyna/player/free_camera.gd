@@ -54,6 +54,9 @@ func _on_console_toggle(console_visible):
 func _input(event):
     if not enabled:
         return
+
+    var hovered_control := get_viewport().gui_get_hovered_control()
+
     # Receives mouse motion
     if event is InputEventMouseMotion:
         _mouse_position = event.relative
@@ -64,9 +67,13 @@ func _input(event):
             MOUSE_BUTTON_RIGHT: # Only allows rotation if right click down
                 Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE)
             MOUSE_BUTTON_WHEEL_UP:
+                if hovered_control:
+                    return
                 #velocity_multiplier = clamp(velocity_multiplier * 1.1, 0.2, 20)
                 fov = clamp(fov - 1, 1, 100)
             MOUSE_BUTTON_WHEEL_DOWN:
+                if hovered_control:
+                    return
                 fov = clamp(fov + 1, 1, 100)
 
     # Receives key input

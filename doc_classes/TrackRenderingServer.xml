@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrackRenderingServer" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Native singleton managing server-side rendering for railway tracks.
+	</brief_description>
+	<description>
+		[TrackRenderingServer] is an engine singleton used by [MaszynaTrack3D] to manage track rendering directly through [RenderingServer]. It owns per-track render instances, uploads path data for GPU deformation, manages sleeper multimeshes, and generates rail and ballast meshes without adding helper nodes to the scene tree.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="create_track">
+			<return type="int" />
+			<description>
+				Creates a new track entry and returns its handle.
+			</description>
+		</method>
+		<method name="free_track">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+				Frees all render resources associated with [param track_id].
+			</description>
+		</method>
+		<method name="get_ballast_mesh_instance" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+				Returns the ballast instance RID for the given track.
+			</description>
+		</method>
+		<method name="get_instance_rid" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+				Returns the rail instance RID for the given track.
+			</description>
+		</method>
+		<method name="get_rail_mesh_instance" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+				Returns the rail instance RID for the given track.
+			</description>
+		</method>
+		<method name="get_sleeper_multimesh_instance" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+				Returns the sleeper multimesh instance RID for the given track.
+			</description>
+		</method>
+		<method name="set_ballast_texture">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="path" type="String" />
+			<description>
+				Sets the ballast texture for the given track using a path relative to the MaSzyna game directory.
+			</description>
+		</method>
+		<method name="set_sleeper_model_name">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="sleeper_model_name" type="String" />
+			<description>
+				Loads the sleeper mesh source for the given track from a relative E3D model path such as [code]models/quark/podklad1[/code].
+			</description>
+		</method>
+		<method name="set_sleeper_model_skin">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="sleeper_model_skin" type="String" />
+			<description>
+				Overrides the sleeper material name with an optional skin value such as [code]quark/podklad_betonowy1[/code].
+			</description>
+		</method>
+		<method name="update_ballast_mesh">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="length" type="float" />
+			<param index="2" name="curve_precision" type="float" />
+			<description>
+				Regenerates the ballast mesh cache for the given track.
+			</description>
+		</method>
+		<method name="update_rail_mesh">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="length" type="float" />
+			<param index="2" name="rail_spacing" type="float" />
+			<param index="3" name="curve_precision" type="float" />
+			<description>
+				Regenerates the rail mesh cache for the given track.
+			</description>
+		</method>
+		<method name="update_track_data">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="points" type="PackedVector4Array" />
+			<param index="2" name="quats" type="PackedVector4Array" />
+			<param index="3" name="length" type="float" />
+			<description>
+				Uploads sampled path data to the GPU for the given track.
+			</description>
+		</method>
+	</methods>
+</class>

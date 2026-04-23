@@ -8,14 +8,14 @@
 
 namespace godot {
 
-    void E3DModelManager::_set_owner_recursive(Node *node, Node *new_owner) {
-        if (node != new_owner) {
-            node->set_owner(new_owner);
+    void E3DModelManager::_set_owner_recursive(Node *p_node, Node *p_new_owner) {
+        if (p_node != p_new_owner) {
+            p_node->set_owner(p_new_owner);
         }
 
-        if (node->get_child_count() > 0) {
-            for (int i = 0; i < node->get_child_count(); ++i) {
-                _set_owner_recursive(node->get_child(i), node);
+        if (p_node->get_child_count() > 0) {
+            for (int i = 0; i < p_node->get_child_count(); ++i) {
+                _set_owner_recursive(p_node->get_child(i), p_node);
             }
         }
     }
@@ -25,13 +25,13 @@ namespace godot {
     }
 
     E3DModelManager::E3DModelManager() : user_settings_node(nullptr) {
-        Ref<ConfigFile> _config;
-        _config.instantiate();
-        if (_config->load("user://settings.cfg") == OK) {
+        Ref<ConfigFile> config;
+        config.instantiate();
+        if (config->load("user://settings.cfg") == OK) {
             if (OS::get_singleton()->has_feature("release") && !OS::get_singleton()->has_feature("editor")) {
                 game_dir = ".";
             } else {
-                game_dir = _config->get_value("maszyna", "game_dir", ".");
+                game_dir = config->get_value("maszyna", "game_dir", ".");
             }
         } else {
             game_dir = ".";
@@ -39,9 +39,9 @@ namespace godot {
         // Will be set when entering the SceneTree
     }
 
-    Ref<E3DModel> E3DModelManager::load_model(const String &data_path, const String &file_name) {
+    Ref<E3DModel> E3DModelManager::load_model(const String &p_data_path, const String &p_file_name) {
         Ref<E3DModel> model;
-        const String path = game_dir + "/" + data_path + "/" + file_name + ".e3d";
+        const String path = game_dir + "/" + p_data_path + "/" + p_file_name + ".e3d";
         
         Ref<Resource> cached_res = ResourceCache::get(path, ResourceCache::RESOURCE_CACHE_DIR_MODELS);
         if (cached_res.is_valid()) {

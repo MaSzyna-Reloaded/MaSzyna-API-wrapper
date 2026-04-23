@@ -13,7 +13,7 @@ namespace godot {
 
         protected:
             EngineType get_engine_type() override;
-            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
 
         public:
             MAKE_MEMBER_GS(double, nominal_voltage, 0.0);

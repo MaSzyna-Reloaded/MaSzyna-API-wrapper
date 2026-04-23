@@ -308,10 +308,10 @@
 		<constant name="BRAKE_VALVE_OTHER" value="29" enum="TrainBrakeValve">
 			Other/unknown distributor valve type.
 		</constant>
-		<constant name="BRAKE_METHOD_P10Bgu" value="0" enum="BrakeMethod">
+		<constant name="BRAKE_METHOD_P10_BGU" value="0" enum="BrakeMethod">
 			Cast-iron tread brake blocks P10 (variant Bgu). Legacy phosphorus cast‑iron shoes used on block brakes; robust but noisy and abrasive. Use for older stock with P10 blocks.
 		</constant>
-		<constant name="BRAKE_METHOD_P10Bg" value="1" enum="BrakeMethod">
+		<constant name="BRAKE_METHOD_P10_BG" value="1" enum="BrakeMethod">
 			Cast-iron tread brake blocks P10 (variant Bg). Similar to Bgu with a slightly different friction curve; traditional iron shoes for block brakes.
 		</constant>
 		<constant name="BRAKE_METHOD_D1" value="2" enum="BrakeMethod">
@@ -323,13 +323,13 @@
 		<constant name="BRAKE_METHOD_FR513" value="4" enum="BrakeMethod">
 			Composite tread brake blocks Frenoplast FR‑513 (K‑block). Quieter and less wheel‑abrasive than cast iron; common on modernized wagons.
 		</constant>
-		<constant name="BRAKE_METHOD_Cosid" value="5" enum="BrakeMethod">
+		<constant name="BRAKE_METHOD_COSID" value="5" enum="BrakeMethod">
 			Composite tread brake blocks (e.g., Cosid K‑block family). Use as a generic composite block when a more specific type is unknown.
 		</constant>
-		<constant name="BRAKE_METHOD_P10yBg" value="6" enum="BrakeMethod">
+		<constant name="BRAKE_METHOD_P10Y_BG" value="6" enum="BrakeMethod">
 			Cast-iron tread brake blocks P10 (variant yBg). P10 iron shoes with a modified characteristic ("y" curve) used in some braking tables.
 		</constant>
-		<constant name="BRAKE_METHOD_P10yBgu" value="7" enum="BrakeMethod">
+		<constant name="BRAKE_METHOD_P10Y_BGU" value="7" enum="BrakeMethod">
 			Cast-iron tread brake blocks P10 (variant yBgu). As above with the "y" curve applied to the Bgu variant.
 		</constant>
 		<constant name="BRAKE_METHOD_D1MG" value="9" enum="BrakeMethod">

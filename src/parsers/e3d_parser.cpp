@@ -20,44 +20,44 @@ namespace godot {
         return {chunk_id, chunk_len, chunk_len - 8};
     }
 
-    int E3DParser::u32s(const uint32_t value) const {
-        return static_cast<int>((static_cast<int64_t>(value) + MAX_31B) % MAX_32B - MAX_31B); // NOLINT(*-math-missing-parentheses)
+    int E3DParser::u32s(const uint32_t p_value) const {
+        return static_cast<int>((static_cast<int64_t>(p_value) + max_31_b) % max_32_b - max_31_b); // NOLINT(*-math-missing-parentheses)
     }
 
     PackedVector3Array
-    E3DParser::_calculate_normals(const PackedVector3Array &vertices, const PackedInt32Array &indices) {
+    E3DParser::_calculate_normals(const PackedVector3Array &p_vertices, const PackedInt32Array &p_indices) {
         PackedVector3Array normals;
-        const bool has_indices = indices.size() > 0;
-        for (int i = 0; i < vertices.size(); i++) {
+        const bool has_indices = p_indices.size() > 0;
+        for (int i = 0; i < p_vertices.size(); i++) {
             normals.append(Vector3(0, 0, 0));
         }
 
-        for (int i = 0; i < indices.size(); i += 3) {
-            Indices _indices;
-            Vertices _vertices;
-            Edges _edges;
+        for (int i = 0; i < p_indices.size(); i += 3) {
+            Indices indices;
+            Vertices vertices;
+            Edges edges;
             if (has_indices) {
-                _indices.i1 = indices.get(i);
-                _indices.i2 = indices.get(i + 1);
-                _indices.i3 = indices.get(i + 2);
+                indices.i1 = p_indices.get(i);
+                indices.i2 = p_indices.get(i + 1);
+                indices.i3 = p_indices.get(i + 2);
             } else {
-                _indices.i1 = i;
-                _indices.i2 = i + 1;
-                _indices.i3 = i + 2;
+                indices.i1 = i;
+                indices.i2 = i + 1;
+                indices.i3 = i + 2;
             }
 
-            _vertices.v1 = vertices.get(_indices.i1);
-            _vertices.v2 = vertices.get(_indices.i2);
-            _vertices.v3 = vertices.get(_indices.i3);
+            vertices.v1 = p_vertices.get(indices.i1);
+            vertices.v2 = p_vertices.get(indices.i2);
+            vertices.v3 = p_vertices.get(indices.i3);
 
-            _edges.e1 = _vertices.v2 - _vertices.v1;
-            _edges.e2 = _vertices.v3 - _vertices.v1;
+            edges.e1 = vertices.v2 - vertices.v1;
+            edges.e2 = vertices.v3 - vertices.v1;
 
-            const Vector3 normal = _edges.e1.cross(_edges.e2).normalized();
+            const Vector3 normal = edges.e1.cross(edges.e2).normalized();
 
-            normals.set(_indices.i1, normals.get(_indices.i1) + normal);
-            normals.set(_indices.i2, normals.get(_indices.i2) + normal);
-            normals.set(_indices.i3, normals.get(_indices.i3) + normal);
+            normals.set(indices.i1, normals.get(indices.i1) + normal);
+            normals.set(indices.i2, normals.get(indices.i2) + normal);
+            normals.set(indices.i3, normals.get(indices.i3) + normal);
         }
 
         for (int i = 0; i < normals.size(); i++) {
@@ -67,7 +67,7 @@ namespace godot {
         return normals;
     }
 
-    E3DParser::SubModelData E3DParser::_read_submodel(const Ref<FileAccess> &p_file, const int chunk_size) const {
+    E3DParser::SubModelData E3DParser::_read_submodel(const Ref<FileAccess> &p_file, const int p_chunk_size) const {
         SubModelData result;
         result.next_idx = u32s(p_file->get_32());
         result.first_child_idx = u32s(p_file->get_32());
@@ -93,7 +93,7 @@ namespace godot {
 
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_float(); // skip unused alpha
-        if (const auto _transparent = result.flags & 32; _transparent == 0u) {
+        if (const auto transparent = result.flags & 32; transparent == 0u) {
             selfillum_color.a = 1.0;
             diffuse_color.a = 1.0;
         }
@@ -110,7 +110,7 @@ namespace godot {
         result.first_index_idx = p_file->get_32();
         result.transparent = result.flags & 0b000001;
         // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_buffer(chunk_size - 164); // read to the end of the chunk
+        p_file->get_buffer(p_chunk_size - 164); // read to the end of the chunk
         result.vertices = PackedVector3Array();
         result.normals = PackedVector3Array();
         result.uvs = PackedVector2Array();
@@ -297,7 +297,7 @@ namespace godot {
         Ref<E3DSubModel> submodel;
         submodel.instantiate();
 
-        const std::unordered_map<int, E3DSubModel::SubModelType> typeMap = {
+        const std::unordered_map<int, E3DSubModel::SubModelType> type_map = {
                 {0, E3DSubModel::SubModelType::GL_POINTS},       {1, E3DSubModel::SubModelType::GL_LINES},
                 {2, E3DSubModel::SubModelType::GL_LINE_STRIP},   {3, E3DSubModel::SubModelType::GL_LINE_LOOP},
                 {4, E3DSubModel::SubModelType::GL_TRIANGLES},    {5, E3DSubModel::SubModelType::GL_TRIANGLE_STRIP},
@@ -306,7 +306,7 @@ namespace godot {
                 {256, E3DSubModel::SubModelType::TRANSFORM},     {257, E3DSubModel::SubModelType::FREE_SPOTLIGHT},
                 {258, E3DSubModel::SubModelType::STARS}};
 
-        const std::unordered_map<int, E3DSubModel::AnimationType> animMap = {
+        const std::unordered_map<int, E3DSubModel::AnimationType> anim_map = {
                 {1, E3DSubModel::AnimationType::NONE},         {2, E3DSubModel::AnimationType::ROTATE_VEC},
                 {3, E3DSubModel::AnimationType::ROTATE_XYZ},   {4, E3DSubModel::AnimationType::MOVE},
                 {5, E3DSubModel::AnimationType::JUMP_SECONDS}, {6, E3DSubModel::AnimationType::JUMP_MINUTES},
@@ -320,8 +320,8 @@ namespace godot {
                 {258, E3DSubModel::AnimationType::IK2},        {-1, E3DSubModel::AnimationType::UNKNOWN}};
 
         if (const std::unordered_map<int, E3DSubModel::SubModelType>::const_iterator type_it =
-                    typeMap.find(static_cast<int>(p_submodel.type));
-            type_it != typeMap.end()) {
+                    type_map.find(static_cast<int>(p_submodel.type));
+            type_it != type_map.end()) {
             submodel->set_submodel_type(type_it->second);
         } else {
             UtilityFunctions::push_warning("Unknown submodel type: " + String::num_int64(p_submodel.type));
@@ -330,17 +330,17 @@ namespace godot {
 
         submodel->set_visible(true);
         submodel->set_skip_rendering(false);
-        const String _submodel_name = p_submodel.name;
-        if (!_submodel_name.is_empty()) {
-            submodel->set_name(_submodel_name);
+        const String submodel_name = p_submodel.name;
+        if (!submodel_name.is_empty()) {
+            submodel->set_name(submodel_name);
 
-            if (_submodel_name.begins_with("Light_On")) {
+            if (submodel_name.begins_with("Light_On")) {
                 submodel->set_visible(false);
-            } else if (_submodel_name.to_lower().ends_with("_on")) {
+            } else if (submodel_name.to_lower().ends_with("_on")) {
                 submodel->set_visible(false);
-            } else if (_submodel_name.to_lower().ends_with("_xon")) {
+            } else if (submodel_name.to_lower().ends_with("_xon")) {
                 submodel->set_visible(false);
-            } else if (_submodel_name == "cien") {
+            } else if (submodel_name == "cien") {
                 submodel->set_visible(false);
                 submodel->set_skip_rendering(true);
             }
@@ -348,7 +348,7 @@ namespace godot {
 
         switch (p_submodel.type) {
             case E3DSubModel::SubModelType::TRANSFORM:
-                if (_submodel_name.is_empty()) {
+                if (submodel_name.is_empty()) {
                     submodel->set_name("banan");
                 }
 
@@ -356,10 +356,10 @@ namespace godot {
                 return submodel;
             case E3DSubModel::SubModelType::GL_TRIANGLES: {
                 const int64_t vertices_count = p_submodel.vertices.size();
-                const String _mat_name = p_submodel.material != "" ? p_submodel.material.split(":").get(0) : "";
+                const String mat_name = p_submodel.material != "" ? p_submodel.material.split(":").get(0) : "";
                 if (const std::unordered_map<int, E3DSubModel::AnimationType>::const_iterator anim_it =
-                            animMap.find(p_submodel.anim);
-                    anim_it != animMap.end()) {
+                            anim_map.find(p_submodel.anim);
+                    anim_it != anim_map.end()) {
                     submodel->set_animation(anim_it->second);
                 } else {
                     submodel->set_animation(E3DSubModel::AnimationType::NONE);
@@ -370,7 +370,7 @@ namespace godot {
                     submodel->set_dynamic_material_index(abs(p_submodel.material_idx) - 1);
                 }
 
-                submodel->set_material_name(_mat_name);
+                submodel->set_material_name(mat_name);
                 submodel->set_material_transparent((p_submodel.flags & (1 << 5)) != 0);
                 submodel->set_material_colored(p_submodel.is_material_colored);
                 submodel->set_visibility_range_begin(std::sqrt(p_submodel.lod_min_distance));
@@ -386,13 +386,13 @@ namespace godot {
                     Array triangles;
                     triangles.resize(ArrayMesh::ARRAY_MAX);
                     triangles.set(ArrayMesh::ARRAY_VERTEX, p_submodel.vertices);
-                    const PackedInt32Array _indices = p_submodel.indices;
+                    const PackedInt32Array indices = p_submodel.indices;
                     PackedInt32Array ccw_indices;
-                    for (int i = 0; i < _indices.size(); i += 3) {
-                        int32_t _i1 = static_cast<int32_t>(_indices.get(i));
-                        int32_t _i2 = static_cast<int32_t>(_indices.get(i + 1));
-                        int32_t _i3 = static_cast<int32_t>(_indices.get(i + 2));
-                        ccw_indices.append_array(PackedInt32Array({_i1, _i3, _i2}));
+                    for (int i = 0; i < indices.size(); i += 3) {
+                        int32_t i1 = static_cast<int32_t>(indices.get(i));
+                        int32_t i2 = static_cast<int32_t>(indices.get(i + 1));
+                        int32_t i3 = static_cast<int32_t>(indices.get(i + 2));
+                        ccw_indices.append_array(PackedInt32Array({i1, i3, i2}));
                     }
 
                     p_submodel.indices = ccw_indices;

@@ -157,12 +157,12 @@ namespace godot {
         singleton->_cache.clear();
         singleton->_mutex->unlock();
 
-        const String _dir_name = _get_dir_name(p_dir);
-        const String cache_dir = "user://cache/" + _dir_name;
+        const String dir_name = _get_dir_name(p_dir);
+        const String cache_dir = "user://cache/" + dir_name;
         if (DirAccess::dir_exists_absolute(cache_dir)) {
             const Ref<DirAccess> dir = DirAccess::open(cache_dir);
             if (dir.is_valid()) {
-                UtilityFunctions::print_verbose("[ResourceCache] Clearing cache for " + _dir_name + "...");
+                UtilityFunctions::print_verbose("[ResourceCache] Clearing cache for " + dir_name + "...");
                 dir->list_dir_begin();
                 String file_name = dir->get_next();
                 while (file_name != "") {

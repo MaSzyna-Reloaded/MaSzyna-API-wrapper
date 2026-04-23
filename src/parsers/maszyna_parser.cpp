@@ -71,27 +71,27 @@ namespace godot {
         return eof;
     }
 
-    void MaszynaParser::register_handler(const String &token, const Callable &callback) {
+    void MaszynaParser::register_handler(const String &p_token, const Callable &p_callback) {
         mutex->lock();
-        handlers.set(token, callback);
+        handlers.set(p_token, p_callback);
         mutex->unlock();
     }
 
-    bool MaszynaParser::as_bool(const String &token) {
-        const String lower = token.to_lower();
+    bool MaszynaParser::as_bool(const String &p_token) {
+        const String lower = p_token.to_lower();
         return lower == "yes" || lower == "on" || lower == "1" || lower == "true" || lower == "vis";
     }
 
-    Vector3 MaszynaParser::as_vector3(const Array &tokens) {
-        return Vector3(tokens.get(0), tokens.get(1), tokens.get(2));
+    Vector3 MaszynaParser::as_vector3(const Array &p_tokens) {
+        return Vector3(p_tokens.get(0), p_tokens.get(1), p_tokens.get(2));
     }
 
-    Array MaszynaParser::get_tokens(const int num, const Array &stop) {
+    Array MaszynaParser::get_tokens(const int p_num, const Array &p_stop) {
         Array tokens;
         bool maybe_comment = false;
         bool maybe_endcomment = false;
 
-        while (tokens.size() < num && !eof_reached()) {
+        while (tokens.size() < p_num && !eof_reached()) {
             String token = "";
 
             while (!eof_reached()) {
@@ -133,7 +133,7 @@ namespace godot {
                     token += '/';
                 }
 
-                if (skip || stop.has(String::chr(c))) {
+                if (skip || p_stop.has(String::chr(c))) {
                     break;
                 }
 
@@ -158,23 +158,23 @@ namespace godot {
         return tokens;
     }
 
-    String MaszynaParser::next_token(const Array &stop) {
-        const Array tokens = get_tokens(1, stop);
+    String MaszynaParser::next_token(const Array &p_stop) {
+        const Array tokens = get_tokens(1, p_stop);
         return tokens.size() > 0 ? tokens.get(0).operator String() : "";
     }
 
-    Vector3 MaszynaParser::next_vector3(const Array &stop) {
-        const Array tokens = get_tokens(3, stop);
+    Vector3 MaszynaParser::next_vector3(const Array &p_stop) {
+        const Array tokens = get_tokens(3, p_stop);
         return as_vector3(tokens);
     }
 
     Array
-    MaszynaParser::get_tokens_until(const String &token, const Array &stop) {
+    MaszynaParser::get_tokens_until(const String &p_token, const Array &p_stop) {
         Array tokens;
         while (!eof_reached()) {
-            if (String upcoming_token = next_token(stop); !upcoming_token.is_empty()) {
+            if (String upcoming_token = next_token(p_stop); !upcoming_token.is_empty()) {
                 tokens.append(upcoming_token);
-                if (upcoming_token == token) {
+                if (upcoming_token == p_token) {
                     break;
                 }
             }

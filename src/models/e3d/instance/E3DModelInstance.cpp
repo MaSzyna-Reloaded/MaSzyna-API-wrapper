@@ -4,7 +4,7 @@
 #include <godot_cpp/classes/engine.hpp>
 
 namespace godot {
-    const char *E3DModelInstance::E3D_LOADED_SIGNAL = "e3d_loaded";
+    const char *E3DModelInstance::e3d_loaded_signal = "e3d_loaded";
 
     E3DModelInstance::E3DModelInstance()
         : data_path(String(), [this] { _reload(); })
@@ -27,7 +27,7 @@ namespace godot {
     }
 
     void E3DModelInstance::_bind_methods() {
-        ADD_SIGNAL(MethodInfo(E3D_LOADED_SIGNAL));
+        ADD_SIGNAL(MethodInfo(e3d_loaded_signal));
         BIND_PROPERTY(Variant::VECTOR3, "default_aabb_size", "default_aabb_size", &E3DModelInstance::set_default_aabb_size, &E3DModelInstance::get_default_aabb_size, "default_aabb_size");
         BIND_PROPERTY(Variant::STRING, "data_path", "data_path", &E3DModelInstance::set_data_path, &E3DModelInstance::get_data_path, "data_path");
         BIND_PROPERTY(Variant::STRING, "model_filename", "model_filename", &E3DModelInstance::set_model_filename, &E3DModelInstance::get_model_filename, "model_filename");
@@ -102,6 +102,6 @@ namespace godot {
         _mutex->unlock();
 
         E3DNodesInstancer::instantiate(model, this, get_editable_in_editor());
-        emit_signal(E3D_LOADED_SIGNAL);
+        emit_signal(e3d_loaded_signal);
     }
 }//namespace godot

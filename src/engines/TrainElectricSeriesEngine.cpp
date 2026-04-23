@@ -15,10 +15,10 @@ namespace godot {
         return TrainEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 
-    void TrainElectricSeriesEngine::_do_update_internal_mover(TMoverParameters *mover) {
-        TrainElectricEngine::_do_update_internal_mover(mover);
-        mover->NominalVoltage = nominal_voltage;
-        mover->WindingRes = winding_resistance;
+    void TrainElectricSeriesEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
+        TrainElectricEngine::_do_update_internal_mover(p_mover);
+        p_mover->NominalVoltage = nominal_voltage;
+        p_mover->WindingRes = winding_resistance;
     }
 
 } // namespace godot

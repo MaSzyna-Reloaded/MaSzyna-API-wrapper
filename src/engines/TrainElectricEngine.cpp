@@ -26,69 +26,69 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
     }
 
-    void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        TrainEngine::_do_fetch_state_from_mover(mover, state);
-        state["compressor_enabled"] = mover->CompressorFlag;
-        state["compressor_allowed"] = mover->CompressorAllow;
-        state["converter_enabled"] = mover->ConverterFlag;
-        state["converted_allowed"] = mover->ConverterAllow;
-        state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        state["power_source"] = _controller->tpower_source_map.at(mover->EnginePowerSource.SourceType);
-        state["accumulator/recharge_source"] = _controller->tpower_source_map.at(mover->EnginePowerSource.RAccumulator.RechargeSource);
-        state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
-        state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
-        state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
-        state["current_collector/min_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MinH;
-        state["current_collector/collector_sliding_width"] = mover->EnginePowerSource.CollectorParameters.CSW;
-        state["current_collector/min_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.MinV;
-        state["current_collector/min_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MinPress;
-        state["current_collector/max_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MaxPress;
-        state["current_collector/overvoltage_relay"] = mover->EnginePowerSource.CollectorParameters.OVP;
-        state["current_collector/required_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.InsetV;
-        state["transducer/input_voltage"] = mover->EnginePowerSource.Transducer.InputVoltage;
-        state["power_cable/source"] = _controller->tpower_type_map.at(mover->EnginePowerSource.RPowerCable.PowerTrans);
-        state["power_cable/steam_pressure"] = mover->EnginePowerSource.RPowerCable.SteamPressure;
+    void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        TrainEngine::_do_fetch_state_from_mover(p_mover, p_state);
+        p_state["compressor_enabled"] = p_mover->CompressorFlag;
+        p_state["compressor_allowed"] = p_mover->CompressorAllow;
+        p_state["converter_enabled"] = p_mover->ConverterFlag;
+        p_state["converted_allowed"] = p_mover->ConverterAllow;
+        p_state["converter_time_to_start"] = p_mover->ConverterStartDelayTimer;
+        p_state["power_source"] = _controller->tpower_source_map.at(p_mover->EnginePowerSource.SourceType);
+        p_state["accumulator/recharge_source"] = _controller->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+        p_state["current_collector/max_voltage"] = p_mover->EnginePowerSource.MaxVoltage;
+        p_state["current_collector/max_current"] = p_mover->EnginePowerSource.MaxCurrent;
+        p_state["current_collector/max_collector_lifting"] = p_mover->EnginePowerSource.CollectorParameters.MaxH;
+        p_state["current_collector/min_collector_lifting"] = p_mover->EnginePowerSource.CollectorParameters.MinH;
+        p_state["current_collector/collector_sliding_width"] = p_mover->EnginePowerSource.CollectorParameters.CSW;
+        p_state["current_collector/min_main_switch_voltage"] = p_mover->EnginePowerSource.CollectorParameters.MinV;
+        p_state["current_collector/min_pantograph_tank_pressure"] = p_mover->EnginePowerSource.CollectorParameters.MinPress;
+        p_state["current_collector/max_pantograph_tank_pressure"] = p_mover->EnginePowerSource.CollectorParameters.MaxPress;
+        p_state["current_collector/overvoltage_relay"] = p_mover->EnginePowerSource.CollectorParameters.OVP;
+        p_state["current_collector/required_main_switch_voltage"] = p_mover->EnginePowerSource.CollectorParameters.InsetV;
+        p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
+        p_state["power_cable/source"] = _controller->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
+        p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
     }
 
-    void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *mover) {
-        TrainEngine::_do_update_internal_mover(mover);
-        mover->EnginePowerSource.SourceType = _controller->power_source_map.at(power_source);
+    void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
+        TrainEngine::_do_update_internal_mover(p_mover);
+        p_mover->EnginePowerSource.SourceType = _controller->power_source_map.at(power_source);
 
         switch (power_source) {
             case TrainController::POWER_SOURCE_INTERNAL: {
                 const std::map<TrainController::TrainPowerType, TPowerType>::const_iterator lookup =
                         _controller->power_type_map.find(power_cable_power_source);
-                mover->EnginePowerSource.PowerType = lookup != _controller->power_type_map.end() ? lookup->second : TPowerType::NoPower;
+                p_mover->EnginePowerSource.PowerType = lookup != _controller->power_type_map.end() ? lookup->second : TPowerType::NoPower;
             }
             case TrainController::POWER_SOURCE_TRANSDUCER: {
-                mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
+                p_mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
             }
             case TrainController::POWER_SOURCE_GENERATOR: {
-                engine_generator &GeneratorParams{mover->EnginePowerSource.EngineGenerator};
-                // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
+                engine_generator &generator_params{p_mover->EnginePowerSource.EngineGenerator};
+                // generator_params.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
             }
             case TrainController::POWER_SOURCE_ACCUMULATOR: {
-                mover->EnginePowerSource.RAccumulator.RechargeSource =
+                p_mover->EnginePowerSource.RAccumulator.RechargeSource =
                         _controller->power_source_map.at(accumulator_recharge_source);
             }
             case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
-                mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
-                mover->EnginePowerSource.CollectorParameters.MaxH = max_collector_lifting;
-                mover->EnginePowerSource.CollectorParameters.CSW = collector_sliding_width;
-                mover->EnginePowerSource.CollectorParameters.MinV = min_main_switch_voltage;
-                mover->EnginePowerSource.CollectorParameters.MinPress = min_pantograph_tank_pressure;
-                mover->EnginePowerSource.CollectorParameters.MaxPress = max_pantograph_tank_pressure;
-                mover->EnginePowerSource.CollectorParameters.OVP = overvoltage_relay;
-                mover->EnginePowerSource.CollectorParameters.CollectorsNo = collectors_no;
-                mover->EnginePowerSource.MaxVoltage = max_voltage;
-                mover->EnginePowerSource.MaxCurrent = max_current;
-                mover->EnginePowerSource.CollectorParameters.InsetV = required_main_switch_voltage;
+                p_mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
+                p_mover->EnginePowerSource.CollectorParameters.MaxH = max_collector_lifting;
+                p_mover->EnginePowerSource.CollectorParameters.CSW = collector_sliding_width;
+                p_mover->EnginePowerSource.CollectorParameters.MinV = min_main_switch_voltage;
+                p_mover->EnginePowerSource.CollectorParameters.MinPress = min_pantograph_tank_pressure;
+                p_mover->EnginePowerSource.CollectorParameters.MaxPress = max_pantograph_tank_pressure;
+                p_mover->EnginePowerSource.CollectorParameters.OVP = overvoltage_relay;
+                p_mover->EnginePowerSource.CollectorParameters.CollectorsNo = collectors_no;
+                p_mover->EnginePowerSource.MaxVoltage = max_voltage;
+                p_mover->EnginePowerSource.MaxCurrent = max_current;
+                p_mover->EnginePowerSource.CollectorParameters.InsetV = required_main_switch_voltage;
             }
             case TrainController::POWER_SOURCE_POWERCABLE: {
-                mover->EnginePowerSource.RPowerCable.PowerTrans =
+                p_mover->EnginePowerSource.RPowerCable.PowerTrans =
                     _controller->power_type_map.at(power_cable_power_source);
-                if (mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
-                    mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
+                if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
+                    p_mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }
             }
             case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
@@ -124,7 +124,7 @@ namespace godot {
 
     void TrainElectricEngine::set_engine_power_source(const TrainController::TrainPowerSource p_source) {
         power_source = p_source;
-        _dirty = true;
+        dirty = true;
     }
 
     TrainController::TrainPowerSource TrainElectricEngine::get_engine_power_source() const {

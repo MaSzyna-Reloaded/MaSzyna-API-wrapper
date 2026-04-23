@@ -12,7 +12,7 @@ namespace godot {
        protected:
            static void _bind_methods();
        private:
-           String _parse_texture_path(const String &texturePath);
+           String _parse_texture_path(const String &p_texture_path);
            MAKE_MEMBER_OBSERVABLE_GS(String, albedo_texture_path)
            MAKE_MEMBER_GS_NR(BaseMaterial3D::Transparency, transparency, StandardMaterial3D::TRANSPARENCY_ALPHA_SCISSOR);
            MAKE_MEMBER_GS(String, normal_texture_path, "")

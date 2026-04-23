@@ -9,11 +9,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("parse", "material_path", "material_name"), &MaterialParser::parse);
     }
 
-    Ref<MaszynaMaterial> MaterialParser::parse(const String &material_path, const String &material_name) const {
-        UtilityFunctions::print_verbose("[MaterialParser] Parsing material: " + material_path);
+    Ref<MaszynaMaterial> MaterialParser::parse(const String &p_material_path, const String &p_material_name) const {
+        UtilityFunctions::print_verbose("[MaterialParser] Parsing material: " + p_material_path);
         Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
-        if (const Ref<FileAccess> file = FileAccess::open(material_path, FileAccess::READ); file.is_valid()) {
-            UtilityFunctions::print_verbose("[MaterialParser] Opening material file: " + material_path);
+        if (const Ref<FileAccess> file = FileAccess::open(p_material_path, FileAccess::READ); file.is_valid()) {
+            UtilityFunctions::print_verbose("[MaterialParser] Opening material file: " + p_material_path);
             MaszynaParser *parser = memnew(MaszynaParser);
             parser->initialize(file->get_buffer(static_cast<int64_t>(file->get_length())));
             const Dictionary data = {};
@@ -22,7 +22,7 @@ namespace godot {
             String value = "";
 
             while (!parser->eof_reached()) {
-                if (String token = parser->next_token(STOP_KEY); token.ends_with(":")) {
+                if (String token = parser->next_token(stop_key); token.ends_with(":")) {
                     key = token.split(":").get(0);
                 } else {
                     if (token == "}") {
@@ -43,9 +43,9 @@ namespace godot {
                             Dictionary current_dict = current.get(0);
                             if (current_dict.has(key)) {
                                 if (current_dict.get(key, "").get_type() != Variant::ARRAY) {
-                                    Array _new;
-                                    _new.push_back(current_dict.get(key, ""));
-                                    current_dict.set(key, _new);
+                                    Array new_dict;
+                                    new_dict.push_back(current_dict.get(key, ""));
+                                    current_dict.set(key, new_dict);
                                 }
 
                                 Array target_array = current_dict.get(key, "");
@@ -59,24 +59,24 @@ namespace godot {
             }
 
             material->set_shader(data.get("shader", ""));
-            auto _t1 = data.get("texture_diffuse", data.get("texture1", ""));
-            auto _t2 = data.get("texture_normalmap", data.get("texture2", ""));
+            Variant t1 = data.get("texture_diffuse", data.get("texture1", ""));
+            Variant t2 = data.get("texture_normalmap", data.get("texture2", ""));
 
-            if (_t1.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + material_path + ") are not supported!");
-                _t1 = _t1.get(0);
+            if (t1.get_type() == Variant::ARRAY) {
+                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + p_material_path + ") are not supported!");
+                t1 = t1.get(0);
             }
 
-            if (_t2.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + material_path + ") are not supported!");
-                _t2 = _t2.get(0);
+            if (t2.get_type() == Variant::ARRAY) {
+                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + p_material_path + ") are not supported!");
+                t2 = t2.get(0);
             }
 
-            material->set_albedo_texture_path(_t1);
-            material->set_normal_texture_path(_t2);
+            material->set_albedo_texture_path(t1);
+            material->set_normal_texture_path(t2);
             memdelete(parser);
         } else {
-            material->set_albedo_texture_path(material_name);
+            material->set_albedo_texture_path(p_material_name);
         }
         return material;
     }

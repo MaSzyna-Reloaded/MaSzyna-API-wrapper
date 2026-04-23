@@ -17,8 +17,8 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            const int64_t MAX_31B = 1LL << 31;
-            const int64_t MAX_32B = 1LL << 32;
+            const int64_t max_31_b = 1LL << 31;
+            const int64_t max_32_b = 1LL << 32;
 
             struct ChunkHeader {
                     String id;
@@ -76,10 +76,10 @@ namespace godot {
             };
 
             static ChunkHeader _read_chunk_header(const Ref<FileAccess> &p_file);
-            int u32s(uint32_t value) const;
+            int u32s(uint32_t p_value) const;
             static PackedVector3Array
-            _calculate_normals(const PackedVector3Array &vertices, const PackedInt32Array &indices);
-            SubModelData _read_submodel(const Ref<FileAccess> &p_file, int chunk_size) const;
+            _calculate_normals(const PackedVector3Array &p_vertices, const PackedInt32Array &p_indices);
+            SubModelData _read_submodel(const Ref<FileAccess> &p_file, int p_chunk_size) const;
             std::vector<SubModelData> _parse_file(const Ref<FileAccess> &p_file) const;
             static TypedArray<String> _buffer_to_strings(const PackedByteArray &p_buffer);
             static Transform3D _read_matrix(const Ref<FileAccess> &p_file);

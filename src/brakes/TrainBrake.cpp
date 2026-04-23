@@ -90,14 +90,14 @@ namespace godot {
         BIND_ENUM_CONSTANT(BRAKE_VALVE_CV1_R);
         BIND_ENUM_CONSTANT(BRAKE_VALVE_OTHER);
 
-        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Bgu);
-        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Bg);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10_BGU);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10_BG);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D2);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_FR513);
-        BIND_ENUM_CONSTANT(BRAKE_METHOD_Cosid);
-        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10yBg);
-        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10yBgu);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_COSID);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Y_BG);
+        BIND_ENUM_CONSTANT(BRAKE_METHOD_P10Y_BGU);
         BIND_ENUM_CONSTANT(BRAKE_METHOD_D1MG);
 
         ClassDB::bind_method(D_METHOD("brake_releaser", "enabled"), &TrainBrake::brake_releaser);
@@ -144,8 +144,8 @@ namespace godot {
     void TrainBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
-        if (const std::unordered_map<BrakeHandlePosition, int>::const_iterator it = BrakeHandlePositionMap.find(
-                p_position); it != BrakeHandlePositionMap.end()) {
+        if (const std::unordered_map<BrakeHandlePosition, int>::const_iterator it = brake_handle_position_map.find(
+                p_position); it != brake_handle_position_map.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
             log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
@@ -156,8 +156,8 @@ namespace godot {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         const std::unordered_map<std::string, int>::const_iterator it =
-                BrakeHandlePositionStringMap.find(std::string(p_position.utf8()));
-        if (it != BrakeHandlePositionStringMap.end()) {
+                brake_handle_position_string_map.find(std::string(p_position.utf8()));
+        if (it != brake_handle_position_string_map.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
             log_error("Unhandled brake level position: " + p_position);
@@ -176,46 +176,46 @@ namespace godot {
         mover->DecBrakeLevel();
     }
 
-    void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
-        if (mover->Handle == nullptr) {
+    void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        if (p_mover->Handle == nullptr) {
             return;
         }
-        config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
-        config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
+        p_config["brakes_controller_position_min"] = p_mover->Handle->GetPos(bh_MIN);
+        p_config["brakes_controller_position_max"] = p_mover->Handle->GetPos(bh_MAX);
     }
 
-    void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        const double brake_controller_pos = mover->fBrakeCtrlPos;
-        const double brake_controller_min = mover->Handle->GetPos(bh_MIN);
-        const double brake_controller_max = mover->Handle->GetPos(bh_MAX);
+    void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        const double brake_controller_pos = p_mover->fBrakeCtrlPos;
+        const double brake_controller_min = p_mover->Handle->GetPos(bh_MIN);
+        const double brake_controller_max = p_mover->Handle->GetPos(bh_MAX);
         double brake_controller_pos_normalized = 0.0;
         if (brake_controller_max != brake_controller_min) {
             brake_controller_pos_normalized =
                     (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);
         }
-        state["brake_air_pressure"] = mover->BrakePress;
-        state["brake_loco_pressure"] = mover->LocBrakePress;
-        state["brake_pipe_pressure"] = mover->PipeBrakePress;
-        state["pipe_pressure"] = mover->PipePress;
-        state["brake_tank_volume"] = mover->Volume;
-        state["brake_controller_position"] = brake_controller_pos;
-        state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
+        p_state["brake_air_pressure"] = p_mover->BrakePress;
+        p_state["brake_loco_pressure"] = p_mover->LocBrakePress;
+        p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;
+        p_state["pipe_pressure"] = p_mover->PipePress;
+        p_state["brake_tank_volume"] = p_mover->Volume;
+        p_state["brake_controller_position"] = brake_controller_pos;
+        p_state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
     }
 
-    void TrainBrake::_do_update_internal_mover(TMoverParameters *mover) {
+    void TrainBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
         /* logika z Mover::LoadFiz_Brake */
-        mover->BrakeSystem = TBrakeSystem::Pneumatic;    // BrakeSystem
-        mover->BrakeCtrlPosNo = 6;                       // BCPN
-        mover->BrakeDelay[0] = 15;                       // BDelay1
-        mover->BrakeDelay[1] = 3;                        // BDelay2
-        mover->BrakeDelay[2] = 36;                       // BDelay3
-        mover->BrakeDelay[3] = 22;                       // BDelay4
-        mover->BrakeDelays = bdelay_G + bdelay_P;        // BrakeDelays
-        mover->BrakeHandle = TBrakeHandle::FV4a;         // BrakeHandle
-        mover->BrakeLocHandle = TBrakeHandle::FD1;       // LocBrakeHandle
-        mover->ASBType = 1;                              // ASB
-        mover->LocalBrake = TLocalBrake::PneumaticBrake; // LocalBrake
-        mover->MBrake = true;                            // ManualBrake
+        p_mover->BrakeSystem = TBrakeSystem::Pneumatic;    // BrakeSystem
+        p_mover->BrakeCtrlPosNo = 6;                       // BCPN
+        p_mover->BrakeDelay[0] = 15;                       // BDelay1
+        p_mover->BrakeDelay[1] = 3;                        // BDelay2
+        p_mover->BrakeDelay[2] = 36;                       // BDelay3
+        p_mover->BrakeDelay[3] = 22;                       // BDelay4
+        p_mover->BrakeDelays = bdelay_G + bdelay_P;        // BrakeDelays
+        p_mover->BrakeHandle = TBrakeHandle::FV4a;         // BrakeHandle
+        p_mover->BrakeLocHandle = TBrakeHandle::FD1;       // LocBrakeHandle
+        p_mover->ASBType = 1;                              // ASB
+        p_mover->LocalBrake = TLocalBrake::PneumaticBrake; // LocalBrake
+        p_mover->MBrake = true;                            // ManualBrake
 
         /* FIXME: BrakeValve nie jest tylko enumem, jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE ustawi BrakeValve=ESt3. Powinien to ogarnąć importer FIZ
          *
@@ -224,97 +224,97 @@ namespace godot {
          */
 
         // assuming same int values between our TrainBrakeValve and mover's TBrakeValve
-        mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve_type));
+        p_mover->BrakeValve = static_cast<TBrakeValve>(static_cast<int>(valve_type));
 
         const std::unordered_map<TBrakeValve, TBrakeSubSystem>::const_iterator it =
-                BrakeValveToSubsystemMap.find(mover->BrakeValve);
-        mover->BrakeSubsystem = it != BrakeValveToSubsystemMap.end() ? it->second : TBrakeSubSystem::ss_None;
+                brake_valve_to_subsystem_map.find(p_mover->BrakeValve);
+        p_mover->BrakeSubsystem = it != brake_valve_to_subsystem_map.end() ? it->second : TBrakeSubSystem::ss_None;
 
-        mover->NBpA = CLAMP<int, int, int>(friction_elements_per_axle, 0, 4);
-        mover->MaxBrakeForce = max_brake_force;
-        mover->BrakeValveSize = valve_size;
-        mover->TrackBrakeForce = traction_brake_force * 1000.0;
-        mover->MaxBrakePress[3] = max_cylinder_pressure;
+        p_mover->NBpA = CLAMP<int, int, int>(friction_elements_per_axle, 0, 4);
+        p_mover->MaxBrakeForce = max_brake_force;
+        p_mover->BrakeValveSize = valve_size;
+        p_mover->TrackBrakeForce = traction_brake_force * 1000.0;
+        p_mover->MaxBrakePress[3] = max_cylinder_pressure;
         if (max_cylinder_pressure > 0.0) {
-            mover->BrakeCylNo = cylinder_count;
+            p_mover->BrakeCylNo = cylinder_count;
 
             if (cylinder_count > 0) {
-                mover->MaxBrakePress[0] = max_aux_pressure < 0.01 ? max_cylinder_pressure : max_aux_pressure;
-                mover->MaxBrakePress[1] = max_tare_pressure;
-                mover->MaxBrakePress[2] = max_medium_pressure;
-                mover->MaxBrakePress[4] = max_antislip_pressure < 0.01 ? 0.0 : max_antislip_pressure;
+                p_mover->MaxBrakePress[0] = max_aux_pressure < 0.01 ? max_cylinder_pressure : max_aux_pressure;
+                p_mover->MaxBrakePress[1] = max_tare_pressure;
+                p_mover->MaxBrakePress[2] = max_medium_pressure;
+                p_mover->MaxBrakePress[4] = max_antislip_pressure < 0.01 ? 0.0 : max_antislip_pressure;
 
-                mover->BrakeCylRadius = cylinder_radius;
-                mover->BrakeCylDist = cylinder_distance;
-                mover->BrakeCylSpring = cylinder_spring_force;
-                mover->BrakeSlckAdj = piston_stroke_adjuster_resistance;
-                mover->BrakeRigEff = rig_effectiveness;
+                p_mover->BrakeCylRadius = cylinder_radius;
+                p_mover->BrakeCylDist = cylinder_distance;
+                p_mover->BrakeCylSpring = cylinder_spring_force;
+                p_mover->BrakeSlckAdj = piston_stroke_adjuster_resistance;
+                p_mover->BrakeRigEff = rig_effectiveness;
 
-                mover->BrakeCylMult[0] = cylinder_gear_ratio;
-                mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
-                mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
+                p_mover->BrakeCylMult[0] = cylinder_gear_ratio;
+                p_mover->BrakeCylMult[1] = cylinder_gear_ratio_low;
+                p_mover->BrakeCylMult[2] = cylinder_gear_ratio_high;
 
-                mover->P2FTrans = 100 * M_PI * std::pow(cylinder_radius, 2);
+                p_mover->P2FTrans = 100 * M_PI * std::pow(cylinder_radius, 2);
 
-                mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
+                p_mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
 
-                mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinder_count;
-                mover->BrakeVVolume = aux_tank_volume;
+                p_mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinder_count;
+                p_mover->BrakeVVolume = aux_tank_volume;
 
                 const std::unordered_map<BrakeMethod, int>::const_iterator lookup;
-                mover->BrakeMethod = lookup != BrakeMethodMap.find(brake_method) ? brake_method : 0;
-                mover->BrakeMethod = brake_method;
-                mover->RapidMult = rapid_transfer;
-                mover->RapidVel = rapid_switching_speed;
+                p_mover->BrakeMethod = lookup != brake_method_map.find(brake_method) ? brake_method : 0;
+                p_mover->BrakeMethod = brake_method;
+                p_mover->RapidMult = rapid_transfer;
+                p_mover->RapidVel = rapid_switching_speed;
             }
         } else {
-            mover->P2FTrans = 0;
+            p_mover->P2FTrans = 0;
         }
 
-        mover->CntrlPipePress = 5 + 0.001 * (libmaszyna::utils::random(0, 10) - libmaszyna::utils::random(0, 10));
+        p_mover->CntrlPipePress = 5 + 0.001 * (libmaszyna::utils::random(0, 10) - libmaszyna::utils::random(0, 10));
         /* PipePress i HighPipePress musza byc skopiowane */
-        mover->HighPipePress = pipe_pressure_max;
-        mover->LowPipePress = pipe_pressure_min;
-        mover->VeselVolume = main_tank_volume;
-        mover->MinCompressor = compressor_pressure_cab_a_min;
-        mover->MaxCompressor = compressor_pressure_cab_a_max;
-        mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
-        mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
+        p_mover->HighPipePress = pipe_pressure_max;
+        p_mover->LowPipePress = pipe_pressure_min;
+        p_mover->VeselVolume = main_tank_volume;
+        p_mover->MinCompressor = compressor_pressure_cab_a_min;
+        p_mover->MaxCompressor = compressor_pressure_cab_a_max;
+        p_mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
+        p_mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
 
-        mover->CompressorTankValve = compressor_tank_valve_active;
-        mover->EmergencyValveOff = lower_emergency_closing_pressure;
-        mover->EmergencyValveOn = higher_emergency_closing_pressure;
+        p_mover->CompressorTankValve = compressor_tank_valve_active;
+        p_mover->EmergencyValveOff = lower_emergency_closing_pressure;
+        p_mover->EmergencyValveOn = higher_emergency_closing_pressure;
 
         //@TODO: Figure out and implement equivalents for UniversalBrakeButtonFlag
 
-        mover->LockPipeOn = main_pipe_blocking_pressure;
-        mover->LockPipeOff = main_pipe_unblocking_pressure;
-        mover->HandleUnlock = main_pipe_minimum_unblocking_handle_position;
-        mover->EmergencyCutsOffHandle = false; //@TODO: Figure out wtf is this
+        p_mover->LockPipeOn = main_pipe_blocking_pressure;
+        p_mover->LockPipeOff = main_pipe_unblocking_pressure;
+        p_mover->HandleUnlock = main_pipe_minimum_unblocking_handle_position;
+        p_mover->EmergencyCutsOffHandle = false; //@TODO: Figure out wtf is this
 
-        mover->CompressorSpeed = compressor_speed;
-        mover->CompressorPower = compressor_power;
+        p_mover->CompressorSpeed = compressor_speed;
+        p_mover->CompressorPower = compressor_power;
 
         //According to the original code - the parameter is provided in the form of a multiplier, where 1.0 means the default rate of 0.01
-        mover->AirLeakRate = air_leak_multiplier*0.01;
+        p_mover->AirLeakRate = air_leak_multiplier*0.01;
 
         //By default, this should be set to true if an engine type is diesel or diesel-electric and false, otherwise
         // this action should be performed by FIZ parser
-        mover->ReleaserEnabledOnlyAtNoPowerPos = releaser_enabled_only_at_no_power_pos;
-        if (mover->MinCompressor_cabB > 0.0) {
-            mover->MinCompressor_cabA = mover->MinCompressor;
-            mover->CabDependentCompressor = true;
+        p_mover->ReleaserEnabledOnlyAtNoPowerPos = releaser_enabled_only_at_no_power_pos;
+        if (p_mover->MinCompressor_cabB > 0.0) {
+            p_mover->MinCompressor_cabA = p_mover->MinCompressor;
+            p_mover->CabDependentCompressor = true;
         }
         else {
-            mover->MinCompressor_cabB = mover->MinCompressor;
+            p_mover->MinCompressor_cabB = p_mover->MinCompressor;
         }
-        if (mover->MaxCompressor_cabB > 0.0)
+        if (p_mover->MaxCompressor_cabB > 0.0)
         {
-            mover->MaxCompressor_cabA = mover->MaxCompressor;
-            mover->CabDependentCompressor = true;
+            p_mover->MaxCompressor_cabA = p_mover->MaxCompressor;
+            p_mover->CabDependentCompressor = true;
         }
         else {
-            mover->MaxCompressor_cabB = mover->MaxCompressor;
+            p_mover->MaxCompressor_cabB = p_mover->MaxCompressor;
         }
     }
 } // namespace godot

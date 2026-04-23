@@ -61,7 +61,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     const Error con = train_controller_node->connect(
-                            TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                            TrainController::mover_config_changed_signal, Callable(this, "update_mover"));
                     if (con != OK) {
                         log_warning("TrainPart::notification(NOTIFICATION_ENTER_TREE) failed with error code " + String::num(con));
                     }
@@ -78,7 +78,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     train_controller_node->disconnect(
-                            TrainController::MOVER_CONFIG_CHANGED_SIGNAL, Callable(this, "update_mover"));
+                            TrainController::mover_config_changed_signal, Callable(this, "update_mover"));
                 }
                 train_controller_node = nullptr;
             } break;
@@ -86,52 +86,52 @@ namespace godot {
         }
     }
 
-    void TrainPart::log(const GameLog::LogLevel level, const String &line) {
+    void TrainPart::log(const GameLog::LogLevel p_level, const String &p_line) {
         if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
+            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), p_level, p_line);
         }
     }
-    void TrainPart::log_debug(const String &line) {
-        log(GameLog::LogLevel::DEBUG, line);
+    void TrainPart::log_debug(const String &p_line) {
+        log(GameLog::LogLevel::DEBUG, p_line);
     }
 
-    void TrainPart::log_info(const String &line) {
-        log(GameLog::LogLevel::INFO, line);
+    void TrainPart::log_info(const String &p_line) {
+        log(GameLog::LogLevel::INFO, p_line);
     }
 
-    void TrainPart::log_warning(const String &line) {
-        log(GameLog::LogLevel::WARNING, line);
+    void TrainPart::log_warning(const String &p_line) {
+        log(GameLog::LogLevel::WARNING, p_line);
     }
 
-    void TrainPart::log_error(const String &line) {
-        log(GameLog::LogLevel::ERROR, line);
+    void TrainPart::log_error(const String &p_line) {
+        log(GameLog::LogLevel::ERROR, p_line);
     }
 
-    void TrainPart::register_command(const String &command, const Callable &callback) {
-        TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), command, callback);
+    void TrainPart::register_command(const String &p_command, const Callable &p_callback) {
+        TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), p_command, p_callback);
     }
 
-    void TrainPart::unregister_command(const String &command, const Callable &callback) {
-        TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), command, callback);
+    void TrainPart::unregister_command(const String &p_command, const Callable &p_callback) {
+        TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), p_command, p_callback);
     }
 
     void TrainPart::emit_config_changed_signal() {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_process(const double delta) {
+    void TrainPart::_process(const double p_delta) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
 
-        if (_dirty) {
+        if (dirty) {
             // emit_config_changed_signal();
             update_mover();
-            _dirty = false;
+            dirty = false;
         }
 
         if (enabled) {
-            _process_mover(delta);
+            _process_mover(p_delta);
         }
 
         if (enabled_changed) {
@@ -150,19 +150,19 @@ namespace godot {
         }
     }
 
-    void TrainPart::_process_mover(const double delta) {
+    void TrainPart::_process_mover(const double p_delta) {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
-                _do_process_mover(mover, delta);
+                _do_process_mover(mover, p_delta);
                 train_controller_node->get_state().merge(get_mover_state(), true);
             }
         }
     }
 
-    void TrainPart::_do_process_mover(TMoverParameters *mover, double delta) {}
-    void TrainPart::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {};
-    void TrainPart::_do_update_internal_mover(TMoverParameters *mover) {};
+    void TrainPart::_do_process_mover(TMoverParameters *p_mover, double p_delta) {}
+    void TrainPart::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {};
+    void TrainPart::_do_update_internal_mover(TMoverParameters *p_mover) {};
 
     void TrainPart::update_mover() {
         if (train_controller_node != nullptr) {
@@ -200,21 +200,21 @@ namespace godot {
     void TrainPart::set_enabled(const bool p_value) {
         enabled_changed = (enabled != p_value);
         enabled = p_value;
-        _dirty = true;
+        dirty = true;
     }
 
     bool TrainPart::get_enabled() {
         return enabled;
     }
 
-    void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) {
+    void TrainPart::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), command, p1, p2);
+            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), p_command, p_p1, p_p2);
         }
     }
 
-    void TrainPart::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
-        TrainSystem::get_instance()->broadcast_command(command, p1, p2);
+    void TrainPart::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+        TrainSystem::get_instance()->broadcast_command(p_command, p_p1, p_p2);
     }
 
 } // namespace godot

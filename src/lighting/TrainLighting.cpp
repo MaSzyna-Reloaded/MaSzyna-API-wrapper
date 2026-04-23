@@ -1,6 +1,6 @@
 #include "TrainLighting.hpp"
 namespace godot {
-    const char *TrainLighting::SELECTOR_POSITION_CHANGED_SIGNAL = "selector_position_changed";
+    const char *TrainLighting::selector_position_changed_signal = "selector_position_changed";
 
     TrainLighting::TrainLighting() {
         train_controller_node = nullptr;
@@ -29,34 +29,34 @@ namespace godot {
     BIND_PROPERTY(Variant::INT, "instrument_type", "instrument_type", &TrainLighting::set_instrument_light_type, &TrainLighting::get_instrument_light_type, "instrument_type");
         ClassDB::bind_method(D_METHOD("increase_light_selector_position"), &TrainLighting::increase_light_selector_position);
         ClassDB::bind_method(D_METHOD("decrease_light_selector_position"), &TrainLighting::decrease_light_selector_position);
-        ADD_SIGNAL(MethodInfo(SELECTOR_POSITION_CHANGED_SIGNAL, PropertyInfo(Variant::INT, "position")));
+        ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
     }
 
-    void TrainLighting::_do_update_internal_mover(TMoverParameters *mover) {
-        ASSERT_MOVER(mover);
-        TrainPart::_do_update_internal_mover(mover);
-        mover->LightsPosNo = static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int
-        mover->LightsWrap = wrap_light_selector;
-        mover->LightsDefPos = default_selector_position;
-        mover->LightPower = 0; //LightPower is used there but declared in the Param section in the .fiz file
+    void TrainLighting::_do_update_internal_mover(TMoverParameters *p_mover) {
+        ASSERT_MOVER(p_mover);
+        TrainPart::_do_update_internal_mover(p_mover);
+        p_mover->LightsPosNo = static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int
+        p_mover->LightsWrap = wrap_light_selector;
+        p_mover->LightsDefPos = default_selector_position;
+        p_mover->LightPower = 0; //LightPower is used there but declared in the Param section in the .fiz file
         if (train_controller_node != nullptr) {
-            mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
-            mover->AlterLightPowerSource.SourceType = train_controller_node->power_source_map.at(alternative_light_source);
+            p_mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
+            p_mover->AlterLightPowerSource.SourceType = train_controller_node->power_source_map.at(alternative_light_source);
         }
-        mover->LightsPos = selector_position;
+        p_mover->LightsPos = selector_position;
     }
 
-    void TrainLighting::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        ASSERT_MOVER(mover);
-        state.set("light_position", mover->LightsPosNo);
-        state.set("light_power", mover->LightPower);
+    void TrainLighting::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        ASSERT_MOVER(p_mover);
+        p_state.set("light_position", p_mover->LightsPosNo);
+        p_state.set("light_power", p_mover->LightPower);
         if (train_controller_node != nullptr) {
-            state.set("power_source", train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType));
+            p_state.set("power_source", train_controller_node->tpower_source_map.at(p_mover->LightPowerSource.SourceType));
         }
     }
 
-    void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
-        TrainPart::_do_fetch_config_from_mover(mover, config);
+    void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        TrainPart::_do_fetch_config_from_mover(p_mover, p_config);
     }
 
     void TrainLighting::_register_commands() {

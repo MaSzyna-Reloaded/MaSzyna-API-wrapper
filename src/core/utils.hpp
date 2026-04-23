@@ -23,12 +23,12 @@
 namespace libmaszyna::utils {
     template<typename EnumType>
     std::string enum_to_string();
-    template<typename Type_>
-    Type_ interpolate(Type_ const &First, Type_ const &Second, double const Factor) {
-        return static_cast<Type_>((First * (1.0 - Factor)) + (Second * Factor));
+    template<typename Type>
+    Type interpolate(Type const &p_first, Type const &p_second, double const p_factor) {
+        return static_cast<Type>((p_first * (1.0 - p_factor)) + (p_second * p_factor));
     }
 
-    double random(double a, double b);
+    double random(double p_a, double p_b);
 
     /**
      * @brief A templated class that wraps a value and calls a callback function
@@ -39,32 +39,32 @@ namespace libmaszyna::utils {
     template<typename T>
     class ObservableValue {
         private:
-            T value_;
-            std::function<void(const T&)> callback_;
+            T value;
+            std::function<void(const T&)> callback;
 
         public:
             /**
              * ObservableValue watches any change to the variable it declares and calls the provided callback as it changes
-             * @param initialValue Initial value
-             * @param callbackFn Callback function taking no arguments
+             * @param p_initial_value Initial value
+             * @param p_callback_fn Callback function taking no arguments
              */
-            ObservableValue(const T& initialValue, std::function<void()> callbackFn)
-                : value_(initialValue), callback_([fn = std::move(callbackFn)](const T&) { if (fn) { fn(); } }) {}
+            ObservableValue(const T& p_initial_value, std::function<void()> p_callback_fn)
+                : value(p_initial_value), callback([fn = std::move(p_callback_fn)](const T&) { if (fn) { fn(); } }) {}
 
             /**
              * ObservableValue watches any change to the variable it declares and calls the provided callback as it changes
-             * @param initialValue Initial value
-             * @param callbackFn Callback function taking the new value (const T&)
+             * @param p_initial_value Initial value
+             * @param p_callback_fn Callback function taking the new value (const T&)
              */
-            ObservableValue(const T& initialValue, std::function<void(const T&)> callbackFn)
-                : value_(initialValue), callback_(std::move(callbackFn)) {}
+            ObservableValue(const T& p_initial_value, std::function<void(const T&)> p_callback_fn)
+                : value(p_initial_value), callback(std::move(p_callback_fn)) {}
 
             // Core logic: Overload assignment operator - calls callback with one argument (new value)
-            ObservableValue<T>& operator=(const T& newValue) {
-                if (value_ != newValue) {
-                    value_ = newValue;
-                    if (callback_) {
-                        callback_(newValue); // Call callback with the new value
+            ObservableValue<T>& operator=(const T& p_new_value) {
+                if (value != p_new_value) {
+                    value = p_new_value;
+                    if (callback) {
+                        callback(p_new_value); // Call callback with the new value
                     }
                 }
                 return *this;
@@ -72,12 +72,12 @@ namespace libmaszyna::utils {
 
             // Implicit conversion operator for easy reading
             explicit operator T() const {
-                return value_;
+                return value;
             }
 
             // Explicit getter
             const T& get() const {
-                return value_;
+                return value;
             }
     };
 } // namespace libmaszyna::utils

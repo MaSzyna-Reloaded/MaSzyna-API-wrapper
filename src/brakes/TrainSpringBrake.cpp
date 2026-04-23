@@ -70,32 +70,32 @@ namespace godot {
         mover->SpringBrakeRelease();
     }
 
-    void TrainSpringBrake::_do_update_internal_mover(TMoverParameters *mover) {
-        if (!mover->SpringBrake.Cylinder) {
-            mover->SpringBrake.Cylinder = std::make_shared<TReservoir>();
+    void TrainSpringBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
+        if (!p_mover->SpringBrake.Cylinder) {
+            p_mover->SpringBrake.Cylinder = std::make_shared<TReservoir>();
         }
-        mover->SpringBrake.Cylinder->CreateCap(spring_actuator_chamber_volume);
-        mover->SpringBrake.MaxBrakeForce = pressure_force_coefficient; // It is equal to brake force
-        mover->SpringBrake.MaxSetPressure = spring_actuator_preload_pressure;
-        mover->SpringBrake.ResetPressure = max_spring_actuator_filling_force;
-        mover->SpringBrake.MinForcePressure = spring_full_balance_pressure;
-        mover->SpringBrake.PressureOff = brake_signal_released_state_pressure;
-        mover->SpringBrake.PressureOn = brake_signal_braked_state_pressure;
-        mover->SpringBrake.ValveOffArea = actuator_charge_valve_cross_section;
-        mover->SpringBrake.ValveOnArea = actuator_discharge_valve_cross_section;
-        mover->SpringBrake.ValvePNBrakeArea = pneumatic_brake_valve_cross_section;
-        mover->SpringBrake.PNBrakeConnection = mover->SpringBrake.ValvePNBrakeArea > 0;
-        mover->SpringBrake.MultiTractionCoupler = required_coupler_connection_method;
+        p_mover->SpringBrake.Cylinder->CreateCap(spring_actuator_chamber_volume);
+        p_mover->SpringBrake.MaxBrakeForce = pressure_force_coefficient; // It is equal to brake force
+        p_mover->SpringBrake.MaxSetPressure = spring_actuator_preload_pressure;
+        p_mover->SpringBrake.ResetPressure = max_spring_actuator_filling_force;
+        p_mover->SpringBrake.MinForcePressure = spring_full_balance_pressure;
+        p_mover->SpringBrake.PressureOff = brake_signal_released_state_pressure;
+        p_mover->SpringBrake.PressureOn = brake_signal_braked_state_pressure;
+        p_mover->SpringBrake.ValveOffArea = actuator_charge_valve_cross_section;
+        p_mover->SpringBrake.ValveOnArea = actuator_discharge_valve_cross_section;
+        p_mover->SpringBrake.ValvePNBrakeArea = pneumatic_brake_valve_cross_section;
+        p_mover->SpringBrake.PNBrakeConnection = p_mover->SpringBrake.ValvePNBrakeArea > 0;
+        p_mover->SpringBrake.MultiTractionCoupler = required_coupler_connection_method;
 
         //@TODO: There might be a need to update Spring Brake in the mover internally but it seems to be working as for now
-        TrainPart::_do_update_internal_mover(mover);
+        TrainPart::_do_update_internal_mover(p_mover);
     }
 
-    void TrainSpringBrake::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
-        state["spring_brake/is_ready"] = mover->SpringBrake.IsReady;
-        state["spring_brake/shut_off"] = mover->SpringBrake.ShuttOff;
-        state["spring_brake/active"] = mover->SpringBrake.Activate;
-        state["spring_brake/cylinder_pressure"] = mover->SpringBrake.SBP;
+    void TrainSpringBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        p_state["spring_brake/is_ready"] = p_mover->SpringBrake.IsReady;
+        p_state["spring_brake/shut_off"] = p_mover->SpringBrake.ShuttOff;
+        p_state["spring_brake/active"] = p_mover->SpringBrake.Activate;
+        p_state["spring_brake/cylinder_pressure"] = p_mover->SpringBrake.SBP;
     }
 
     void TrainSpringBrake::_register_commands() {

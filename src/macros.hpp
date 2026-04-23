@@ -1,6 +1,5 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
-#include "core/utils.hpp"
 /**
  * Macro for generating private members with their setters and getters
  * @param type Member type
@@ -71,42 +70,6 @@ public:                                                                         
         return name;                                                                                                   \
     }                                                                                                                  \
     void set_##name(type value) {                                                                                      \
-        name = value;                                                                                                  \
-    }
-
-/**
- * Macro for generating private members with their setters and getters without a const reference
- * @param type Member type
- * @param name Member name
- * @param default_value Default value
- */
-#define MAKE_MEMBER_OBSERVABLE_GS(type, name)                                                                          \
-private:                                                                                                               \
-    libmaszyna::utils::ObservableValue<type> name;                                                                     \
-                                                                                                                       \
-public:                                                                                                                \
-    type get_##name() const {                                                                                          \
-        return name.get();                                                                                             \
-    }                                                                                                                  \
-    void set_##name(const type &value) {                                                                               \
-        name = value;                                                                                                  \
-    }
-
-/**
- * Macro for generating private members with their setters and getters without a const reference
- * @param type Member type
- * @param name Member name
- * @param default_value Default value
- */
-#define MAKE_MEMBER_OBSERVABLE_GS_NR(type, name)                                                                       \
-private:                                                                                                               \
-    libmaszyna::utils::ObservableValue<type> name;                                                                     \
-                                                                                                                       \
-public:                                                                                                                \
-    type get_##name() const {                                                                                          \
-        return name.get();                                                                                             \
-    }                                                                                                                  \
-    void set_##name(const type value) {                                                                                \
         name = value;                                                                                                  \
     }
 

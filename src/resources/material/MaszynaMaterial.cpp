@@ -2,16 +2,7 @@
 #include <godot_cpp/classes/standard_material3d.hpp>
 
 namespace godot {
-    MaszynaMaterial::MaszynaMaterial() :
-        albedo_texture_path(String(), [this](const String &p_new_val) {
-                    _parse_texture_path(p_new_val);
-                }),
-    winter_albedo_texture_path(String(), [this](const String &p_new_val) {
-                    _parse_texture_path(p_new_val);
-                }),
-    autumn_albedo_texture_path(String(), [this](const String &p_new_val) {
-                    _parse_texture_path(p_new_val);
-                }) {}
+    MaszynaMaterial::MaszynaMaterial() = default;
 
     void MaszynaMaterial::apply_to_material(StandardMaterial3D *p_material) const {
         p_material->set_transparency(transparency);
@@ -50,5 +41,32 @@ namespace godot {
         }
 
         return tex;
+    }
+
+    String MaszynaMaterial::get_albedo_texture_path() const {
+        return albedo_texture_path;
+    }
+
+    void MaszynaMaterial::set_albedo_texture_path(const String &p_value) {
+        albedo_texture_path = p_value;
+        _parse_texture_path(p_value);
+    }
+
+    String MaszynaMaterial::get_winter_albedo_texture_path() const {
+        return winter_albedo_texture_path;
+    }
+
+    void MaszynaMaterial::set_winter_albedo_texture_path(const String &p_value) {
+        winter_albedo_texture_path = p_value;
+        _parse_texture_path(p_value);
+    }
+
+    String MaszynaMaterial::get_autumn_albedo_texture_path() const {
+        return autumn_albedo_texture_path;
+    }
+
+    void MaszynaMaterial::set_autumn_albedo_texture_path(const String &p_value) {
+        autumn_albedo_texture_path = p_value;
+        _parse_texture_path(p_value);
     }
 } //namespace godot

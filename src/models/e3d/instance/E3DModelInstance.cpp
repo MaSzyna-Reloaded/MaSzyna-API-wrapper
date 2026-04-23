@@ -6,15 +6,7 @@
 namespace godot {
     const char *E3DModelInstance::e3d_loaded_signal = "e3d_loaded";
 
-    E3DModelInstance::E3DModelInstance()
-        : data_path(String(), [this] { _reload(); })
-        , model_filename(String(), [this] { _reload(); })
-        , skins(Array(), [this] { _reload(); })
-        , exclude_node_names(Array(), [this] { _reload(); })
-        , instancer(INSTANCER_NODES, [this] { _reload(); })
-        , submodels_aabb(AABB(), [this] { _reload(); })
-        , editable_in_editor(false, [this] { _reload(); })
-        {
+    E3DModelInstance::E3DModelInstance() {
         _mutex.instantiate();
     }
 
@@ -66,6 +58,14 @@ namespace godot {
         }
     }
 
+    void E3DModelInstance::_request_reload() {
+        if (!is_inside_tree()) {
+            return;
+        }
+
+        _reload();
+    }
+
     void E3DModelInstance::_reload() {
         if (_is_dirty) {
             return;
@@ -101,7 +101,99 @@ namespace godot {
         _pending_model_scheduled = false;
         _mutex->unlock();
 
-        E3DNodesInstancer::instantiate(model, this, get_editable_in_editor());
+        const bool editable = get_editable_in_editor() || get_instancer() == INSTANCER_EDITABLE_NODES;
+        E3DNodesInstancer::instantiate(model, this, editable);
         emit_signal(e3d_loaded_signal);
+    }
+
+    String E3DModelInstance::get_data_path() const {
+        return data_path;
+    }
+
+    void E3DModelInstance::set_data_path(const String &p_value) {
+        if (data_path == p_value) {
+            return;
+        }
+
+        data_path = p_value;
+        _request_reload();
+    }
+
+    String E3DModelInstance::get_model_filename() const {
+        return model_filename;
+    }
+
+    void E3DModelInstance::set_model_filename(const String &p_value) {
+        if (model_filename == p_value) {
+            return;
+        }
+
+        model_filename = p_value;
+        _request_reload();
+    }
+
+    Array E3DModelInstance::get_skins() const {
+        return skins;
+    }
+
+    void E3DModelInstance::set_skins(const Array &p_value) {
+        if (skins == p_value) {
+            return;
+        }
+
+        skins = p_value;
+        _request_reload();
+    }
+
+    Array E3DModelInstance::get_exclude_node_names() const {
+        return exclude_node_names;
+    }
+
+    void E3DModelInstance::set_exclude_node_names(const Array &p_value) {
+        if (exclude_node_names == p_value) {
+            return;
+        }
+
+        exclude_node_names = p_value;
+        _request_reload();
+    }
+
+    E3DModelInstance::Instancer E3DModelInstance::get_instancer() const {
+        return instancer;
+    }
+
+    void E3DModelInstance::set_instancer(const Instancer p_value) {
+        if (instancer == p_value) {
+            return;
+        }
+
+        instancer = p_value;
+        _request_reload();
+    }
+
+    AABB E3DModelInstance::get_submodels_aabb() const {
+        return submodels_aabb;
+    }
+
+    void E3DModelInstance::set_submodels_aabb(const AABB &p_value) {
+        if (submodels_aabb == p_value) {
+            return;
+        }
+
+        submodels_aabb = p_value;
+        _request_reload();
+    }
+
+    bool E3DModelInstance::get_editable_in_editor() const {
+        return editable_in_editor;
+    }
+
+    void E3DModelInstance::set_editable_in_editor(const bool &p_value) {
+        if (editable_in_editor == p_value) {
+            return;
+        }
+
+        editable_in_editor = p_value;
+        _request_reload();
     }
 }//namespace godot

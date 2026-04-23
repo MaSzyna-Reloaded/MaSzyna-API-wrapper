@@ -9,6 +9,8 @@ var maszyna_environment_node_script = preload("res://addons/libmaszyna/environme
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
 var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
+var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
+var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
 
 # Editor plugins
 
@@ -48,6 +50,21 @@ func _enter_tree():
     )
 
     ResourceLoader.add_resource_format_loader(e3d_loader)
+
+    add_custom_type(
+        "MaszynaTrack3D",
+        "Path3D",
+        maszyna_track_3d_script,
+        null
+    )
+
+    add_custom_type(
+        "MaszynaSwitch3D",
+        "Node3D",
+        maszyna_switch_3d_script,
+        null
+    )
+
     user_settings_dock = user_settings_dock_scene.instantiate()
     add_control_to_dock(DOCK_SLOT_RIGHT_UL, user_settings_dock)
 
@@ -62,6 +79,8 @@ func _exit_tree():
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
+    remove_custom_type("MaszynaTrack3D")
+    remove_custom_type("MaszynaSwitch3D")
 
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("E3DModelInstanceManager")

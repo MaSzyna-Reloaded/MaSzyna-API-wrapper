@@ -39,6 +39,7 @@ E3DNodesInstancer="*uid://dl44jll5gimwi"
 UserSettings="*uid://dd2pj6a7hturn"
 E3DModelInstanceManager="*uid://bt2jcd405kweg"
 AudioStreamManager="*uid://cp8sgfk334adm"
+TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 
 [debug]
 

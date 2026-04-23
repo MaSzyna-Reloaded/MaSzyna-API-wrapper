@@ -66,8 +66,15 @@ namespace godot {
             child->set_transform(submodel->get_transform());
 
             if ((Engine::get_singleton() != nullptr) && Engine::get_singleton()->is_editor_hint()) {
-                if (Node *owner = p_editable ? p_target_node.get_owner() : nullptr;
-                    owner != nullptr) {
+                Node *owner = nullptr;
+                if (p_editable) {
+                    owner = p_target_node.get_owner();
+                    if (owner == nullptr) {
+                        owner = const_cast<E3DModelInstance *>(&p_target_node);
+                    }
+                }
+
+                if (owner != nullptr) {
                     child->set_owner(owner);
                 }
             }

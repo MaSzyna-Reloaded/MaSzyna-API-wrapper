@@ -101,7 +101,8 @@ namespace godot {
         _pending_model_scheduled = false;
         _mutex->unlock();
 
-        E3DNodesInstancer::instantiate(model, this, get_editable_in_editor());
+        const bool editable = get_editable_in_editor() || get_instancer() == INSTANCER_EDITABLE_NODES;
+        E3DNodesInstancer::instantiate(model, this, editable);
         emit_signal(e3d_loaded_signal);
     }
 

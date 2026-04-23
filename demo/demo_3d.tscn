@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
+[ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_rrc65"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
@@ -56,6 +57,8 @@ adjustment_enabled = true
 
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
+
+[node name="DebugMenuFPS" parent="." unique_id=901825413 instance=ExtResource("2_rrc65")]
 
 [node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=282874346]
 visible = false

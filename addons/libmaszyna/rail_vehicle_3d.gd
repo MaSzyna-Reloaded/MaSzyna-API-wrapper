@@ -55,8 +55,10 @@ var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
+var _derail_body: RigidBody3D
 var _t:float = 0.0
 var _invalid_velocity_reported: bool = false
+var _is_derailed_physics: bool = false
 
 var state: Dictionary:
     get:
@@ -78,10 +80,16 @@ var type_name: String:
 
 
 func _resolve_controller() -> void:
+    if _controller and _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
+        _controller.disconnect("derailed", Callable(self, "_on_controller_derailed"))
+
     if controller_path and is_inside_tree():
         _controller = get_node_or_null(controller_path) as TrainController
     else:
         _controller = null
+
+    if _controller and not _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
+        _controller.connect("derailed", Callable(self, "_on_controller_derailed"))
 
 
 func _register_train() -> void:
@@ -236,6 +244,211 @@ func log_warning(line: String) -> void:
 func log_error(line: String) -> void:
     self.log(GameLog.LogLevel.ERROR, line)
 
+
+func _controller_to_vehicle(controller: TrainController) -> RailVehicle3D:
+    if controller == null:
+        return null
+
+    var node := controller.get_parent()
+    while node != null:
+        if node is RailVehicle3D:
+            return node as RailVehicle3D
+        node = node.get_parent()
+
+    return null
+
+
+func _get_trainset_vehicles(controller: TrainController) -> Array[RailVehicle3D]:
+    var vehicles: Array[RailVehicle3D] = []
+    if controller == null:
+        return vehicles
+
+    var trainset := controller.get_trainset()
+    if trainset == null:
+        return vehicles
+
+    for entry in trainset.to_array():
+        var vehicle_controller := entry as TrainController
+        var vehicle := _controller_to_vehicle(vehicle_controller)
+        if vehicle != null:
+            vehicles.append(vehicle)
+
+    return vehicles
+
+
+func _find_nearest_collision_vehicle() -> RailVehicle3D:
+    if _controller == null:
+        return null
+
+    var track_id := String(_controller.state.get("track_id", ""))
+    if track_id.is_empty():
+        return null
+
+    var own_offset := float(_controller.state.get("track_offset", 0.0))
+    var nearest_vehicle: RailVehicle3D = null
+    var nearest_distance := INF
+
+    for node in get_tree().get_nodes_in_group(&"rail_vehicle_runtime"):
+        if node == self or not node is RailVehicle3D:
+            continue
+
+        var vehicle := node as RailVehicle3D
+        var other_controller := vehicle.get_controller()
+        if other_controller == null:
+            continue
+        if String(other_controller.state.get("track_id", "")) != track_id:
+            continue
+
+        var other_offset := float(other_controller.state.get("track_offset", 0.0))
+        var distance := abs(other_offset - own_offset)
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_vehicle = vehicle
+
+    return nearest_vehicle
+
+
+func _find_primary_collision_shape() -> CollisionShape3D:
+    for node in find_children("", "CollisionShape3D", true, false):
+        var collision_shape := node as CollisionShape3D
+        if collision_shape != null and collision_shape.shape != null:
+            return collision_shape
+    return null
+
+
+func _create_derail_body_shape() -> CollisionShape3D:
+    var source_shape := _find_primary_collision_shape()
+    if source_shape == null:
+        return null
+
+    var body_shape := CollisionShape3D.new()
+    body_shape.shape = source_shape.shape
+    body_shape.transform = global_transform.affine_inverse() * source_shape.global_transform
+    return body_shape
+
+
+func _detach_from_consist() -> void:
+    if _controller == null:
+        return
+
+    _controller.uncouple_front()
+    _controller.uncouple_back()
+
+
+func _activate_derail_body(derail_body: RigidBody3D, body_shape: CollisionShape3D, impact_origin: Vector3, relative_speed_kmh: float) -> void:
+    if derail_body == null or body_shape == null:
+        return
+
+    await get_tree().physics_frame
+    if not is_instance_valid(derail_body) or not is_instance_valid(body_shape):
+        return
+
+    body_shape.disabled = false
+
+    if impact_origin != Vector3.INF:
+        var rel_speed_ms := clamp(relative_speed_kmh / 3.6, 2.0, 12.0)
+        var push_dir := global_position - impact_origin
+        push_dir.y = 0.0
+        if push_dir.is_zero_approx():
+            push_dir = global_basis.x
+        push_dir = push_dir.normalized()
+
+        var torque_axis := global_basis.z.cross(push_dir)
+        if torque_axis.is_zero_approx():
+            torque_axis = global_basis.x
+        torque_axis = torque_axis.normalized()
+        var effective_mass := clamp(derail_body.mass, 5000.0, 12000.0)
+        var torque_impulse = torque_axis * min(effective_mass * rel_speed_ms * 0.02, 80000.0)
+
+        derail_body.apply_torque_impulse(torque_impulse)
+
+
+func _wrap_in_derail_body(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
+    if _is_derailed_physics or _controller == null:
+        return
+
+    var body_shape := _create_derail_body_shape()
+    if body_shape == null:
+        push_warning("RailVehicle3D '%s': missing CollisionShape3D for derail physics." % name)
+        return
+
+    var previous_parent := get_parent()
+    if previous_parent == null:
+        return
+
+    var previous_index := get_index()
+    var track_rid := _controller.get_track_rid()
+    var track := TrackManager.get_track(track_rid)
+    var velocity := float(_controller.state.get("velocity", 0.0))
+    var mass_total := float(_controller.state.get("mass_total", 0.0))
+    var derail_body := RigidBody3D.new()
+    derail_body.name = "%sDerailBody" % name
+    derail_body.global_transform = global_transform
+    derail_body.mass = mass_total if mass_total > 0.0 else _controller.mass
+    derail_body.contact_monitor = true
+    derail_body.max_contacts_reported = 4
+    derail_body.linear_damp = 0.05
+    derail_body.angular_damp = 0.05
+    derail_body.continuous_cd = true
+    derail_body.add_child(body_shape)
+    body_shape.disabled = true
+
+    previous_parent.add_child(derail_body)
+    previous_parent.move_child(derail_body, previous_index)
+
+    _detach_from_consist()
+    _controller.assign_track_rid(RID(), "")
+    _is_derailed_physics = true
+    _derail_body = derail_body
+
+    var preserved_global_transform := global_transform
+    previous_parent.remove_child(self)
+    derail_body.add_child(self)
+    global_transform = preserved_global_transform
+    if _cabin:
+        _cabin.controller_path = get_path()
+
+    var linear_velocity := Vector3.ZERO
+    if track != null:
+        linear_velocity = track.get_axis() * velocity
+    else:
+        linear_velocity = -global_basis.z.normalized() * velocity
+
+    var roll_axis := global_basis.z.normalized()
+    if roll_axis.is_zero_approx():
+        roll_axis = Vector3.FORWARD
+
+    derail_body.linear_velocity = linear_velocity
+    derail_body.angular_velocity = roll_axis * 0.28
+    _activate_derail_body(derail_body, body_shape, impact_origin, relative_speed_kmh)
+
+
+func _enter_derail_physics() -> void:
+    if _is_derailed_physics or _controller == null:
+        return
+
+    var collision_vehicle := _find_nearest_collision_vehicle()
+    var impacted_vehicles: Array[RailVehicle3D] = []
+    var collision_origin := Vector3.INF
+    var relative_speed_kmh := max(
+        float(_controller.state.get("front_relative_speed_kmh", 0.0)),
+        float(_controller.state.get("rear_relative_speed_kmh", 0.0))
+    )
+    if collision_vehicle != null:
+        impacted_vehicles = _get_trainset_vehicles(collision_vehicle.get_controller())
+        collision_origin = collision_vehicle.global_position
+
+    _wrap_in_derail_body(collision_origin, relative_speed_kmh)
+
+    for vehicle in impacted_vehicles:
+        if vehicle == null or vehicle == self:
+            continue
+        vehicle._wrap_in_derail_body(global_position, relative_speed_kmh)
+
+
+func _on_controller_derailed(_damage_flag: int, _derail_reason: int) -> void:
+    _enter_derail_physics()
+
 func _update_head_display():
     if not is_inside_tree():
         return
@@ -274,6 +487,14 @@ func _process(delta):
 
 func _physics_process(delta: float) -> void:
     if not Engine.is_editor_hint():
+        if _controller and bool(_controller.state.get("is_derailed", false)) and not _is_derailed_physics:
+            _enter_derail_physics()
+
+        if _is_derailed_physics:
+            if _controller:
+                _controller.set_mover_location(global_position)
+            return
+
         if _controller:
             var track_rid := _controller.get_track_rid()
             var track_offset := float(_controller.get_track_offset())
@@ -293,12 +514,18 @@ func _physics_process(delta: float) -> void:
 
 func _ready() -> void:
     set_physics_process(true)
+    add_to_group(&"rail_vehicle_runtime")
     _needs_head_display_update = true
     _dirty = true
     _resolve_controller()
     _register_train()
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
+    if _controller and bool(_controller.state.get("is_derailed", false)):
+        _enter_derail_physics()
 
 
 func _exit_tree() -> void:
+    if _controller and _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
+        _controller.disconnect("derailed", Callable(self, "_on_controller_derailed"))
+    remove_from_group(&"rail_vehicle_runtime")
     _unregister_train()

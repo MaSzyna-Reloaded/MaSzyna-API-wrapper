@@ -18,7 +18,7 @@ http://mozilla.org/MPL/2.0/.
 
 
 #define Global_AirTemperature 15.f
-#define Global_crash_damage false
+#define Global_crash_damage true
 
 //---------------------------------------------------------------------------
 

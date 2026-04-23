@@ -6,6 +6,7 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <cmath>
 #include <memory>
 
 namespace godot {
@@ -16,6 +17,7 @@ namespace godot {
     const char *TrainController::COMMAND_RECEIVED = "command_received";
     const char *TrainController::RADIO_TOGGLED = "radio_toggled";
     const char *TrainController::RADIO_CHANNEL_CHANGED = "radio_channel_changed";
+    const char *TrainController::DERAILED_SIGNAL = "derailed";
 
     TrainController::TrainController() {
         trainset.instantiate();
@@ -112,6 +114,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(RADIO_TOGGLED, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(RADIO_CHANNEL_CHANGED, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(COMMAND_RECEIVED, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"), PropertyInfo(Variant::NIL, "p2")));
+        ADD_SIGNAL(MethodInfo(DERAILED_SIGNAL, PropertyInfo(Variant::INT, "damage_flag"), PropertyInfo(Variant::INT, "derail_reason")));
 
         BIND_ENUM_CONSTANT(FRONT);
         BIND_ENUM_CONSTANT(BACK);
@@ -332,22 +335,75 @@ namespace godot {
     }
 
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+        const auto &front_coupler = mover->Couplers[end::front];
+        const auto &rear_coupler = mover->Couplers[end::rear];
+        const auto compute_relative_speed_kmh = [](TMoverParameters *self, neighbour_data &neighbour) -> double {
+            if (neighbour.vehicle == nullptr) {
+                return 0.0;
+            }
+
+            const auto selfvx = std::cos(self->Rot.Rz) * self->V;
+            const auto selfvy = std::sin(self->Rot.Rz) * self->V;
+            const auto othervx = std::cos(neighbour.vehicle->Rot.Rz) * neighbour.vehicle->V;
+            const auto othervy = std::sin(neighbour.vehicle->Rot.Rz) * neighbour.vehicle->V;
+            return std::hypot(selfvx - othervx, selfvy - othervy) * 3.6;
+        };
+
         state["mass_total"] = mover->TotalMass;
         state["velocity"] = mover->V;
         state["speed"] = mover->Vel;
         state["total_distance"] = mover->DistCounter;
         state["direction"] = mover->DirActive;
         state["damage_flag"] = mover->DamageFlag;
+        state["is_derailed"] = (mover->DamageFlag & dtrain_out) != 0;
+        state["derail_reason"] = mover->DerailReason;
+        state["crash_damage_enabled"] = true;
         state["movement_delta"] = _movement_delta;
         state["track_rid"] = current_track_rid;
         state["track_id"] = current_track_id;
         state["track_offset"] = current_track_offset;
+        state["front_coupler_connected"] = front_coupler.Connected != nullptr;
+        state["front_coupler_connected_number"] = front_coupler.ConnectedNr;
+        state["front_coupler_flag"] = front_coupler.CouplingFlag;
+        state["front_coupler_automatic_flag"] = front_coupler.AutomaticCouplingFlag;
+        state["front_coupler_allowed_flag"] = front_coupler.AllowedFlag;
+        state["front_coupler_distance"] = front_coupler.Dist;
+        state["rear_coupler_connected"] = rear_coupler.Connected != nullptr;
+        state["rear_coupler_connected_number"] = rear_coupler.ConnectedNr;
+        state["rear_coupler_flag"] = rear_coupler.CouplingFlag;
+        state["rear_coupler_automatic_flag"] = rear_coupler.AutomaticCouplingFlag;
+        state["rear_coupler_allowed_flag"] = rear_coupler.AllowedFlag;
+        state["rear_coupler_distance"] = rear_coupler.Dist;
         state["front_neighbour_present"] = mover->Neighbours[end::front].vehicle != nullptr;
         state["front_neighbour_end"] = mover->Neighbours[end::front].vehicle_end;
         state["front_neighbour_distance"] = mover->Neighbours[end::front].distance;
+        state["front_neighbour_damage_flag"] = mover->Neighbours[end::front].vehicle != nullptr
+                ? mover->Neighbours[end::front].vehicle->DamageFlag
+                : 0;
+        state["front_relative_speed_kmh"] = compute_relative_speed_kmh(mover, mover->Neighbours[end::front]);
+        state["front_derail_threshold_self_kmh"] = mover->Neighbours[end::front].vehicle != nullptr &&
+                        mover->Neighbours[end::front].vehicle->TotalMass > 0.0
+                ? 15.0 * (mover->TotalMass / mover->Neighbours[end::front].vehicle->TotalMass)
+                : 0.0;
+        state["front_derail_threshold_other_kmh"] = mover->Neighbours[end::front].vehicle != nullptr &&
+                        mover->TotalMass > 0.0
+                ? 15.0 * (mover->Neighbours[end::front].vehicle->TotalMass / mover->TotalMass)
+                : 0.0;
         state["rear_neighbour_present"] = mover->Neighbours[end::rear].vehicle != nullptr;
         state["rear_neighbour_end"] = mover->Neighbours[end::rear].vehicle_end;
         state["rear_neighbour_distance"] = mover->Neighbours[end::rear].distance;
+        state["rear_neighbour_damage_flag"] = mover->Neighbours[end::rear].vehicle != nullptr
+                ? mover->Neighbours[end::rear].vehicle->DamageFlag
+                : 0;
+        state["rear_relative_speed_kmh"] = compute_relative_speed_kmh(mover, mover->Neighbours[end::rear]);
+        state["rear_derail_threshold_self_kmh"] = mover->Neighbours[end::rear].vehicle != nullptr &&
+                        mover->Neighbours[end::rear].vehicle->TotalMass > 0.0
+                ? 15.0 * (mover->TotalMass / mover->Neighbours[end::rear].vehicle->TotalMass)
+                : 0.0;
+        state["rear_derail_threshold_other_kmh"] = mover->Neighbours[end::rear].vehicle != nullptr &&
+                        mover->TotalMass > 0.0
+                ? 15.0 * (mover->Neighbours[end::rear].vehicle->TotalMass / mover->TotalMass)
+                : 0.0;
 
         state["cabin"] = mover->CabActive;
         state["cabin_controleable"] = mover->IsCabMaster();
@@ -384,7 +440,15 @@ namespace godot {
     }
 
     void TrainController::_handle_mover_update() {
+        const bool was_derailed = static_cast<bool>(state.get("is_derailed", false));
         state.merge(get_mover_state(), true);
+        const bool is_derailed = static_cast<bool>(state.get("is_derailed", false));
+        if (!was_derailed && is_derailed) {
+            emit_signal(
+                    DERAILED_SIGNAL,
+                    static_cast<int>(state.get("damage_flag", 0)),
+                    static_cast<int>(state.get("derail_reason", 0)));
+        }
     }
 
     void TrainController::_sync_mover_neighbours() {

@@ -4,8 +4,8 @@
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/cabin.tscn" id="2_fd6gs"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/fiz.tscn" id="3_a5dx7"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
-size = Vector3(4.5332, 4.72223, 17.0549)
+[sub_resource type="BoxShape3D" id="BoxShape3D_ek1qp"]
+size = Vector3(2.9455566, 3.8098755, 13.81691)
 
 [node name="SM42-907" type="Node3D" unique_id=2022996241]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
@@ -32,9 +32,6 @@ exclude_node_names = ["cien"]
 instancer = 0
 submodels_aabb = AABB(-1.4508098, 1.2607, -3.924, 2.9026198, 2.93835, 2.20054)
 
-[node name="Area3D" type="Area3D" parent="." unique_id=585090803]
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=771965425]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
-shape = SubResource("BoxShape3D_uljbo")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1676706806]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.029907236, 2.1289368, 0.049171407)
+shape = SubResource("BoxShape3D_ek1qp")

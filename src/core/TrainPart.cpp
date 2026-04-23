@@ -1,4 +1,3 @@
-#include "./TrainSystem.hpp"
 #include "TrainCommand.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
@@ -13,13 +12,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainPart::get_mover_state);
         ClassDB::bind_method(D_METHOD("get_train_controller_node"), &TrainPart::get_train_controller_node);
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &TrainPart::emit_config_changed_signal);
-        ClassDB::bind_method(D_METHOD("send_command", "command", "p1", "p2"), &TrainPart::send_command, DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainPart::broadcast_command, DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("log", "loglevel", "line"), &TrainPart::log);
-        ClassDB::bind_method(D_METHOD("log_debug", "line"), &TrainPart::log_debug);
-        ClassDB::bind_method(D_METHOD("log_info", "line"), &TrainPart::log_info);
-        ClassDB::bind_method(D_METHOD("log_warning", "line"), &TrainPart::log_warning);
-        ClassDB::bind_method(D_METHOD("log_error", "line"), &TrainPart::log_error);
 
         ClassDB::bind_method(D_METHOD("set_enabled"), &TrainPart::set_enabled);
         ClassDB::bind_method(D_METHOD("get_enabled"), &TrainPart::get_enabled);
@@ -168,17 +160,6 @@ namespace godot {
         return train_controller_node;
     }
 
-    void TrainPart::log(const GameLog::LogLevel level, const String &line) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), level, line);
-        }
-    }
-
-    void TrainPart::log_debug(const String &line) { log(GameLog::LogLevel::DEBUG, line); }
-    void TrainPart::log_info(const String &line) { log(GameLog::LogLevel::INFO, line); }
-    void TrainPart::log_warning(const String &line) { log(GameLog::LogLevel::WARNING, line); }
-    void TrainPart::log_error(const String &line) { log(GameLog::LogLevel::ERROR, line); }
-
     void TrainPart::emit_config_changed_signal() {
         emit_signal("config_changed");
     }
@@ -191,15 +172,5 @@ namespace godot {
 
     bool TrainPart::get_enabled() {
         return enabled;
-    }
-
-    void TrainPart::send_command(const String &command, const Variant &p1, const Variant &p2) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), command, p1, p2);
-        }
-    }
-
-    void TrainPart::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
-        TrainSystem::get_instance()->broadcast_command(command, p1, p2);
     }
 } // namespace godot

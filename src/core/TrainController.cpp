@@ -1,6 +1,5 @@
 #include "../core/GameLog.hpp"
 #include "../core/TrainController.hpp"
-#include "../core/TrainSystem.hpp"
 #include "TrackManager.hpp"
 #include "TrainPart.hpp"
 #include "TrainSet.hpp"
@@ -76,8 +75,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_height", "value"), &TrainController::set_height);
         ClassDB::bind_method(D_METHOD("get_height"), &TrainController::get_height);
 
-        ClassDB::bind_method(D_METHOD("send_command", "command", "p1", "p2"), &TrainController::send_command, DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainController::broadcast_command, DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainController::get_supported_commands);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
         ClassDB::bind_method(D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
@@ -103,7 +100,6 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "track_id"), "assign_track", "get_track_id");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "track_offset"), "set_track_offset", "get_track_offset");
 
-        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
         BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
         BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
@@ -204,9 +200,6 @@ namespace godot {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
                 set_process(true);
-                if (!train_id.is_empty()) {
-                    TrainSystem::get_instance()->register_train(train_id, this);
-                }
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
@@ -215,9 +208,6 @@ namespace godot {
                 break;
             case NOTIFICATION_EXIT_TREE:
                 set_process(false);
-                if (!train_id.is_empty()) {
-                    TrainSystem::get_instance()->unregister_train(train_id);
-                }
                 if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
                     track_manager->remove_vehicle(this);
                 }
@@ -616,11 +606,6 @@ namespace godot {
         }
 
         TrainController *result = decouple_front_side ? target->uncouple_front() : target->uncouple_back();
-        if (result == nullptr && !train_id.is_empty()) {
-            TrainSystem::get_instance()->log(
-                    train_id, GameLog::LogLevel::ERROR,
-                    "decouple failed for relative_index=" + String::num_int64(relative_index));
-        }
         return result;
     }
 
@@ -699,14 +684,6 @@ namespace godot {
         emit_signal(COMMAND_RECEIVED, command, p1, p2);
     }
 
-    void TrainController::broadcast_command(const String &command, const Variant &p1, const Variant &p2) {
-        TrainSystem::get_instance()->broadcast_command(command, p1, p2);
-    }
-
-    void TrainController::send_command(const StringName &command, const Variant &p1, const Variant &p2) const {
-        TrainSystem::get_instance()->send_command(train_id, String(command), p1, p2);
-    }
-
     void TrainController::battery(const bool p_enabled) const {
         if (mover != nullptr) {
             mover->BatterySwitch(p_enabled);
@@ -735,22 +712,6 @@ namespace godot {
         if (mover != nullptr) {
             mover->DirectionBackward();
         }
-    }
-
-    void TrainController::set_train_id(const StringName p_train_id) {
-        if (!train_id.is_empty() && !Engine::get_singleton()->is_editor_hint()) {
-            TrainSystem::get_instance()->unregister_train(train_id);
-        }
-
-        train_id = p_train_id;
-
-        if (!train_id.is_empty() && !Engine::get_singleton()->is_editor_hint()) {
-            TrainSystem::get_instance()->register_train(train_id, this);
-        }
-    }
-
-    StringName TrainController::get_train_id() const {
-        return train_id;
     }
 
     void TrainController::radio(const bool p_enabled) {

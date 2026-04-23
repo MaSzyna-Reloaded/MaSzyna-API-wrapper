@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://ny4n6hhynsd4"]
 
-[ext_resource type="Script" uid="uid://cxpfum6pheqtt" path="res://addons/libmaszyna/train_3d.gd" id="1_m2356"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_m2356"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/cabin.tscn" id="2_fd6gs"]
 [ext_resource type="PackedScene" uid="uid://c5hi8nsm1d2hb" path="res://vehicles/sm42/fiz.tscn" id="3_a5dx7"]
 
@@ -13,7 +13,6 @@ script = ExtResource("1_m2356")
 controller_path = NodePath("SM42v1")
 cabin_scene = ExtResource("2_fd6gs")
 low_poly_cabin_path = NodePath("SM42-907-LowPolyCab")
-metadata/_custom_type_script = "uid://cxpfum6pheqtt"
 
 [node name="SM42v1" parent="." unique_id=433994401 instance=ExtResource("3_a5dx7")]
 

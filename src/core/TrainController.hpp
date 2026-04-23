@@ -13,8 +13,6 @@
 namespace godot {
     class TrainPart;
     class TrainSet;
-    class TrainSystem;
-
     class TrainController : public Node {
             GDCLASS(TrainController, Node)
 
@@ -66,8 +64,6 @@ namespace godot {
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
             int prev_radio_channel = 0;
-            StringName train_id;
-
             void initialize_mover();
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
@@ -170,7 +166,6 @@ namespace godot {
             double get_track_offset() const;
 
             TypedArray<TrainCommand> get_supported_commands();
-            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -181,9 +176,6 @@ namespace godot {
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
             void emit_command_received_signal(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void set_train_id(StringName p_train_id);
-            StringName get_train_id() const;
 
             static void _bind_methods();
 

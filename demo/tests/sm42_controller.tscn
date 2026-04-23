@@ -111,7 +111,6 @@ voltage_constant = 2000.0
 saturation_current = 49.0
 
 [node name="SM42v1" type="TrainController" unique_id=1082540440]
-train_id = "TestTrain"
 power = 590.0
 battery_voltage = 110.0
 type_name = "6d"

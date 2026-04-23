@@ -40,4 +40,4 @@ func _process_regardless_of_power(delta):
 
 func _on_lock_power(p1, p2):
     locked = true if p1 else false
-    self.log_debug("power locked: %s" % locked)
+    GameLog.debug("power locked: %s" % locked)

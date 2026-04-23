@@ -9,6 +9,7 @@ size = Vector3(4.5332, 4.72223, 17.0549)
 
 [node name="TEM2" type="Node3D" unique_id=1789571545]
 script = ExtResource("1_ra284")
+train_id = "tem2"
 controller_path = NodePath("TEM2Controller")
 cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true

@@ -4,12 +4,27 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
+@export var train_id: StringName = &"":
+    set(x):
+        if x == train_id:
+            return
+        if not Engine.is_editor_hint():
+            _unregister_train()
+        train_id = x
+        if not Engine.is_editor_hint():
+            _register_train()
+
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
+            if not Engine.is_editor_hint():
+                _unregister_train()
             controller_path = x
             _controller = null
             _dirty = true
+            if not Engine.is_editor_hint():
+                _resolve_controller()
+                _register_train()
 
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
@@ -43,6 +58,51 @@ var _controller:TrainController
 var _t:float = 0.0
 var _invalid_velocity_reported: bool = false
 
+var state: Dictionary:
+    get:
+        if _controller:
+            return _controller.state
+        return {}
+
+var config: Dictionary:
+    get:
+        if _controller:
+            return _controller.config
+        return {}
+
+var type_name: String:
+    get:
+        if _controller:
+            return _controller.type_name
+        return ""
+
+
+func _resolve_controller() -> void:
+    if controller_path and is_inside_tree():
+        _controller = get_node_or_null(controller_path) as TrainController
+    else:
+        _controller = null
+
+
+func _register_train() -> void:
+    if Engine.is_editor_hint():
+        return
+    if not is_inside_tree():
+        return
+    if train_id.is_empty():
+        return
+    if not _controller:
+        return
+    TrainSystem.register_train(train_id, _controller)
+
+
+func _unregister_train() -> void:
+    if Engine.is_editor_hint():
+        return
+    if train_id.is_empty():
+        return
+    TrainSystem.unregister_train(train_id)
+
 
 func enter_cabin(player:MaszynaPlayer):
     _camera = player.get_camera()
@@ -54,7 +114,7 @@ func enter_cabin(player:MaszynaPlayer):
     if controller_path:
         var controller = get_node(controller_path)
         if controller:
-            _cabin.controller_path = controller.get_path()
+            _cabin.controller_path = get_path()
 
     # The sequence of adding, removing, hiding, showing nodes is very important
     # to reduce visual artifacts
@@ -138,10 +198,43 @@ func leave_cabin(player:Node):
     _cabin = null
 
 func get_controller() -> TrainController:
-    if controller_path:
-        return get_node(controller_path)
-    else:
-        return null
+    if not _controller:
+        _resolve_controller()
+    return _controller
+
+
+func send_command(command: StringName, p1: Variant = null, p2: Variant = null) -> void:
+    if train_id.is_empty():
+        push_error("RailVehicle3D '%s': cannot send command without train_id." % name)
+        return
+    TrainSystem.send_command(train_id, String(command), p1, p2)
+
+
+func broadcast_command(command: String, p1: Variant = null, p2: Variant = null) -> void:
+    TrainSystem.broadcast_command(command, p1, p2)
+
+
+func log(level: int, line: String) -> void:
+    if train_id.is_empty():
+        push_error("RailVehicle3D '%s': cannot log without train_id: %s" % [name, line])
+        return
+    TrainSystem.log(train_id, level, line)
+
+
+func log_debug(line: String) -> void:
+    self.log(GameLog.LogLevel.DEBUG, line)
+
+
+func log_info(line: String) -> void:
+    self.log(GameLog.LogLevel.INFO, line)
+
+
+func log_warning(line: String) -> void:
+    self.log(GameLog.LogLevel.WARNING, line)
+
+
+func log_error(line: String) -> void:
+    self.log(GameLog.LogLevel.ERROR, line)
 
 func _update_head_display():
     if not is_inside_tree():
@@ -171,8 +264,7 @@ func _process(delta):
             if _head_display_e3d:
                 _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
 
-        if controller_path and is_inside_tree():
-            _controller = get_node(controller_path)
+        _resolve_controller()
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -203,4 +295,10 @@ func _ready() -> void:
     set_physics_process(true)
     _needs_head_display_update = true
     _dirty = true
+    _resolve_controller()
+    _register_train()
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
+
+
+func _exit_tree() -> void:
+    _unregister_train()

@@ -1,7 +1,7 @@
 extends SpotLight3D
 class_name CabinSpotLight3D
 
-var _controller:TrainController
+var _controller:RailVehicle3D
 
 var _dirty:bool = false
 var _setup_phase: bool = true
@@ -9,7 +9,7 @@ var _t = 0.0
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("RailVehicle3D") var controller_path:NodePath = "":
     set(x):
         controller_path = x
         _controller = null
@@ -32,7 +32,7 @@ func _process(delta):
     if _dirty:
         _dirty = false
         if not _controller and controller_path:
-            _controller = get_node(controller_path)
+            _controller = get_node(controller_path) as RailVehicle3D
             if _controller:
                 _update_state()
                 _setup_phase = true

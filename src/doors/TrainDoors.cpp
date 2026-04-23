@@ -1,3 +1,4 @@
+#include "../core/GameLog.hpp"
 #include "TrainDoors.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -182,13 +183,13 @@ namespace godot {
         if (doorControlsMap.find(open_method) != doorControlsMap.end()) {
             mover->Doors.open_control = doorControlsMap.at(open_method);
         } else {
-            log_error("Unhandled door open controls position: " + String::num(open_method));
+            GameLog::get_instance()->error("Unhandled door open controls position: " + String::num(open_method));
         }
 
         if (doorControlsMap.find(close_method) != doorControlsMap.end()) {
             mover->Doors.close_control = doorControlsMap.at(close_method);
         } else {
-            log_error("Unhandled door close controls position: " + String::num(close_method));
+            GameLog::get_instance()->error("Unhandled door close controls position: " + String::num(close_method));
         }
 
         mover->Doors.auto_duration = open_time;
@@ -218,7 +219,7 @@ namespace godot {
         if (doorTypeMap.find(type) != doorTypeMap.end()) {
             mover->Doors.type = doorTypeMap.at(type);
         } else {
-            log_error("Unhandled door type: " + String::num(type));
+            GameLog::get_instance()->error("Unhandled door type: " + String::num(type));
         }
 
         mover->Doors.has_warning = close_warning;

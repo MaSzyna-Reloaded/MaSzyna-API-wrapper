@@ -4,9 +4,9 @@ extends Button
 class_name DebugButton
 
 var _dirty = false
-var _controller:TrainController
+var _controller:RailVehicle3D
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("RailVehicle3D") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -46,4 +46,4 @@ func _on_pressed():
             if command_argument.to_lower() == "false":
                 _controller.send_command(command, false)
         else:
-             _controller.send_command(command, command_argument)
+            _controller.send_command(command, command_argument)

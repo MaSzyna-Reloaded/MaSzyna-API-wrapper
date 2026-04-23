@@ -114,11 +114,11 @@ $(CLANG_TIDY_BUILD_DIR)/compile_commands.json:
 
 
 style-check: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
-	@scripts/style-check
+	@scripts/style-check $(STYLE_FILE)
 
 
 style-fix: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
-	@scripts/style-fix
+	@scripts/style-fix $(STYLE_FILE)
 
 docker-build-tests:
 	docker build -t godot-tests .

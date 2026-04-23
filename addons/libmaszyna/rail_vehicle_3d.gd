@@ -49,6 +49,21 @@ class_name RailVehicle3D
             head_display_node_path = x
             _needs_head_display_update = true
 
+@export var runtime_physics_enabled: bool = false:
+    set(x):
+        if x == runtime_physics_enabled:
+            return
+        if not x and _is_derailed_physics:
+            runtime_physics_enabled = true
+            if not _runtime_physics_disable_warned:
+                _runtime_physics_disable_warned = true
+                push_warning("RailVehicle3D '%s': runtime physics cannot be disabled once activated." % name)
+            return
+
+        runtime_physics_enabled = x
+        if runtime_physics_enabled and is_inside_tree() and not Engine.is_editor_hint():
+            _enter_runtime_physics()
+
 var _dirty:bool = true
 var _needs_head_display_update: bool = false
 var _head_display_e3d:E3DModelInstance
@@ -59,6 +74,9 @@ var _derail_body: RigidBody3D
 var _t:float = 0.0
 var _invalid_velocity_reported: bool = false
 var _is_derailed_physics: bool = false
+var _runtime_physics_disable_warned: bool = false
+var _runtime_physics_impact_origin: Vector3 = Vector3.INF
+var _runtime_physics_relative_speed_kmh: float = 0.0
 
 var state: Dictionary:
     get:
@@ -209,6 +227,10 @@ func get_controller() -> TrainController:
     if not _controller:
         _resolve_controller()
     return _controller
+
+
+func get_runtime_physics_body() -> RigidBody3D:
+    return _derail_body
 
 
 func send_command(command: StringName, p1: Variant = null, p2: Variant = null) -> void:
@@ -363,13 +385,13 @@ func _activate_derail_body(derail_body: RigidBody3D, body_shape: CollisionShape3
         derail_body.apply_torque_impulse(torque_impulse)
 
 
-func _wrap_in_derail_body(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
+func _wrap_in_runtime_physics_body(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
     if _is_derailed_physics or _controller == null:
         return
 
     var body_shape := _create_derail_body_shape()
     if body_shape == null:
-        push_warning("RailVehicle3D '%s': missing CollisionShape3D for derail physics." % name)
+        push_warning("RailVehicle3D '%s': missing CollisionShape3D for runtime physics." % name)
         return
 
     var previous_parent := get_parent()
@@ -390,6 +412,7 @@ func _wrap_in_derail_body(impact_origin: Vector3 = Vector3.INF, relative_speed_k
     derail_body.linear_damp = 0.05
     derail_body.angular_damp = 0.05
     derail_body.continuous_cd = true
+    derail_body.add_to_group(&"rail_vehicle_runtime_physics_body")
     derail_body.add_child(body_shape)
     body_shape.disabled = true
 
@@ -399,6 +422,7 @@ func _wrap_in_derail_body(impact_origin: Vector3 = Vector3.INF, relative_speed_k
     _detach_from_consist()
     _controller.assign_track_rid(RID(), "")
     _is_derailed_physics = true
+    runtime_physics_enabled = true
     _derail_body = derail_body
 
     var preserved_global_transform := global_transform
@@ -423,6 +447,20 @@ func _wrap_in_derail_body(impact_origin: Vector3 = Vector3.INF, relative_speed_k
     _activate_derail_body(derail_body, body_shape, impact_origin, relative_speed_kmh)
 
 
+func _enter_runtime_physics() -> void:
+    if _is_derailed_physics:
+        runtime_physics_enabled = true
+        return
+
+    _wrap_in_runtime_physics_body(_runtime_physics_impact_origin, _runtime_physics_relative_speed_kmh)
+
+
+func _request_runtime_physics(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
+    _runtime_physics_impact_origin = impact_origin
+    _runtime_physics_relative_speed_kmh = relative_speed_kmh
+    runtime_physics_enabled = true
+
+
 func _enter_derail_physics() -> void:
     if _is_derailed_physics or _controller == null:
         return
@@ -438,12 +476,12 @@ func _enter_derail_physics() -> void:
         impacted_vehicles = _get_trainset_vehicles(collision_vehicle.get_controller())
         collision_origin = collision_vehicle.global_position
 
-    _wrap_in_derail_body(collision_origin, relative_speed_kmh)
+    _request_runtime_physics(collision_origin, relative_speed_kmh)
 
     for vehicle in impacted_vehicles:
         if vehicle == null or vehicle == self:
             continue
-        vehicle._wrap_in_derail_body(global_position, relative_speed_kmh)
+        vehicle._request_runtime_physics(global_position, relative_speed_kmh)
 
 
 func _on_controller_derailed(_damage_flag: int, _derail_reason: int) -> void:
@@ -487,7 +525,9 @@ func _process(delta):
 
 func _physics_process(delta: float) -> void:
     if not Engine.is_editor_hint():
-        if _controller and bool(_controller.state.get("is_derailed", false)) and not _is_derailed_physics:
+        if runtime_physics_enabled and not _is_derailed_physics:
+            _enter_runtime_physics()
+        elif _controller and bool(_controller.state.get("is_derailed", false)) and not _is_derailed_physics:
             _enter_derail_physics()
 
         if _is_derailed_physics:
@@ -520,7 +560,9 @@ func _ready() -> void:
     _resolve_controller()
     _register_train()
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
-    if _controller and bool(_controller.state.get("is_derailed", false)):
+    if runtime_physics_enabled:
+        _enter_runtime_physics()
+    elif _controller and bool(_controller.state.get("is_derailed", false)):
         _enter_derail_physics()
 
 

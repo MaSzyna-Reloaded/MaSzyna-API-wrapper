@@ -8,8 +8,12 @@ var _state = {}
 func _ready():
     var train = get_train_controller_node()
     train.power_changed.connect(_on_power_changed)
-    train.register_command("roof_light", set_roof_light)
-    train.register_command("devices_light", set_devices_light)
+
+func _get_supported_commands():
+    return [
+        TrainCommand.create("roof_light", set_roof_light),
+        TrainCommand.create("devices_light", set_devices_light),
+    ]
 
 func _on_power_changed(train_is_powered):
     _powered = train_is_powered

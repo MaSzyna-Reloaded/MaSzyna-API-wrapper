@@ -1,6 +1,7 @@
 #pragma once
 
 #include "LegacyRailVehicle.hpp"
+#include "TrainCommand.hpp"
 #include "macros.hpp"
 
 namespace godot {
@@ -100,11 +101,10 @@ namespace godot {
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
+            TypedArray<TrainCommand> get_supported_commands();
             void emit_command_received_signal(
                     const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void register_command(const String &command, const Callable &callable);
-            void unregister_command(const String &command, const Callable &callable);
             void set_train_id(StringName p_train_id);
             StringName get_train_id() const;
 

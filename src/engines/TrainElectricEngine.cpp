@@ -109,16 +109,11 @@ namespace godot {
         mover->CompressorSwitch(p_enabled);
     }
 
-    void TrainElectricEngine::_register_commands() {
-        TrainEngine::_register_commands();
-        register_command("converter", Callable(this, "converter"));
-        register_command("compressor", Callable(this, "compressor"));
-    }
-
-    void TrainElectricEngine::_unregister_commands() {
-        TrainEngine::_unregister_commands();
-        unregister_command("converter", Callable(this, "converter"));
-        unregister_command("compressor", Callable(this, "compressor"));
+    TypedArray<TrainCommand> TrainElectricEngine::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainEngine::get_supported_commands();
+        commands.append(make_train_command("converter", Callable(this, "converter")));
+        commands.append(make_train_command("compressor", Callable(this, "compressor")));
+        return commands;
     }
 
 

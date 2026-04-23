@@ -33,8 +33,7 @@ namespace godot {
             TrainController::TrainPowerSource get_engine_power_source() const;
             void compressor(bool p_enabled);
             void converter(bool p_enabled);
-            void _register_commands() override;
-            void _unregister_commands() override;
+            TypedArray<TrainCommand> get_supported_commands() override;
             //@TODO: Implement bitmask for PhysicalLayout
 
         protected:

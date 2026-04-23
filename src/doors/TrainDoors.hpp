@@ -11,8 +11,7 @@ namespace godot {
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_process_mover(TMoverParameters *mover, double delta) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
+            TypedArray<TrainCommand> get_supported_commands() override;
 
         public:
             enum PermitLight {

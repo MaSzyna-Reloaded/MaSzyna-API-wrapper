@@ -1,4 +1,5 @@
 #include "./TrainSystem.hpp"
+#include "TrainCommand.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
 #include <godot_cpp/classes/engine.hpp>
@@ -8,8 +9,7 @@
 namespace godot {
     void TrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &TrainPart::emit_config_changed_signal);
-        ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainPart::register_command);
-        ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &TrainPart::unregister_command);
+        ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainPart::get_supported_commands);
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &TrainPart::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
@@ -32,8 +32,10 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("train_part_disabled"));
     }
 
-    void TrainPart::_register_commands() {};
-    void TrainPart::_unregister_commands() {};
+    TypedArray<TrainCommand> TrainPart::get_supported_commands() {
+        TypedArray<TrainCommand> commands;
+        return commands;
+    }
 
     void TrainPart::log(const GameLog::LogLevel level, const String &line) {
         if (train_controller_node != nullptr) {
@@ -57,22 +59,6 @@ namespace godot {
         log(GameLog::LogLevel::ERROR, line);
     }
 
-    void TrainPart::register_command(const String &command, const Callable &callback) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), command, callback);
-        } else {
-            log_debug("Cannot register command " + command + ": no train_controller_node!");
-        }
-    }
-
-    void TrainPart::unregister_command(const String &command, const Callable &callback) {
-        if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), command, callback);
-        } else {
-            log_debug("Cannot unregister command " + command + ": no train_controller_node!");
-        }
-    }
-
     void TrainPart::emit_config_changed_signal() {
         emit_signal("config_changed");
     }
@@ -94,18 +80,8 @@ namespace godot {
                     }
                     parent = parent->get_parent();
                 }
-
-                if (enabled) {
-                    _register_commands();
-                    _commands_registered = true;
-                }
             } break;
             case NOTIFICATION_EXIT_TREE: {
-                if (enabled) {
-                    _unregister_commands();
-                    _commands_registered = false;
-                }
-
                 train_controller_node = nullptr;
             } break;
             default:
@@ -129,15 +105,6 @@ namespace godot {
 
         if (enabled_changed) {
             enabled_changed = false;
-            if (enabled && !_commands_registered) {
-                log_debug("Registering commands for train part " + get_name());
-                _register_commands();
-                _commands_registered = true;
-            } else if (!enabled && _commands_registered) {
-                log_debug("Unregistering commands for train part " + get_name());
-                _unregister_commands();
-                _commands_registered = false;
-            }
             emit_signal("enable_changed", enabled);
             emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
         }

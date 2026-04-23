@@ -1,6 +1,7 @@
 #pragma once
 #include "./GameLog.hpp"
 #include "./LegacyRailVehicleModule.hpp"
+#include "./TrainCommand.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include <functional>
@@ -15,9 +16,6 @@ namespace godot {
             GDCLASS(TrainPart, LegacyRailVehicleModule)
         public:
             static void _bind_methods();
-
-        private:
-            bool _commands_registered = false;
 
         protected:
             void _notification(int p_what);
@@ -48,15 +46,11 @@ namespace godot {
 
             virtual void _do_process_mover(TMoverParameters *mover, double delta);
 
-            virtual void _register_commands();
-            virtual void _unregister_commands();
-
         public:
             ~TrainPart() override = default;
             void _process(double delta) override;
 
-            void register_command(const String &command, const Callable &callback);
-            void unregister_command(const String &command, const Callable &callback);
+            virtual TypedArray<TrainCommand> get_supported_commands();
             void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void log(GameLog::LogLevel level, const String &line);

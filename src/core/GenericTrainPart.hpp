@@ -1,6 +1,7 @@
 #pragma once
 #include <godot_cpp/core/binder_common.hpp>
 
+#include "TrainCommand.hpp"
 #include "TrainPart.hpp"
 
 namespace godot {
@@ -22,6 +23,8 @@ namespace godot {
             void _process_mover(double delta) override;
             virtual void _process_train_part(double delta);
             virtual Dictionary _get_train_part_state();
+            virtual Array _get_supported_commands();
+            TypedArray<TrainCommand> get_supported_commands() override;
             Dictionary get_train_state();
     };
 } // namespace godot

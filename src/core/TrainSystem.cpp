@@ -21,10 +21,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_command_supported", "command"), &TrainSystem::is_command_supported);
         ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainSystem::get_supported_commands);
         ClassDB::bind_method(D_METHOD("get_registered_trains"), &TrainSystem::get_registered_trains);
-        ClassDB::bind_method(
-                D_METHOD("register_command", "train_id", "command", "callable"), &TrainSystem::register_command);
-        ClassDB::bind_method(
-                D_METHOD("unregister_command", "train_id", "command", "callable"), &TrainSystem::unregister_command);
         ClassDB::bind_method(D_METHOD("get_train_state", "train_id"), &TrainSystem::get_train_state);
         ClassDB::bind_method(D_METHOD("log", "train_id", "loglevel", "line"), &TrainSystem::log);
     }
@@ -96,6 +92,13 @@ namespace godot {
             log(train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[train_id] = train;
+            const TypedArray<TrainCommand> train_commands = train->get_supported_commands();
+            for (const Ref<TrainCommand> &train_command : train_commands) {
+                if (train_command.is_null()) {
+                    continue;
+                }
+                register_command(train_id, String(train_command->get_name()), train_command->get_callback());
+            }
             log(train_id, GameLog::DEBUG, "Registered train");
         }
     }
@@ -150,22 +153,14 @@ namespace godot {
             return;
         }
 
-        Array command_keys = commands.keys();
-        Array commands_to_remove;
-
-        for (const auto & command_key : command_keys) {
-            String command = command_key;
-            Dictionary _trains = commands[command];
-            if (_trains.has(train_id)) {
-                _trains.erase(train_id);
+        if (TrainController *train = get_train(train_id); train != nullptr) {
+            const TypedArray<TrainCommand> train_commands = train->get_supported_commands();
+            for (const Ref<TrainCommand> &train_command : train_commands) {
+                if (train_command.is_null()) {
+                    continue;
+                }
+                unregister_command(train_id, String(train_command->get_name()), train_command->get_callback());
             }
-            if (_trains.size() == 0) {
-                commands_to_remove.append(command);
-            }
-        }
-
-        for (const auto & i : commands_to_remove) {
-            commands.erase(i);
         }
 
         trains.erase(train_id);

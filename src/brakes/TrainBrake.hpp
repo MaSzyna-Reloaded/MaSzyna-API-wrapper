@@ -161,8 +161,7 @@ namespace godot {
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
+            TypedArray<TrainCommand> get_supported_commands() override;
 
         public:
             static void _bind_methods();

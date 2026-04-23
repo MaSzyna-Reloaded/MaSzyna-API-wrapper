@@ -1,5 +1,6 @@
 #include "../core/TrainController.hpp"
 #include "../core/TrainSystem.hpp"
+#include "TrainPart.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/math.hpp>
 
@@ -16,9 +17,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("broadcast_command", "command", "p1", "p2"), &TrainController::broadcast_command,
                 DEFVAL(Variant()), DEFVAL(Variant()));
-        ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainController::register_command);
-        ClassDB::bind_method(
-                D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
+        ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainController::get_supported_commands);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
         ClassDB::bind_method(
                 D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
@@ -143,28 +142,8 @@ namespace godot {
                 if (!train_id.is_empty()) {
                     TrainSystem::get_instance()->register_train(train_id, this);
                 }
-                register_command("battery", Callable(this, "battery"));
-                register_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                register_command("direction_increase", Callable(this, "direction_increase"));
-                register_command("direction_decrease", Callable(this, "direction_decrease"));
-                register_command("decouple", Callable(this, "decouple"));
-                register_command("radio", Callable(this, "radio"));
-                register_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 break;
             case NOTIFICATION_EXIT_TREE:
-                unregister_command("battery", Callable(this, "battery"));
-                unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                unregister_command("direction_increase", Callable(this, "direction_increase"));
-                unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-                unregister_command("decouple", Callable(this, "decouple"));
-                unregister_command("radio", Callable(this, "radio"));
-                unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 if (!train_id.is_empty()) {
                     TrainSystem::get_instance()->unregister_train(train_id);
                 }
@@ -186,12 +165,28 @@ namespace godot {
         refresh_runtime_signals();
     }
 
-    void TrainController::register_command(const String &command, const Callable &callable) {
-        TrainSystem::get_instance()->register_command(train_id, command, callable);
-    }
+    TypedArray<TrainCommand> TrainController::get_supported_commands() {
+        TypedArray<TrainCommand> commands;
 
-    void TrainController::unregister_command(const String &command, const Callable &callable) {
-        TrainSystem::get_instance()->unregister_command(train_id, command, callable);
+        commands.append(make_train_command("battery", Callable(this, "battery")));
+        commands.append(make_train_command("main_controller_increase", Callable(this, "main_controller_increase")));
+        commands.append(make_train_command("main_controller_decrease", Callable(this, "main_controller_decrease")));
+        commands.append(make_train_command("direction_increase", Callable(this, "direction_increase")));
+        commands.append(make_train_command("direction_decrease", Callable(this, "direction_decrease")));
+        commands.append(make_train_command("decouple", Callable(this, "decouple")));
+        commands.append(make_train_command("radio", Callable(this, "radio")));
+        commands.append(make_train_command("radio_channel_set", Callable(this, "radio_channel_set")));
+        commands.append(make_train_command("radio_channel_increase", Callable(this, "radio_channel_increase")));
+        commands.append(make_train_command("radio_channel_decrease", Callable(this, "radio_channel_decrease")));
+
+        const Array modules = get_rail_vehicle_modules();
+        for (auto module : modules) {
+            if (TrainPart *train_part = Object::cast_to<TrainPart>(module); train_part != nullptr) {
+                commands.append_array(train_part->get_supported_commands());
+            }
+        }
+
+        return commands;
     }
 
     void TrainController::emit_command_received_signal(const String &command, const Variant &p1, const Variant &p2) {

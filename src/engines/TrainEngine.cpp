@@ -95,11 +95,9 @@ namespace godot {
         mover->MainSwitch(p_enabled);
     }
 
-    void TrainEngine::_register_commands() {
-        register_command("main_switch", Callable(this, "main_switch"));
-    }
-
-    void TrainEngine::_unregister_commands() {
-        unregister_command("main_switch", Callable(this, "main_switch"));
+    TypedArray<TrainCommand> TrainEngine::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("main_switch", Callable(this, "main_switch")));
+        return commands;
     }
 } // namespace godot

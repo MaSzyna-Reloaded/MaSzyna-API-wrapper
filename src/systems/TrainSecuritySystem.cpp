@@ -80,12 +80,10 @@ namespace godot {
         }
     }
 
-    void TrainSecuritySystem::_register_commands() {
-        register_command("security_acknowledge", Callable(this, "security_acknowledge"));
-    }
-
-    void TrainSecuritySystem::_unregister_commands() {
-        unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
+    TypedArray<TrainCommand> TrainSecuritySystem::get_supported_commands() {
+        TypedArray<TrainCommand> commands = TrainPart::get_supported_commands();
+        commands.append(make_train_command("security_acknowledge", Callable(this, "security_acknowledge")));
+        return commands;
     }
 
     void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {

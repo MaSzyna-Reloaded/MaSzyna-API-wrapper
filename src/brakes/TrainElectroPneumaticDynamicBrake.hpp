@@ -23,8 +23,7 @@ namespace godot {
             void _do_update_internal_mover(TMoverParameters *mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
             void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override {};
-            void _register_commands() override;
-            void _unregister_commands() override;
+            TypedArray<TrainCommand> get_supported_commands() override;
         private:
             MAKE_MEMBER_GS_NR(CouplerCheck, coupler_check, CouplerCheck::None);
             MAKE_MEMBER_GS(float, ed_braking_ep_delay, 0.0f);

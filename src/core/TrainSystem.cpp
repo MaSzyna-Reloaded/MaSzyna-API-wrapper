@@ -164,7 +164,7 @@ namespace godot {
         }
 
         trains.erase(train_id);
-        DEBUG("Unregistered train %s", train_id);
+        log(train_id, GameLog::DEBUG, "Unregistered train");
     }
 
     bool TrainSystem::is_command_supported(const String &command) {

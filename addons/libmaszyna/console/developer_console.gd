@@ -50,6 +50,8 @@ func console_print_log(loglevel, line):
         Console.print_line("[color=red]%s[/color]" % [line])
     elif loglevel == GameLog.LogLevel.WARNING:
         Console.print_line("[color=orange]%s[/color]" % [line])
+    elif loglevel == GameLog.LogLevel.DEBUG:
+        Console.print_line("[color=#666]%s[/color]" % [line])
     else:
         Console.print_line("%s" % [line])
 

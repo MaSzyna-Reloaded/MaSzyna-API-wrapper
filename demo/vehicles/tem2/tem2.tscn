@@ -140,6 +140,8 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "tem2-122a"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5676672, -0.057509635, -9.035448, 3.1353345, 4.765074, 17.92368)
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="TEM2_LowPolyCab" type="E3DModelInstance" parent="." unique_id=1160136315]
@@ -147,6 +149,8 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "lowpoly/int_tem2"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
+instancer = 0
+submodels_aabb = AABB(-1.5577601, 1.71099, -5.97739, 3.12181, 2.80795, 1.7823896)
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 
 [node name="Area3D" type="Area3D" parent="." unique_id=776248700]

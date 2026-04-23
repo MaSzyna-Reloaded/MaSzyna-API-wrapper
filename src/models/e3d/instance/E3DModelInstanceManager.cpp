@@ -11,10 +11,13 @@
 namespace godot {
     const char *E3DModelInstanceManager::instances_reloaded_signal = "instances_reloaded";
     void E3DModelInstanceManager::_bind_methods() {
-        ADD_SIGNAL(MethodInfo(instances_reloaded_signal, PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_RESOURCE_TYPE, "E3DModelInstance")));
+        ADD_SIGNAL(MethodInfo(
+                instances_reloaded_signal,
+                PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_RESOURCE_TYPE, "E3DModelInstance")));
         ClassDB::bind_method(D_METHOD("reload_all"), &E3DModelInstanceManager::reload_all);
         ClassDB::bind_method(D_METHOD("register_instance", "instance"), &E3DModelInstanceManager::register_instance);
-        ClassDB::bind_method(D_METHOD("unregister_instance", "instance"), &E3DModelInstanceManager::unregister_instance);
+        ClassDB::bind_method(
+                D_METHOD("unregister_instance", "instance"), &E3DModelInstanceManager::unregister_instance);
         ClassDB::bind_method(D_METHOD("reload_instance", "instance"), &E3DModelInstanceManager::reload_instance);
     }
 
@@ -78,16 +81,24 @@ namespace godot {
             return;
         }
 
-        const Ref<E3DModel> model = model_manager->load_model(p_instance->get_data_path(), p_instance->get_model_filename());
+        const Ref<E3DModel> model =
+                model_manager->load_model(p_instance->get_data_path(), p_instance->get_model_filename());
 
         switch (p_instance->get_instancer()) {
+            case E3DModelInstance::INSTANCER_OPTIMIZED: {
+                UtilityFunctions::print_verbose(
+                        "[E3DModelInstanceManager] Instantiating optimized E3D for ", p_instance->get_name());
+                p_instance->call_deferred("_instantiate_children", model);
+            } break;
             case E3DModelInstance::INSTANCER_NODES:
             case E3DModelInstance::INSTANCER_EDITABLE_NODES: {
-                UtilityFunctions::print_verbose("[E3DModelInstanceManager] Instantiating nodes for ", p_instance->get_name());
+                UtilityFunctions::print_verbose(
+                        "[E3DModelInstanceManager] Instantiating nodes for ", p_instance->get_name());
                 p_instance->call_deferred("_instantiate_children", model);
             } break;
             default:
-                UtilityFunctions::push_warning("[E3DModelInstanceManager] Unsupported instancer type for ", p_instance->get_name());
+                UtilityFunctions::push_warning(
+                        "[E3DModelInstanceManager] Unsupported instancer type for ", p_instance->get_name());
                 break;
         }
     }

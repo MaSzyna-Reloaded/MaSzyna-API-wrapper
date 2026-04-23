@@ -318,49 +318,67 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
 data_path = "models/stacje/"
 model_filename = "dworzec_olkusz"
 skins = ["dworzec_olkusz_lhs"]
+instancer = 0
+submodels_aabb = AABB(-8.02, -1e-05, -13.50003, 16.02, 13.00001, 24.850029)
 transform = Transform3D(1, 0, 0, 0, 0.999979, -0.00651009, 0, 0.00651009, 0.999979, 23.6762, -0.0722218, 3.12076)
 
 [node name="Dworzec Sosnowiec" type="E3DModelInstance" parent="Dekoracje" unique_id=239443790]
 data_path = "models/stacje/"
 model_filename = "dworzec_sosnowiec_porabka"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
+submodels_aabb = AABB(-4.77639, 0, -12.59601, 9.55279, 5.67359, 25.19198)
 transform = Transform3D(-0.996005, -0.000581314, -0.0892923, 0, 0.999979, -0.00651009, 0.0892942, -0.00648409, -0.995984, 21.3481, 0.108946, 32.9385)
 
 [node name="Nastawnia Sochaczew" type="E3DModelInstance" parent="Dekoracje" unique_id=977137201]
 data_path = "models/sochaczew/"
 model_filename = "nastawnia"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
+submodels_aabb = AABB(-36.748795, -3.9339066e-06, -31.334333, 48.35534, 15.439321, 58.387524)
 transform = Transform3D(0.995214, -0.000636179, -0.0977197, -2.73898e-10, 0.999979, -0.00651009, 0.0977218, 0.00647893, 0.995193, 49.2187, -0.199109, 49.3024)
 
 [node name="Szyb Kleofas" type="E3DModelInstance" parent="Dekoracje" unique_id=1502784411]
 data_path = "models/przemysl/kopalnie"
 model_filename = "szyb_kleofas_gigant"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
+submodels_aabb = AABB(-82.2852, -11.2371, -13.4803, 163.4931, 87.1152, 28)
 transform = Transform3D(-0.00991323, -0.00650977, -0.99993, -3.31827e-10, 0.999979, -0.00651009, 0.999951, -6.45372e-05, -0.00991302, -48.9397, -0.199109, 49.3024)
 
 [node name="KWK Staszic" type="E3DModelInstance" parent="Dekoracje" unique_id=869329264]
 data_path = "models/przemysl/kopalnie/kwk_staszic"
 model_filename = "szyb_ii"
+instancer = 0
+submodels_aabb = AABB(-56.77006, -1.76265, -3.2559, 113.54012, 58.62572, 110.01989)
 transform = Transform3D(0.991685, 0.000837795, 0.128689, -7.01784e-10, 0.999979, -0.00651009, -0.128692, 0.00645596, 0.991664, 69.2926, -0.199109, 92.8501)
 
 [node name="Tabliczka PKP" type="E3DModelInstance" parent="Dekoracje" unique_id=1843243574]
 data_path = "models/otoczenie/obiekty_stacyjne"
 model_filename = "terenpkp"
+instancer = 0
+submodels_aabb = AABB(-0.025, 0, -0.647273, 0.05, 1.8, 1.294273)
 transform = Transform3D(-0.989323, -0.000948765, -0.145735, -8.28882e-10, 0.999979, -0.0065101, 0.145738, -0.00644059, -0.989302, 16.5195, -0.199109, -17.7848)
 
 [node name="Parkomat" type="E3DModelInstance" parent="Dekoracje" unique_id=1329807292]
 data_path = "models/miejskie"
 model_filename = "parkomat_rozi_macius9551"
+instancer = 0
+submodels_aabb = AABB(-0.242751, -0.00547087, -0.165739, 0.485502, 2.0088708, 0.331478)
 transform = Transform3D(-0.997577, -0.000452873, -0.0695637, -5.57518e-10, 0.999979, -0.0065101, 0.0695652, -0.00649432, -0.997556, 18.1062, -0.0388117, -10.9422)
 
 [node name="Skrzynka" type="E3DModelInstance" parent="Dekoracje" unique_id=1717139619]
 data_path = "models/miejskie"
 model_filename = "skrzynka_tel_rozi_macius9551"
+instancer = 0
+submodels_aabb = AABB(-0.614482, -0.003975, -0.31755, 1.228966, 1.810225, 0.635436)
 transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, 21.1062, -0.0161638, -10.6909)
 
 [node name="Klamoty" type="E3DModelInstance" parent="Dekoracje" unique_id=263717604]
 data_path = "models/kolejowe"
 model_filename = "klamoty_naprawcze"
+instancer = 0
+submodels_aabb = AABB(-1.27, 0, -5.53571, 2.55484, 0.85, 11.06163)
 transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979, -0.0065101, -0.0163532, 0.00650922, 0.999845, -26.1908, -0.0161638, -13.3744)
 
 [node name="Podklady betonowe" type="E3DModelInstance" parent="Dekoracje" unique_id=1594870762]

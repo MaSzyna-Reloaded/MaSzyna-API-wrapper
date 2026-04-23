@@ -207,7 +207,6 @@ offset_right = 270.0
 offset_bottom = 408.0
 script = ExtResource("3_qg2pq")
 vehicle_path = NodePath("../SM42-907/SM42-907")
-text = "[ .. no controller .. ]"
 title = "SM42"
 
 [node name="DebugPanelWagon1" parent="." unique_id=629689876 instance=ExtResource("2_esmlu")]
@@ -317,11 +316,21 @@ environment = SubResource("Environment_jrns0")
 [node name="SM42-907" parent="." unique_id=1125812614 instance=ExtResource("11_8gidn")]
 start_track_offset = 100.0
 
+[node name="SM42-907" parent="SM42-907" index="0" unique_id=13773796]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -21.305199, 0, -112.701164)
+
+[node name="Wagon1" parent="SM42-907" index="1" unique_id=149723671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -98.561165)
+
+[node name="Wagon2" parent="SM42-907" index="2" unique_id=1655419086]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -84.521164)
+
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
 
 [node name="TEM2" parent="." unique_id=1971513606 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
+train_id = &"tem2"
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1593258065]
 

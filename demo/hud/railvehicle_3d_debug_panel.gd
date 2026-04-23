@@ -8,6 +8,7 @@ var _controller : TrainController
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
+    super()
     _vehicle = get_node_or_null(vehicle_path) as RailVehicle3D
     if _vehicle:
         _controller =_vehicle.get_controller()

@@ -2,6 +2,10 @@
 
 [ext_resource type="Script" uid="uid://bkwi32wa1iq70" path="res://hud/panel.gd" id="1_7xna6"]
 [ext_resource type="Texture2D" uid="uid://6lsf2giat1da" path="res://icons/search.png" id="2_s0ly2"]
+[ext_resource type="Texture2D" uid="uid://bpnxog7lrn2ch" path="res://hud/drag-handle-corner-line.svg" id="3_gvcq4"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_a1pfm"]
+bg_color = Color(0.14713949, 0.46044487, 0.34612492, 0.8901961)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_kvppn"]
 content_margin_left = 10.0
@@ -23,20 +27,25 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_7xna6")
 
-[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=768449866]
+[node name="PanelContainer" type="PanelContainer" parent="." unique_id=422206898]
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_a1pfm")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PanelContainer" unique_id=768449866]
+self_modulate = Color(0.6102177, 0.2712238, 0.489919, 1)
 layout_mode = 2
 
-[node name="Title" type="Label" parent="HBoxContainer" unique_id=579337408]
+[node name="Title" type="Label" parent="PanelContainer/HBoxContainer" unique_id=579337408]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="TextureRect" type="TextureRect" parent="HBoxContainer" unique_id=368316223]
+[node name="TextureRect" type="TextureRect" parent="PanelContainer/HBoxContainer" unique_id=368316223]
 layout_mode = 2
 texture = ExtResource("2_s0ly2")
 stretch_mode = 3
 
-[node name="Filter" type="LineEdit" parent="HBoxContainer" unique_id=666090503]
+[node name="Filter" type="LineEdit" parent="PanelContainer/HBoxContainer" unique_id=666090503]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 layout_mode = 2
@@ -44,7 +53,7 @@ size_flags_horizontal = 8
 size_flags_vertical = 4
 focus_mode = 1
 
-[node name="HFlowContainer" type="HFlowContainer" parent="HBoxContainer" unique_id=382919766]
+[node name="HFlowContainer" type="HFlowContainer" parent="PanelContainer/HBoxContainer" unique_id=382919766]
 layout_mode = 2
 
 [node name="DebugPanel" type="PanelContainer" parent="." unique_id=342346362]
@@ -54,6 +63,22 @@ theme_override_styles/panel = SubResource("StyleBoxFlat_kvppn")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="DebugPanel" unique_id=1348182787]
 layout_mode = 2
+focus_mode = 2
 theme_override_font_sizes/normal_font_size = 12
+selection_enabled = true
 
-[connection signal="text_changed" from="HBoxContainer/Filter" to="." method="_on_filter_text_changed"]
+[node name="ResizeHandle" type="TextureRect" parent="." unique_id=210235897]
+unique_name_in_owner = true
+visible = false
+top_level = true
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+mouse_default_cursor_shape = 8
+texture = ExtResource("3_gvcq4")
+expand_mode = 1
+stretch_mode = 5
+
+[connection signal="gui_input" from="PanelContainer/HBoxContainer" to="." method="_on_header_gui_input"]
+[connection signal="text_changed" from="PanelContainer/HBoxContainer/Filter" to="." method="_on_filter_text_changed"]
+[connection signal="gui_input" from="DebugPanel" to="." method="_on_panel_body_gui_input"]
+[connection signal="gui_input" from="ResizeHandle" to="." method="_on_resize_handle_gui_input"]

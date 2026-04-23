@@ -32,8 +32,6 @@ namespace godot {
         p_mover->GroundRelay = true;
         p_mover->NoVoltRelay = true;
         p_mover->OvervoltageRelay = true;
-        p_mover->DamageFlag = 0;
-        p_mover->EngDmgFlag = 0;
         p_mover->ConvOvldFlag = false;
         /* end testing */
 

@@ -94,6 +94,7 @@ namespace godot {
             static const char *COMMAND_RECEIVED;
             static const char *RADIO_TOGGLED;
             static const char *RADIO_CHANNEL_CHANGED;
+            static const char *DERAILED_SIGNAL;
 
             TrainController *front = nullptr;
             TrainController *back = nullptr;

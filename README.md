@@ -121,6 +121,24 @@ If you have found any bug, have a suggestion or want to join us - feel free to o
 
 ### Code Quality
 
+#### Formatting and style
+
+Before opening a pull request, check formatting and clang-tidy issues:
+
+```bash
+make style-check
+```
+
+To apply automatic formatting and clang-tidy fixes:
+
+```bash
+make style-fix
+```
+
+Both targets use the repository `.clang-format` and `.clang-tidy` configuration. They skip legacy/generated code under `src/maszyna` and `src/gen`.
+
+To check or fix a single file, use `./scripts/style-check <path>` and `./scripts/style-fix <path>`.
+
 #### CI
 Clang-tidy checks are performed on CI. Those will fail automatically and publish results if any warning/error is found
 

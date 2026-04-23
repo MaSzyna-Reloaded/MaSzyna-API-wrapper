@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://c2n8fsvqi31ve"]
 
 [node name="TEM2Controller" type="TrainController" unique_id=1450902435]
-train_id = "tem2"
 power = 780.0
 battery_voltage = 110.0
 type_name = "tem2"

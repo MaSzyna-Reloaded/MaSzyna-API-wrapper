@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../maszyna/McZapkie/MOVER.h"
-#include "./GameLog.hpp"
 #include "./TrainCommand.hpp"
-#include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include <functional>
 #include <godot_cpp/classes/node.hpp>
@@ -44,13 +42,6 @@ namespace godot {
             void update_mover();
             Dictionary get_mover_state();
             TrainController *get_train_controller_node() const;
-            void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void log(GameLog::LogLevel level, const String &line);
-            void log_debug(const String &line);
-            void log_info(const String &line);
-            void log_warning(const String &line);
-            void log_error(const String &line);
 
             void set_enabled(bool p_value);
             bool get_enabled();

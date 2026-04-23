@@ -1,5 +1,4 @@
 #include "TrainBuffCoupl.hpp"
-#include "../core/TrainSystem.hpp"
 
 namespace godot {
     void TrainBuffCoupl::_bind_methods() {
@@ -21,12 +20,6 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (TrainController *train_controller_node = get_train_controller_node(); train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(
-                    train_controller_node->get_train_id(),
-                    GameLog::LogLevel::WARNING,
-                    "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        }
     }
 
     void TrainBuffCoupl::decouple() {
@@ -36,11 +29,5 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (TrainController *train_controller_node = get_train_controller_node(); train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(
-                    train_controller_node->get_train_id(),
-                    GameLog::LogLevel::WARNING,
-                    "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        }
     }
 } //namespace godot

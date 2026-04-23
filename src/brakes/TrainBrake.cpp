@@ -1,3 +1,4 @@
+#include "../core/GameLog.hpp"
 #include "../core/utils.hpp"
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
@@ -142,7 +143,7 @@ namespace godot {
                 p_position); it != brake_handle_position_map.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
-            log_error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
+            GameLog::get_instance()->error("Unhandled brake level position: " + String::num(static_cast<int>(p_position)));
         }
     }
 
@@ -154,7 +155,7 @@ namespace godot {
         if (it != brake_handle_position_string_map.end()) {
             mover->BrakeLevelSet(mover->Handle->GetPos(it->second));
         } else {
-            log_error("Unhandled brake level position: " + p_position);
+            GameLog::get_instance()->error("Unhandled brake level position: " + p_position);
         }
     }
 

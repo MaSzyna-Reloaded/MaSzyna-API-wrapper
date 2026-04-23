@@ -24,10 +24,10 @@ jobs:
             godot-cpp/
             build-host/
             build-win64/
-          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}
           restore-keys: |
-            ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-windows-${{ matrix.arch }}
+            ${{ runner.os }}-${{ matrix.target }}-windows-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ matrix.target }}-windows-
 
       - name: Docker build Windows ${{ matrix.arch }}
         run: sudo chmod 777 ci/docker/entrypoint.sh |
@@ -51,7 +51,7 @@ jobs:
             godot-cpp/
             build-host/
             build-win64/
-          key: ${{ matrix.target }}-windows-${{ matrix.arch }}-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-windows-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}
 
   build-linux:
     strategy:
@@ -72,10 +72,10 @@ jobs:
             godot-cpp/
             build-host/
             build-linux64/
-          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-linux-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}
           restore-keys: |
-            ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-linux-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ matrix.target }}-linux-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ matrix.target }}-linux-
 
       - name: Docker build Linux ${{ matrix.arch }}
         run: sudo chmod 777 ci/docker/entrypoint.sh |
@@ -99,7 +99,7 @@ jobs:
             godot-cpp/
             build-host/
             build-linux64/
-          key: ${{ matrix.target }}-linux-${{ matrix.arch }}-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-linux-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}
 
   build-android:
     strategy:
@@ -120,10 +120,10 @@ jobs:
             godot-cpp/
             build-host/
             build-android64/
-          key: ${{ matrix.target }}-android-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-android-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}
           restore-keys: |
-            ${{ matrix.target }}-android-${{ matrix.arch }}-godot-
-            ${{ matrix.target }}-android-
+            ${{ runner.os }}-${{ matrix.target }}-android-${{ matrix.arch }}-
+            ${{ runner.os }}-${{ matrix.target }}-android-
 
       - name: Docker build Android ${{ matrix.arch }}
         run: sudo chmod 777 ci/docker/entrypoint.sh |
@@ -147,4 +147,4 @@ jobs:
             godot-cpp/
             build-host/
             build-android64/
-          key: ${{ matrix.target }}-android-${{ matrix.arch }}-godot-cpp
+          key: ${{ runner.os }}-${{ matrix.target }}-android-${{ matrix.arch }}-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/build.yaml') }}

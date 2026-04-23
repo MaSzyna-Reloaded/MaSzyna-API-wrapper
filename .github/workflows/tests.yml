@@ -17,11 +17,12 @@ jobs:
         with:
           path: |
             godot-cpp/
+            build-host/
             .sconsign.dblite
-          key: godot-unit-tests
+          key: ${{ runner.os }}-unit-tests-host-template_debug-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/tests.yml') }}
           restore-keys: |
-            godot-unit-tests
-            godot-unit-
+            ${{ runner.os }}-unit-tests-host-template_debug-
+            ${{ runner.os }}-unit-tests-host-
       - name: Run tests
         run: sudo chmod 777 ci/docker/entrypoint.sh |
           docker compose run unit_tests
@@ -35,5 +36,6 @@ jobs:
         with:
           path: |
             godot-cpp/
+            build-host/
             .sconsign.dblite
-          key: godot-unit-tests
+          key: ${{ runner.os }}-unit-tests-host-template_debug-${{ hashFiles('CMakeLists.txt', 'docker-compose.yml', 'ci/docker/entrypoint.sh', '.github/workflows/tests.yml') }}

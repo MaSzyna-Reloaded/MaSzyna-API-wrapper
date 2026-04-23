@@ -18,6 +18,7 @@
 #include "load/TrainLoad.hpp"
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
+#include "models/TrackRenderingServer.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
@@ -41,6 +42,7 @@ TrainSystem *train_system_singleton = nullptr;
 ResourceCache *resource_cache_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 MaterialManager* material_manager_singleton = nullptr;
+TrackRenderingServer *track_rendering_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_loader_singleton;
 E3DModelInstanceManager *e3d_model_instance_manager_singleton = nullptr;
 
@@ -73,6 +75,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainDieselElectricEngine);
         GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
+        GDREGISTER_CLASS(TrackRenderingServer);
         GDREGISTER_CLASS(TrainController);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
@@ -107,6 +110,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             resource_cache_singleton = memnew(ResourceCache);
             game_log_singleton = memnew(GameLog);
             material_manager_singleton = memnew(MaterialManager);
+            track_rendering_server_singleton = memnew(TrackRenderingServer);
             e3d_model_instance_manager_singleton = memnew(E3DModelInstanceManager);
             e3d_loader_singleton.instantiate();
 
@@ -114,6 +118,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             Engine::get_singleton()->register_singleton("ResourceCache", resource_cache_singleton);
             Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
             Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
+            Engine::get_singleton()->register_singleton("TrackRenderingServer", track_rendering_server_singleton);
             Engine::get_singleton()->register_singleton("E3DModelInstanceManager", e3d_model_instance_manager_singleton);
             ResourceLoader::get_singleton()->add_resource_format_loader(e3d_loader_singleton);
         }
@@ -143,6 +148,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             _singleton->unregister_singleton("MaterialManager");
         }
 
+        if (track_rendering_server_singleton != nullptr) {
+            _singleton->unregister_singleton("TrackRenderingServer");
+        }
+
         if (_singleton->has_singleton("E3DModelInstanceManager")) {
             _singleton->unregister_singleton("E3DModelInstanceManager");
         }
@@ -166,6 +175,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (material_manager_singleton != nullptr) {
         memdelete(material_manager_singleton);
         material_manager_singleton = nullptr;
+    }
+
+    if (track_rendering_server_singleton != nullptr) {
+        memdelete(track_rendering_server_singleton);
+        track_rendering_server_singleton = nullptr;
     }
 
     if (e3d_model_instance_manager_singleton != nullptr) {

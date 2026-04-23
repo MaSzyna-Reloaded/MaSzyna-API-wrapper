@@ -22,11 +22,47 @@
 				Frees all render resources associated with [param track_id].
 			</description>
 		</method>
+		<method name="get_ballast_enabled" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ballast_height" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ballast_length_tiling" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="get_ballast_mesh_instance" qualifiers="const">
 			<return type="RID" />
 			<param index="0" name="track_id" type="int" />
 			<description>
 				Returns the ballast instance RID for the given track.
+			</description>
+		</method>
+		<method name="get_ballast_offset" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ballast_uv_scale" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_ballast_width_tiling" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
 			</description>
 		</method>
 		<method name="get_instance_rid" qualifiers="const">
@@ -43,11 +79,81 @@
 				Returns the rail instance RID for the given track.
 			</description>
 		</method>
+		<method name="get_rail_spacing" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_sleeper_height" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_sleeper_mesh" qualifiers="const">
+			<return type="Mesh" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="get_sleeper_multimesh_instance" qualifiers="const">
 			<return type="RID" />
 			<param index="0" name="track_id" type="int" />
 			<description>
 				Returns the sleeper multimesh instance RID for the given track.
+			</description>
+		</method>
+		<method name="get_sleeper_spacing" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_scenario" qualifiers="const">
+			<return type="RID" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="is_track_visible" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="track_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="set_ballast_enabled">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="set_ballast_height">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="height" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_ballast_length_tiling">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="tiling" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_ballast_offset">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="offset" type="float" />
+			<description>
 			</description>
 		</method>
 		<method name="set_ballast_texture">
@@ -56,6 +162,41 @@
 			<param index="1" name="path" type="String" />
 			<description>
 				Sets the ballast texture for the given track using a path relative to the MaSzyna game directory.
+			</description>
+		</method>
+		<method name="set_ballast_uv_scale">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="scale" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_ballast_width_tiling">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="tiling" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_rail_spacing">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_sleeper_height">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="height" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_sleeper_mesh">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="mesh" type="Mesh" />
+			<description>
 			</description>
 		</method>
 		<method name="set_sleeper_model_name">
@@ -72,6 +213,34 @@
 			<param index="1" name="sleeper_model_skin" type="String" />
 			<description>
 				Overrides the sleeper material name with an optional skin value such as [code]quark/podklad_betonowy1[/code].
+			</description>
+		</method>
+		<method name="set_sleeper_spacing">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="set_track_scenario">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="scenario" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="set_track_transform">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="transform" type="Transform3D" />
+			<description>
+			</description>
+		</method>
+		<method name="set_track_visible">
+			<return type="void" />
+			<param index="0" name="track_id" type="int" />
+			<param index="1" name="visible" type="bool" />
+			<description>
 			</description>
 		</method>
 		<method name="update_ballast_mesh">

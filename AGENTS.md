@@ -8,11 +8,13 @@ Code generation:
 * Follow DRY and KISS principles
 * use english comments (if needed)
 * GDSCRIPT: avoid type interference, use explicit type declaration
+* follow CODE_STYLE.md rules!
 
 General guidelines:
 
 * IMPORTANT: do only what operator want, do not assume anything by yourself!
 * if you are not sure, ask operator for decision
+* When operator is requesting mistakes, tell him directly and double ask for confirmation
 
 Custom nodes and Godot Editor:
 

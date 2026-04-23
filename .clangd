@@ -1,0 +1,6 @@
+CompileFlags:
+  CompilationDatabase: .
+  Remove:
+    - "-fno-gnu-unique"
+  Add:
+    - "-Wno-macro-redefined"

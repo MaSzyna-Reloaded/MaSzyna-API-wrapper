@@ -5,7 +5,10 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLANG_TIDY_BUILD_DIR="${ROOT_DIR}/build-clang-tidy"
 CLANG_TIDY_EXTRA_ARGS=(
     -extra-arg=-std=c++17
+    -extra-arg=-I"${ROOT_DIR}/src"
+    -extra-arg=-I"${ROOT_DIR}/godot-cpp/include"
     -extra-arg=-I"${ROOT_DIR}/godot-cpp/gen/include"
+    -extra-arg=-I"${ROOT_DIR}/godot-cpp/gdextension"
     -extra-arg=-Wno-macro-redefined
 )
 
@@ -14,12 +17,14 @@ usage() {
 }
 
 ensure_compile_commands() {
-    if [ ! -f "${CLANG_TIDY_BUILD_DIR}/compile_commands.json" ]; then
+    if [ ! -f "${CLANG_TIDY_BUILD_DIR}/compile_commands.json" ] || \
+        [ ! -f "${CLANG_TIDY_BUILD_DIR}/godot-cpp/gen/include/godot_cpp/classes/engine.hpp" ]; then
         echo "Style: configuring clang-tidy database..."
         cmake --log-level=ERROR -S "${ROOT_DIR}" -B "${CLANG_TIDY_BUILD_DIR}" \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        cmake --build "${CLANG_TIDY_BUILD_DIR}" --target generate_bindings
     fi
 }
 

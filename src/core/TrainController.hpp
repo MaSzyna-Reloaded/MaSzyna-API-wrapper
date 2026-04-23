@@ -1,32 +1,29 @@
 #pragma once
 
-#include "LegacyRailVehicle.hpp"
+#include "../maszyna/McZapkie/MOVER.h"
 #include "TrainCommand.hpp"
 #include "macros.hpp"
+#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/ref.hpp>
+#include <godot_cpp/variant/array.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/rid.hpp>
+#include <godot_cpp/variant/vector3.hpp>
 
 namespace godot {
+    class TrainPart;
+    class TrainSet;
     class TrainSystem;
 
-    class TrainController : public LegacyRailVehicle {
-            GDCLASS(TrainController, LegacyRailVehicle)
-
-        private:
-            int radio_channel = 0;
-            bool prev_is_powered = false;
-            bool prev_radio_enabled = false;
-            int prev_radio_channel = 0;
-            void refresh_runtime_signals();
-            StringName train_id;
-
-        protected:
-            void _notification(int p_what);
-            void _notification_after_mover_ready() override;
-            bool can_host_commands() const override;
-            String get_command_target_id() const override;
-            void _do_update_internal_mover(TMoverParameters *mover) const;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
+    class TrainController : public Node {
+            GDCLASS(TrainController, Node)
 
         public:
+            enum Side {
+                FRONT = 0,
+                BACK,
+            };
+
             enum TrainPowerSource {
                 POWER_SOURCE_NOT_DEFINED,
                 POWER_SOURCE_INTERNAL,
@@ -47,12 +44,66 @@ namespace godot {
                 POWER_TYPE_STEAM
             };
 
+        private:
+            Ref<TrainSet> trainset;
+            TMoverParameters *mover = nullptr;
+            Dictionary state;
+            Dictionary config;
+            Dictionary internal_state;
+            int debug_tick_counter = 0;
+            double _external_move_accumulator = 0.0;
+            double _movement_delta = 0.0;
+            RID current_track_rid;
+            String current_track_id;
+            double current_track_offset = 0.0;
+            bool _dirty = false;
+            bool _dirty_prop = false;
+
+            double initial_velocity = 0.0;
+            int cabin_number = 0;
+
+            int radio_channel = 0;
+            bool prev_is_powered = false;
+            bool prev_radio_enabled = false;
+            int prev_radio_channel = 0;
+            StringName train_id;
+
+            void initialize_mover();
+            void _update_mover_config_if_dirty();
+            void _handle_mover_update();
+            void _sync_mover_neighbours();
+            void sync_mover_coupling(TrainController *other_vehicle, Side self_side, Side other_side, bool attach);
+            static int to_mover_end(Side side);
+            void refresh_runtime_signals();
+
+        protected:
+            void _notification(int p_what);
+            void _process_mover(double delta);
+            virtual void _notification_after_mover_ready();
+            virtual void _notification_before_mover_cleanup();
+            virtual void _do_update_internal_mover(TMoverParameters *mover) const;
+            virtual void _do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const;
+            virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state);
+            virtual void _on_coupled(TrainController *other_vehicle, Side self_side, Side other_side);
+            virtual void _on_uncoupled(TrainController *other_vehicle, Side self_side, Side other_side);
+
+        public:
+            TrainController();
+            ~TrainController() override;
+
+            static const char *MOVER_CONFIG_CHANGED_SIGNAL;
+            static const char *MOVER_INITIALIZED_SIGNAL;
+            static const char *CONFIG_CHANGED;
             static const char *POWER_CHANGED_SIGNAL;
             static const char *COMMAND_RECEIVED;
             static const char *RADIO_TOGGLED;
             static const char *RADIO_CHANNEL_CHANGED;
 
+            TrainController *front = nullptr;
+            TrainController *back = nullptr;
+
             void _process(double delta) override;
+
             const std::map<TrainPowerSource, TPowerSource> power_source_map = {
                     {POWER_SOURCE_NOT_DEFINED, TPowerSource::NotDefined},
                     {POWER_SOURCE_INTERNAL, TPowerSource::InternalSource},
@@ -89,27 +140,61 @@ namespace godot {
                     {TPowerType::ElectricPower, POWER_TYPE_ELECTRIC},
                     {TPowerType::SteamPower, POWER_TYPE_STEAM}};
 
-            void
-            send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
+            String _to_string() const;
+            void couple(TrainController *other_vehicle, Side self_side, Side other_side);
+            void couple_front(TrainController *other_vehicle, Side other_side);
+            void couple_back(TrainController *other_vehicle, Side other_side);
+            TrainController *get_front_vehicle() const;
+            TrainController *get_back_vehicle() const;
+            Array get_rail_vehicle_modules() const;
+            Ref<TrainSet> get_trainset() const;
+            TrainController *decouple(int relative_index);
+            TrainController *uncouple_front();
+            TrainController *uncouple_back();
+
+            Dictionary get_config() const;
+            void update_config(const Dictionary &p_config);
+            Dictionary get_state();
+            Dictionary &_get_state_internal();
+            Dictionary get_mover_state();
+            void update_state();
+            void update_mover();
+            TMoverParameters *get_mover() const;
+            void set_mover_location(const Vector3 &position);
+            Vector3 get_mover_location() const;
+            void assign_track_rid(const RID &track_rid, const String &track_id = "");
+            RID get_track_rid() const;
+            void assign_track(const String &track_id);
+            String get_track_id() const;
+            void set_track_offset(double offset);
+            double get_track_offset() const;
+
+            TypedArray<TrainCommand> get_supported_commands();
+            void send_command(const StringName &command, const Variant &p1 = Variant(), const Variant &p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
             void direction_increase() const;
             void direction_decrease() const;
-            void decouple(int relative_index);
             void radio(bool p_enabled);
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
-            TypedArray<TrainCommand> get_supported_commands();
-            void emit_command_received_signal(
-                    const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
+            void emit_command_received_signal(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void set_train_id(StringName p_train_id);
             StringName get_train_id() const;
 
             static void _bind_methods();
 
+            MAKE_MEMBER_GS(String, type_name, "");
+            MAKE_MEMBER_GS_DIRTY(String, axle_arrangement, "");
+            MAKE_MEMBER_GS_DIRTY(float, drag_coefficient, 0.0);
+            MAKE_MEMBER_GS_DIRTY(float, mass, 0.0);
+            MAKE_MEMBER_GS_DIRTY(float, max_velocity, 0.0);
+            MAKE_MEMBER_GS_DIRTY(float, length, 0.0);
+            MAKE_MEMBER_GS_DIRTY(float, width, 0.0);
+            MAKE_MEMBER_GS_DIRTY(float, height, 0.0);
             MAKE_MEMBER_GS_DIRTY(double, power, 0.0);
             MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0);
             MAKE_MEMBER_GS(int, radio_channel_min, 0);
@@ -117,5 +202,6 @@ namespace godot {
     };
 } // namespace godot
 
+VARIANT_ENUM_CAST(TrainController::Side);
 VARIANT_ENUM_CAST(TrainController::TrainPowerSource);
 VARIANT_ENUM_CAST(TrainController::TrainPowerType);

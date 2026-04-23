@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../core/LegacyRailVehicleModule.hpp"
+#include "../core/TrainPart.hpp"
 #include "macros.hpp"
 
 namespace godot {
-    class LegacyBufferCouplerModule : public LegacyRailVehicleModule {
-            GDCLASS(LegacyBufferCouplerModule, LegacyRailVehicleModule);
+    class LegacyBufferCouplerModule : public TrainPart {
+            GDCLASS(LegacyBufferCouplerModule, TrainPart);
 
         protected:
             void _do_update_internal_mover(TMoverParameters *mover) override;

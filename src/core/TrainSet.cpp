@@ -1,5 +1,5 @@
 #include <godot_cpp/variant/utility_functions.hpp>
-#include "RailVehicle.hpp"
+#include "TrainController.hpp"
 #include "TrainSet.hpp"
 
 namespace godot {
@@ -14,17 +14,17 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("attach_to_head", "vehicle", "side"), &TrainSet::attach_to_head);
     }
 
-    TrainSet::TrainSet() {}
+    TrainSet::TrainSet() = default;
 
-    void TrainSet::_init(RailVehicle *_start_car) {
-        if (_start_car == nullptr) {
+    void TrainSet::_init(TrainController *_start_vehicle) {
+        if (_start_vehicle == nullptr) {
             UtilityFunctions::push_error("Initializing TrainSet without a vehicle!");
         }
-        start_vehicle = _start_car;
+        start_vehicle = _start_vehicle;
     }
 
-    RailVehicle *TrainSet::get_by_index(int index) {
-        RailVehicle *current;
+    TrainController *TrainSet::get_by_index(int index) {
+        TrainController *current;
         if (index >= 0) {
             current = get_head();
             for (int i = 0; i < index && current != nullptr; ++i) {
@@ -44,7 +44,7 @@ namespace godot {
 
     Array TrainSet::to_array() const {
         Array result;
-        RailVehicle *current = get_head();
+        TrainController *current = get_head();
         while (current != nullptr) {
             result.append(current);
             current = current->back;
@@ -52,27 +52,33 @@ namespace godot {
         return result;
     }
 
-    RailVehicle *TrainSet::get_head() const {
-        RailVehicle *current = start_vehicle;
-        while (current->front != nullptr) {
+    TrainController *TrainSet::get_head() const {
+        TrainController *current = start_vehicle;
+        while (current != nullptr && current->front != nullptr) {
             current = current->front;
         }
         return current;
     }
 
-    RailVehicle *TrainSet::get_tail() const {
-        RailVehicle *current = start_vehicle;
-        while (current->back != nullptr) {
+    TrainController *TrainSet::get_tail() const {
+        TrainController *current = start_vehicle;
+        while (current != nullptr && current->back != nullptr) {
             current = current->back;
         }
         return current;
     }
 
-    void TrainSet::attach_to_head(RailVehicle *vehicle, RailVehicle::Side side) {
-        get_head()->couple(vehicle, side, RailVehicle::Side::FRONT);
+    void TrainSet::attach_to_head(TrainController *vehicle, const TrainController::Side side) {
+        TrainController *head = get_head();
+        if (head != nullptr) {
+            head->couple(vehicle, side, TrainController::Side::FRONT);
+        }
     }
 
-    void TrainSet::attach_to_tail(RailVehicle *vehicle, RailVehicle::Side side) {
-        get_tail()->couple(vehicle, side, RailVehicle::Side::BACK);
+    void TrainSet::attach_to_tail(TrainController *vehicle, const TrainController::Side side) {
+        TrainController *tail = get_tail();
+        if (tail != nullptr) {
+            tail->couple(vehicle, side, TrainController::Side::BACK);
+        }
     }
 } // namespace godot

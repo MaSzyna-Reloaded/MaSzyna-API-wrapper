@@ -17,7 +17,7 @@ class_name TrainSet3D
         _queue_editor_layout()
 
 var _vehicles: Array[RailVehicle3D] = []
-var _controllers: Array[LegacyRailVehicle] = []
+var _controllers: Array[TrainController] = []
 var _editor_layout_queued := false
 var _missing_preview_track_warning_id := ""
 
@@ -61,7 +61,7 @@ func _collect_consist_members() -> void:
 
 
 func _couple_consist() -> void:
-    var previous_controller: LegacyRailVehicle = null
+    var previous_controller: TrainController = null
 
     for controller in _controllers:
         if previous_controller != null:
@@ -72,7 +72,7 @@ func _couple_consist() -> void:
                 "TrainSet3D: coupling %s(BACK) -> %s(FRONT)" %
                 [previous_controller.name, controller.name]
             )
-            previous_controller.couple_back(controller, RailVehicle.FRONT)
+            previous_controller.couple_back(controller, TrainController.FRONT)
 
         previous_controller = controller
 
@@ -103,7 +103,7 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
 
     var track_rid := track.get_rid()
     var current_offset := start_track_offset
-    var previous_controller: LegacyRailVehicle = null
+    var previous_controller: TrainController = null
 
     for index in range(_vehicles.size()):
         var current_vehicle := _vehicles[index]
@@ -128,7 +128,7 @@ func _place_consist_on_track(require_coupled_chain: bool) -> void:
         previous_controller = current_controller
 
 
-func _get_spacing(previous_controller: LegacyRailVehicle, current_controller: LegacyRailVehicle) -> float:
+func _get_spacing(previous_controller: TrainController, current_controller: TrainController) -> float:
     return 0.5 * (previous_controller.length + current_controller.length)
 
 

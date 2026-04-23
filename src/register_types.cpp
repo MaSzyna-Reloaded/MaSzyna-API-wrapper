@@ -5,11 +5,7 @@
 #include "buffers/TrainBuffCoupl.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
-#include "core/LegacyRailVehicle.hpp"
-#include "core/LegacyRailVehicleModule.hpp"
-#include "core/LegacyWagon.hpp"
 #include "core/ResourceCache.hpp"
-#include "core/RailVehicle.hpp"
 #include "core/TrainCommand.hpp"
 #include "core/TrackManager.hpp"
 #include "core/TrainController.hpp"
@@ -72,13 +68,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(MaszynaParser);
-        GDREGISTER_ABSTRACT_CLASS(LegacyRailVehicleModule);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(TrainCommand);
         GDREGISTER_CLASS(GenericTrainPart);
-        GDREGISTER_CLASS(RailVehicle);
-        GDREGISTER_CLASS(LegacyRailVehicle);
-        GDREGISTER_CLASS(LegacyWagon);
         GDREGISTER_CLASS(VirtualTrack);
         GDREGISTER_CLASS(TrackManager);
         GDREGISTER_CLASS(TrainSet);

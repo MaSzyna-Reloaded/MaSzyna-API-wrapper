@@ -1,9 +1,12 @@
 #pragma once
+
+#include "../maszyna/McZapkie/MOVER.h"
 #include "./GameLog.hpp"
-#include "./LegacyRailVehicleModule.hpp"
 #include "./TrainCommand.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
+#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
 #include <functional>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
@@ -12,45 +15,35 @@
     }
 
 namespace godot {
-    class TrainPart : public LegacyRailVehicleModule {
-            GDCLASS(TrainPart, LegacyRailVehicleModule)
-        public:
-            static void _bind_methods();
+    class TrainPart : public Node {
+            GDCLASS(TrainPart, Node)
+        private:
+            Dictionary state;
 
         protected:
-            void _notification(int p_what);
+            bool _dirty = false;
             bool enabled = true;
             bool enabled_changed = false;
             TrainController *train_controller_node = nullptr;
 
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
-             * i powinna byc wywolywana przez TrainPart::initialize_mover() */
-            // virtual void _do_initialize_internal_mover(TMoverParameters *mover) = 0;
-
-            /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
-             * for creating Train nodes. Pointer to `mover` and reference to `state` should stay "as is",
-             * because the mover initialization and state sharing routines can be changed in the future. */
-
-            /* Transfers data from Godot's node to original/internal Mover instance.
-             * `mover` is always set */
+            void _notification(int p_what);
 
             virtual void _do_update_internal_mover(TMoverParameters *mover);
-
-            /* Transfers state from the original/internal Mover instance to Godot's Dictionary.
-             * `mover` and `state` are always set
-             * */
-
             virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) = 0;
             virtual void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config);
-
             virtual void _do_process_mover(TMoverParameters *mover, double delta);
+            virtual void _process_mover(double delta);
+
+            TMoverParameters *get_mover();
 
         public:
             ~TrainPart() override = default;
             void _process(double delta) override;
 
             virtual TypedArray<TrainCommand> get_supported_commands();
+            void update_mover();
+            Dictionary get_mover_state();
+            TrainController *get_train_controller_node() const;
             void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
             void log(GameLog::LogLevel level, const String &line);
@@ -61,11 +54,8 @@ namespace godot {
 
             void set_enabled(bool p_value);
             bool get_enabled();
-
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
-             * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
-            // void initialize_mover(TrainController *train_controller_node);
             void emit_config_changed_signal();
+
+            static void _bind_methods();
     };
 } // namespace godot

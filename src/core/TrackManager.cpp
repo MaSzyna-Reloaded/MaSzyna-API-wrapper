@@ -1,5 +1,5 @@
-#include "LegacyRailVehicle.hpp"
 #include "TrackManager.hpp"
+#include "TrainController.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -12,15 +12,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_world_position", "offset"), &VirtualTrack::get_world_position);
 
         ADD_PROPERTY(PropertyInfo(Variant::RID, "rid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_rid");
-        ADD_PROPERTY(
-                PropertyInfo(Variant::STRING, "track_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
-                "", "get_track_id");
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "length", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
-                "", "get_length");
-        ADD_PROPERTY(
-                PropertyInfo(Variant::VECTOR3, "start_point", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
-                "", "get_start_point");
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "track_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_track_id");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "length", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_length");
+        ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "start_point", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_start_point");
     }
 
     void VirtualTrack::configure(
@@ -44,37 +38,14 @@ namespace godot {
         track_param.Velmax = 300.0;
     }
 
-    RID VirtualTrack::get_rid() const {
-        return track_rid;
-    }
-
-    String VirtualTrack::get_track_id() const {
-        return track_id;
-    }
-
-    double VirtualTrack::get_length() const {
-        return length;
-    }
-
-    Vector3 VirtualTrack::get_start_point() const {
-        return start_point;
-    }
-
-    Vector3 VirtualTrack::get_axis() const {
-        return Vector3(0.0, 0.0, -1.0);
-    }
-
-    Vector3 VirtualTrack::get_world_position(const double offset) const {
-        return start_point + get_axis() * static_cast<float>(offset);
-    }
-
-    const Maszyna::TTrackShape &VirtualTrack::get_shape() const {
-        return shape;
-    }
-
-    const Maszyna::TTrackParam &VirtualTrack::get_track_param() const {
-        return track_param;
-    }
+    RID VirtualTrack::get_rid() const { return track_rid; }
+    String VirtualTrack::get_track_id() const { return track_id; }
+    double VirtualTrack::get_length() const { return length; }
+    Vector3 VirtualTrack::get_start_point() const { return start_point; }
+    Vector3 VirtualTrack::get_axis() const { return Vector3(0.0, 0.0, -1.0); }
+    Vector3 VirtualTrack::get_world_position(const double offset) const { return start_point + get_axis() * static_cast<float>(offset); }
+    const Maszyna::TTrackShape &VirtualTrack::get_shape() const { return shape; }
+    const Maszyna::TTrackParam &VirtualTrack::get_track_param() const { return track_param; }
 
     TrackManager::TrackManager() {
         tracks.set_description("VirtualTrack");
@@ -82,16 +53,13 @@ namespace godot {
 
     void TrackManager::_bind_methods() {
         ClassDB::bind_method(D_METHOD("add_track", "length", "start_point", "track_id"), &TrackManager::add_track);
-        ClassDB::bind_method(
-                D_METHOD("modify_track", "track_rid", "length", "start_point", "track_id"), &TrackManager::modify_track);
+        ClassDB::bind_method(D_METHOD("modify_track", "track_rid", "length", "start_point", "track_id"), &TrackManager::modify_track);
         ClassDB::bind_method(D_METHOD("remove_track", "track_rid"), &TrackManager::remove_track);
         ClassDB::bind_method(D_METHOD("has_track", "track_id"), &TrackManager::has_track);
         ClassDB::bind_method(D_METHOD("get_track", "track_rid"), &TrackManager::get_track);
         ClassDB::bind_method(D_METHOD("get_track_by_name", "track_id"), &TrackManager::get_track_by_name);
-        ClassDB::bind_method(
-                D_METHOD("get_track_position", "track_rid", "offset"), &TrackManager::get_track_position);
-        ClassDB::bind_method(
-                D_METHOD("register_vehicle", "vehicle", "track_rid", "track_id", "offset"), &TrackManager::register_vehicle);
+        ClassDB::bind_method(D_METHOD("get_track_position", "track_rid", "offset"), &TrackManager::get_track_position);
+        ClassDB::bind_method(D_METHOD("register_vehicle", "vehicle", "track_rid", "track_id", "offset"), &TrackManager::register_vehicle);
         ClassDB::bind_method(D_METHOD("update_vehicle_offset", "vehicle", "offset"), &TrackManager::update_vehicle_offset);
         ClassDB::bind_method(D_METHOD("remove_vehicle", "vehicle"), &TrackManager::remove_vehicle);
     }
@@ -228,7 +196,7 @@ namespace godot {
     }
 
     void TrackManager::register_vehicle(
-            LegacyRailVehicle *vehicle, const RID &track_rid, const String &track_id, const double offset) {
+            TrainController *vehicle, const RID &track_rid, const String &track_id, const double offset) {
         if (vehicle == nullptr) {
             return;
         }
@@ -242,7 +210,7 @@ namespace godot {
         vehicle_placements[vehicle] = VehiclePlacement{track_rid, track_id, offset};
     }
 
-    void TrackManager::update_vehicle_offset(LegacyRailVehicle *vehicle, const double offset) {
+    void TrackManager::update_vehicle_offset(TrainController *vehicle, const double offset) {
         if (vehicle == nullptr) {
             return;
         }
@@ -255,7 +223,7 @@ namespace godot {
         it->second.offset = offset;
     }
 
-    void TrackManager::remove_vehicle(LegacyRailVehicle *vehicle) {
+    void TrackManager::remove_vehicle(TrainController *vehicle) {
         if (vehicle == nullptr) {
             return;
         }
@@ -263,7 +231,7 @@ namespace godot {
         vehicle_placements.erase(vehicle);
     }
 
-    Ref<VirtualTrack> TrackManager::get_vehicle_track(LegacyRailVehicle *vehicle) const {
+    Ref<VirtualTrack> TrackManager::get_vehicle_track(TrainController *vehicle) const {
         if (vehicle == nullptr) {
             return Ref<VirtualTrack>();
         }
@@ -276,7 +244,7 @@ namespace godot {
         return get_track(it->second.track_rid);
     }
 
-    bool TrackManager::get_vehicle_offset(LegacyRailVehicle *vehicle, double &offset) const {
+    bool TrackManager::get_vehicle_offset(TrainController *vehicle, double &offset) const {
         if (vehicle == nullptr) {
             return false;
         }
@@ -290,8 +258,8 @@ namespace godot {
         return true;
     }
 
-    LegacyRailVehicle *TrackManager::find_nearest_vehicle(
-            LegacyRailVehicle *vehicle, const bool ahead, double *distance, int *other_end) const {
+    TrainController *TrackManager::find_nearest_vehicle(
+            TrainController *vehicle, const bool ahead, double *distance, int *other_end) const {
         if (vehicle == nullptr) {
             return nullptr;
         }
@@ -301,7 +269,7 @@ namespace godot {
             return nullptr;
         }
 
-        LegacyRailVehicle *nearest = nullptr;
+        TrainController *nearest = nullptr;
         double nearest_distance = 0.0;
 
         for (const auto &[other_vehicle, placement] : vehicle_placements) {
@@ -334,13 +302,13 @@ namespace godot {
         return nearest;
     }
 
-    LegacyRailVehicle *TrackManager::get_nearest_vehicle_ahead(
-            LegacyRailVehicle *vehicle, double *distance, int *other_end) const {
+    TrainController *TrackManager::get_nearest_vehicle_ahead(
+            TrainController *vehicle, double *distance, int *other_end) const {
         return find_nearest_vehicle(vehicle, true, distance, other_end);
     }
 
-    LegacyRailVehicle *TrackManager::get_nearest_vehicle_behind(
-            LegacyRailVehicle *vehicle, double *distance, int *other_end) const {
+    TrainController *TrackManager::get_nearest_vehicle_behind(
+            TrainController *vehicle, double *distance, int *other_end) const {
         return find_nearest_vehicle(vehicle, false, distance, other_end);
     }
 } // namespace godot

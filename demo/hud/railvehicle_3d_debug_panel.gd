@@ -4,7 +4,7 @@ extends DebugPanel
 @export_node_path("RailVehicle3D") var vehicle_path = NodePath("")
 
 var _vehicle : RailVehicle3D
-var _controller : LegacyRailVehicle
+var _controller : TrainController
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:

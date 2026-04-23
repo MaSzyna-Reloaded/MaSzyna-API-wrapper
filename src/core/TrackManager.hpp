@@ -12,7 +12,7 @@
 #include <map>
 
 namespace godot {
-    class LegacyRailVehicle;
+    class TrainController;
 
     class VirtualTrack : public RefCounted {
             GDCLASS(VirtualTrack, RefCounted)
@@ -56,11 +56,11 @@ namespace godot {
 
             mutable RID_Owner<Ref<VirtualTrack>> tracks;
             std::map<String, RID> named_tracks;
-            std::map<LegacyRailVehicle *, VehiclePlacement> vehicle_placements;
+            std::map<TrainController *, VehiclePlacement> vehicle_placements;
 
             void _report_duplicate_track_name(const String &track_id, const RID &existing_rid, const RID &requested_rid) const;
-            LegacyRailVehicle *find_nearest_vehicle(
-                    LegacyRailVehicle *vehicle, bool ahead, double *distance = nullptr, int *other_end = nullptr) const;
+            TrainController *find_nearest_vehicle(
+                    TrainController *vehicle, bool ahead, double *distance = nullptr, int *other_end = nullptr) const;
 
         protected:
             static void _bind_methods();
@@ -81,15 +81,15 @@ namespace godot {
             Ref<VirtualTrack> get_track_by_name(const String &track_id) const;
             Vector3 get_track_position(const RID &track_rid, double offset) const;
 
-            void register_vehicle(LegacyRailVehicle *vehicle, const RID &track_rid, const String &track_id, double offset);
-            void update_vehicle_offset(LegacyRailVehicle *vehicle, double offset);
-            void remove_vehicle(LegacyRailVehicle *vehicle);
+            void register_vehicle(TrainController *vehicle, const RID &track_rid, const String &track_id, double offset);
+            void update_vehicle_offset(TrainController *vehicle, double offset);
+            void remove_vehicle(TrainController *vehicle);
 
-            Ref<VirtualTrack> get_vehicle_track(LegacyRailVehicle *vehicle) const;
-            bool get_vehicle_offset(LegacyRailVehicle *vehicle, double &offset) const;
-            LegacyRailVehicle *get_nearest_vehicle_ahead(
-                    LegacyRailVehicle *vehicle, double *distance = nullptr, int *other_end = nullptr) const;
-            LegacyRailVehicle *get_nearest_vehicle_behind(
-                    LegacyRailVehicle *vehicle, double *distance = nullptr, int *other_end = nullptr) const;
+            Ref<VirtualTrack> get_vehicle_track(TrainController *vehicle) const;
+            bool get_vehicle_offset(TrainController *vehicle, double &offset) const;
+            TrainController *get_nearest_vehicle_ahead(
+                    TrainController *vehicle, double *distance = nullptr, int *other_end = nullptr) const;
+            TrainController *get_nearest_vehicle_behind(
+                    TrainController *vehicle, double *distance = nullptr, int *other_end = nullptr) const;
     };
 } // namespace godot

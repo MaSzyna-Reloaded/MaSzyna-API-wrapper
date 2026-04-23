@@ -1,5 +1,5 @@
 #include "../core/GameLog.hpp"
-#include "../core/LegacyRailVehicle.hpp"
+#include "../core/TrainController.hpp"
 #include "LegacyBufferCouplerModule.hpp"
 
 namespace godot {
@@ -96,7 +96,7 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        LegacyRailVehicle *vehicle = get_legacy_rail_vehicle_node();
+        TrainController *vehicle = get_train_controller_node();
         if (vehicle == nullptr) {
             return;
         }

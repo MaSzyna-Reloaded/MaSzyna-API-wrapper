@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://d3bqaxs80et01"]
 
-[node name="401W" type="LegacyWagon" unique_id=1385549383]
+[node name="401W" type="TrainController" unique_id=1385549383]
 axle_arrangement = "2'2'"
 drag_coefficient = 0.1
 mass = 20100.0

@@ -1,6 +1,5 @@
 #include "TrainBuffCoupl.hpp"
-#include <godot_cpp/classes/engine.hpp>
-#include <godot_cpp/classes/node.hpp>
+#include "../core/TrainSystem.hpp"
 
 namespace godot {
     void TrainBuffCoupl::_bind_methods() {
@@ -8,59 +7,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("decouple"), &TrainBuffCoupl::decouple);
     }
 
-    void TrainBuffCoupl::_notification(int p_what) {
-        LegacyBufferCouplerModule::_notification(p_what);
-
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE: {
-                Node *parent = get_parent();
-                while (parent != nullptr) {
-                    train_controller_node = Object::cast_to<TrainController>(parent);
-                    if (train_controller_node != nullptr) {
-                        break;
-                    }
-                    parent = parent->get_parent();
-                }
-
-                if (train_controller_node != nullptr) {
-                    _register_commands();
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE: {
-                if (train_controller_node != nullptr) {
-                    _unregister_commands();
-                }
-                train_controller_node = nullptr;
-            } break;
-            default:
-                break;
-        }
-    }
-
-    void TrainBuffCoupl::_register_commands() {
-        if (train_controller_node == nullptr) {
-            return;
-        }
-
-        TrainSystem::get_instance()->register_command(
-                train_controller_node->get_train_id(), "buffer_couple", Callable(this, "couple"));
-        TrainSystem::get_instance()->register_command(
-                train_controller_node->get_train_id(), "buffer_decouple", Callable(this, "decouple"));
-    }
-
-    void TrainBuffCoupl::_unregister_commands() {
-        if (train_controller_node == nullptr) {
-            return;
-        }
-
-        TrainSystem::get_instance()->unregister_command(
-                train_controller_node->get_train_id(), "buffer_couple", Callable(this, "couple"));
-        TrainSystem::get_instance()->unregister_command(
-                train_controller_node->get_train_id(), "buffer_decouple", Callable(this, "decouple"));
+    TypedArray<TrainCommand> TrainBuffCoupl::get_supported_commands() {
+        TypedArray<TrainCommand> commands = LegacyBufferCouplerModule::get_supported_commands();
+        commands.append(make_train_command("buffer_couple", Callable(this, "couple")));
+        commands.append(make_train_command("buffer_decouple", Callable(this, "decouple")));
+        return commands;
     }
 
     void TrainBuffCoupl::couple() {
@@ -70,7 +21,7 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (train_controller_node != nullptr) {
+        if (TrainController *train_controller_node = get_train_controller_node(); train_controller_node != nullptr) {
             TrainSystem::get_instance()->log(
                     train_controller_node->get_train_id(),
                     GameLog::LogLevel::WARNING,
@@ -85,7 +36,7 @@ namespace godot {
         }
 
         UtilityFunctions::push_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        if (train_controller_node != nullptr) {
+        if (TrainController *train_controller_node = get_train_controller_node(); train_controller_node != nullptr) {
             TrainSystem::get_instance()->log(
                     train_controller_node->get_train_id(),
                     GameLog::LogLevel::WARNING,

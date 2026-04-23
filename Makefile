@@ -1,9 +1,10 @@
-.PHONY: docs compile watch-and-compile docs-server docs-install cleanup run-clang-tidy run-clang-tidy-fix
+.PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix
 .DEFAULT_GOAL = compile-debug
 
 GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
+CLANG_TIDY_BUILD_DIR=build-clang-tidy
 LIBMASZYNA_DEBUG:=""
 
 #Helper for CLion so it would see generated bindings
@@ -107,20 +108,17 @@ watch-and-compile:
 	sh scripts/autocompile.sh
 
 
-run-clang-tidy:
-	scons compiledb && \
-		find src/ \( -name "*.cpp" -or -name "*.hpp" \) \
-			-not -path "src/maszyna/*"\
-			-not -path "src/gen/*"\
-			-exec clang-tidy --fix-notes --quiet -p . {} +
+$(CLANG_TIDY_BUILD_DIR)/compile_commands.json:
+	@echo "Style: configuring clang-tidy database..." && \
+	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
 
 
-run-clang-tidy-fix:
-	scons compiledb && \
-		find src/ \( -name "*.cpp" -or -name "*.hpp" \) \
-			-not -path "src/maszyna/*"\
-			-not -path "src/gen/*"\
-			-exec clang-tidy --fix --fix-errors --quiet -p . {} +
+style-check: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
+	@scripts/style-check
+
+
+style-fix: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
+	@scripts/style-fix
 
 docker-build-tests:
 	docker build -t godot-tests .

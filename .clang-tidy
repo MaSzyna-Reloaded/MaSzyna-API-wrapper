@@ -35,6 +35,7 @@ Checks: "bugprone-*,
   -modernize-use-auto,
   -*-pro-bounds-constant-array-index,
   -readability-uppercase-literal-suffix,
+  -readability-use-anyofallof,
   -*-pro-type-const-cast,
   -*-pro-type-reinterpret-cast,
   -llvm-header-guard,
@@ -52,6 +53,10 @@ Checks: "bugprone-*,
   -*-pro-bounds-avoid-unchecked-container-access,
   -*-unnecessary-value-param"
 WarningsAsErrors: "*"
+HeaderFilterRegex: '$^'
+ExcludeHeaderFilterRegex: '(^|.*/)(maszyna|gen|godot-cpp)/'
+RemovedArgs:
+  - '-fno-gnu-unique'
 CheckOptions:
   - key: bugprone-reserved-identifier.AllowedIdentifiers
     value: 'GDCLASS;VARIANT_ENUM_CAST'

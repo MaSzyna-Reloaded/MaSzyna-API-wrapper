@@ -3,13 +3,18 @@
 #include "macros.hpp"
 #include "models/e3d/E3DModel.hpp"
 
+#include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/visual_instance3d.hpp>
+#include <godot_cpp/variant/dictionary.hpp>
+#include <godot_cpp/variant/rid.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
+
+#include <vector>
 
 namespace godot {
-    class E3DNodesInstancer; // forward declaration
-    class E3DModelInstance: public VisualInstance3D {
-        GDCLASS(E3DModelInstance, VisualInstance3D)
+    class E3DModelInstance : public VisualInstance3D {
+            GDCLASS(E3DModelInstance, VisualInstance3D)
         public:
             static const char *e3d_loaded_signal;
             enum Instancer {
@@ -24,10 +29,28 @@ namespace godot {
             void _deferred_reload();
             void _flush_pending_model();
             E3DModelInstanceManager *_get_manager() const;
+
+            void _clear_optimized_instances();
+            void _sync_optimized_instances();
+            void _collect_optimized_submodels(
+                    const TypedArray<E3DSubModel> &p_submodels, const Transform3D &p_parent_transform,
+                    bool p_parent_visible);
+
             bool _is_dirty = false;
             bool _pending_model_scheduled = false;
             Ref<Mutex> _mutex;
             Ref<E3DModel> _pending_model;
+            Ref<E3DModel> _loaded_model;
+            Dictionary _submodel_material_overrides;
+
+            struct OptimizedInstanceRecord {
+                    RID instance_rid;
+                    Transform3D local_transform;
+                    bool visible;
+                    String name;
+            };
+            std::vector<OptimizedInstanceRecord> _optimized_instances;
+
             String data_path;
             String model_filename;
             Array skins;
@@ -35,8 +58,10 @@ namespace godot {
             Instancer instancer = INSTANCER_NODES;
             AABB submodels_aabb;
             bool editable_in_editor = false;
+
         protected:
             static void _bind_methods();
+
         public:
             //@TODO: Maybe remove this?
             void _notification(int p_what);
@@ -57,9 +82,13 @@ namespace godot {
             void set_submodels_aabb(const AABB &p_value);
             bool get_editable_in_editor() const;
             void set_editable_in_editor(const bool &p_value);
-            
+
+            AABB _get_aabb() const override;
             void _instantiate_children(const Ref<E3DModel> &p_model);
+            void set_submodel_material_override(const String &submodel_name, const Ref<Material> &material);
+            Ref<Material> get_submodel_material_override(const String &submodel_name) const;
+            void clear_submodel_material_override(const String &submodel_name);
     };
-} //namespace godot
+} // namespace godot
 
 VARIANT_ENUM_CAST(E3DModelInstance::Instancer)

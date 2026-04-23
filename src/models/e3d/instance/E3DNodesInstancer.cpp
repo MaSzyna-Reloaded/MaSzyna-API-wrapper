@@ -10,7 +10,8 @@
 
 namespace godot {
     Ref<Material> E3DNodesInstancer::colored_material;
-    Node3D * E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &p_submodel) {
+    Node3D *
+    E3DNodesInstancer::_create_submodel_instance(const E3DModelInstance &p_target_node, const E3DSubModel &p_submodel) {
         if (p_submodel.get_skip_rendering()) {
             return nullptr;
         }
@@ -24,7 +25,8 @@ namespace godot {
             }
 
             case E3DSubModel::GL_TRIANGLES: {
-                if (const bool is_name_excluded = p_target_node.get_exclude_node_names().has(p_submodel.get_name()); !is_name_excluded) {
+                if (const bool is_name_excluded = p_target_node.get_exclude_node_names().has(p_submodel.get_name());
+                    !is_name_excluded) {
                     MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
                     mesh_instance->set_name(StringName(p_submodel.get_name()));
                     mesh_instance->set_mesh(p_submodel.get_mesh());
@@ -87,15 +89,30 @@ namespace godot {
 
     void E3DNodesInstancer::_update_submodel_material(
             const E3DModelInstance &p_target_node, Node3D &p_subnode, const E3DSubModel &p_submodel) {
-        const String unprefixed_model_path = String("/").join(p_target_node.get_data_path().split("/").slice(1));
         MeshInstance3D *mesh_instance = cast_to<MeshInstance3D>(&p_subnode);
         if (mesh_instance == nullptr) {
             return;
         }
 
+        const Ref<Material> mat = resolve_submodel_material(p_target_node, p_submodel);
+        if (mat.is_valid()) {
+            mesh_instance->set_surface_override_material(0, mat);
+        }
+    }
+
+    Ref<Material>
+    E3DNodesInstancer::resolve_submodel_material(const E3DModelInstance &p_target_node, const E3DSubModel &p_submodel) {
+
+        // Check for manual override first
+        const Ref<Material> override_mat = p_target_node.get_submodel_material_override(p_submodel.get_name());
+        if (override_mat.is_valid()) {
+            return override_mat;
+        }
+
+        const String unprefixed_model_path = String("/").join(p_target_node.get_data_path().split("/").slice(1));
         MaterialManager *mm = cast_to<MaterialManager>(Engine::get_singleton()->get_singleton("MaterialManager"));
         if (mm == nullptr) {
-            return;
+            return Ref<Material>();
         }
 
         String material_name = p_submodel.get_material_name();
@@ -104,7 +121,9 @@ namespace godot {
             if (const int idx = p_submodel.get_dynamic_material_index(); skins.size() > idx) {
                 material_name = skins.get(idx);
             } else {
-                UtilityFunctions::push_warning( "Model " + p_target_node.get_name() + " has less skins than dynamic material index " + String::num_int64(idx));
+                UtilityFunctions::push_warning(
+                        "Model " + p_target_node.get_name() + " has less skins than dynamic material index " +
+                        String::num_int64(idx));
             }
         }
 
@@ -121,12 +140,11 @@ namespace godot {
                 sm->set_albedo(p_submodel.get_diffuse_color());
             }
         } else {
-            mat = mm->get_material(unprefixed_model_path, material_name, transparency, false, p_submodel.get_diffuse_color());
+            mat = mm->get_material(
+                    unprefixed_model_path, material_name, transparency, false, p_submodel.get_diffuse_color());
         }
 
-        if (mat.is_valid()) {
-            mesh_instance->set_surface_override_material(0, mat);
-        }
+        return mat;
     }
 
     void E3DNodesInstancer::_bind_methods() {
@@ -143,7 +161,9 @@ namespace godot {
         if (!colored_material.is_valid()) {
             if ((Engine::get_singleton() != nullptr) && !Engine::get_singleton()->is_editor_hint()) {
                 const String path = "res://addons/libmaszyna/e3d/colored.material";
-                if (const Ref<Material> res = ResourceLoader::get_singleton()->load(path, "Material", ResourceLoader::CACHE_MODE_REUSE); res.is_valid()) {
+                if (const Ref<Material> res =
+                            ResourceLoader::get_singleton()->load(path, "Material", ResourceLoader::CACHE_MODE_REUSE);
+                    res.is_valid()) {
                     colored_material = res;
                 }
             }
@@ -151,7 +171,7 @@ namespace godot {
         return colored_material;
     }
 
-    void E3DNodesInstancer::instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool p_editable) {
+    void E3DNodesInstancer::clear_children(E3DModelInstance *p_target_node) {
         if (p_target_node == nullptr) {
             return;
         }
@@ -166,6 +186,11 @@ namespace godot {
             p_target_node->remove_child(child);
             child->queue_free();
         }
+    }
+
+    void E3DNodesInstancer::instantiate(
+            const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, const bool p_editable) {
+        clear_children(p_target_node);
 
         if (p_model.is_valid()) {
             _do_add_submodels(*p_target_node, p_target_node, p_model->get_submodels(), p_editable);

@@ -8,6 +8,27 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="clear_submodel_material_override">
+			<return type="void" />
+			<param index="0" name="submodel_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="get_submodel_material_override" qualifiers="const">
+			<return type="Material" />
+			<param index="0" name="submodel_name" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="set_submodel_material_override">
+			<return type="void" />
+			<param index="0" name="submodel_name" type="String" />
+			<param index="1" name="material" type="Material" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="data_path" type="String" setter="set_data_path" getter="get_data_path" default="&quot;&quot;">
 			The relative directory path within the MaSzyna game directory where the model and its textures are located.
@@ -49,7 +70,7 @@
 			Similar to [code]INSTANCER_NODES[/code], but specifically configures nodes to be editable within the Godot editor.
 		</constant>
 		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
-			Experimental instancer designed for higher performance with reduced node overhead.
+			Instancer that renders E3D submodels through [RenderingServer] directly instead of creating a child [Node3D] hierarchy.
 		</constant>
 	</constants>
 </class>

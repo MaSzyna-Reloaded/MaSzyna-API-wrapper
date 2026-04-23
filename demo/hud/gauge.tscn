@@ -15,21 +15,22 @@ shader_parameter/feather = -0.05
 
 [sub_resource type="CanvasTexture" id="CanvasTexture_883b5"]
 
-[node name="Gauge" type="Control" unique_id=926326915]
+[node name="Gauge" type="Control" unique_id=628880932]
+custom_minimum_size = Vector2(100, 140)
 layout_mode = 3
 anchors_preset = 0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 script = ExtResource("1_l2s17")
 
-[node name="Background" type="TextureRect" parent="." unique_id=1435227005]
+[node name="Background" type="TextureRect" parent="." unique_id=2095455134]
 material = SubResource("ShaderMaterial_xghqt")
 layout_mode = 0
 offset_right = 144.0
 offset_bottom = 139.0
 texture = SubResource("CanvasTexture_e7i56")
 
-[node name="Arrow" type="TextureRect" parent="." unique_id=1718395539]
+[node name="Arrow" type="TextureRect" parent="." unique_id=1337384858]
 modulate = Color(0, 0, 0, 1)
 self_modulate = Color(0, 0, 0, 1)
 material = SubResource("CanvasItemMaterial_0mu1h")
@@ -41,10 +42,11 @@ offset_bottom = 71.0
 rotation = 4.712389
 texture = SubResource("CanvasTexture_883b5")
 
-[node name="Label" type="Label" parent="." unique_id=1273729468]
+[node name="Label" type="Label" parent="." unique_id=1257079469]
 layout_mode = 0
 offset_left = 4.0
 offset_top = 123.0
 offset_right = 141.0
-offset_bottom = 146.0
+offset_bottom = 170.0
 horizontal_alignment = 1
+autowrap_mode = 2

@@ -7,8 +7,6 @@ extends HBoxContainer
             controller = null
             _do_update()
 
-@onready var FORWARD = $General/HBoxContainer2/Forward
-@onready var REVERSE = $General/HBoxContainer2/Reverse
 
 var controller:TrainController
 
@@ -21,16 +19,8 @@ func _do_update():
 
 func _propagate_train_controller(node: Node, controller: TrainController):
     for child in node.get_children():
-        _propagate_train_controller(child, controller)
-        if "controller" in child:
-            child.controller = child.get_path_to(controller) if controller else NodePath("")
+        if "train_controller" in child:
+            child.train_controller = child.get_path_to(controller) if controller else NodePath("")
 
 func _ready():
     _do_update()
-
-func _process(delta):
-    if controller:
-        var state = controller.state
-
-        FORWARD.modulate = Color.GREEN if state.get("direction", 0) > 0 else Color.WHITE
-        REVERSE.modulate = Color.GREEN if state.get("direction", 0) < 0 else Color.WHITE

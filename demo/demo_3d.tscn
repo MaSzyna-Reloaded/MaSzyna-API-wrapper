@@ -7,13 +7,20 @@
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_qg2pq"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
+[ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
+[ext_resource type="Script" path="res://hud/window.gd" id="3_rrc65"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
 [ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
-[ext_resource type="PackedScene" uid="uid://gr0lw1vyf240" path="res://hud/debug_hud.tscn" id="5_vl0kb"]
+[ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
+[ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
+[ext_resource type="Script" path="res://hud/top_bar.gd" id="17_l04v0"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s18ef"]
 shader = ExtResource("2_ydn4r")
@@ -52,7 +59,130 @@ adjustment_enabled = true
 [node name="Demo3D" type="Node3D" unique_id=598546957]
 script = ExtResource("1_ut343")
 
-[node name="CanvasLayer" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
+[node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
+
+[node name="TopBar" type="Container" parent="." unique_id=1102380660]
+top_level = true
+clip_contents = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+script = ExtResource("17_l04v0")
+drag_enabled = false
+resize_enabled = false
+window_decorations = false
+allow_close = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar" unique_id=1216009355]
+clip_contents = true
+layout_mode = 2
+
+[node name="MenuBar" type="MenuBar" parent="TopBar/HBoxContainer" unique_id=2006595567]
+clip_contents = true
+layout_mode = 2
+
+[node name="PopupMenu" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar" unique_id=1597513232]
+title = "Controls"
+system_menu_id = 2
+
+[node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer" unique_id=2090323336]
+clip_contents = true
+layout_mode = 2
+toggle_mode = true
+text = "Toggle controls"
+
+[node name="ControlWindows" type="Node" parent="." unique_id=104336370]
+
+[node name="General" type="Container" parent="ControlWindows" unique_id=1974252148]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 24.0
+offset_top = 467.0
+offset_right = 387.0
+offset_bottom = 721.0
+script = ExtResource("3_rrc65")
+title = "General"
+
+[node name="General" parent="ControlWindows/General" unique_id=1612449326 instance=ExtResource("3_l04v0")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Diesel" type="Container" parent="ControlWindows" unique_id=1842182184]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 405.0
+offset_top = 467.0
+offset_right = 555.0
+offset_bottom = 622.0
+script = ExtResource("3_rrc65")
+title = "Diesel"
+
+[node name="Diesel" parent="ControlWindows/Diesel" unique_id=1618493965 instance=ExtResource("4_lsqkb")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Brakes" type="Container" parent="ControlWindows" unique_id=2108387886]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 579.0
+offset_top = 467.0
+offset_right = 753.0
+offset_bottom = 804.0
+script = ExtResource("3_rrc65")
+title = "Brakes"
+
+[node name="Brakes" parent="ControlWindows/Brakes" unique_id=207886123 instance=ExtResource("6_lsqkb")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Doors" type="Container" parent="ControlWindows" unique_id=396795069]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 779.0
+offset_top = 467.0
+offset_right = 989.0
+offset_bottom = 804.0
+script = ExtResource("3_rrc65")
+title = "Doors"
+
+[node name="Doors" parent="ControlWindows/Doors" unique_id=1529964687 instance=ExtResource("7_t705k")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Security" type="Container" parent="ControlWindows" unique_id=2063708692]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 1011.0
+offset_top = 467.0
+offset_right = 1231.0
+offset_bottom = 569.0
+script = ExtResource("3_rrc65")
+title = "Security"
+
+[node name="Security" parent="ControlWindows/Security" unique_id=628826945 instance=ExtResource("8_h5mje")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Gauges" type="Container" parent="ControlWindows" unique_id=833711953]
+top_level = true
+clip_contents = true
+custom_minimum_size = Vector2(100, 50)
+offset_left = 24.0
+offset_top = 823.0
+offset_right = 1396.0
+offset_bottom = 1061.0
+script = ExtResource("3_rrc65")
+title = "Gauges"
+
+[node name="Gauges" parent="ControlWindows/Gauges" unique_id=1086519321 instance=ExtResource("9_ss847")]
+clip_contents = true
+layout_mode = 2
 
 [node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=337717684]
 visible = false
@@ -103,10 +233,7 @@ horizontal_alignment = 1
 [node name="Maszyna Settings" parent="UserSettingsPanel/VBoxContainer" unique_id=1669941723 instance=ExtResource("4_dyl8i")]
 layout_mode = 2
 
-[node name="DebugHUD" parent="." unique_id=1282244848 instance=ExtResource("5_vl0kb")]
-player_path = NodePath("../Player")
-
-[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1228891371]
+[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1464463242]
 script = ExtResource("2_py6pt")
 world_environment = NodePath("../WorldEnvironment")
 sky_texture_offset = Vector2(0.49, 0.005)
@@ -333,5 +460,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/kolejowe"
 model_filename = "klamoty_naprawcze"
 
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
+[connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
 [connection signal="fadein_finished" from="LoadingScreen" to="." method="_on_loading_screen_fadein_finished"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

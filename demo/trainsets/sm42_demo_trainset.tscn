@@ -14,6 +14,3 @@ train_id = &"sm42"
 
 [node name="Wagon1" parent="." unique_id=149723671 instance=ExtResource("5_n7ime")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.139999)
-
-[node name="Wagon2" parent="." unique_id=1655419086 instance=ExtResource("5_n7ime")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 28.18)

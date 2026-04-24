@@ -75,6 +75,8 @@ var _t:float = 0.0
 var _invalid_velocity_reported: bool = false
 var _is_derailed_physics: bool = false
 var _runtime_physics_disable_warned: bool = false
+var _track_orientation_initialized: bool = false
+var _track_orientation_offset: Basis = Basis.IDENTITY
 var _runtime_physics_impact_origin: Vector3 = Vector3.INF
 var _runtime_physics_relative_speed_kmh: float = 0.0
 
@@ -507,6 +509,19 @@ func _update_head_display():
     _needs_head_display_update = false
 
 
+func _compute_track_basis(track_axis: Vector3) -> Basis:
+    var forward := track_axis.normalized()
+    if forward.is_zero_approx():
+        return global_basis.orthonormalized()
+
+    var right := Vector3.UP.cross(forward).normalized()
+    if right.is_zero_approx():
+        right = Vector3.RIGHT
+
+    var up := forward.cross(right).normalized()
+    return Basis(right, up, -forward).orthonormalized()
+
+
 func _process(delta):
     if _dirty:
         _dirty = false
@@ -541,7 +556,14 @@ func _physics_process(delta: float) -> void:
             var track := TrackManager.get_track(track_rid)
             if track != null and is_finite(track_offset):
                 _invalid_velocity_reported = false
+                var track_axis := TrackManager.get_track_axis(track_rid, track_offset)
                 global_position = TrackManager.get_track_position(track_rid, track_offset)
+                if not track_axis.is_zero_approx():
+                    var track_basis := _compute_track_basis(track_axis)
+                    if not _track_orientation_initialized:
+                        _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
+                        _track_orientation_initialized = true
+                    global_basis = (track_basis * _track_orientation_offset).orthonormalized()
                 _controller.set_mover_location(global_position)
             elif track_rid != RID() and not _invalid_velocity_reported:
                 _invalid_velocity_reported = true

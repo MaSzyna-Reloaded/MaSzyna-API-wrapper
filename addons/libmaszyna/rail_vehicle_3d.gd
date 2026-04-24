@@ -434,7 +434,7 @@ func _wrap_in_runtime_physics_body(impact_origin: Vector3 = Vector3.INF, relativ
 
     var linear_velocity := Vector3.ZERO
     if track != null:
-        linear_velocity = track.get_axis() * velocity
+        linear_velocity = TrackManager.get_track_axis(track_rid, float(_controller.get_track_offset())) * velocity
     else:
         linear_velocity = -global_basis.z.normalized() * velocity
 
@@ -538,12 +538,10 @@ func _physics_process(delta: float) -> void:
         if _controller:
             var track_rid := _controller.get_track_rid()
             var track_offset := float(_controller.get_track_offset())
-            var movement_delta := float(_controller.state.get("movement_delta", 0.0))
             var track := TrackManager.get_track(track_rid)
-            if track != null and is_finite(track_offset) and is_finite(movement_delta):
+            if track != null and is_finite(track_offset):
                 _invalid_velocity_reported = false
-                global_position = TrackManager.get_track_position(track_rid, track_offset) + track.get_axis() * movement_delta
-                _controller.set_track_offset(track_offset + movement_delta)
+                global_position = TrackManager.get_track_position(track_rid, track_offset)
                 _controller.set_mover_location(global_position)
             elif track_rid != RID() and not _invalid_velocity_reported:
                 _invalid_velocity_reported = true

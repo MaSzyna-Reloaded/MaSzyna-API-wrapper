@@ -73,9 +73,15 @@ func _update_switch():
     if not is_inside_tree(): return
     update_configuration_warnings()
     
-    if common_track: _auto_link_track(common_track)
-    if straight_track: _auto_link_track(straight_track)
-    if diverging_track: _auto_link_track(diverging_track)
+    if common_track:
+        _auto_link_track(common_track)
+        common_track._request_track_update()
+    if straight_track:
+        _auto_link_track(straight_track)
+        straight_track._request_track_update()
+    if diverging_track:
+        _auto_link_track(diverging_track)
+        diverging_track._request_track_update()
 
 func _auto_link_track(track: MaszynaTrack3D):
     if not track or not track.curve: return

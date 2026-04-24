@@ -6,7 +6,7 @@
 
 [node name="SM42-907 Trainset" type="Node3D" unique_id=1097042846]
 script = ExtResource("1_uwj4h")
-start_track_id = "debug"
+start_track_id = "approach"
 
 [node name="SM42-907" parent="." unique_id=13773796 instance=ExtResource("2_m8hf2")]
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)

@@ -2,6 +2,13 @@
 extends Path3D
 class_name MaszynaTrack3D
 
+@export var track_id: String = "":
+    set(x):
+        if x == track_id:
+            return
+        track_id = x
+        _request_track_update()
+
 @export_group("Rails")
 @export var rail_spacing: float = 1.6:
     set(x):
@@ -123,10 +130,21 @@ class_name MaszynaTrack3D
         _request_track_update()
 
 @export_group("Connectivity")
-@export var next_track: NodePath
-@export var previous_track: NodePath
+@export var next_track: NodePath:
+    set(x):
+        if x == next_track:
+            return
+        next_track = x
+        _request_track_update()
+@export var previous_track: NodePath:
+    set(x):
+        if x == previous_track:
+            return
+        previous_track = x
+        _request_track_update()
 
 var _track_id: int = 0
+var _virtual_track_rid := RID()
 var _dirty = false
 var _is_updating = false
 var _update_timer = 0.0
@@ -135,16 +153,22 @@ const DEBOUNCE_TIME = 0.05
 func _enter_tree():
     _ensure_curve()
     _ensure_track()
+    _ensure_virtual_track()
     _sync_track_state()
+    set_notify_transform(true)
+    set_notify_local_transform(true)
 
 func _exit_tree():
     _free_track()
+    _free_virtual_track()
 
 func _ready():
     _ensure_curve()
     _ensure_track()
+    _ensure_virtual_track()
     set_process(true)
     set_notify_transform(true)
+    set_notify_local_transform(true)
     _apply_track_settings()
     _sync_track_state()
     if Engine.is_editor_hint():
@@ -157,6 +181,9 @@ func _notification(what):
     match what:
         NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED, NOTIFICATION_ENTER_WORLD, NOTIFICATION_EXIT_WORLD:
             _sync_track_state()
+            _request_track_update()
+        NOTIFICATION_LOCAL_TRANSFORM_CHANGED:
+            _request_track_update()
 
 func _ensure_curve():
     if not curve:
@@ -167,6 +194,9 @@ func _ensure_curve():
 func _get_track_server():
     return TrackRenderingServer if Engine.has_singleton("TrackRenderingServer") else null
 
+func _get_track_manager():
+    return TrackManager if Engine.has_singleton("TrackManager") else null
+
 func _ensure_track():
     if _track_id != 0:
         return
@@ -176,6 +206,14 @@ func _ensure_track():
     _track_id = server.create_track()
     _apply_track_settings()
 
+func _ensure_virtual_track():
+    if _virtual_track_rid != RID():
+        return
+    var manager = _get_track_manager()
+    if manager == null:
+        return
+    _virtual_track_rid = manager.add_path_track(PackedVector3Array(), track_id)
+
 func _free_track():
     if _track_id == 0:
         return
@@ -183,6 +221,15 @@ func _free_track():
     if server:
         server.free_track(_track_id)
     _track_id = 0
+
+func _free_virtual_track():
+    if _virtual_track_rid == RID():
+        return
+    var manager = _get_track_manager()
+    if manager != null:
+        manager.remove_track(_virtual_track_rid)
+    _virtual_track_rid = RID()
+    _notify_train_set_previews()
 
 func _apply_track_settings():
     var server = _get_track_server()
@@ -233,7 +280,8 @@ func _process(delta):
 
 func _update_track():
     var server = _get_track_server()
-    if not is_inside_tree() or _is_updating or not server or _track_id == 0: return
+    if not is_inside_tree() or _is_updating or not server or _track_id == 0:
+        return
     _is_updating = true
 
     if auto_smooth:
@@ -247,6 +295,8 @@ func _update_track():
     server.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])
     _update_rail_mesh(path_data["length"])
     _update_ballast_mesh(path_data["length"])
+    _sync_virtual_track()
+    _notify_train_set_previews()
 
     _is_updating = false
 
@@ -340,9 +390,63 @@ func _prepare_path_data() -> Dictionary:
         "length": length
     }
 
+func _sync_virtual_track():
+    var manager = _get_track_manager()
+    if manager == null or not is_inside_tree():
+        return
+
+    _ensure_virtual_track()
+    if _virtual_track_rid == RID():
+        return
+
+    var baked_points := curve.get_baked_points() if curve != null else PackedVector3Array()
+    var world_points := PackedVector3Array()
+
+    if baked_points.is_empty():
+        world_points.push_back(global_position)
+    else:
+        for point in baked_points:
+            world_points.push_back(to_global(point))
+
+    manager.modify_path_track(
+        _virtual_track_rid,
+        world_points,
+        track_id,
+        _resolve_connected_track_rid(previous_track),
+        _resolve_connected_track_rid(next_track)
+    )
+
+func _resolve_connected_track_rid(target_path: NodePath) -> RID:
+    if target_path.is_empty():
+        return RID()
+
+    var target = get_node_or_null(target_path)
+    if target == null:
+        return RID()
+
+    if target is MaszynaTrack3D:
+        return (target as MaszynaTrack3D).get_virtual_track_rid()
+
+    if target is MaszynaSwitch3D:
+        var resolved = (target as MaszynaSwitch3D).resolve_track(self)
+        if resolved != null:
+            return resolved.get_virtual_track_rid()
+
+    return RID()
+
+func _notify_train_set_previews() -> void:
+    if not is_inside_tree():
+        return
+
+    get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, &"train_set_3d_editor_preview", "_queue_editor_layout")
+
 func get_rail_instance_rid() -> RID:
     var server = _get_track_server()
     return server.get_rail_mesh_instance(_track_id) if server and _track_id != 0 else RID()
 
 func get_rail_top_vertical_offset() -> float:
     return sleeper_height + 0.16
+
+func get_virtual_track_rid() -> RID:
+    _ensure_virtual_track()
+    return _virtual_track_rid

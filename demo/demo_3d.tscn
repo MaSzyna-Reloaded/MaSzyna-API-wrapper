@@ -20,7 +20,6 @@
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
-[ext_resource type="Script" uid="uid://brwkvfoy75fiw" path="res://addons/libmaszyna/track_3d.gd" id="14_h4vb7"]
 [ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="15_rrc65"]
 [ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="16_hgm1p"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
@@ -308,12 +307,6 @@ sky_texture_offset = Vector2(0.49, 0.005)
 sky_texture_scale = Vector2(0.547, 0.865)
 sky_energy = 0.85
 
-[node name="DebugTrack" type="Node3D" parent="." unique_id=79258348]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -21.305199, 0, -12.701162)
-script = ExtResource("14_h4vb7")
-track_id = "debug"
-length = 10000000.0
-
 [node name="Player" parent="." unique_id=1342508122 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
 controlled_vehicle_path = NodePath("../SM42-907/SM42-907")
@@ -444,6 +437,7 @@ process_thread_group_order = 0
 process_thread_messages = 0
 curve = SubResource("Curve3D_esmlu")
 script = ExtResource("15_rrc65")
+track_id = "straight"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
@@ -466,6 +460,7 @@ metadata/_custom_type_script = "uid://bami2gx4l6pyl"
 [node name="MaszynaTrack3D2" type="Path3D" parent="." unique_id=1426965910]
 curve = SubResource("Curve3D_qg2pq")
 script = ExtResource("15_rrc65")
+track_id = "diverging"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
@@ -478,6 +473,7 @@ metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 [node name="MaszynaTrack3D3" type="Path3D" parent="." unique_id=1077451802]
 curve = SubResource("Curve3D_rrc65")
 script = ExtResource("15_rrc65")
+track_id = "approach"
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"

@@ -252,6 +252,37 @@ namespace godot {
         }
     }
 
+    bool TrainController::_resolve_track_state(
+            const double requested_offset, RID &resolved_track_rid, String &resolved_track_id, double &resolved_offset,
+            Vector3 *resolved_position, Vector3 *resolved_axis, Maszyna::TTrackShape *resolved_shape) const {
+        TrackManager *track_manager = TrackManager::get_instance();
+        if (track_manager == nullptr || current_track_rid == RID()) {
+            return false;
+        }
+
+        return track_manager->resolve_track_state(
+                current_track_rid, requested_offset, resolved_track_rid, resolved_track_id, resolved_offset,
+                resolved_position, resolved_axis, resolved_shape);
+    }
+
+    bool TrainController::_apply_resolved_track_state(
+            const RID &resolved_track_rid, const String &resolved_track_id, const double resolved_offset) {
+        if (resolved_track_rid == RID()) {
+            return false;
+        }
+
+        const bool track_changed = resolved_track_rid != current_track_rid || resolved_track_id != current_track_id;
+        current_track_offset = resolved_offset;
+
+        if (track_changed) {
+            assign_track_rid(resolved_track_rid, resolved_track_id);
+        } else if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
+            track_manager->register_vehicle(this, current_track_rid, current_track_id, current_track_offset);
+        }
+
+        return true;
+    }
+
     void TrainController::_process_mover(const double delta) {
         if (mover == nullptr) {
             return;
@@ -267,6 +298,27 @@ namespace godot {
             return;
         }
 
+        RID resolved_track_rid;
+        String resolved_track_id;
+        double resolved_track_offset = 0.0;
+        Vector3 world_position;
+        Maszyna::TTrackShape running_shape;
+        if (!_resolve_track_state(
+                    current_track_offset, resolved_track_rid, resolved_track_id, resolved_track_offset, &world_position,
+                    nullptr, &running_shape)) {
+            _movement_delta = 0.0;
+            _external_move_accumulator = 0.0;
+            _handle_mover_update();
+            return;
+        }
+
+        if (!_apply_resolved_track_state(resolved_track_rid, resolved_track_id, resolved_track_offset)) {
+            _movement_delta = 0.0;
+            _external_move_accumulator = 0.0;
+            _handle_mover_update();
+            return;
+        }
+
         const Ref<VirtualTrack> track = track_manager->get_track(current_track_rid);
         if (track.is_null()) {
             _movement_delta = 0.0;
@@ -275,15 +327,24 @@ namespace godot {
             return;
         }
 
-        const Vector3 world_position = track->get_world_position(current_track_offset);
         set_mover_location(world_position);
-        mover->RunningShape = track->get_shape();
+        mover->RunningShape = running_shape;
         mover->RunningTrack = track->get_track_param();
         _sync_mover_neighbours();
         mover->ComputeTotalForce(delta);
         _movement_delta = mover->ComputeMovement(
                 delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc, mover->Rot);
         _external_move_accumulator = 0.0;
+        RID next_track_rid;
+        String next_track_id;
+        double next_track_offset = 0.0;
+        Vector3 next_world_position;
+        if (_resolve_track_state(
+                    current_track_offset + _movement_delta, next_track_rid, next_track_id, next_track_offset,
+                    &next_world_position)) {
+            _apply_resolved_track_state(next_track_rid, next_track_id, next_track_offset);
+            set_mover_location(next_world_position);
+        }
         debug_tick_counter += 1;
         _handle_mover_update();
     }

@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/editor/user_settings_dock.gd" id="1_c24dg"]
 [ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/editor/user_settings_check_button.gd" id="2_2cs74"]
 [ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/editor/user_settings_dropdown.gd" id="3_hwkpe"]
+[ext_resource type="Script" uid="uid://dsysphlfnqhm" path="res://addons/libmaszyna/editor/user_settings_numeric.gd" id="4_numeric"]
 
 [node name="Maszyna Settings" type="PanelContainer" unique_id=1678337651]
 anchors_preset = 15
@@ -241,6 +242,110 @@ key = "anisotropic_filtering_level"
 [node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer10" unique_id=631822608]
 layout_mode = 2
 text = "Anisotropic filtering level"
+
+[node name="LabelMultiMonitor" type="Label" parent="VBoxContainer" unique_id=830455753]
+layout_mode = 2
+text = "Multi Monitor Settings"
+
+[node name="HBoxMode" type="HBoxContainer" parent="VBoxContainer" unique_id=1611371117]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxMode" unique_id=1668562301]
+layout_mode = 2
+text = "Mode (0: Off, 1: 2 Screens, 2: 3 Screens)"
+
+[node name="SpinBox" type="SpinBox" parent="VBoxContainer/HBoxMode" unique_id=117545305]
+layout_mode = 2
+max_value = 2.0
+value = 2.0
+script = ExtResource("4_numeric")
+section = "window"
+key = "multi_monitor_mode"
+
+[node name="HBoxRotation" type="HBoxContainer" parent="VBoxContainer" unique_id=1089496719]
+layout_mode = 2
+
+[node name="LabelRotL" type="Label" parent="VBoxContainer/HBoxRotation" unique_id=1621369721]
+layout_mode = 2
+text = "Rotation Left"
+
+[node name="SpinBoxRotL" type="SpinBox" parent="VBoxContainer/HBoxRotation" unique_id=1672907741]
+layout_mode = 2
+min_value = -360.0
+max_value = 360.0
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_rotation_left"
+
+[node name="LabelRotR" type="Label" parent="VBoxContainer/HBoxRotation" unique_id=733294976]
+layout_mode = 2
+text = "Rotation Right"
+
+[node name="SpinBoxRotR" type="SpinBox" parent="VBoxContainer/HBoxRotation" unique_id=648214065]
+layout_mode = 2
+min_value = -360.0
+max_value = 360.0
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_rotation_right"
+
+[node name="HBoxOffset" type="HBoxContainer" parent="VBoxContainer" unique_id=1237172646]
+layout_mode = 2
+
+[node name="LabelOffL" type="Label" parent="VBoxContainer/HBoxOffset" unique_id=2036809170]
+layout_mode = 2
+text = "Offset Left"
+
+[node name="SpinBoxOffL" type="SpinBox" parent="VBoxContainer/HBoxOffset" unique_id=729655493]
+layout_mode = 2
+min_value = -1000.0
+max_value = 1000.0
+step = 0.1
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_offset_left"
+
+[node name="LabelOffR" type="Label" parent="VBoxContainer/HBoxOffset" unique_id=1363556279]
+layout_mode = 2
+text = "Offset Right"
+
+[node name="SpinBoxOffR" type="SpinBox" parent="VBoxContainer/HBoxOffset" unique_id=396858379]
+layout_mode = 2
+min_value = -1000.0
+max_value = 1000.0
+step = 0.1
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_offset_right"
+
+[node name="HBoxTilt" type="HBoxContainer" parent="VBoxContainer" unique_id=1047807381]
+layout_mode = 2
+
+[node name="LabelTiltL" type="Label" parent="VBoxContainer/HBoxTilt" unique_id=1706646835]
+layout_mode = 2
+text = "Tilt Left"
+
+[node name="SpinBoxTiltL" type="SpinBox" parent="VBoxContainer/HBoxTilt" unique_id=861828296]
+layout_mode = 2
+min_value = -90.0
+max_value = 90.0
+step = 0.1
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_tilt_left"
+
+[node name="LabelTiltR" type="Label" parent="VBoxContainer/HBoxTilt" unique_id=836358378]
+layout_mode = 2
+text = "Tilt Right"
+
+[node name="SpinBoxTiltR" type="SpinBox" parent="VBoxContainer/HBoxTilt" unique_id=834709548]
+layout_mode = 2
+min_value = -90.0
+max_value = 90.0
+step = 0.1
+script = ExtResource("4_numeric")
+section = "window"
+key = "monitor_tilt_right"
 
 [node name="InfoMessageWindow" type="Window" parent="." unique_id=308881657]
 unique_name_in_owner = true

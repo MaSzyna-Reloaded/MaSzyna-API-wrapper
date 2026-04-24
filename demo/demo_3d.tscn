@@ -454,7 +454,6 @@ metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 [node name="MaszynaSwitch3D" type="Node3D" parent="." unique_id=364459163 node_paths=PackedStringArray("straight_track", "diverging_track", "common_track")]
 transform = Transform3D(-0.16263713, 0, -0.98668593, 0, 1, 0, 0.98668593, 0, -0.16263713, -18.468254, -0.04, 122.02463)
 script = ExtResource("16_hgm1p")
-state = 1
 straight_track = NodePath("../MaszynaTrack3D")
 diverging_track = NodePath("../MaszynaTrack3D2")
 common_track = NodePath("../MaszynaTrack3D3")

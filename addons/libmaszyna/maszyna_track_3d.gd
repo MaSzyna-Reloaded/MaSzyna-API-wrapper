@@ -51,6 +51,11 @@ class_name MaszynaTrack3D
             server.set_sleeper_height(_track_id, x)
         _request_track_update()
 
+@export var rail_height: float = 0.16:
+    set(x):
+        rail_height = x
+        _request_track_update()
+
 @export_group("Ballast")
 @export var ballast_enabled: bool = true:
     set(x):
@@ -445,7 +450,7 @@ func get_rail_instance_rid() -> RID:
     return server.get_rail_mesh_instance(_track_id) if server and _track_id != 0 else RID()
 
 func get_rail_top_vertical_offset() -> float:
-    return sleeper_height + 0.16
+    return ballast_height + sleeper_height + rail_height
 
 func get_virtual_track_rid() -> RID:
     _ensure_virtual_track()

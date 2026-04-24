@@ -581,10 +581,10 @@ namespace godot {
         const int steps = std::max(2, static_cast<int>(std::floor(p_length / p_curve_precision)));
 
         PackedVector2Array ballast_poly;
-        ballast_poly.push_back(Vector2(-1.25f, 0.0f));
-        ballast_poly.push_back(Vector2(1.25f, 0.0f));
-        ballast_poly.push_back(Vector2(2.0f, -state->ballast_height));
-        ballast_poly.push_back(Vector2(-2.0f, -state->ballast_height));
+        ballast_poly.push_back(Vector2(-1.25f, state->ballast_height));
+        ballast_poly.push_back(Vector2(1.25f, state->ballast_height));
+        ballast_poly.push_back(Vector2(2.0f, 0.0f));
+        ballast_poly.push_back(Vector2(-2.0f, 0.0f));
 
         PackedVector3Array vertices;
         PackedVector3Array normals;

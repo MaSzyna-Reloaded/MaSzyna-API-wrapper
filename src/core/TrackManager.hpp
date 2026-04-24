@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../maszyna/McZapkie/MOVER.h"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/ref_counted.hpp>
@@ -17,6 +16,22 @@
 namespace godot {
     class TrainController;
 
+    struct TrackGeometry {
+        double radius = 0.0;
+        double length = 0.0;
+        double track_height_delta = 0.0;
+        double rail_height_delta = 0.0;
+    };
+
+    struct TrackRuntimeProfile {
+        double width = 1.435;
+        double friction = 0.15;
+        int category_flags = 1;
+        int quality_flags = 20;
+        int damage_flags = 0;
+        double velocity_limit = 300.0;
+    };
+
     class VirtualTrack : public RefCounted {
             GDCLASS(VirtualTrack, RefCounted)
 
@@ -29,8 +44,8 @@ namespace godot {
             RID next_track_rid;
             std::vector<Vector3> sampled_points;
             std::vector<double> sampled_offsets;
-            Maszyna::TTrackShape shape;
-            Maszyna::TTrackParam track_param;
+            TrackGeometry shape;
+            TrackRuntimeProfile runtime_profile;
 
         protected:
             static void _bind_methods();
@@ -53,11 +68,12 @@ namespace godot {
             Vector3 get_world_position(double offset) const;
             bool sample_position(double offset, Vector3 &out_position) const;
             bool sample_axis(double offset, Vector3 &out_axis) const;
-            bool sample_shape(double offset, Maszyna::TTrackShape &out_shape) const;
+            bool sample_shape(double offset, TrackGeometry &out_shape) const;
             double clamp_offset(double offset) const;
+            void set_runtime_profile(const TrackRuntimeProfile &p_runtime_profile);
 
-            const Maszyna::TTrackShape &get_shape() const;
-            const Maszyna::TTrackParam &get_track_param() const;
+            const TrackGeometry &get_shape() const;
+            const TrackRuntimeProfile &get_runtime_profile() const;
     };
 
     class TrackManager : public Object {
@@ -70,18 +86,32 @@ namespace godot {
                 double offset = 0.0;
             };
 
+            struct TerminalTrackKey {
+                uint64_t source_track_id = 0;
+                bool from_end = false;
+
+                bool operator<(const TerminalTrackKey &other) const {
+                    if (source_track_id != other.source_track_id) {
+                        return source_track_id < other.source_track_id;
+                    }
+                    return from_end < other.from_end;
+                }
+            };
+
             mutable RID_Owner<Ref<VirtualTrack>> tracks;
             std::map<String, RID> named_tracks;
             std::map<TrainController *, VehiclePlacement> vehicle_placements;
+            mutable std::map<TerminalTrackKey, RID> terminal_tracks;
 
             bool _update_track_name_mapping(const RID &track_rid, const String &previous_track_id, const String &track_id);
             void _report_duplicate_track_name(const String &track_id, const RID &existing_rid, const RID &requested_rid) const;
             TrainController *find_nearest_vehicle(
                     TrainController *vehicle, bool ahead, double *distance = nullptr, int *other_end = nullptr) const;
+            RID get_or_create_terminal_track(const Ref<VirtualTrack> &source_track, bool from_end) const;
             bool resolve_track_position_internal(
                     const RID &track_rid, double offset, RID &resolved_track_rid, String &resolved_track_id,
                     double &resolved_offset, Vector3 *resolved_position = nullptr, Vector3 *resolved_axis = nullptr,
-                    Maszyna::TTrackShape *resolved_shape = nullptr) const;
+                    TrackGeometry *resolved_shape = nullptr) const;
 
         protected:
             static void _bind_methods();
@@ -112,7 +142,7 @@ namespace godot {
             bool resolve_track_state(
                     const RID &track_rid, double offset, RID &resolved_track_rid, String &resolved_track_id,
                     double &resolved_offset, Vector3 *resolved_position = nullptr, Vector3 *resolved_axis = nullptr,
-                    Maszyna::TTrackShape *resolved_shape = nullptr) const;
+                    TrackGeometry *resolved_shape = nullptr) const;
 
             void register_vehicle(TrainController *vehicle, const RID &track_rid, const String &track_id, double offset);
             void update_vehicle_offset(TrainController *vehicle, double offset);

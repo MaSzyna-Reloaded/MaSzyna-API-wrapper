@@ -10,6 +10,28 @@
 #include <memory>
 
 namespace godot {
+    namespace {
+        Maszyna::TTrackShape to_mover_track_shape(const TrackGeometry &shape) {
+            Maszyna::TTrackShape mover_shape;
+            mover_shape.R = shape.radius;
+            mover_shape.Len = shape.length;
+            mover_shape.dHtrack = shape.track_height_delta;
+            mover_shape.dHrail = shape.rail_height_delta;
+            return mover_shape;
+        }
+
+        Maszyna::TTrackParam to_mover_track_param(const TrackRuntimeProfile &profile) {
+            Maszyna::TTrackParam mover_track;
+            mover_track.Width = profile.width;
+            mover_track.friction = profile.friction;
+            mover_track.CategoryFlag = profile.category_flags;
+            mover_track.QualityFlag = profile.quality_flags;
+            mover_track.DamageFlag = profile.damage_flags;
+            mover_track.Velmax = profile.velocity_limit;
+            return mover_track;
+        }
+    } // namespace
+
     const char *TrainController::MOVER_CONFIG_CHANGED_SIGNAL = "mover_config_changed";
     const char *TrainController::MOVER_INITIALIZED_SIGNAL = "mover_initialized";
     const char *TrainController::CONFIG_CHANGED = "config_changed";
@@ -254,7 +276,7 @@ namespace godot {
 
     bool TrainController::_resolve_track_state(
             const double requested_offset, RID &resolved_track_rid, String &resolved_track_id, double &resolved_offset,
-            Vector3 *resolved_position, Vector3 *resolved_axis, Maszyna::TTrackShape *resolved_shape) const {
+            Vector3 *resolved_position, Vector3 *resolved_axis, TrackGeometry *resolved_shape) const {
         TrackManager *track_manager = TrackManager::get_instance();
         if (track_manager == nullptr || current_track_rid == RID()) {
             return false;
@@ -302,7 +324,7 @@ namespace godot {
         String resolved_track_id;
         double resolved_track_offset = 0.0;
         Vector3 world_position;
-        Maszyna::TTrackShape running_shape;
+        TrackGeometry running_shape;
         if (!_resolve_track_state(
                     current_track_offset, resolved_track_rid, resolved_track_id, resolved_track_offset, &world_position,
                     nullptr, &running_shape)) {
@@ -328,8 +350,8 @@ namespace godot {
         }
 
         set_mover_location(world_position);
-        mover->RunningShape = running_shape;
-        mover->RunningTrack = track->get_track_param();
+        mover->RunningShape = to_mover_track_shape(running_shape);
+        mover->RunningTrack = to_mover_track_param(track->get_runtime_profile());
         _sync_mover_neighbours();
         mover->ComputeTotalForce(delta);
         _movement_delta = mover->ComputeMovement(

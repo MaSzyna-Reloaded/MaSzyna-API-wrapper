@@ -564,7 +564,6 @@ func _physics_process(delta: float) -> void:
                         _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
                         _track_orientation_initialized = true
                     global_basis = (track_basis * _track_orientation_offset).orthonormalized()
-                _controller.set_mover_location(global_position)
             elif track_rid != RID() and not _invalid_velocity_reported:
                 _invalid_velocity_reported = true
                 push_error(

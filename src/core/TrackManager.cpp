@@ -9,6 +9,8 @@ namespace godot {
     namespace {
         constexpr double DEFAULT_TRACK_WIDTH = 1.435;
         constexpr int MAX_TRACK_TRANSITIONS = 64;
+        constexpr double DEFAULT_TRACK_FRICTION = 0.15;
+        constexpr int TERMINAL_TRACK_DAMAGE_FLAG = 128;
 
         double compute_radius(const Vector3 &p0, const Vector3 &p1, const Vector3 &p2) {
             const double a = p0.distance_to(p1);
@@ -94,17 +96,17 @@ namespace godot {
         start_point = sampled_points.front();
         length = sampled_offsets.back();
 
-        shape.R = 0.0;
-        shape.Len = length;
-        shape.dHtrack = 0.0;
-        shape.dHrail = 0.0;
+        shape.radius = 0.0;
+        shape.length = length;
+        shape.track_height_delta = 0.0;
+        shape.rail_height_delta = 0.0;
 
-        track_param.Width = p_track_width;
-        track_param.friction = Maszyna::Steel2Steel_friction;
-        track_param.CategoryFlag = 1;
-        track_param.QualityFlag = 20;
-        track_param.DamageFlag = 0;
-        track_param.Velmax = 300.0;
+        runtime_profile.width = p_track_width;
+        runtime_profile.friction = DEFAULT_TRACK_FRICTION;
+        runtime_profile.category_flags = 1;
+        runtime_profile.quality_flags = 20;
+        runtime_profile.damage_flags = 0;
+        runtime_profile.velocity_limit = 300.0;
     }
 
     RID VirtualTrack::get_rid() const { return track_rid; }
@@ -115,11 +117,7 @@ namespace godot {
     RID VirtualTrack::get_next_track_rid() const { return next_track_rid; }
 
     double VirtualTrack::clamp_offset(const double offset) const {
-        if (length <= 0.0) {
-            return 0.0;
-        }
-
-        return Math::clamp(offset, 0.0, length);
+        return offset;
     }
 
     bool VirtualTrack::sample_position(const double offset, Vector3 &out_position) const {
@@ -133,17 +131,21 @@ namespace godot {
             return true;
         }
 
-        const double clamped_offset = clamp_offset(offset);
-        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), clamped_offset);
+        if (offset <= sampled_offsets.front()) {
+            const Vector3 direction = (sampled_points[1] - sampled_points[0]).normalized();
+            out_position = sampled_points[0] + direction * static_cast<float>(offset - sampled_offsets.front());
+            return true;
+        }
+
+        if (offset >= sampled_offsets.back()) {
+            const int last_index = static_cast<int>(sampled_points.size()) - 1;
+            const Vector3 direction = (sampled_points[last_index] - sampled_points[last_index - 1]).normalized();
+            out_position = sampled_points[last_index] + direction * static_cast<float>(offset - sampled_offsets.back());
+            return true;
+        }
+
+        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), offset);
         const int upper_index = static_cast<int>(upper - sampled_offsets.begin());
-        if (upper == sampled_offsets.begin()) {
-            out_position = sampled_points.front();
-            return true;
-        }
-        if (upper == sampled_offsets.end()) {
-            out_position = sampled_points.back();
-            return true;
-        }
 
         const int lower_index = upper_index - 1;
         const double lower_offset = sampled_offsets[lower_index];
@@ -154,7 +156,7 @@ namespace godot {
             return true;
         }
 
-        const double weight = (clamped_offset - lower_offset) / segment_length;
+        const double weight = (offset - lower_offset) / segment_length;
         out_position = sampled_points[lower_index].lerp(sampled_points[upper_index], static_cast<float>(weight));
         return true;
     }
@@ -173,8 +175,24 @@ namespace godot {
             return true;
         }
 
-        const double clamped_offset = clamp_offset(offset);
-        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), clamped_offset);
+        if (offset <= sampled_offsets.front()) {
+            out_axis = (sampled_points[1] - sampled_points[0]).normalized();
+            if (out_axis.is_zero_approx()) {
+                out_axis = Vector3(0.0, 0.0, -1.0);
+            }
+            return true;
+        }
+
+        if (offset >= sampled_offsets.back()) {
+            const int last_index = static_cast<int>(sampled_points.size()) - 1;
+            out_axis = (sampled_points[last_index] - sampled_points[last_index - 1]).normalized();
+            if (out_axis.is_zero_approx()) {
+                out_axis = Vector3(0.0, 0.0, -1.0);
+            }
+            return true;
+        }
+
+        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), offset);
         int segment_index = static_cast<int>(upper - sampled_offsets.begin()) - 1;
         segment_index = std::clamp(segment_index, 0, static_cast<int>(sampled_points.size()) - 2);
 
@@ -185,23 +203,34 @@ namespace godot {
         return true;
     }
 
-    bool VirtualTrack::sample_shape(const double offset, Maszyna::TTrackShape &out_shape) const {
+    bool VirtualTrack::sample_shape(const double offset, TrackGeometry &out_shape) const {
         out_shape = shape;
         if (sampled_points.size() < 3) {
-            out_shape.R = 0.0;
+            out_shape.radius = 0.0;
             return false;
         }
 
-        const double clamped_offset = clamp_offset(offset);
-        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), clamped_offset);
+        if (offset <= sampled_offsets.front()) {
+            out_shape.radius = compute_radius(sampled_points[0], sampled_points[1], sampled_points[2]);
+            return true;
+        }
+
+        if (offset >= sampled_offsets.back()) {
+            const int last_index = static_cast<int>(sampled_points.size()) - 1;
+            out_shape.radius = compute_radius(
+                    sampled_points[last_index - 2], sampled_points[last_index - 1], sampled_points[last_index]);
+            return true;
+        }
+
+        const auto upper = std::lower_bound(sampled_offsets.begin(), sampled_offsets.end(), offset);
         int center_index = static_cast<int>(upper - sampled_offsets.begin());
         center_index = std::clamp(center_index, 1, static_cast<int>(sampled_points.size()) - 2);
 
-        out_shape.R = compute_radius(
+        out_shape.radius = compute_radius(
                 sampled_points[center_index - 1], sampled_points[center_index], sampled_points[center_index + 1]);
-        out_shape.Len = length;
-        out_shape.dHtrack = 0.0;
-        out_shape.dHrail = 0.0;
+        out_shape.length = length;
+        out_shape.track_height_delta = 0.0;
+        out_shape.rail_height_delta = 0.0;
         return true;
     }
 
@@ -217,8 +246,12 @@ namespace godot {
         return position;
     }
 
-    const Maszyna::TTrackShape &VirtualTrack::get_shape() const { return shape; }
-    const Maszyna::TTrackParam &VirtualTrack::get_track_param() const { return track_param; }
+    void VirtualTrack::set_runtime_profile(const TrackRuntimeProfile &p_runtime_profile) {
+        runtime_profile = p_runtime_profile;
+    }
+
+    const TrackGeometry &VirtualTrack::get_shape() const { return shape; }
+    const TrackRuntimeProfile &VirtualTrack::get_runtime_profile() const { return runtime_profile; }
 
     TrackManager::TrackManager() {
         tracks.set_description("VirtualTrack");
@@ -371,6 +404,16 @@ namespace godot {
             }
         }
 
+        for (auto it = terminal_tracks.begin(); it != terminal_tracks.end();) {
+            if (it->first.source_track_id != track_rid.get_id()) {
+                ++it;
+                continue;
+            }
+
+            tracks.free(it->second);
+            it = terminal_tracks.erase(it);
+        }
+
         tracks.free(track_rid);
     }
 
@@ -398,7 +441,7 @@ namespace godot {
 
     bool TrackManager::resolve_track_position_internal(
             const RID &track_rid, double offset, RID &resolved_track_rid, String &resolved_track_id, double &resolved_offset,
-            Vector3 *resolved_position, Vector3 *resolved_axis, Maszyna::TTrackShape *resolved_shape) const {
+            Vector3 *resolved_position, Vector3 *resolved_axis, TrackGeometry *resolved_shape) const {
         Ref<VirtualTrack> track = get_track(track_rid);
         if (track.is_null()) {
             return false;
@@ -422,6 +465,19 @@ namespace godot {
                 continue;
             }
 
+            if (resolved_offset < 0.0) {
+                Ref<VirtualTrack> terminal_track = get_track(get_or_create_terminal_track(track, false));
+                if (terminal_track.is_null()) {
+                    break;
+                }
+
+                resolved_offset = -resolved_offset;
+                track = terminal_track;
+                resolved_track_rid = track->get_rid();
+                resolved_track_id = track->get_track_id();
+                continue;
+            }
+
             if (resolved_offset > track_length && track->get_next_track_rid() != RID()) {
                 Ref<VirtualTrack> next_track = get_track(track->get_next_track_rid());
                 if (next_track.is_null()) {
@@ -434,7 +490,19 @@ namespace godot {
                 continue;
             }
 
-            resolved_offset = track->clamp_offset(resolved_offset);
+            if (resolved_offset > track_length) {
+                Ref<VirtualTrack> terminal_track = get_track(get_or_create_terminal_track(track, true));
+                if (terminal_track.is_null()) {
+                    break;
+                }
+
+                resolved_offset -= track_length;
+                track = terminal_track;
+                resolved_track_rid = track->get_rid();
+                resolved_track_id = track->get_track_id();
+                continue;
+            }
+
             if (resolved_position != nullptr) {
                 track->sample_position(resolved_offset, *resolved_position);
             }
@@ -447,7 +515,6 @@ namespace godot {
             return true;
         }
 
-        resolved_offset = track->clamp_offset(resolved_offset);
         if (resolved_position != nullptr) {
             track->sample_position(resolved_offset, *resolved_position);
         }
@@ -509,8 +576,7 @@ namespace godot {
 
     bool TrackManager::resolve_track_state(
             const RID &track_rid, const double offset, RID &resolved_track_rid, String &resolved_track_id,
-            double &resolved_offset, Vector3 *resolved_position, Vector3 *resolved_axis,
-            Maszyna::TTrackShape *resolved_shape) const {
+            double &resolved_offset, Vector3 *resolved_position, Vector3 *resolved_axis, TrackGeometry *resolved_shape) const {
         return resolve_track_position_internal(
                 track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, resolved_position,
                 resolved_axis, resolved_shape);
@@ -621,6 +687,46 @@ namespace godot {
         }
 
         return nearest;
+    }
+
+    RID TrackManager::get_or_create_terminal_track(const Ref<VirtualTrack> &source_track, const bool from_end) const {
+        if (source_track.is_null()) {
+            return RID();
+        }
+
+        const TerminalTrackKey key{static_cast<uint64_t>(source_track->get_rid().get_id()), from_end};
+        const auto existing = terminal_tracks.find(key);
+        if (existing != terminal_tracks.end()) {
+            return existing->second;
+        }
+
+        Ref<VirtualTrack> terminal_track;
+        terminal_track.instantiate();
+
+        const RID terminal_track_rid = tracks.make_rid(terminal_track);
+        const Vector3 anchor = source_track->get_world_position(from_end ? source_track->get_length() : 0.0);
+        Vector3 direction = source_track->get_axis(from_end ? source_track->get_length() : 0.0);
+        if (!from_end) {
+            direction = -direction;
+        }
+        if (direction.is_zero_approx()) {
+            direction = Vector3(0.0, 0.0, -1.0);
+        }
+
+        PackedVector3Array terminal_points;
+        terminal_points.push_back(anchor);
+        terminal_points.push_back(anchor + direction.normalized() * 450.0);
+
+        TrackRuntimeProfile terminal_profile = source_track->get_runtime_profile();
+        terminal_profile.damage_flags |= TERMINAL_TRACK_DAMAGE_FLAG;
+        terminal_profile.velocity_limit = 0.0;
+
+        // Keep end-of-track handling inside the track layer by switching to a dedicated terminal segment.
+        terminal_track->configure_path(terminal_track_rid, "", terminal_points, terminal_profile.width);
+        terminal_track->set_runtime_profile(terminal_profile);
+
+        terminal_tracks[key] = terminal_track_rid;
+        return terminal_track_rid;
     }
 
     TrainController *TrackManager::get_nearest_vehicle_ahead(

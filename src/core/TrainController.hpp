@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../maszyna/McZapkie/MOVER.h"
+#include "TrackManager.hpp"
 #include "TrainCommand.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
@@ -71,7 +72,7 @@ namespace godot {
             bool _resolve_track_state(
                     double requested_offset, RID &resolved_track_rid, String &resolved_track_id, double &resolved_offset,
                     Vector3 *resolved_position = nullptr, Vector3 *resolved_axis = nullptr,
-                    Maszyna::TTrackShape *resolved_shape = nullptr) const;
+                    TrackGeometry *resolved_shape = nullptr) const;
             bool _apply_resolved_track_state(
                     const RID &resolved_track_rid, const String &resolved_track_id, double resolved_offset);
             void sync_mover_coupling(TrainController *other_vehicle, Side self_side, Side other_side, bool attach);

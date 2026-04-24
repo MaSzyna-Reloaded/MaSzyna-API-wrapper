@@ -319,7 +319,7 @@ transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 
 controlled_vehicle_path = NodePath("../SM42-907/SM42-907")
 
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.069304, -5.63989)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)
 material_override = ExtResource("2_imrpy")
 use_collision = true
 size = Vector3(5000, 0.1, 5000)

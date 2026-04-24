@@ -1,9 +1,9 @@
 #include "TrackManager.hpp"
 #include "TrainController.hpp"
-#include <godot_cpp/core/math.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <algorithm>
 #include <cmath>
+#include <godot_cpp/core/math.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     namespace {
@@ -47,10 +47,17 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_axis", "offset"), &VirtualTrack::get_axis, DEFVAL(0.0));
         ClassDB::bind_method(D_METHOD("get_world_position", "offset"), &VirtualTrack::get_world_position);
 
-        ADD_PROPERTY(PropertyInfo(Variant::RID, "rid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_rid");
-        ADD_PROPERTY(PropertyInfo(Variant::STRING, "track_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_track_id");
-        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "length", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_length");
-        ADD_PROPERTY(PropertyInfo(Variant::VECTOR3, "start_point", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_start_point");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::RID, "rid", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "", "get_rid");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::STRING, "track_id", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
+                "get_track_id");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "length", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
+                "get_length");
+        ADD_PROPERTY(
+                PropertyInfo(Variant::VECTOR3, "start_point", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
+                "get_start_point");
     }
 
     void VirtualTrack::configure(
@@ -98,6 +105,7 @@ namespace godot {
 
         shape.radius = 0.0;
         shape.length = length;
+        // spadek/wzrost miedzy krancami toru
         shape.track_height_delta = 0.0;
         shape.rail_height_delta = 0.0;
 
@@ -109,12 +117,24 @@ namespace godot {
         runtime_profile.velocity_limit = 300.0;
     }
 
-    RID VirtualTrack::get_rid() const { return track_rid; }
-    String VirtualTrack::get_track_id() const { return track_id; }
-    double VirtualTrack::get_length() const { return length; }
-    Vector3 VirtualTrack::get_start_point() const { return start_point; }
-    RID VirtualTrack::get_previous_track_rid() const { return previous_track_rid; }
-    RID VirtualTrack::get_next_track_rid() const { return next_track_rid; }
+    RID VirtualTrack::get_rid() const {
+        return track_rid;
+    }
+    String VirtualTrack::get_track_id() const {
+        return track_id;
+    }
+    double VirtualTrack::get_length() const {
+        return length;
+    }
+    Vector3 VirtualTrack::get_start_point() const {
+        return start_point;
+    }
+    RID VirtualTrack::get_previous_track_rid() const {
+        return previous_track_rid;
+    }
+    RID VirtualTrack::get_next_track_rid() const {
+        return next_track_rid;
+    }
 
     double VirtualTrack::clamp_offset(const double offset) const {
         return offset;
@@ -229,6 +249,7 @@ namespace godot {
         out_shape.radius = compute_radius(
                 sampled_points[center_index - 1], sampled_points[center_index], sampled_points[center_index + 1]);
         out_shape.length = length;
+        // spadek/wzrost miedzy krancami toru
         out_shape.track_height_delta = 0.0;
         out_shape.rail_height_delta = 0.0;
         return true;
@@ -255,8 +276,12 @@ namespace godot {
         shape.rail_height_delta = p_rail_height_delta;
     }
 
-    const TrackGeometry &VirtualTrack::get_shape() const { return shape; }
-    const TrackRuntimeProfile &VirtualTrack::get_runtime_profile() const { return runtime_profile; }
+    const TrackGeometry &VirtualTrack::get_shape() const {
+        return shape;
+    }
+    const TrackRuntimeProfile &VirtualTrack::get_runtime_profile() const {
+        return runtime_profile;
+    }
 
     TrackManager::TrackManager() {
         tracks.set_description("VirtualTrack");
@@ -264,12 +289,15 @@ namespace godot {
 
     void TrackManager::_bind_methods() {
         ClassDB::bind_method(D_METHOD("add_track", "length", "start_point", "track_id"), &TrackManager::add_track);
-        ClassDB::bind_method(D_METHOD("modify_track", "track_rid", "length", "start_point", "track_id"), &TrackManager::modify_track);
+        ClassDB::bind_method(
+                D_METHOD("modify_track", "track_rid", "length", "start_point", "track_id"),
+                &TrackManager::modify_track);
         ClassDB::bind_method(
                 D_METHOD("add_path_track", "points", "track_id", "previous_track_rid", "next_track_rid"),
                 &TrackManager::add_path_track, DEFVAL(""), DEFVAL(RID()), DEFVAL(RID()));
         ClassDB::bind_method(
-                D_METHOD("modify_path_track", "track_rid", "points", "track_id", "previous_track_rid", "next_track_rid"),
+                D_METHOD(
+                        "modify_path_track", "track_rid", "points", "track_id", "previous_track_rid", "next_track_rid"),
                 &TrackManager::modify_path_track, DEFVAL(""), DEFVAL(RID()), DEFVAL(RID()));
         ClassDB::bind_method(D_METHOD("remove_track", "track_rid"), &TrackManager::remove_track);
         ClassDB::bind_method(D_METHOD("has_track", "track_id"), &TrackManager::has_track);
@@ -277,17 +305,23 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_track_by_name", "track_id"), &TrackManager::get_track_by_name);
         ClassDB::bind_method(D_METHOD("get_track_position", "track_rid", "offset"), &TrackManager::get_track_position);
         ClassDB::bind_method(D_METHOD("get_track_axis", "track_rid", "offset"), &TrackManager::get_track_axis);
-        ClassDB::bind_method(D_METHOD("resolve_track_position", "track_rid", "offset"), &TrackManager::resolve_track_position);
-        ClassDB::bind_method(D_METHOD("register_vehicle", "vehicle", "track_rid", "track_id", "offset"), &TrackManager::register_vehicle);
-        ClassDB::bind_method(D_METHOD("update_vehicle_offset", "vehicle", "offset"), &TrackManager::update_vehicle_offset);
-        ClassDB::bind_method(D_METHOD("set_track_heights", "track_rid", "track_height_delta", "rail_height_delta"), &TrackManager::set_track_heights);
+        ClassDB::bind_method(
+                D_METHOD("resolve_track_position", "track_rid", "offset"), &TrackManager::resolve_track_position);
+        ClassDB::bind_method(
+                D_METHOD("register_vehicle", "vehicle", "track_rid", "track_id", "offset"),
+                &TrackManager::register_vehicle);
+        ClassDB::bind_method(
+                D_METHOD("update_vehicle_offset", "vehicle", "offset"), &TrackManager::update_vehicle_offset);
+        ClassDB::bind_method(
+                D_METHOD("set_track_heights", "track_rid", "track_height_delta", "rail_height_delta"),
+                &TrackManager::set_track_heights);
         ClassDB::bind_method(D_METHOD("remove_vehicle", "vehicle"), &TrackManager::remove_vehicle);
     }
 
     TrackManager::~TrackManager() {
         List<RID> owned_tracks;
         tracks.get_owned_list(&owned_tracks);
-        for (const RID &track_rid : owned_tracks) {
+        for (const RID &track_rid: owned_tracks) {
             tracks.free(track_rid);
         }
 
@@ -326,8 +360,8 @@ namespace godot {
     void TrackManager::_report_duplicate_track_name(
             const String &track_id, const RID &existing_rid, const RID &requested_rid) const {
         const String message = "TrackManager: duplicate track_id '" + track_id + "' for RID " +
-                String::num_uint64(requested_rid.get_id()) + ". Existing mapping keeps RID " +
-                String::num_uint64(existing_rid.get_id()) + ".";
+                               String::num_uint64(requested_rid.get_id()) + ". Existing mapping keeps RID " +
+                               String::num_uint64(existing_rid.get_id()) + ".";
         UtilityFunctions::push_warning(message);
         UtilityFunctions::push_error(message);
     }
@@ -446,8 +480,9 @@ namespace godot {
     }
 
     bool TrackManager::resolve_track_position_internal(
-            const RID &track_rid, double offset, RID &resolved_track_rid, String &resolved_track_id, double &resolved_offset,
-            Vector3 *resolved_position, Vector3 *resolved_axis, TrackGeometry *resolved_shape) const {
+            const RID &track_rid, double offset, RID &resolved_track_rid, String &resolved_track_id,
+            double &resolved_offset, Vector3 *resolved_position, Vector3 *resolved_axis,
+            TrackGeometry *resolved_shape) const {
         Ref<VirtualTrack> track = get_track(track_rid);
         if (track.is_null()) {
             return false;
@@ -554,7 +589,8 @@ namespace godot {
         double resolved_offset = 0.0;
         Vector3 resolved_axis;
         if (!resolve_track_position_internal(
-                    track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, nullptr, &resolved_axis)) {
+                    track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, nullptr,
+                    &resolved_axis)) {
             return Vector3(0.0, 0.0, -1.0);
         }
 
@@ -570,7 +606,8 @@ namespace godot {
         Vector3 resolved_axis;
         TrackGeometry resolved_shape;
         const bool valid = resolve_track_position_internal(
-                track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, &resolved_position, &resolved_axis, &resolved_shape);
+                track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, &resolved_position,
+                &resolved_axis, &resolved_shape);
 
         resolved["valid"] = valid;
         resolved["track_rid"] = resolved_track_rid;
@@ -584,7 +621,8 @@ namespace godot {
 
     bool TrackManager::resolve_track_state(
             const RID &track_rid, const double offset, RID &resolved_track_rid, String &resolved_track_id,
-            double &resolved_offset, Vector3 *resolved_position, Vector3 *resolved_axis, TrackGeometry *resolved_shape) const {
+            double &resolved_offset, Vector3 *resolved_position, Vector3 *resolved_axis,
+            TrackGeometry *resolved_shape) const {
         return resolve_track_position_internal(
                 track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, resolved_position,
                 resolved_axis, resolved_shape);
@@ -598,7 +636,8 @@ namespace godot {
 
         if (get_track(track_rid).is_null()) {
             UtilityFunctions::push_warning(
-                    "TrackManager::register_vehicle(): unknown track RID " + String::num_uint64(track_rid.get_id()) + ".");
+                    "TrackManager::register_vehicle(): unknown track RID " + String::num_uint64(track_rid.get_id()) +
+                    ".");
             return;
         }
 
@@ -618,7 +657,8 @@ namespace godot {
         it->second.offset = offset;
     }
 
-    void TrackManager::set_track_heights(const RID &track_rid, const double track_height_delta, const double rail_height_delta) {
+    void TrackManager::set_track_heights(
+            const RID &track_rid, const double track_height_delta, const double rail_height_delta) {
         Ref<VirtualTrack> track = get_track(track_rid);
         if (track.is_valid()) {
             track->set_heights(track_height_delta, rail_height_delta);
@@ -674,7 +714,7 @@ namespace godot {
         TrainController *nearest = nullptr;
         double nearest_distance = 0.0;
 
-        for (const auto &[other_vehicle, placement] : vehicle_placements) {
+        for (const auto &[other_vehicle, placement]: vehicle_placements) {
             if (other_vehicle == vehicle || placement.track_rid != vehicle_it->second.track_rid) {
                 continue;
             }
@@ -744,13 +784,13 @@ namespace godot {
         return terminal_track_rid;
     }
 
-    TrainController *TrackManager::get_nearest_vehicle_ahead(
-            TrainController *vehicle, double *distance, int *other_end) const {
+    TrainController *
+    TrackManager::get_nearest_vehicle_ahead(TrainController *vehicle, double *distance, int *other_end) const {
         return find_nearest_vehicle(vehicle, true, distance, other_end);
     }
 
-    TrainController *TrackManager::get_nearest_vehicle_behind(
-            TrainController *vehicle, double *distance, int *other_end) const {
+    TrainController *
+    TrackManager::get_nearest_vehicle_behind(TrainController *vehicle, double *distance, int *other_end) const {
         return find_nearest_vehicle(vehicle, false, distance, other_end);
     }
 } // namespace godot

@@ -18,7 +18,7 @@ func _do_update():
         controller = get_node(train_controller)
     _propagate_train_controller(self, controller)
     
-func _propagate_train_controller(p_node: Node, p_controller: TrainController):
+func _propagate_train_controller(p_node: Node, p_controller: RailVehicle3D):
     for child in p_node.get_children():
         _propagate_train_controller(child, p_controller)
         if "controller" in child:

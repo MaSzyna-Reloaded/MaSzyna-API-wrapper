@@ -9,6 +9,10 @@ size = Vector3(2.9624023, 3.1671143, 13.969009)
 [node name="401W" type="Node3D" unique_id=149723671]
 script = ExtResource("1_so3po")
 controller_path = NodePath("401WController")
+front_bogie_path = NodePath("401W/main/bogie1")
+rear_bogie_path = NodePath("401W/main/bogie2")
+front_rolling_wheel_paths = Array[NodePath]([NodePath("401W/main/bogie1/wheel01"), NodePath("401W/main/bogie1/wheel02")])
+rear_rolling_wheel_paths = Array[NodePath]([NodePath("401W/main/bogie2/wheel03"), NodePath("401W/main/bogie2/wheel04")])
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="401W" type="E3DModelInstance" parent="." unique_id=782060243]

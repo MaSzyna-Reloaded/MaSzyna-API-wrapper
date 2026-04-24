@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="LegacyBufferCouplerModule" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="allowed_flag" type="int" setter="set_allowed_flag" getter="get_allowed_flag" default="0">
+		</member>
+		<member name="automatic_flag" type="int" setter="set_automatic_flag" getter="get_automatic_flag" default="0">
+		</member>
+		<member name="buffer/max_compression_tolerance" type="float" setter="set_buffer_max_compression_tolerance" getter="get_buffer_max_compression_tolerance" default="0.1">
+		</member>
+		<member name="buffer/max_tension_tolerance" type="float" setter="set_buffer_max_tension_tolerance" getter="get_buffer_max_tension_tolerance" default="1000.0">
+		</member>
+		<member name="buffer/stiffness_k" type="float" setter="set_buffer_stiffness_k" getter="get_buffer_stiffness_k" default="1.0">
+		</member>
+		<member name="buffer_location" type="int" setter="set_buffer_location" getter="get_buffer_location" enum="LegacyBufferCouplerModule.BufferLocation" default="0">
+		</member>
+		<member name="control_type" type="String" setter="set_control_type" getter="get_control_type" default="&quot;&quot;">
+		</member>
+		<member name="coupler/max_compression_tolerance" type="float" setter="set_coupler_max_compression_tolerance" getter="get_coupler_max_compression_tolerance" default="0.1">
+		</member>
+		<member name="coupler/max_tension_tolerance" type="float" setter="set_coupler_max_tension_tolerance" getter="get_coupler_max_tension_tolerance" default="1000.0">
+		</member>
+		<member name="coupler/stiffness_k" type="float" setter="set_coupler_stiffness_k" getter="get_coupler_stiffness_k" default="1.0">
+		</member>
+		<member name="coupler/type" type="int" setter="set_coupler_type" getter="get_coupler_type" enum="LegacyBufferCouplerModule.CouplerType" default="0">
+		</member>
+		<member name="damping_beta" type="float" setter="set_damping_beta" getter="get_damping_beta" default="0.0">
+		</member>
+		<member name="power_coupling" type="int" setter="set_power_coupling" getter="get_power_coupling" default="128">
+		</member>
+		<member name="power_flag" type="int" setter="set_power_flag" getter="get_power_flag" default="0">
+		</member>
+	</members>
+	<constants>
+		<constant name="COUPLER_TYPE_AUTOMATIC" value="0" enum="CouplerType">
+		</constant>
+		<constant name="COUPLER_TYPE_SCREW" value="1" enum="CouplerType">
+		</constant>
+		<constant name="COUPLER_TYPE_CHAIN" value="2" enum="CouplerType">
+		</constant>
+		<constant name="COUPLER_TYPE_BARE" value="3" enum="CouplerType">
+		</constant>
+		<constant name="COUPLER_TYPE_ARTICULATED" value="4" enum="CouplerType">
+		</constant>
+		<constant name="ALLOWED_MECHANICAL" value="1" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_BRAKE_PIPE" value="2" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_MULTIPLE_CONTROL" value="4" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_HIGH_VOLTAGE" value="8" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_PASSAGE" value="16" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_AIR_8_BAR" value="32" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_HEATING" value="64" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_FIXED_COUPLING_LOCK" value="128" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_ELEC_24V" value="256" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_ELEC_110V" value="512" enum="AllowedFlagBits">
+		</constant>
+		<constant name="ALLOWED_ELEC_3x400V" value="1024" enum="AllowedFlagBits">
+		</constant>
+		<constant name="POWER_24V" value="256" enum="PowerFlagBits">
+		</constant>
+		<constant name="POWER_110V" value="512" enum="PowerFlagBits">
+		</constant>
+		<constant name="POWER_3x400V" value="1024" enum="PowerFlagBits">
+		</constant>
+		<constant name="BUFFER_LOCATION_FRONT" value="0" enum="BufferLocation">
+		</constant>
+		<constant name="BUFFER_LOCATION_BACK" value="1" enum="BufferLocation">
+		</constant>
+		<constant name="BUFFER_LOCATION_BOTH" value="2" enum="BufferLocation">
+		</constant>
+	</constants>
+</class>

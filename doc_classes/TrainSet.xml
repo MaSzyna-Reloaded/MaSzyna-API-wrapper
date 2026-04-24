@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainSet" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="attach_to_head">
+			<return type="void" />
+			<param index="0" name="vehicle" type="TrainController" />
+			<param index="1" name="side" type="int" enum="TrainController.Side" />
+			<description>
+			</description>
+		</method>
+		<method name="attach_to_tail">
+			<return type="void" />
+			<param index="0" name="vehicle" type="TrainController" />
+			<param index="1" name="side" type="int" enum="TrainController.Side" />
+			<description>
+			</description>
+		</method>
+		<method name="get_by_index">
+			<return type="TrainController" />
+			<param index="0" name="index" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_head" qualifiers="const">
+			<return type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="get_tail" qualifiers="const">
+			<return type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="to_array" qualifiers="const">
+			<return type="Array" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

@@ -26,6 +26,31 @@ class_name RailVehicle3D
                 _resolve_controller()
                 _register_train()
 
+@export_node_path("Node3D") var front_bogie_path: NodePath = NodePath(""):
+    set(x):
+        front_bogie_path = x
+        _dirty = true
+
+@export_node_path("Node3D") var rear_bogie_path: NodePath = NodePath(""):
+    set(x):
+        rear_bogie_path = x
+        _dirty = true
+
+@export var front_rolling_wheel_paths: Array[NodePath] = []:
+    set(x):
+        front_rolling_wheel_paths = x
+        _dirty = true
+
+@export var powered_wheel_paths: Array[NodePath] = []:
+    set(x):
+        powered_wheel_paths = x
+        _dirty = true
+
+@export var rear_rolling_wheel_paths: Array[NodePath] = []:
+    set(x):
+        rear_rolling_wheel_paths = x
+        _dirty = true
+
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
@@ -79,6 +104,15 @@ var _track_orientation_initialized: bool = false
 var _track_orientation_offset: Basis = Basis.IDENTITY
 var _runtime_physics_impact_origin: Vector3 = Vector3.INF
 var _runtime_physics_relative_speed_kmh: float = 0.0
+var _front_bogie_node: Node3D
+var _rear_bogie_node: Node3D
+var _front_rolling_wheel_nodes: Array[Node3D] = []
+var _powered_wheel_nodes: Array[Node3D] = []
+var _rear_rolling_wheel_nodes: Array[Node3D] = []
+var _node_rest_bases: Dictionary = {}
+var _bogie_rest_offsets: Dictionary = {}
+var _bogie_rest_global_bases: Dictionary = {}
+var _bogie_configuration_warned: bool = false
 
 var state: Dictionary:
     get:
@@ -522,15 +556,147 @@ func _compute_track_basis(track_axis: Vector3) -> Basis:
     return Basis(right, up, -forward).orthonormalized()
 
 
+func _resolve_animation_nodes(paths: Array[NodePath]) -> Array[Node3D]:
+    var nodes: Array[Node3D] = []
+    for path: NodePath in paths:
+        if path.is_empty():
+            continue
+        var node: Node3D = get_node_or_null(path) as Node3D
+        if node != null:
+            nodes.append(node)
+    return nodes
+
+
+func _capture_rest_basis(node: Node3D) -> void:
+    if node == null:
+        return
+    if not _node_rest_bases.has(node):
+        _node_rest_bases[node] = node.transform.basis.orthonormalized()
+
+
+func _cache_animation_bindings() -> void:
+    _front_bogie_node = get_node_or_null(front_bogie_path) as Node3D
+    _rear_bogie_node = get_node_or_null(rear_bogie_path) as Node3D
+    _front_rolling_wheel_nodes = _resolve_animation_nodes(front_rolling_wheel_paths)
+    _powered_wheel_nodes = _resolve_animation_nodes(powered_wheel_paths)
+    _rear_rolling_wheel_nodes = _resolve_animation_nodes(rear_rolling_wheel_paths)
+    _track_orientation_initialized = false
+
+    _node_rest_bases.clear()
+    _bogie_rest_offsets.clear()
+    _bogie_rest_global_bases.clear()
+
+    if _front_bogie_node != null:
+        _capture_rest_basis(_front_bogie_node)
+        _bogie_rest_offsets[_front_bogie_node] = to_local(_front_bogie_node.global_position)
+        _bogie_rest_global_bases[_front_bogie_node] = global_basis.inverse() * _front_bogie_node.global_basis
+
+    if _rear_bogie_node != null:
+        _capture_rest_basis(_rear_bogie_node)
+        _bogie_rest_offsets[_rear_bogie_node] = to_local(_rear_bogie_node.global_position)
+        _bogie_rest_global_bases[_rear_bogie_node] = global_basis.inverse() * _rear_bogie_node.global_basis
+
+    for wheel_node: Node3D in _front_rolling_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+    for wheel_node: Node3D in _powered_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+    for wheel_node: Node3D in _rear_rolling_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+
+
+func _apply_wheel_rotation(nodes: Array[Node3D], angle_deg: float) -> void:
+    var angle_rad: float = -deg_to_rad(angle_deg)
+    for node: Node3D in nodes:
+        if node == null:
+            continue
+        var rest_basis: Variant = _node_rest_bases.get(node)
+        if rest_basis is Basis:
+            node.transform.basis = (rest_basis as Basis) * Basis(Vector3.RIGHT, angle_rad)
+
+
+func _update_wheel_animation_state() -> void:
+    if _controller == null:
+        return
+
+    _apply_wheel_rotation(_front_rolling_wheel_nodes, float(_controller.state.get("wheel_angle_front_deg", 0.0)))
+    _apply_wheel_rotation(_powered_wheel_nodes, float(_controller.state.get("wheel_angle_powered_deg", 0.0)))
+    _apply_wheel_rotation(_rear_rolling_wheel_nodes, float(_controller.state.get("wheel_angle_rear_deg", 0.0)))
+
+
+func _update_bogie_transforms(track_rid: RID, track_offset: float) -> bool:
+    if _front_bogie_node == null and _rear_bogie_node == null:
+        return false
+
+    if _front_bogie_node == null or _rear_bogie_node == null:
+        if not _bogie_configuration_warned:
+            _bogie_configuration_warned = true
+            push_warning(
+                "RailVehicle3D '%s': both front_bogie_path and rear_bogie_path must be set together." % name
+            )
+        return false
+
+    _bogie_configuration_warned = false
+
+    var front_bogie: Node3D = _front_bogie_node
+    var rear_bogie: Node3D = _rear_bogie_node
+    if front_bogie == null or rear_bogie == null:
+        return false
+
+    var front_rest_offset: Variant = _bogie_rest_offsets.get(front_bogie)
+    var rear_rest_offset: Variant = _bogie_rest_offsets.get(rear_bogie)
+    if not (front_rest_offset is Vector3 and rear_rest_offset is Vector3):
+        return false
+
+    var front_offset: float = track_offset - (front_rest_offset as Vector3).z
+    var rear_offset: float = track_offset - (rear_rest_offset as Vector3).z
+    var front_position: Vector3 = TrackManager.get_track_position(track_rid, front_offset)
+    var rear_position: Vector3 = TrackManager.get_track_position(track_rid, rear_offset)
+    var front_axis: Vector3 = TrackManager.get_track_axis(track_rid, front_offset)
+    var rear_axis: Vector3 = TrackManager.get_track_axis(track_rid, rear_offset)
+
+    var body_forward: Vector3 = front_position - rear_position
+    if body_forward.is_zero_approx():
+        return false
+    body_forward = body_forward.normalized()
+
+    global_position = (front_position + rear_position) * 0.5
+    var body_basis: Basis = _compute_track_basis(body_forward)
+    if not _track_orientation_initialized:
+        _track_orientation_offset = body_basis.inverse() * global_basis.orthonormalized()
+        _track_orientation_initialized = true
+    global_basis = (body_basis * _track_orientation_offset).orthonormalized()
+
+    var body_yaw: float = atan2(-body_forward.x, body_forward.z)
+    var bogie_nodes: Array[Node3D] = [front_bogie, rear_bogie]
+    var bogie_axes: Array[Vector3] = [front_axis, rear_axis]
+    for index: int in range(bogie_nodes.size()):
+        var bogie_node: Node3D = bogie_nodes[index]
+        var bogie_axis: Vector3 = bogie_axes[index]
+        if bogie_axis.is_zero_approx():
+            continue
+
+        var bogie_yaw: float = atan2(-bogie_axis.normalized().x, bogie_axis.normalized().z)
+        var yaw_delta: float = bogie_yaw - body_yaw
+        var rest_global_basis: Variant = _bogie_rest_global_bases.get(bogie_node)
+        if rest_global_basis is Basis:
+            bogie_node.global_basis = global_basis * Basis(Vector3.UP, yaw_delta) * (rest_global_basis as Basis)
+
+    return true
+
+
 func _process(delta):
     if _dirty:
         _dirty = false
         if head_display_e3d_path:
             _head_display_e3d = get_node_or_null(head_display_e3d_path)
             if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
+                _head_display_e3d.e3d_loaded.connect(func():
+                    _needs_head_display_update = true
+                    _dirty = true
+                )
 
         _resolve_controller()
+        _cache_animation_bindings()
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -556,14 +722,17 @@ func _physics_process(delta: float) -> void:
             var track := TrackManager.get_track(track_rid)
             if track != null and is_finite(track_offset):
                 _invalid_velocity_reported = false
-                var track_axis := TrackManager.get_track_axis(track_rid, track_offset)
-                global_position = TrackManager.get_track_position(track_rid, track_offset)
-                if not track_axis.is_zero_approx():
-                    var track_basis := _compute_track_basis(track_axis)
-                    if not _track_orientation_initialized:
-                        _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
-                        _track_orientation_initialized = true
-                    global_basis = (track_basis * _track_orientation_offset).orthonormalized()
+                var applied_bogies: bool = _update_bogie_transforms(track_rid, track_offset)
+                if not applied_bogies:
+                    var track_axis := TrackManager.get_track_axis(track_rid, track_offset)
+                    global_position = TrackManager.get_track_position(track_rid, track_offset)
+                    if not track_axis.is_zero_approx():
+                        var track_basis := _compute_track_basis(track_axis)
+                        if not _track_orientation_initialized:
+                            _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
+                            _track_orientation_initialized = true
+                        global_basis = (track_basis * _track_orientation_offset).orthonormalized()
+                _update_wheel_animation_state()
             elif track_rid != RID() and not _invalid_velocity_reported:
                 _invalid_velocity_reported = true
                 push_error(

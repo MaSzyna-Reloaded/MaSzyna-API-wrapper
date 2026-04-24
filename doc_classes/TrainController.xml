@@ -12,6 +12,13 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="assign_track_rid">
+			<return type="void" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="track_id" type="String" />
+			<description>
+			</description>
+		</method>
 		<method name="battery" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -19,13 +26,32 @@
 				Turn on/off train battery
 			</description>
 		</method>
-		<method name="broadcast_command">
+		<method name="couple">
 			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
+			<param index="0" name="other_vehicle" type="TrainController" />
+			<param index="1" name="self_side" type="int" enum="TrainController.Side" />
+			<param index="2" name="other_side" type="int" enum="TrainController.Side" />
 			<description>
-				Broadcasts command to all trains (including self)
+			</description>
+		</method>
+		<method name="couple_back">
+			<return type="void" />
+			<param index="0" name="other_vehicle" type="TrainController" />
+			<param index="1" name="other_side" type="int" enum="TrainController.Side" />
+			<description>
+			</description>
+		</method>
+		<method name="couple_front">
+			<return type="void" />
+			<param index="0" name="other_vehicle" type="TrainController" />
+			<param index="1" name="other_side" type="int" enum="TrainController.Side" />
+			<description>
+			</description>
+		</method>
+		<method name="decouple">
+			<return type="TrainController" />
+			<param index="0" name="relative_index" type="int" />
+			<description>
 			</description>
 		</method>
 		<method name="direction_decrease" qualifiers="const">
@@ -38,6 +64,41 @@
 			<return type="void" />
 			<description>
 				Decrease direction by one step
+			</description>
+		</method>
+		<method name="get_back_vehicle" qualifiers="const">
+			<return type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="get_front_vehicle" qualifiers="const">
+			<return type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mover_location" qualifiers="const">
+			<return type="Vector3" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rail_vehicle_modules" qualifiers="const">
+			<return type="Array" />
+			<description>
+			</description>
+		</method>
+		<method name="get_supported_commands">
+			<return type="TrainCommand[]" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="get_trainset" qualifiers="const">
+			<return type="TrainSet" />
+			<description>
 			</description>
 		</method>
 		<method name="main_controller_decrease" qualifiers="const">
@@ -75,32 +136,26 @@
 				Increase radio channel
 			</description>
 		</method>
-		<method name="register_command">
+		<method name="radio_channel_set">
 			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
+			<param index="0" name="channel" type="int" />
 			<description>
-				Registers command for train controlled by this node.
-				This is a shortcut for [method TrainSystem.register_command].
 			</description>
 		</method>
-		<method name="send_command" qualifiers="const">
+		<method name="set_mover_location">
 			<return type="void" />
-			<param index="0" name="command" type="StringName" />
-			<param index="1" name="p1" type="Variant" default="null" />
-			<param index="2" name="p2" type="Variant" default="null" />
+			<param index="0" name="position" type="Vector3" />
 			<description>
-				Sends command to train controlled by this node.
-				This is a shortcut for [method TrainSystem.send_command].
 			</description>
 		</method>
-		<method name="unregister_command">
-			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
+		<method name="uncouple_back">
+			<return type="TrainController" />
 			<description>
-				Removes command of a train controlled by this node from the registry.
-				This is a shortcut for [method TrainSystem.unregister_command].
+			</description>
+		</method>
+		<method name="uncouple_front">
+			<return type="TrainController" />
+			<description>
 			</description>
 		</method>
 		<method name="update_config">
@@ -133,6 +188,12 @@
 			Returns a dictionary with all config properties of the train.
 			This is a shortcut for iterating over [method TrainSystem.get_supported_config_properties] to read each from [method TrainSystem.get_config_property].
 		</member>
+		<member name="drag_coefficient" type="float" setter="set_drag_coefficient" getter="get_drag_coefficient" default="0.0">
+		</member>
+		<member name="height" type="float" setter="set_height" getter="get_height" default="0.0">
+		</member>
+		<member name="length" type="float" setter="set_length" getter="get_length" default="0.0">
+		</member>
 		<member name="mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
 			[code]Param.M[/code] Mass of the train
 		</member>
@@ -151,11 +212,14 @@
 		<member name="state" type="Dictionary" setter="" getter="get_state" default="{}">
 			Actual state of the train
 		</member>
-		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
-			Unique identifier of the train. See [method TrainSystem.register_train].
+		<member name="track_id" type="String" setter="assign_track" getter="get_track_id" default="&quot;&quot;">
+		</member>
+		<member name="track_offset" type="float" setter="set_track_offset" getter="get_track_offset" default="0.0">
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
 			Train type name
+		</member>
+		<member name="width" type="float" setter="set_width" getter="get_width" default="0.0">
 		</member>
 	</members>
 	<signals>
@@ -170,6 +234,12 @@
 		<signal name="config_changed">
 			<description>
 				Train configuration changed
+			</description>
+		</signal>
+		<signal name="derailed">
+			<param index="0" name="damage_flag" type="int" />
+			<param index="1" name="derail_reason" type="int" />
+			<description>
 			</description>
 		</signal>
 		<signal name="mover_config_changed">
@@ -202,6 +272,10 @@
 		</signal>
 	</signals>
 	<constants>
+		<constant name="FRONT" value="0" enum="Side">
+		</constant>
+		<constant name="BACK" value="1" enum="Side">
+		</constant>
 		<constant name="POWER_SOURCE_NOT_DEFINED" value="0" enum="TrainPowerSource">
 			Indicates that the power source is not defined.
 		</constant>

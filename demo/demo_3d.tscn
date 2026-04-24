@@ -87,10 +87,10 @@ point_count = 5
 [sub_resource type="Curve3D" id="Curve3D_rrc65"]
 bake_interval = 0.1
 _data = {
-"points": PackedVector3Array(0, 0, 0, 1.1770676, 0, -46.7242, -28.74, 0, 300, 0, 0, 0, 0, 0, 0, -25.37695, 0, 166.50227, -0.114873014, 0, 1.8130357, 0.13763739, 0, -2.172325, -25.246233, 0, 161.31343, -0.28505298, 0, 2.1579351, 0.34607038, 0, -2.6198547, -24.655928, 0, 155.12242, -0.4241746, 0, 2.608348, 0, 0, 0, -23.444, 0, 147.67),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
+"points": PackedVector3Array(0, 0, 0, -1.588137, 0, -41.003998, -28.74, 0, 300, -1.7360743, 0, 40.998, 0.35415033, 0, -8.363383, -33.277534, 0, 182.84572, -1.740632, 0, 6.2264476, 0.99383736, 0, -3.5550742, -22.86727, 0, 161.31343, 0.20185573, 0, 4.7752013, 0, 0, 0, -23.444, 0, 147.67),
+"tilts": PackedFloat32Array(0, 0, 0, 0)
 }
-point_count = 5
+point_count = 4
 
 [node name="Demo3D" type="Node3D" unique_id=553602174]
 script = ExtResource("1_ut343")
@@ -340,11 +340,11 @@ environment = SubResource("Environment_jrns0")
 [node name="SM42-907 Trainset" parent="." unique_id=1097042846 instance=ExtResource("19_6m450")]
 start_track_offset = 100.0
 
-[node name="SM42-907" parent="SM42-907 Trainset" index="0" unique_id=13773796]
-transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -26.221617, 0, 200.03172)
+[node name="SM42-907" parent="SM42-907" index="0" unique_id=13773796]
+transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -33.656265, 0, 200.13808)
 
-[node name="Wagon1" parent="SM42-907 Trainset" index="1" unique_id=149723671]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.577717, 0, 214.16724)
+[node name="Wagon1" parent="SM42-907" index="1" unique_id=149723671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.48581, 0, 214.27658)
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)
@@ -454,6 +454,7 @@ metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 [node name="MaszynaSwitch3D" type="Node3D" parent="." unique_id=364459163 node_paths=PackedStringArray("straight_track", "diverging_track", "common_track")]
 transform = Transform3D(-0.16263713, 0, -0.98668593, 0, 1, 0, 0.98668593, 0, -0.16263713, -18.468254, -0.04, 122.02463)
 script = ExtResource("16_hgm1p")
+state = 1
 straight_track = NodePath("../MaszynaTrack3D")
 diverging_track = NodePath("../MaszynaTrack3D2")
 common_track = NodePath("../MaszynaTrack3D3")
@@ -492,7 +493,7 @@ start_track_offset = 30.0
 metadata/_custom_type_script = "uid://bocodruvp5emd"
 
 [node name="401W" parent="TrainSet3D" unique_id=173667047 instance=ExtResource("17_lsqkb")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.984484, 0, 270.00952)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.370731, 0, 270.0453)
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]

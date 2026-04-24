@@ -17,6 +17,15 @@ namespace godot {
     namespace {
         std::set<TrainController *> active_train_controllers;
         uint64_t last_global_tick_frame = std::numeric_limits<uint64_t>::max();
+        constexpr double WHEEL_LINEAR_TO_DEGREES = 114.59155902616464175359630962821;
+
+        double wrap_degrees(const double angle) {
+            double wrapped = std::fmod(angle, 360.0);
+            if (wrapped < 0.0) {
+                wrapped += 360.0;
+            }
+            return wrapped;
+        }
 
         std::vector<TrainController *> get_sorted_active_train_controllers() {
             std::vector<TrainController *> controllers(active_train_controllers.begin(), active_train_controllers.end());
@@ -413,6 +422,20 @@ namespace godot {
         }
     }
 
+    void TrainController::_update_wheel_animation_state(const double delta) {
+        if (mover == nullptr || mover->Vel == 0.0) {
+            return;
+        }
+
+        wheel_angle_front_deg += WHEEL_LINEAR_TO_DEGREES * mover->V * delta / mover->WheelDiameterL;
+        wheel_angle_powered_deg += mover->nrot * delta * 360.0;
+        wheel_angle_rear_deg += WHEEL_LINEAR_TO_DEGREES * mover->V * delta / mover->WheelDiameterT;
+
+        wheel_angle_front_deg = wrap_degrees(wheel_angle_front_deg);
+        wheel_angle_powered_deg = wrap_degrees(wheel_angle_powered_deg);
+        wheel_angle_rear_deg = wrap_degrees(wheel_angle_rear_deg);
+    }
+
     void TrainController::_publish_mover_tick() {
         if (mover == nullptr) {
             return;
@@ -461,6 +484,10 @@ namespace godot {
 
         for (TrainController *controller : controllers) {
             controller->_compute_mover_movement(delta);
+        }
+
+        for (TrainController *controller : controllers) {
+            controller->_update_wheel_animation_state(delta);
         }
 
         for (TrainController *controller : controllers) {
@@ -619,6 +646,9 @@ namespace godot {
         state["radio_enabled"] = mover->Radio;
         state["radio_powered"] = mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
         state["radio_channel"] = radio_channel;
+        state["wheel_angle_front_deg"] = wheel_angle_front_deg;
+        state["wheel_angle_powered_deg"] = wheel_angle_powered_deg;
+        state["wheel_angle_rear_deg"] = wheel_angle_rear_deg;
     }
 
     Dictionary TrainController::get_config() const {

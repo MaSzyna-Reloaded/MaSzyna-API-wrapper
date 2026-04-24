@@ -21,7 +21,6 @@ data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
-instancer = 0
 submodels_aabb = AABB(-1.5978377, -1.0894207, -7.50629, 3.1975832, 5.4746947, 15.018351)
 
 [node name="SM42-907-LowPolyCab" type="E3DModelInstance" parent="." unique_id=895527231]
@@ -29,7 +28,6 @@ data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_interior"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
-instancer = 0
 submodels_aabb = AABB(-1.4508098, 1.2607, -3.924, 2.9026198, 2.93835, 2.20054)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="." unique_id=1676706806]

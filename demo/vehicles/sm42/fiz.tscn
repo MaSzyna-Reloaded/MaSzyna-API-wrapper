@@ -118,16 +118,15 @@ cabin_a/left/white_signal = true
 cabin_a/right/white_signal = true
 
 [node name="SM42v1" type="TrainController" unique_id=433994401]
-power = 590.0
-battery_voltage = 110.0
-type_name = "6d"
-axle_arrangement = "Bo'Bo'"
-drag_coefficient = 0.2
 mass = 74000.0
 max_velocity = 90.0
 length = 14.24
 width = 3.17
 height = 4.285
+type_name = "6d"
+drag_coefficient = 0.2
+power = 590.0
+battery_voltage = 110.0
 
 [node name="Brake" type="TrainBrake" parent="." unique_id=1887497176]
 valve/type = 20
@@ -199,5 +198,7 @@ coupler/max_tension_tolerance = 780.0
 damping_beta = 0.58
 allowed_flag = 39
 buffer_location = 2
+
+[node name="TrainWheels" type="TrainWheels" parent="." unique_id=127806310]
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

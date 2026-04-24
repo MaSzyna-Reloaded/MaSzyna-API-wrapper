@@ -62,9 +62,6 @@ namespace godot {
             Vector3 _pending_world_position;
             bool _dirty = false;
             bool _dirty_prop = false;
-            double wheel_angle_front_deg = 0.0;
-            double wheel_angle_powered_deg = 0.0;
-            double wheel_angle_rear_deg = 0.0;
 
             double initial_velocity = 0.0;
             int cabin_number = 0;
@@ -91,7 +88,6 @@ namespace godot {
             static void _process_all_movers(double delta);
             static void _register_active_controller(TrainController *controller);
             static void _unregister_active_controller(TrainController *controller);
-            void _update_wheel_animation_state(double delta);
             void sync_mover_coupling(TrainController *other_vehicle, Side self_side, Side other_side, bool attach);
             static int to_mover_end(Side side);
             void refresh_runtime_signals();
@@ -205,7 +201,6 @@ namespace godot {
             static void _bind_methods();
 
             MAKE_MEMBER_GS(String, type_name, "");
-            MAKE_MEMBER_GS_DIRTY(String, axle_arrangement, "");
             MAKE_MEMBER_GS_DIRTY(float, drag_coefficient, 0.0);
             MAKE_MEMBER_GS_DIRTY(float, mass, 0.0);
             MAKE_MEMBER_GS_DIRTY(float, max_velocity, 0.0);

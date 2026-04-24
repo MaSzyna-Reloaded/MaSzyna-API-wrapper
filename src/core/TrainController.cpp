@@ -17,15 +17,6 @@ namespace godot {
     namespace {
         std::set<TrainController *> active_train_controllers;
         uint64_t last_global_tick_frame = std::numeric_limits<uint64_t>::max();
-        constexpr double WHEEL_LINEAR_TO_DEGREES = 114.59155902616464175359630962821;
-
-        double wrap_degrees(const double angle) {
-            double wrapped = std::fmod(angle, 360.0);
-            if (wrapped < 0.0) {
-                wrapped += 360.0;
-            }
-            return wrapped;
-        }
 
         std::vector<TrainController *> get_sorted_active_train_controllers() {
             std::vector<TrainController *> controllers(active_train_controllers.begin(), active_train_controllers.end());
@@ -146,7 +137,6 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "height"), "set_height", "get_height");
 
         BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainController::set_type_name, &TrainController::get_type_name, "type_name");
-        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainController::set_axle_arrangement, &TrainController::get_axle_arrangement, "axle_arrangement");
         BIND_PROPERTY(Variant::FLOAT, "drag_coefficient", "drag_coefficient", &TrainController::set_drag_coefficient, &TrainController::get_drag_coefficient, "drag_coefficient");
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "track_id"), "assign_track", "get_track_id");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "track_offset"), "set_track_offset", "get_track_offset");
@@ -422,20 +412,6 @@ namespace godot {
         }
     }
 
-    void TrainController::_update_wheel_animation_state(const double delta) {
-        if (mover == nullptr || mover->Vel == 0.0) {
-            return;
-        }
-
-        wheel_angle_front_deg += WHEEL_LINEAR_TO_DEGREES * mover->V * delta / mover->WheelDiameterL;
-        wheel_angle_powered_deg += mover->nrot * delta * 360.0;
-        wheel_angle_rear_deg += WHEEL_LINEAR_TO_DEGREES * mover->V * delta / mover->WheelDiameterT;
-
-        wheel_angle_front_deg = wrap_degrees(wheel_angle_front_deg);
-        wheel_angle_powered_deg = wrap_degrees(wheel_angle_powered_deg);
-        wheel_angle_rear_deg = wrap_degrees(wheel_angle_rear_deg);
-    }
-
     void TrainController::_publish_mover_tick() {
         if (mover == nullptr) {
             return;
@@ -487,10 +463,6 @@ namespace godot {
         }
 
         for (TrainController *controller : controllers) {
-            controller->_update_wheel_animation_state(delta);
-        }
-
-        for (TrainController *controller : controllers) {
             if (controller->mover != nullptr) {
                 controller->_publish_mover_tick();
                 controller->_handle_mover_update();
@@ -521,15 +493,10 @@ namespace godot {
         mover->Power = power;
         mover->BatteryVoltage = battery_voltage;
         mover->NominalBatteryVoltage = static_cast<float>(battery_voltage);
-
         mover->ComputeMass();
-        mover->NPoweredAxles = Maszyna::s2NPW(axle_arrangement.ascii().get_data());
-        mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
     }
 
     void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
-        config["axles_powered_count"] = mover->NPoweredAxles;
-        config["axles_count"] = mover->NAxles;
         config["length"] = mover->Dim.L;
         config["width"] = mover->Dim.W;
         config["height"] = mover->Dim.H;
@@ -646,9 +613,6 @@ namespace godot {
         state["radio_enabled"] = mover->Radio;
         state["radio_powered"] = mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
         state["radio_channel"] = radio_channel;
-        state["wheel_angle_front_deg"] = wheel_angle_front_deg;
-        state["wheel_angle_powered_deg"] = wheel_angle_powered_deg;
-        state["wheel_angle_rear_deg"] = wheel_angle_rear_deg;
     }
 
     Dictionary TrainController::get_config() const {

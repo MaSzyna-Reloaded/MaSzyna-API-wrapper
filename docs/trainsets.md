@@ -36,6 +36,7 @@ For trainsets, the wrapper owns the published on-track position.
 
 - `front_rolling_wheel_paths`, `powered_wheel_paths`, and `rear_rolling_wheel_paths` are manual `NodePath` arrays for the three wheel groups used by the original simulator.
 - `front_bogie_path` and `rear_bogie_path` are optional manual `NodePath` bindings for the two bogies.
+- wheel animation state is published by the `TrainWheels` train part, not by `TrainController` directly.
 - when both bogies are configured, the vehicle body position and yaw are derived from the line between the sampled bogie positions on the track.
 - when no bogies are configured, the vehicle falls back to the default transform derived directly from `track_offset`.
 

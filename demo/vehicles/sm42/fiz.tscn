@@ -200,5 +200,11 @@ allowed_flag = 39
 buffer_location = 2
 
 [node name="TrainWheels" type="TrainWheels" parent="." unique_id=127806310]
+powered_wheel_diameter = 1.1
+axle_inertial_moment = 4000.0
+axle_arrangement = "Bo'Bo'"
+bogie_axle_spacing = 2.6
+bogie_pivot_spacing = 7.524
+minimum_curve_radius = 0.08
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

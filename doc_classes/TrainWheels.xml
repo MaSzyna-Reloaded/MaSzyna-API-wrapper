@@ -9,7 +9,7 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="&quot;&quot;">
+		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="">
 			[code]Wheels:Axle[/code]
 			Axle arrangement string, for example [code]Bo'Bo'[/code].
 		</member>

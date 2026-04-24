@@ -71,6 +71,7 @@ namespace godot {
             bool sample_shape(double offset, TrackGeometry &out_shape) const;
             double clamp_offset(double offset) const;
             void set_runtime_profile(const TrackRuntimeProfile &p_runtime_profile);
+            void set_heights(double p_track_height_delta, double p_rail_height_delta);
 
             const TrackGeometry &get_shape() const;
             const TrackRuntimeProfile &get_runtime_profile() const;
@@ -146,6 +147,7 @@ namespace godot {
 
             void register_vehicle(TrainController *vehicle, const RID &track_rid, const String &track_id, double offset);
             void update_vehicle_offset(TrainController *vehicle, double offset);
+            void set_track_heights(const RID &track_rid, double track_height_delta, double rail_height_delta);
             void remove_vehicle(TrainController *vehicle);
 
             Ref<VirtualTrack> get_vehicle_track(TrainController *vehicle) const;

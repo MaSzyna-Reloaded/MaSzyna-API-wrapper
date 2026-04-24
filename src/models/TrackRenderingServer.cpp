@@ -711,7 +711,8 @@ namespace godot {
                 for (int j = 0; j < poly_size; j++) {
                     const Vector2 p = rail_poly[j];
                     const float x_pos = (static_cast<float>(side) * offset) + (p.x * static_cast<float>(side));
-                    vertices.push_back(Vector3(x_pos, p.y, z));
+                    // Start from the top of the sleepers
+                    vertices.push_back(Vector3(x_pos, p.y + state->sleeper_height, z));
                     normals.push_back(Vector3(p.x, p.y - 0.08f, 0.0f).normalized());
                     uvs.push_back(Vector2(static_cast<float>(j) / static_cast<float>(poly_size - 1), v_u));
                 }

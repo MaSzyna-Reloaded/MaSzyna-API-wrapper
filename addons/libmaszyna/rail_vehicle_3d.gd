@@ -657,18 +657,30 @@ func _update_bogie_transforms(track_rid: RID, track_offset: float) -> bool:
         front_offset = track_offset - (front_rest_offset as Vector3).z
         rear_offset = track_offset - (rear_rest_offset as Vector3).z
 
-    var front_position: Vector3 = TrackManager.get_track_position(track_rid, front_offset)
-    var rear_position: Vector3 = TrackManager.get_track_position(track_rid, rear_offset)
-    var front_axis: Vector3 = TrackManager.get_track_axis(track_rid, front_offset)
-    var rear_axis: Vector3 = TrackManager.get_track_axis(track_rid, rear_offset)
+    var front_state: Dictionary = TrackManager.resolve_track_position(track_rid, front_offset)
+    var rear_state: Dictionary = TrackManager.resolve_track_position(track_rid, rear_offset)
+    
+    if not (front_state.get("valid", false) and rear_state.get("valid", false)):
+        return false
+
+    var front_position: Vector3 = front_state.get("position", Vector3.ZERO)
+    var rear_position: Vector3 = rear_state.get("position", Vector3.ZERO)
+    var front_axis: Vector3 = front_state.get("axis", Vector3.FORWARD)
+    var rear_axis: Vector3 = rear_state.get("axis", Vector3.FORWARD)
+    
+    var front_vertical_offset: float = front_state.get("vertical_offset", 0.0)
+    var rear_vertical_offset: float = rear_state.get("vertical_offset", 0.0)
 
     var body_forward: Vector3 = front_position - rear_position
     if body_forward.is_zero_approx():
         return false
     body_forward = body_forward.normalized()
 
-    global_position = (front_position + rear_position) * 0.5
     var body_basis: Basis = _compute_track_basis(body_forward)
+    var total_vertical_offset: float = (front_vertical_offset + rear_vertical_offset) * 0.5
+    
+    global_position = (front_position + rear_position) * 0.5 + body_basis.y * total_vertical_offset
+    
     if not _track_orientation_initialized:
         _track_orientation_offset = body_basis.inverse() * global_basis.orthonormalized()
         _track_orientation_initialized = true
@@ -732,14 +744,19 @@ func _physics_process(delta: float) -> void:
                 _invalid_velocity_reported = false
                 var applied_bogies: bool = _update_bogie_transforms(track_rid, track_offset)
                 if not applied_bogies:
-                    var track_axis := TrackManager.get_track_axis(track_rid, track_offset)
-                    global_position = TrackManager.get_track_position(track_rid, track_offset)
-                    if not track_axis.is_zero_approx():
-                        var track_basis := _compute_track_basis(track_axis)
-                        if not _track_orientation_initialized:
-                            _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
-                            _track_orientation_initialized = true
-                        global_basis = (track_basis * _track_orientation_offset).orthonormalized()
+                    var resolved: Dictionary = TrackManager.resolve_track_position(track_rid, track_offset)
+                    if resolved.get("valid", false):
+                        var track_axis: Vector3 = resolved.get("axis", Vector3.FORWARD)
+                        var track_pos: Vector3 = resolved.get("position", Vector3.ZERO)
+                        var vertical_offset: float = resolved.get("vertical_offset", 0.0)
+                        
+                        if not track_axis.is_zero_approx():
+                            var track_basis := _compute_track_basis(track_axis)
+                            global_position = track_pos + track_basis.y * vertical_offset
+                            if not _track_orientation_initialized:
+                                _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
+                                _track_orientation_initialized = true
+                            global_basis = (track_basis * _track_orientation_offset).orthonormalized()
                 _update_wheel_animation_state()
             elif track_rid != RID() and not _invalid_velocity_reported:
                 _invalid_velocity_reported = true

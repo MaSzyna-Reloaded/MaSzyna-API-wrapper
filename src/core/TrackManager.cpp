@@ -250,6 +250,11 @@ namespace godot {
         runtime_profile = p_runtime_profile;
     }
 
+    void VirtualTrack::set_heights(const double p_track_height_delta, const double p_rail_height_delta) {
+        shape.track_height_delta = p_track_height_delta;
+        shape.rail_height_delta = p_rail_height_delta;
+    }
+
     const TrackGeometry &VirtualTrack::get_shape() const { return shape; }
     const TrackRuntimeProfile &VirtualTrack::get_runtime_profile() const { return runtime_profile; }
 
@@ -275,6 +280,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("resolve_track_position", "track_rid", "offset"), &TrackManager::resolve_track_position);
         ClassDB::bind_method(D_METHOD("register_vehicle", "vehicle", "track_rid", "track_id", "offset"), &TrackManager::register_vehicle);
         ClassDB::bind_method(D_METHOD("update_vehicle_offset", "vehicle", "offset"), &TrackManager::update_vehicle_offset);
+        ClassDB::bind_method(D_METHOD("set_track_heights", "track_rid", "track_height_delta", "rail_height_delta"), &TrackManager::set_track_heights);
         ClassDB::bind_method(D_METHOD("remove_vehicle", "vehicle"), &TrackManager::remove_vehicle);
     }
 
@@ -562,8 +568,9 @@ namespace godot {
         double resolved_offset = 0.0;
         Vector3 resolved_position;
         Vector3 resolved_axis;
+        TrackGeometry resolved_shape;
         const bool valid = resolve_track_position_internal(
-                track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, &resolved_position, &resolved_axis);
+                track_rid, offset, resolved_track_rid, resolved_track_id, resolved_offset, &resolved_position, &resolved_axis, &resolved_shape);
 
         resolved["valid"] = valid;
         resolved["track_rid"] = resolved_track_rid;
@@ -571,6 +578,7 @@ namespace godot {
         resolved["offset"] = resolved_offset;
         resolved["position"] = resolved_position;
         resolved["axis"] = resolved_axis;
+        resolved["vertical_offset"] = resolved_shape.track_height_delta + resolved_shape.rail_height_delta;
         return resolved;
     }
 
@@ -608,6 +616,13 @@ namespace godot {
         }
 
         it->second.offset = offset;
+    }
+
+    void TrackManager::set_track_heights(const RID &track_rid, const double track_height_delta, const double rail_height_delta) {
+        Ref<VirtualTrack> track = get_track(track_rid);
+        if (track.is_valid()) {
+            track->set_heights(track_height_delta, rail_height_delta);
+        }
     }
 
     void TrackManager::remove_vehicle(TrainController *vehicle) {

@@ -43,12 +43,10 @@ class_name MaszynaTrack3D
             server.set_sleeper_spacing(_track_id, x)
         _request_track_update()
 
-@export var sleeper_height: float = -0.05:
+@export var sleeper_height: float = 0.15:
     set(x):
         sleeper_height = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_sleeper_height(_track_id, x)
+        _update_server_heights()
         _request_track_update()
 
 @export var rail_height: float = 0.16:
@@ -100,18 +98,22 @@ class_name MaszynaTrack3D
 @export var ballast_height: float = 0.4:
     set(x):
         ballast_height = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_height(_track_id, x)
+        _update_server_heights()
         _request_track_update()
 
-@export var ballast_offset: float = -0.05:
+@export var ballast_offset: float = 0.0:
     set(x):
         ballast_offset = x
         var server = _get_track_server()
         if server and _track_id != 0:
             server.set_ballast_offset(_track_id, x)
         _request_track_update()
+
+func _update_server_heights():
+    var server = _get_track_server()
+    if server and _track_id != 0:
+        server.set_ballast_height(_track_id, ballast_height)
+        server.set_sleeper_height(_track_id, ballast_height + sleeper_height)
 
 @export_group("Geometry")
 @export var curve_precision: float = 0.5:
@@ -241,7 +243,8 @@ func _apply_track_settings():
     if not server or _track_id == 0:
         return
 
-    server.set_sleeper_height(_track_id, sleeper_height)
+    _update_server_heights()
+    server.set_sleeper_model_name(_track_id, sleeper_model_name)
     server.set_sleeper_spacing(_track_id, sleeper_spacing)
     server.set_rail_spacing(_track_id, rail_spacing)
     server.set_ballast_height(_track_id, ballast_height)
@@ -419,6 +422,12 @@ func _sync_virtual_track():
         track_id,
         _resolve_connected_track_rid(previous_track),
         _resolve_connected_track_rid(next_track)
+    )
+    
+    manager.set_track_heights(
+        _virtual_track_rid,
+        ballast_height + sleeper_height,
+        rail_height
     )
 
 func _resolve_connected_track_rid(target_path: NodePath) -> RID:

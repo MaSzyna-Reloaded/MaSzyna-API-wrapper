@@ -6,11 +6,28 @@
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
+#include <algorithm>
 #include <cmath>
 #include <memory>
+#include <limits>
+#include <set>
+#include <vector>
 
 namespace godot {
     namespace {
+        std::set<TrainController *> active_train_controllers;
+        uint64_t last_global_tick_frame = std::numeric_limits<uint64_t>::max();
+
+        std::vector<TrainController *> get_sorted_active_train_controllers() {
+            std::vector<TrainController *> controllers(active_train_controllers.begin(), active_train_controllers.end());
+            std::sort(
+                    controllers.begin(), controllers.end(),
+                    [](const TrainController *left, const TrainController *right) {
+                        return left->get_instance_id() < right->get_instance_id();
+                    });
+            return controllers;
+        }
+
         Maszyna::TTrackShape to_mover_track_shape(const TrackGeometry &shape) {
             Maszyna::TTrackShape mover_shape;
             mover_shape.R = shape.radius;
@@ -55,7 +72,8 @@ namespace godot {
         config.clear();
         internal_state.clear();
         _external_move_accumulator = 0.0;
-        _movement_delta = 0.0;
+        _clear_pending_mover_tick();
+        _unregister_active_controller(this);
         if (mover != nullptr) {
             delete mover;
             mover = nullptr;
@@ -224,6 +242,7 @@ namespace godot {
 
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
+                _register_active_controller(this);
                 set_process(true);
                 break;
             case NOTIFICATION_READY:
@@ -232,6 +251,7 @@ namespace godot {
                 _notification_after_mover_ready();
                 break;
             case NOTIFICATION_EXIT_TREE:
+                _unregister_active_controller(this);
                 set_process(false);
                 if (TrackManager *track_manager = TrackManager::get_instance(); track_manager != nullptr) {
                     track_manager->remove_vehicle(this);
@@ -247,11 +267,11 @@ namespace godot {
             return;
         }
 
-        _update_mover_config_if_dirty();
-        if (mover != nullptr) {
-            _process_mover(delta);
+        const uint64_t current_frame = Engine::get_singleton()->get_process_frames();
+        if (current_frame != last_global_tick_frame) {
+            last_global_tick_frame = current_frame;
+            _process_all_movers(delta);
         }
-        refresh_runtime_signals();
     }
 
     void TrainController::_notification_after_mover_ready() {
@@ -310,14 +330,22 @@ namespace godot {
             return;
         }
 
-        mover->dMoveLen = _external_move_accumulator;
+        const uint64_t current_frame = Engine::get_singleton()->get_process_frames();
+        if (current_frame != last_global_tick_frame) {
+            last_global_tick_frame = current_frame;
+            _process_all_movers(delta);
+        }
+    }
+
+    bool TrainController::_prepare_mover_tick() {
+        _clear_pending_mover_tick();
+        if (mover == nullptr) {
+            return false;
+        }
 
         TrackManager *track_manager = TrackManager::get_instance();
         if (track_manager == nullptr || current_track_rid == RID()) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
-            _handle_mover_update();
-            return;
+            return false;
         }
 
         RID resolved_track_rid;
@@ -328,47 +356,132 @@ namespace godot {
         if (!_resolve_track_state(
                     current_track_offset, resolved_track_rid, resolved_track_id, resolved_track_offset, &world_position,
                     nullptr, &running_shape)) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
-            _handle_mover_update();
-            return;
+            return false;
         }
 
         if (!_apply_resolved_track_state(resolved_track_rid, resolved_track_id, resolved_track_offset)) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
-            _handle_mover_update();
-            return;
+            return false;
         }
 
         const Ref<VirtualTrack> track = track_manager->get_track(current_track_rid);
         if (track.is_null()) {
-            _movement_delta = 0.0;
-            _external_move_accumulator = 0.0;
-            _handle_mover_update();
-            return;
+            return false;
         }
 
         set_mover_location(world_position);
         mover->RunningShape = to_mover_track_shape(running_shape);
         mover->RunningTrack = to_mover_track_param(track->get_runtime_profile());
-        _sync_mover_neighbours();
+        _tick_state_ready = true;
+        return true;
+    }
+
+    void TrainController::_compute_mover_forces(const double delta) {
+        if (mover == nullptr || !_tick_state_ready) {
+            return;
+        }
+
+        mover->dMoveLen = _external_move_accumulator;
         mover->ComputeTotalForce(delta);
-        _movement_delta = mover->ComputeMovement(
+    }
+
+    void TrainController::_compute_mover_movement(const double delta) {
+        if (mover == nullptr || !_tick_state_ready) {
+            return;
+        }
+
+        _pending_track_rid = current_track_rid;
+        _pending_track_id = current_track_id;
+        _pending_track_offset = current_track_offset;
+        _pending_world_position = get_mover_location();
+        _pending_publish_valid = true;
+
+        const double movement = mover->ComputeMovement(
                 delta, delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc, mover->Rot);
-        _external_move_accumulator = 0.0;
+        const double published_movement = _external_move_accumulator + movement;
+
         RID next_track_rid;
         String next_track_id;
         double next_track_offset = 0.0;
         Vector3 next_world_position;
         if (_resolve_track_state(
-                    current_track_offset + _movement_delta, next_track_rid, next_track_id, next_track_offset,
+                    current_track_offset + published_movement, next_track_rid, next_track_id, next_track_offset,
                     &next_world_position)) {
-            _apply_resolved_track_state(next_track_rid, next_track_id, next_track_offset);
-            set_mover_location(next_world_position);
+            _pending_track_rid = next_track_rid;
+            _pending_track_id = next_track_id;
+            _pending_track_offset = next_track_offset;
+            _pending_world_position = next_world_position;
         }
-        debug_tick_counter += 1;
-        _handle_mover_update();
+    }
+
+    void TrainController::_publish_mover_tick() {
+        if (mover == nullptr) {
+            return;
+        }
+
+        if (_tick_state_ready && _pending_publish_valid) {
+            _apply_resolved_track_state(_pending_track_rid, _pending_track_id, _pending_track_offset);
+            set_mover_location(_pending_world_position);
+            debug_tick_counter += 1;
+        }
+
+        _external_move_accumulator = 0.0;
+        mover->dMoveLen = 0.0;
+        _clear_pending_mover_tick();
+    }
+
+    void TrainController::_clear_pending_mover_tick() {
+        _tick_state_ready = false;
+        _pending_publish_valid = false;
+        _pending_track_rid = RID();
+        _pending_track_id = "";
+        _pending_track_offset = 0.0;
+        _pending_world_position = Vector3();
+    }
+
+    void TrainController::_process_all_movers(const double delta) {
+        const std::vector<TrainController *> controllers = get_sorted_active_train_controllers();
+
+        for (TrainController *controller : controllers) {
+            controller->_update_mover_config_if_dirty();
+        }
+
+        for (TrainController *controller : controllers) {
+            controller->_prepare_mover_tick();
+        }
+
+        for (TrainController *controller : controllers) {
+            if (controller->_tick_state_ready) {
+                controller->_sync_mover_neighbours();
+            }
+        }
+
+        for (TrainController *controller : controllers) {
+            controller->_compute_mover_forces(delta);
+        }
+
+        for (TrainController *controller : controllers) {
+            controller->_compute_mover_movement(delta);
+        }
+
+        for (TrainController *controller : controllers) {
+            if (controller->mover != nullptr) {
+                controller->_publish_mover_tick();
+                controller->_handle_mover_update();
+            }
+            controller->refresh_runtime_signals();
+        }
+    }
+
+    void TrainController::_register_active_controller(TrainController *controller) {
+        if (controller != nullptr) {
+            active_train_controllers.insert(controller);
+        }
+    }
+
+    void TrainController::_unregister_active_controller(TrainController *controller) {
+        if (controller != nullptr) {
+            active_train_controllers.erase(controller);
+        }
     }
 
     void TrainController::_do_update_internal_mover(TMoverParameters *mover) const {
@@ -441,7 +554,6 @@ namespace godot {
         state["is_derailed"] = (mover->DamageFlag & dtrain_out) != 0;
         state["derail_reason"] = mover->DerailReason;
         state["crash_damage_enabled"] = true;
-        state["movement_delta"] = _movement_delta;
         state["track_rid"] = current_track_rid;
         state["track_id"] = current_track_id;
         state["track_offset"] = current_track_offset;

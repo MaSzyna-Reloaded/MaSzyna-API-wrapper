@@ -74,4 +74,4 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
         for child in win.get_children():
             if "train_controller" in child:
                 if $Player.controlled_vehicle:
-                    child.train_controller = child.get_path_to($Player.controlled_vehicle.get_controller())
+                    child.train_controller = child.get_path_to($Player.controlled_vehicle)

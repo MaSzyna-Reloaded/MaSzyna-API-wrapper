@@ -1,14 +1,14 @@
 extends HFlowContainer
 
 
-@export_node_path("TrainController") var train_controller:NodePath = NodePath(""):
+@export_node_path("RailVehicle3D") var train_controller:NodePath = NodePath(""):
     set(x):
         if not train_controller == x:
             train_controller = x
             controller = null
             _do_update()
 
-var controller:TrainController
+var controller:RailVehicle3D
 
 func _ready() -> void:
     _do_update()

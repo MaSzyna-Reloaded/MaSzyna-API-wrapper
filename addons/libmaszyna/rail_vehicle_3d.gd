@@ -605,7 +605,7 @@ func _cache_animation_bindings() -> void:
 
 
 func _apply_wheel_rotation(nodes: Array[Node3D], angle_deg: float) -> void:
-    var angle_rad: float = -deg_to_rad(angle_deg)
+    var angle_rad: float = deg_to_rad(angle_deg)
     for node: Node3D in nodes:
         if node == null:
             continue
@@ -642,13 +642,21 @@ func _update_bogie_transforms(track_rid: RID, track_offset: float) -> bool:
     if front_bogie == null or rear_bogie == null:
         return false
 
-    var front_rest_offset: Variant = _bogie_rest_offsets.get(front_bogie)
-    var rear_rest_offset: Variant = _bogie_rest_offsets.get(rear_bogie)
-    if not (front_rest_offset is Vector3 and rear_rest_offset is Vector3):
-        return false
+    var bdist: float = state.get("bogie_pivot_spacing", 0.0)
+    var front_offset: float
+    var rear_offset: float
 
-    var front_offset: float = track_offset - (front_rest_offset as Vector3).z
-    var rear_offset: float = track_offset - (rear_rest_offset as Vector3).z
+    if bdist > 0.0:
+        front_offset = track_offset + (bdist * 0.5)
+        rear_offset = track_offset - (bdist * 0.5)
+    else:
+        var front_rest_offset: Variant = _bogie_rest_offsets.get(front_bogie)
+        var rear_rest_offset: Variant = _bogie_rest_offsets.get(rear_bogie)
+        if not (front_rest_offset is Vector3 and rear_rest_offset is Vector3):
+            return false
+        front_offset = track_offset - (front_rest_offset as Vector3).z
+        rear_offset = track_offset - (rear_rest_offset as Vector3).z
+
     var front_position: Vector3 = TrackManager.get_track_position(track_rid, front_offset)
     var rear_position: Vector3 = TrackManager.get_track_position(track_rid, rear_offset)
     var front_axis: Vector3 = TrackManager.get_track_axis(track_rid, front_offset)
@@ -676,7 +684,7 @@ func _update_bogie_transforms(track_rid: RID, track_offset: float) -> bool:
             continue
 
         var bogie_yaw: float = atan2(-bogie_axis.normalized().x, bogie_axis.normalized().z)
-        var yaw_delta: float = bogie_yaw - body_yaw
+        var yaw_delta: float = -(bogie_yaw - body_yaw)
         var rest_global_basis: Variant = _bogie_rest_global_bases.get(bogie_node)
         if rest_global_basis is Basis:
             bogie_node.global_basis = global_basis * Basis(Vector3.UP, yaw_delta) * (rest_global_basis as Basis)

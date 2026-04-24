@@ -613,6 +613,8 @@ namespace godot {
         state["radio_enabled"] = mover->Radio;
         state["radio_powered"] = mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
         state["radio_channel"] = radio_channel;
+        state["bogie_axle_spacing"] = mover->ADist;
+        state["bogie_pivot_spacing"] = mover->BDist;
     }
 
     Dictionary TrainController::get_config() const {

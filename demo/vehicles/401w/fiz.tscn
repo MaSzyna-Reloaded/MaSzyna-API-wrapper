@@ -1,13 +1,12 @@
 [gd_scene format=3 uid="uid://d3bqaxs80et01"]
 
 [node name="401W" type="TrainController" unique_id=1385549383]
-axle_arrangement = "2'2'"
-drag_coefficient = 0.1
 mass = 20100.0
 max_velocity = 100.0
 length = 14.04
 width = 3.04
 height = 3.235
+drag_coefficient = 0.1
 
 [node name="Coupler" type="LegacyBufferCouplerModule" parent="." unique_id=1677556398]
 coupler/type = 1
@@ -20,3 +19,11 @@ coupler/max_tension_tolerance = 780.0
 damping_beta = 0.52
 allowed_flag = 3
 buffer_location = 2
+
+[node name="TrainWheels" type="TrainWheels" parent="." unique_id=1706145136]
+powered_wheel_diameter = 0.92
+axle_inertial_moment = 300.0
+axle_arrangement = "2'2'"
+bogie_axle_spacing = 1.9
+bogie_pivot_spacing = 8.5
+minimum_curve_radius = 75.0

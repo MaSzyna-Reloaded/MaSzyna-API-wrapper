@@ -81,7 +81,7 @@ namespace godot {
         p_mover->NPoweredAxles = Maszyna::s2NPW(p_mover->AxleArangement);
         p_mover->NAxles = p_mover->NPoweredAxles + Maszyna::s2NNW(p_mover->AxleArangement);
         p_mover->BearingType = bearing_type == BEARING_TYPE_SLIDE ? 0 : 1;
-        p_mover->ADist = bogie_pivot_spacing;
+        p_mover->ADist = bogie_axle_spacing;
         p_mover->BDist = bogie_pivot_spacing;
 
         if (axle_inertial_moment <= 0.0) {

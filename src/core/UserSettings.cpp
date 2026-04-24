@@ -1,11 +1,9 @@
 #include "UserSettings.hpp"
 
-#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
 
@@ -48,9 +46,19 @@ namespace godot {
         render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_DISABLED;
         render["use_taa"] = true;
 
+        Dictionary window;
+        window["multi_monitor_mode"] = 0;
+        window["monitor_rotation_right"] = 0.0;
+        window["monitor_offset_right"] = 0.0;
+        window["monitor_tilt_right"] = 0.0;
+        window["monitor_rotation_left"] = 0.0;
+        window["monitor_offset_left"] = 0.0;
+        window["monitor_tilt_left"] = 0.0;
+
         defaults["e3d"] = e3d;
         defaults["maszyna"] = maszyna;
         defaults["render"] = render;
+        defaults["window"] = window;
     }
 
     void UserSettings::_apply_defaults() {

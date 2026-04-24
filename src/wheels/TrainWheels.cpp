@@ -6,6 +6,7 @@ namespace godot {
     namespace {
         constexpr double WHEEL_LINEAR_TO_DEGREES = 114.59155902616464175359630962821;
 
+        /*
         double wrap_degrees(const double p_angle) {
             double wrapped = std::fmod(p_angle, 360.0);
             if (wrapped < 0.0) {
@@ -13,6 +14,7 @@ namespace godot {
             }
             return wrapped;
         }
+        */
     } // namespace
 
     void TrainWheels::_bind_methods() {
@@ -122,17 +124,13 @@ namespace godot {
             return;
         }
 
-        if (p_mover->WheelDiameterL > 0.0) {
-            wheel_angle_front_deg += WHEEL_LINEAR_TO_DEGREES * p_mover->V * p_delta / p_mover->WheelDiameterL;
-            wheel_angle_front_deg = wrap_degrees(wheel_angle_front_deg);
-        }
+        wheel_angle_front_deg += WHEEL_LINEAR_TO_DEGREES * p_mover->V * p_delta / p_mover->WheelDiameterL;
+        // wheel_angle_front_deg = wrap_degrees(wheel_angle_front_deg);
 
         wheel_angle_powered_deg += p_mover->nrot * p_delta * 360.0;
-        wheel_angle_powered_deg = wrap_degrees(wheel_angle_powered_deg);
+        // wheel_angle_powered_deg = wrap_degrees(wheel_angle_powered_deg);
 
-        if (p_mover->WheelDiameterT > 0.0) {
-            wheel_angle_rear_deg += WHEEL_LINEAR_TO_DEGREES * p_mover->V * p_delta / p_mover->WheelDiameterT;
-            wheel_angle_rear_deg = wrap_degrees(wheel_angle_rear_deg);
-        }
+        wheel_angle_rear_deg += WHEEL_LINEAR_TO_DEGREES * p_mover->V * p_delta / p_mover->WheelDiameterT;
+        // wheel_angle_rear_deg = wrap_degrees(wheel_angle_rear_deg);
     }
 } // namespace godot

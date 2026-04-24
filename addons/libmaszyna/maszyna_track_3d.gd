@@ -43,7 +43,7 @@ class_name MaszynaTrack3D
             server.set_sleeper_spacing(_track_id, x)
         _request_track_update()
 
-@export var sleeper_height: float = 0.15:
+@export var sleeper_height: float = 0.4:
     set(x):
         sleeper_height = x
         _update_server_heights()
@@ -52,6 +52,9 @@ class_name MaszynaTrack3D
 @export var rail_height: float = 0.16:
     set(x):
         rail_height = x
+        var server = _get_track_server()
+        if server and _track_id != 0:
+            server.set_rail_height(_track_id, x)
         _request_track_update()
 
 @export_group("Ballast")
@@ -113,7 +116,7 @@ func _update_server_heights():
     var server = _get_track_server()
     if server and _track_id != 0:
         server.set_ballast_height(_track_id, ballast_height)
-        server.set_sleeper_height(_track_id, ballast_height + sleeper_height)
+        server.set_sleeper_height(_track_id, sleeper_height)
 
 @export_group("Geometry")
 @export var curve_precision: float = 0.5:
@@ -247,6 +250,7 @@ func _apply_track_settings():
     server.set_sleeper_model_name(_track_id, sleeper_model_name)
     server.set_sleeper_spacing(_track_id, sleeper_spacing)
     server.set_rail_spacing(_track_id, rail_spacing)
+    server.set_rail_height(_track_id, rail_height)
     server.set_ballast_height(_track_id, ballast_height)
     server.set_ballast_offset(_track_id, ballast_offset)
     server.set_ballast_uv_scale(_track_id, ballast_uv_scale)
@@ -261,7 +265,6 @@ func _sync_track_state():
     var server = _get_track_server()
     if not server or _track_id == 0:
         return
-
     server.set_track_transform(_track_id, global_transform)
     server.set_track_visible(_track_id, is_visible_in_tree())
     if is_inside_tree() and get_world_3d():
@@ -311,7 +314,7 @@ func _update_track():
 func _update_rail_mesh(length: float):
     var server = _get_track_server()
     if server and _track_id != 0:
-        server.update_rail_mesh(_track_id, length, rail_spacing, curve_precision)
+        server.update_rail_mesh(_track_id, length, rail_spacing, rail_height, curve_precision)
 
 func _update_ballast_mesh(length: float):
     var server = _get_track_server()

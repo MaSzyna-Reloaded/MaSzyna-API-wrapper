@@ -413,6 +413,7 @@ rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 ballast_texture = "tory/podsypka-2"
+ballast_height = 0.475
 min_turn_radius = 70.0
 previous_track = NodePath("../MaszynaTrack3D3")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"

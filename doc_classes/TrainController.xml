@@ -123,9 +123,6 @@
 		</method>
 	</methods>
 	<members>
-		<member name="axle_arrangement" type="String" setter="set_axle_arrangement" getter="get_axle_arrangement" default="&quot;&quot;">
-			[code]Wheels:Axle[/code]
-		</member>
 		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
 			[code]Light:LMaxVoltage[/code]
 		</member>

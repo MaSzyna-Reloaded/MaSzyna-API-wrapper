@@ -124,7 +124,6 @@ type_name = "6d"
 mass = 74000.0
 power = 590.0
 max_velocity = 90.0
-axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
 script = ExtResource("1_vib8j")
 
@@ -188,5 +187,13 @@ source/generator/engine = 0
 [node name="TrainLoad" type="TrainLoad" parent="." unique_id=829257758]
 
 [node name="TrainBuffer" type="TrainBuffCoupl" parent="."]
+
+[node name="TrainWheels" type="TrainWheels" parent="." unique_id=127806310]
+powered_wheel_diameter = 1.1
+axle_inertial_moment = 4000.0
+axle_arrangement = "Bo'Bo'"
+bogie_axle_spacing = 2.6
+bogie_pivot_spacing = 7.524
+minimum_curve_radius = 0.08
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

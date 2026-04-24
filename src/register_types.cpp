@@ -25,6 +25,7 @@
 #include "models/MaterialManager.hpp"
 #include "models/MaterialParser.hpp"
 #include "systems/TrainSecuritySystem.hpp"
+#include "wheels/TrainWheels.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/defs.hpp>
@@ -67,6 +68,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
         GDREGISTER_CLASS(TrainController);
+        GDREGISTER_CLASS(TrainWheels);
         GDREGISTER_CLASS(TrainSecuritySystem);
         GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_CLASS(TrainLighting)

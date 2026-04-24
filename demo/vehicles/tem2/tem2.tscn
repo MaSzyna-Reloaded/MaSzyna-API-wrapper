@@ -193,7 +193,6 @@ type_name = "tem2"
 mass = 116000.0
 power = 780.0
 max_velocity = 90.0
-axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
 script = ExtResource("4_tujep")
 
@@ -229,3 +228,11 @@ emergency_brake/delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
+
+[node name="TrainWheels" type="TrainWheels" parent="TEM2Controller" unique_id=7953418]
+powered_wheel_diameter = 1.05
+axle_inertial_moment = 4000.0
+axle_arrangement = "Co'Co'"
+bogie_axle_spacing = 2.1
+bogie_pivot_spacing = 8.6
+minimum_curve_radius = 80.0

@@ -59,16 +59,28 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
-        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
-        BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainController::set_type_name, &TrainController::get_type_name, "type_name");
+        BIND_PROPERTY(
+                Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
+                "train_id");
+        BIND_PROPERTY(
+                Variant::STRING, "type_name", "type_name", &TrainController::set_type_name,
+                &TrainController::get_type_name, "type_name");
         BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
-        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity, &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainController::set_axle_arrangement, &TrainController::get_axle_arrangement, "axle_arrangement");
-        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(
+                Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
+        BIND_PROPERTY(
+                Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity,
+                &TrainController::get_max_velocity, "max_velocity");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min,
+                &TrainController::get_radio_channel_min, "radio_channel_min");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max,
+                &TrainController::get_radio_channel_max, "radio_channel_max");
         /* FIXME: move to TrainPower section? */
-        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY_W_HINT(
+                Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
+                &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
 
         ADD_SIGNAL(MethodInfo(MOVER_CONFIG_CHANGED_SIGNAL));
         ADD_SIGNAL(MethodInfo(MOVER_INITIALIZED_SIGNAL));
@@ -254,18 +266,13 @@ namespace godot {
         mover->Vmax = max_velocity;
 
         mover->ComputeMass();
-        mover->NPoweredAxles = Maszyna::s2NPW(axle_arrangement.ascii().get_data());
-        mover->NAxles = mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
 
         // FIXME: move to TrainPower
         mover->BatteryVoltage = battery_voltage;
         mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {
-        config["axles_powered_count"] = mover->NPoweredAxles;
-        config["axles_count"] = mover->NAxles;
-    }
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *mover, Dictionary &config) const {}
 
     void TrainController::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {

@@ -145,7 +145,6 @@ namespace godot {
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);
-            MAKE_MEMBER_GS(String, axle_arrangement, "");
             MAKE_MEMBER_GS(int, radio_channel_min, 0);
             MAKE_MEMBER_GS(int, radio_channel_max, 0);
             Dictionary get_state();

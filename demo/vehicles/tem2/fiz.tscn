@@ -1,12 +1,11 @@
 [gd_scene format=3 uid="uid://c2n8fsvqi31ve"]
 
 [node name="TEM2Controller" type="TrainController" unique_id=1450902435]
-power = 780.0
-battery_voltage = 110.0
-type_name = "tem2"
-axle_arrangement = "Bo'Bo'"
 mass = 116000.0
 max_velocity = 90.0
+type_name = "tem2"
+power = 780.0
+battery_voltage = 110.0
 
 [node name="Brake" type="TrainBrake" parent="." unique_id=2085468484]
 valve/type = 20
@@ -30,8 +29,6 @@ rig_effectiveness = 0.85
 oil_pump/pressure_minimum = 0.16
 oil_pump/pressure_maximum = 0.3
 maximum_traction_force = 228000.0
-wwlist = Array[WWListItem]([])
-motor_param_table = Array[MotorParameter]([])
 
 [node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="." unique_id=979141050]
 aware_system/active = true
@@ -40,3 +37,11 @@ emergency_brake/delay = 2.5
 sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
+
+[node name="TrainWheels" type="TrainWheels" parent="." unique_id=7953418]
+powered_wheel_diameter = 1.1
+axle_inertial_moment = 4000.0
+axle_arrangement = "Bo'Bo'"
+bogie_axle_spacing = 2.6
+bogie_pivot_spacing = 7.524
+minimum_curve_radius = 0.08

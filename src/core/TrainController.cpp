@@ -73,7 +73,6 @@ namespace godot {
         BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
         BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
         BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity, &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainController::set_axle_arrangement, &TrainController::get_axle_arrangement, "axle_arrangement");
         BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
         BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
         /* FIXME: move to TrainPower section? */
@@ -263,8 +262,6 @@ namespace godot {
         p_mover->Vmax = max_velocity;
 
         p_mover->ComputeMass();
-        p_mover->NPoweredAxles = Maszyna::s2NPW(axle_arrangement.ascii().get_data());
-        p_mover->NAxles = p_mover->NPoweredAxles + Maszyna::s2NNW(axle_arrangement.ascii().get_data());
 
         // FIXME: move to TrainPower
         p_mover->BatteryVoltage = battery_voltage;
@@ -272,8 +269,6 @@ namespace godot {
     }
 
     void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
-        p_config["axles_powered_count"] = p_mover->NPoweredAxles;
-        p_config["axles_count"] = p_mover->NAxles;
     }
 
     void TrainController::update_mover() {

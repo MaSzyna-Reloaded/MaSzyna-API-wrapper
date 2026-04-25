@@ -1,4 +1,4 @@
-[gd_scene load_steps=18 format=3 uid="uid://c5hi8nsm1d2hb"]
+[gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
 [ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
@@ -124,7 +124,6 @@ type_name = "6d"
 mass = 74000.0
 power = 590.0
 max_velocity = 90.0
-axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
 script = ExtResource("1_vib8j")
 
@@ -188,5 +187,13 @@ source/generator/engine = 0
 [node name="TrainLoad" type="TrainLoad" parent="."]
 
 [node name="TrainBuffer" type="TrainBuffCoupl" parent="."]
+
+[node name="TrainWheels" type="TrainWheels" parent="." unique_id=127806310]
+powered_wheel_diameter = 1.1
+axle_inertial_moment = 4000.0
+axle_arrangement = "Bo'Bo'"
+bogie_axle_spacing = 2.6
+bogie_pivot_spacing = 7.524
+minimum_curve_radius = 0.08
 
 [connection signal="selector_position_changed" from="TrainLightning" to="." method="_on_train_lightning_selector_position_changed"]

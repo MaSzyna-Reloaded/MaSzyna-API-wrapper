@@ -2,6 +2,8 @@
 extends Node3D
 class_name RailVehicle3D
 
+enum PhysicsMode {MOVER, RIGIDBODY}
+
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
 @export var train_id: StringName = &"":
@@ -17,14 +19,9 @@ class_name RailVehicle3D
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
-            if not Engine.is_editor_hint():
-                _unregister_train()
             controller_path = x
             _controller = null
             _dirty = true
-            if not Engine.is_editor_hint():
-                _resolve_controller()
-                _register_train()
 
 @export_node_path("Node3D") var front_bogie_path: NodePath = NodePath(""):
     set(x):
@@ -74,20 +71,9 @@ class_name RailVehicle3D
             head_display_node_path = x
             _needs_head_display_update = true
 
-@export var runtime_physics_enabled: bool = false:
+@export var physics_mode: PhysicsMode = PhysicsMode.MOVER:
     set(x):
-        if x == runtime_physics_enabled:
-            return
-        if not x and _is_derailed_physics:
-            runtime_physics_enabled = true
-            if not _runtime_physics_disable_warned:
-                _runtime_physics_disable_warned = true
-                push_warning("RailVehicle3D '%s': runtime physics cannot be disabled once activated." % name)
-            return
-
-        runtime_physics_enabled = x
-        if runtime_physics_enabled and is_inside_tree() and not Engine.is_editor_hint():
-            _enter_runtime_physics()
+        physics_mode = x
 
 var _dirty:bool = true
 var _needs_head_display_update: bool = false
@@ -97,22 +83,18 @@ var _camera:FreeCamera3D
 var _controller:TrainController
 var _derail_body: RigidBody3D
 var _t:float = 0.0
-var _invalid_velocity_reported: bool = false
-var _is_derailed_physics: bool = false
-var _runtime_physics_disable_warned: bool = false
+
+var _current_physics_mode:PhysicsMode = PhysicsMode.MOVER
+
 var _track_orientation_initialized: bool = false
 var _track_orientation_offset: Basis = Basis.IDENTITY
 var _runtime_physics_impact_origin: Vector3 = Vector3.INF
 var _runtime_physics_relative_speed_kmh: float = 0.0
-var _front_bogie_node: Node3D
-var _rear_bogie_node: Node3D
-var _front_rolling_wheel_nodes: Array[Node3D] = []
-var _powered_wheel_nodes: Array[Node3D] = []
-var _rear_rolling_wheel_nodes: Array[Node3D] = []
-var _node_rest_bases: Dictionary = {}
-var _bogie_rest_offsets: Dictionary = {}
-var _bogie_rest_global_bases: Dictionary = {}
-var _bogie_configuration_warned: bool = false
+var _front_bogie: Node3D
+var _rear_bogie: Node3D
+var _front_rolling_wheels: Array[Node3D] = []
+var _powered_wheels: Array[Node3D] = []
+var _rear_rolling_wheels: Array[Node3D] = []
 
 var state: Dictionary:
     get:
@@ -133,36 +115,14 @@ var type_name: String:
         return ""
 
 
-func _resolve_controller() -> void:
-    if _controller and _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
-        _controller.disconnect("derailed", Callable(self, "_on_controller_derailed"))
-
-    if controller_path and is_inside_tree():
-        _controller = get_node_or_null(controller_path) as TrainController
-    else:
-        _controller = null
-
-    if _controller and not _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
-        _controller.connect("derailed", Callable(self, "_on_controller_derailed"))
-
 
 func _register_train() -> void:
-    if Engine.is_editor_hint():
-        return
-    if not is_inside_tree():
-        return
-    if train_id.is_empty():
-        return
     if not _controller:
         return
     TrainSystem.register_train(train_id, _controller)
 
 
 func _unregister_train() -> void:
-    if Engine.is_editor_hint():
-        return
-    if train_id.is_empty():
-        return
     TrainSystem.unregister_train(train_id)
 
 
@@ -261,7 +221,7 @@ func leave_cabin(player:Node):
 
 func get_controller() -> TrainController:
     if not _controller:
-        _resolve_controller()
+        _controller = get_node_or_null(controller_path)
     return _controller
 
 
@@ -303,36 +263,12 @@ func log_error(line: String) -> void:
     self.log(GameLog.LogLevel.ERROR, line)
 
 
-func _controller_to_vehicle(controller: TrainController) -> RailVehicle3D:
-    if controller == null:
-        return null
-
-    var node := controller.get_parent()
-    while node != null:
-        if node is RailVehicle3D:
-            return node as RailVehicle3D
-        node = node.get_parent()
-
-    return null
-
-
-func _get_trainset_vehicles(controller: TrainController) -> Array[RailVehicle3D]:
-    var vehicles: Array[RailVehicle3D] = []
-    if controller == null:
-        return vehicles
-
-    var trainset := controller.get_trainset()
-    if trainset == null:
-        return vehicles
-
-    for entry in trainset.to_array():
-        var vehicle_controller := entry as TrainController
-        var vehicle := _controller_to_vehicle(vehicle_controller)
-        if vehicle != null:
-            vehicles.append(vehicle)
-
-    return vehicles
-
+func _get_trainset_vehicles(vehicle: RailVehicle3D) -> Array[RailVehicle3D]:
+    var trainset := vehicle.get_parent() as TrainSetNode
+    if trainset:
+        return trainset.get_rail_vehicles()
+    else:
+        return []
 
 func _find_nearest_collision_vehicle() -> RailVehicle3D:
     if _controller == null:
@@ -422,13 +358,7 @@ func _activate_derail_body(derail_body: RigidBody3D, body_shape: CollisionShape3
 
 
 func _wrap_in_runtime_physics_body(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
-    if _is_derailed_physics or _controller == null:
-        return
-
     var body_shape := _create_derail_body_shape()
-    if body_shape == null:
-        push_warning("RailVehicle3D '%s': missing CollisionShape3D for runtime physics." % name)
-        return
 
     var previous_parent := get_parent()
     if previous_parent == null:
@@ -457,8 +387,7 @@ func _wrap_in_runtime_physics_body(impact_origin: Vector3 = Vector3.INF, relativ
 
     _detach_from_consist()
     _controller.assign_track_rid(RID(), "")
-    _is_derailed_physics = true
-    runtime_physics_enabled = true
+
     _derail_body = derail_body
 
     var preserved_global_transform := global_transform
@@ -483,24 +412,12 @@ func _wrap_in_runtime_physics_body(impact_origin: Vector3 = Vector3.INF, relativ
     _activate_derail_body(derail_body, body_shape, impact_origin, relative_speed_kmh)
 
 
-func _enter_runtime_physics() -> void:
-    if _is_derailed_physics:
-        runtime_physics_enabled = true
-        return
-
-    _wrap_in_runtime_physics_body(_runtime_physics_impact_origin, _runtime_physics_relative_speed_kmh)
-
-
 func _request_runtime_physics(impact_origin: Vector3 = Vector3.INF, relative_speed_kmh: float = 0.0) -> void:
     _runtime_physics_impact_origin = impact_origin
     _runtime_physics_relative_speed_kmh = relative_speed_kmh
-    runtime_physics_enabled = true
 
 
 func _enter_derail_physics() -> void:
-    if _is_derailed_physics or _controller == null:
-        return
-
     var collision_vehicle := _find_nearest_collision_vehicle()
     var impacted_vehicles: Array[RailVehicle3D] = []
     var collision_origin := Vector3.INF
@@ -509,7 +426,7 @@ func _enter_derail_physics() -> void:
         float(_controller.state.get("rear_relative_speed_kmh", 0.0))
     )
     if collision_vehicle != null:
-        impacted_vehicles = _get_trainset_vehicles(collision_vehicle.get_controller())
+        impacted_vehicles = _get_trainset_vehicles(collision_vehicle)
         collision_origin = collision_vehicle.global_position
 
     _request_runtime_physics(collision_origin, relative_speed_kmh)
@@ -543,180 +460,72 @@ func _update_head_display():
     _needs_head_display_update = false
 
 
-func _compute_track_basis(track_axis: Vector3) -> Basis:
-    var forward := track_axis.normalized()
-    if forward.is_zero_approx():
-        return global_basis.orthonormalized()
+func _rotate_wheel(wheel: Node3D, delta: float, velocity: float, diameter: float):
+    wheel.rotation_degrees = Vector3(deg_to_rad(delta*velocity/diameter), 0, 0)
 
-    var right := Vector3.UP.cross(forward).normalized()
-    if right.is_zero_approx():
-        right = Vector3.RIGHT
+func _process_wheels(delta) -> void:
+    var velocity:float = _controller.state.get("velocity", 0.0)
+    var powered_diameter:float = _controller.config.get("powered_wheel_diameter", 0.0)
+    var front_diameter:float = _controller.config.get("front_rolling_wheel_diameter", powered_diameter)
+    var rear_diameter:float = _controller.config.get("front_rolling_rear_diameter", powered_diameter)
 
-    var up := forward.cross(right).normalized()
-    return Basis(right, up, -forward).orthonormalized()
+    for wheel:Node3D in _front_rolling_wheels:
+        _rotate_wheel(wheel, delta, velocity, front_diameter)
 
+    for wheel in _rear_rolling_wheels:
+        _rotate_wheel(wheel, delta, velocity, rear_diameter)
 
-func _resolve_animation_nodes(paths: Array[NodePath]) -> Array[Node3D]:
-    var nodes: Array[Node3D] = []
-    for path: NodePath in paths:
-        if path.is_empty():
-            continue
-        var node: Node3D = get_node_or_null(path) as Node3D
-        if node != null:
-            nodes.append(node)
-    return nodes
+    for wheel in _powered_wheels:
+        _rotate_wheel(wheel, delta, velocity, powered_diameter)
 
 
-func _capture_rest_basis(node: Node3D) -> void:
-    if node == null:
-        return
-    if not _node_rest_bases.has(node):
-        _node_rest_bases[node] = node.transform.basis.orthonormalized()
+func place_on_track(track_rid: RID, track_offset: float) -> void:
+    global_position = TrackManager.get_track_position(track_rid, track_offset)
+    print(track_rid, " ", track_offset, " ", global_position)
+    global_transform.basis.z = TrackManager.get_track_axis(track_rid, track_offset)
+    _update_bogies(track_rid, track_offset)
 
+func _update_bogies(track_rid: RID, track_offset: float):
+    var bdist: float = config.get("bogie_pivot_spacing", 0.0)
+    var front_offset: float = 0.0
+    var rear_offset: float = 0.0
 
-func _cache_animation_bindings() -> void:
-    _front_bogie_node = get_node_or_null(front_bogie_path) as Node3D
-    _rear_bogie_node = get_node_or_null(rear_bogie_path) as Node3D
-    _front_rolling_wheel_nodes = _resolve_animation_nodes(front_rolling_wheel_paths)
-    _powered_wheel_nodes = _resolve_animation_nodes(powered_wheel_paths)
-    _rear_rolling_wheel_nodes = _resolve_animation_nodes(rear_rolling_wheel_paths)
-    _track_orientation_initialized = false
+    # track offsets for middle of the bogie
+    front_offset = track_offset + (bdist * 0.5)
+    rear_offset = track_offset - (bdist * 0.5)
 
-    _node_rest_bases.clear()
-    _bogie_rest_offsets.clear()
-    _bogie_rest_global_bases.clear()
+    var front_position := TrackManager.get_track_position(track_rid, front_offset)
+    var front_axis := TrackManager.get_track_axis(track_rid, rear_offset)
 
-    if _front_bogie_node != null:
-        _capture_rest_basis(_front_bogie_node)
-        _bogie_rest_offsets[_front_bogie_node] = to_local(_front_bogie_node.global_position)
-        _bogie_rest_global_bases[_front_bogie_node] = global_basis.inverse() * _front_bogie_node.global_basis
-
-    if _rear_bogie_node != null:
-        _capture_rest_basis(_rear_bogie_node)
-        _bogie_rest_offsets[_rear_bogie_node] = to_local(_rear_bogie_node.global_position)
-        _bogie_rest_global_bases[_rear_bogie_node] = global_basis.inverse() * _rear_bogie_node.global_basis
-
-    for wheel_node: Node3D in _front_rolling_wheel_nodes:
-        _capture_rest_basis(wheel_node)
-    for wheel_node: Node3D in _powered_wheel_nodes:
-        _capture_rest_basis(wheel_node)
-    for wheel_node: Node3D in _rear_rolling_wheel_nodes:
-        _capture_rest_basis(wheel_node)
-
-
-func _apply_wheel_rotation(nodes: Array[Node3D], angle_deg: float) -> void:
-    var angle_rad: float = deg_to_rad(angle_deg)
-    for node: Node3D in nodes:
-        if node == null:
-            continue
-        var rest_basis: Variant = _node_rest_bases.get(node)
-        if rest_basis is Basis:
-            node.transform.basis = (rest_basis as Basis) * Basis(Vector3.RIGHT, angle_rad)
-
-
-func _update_wheel_animation_state() -> void:
-    if _controller == null:
-        return
-
-    _apply_wheel_rotation(_front_rolling_wheel_nodes, float(_controller.state.get("wheel_angle_front_deg", 0.0)))
-    _apply_wheel_rotation(_powered_wheel_nodes, float(_controller.state.get("wheel_angle_powered_deg", 0.0)))
-    _apply_wheel_rotation(_rear_rolling_wheel_nodes, float(_controller.state.get("wheel_angle_rear_deg", 0.0)))
-
-
-func _update_bogie_transforms(track_rid: RID, track_offset: float) -> bool:
-    if _front_bogie_node == null and _rear_bogie_node == null:
-        return false
-
-    if _front_bogie_node == null or _rear_bogie_node == null:
-        if not _bogie_configuration_warned:
-            _bogie_configuration_warned = true
-            push_warning(
-                "RailVehicle3D '%s': both front_bogie_path and rear_bogie_path must be set together." % name
-            )
-        return false
-
-    _bogie_configuration_warned = false
-
-    var front_bogie: Node3D = _front_bogie_node
-    var rear_bogie: Node3D = _rear_bogie_node
-    if front_bogie == null or rear_bogie == null:
-        return false
-
-    var bdist: float = state.get("bogie_pivot_spacing", 0.0)
-    var front_offset: float
-    var rear_offset: float
-
-    if bdist > 0.0:
-        front_offset = track_offset + (bdist * 0.5)
-        rear_offset = track_offset - (bdist * 0.5)
-    else:
-        var front_rest_offset: Variant = _bogie_rest_offsets.get(front_bogie)
-        var rear_rest_offset: Variant = _bogie_rest_offsets.get(rear_bogie)
-        if not (front_rest_offset is Vector3 and rear_rest_offset is Vector3):
-            return false
-        front_offset = track_offset - (front_rest_offset as Vector3).z
-        rear_offset = track_offset - (rear_rest_offset as Vector3).z
+    var rear_position := TrackManager.get_track_position(track_rid, rear_offset)
+    var rear_axis := TrackManager.get_track_axis(track_rid, rear_offset)
 
     var front_state: Dictionary = TrackManager.resolve_track_position(track_rid, front_offset)
     var rear_state: Dictionary = TrackManager.resolve_track_position(track_rid, rear_offset)
-    
-    if not (front_state.get("valid", false) and rear_state.get("valid", false)):
-        return false
 
-    var front_position: Vector3 = front_state.get("position", Vector3.ZERO)
-    var rear_position: Vector3 = rear_state.get("position", Vector3.ZERO)
-    var front_axis: Vector3 = front_state.get("axis", Vector3.FORWARD)
-    var rear_axis: Vector3 = rear_state.get("axis", Vector3.FORWARD)
-    
-    var front_vertical_offset: float = front_state.get("vertical_offset", 0.0)
-    var rear_vertical_offset: float = rear_state.get("vertical_offset", 0.0)
+    #var front_vertical_offset: float = front_state.get("vertical_offset", 0.0)
+    #var rear_vertical_offset: float = rear_state.get("vertical_offset", 0.0)
+    #var total_vertical_offset: float = (front_vertical_offset + rear_vertical_offset) * 0.5
 
-    var body_forward: Vector3 = front_position - rear_position
-    if body_forward.is_zero_approx():
-        return false
-    body_forward = body_forward.normalized()
-
-    var body_basis: Basis = _compute_track_basis(body_forward)
-    var total_vertical_offset: float = (front_vertical_offset + rear_vertical_offset) * 0.5
-    
-    global_position = (front_position + rear_position) * 0.5 + body_basis.y * total_vertical_offset
-    
-    if not _track_orientation_initialized:
-        _track_orientation_offset = body_basis.inverse() * global_basis.orthonormalized()
-        _track_orientation_initialized = true
-    global_basis = (body_basis * _track_orientation_offset).orthonormalized()
-
+    var body_forward: Vector3 = (front_position - rear_position).normalized()
     var body_yaw: float = atan2(-body_forward.x, body_forward.z)
-    var bogie_nodes: Array[Node3D] = [front_bogie, rear_bogie]
-    var bogie_axes: Array[Vector3] = [front_axis, rear_axis]
-    for index: int in range(bogie_nodes.size()):
-        var bogie_node: Node3D = bogie_nodes[index]
-        var bogie_axis: Vector3 = bogie_axes[index]
-        if bogie_axis.is_zero_approx():
-            continue
-
-        var bogie_yaw: float = atan2(-bogie_axis.normalized().x, bogie_axis.normalized().z)
-        var yaw_delta: float = -(bogie_yaw - body_yaw)
-        var rest_global_basis: Variant = _bogie_rest_global_bases.get(bogie_node)
-        if rest_global_basis is Basis:
-            bogie_node.global_basis = global_basis * Basis(Vector3.UP, yaw_delta) * (rest_global_basis as Basis)
-
-    return true
-
 
 func _process(delta):
     if _dirty:
         _dirty = false
-        if head_display_e3d_path:
-            _head_display_e3d = get_node_or_null(head_display_e3d_path)
-            if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func():
-                    _needs_head_display_update = true
-                    _dirty = true
-                )
+        _process_dirty(delta)
 
-        _resolve_controller()
-        _cache_animation_bindings()
+func _process_dirty(delta):
+    _front_bogie = get_node_or_null(front_bogie_path)
+    _rear_bogie = get_node_or_null(rear_bogie_path)
+
+    if head_display_e3d_path:
+        _head_display_e3d = get_node_or_null(head_display_e3d_path)
+        if _head_display_e3d:
+            _head_display_e3d.e3d_loaded.connect(func():
+                _needs_head_display_update = true
+                _dirty = true
+            )
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -725,62 +534,27 @@ func _process(delta):
 
 
 func _physics_process(delta: float) -> void:
-    if not Engine.is_editor_hint():
-        if runtime_physics_enabled and not _is_derailed_physics:
-            _enter_runtime_physics()
-        elif _controller and bool(_controller.state.get("is_derailed", false)) and not _is_derailed_physics:
-            _enter_derail_physics()
-
-        if _is_derailed_physics:
-            if _controller:
-                _controller.set_mover_location(global_position)
-            return
-
-        if _controller:
-            var track_rid := _controller.get_track_rid()
-            var track_offset := float(_controller.get_track_offset())
-            var track := TrackManager.get_track(track_rid)
-            if track != null and is_finite(track_offset):
-                _invalid_velocity_reported = false
-                var applied_bogies: bool = _update_bogie_transforms(track_rid, track_offset)
-                if not applied_bogies:
-                    var resolved: Dictionary = TrackManager.resolve_track_position(track_rid, track_offset)
-                    if resolved.get("valid", false):
-                        var track_axis: Vector3 = resolved.get("axis", Vector3.FORWARD)
-                        var track_pos: Vector3 = resolved.get("position", Vector3.ZERO)
-                        var vertical_offset: float = resolved.get("vertical_offset", 0.0)
-                        
-                        if not track_axis.is_zero_approx():
-                            var track_basis := _compute_track_basis(track_axis)
-                            global_position = track_pos + track_basis.y * vertical_offset
-                            if not _track_orientation_initialized:
-                                _track_orientation_offset = track_basis.inverse() * global_basis.orthonormalized()
-                                _track_orientation_initialized = true
-                            global_basis = (track_basis * _track_orientation_offset).orthonormalized()
-                _update_wheel_animation_state()
-            elif track_rid != RID() and not _invalid_velocity_reported:
-                _invalid_velocity_reported = true
-                push_error(
-                    "RailVehicle3D '%s': controller '%s' produced invalid track state." %
-                    [name, _controller.name]
-                )
+    if Engine.is_editor_hint():
+        return
+    match _current_physics_mode:
+        PhysicsMode.MOVER:
+            var track_rid = _controller.get_track_rid()
+            var track_offset = _controller.get_track_offset()
+            place_on_track(track_rid, track_offset)
+            _update_bogies(track_rid, track_offset)
+            _process_wheels(delta)
+        PhysicsMode.RIGIDBODY:
+            pass
 
 func _ready() -> void:
     set_physics_process(true)
-    add_to_group(&"rail_vehicle_runtime")
     _needs_head_display_update = true
     _dirty = true
-    _resolve_controller()
     _register_train()
     E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
-    if runtime_physics_enabled:
-        _enter_runtime_physics()
-    elif _controller and bool(_controller.state.get("is_derailed", false)):
-        _enter_derail_physics()
 
 
 func _exit_tree() -> void:
     if _controller and _controller.is_connected("derailed", Callable(self, "_on_controller_derailed")):
         _controller.disconnect("derailed", Callable(self, "_on_controller_derailed"))
-    remove_from_group(&"rail_vehicle_runtime")
     _unregister_train()

@@ -32,7 +32,7 @@ func _ready():
         if win:
             win.visible = false
             menu.add_item(win.title)
-        
+
     _auto_user_settings_visibility()
     UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
     UserSettings.config_changed.connect(_update_render_settings)

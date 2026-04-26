@@ -235,11 +235,10 @@ func _update_track():
     TrackRenderingServer.set_sleeper_spacing(_track_id, sleeper_spacing)
     TrackRenderingServer.set_sleeper_model_skin(_track_id, sleeper_model_skin)
     TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
-    TrackRenderingServer.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])    
-    TrackRenderingServer.update_rail_mesh(_track_id, path_data["length"], rail_spacing, rail_height, curve_precision)    
-    TrackRenderingServer.update_ballast_mesh(_track_id, path_data["length"], curve_precision)    
+    TrackRenderingServer.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])
+    TrackRenderingServer.update_rail_mesh(_track_id, path_data["length"], rail_spacing, rail_height, curve_precision)
+    TrackRenderingServer.update_ballast_mesh(_track_id, path_data["length"], curve_precision)
     _sync_virtual_track()
-    _notify_train_set_previews()
 
     _is_updating = false
 
@@ -265,7 +264,7 @@ func _apply_3_point_logic_optimized():
             var p_next = curve.get_point_position(i + 1)
             var dir_prev = (p - p_prev).normalized()
             var dir_next = (p_next - p).normalized()
-            
+
             if abs(p.x - p_prev.x) + abs(p_next.x - p.x) < 0.001 or dir_prev.dot(dir_next) > 0.9999:
                 curve.set_point_in(i, Vector3.ZERO)
                 curve.set_point_out(i, Vector3.ZERO)
@@ -283,7 +282,7 @@ func _apply_3_point_logic_optimized():
                 if angle > PI: angle -= 2*PI
                 if angle < -PI: angle += 2*PI
                 curve.set_point_tilt(i, angle * banking_intensity)
-    
+
     curve.set_block_signals(false)
     curve.emit_changed()
 
@@ -298,25 +297,25 @@ func _prepare_path_data() -> Dictionary:
     var length = curve.get_baked_length()
     var max_points = 256
     var interval = max(0.1, length / float(max_points - 1))
-    
+
     var points = PackedVector4Array()
     var quats = PackedVector4Array()
-    
+
     var current_dist = 0.0
     while current_dist <= length + 0.001 and points.size() < max_points:
         var t = curve.sample_baked_with_rotation(current_dist)
         var tilt = 0.0
         if curve.has_method("sample_baked_tilt"):
             tilt = curve.sample_baked_tilt(current_dist)
-        
+
         points.append(Vector4(t.origin.x, t.origin.y, t.origin.z, tilt))
-        
+
         var q = t.basis.get_rotation_quaternion()
         quats.append(Vector4(q.x, q.y, q.z, q.w))
-        
+
         current_dist += interval
         if interval <= 0: break
-    
+
     return {
         "points": points,
         "quats": quats,
@@ -342,7 +341,7 @@ func _sync_virtual_track():
         _resolve_connected_track_rid(previous_track),
         _resolve_connected_track_rid(next_track)
     )
-    
+
     TrackManager.set_track_heights(
         _virtual_track_rid,
         ballast_height + sleeper_height,
@@ -367,15 +366,10 @@ func _resolve_connected_track_rid(target_path: NodePath) -> RID:
 
     return RID()
 
-func _notify_train_set_previews() -> void:
-    if not is_inside_tree():
-        return
-
-    get_tree().call_group_flags(SceneTree.GROUP_CALL_DEFERRED, &"train_set_3d_editor_preview", "_queue_editor_layout")
 
 func get_rail_top_vertical_offset() -> float:
     return ballast_height + sleeper_height + rail_height
-    
+
 
 func get_virtual_track_rid():
     return _virtual_track_rid

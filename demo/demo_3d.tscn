@@ -334,7 +334,6 @@ metadata/_custom_type_script = "uid://bocodruvp5emd"
 
 [node name="TEM2" parent="TEM2 Trainset" unique_id=1971513606 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.877241, 0, 68.89631)
-train_id = &"tem2"
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)

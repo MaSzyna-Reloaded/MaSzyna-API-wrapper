@@ -309,13 +309,13 @@ environment = SubResource("Environment_jrns0")
 start_track_offset = 100.0
 
 [node name="SM42-907" parent="SM42-907 Trainset" index="0" unique_id=13773796]
-transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, -28.09319, 0, 200.0035)
+transform = Transform3D(-1, 0, 0.021243587, 0, 1, 0, 1.509958e-07, 0, -0.9997743, -28.09319, 0, 200.0035)
 
 [node name="401W-1" parent="SM42-907 Trainset" index="1" unique_id=149723671]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.334385, 0, 214.1414)
+transform = Transform3D(1, 0, 0.013099456, 0, 1, 0, 0, 0, -0.99991417, -28.335697, 0, 214.2414)
 
 [node name="401W-2" parent="SM42-907 Trainset" index="2" unique_id=1101690052]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.472622, 0, 228.1807)
+transform = Transform3D(1, 0, 0.00687659, 0, 1, 0, 0, 0, -0.9999764, -28.47331, 0, 228.2807)
 
 [node name="401W Standalone TrainSet" type="Node" parent="." unique_id=1017916141]
 script = ExtResource("16_l04v0")
@@ -324,7 +324,7 @@ start_track_offset = 30.0
 metadata/_custom_type_script = "uid://bocodruvp5emd"
 
 [node name="401W" parent="401W Standalone TrainSet" unique_id=173667047 instance=ExtResource("17_lsqkb")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.582737, 0, 270.0005)
+transform = Transform3D(1, 0, 0.001855132, 0, 1, 0, 0, 0, -0.9999983, -28.582737, 0, 270.0005)
 
 [node name="TEM2 Trainset" type="Node" parent="." unique_id=1066307364]
 script = ExtResource("16_l04v0")
@@ -333,7 +333,7 @@ start_track_offset = 80.0
 metadata/_custom_type_script = "uid://bocodruvp5emd"
 
 [node name="TEM2" parent="TEM2 Trainset" unique_id=1971513606 instance=ExtResource("13_fe5ju")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16.877241, 0, 68.89631)
+transform = Transform3D(1, 0, -0.07540948, 0, 1, 0, 0, 0, -0.9971526, -16.877241, 0, 68.89631)
 
 [node name="Impuls" parent="." unique_id=1642739350 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0308414, 0, -4.30589)

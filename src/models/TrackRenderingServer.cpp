@@ -24,78 +24,72 @@ namespace godot {
 
     void TrackRenderingServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("create_track"), &TrackRenderingServer::create_track);
-        ClassDB::bind_method(D_METHOD("free_track", "track_id"), &TrackRenderingServer::free_track);
+        ClassDB::bind_method(D_METHOD("free_track", "track_rid"), &TrackRenderingServer::free_track);
         ClassDB::bind_method(
-                D_METHOD("set_track_transform", "track_id", "transform"), &TrackRenderingServer::set_track_transform);
-        ClassDB::bind_method(D_METHOD("get_track_transform", "track_id"), &TrackRenderingServer::get_track_transform);
+                D_METHOD("set_track_transform", "track_rid", "transform"), &TrackRenderingServer::set_track_transform);
+        ClassDB::bind_method(D_METHOD("get_track_transform", "track_rid"), &TrackRenderingServer::get_track_transform);
         ClassDB::bind_method(
-                D_METHOD("set_track_visible", "track_id", "visible"), &TrackRenderingServer::set_track_visible);
-        ClassDB::bind_method(D_METHOD("is_track_visible", "track_id"), &TrackRenderingServer::is_track_visible);
+                D_METHOD("set_track_visible", "track_rid", "visible"), &TrackRenderingServer::set_track_visible);
+        ClassDB::bind_method(D_METHOD("is_track_visible", "track_rid"), &TrackRenderingServer::is_track_visible);
         ClassDB::bind_method(
-                D_METHOD("set_track_scenario", "track_id", "scenario"), &TrackRenderingServer::set_track_scenario);
-        ClassDB::bind_method(D_METHOD("get_track_scenario", "track_id"), &TrackRenderingServer::get_track_scenario);
+                D_METHOD("set_track_scenario", "track_rid", "scenario"), &TrackRenderingServer::set_track_scenario);
+        ClassDB::bind_method(D_METHOD("get_track_scenario", "track_rid"), &TrackRenderingServer::get_track_scenario);
         ClassDB::bind_method(
-                D_METHOD("update_track_data", "track_id", "points", "quats", "length"),
+                D_METHOD("update_track_data", "track_rid", "points", "quats", "length"),
                 &TrackRenderingServer::update_track_data);
         ClassDB::bind_method(
-                D_METHOD("update_rail_mesh", "track_id", "length", "rail_spacing", "curve_precision"),
+                D_METHOD("update_rail_mesh", "track_rid", "length", "rail_spacing", "curve_precision"),
                 &TrackRenderingServer::update_rail_mesh);
         ClassDB::bind_method(
-                D_METHOD("update_ballast_mesh", "track_id", "length", "curve_precision"),
+                D_METHOD("update_ballast_mesh", "track_rid", "length", "curve_precision"),
                 &TrackRenderingServer::update_ballast_mesh);
         ClassDB::bind_method(
-                D_METHOD("set_sleeper_model_name", "track_id", "sleeper_model_name"),
+                D_METHOD("set_sleeper_model_name", "track_rid", "sleeper_model_name"),
                 &TrackRenderingServer::set_sleeper_model_name);
         ClassDB::bind_method(
-                D_METHOD("set_sleeper_model_skin", "track_id", "sleeper_model_skin"),
+                D_METHOD("set_sleeper_model_skin", "track_rid", "sleeper_model_skin"),
                 &TrackRenderingServer::set_sleeper_model_skin);
-        ClassDB::bind_method(D_METHOD("set_sleeper_mesh", "track_id", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
-        ClassDB::bind_method(D_METHOD("get_sleeper_mesh", "track_id"), &TrackRenderingServer::get_sleeper_mesh);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_texture", "track_id", "path"), &TrackRenderingServer::set_ballast_texture);
+                D_METHOD("set_sleeper_mesh", "track_rid", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
+        ClassDB::bind_method(D_METHOD("get_sleeper_mesh", "track_rid"), &TrackRenderingServer::get_sleeper_mesh);
+        ClassDB::bind_method(
+                D_METHOD("set_ballast_texture", "track_rid", "path"), &TrackRenderingServer::set_ballast_texture);
 
         ClassDB::bind_method(
-                D_METHOD("set_sleeper_height", "track_id", "height"), &TrackRenderingServer::set_sleeper_height);
-        ClassDB::bind_method(D_METHOD("get_sleeper_height", "track_id"), &TrackRenderingServer::get_sleeper_height);
+                D_METHOD("set_sleeper_height", "track_rid", "height"), &TrackRenderingServer::set_sleeper_height);
+        ClassDB::bind_method(D_METHOD("get_sleeper_height", "track_rid"), &TrackRenderingServer::get_sleeper_height);
         ClassDB::bind_method(
-                D_METHOD("set_sleeper_spacing", "track_id", "spacing"), &TrackRenderingServer::set_sleeper_spacing);
-        ClassDB::bind_method(D_METHOD("get_sleeper_spacing", "track_id"), &TrackRenderingServer::get_sleeper_spacing);
+                D_METHOD("set_sleeper_spacing", "track_rid", "spacing"), &TrackRenderingServer::set_sleeper_spacing);
+        ClassDB::bind_method(D_METHOD("get_sleeper_spacing", "track_rid"), &TrackRenderingServer::get_sleeper_spacing);
         ClassDB::bind_method(
-                D_METHOD("set_rail_spacing", "track_id", "spacing"), &TrackRenderingServer::set_rail_spacing);
-        ClassDB::bind_method(D_METHOD("get_rail_spacing", "track_id"), &TrackRenderingServer::get_rail_spacing);
-        ClassDB::bind_method(D_METHOD("set_rail_height", "track_id", "height"), &TrackRenderingServer::set_rail_height);
-        ClassDB::bind_method(D_METHOD("get_rail_height", "track_id"), &TrackRenderingServer::get_rail_height);
+                D_METHOD("set_rail_spacing", "track_rid", "spacing"), &TrackRenderingServer::set_rail_spacing);
+        ClassDB::bind_method(D_METHOD("get_rail_spacing", "track_rid"), &TrackRenderingServer::get_rail_spacing);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_height", "track_id", "height"), &TrackRenderingServer::set_ballast_height);
-        ClassDB::bind_method(D_METHOD("get_ballast_height", "track_id"), &TrackRenderingServer::get_ballast_height);
+                D_METHOD("set_rail_height", "track_rid", "height"), &TrackRenderingServer::set_rail_height);
+        ClassDB::bind_method(D_METHOD("get_rail_height", "track_rid"), &TrackRenderingServer::get_rail_height);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_offset", "track_id", "offset"), &TrackRenderingServer::set_ballast_offset);
-        ClassDB::bind_method(D_METHOD("get_ballast_offset", "track_id"), &TrackRenderingServer::get_ballast_offset);
+                D_METHOD("set_ballast_height", "track_rid", "height"), &TrackRenderingServer::set_ballast_height);
+        ClassDB::bind_method(D_METHOD("get_ballast_height", "track_rid"), &TrackRenderingServer::get_ballast_height);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_uv_scale", "track_id", "scale"), &TrackRenderingServer::set_ballast_uv_scale);
-        ClassDB::bind_method(D_METHOD("get_ballast_uv_scale", "track_id"), &TrackRenderingServer::get_ballast_uv_scale);
+                D_METHOD("set_ballast_offset", "track_rid", "offset"), &TrackRenderingServer::set_ballast_offset);
+        ClassDB::bind_method(D_METHOD("get_ballast_offset", "track_rid"), &TrackRenderingServer::get_ballast_offset);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_width_tiling", "track_id", "tiling"),
+                D_METHOD("set_ballast_uv_scale", "track_rid", "scale"), &TrackRenderingServer::set_ballast_uv_scale);
+        ClassDB::bind_method(
+                D_METHOD("get_ballast_uv_scale", "track_rid"), &TrackRenderingServer::get_ballast_uv_scale);
+        ClassDB::bind_method(
+                D_METHOD("set_ballast_width_tiling", "track_rid", "tiling"),
                 &TrackRenderingServer::set_ballast_width_tiling);
         ClassDB::bind_method(
-                D_METHOD("get_ballast_width_tiling", "track_id"), &TrackRenderingServer::get_ballast_width_tiling);
+                D_METHOD("get_ballast_width_tiling", "track_rid"), &TrackRenderingServer::get_ballast_width_tiling);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_length_tiling", "track_id", "tiling"),
+                D_METHOD("set_ballast_length_tiling", "track_rid", "tiling"),
                 &TrackRenderingServer::set_ballast_length_tiling);
         ClassDB::bind_method(
-                D_METHOD("get_ballast_length_tiling", "track_id"), &TrackRenderingServer::get_ballast_length_tiling);
+                D_METHOD("get_ballast_length_tiling", "track_rid"), &TrackRenderingServer::get_ballast_length_tiling);
         ClassDB::bind_method(
-                D_METHOD("set_ballast_enabled", "track_id", "enabled"), &TrackRenderingServer::set_ballast_enabled);
-        ClassDB::bind_method(D_METHOD("get_ballast_enabled", "track_id"), &TrackRenderingServer::get_ballast_enabled);
-
-        ClassDB::bind_method(D_METHOD("get_instance_rid", "track_id"), &TrackRenderingServer::get_instance_rid);
-        ClassDB::bind_method(
-                D_METHOD("get_rail_mesh_instance", "track_id"), &TrackRenderingServer::get_rail_mesh_instance);
-        ClassDB::bind_method(
-                D_METHOD("get_sleeper_multimesh_instance", "track_id"),
-                &TrackRenderingServer::get_sleeper_multimesh_instance);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_mesh_instance", "track_id"), &TrackRenderingServer::get_ballast_mesh_instance);
+                D_METHOD("set_ballast_enabled", "track_rid", "enabled"), &TrackRenderingServer::set_ballast_enabled);
+        ClassDB::bind_method(D_METHOD("get_ballast_enabled", "track_rid"), &TrackRenderingServer::get_ballast_enabled);
     }
 
     TrackRenderingServer::TrackRenderingServer() : model_manager(memnew(E3DModelManager)) {
@@ -103,10 +97,16 @@ namespace godot {
     }
 
     TrackRenderingServer::~TrackRenderingServer() {
-        for (KeyValue<int64_t, TrackState> &entry: tracks) {
-            _free_track_rids(entry.value);
+        List<RID> owned_tracks;
+        tracks.get_owned_list(&owned_tracks);
+
+        for (const RID &track_rid: owned_tracks) {
+            TrackState *track = get_track_state(track_rid);
+            if (track != nullptr) {
+                _free_track_rids(track);
+            }
+            tracks.free(track_rid);
         }
-        tracks.clear();
         if (model_manager != nullptr) {
             memdelete(model_manager);
             model_manager = nullptr;
@@ -120,22 +120,9 @@ namespace godot {
         return singleton;
     }
 
-    TrackRenderingServer::TrackState *TrackRenderingServer::get_track_state(const int64_t p_track_id) {
-        if (!tracks.has(p_track_id)) {
-            UtilityFunctions::push_warning(vformat("[TrackRenderingServer] Unknown track id: %d", p_track_id));
-            return nullptr;
-        }
-        return &tracks[p_track_id];
+    TrackRenderingServer::TrackState *TrackRenderingServer::get_track_state(RID p_track_rid) const {
+        return tracks.get_or_null(p_track_rid);
     }
-
-    const TrackRenderingServer::TrackState *TrackRenderingServer::get_track_state(const int64_t p_track_id) const {
-        const TrackState *state = tracks.getptr(p_track_id);
-        if (state == nullptr) {
-            UtilityFunctions::push_warning(vformat("[TrackRenderingServer] Unknown track id: %d", p_track_id));
-        }
-        return state;
-    }
-
     void
     TrackRenderingServer::_apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const {
         RenderingServer::get_singleton()->instance_geometry_set_material_override(
@@ -151,52 +138,53 @@ namespace godot {
         return material;
     }
 
-    void TrackRenderingServer::_clear_sleeper_material(TrackState &p_state) {
-        if (p_state.sleeper_material.is_null()) {
+    void TrackRenderingServer::_clear_sleeper_material(TrackState *p_state) {
+        if (p_state->sleeper_material.is_null()) {
             return;
         }
 
-        p_state.sleeper_material->set_shader_parameter("albedo_tex", Variant());
-        p_state.sleeper_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
+        p_state->sleeper_material->set_shader_parameter("albedo_tex", Variant());
+        p_state->sleeper_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
     }
 
-    void TrackRenderingServer::_free_track_rids(TrackState &p_state) {
+    void TrackRenderingServer::_free_track_rids(TrackState *p_state) {
         RenderingServer *rs = RenderingServer::get_singleton();
-        if (p_state.rail_mesh_instance.is_valid()) {
-            rs->free_rid(p_state.rail_mesh_instance);
+        if (p_state->rail_mesh_instance.is_valid()) {
+            rs->free_rid(p_state->rail_mesh_instance);
         }
-        if (p_state.rail_mesh.is_valid()) {
-            rs->free_rid(p_state.rail_mesh);
+        if (p_state->rail_mesh.is_valid()) {
+            rs->free_rid(p_state->rail_mesh);
         }
-        if (p_state.ballast_mesh_instance.is_valid()) {
-            rs->free_rid(p_state.ballast_mesh_instance);
+        if (p_state->ballast_mesh_instance.is_valid()) {
+            rs->free_rid(p_state->ballast_mesh_instance);
         }
-        if (p_state.ballast_mesh.is_valid()) {
-            rs->free_rid(p_state.ballast_mesh);
+        if (p_state->ballast_mesh.is_valid()) {
+            rs->free_rid(p_state->ballast_mesh);
         }
-        if (p_state.sleeper_multimesh_instance.is_valid()) {
-            rs->free_rid(p_state.sleeper_multimesh_instance);
+        if (p_state->sleeper_multimesh_instance.is_valid()) {
+            rs->free_rid(p_state->sleeper_multimesh_instance);
         }
-        if (p_state.sleeper_multimesh.is_valid()) {
-            rs->free_rid(p_state.sleeper_multimesh);
+        if (p_state->sleeper_multimesh.is_valid()) {
+            rs->free_rid(p_state->sleeper_multimesh);
         }
     }
 
-    void TrackRenderingServer::_update_render_instances(TrackState &p_state) {
+    void TrackRenderingServer::_update_render_instances(TrackState *p_state) {
         RenderingServer *rs = RenderingServer::get_singleton();
-        const RID active_scenario = p_state.visible ? p_state.scenario : RID();
+        const RID active_scenario = p_state->visible ? p_state->scenario : RID();
 
-        rs->instance_set_scenario(p_state.rail_mesh_instance, active_scenario);
-        rs->instance_set_scenario(p_state.sleeper_multimesh_instance, active_scenario);
+        rs->instance_set_scenario(p_state->rail_mesh_instance, active_scenario);
+        rs->instance_set_scenario(p_state->sleeper_multimesh_instance, active_scenario);
         rs->instance_set_scenario(
-                p_state.ballast_mesh_instance, (p_state.visible && p_state.ballast_enabled) ? p_state.scenario : RID());
+                p_state->ballast_mesh_instance,
+                (p_state->visible && p_state->ballast_enabled) ? p_state->scenario : RID());
 
-        rs->instance_set_transform(p_state.rail_mesh_instance, p_state.transform);
-        rs->instance_set_transform(p_state.sleeper_multimesh_instance, p_state.transform);
-        rs->instance_set_transform(p_state.ballast_mesh_instance, p_state.transform);
+        rs->instance_set_transform(p_state->rail_mesh_instance, p_state->transform);
+        rs->instance_set_transform(p_state->sleeper_multimesh_instance, p_state->transform);
+        rs->instance_set_transform(p_state->ballast_mesh_instance, p_state->transform);
     }
 
-    int64_t TrackRenderingServer::create_track() {
+    RID TrackRenderingServer::create_track() {
         RenderingServer *rs = RenderingServer::get_singleton();
 
         TrackState state;
@@ -214,62 +202,63 @@ namespace godot {
                 _create_shader_material("res://addons/libmaszyna/materials/ballast_path_deform.gdshader");
         _apply_material_override(state.ballast_mesh_instance, state.ballast_material);
 
-        const int64_t track_id = next_track_id++;
-        tracks.insert(track_id, state);
-        return track_id;
+        const RID track_rid = tracks.make_rid(state);
+        return track_rid;
     }
 
-    void TrackRenderingServer::free_track(const int64_t p_track_id) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::free_track(const RID p_track_rid) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
-        _free_track_rids(*state);
-        tracks.erase(p_track_id);
+        _free_track_rids(state);
+        if (tracks.owns(p_track_rid)) {
+            tracks.free(p_track_rid);
+        }
     }
 
-    void TrackRenderingServer::set_track_transform(const int64_t p_track_id, const Transform3D &p_transform) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_track_transform(const RID p_track_rid, const Transform3D &p_transform) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->transform = p_transform;
-        _update_render_instances(*state);
+        _update_render_instances(state);
     }
 
-    Transform3D TrackRenderingServer::get_track_transform(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    Transform3D TrackRenderingServer::get_track_transform(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, Transform3D());
         return state->transform;
     }
 
-    void TrackRenderingServer::set_track_visible(const int64_t p_track_id, const bool p_visible) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_track_visible(const RID p_track_rid, const bool p_visible) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->visible = p_visible;
-        _update_render_instances(*state);
+        _update_render_instances(state);
     }
 
-    bool TrackRenderingServer::is_track_visible(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    bool TrackRenderingServer::is_track_visible(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, false);
         return state->visible;
     }
 
-    void TrackRenderingServer::set_track_scenario(const int64_t p_track_id, const RID p_scenario) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_track_scenario(const RID p_track_rid, const RID p_scenario) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->scenario = p_scenario;
-        _update_render_instances(*state);
+        _update_render_instances(state);
     }
 
-    RID TrackRenderingServer::get_track_scenario(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    RID TrackRenderingServer::get_track_scenario(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, RID());
         return state->scenario;
     }
 
     void TrackRenderingServer::update_track_data(
-            const int64_t p_track_id, const PackedVector4Array &p_points, const PackedVector4Array &p_quats,
+            const RID p_track_rid, const PackedVector4Array &p_points, const PackedVector4Array &p_quats,
             const float p_length) {
-        TrackState *state = get_track_state(p_track_id);
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         state->path_points = p_points;
@@ -330,11 +319,11 @@ namespace godot {
             }
         }
 
-        _update_render_instances(*state);
+        _update_render_instances(state);
     }
 
-    void TrackRenderingServer::set_sleeper_model_name(const int64_t p_track_id, const String &p_sleeper_model_name) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_sleeper_model_name(const RID p_track_rid, const String &p_sleeper_model_name) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         if (state->sleeper_model_name == p_sleeper_model_name) {
@@ -342,11 +331,11 @@ namespace godot {
         }
 
         state->sleeper_model_name = p_sleeper_model_name;
-        _reload_sleeper_model(p_track_id, *state);
+        _reload_sleeper_model(p_track_rid, state);
     }
 
-    void TrackRenderingServer::set_sleeper_model_skin(const int64_t p_track_id, const String &p_sleeper_model_skin) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_sleeper_model_skin(const RID p_track_rid, const String &p_sleeper_model_skin) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         if (state->sleeper_model_skin == p_sleeper_model_skin) {
@@ -354,17 +343,17 @@ namespace godot {
         }
 
         state->sleeper_model_skin = p_sleeper_model_skin;
-        _reload_sleeper_model(p_track_id, *state);
+        _reload_sleeper_model(p_track_rid, state);
     }
 
-    void TrackRenderingServer::_reload_sleeper_model(const int64_t p_track_id, TrackState &p_state) {
-        String model_path = p_state.sleeper_model_name.strip_edges();
+    void TrackRenderingServer::_reload_sleeper_model(const RID p_track_rid, TrackState *p_state) {
+        String model_path = p_state->sleeper_model_name.strip_edges();
         if (model_path.begins_with("/")) {
             model_path = model_path.trim_prefix("/");
         }
 
         if (model_path.is_empty()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
@@ -373,28 +362,28 @@ namespace godot {
         const String data_path = split_index >= 0 ? model_path.substr(0, split_index) : String();
         const String model_filename = split_index >= 0 ? model_path.substr(split_index + 1) : model_path;
         if (model_filename.is_empty()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
 
         if (model_manager == nullptr) {
             UtilityFunctions::push_warning("[TrackRenderingServer] Missing E3DModelManager for sleeper loading");
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
 
         const Ref<E3DModel> model = model_manager->load_model(data_path, model_filename);
         if (model.is_null()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
 
         TypedArray<E3DSubModel> submodels = model->get_submodels();
         if (submodels.is_empty()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
@@ -430,12 +419,12 @@ namespace godot {
         }
 
         if (!found_mesh.is_valid()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
+            set_sleeper_mesh(p_track_rid, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
         }
 
-        set_sleeper_mesh(p_track_id, found_mesh);
+        set_sleeper_mesh(p_track_rid, found_mesh);
 
         MaterialManager *mm =
                 Object::cast_to<MaterialManager>(Engine::get_singleton()->get_singleton("MaterialManager"));
@@ -445,7 +434,7 @@ namespace godot {
         }
 
         const String unprefixed_model_path = data_path;
-        const String sleeper_model_skin = p_state.sleeper_model_skin.strip_edges();
+        const String sleeper_model_skin = p_state->sleeper_model_skin.strip_edges();
         if (!sleeper_model_skin.is_empty()) {
             found_material_name = sleeper_model_skin;
         }
@@ -462,16 +451,16 @@ namespace godot {
         }
 
         if (mat.is_valid()) {
-            p_state.sleeper_material->set_shader_parameter(
+            p_state->sleeper_material->set_shader_parameter(
                     "albedo_tex", mat->get_texture(BaseMaterial3D::TEXTURE_ALBEDO));
-            p_state.sleeper_material->set_shader_parameter("albedo", mat->get_albedo());
+            p_state->sleeper_material->set_shader_parameter("albedo", mat->get_albedo());
         } else {
             _clear_sleeper_material(p_state);
         }
     }
 
-    void TrackRenderingServer::set_sleeper_mesh(const int64_t p_track_id, const Ref<Mesh> &p_mesh) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_sleeper_mesh(const RID p_track_rid, const Ref<Mesh> &p_mesh) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         state->sleeper_mesh = p_mesh;
@@ -480,17 +469,17 @@ namespace godot {
             rs->multimesh_set_mesh(state->sleeper_multimesh, p_mesh.is_valid() ? p_mesh->get_rid() : RID());
             rs->multimesh_set_visible_instances(state->sleeper_multimesh, -1);
         }
-        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+        update_track_data(p_track_rid, state->path_points, state->path_quats, state->path_length);
     }
 
-    Ref<Mesh> TrackRenderingServer::get_sleeper_mesh(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    Ref<Mesh> TrackRenderingServer::get_sleeper_mesh(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, Ref<Mesh>());
         return state->sleeper_mesh;
     }
 
-    void TrackRenderingServer::set_ballast_uv_scale(const int64_t p_track_id, const float p_scale) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_uv_scale(const RID p_track_rid, const float p_scale) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         state->ballast_uv_scale = p_scale;
@@ -499,14 +488,14 @@ namespace godot {
         }
     }
 
-    float TrackRenderingServer::get_ballast_uv_scale(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_ballast_uv_scale(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->ballast_uv_scale;
     }
 
-    void TrackRenderingServer::set_ballast_texture(const int64_t p_track_id, const String &p_path) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_texture(const RID p_track_rid, const String &p_path) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         const String texture_path = p_path.strip_edges();
         if (state->ballast_texture_path == texture_path) {
@@ -535,8 +524,8 @@ namespace godot {
     }
 
     void TrackRenderingServer::update_ballast_mesh(
-            const int64_t p_track_id, const float p_length, const float p_curve_precision) {
-        TrackState *state = get_track_state(p_track_id);
+            const RID p_track_rid, const float p_length, const float p_curve_precision) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         if (p_length < 0.1f) {
@@ -643,9 +632,9 @@ namespace godot {
     }
 
     void TrackRenderingServer::update_rail_mesh(
-            const int64_t p_track_id, const float p_length, const float p_rail_spacing, const float p_rail_height,
+            const RID p_track_rid, const float p_length, const float p_rail_spacing, const float p_rail_height,
             const float p_curve_precision) {
-        TrackState *state = get_track_state(p_track_id);
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
 
         if (p_length < 0.1f) {
@@ -764,143 +753,120 @@ namespace godot {
         RenderingServer::get_singleton()->instance_set_base(state->rail_mesh_instance, state->rail_mesh);
     }
 
-    void TrackRenderingServer::set_sleeper_height(const int64_t p_track_id, const float p_height) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_sleeper_height(const RID p_track_rid, const float p_height) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->sleeper_height = p_height;
-        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+        update_track_data(p_track_rid, state->path_points, state->path_quats, state->path_length);
     }
 
-    float TrackRenderingServer::get_sleeper_height(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_sleeper_height(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->sleeper_height;
     }
 
-    void TrackRenderingServer::set_sleeper_spacing(const int64_t p_track_id, const float p_spacing) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_sleeper_spacing(const RID p_track_rid, const float p_spacing) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->sleeper_spacing = p_spacing;
-        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+        update_track_data(p_track_rid, state->path_points, state->path_quats, state->path_length);
     }
 
-    float TrackRenderingServer::get_sleeper_spacing(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_sleeper_spacing(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->sleeper_spacing;
     }
 
-    void TrackRenderingServer::set_rail_spacing(const int64_t p_track_id, const float p_spacing) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_rail_spacing(const RID p_track_rid, const float p_spacing) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->rail_spacing = p_spacing;
-        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+        update_track_data(p_track_rid, state->path_points, state->path_quats, state->path_length);
     }
 
-    float TrackRenderingServer::get_rail_spacing(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_rail_spacing(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->rail_spacing;
     }
 
-    void TrackRenderingServer::set_rail_height(const int64_t p_track_id, const float p_height) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_rail_height(const RID p_track_rid, const float p_height) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->rail_height = p_height;
-        update_track_data(p_track_id, state->path_points, state->path_quats, state->path_length);
+        update_track_data(p_track_rid, state->path_points, state->path_quats, state->path_length);
     }
 
-    float TrackRenderingServer::get_rail_height(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_rail_height(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->rail_height;
     }
 
-    void TrackRenderingServer::set_ballast_height(const int64_t p_track_id, const float p_height) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_height(const RID p_track_rid, const float p_height) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->ballast_height = p_height;
-        update_ballast_mesh(p_track_id, state->path_length, 0.5f);
+        update_ballast_mesh(p_track_rid, state->path_length, 0.5f);
     }
 
-    float TrackRenderingServer::get_ballast_height(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_ballast_height(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->ballast_height;
     }
 
-    void TrackRenderingServer::set_ballast_offset(const int64_t p_track_id, const float p_offset) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_offset(const RID p_track_rid, const float p_offset) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->ballast_offset = p_offset;
-        update_ballast_mesh(p_track_id, state->path_length, 0.5f);
+        update_ballast_mesh(p_track_rid, state->path_length, 0.5f);
     }
 
-    float TrackRenderingServer::get_ballast_offset(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_ballast_offset(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->ballast_offset;
     }
 
-    void TrackRenderingServer::set_ballast_width_tiling(const int64_t p_track_id, const float p_tiling) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_width_tiling(const RID p_track_rid, const float p_tiling) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->ballast_width_tiling = p_tiling;
-        update_ballast_mesh(p_track_id, state->path_length, 0.5f);
+        update_ballast_mesh(p_track_rid, state->path_length, 0.5f);
     }
 
-    float TrackRenderingServer::get_ballast_width_tiling(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_ballast_width_tiling(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->ballast_width_tiling;
     }
 
-    void TrackRenderingServer::set_ballast_length_tiling(const int64_t p_track_id, const float p_tiling) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_length_tiling(const RID p_track_rid, const float p_tiling) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->ballast_length_tiling = p_tiling;
-        update_ballast_mesh(p_track_id, state->path_length, 0.5f);
+        update_ballast_mesh(p_track_rid, state->path_length, 0.5f);
     }
 
-    float TrackRenderingServer::get_ballast_length_tiling(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    float TrackRenderingServer::get_ballast_length_tiling(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, 0.0f);
         return state->ballast_length_tiling;
     }
 
-    void TrackRenderingServer::set_ballast_enabled(const int64_t p_track_id, const bool p_enabled) {
-        TrackState *state = get_track_state(p_track_id);
+    void TrackRenderingServer::set_ballast_enabled(const RID p_track_rid, const bool p_enabled) {
+        TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL(state);
         state->ballast_enabled = p_enabled;
-        _update_render_instances(*state);
+        _update_render_instances(state);
     }
 
-    bool TrackRenderingServer::get_ballast_enabled(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
+    bool TrackRenderingServer::get_ballast_enabled(const RID p_track_rid) const {
+        const TrackState *state = get_track_state(p_track_rid);
         ERR_FAIL_NULL_V(state, false);
         return state->ballast_enabled;
     }
-
-    RID TrackRenderingServer::get_instance_rid(const int64_t p_track_id) const {
-        return get_rail_mesh_instance(p_track_id);
-    }
-
-    RID TrackRenderingServer::get_rail_mesh_instance(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
-        ERR_FAIL_NULL_V(state, RID());
-        return state->rail_mesh_instance;
-    }
-
-    RID TrackRenderingServer::get_sleeper_multimesh_instance(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
-        ERR_FAIL_NULL_V(state, RID());
-        return state->sleeper_multimesh_instance;
-    }
-
-    RID TrackRenderingServer::get_ballast_mesh_instance(const int64_t p_track_id) const {
-        const TrackState *state = get_track_state(p_track_id);
-        ERR_FAIL_NULL_V(state, RID());
-        return state->ballast_mesh_instance;
-    }
-
 } // namespace godot

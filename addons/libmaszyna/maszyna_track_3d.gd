@@ -16,86 +16,70 @@ var _virtual_track_rid:RID
 @export var rail_spacing: float = 1.6:
     set(x):
         rail_spacing = x
-        TrackRenderingServer.set_rail_spacing(_track_id, x)
         _request_track_update()
 
 @export_group("Sleepers")
 @export var sleeper_model_name: String = "":
     set(x):
         sleeper_model_name = x
-        TrackRenderingServer.set_sleeper_model_name(_track_id, x)
         _request_track_update()
 
 @export var sleeper_model_skin: String = "":
     set(x):
         sleeper_model_skin = x
-        TrackRenderingServer.set_sleeper_model_skin(_track_id, x)
         _request_track_update()
 
 @export var sleeper_spacing: float = 1.0:
     set(x):
         sleeper_spacing = x
-        TrackRenderingServer.set_sleeper_spacing(_track_id, x)
         _request_track_update()
 
 @export var sleeper_height: float = 0.4:
     set(x):
         sleeper_height = x
-        _update_server_heights()
         _request_track_update()
 
 @export var rail_height: float = 0.16:
     set(x):
         rail_height = x
-        TrackRenderingServer.set_rail_height(_track_id, x)
         _request_track_update()
 
 @export_group("Ballast")
 @export var ballast_enabled: bool = true:
     set(x):
         ballast_enabled = x
-        TrackRenderingServer.set_ballast_enabled(_track_id, x)
         _request_track_update()
 
 @export var ballast_texture: String = "":
     set(x):
         ballast_texture = x
-        TrackRenderingServer.set_ballast_texture(_track_id, x)
         _request_track_update()
 
 @export var ballast_uv_scale: float = 1.0:
     set(x):
         ballast_uv_scale = x
-        TrackRenderingServer.set_ballast_uv_scale(_track_id, x)
         _request_track_update()
 
 @export var ballast_width_tiling: float = 1.0:
     set(x):
         ballast_width_tiling = x
-        TrackRenderingServer.set_ballast_width_tiling(_track_id, x)
         _request_track_update()
 
 @export var ballast_length_tiling: float = 1.0:
     set(x):
         ballast_length_tiling = x
-        TrackRenderingServer.set_ballast_length_tiling(_track_id, x)
         _request_track_update()
 
 @export var ballast_height: float = 0.4:
     set(x):
         ballast_height = x
-        _update_server_heights()
         _request_track_update()
 
 @export var ballast_offset: float = 0.0:
     set(x):
         ballast_offset = x
-        TrackRenderingServer.set_ballast_offset(_track_id, x)
         _request_track_update()
 
-func _update_server_heights():
-    TrackRenderingServer.set_ballast_height(_track_id, ballast_height)
-    TrackRenderingServer.set_sleeper_height(_track_id, sleeper_height)
 
 @export_group("Geometry")
 @export var curve_precision: float = 0.5:
@@ -142,7 +126,6 @@ func _enter_tree():
     _ensure_curve()
     _ensure_track()
     _ensure_virtual_track()
-    _sync_track_state()
     set_notify_transform(true)
     set_notify_local_transform(true)
 
@@ -159,17 +142,11 @@ func _ready():
     _sync_track_state()
     set_notify_transform(true)
     set_notify_local_transform(true)
-    
-    if Engine.is_editor_hint():
-        _update_track()
-    else:
-        await get_tree().process_frame
-        _update_track()
+    _update_track()
 
 func _notification(what):
     match what:
         NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED, NOTIFICATION_ENTER_WORLD, NOTIFICATION_EXIT_WORLD:
-            _sync_track_state()
             _request_track_update()
         NOTIFICATION_LOCAL_TRANSFORM_CHANGED:
             _request_track_update()
@@ -198,7 +175,6 @@ func _free_virtual_track():
 
 
 func _apply_track_settings():
-    _update_server_heights()
     TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
     TrackRenderingServer.set_sleeper_spacing(_track_id, sleeper_spacing)
     TrackRenderingServer.set_rail_spacing(_track_id, rail_spacing)
@@ -246,19 +222,27 @@ func _update_track():
 
     var path_data = _prepare_path_data()
 
-    TrackRenderingServer.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])
-    _update_rail_mesh(path_data["length"])
-    _update_ballast_mesh(path_data["length"])
+    TrackRenderingServer.set_ballast_height(_track_id, ballast_height)
+    TrackRenderingServer.set_sleeper_height(_track_id, sleeper_height)
+    TrackRenderingServer.set_ballast_offset(_track_id, ballast_offset)
+    TrackRenderingServer.set_ballast_length_tiling(_track_id, ballast_length_tiling)
+    TrackRenderingServer.set_ballast_width_tiling(_track_id, ballast_width_tiling)
+    TrackRenderingServer.set_ballast_uv_scale(_track_id, ballast_uv_scale)
+    TrackRenderingServer.set_ballast_texture(_track_id, ballast_texture)
+    TrackRenderingServer.set_ballast_enabled(_track_id, ballast_enabled)
+    TrackRenderingServer.set_rail_height(_track_id, rail_height)
+    TrackRenderingServer.set_rail_spacing(_track_id, rail_spacing)
+    TrackRenderingServer.set_sleeper_spacing(_track_id, sleeper_spacing)
+    TrackRenderingServer.set_sleeper_model_skin(_track_id, sleeper_model_skin)
+    TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
+    TrackRenderingServer.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])    
+    TrackRenderingServer.update_rail_mesh(_track_id, path_data["length"], rail_spacing, rail_height, curve_precision)    
+    TrackRenderingServer.update_ballast_mesh(_track_id, path_data["length"], curve_precision)    
     _sync_virtual_track()
     _notify_train_set_previews()
 
     _is_updating = false
 
-func _update_rail_mesh(length: float):
-    TrackRenderingServer.update_rail_mesh(_track_id, length, rail_spacing, rail_height, curve_precision)
-
-func _update_ballast_mesh(length: float):
-    TrackRenderingServer.update_ballast_mesh(_track_id, length, curve_precision)
 
 func _apply_3_point_logic_optimized():
     if not curve or curve.point_count < 2: return

@@ -9,8 +9,11 @@ size = Vector3(4.5332, 4.72223, 17.0549)
 
 [node name="TEM2" type="Node3D" unique_id=1789571545]
 script = ExtResource("1_ra284")
-train_id = "tem2"
+train_id = &"tem2"
 controller_path = NodePath("TEM2Controller")
+front_bogie_path = NodePath("TEM2/banan/main/bogie1")
+rear_bogie_path = NodePath("TEM2/banan/main/bogie2")
+powered_wheel_paths = Array[NodePath]([NodePath("TEM2/banan/main/bogie1/Wheel01"), NodePath("TEM2/banan/main/bogie1/Wheel02"), NodePath("TEM2/banan/main/bogie1/Wheel03"), NodePath("TEM2/banan/main/bogie2/Wheel04"), NodePath("TEM2/banan/main/bogie2/Wheel05"), NodePath("TEM2/banan/main/bogie2/Wheel06")])
 cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true
 low_poly_cabin_path = NodePath("TEM2_LowPolyCab")
@@ -20,7 +23,6 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "tem2-122a"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
-instancer = 0
 submodels_aabb = AABB(-1.5676672, -0.057509635, -9.035448, 3.1353345, 4.765074, 17.92368)
 transform = Transform3D(-1, 0, 8.74228e-08, 0, 1, 0, -8.74228e-08, 0, -1, 0, 0, 0)
 

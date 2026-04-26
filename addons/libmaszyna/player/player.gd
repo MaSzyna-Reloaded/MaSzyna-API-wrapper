@@ -54,3 +54,6 @@ func _input(event):
                 controlled_vehicle_path = last_controlled_vehicle_path
         else:
             controlled_vehicle_path = NodePath("")
+
+func get_camera():
+    return $Camera3D

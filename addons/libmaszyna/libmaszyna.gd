@@ -21,10 +21,10 @@ func _enter_tree():
 
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
-    _ensure_autoload("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
-    _ensure_autoload("Console", "res://addons/libmaszyna/console/console.gd")
-    _ensure_autoload("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
-    _ensure_autoload("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
+    add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
+    add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
+    add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
+    add_autoload_singleton("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -64,10 +64,10 @@ func _exit_tree():
     remove_custom_type("MaszynaTrack3D")
     remove_custom_type("MaszynaSwitch3D")
 
-    _remove_autoload_if_present("AudioStreamManager")
-    _remove_autoload_if_present("Console")
-    _remove_autoload_if_present("MaszynaEnvironment")
-    _remove_autoload_if_present("UserSettings")
+    remove_autoload_singleton("AudioStreamManager")
+    remove_autoload_singleton("Console")
+    remove_autoload_singleton("MaszynaEnvironment")
+    remove_autoload_singleton("UserSettings")
 
 
 func add_custom_project_setting(name: String, default_value, type: int, hint: int = PROPERTY_HINT_NONE, hint_string: String = "") -> void:
@@ -84,17 +84,3 @@ func add_custom_project_setting(name: String, default_value, type: int, hint: in
     ProjectSettings.set_setting(name, default_value)
     ProjectSettings.add_property_info(setting_info)
     ProjectSettings.set_initial_value(name, default_value)
-
-
-func _ensure_autoload(name: String, path: String) -> void:
-    var setting_name := "autoload/" + name
-    if ProjectSettings.has_setting(setting_name):
-        return
-    add_autoload_singleton(name, path)
-
-
-func _remove_autoload_if_present(name: String) -> void:
-    var setting_name := "autoload/" + name
-    if not ProjectSettings.has_setting(setting_name):
-        return
-    remove_autoload_singleton(name)

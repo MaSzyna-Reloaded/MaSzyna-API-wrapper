@@ -1,6 +1,6 @@
 @tool
-extends Node3D
-class_name TrainSet3D
+extends Node
+class_name TrainSetNode
 
 @export var auto_couple_on_ready: bool = true
 @export var start_track_id: String = "":

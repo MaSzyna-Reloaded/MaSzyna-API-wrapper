@@ -12,5 +12,8 @@ start_track_id = "approach"
 transform = Transform3D(-1, 0, -1.509958e-07, 0, 1, 0, 1.509958e-07, 0, -1, 0, 0, 0)
 train_id = &"sm42"
 
-[node name="Wagon1" parent="." unique_id=149723671 instance=ExtResource("5_n7ime")]
+[node name="401W-1" parent="." unique_id=149723671 instance=ExtResource("5_n7ime")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 14.139999)
+
+[node name="401W-2" parent="." unique_id=1101690052 instance=ExtResource("5_n7ime")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 28.14)

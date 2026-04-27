@@ -28,7 +28,6 @@ namespace godot {
             void _request_reload();
             void _deferred_reload();
             void _flush_pending_model();
-            E3DModelInstanceManager *_get_manager() const;
 
             void _clear_optimized_instances();
             void _sync_optimized_instances();
@@ -66,7 +65,6 @@ namespace godot {
             //@TODO: Maybe remove this?
             void _notification(int p_what);
             E3DModelInstance();
-            ~E3DModelInstance() override;
             MAKE_MEMBER_GS(Vector3, default_aabb_size, Vector3(1, 1, 1))
             String get_data_path() const;
             void set_data_path(const String &p_value);

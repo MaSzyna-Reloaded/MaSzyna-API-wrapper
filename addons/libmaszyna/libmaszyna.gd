@@ -15,6 +15,7 @@ var e3d_submodel_toolbar_instance
 var user_settings_dock
 var user_settings_dock_scene = preload("res://addons/libmaszyna/editor/user_settings_dock.tscn")
 
+
 func _enter_tree():
     e3d_submodel_toolbar_instance = e3d_submodel_toolbar.instantiate()
     add_control_to_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
@@ -24,7 +25,6 @@ func _enter_tree():
     add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
-    add_autoload_singleton("UserSettings","res://addons/libmaszyna/settings/user_settings.gd" )
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -67,7 +67,6 @@ func _exit_tree():
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("Console")
     remove_autoload_singleton("MaszynaEnvironment")
-    remove_autoload_singleton("UserSettings")
 
 
 func add_custom_project_setting(name: String, default_value, type: int, hint: int = PROPERTY_HINT_NONE, hint_string: String = "") -> void:

@@ -9,9 +9,6 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="name" type="String" setter="set_name" getter="get_name" default="&quot;&quot;">
-			The internal name of the model, usually extracted from the E3D file header.
-		</member>
 		<member name="submodels" type="E3DSubModel[]" setter="set_submodels" getter="get_submodels" default="[]">
 			A list of top-level [E3DSubModel] resources that form the root of the model's hierarchy.
 		</member>

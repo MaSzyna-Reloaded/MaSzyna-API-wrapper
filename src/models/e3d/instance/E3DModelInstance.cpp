@@ -16,15 +16,6 @@ namespace godot {
         set_notify_local_transform(true);
     }
 
-    E3DModelInstance::~E3DModelInstance() {
-        _clear_optimized_instances();
-        _mutex.unref();
-    }
-
-    E3DModelInstanceManager *E3DModelInstance::_get_manager() const {
-        return cast_to<E3DModelInstanceManager>(Engine::get_singleton()->get_singleton("E3DModelInstanceManager"));
-    }
-
     void E3DModelInstance::_bind_methods() {
         ADD_SIGNAL(MethodInfo(e3d_loaded_signal));
         BIND_PROPERTY(
@@ -71,10 +62,10 @@ namespace godot {
     void E3DModelInstance::_notification(const int p_what) {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE: {
-                _reload();
-                if (E3DModelInstanceManager *manager = _get_manager()) {
+                if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
                     manager->register_instance(this);
                 }
+                _reload();
             } break;
 
             case NOTIFICATION_ENTER_WORLD:
@@ -87,7 +78,7 @@ namespace godot {
             } break;
 
             case NOTIFICATION_EXIT_TREE: {
-                if (E3DModelInstanceManager *manager = _get_manager()) {
+                if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
                     manager->unregister_instance(this);
                 }
                 _clear_optimized_instances();
@@ -113,10 +104,19 @@ namespace godot {
     }
 
     void E3DModelInstance::_deferred_reload() {
-        _is_dirty = false;
-        if (const E3DModelInstanceManager *manager = _get_manager()) {
-            manager->reload_instance(this);
+        if (!is_inside_tree()) {
+            _is_dirty = false;
+            return;
         }
+
+        E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance();
+        if (manager == nullptr) {
+            _is_dirty = false;
+            return;
+        }
+
+        _is_dirty = false;
+        manager->reload_instance(this);
     }
 
     void E3DModelInstance::_instantiate_children(const Ref<E3DModel> &p_model) {
@@ -150,16 +150,18 @@ namespace godot {
 
             if (submodel->get_submodel_type() == E3DSubModel::GL_TRIANGLES &&
                 !exclude_node_names.has(submodel->get_name())) {
-                const Ref<ArrayMesh> mesh = submodel->get_mesh();
+                const Ref<Mesh> mesh = submodel->get_mesh();
                 if (mesh.is_valid()) {
                     const RID instance = rs->instance_create2(mesh->get_rid(), RID());
                     rs->instance_geometry_set_visibility_range(
                             instance, submodel->get_visibility_range_begin(), submodel->get_visibility_range_end(), 0,
                             0, RenderingServer::VISIBILITY_RANGE_FADE_DISABLED);
 
-                    if (const Ref<Material> mat = E3DNodesInstancer::resolve_submodel_material(*this, *submodel.ptr());
-                        mat.is_valid()) {
-                        rs->instance_geometry_set_material_override(instance, mat->get_rid());
+                    if (E3DNodesInstancer *nodes_instancer = E3DNodesInstancer::get_instance(); nodes_instancer != nullptr) {
+                        if (const Ref<Material> mat = nodes_instancer->resolve_submodel_material(this, submodel);
+                            mat.is_valid()) {
+                            rs->instance_geometry_set_material_override(instance, mat->get_rid());
+                        }
                     }
 
                     _optimized_instances.push_back(
@@ -170,6 +172,23 @@ namespace godot {
     }
 
     void E3DModelInstance::_flush_pending_model() {
+        if (!is_inside_tree()) {
+            _mutex->lock();
+            _pending_model.unref();
+            _pending_model_scheduled = false;
+            _mutex->unlock();
+            return;
+        }
+
+        E3DNodesInstancer *instancer_singleton = E3DNodesInstancer::get_instance();
+        if (instancer_singleton == nullptr) {
+            _mutex->lock();
+            _pending_model.unref();
+            _pending_model_scheduled = false;
+            _mutex->unlock();
+            return;
+        }
+
         _mutex->lock();
         const Ref<E3DModel> model = _pending_model;
         _pending_model_scheduled = false;
@@ -180,13 +199,13 @@ namespace godot {
         _clear_optimized_instances();
 
         if (instancer == INSTANCER_OPTIMIZED) {
-            E3DNodesInstancer::clear_children(this);
+            instancer_singleton->clear_children(this);
             if (model.is_valid()) {
                 _collect_optimized_submodels(model->get_submodels(), Transform3D(), true);
                 _sync_optimized_instances();
             }
         } else {
-            E3DNodesInstancer::instantiate(
+            instancer_singleton->instantiate(
                     model, this,
                     instancer == INSTANCER_EDITABLE_NODES || (instancer == INSTANCER_NODES && editable_in_editor));
         }
@@ -196,11 +215,16 @@ namespace godot {
 
     void E3DModelInstance::_clear_optimized_instances() {
         RenderingServer *rs = RenderingServer::get_singleton();
-        for (const auto &record: _optimized_instances) {
+
+        for (auto &record: _optimized_instances) {
             if (record.instance_rid.is_valid()) {
-                rs->free_rid(record.instance_rid);
+                if (rs != nullptr) {
+                    rs->free_rid(record.instance_rid);
+                }
+                record.instance_rid = RID();
             }
         }
+
         _optimized_instances.clear();
     }
 
@@ -208,8 +232,12 @@ namespace godot {
         if (!is_inside_tree() || _optimized_instances.empty()) {
             return;
         }
+        Ref<World3D> world = get_world_3d();
+        if (world.is_null()) {
+            return;
+        }
         RenderingServer *rs = RenderingServer::get_singleton();
-        const RID scenario = get_world_3d()->get_scenario();
+        const RID scenario = world->get_scenario();
         const Transform3D gt = get_global_transform();
         const bool tree_visible = is_visible_in_tree();
         const uint32_t layer_mask = get_layer_mask();

@@ -16,11 +16,13 @@ namespace godot {
             GDCLASS(TrainController, Node)
         public:
             ~TrainController() override;
+
         private:
-            TMoverParameters *mover{};
+            std::unique_ptr<TMoverParameters> mover;
             double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
+            void destroy_mover();
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
@@ -79,36 +81,32 @@ namespace godot {
                     {TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR, TPowerSource::CurrentCollector},
                     {TrainPowerSource::POWER_SOURCE_POWERCABLE, TPowerSource::PowerCable},
                     {TrainPowerSource::POWER_SOURCE_HEATER, TPowerSource::Heater},
-                    {TrainPowerSource::POWER_SOURCE_MAIN, TPowerSource::Main}
-            };
+                    {TrainPowerSource::POWER_SOURCE_MAIN, TPowerSource::Main}};
 
             const std::map<TPowerSource, TrainPowerSource> tpower_source_map = {
-                {TPowerSource::NotDefined, TrainPowerSource::POWER_SOURCE_NOT_DEFINED},
-                {TPowerSource::InternalSource, TrainPowerSource::POWER_SOURCE_INTERNAL},
-                {TPowerSource::Transducer, TrainPowerSource::POWER_SOURCE_TRANSDUCER},
-                {TPowerSource::Generator, TrainPowerSource::POWER_SOURCE_GENERATOR},
-                {TPowerSource::Accumulator, TrainPowerSource::POWER_SOURCE_ACCUMULATOR},
-                {TPowerSource::CurrentCollector, TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR},
-                {TPowerSource::PowerCable, TrainPowerSource::POWER_SOURCE_POWERCABLE},
-                {TPowerSource::Heater, TrainPowerSource::POWER_SOURCE_HEATER},
-                {TPowerSource::Main, TrainPowerSource::POWER_SOURCE_MAIN}
-            };
+                    {TPowerSource::NotDefined, TrainPowerSource::POWER_SOURCE_NOT_DEFINED},
+                    {TPowerSource::InternalSource, TrainPowerSource::POWER_SOURCE_INTERNAL},
+                    {TPowerSource::Transducer, TrainPowerSource::POWER_SOURCE_TRANSDUCER},
+                    {TPowerSource::Generator, TrainPowerSource::POWER_SOURCE_GENERATOR},
+                    {TPowerSource::Accumulator, TrainPowerSource::POWER_SOURCE_ACCUMULATOR},
+                    {TPowerSource::CurrentCollector, TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR},
+                    {TPowerSource::PowerCable, TrainPowerSource::POWER_SOURCE_POWERCABLE},
+                    {TPowerSource::Heater, TrainPowerSource::POWER_SOURCE_HEATER},
+                    {TPowerSource::Main, TrainPowerSource::POWER_SOURCE_MAIN}};
 
             const std::map<TrainPowerType, TPowerType> power_type_map = {
                     {TrainPowerType::POWER_TYPE_NONE, TPowerType::NoPower},
                     {TrainPowerType::POWER_TYPE_BIO, TPowerType::BioPower},
                     {TrainPowerType::POWER_TYPE_MECH, TPowerType::MechPower},
                     {TrainPowerType::POWER_TYPE_ELECTRIC, TPowerType::ElectricPower},
-                    {TrainPowerType::POWER_TYPE_STEAM, TPowerType::SteamPower}
-            };
+                    {TrainPowerType::POWER_TYPE_STEAM, TPowerType::SteamPower}};
 
             const std::map<TPowerType, TrainPowerType> tpower_type_map = {
                     {TPowerType::NoPower, TrainPowerType::POWER_TYPE_NONE},
                     {TPowerType::BioPower, TrainPowerType::POWER_TYPE_BIO},
                     {TPowerType::MechPower, TrainPowerType::POWER_TYPE_MECH},
                     {TPowerType::ElectricPower, TrainPowerType::POWER_TYPE_ELECTRIC},
-                    {TPowerType::SteamPower, TrainPowerType::POWER_TYPE_STEAM}
-            };
+                    {TPowerType::SteamPower, TrainPowerType::POWER_TYPE_STEAM}};
 
             static const char *mover_config_changed_signal;
             static const char *mover_initialized_signal;
@@ -122,7 +120,9 @@ namespace godot {
             void update_config(const Dictionary &p_config);
             void _process(double p_delta) override;
             void _notification(int p_what);
-            void send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant()) const;
+            void send_command(
+                    const StringName &p_command, const Variant &p_p1 = Variant(),
+                    const Variant &p_p2 = Variant()) const;
             void battery(bool p_enabled) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -134,7 +134,8 @@ namespace godot {
             void radio_channel_decrease(int p_step = 1);
             void emit_command_received_signal(
                     const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
-            void broadcast_command(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            void broadcast_command(
+                    const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             void register_command(const String &p_command, const Callable &p_callable);
             void unregister_command(const String &p_command, const Callable &p_callable);
             void update_state();

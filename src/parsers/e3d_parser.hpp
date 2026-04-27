@@ -7,11 +7,11 @@
 #include <vector>
 
 namespace godot {
-    class E3DParser : public Node {
-            GDCLASS(E3DParser, Node)
+    class E3DParser : public Object {
+            GDCLASS(E3DParser, Object)
 
         public:
-            Ref<E3DModel> parse(const Ref<FileAccess> &p_file) const;
+            Ref<E3DModel> parse(const Ref<FileAccess> &p_file);
 
         protected:
             static void _bind_methods();
@@ -75,14 +75,14 @@ namespace godot {
                     Transform3D matrix;
             };
 
-            static ChunkHeader _read_chunk_header(const Ref<FileAccess> &p_file);
+            ChunkHeader _read_chunk_header(const Ref<FileAccess> &p_file);
             int u32s(uint32_t p_value) const;
-            static PackedVector3Array
+            PackedVector3Array
             _calculate_normals(const PackedVector3Array &p_vertices, const PackedInt32Array &p_indices);
             SubModelData _read_submodel(const Ref<FileAccess> &p_file, int p_chunk_size) const;
-            std::vector<SubModelData> _parse_file(const Ref<FileAccess> &p_file) const;
-            static TypedArray<String> _buffer_to_strings(const PackedByteArray &p_buffer);
-            static Transform3D _read_matrix(const Ref<FileAccess> &p_file);
-            static Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel);
+            std::vector<SubModelData> _parse_file(const Ref<FileAccess> &p_file);
+            TypedArray<String> _buffer_to_strings(const PackedByteArray &p_buffer);
+            Transform3D _read_matrix(const Ref<FileAccess> &p_file);
+            Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel);
     };
 } // namespace godot

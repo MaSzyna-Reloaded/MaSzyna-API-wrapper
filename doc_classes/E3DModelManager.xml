@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="E3DModelManager" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="E3DModelManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		High-level manager for loading and caching E3D model resources.
 	</brief_description>
@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="clear_cache">
+			<return type="void" />
+			<description>
+				Clear models cache
+			</description>
+		</method>
 		<method name="load_model">
 			<return type="E3DModel" />
 			<param index="0" name="data_path" type="String" />

@@ -4,7 +4,7 @@
 		Represents a single subcomponent of an E3D model, containing geometry and metadata.
 	</brief_description>
 	<description>
-		[E3DSubModel] is a resource that stores the data for a specific part of an [E3DModel]. It contains the geometry (as an [ArrayMesh]), transformation matrices, material properties, and animation logic specific to the MaSzyna E3D format. Submodels can be nested, allowing for complex hierarchical structures where child submodels inherit the transformations of their parents.
+		[E3DSubModel] is a resource that stores the data for a specific part of an [E3DModel]. It contains the geometry (as an [Mesh]), transformation matrices, material properties, and animation logic specific to the MaSzyna E3D format. Submodels can be nested, allowing for complex hierarchical structures where child submodels inherit the transformations of their parents.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -36,11 +36,8 @@
 		<member name="material_transparent" type="bool" setter="set_material_transparent" getter="get_material_transparent" default="false">
 			If [code]true[/code], the material is treated as having transparency (either alpha blended or alpha scissored).
 		</member>
-		<member name="mesh" type="ArrayMesh" setter="set_mesh" getter="get_mesh">
-			The [ArrayMesh] containing the vertex data (positions, normals, UVs, colors) for this submodel.
-		</member>
-		<member name="name" type="String" setter="set_name" getter="get_name" default="&quot;&quot;">
-			The name of the submodel as defined in the E3D file.
+		<member name="mesh" type="Mesh" setter="set_mesh" getter="get_mesh">
+			The [Mesh] containing the vertex data (positions, normals, UVs, colors) for this submodel.
 		</member>
 		<member name="self_illumination" type="Color" setter="set_self_illumination" getter="get_self_illumination" default="Color(1, 1, 1, 1)">
 			The emissive color of the submodel, used for lights and glowing parts.

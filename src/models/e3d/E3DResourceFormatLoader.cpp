@@ -20,7 +20,8 @@ namespace godot {
     }
 
     Variant E3DResourceFormatLoader::_load(
-            const String &p_path, const String &p_original_path, const bool p_use_sub_threads, const int32_t p_cache_mode) const {
+            const String &p_path, const String &p_original_path, const bool p_use_sub_threads,
+            const int32_t p_cache_mode) const {
         const Ref<FileAccess> file = FileAccess::open(p_path, FileAccess::READ);
         if (!file.is_valid()) {
             UtilityFunctions::push_error("Failed to open E3D file: " + p_path);
@@ -31,6 +32,5 @@ namespace godot {
         Ref<E3DModel> model = parser->parse(file);
         memdelete(parser);
         return model;
-        // return ResourceFormatLoader::_load(p_path, p_original_path, p_use_sub_threads, p_cache_mode);
     }
 } // namespace godot

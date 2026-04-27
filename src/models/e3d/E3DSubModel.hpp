@@ -9,14 +9,16 @@
 #include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {
-    class E3DSubModel: public Resource {
-        GDCLASS(E3DSubModel, Resource)
-        public:
-            ~E3DSubModel() override;
+    class E3DSubModel : public Resource {
+            GDCLASS(E3DSubModel, Resource)
         protected:
             static void _bind_methods();
-        E3DSubModel* parent = nullptr;
+            TypedArray<E3DSubModel> submodels;
+            Ref<Mesh> mesh;
+            E3DSubModel *parent;
+
         public:
+            E3DSubModel();
             enum SubModelType {
                 GL_POINTS,
                 GL_LINES,
@@ -52,13 +54,12 @@ namespace godot {
                 DIGITAL,
                 DIGICLK,
                 UNDEFINED,
-                IK=256,
+                IK = 256,
                 IK1,
                 IK2,
-                UNKNOWN=-1
+                UNKNOWN = -1
             };
 
-            MAKE_MEMBER_GS_NR(String, name, "")
             MAKE_MEMBER_GS_NR(SubModelType, submodel_type, GL_TRIANGLES)
             MAKE_MEMBER_GS_NR(AnimationType, animation, NONE)
             MAKE_MEMBER_GS_NR(float, lights_on_threshold, 0.0)
@@ -74,16 +75,18 @@ namespace godot {
             MAKE_MEMBER_GS_NR(String, material_name, "")
             MAKE_MEMBER_GS_NR(Transform3D, transform, Transform3D())
             MAKE_MEMBER_GS_NR(Transform3D, material_transform, Transform3D())
-            MAKE_MEMBER_GS_NR(Ref<ArrayMesh>, mesh, Ref<ArrayMesh>())
-            MAKE_MEMBER_GS_NR(TypedArray<E3DSubModel>, submodels, TypedArray<E3DSubModel>())
             MAKE_MEMBER_GS_NR(bool, visible, true)
             MAKE_MEMBER_GS_NR(bool, skip_rendering, false)
 
-            void add_child(const Ref<E3DSubModel>& p_sub_model);
-            void set_parent(E3DSubModel* p_sub_model);
+            void add_child(const Ref<E3DSubModel> &p_sub_model);
+            void set_mesh(const Ref<Mesh> &p_mesh);
+            Ref<Mesh> get_mesh() const;
+            void set_parent(E3DSubModel *p_parent);
+            void set_submodels(const TypedArray<E3DSubModel> &p_submodels);
+            TypedArray<E3DSubModel> get_submodels() const;
             void clear();
     };
-} //namespace godot
+} // namespace godot
 
 VARIANT_ENUM_CAST(E3DSubModel::AnimationType)
 VARIANT_ENUM_CAST(E3DSubModel::SubModelType)

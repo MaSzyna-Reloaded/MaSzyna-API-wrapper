@@ -12,55 +12,59 @@ namespace godot {
     }
 
     E3DParser::ChunkHeader E3DParser::_read_chunk_header(const Ref<FileAccess> &p_file) {
-        if (!p_file.is_valid()) {
+        if (!p_file.is_valid() || p_file->eof_reached()) {
             return {};
         }
         const String chunk_id = p_file->get_buffer(4).get_string_from_ascii();
         const uint32_t chunk_len = p_file->get_32();
+        if (chunk_len < 8) {
+            return {chunk_id, chunk_len, 0};
+        }
         return {chunk_id, chunk_len, chunk_len - 8};
     }
 
     int E3DParser::u32s(const uint32_t p_value) const {
-        return static_cast<int>((static_cast<int64_t>(p_value) + max_31_b) % max_32_b - max_31_b); // NOLINT(*-math-missing-parentheses)
+        return static_cast<int>(
+                (static_cast<int64_t>(p_value) + max_31_b) % max_32_b - max_31_b); // NOLINT(*-math-missing-parentheses)
     }
 
     PackedVector3Array
     E3DParser::_calculate_normals(const PackedVector3Array &p_vertices, const PackedInt32Array &p_indices) {
         PackedVector3Array normals;
-        const bool has_indices = p_indices.size() > 0;
-        for (int i = 0; i < p_vertices.size(); i++) {
+        const int32_t vertex_count = p_vertices.size();
+        if (vertex_count == 0) {
+            return normals;
+        }
+
+        for (int i = 0; i < vertex_count; i++) {
             normals.append(Vector3(0, 0, 0));
         }
 
-        for (int i = 0; i < p_indices.size(); i += 3) {
-            Indices indices;
-            Vertices vertices;
-            Edges edges;
-            if (has_indices) {
-                indices.i1 = p_indices.get(i);
-                indices.i2 = p_indices.get(i + 1);
-                indices.i3 = p_indices.get(i + 2);
-            } else {
-                indices.i1 = i;
-                indices.i2 = i + 1;
-                indices.i3 = i + 2;
+        const int32_t index_count = p_indices.size();
+        for (int i = 0; i + 2 < index_count; i += 3) {
+            const int32_t i1 = p_indices.get(i);
+            const int32_t i2 = p_indices.get(i + 1);
+            const int32_t i3 = p_indices.get(i + 2);
+
+            if (i1 < 0 || i1 >= vertex_count || i2 < 0 || i2 >= vertex_count || i3 < 0 || i3 >= vertex_count) {
+                continue;
             }
 
-            vertices.v1 = p_vertices.get(indices.i1);
-            vertices.v2 = p_vertices.get(indices.i2);
-            vertices.v3 = p_vertices.get(indices.i3);
+            const Vector3 v1 = p_vertices.get(i1);
+            const Vector3 v2 = p_vertices.get(i2);
+            const Vector3 v3 = p_vertices.get(i3);
 
-            edges.e1 = vertices.v2 - vertices.v1;
-            edges.e2 = vertices.v3 - vertices.v1;
+            const Vector3 e1 = v2 - v1;
+            const Vector3 e2 = v3 - v1;
 
-            const Vector3 normal = edges.e1.cross(edges.e2).normalized();
+            const Vector3 normal = e1.cross(e2).normalized();
 
-            normals.set(indices.i1, normals.get(indices.i1) + normal);
-            normals.set(indices.i2, normals.get(indices.i2) + normal);
-            normals.set(indices.i3, normals.get(indices.i3) + normal);
+            normals.set(i1, normals.get(i1) + normal);
+            normals.set(i2, normals.get(i2) + normal);
+            normals.set(i3, normals.get(i3) + normal);
         }
 
-        for (int i = 0; i < normals.size(); i++) {
+        for (int i = 0; i < vertex_count; i++) {
             normals.set(i, normals.get(i).normalized());
         }
 
@@ -118,14 +122,21 @@ namespace godot {
         return result;
     }
 
-    std::vector<E3DParser::SubModelData> E3DParser::_parse_file(const Ref<FileAccess> &p_file) const {
+    std::vector<E3DParser::SubModelData> E3DParser::_parse_file(const Ref<FileAccess> &p_file) {
         ChunkHeader chunk_header = _read_chunk_header(p_file);
+
         std::vector<SubModelData> submodels;
         TypedArray<String> submodel_names;
         TypedArray<String> material_names;
         TypedArray<Transform3D> matrices;
+
         while (!p_file->eof_reached()) {
+            const uint64_t chunk_start_pos = p_file->get_position();
             const ChunkHeader chunk = _read_chunk_header(p_file);
+            if (chunk.id.is_empty()) {
+                break;
+            }
+
             if (chunk.id == "SUB0") {
                 const int submodels_count = static_cast<int>(chunk.data_len) / 256;
                 for (int i = 0; i < submodels_count; i++) {
@@ -146,12 +157,12 @@ namespace godot {
                     matrices.append(_read_matrix(p_file));
                 }
             } else if (chunk.id == "IDX1") {
-                const uint64_t pos = p_file->get_position();
+                const uint64_t data_pos = p_file->get_position();
                 for (SubModelData &submodel: submodels) {
-                    if (submodel.index_count <= 0) {
+                    if (submodel.index_count <= 0 || submodel.first_index_idx < 0) {
                         continue;
                     }
-                    p_file->seek(pos + submodel.first_index_idx);
+                    p_file->seek(data_pos + submodel.first_index_idx);
                     PackedInt32Array indices;
                     for (int j = 0; j < submodel.index_count; j++) {
                         indices.append(p_file->get_8());
@@ -159,12 +170,13 @@ namespace godot {
 
                     submodel.indices.append_array(indices);
                 }
-
-                p_file->seek(pos + chunk.data_len);
             } else if (chunk.id == "IDX2") {
-                const uint64_t pos = p_file->get_position();
+                const uint64_t data_pos = p_file->get_position();
                 for (SubModelData &submodel: submodels) {
-                    p_file->seek(pos + (static_cast<uint64_t>(submodel.first_index_idx) * 2));
+                    if (submodel.index_count <= 0 || submodel.first_index_idx < 0) {
+                        continue;
+                    }
+                    p_file->seek(data_pos + (static_cast<uint64_t>(submodel.first_index_idx) * 2));
                     PackedInt32Array indices;
                     for (int j = 0; j < submodel.index_count; j++) {
                         indices.append(p_file->get_16());
@@ -172,12 +184,13 @@ namespace godot {
 
                     submodel.indices.append_array(indices);
                 }
-
-                p_file->seek(pos + chunk.data_len);
             } else if (chunk.id == "IDX4") {
-                const uint64_t pos = p_file->get_position();
+                const uint64_t data_pos = p_file->get_position();
                 for (SubModelData &submodel: submodels) {
-                    p_file->seek(pos + (static_cast<uint64_t>(submodel.first_index_idx) * 4));
+                    if (submodel.index_count <= 0 || submodel.first_index_idx < 0) {
+                        continue;
+                    }
+                    p_file->seek(data_pos + (static_cast<uint64_t>(submodel.first_index_idx) * 4));
                     PackedInt32Array indices;
                     for (int j = 0; j < submodel.index_count; j++) {
                         indices.append(p_file->get_32());
@@ -185,12 +198,13 @@ namespace godot {
 
                     submodel.indices.append_array(indices);
                 }
-
-                p_file->seek(pos + chunk.data_len);
             } else if (chunk.id == "VNT2") {
-                const uint64_t pos = p_file->get_position();
+                const uint64_t data_pos = p_file->get_position();
                 for (SubModelData &submodel: submodels) {
-                    p_file->seek(pos + (static_cast<uint64_t>(submodel.first_vertex_idx) * 48));
+                    if (submodel.vertex_count <= 0 || submodel.first_vertex_idx < 0) {
+                        continue;
+                    }
+                    p_file->seek(data_pos + (static_cast<uint64_t>(submodel.first_vertex_idx) * 48));
 
                     PackedVector3Array vertices;
                     PackedVector3Array normals;
@@ -212,13 +226,9 @@ namespace godot {
                         const float tz = p_file->get_float();
                         const float tw = p_file->get_float();
 
-                        Vector3 vertice(x, y, z);
-                        Vector3 normal(nx, ny, nz);
-                        Vector2 uv(u, v);
-
-                        vertices.append(vertice);
-                        normals.append(normal);
-                        uvs.append(uv);
+                        vertices.append(Vector3(x, y, z));
+                        normals.append(Vector3(nx, ny, nz));
+                        uvs.append(Vector2(u, v));
                         tangents.push_back(tx);
                         tangents.push_back(ty);
                         tangents.push_back(tz);
@@ -229,21 +239,18 @@ namespace godot {
                     submodel.uvs = uvs;
                     submodel.tangents = tangents;
                 }
-                p_file->seek(pos + chunk.data_len);
             } else {
                 if (!chunk.id.is_empty()) {
-                    UtilityFunctions::push_warning("Skipping unsupported chunk: " + chunk.id);
-                }
-
-                if (chunk.data_len > 0) {
-                    // ReSharper disable once CppExpressionWithoutSideEffects
-                    p_file->get_buffer(chunk.data_len);
+                    UtilityFunctions::print_verbose("Skipping unsupported chunk: " + chunk.id);
                 }
             }
+
+            // Always seek to the end of the chunk to be safe
+            p_file->seek(chunk_start_pos + chunk.len);
         }
 
-        for (SubModelData& submodel : submodels) {
-            //might be better to use operator[]
+        for (SubModelData &submodel: submodels) {
+            // might be better to use operator[]
 
             if (submodel.name_idx >= 0 && submodel.name_idx < submodel_names.size()) {
                 submodel.name = String(submodel_names.get(submodel.name_idx));
@@ -283,13 +290,8 @@ namespace godot {
         }
 
         return Transform3D(
-            Basis(
-                Vector3(m[0], m[1], m[2]),
-                Vector3(m[4], m[5], m[6]),
-                Vector3(m[8], m[9], m[10])
-            ),
-            Vector3(m[12], m[13], m[14])
-        );
+                Basis(Vector3(m[0], m[1], m[2]), Vector3(m[4], m[5], m[6]), Vector3(m[8], m[9], m[10])),
+                Vector3(m[12], m[13], m[14]));
     }
 
     Ref<E3DSubModel> E3DParser::_create_submodel(SubModelData &p_submodel) {
@@ -388,11 +390,13 @@ namespace godot {
                     triangles.set(ArrayMesh::ARRAY_VERTEX, p_submodel.vertices);
                     const PackedInt32Array indices = p_submodel.indices;
                     PackedInt32Array ccw_indices;
-                    for (int i = 0; i < indices.size(); i += 3) {
-                        int32_t i1 = static_cast<int32_t>(indices.get(i));
-                        int32_t i2 = static_cast<int32_t>(indices.get(i + 1));
-                        int32_t i3 = static_cast<int32_t>(indices.get(i + 2));
-                        ccw_indices.append_array(PackedInt32Array({i1, i3, i2}));
+                    for (int i = 0; i + 2 < indices.size(); i += 3) {
+                        int32_t i1 = indices.get(i);
+                        int32_t i2 = indices.get(i + 1);
+                        int32_t i3 = indices.get(i + 2);
+                        ccw_indices.append(i1);
+                        ccw_indices.append(i3);
+                        ccw_indices.append(i2);
                     }
 
                     p_submodel.indices = ccw_indices;
@@ -421,34 +425,35 @@ namespace godot {
                 return submodel;
             }
             default:
-                UtilityFunctions::push_error("Unsupported submodel (name: " + p_submodel.name + ", type: " + String::num(p_submodel.type) + ")"); //@TODO Display type name based on p_sumbodel.type
+                UtilityFunctions::push_error(
+                        "Unsupported submodel (name: " + p_submodel.name + ", type: " + String::num(p_submodel.type) +
+                        ")"); //@TODO Display type name based on p_sumbodel.type
                 return submodel;
         }
     }
 
-    Ref<E3DModel> E3DParser::parse(const Ref<FileAccess> &p_file) const {
+    Ref<E3DModel> E3DParser::parse(const Ref<FileAccess> &p_file) {
         UtilityFunctions::print_verbose("[E3DParser] Parsing " + p_file->get_path());
         // Build a list of submodels first using a simple vector to avoid Variant conversions.
-        std::vector<Ref<E3DSubModel>> submodels;
+        TypedArray<E3DSubModel> submodels;
         std::vector<SubModelData> submodels_meta = _parse_file(p_file);
-        submodels.reserve(submodels_meta.size());
 
         for (SubModelData &i: submodels_meta) {
-            submodels.push_back(_create_submodel(i));
+            submodels.append(_create_submodel(i));
         }
 
         // Track parentage to avoid duplication in E3DModel
         std::vector has_parent(submodels.size(), false);
 
         // Apply parent/child relationships using references to actual stored elements
-        for (size_t i = 0; i < submodels_meta.size(); i++) {
+        for (int i = 0; i < submodels_meta.size(); i++) {
             const SubModelData &meta = submodels_meta.at(i);
-            const Ref<E3DSubModel> &parent = submodels.at(i);
+            const Ref<E3DSubModel> parent = submodels.get(i);
 
             if (meta.first_child_idx > -1 && static_cast<size_t>(meta.first_child_idx) < submodels.size()) {
                 int child_idx = meta.first_child_idx;
                 while (child_idx > -1 && static_cast<size_t>(child_idx) < submodels.size()) {
-                    const Ref<E3DSubModel> &child = submodels.at(child_idx);
+                    const Ref<E3DSubModel> child = submodels.get(child_idx);
                     child->set_parent(parent.ptr());
                     if (child_idx >= 0 && static_cast<size_t>(child_idx) < has_parent.size()) {
                         has_parent.at(child_idx) = true;
@@ -462,9 +467,9 @@ namespace godot {
         Ref<E3DModel> model;
         UtilityFunctions::print_verbose("[E3DParser] Creating model instance for " + p_file->get_path());
         model.instantiate();
-        for (size_t i = 0; i < submodels.size(); i++) {
+        for (int i = 0; i < submodels.size(); i++) {
             if (!has_parent.at(i)) {
-                model->add_child(submodels.at(i));
+                model->add_child(submodels.get(i));
             }
         }
 

@@ -185,4 +185,4 @@ func _process(delta):
 func _ready() -> void:
     _needs_head_display_update = true
     _dirty = true
-    E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
+    E3DModelInstanceManager.instances_reloaded.connect(func(instance): _needs_head_display_update = true)

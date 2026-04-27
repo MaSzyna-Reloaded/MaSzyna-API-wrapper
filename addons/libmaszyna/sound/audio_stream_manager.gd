@@ -8,7 +8,6 @@ func clear_cache():
 
 func _ready():
     UserSettings.config_changed.connect(clear_cache)
-    UserSettings.cache_clear_requested.connect(clear_cache)
 
 func get_stream(name:String, loop:bool = false) -> AudioStream:
     var stream_key = "%s:%s" % [name, loop]

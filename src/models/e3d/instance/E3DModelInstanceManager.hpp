@@ -1,27 +1,37 @@
 #pragma once
 
-#include "models/e3d/E3DModelManager.hpp"
-
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/wrapped.hpp>
+
 #include <vector>
 
 namespace godot {
-    class E3DModelInstance; // forward declaration
-    class E3DModelInstanceManager : public Node {
-            GDCLASS(E3DModelInstanceManager, Node)
+
+    class E3DModelInstance;
+
+    class E3DModelInstanceManager : public Object {
+            GDCLASS(E3DModelInstanceManager, Object)
+
         protected:
             static void _bind_methods();
-            E3DModelManager *model_manager;
+
             std::vector<E3DModelInstance *> instances;
 
         public:
             E3DModelInstanceManager();
-            ~E3DModelInstanceManager() override;
+
+            static E3DModelInstanceManager *get_instance() {
+                return Object::cast_to<E3DModelInstanceManager>(
+                        Engine::get_singleton()->get_singleton("E3DModelInstanceManager"));
+            }
+
             static const char *instances_reloaded_signal;
-            void reload_all() const;
+
+            void reload_all();
             void register_instance(E3DModelInstance *p_instance);
             void unregister_instance(E3DModelInstance *p_instance);
-            void reload_instance(E3DModelInstance *p_instance) const;
+            void reload_instance(E3DModelInstance *p_instance);
     };
+
 } // namespace godot

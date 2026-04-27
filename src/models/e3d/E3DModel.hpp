@@ -6,16 +6,15 @@
 namespace godot {
     class E3DModel : public Resource {
             GDCLASS(E3DModel, Resource)
-        public:
-            ~E3DModel() override;
-
         protected:
             static void _bind_methods();
-            MAKE_MEMBER_GS_NR(String, name, "");
-            MAKE_MEMBER_GS_NR(TypedArray<E3DSubModel>, submodels, TypedArray<E3DSubModel>());
+            TypedArray<E3DSubModel> submodels;
 
+        public:
             void add_child(const Ref<E3DSubModel> &p_sub_model);
             void clear();
+            void set_submodels(const TypedArray<E3DSubModel> &p_submodels);
+            TypedArray<E3DSubModel> get_submodels() const;
             AABB get_aabb() const;
     };
 } // namespace godot

@@ -1,8 +1,11 @@
 #pragma once
 
 #include "MaterialParser.hpp"
+#include "core/ResourceCache.hpp"
+#include "macros.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
 
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -12,12 +15,11 @@ namespace godot {
     class MaterialManager : public Object {
             GDCLASS(MaterialManager, Object)
         private:
-            String game_dir = "";
             Ref<Mutex> mutex;
             Ref<MaterialParser> parser;
             Ref<StandardMaterial3D> _unknown_material;
+            Ref<ResourceCache> textures_cache;
             Ref<ImageTexture> _unknown_texture;
-            Object *user_settings_node = nullptr;
             Dictionary _materials;
 
             bool use_alpha_transparency = false;
@@ -27,15 +29,22 @@ namespace godot {
 
             const char *_transparency_codes[3] = {"0", "a", "s"};
 
-            void _clear_cache();
-
         protected:
             static void _bind_methods();
 
         public:
+            static MaterialManager *get_instance() {
+                Engine *engine = Engine::get_singleton();
+                if (engine == nullptr) {
+                    return nullptr;
+                }
+                return Object::cast_to<MaterialManager>(engine->get_singleton("MaterialManager"));
+            }
+
             MaterialManager();
             ~MaterialManager() override;
             enum Transparency { DISABLED, ALPHA, ALPHA_SCISSOR };
+            void clear_cache();
             String get_material_path(const String &p_model_name, const String &p_material_name);
 
             Ref<MaszynaMaterial> load_material(const String &p_model_path, const String &p_material_name);

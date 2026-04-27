@@ -21,16 +21,8 @@ namespace godot {
     }
 
     MaszynaParser::MaszynaParser() {
-        mutex.instantiate();
         meta.emplace_back();
-    }
-
-    MaszynaParser::~MaszynaParser() {
-        handlers.clear();
-        parameters.clear();
-        meta.clear();
-        buffer.clear();
-        mutex.unref();
+        mutex.instantiate();
     }
 
     void MaszynaParser::initialize(const PackedByteArray &p_buffer) {
@@ -145,7 +137,7 @@ namespace godot {
             if (!token.is_empty()) {
                 mutex->lock();
                 Array keys = parameters.keys();
-                for (const auto & key : keys) {
+                for (const auto &key: keys) {
                     String param = key;
                     String value = parameters.get(param, "");
                     token = token.replace("(" + param + ")", value);
@@ -168,8 +160,7 @@ namespace godot {
         return as_vector3(tokens);
     }
 
-    Array
-    MaszynaParser::get_tokens_until(const String &p_token, const Array &p_stop) {
+    Array MaszynaParser::get_tokens_until(const String &p_token, const Array &p_stop) {
         Array tokens;
         while (!eof_reached()) {
             if (String upcoming_token = next_token(p_stop); !upcoming_token.is_empty()) {

@@ -27,7 +27,6 @@ namespace godot {
 
         public:
             MaszynaParser();
-            ~MaszynaParser() override;
             void initialize(const PackedByteArray &p_buffer);
             int64_t get8();
             String get_line();

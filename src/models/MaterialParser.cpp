@@ -11,10 +11,12 @@ namespace godot {
 
     Ref<MaszynaMaterial> MaterialParser::parse(const String &p_material_path, const String &p_material_name) const {
         UtilityFunctions::print_verbose("[MaterialParser] Parsing material: " + p_material_path);
-        Ref<MaszynaMaterial> material = memnew(MaszynaMaterial);
+        Ref<MaszynaMaterial> material;
+        material.instantiate();
         if (const Ref<FileAccess> file = FileAccess::open(p_material_path, FileAccess::READ); file.is_valid()) {
             UtilityFunctions::print_verbose("[MaterialParser] Opening material file: " + p_material_path);
-            MaszynaParser *parser = memnew(MaszynaParser);
+            Ref<MaszynaParser> parser;
+            parser.instantiate();
             parser->initialize(file->get_buffer(static_cast<int64_t>(file->get_length())));
             const Dictionary data = {};
             TypedArray<Dictionary> current = {data};
@@ -63,21 +65,24 @@ namespace godot {
             Variant t2 = data.get("texture_normalmap", data.get("texture2", ""));
 
             if (t1.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + p_material_path + ") are not supported!");
+                UtilityFunctions::push_warning(
+                        "[MaterialParser]: More than 1 texture parameters (texture_diffuse, " + p_material_path +
+                        ") are not supported!");
                 t1 = t1.get(0);
             }
 
             if (t2.get_type() == Variant::ARRAY) {
-                UtilityFunctions::push_warning("[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + p_material_path + ") are not supported!");
+                UtilityFunctions::push_warning(
+                        "[MaterialParser]: More than 1 texture parameters (texture_normalmap, " + p_material_path +
+                        ") are not supported!");
                 t2 = t2.get(0);
             }
 
             material->set_albedo_texture_path(t1);
             material->set_normal_texture_path(t2);
-            memdelete(parser);
         } else {
             material->set_albedo_texture_path(p_material_name);
         }
         return material;
     }
-} //namespace godot
+} // namespace godot

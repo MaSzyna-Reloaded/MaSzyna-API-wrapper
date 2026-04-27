@@ -1,7 +1,7 @@
 #include "MaterialManager.hpp"
 #include "MaterialParser.hpp"
 #include "core/ResourceCache.hpp"
-#include "godot_cpp/classes/config_file.hpp"
+#include "core/UserSettings.hpp"
 #include "resources/material/MaszynaMaterial.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
@@ -23,6 +23,7 @@ namespace godot {
                 &MaterialManager::get_material, DEFVAL(Transparency::DISABLED), DEFVAL(false), DEFVAL(Color(1, 1, 1)));
         ClassDB::bind_method(D_METHOD("get_texture", "texture_path"), &MaterialManager::get_texture);
         ClassDB::bind_method(D_METHOD("load_texture", "model_path", "material_name"), &MaterialManager::load_texture);
+        ClassDB::bind_method(D_METHOD("clear_cache"), &MaterialManager::clear_cache);
 
         ClassDB::bind_static_method(
                 get_class_static(), D_METHOD("generate_heightmap_from_albedo", "albedo"),
@@ -41,20 +42,26 @@ namespace godot {
 
     MaterialManager::~MaterialManager() {
         _materials.clear();
-        _unknown_material.unref();
+        textures_cache.unref();
         _unknown_texture.unref();
-        mutex.unref();
+        _unknown_material.unref();
         parser.unref();
+        mutex.unref();
     }
 
     MaterialManager::MaterialManager() {
         mutex.instantiate();
         parser.instantiate();
-        UtilityFunctions::print("[MaterialManager] Initializing MaterialManager...");
-        _clear_cache();
+        textures_cache = ResourceCache::create("textures");
     }
 
     String MaterialManager::get_material_path(const String &p_model_name, const String &p_material_name) {
+        UserSettings *settings = UserSettings::get_instance();
+        if (settings == nullptr) {
+            return "";
+        }
+        String game_dir = settings->get_maszyna_game_dir();
+
         if (game_dir.ends_with("\\") || game_dir.ends_with("/")) {
             game_dir = game_dir.substr(0, game_dir.length() - 1);
         }
@@ -77,40 +84,24 @@ namespace godot {
     }
 
 
-    void MaterialManager::_clear_cache() {
+    void MaterialManager::clear_cache() {
+        UserSettings *settings = UserSettings::get_instance();
+        if (settings == nullptr) {
+            return;
+        }
+
         mutex->lock();
         _materials.clear();
-        ResourceCache::clear(ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
-
-        Ref<ConfigFile> config;
-        config.instantiate();
-        if (config->load("user://settings.cfg") == OK) {
-            use_alpha_transparency = config->get_value("e3d", "use_alpha_transparency", false);
-            auto_generate_normal = config->get_value("e3d", "auto_generate_normal", false);
-            auto_generate_metallic = config->get_value("e3d", "auto_generate_metallic", false);
-            auto_generate_height = config->get_value("e3d", "auto_generate_height", false);
-            if (OS::get_singleton()->has_feature("release") && !OS::get_singleton()->has_feature("editor")) {
-                game_dir = ".";
-            } else {
-                game_dir = config->get_value("maszyna", "game_dir", ".");
-            }
-        } else {
-            use_alpha_transparency = false;
-            auto_generate_normal = false;
-            auto_generate_metallic = false;
-            auto_generate_height = false;
-            game_dir = ".";
-        }
-        config.unref();
-        UtilityFunctions::print_verbose("[MaterialManager] Config loaded. Project data dir: " + game_dir);
+        textures_cache->clear();
+        String game_dir = settings->get_maszyna_game_dir();
+        use_alpha_transparency = settings->get_setting("e3d", "use_alpha_transparency", false);
+        auto_generate_normal = settings->get_setting("e3d", "auto_generate_normal", false);
+        auto_generate_metallic = settings->get_setting("e3d", "auto_generate_metallic", false);
+        auto_generate_height = settings->get_setting("e3d", "auto_generate_height", false);
         mutex->unlock();
     }
 
     Ref<MaszynaMaterial> MaterialManager::load_material(const String &p_model_path, const String &p_material_name) {
-        if (parser.is_null()) {
-            parser.instantiate();
-        }
-
         return parser->parse(get_material_path(p_model_path, p_material_name), p_material_name);
     }
 
@@ -124,7 +115,8 @@ namespace godot {
             t_code = _transparency_codes[p_transparent];
         }
 
-        const String code = p_model_path + String("/") + p_material_path + ":t=" + t_code + ":s=" + (p_is_sky ? "1" : "0");
+        const String code =
+                p_model_path + String("/") + p_material_path + ":t=" + t_code + ":s=" + (p_is_sky ? "1" : "0");
         mutex->lock();
         if (_materials.has(code)) {
             Ref<StandardMaterial3D> m = _materials.get(code, "");
@@ -133,7 +125,8 @@ namespace godot {
         }
 
         mutex->unlock();
-        Ref<StandardMaterial3D> m = memnew(StandardMaterial3D);
+        Ref<StandardMaterial3D> m;
+        m.instantiate();
         UtilityFunctions::print_verbose("[MaterialManager] Creating material: " + p_material_path);
         const Ref<MaszynaMaterial> mmat = load_material(p_model_path, p_material_path);
         UtilityFunctions::print_verbose("[MaterialManager] Loaded material: " + p_material_path);
@@ -211,7 +204,7 @@ namespace godot {
                 }
             }
 
-            mmat->apply_to_material(m.ptr());
+            mmat->apply_to_material(m);
         } else {
             UtilityFunctions::push_warning("[MaterialManager] Material is not valid: " + p_material_path);
         }
@@ -269,19 +262,23 @@ namespace godot {
     }
 
     Ref<ImageTexture> MaterialManager::load_texture(const String &p_model_path, const String &p_material_name) {
+        UserSettings *settings = UserSettings::get_instance();
+        if (settings == nullptr) {
+            return _unknown_texture;
+        }
+        String game_dir = settings->get_maszyna_game_dir();
+
         UtilityFunctions::print_verbose(
                 "[MaterialManager] Loading texture for: " + p_model_path + ", " + p_material_name + "...");
 
         if (_unknown_texture.is_null()) {
-            _unknown_texture.instantiate(); // Create a new ImageTexture
-        }
-
-        static bool fallback_loaded = false;
-        if (!fallback_loaded) {
             if (ResourceLoader *rl = ResourceLoader::get_singleton()) {
                 UtilityFunctions::print_verbose("[MaterialManager] Loading fallback texture");
                 _unknown_texture = rl->load("res://addons/libmaszyna/materials/missing_texture.png");
-                fallback_loaded = true;
+            }
+            
+            if (_unknown_texture.is_null()) {
+                _unknown_texture.instantiate(); // Fallback to empty if file missing
             }
         }
 
@@ -317,7 +314,7 @@ namespace godot {
             return _unknown_texture;
         }
 
-        Ref<Resource> cached_res = ResourceCache::get(final_path, ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
+        Ref<Resource> cached_res = textures_cache->get(final_path);
         if (cached_res.is_valid()) {
             return cached_res;
         }
@@ -330,10 +327,11 @@ namespace godot {
 
         UtilityFunctions::print_verbose("[MaterialManager] Loading texture: " + final_path);
         const PackedByteArray buffer = file->get_buffer(static_cast<int64_t>(file->get_length()));
-        const Ref<Image> im = memnew(Image);
+        Ref<Image> im;
+        im.instantiate();
         if (const Error res = im->load_dds_from_buffer(buffer); res == OK) {
             Ref<ImageTexture> tex = ImageTexture::create_from_image(im);
-            ResourceCache::set(final_path, tex, ResourceCache::RESOURCE_CACHE_DIR_TEXTURES);
+            textures_cache->set(final_path, tex);
             return tex;
         }
 
@@ -386,4 +384,5 @@ namespace godot {
         }
         return meta;
     }
+
 } // namespace godot

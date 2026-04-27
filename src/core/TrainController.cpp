@@ -12,10 +12,7 @@ namespace godot {
         state.clear();
         config.clear();
         internal_state.clear();
-        if (mover != nullptr) {
-            delete mover;
-            mover = nullptr;
-        }
+        destroy_mover();
     }
 
     const char *TrainController::mover_config_changed_signal = "mover_config_changed";
@@ -68,15 +65,28 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
-        BIND_PROPERTY(Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id, "train_id");
-        BIND_PROPERTY(Variant::STRING, "type_name", "type_name", &TrainController::set_type_name, &TrainController::get_type_name, "type_name");
+        BIND_PROPERTY(
+                Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
+                "train_id");
+        BIND_PROPERTY(
+                Variant::STRING, "type_name", "type_name", &TrainController::set_type_name,
+                &TrainController::get_type_name, "type_name");
         BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
-        BIND_PROPERTY(Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY(Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity, &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min, &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max, &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(
+                Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
+        BIND_PROPERTY(
+                Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity,
+                &TrainController::get_max_velocity, "max_velocity");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min,
+                &TrainController::get_radio_channel_min, "radio_channel_min");
+        BIND_PROPERTY(
+                Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max,
+                &TrainController::get_radio_channel_max, "radio_channel_max");
         /* FIXME: move to TrainPower section? */
-        BIND_PROPERTY_W_HINT(Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage, &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY_W_HINT(
+                Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
+                &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
 
         ADD_SIGNAL(MethodInfo(mover_config_changed_signal));
         ADD_SIGNAL(MethodInfo(mover_initialized_signal));
@@ -106,14 +116,21 @@ namespace godot {
     }
 
     TMoverParameters *TrainController::get_mover() const {
-        return mover;
+        return mover.get();
+    }
+
+    void TrainController::destroy_mover() {
+        mover.reset();
     }
 
     void TrainController::initialize_mover() {
+        if (mover != nullptr) {
+            destroy_mover();
+        }
         const auto initial_vel = this->initial_velocity;
         const auto type_name_str = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
-        mover = std::make_unique<TMoverParameters>(initial_vel, type_name_str, name, this->cabin_number).release();
+        mover = std::make_unique<TMoverParameters>(initial_vel, type_name_str, name, this->cabin_number);
 
         dirty = true;
         dirty_prop = true;
@@ -180,9 +197,10 @@ namespace godot {
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 TrainSystem::get_instance()->unregister_train(train_id);
+                destroy_mover();
                 break;
             case NOTIFICATION_READY:
-                initialize_mover();
+                initialize_mover(); // must be initialized on ready!
                 update_state();
                 DEBUG("TrainController::_ready() signals connected to train parts");
 
@@ -268,8 +286,7 @@ namespace godot {
         p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
-    }
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {}
 
     void TrainController::update_mover() {
         if (TMoverParameters *mover_params = get_mover(); mover_params != nullptr) {
@@ -310,7 +327,8 @@ namespace godot {
 
         /* FIXME: move to TrainRadio section? */
         internal_state["radio_enabled"] = p_mover->Radio;
-        internal_state["radio_powered"] = p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
+        internal_state["radio_powered"] =
+                p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
         internal_state["radio_channel"] = radio_channel;
 
         /* FIXME: move to TrainPower section */
@@ -341,7 +359,8 @@ namespace godot {
         return state;
     }
 
-    void TrainController::emit_command_received_signal(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+    void
+    TrainController::emit_command_received_signal(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         emit_signal(command_received, p_command, p_p1, p_p2);
     }
 

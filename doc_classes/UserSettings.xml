@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="UserSettings" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		This class manages UserSettings of the MaSzyna Reloaded simulator
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_maszyna_game_dir" qualifiers="const">
+			<return type="String" />
+			<description>
+				Returns the original game data directory
+			</description>
+		</method>
+		<method name="get_setting" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="section" type="String" />
+			<param index="1" name="key" type="String" />
+			<param index="2" name="default_value" type="Variant" default="null" />
+			<description>
+				Reads user setting described by section and key. Returns default value if setting is not set.
+			</description>
+		</method>
+		<method name="load_config">
+			<return type="void" />
+			<description>
+				Loads user configuration
+			</description>
+		</method>
+		<method name="save_maszyna_game_dir">
+			<return type="void" />
+			<param index="0" name="path" type="String" />
+			<description>
+				Saves the original game data directory
+			</description>
+		</method>
+		<method name="save_setting">
+			<return type="void" />
+			<param index="0" name="section" type="String" />
+			<param index="1" name="key" type="String" />
+			<param index="2" name="value" type="Variant" />
+			<description>
+				Saves user setting described by key and section
+			</description>
+		</method>
+	</methods>
+	<signals>
+		<signal name="config_changed">
+			<description>
+				Signal emitted when user configuration changes
+			</description>
+		</signal>
+		<signal name="game_dir_changed">
+			<description>
+				Signal emitted when the original game data directory changes
+			</description>
+		</signal>
+		<signal name="setting_changed">
+			<param index="0" name="section" type="String" />
+			<param index="1" name="key" type="String" />
+			<description>
+				Signal emitted when user setting changes
+			</description>
+		</signal>
+	</signals>
+</class>

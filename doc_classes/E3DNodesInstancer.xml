@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="E3DNodesInstancer" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="E3DNodesInstancer" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Utility class for converting E3DModel resources into a hierarchy of Godot nodes.
 	</brief_description>
@@ -9,7 +9,7 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="instantiate" qualifiers="static">
+		<method name="instantiate">
 			<return type="void" />
 			<param index="0" name="model" type="E3DModel" />
 			<param index="1" name="target_node" type="E3DModelInstance" />

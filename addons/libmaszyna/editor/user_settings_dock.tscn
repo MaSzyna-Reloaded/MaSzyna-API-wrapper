@@ -1,10 +1,10 @@
-[gd_scene load_steps=4 format=3 uid="uid://cpnfrm4urr642"]
+[gd_scene format=3 uid="uid://cpnfrm4urr642"]
 
 [ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/editor/user_settings_dock.gd" id="1_c24dg"]
 [ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/editor/user_settings_check_button.gd" id="2_2cs74"]
 [ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/editor/user_settings_dropdown.gd" id="3_hwkpe"]
 
-[node name="Maszyna Settings" type="PanelContainer"]
+[node name="Maszyna Settings" type="PanelContainer" unique_id=1666476683]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -12,27 +12,27 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_c24dg")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2122847822]
 layout_mode = 2
 
-[node name="GameDirSection" type="HBoxContainer" parent="VBoxContainer"]
+[node name="GameDirSection" type="HBoxContainer" parent="VBoxContainer" unique_id=864348423]
 layout_mode = 2
 
-[node name="Label" type="Label" parent="VBoxContainer/GameDirSection"]
+[node name="Label" type="Label" parent="VBoxContainer/GameDirSection" unique_id=2014565037]
 layout_mode = 2
 text = "Game Folder"
 
-[node name="LineEdit" type="LineEdit" parent="VBoxContainer/GameDirSection"]
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer/GameDirSection" unique_id=687277614]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "d:/Games/MaSzyna/"
+text = "/home/marcin/Games/Maszyna"
 
-[node name="Browse" type="Button" parent="VBoxContainer/GameDirSection"]
+[node name="Browse" type="Button" parent="VBoxContainer/GameDirSection" unique_id=147126665]
 layout_mode = 2
 text = "Browse"
 
-[node name="DirectorySelectorDialog" type="FileDialog" parent="VBoxContainer/GameDirSection"]
+[node name="DirectorySelectorDialog" type="FileDialog" parent="VBoxContainer/GameDirSection" unique_id=1295127766]
 unique_name_in_owner = true
 title = "Open a Directory"
 size = Vector2i(700, 500)
@@ -41,21 +41,21 @@ ok_button_text = "Select Current Folder"
 file_mode = 2
 access = 2
 
-[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer2" type="HBoxContainer" parent="VBoxContainer" unique_id=1531355088]
 layout_mode = 2
 
-[node name="ClearCacheButton" type="Button" parent="VBoxContainer/HBoxContainer2"]
+[node name="ClearCacheButton" type="Button" parent="VBoxContainer/HBoxContainer2" unique_id=2010697698]
 layout_mode = 2
 text = "Clear caches"
 
-[node name="ReloadModelsButton" type="Button" parent="VBoxContainer/HBoxContainer2"]
+[node name="ReloadModelsButton" type="Button" parent="VBoxContainer/HBoxContainer2" unique_id=738035875]
 layout_mode = 2
 text = "Reload models"
 
-[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer3" type="HBoxContainer" parent="VBoxContainer" unique_id=1352004296]
 layout_mode = 2
 
-[node name="FXAAButton" type="CheckButton" parent="VBoxContainer/HBoxContainer3"]
+[node name="FXAAButton" type="CheckButton" parent="VBoxContainer/HBoxContainer3" unique_id=815733542]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -63,15 +63,15 @@ section = "render"
 key = "fxaa_enabled"
 default = true
 
-[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer3"]
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer3" unique_id=1807623671]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "FXAA"
 
-[node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer" unique_id=1416798018]
 layout_mode = 2
 
-[node name="SDFGI" type="CheckButton" parent="VBoxContainer/HBoxContainer5"]
+[node name="SDFGI" type="CheckButton" parent="VBoxContainer/HBoxContainer5" unique_id=1687570951]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -79,15 +79,15 @@ section = "render"
 key = "sdfgi_enabled"
 default = true
 
-[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer5"]
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer5" unique_id=1292077856]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SDFGI"
 
-[node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer6" type="HBoxContainer" parent="VBoxContainer" unique_id=1578974768]
 layout_mode = 2
 
-[node name="SSIL" type="CheckButton" parent="VBoxContainer/HBoxContainer6"]
+[node name="SSIL" type="CheckButton" parent="VBoxContainer/HBoxContainer6" unique_id=20485586]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -95,15 +95,15 @@ section = "render"
 key = "ssil_enabled"
 default = true
 
-[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer6"]
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer6" unique_id=432482144]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SSIL"
 
-[node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer7" type="HBoxContainer" parent="VBoxContainer" unique_id=1071940117]
 layout_mode = 2
 
-[node name="SSAO" type="CheckButton" parent="VBoxContainer/HBoxContainer7"]
+[node name="SSAO" type="CheckButton" parent="VBoxContainer/HBoxContainer7" unique_id=268648592]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -111,15 +111,15 @@ section = "render"
 key = "ssao_enabled"
 default = true
 
-[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer7"]
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer7" unique_id=1515076879]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SSAO"
 
-[node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer8" type="HBoxContainer" parent="VBoxContainer" unique_id=1228864156]
 layout_mode = 2
 
-[node name="SSR" type="CheckButton" parent="VBoxContainer/HBoxContainer8"]
+[node name="SSR" type="CheckButton" parent="VBoxContainer/HBoxContainer8" unique_id=1524254890]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -127,45 +127,44 @@ section = "render"
 key = "ssr_enabled"
 default = true
 
-[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer8"]
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer8" unique_id=1992551748]
 layout_mode = 2
 size_flags_horizontal = 3
 text = "SSR"
 
-[node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer4" type="HBoxContainer" parent="VBoxContainer" unique_id=319028904]
 layout_mode = 2
 
-[node name="VolumetricFog" type="CheckButton" parent="VBoxContainer/HBoxContainer4"]
+[node name="VolumetricFog" type="CheckButton" parent="VBoxContainer/HBoxContainer4" unique_id=1182679499]
 layout_mode = 2
-button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "volumetric_fog_enabled"
 default = true
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer4"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer4" unique_id=1844179100]
 layout_mode = 2
 text = "Volumetric Fog
 "
 
-[node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer" unique_id=746039998]
 layout_mode = 2
 
-[node name="E3DAlphaTransparency" type="CheckButton" parent="VBoxContainer/HBoxContainer9"]
+[node name="E3DAlphaTransparency" type="CheckButton" parent="VBoxContainer/HBoxContainer9" unique_id=1697939968]
 layout_mode = 2
 script = ExtResource("2_2cs74")
 section = "e3d"
 key = "use_alpha_transparency"
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer9"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer9" unique_id=542604405]
 layout_mode = 2
 text = "E3D Alpha Transparency
 "
 
-[node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer" unique_id=1425996572]
 layout_mode = 2
 
-[node name="VSync" type="CheckButton" parent="VBoxContainer/HBoxContainer11"]
+[node name="VSync" type="CheckButton" parent="VBoxContainer/HBoxContainer11" unique_id=1798653897]
 layout_mode = 2
 button_pressed = true
 script = ExtResource("2_2cs74")
@@ -173,16 +172,16 @@ section = "window"
 key = "vsync_enabled"
 default = true
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer11"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer11" unique_id=1967808432]
 layout_mode = 2
 text = "VSync"
 
-[node name="HBoxContainer12" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer12" type="HBoxContainer" parent="VBoxContainer" unique_id=130203540]
 layout_mode = 2
 
-[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer12"]
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer12" unique_id=59882001]
 layout_mode = 2
-selected = 2
+selected = 0
 item_count = 4
 popup/item_0/text = "Disabled"
 popup/item_0/id = 0
@@ -196,16 +195,16 @@ script = ExtResource("3_hwkpe")
 section = "render"
 key = "msaa_3d"
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer12"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer12" unique_id=1715236659]
 layout_mode = 2
 text = "MSAA level"
 
-[node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer"]
+[node name="HBoxContainer10" type="HBoxContainer" parent="VBoxContainer" unique_id=880133636]
 layout_mode = 2
 
-[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer10"]
+[node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer10" unique_id=2118963725]
 layout_mode = 2
-selected = 2
+selected = 0
 item_count = 6
 popup/item_0/text = "Disabled"
 popup/item_0/id = 0
@@ -223,18 +222,18 @@ script = ExtResource("3_hwkpe")
 section = "render"
 key = "anisotropic_filtering_level"
 
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer10"]
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer10" unique_id=1250381874]
 layout_mode = 2
 text = "Anisotropic filtering level"
 
-[node name="InfoMessageWindow" type="Window" parent="."]
+[node name="InfoMessageWindow" type="Window" parent="." unique_id=1879944992]
 unique_name_in_owner = true
 initial_position = 4
 size = Vector2i(300, 100)
 visible = false
 unresizable = true
 
-[node name="FlowContainer" type="FlowContainer" parent="InfoMessageWindow"]
+[node name="FlowContainer" type="FlowContainer" parent="InfoMessageWindow" unique_id=1358748209]
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
@@ -247,7 +246,7 @@ offset_bottom = 11.5
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Label" type="Label" parent="InfoMessageWindow/FlowContainer"]
+[node name="Label" type="Label" parent="InfoMessageWindow/FlowContainer" unique_id=403920800]
 layout_mode = 2
 size_flags_horizontal = 3
 horizontal_alignment = 1

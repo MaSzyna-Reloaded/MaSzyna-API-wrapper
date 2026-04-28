@@ -1,39 +1,44 @@
-#include "E3DModelInstance.hpp"
 #include "E3DModelInstanceManager.hpp"
+
+#include "E3DModelInstance.hpp"
 #include "E3DNodesInstancer.hpp"
 #include "models/e3d/E3DModelManager.hpp"
 
 #include <algorithm>
-#include <godot_cpp/classes/engine.hpp>
+
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
+#include <godot_cpp/core/class_db.hpp>
+#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+
     const char *E3DModelInstanceManager::instances_reloaded_signal = "instances_reloaded";
+
     void E3DModelInstanceManager::_bind_methods() {
         ADD_SIGNAL(MethodInfo(
                 instances_reloaded_signal,
-                PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_RESOURCE_TYPE, "E3DModelInstance")));
+                PropertyInfo(Variant::OBJECT, "instance", PROPERTY_HINT_NODE_TYPE, "E3DModelInstance")));
+
         ClassDB::bind_method(D_METHOD("reload_all"), &E3DModelInstanceManager::reload_all);
+
         ClassDB::bind_method(D_METHOD("register_instance", "instance"), &E3DModelInstanceManager::register_instance);
+
         ClassDB::bind_method(
                 D_METHOD("unregister_instance", "instance"), &E3DModelInstanceManager::unregister_instance);
+
         ClassDB::bind_method(D_METHOD("reload_instance", "instance"), &E3DModelInstanceManager::reload_instance);
     }
 
-    E3DModelInstanceManager::E3DModelInstanceManager() : model_manager(memnew(E3DModelManager)) {}
+    E3DModelInstanceManager::E3DModelInstanceManager() = default;
 
-    E3DModelInstanceManager::~E3DModelInstanceManager() {
-        if (model_manager != nullptr) {
-            memdelete(model_manager);
-            model_manager = nullptr;
-        }
-        instances.clear();
-    }
-
-    void E3DModelInstanceManager::reload_all() const {
+    void E3DModelInstanceManager::reload_all() {
         for (E3DModelInstance *instance: instances) {
-            if (instance != nullptr) {
+            if (instance == nullptr) {
+                continue;
+            }
+
+            if (instance->is_inside_tree()) {
                 reload_instance(instance);
             }
         }
@@ -44,37 +49,25 @@ namespace godot {
             return;
         }
 
-        if (std::find(instances.begin(), instances.end(), p_instance) == instances.end()) {
-            instances.push_back(p_instance);
+        if (std::find(instances.begin(), instances.end(), p_instance) != instances.end()) {
+            return;
         }
+
+        instances.push_back(p_instance);
     }
 
     void E3DModelInstanceManager::unregister_instance(E3DModelInstance *p_instance) {
-        if (p_instance == nullptr) {
-            return;
-        }
-
-        if (const auto it = std::remove(instances.begin(), instances.end(), p_instance); it != instances.end()) {
-            instances.erase(it, instances.end());
-        }
+        instances.erase(std::remove(instances.begin(), instances.end(), p_instance), instances.end());
     }
 
-    void E3DModelInstanceManager::reload_instance(E3DModelInstance *p_instance) const {
-        if (p_instance == nullptr) {
+    void E3DModelInstanceManager::reload_instance(E3DModelInstance *p_instance) {
+        E3DModelManager *model_manager = E3DModelManager::get_instance();
+
+        if (model_manager == nullptr || p_instance == nullptr || !p_instance->is_inside_tree()) {
             return;
         }
 
-        const SceneTree *tree = nullptr;
-        if (p_instance->is_inside_tree()) {
-            tree = p_instance->get_tree();
-        }
-
-        const Engine *singleton = Engine::get_singleton();
-
-        if (tree == nullptr) {
-            Object *ml = (singleton != nullptr) ? singleton->get_main_loop() : nullptr;
-            tree = cast_to<SceneTree>(ml);
-        }
+        SceneTree *tree = p_instance->get_tree();
 
         if (tree == nullptr) {
             UtilityFunctions::push_error("E3DModelInstanceManager::reload_instance: no SceneTree available");
@@ -88,18 +81,27 @@ namespace godot {
             case E3DModelInstance::INSTANCER_OPTIMIZED: {
                 UtilityFunctions::print_verbose(
                         "[E3DModelInstanceManager] Instantiating optimized E3D for ", p_instance->get_name());
-                p_instance->call_deferred("_instantiate_children", model);
+
+                p_instance->_instantiate_children(model);
             } break;
+
             case E3DModelInstance::INSTANCER_NODES:
             case E3DModelInstance::INSTANCER_EDITABLE_NODES: {
                 UtilityFunctions::print_verbose(
                         "[E3DModelInstanceManager] Instantiating nodes for ", p_instance->get_name());
-                p_instance->call_deferred("_instantiate_children", model);
+
+                p_instance->_instantiate_children(model);
             } break;
+
             default:
                 UtilityFunctions::push_warning(
                         "[E3DModelInstanceManager] Unsupported instancer type for ", p_instance->get_name());
-                break;
+                return;
+        }
+
+        if (p_instance != nullptr && p_instance->is_inside_tree()) {
+            emit_signal(instances_reloaded_signal, p_instance);
         }
     }
+
 } // namespace godot

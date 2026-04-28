@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://bjjgkykr4c718" path="res://demo_3d.gd" id="1_ut343"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
-[ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_rrc65"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
 [ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
@@ -92,7 +91,6 @@ point_count = 5
 script = ExtResource("1_ut343")
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -271,13 +269,6 @@ horizontal_alignment = 1
 [node name="Maszyna Settings" parent="UserSettingsPanel/VBoxContainer" unique_id=2059956236 instance=ExtResource("4_dyl8i")]
 layout_mode = 2
 
-[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1464463242]
-script = ExtResource("2_py6pt")
-world_environment = NodePath("../WorldEnvironment")
-sky_texture_offset = Vector2(0.49, 0.005)
-sky_texture_scale = Vector2(0.547, 0.865)
-sky_energy = 0.85
-
 [node name="Player" parent="." unique_id=1342508122 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
 controlled_vehicle_path = NodePath("../SM42-099")
@@ -384,11 +375,13 @@ transform = Transform3D(0.999866, 0.000106457, 0.0163529, -4.68966e-10, 0.999979
 [node name="Podklady betonowe" type="E3DModelInstance" parent="Dekoracje" unique_id=1594870762]
 data_path = "/dynamic/pkp/res_v1"
 model_filename = "podklady_betonowe"
+submodels_aabb = AABB(-1.3, 1.22, -9.30024, 2.6, 1.53972, 18.59989)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.25, 110.46942)
 
 [node name="Podklady" type="E3DModelInstance" parent="Dekoracje" unique_id=1290469893]
 data_path = "/dynamic/pkp/res_v1"
 model_filename = "podklady"
+submodels_aabb = AABB(-1.3226001, 1.3, -9.10519, 2.6676002, 1.2, 18.21549)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -1.1914241, -1.3300041, 89.100494)
 
 [node name="MaszynaTrack3D" type="Path3D" parent="." unique_id=665070806]

@@ -20,8 +20,6 @@
 
 namespace godot {
 
-    TrackRenderingServer *TrackRenderingServer::singleton = nullptr;
-
     void TrackRenderingServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("create_track"), &TrackRenderingServer::create_track);
         ClassDB::bind_method(D_METHOD("free_track", "track_id"), &TrackRenderingServer::free_track);
@@ -49,35 +47,29 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_model_skin", "track_id", "sleeper_model_skin"),
                 &TrackRenderingServer::set_sleeper_model_skin);
-        ClassDB::bind_method(
-                D_METHOD("set_sleeper_mesh", "track_id", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
+        ClassDB::bind_method(D_METHOD("set_sleeper_mesh", "track_id", "mesh"), &TrackRenderingServer::set_sleeper_mesh);
         ClassDB::bind_method(D_METHOD("get_sleeper_mesh", "track_id"), &TrackRenderingServer::get_sleeper_mesh);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_texture", "track_id", "path"), &TrackRenderingServer::set_ballast_texture);
 
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_height", "track_id", "height"), &TrackRenderingServer::set_sleeper_height);
-        ClassDB::bind_method(
-                D_METHOD("get_sleeper_height", "track_id"), &TrackRenderingServer::get_sleeper_height);
+        ClassDB::bind_method(D_METHOD("get_sleeper_height", "track_id"), &TrackRenderingServer::get_sleeper_height);
         ClassDB::bind_method(
                 D_METHOD("set_sleeper_spacing", "track_id", "spacing"), &TrackRenderingServer::set_sleeper_spacing);
-        ClassDB::bind_method(
-                D_METHOD("get_sleeper_spacing", "track_id"), &TrackRenderingServer::get_sleeper_spacing);
+        ClassDB::bind_method(D_METHOD("get_sleeper_spacing", "track_id"), &TrackRenderingServer::get_sleeper_spacing);
         ClassDB::bind_method(
                 D_METHOD("set_rail_spacing", "track_id", "spacing"), &TrackRenderingServer::set_rail_spacing);
         ClassDB::bind_method(D_METHOD("get_rail_spacing", "track_id"), &TrackRenderingServer::get_rail_spacing);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_height", "track_id", "height"), &TrackRenderingServer::set_ballast_height);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_height", "track_id"), &TrackRenderingServer::get_ballast_height);
+        ClassDB::bind_method(D_METHOD("get_ballast_height", "track_id"), &TrackRenderingServer::get_ballast_height);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_offset", "track_id", "offset"), &TrackRenderingServer::set_ballast_offset);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_offset", "track_id"), &TrackRenderingServer::get_ballast_offset);
+        ClassDB::bind_method(D_METHOD("get_ballast_offset", "track_id"), &TrackRenderingServer::get_ballast_offset);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_uv_scale", "track_id", "scale"), &TrackRenderingServer::set_ballast_uv_scale);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_uv_scale", "track_id"), &TrackRenderingServer::get_ballast_uv_scale);
+        ClassDB::bind_method(D_METHOD("get_ballast_uv_scale", "track_id"), &TrackRenderingServer::get_ballast_uv_scale);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_width_tiling", "track_id", "tiling"),
                 &TrackRenderingServer::set_ballast_width_tiling);
@@ -90,8 +82,7 @@ namespace godot {
                 D_METHOD("get_ballast_length_tiling", "track_id"), &TrackRenderingServer::get_ballast_length_tiling);
         ClassDB::bind_method(
                 D_METHOD("set_ballast_enabled", "track_id", "enabled"), &TrackRenderingServer::set_ballast_enabled);
-        ClassDB::bind_method(
-                D_METHOD("get_ballast_enabled", "track_id"), &TrackRenderingServer::get_ballast_enabled);
+        ClassDB::bind_method(D_METHOD("get_ballast_enabled", "track_id"), &TrackRenderingServer::get_ballast_enabled);
 
         ClassDB::bind_method(D_METHOD("get_instance_rid", "track_id"), &TrackRenderingServer::get_instance_rid);
         ClassDB::bind_method(
@@ -103,26 +94,13 @@ namespace godot {
                 D_METHOD("get_ballast_mesh_instance", "track_id"), &TrackRenderingServer::get_ballast_mesh_instance);
     }
 
-    TrackRenderingServer::TrackRenderingServer() : model_manager(memnew(E3DModelManager)) {
-        singleton = this;
-    }
+    TrackRenderingServer::TrackRenderingServer() {}
 
     TrackRenderingServer::~TrackRenderingServer() {
-        for (KeyValue<int64_t, TrackState> &entry : tracks) {
+        for (KeyValue<int64_t, TrackState> &entry: tracks) {
             _free_track_rids(entry.value);
         }
         tracks.clear();
-        if (model_manager != nullptr) {
-            memdelete(model_manager);
-            model_manager = nullptr;
-        }
-        if (singleton == this) {
-            singleton = nullptr;
-        }
-    }
-
-    TrackRenderingServer *TrackRenderingServer::get_singleton() {
-        return singleton;
     }
 
     TrackRenderingServer::TrackState *TrackRenderingServer::get_track_state(const int64_t p_track_id) {
@@ -141,7 +119,8 @@ namespace godot {
         return state;
     }
 
-    void TrackRenderingServer::_apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const {
+    void
+    TrackRenderingServer::_apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const {
         RenderingServer::get_singleton()->instance_geometry_set_material_override(
                 p_instance, p_material.is_valid() ? p_material->get_rid() : RID());
     }
@@ -166,26 +145,36 @@ namespace godot {
 
     void TrackRenderingServer::_free_track_rids(TrackState &p_state) {
         RenderingServer *rs = RenderingServer::get_singleton();
+        if (rs == nullptr) {
+            return;
+        }
+
         if (p_state.rail_mesh_instance.is_valid()) {
             rs->free_rid(p_state.rail_mesh_instance);
+            p_state.rail_mesh_instance = RID();
         }
-        if (p_state.rail_mesh.is_valid()) {
-            rs->free_rid(p_state.rail_mesh);
-        }
+
         if (p_state.ballast_mesh_instance.is_valid()) {
             rs->free_rid(p_state.ballast_mesh_instance);
+            p_state.ballast_mesh_instance = RID();
         }
-        if (p_state.ballast_mesh.is_valid()) {
-            rs->free_rid(p_state.ballast_mesh);
-        }
+
         if (p_state.sleeper_multimesh_instance.is_valid()) {
             rs->free_rid(p_state.sleeper_multimesh_instance);
+            p_state.sleeper_multimesh_instance = RID();
         }
+
         if (p_state.sleeper_multimesh.is_valid()) {
             rs->free_rid(p_state.sleeper_multimesh);
+            p_state.sleeper_multimesh = RID();
         }
-    }
 
+        p_state.rail_mesh = RID();
+        p_state.ballast_mesh = RID();
+        p_state.sleeper_mesh.unref();
+        p_state.internal_rail_mesh.unref();
+        p_state.internal_ballast_mesh.unref();
+    }
     void TrackRenderingServer::_update_render_instances(TrackState &p_state) {
         RenderingServer *rs = RenderingServer::get_singleton();
         const RID active_scenario = p_state.visible ? p_state.scenario : RID();
@@ -315,8 +304,7 @@ namespace godot {
         rs->instance_geometry_set_shader_parameter(
                 state->sleeper_multimesh_instance, "sleeper_height", state->sleeper_height);
         const float safe_spacing = state->sleeper_spacing > 0.001f ? state->sleeper_spacing : 0.001f;
-        rs->instance_geometry_set_shader_parameter(
-                state->sleeper_multimesh_instance, "sleeper_spacing", safe_spacing);
+        rs->instance_geometry_set_shader_parameter(state->sleeper_multimesh_instance, "sleeper_spacing", safe_spacing);
         if (state->sleeper_material.is_valid()) {
             state->sleeper_material->set_shader_parameter("path_points", p_points);
             state->sleeper_material->set_shader_parameter("path_quats", p_quats);
@@ -325,8 +313,7 @@ namespace godot {
         if (state->sleeper_multimesh.is_valid() && state->sleeper_mesh.is_valid()) {
             const int count = static_cast<int>(std::floor(safe_length / safe_spacing));
             if (count > 0) {
-                rs->multimesh_allocate_data(
-                        state->sleeper_multimesh, count, RenderingServer::MULTIMESH_TRANSFORM_3D);
+                rs->multimesh_allocate_data(state->sleeper_multimesh, count, RenderingServer::MULTIMESH_TRANSFORM_3D);
                 rs->multimesh_set_visible_instances(state->sleeper_multimesh, -1);
                 for (int i = 0; i < count; i++) {
                     rs->multimesh_instance_set_transform(state->sleeper_multimesh, i, Transform3D());
@@ -351,8 +338,7 @@ namespace godot {
         _reload_sleeper_model(p_track_id, *state);
     }
 
-    void TrackRenderingServer::set_sleeper_model_skin(
-            const int64_t p_track_id, const String &p_sleeper_model_skin) {
+    void TrackRenderingServer::set_sleeper_model_skin(const int64_t p_track_id, const String &p_sleeper_model_skin) {
         TrackState *state = get_track_state(p_track_id);
         ERR_FAIL_NULL(state);
 
@@ -376,17 +362,15 @@ namespace godot {
             return;
         }
 
+        E3DModelManager *model_manager = E3DModelManager::get_instance();
+        if (model_manager == nullptr) {
+            return;
+        }
+
         const int split_index = model_path.rfind("/");
         const String data_path = split_index >= 0 ? model_path.substr(0, split_index) : String();
         const String model_filename = split_index >= 0 ? model_path.substr(split_index + 1) : model_path;
         if (model_filename.is_empty()) {
-            set_sleeper_mesh(p_track_id, Ref<Mesh>());
-            _clear_sleeper_material(p_state);
-            return;
-        }
-
-        if (model_manager == nullptr) {
-            UtilityFunctions::push_warning("[TrackRenderingServer] Missing E3DModelManager for sleeper loading");
             set_sleeper_mesh(p_track_id, Ref<Mesh>());
             _clear_sleeper_material(p_state);
             return;
@@ -413,7 +397,7 @@ namespace godot {
         bool found_transparent = false;
         std::vector<Ref<E3DSubModel>> stack;
         stack.reserve(submodels.size());
-        for (const Variant &submodel : submodels) {
+        for (const Variant &submodel: submodels) {
             stack.emplace_back(submodel);
         }
 
@@ -431,7 +415,7 @@ namespace godot {
             }
 
             TypedArray<E3DSubModel> children = sm->get_submodels();
-            for (const Variant &child : children) {
+            for (const Variant &child: children) {
                 stack.emplace_back(child);
             }
         }
@@ -565,8 +549,7 @@ namespace godot {
 
         bool should_generate = state->internal_ballast_mesh.is_null();
         if (!should_generate) {
-            if (std::abs(old_length - p_length) > 1.0f ||
-                std::abs(old_height - state->ballast_height) > 0.001f ||
+            if (std::abs(old_length - p_length) > 1.0f || std::abs(old_height - state->ballast_height) > 0.001f ||
                 std::abs(old_offset - state->ballast_offset) > 0.001f ||
                 std::abs(old_w_tiling - state->ballast_width_tiling) > 0.001f ||
                 std::abs(old_l_tiling - state->ballast_length_tiling) > 0.001f) {

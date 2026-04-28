@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="E3DModelInstanceManager" inherits="Node" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="E3DModelInstanceManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Global manager for tracking and updating active E3DModelInstance nodes.
 	</brief_description>
@@ -16,13 +16,13 @@
 				Registers an [E3DModelInstance] with the manager. This is typically called automatically when a model instance enters the scene tree.
 			</description>
 		</method>
-		<method name="reload_all" qualifiers="const">
+		<method name="reload_all">
 			<return type="void" />
 			<description>
 				Triggers a reload for all currently registered [E3DModelInstance] nodes. Useful for updating the visual representation of all models simultaneously.
 			</description>
 		</method>
-		<method name="reload_instance" qualifiers="const">
+		<method name="reload_instance">
 			<return type="void" />
 			<param index="0" name="instance" type="E3DModelInstance" />
 			<description>
@@ -39,7 +39,7 @@
 	</methods>
 	<signals>
 		<signal name="instances_reloaded">
-			<param index="0" name="instance" type="E3DModelInstance" />
+			<param index="0" name="instance" type="Object" />
 			<description>
 				Emitted when a model instance has been successfully reloaded and its node hierarchy has been updated.
 			</description>

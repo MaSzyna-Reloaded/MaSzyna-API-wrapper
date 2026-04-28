@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="clear_cache">
+			<return type="void" />
+			<description>
+				Clears materials cache
+			</description>
+		</method>
 		<method name="generate_heightmap_from_albedo" qualifiers="static">
 			<return type="Image" />
 			<param index="0" name="albedo" type="Image" />

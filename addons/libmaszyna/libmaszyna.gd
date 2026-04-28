@@ -24,7 +24,7 @@ func _enter_tree():
     add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
-    add_autoload_singleton("UserSettings","res://addons/libmaszyna/settings/user_settings.gd" )
+    add_autoload_singleton("UserSettings", "res://addons/libmaszyna/settings/user_settings.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",

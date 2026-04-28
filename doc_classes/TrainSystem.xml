@@ -80,16 +80,6 @@
 				Logs message related to a train
 			</description>
 		</method>
-		<method name="register_command">
-			<return type="void" />
-			<param index="0" name="train_id" type="String" />
-			<param index="1" name="command" type="String" />
-			<param index="2" name="callable" type="Callable" />
-			<description>
-				Registers a handler for the specified command.
-				New commands are automatically added to the registry.
-			</description>
-		</method>
 		<method name="register_train">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
@@ -106,16 +96,6 @@
 			<param index="3" name="p2" type="Variant" default="null" />
 			<description>
 				Sends a command to a specified train
-			</description>
-		</method>
-		<method name="unregister_command">
-			<return type="void" />
-			<param index="0" name="train_id" type="String" />
-			<param index="1" name="command" type="String" />
-			<param index="2" name="callable" type="Callable" />
-			<description>
-				Removes train's command handler.
-				If the handler was last, the command is removed from the registry.
 			</description>
 		</method>
 		<method name="unregister_train">

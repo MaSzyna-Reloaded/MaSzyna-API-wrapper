@@ -8,11 +8,10 @@ namespace godot {
             GDCLASS(TrainDoors, TrainPart)
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
+            void _do_update_internal_mover(TMoverParameters *mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
+            void _do_process_mover(TMoverParameters *mover, double delta) override;
+            TypedArray<TrainCommand> get_supported_commands() override;
 
         public:
             enum PermitLight {

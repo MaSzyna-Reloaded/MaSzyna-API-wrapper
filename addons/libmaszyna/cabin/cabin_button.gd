@@ -134,10 +134,10 @@ func _on_pushed_changed():
 
     if _controller:
         if controller_mode == ControllerMode.OnOff:
-            _controller.send_command(command, pushed)
+            _vehicle.send_command(command, pushed)
         elif pushed and controller_mode == ControllerMode.On:
-            _controller.send_command(command, true)
+            _vehicle.send_command(command, true)
         elif pushed and controller_mode == ControllerMode.Off:
-            _controller.send_command(command, false)
+            _vehicle.send_command(command, false)
 
     _play_sound()

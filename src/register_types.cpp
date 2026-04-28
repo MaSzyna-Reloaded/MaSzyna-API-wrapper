@@ -1,12 +1,16 @@
 #include "brakes/TrainBrake.hpp"
 #include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
+#include "buffers/LegacyBufferCouplerModule.hpp"
 #include "brakes/TrainSpringBrake.hpp"
 #include "buffers/TrainBuffCoupl.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
 #include "core/ResourceCache.hpp"
+#include "core/TrainCommand.hpp"
+#include "core/TrackManager.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
+#include "core/TrainSet.hpp"
 #include "core/TrainSystem.hpp"
 #include "doors/TrainDoors.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
@@ -40,6 +44,7 @@
 using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
+TrackManager *track_manager_singleton = nullptr;
 ResourceCache *resource_cache_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 MaterialManager* material_manager_singleton = nullptr;
@@ -67,7 +72,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
+        GDREGISTER_CLASS(TrainCommand);
         GDREGISTER_CLASS(GenericTrainPart);
+        GDREGISTER_CLASS(VirtualTrack);
+        GDREGISTER_CLASS(TrackManager);
+        GDREGISTER_CLASS(TrainSet);
         GDREGISTER_CLASS(TrainBrake);
         GDREGISTER_CLASS(TrainSpringBrake);
         GDREGISTER_CLASS(TrainDoors);
@@ -92,6 +101,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
         GDREGISTER_CLASS(TrainLoad)
         GDREGISTER_CLASS(LoadListItem)
+        GDREGISTER_CLASS(LegacyBufferCouplerModule)
         GDREGISTER_CLASS(TrainBuffCoupl)
 
         // E3D
@@ -109,6 +119,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
         if (!is_doctool_mode()) {
             train_system_singleton = memnew(TrainSystem);
+            track_manager_singleton = memnew(TrackManager);
             resource_cache_singleton = memnew(ResourceCache);
             game_log_singleton = memnew(GameLog);
             material_manager_singleton = memnew(MaterialManager);
@@ -117,6 +128,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             e3d_loader_singleton.instantiate();
 
             Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
+            Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);
             Engine::get_singleton()->register_singleton("ResourceCache", resource_cache_singleton);
             Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
             Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);
@@ -140,6 +152,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
         if (resource_cache_singleton != nullptr) {
             _singleton->unregister_singleton("ResourceCache");
+        }
+
+        if (track_manager_singleton != nullptr) {
+            _singleton->unregister_singleton("TrackManager");
         }
 
         if (game_log_singleton != nullptr) {
@@ -167,6 +183,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (resource_cache_singleton != nullptr) {
         memdelete(resource_cache_singleton);
         resource_cache_singleton = nullptr;
+    }
+
+    if (track_manager_singleton != nullptr) {
+        memdelete(track_manager_singleton);
+        track_manager_singleton = nullptr;
     }
 
     if (game_log_singleton != nullptr) {

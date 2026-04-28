@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrackManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="add_path_track">
+			<return type="RID" />
+			<param index="0" name="points" type="PackedVector3Array" />
+			<param index="1" name="track_id" type="String" default="&quot;&quot;" />
+			<param index="2" name="previous_track_rid" type="RID" default="RID()" />
+			<param index="3" name="next_track_rid" type="RID" default="RID()" />
+			<description>
+			</description>
+		</method>
+		<method name="add_track">
+			<return type="RID" />
+			<param index="0" name="length" type="float" />
+			<param index="1" name="start_point" type="Vector3" />
+			<param index="2" name="track_id" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track" qualifiers="const">
+			<return type="VirtualTrack" />
+			<param index="0" name="track_rid" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_axis" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_by_name" qualifiers="const">
+			<return type="VirtualTrack" />
+			<param index="0" name="track_id" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="get_track_position" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="has_track" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="track_id" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="modify_path_track">
+			<return type="void" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="points" type="PackedVector3Array" />
+			<param index="2" name="track_id" type="String" default="&quot;&quot;" />
+			<param index="3" name="previous_track_rid" type="RID" default="RID()" />
+			<param index="4" name="next_track_rid" type="RID" default="RID()" />
+			<description>
+			</description>
+		</method>
+		<method name="modify_track">
+			<return type="void" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="length" type="float" />
+			<param index="2" name="start_point" type="Vector3" />
+			<param index="3" name="track_id" type="String" />
+			<description>
+			</description>
+		</method>
+		<method name="register_vehicle">
+			<return type="void" />
+			<param index="0" name="vehicle" type="TrainController" />
+			<param index="1" name="track_rid" type="RID" />
+			<param index="2" name="track_id" type="String" />
+			<param index="3" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_track">
+			<return type="void" />
+			<param index="0" name="track_rid" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="remove_vehicle">
+			<return type="void" />
+			<param index="0" name="vehicle" type="TrainController" />
+			<description>
+			</description>
+		</method>
+		<method name="resolve_track_position" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="track_rid" type="RID" />
+			<param index="1" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="update_vehicle_offset">
+			<return type="void" />
+			<param index="0" name="vehicle" type="TrainController" />
+			<param index="1" name="offset" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

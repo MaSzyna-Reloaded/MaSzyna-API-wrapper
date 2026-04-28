@@ -52,7 +52,7 @@ public:                                                                         
     }                                                                                                                  \
     void set_##name(const type &value) {                                                                               \
         name = value;                                                                                                  \
-        dirty = true;                                                                                                 \
+        _dirty = true;                                                                                                 \
     }
 
 /**

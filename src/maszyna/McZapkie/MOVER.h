@@ -10,12 +10,12 @@ http://mozilla.org/MPL/2.0/.
 #pragma once
 //---------------------------------------------------------------------------
 // Q: 20160805 - odlaczenie pliku fizyki .pas od kompilacji
+#include "hamulce.h"
 #include <array>
 #include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include "hamulce.h"
 /*
 MaSzyna EU07 locomotive simulator
 Copyright (C) 2001-2004  Maciej Czapkiewicz and others
@@ -798,9 +798,11 @@ namespace Maszyna {
             }
     };
 
+    class TMoverParameters;
+
     struct neighbour_data {
-            // TDynamicObject *vehicle{nullptr}; // detected obstacle
-            int vehicle_end{-1}; // facing end of the obstacle
+            TMoverParameters *vehicle{nullptr}; // detected obstacle
+            int vehicle_end{-1};                // facing end of the obstacle
             float distance{
                     10000.f}; // distance to the obstacle // NOTE: legacy value. TBD, TODO: use standard -1 instead?
     };
@@ -1751,9 +1753,9 @@ namespace Maszyna {
             /*-dla wagonow*/
             float LoadAmount = 0.f; /*masa w T lub ilosc w sztukach - zaladowane*/
             load_attributes LoadType;
-            std::string LoadQuantity;   // jednostki miary
-            int LoadStatus = 0;         //+1=trwa rozladunek,+2=trwa zaladunek,+4=zakończono,0=zaktualizowany model
-            bool LoadTypeChange{false}; // indicates load type was changed
+            std::string LoadQuantity;        // jednostki miary
+            int LoadStatus = 0;              //+1=trwa rozladunek,+2=trwa zaladunek,+4=zakończono,0=zaktualizowany model
+            bool LoadTypeChange{false};      // indicates load type was changed
             double LastLoadChangeTime = 0.0; // raz (roz)ładowania
 #ifdef EU07_USEOLDDOORCODE
             bool DoorBlocked = false; // Czy jest blokada drzwi
@@ -1945,8 +1947,8 @@ namespace Maszyna {
             double BrakeForceP(double press, double velocity);
             double BrakeForce(const TTrackParam &Track);
 
-            // double CouplerForce(int const End, double dt);
-            // void CollisionDetect(int const End, double const dt); //
+            double CouplerForce(int const End, double dt);
+            void CollisionDetect(int const End, double const dt);
 
             /*obrot kol uwzgledniajacy poslizg*/
             double ComputeRotatingWheel(double WForce, double dt, double n) const;

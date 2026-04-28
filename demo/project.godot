@@ -36,8 +36,7 @@ UserSettings="*uid://dd2pj6a7hturn"
 
 [debug]
 
-settings/stdout/verbose_stdout=true
-file_logging/log_path="user://logs/app.log"
+file_logging/log_path="user://app.log"
 
 [display]
 

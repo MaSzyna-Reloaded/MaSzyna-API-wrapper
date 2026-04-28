@@ -2,104 +2,84 @@
 extends Path3D
 class_name MaszynaTrack3D
 
+var _track_id:RID
+var _virtual_track_rid:RID
+
+@export var track_id: String = "":
+    set(x):
+        if x == track_id:
+            return
+        track_id = x
+        _request_track_update()
+
 @export_group("Rails")
 @export var rail_spacing: float = 1.6:
     set(x):
         rail_spacing = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_rail_spacing(_track_id, x)
         _request_track_update()
 
 @export_group("Sleepers")
 @export var sleeper_model_name: String = "":
     set(x):
         sleeper_model_name = x
-        var server = _get_track_server()
-        if is_inside_tree() and server and _track_id != 0:
-            server.set_sleeper_model_name(_track_id, x)
         _request_track_update()
 
 @export var sleeper_model_skin: String = "":
     set(x):
         sleeper_model_skin = x
-        var server = _get_track_server()
-        if is_inside_tree() and server and _track_id != 0:
-            server.set_sleeper_model_skin(_track_id, x)
         _request_track_update()
 
 @export var sleeper_spacing: float = 1.0:
     set(x):
         sleeper_spacing = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_sleeper_spacing(_track_id, x)
         _request_track_update()
 
-@export var sleeper_height: float = -0.05:
+@export var sleeper_height: float = 0.4:
     set(x):
         sleeper_height = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_sleeper_height(_track_id, x)
+        _request_track_update()
+
+@export var rail_height: float = 0.16:
+    set(x):
+        rail_height = x
         _request_track_update()
 
 @export_group("Ballast")
 @export var ballast_enabled: bool = true:
     set(x):
         ballast_enabled = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_enabled(_track_id, x)
         _request_track_update()
 
 @export var ballast_texture: String = "":
     set(x):
         ballast_texture = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_texture(_track_id, x)
         _request_track_update()
 
 @export var ballast_uv_scale: float = 1.0:
     set(x):
         ballast_uv_scale = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_uv_scale(_track_id, x)
         _request_track_update()
 
 @export var ballast_width_tiling: float = 1.0:
     set(x):
         ballast_width_tiling = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_width_tiling(_track_id, x)
         _request_track_update()
 
 @export var ballast_length_tiling: float = 1.0:
     set(x):
         ballast_length_tiling = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_length_tiling(_track_id, x)
         _request_track_update()
 
 @export var ballast_height: float = 0.4:
     set(x):
         ballast_height = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_height(_track_id, x)
         _request_track_update()
 
-@export var ballast_offset: float = -0.05:
+@export var ballast_offset: float = 0.0:
     set(x):
         ballast_offset = x
-        var server = _get_track_server()
-        if server and _track_id != 0:
-            server.set_ballast_offset(_track_id, x)
         _request_track_update()
+
 
 @export_group("Geometry")
 @export var curve_precision: float = 0.5:
@@ -123,10 +103,20 @@ class_name MaszynaTrack3D
         _request_track_update()
 
 @export_group("Connectivity")
-@export var next_track: NodePath
-@export var previous_track: NodePath
+@export var next_track: NodePath:
+    set(x):
+        if x == next_track:
+            return
+        next_track = x
+        _request_track_update()
+@export var previous_track: NodePath:
+    set(x):
+        if x == previous_track:
+            return
+        previous_track = x
+        _request_track_update()
 
-var _track_id: int = 0
+var _track_rid: int = 0
 var _dirty = false
 var _is_updating = false
 var _update_timer = 0.0
@@ -135,28 +125,31 @@ const DEBOUNCE_TIME = 0.05
 func _enter_tree():
     _ensure_curve()
     _ensure_track()
-    _sync_track_state()
+    _ensure_virtual_track()
+    set_notify_transform(true)
+    set_notify_local_transform(true)
 
 func _exit_tree():
     _free_track()
+    _free_virtual_track()
 
 func _ready():
+    set_process(true)
     _ensure_curve()
     _ensure_track()
-    set_process(true)
-    set_notify_transform(true)
+    _ensure_virtual_track()
     _apply_track_settings()
     _sync_track_state()
-    if Engine.is_editor_hint():
-        _update_track()
-    else:
-        await get_tree().process_frame
-        _update_track()
+    set_notify_transform(true)
+    set_notify_local_transform(true)
+    _update_track()
 
 func _notification(what):
     match what:
         NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED, NOTIFICATION_ENTER_WORLD, NOTIFICATION_EXIT_WORLD:
-            _sync_track_state()
+            _request_track_update()
+        NOTIFICATION_LOCAL_TRANSFORM_CHANGED:
+            _request_track_update()
 
 func _ensure_curve():
     if not curve:
@@ -164,55 +157,42 @@ func _ensure_curve():
     if not curve.changed.is_connected(_on_curve_changed):
         curve.changed.connect(_on_curve_changed)
 
-func _get_track_server():
-    return TrackRenderingServer if Engine.has_singleton("TrackRenderingServer") else null
-
 func _ensure_track():
-    if _track_id != 0:
-        return
-    var server = _get_track_server()
-    if not server:
-        return
-    _track_id = server.create_track()
+    _track_id = TrackRenderingServer.create_track()
     _apply_track_settings()
 
-func _free_track():
-    if _track_id == 0:
+func _ensure_virtual_track():
+    if _virtual_track_rid != RID():
         return
-    var server = _get_track_server()
-    if server:
-        server.free_track(_track_id)
-    _track_id = 0
+    _virtual_track_rid = TrackManager.add_path_track(PackedVector3Array(), track_id)
+
+func _free_track():
+    TrackRenderingServer.free_track(_track_id)
+
+func _free_virtual_track():
+    TrackManager.remove_track(_virtual_track_rid)
+    _virtual_track_rid = RID()
+
 
 func _apply_track_settings():
-    var server = _get_track_server()
-    if not server or _track_id == 0:
-        return
-
-    server.set_sleeper_height(_track_id, sleeper_height)
-    server.set_sleeper_spacing(_track_id, sleeper_spacing)
-    server.set_rail_spacing(_track_id, rail_spacing)
-    server.set_ballast_height(_track_id, ballast_height)
-    server.set_ballast_offset(_track_id, ballast_offset)
-    server.set_ballast_uv_scale(_track_id, ballast_uv_scale)
-    server.set_ballast_width_tiling(_track_id, ballast_width_tiling)
-    server.set_ballast_length_tiling(_track_id, ballast_length_tiling)
-    server.set_ballast_enabled(_track_id, ballast_enabled)
-    server.set_ballast_texture(_track_id, ballast_texture)
-    server.set_sleeper_model_name(_track_id, sleeper_model_name)
-    server.set_sleeper_model_skin(_track_id, sleeper_model_skin)
+    TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
+    TrackRenderingServer.set_sleeper_spacing(_track_id, sleeper_spacing)
+    TrackRenderingServer.set_rail_spacing(_track_id, rail_spacing)
+    TrackRenderingServer.set_rail_height(_track_id, rail_height)
+    TrackRenderingServer.set_ballast_height(_track_id, ballast_height)
+    TrackRenderingServer.set_ballast_offset(_track_id, ballast_offset)
+    TrackRenderingServer.set_ballast_uv_scale(_track_id, ballast_uv_scale)
+    TrackRenderingServer.set_ballast_width_tiling(_track_id, ballast_width_tiling)
+    TrackRenderingServer.set_ballast_length_tiling(_track_id, ballast_length_tiling)
+    TrackRenderingServer.set_ballast_enabled(_track_id, ballast_enabled)
+    TrackRenderingServer.set_ballast_texture(_track_id, ballast_texture)
+    TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
+    TrackRenderingServer.set_sleeper_model_skin(_track_id, sleeper_model_skin)
 
 func _sync_track_state():
-    var server = _get_track_server()
-    if not server or _track_id == 0:
-        return
-
-    server.set_track_transform(_track_id, global_transform)
-    server.set_track_visible(_track_id, is_visible_in_tree())
-    if is_inside_tree() and get_world_3d():
-        server.set_track_scenario(_track_id, get_world_3d().scenario)
-    else:
-        server.set_track_scenario(_track_id, RID())
+    TrackRenderingServer.set_track_transform(_track_id, global_transform)
+    TrackRenderingServer.set_track_visible(_track_id, is_visible_in_tree())
+    TrackRenderingServer.set_track_scenario(_track_id, get_world_3d().scenario)
 
 func _on_curve_changed():
     if _is_updating: return
@@ -232,8 +212,6 @@ func _process(delta):
             _update_track()
 
 func _update_track():
-    var server = _get_track_server()
-    if not is_inside_tree() or _is_updating or not server or _track_id == 0: return
     _is_updating = true
 
     if auto_smooth:
@@ -244,21 +222,26 @@ func _update_track():
 
     var path_data = _prepare_path_data()
 
-    server.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])
-    _update_rail_mesh(path_data["length"])
-    _update_ballast_mesh(path_data["length"])
+    TrackRenderingServer.set_ballast_height(_track_id, ballast_height)
+    TrackRenderingServer.set_sleeper_height(_track_id, sleeper_height)
+    TrackRenderingServer.set_ballast_offset(_track_id, ballast_offset)
+    TrackRenderingServer.set_ballast_length_tiling(_track_id, ballast_length_tiling)
+    TrackRenderingServer.set_ballast_width_tiling(_track_id, ballast_width_tiling)
+    TrackRenderingServer.set_ballast_uv_scale(_track_id, ballast_uv_scale)
+    TrackRenderingServer.set_ballast_texture(_track_id, ballast_texture)
+    TrackRenderingServer.set_ballast_enabled(_track_id, ballast_enabled)
+    TrackRenderingServer.set_rail_height(_track_id, rail_height)
+    TrackRenderingServer.set_rail_spacing(_track_id, rail_spacing)
+    TrackRenderingServer.set_sleeper_spacing(_track_id, sleeper_spacing)
+    TrackRenderingServer.set_sleeper_model_skin(_track_id, sleeper_model_skin)
+    TrackRenderingServer.set_sleeper_model_name(_track_id, sleeper_model_name)
+    TrackRenderingServer.update_track_data(_track_id, path_data["points"], path_data["quats"], path_data["length"])
+    TrackRenderingServer.update_rail_mesh(_track_id, path_data["length"], rail_spacing, rail_height, curve_precision)
+    TrackRenderingServer.update_ballast_mesh(_track_id, path_data["length"], curve_precision)
+    _sync_virtual_track()
 
     _is_updating = false
 
-func _update_rail_mesh(length: float):
-    var server = _get_track_server()
-    if server and _track_id != 0:
-        server.update_rail_mesh(_track_id, length, rail_spacing, curve_precision)
-
-func _update_ballast_mesh(length: float):
-    var server = _get_track_server()
-    if server and _track_id != 0 and ballast_enabled:
-        server.update_ballast_mesh(_track_id, length, curve_precision)
 
 func _apply_3_point_logic_optimized():
     if not curve or curve.point_count < 2: return
@@ -281,7 +264,7 @@ func _apply_3_point_logic_optimized():
             var p_next = curve.get_point_position(i + 1)
             var dir_prev = (p - p_prev).normalized()
             var dir_next = (p_next - p).normalized()
-            
+
             if abs(p.x - p_prev.x) + abs(p_next.x - p.x) < 0.001 or dir_prev.dot(dir_next) > 0.9999:
                 curve.set_point_in(i, Vector3.ZERO)
                 curve.set_point_out(i, Vector3.ZERO)
@@ -299,7 +282,7 @@ func _apply_3_point_logic_optimized():
                 if angle > PI: angle -= 2*PI
                 if angle < -PI: angle += 2*PI
                 curve.set_point_tilt(i, angle * banking_intensity)
-    
+
     curve.set_block_signals(false)
     curve.emit_changed()
 
@@ -314,25 +297,25 @@ func _prepare_path_data() -> Dictionary:
     var length = curve.get_baked_length()
     var max_points = 256
     var interval = max(0.1, length / float(max_points - 1))
-    
+
     var points = PackedVector4Array()
     var quats = PackedVector4Array()
-    
+
     var current_dist = 0.0
     while current_dist <= length + 0.001 and points.size() < max_points:
         var t = curve.sample_baked_with_rotation(current_dist)
         var tilt = 0.0
         if curve.has_method("sample_baked_tilt"):
             tilt = curve.sample_baked_tilt(current_dist)
-        
+
         points.append(Vector4(t.origin.x, t.origin.y, t.origin.z, tilt))
-        
+
         var q = t.basis.get_rotation_quaternion()
         quats.append(Vector4(q.x, q.y, q.z, q.w))
-        
+
         current_dist += interval
         if interval <= 0: break
-    
+
     return {
         "points": points,
         "quats": quats,
@@ -340,9 +323,53 @@ func _prepare_path_data() -> Dictionary:
         "length": length
     }
 
-func get_rail_instance_rid() -> RID:
-    var server = _get_track_server()
-    return server.get_rail_mesh_instance(_track_id) if server and _track_id != 0 else RID()
+func _sync_virtual_track():
+
+    var baked_points := curve.get_baked_points() if curve != null else PackedVector3Array()
+    var world_points := PackedVector3Array()
+
+    if baked_points.is_empty():
+        world_points.push_back(global_position)
+    else:
+        for point in baked_points:
+            world_points.push_back(to_global(point))
+
+    TrackManager.modify_path_track(
+        _virtual_track_rid,
+        world_points,
+        track_id,
+        _resolve_connected_track_rid(previous_track),
+        _resolve_connected_track_rid(next_track)
+    )
+
+    TrackManager.set_track_heights(
+        _virtual_track_rid,
+        ballast_height + sleeper_height,
+        rail_height
+    )
+
+func _resolve_connected_track_rid(target_path: NodePath) -> RID:
+    if target_path.is_empty():
+        return RID()
+
+    var target = get_node_or_null(target_path)
+    if target == null:
+        return RID()
+
+    if target is MaszynaTrack3D:
+        return (target as MaszynaTrack3D).get_virtual_track_rid()
+
+    if target is MaszynaSwitch3D:
+        var resolved = (target as MaszynaSwitch3D).resolve_track(self)
+        if resolved != null:
+            return resolved.get_virtual_track_rid()
+
+    return RID()
+
 
 func get_rail_top_vertical_offset() -> float:
-    return sleeper_height + 0.16
+    return ballast_height + sleeper_height + rail_height
+
+
+func get_virtual_track_rid():
+    return _virtual_track_rid

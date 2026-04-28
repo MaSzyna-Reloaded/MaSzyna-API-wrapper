@@ -32,7 +32,7 @@ func _ready():
         if win:
             win.visible = false
             menu.add_item(win.title)
-        
+
     _auto_user_settings_visibility()
     UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
     UserSettings.config_changed.connect(_update_render_settings)
@@ -74,4 +74,4 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
         for child in win.get_children():
             if "train_controller" in child:
                 if $Player.controlled_vehicle:
-                    child.train_controller = child.get_path_to($Player.controlled_vehicle.get_controller())
+                    child.train_controller = child.get_path_to($Player.controlled_vehicle)

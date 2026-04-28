@@ -4,7 +4,7 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _controller:TrainController
+var _controller:RailVehicle3D
 
 
 @export var label:String:
@@ -16,7 +16,7 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 
 @export var type:SwitchType = SwitchType.TOGGLE
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("RailVehicle3D") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null

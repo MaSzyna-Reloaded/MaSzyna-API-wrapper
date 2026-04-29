@@ -53,18 +53,18 @@ func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubMo
         return
 
     match submodel.submodel_type:
-        E3DSubModel.SubModelType.TRANSFORM:
+        E3DSubModel.SubModelType.SUBMODEL_TRANSFORM:
             obj = Node3D.new()
-            obj.name = submodel.name
+            obj.name = submodel.resource_name
 
-        E3DSubModel.SubModelType.GL_TRIANGLES:
+        E3DSubModel.SubModelType.SUBMODEL_GL_TRIANGLES:
             var is_name_excluded = target_node.exclude_node_names.any(
-                    func(name): return submodel.name == name
+                    func(name): return submodel.resource_name == name
                 )
 
             if not is_name_excluded:
                 obj = MeshInstance3D.new()
-                obj.name = submodel.name
+                obj.name = submodel.resource_name
                 obj.mesh = submodel.mesh
                 obj.visibility_range_begin = submodel.visibility_range_begin
                 obj.visibility_range_end = submodel.visibility_range_end

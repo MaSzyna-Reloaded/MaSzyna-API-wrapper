@@ -35,7 +35,6 @@ MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://dokfadkw7wrhi"
 MaterialParser="*uid://7b48fl428yqa"
-E3DParser="*uid://d08el7q5iodf4"
 E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 UserSettings="*uid://dd2pj6a7hturn"
@@ -45,7 +44,6 @@ TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd
 
 [debug]
 
-settings/stdout/verbose_stdout=false
 file_logging/log_path="user://logs/app.log"
 
 [display]

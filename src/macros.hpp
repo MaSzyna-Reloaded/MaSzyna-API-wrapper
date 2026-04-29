@@ -1,6 +1,6 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
-
+#include "core/utils.hpp"
 /**
  * Macro for generating private members with their setters and getters
  * @param type Member type
@@ -10,6 +10,23 @@
 #define MAKE_MEMBER_GS(type, name, default_value)                                                                      \
 private:                                                                                                               \
     type name = default_value;                                                                                         \
+                                                                                                                       \
+public:                                                                                                                \
+    const type &get_##name() const {                                                                                   \
+        return name;                                                                                                   \
+    }                                                                                                                  \
+    void set_##name(const type &value) {                                                                               \
+        name = value;                                                                                                  \
+    }
+/**
+ * Macro for generating private members with their setters and getters without any default value
+ * @param type Member type
+ * @param name Member name
+ * @param default_value Default value
+ */
+#define MAKE_MEMBER_GS_NO_DEF(type, name)                                                                              \
+private:                                                                                                               \
+    type name;                                                                                                         \
                                                                                                                        \
 public:                                                                                                                \
     const type &get_##name() const {                                                                                   \
@@ -50,13 +67,31 @@ private:                                                                        
     type name = default_value;                                                                                         \
                                                                                                                        \
 public:                                                                                                                \
-    type get_##name() const {                                                                                    \
+    type get_##name() const {                                                                                          \
         return name;                                                                                                   \
     }                                                                                                                  \
     void set_##name(type value) {                                                                                      \
         name = value;                                                                                                  \
     }
 
+/**
+ * Macro for generating private members with their setters and getters without a const reference
+ * and without default value
+ * @param type Member type
+ * @param name Member name
+ */
+
+#define MAKE_MEMBER_GS_NR_NO_DEF(type, name)                                                                           \
+private:                                                                                                               \
+    type name;                                                                                                         \
+                                                                                                                       \
+public:                                                                                                                \
+    type get_##name() const {                                                                                          \
+        return name;                                                                                                   \
+    }                                                                                                                  \
+    void set_##name(type value) {                                                                                      \
+        name = value;                                                                                                  \
+    }
 
 /**
  * Generates Godot setters and getters with the desired property using the following:

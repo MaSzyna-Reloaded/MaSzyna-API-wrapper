@@ -4,7 +4,7 @@
 		High-level manager for loading and caching E3D model resources.
 	</brief_description>
 	<description>
-		[E3DModelManager] handles the loading of MaSzyna [code].e3d[/code] models from the filesystem. It resolves paths based on the configured MaSzyna game directory and utilizes [ResourceCache] to provide efficient memory and persistent disk caching. This ensures that models are only parsed once and can be quickly reloaded from Godot's native resource format on subsequent requests.
+		[E3DModelManager] handles the loading of MaSzyna [code].e3d[/code] models from the filesystem. It resolves paths based on the configured MaSzyna game directory and utilizes [ResourceCache] to provide persistent disk caching. Cached resources are loaded without reusing Godot's global resource cache so hot reload can rebuild extension-backed resources safely.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -20,7 +20,7 @@
 			<param index="0" name="data_path" type="String" />
 			<param index="1" name="file_name" type="String" />
 			<description>
-				Loads the specified model from the given [param data_path] and [param file_name]. The method first checks [ResourceCache] for a cached version (both in memory and on disk). If no cached version exists, it loads the original [code].e3d[/code] file, parses it, and automatically saves the result to the persistent cache for future use.
+				Loads the specified model from the given [param data_path] and [param file_name]. The method first checks [ResourceCache] for a cached disk snapshot. If the cached resource cannot be restored as a valid [E3DModel], the stale cache entry is discarded and the original [code].e3d[/code] file is parsed again before being saved back to cache.
 			</description>
 		</method>
 	</methods>

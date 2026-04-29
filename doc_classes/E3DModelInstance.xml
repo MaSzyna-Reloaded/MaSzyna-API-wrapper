@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="cleanup_for_extension_reload">
+			<return type="void" />
+			<description>
+				Performs a hard teardown of generated E3D renderer state before a GDExtension reload. Optimized [RenderingServer] instances are freed immediately, generated child nodes are removed and destroyed, and pending reload state is discarded so the instance can be rebuilt safely after the extension is reloaded.
+			</description>
+		</method>
 		<method name="clear_submodel_material_override">
 			<return type="void" />
 			<param index="0" name="submodel_name" type="String" />

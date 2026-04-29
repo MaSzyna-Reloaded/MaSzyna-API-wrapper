@@ -133,12 +133,6 @@ namespace godot {
 
     void E3DSubModel::set_parent(E3DSubModel *p_parent) {
         parent = p_parent;
-
-        if (p_parent != nullptr) {
-            Ref<E3DSubModel> self;
-            self.reference_ptr(this);
-            p_parent->add_child(self);
-        }
     }
 
     void E3DSubModel::set_mesh(const Ref<Mesh> &p_mesh) {

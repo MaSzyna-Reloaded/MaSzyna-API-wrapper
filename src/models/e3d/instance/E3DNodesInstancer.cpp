@@ -10,6 +10,18 @@
 #include <godot_cpp/core/memory.hpp>
 
 namespace godot {
+    static void _clear_owner_recursive(Node *p_node) {
+        if (p_node == nullptr) {
+            return;
+        }
+
+        p_node->set_owner(nullptr);
+        const int32_t child_count = p_node->get_child_count(true);
+        for (int32_t i = 0; i < child_count; ++i) {
+            _clear_owner_recursive(p_node->get_child(i, true));
+        }
+    }
+
     Node3D *E3DNodesInstancer::_create_submodel_instance(
             const E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel) {
         if (!p_submodel.is_valid() || p_submodel->get_skip_rendering()) {
@@ -168,11 +180,12 @@ namespace godot {
         return colored_material;
     }
 
-    void E3DNodesInstancer::clear_children(E3DModelInstance *p_target_node) {
+    void E3DNodesInstancer::clear_children(E3DModelInstance *p_target_node, const bool p_immediate) {
         if (p_target_node == nullptr) {
             return;
         }
 
+        static const StringName free_method("free");
         const int32_t child_count = p_target_node->get_child_count(true);
         for (int32_t i = child_count - 1; i >= 0; --i) {
             Node *child = p_target_node->get_child(i, true);
@@ -181,7 +194,13 @@ namespace godot {
             }
 
             p_target_node->remove_child(child);
-            child->queue_free();
+            if (p_immediate) {
+                _clear_owner_recursive(child);
+                child->cancel_free();
+                child->call(free_method);
+            } else {
+                child->queue_free();
+            }
         }
     }
 

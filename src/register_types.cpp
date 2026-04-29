@@ -144,6 +144,20 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         return;
     }
 
+    if (e3d_loader_singleton.is_valid()) {
+        ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_loader_singleton);
+        e3d_loader_singleton.unref();
+    }
+
+    if (e3d_model_instance_manager_singleton != nullptr) {
+        e3d_model_instance_manager_singleton->teardown_all_for_extension_reload();
+        e3d_model_instance_manager_singleton->cleanup();
+    }
+
+    if (e3d_nodes_instancer_singleton != nullptr) {
+        e3d_nodes_instancer_singleton->cleanup();
+    }
+
     if (Engine *singleton = Engine::get_singleton(); !is_doctool_mode() && singleton != nullptr) {
         if (singleton->has_singleton("E3DModelInstanceManager")) {
             singleton->unregister_singleton("E3DModelInstanceManager");
@@ -169,11 +183,6 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         if (singleton->has_singleton("UserSettings")) {
             singleton->unregister_singleton("UserSettings");
         }
-    }
-
-    if (e3d_loader_singleton.is_valid()) {
-        ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_loader_singleton);
-        e3d_loader_singleton.unref();
     }
 
     if (e3d_nodes_instancer_singleton != nullptr) {

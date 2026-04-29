@@ -28,12 +28,35 @@ namespace godot {
                 D_METHOD("unregister_instance", "instance"), &E3DModelInstanceManager::unregister_instance);
 
         ClassDB::bind_method(D_METHOD("reload_instance", "instance"), &E3DModelInstanceManager::reload_instance);
+        ClassDB::bind_method(
+                D_METHOD("teardown_all_for_extension_reload"),
+                &E3DModelInstanceManager::teardown_all_for_extension_reload);
     }
 
     E3DModelInstanceManager::E3DModelInstanceManager() = default;
 
+    E3DModelInstance *E3DModelInstanceManager::_get_instance(const ObjectID &p_instance_id) const {
+        return Object::cast_to<E3DModelInstance>(ObjectDB::get_instance(p_instance_id));
+    }
+
+    void E3DModelInstanceManager::_compact_instances() {
+        instances.erase(
+                std::remove_if(
+                        instances.begin(), instances.end(),
+                        [this](const ObjectID &p_instance_id) { return _get_instance(p_instance_id) == nullptr; }),
+                instances.end());
+    }
+
     void E3DModelInstanceManager::reload_all() {
-        for (E3DModelInstance *instance: instances) {
+        if (extension_reload_in_progress) {
+            return;
+        }
+
+        _compact_instances();
+
+        const std::vector<ObjectID> instance_ids = instances;
+        for (const ObjectID &instance_id: instance_ids) {
+            E3DModelInstance *instance = _get_instance(instance_id);
             if (instance == nullptr) {
                 continue;
             }
@@ -49,21 +72,31 @@ namespace godot {
             return;
         }
 
-        if (std::find(instances.begin(), instances.end(), p_instance) != instances.end()) {
+        _compact_instances();
+
+        const ObjectID instance_id(p_instance->get_instance_id());
+        if (std::find(instances.begin(), instances.end(), instance_id) != instances.end()) {
             return;
         }
 
-        instances.push_back(p_instance);
+        instances.push_back(instance_id);
     }
 
     void E3DModelInstanceManager::unregister_instance(E3DModelInstance *p_instance) {
-        instances.erase(std::remove(instances.begin(), instances.end(), p_instance), instances.end());
+        if (p_instance == nullptr) {
+            _compact_instances();
+            return;
+        }
+
+        const ObjectID instance_id(p_instance->get_instance_id());
+        instances.erase(std::remove(instances.begin(), instances.end(), instance_id), instances.end());
     }
 
     void E3DModelInstanceManager::reload_instance(E3DModelInstance *p_instance) {
         E3DModelManager *model_manager = E3DModelManager::get_instance();
 
-        if (model_manager == nullptr || p_instance == nullptr || !p_instance->is_inside_tree()) {
+        if (extension_reload_in_progress || model_manager == nullptr || p_instance == nullptr ||
+            !p_instance->is_inside_tree()) {
             return;
         }
 
@@ -102,6 +135,26 @@ namespace godot {
         if (p_instance != nullptr && p_instance->is_inside_tree()) {
             emit_signal(instances_reloaded_signal, p_instance);
         }
+    }
+
+    void E3DModelInstanceManager::teardown_all_for_extension_reload() {
+        extension_reload_in_progress = true;
+        _compact_instances();
+
+        const std::vector<ObjectID> instance_ids = instances;
+        for (const ObjectID &instance_id: instance_ids) {
+            E3DModelInstance *instance = _get_instance(instance_id);
+            if (instance == nullptr) {
+                continue;
+            }
+
+            instance->cleanup_for_extension_reload();
+        }
+    }
+
+    void E3DModelInstanceManager::cleanup() {
+        instances.clear();
+        extension_reload_in_progress = false;
     }
 
 } // namespace godot

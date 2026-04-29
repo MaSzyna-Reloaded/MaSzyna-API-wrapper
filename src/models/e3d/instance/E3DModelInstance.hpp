@@ -28,6 +28,8 @@ namespace godot {
             void _request_reload();
             void _deferred_reload();
             void _flush_pending_model();
+            void _reset_reload_state();
+            void _finish_extension_reload();
 
             void _clear_optimized_instances();
             void _sync_optimized_instances();
@@ -36,6 +38,7 @@ namespace godot {
                     bool p_parent_visible);
 
             bool _is_dirty = false;
+            bool _is_tearing_down = false;
             bool _pending_model_scheduled = false;
             Ref<Mutex> _mutex;
             Ref<E3DModel> _pending_model;
@@ -83,6 +86,7 @@ namespace godot {
 
             AABB _get_aabb() const override;
             void _instantiate_children(const Ref<E3DModel> &p_model);
+            void cleanup_for_extension_reload();
             void set_submodel_material_override(const String &submodel_name, const Ref<Material> &material);
             Ref<Material> get_submodel_material_override(const String &submodel_name) const;
             void clear_submodel_material_override(const String &submodel_name);

@@ -4,7 +4,7 @@
 		Global manager for tracking and updating active E3DModelInstance nodes.
 	</brief_description>
 	<description>
-		[E3DModelInstanceManager] acts as a registry for all [E3DModelInstance] nodes currently active in the scene. It provides centralized control for batch operations, such as reloading all active models when global settings (like texture quality or game directory) change. This manager ensures that model instances remain synchronized with the underlying [E3DModel] resources and the [MaterialManager].
+		[E3DModelInstanceManager] acts as a registry for all [E3DModelInstance] nodes currently active in the scene. It provides centralized control for batch operations, such as reloading all active models when global settings (like texture quality or game directory) change. The registry tracks instance identities defensively so stale nodes left behind by scene teardown or hot reload are ignored instead of being dereferenced, and it can force a global teardown of live E3D renderer state before the extension library is unloaded.
 	</description>
 	<tutorials>
 	</tutorials>
@@ -27,6 +27,12 @@
 			<param index="0" name="instance" type="E3DModelInstance" />
 			<description>
 				Forces a specific [E3DModelInstance] to re-instantiate its geometry and re-apply its materials from the [E3DModel] resource.
+			</description>
+		</method>
+		<method name="teardown_all_for_extension_reload">
+			<return type="void" />
+			<description>
+				Forces every currently registered [E3DModelInstance] to release generated child nodes, optimized renderer instances, and pending reload state before the GDExtension library is reloaded.
 			</description>
 		</method>
 		<method name="unregister_instance">

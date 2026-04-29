@@ -455,6 +455,7 @@ namespace godot {
                 while (child_idx > -1 && static_cast<size_t>(child_idx) < submodels.size()) {
                     const Ref<E3DSubModel> child = submodels.get(child_idx);
                     child->set_parent(parent.ptr());
+                    parent->add_child(child);
                     if (child_idx >= 0 && static_cast<size_t>(child_idx) < has_parent.size()) {
                         has_parent.at(child_idx) = true;
                     }

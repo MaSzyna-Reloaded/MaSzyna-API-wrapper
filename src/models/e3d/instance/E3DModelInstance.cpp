@@ -49,6 +49,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("_deferred_reload"), &E3DModelInstance::_deferred_reload);
         ClassDB::bind_method(D_METHOD("_flush_pending_model"), &E3DModelInstance::_flush_pending_model);
         ClassDB::bind_method(
+                D_METHOD("cleanup_for_extension_reload"), &E3DModelInstance::cleanup_for_extension_reload);
+        ClassDB::bind_method(
                 D_METHOD("set_submodel_material_override", "submodel_name", "material"),
                 &E3DModelInstance::set_submodel_material_override);
         ClassDB::bind_method(
@@ -72,9 +74,13 @@ namespace godot {
             case NOTIFICATION_VISIBILITY_CHANGED:
             case NOTIFICATION_TRANSFORM_CHANGED:
             case NOTIFICATION_LOCAL_TRANSFORM_CHANGED: {
-                if (instancer == INSTANCER_OPTIMIZED) {
+                if (!_is_tearing_down && instancer == INSTANCER_OPTIMIZED) {
                     _sync_optimized_instances();
                 }
+            } break;
+
+            case Object::NOTIFICATION_EXTENSION_RELOADED: {
+                _finish_extension_reload();
             } break;
 
             case NOTIFICATION_EXIT_TREE: {
@@ -82,13 +88,18 @@ namespace godot {
                     manager->unregister_instance(this);
                 }
                 _clear_optimized_instances();
+                _reset_reload_state();
+            } break;
+
+            case Object::NOTIFICATION_PREDELETE: {
+                cleanup_for_extension_reload();
             } break;
             default:;
         }
     }
 
     void E3DModelInstance::_request_reload() {
-        if (!is_inside_tree()) {
+        if (_is_tearing_down || !is_inside_tree()) {
             return;
         }
 
@@ -96,7 +107,7 @@ namespace godot {
     }
 
     void E3DModelInstance::_reload() {
-        if (_is_dirty) {
+        if (_is_tearing_down || _is_dirty) {
             return;
         }
         _is_dirty = true;
@@ -104,7 +115,7 @@ namespace godot {
     }
 
     void E3DModelInstance::_deferred_reload() {
-        if (!is_inside_tree()) {
+        if (_is_tearing_down || !is_inside_tree()) {
             _is_dirty = false;
             return;
         }
@@ -120,6 +131,10 @@ namespace godot {
     }
 
     void E3DModelInstance::_instantiate_children(const Ref<E3DModel> &p_model) {
+        if (_is_tearing_down) {
+            return;
+        }
+
         _mutex->lock();
         const bool is_scheduled = _pending_model_scheduled;
         _pending_model = p_model;
@@ -172,20 +187,14 @@ namespace godot {
     }
 
     void E3DModelInstance::_flush_pending_model() {
-        if (!is_inside_tree()) {
-            _mutex->lock();
-            _pending_model.unref();
-            _pending_model_scheduled = false;
-            _mutex->unlock();
+        if (_is_tearing_down || !is_inside_tree()) {
+            _reset_reload_state();
             return;
         }
 
         E3DNodesInstancer *instancer_singleton = E3DNodesInstancer::get_instance();
         if (instancer_singleton == nullptr) {
-            _mutex->lock();
-            _pending_model.unref();
-            _pending_model_scheduled = false;
-            _mutex->unlock();
+            _reset_reload_state();
             return;
         }
 
@@ -210,7 +219,43 @@ namespace godot {
                     instancer == INSTANCER_EDITABLE_NODES || (instancer == INSTANCER_NODES && editable_in_editor));
         }
 
-        emit_signal(e3d_loaded_signal);
+        if (!_is_tearing_down) {
+            emit_signal(e3d_loaded_signal);
+        }
+    }
+
+    void E3DModelInstance::_reset_reload_state() {
+        _mutex->lock();
+        _pending_model.unref();
+        _loaded_model.unref();
+        _pending_model_scheduled = false;
+        _is_dirty = false;
+        _mutex->unlock();
+    }
+
+    void E3DModelInstance::_finish_extension_reload() {
+        _is_tearing_down = false;
+
+        if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
+            manager->register_instance(this);
+        }
+
+        if (is_inside_tree()) {
+            _reload();
+        }
+    }
+
+    void E3DModelInstance::cleanup_for_extension_reload() {
+        _is_tearing_down = true;
+        _clear_optimized_instances();
+
+        if (E3DNodesInstancer *instancer_singleton = E3DNodesInstancer::get_instance(); instancer_singleton != nullptr) {
+            instancer_singleton->clear_children(this, true);
+        }
+
+        _submodel_material_overrides.clear();
+        submodels_aabb = AABB();
+        _reset_reload_state();
     }
 
     void E3DModelInstance::_clear_optimized_instances() {
@@ -271,6 +316,9 @@ namespace godot {
             return;
         }
         _submodel_material_overrides.set(p_submodel_name, p_material);
+        if (_is_tearing_down) {
+            return;
+        }
         if (instancer == INSTANCER_OPTIMIZED) {
             _sync_optimized_instances();
         } else {
@@ -284,6 +332,9 @@ namespace godot {
 
     void E3DModelInstance::clear_submodel_material_override(const String &p_submodel_name) {
         _submodel_material_overrides.erase(p_submodel_name);
+        if (_is_tearing_down) {
+            return;
+        }
         _reload();
     }
 

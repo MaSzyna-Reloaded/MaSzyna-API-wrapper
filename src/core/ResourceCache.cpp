@@ -40,7 +40,8 @@ namespace godot {
         if (FileAccess::file_exists(cache_path)) {
             UtilityFunctions::print_verbose(
                     "[ResourceCache] Loading from disk: " + cache_path + " (original: " + p_path + ")");
-            Ref<Resource> res = ResourceLoader::get_singleton()->load(cache_path);
+            Ref<Resource> res = ResourceLoader::get_singleton()->load(
+                    cache_path, "", ResourceLoader::CACHE_MODE_IGNORE);
             if (res.is_valid()) {
                 return res;
             }
@@ -87,7 +88,7 @@ namespace godot {
                     if (!dir->current_is_dir()) {
                         dir->remove(file_name);
                     } else {
-                        _clear_cache_dir(file_name);
+                        _clear_cache_dir(p_path.path_join(file_name));
                     }
                     file_name = dir->get_next();
                 }

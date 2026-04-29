@@ -30,7 +30,7 @@ namespace godot {
             void cleanup();
             Ref<Material> get_colored_material();
             void instantiate(const Ref<E3DModel> &p_model, E3DModelInstance *p_target_node, bool p_editable = false);
-            void clear_children(E3DModelInstance *p_target_node);
+            void clear_children(E3DModelInstance *p_target_node, bool p_immediate = false);
             Ref<Material>
             resolve_submodel_material(const E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel);
     };

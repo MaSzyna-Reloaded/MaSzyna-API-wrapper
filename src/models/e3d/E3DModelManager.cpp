@@ -41,13 +41,22 @@ namespace godot {
 
         Ref<Resource> cached_res = resource_cache->get(path);
         if (cached_res.is_valid()) {
-            return cached_res;
+            model = cached_res;
+            if (model.is_valid()) {
+                return model;
+            }
+
+            resource_cache->remove(path);
         }
 
         if (FileAccess::file_exists(path)) {
-            if (const Ref<Resource> res = ResourceLoader::get_singleton()->load(path); res.is_valid()) {
+            if (const Ref<Resource> res =
+                        ResourceLoader::get_singleton()->load(path, "E3DModel", ResourceLoader::CACHE_MODE_IGNORE);
+                res.is_valid()) {
                 model = res;
-                resource_cache->set(path, model);
+                if (model.is_valid()) {
+                    resource_cache->set(path, model);
+                }
             }
         } else {
             UtilityFunctions::push_warning("File does not exist: " + path);

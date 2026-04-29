@@ -20,6 +20,8 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            static const char *cache_cleared_signal;
+
             static E3DModelManager *get_instance() {
                 return dynamic_cast<E3DModelManager *>(Engine::get_singleton()->get_singleton("E3DModelManager"));
             }
@@ -27,5 +29,6 @@ namespace godot {
             E3DModelManager();
             Ref<E3DModel> load_model(const String &p_data_path, const String &p_file_name);
             void clear_cache();
+            void cleanup_for_extension_reload();
     };
 } // namespace godot

@@ -1,6 +1,7 @@
 #pragma once
 #include "models/e3d/E3DModel.hpp"
 #include "models/e3d/instance/E3DModelInstance.hpp"
+#include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>

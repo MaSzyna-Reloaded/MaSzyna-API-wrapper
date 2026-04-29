@@ -32,10 +32,12 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/window.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 #include <models/e3d/E3DResourceFormatLoader.hpp>
-#include <models/e3d/instance/E3DModelInstanceManager.hpp>
+#include <models/e3d/instance/E3DModelInstance.hpp>
 #include <models/e3d/instance/E3DNodesInstancer.hpp>
 
 using namespace godot;
@@ -48,7 +50,6 @@ TrackRenderingServer *track_rendering_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_loader_singleton;
 E3DModelManager *e3d_model_manager_singleton = nullptr;
 E3DNodesInstancer *e3d_nodes_instancer_singleton = nullptr;
-E3DModelInstanceManager *e3d_model_instance_manager_singleton = nullptr;
 
 static bool is_doctool_mode() {
     const PackedStringArray args = OS::get_singleton()->get_cmdline_args();
@@ -58,6 +59,20 @@ static bool is_doctool_mode() {
         }
     }
     return false;
+}
+
+static void teardown_e3d_instances(Node *p_node) {
+    if (p_node == nullptr) {
+        return;
+    }
+
+    if (E3DModelInstance *instance = Object::cast_to<E3DModelInstance>(p_node); instance != nullptr) {
+        instance->cleanup_for_extension_reload();
+    }
+
+    for (int i = 0; i < p_node->get_child_count(); ++i) {
+        teardown_e3d_instances(p_node->get_child(i));
+    }
 }
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
@@ -106,7 +121,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelInstance);
         GDREGISTER_CLASS(E3DModelManager);
         GDREGISTER_CLASS(E3DNodesInstancer);
-        GDREGISTER_CLASS(E3DModelInstanceManager);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
 
         // Core
@@ -119,7 +133,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             material_manager_singleton = memnew(MaterialManager);
             track_rendering_server_singleton = memnew(TrackRenderingServer);
             e3d_model_manager_singleton = memnew(E3DModelManager);
-            e3d_model_instance_manager_singleton = memnew(E3DModelInstanceManager);
             e3d_nodes_instancer_singleton = memnew(E3DNodesInstancer);
             e3d_loader_singleton.instantiate();
 
@@ -130,8 +143,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
             Engine::get_singleton()->register_singleton("TrackRenderingServer", track_rendering_server_singleton);
             Engine::get_singleton()->register_singleton("E3DModelManager", e3d_model_manager_singleton);
             Engine::get_singleton()->register_singleton("E3DNodesInstancer", e3d_nodes_instancer_singleton);
-            Engine::get_singleton()->register_singleton(
-                    "E3DModelInstanceManager", e3d_model_instance_manager_singleton);
             ResourceLoader::get_singleton()->add_resource_format_loader(e3d_loader_singleton);
         }
     }
@@ -149,9 +160,13 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_loader_singleton.unref();
     }
 
-    if (e3d_model_instance_manager_singleton != nullptr) {
-        e3d_model_instance_manager_singleton->teardown_all_for_extension_reload();
-        e3d_model_instance_manager_singleton->cleanup();
+    if (SceneTree *scene_tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        scene_tree != nullptr) {
+        teardown_e3d_instances(Object::cast_to<Node>(scene_tree->get_root()));
+    }
+
+    if (e3d_model_manager_singleton != nullptr) {
+        e3d_model_manager_singleton->cleanup_for_extension_reload();
     }
 
     if (e3d_nodes_instancer_singleton != nullptr) {
@@ -159,9 +174,6 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (Engine *singleton = Engine::get_singleton(); !is_doctool_mode() && singleton != nullptr) {
-        if (singleton->has_singleton("E3DModelInstanceManager")) {
-            singleton->unregister_singleton("E3DModelInstanceManager");
-        }
         if (singleton->has_singleton("E3DNodesInstancer")) {
             singleton->unregister_singleton("E3DNodesInstancer");
         }
@@ -188,11 +200,6 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_nodes_instancer_singleton != nullptr) {
         memdelete(e3d_nodes_instancer_singleton);
         e3d_nodes_instancer_singleton = nullptr;
-    }
-
-    if (e3d_model_instance_manager_singleton != nullptr) {
-        memdelete(e3d_model_instance_manager_singleton);
-        e3d_model_instance_manager_singleton = nullptr;
     }
 
     if (e3d_model_manager_singleton != nullptr) {

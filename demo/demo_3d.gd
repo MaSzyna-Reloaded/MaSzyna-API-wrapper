@@ -7,7 +7,13 @@ func _auto_user_settings_visibility():
     $UserSettingsPanel.visible = not game_dir or FileAccess.file_exists(game_dir)
 
 func _auto_reload_models():
-    E3DModelInstanceManager.reload_all()
+    var nodes: Array[Node] = [get_tree().root]
+    while not nodes.is_empty():
+        var node: Node = nodes.pop_back()
+        if node is E3DModelInstance:
+            node.reload()
+        for child: Node in node.get_children():
+            nodes.append(child)
 
 func _update_render_settings():
     var viewport = get_tree().root.get_viewport()
@@ -30,14 +36,14 @@ func _update_render_settings():
 
 func _ready():
     UserSettings.load_config()
-    
+
     var menu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child in $ControlWindows.get_children():
         var win = child as HUDWindow
         if win:
             win.visible = false
             menu.add_item(win.title)
-        
+
     _auto_user_settings_visibility()
     UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
     UserSettings.game_dir_changed.connect(_auto_reload_models)

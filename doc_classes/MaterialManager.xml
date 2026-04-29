@@ -12,7 +12,7 @@
 		<method name="clear_cache">
 			<return type="void" />
 			<description>
-				Clears materials cache
+				Clears the internal material and texture caches and emits [signal cache_cleared].
 			</description>
 		</method>
 		<method name="generate_heightmap_from_albedo" qualifiers="static">
@@ -81,6 +81,13 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="cache_cleared">
+			<description>
+				Emitted after the material and texture caches are cleared.
+			</description>
+		</signal>
+	</signals>
 	<constants>
 		<constant name="DISABLED" value="0" enum="Transparency">
 			No transparency - material renders as fully opaque.

@@ -12,7 +12,13 @@
 		<method name="clear_cache">
 			<return type="void" />
 			<description>
-				Clear models cache
+				Clears the internal model cache and emits [signal cache_cleared].
+			</description>
+		</method>
+		<method name="cleanup_for_extension_reload">
+			<return type="void" />
+			<description>
+				Releases model-cache state before a GDExtension hot reload so extension-backed E3D resources are not kept alive across class unload.
 			</description>
 		</method>
 		<method name="load_model">
@@ -24,4 +30,11 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="cache_cleared">
+			<description>
+				Emitted after the model cache is cleared.
+			</description>
+		</signal>
+	</signals>
 </class>

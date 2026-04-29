@@ -162,13 +162,20 @@ func _update_head_display():
     _needs_head_display_update = false
 
 
+func _on_head_display_e3d_reloaded() -> void:
+    _needs_head_display_update = true
+
+
 func _process(delta):
     if _dirty:
         _dirty = false
+        if _head_display_e3d and _head_display_e3d.reloaded.is_connected(_on_head_display_e3d_reloaded):
+            _head_display_e3d.reloaded.disconnect(_on_head_display_e3d_reloaded)
+
         if head_display_e3d_path:
             _head_display_e3d = get_node_or_null(head_display_e3d_path)
             if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
+                _head_display_e3d.reloaded.connect(_on_head_display_e3d_reloaded)
 
         if controller_path and is_inside_tree():
             _controller = get_node(controller_path)
@@ -185,4 +192,3 @@ func _process(delta):
 func _ready() -> void:
     _needs_head_display_update = true
     _dirty = true
-    E3DModelInstanceManager.instances_reloaded.connect(func(instance): _needs_head_display_update = true)

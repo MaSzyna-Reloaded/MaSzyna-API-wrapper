@@ -27,6 +27,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="reload">
+			<return type="void" />
+			<description>
+				Requests this instance to rebuild its rendered state from the current [member data_path], [member model_filename], and material settings. The work is deferred and coalesced so repeated reload requests within the same frame do not trigger duplicate instancing.
+			</description>
+		</method>
 		<method name="set_submodel_material_override">
 			<return type="void" />
 			<param index="0" name="submodel_name" type="String" />
@@ -65,6 +71,11 @@
 		<signal name="e3d_loaded">
 			<description>
 				Emitted when the model has been successfully loaded and its node hierarchy has been instantiated.
+			</description>
+		</signal>
+		<signal name="reloaded">
+			<description>
+				Emitted after this instance finishes reloading and its generated geometry/material state has been rebuilt.
 			</description>
 		</signal>
 	</signals>

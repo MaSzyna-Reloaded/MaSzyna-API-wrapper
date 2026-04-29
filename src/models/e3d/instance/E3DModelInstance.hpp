@@ -1,5 +1,4 @@
 #pragma once
-#include "E3DModelInstanceManager.hpp"
 #include "macros.hpp"
 #include "models/e3d/E3DModel.hpp"
 
@@ -17,6 +16,7 @@ namespace godot {
             GDCLASS(E3DModelInstance, VisualInstance3D)
         public:
             static const char *e3d_loaded_signal;
+            static const char *reloaded_signal;
             enum Instancer {
                 INSTANCER_OPTIMIZED,
                 INSTANCER_NODES,
@@ -68,6 +68,7 @@ namespace godot {
             //@TODO: Maybe remove this?
             void _notification(int p_what);
             E3DModelInstance();
+            void reload();
             MAKE_MEMBER_GS(Vector3, default_aabb_size, Vector3(1, 1, 1))
             String get_data_path() const;
             void set_data_path(const String &p_value);

@@ -7,6 +7,7 @@
 #include <godot_cpp/classes/resource_loader.hpp>
 
 namespace godot {
+    const char *E3DModelManager::cache_cleared_signal = "cache_cleared";
 
     void E3DModelManager::_set_owner_recursive(Node *p_node, Node *p_new_owner) {
         if (p_node != p_new_owner) {
@@ -21,8 +22,11 @@ namespace godot {
     }
 
     void E3DModelManager::_bind_methods() {
+        ADD_SIGNAL(MethodInfo(cache_cleared_signal));
         ClassDB::bind_method(D_METHOD("load_model", "data_path", "file_name"), &E3DModelManager::load_model);
         ClassDB::bind_method(D_METHOD("clear_cache"), &E3DModelManager::clear_cache);
+        ClassDB::bind_method(
+                D_METHOD("cleanup_for_extension_reload"), &E3DModelManager::cleanup_for_extension_reload);
     }
 
     E3DModelManager::E3DModelManager() {
@@ -67,5 +71,12 @@ namespace godot {
 
     void E3DModelManager::clear_cache() {
         resource_cache->clear();
+        emit_signal(cache_cleared_signal);
+    }
+
+    void E3DModelManager::cleanup_for_extension_reload() {
+        if (resource_cache.is_valid()) {
+            resource_cache->clear();
+        }
     }
 } // namespace godot

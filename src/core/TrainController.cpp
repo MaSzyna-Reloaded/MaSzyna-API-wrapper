@@ -127,6 +127,7 @@ namespace godot {
         if (mover != nullptr) {
             destroy_mover();
         }
+        UtilityFunctions::print("DUPA");
         const auto initial_vel = this->initial_velocity;
         const auto type_name_str = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());

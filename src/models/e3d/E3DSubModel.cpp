@@ -13,7 +13,9 @@ namespace godot {
                 sm->clear();
             }
         }
+        mesh.unref();
         submodels.clear();
+        parent = nullptr;
     }
 
     void E3DSubModel::_bind_methods() {

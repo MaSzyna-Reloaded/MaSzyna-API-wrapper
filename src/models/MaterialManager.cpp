@@ -13,8 +13,10 @@
 #include <godot_cpp/core/class_db.hpp>
 
 namespace godot {
+    const char *MaterialManager::cache_cleared_signal = "cache_cleared";
 
     void MaterialManager::_bind_methods() {
+        ADD_SIGNAL(MethodInfo(cache_cleared_signal));
         ClassDB::bind_method(
                 D_METHOD("get_material_path", "model_name", "material_name"), &MaterialManager::get_material_path);
         ClassDB::bind_method(D_METHOD("load_material", "model_path", "material_name"), &MaterialManager::load_material);
@@ -99,6 +101,7 @@ namespace godot {
         auto_generate_metallic = settings->get_setting("e3d", "auto_generate_metallic", false);
         auto_generate_height = settings->get_setting("e3d", "auto_generate_height", false);
         mutex->unlock();
+        emit_signal(cache_cleared_signal);
     }
 
     Ref<MaszynaMaterial> MaterialManager::load_material(const String &p_model_path, const String &p_material_name) {

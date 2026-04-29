@@ -1,6 +1,6 @@
 #include "E3DModelInstance.hpp"
-#include "E3DModelInstanceManager.hpp"
 #include "E3DNodesInstancer.hpp"
+#include "models/e3d/E3DModelManager.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
@@ -8,7 +8,15 @@
 #include <godot_cpp/classes/world3d.hpp>
 
 namespace godot {
+    static void _clear_model_ref(Ref<E3DModel> &p_model) {
+        if (p_model.is_valid()) {
+            p_model->clear();
+            p_model.unref();
+        }
+    }
+
     const char *E3DModelInstance::e3d_loaded_signal = "e3d_loaded";
+    const char *E3DModelInstance::reloaded_signal = "reloaded";
 
     E3DModelInstance::E3DModelInstance() {
         _mutex.instantiate();
@@ -18,6 +26,7 @@ namespace godot {
 
     void E3DModelInstance::_bind_methods() {
         ADD_SIGNAL(MethodInfo(e3d_loaded_signal));
+        ADD_SIGNAL(MethodInfo(reloaded_signal));
         BIND_PROPERTY(
                 Variant::VECTOR3, "default_aabb_size", "default_aabb_size", &E3DModelInstance::set_default_aabb_size,
                 &E3DModelInstance::get_default_aabb_size, "default_aabb_size");
@@ -48,6 +57,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("_instantiate_children", "model"), &E3DModelInstance::_instantiate_children);
         ClassDB::bind_method(D_METHOD("_deferred_reload"), &E3DModelInstance::_deferred_reload);
         ClassDB::bind_method(D_METHOD("_flush_pending_model"), &E3DModelInstance::_flush_pending_model);
+        ClassDB::bind_method(D_METHOD("reload"), &E3DModelInstance::reload);
         ClassDB::bind_method(
                 D_METHOD("cleanup_for_extension_reload"), &E3DModelInstance::cleanup_for_extension_reload);
         ClassDB::bind_method(
@@ -64,10 +74,7 @@ namespace godot {
     void E3DModelInstance::_notification(const int p_what) {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE: {
-                if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
-                    manager->register_instance(this);
-                }
-                _reload();
+                reload();
             } break;
 
             case NOTIFICATION_ENTER_WORLD:
@@ -84,9 +91,6 @@ namespace godot {
             } break;
 
             case NOTIFICATION_EXIT_TREE: {
-                if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
-                    manager->unregister_instance(this);
-                }
                 _clear_optimized_instances();
                 _reset_reload_state();
             } break;
@@ -99,6 +103,10 @@ namespace godot {
     }
 
     void E3DModelInstance::_request_reload() {
+        reload();
+    }
+
+    void E3DModelInstance::reload() {
         if (_is_tearing_down || !is_inside_tree()) {
             return;
         }
@@ -120,14 +128,31 @@ namespace godot {
             return;
         }
 
-        E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance();
-        if (manager == nullptr) {
+        E3DModelManager *model_manager = E3DModelManager::get_instance();
+        if (model_manager == nullptr) {
             _is_dirty = false;
             return;
         }
 
         _is_dirty = false;
-        manager->reload_instance(this);
+        const Ref<E3DModel> model = model_manager->load_model(get_data_path(), get_model_filename());
+
+        switch (get_instancer()) {
+            case INSTANCER_OPTIMIZED: {
+                UtilityFunctions::print_verbose("[E3DModelInstance] Instantiating optimized E3D for ", get_name());
+                _instantiate_children(model);
+            } break;
+
+            case INSTANCER_NODES:
+            case INSTANCER_EDITABLE_NODES: {
+                UtilityFunctions::print_verbose("[E3DModelInstance] Instantiating nodes for ", get_name());
+                _instantiate_children(model);
+            } break;
+
+            default:
+                UtilityFunctions::push_warning("[E3DModelInstance] Unsupported instancer type for ", get_name());
+                break;
+        }
     }
 
     void E3DModelInstance::_instantiate_children(const Ref<E3DModel> &p_model) {
@@ -220,14 +245,15 @@ namespace godot {
         }
 
         if (!_is_tearing_down) {
+            emit_signal(reloaded_signal);
             emit_signal(e3d_loaded_signal);
         }
     }
 
     void E3DModelInstance::_reset_reload_state() {
         _mutex->lock();
-        _pending_model.unref();
-        _loaded_model.unref();
+        _clear_model_ref(_pending_model);
+        _clear_model_ref(_loaded_model);
         _pending_model_scheduled = false;
         _is_dirty = false;
         _mutex->unlock();
@@ -236,12 +262,8 @@ namespace godot {
     void E3DModelInstance::_finish_extension_reload() {
         _is_tearing_down = false;
 
-        if (E3DModelInstanceManager *manager = E3DModelInstanceManager::get_instance(); manager != nullptr) {
-            manager->register_instance(this);
-        }
-
         if (is_inside_tree()) {
-            _reload();
+            reload();
         }
     }
 
@@ -315,6 +337,11 @@ namespace godot {
         if (p_submodel_name.is_empty()) {
             return;
         }
+        const Ref<Material> existing_material = _submodel_material_overrides.get(p_submodel_name, Variant());
+        if (existing_material == p_material) {
+            return;
+        }
+
         _submodel_material_overrides.set(p_submodel_name, p_material);
         if (_is_tearing_down) {
             return;
@@ -331,6 +358,10 @@ namespace godot {
     }
 
     void E3DModelInstance::clear_submodel_material_override(const String &p_submodel_name) {
+        if (!_submodel_material_overrides.has(p_submodel_name)) {
+            return;
+        }
+
         _submodel_material_overrides.erase(p_submodel_name);
         if (_is_tearing_down) {
             return;

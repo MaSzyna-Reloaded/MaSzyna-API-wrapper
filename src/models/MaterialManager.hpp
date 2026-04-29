@@ -33,6 +33,8 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            static const char *cache_cleared_signal;
+
             static MaterialManager *get_instance() {
                 Engine *engine = Engine::get_singleton();
                 if (engine == nullptr) {

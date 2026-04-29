@@ -52,9 +52,6 @@ func _enter_tree():
 
 
 func _exit_tree():
-    if Engine.has_singleton("E3DModelInstanceManager"):
-        E3DModelInstanceManager.teardown_all_for_extension_reload()
-
     if e3d_submodel_toolbar_instance:
         remove_control_from_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
         e3d_submodel_toolbar_instance.queue_free()

@@ -1,7 +1,6 @@
 @tool
 extends Control
 
-
 func _on_browse_button_up():
     %DirectorySelectorDialog.popup_centered()
 
@@ -32,7 +31,13 @@ func _on_clear_cache_button_button_up():
 
 func _on_reload_models_button_button_up():
     var fn = func():
-        E3DModelInstanceManager.reload_all()
+        var nodes: Array[Node] = [get_tree().root]
+        while not nodes.is_empty():
+            var node: Node = nodes.pop_back()
+            if node is E3DModelInstance:
+                node.reload()
+            for child: Node in node.get_children():
+                nodes.append(child)
     call_func_with_message_window("Reloading models...", "Please wait.\nModels reloading in progress...", fn)
 
 

@@ -58,11 +58,18 @@ namespace godot {
 
             HashMap<int64_t, TrackState> tracks;
             int64_t next_track_id = 1;
+            bool material_manager_connected = false;
             TrackState *get_track_state(int64_t p_track_id);
             const TrackState *get_track_state(int64_t p_track_id) const;
             void _free_track_rids(TrackState &p_state);
             void _update_render_instances(TrackState &p_state);
             void _clear_sleeper_material(TrackState &p_state);
+            void _clear_ballast_material(TrackState &p_state);
+            void _apply_ballast_material(TrackState &p_state);
+            void _refresh_track_materials(int64_t p_track_id, TrackState &p_state);
+            void _on_material_manager_cache_cleared();
+            void _connect_material_manager_signals_if_needed();
+            void _disconnect_material_manager_signals_if_needed();
             void _reload_sleeper_model(int64_t p_track_id, TrackState &p_state);
             Ref<ShaderMaterial> _create_shader_material(const String &p_shader_path) const;
             void _apply_material_override(const RID &p_instance, const Ref<ShaderMaterial> &p_material) const;

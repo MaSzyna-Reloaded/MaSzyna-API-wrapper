@@ -4,14 +4,12 @@
 #include "models/e3d/E3DSubModel.hpp"
 
 #include <cmath>
-#include <godot_cpp/classes/base_material3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/image_texture.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
-#include <godot_cpp/classes/standard_material3d.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/core/object.hpp>
@@ -21,6 +19,8 @@
 namespace godot {
 
     void TrackRenderingServer::_bind_methods() {
+        ClassDB::bind_method(
+                D_METHOD("_on_material_manager_cache_cleared"), &TrackRenderingServer::_on_material_manager_cache_cleared);
         ClassDB::bind_method(D_METHOD("create_track"), &TrackRenderingServer::create_track);
         ClassDB::bind_method(D_METHOD("free_track", "track_id"), &TrackRenderingServer::free_track);
         ClassDB::bind_method(
@@ -97,6 +97,7 @@ namespace godot {
     TrackRenderingServer::TrackRenderingServer() {}
 
     TrackRenderingServer::~TrackRenderingServer() {
+        _disconnect_material_manager_signals_if_needed();
         for (KeyValue<int64_t, TrackState> &entry: tracks) {
             _free_track_rids(entry.value);
         }
@@ -141,6 +142,92 @@ namespace godot {
 
         p_state.sleeper_material->set_shader_parameter("albedo_tex", Variant());
         p_state.sleeper_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
+    }
+
+    void TrackRenderingServer::_clear_ballast_material(TrackState &p_state) {
+        if (p_state.ballast_material.is_null()) {
+            return;
+        }
+
+        p_state.ballast_material->set_shader_parameter("albedo_tex", Variant());
+        p_state.ballast_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
+    }
+
+    void TrackRenderingServer::_apply_ballast_material(TrackState &p_state) {
+        if (p_state.ballast_material.is_null()) {
+            return;
+        }
+
+        const String texture_path = p_state.ballast_texture_path.strip_edges();
+        if (texture_path.is_empty()) {
+            _clear_ballast_material(p_state);
+            return;
+        }
+
+        MaterialManager *mm = MaterialManager::get_instance();
+        if (mm == nullptr) {
+            _clear_ballast_material(p_state);
+            return;
+        }
+
+        const Ref<ImageTexture> tex = mm->get_texture(texture_path);
+        if (!tex.is_valid()) {
+            UtilityFunctions::push_warning("[TrackRenderingServer] Ballast texture is not supported");
+            _clear_ballast_material(p_state);
+            return;
+        }
+
+        p_state.ballast_material->set_shader_parameter("albedo_tex", tex);
+        p_state.ballast_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
+    }
+
+    void TrackRenderingServer::_refresh_track_materials(const int64_t p_track_id, TrackState &p_state) {
+        _reload_sleeper_model(p_track_id, p_state);
+        _apply_ballast_material(p_state);
+    }
+
+    void TrackRenderingServer::_on_material_manager_cache_cleared() {
+        for (KeyValue<int64_t, TrackState> &entry: tracks) {
+            _refresh_track_materials(entry.key, entry.value);
+        }
+    }
+
+    void TrackRenderingServer::_connect_material_manager_signals_if_needed() {
+        if (material_manager_connected) {
+            return;
+        }
+
+        MaterialManager *mm = MaterialManager::get_instance();
+        if (mm == nullptr) {
+            return;
+        }
+
+        const Callable callable(this, "_on_material_manager_cache_cleared");
+        if (!mm->is_connected(MaterialManager::cache_cleared_signal, callable)) {
+            const Error err = mm->connect(MaterialManager::cache_cleared_signal, callable);
+            if (err != OK) {
+                UtilityFunctions::push_warning("[TrackRenderingServer] Failed to connect MaterialManager.cache_cleared");
+                return;
+            }
+        }
+
+        material_manager_connected = true;
+    }
+
+    void TrackRenderingServer::_disconnect_material_manager_signals_if_needed() {
+        if (!material_manager_connected) {
+            return;
+        }
+
+        MaterialManager *mm = MaterialManager::get_instance();
+        if (mm != nullptr) {
+            const Callable callable(this, "_on_material_manager_cache_cleared");
+            if (mm->is_connected(MaterialManager::cache_cleared_signal, callable)) {
+                mm->disconnect(MaterialManager::cache_cleared_signal, callable);
+            }
+        }
+
+        material_manager_connected = false;
     }
 
     void TrackRenderingServer::_free_track_rids(TrackState &p_state) {
@@ -190,6 +277,7 @@ namespace godot {
     }
 
     int64_t TrackRenderingServer::create_track() {
+        _connect_material_manager_signals_if_needed();
         RenderingServer *rs = RenderingServer::get_singleton();
 
         TrackState state;
@@ -394,7 +482,6 @@ namespace godot {
         String found_material_name;
         Color found_diffuse = Color(1, 1, 1);
         bool found_colored = false;
-        bool found_transparent = false;
         std::vector<Ref<E3DSubModel>> stack;
         stack.reserve(submodels.size());
         for (const Variant &submodel: submodels) {
@@ -410,7 +497,6 @@ namespace godot {
                 found_material_name = sm->get_material_name();
                 found_diffuse = sm->get_diffuse_color();
                 found_colored = sm->get_material_colored();
-                found_transparent = sm->get_material_transparent();
                 break;
             }
 
@@ -428,8 +514,7 @@ namespace godot {
 
         set_sleeper_mesh(p_track_id, found_mesh);
 
-        MaterialManager *mm =
-                Object::cast_to<MaterialManager>(Engine::get_singleton()->get_singleton("MaterialManager"));
+        MaterialManager *mm = MaterialManager::get_instance();
         if (mm == nullptr) {
             _clear_sleeper_material(p_state);
             return;
@@ -441,21 +526,32 @@ namespace godot {
             found_material_name = sleeper_model_skin;
         }
 
-        const MaterialManager::Transparency transparency =
-                found_transparent ? MaterialManager::ALPHA : MaterialManager::DISABLED;
-
-        Ref<StandardMaterial3D> mat;
         if (found_colored) {
-            mat.instantiate();
-            mat->set_albedo(found_diffuse);
-        } else {
-            mat = mm->get_material(unprefixed_model_path, found_material_name, transparency, false, found_diffuse);
+            p_state.sleeper_material->set_shader_parameter("albedo_tex", Variant());
+            p_state.sleeper_material->set_shader_parameter(
+                    "albedo", Color(found_diffuse.r, found_diffuse.g, found_diffuse.b, found_diffuse.a));
+            return;
         }
 
-        if (mat.is_valid()) {
+        const Ref<MaszynaMaterial> material = mm->load_material(unprefixed_model_path, found_material_name);
+        if (material.is_null()) {
+            _clear_sleeper_material(p_state);
+            return;
+        }
+
+        const String albedo_path = material->get_albedo_texture_path();
+        if (albedo_path.is_empty()) {
+            p_state.sleeper_material->set_shader_parameter("albedo_tex", Variant());
             p_state.sleeper_material->set_shader_parameter(
-                    "albedo_tex", mat->get_texture(BaseMaterial3D::TEXTURE_ALBEDO));
-            p_state.sleeper_material->set_shader_parameter("albedo", mat->get_albedo());
+                    "albedo", Color(found_diffuse.r, found_diffuse.g, found_diffuse.b, found_diffuse.a));
+            return;
+        }
+
+        const String texture_name = albedo_path.split(":").get(0);
+        const Ref<ImageTexture> tex = mm->load_texture(unprefixed_model_path, texture_name);
+        if (tex.is_valid()) {
+            p_state.sleeper_material->set_shader_parameter("albedo_tex", tex);
+            p_state.sleeper_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
         } else {
             _clear_sleeper_material(p_state);
         }
@@ -504,25 +600,7 @@ namespace godot {
             return;
         }
         state->ballast_texture_path = texture_path;
-        if (state->ballast_material.is_null()) {
-            return;
-        }
-
-        MaterialManager *mm =
-                Object::cast_to<MaterialManager>(Engine::get_singleton()->get_singleton("MaterialManager"));
-        if (mm == nullptr) {
-            UtilityFunctions::push_warning("[TrackRenderingServer] Failed to get MaterialManager singleton");
-            return;
-        }
-
-        const Ref<ImageTexture> tex = mm->get_texture(texture_path);
-        if (!tex.is_valid()) {
-            UtilityFunctions::push_warning("[TrackRenderingServer] Ballast texture is not supported");
-            return;
-        }
-
-        state->ballast_material->set_shader_parameter("albedo_tex", tex);
-        state->ballast_material->set_shader_parameter("albedo", Color(1, 1, 1, 1));
+        _apply_ballast_material(*state);
     }
 
     void TrackRenderingServer::update_ballast_mesh(

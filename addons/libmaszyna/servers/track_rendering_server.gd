@@ -118,16 +118,6 @@ func _clear_sleeper_material(state: TrackState) -> void:
     state.sleeper_material.set_shader_parameter("albedo", Color(1.0, 1.0, 1.0, 1.0))
 
 
-func _get_material_manager() -> Object:
-    if Engine.has_singleton("MaterialManager"):
-        return Engine.get_singleton("MaterialManager")
-    return null
-
-
-func _get_model_manager() -> Node:
-    return get_node_or_null("/root/E3DModelManager")
-
-
 func _find_first_submodel_with_mesh(submodels: Array[E3DSubModel]) -> Dictionary:
     var stack: Array[E3DSubModel] = []
     for submodel: E3DSubModel in submodels:
@@ -169,14 +159,7 @@ func _reload_sleeper_model(track_id: int, state: TrackState) -> void:
         _clear_sleeper_material(state)
         return
 
-    var model_manager: Node = _get_model_manager()
-    if model_manager == null:
-        push_warning("[TrackRenderingServer] Missing E3DModelManager for sleeper loading")
-        set_sleeper_mesh(track_id, null)
-        _clear_sleeper_material(state)
-        return
-
-    var model: E3DModel = model_manager.call("load_model", data_path, model_filename) as E3DModel
+    var model: E3DModel = E3DModelManager.load_model(data_path, model_filename) as E3DModel
     if model == null:
         set_sleeper_mesh(track_id, null)
         _clear_sleeper_material(state)
@@ -196,11 +179,6 @@ func _reload_sleeper_model(track_id: int, state: TrackState) -> void:
 
     set_sleeper_mesh(track_id, found_mesh)
 
-    var material_manager: Object = _get_material_manager()
-    if material_manager == null:
-        _clear_sleeper_material(state)
-        return
-
     var found_material_name: String = str(found.get("material_name", ""))
     var found_diffuse: Color = found.get("diffuse_color", Color(1.0, 1.0, 1.0))
     var found_colored: bool = found.get("material_colored", false)
@@ -215,8 +193,7 @@ func _reload_sleeper_model(track_id: int, state: TrackState) -> void:
         material = StandardMaterial3D.new()
         material.albedo_color = found_diffuse
     else:
-        material = material_manager.call(
-            "get_material",
+        material = MaterialManager.get_material(
             data_path,
             found_material_name,
             MATERIAL_TRANSPARENCY_ALPHA if found_transparent else MATERIAL_TRANSPARENCY_DISABLED,
@@ -478,12 +455,7 @@ func set_ballast_texture(track_id: int, path: String) -> void:
     if state.ballast_material == null:
         return
 
-    var material_manager: Object = _get_material_manager()
-    if material_manager == null:
-        push_warning("[TrackRenderingServer] Failed to get MaterialManager singleton")
-        return
-
-    var texture: Texture2D = material_manager.call("get_texture", texture_path) as Texture2D
+    var texture: Texture2D = MaterialManager.get_texture(texture_path) as Texture2D
     if texture == null:
         push_warning("[TrackRenderingServer] Ballast texture is not supported")
         return

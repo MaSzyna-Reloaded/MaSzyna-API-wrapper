@@ -6,7 +6,6 @@ var _streams = {}
 func clear_cache():
     _streams.clear()
 
-
 func get_stream(name:String, loop:bool = false) -> AudioStream:
     var stream_key = "%s:%s" % [name, loop]
     if not stream_key in _streams:

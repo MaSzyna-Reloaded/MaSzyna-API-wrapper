@@ -21,33 +21,26 @@ namespace godot {
     }
 
     MaszynaParser::MaszynaParser() {
-        mutex.instantiate();
         meta.emplace_back();
     }
 
     void MaszynaParser::initialize(const PackedByteArray &buffer) {
-        mutex->lock();
         this->buffer = buffer;
         length = static_cast<int>(buffer.size());
         cursor = 0;
-        mutex->unlock();
     }
 
-    int64_t MaszynaParser::get8() {
-        mutex->lock();
+    int MaszynaParser::get8() {
         if (cursor < length) {
-            const int64_t val = buffer.get(cursor++);
-            mutex->unlock();
-            return val;
+            return buffer[cursor++];
         }
-        mutex->unlock();
         return -1;
     }
 
     String MaszynaParser::get_line() {
         PackedByteArray subbuf;
         while (!eof_reached()) {
-            const int64_t c = get8();
+            const int c = get8();
             if (c == 10 || c == 13) {
                 break;
             }
@@ -57,16 +50,11 @@ namespace godot {
     }
 
     bool MaszynaParser::eof_reached() const {
-        mutex->lock();
-        bool eof = cursor >= length;
-        mutex->unlock();
-        return eof;
+        return cursor >= length;
     }
 
     void MaszynaParser::register_handler(const String &token, const Callable &callback) {
-        mutex->lock();
-        handlers.set(token, callback);
-        mutex->unlock();
+        handlers[token] = callback;
     }
 
     bool MaszynaParser::as_bool(const String &token) {
@@ -75,7 +63,7 @@ namespace godot {
     }
 
     Vector3 MaszynaParser::as_vector3(const Array &tokens) {
-        return Vector3(tokens.get(0), tokens.get(1), tokens.get(2));
+        return Vector3(tokens[0], tokens[1], tokens[2]);
     }
 
     Array MaszynaParser::get_tokens(const int num, const Array &stop) {
@@ -135,14 +123,12 @@ namespace godot {
             token = token.strip_edges();
 
             if (!token.is_empty()) {
-                mutex->lock();
                 Array keys = parameters.keys();
                 for (const auto & key : keys) {
                     String param = key;
-                    String value = parameters.get(param, "");
+                    String value = parameters[param];
                     token = token.replace("(" + param + ")", value);
                 }
-                mutex->unlock();
                 tokens.append(token);
             }
         }
@@ -150,9 +136,9 @@ namespace godot {
         return tokens;
     }
 
-    String MaszynaParser::next_token(const Array &stop) {
-        const Array tokens = get_tokens(1, stop);
-        return tokens.size() > 0 ? tokens.get(0).operator String() : "";
+    String MaszynaParser::next_token(const Array &stop = Array::make(" ", '\t', '\n', '\r', ';')) {
+        Array tokens = get_tokens(1, stop);
+        return tokens.size() > 0 ? tokens[0] : "";
     }
 
     Vector3 MaszynaParser::next_vector3(const Array &stop) {
@@ -161,7 +147,7 @@ namespace godot {
     }
 
     Array
-    MaszynaParser::get_tokens_until(const String &token, const Array &stop) {
+    MaszynaParser::get_tokens_until(const String &token, const Array &stop = Array::make(" ", '\t', '\n', '\r', ';')) {
         Array tokens;
         while (!eof_reached()) {
             if (String upcoming_token = next_token(stop); !upcoming_token.is_empty()) {
@@ -179,19 +165,12 @@ namespace godot {
     Array MaszynaParser::parse() {
         Array result;
         while (!eof_reached()) {
-            String token = next_token();
-            mutex->lock();
-            if (handlers.has(token)) {
-                if (Callable callback = handlers.get(token, ""); callback.is_valid()) {
-                    mutex->unlock();
+            if (String token = next_token(); handlers.has(token)) {
+                if (Callable callback = handlers[token]; callback.is_valid()) {
                     if (Array parsed = callback.call(); parsed.size() > 0) {
                         result.append_array(parsed);
                     }
-                } else {
-                    mutex->unlock();
                 }
-            } else {
-                mutex->unlock();
             }
         }
 
@@ -199,30 +178,21 @@ namespace godot {
     }
 
     Dictionary MaszynaParser::get_parsed_metadata() {
-        mutex->lock();
-        Dictionary d = meta.front();
-        mutex->unlock();
-        return d;
+        return meta.front();
     }
 
     void MaszynaParser::push_metadata() {
-        mutex->lock();
         meta.insert(meta.begin(), Dictionary());
-        mutex->unlock();
     }
 
     Dictionary MaszynaParser::pop_metadata() {
-        mutex->lock();
         Dictionary top = meta.front();
         meta.erase(meta.begin());
-        mutex->unlock();
         return top;
     }
 
     void MaszynaParser::clear_metadata() {
-        mutex->lock();
         meta.clear();
         meta.emplace_back();
-        mutex->unlock();
     }
 } // namespace godot

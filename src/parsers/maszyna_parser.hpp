@@ -1,7 +1,6 @@
 #pragma once
 
-#include <godot_cpp/classes/mutex.hpp>
-#include <godot_cpp/classes/ref_counted.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/packed_byte_array.hpp>
@@ -10,11 +9,10 @@
 #include <vector>
 
 namespace godot {
-    class MaszynaParser : public RefCounted {
-            GDCLASS(MaszynaParser, RefCounted);
+    class MaszynaParser : public Object {
+            GDCLASS(MaszynaParser, Object);
 
         private:
-            Ref<Mutex> mutex;
             PackedByteArray buffer;
             Dictionary handlers;
             int cursor = 0;
@@ -28,16 +26,17 @@ namespace godot {
         public:
             MaszynaParser();
             void initialize(const PackedByteArray &buffer);
-            int64_t get8();
+            // void _create_instance(const PackedByteArray &buffer);
+            int get8();
             String get_line();
             bool eof_reached() const;
             void register_handler(const String &token, const Callable &callback);
             bool as_bool(const String &token);
             Vector3 as_vector3(const Array &tokens);
             Array get_tokens(int num, const Array &stop);
-            String next_token(const Array &stop = Array::make(" ", "\t", "\n", "\r", ";"));
+            String next_token(const Array &stop);
             Vector3 next_vector3(const Array &stop);
-            Array get_tokens_until(const String &token, const Array &stop = Array::make(" ", "\t", "\n", "\r", ";"));
+            Array get_tokens_until(const String &token, const Array &stop);
             Array parse();
             Dictionary get_parsed_metadata();
             void push_metadata();

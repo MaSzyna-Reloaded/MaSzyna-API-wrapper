@@ -74,7 +74,7 @@ func get_material(
             var img:Image = _m.albedo_texture.get_image()
             texture_alpha = not img.detect_alpha() == Image.ALPHA_NONE
 
-        if texture_alpha or  _m.albedo_texture.has_alpha():
+        if texture_alpha:
             # FIXME: the legacy exe uses alpha channel mostly for rendering
             # windows, so ALPHA or ALPHA_DEPTH_PRE_PASS should be enabled
             # here. But both causes issues with rendering (priorirty and

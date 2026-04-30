@@ -368,6 +368,27 @@ model_filename = "nastawnia"
 skins = ["dworzec_sosnowiec_porabka"]
 instancer = 0
 
+[node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje" unique_id=230588431]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.991685, 0.000837795, 0.128689, -7.01784e-10, 0.999979, -0.00651009, -0.128692, 0.00645596, 0.991664, 69.2926, -0.199109, 92.8501)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przemysl/kopalnie/kwk_staszic"
+model_filename = "szyb_ii"
+instancer = 0
+
 [node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje" unique_id=723025036]
 unique_name_in_owner = false
 process_mode = 0
@@ -388,27 +409,6 @@ script = ExtResource("4_drlsl")
 data_path = "models/przemysl/kopalnie"
 model_filename = "szyb_kleofas_gigant"
 skins = ["dworzec_sosnowiec_porabka"]
-instancer = 0
-
-[node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje" unique_id=230588431]
-unique_name_in_owner = false
-process_mode = 0
-process_priority = 0
-process_physics_priority = 0
-process_thread_group = 0
-physics_interpolation_mode = 0
-auto_translate_mode = 0
-editor_description = ""
-transform = Transform3D(0.991685, 0.000837795, 0.128689, -7.01784e-10, 0.999979, -0.00651009, -0.128692, 0.00645596, 0.991664, 69.2926, -0.199109, 92.8501)
-rotation_edit_mode = 0
-rotation_order = 2
-top_level = false
-visible = true
-visibility_parent = NodePath("")
-layers = 1
-script = ExtResource("4_drlsl")
-data_path = "models/przemysl/kopalnie/kwk_staszic"
-model_filename = "szyb_ii"
 instancer = 0
 
 [node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje" unique_id=2055300724]

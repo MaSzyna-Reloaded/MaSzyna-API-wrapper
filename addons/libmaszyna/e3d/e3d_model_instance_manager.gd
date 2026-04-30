@@ -13,7 +13,6 @@ func _on_user_setting_changed(section: String, key: String) -> void:
 
 func _ready() -> void:
     UserSettings.game_dir_changed.connect(reload_all)
-    UserSettings.cache_cleared.connect(reload_all)
     UserSettings.models_reload_requested.connect(reload_all)
     UserSettings.setting_changed.connect(_on_user_setting_changed)
 

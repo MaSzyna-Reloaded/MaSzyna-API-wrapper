@@ -114,7 +114,6 @@ namespace godot {
     }
 
     void TrainController::initialize_mover() {
-        UtilityFunctions::print("DUPA");
         const auto initial_vel = this->initial_velocity;
         const auto _type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());

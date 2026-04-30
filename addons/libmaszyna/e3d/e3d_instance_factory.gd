@@ -2,16 +2,7 @@
 extends Node
 
 var _colored_material: Material = preload("res://addons/libmaszyna/e3d/colored.material")
-var _optimized_records_by_instance: Dictionary = {}
-
-
-class OptimizedInstanceRecord:
-    var instance_rid: RID = RID()
-    var local_transform: Transform3D = Transform3D.IDENTITY
-    var visible: bool = true
-    var name: String = ""
-    var default_material: Material = null
-
+var _optimized_rids : Dictionary[E3DModelInstance, Array] = {}
 
 func clear_children(target_node: E3DModelInstance) -> void:
     for child in target_node.get_children(true):
@@ -21,12 +12,12 @@ func clear_children(target_node: E3DModelInstance) -> void:
 
 func instantiate(model, target_node: E3DModelInstance) -> void:
     target_node.e3d_model = model
+    _optimized_rids[target_node] = []
 
     match target_node.instancer:
         E3DModelInstance.Instancer.OPTIMIZED:
             if model:
-                _optimized_records_by_instance[target_node.get_instance_id()] = []
-                _instantiate_optimized(model.submodels, target_node, Transform3D.IDENTITY, true)
+               _instantiate_optimized(model.submodels, target_node, Transform3D.IDENTITY, true)
             target_node.e3d_loaded.emit()
         E3DModelInstance.Instancer.NODES:
             if model:
@@ -43,15 +34,11 @@ func instantiate(model, target_node: E3DModelInstance) -> void:
 
 
 func teardown(target_node: E3DModelInstance) -> void:
-    var instance_id: int = target_node.get_instance_id()
-    if _optimized_records_by_instance.has(instance_id):
-        var records: Array = _optimized_records_by_instance[instance_id]
-        for record: OptimizedInstanceRecord in records:
-            if record.instance_rid.is_valid():
-                RenderingServer.free_rid(record.instance_rid)
-        _optimized_records_by_instance.erase(instance_id)
+    var rids = _optimized_rids.get(target_node, [])
+    for rid in rids:
+        RenderingServer.free_rid(rid)
+    _optimized_rids.erase(target_node)
     clear_children(target_node)
-
 
 # Helper function to traverse and merge AABBs of VisualInstance3D descendants
 func _traverse_and_extend(node: Node, combined_aabb: AABB, has_initialized_aabb: bool):
@@ -224,16 +211,7 @@ func _instantiate_optimized(
         if material != null:
             RenderingServer.instance_geometry_set_material_override(instance_rid, material.get_rid())
 
-        var record: OptimizedInstanceRecord = OptimizedInstanceRecord.new()
-        record.instance_rid = instance_rid
-        record.local_transform = current_transform
-        record.visible = current_visible
-        record.name = submodel.name
-        record.default_material = material
-        var instance_id: int = target_node.get_instance_id()
-        var records: Array = _optimized_records_by_instance.get(instance_id, [])
-        records.append(record)
-        _optimized_records_by_instance[instance_id] = records
+        _optimized_rids[target_node].append(instance_rid)
 
         RenderingServer.instance_set_scenario(instance_rid, target_node.get_world_3d().scenario)
         RenderingServer.instance_set_transform(

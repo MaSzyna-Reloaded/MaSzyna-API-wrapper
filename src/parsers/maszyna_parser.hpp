@@ -25,18 +25,18 @@ namespace godot {
 
         public:
             MaszynaParser();
-            void initialize(const PackedByteArray &buffer);
+            void initialize(const PackedByteArray &p_buffer);
             // void _create_instance(const PackedByteArray &buffer);
             int get8();
             String get_line();
             bool eof_reached() const;
-            void register_handler(const String &token, const Callable &callback);
-            bool as_bool(const String &token);
-            Vector3 as_vector3(const Array &tokens);
-            Array get_tokens(int num, const Array &stop);
-            String next_token(const Array &stop);
-            Vector3 next_vector3(const Array &stop);
-            Array get_tokens_until(const String &token, const Array &stop);
+            void register_handler(const String &p_token, const Callable &p_callback);
+            bool as_bool(const String &p_token);
+            Vector3 as_vector3(const Array &p_tokens);
+            Array get_tokens(int p_num, const Array &p_stop);
+            String next_token(const Array &p_stop);
+            Vector3 next_vector3(const Array &p_stop);
+            Array get_tokens_until(const String &p_token, const Array &p_stop);
             Array parse();
             Dictionary get_parsed_metadata();
             void push_metadata();

@@ -1,3 +1,4 @@
+@tool
 extends Resource
 class_name E3DSubModel
 
@@ -58,16 +59,16 @@ enum AnimationType {
 @export var material_name:String = ""
 @export var transform:Transform3D = Transform3D()
 @export var mesh:ArrayMesh
-@export var submodels:Array[E3DSubModel] = []
+@export var submodels:Array = []
 @export var visible:bool = true
 @export var skip_rendering:bool = false
 
-var parent:E3DSubModel
+var parent = null
 
-func add_child(submodel:E3DSubModel):
+func add_child(submodel) -> void:
     submodels.append(submodel)
 
-func set_parent(submodel:E3DSubModel):
+func set_parent(submodel) -> void:
     parent = submodel
     if submodel:
         submodel.add_child(self)

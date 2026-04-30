@@ -1,6 +1,7 @@
 set expandtab
 
 let &path.= "godot-cpp/gen/include,godot-cpp/gdextension/godot-cpp/inlcude,"
+let g:ale_c_build_dir_names = ['build-clang-tidy', 'build', 'bin']
 
 let g:ale_fixers = {
     \ 'hpp': ['clang-format'],

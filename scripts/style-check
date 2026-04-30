@@ -3,14 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 CLANG_TIDY_BUILD_DIR="${ROOT_DIR}/build-clang-tidy"
-CLANG_TIDY_EXTRA_ARGS=(
-    -extra-arg=-std=c++17
-    -extra-arg=-I"${ROOT_DIR}/src"
-    -extra-arg=-I"${ROOT_DIR}/godot-cpp/include"
-    -extra-arg=-I"${ROOT_DIR}/godot-cpp/gen/include"
-    -extra-arg=-I"${ROOT_DIR}/godot-cpp/gdextension"
-    -extra-arg=-Wno-macro-redefined
-)
+CLANG_TIDY_EXTRA_ARGS=()
 
 usage() {
     echo "Usage: scripts/style-check [path/to/file]" >&2
@@ -33,7 +26,11 @@ is_supported_format_file() {
 }
 
 is_supported_tidy_file() {
-    [[ "$1" == *.cpp || "$1" == *.cc || "$1" == *.cxx || "$1" == *.c ]]
+    [[ "$1" == *.cpp || "$1" == *.cc || "$1" == *.cxx || "$1" == *.c || "$1" == *.hpp || "$1" == *.h ]]
+}
+
+is_header_tidy_file() {
+    [[ "$1" == *.hpp || "$1" == *.h ]]
 }
 
 is_excluded_file() {
@@ -78,12 +75,13 @@ run_clang_format() {
 
 run_clang_tidy() {
     local files=()
+    local file=""
 
     if [ "$#" -eq 0 ]; then
         while IFS= read -r file; do
             files+=("${file#${ROOT_DIR}/}")
         done < <(
-            find "${ROOT_DIR}/src" \( -name "*.cpp" -or -name "*.cc" -or -name "*.cxx" -or -name "*.c" \) \
+            find "${ROOT_DIR}/src" \( -name "*.cpp" -or -name "*.cc" -or -name "*.cxx" -or -name "*.c" -or -name "*.hpp" -or -name "*.h" \) \
                 -not -path "${ROOT_DIR}/src/maszyna/*" \
                 -not -path "${ROOT_DIR}/src/gen/*"
         )
@@ -92,10 +90,42 @@ run_clang_tidy() {
     fi
 
     for file in "${files[@]}"; do
+        local translation_unit="${file}"
+        local line_filter="${ROOT_DIR}/${file}"
+        local header_filter_args=()
+
+        if is_header_tidy_file "${file}"; then
+            translation_unit=""
+
+            for extension in cpp cc cxx c; do
+                local candidate="${file%.*}.${extension}"
+                if [ -f "${ROOT_DIR}/${candidate}" ] && ! is_excluded_file "${candidate}"; then
+                    translation_unit="${candidate}"
+                    break
+                fi
+            done
+
+            if [ -z "${translation_unit}" ]; then
+                translation_unit="$(
+                    rg -l -m 1 --glob '*.cpp' --glob '*.cc' --glob '*.cxx' --glob '*.c' \
+                        "#include [\"<].*$(basename "${file}")[\">]" "${ROOT_DIR}/src" | head -n 1
+                )"
+                translation_unit="${translation_unit#${ROOT_DIR}/}"
+            fi
+
+            if [ -z "${translation_unit}" ]; then
+                echo "Style check: could not find translation unit for header: ${file}" >&2
+                exit 1
+            fi
+
+            header_filter_args=("-header-filter=${ROOT_DIR}/${file}")
+        fi
+
         (
             cd "${ROOT_DIR}"
             clang-tidy --quiet -p "${CLANG_TIDY_BUILD_DIR}" "${CLANG_TIDY_EXTRA_ARGS[@]}" \
-                -line-filter="[{\"name\":\"${file}\"}]" "${file}"
+                "${header_filter_args[@]}" \
+                -line-filter="[{\"name\":\"${line_filter}\"}]" "${translation_unit}"
         )
     done
 }

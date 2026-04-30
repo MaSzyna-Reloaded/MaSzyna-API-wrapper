@@ -37,7 +37,6 @@ MaterialManager="*uid://dokfadkw7wrhi"
 MaterialParser="*uid://7b48fl428yqa"
 E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
-UserSettings="*uid://dd2pj6a7hturn"
 AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 

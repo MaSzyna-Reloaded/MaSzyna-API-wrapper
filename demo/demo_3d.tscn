@@ -88,7 +88,6 @@ script = ExtResource("1_ut343")
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0

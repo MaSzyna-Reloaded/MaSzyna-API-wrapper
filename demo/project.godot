@@ -45,7 +45,7 @@ TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd
 
 [debug]
 
-settings/stdout/verbose_stdout=true
+settings/stdout/verbose_stdout=false
 file_logging/log_path="user://logs/app.log"
 
 [display]

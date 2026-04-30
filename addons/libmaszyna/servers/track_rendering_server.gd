@@ -128,7 +128,7 @@ func _get_model_manager() -> Node:
     return get_node_or_null("/root/E3DModelManager")
 
 
-func _find_first_submodel_with_mesh(submodels: Array[E3DSubModel]) -> Dictionary:
+func _find_first_submodel_with_mesh(submodels: Array) -> Dictionary:
     var stack: Array[E3DSubModel] = []
     for submodel: E3DSubModel in submodels:
         stack.append(submodel)

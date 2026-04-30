@@ -2,6 +2,16 @@
 extends Node
 
 var _colored_material: Material = preload("res://addons/libmaszyna/e3d/colored.material")
+var _optimized_records_by_instance: Dictionary = {}
+
+
+class OptimizedInstanceRecord:
+    var instance_rid: RID = RID()
+    var local_transform: Transform3D = Transform3D.IDENTITY
+    var visible: bool = true
+    var name: String = ""
+    var default_material: Material = null
+
 
 func clear_children(target_node: E3DModelInstance) -> void:
     for child in target_node.get_children(true):
@@ -9,9 +19,39 @@ func clear_children(target_node: E3DModelInstance) -> void:
         child.queue_free()
 
 
-func instantiate(model, target_node: E3DModelInstance, editable: bool = false) -> void:
+func instantiate(model, target_node: E3DModelInstance) -> void:
+    target_node.e3d_model = model
+
+    match target_node.instancer:
+        E3DModelInstance.Instancer.OPTIMIZED:
+            if model:
+                _optimized_records_by_instance[target_node.get_instance_id()] = []
+                _instantiate_optimized(model.submodels, target_node, Transform3D.IDENTITY, true)
+            target_node.e3d_loaded.emit()
+        E3DModelInstance.Instancer.NODES:
+            if model:
+                clear_children(target_node)
+                _instantiate_nodes(target_node, target_node, model.submodels, target_node.editable_in_editor)
+            target_node.e3d_loaded.emit()
+        E3DModelInstance.Instancer.EDITABLE_NODES:
+            if model:
+                clear_children(target_node)
+                _instantiate_nodes(target_node, target_node, model.submodels, true)
+                target_node.e3d_loaded.emit()
+        _:
+            push_error("Selected instancer is not supported!")
+
+
+func teardown(target_node: E3DModelInstance) -> void:
+    var instance_id: int = target_node.get_instance_id()
+    if _optimized_records_by_instance.has(instance_id):
+        var records: Array = _optimized_records_by_instance[instance_id]
+        for record: OptimizedInstanceRecord in records:
+            if record.instance_rid.is_valid():
+                RenderingServer.free_rid(record.instance_rid)
+        _optimized_records_by_instance.erase(instance_id)
     clear_children(target_node)
-    _do_add_submodels(target_node, target_node, model.submodels, editable)
+
 
 # Helper function to traverse and merge AABBs of VisualInstance3D descendants
 func _traverse_and_extend(node: Node, combined_aabb: AABB, has_initialized_aabb: bool):
@@ -32,7 +72,8 @@ func _traverse_and_extend(node: Node, combined_aabb: AABB, has_initialized_aabb:
             return _traverse_and_extend(child, combined_aabb, true)
     return combined_aabb
 
-func _do_add_submodels(
+
+func _instantiate_nodes(
     target_node: E3DModelInstance, parent: Node, submodels: Array, editable: bool
 ) -> void:
     for submodel in submodels:
@@ -50,7 +91,7 @@ func _do_add_submodels(
             if Engine.is_editor_hint():
                 child.owner = target_node.owner if editable else target_node
             if submodel.submodels:
-                _do_add_submodels(target_node, child, submodel.submodels, editable)
+                _instantiate_nodes(target_node, child, submodel.submodels, editable)
 
 func _create_submodel_instance(target_node: E3DModelInstance, submodel) -> Node3D:
     var obj: Node3D
@@ -140,3 +181,67 @@ func resolve_submodel_material(target_node: E3DModelInstance, submodel) -> Mater
                 submodel.diffuse_color,
             )
     return null
+
+
+func _instantiate_optimized(
+    submodels: Array, target_node: E3DModelInstance, parent_transform: Transform3D, parent_visible: bool
+) -> void:
+    for submodel: E3DSubModel in submodels:
+        if submodel == null or submodel.skip_rendering:
+            continue
+
+        var current_transform: Transform3D = parent_transform * submodel.transform
+        var current_visible: bool = parent_visible and submodel.visible
+
+        if not submodel.submodels.is_empty():
+            _instantiate_optimized(
+                submodel.submodels,
+                target_node,
+                current_transform,
+                current_visible
+            )
+
+        if submodel.submodel_type != E3DSubModel.SubModelType.GL_TRIANGLES:
+            continue
+        if target_node.exclude_node_names.has(submodel.name):
+            continue
+
+        var mesh: Mesh = submodel.mesh
+        if mesh == null:
+            continue
+
+        var instance_rid: RID = RenderingServer.instance_create2(mesh.get_rid(), RID())
+        RenderingServer.instance_geometry_set_visibility_range(
+            instance_rid,
+            submodel.visibility_range_begin,
+            submodel.visibility_range_end,
+            0.0,
+            0.0,
+            RenderingServer.VISIBILITY_RANGE_FADE_DISABLED
+        )
+
+        var material: Material = resolve_submodel_material(target_node, submodel)
+        if material != null:
+            RenderingServer.instance_geometry_set_material_override(instance_rid, material.get_rid())
+
+        var record: OptimizedInstanceRecord = OptimizedInstanceRecord.new()
+        record.instance_rid = instance_rid
+        record.local_transform = current_transform
+        record.visible = current_visible
+        record.name = submodel.name
+        record.default_material = material
+        var instance_id: int = target_node.get_instance_id()
+        var records: Array = _optimized_records_by_instance.get(instance_id, [])
+        records.append(record)
+        _optimized_records_by_instance[instance_id] = records
+
+        RenderingServer.instance_set_scenario(instance_rid, target_node.get_world_3d().scenario)
+        RenderingServer.instance_set_transform(
+            instance_rid,
+            target_node.global_transform * current_transform
+        )
+        RenderingServer.instance_set_visible(
+            instance_rid,
+            target_node.is_visible_in_tree() and current_visible
+        )
+        RenderingServer.instance_set_layer_mask(instance_rid, target_node.get_layer_mask())

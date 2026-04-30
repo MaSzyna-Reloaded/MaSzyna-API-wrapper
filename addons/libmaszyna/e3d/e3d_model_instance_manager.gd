@@ -31,7 +31,8 @@ func reload_all() -> void:
     instances_reloaded.emit()
 
 func reload_instance(instance: E3DModelInstance) -> void:
-    if instance.is_inside_tree() and instance.model_filename and instance.data_path:
+    if instance.is_inside_tree():
+        E3DInstanceFactory.teardown(instance)
         if instance.data_path and instance.model_filename:
             var _do_load = func():
                 var model = E3DModelManager.load_model(
@@ -41,14 +42,11 @@ func reload_instance(instance: E3DModelInstance) -> void:
                 if model == null:
                     return
 
-                match instance.instancer:
-                    E3DModelInstance.Instancer.OPTIMIZED, E3DModelInstance.Instancer.NODES, E3DModelInstance.Instancer.EDITABLE_NODES:
-                        var _do_instantiate = func():
-                            instance._apply_loaded_model(model)
-                        SceneryResourceLoader.schedule(
-                            "Creating model %s" % instance.name,
-                            _do_instantiate
-                        )
-                    _:
-                        push_error("Selected instancer is not supported!")
+                var _do_instantiate = func():
+                    instance.submodels_aabb = model.get_aabb()
+                    E3DInstanceFactory.instantiate(model, instance)
+                SceneryResourceLoader.schedule(
+                    "Creating model %s" % instance.name,
+                    _do_instantiate
+                )
             SceneryResourceLoader.schedule("Loading %s" % instance.name, _do_load)

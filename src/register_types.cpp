@@ -8,6 +8,8 @@
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
 #include "doors/TrainDoors.hpp"
+#include "e3d/E3DModel.hpp"
+#include "e3d/E3DSubModel.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
 #include "engines/TrainDieselEngine.hpp"
 #include "engines/TrainElectricEngine.hpp"
@@ -15,6 +17,7 @@
 #include "engines/TrainEngine.hpp"
 #include "lighting/TrainLighting.hpp"
 #include "load/TrainLoad.hpp"
+#include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
 #include "resources/engines/MotorParameter.hpp"
@@ -25,6 +28,7 @@
 #include "wheels/TrainWheels.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
+#include <godot_cpp/classes/os.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
@@ -32,16 +36,19 @@ using namespace godot;
 
 TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
+E3DParser *e3d_parser_singleton = nullptr;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
-    ;
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
         //         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
+        GDREGISTER_CLASS(E3DSubModel);
+        GDREGISTER_CLASS(E3DModel);
+        GDREGISTER_CLASS(E3DParser);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
@@ -67,20 +74,26 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(LoadListItem)
         GDREGISTER_CLASS(TrainBuffCoupl)
 
+
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
+        e3d_parser_singleton = memnew(E3DParser);
 
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);
+        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);
     }
 }
 
 void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");
-    ;
 
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
+    }
+
+    if (Engine::get_singleton()->has_singleton("E3DParser")) {
+        Engine::get_singleton()->unregister_singleton("E3DParser");
     }
 
     if (Engine::get_singleton()->has_singleton("TrainSystem")) {
@@ -89,6 +102,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (Engine::get_singleton()->has_singleton("GameLog")) {
         Engine::get_singleton()->unregister_singleton("GameLog");
+    }
+
+    if (e3d_parser_singleton != nullptr) {
+        memdelete(e3d_parser_singleton);
+        e3d_parser_singleton = nullptr;
     }
 
     if (train_system_singleton != nullptr) {

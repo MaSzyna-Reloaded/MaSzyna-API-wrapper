@@ -22,10 +22,6 @@ func clear_cache():
     _materials.clear()
     use_alpha_transparency = UserSettings.get_setting("e3d", "use_alpha_transparency", false)
 
-func _ready():
-    UserSettings.config_changed.connect(clear_cache)
-    UserSettings.cache_clear_requested.connect(clear_cache)
-
 func load_material(model_path, material_name) -> MaszynaMaterial:
     return MaterialParser.parse(model_path, material_name)
 

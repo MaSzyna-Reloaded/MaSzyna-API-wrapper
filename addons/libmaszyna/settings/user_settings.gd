@@ -4,9 +4,6 @@ extends Node
 signal config_changed
 signal game_dir_changed
 signal setting_changed(section, key)
-signal cache_clear_requested  # probably should be somewhere else?
-signal models_reload_requested  # probably should be somewhere else?
-signal cache_cleared
 
 var config_file_path = "user://settings.cfg"
 var config = ConfigFile.new()

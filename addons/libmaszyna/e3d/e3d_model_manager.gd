@@ -3,9 +3,6 @@ extends Node
 
 const E3D_CACHE_PATH = "user://cache/e3d/res"
 
-func _ready():
-    UserSettings.cache_clear_requested.connect(clear_cache)
-
 func clear_cache():
     if DirAccess.dir_exists_absolute(E3D_CACHE_PATH):
         var err = FileUtils.remove_dir_recursively(E3D_CACHE_PATH)

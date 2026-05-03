@@ -26,7 +26,7 @@ text = "Game Folder"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
-text = "/home/DoS/Stuff/Games/MaSzyna/"
+text = "."
 
 [node name="Browse" type="Button" parent="VBoxContainer/GameDirSection" unique_id=1016640318]
 layout_mode = 2
@@ -57,6 +57,7 @@ layout_mode = 2
 
 [node name="FXAAButton" type="CheckButton" parent="VBoxContainer/HBoxContainer3" unique_id=2048680945]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "fxaa_enabled"
@@ -72,6 +73,7 @@ layout_mode = 2
 
 [node name="SDFGI" type="CheckButton" parent="VBoxContainer/HBoxContainer5" unique_id=125688743]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "sdfgi_enabled"
@@ -87,6 +89,7 @@ layout_mode = 2
 
 [node name="SSIL" type="CheckButton" parent="VBoxContainer/HBoxContainer6" unique_id=222514818]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "ssil_enabled"
@@ -102,6 +105,7 @@ layout_mode = 2
 
 [node name="SSAO" type="CheckButton" parent="VBoxContainer/HBoxContainer7" unique_id=2100588125]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "ssao_enabled"
@@ -117,6 +121,7 @@ layout_mode = 2
 
 [node name="SSR" type="CheckButton" parent="VBoxContainer/HBoxContainer8" unique_id=566231819]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "ssr_enabled"
@@ -161,6 +166,7 @@ layout_mode = 2
 
 [node name="VSync" type="CheckButton" parent="VBoxContainer/HBoxContainer11" unique_id=942552119]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "window"
 key = "vsync_enabled"

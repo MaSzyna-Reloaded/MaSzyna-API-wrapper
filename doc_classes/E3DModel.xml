@@ -13,4 +13,9 @@
 			A list of top-level [E3DSubModel] resources that form the root of the model's hierarchy.
 		</member>
 	</members>
+	<constants>
+		<constant name="FORMAT_VERSION" value="20260504">
+			Version of the serialized E3D model cache format.
+		</constant>
+	</constants>
 </class>

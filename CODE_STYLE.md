@@ -87,3 +87,8 @@ For in-game logging, use `GameLog` but be aware that it'll only post log message
   ```
 * Avoid circular dependencies between Refs - they may cause infinite lifecycle and memory leaks
 * Use raw pointers to avoid circular dependencies
+
+### E3DModel / E3DSubModel
+
+* when public API of `E3DModel` or `E3DSubModel` changes,
+  the `E3DModel.FORMAT_VERSION` must be updated to invalidate the E3D cache automatically

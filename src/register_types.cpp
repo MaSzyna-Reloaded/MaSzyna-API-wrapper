@@ -4,6 +4,7 @@
 #include "buffers/TrainBuffCoupl.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/ResourceCache.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
@@ -49,6 +50,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
+        GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);

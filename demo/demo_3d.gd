@@ -2,9 +2,18 @@ extends Node3D
 
 @onready var world = $WorldEnvironment
 
+
+func _on_gamedir_changed():
+    _auto_user_settings_visibility()
+    E3DModelManager.clear_cache()
+    MaterialManager.clear_cache()
+    _reload_all_models()
+
+
 func _auto_user_settings_visibility():
     var game_dir = UserSettings.get_maszyna_game_dir()
     $UserSettingsPanel.visible = not game_dir or FileAccess.file_exists(game_dir)
+    
 
 func _update_render_settings():
     var viewport = get_tree().root.get_viewport()
@@ -38,7 +47,7 @@ func _ready():
             menu.add_item(win.title)
 
     _auto_user_settings_visibility()
-    UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
+    UserSettings.game_dir_changed.connect(_on_gamedir_changed)
     UserSettings.config_changed.connect(_update_render_settings)
     UserSettings.setting_changed.connect(_on_user_setting_changed)
     _update_render_settings()

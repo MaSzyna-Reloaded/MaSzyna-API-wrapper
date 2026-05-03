@@ -11,8 +11,8 @@ namespace godot {
 
     class TrainController;
 
-    class TrainSystem : public RefCounted {
-            GDCLASS(TrainSystem, RefCounted);
+    class TrainSystem : public Object {
+            GDCLASS(TrainSystem, Object);
 
         private:
             std::map<String, TrainController *> trains;

@@ -62,3 +62,28 @@ Always use `static_cast<type>`, don't use C-style cast
 ### Logging
 For dev logging, use and only Godot's built-in methods.  
 For in-game logging, use `GameLog` but be aware that it'll only post log messages to the Dev console or anything else connected to it's `log_updated` signal. It won't print logs to the Godot's console
+
+## C++ notes
+
+### Singletons C++
+
+* Never inherit from RefCounted (use plain `Object` as a base)
+* Register and de-register signletons in a proper order (check dependencies)
+* De-registering sequence should follow the schema:
+  - call `Engine::unregister_singleton()` with checking `Engine::has_singleton()`
+  - call `memdelete()` if pointer is not nullptr, then assign nullptr to the pointer
+  - double check order of deallocation singletons
+* `Engine::get_singleton()->get_singleton("<name>")` and/or `CustomSingleton::get_instance()` does not guarantee
+  a valid instance / pointer. Always check that the singleton pointer is not `nullptr`.
+
+### Pointers, Refs and RefCounted objects
+
+* Prefer Refs instead of raw pointers, if applicable
+* Do not mix `Ref` with `memnew()` / `memdelete()`
+* Instantiate Refs in the heap:
+  ```
+  SomeRefCountedObject obj;
+  obj.instantiate();
+  ```
+* Avoid circular dependencies between Refs - they may cause infinite lifecycle and memory leaks
+* Use raw pointers to avoid circular dependencies

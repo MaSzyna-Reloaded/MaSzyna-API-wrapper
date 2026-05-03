@@ -34,10 +34,11 @@ TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");;
+    UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
+    ;
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_EDITOR) {
-//         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
+        //         GDREGISTER_CLASS(DieselEngineMasterControllerPowerItemEditor);
     }
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
@@ -75,17 +76,29 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 }
 
 void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
-    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");;
+    UtilityFunctions::print("De-initializing libmaszyna module on level " + String::num(p_level) + "...");
+    ;
 
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
     }
 
-    if (train_system_singleton != nullptr) {
+    if (Engine::get_singleton()->has_singleton("TrainSystem")) {
         Engine::get_singleton()->unregister_singleton("TrainSystem");
+    }
+
+    if (Engine::get_singleton()->has_singleton("GameLog")) {
         Engine::get_singleton()->unregister_singleton("GameLog");
-        // memdelete(train_system_singleton);
-        // train_system_singleton = nullptr;
+    }
+
+    if (train_system_singleton != nullptr) {
+        memdelete(train_system_singleton);
+        train_system_singleton = nullptr;
+    }
+
+    if (game_log_singleton != nullptr) {
+        memdelete(game_log_singleton);
+        game_log_singleton = nullptr;
     }
 }
 

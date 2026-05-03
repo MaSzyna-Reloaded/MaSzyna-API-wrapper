@@ -28,8 +28,8 @@
 
 namespace godot {
 
-    class GameLog : public RefCounted {
-            GDCLASS(GameLog, RefCounted);
+    class GameLog : public Object {
+            GDCLASS(GameLog, Object);
 
         public:
             static const char *LOG_UPDATED_SIGNAL;

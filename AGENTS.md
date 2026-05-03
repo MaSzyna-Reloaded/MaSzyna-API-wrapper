@@ -18,6 +18,7 @@ Custom nodes and Godot Editor:
 
 * place editor related code in addons/libmaszyna/editor
 * use libmaszyna.gd just for bootstraping and proxying to editor plugins
+* make sure C++ singletons never inherit from RefCounted
 
 Documentation:
 

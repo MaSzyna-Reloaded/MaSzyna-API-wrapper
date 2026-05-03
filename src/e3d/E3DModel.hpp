@@ -7,6 +7,8 @@ namespace godot {
     class E3DModel : public Resource {
             GDCLASS(E3DModel, Resource)
         public:
+            static constexpr int FORMAT_VERSION = 20260504; // must be incremented when public API of E3DModel or
+                                                            // E3DSubModel is changing
             ~E3DModel() override;
 
         protected:

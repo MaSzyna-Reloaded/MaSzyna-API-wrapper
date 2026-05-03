@@ -16,6 +16,7 @@ namespace godot {
     }
 
     void E3DModel::_bind_methods() {
+        BIND_CONSTANT(FORMAT_VERSION);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 Variant::ARRAY, "submodels", "submodels", &E3DModel::set_submodels, &E3DModel::get_submodels,
                 "p_submodels", PROPERTY_HINT_ARRAY_TYPE, "E3DSubModel");

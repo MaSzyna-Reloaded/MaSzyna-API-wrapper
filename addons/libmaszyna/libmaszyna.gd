@@ -2,6 +2,7 @@
 extends EditorPlugin
 
 var e3d_loader = E3DResourceFormatLoader.new()
+var ogg_vorbis_loader = OggVorbisFormatLoader.new()
 
 # Custom nodes
 
@@ -49,6 +50,7 @@ func _enter_tree():
     )
 
     ResourceLoader.add_resource_format_loader(e3d_loader)
+    ResourceLoader.add_resource_format_loader(ogg_vorbis_loader)
 
     add_custom_type(
         "MaszynaTrack3D",
@@ -75,6 +77,7 @@ func _exit_tree():
         remove_control_from_docks(user_settings_dock)
 
     ResourceLoader.remove_resource_format_loader(e3d_loader)
+    ResourceLoader.remove_resource_format_loader(ogg_vorbis_loader)
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")

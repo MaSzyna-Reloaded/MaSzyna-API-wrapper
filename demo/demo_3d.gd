@@ -25,6 +25,10 @@ func _update_render_settings():
         else DisplayServer.VSYNC_DISABLED
     )
 
+func _on_user_setting_changed(section, key):
+    if section == "e3d" and key == "use_alpha_transparency":
+        _reload_all_models()
+
 func _ready():
     var menu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child in $ControlWindows.get_children():
@@ -36,6 +40,7 @@ func _ready():
     _auto_user_settings_visibility()
     UserSettings.game_dir_changed.connect(_auto_user_settings_visibility)
     UserSettings.config_changed.connect(_update_render_settings)
+    UserSettings.setting_changed.connect(_on_user_setting_changed)
     _update_render_settings()
     SceneryResourceLoader.enabled = false
     SceneryResourceLoader.loading_request.connect(_on_loading_started)
@@ -82,3 +87,9 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
             if "train_controller" in child:
                 if $Player.controlled_vehicle:
                     child.train_controller = child.get_path_to($Player.controlled_vehicle.get_controller())
+
+
+func _reload_all_models():
+    var instances = get_tree().root.find_children("", "E3DModelInstance", true, false)
+    for instance in instances:
+        instance.reload()

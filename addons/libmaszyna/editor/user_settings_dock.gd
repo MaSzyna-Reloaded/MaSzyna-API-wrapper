@@ -25,15 +25,16 @@ func _on_directory_selector_dialog_dir_selected(dir):
 
 func _on_clear_cache_button_button_up():
     var fn = func():
-        UserSettings.cache_clear_requested.emit()
-        UserSettings.cache_cleared.emit()
+        E3DModelManager.clear_cache()
+        MaterialManager.clear_cache()
+        AudioStreamManager.clear_cache()
 
     call_func_with_message_window("Clering caches...", "Please wait.\nClearing caches in progress...", fn)
 
 
 func _on_reload_models_button_button_up():
     var fn = func():
-        UserSettings.models_reload_requested.emit()
+        _reload_e3d_models()
     call_func_with_message_window("Reloading models...", "Please wait.\nModels reloading in progress...", fn)
 
 
@@ -74,3 +75,10 @@ func _on_settings_updater_timeout():
 
 func _on_fxaa_button_toggled(toggled_on):
     UserSettings
+
+
+func _reload_e3d_models():
+    var instances = get_tree().root.find_children(
+        "", "E3DModelInstance", true, false)
+    for instance in instances:
+        instance.reload()

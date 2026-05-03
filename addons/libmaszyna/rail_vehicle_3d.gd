@@ -175,7 +175,12 @@ func _process(delta):
         if _controller:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
 
-func _ready() -> void:
+func _schedule_head_display_update():
     _needs_head_display_update = true
+
+func _ready() -> void:
+    _schedule_head_display_update()
     _dirty = true
-    E3DModelInstanceManager.instances_reloaded.connect(func(): _needs_head_display_update = true)
+
+    for instance:E3DModelInstance in find_children("", "E3DModelInstance", true, false):
+        instance.e3d_loaded.connect(_schedule_head_display_update)

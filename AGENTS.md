@@ -12,6 +12,7 @@ Code generation:
 General guidelines:
 
 * IMPORTANT: do only what operator want, do not assume anything by yourself!
+* IMPORTANT: do not expand requested scope, API, or stored state unless operator explicitly asks for it
 * if you are not sure, ask operator for decision
 
 Custom nodes and Godot Editor:
@@ -26,7 +27,8 @@ Documentation:
 
 Build:
 
-* use cmake to build c++ extension (check Makefile and compile-debug target)
+* if C++ code changes, use cmake to build c++ extension (check Makefile and compile-debug target)
+* if GDSCRIPT code changes, check errors with godot (out of sandbox)
 
 Checks:
 

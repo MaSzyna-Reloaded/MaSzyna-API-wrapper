@@ -12,6 +12,7 @@ extends VisualInstance3D
 class_name E3DModelInstance
 
 ## Emitted after the current model instance has been created.
+signal e3d_loading
 signal e3d_loaded
 
 ## Selected instancing backend.
@@ -23,6 +24,7 @@ enum Instancer {
 
 var _model: E3DModel
 var _dirty: bool = false
+var _e3d_loaded: bool = false
 var _current_instancer: E3DInstancer = null
 var _current_editable: bool = false
 
@@ -107,27 +109,26 @@ func _process_dirty(_delta: float) -> void:
 ## Reloads the configured E3D model and recreates the current instance using the selected instancer.
 func reload() -> void:
     if is_inside_tree() and (model or model_filename):
+        _e3d_loaded = false
+        e3d_loading.emit()
         if _current_instancer:
             _current_instancer.clear(self)
         _current_instancer = _resolve_instancer()
-        var _do_load = func():
-            if model:
-                _model = model
+        if model:
+            _model = model
+        else:
+            _model = E3DModelManager.load_model(data_path, model_filename)
+        if _model:
+            submodels_aabb = E3DModelTool.get_aabb(_model)
+            _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
+            if _current_instancer:
+                _current_instancer.clear(self)
+                _current_instancer.instantiate(self, _model, _current_editable)
+                _e3d_loaded = true
+                e3d_loaded.emit()
             else:
-                _model = E3DModelManager.load_model(data_path, model_filename)
-            if _model:
-                submodels_aabb = E3DModelTool.get_aabb(_model)
-
-                _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
-                if _current_instancer:
-                    _current_instancer.clear(self)
-                    _current_instancer.instantiate(self, _model, _current_editable)
-                    e3d_loaded.emit()
-                else:
-                    push_error("Selected instancer is not supported!")
-
-        SceneryResourceLoader.schedule("Loading %s" % name, _do_load)
-
+                push_error("Selected instancer is not supported!")
+    
 
 func _notification(what: int) -> void:
     match what:
@@ -149,3 +150,7 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
     if _current_instancer:
         _current_instancer.clear(self)
+
+
+func is_e3d_loaded():
+    return _e3d_loaded

@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://cqet31gklr3sb" path="res://addons/libmaszyna/player/free_camera.gd" id="3_xr1tx"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="4_n50b0"]
 [ext_resource type="PackedScene" uid="uid://do3s7mkbpv7es" path="res://vehicles/sm42/sm_42_cabin.tscn" id="8_1ye4a"]
-[ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="8_ac5ka"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_yo2ou"]
 shader = ExtResource("2_x8lk3")
@@ -71,7 +70,7 @@ process_thread_group = 0
 physics_interpolation_mode = 0
 auto_translate_mode = 0
 editor_description = ""
-transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 rotation_edit_mode = 0
 rotation_order = 2
 top_level = false
@@ -104,7 +103,7 @@ directional_shadow_max_distance = 300.0
 environment = SubResource("Environment_y62w3")
 
 [node name="Camera3D" type="Camera3D" parent="Environment" unique_id=2145021518]
-transform = Transform3D(0.937281, -0.0875449, 0.337402, 0, 0.967948, 0.251151, -0.348575, -0.235399, 0.907239, 0.785838, 3.45703, 3.02634)
+transform = Transform3D(-0.9997994, 0.0013620713, -0.019990351, 0, 0.9976868, 0.06797882, 0.020036694, 0.06796516, -0.99748623, -0.010132782, 3.3619225, -3.4189606)
 script = ExtResource("3_xr1tx")
 velocity_multiplier = 0.2
 
@@ -114,5 +113,3 @@ world_environment = NodePath("../WorldEnvironment")
 sky_texture_offset = Vector2(0.49, 0.005)
 sky_texture_scale = Vector2(0.547, 0.865)
 sky_energy = 0.575
-
-[node name="LoadingScreen" parent="." unique_id=306278624 instance=ExtResource("8_ac5ka")]

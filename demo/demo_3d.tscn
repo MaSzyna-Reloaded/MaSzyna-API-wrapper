@@ -23,6 +23,7 @@
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="15_rrc65"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
+[ext_resource type="E3DModel" uid="uid://dvj0j2osk1gv3" path="res://e3d_models/dzik.e3d" id="22_eihw1"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s18ef"]
 shader = ExtResource("2_ydn4r")
@@ -323,6 +324,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/stacje/"
 model_filename = "dworzec_olkusz"
 skins = ["dworzec_olkusz_lhs"]
+instancer = 0
 
 [node name="Dworzec Sosnowiec" type="VisualInstance3D" parent="Dekoracje" unique_id=1386451553]
 unique_name_in_owner = false
@@ -344,6 +346,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/stacje/"
 model_filename = "dworzec_sosnowiec_porabka"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
 
 [node name="Nastawnia Sochaczew" type="VisualInstance3D" parent="Dekoracje" unique_id=2113648551]
 unique_name_in_owner = false
@@ -365,6 +368,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/sochaczew/"
 model_filename = "nastawnia"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
 
 [node name="Szyb Kleofas" type="VisualInstance3D" parent="Dekoracje" unique_id=723025036]
 unique_name_in_owner = false
@@ -386,6 +390,7 @@ script = ExtResource("4_drlsl")
 data_path = "models/przemysl/kopalnie"
 model_filename = "szyb_kleofas_gigant"
 skins = ["dworzec_sosnowiec_porabka"]
+instancer = 0
 
 [node name="KWK Staszic" type="VisualInstance3D" parent="Dekoracje" unique_id=230588431]
 unique_name_in_owner = false
@@ -406,6 +411,7 @@ layers = 1
 script = ExtResource("4_drlsl")
 data_path = "models/przemysl/kopalnie/kwk_staszic"
 model_filename = "szyb_ii"
+instancer = 0
 
 [node name="Tabliczka PKP" type="VisualInstance3D" parent="Dekoracje" unique_id=2055300724]
 unique_name_in_owner = false
@@ -426,6 +432,7 @@ layers = 1
 script = ExtResource("4_drlsl")
 data_path = "models/otoczenie/obiekty_stacyjne"
 model_filename = "terenpkp"
+instancer = 0
 
 [node name="Parkomat" type="VisualInstance3D" parent="Dekoracje" unique_id=969128519]
 unique_name_in_owner = false
@@ -446,6 +453,7 @@ layers = 1
 script = ExtResource("4_drlsl")
 data_path = "models/miejskie"
 model_filename = "parkomat_rozi_macius9551"
+instancer = 0
 
 [node name="Skrzynka" type="VisualInstance3D" parent="Dekoracje" unique_id=204687938]
 unique_name_in_owner = false
@@ -466,6 +474,7 @@ layers = 1
 script = ExtResource("4_drlsl")
 data_path = "models/miejskie"
 model_filename = "skrzynka_tel_rozi_macius9551"
+instancer = 0
 
 [node name="Klamoty" type="VisualInstance3D" parent="Dekoracje" unique_id=2091251360]
 unique_name_in_owner = false
@@ -486,6 +495,27 @@ layers = 1
 script = ExtResource("4_drlsl")
 data_path = "models/kolejowe"
 model_filename = "klamoty_naprawcze"
+instancer = 0
+
+[node name="Dzik" type="VisualInstance3D" parent="Dekoracje" unique_id=174687828]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.7668292, 0, -0.64185125, 0, 1, 0, 0.64185125, 0, 0.7668292, -13.21242, -0.3910473, 64.84849)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+model = ExtResource("22_eihw1")
+metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
 [node name="MaszynaTrack3D" type="Path3D" parent="." unique_id=665070806]
 process_thread_group = 2

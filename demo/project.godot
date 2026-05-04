@@ -29,6 +29,7 @@ run/disable_stderr.release=true
 
 [autoload]
 
+LibMaszynaRuntime="*res://addons/libmaszyna/libmaszyna_runtime.gd"
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 SceneryResourceLoader="*uid://bgkb12fiqj2y2"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
@@ -40,6 +41,7 @@ E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
+E3DOptimizedInstancer="*uid://df2elvi65bdmc"
 
 [debug]
 

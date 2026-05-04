@@ -59,7 +59,7 @@ volumetric_fog_sky_affect = 0.405
 adjustment_enabled = true
 
 [sub_resource type="Curve3D" id="Curve3D_esmlu"]
-bake_interval = 0.1
+bake_interval = 1.0
 _data = {
 "points": PackedVector3Array(0, 0, 0, 1.747859, 0, -10.183362, -23.444, 0, 147.67, -0.66759187, 0, 10.310684, 0.5981633, 0, -9.238388, -18.450117, 0, 118.57468, 0, 0, 0, 0, 0, 0, -19.849932, 0, 92.16108, -0.32857656, 0, 20.483587, 0.2021752, 0, -12.603679, -23.086369, 0, 33.718567, -4.9744463, 0, 11.582247, 9.18649, 0, -21.389355, -18.339779, 0, -1.9824181, -18.185575, 0, 14.532068, 44.758102, 0, -35.766136, 16.563, 0, -58.599, -57.281147, 0, 1.1720206, 59.472244, 0, -1.2168522, 157.24503, 0, -142.292, -52.9003, 0, -27.202703, 0, 0, 0, 308.38873, 0, -64.57),
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)
@@ -67,7 +67,7 @@ _data = {
 point_count = 8
 
 [sub_resource type="Curve3D" id="Curve3D_qg2pq"]
-bake_interval = 0.1
+bake_interval = 1.0
 _data = {
 "points": PackedVector3Array(0, 0, 0, 0.33323526, 0, -1.6563102, -23.444, 0, 147.67, -0.4298226, 0, 1.6339101, 2.5139513, 0, -9.556432, -22.4919, 0, 142.93768, -1.8886186, 0, 9.699405, 0.873898, 0, -4.48809, -15.035694, 0, 115.70701, 0.22356537, 0, 4.5669103, -0.8960822, 0, -18.304832, -14.647063, 0, 102.64885, 1.2548047, 0, 18.283747, 0, 0, 0, -18.23222, 0, 50.409576),
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0)
@@ -75,7 +75,7 @@ _data = {
 point_count = 5
 
 [sub_resource type="Curve3D" id="Curve3D_rrc65"]
-bake_interval = 0.1
+bake_interval = 1.0
 _data = {
 "points": PackedVector3Array(0, 0, 0, 1.1770676, 0, -46.7242, -28.74, 0, 300, 0, 0, 0, 0, 0, 0, -25.37695, 0, 166.50227, -0.114873014, 0, 1.8130357, 0.13763739, 0, -2.172325, -25.246233, 0, 161.31343, -0.28505298, 0, 2.1579351, 0.34607038, 0, -2.6198547, -24.655928, 0, 155.12242, -0.4241746, 0, 2.608348, 0, 0, 0, -23.444, 0, 147.67),
 "tilts": PackedFloat32Array(0, 0, 0, 0, 0)
@@ -88,6 +88,7 @@ script = ExtResource("1_ut343")
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
+top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -496,9 +497,8 @@ rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_texture = "tory/podsypka-2"
+ballast_material = "tory/podsypka-2"
 ballast_offset = -0.1
-min_turn_radius = 70.0
 previous_track = NodePath("../MaszynaTrack3D3")
 
 [node name="MaszynaSwitch3D" type="Node3D" parent="." unique_id=364459163 node_paths=PackedStringArray("straight_track", "diverging_track", "common_track")]
@@ -517,7 +517,7 @@ rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_texture = "tory/podsypka-2"
+ballast_material = "tory/podsypka-2"
 ballast_offset = -0.1
 previous_track = NodePath("../MaszynaTrack3D3")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
@@ -529,7 +529,7 @@ rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_texture = "tory/podsypka-2"
+ballast_material = "tory/podsypka-2"
 ballast_offset = -0.1
 next_track = NodePath("../MaszynaSwitch3D")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"

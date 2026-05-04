@@ -1,0 +1,107 @@
+[gd_scene format=3 uid="uid://dfiavnueyvev3"]
+
+[ext_resource type="Script" uid="uid://tr6bxovh8fa4" path="res://addons/libmaszyna/editor/nodebank/nodebank_panel.gd" id="1_nodebank_panel"]
+[ext_resource type="Script" uid="uid://c541r6f861p5u" path="res://addons/libmaszyna/editor/nodebank/nodebank_preview_renderer.gd" id="2_qb2n1"]
+
+[node name="NodebankPanel" type="VBoxContainer" unique_id=1016198546]
+custom_minimum_size = Vector2(0, 240)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_nodebank_panel")
+
+[node name="Toolbar" type="HBoxContainer" parent="." unique_id=1571890808]
+layout_mode = 2
+
+[node name="GroupLabel" type="Label" parent="Toolbar" unique_id=788402843]
+layout_mode = 2
+text = "Group"
+
+[node name="GroupSelector" type="OptionButton" parent="Toolbar" unique_id=1735841323]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Search" type="LineEdit" parent="Toolbar" unique_id=1692994157]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Search..."
+clear_button_enabled = true
+
+[node name="ReloadButton" type="Button" parent="Toolbar" unique_id=1001364968]
+layout_mode = 2
+text = "Reload"
+
+[node name="Status" type="Label" parent="Toolbar" unique_id=931003418]
+layout_mode = 2
+text = "not loaded"
+
+[node name="PagePrev" type="Button" parent="Toolbar" unique_id=1340355240]
+layout_mode = 2
+text = "<"
+
+[node name="PageNumber" type="Label" parent="Toolbar" unique_id=223478826]
+layout_mode = 2
+text = "1/1"
+
+[node name="PageNext" type="Button" parent="Toolbar" unique_id=1154621140]
+layout_mode = 2
+text = ">"
+
+[node name="Content" type="HSplitContainer" parent="." unique_id=562996082]
+layout_mode = 2
+size_flags_vertical = 3
+split_offsets = PackedInt32Array(-260)
+split_offset = -260
+
+[node name="ScrollContainer" type="ScrollContainer" parent="Content" unique_id=1239049343]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemsGrid" type="HFlowContainer" parent="Content/ScrollContainer" unique_id=552928720]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PreviewPanel" type="PanelContainer" parent="Content" unique_id=2011304775]
+custom_minimum_size = Vector2(260, 0)
+layout_mode = 2
+
+[node name="PreviewBox" type="VBoxContainer" parent="Content/PreviewPanel" unique_id=1413553723]
+layout_mode = 2
+
+[node name="PreviewTitle" type="Label" parent="Content/PreviewPanel/PreviewBox" unique_id=999329998]
+layout_mode = 2
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="PreviewStatus" type="Label" parent="Content/PreviewPanel/PreviewBox" unique_id=1675723833]
+layout_mode = 2
+text = "Select item"
+horizontal_alignment = 1
+text_overrun_behavior = 3
+
+[node name="PreviewHost" type="Control" parent="Content/PreviewPanel/PreviewBox" unique_id=605834497]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PreviewTexture" type="TextureRect" parent="Content/PreviewPanel/PreviewBox/PreviewHost" unique_id=1926842752]
+custom_minimum_size = Vector2(192, 192)
+layout_mode = 0
+offset_right = 40.0
+offset_bottom = 40.0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NodebankPreviewRenderer" type="Node" parent="." unique_id=1319474376]
+script = ExtResource("2_qb2n1")
+metadata/_custom_type_script = "uid://c541r6f861p5u"
+
+[connection signal="item_selected" from="Toolbar/GroupSelector" to="." method="_on_group_selected"]
+[connection signal="text_changed" from="Toolbar/Search" to="." method="_on_search_text_changed"]
+[connection signal="pressed" from="Toolbar/ReloadButton" to="." method="_on_reload_pressed"]
+[connection signal="pressed" from="Toolbar/PagePrev" to="." method="_on_page_prev_pressed"]
+[connection signal="pressed" from="Toolbar/PageNext" to="." method="_on_page_next_pressed"]

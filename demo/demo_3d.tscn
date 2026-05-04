@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://bjjgkykr4c718" path="res://demo_3d.gd" id="1_ut343"]
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="2_ig825"]
 [ext_resource type="Material" uid="uid://b7qto250huuby" path="res://materials/custom_demo_ground.tres" id="2_imrpy"]
-[ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="2_n5hjg"]
 [ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="2_py6pt"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="2_qg2pq"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="2_ydn4r"]
@@ -211,27 +210,6 @@ title = "Gauges"
 [node name="Gauges" parent="ControlWindows/Gauges" unique_id=1086519321 instance=ExtResource("9_ss847")]
 clip_contents = true
 layout_mode = 2
-
-[node name="LoadingLabel" type="VBoxContainer" parent="." unique_id=337717684]
-visible = false
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = -40.0
-offset_top = -40.0
-grow_horizontal = 0
-grow_vertical = 0
-
-[node name="Label" type="Label" parent="LoadingLabel" unique_id=1515757586]
-layout_mode = 2
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 36
-text = "Loading..."
-
-[node name="LoadingScreen" parent="." unique_id=785219485 instance=ExtResource("2_n5hjg")]
 
 [node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]
 
@@ -517,6 +495,518 @@ script = ExtResource("4_drlsl")
 model = ExtResource("22_eihw1")
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
+[node name="nastawnia_opuszczona" type="VisualInstance3D" parent="Dekoracje" unique_id=1085419613]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -4.738611, 0, 120.73321)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/otoczenie/obiekty_stacyjne"
+model_filename = "nastawnia_opuszczona"
+
+[node name="chlodnia_belchatow" type="VisualInstance3D" parent="Dekoracje" unique_id=75347577]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -184.59415, 0, 134.46771)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przemysl"
+model_filename = "chlodnia_belchatow"
+
+[node name="chlodnia_belchatow2" type="VisualInstance3D" parent="Dekoracje" unique_id=1543279749]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -184.59415, 0, -29.266571)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przemysl"
+model_filename = "chlodnia_belchatow"
+
+[node name="chlodnia_belchatow3" type="VisualInstance3D" parent="Dekoracje" unique_id=2018873026]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -184.59415, 0, -281.21332)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przemysl"
+model_filename = "chlodnia_belchatow"
+
+[node name="komin_jadwiga_7,6x65" type="VisualInstance3D" parent="Dekoracje" unique_id=1038208604]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71.67697, -0.9466953, 138.53416)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przemysl"
+model_filename = "komin_jadwiga_7,6x65"
+
+[node name="plot_beton_10m" type="VisualInstance3D" parent="Dekoracje" unique_id=2062558236]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.409653, -0.40674806, 206.01675)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/miejskie"
+model_filename = "plot_beton_10m"
+
+[node name="plot_beton_10m2" type="VisualInstance3D" parent="Dekoracje" unique_id=165452069]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.409653, -0.40674806, 216.01675)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/miejskie"
+model_filename = "plot_beton_10m"
+
+[node name="plot_beton_10m3" type="VisualInstance3D" parent="Dekoracje" unique_id=2044339556]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.409653, -0.40674806, 226.01675)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/miejskie"
+model_filename = "plot_beton_10m"
+
+[node name="plot_beton_10m4" type="VisualInstance3D" parent="Dekoracje" unique_id=432120979]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.409653, -0.40674806, 236.01675)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/miejskie"
+model_filename = "plot_beton_10m"
+
+[node name="star200_star200_teal" type="VisualInstance3D" parent="Dekoracje" unique_id=1963611550]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.5071774, 0, -0.8618416, 0, 1, 0, 0.8618416, 0, 0.5071774, -9.210876, -0.40161085, 127.85586)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/pojazdy"
+model_filename = "star200"
+skins = ["pojazdy/star200_teal"]
+
+[node name="manewrowy" type="VisualInstance3D" parent="Dekoracje" unique_id=1289891567]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.538921, -0.46689212, 129.24854)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/posers"
+model_filename = "manewrowy"
+
+[node name="droznik_sosnowiec" type="VisualInstance3D" parent="Dekoracje" unique_id=1873147890]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.486008, -0.50483894, 160.33926)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/przejazdy"
+model_filename = "droznik_sosnowiec"
+
+[node name="Jezewo Budynekstacyjny" type="VisualInstance3D" parent="Dekoracje" unique_id=300012307]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.9999944, 0, 0.003351026, 0, 1, 0, -0.003351026, 0, 0.9999944, -12.8812, -0.6631875, 155.931)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/stacje"
+model_filename = "jezewo_budynekstacyjny"
+
+[node name="Lniano Budynekstacyjny" type="VisualInstance3D" parent="Dekoracje" unique_id=1758613069]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -11.835052, -0.94846535, 187.91615)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/stacje"
+model_filename = "lniano_budynekstacyjny"
+
+[node name="Tree Small Drzewo 1024g" type="VisualInstance3D" parent="Dekoracje" unique_id=1271935891]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35.81495, -0.51280403, 177.55128)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024g"]
+
+[node name="Tree Small Drzewo 1024d" type="VisualInstance3D" parent="Dekoracje" unique_id=1363659506]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.81652, -0.51280403, 156.84164)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024d"]
+
+[node name="Tree Small Drzewo 1024c" type="VisualInstance3D" parent="Dekoracje" unique_id=1287185876]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -13.875992, -0.51280403, 170.90414)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024c"]
+
+[node name="Tree Small Drzewo 1024g2" type="VisualInstance3D" parent="Dekoracje" unique_id=114427822]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.582233, -0.51280403, 173.26945)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024g"]
+
+[node name="Tree Small Drzewo 512m" type="VisualInstance3D" parent="Dekoracje" unique_id=853177906]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.351986, -0.51280403, 198.75656)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo512m"]
+
+[node name="Tree Small Drzewo 512r" type="VisualInstance3D" parent="Dekoracje" unique_id=1303309419]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39.951008, -0.51280403, 182.85709)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo512r"]
+
+[node name="Tree Small Drzewo 1024q" type="VisualInstance3D" parent="Dekoracje" unique_id=1259392883]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45.059017, -0.51280403, 167.13202)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024q"]
+
+[node name="Tree Small Drzewo 1024t" type="VisualInstance3D" parent="Dekoracje" unique_id=405853632]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.535767, -0.51280403, 168.87762)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024t"]
+
+[node name="Tree Small Drzewo 1024g3" type="VisualInstance3D" parent="Dekoracje" unique_id=1443074217]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.8660254, 0, 0.5, 0, 1, 0, -0.5, 0, 0.8660254, -42.938126, -0.51280403, 179.7218)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/"
+model_filename = "tree_small"
+skins = ["l61_plants/drzewo1024g"]
+
+[node name="Jelen Prawo Sarna A 1" type="VisualInstance3D" parent="Dekoracje" unique_id=942001874]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(0.9659258, 0, -0.25881904, 0, 1, 0, 0.25881904, 0, 0.9659258, -33.498325, -0.4359014, 173.47368)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/animals"
+model_filename = "jelen_prawo"
+skins = ["animals/sarna_a_1"]
+
+[node name="Jelen Lezacy Sarna D 3" type="VisualInstance3D" parent="Dekoracje" unique_id=1682514191]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.315773, -0.38386, 174.99045)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
+script = ExtResource("4_drlsl")
+data_path = "models/animals"
+model_filename = "jelen_lezacy"
+skins = ["animals/sarna_d_3"]
+
 [node name="MaszynaTrack3D" type="Path3D" parent="." unique_id=665070806]
 process_thread_group = 2
 process_thread_group_order = 0
@@ -566,5 +1056,4 @@ metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
-[connection signal="fadein_finished" from="LoadingScreen" to="." method="_on_loading_screen_fadein_finished"]
 [connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

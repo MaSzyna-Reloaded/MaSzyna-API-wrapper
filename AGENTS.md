@@ -12,6 +12,7 @@ Code generation:
 General guidelines:
 
 * IMPORTANT: do only what operator want, do not assume anything by yourself!
+* IMPORTANT: NEVER guess. If operator did not request something explicitly, do not invent behavior, workaround, convention, API, or implementation detail on your own.
 * IMPORTANT: do not expand requested scope, API, or stored state unless operator explicitly asks for it
 * if you are not sure, ask operator for decision
 

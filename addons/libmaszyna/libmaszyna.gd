@@ -5,6 +5,7 @@ extends EditorPlugin
 
 var maszyna_environment_node_script = preload("res://addons/libmaszyna/environment/maszyna_environment_node.gd")
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
+var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
 var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
 var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
 
@@ -25,6 +26,7 @@ var user_settings_dock_scene = preload("res://addons/libmaszyna/editor/user_sett
 func _enter_tree():
     set_input_event_forwarding_always_enabled()
     set_process(false)
+    get_editor_interface().get_editor_theme().set_icon("E3DModelInstance", "EditorIcons", e3d_model_instance_icon)
 
     e3d_submodel_toolbar_instance = e3d_submodel_toolbar.instantiate()
     add_control_to_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
@@ -75,6 +77,8 @@ func _enter_tree():
         
         
 func _exit_tree():
+    get_editor_interface().get_editor_theme().clear_icon("E3DModelInstance", "EditorIcons")
+
     for plugin in maszyna_editor_plugins:
         plugin._editor_plugin_exit_tree(self)
         

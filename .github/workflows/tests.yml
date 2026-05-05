@@ -3,6 +3,43 @@ name: Run Godot Tests
 on: [pull_request]
 
 jobs:
+  hotreload-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v4.2.2
+        with:
+          submodules: recursive
+
+      - uses: actions/cache/restore@v4.2.3
+        id: hotreload-cache-restore
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: godot-hotreload-tests
+          restore-keys: |
+            godot-hotreload-tests
+            godot-hotreload-
+      - name: Run hot reload crash test
+        run: |
+          sudo chmod 777 ci/docker/entrypoint.sh ci/test-hotreload.sh
+          docker compose run --rm --entrypoint /var/maszyna/ci/test-hotreload.sh unit_tests
+      - uses: actions/upload-artifact@v4.6.2
+        if: always()
+        with:
+          name: hotreload-test-log
+          path: ci/hotreload-test.log
+      - uses: actions/cache/save@v4.2.3
+        id: hotreload-cache
+        if: always() && steps.hotreload-cache-restore.outputs.cache-hit != 'true'
+        with:
+          path: |
+            godot-cpp/
+            .sconsign.dblite
+          key: godot-hotreload-tests
+
   run-tests:
     runs-on: ubuntu-latest
 

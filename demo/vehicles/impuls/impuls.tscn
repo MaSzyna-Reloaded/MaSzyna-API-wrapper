@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://dqwt31s3qnglp"]
 
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_4abai"]
-[ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_pes3o"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://vehicles/impuls/impuls_head_display.tres" id="2_iawif"]
 [ext_resource type="PackedScene" uid="uid://cno8d0tylykmu" path="res://vehicles/impuls/impuls_cabin_a.tscn" id="2_tivfr"]
 
@@ -22,7 +21,7 @@ head_display_e3d_path = NodePath("Impuls-024a")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024a/banan/banan/tablice_relacyjne")
 
-[node name="Impuls-024a" type="VisualInstance3D" parent="Impuls-024a" unique_id=170562242]
+[node name="Impuls-024a" type="E3DModelInstance" parent="Impuls-024a" unique_id=170562242]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -38,13 +37,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/36wea-a_kd"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
 
-[node name="Impuls-024a_LowPolyCab" type="VisualInstance3D" parent="Impuls-024a" unique_id=361100598]
+[node name="Impuls-024a_LowPolyCab" type="E3DModelInstance" parent="Impuls-024a" unique_id=361100598]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -60,13 +58,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-a"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
 
-[node name="People_A" type="VisualInstance3D" parent="Impuls-024a" unique_id=117299797]
+[node name="People_A" type="E3DModelInstance" parent="Impuls-024a" unique_id=117299797]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -82,7 +79,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
@@ -101,7 +97,7 @@ head_display_e3d_path = NodePath("Impuls-024b")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024b/banan/tablice_relacyjne")
 
-[node name="Impuls-024b" type="VisualInstance3D" parent="Impuls-024b" unique_id=873606672]
+[node name="Impuls-024b" type="E3DModelInstance" parent="Impuls-024b" unique_id=873606672]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -117,13 +113,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-b_kd"
 skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
 
-[node name="Impuls-024b_LowPolyInt" type="VisualInstance3D" parent="Impuls-024b" unique_id=887032148]
+[node name="Impuls-024b_LowPolyInt" type="E3DModelInstance" parent="Impuls-024b" unique_id=887032148]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -139,13 +134,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-b"
 skins = ["36wea-019b,1", "36wea-019b,2", "36wea-019b,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
 
-[node name="People_B" type="VisualInstance3D" parent="Impuls-024b" unique_id=1981720913]
+[node name="People_B" type="E3DModelInstance" parent="Impuls-024b" unique_id=1981720913]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -161,7 +155,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-b_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
@@ -172,7 +165,7 @@ head_display_e3d_path = NodePath("Impuls-024c")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024c/banan/tablice_relacyjne")
 
-[node name="Impuls-024c" type="VisualInstance3D" parent="Impuls-024c" unique_id=457893452]
+[node name="Impuls-024c" type="E3DModelInstance" parent="Impuls-024c" unique_id=457893452]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -188,13 +181,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-c_kd"
 skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
 exclude_node_names = ["cien"]
 
-[node name="Impuls-024c_LowPolyInt" type="VisualInstance3D" parent="Impuls-024c" unique_id=1503305875]
+[node name="Impuls-024c_LowPolyInt" type="E3DModelInstance" parent="Impuls-024c" unique_id=1503305875]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -210,7 +202,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-b"
 skins = ["36wea-019b,1", "36wea-019c,2", "36wea-019c,3", "36wea-019c,4"]
@@ -225,7 +216,7 @@ head_display_e3d_path = NodePath("Impuls-024d")
 head_display_material = ExtResource("2_iawif")
 head_display_node_path = NodePath("Impuls-024d/banan/tablice_relacyjne")
 
-[node name="Impuls-024d" type="VisualInstance3D" parent="Impuls-024d" unique_id=1769520630]
+[node name="Impuls-024d" type="E3DModelInstance" parent="Impuls-024d" unique_id=1769520630]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -241,13 +232,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "main/31wea-d_kd"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
 
-[node name="Impuls-024d_LowPolyCab" type="VisualInstance3D" parent="Impuls-024d" unique_id=288601517]
+[node name="Impuls-024d_LowPolyCab" type="E3DModelInstance" parent="Impuls-024d" unique_id=288601517]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -263,13 +253,12 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "low_poly_int/int_36wea_kd-c"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 exclude_node_names = ["cien"]
 
-[node name="People_A2" type="VisualInstance3D" parent="Impuls-024d" unique_id=323616169]
+[node name="People_A2" type="E3DModelInstance" parent="Impuls-024d" unique_id=323616169]
 unique_name_in_owner = false
 process_mode = 0
 process_priority = 0
@@ -285,7 +274,6 @@ top_level = false
 visible = true
 visibility_parent = NodePath("")
 layers = 1
-script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]

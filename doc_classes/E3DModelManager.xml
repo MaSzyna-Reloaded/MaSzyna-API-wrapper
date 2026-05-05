@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DModelManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Loads and caches MaSzyna E3D models.
+	</brief_description>
+	<description>
+		[E3DModelManager] is an engine singleton responsible for loading [code].e3d[/code] files and caching parsed [E3DModel] resources. It is used by [E3DModelInstance] when a model is referenced through path and filename instead of a direct resource.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="clear_cache">
+			<return type="void" />
+			<description>
+				Clears the internal cache of previously loaded E3D models.
+			</description>
+		</method>
+		<method name="load_model" qualifiers="const">
+			<return type="E3DModel" />
+			<param index="0" name="data_path" type="String" />
+			<param index="1" name="filename" type="String" />
+			<description>
+				Loads an [E3DModel] from the given base directory and filename, using the manager cache when possible.
+			</description>
+		</method>
+	</methods>
+</class>

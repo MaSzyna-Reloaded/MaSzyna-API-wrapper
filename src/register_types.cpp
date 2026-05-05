@@ -113,16 +113,18 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
+
+        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                    // 1
+        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                          // 2
+        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                              // 3
+        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                      // 4
+
         material_manager_singleton = memnew(MaterialManager);
         e3d_model_manager_singleton = memnew(E3DModelManager);
         e3d_model_tool_singleton = memnew(E3DModelTool);
         e3d_nodes_instancer_singleton = memnew(E3DNodesInstancer);
         e3d_optimized_instancer_singleton = memnew(E3DOptimizedInstancer);
 
-        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                    // 1
-        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                          // 2
-        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                              // 3
-        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                      // 4
         Engine::get_singleton()->register_singleton("MaterialManager", material_manager_singleton);              // 5
         Engine::get_singleton()->register_singleton("E3DModelManager", e3d_model_manager_singleton);             // 6
         Engine::get_singleton()->register_singleton("E3DModelTool", e3d_model_tool_singleton);                   // 7

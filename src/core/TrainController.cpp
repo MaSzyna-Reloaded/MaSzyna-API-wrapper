@@ -119,7 +119,7 @@ namespace godot {
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_vel, _type_name, name, this->cabin_number).release();
 
-        UtilityFunctions::print("HERE2");
+        UtilityFunctions::print("HERE3");
         _dirty = true;
         _dirty_prop = true;
         _update_mover_config_if_dirty();

@@ -100,8 +100,8 @@ func enter_cabin(player:MaszynaPlayer):
         # and tune the camera settings
         _camera.velocity_multiplier = 0.2
 
-    # connect callback
-    _cabin.cabin_ready.connect(_jump_into_cabin)
+    # cabin is not ready, because it is not added to the tree yet
+    _cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
 
     # then add it to the scene
     add_child(_cabin)

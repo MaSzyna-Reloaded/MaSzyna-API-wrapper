@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="res://demo_3d.tscn"
+run/main_scene="uid://1djubq5jy2wx"
 run/print_header=false
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
@@ -31,7 +31,6 @@ run/disable_stderr.release=true
 
 LibMaszynaRuntime="*res://addons/libmaszyna/libmaszyna_runtime.gd"
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
-SceneryResourceLoader="*uid://bgkb12fiqj2y2"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://dokfadkw7wrhi"
@@ -42,6 +41,7 @@ E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 E3DOptimizedInstancer="*uid://df2elvi65bdmc"
+NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 
 [debug]
 

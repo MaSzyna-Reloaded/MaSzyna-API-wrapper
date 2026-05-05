@@ -61,10 +61,10 @@ namespace godot {
             void set_exclude_node_names(const Array &p_exclude_node_names);
 
             Instancer get_instancer() const;
-            void set_instancer(const Instancer p_instancer);
+            void set_instancer(Instancer p_instancer);
 
             bool is_editable_in_editor() const;
-            void set_editable_in_editor(const bool p_editable_in_editor);
+            void set_editable_in_editor(bool p_editable_in_editor);
 
             void reload();
             bool is_e3d_loaded() const;

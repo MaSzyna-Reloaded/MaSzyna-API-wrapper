@@ -27,7 +27,7 @@ namespace godot {
 
         public:
             BaseMaterial3D::Transparency get_transparency() const;
-            void set_transparency(const BaseMaterial3D::Transparency p_transparency);
+            void set_transparency(BaseMaterial3D::Transparency p_transparency);
 
             String get_albedo_texture_path() const;
             void set_albedo_texture_path(const String &p_path);
@@ -48,7 +48,7 @@ namespace godot {
             void set_shader(const String &p_shader);
 
             int get_shadow_rank() const;
-            void set_shadow_rank(const int p_shadow_rank);
+            void set_shadow_rank(int p_shadow_rank);
 
             void apply_to_material(const Ref<StandardMaterial3D> &p_material) const;
     };

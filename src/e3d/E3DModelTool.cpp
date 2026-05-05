@@ -57,18 +57,18 @@ namespace godot {
     }
 
     bool E3DModelTool::_get_aabb_from_submodel(
-            const Ref<E3DSubModel> &p_submodel, const Transform3D &p_parent_transform, AABB &r_aabb,
-            bool &r_has_aabb) const {
+            const Ref<E3DSubModel> &p_submodel, const Transform3D &p_parent_transform, AABB &p_aabb,
+            bool &p_has_aabb) const {
         const Transform3D local_transform = p_parent_transform * p_submodel->get_transform();
 
         Ref<ArrayMesh> mesh = p_submodel->get_mesh();
         if (mesh.is_valid()) {
             AABB local_aabb = local_transform.xform(mesh->get_aabb());
-            if (r_has_aabb) {
-                r_aabb = r_aabb.merge(local_aabb);
+            if (p_has_aabb) {
+                p_aabb = p_aabb.merge(local_aabb);
             } else {
-                r_aabb = local_aabb;
-                r_has_aabb = true;
+                p_aabb = local_aabb;
+                p_has_aabb = true;
             }
         }
 
@@ -76,11 +76,11 @@ namespace godot {
         for (int i = 0; i < children.size(); i++) {
             Ref<E3DSubModel> child = children[i];
             if (child.is_valid()) {
-                _get_aabb_from_submodel(child, local_transform, r_aabb, r_has_aabb);
+                _get_aabb_from_submodel(child, local_transform, p_aabb, p_has_aabb);
             }
         }
 
-        return r_has_aabb;
+        return p_has_aabb;
     }
 
 } // namespace godot

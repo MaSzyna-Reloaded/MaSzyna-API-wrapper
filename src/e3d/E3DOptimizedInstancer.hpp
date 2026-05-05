@@ -23,10 +23,10 @@ namespace godot {
             std::unordered_map<uint64_t, InstancerEntry> instances_by_target;
 
             void _add_submodels(
-                    InstancerEntry &r_entry, E3DModelInstance *p_target_node, const Array &p_submodels,
+                    InstancerEntry &p_entry, E3DModelInstance *p_target_node, const Array &p_submodels,
                     const Transform3D &p_parent_transform, const RID &p_scenario);
             void _add_submodel(
-                    InstancerEntry &r_entry, E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel,
+                    InstancerEntry &p_entry, E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel,
                     const Transform3D &p_local_transform, const RID &p_scenario);
 
         protected:

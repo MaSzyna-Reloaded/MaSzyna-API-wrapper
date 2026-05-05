@@ -27,10 +27,10 @@ namespace godot {
             Ref<Texture2D> unknown_texture;
             bool use_alpha_transparency = false;
 
-            String _get_transparency_code(const Transparency p_transparency) const;
+            String _get_transparency_code(Transparency p_transparency) const;
             Ref<MaszynaMaterial> load_material(const String &p_model_path, const String &p_material_name) const;
             Ref<Texture2D>
-            load_texture(const String &p_model_path, const String &p_material_name, const bool p_normal = false) const;
+            load_texture(const String &p_model_path, const String &p_material_name, bool p_normal = false) const;
 
         protected:
             static void _bind_methods();
@@ -45,7 +45,7 @@ namespace godot {
             void clear_cache();
             Ref<StandardMaterial3D> get_material(
                     const String &p_model_path, const String &p_material_path,
-                    const Transparency p_transparent = Transparency::DISABLED, const bool p_is_sky = false,
+                    Transparency p_transparent = Transparency::DISABLED, bool p_is_sky = false,
                     const Color &p_diffuse_color = Color(1.0, 1.0, 1.0)) const;
             Ref<Texture2D> get_texture(const String &p_texture_path) const;
     };

@@ -57,7 +57,7 @@ namespace godot {
     }
 
     void E3DOptimizedInstancer::_add_submodels(
-            InstancerEntry &r_entry, E3DModelInstance *p_target_node, const Array &p_submodels,
+            InstancerEntry &p_entry, E3DModelInstance *p_target_node, const Array &p_submodels,
             const Transform3D &p_parent_transform, const RID &p_scenario) {
         for (int i = 0; i < p_submodels.size(); i++) {
             Ref<E3DSubModel> submodel = p_submodels[i];
@@ -72,17 +72,17 @@ namespace godot {
             const Transform3D local_transform = p_parent_transform * submodel->get_transform();
 
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES) {
-                _add_submodel(r_entry, p_target_node, submodel, local_transform, p_scenario);
+                _add_submodel(p_entry, p_target_node, submodel, local_transform, p_scenario);
             }
 
             if (submodel->get_submodels().size() > 0) {
-                _add_submodels(r_entry, p_target_node, submodel->get_submodels(), local_transform, p_scenario);
+                _add_submodels(p_entry, p_target_node, submodel->get_submodels(), local_transform, p_scenario);
             }
         }
     }
 
     void E3DOptimizedInstancer::_add_submodel(
-            InstancerEntry &r_entry, E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel,
+            InstancerEntry &p_entry, E3DModelInstance *p_target_node, const Ref<E3DSubModel> &p_submodel,
             const Transform3D &p_local_transform, const RID &p_scenario) {
         RenderingServer *rendering_server = RenderingServer::get_singleton();
         const RID instance = rendering_server->instance_create();
@@ -95,7 +95,7 @@ namespace godot {
 
         Ref<Material> material = _get_material_override(p_target_node, p_submodel);
         if (material.is_valid()) {
-            r_entry.materials.push_back(material);
+            p_entry.materials.push_back(material);
             rendering_server->instance_geometry_set_material_override(instance, material->get_rid());
             if (_requires_alpha_depth_prepass_sorting(material)) {
                 rendering_server->instance_set_pivot_data(instance, -1.0f, false);
@@ -103,7 +103,7 @@ namespace godot {
         }
 
         rendering_server->instance_set_visible(instance, p_submodel->get_visible());
-        r_entry.instances.push_back({instance, p_local_transform});
+        p_entry.instances.push_back({instance, p_local_transform});
     }
 
 } // namespace godot

@@ -14,8 +14,8 @@ namespace godot {
         private:
             Ref<ArrayMesh> _find_first_mesh_in_submodels(const Array &p_submodels) const;
             bool _get_aabb_from_submodel(
-                    const Ref<E3DSubModel> &p_submodel, const Transform3D &p_parent_transform, AABB &r_aabb,
-                    bool &r_has_aabb) const;
+                    const Ref<E3DSubModel> &p_submodel, const Transform3D &p_parent_transform, AABB &p_aabb,
+                    bool &p_has_aabb) const;
 
         protected:
             static void _bind_methods();

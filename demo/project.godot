@@ -41,6 +41,7 @@ AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
+SceneryInstancer="*uid://bbfn0tknb7ayr"
 
 [debug]
 

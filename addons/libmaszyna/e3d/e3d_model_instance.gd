@@ -1,5 +1,6 @@
 @tool
 extends VisualInstance3D
+class_name E3DModelInstance
 
 ## Displays a MaSzyna E3D model in 3D space.
 ##
@@ -9,27 +10,26 @@ extends VisualInstance3D
 ## [code]RenderingServer[/code] and does not create child mesh nodes.
 ## If [member model] is set, it will be used to instnatiate. Otherwise the
 ## [member data_path] and [member model_filename] will be used to load with [E3DModelManager].
-class_name E3DModelInstance
+
 
 ## Emitted after the current model instance has been created.
 signal e3d_loading
 signal e3d_loaded
 
-## Selected instancing backend.
+## Selected instancing backend
 enum Instancer {
-    OPTIMIZED,  ## Renders using [code]RenderingServer[/code] without creating child mesh nodes.
-    NODES,  ## Creates a regular hierarchy of generated 3D nodes.
-    EDITABLE_NODES,  ## Creates generated 3D nodes intended to stay editable in the editor.
+     OPTIMIZED,  ## Renders using [code]RenderingServer[/code] without creating child mesh nodes.
+     NODES,  ## Creates a regular hierarchy of generated 3D nodes.
+     EDITABLE_NODES,  ## Creates generated 3D nodes intended to stay editable in the editor.
 }
 
 var _model: E3DModel
 var _dirty: bool = false
 var _e3d_loaded: bool = false
-var _current_instancer: E3DInstancer = null
+var _current_instancer: E3DInstancer
 var _current_editable: bool = false
 
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
-
 
 ## E3DModel to instantiate (leave empty, if you want to lazy load with [member model_filename])
 @export var model: E3DModel:
@@ -45,28 +45,25 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             data_path = x
             _dirty = true
 
-## Name of the [code].e3d[/code] model file to load (if [member model] is not used).
 @export var model_filename:String = "":
     set(x):
         if not x == model_filename:
             model_filename = x
             _dirty = true
 
-## Optional material skin overrides used by dynamic submodel materials.
 @export var skins:Array = []:
     set(x):
         if not x == skins:
             skins = x
             _dirty = true
 
-## Submodel names that should be skipped during instantiation.
 @export var exclude_node_names:Array = []:
     set(x):
         if not x == exclude_node_names:
             exclude_node_names = x
             _dirty = true
 
-## Selected instancing backend. The default is [code]NODES[/code].
+# Probably instancer should be set project-wide
 @export var instancer = Instancer.NODES:
     set(x):
         if not x == instancer:
@@ -74,7 +71,6 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             _dirty = true
 
 var submodels_aabb:AABB = AABB()
-## When enabled, node-based instancing keeps generated children editable in the editor.
 var editable_in_editor:bool = false:
     set(x):
         if not editable_in_editor == x:
@@ -84,15 +80,6 @@ var editable_in_editor:bool = false:
 
 func _get_aabb() -> AABB:
     return submodels_aabb
-
-
-func _resolve_instancer() -> E3DInstancer:
-    match instancer:
-        Instancer.NODES, Instancer.EDITABLE_NODES:
-            return E3DNodesInstancer
-        Instancer.OPTIMIZED:
-            return E3DOptimizedInstancer
-    return null
 
 
 func _process(_delta: float) -> void:
@@ -113,7 +100,7 @@ func reload() -> void:
         e3d_loading.emit()
         if _current_instancer:
             _current_instancer.clear(self)
-        _current_instancer = _resolve_instancer()
+        
         if model:
             _model = model
         else:
@@ -121,8 +108,10 @@ func reload() -> void:
         if _model:
             submodels_aabb = E3DModelTool.get_aabb(_model)
             _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
+
+            _current_instancer = _resolve_instancer()
+             
             if _current_instancer:
-                _current_instancer.clear(self)
                 _current_instancer.instantiate(self, _model, _current_editable)
                 _e3d_loaded = true
                 e3d_loaded.emit()
@@ -154,3 +143,11 @@ func _exit_tree() -> void:
 
 func is_e3d_loaded():
     return _e3d_loaded
+
+
+func _resolve_instancer():
+    match instancer:
+        Instancer.NODES, Instancer.EDITABLE_NODES:
+            return E3DNodesInstancer
+        _:
+            push_error("Unsupported instancer " + instancer)

@@ -4,7 +4,7 @@
 		Low-level parser for the MaSzyna E3D binary model format.
 	</brief_description>
 	<description>
-		[E3DParser] is responsible for reading and decoding the binary data structure of MaSzyna [code].e3d[/code] files. It traverses the file's hierarchical node structure, extracting geometry, transformations, and material metadata to build a complete [E3DModel] resource tree. This class is primarily used internally by [E3DResourceFormatLoader].
+		[E3DParser] is responsible for reading and decoding the binary data structure of MaSzyna [code].e3d[/code] files. It traverses the file's hierarchical node structure, extracting geometry, transformations, and material metadata to build a complete [E3DModel] resource tree. This class is primarily used internally by the C++ [E3DResourceFormatLoader].
 	</description>
 	<tutorials>
 	</tutorials>

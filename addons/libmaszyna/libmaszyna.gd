@@ -1,9 +1,6 @@
 @tool
 extends EditorPlugin
 
-var e3d_loader = E3DResourceFormatLoader.new()
-var ogg_vorbis_loader = OggVorbisFormatLoader.new()
-
 # Custom nodes
 
 var maszyna_environment_node_script = preload("res://addons/libmaszyna/environment/maszyna_environment_node.gd")
@@ -51,7 +48,6 @@ func _enter_tree():
     add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
-    add_autoload_singleton("E3DOptimizedInstancer", "res://addons/libmaszyna/e3d/e3d_optimized_instancer.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
 
     add_custom_type(
@@ -67,9 +63,6 @@ func _enter_tree():
         e3d_model_instance_script,
         e3d_model_instance_icon,
     )
-
-    ResourceLoader.add_resource_format_loader(e3d_loader)
-    ResourceLoader.add_resource_format_loader(ogg_vorbis_loader)
 
     add_custom_type(
         "MaszynaTrack3D",
@@ -112,9 +105,6 @@ func _exit_tree():
     if nodebank_editor_plugin:
         unregister_maszyna_editor_plugin(nodebank_editor_plugin)
 
-    ResourceLoader.remove_resource_format_loader(e3d_loader)
-    ResourceLoader.remove_resource_format_loader(ogg_vorbis_loader)
-
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
     remove_custom_type("MaszynaTrack3D")
@@ -122,7 +112,6 @@ func _exit_tree():
 
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("E3DModelTool")
-    remove_autoload_singleton("E3DOptimizedInstancer")
     remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")
     remove_autoload_singleton("E3DParser")

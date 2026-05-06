@@ -30,19 +30,22 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     parser.set_parameters(parameters)
     
     parser.initialize(file.get_buffer(file.get_length()))
-    parser.register_handler("sky", _make_importer_callback(sky_importer, parser, context))
-    parser.register_handler("atmo", _make_importer_callback(atmo_importer, parser, context))
-    parser.register_handler("node", _make_importer_callback(node_importer, parser, context))
-    parser.register_handler("event", _make_importer_callback(event_importer, parser, context))
-    parser.register_handler("origin", _make_importer_callback(origin_importer, parser, context))
-    parser.register_handler("endorigin", _make_importer_callback(endorigin_importer, parser, context))
-    parser.register_handler("rotate", _make_importer_callback(rotate_importer, parser, context))
-    parser.register_handler("terrain", _make_importer_callback(terrain_importer, parser, context))
-    parser.register_handler("include", _make_importer_callback(include_importer, parser, context))
-    parser.register_handler("trainset", _make_importer_callback(trainset_importer, parser, context))
-    parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, parser, context))
+    parser.register_handler("sky", _make_importer_callback(sky_importer, context))
+    parser.register_handler("atmo", _make_importer_callback(atmo_importer, context))
+    parser.register_handler("node", _make_importer_callback(node_importer, context))
+    parser.register_handler("event", _make_importer_callback(event_importer, context))
+    parser.register_handler("origin", _make_importer_callback(origin_importer, context))
+    parser.register_handler("endorigin", _make_importer_callback(endorigin_importer, context))
+    parser.register_handler("rotate", _make_importer_callback(rotate_importer, context))
+    parser.register_handler("terrain", _make_importer_callback(terrain_importer, context))
+    parser.register_handler("include", _make_importer_callback(include_importer, context))
+    parser.register_handler("trainset", _make_importer_callback(trainset_importer, context))
+    parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
 
     var objects = parser.parse()
+    # Clear handlers manually to break reference cycles
+    for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "firstinit"]:
+        parser.unregister_handler(token)
     var metadata = parser.get_parsed_metadata()
 
     #root.category = _get_meta_value(metadata, "l")
@@ -64,8 +67,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             _set_owner_recursive(obj, root)
 
 
-func _make_importer_callback(importer, parser, context) -> Callable:
-    var callback = func(): return importer.import(parser, context)
+func _make_importer_callback(importer, context) -> Callable:
+    var callback = func(p): return importer.import(p, context)
     return callback
 
 

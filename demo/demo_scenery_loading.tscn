@@ -3,6 +3,7 @@
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="2_f81ma"]
 [ext_resource type="Script" uid="uid://m0t4e4uurpbc" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_fraxg"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="3_nk4av"]
+[ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="4_f81ma"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_whf3y"]
 shader = ExtResource("3_nk4av")
@@ -61,3 +62,5 @@ environment = SubResource("Environment_nd35h")
 script = ExtResource("3_fraxg")
 filename = "td.scn"
 metadata/_custom_type_script = "uid://m0t4e4uurpbc"
+
+[node name="CanvasLayer" parent="." unique_id=28357571 instance=ExtResource("4_f81ma")]

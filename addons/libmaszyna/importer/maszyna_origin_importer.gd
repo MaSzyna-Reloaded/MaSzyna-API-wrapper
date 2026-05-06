@@ -1,5 +1,5 @@
 @tool
-extends Object
+extends RefCounted
 
 func import(p:MaszynaParser, context: MaszynaImporterContext):
     var origin = p.get_tokens(3)

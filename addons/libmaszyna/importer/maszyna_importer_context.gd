@@ -1,4 +1,4 @@
-extends Object
+extends RefCounted
 class_name MaszynaImporterContext
 
 var rotate := Vector3.ZERO

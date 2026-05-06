@@ -1,5 +1,5 @@
 @tool
-extends Object
+extends RefCounted
 
 
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaTrack3D:

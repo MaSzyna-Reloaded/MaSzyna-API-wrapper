@@ -1,7 +1,8 @@
 @tool
-extends Object
+extends RefCounted
 
 static var track_importer = preload("res://addons/libmaszyna/importer/maszyna_node_track_importer.gd").new()
+static var traction_importer = preload("res://addons/libmaszyna/importer/maszyna_node_traction_importer.gd").new()
 static var model_importer = preload("res://addons/libmaszyna/importer/maszyna_node_model_importer.gd").new()
 static var triangles_importer = preload("res://addons/libmaszyna/importer/maszyna_node_triangles_importer.gd").new()
 
@@ -28,7 +29,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             #push_warning("Sound node is not supported yet")
 
         "traction":
-            p.get_tokens_until("endtraction")
+            obj = traction_importer.import(p, context)
             #push_warning("Traction node is not supported yet")
 
         "tractionpowersource":

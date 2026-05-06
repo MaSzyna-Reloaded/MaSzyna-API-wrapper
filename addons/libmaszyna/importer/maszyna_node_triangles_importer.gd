@@ -1,6 +1,5 @@
 @tool
-extends Object
-
+extends RefCounted
 
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> MeshInstance3D:
     var material

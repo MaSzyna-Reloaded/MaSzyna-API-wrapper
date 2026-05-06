@@ -18,6 +18,8 @@
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
 #include "lighting/TrainLighting.hpp"
+#include "loaders/E3DResourceFormatLoader.hpp"
+#include "loaders/OggVorbisFormatLoader.hpp"
 #include "load/TrainLoad.hpp"
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
@@ -31,6 +33,7 @@
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
+#include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/core/defs.hpp>
 #include <godot_cpp/godot.hpp>
 
@@ -40,6 +43,8 @@ TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
+Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
+Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
 void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     UtilityFunctions::print("Initializing libmaszyna module on level " + String::num(p_level) + "...");
@@ -54,7 +59,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);
+        GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(MaszynaParser);
+        GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);
         GDREGISTER_CLASS(TrainBrake);
@@ -88,6 +95,11 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);       // 2
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);           // 3
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);   // 4
+
+        e3d_resource_format_loader.instantiate();
+        ogg_vorbis_format_loader.instantiate();
+        ResourceLoader::get_singleton()->add_resource_format_loader(e3d_resource_format_loader);
+        ResourceLoader::get_singleton()->add_resource_format_loader(ogg_vorbis_format_loader);
     }
 }
 
@@ -96,6 +108,16 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
         return;
+    }
+
+    if (ogg_vorbis_format_loader.is_valid()) {
+        ResourceLoader::get_singleton()->remove_resource_format_loader(ogg_vorbis_format_loader);
+        ogg_vorbis_format_loader.unref();
+    }
+
+    if (e3d_resource_format_loader.is_valid()) {
+        ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
+        e3d_resource_format_loader.unref();
     }
 
     if (Engine::get_singleton()->has_singleton("TrainSystem")) {

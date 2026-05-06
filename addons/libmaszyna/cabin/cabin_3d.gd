@@ -40,40 +40,10 @@ func _process(delta):
         if controller_path:
             var controller:TrainController = get_node(controller_path)
             set_train_controller(controller)
+            
+func _ready() -> void:
+    _cabin_ready = true
+    cabin_ready.emit()                
 
-# NOTE: EXPERIMENTAL: Automatic handle of `cabin_ready` signal.
-#
-# Finds all E3DModelInstances and emits a signal after all of them
-# are fully created. E3DModelInstances are lazy-initialized, loaded and created
-# at the runtime. This approach introduces artifacts like not fully loaded
-# meshes, which will be invisible for a while. Switching to the indoor (cabin)
-# is based on the `cabin_ready` signal to address these issues.
-#
-# NOTE: Will not re-emit signal after removing and adding the node
-# to the scene tree. To achieve that a NOTIFICATION_ENTER_TREE should be handled.
-
-# NOTE: Will not handle E3D hot reloading. The signal will be emitted just once.
-
-# FIXME: In case of E3D loading/instancing error, the signal WILL NEVER be emitted.
-# Consider adding a fallback timer.
-
-func _find_e3d_instances(node:Node, found: Array):
-    for obj in node.get_children(false):
-        if obj is E3DModelInstance:
-            found.append(obj)
-        _find_e3d_instances(obj, found)
-
-func _on_e3d_loaded():
-    if not _cabin_ready:
-        _e3d_loaded_count += 1
-        if _e3d_loaded_count == _e3d_instances.size():
-            _cabin_ready = true
-            cabin_ready.emit()
-
-func _notification(what: int) -> void:
-    match what:
-        NOTIFICATION_READY:
-            _e3d_instances = []
-            _find_e3d_instances(self, _e3d_instances)
-            for obj in _e3d_instances:
-                obj.e3d_loaded.connect(_on_e3d_loaded)
+func is_cabin_ready() -> bool:
+    return _cabin_ready

@@ -1,9 +1,21 @@
 @tool
-extends Path3D
+extends Node3D
 class_name MaszynaTrack3D
 
 static var _unknown_material = preload("res://addons/libmaszyna/materials/unknown.material")
 static var _rail_material = preload("res://addons/libmaszyna/materials/rail.material")
+
+@export_group("Domain")
+@export_enum("flat", "bridge", "tunnel", "mountains", "canyon", "bank") var environment:String = "flat"
+@export_flags("Destroyed:128") var damage_flag:int = 0
+@export var quality_flag:int
+@export var friction:float = 0.0
+@export var length:float = 0.0
+@export var parameters:Dictionary = {}
+@export var curve:MaszynaTrackCurve:
+    set(x):
+        curve = x
+        _dirty = true
 
 @export_group("Rails")
 @export var rail_spacing: float = 1.6:
@@ -89,18 +101,38 @@ func _enter_tree():
         _track_rid = TrackRenderingServer.create_track()
         TrackRenderingServer.set_track_scenario(_track_rid, get_world_3d().scenario)
         _update_track_rendering()
-    curve_changed.connect(_update_track_rendering)
-
+    _initialize_curve_3d()
+    
 func _exit_tree():
     if TrackRenderingServer and _track_rid and _track_rid.is_valid():
         TrackRenderingServer.free_track(_track_rid)
         _track_rid = RID()
-    curve_changed.disconnect(_update_track_rendering)
+    _free_curve_3d()
 
+func _initialize_curve_3d():
+    _curve = Curve3D.new()
+    _curve.closed = false
+    _curve.bake_interval = 10
+    _curve.changed.connect(_mark_dirty)
+    if curve:
+        curve.changed.connect(_update_curve3d)
+        _update_curve3d()
+    
+func _free_curve_3d():
+    if _curve:
+        _curve.changed.disconnect(_mark_dirty)
+        _curve = null
+    if curve:
+        curve.changed.disconnect(_update_curve3d)
+    
+func _mark_dirty():
+    _dirty = true
+    
 func _ready():
     set_process(true)
     set_notify_transform(true)
-
+    if not Engine.is_editor_hint():
+        _update_track_rendering()
 
 func _notification(what):
     match what:
@@ -120,6 +152,8 @@ func _process(_delta) -> void:
 func _process_dirty(_delta: float) -> void:
     var _current := (Time.get_ticks_msec()/1000.0)
     if _current - _last_debouce > DEBOUNCE_TIME:
+        _free_curve_3d()
+        _initialize_curve_3d()
         _update_track_rendering()
         _last_debouce = _current
 
@@ -143,7 +177,7 @@ func _update_track_rendering():
 
     server.set_track_curve(
         _track_rid,
-        curve,
+        _curve,
         rail_spacing,
         sleeper_spacing,
         sleeper_height,
@@ -159,3 +193,13 @@ func _update_track_rendering():
     server.set_track_transform(_track_rid, global_transform)
     server.set_track_visible(_track_rid, visible)
     server.set_track_materials(_track_rid, _ballast_material.get_rid(), _rail_material.get_rid(), _sleeper_material.get_rid())
+
+
+func _update_curve3d():
+    if not _curve:
+        return
+    
+    _curve.clear_points()
+    _curve.add_point(curve.p1, Vector3.ZERO, curve.c1)
+    _curve.add_point(curve.p2, curve.c2, Vector3.ZERO)
+    _curve.emit_changed()

@@ -6,9 +6,11 @@ var origin := Vector3.ZERO
 var tracks: Array[MaszynaTrack3D] = []
 var traction: Array = []
 var terrains: Array = []
+var triangles: Array = []
 
 var _rotates = []
 var _origins = []
+var _triangles = []
 
 func push_rotate(new_rotate: Vector3):
     _rotates.push_front(rotate)

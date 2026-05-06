@@ -22,15 +22,19 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             #push_warning("Eventlauncher node is not supported yet")
 
         "triangles":
-            obj = triangles_importer.import(p, context)
+            var triangles = triangles_importer.import(p, context)
+            if triangles:
+                context.triangles.append(triangles)
 
         "sound":
             p.get_tokens_until("endsound")
             #push_warning("Sound node is not supported yet")
 
         "traction":
-            obj = traction_importer.import(p, context)
-            #push_warning("Traction node is not supported yet")
+            var traction = traction_importer.import(p, context)
+            if traction:
+                traction.name = name
+                context.traction.append(traction)
 
         "tractionpowersource":
             p.get_tokens_until("end")
@@ -38,8 +42,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
 
         "model":
             obj = model_importer.import(p, context)
-            if obj and context.rotate:
-                obj.rotation = Vector3(context.rotate)
+            #if obj and context.rotate:
+            #    obj.rotation += Vector3(context.rotate)
 
         "track":
             var track = track_importer.import(p, context)
@@ -61,7 +65,9 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     if obj:
         obj.name = node_name
     if obj is Node3D:
+        obj.rotation += Vector3(context.rotate)
         obj.position += context.origin
+
     if range_max > 0 and obj and obj is GeometryInstance3D:
         obj.visibility_range_begin = range_min
         obj.visibility_range_end = range_max

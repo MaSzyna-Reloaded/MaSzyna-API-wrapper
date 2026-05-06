@@ -14,9 +14,15 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
         var obj := MaszynaIncludeNode.new()
+        obj.name = filename
         obj.filename = filename
         obj.parameters = parameters
+        obj.context_rotate = context.rotate
+        obj.context_origin = context.origin
+        #SceneryInstancer.instantiate(obj, parameters, context)
+        #return obj.get_children(true)
         return [obj]
+        
     else:
         push_error("Cannot load include file: " + final_path)
         return []

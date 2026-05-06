@@ -1,7 +1,7 @@
 @tool
 extends RefCounted
 
-func import(p:MaszynaParser, context: MaszynaImporterContext) -> MeshInstance3D:
+func import(p:MaszynaParser, context: MaszynaImporterContext):
     var material
     var texture
 
@@ -14,7 +14,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MeshInstance3D:
             texture = _n
 
     var data:Array = p.get_tokens_until("endtri")
-    var mesh = ArrayMesh.new()
+    #var mesh = ArrayMesh.new()
     var vertices = PackedVector3Array()
 
     var normals = PackedVector3Array()
@@ -44,19 +44,20 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MeshInstance3D:
     normals.reverse()
     uvs.reverse()
 
-    var arrays: Array = []
-    arrays.resize(Mesh.ARRAY_MAX)
-    arrays[Mesh.ARRAY_VERTEX] = vertices
-    arrays[Mesh.ARRAY_NORMAL] = normals
-    arrays[Mesh.ARRAY_TEX_UV] = uvs
+    #var arrays: Array = []
+    #arrays.resize(Mesh.ARRAY_MAX)
+    #arrays[Mesh.ARRAY_VERTEX] = vertices
+    #arrays[Mesh.ARRAY_NORMAL] = normals
+    #arrays[Mesh.ARRAY_TEX_UV] = uvs
 
-    mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+    return [texture, vertices, normals, uvs]
+    #mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 
-    var obj := MeshInstance3D.new()
-    obj.mesh = mesh
-    if texture:
-        var mat = MaterialManager.get_material("", texture)
-        if mat:
-            obj.material_override = mat
+    #var obj := MeshInstance3D.new()
+    #obj.mesh = mesh
+    #if texture:
+    #    var mat = MaterialManager.get_material("", texture)
+    #    if mat:
+    #        obj.material_override = mat
     
-    return obj
+    #return obj

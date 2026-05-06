@@ -19,6 +19,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         root.remove_child(child)
 
     var context := MaszynaImporterContext.new()
+    context.rotate = root.context_rotate
+    context.origin = root.context_origin
     var abs_file = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(root.filename)
 
     var file = FileAccess.open(abs_file, FileAccess.READ)
@@ -43,21 +45,65 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
 
     var objects = parser.parse()
+    var metadata = parser.get_parsed_metadata()
+    
+    
     # Clear handlers manually to break reference cycles
     for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "firstinit"]:
         parser.unregister_handler(token)
-    var metadata = parser.get_parsed_metadata()
-
+    parser.unreference()
+    
     #root.category = _get_meta_value(metadata, "l")
     #root.title = _get_meta_value(metadata, "n")
     #root.description = _get_meta_value(metadata, "d")
+    
+# create tracks
     var tracks = Node3D.new()
     tracks.name = "Tracks"
-    for track in context.tracks:
-        tracks.add_child(track)
-        
-    objects.insert(0, tracks)
+    for item in context.tracks:
+        tracks.add_child(item)
+    if tracks.get_child_count() > 0:
+        objects.insert(0, tracks)
 
+# create traction    
+    var traction = Node3D.new()
+    traction.name = "Traction"
+    for item in context.traction:
+        traction.add_child(item)
+    if traction.get_child_count() > 0:
+        objects.insert(0, traction)
+
+# create meshinstances for triangles grouped by material
+
+    var triangles_by_material = {}
+    for triangle in context.triangles:
+        # [texture, vertices, normals, uvs]
+        var texture = triangle[0]
+        if not texture in triangles_by_material:
+            triangles_by_material[texture] = []
+        triangles_by_material[texture].append(triangle)
+    
+    for texture in triangles_by_material.keys():
+        var node = MeshInstance3D.new()
+        var mesh = ArrayMesh.new()
+        var arrays: Array = []
+        arrays.resize(Mesh.ARRAY_MAX)
+        arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array()
+        arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array()
+        arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array()
+        for triangles in triangles_by_material[texture]:
+            arrays[Mesh.ARRAY_VERTEX].append_array(triangles[1])
+            arrays[Mesh.ARRAY_NORMAL].append_array(triangles[2])
+            arrays[Mesh.ARRAY_TEX_UV].append_array(triangles[3])
+        mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+        node.mesh = mesh
+        node.name = texture
+        var material = MaterialManager.get_material("", texture)
+        if material:
+            node.material_override = material
+        objects.append(node)
+    
+    
     for obj in objects:
         if not obj:
             continue

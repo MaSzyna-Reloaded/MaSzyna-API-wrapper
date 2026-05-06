@@ -7,12 +7,14 @@ var _t := 0
 
 const RELOAD_DEBOUNCE_MSEC := 500
 
-@export var parameters:Dictionary = {}
 @export var filename:String = "":
     set(x):
         if not filename == x:
             _dirty = true
             filename = x
+@export var parameters:Dictionary = {}
+@export var context_rotate: Vector3 = Vector3.ZERO
+@export var context_origin: Vector3 = Vector3.ZERO
 
 func _ready() -> void:
     if self.filename:

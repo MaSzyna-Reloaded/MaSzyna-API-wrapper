@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaterialParser" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Parses MaSzyna material definition files.
+	</brief_description>
+	<description>
+		[MaterialParser] reads MaSzyna [code].mat[/code] files and converts them into [MaszynaMaterial] objects. If no material file is found, it falls back to treating the requested material name as a plain texture reference.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="parse" qualifiers="const">
+			<return type="MaszynaMaterial" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_file" type="String" />
+			<description>
+				Parses the requested material definition and returns a [MaszynaMaterial] describing its resolved settings.
+			</description>
+		</method>
+	</methods>
+</class>

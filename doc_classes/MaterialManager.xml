@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaterialManager" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Loads and caches MaSzyna materials and DDS textures.
+	</brief_description>
+	<description>
+		[MaterialManager] is an engine singleton used by the E3D runtime to resolve MaSzyna [code].mat[/code] definitions and related DDS textures into [StandardMaterial3D] resources. It also exposes direct texture loading and respects the [code]e3d/use_alpha_transparency[/code] user setting when resolving transparency.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="clear_cache">
+			<return type="void" />
+			<description>
+				Clears the cached generated materials and refreshes settings-dependent behavior.
+			</description>
+		</method>
+		<method name="get_material" qualifiers="const">
+			<return type="StandardMaterial3D" />
+			<param index="0" name="model_path" type="String" />
+			<param index="1" name="material_path" type="String" />
+			<param index="2" name="transparent" type="int" enum="MaterialManager.Transparency" default="0" />
+			<param index="3" name="is_sky" type="bool" default="false" />
+			<param index="4" name="diffuse_color" type="Color" default="Color(1, 1, 1, 1)" />
+			<description>
+				Returns a generated [StandardMaterial3D] for the requested MaSzyna material path.
+			</description>
+		</method>
+		<method name="get_texture" qualifiers="const">
+			<return type="Texture2D" />
+			<param index="0" name="texture_path" type="String" />
+			<description>
+				Loads a DDS texture using the same path resolution rules as material loading.
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="DISABLED" value="0" enum="Transparency">
+			Leaves transparency disabled.
+		</constant>
+		<constant name="ALPHA" value="1" enum="Transparency">
+			Uses alpha transparency.
+		</constant>
+		<constant name="ALPHA_SCISSOR" value="2" enum="Transparency">
+			Uses alpha scissor transparency.
+		</constant>
+	</constants>
+</class>

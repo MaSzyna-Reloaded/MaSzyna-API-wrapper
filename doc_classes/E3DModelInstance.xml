@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DModelInstance" inherits="VisualInstance3D" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Instantiates and displays a MaSzyna E3D model in the scene tree.
+	</brief_description>
+	<description>
+		[E3DModelInstance] is the native runtime node used to display [E3DModel] resources. It can either use a directly assigned [member model] resource or load a model through [member data_path] and [member model_filename]. The node rebuilds its contents when reloaded and exposes signals for the loading lifecycle.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="is_e3d_loaded" qualifiers="const">
+			<return type="bool" />
+			<description>
+				Returns [code]true[/code] after the current model was instantiated successfully.
+			</description>
+		</method>
+		<method name="reload">
+			<return type="void" />
+			<description>
+				Reloads the current E3D model and rebuilds the instantiated representation.
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="data_path" type="String" setter="set_data_path" getter="get_data_path" default="&quot;&quot;">
+			Base data directory used together with [member model_filename] when loading through [E3DModelManager].
+		</member>
+		<member name="editable_in_editor" type="bool" setter="set_editable_in_editor" getter="is_editable_in_editor" default="false">
+			When enabled, the instantiated node-based representation stays editable in the editor.
+		</member>
+		<member name="exclude_node_names" type="Array" setter="set_exclude_node_names" getter="get_exclude_node_names" default="[]">
+			List of E3D node names that should be skipped during instantiation.
+		</member>
+		<member name="instancer" type="int" setter="set_instancer" getter="get_instancer" enum="E3DModelInstance.Instancer" default="1">
+			Selects which E3D instancer backend is used for this node.
+		</member>
+		<member name="model" type="E3DModel" setter="set_model" getter="get_model">
+			Directly assigned E3D model resource. When set, it takes precedence over [member data_path] and [member model_filename].
+		</member>
+		<member name="model_filename" type="String" setter="set_model_filename" getter="get_model_filename" default="&quot;&quot;">
+			Model filename relative to [member data_path] when loading through [E3DModelManager].
+		</member>
+		<member name="skins" type="Array" setter="set_skins" getter="get_skins" default="[]">
+			Array of skin overrides passed to the selected instancer.
+		</member>
+	</members>
+	<signals>
+		<signal name="e3d_loaded">
+			<description>
+				Emitted after the current model was loaded and instantiated successfully.
+			</description>
+		</signal>
+		<signal name="e3d_loading">
+			<description>
+				Emitted right before the current model starts reloading.
+			</description>
+		</signal>
+	</signals>
+	<constants>
+		<constant name="OPTIMIZED" value="0" enum="Instancer">
+			Uses the optimized instancer backend.
+		</constant>
+		<constant name="NODES" value="1" enum="Instancer">
+			Uses the node-based instancer backend.
+		</constant>
+		<constant name="EDITABLE_NODES" value="2" enum="Instancer">
+			Uses the node-based backend and keeps generated nodes editable in the editor.
+		</constant>
+	</constants>
+</class>

@@ -1,11 +1,10 @@
 extends MaszynaGutTest
 
-var tool: Node
+var tool
 
 
 func before_each() -> void:
-    tool = load("res://addons/libmaszyna/e3d/e3d_model_tool.gd").new()
-    add_child_autoqfree(tool)
+    tool = E3DModelTool
 
 
 func test_returns_first_root_mesh() -> void:

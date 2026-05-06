@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DModelTool" inherits="Object" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Utility singleton for derived E3D model data.
+	</brief_description>
+	<description>
+		[E3DModelTool] provides helper methods for inspecting [E3DModel] resources. It can find the first mesh stored in a model hierarchy and compute an axis-aligned bounding box for the full model.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="find_first_mesh" qualifiers="const">
+			<return type="ArrayMesh" />
+			<param index="0" name="model" type="E3DModel" />
+			<description>
+				Returns the first mesh found in the E3D submodel hierarchy, or [code]null[/code] if the model has no meshes.
+			</description>
+		</method>
+		<method name="get_aabb" qualifiers="const">
+			<return type="AABB" />
+			<param index="0" name="model" type="E3DModel" />
+			<description>
+				Computes and returns the combined axis-aligned bounding box for the whole E3D model.
+			</description>
+		</method>
+	</methods>
+</class>

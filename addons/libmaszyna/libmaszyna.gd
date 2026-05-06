@@ -10,8 +10,8 @@ var maszyna_environment_node_script = preload("res://addons/libmaszyna/environme
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
 var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
-var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
-var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
+var maszyna_track_3d_script = load("res://addons/libmaszyna/maszyna_track_3d.gd")
+var maszyna_switch_3d_script = load("res://addons/libmaszyna/maszyna_switch_3d.gd")
 
 # Editor plugins
 

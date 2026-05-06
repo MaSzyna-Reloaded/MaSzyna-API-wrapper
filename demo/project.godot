@@ -42,6 +42,7 @@ AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 E3DOptimizedInstancer="*uid://df2elvi65bdmc"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
+SceneryInstancer="*uid://bbfn0tknb7ayr"
 
 [debug]
 

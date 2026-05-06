@@ -18,25 +18,27 @@ namespace godot {
             int cursor = 0;
             int length = 0;
             std::vector<Dictionary> meta;
+            Array default_stop_chars;
             Dictionary parameters;
+            Array get_stops(const Array &p_stops) const;
 
         protected:
             static void _bind_methods();
 
         public:
             MaszynaParser();
-            void initialize(const PackedByteArray &p_buffer);
-            // void _create_instance(const PackedByteArray &buffer);
+            void initialize(const PackedByteArray &p_buffer, const Array &p_default_stop_chars);
             int get8();
             String get_line();
             bool eof_reached() const;
             void register_handler(const String &p_token, const Callable &p_callback);
+            void set_parameters(const Dictionary &p_parameters);
             bool as_bool(const String &p_token);
             Vector3 as_vector3(const Array &p_tokens);
-            Array get_tokens(int p_num, const Array &p_stop);
-            String next_token(const Array &p_stop);
-            Vector3 next_vector3(const Array &p_stop);
-            Array get_tokens_until(const String &p_token, const Array &p_stop);
+            Array get_tokens(int p_num, const Array &p_stops = Array());
+            String next_token(const Array &p_stops = Array());
+            Vector3 next_vector3(const Array &p_stops = Array());
+            Array get_tokens_until(const String &p_token, const Array &p_stops = Array());
             Array parse();
             Dictionary get_parsed_metadata();
             void push_metadata();

@@ -2,32 +2,50 @@
 
 namespace godot {
     void MaszynaParser::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("initialize", "buffer"), &MaszynaParser::initialize);
+        ClassDB::bind_method(
+                D_METHOD("initialize", "buffer", "default_stop"), &MaszynaParser::initialize, DEFVAL(Array()));
         ClassDB::bind_method(D_METHOD("get8"), &MaszynaParser::get8);
         ClassDB::bind_method(D_METHOD("get_line"), &MaszynaParser::get_line);
         ClassDB::bind_method(D_METHOD("eof_reached"), &MaszynaParser::eof_reached);
         ClassDB::bind_method(D_METHOD("register_handler", "token", "callback"), &MaszynaParser::register_handler);
         ClassDB::bind_method(D_METHOD("as_bool", "token"), &MaszynaParser::as_bool);
         ClassDB::bind_method(D_METHOD("as_vector3", "tokens"), &MaszynaParser::as_vector3);
-        ClassDB::bind_method(D_METHOD("get_tokens", "num", "stop"), &MaszynaParser::get_tokens);
-        ClassDB::bind_method(D_METHOD("next_token", "stop"), &MaszynaParser::next_token);
-        ClassDB::bind_method(D_METHOD("next_vector3", "stop"), &MaszynaParser::next_vector3);
-        ClassDB::bind_method(D_METHOD("get_tokens_until", "token", "stop"), &MaszynaParser::get_tokens_until);
+        ClassDB::bind_method(D_METHOD("get_tokens", "num", "stops"), &MaszynaParser::get_tokens, DEFVAL(Array()));
+        ClassDB::bind_method(D_METHOD("next_token", "stops"), &MaszynaParser::next_token, DEFVAL(Array()));
+        ClassDB::bind_method(D_METHOD("next_vector3", "stops"), &MaszynaParser::next_vector3, DEFVAL(Array()));
+        ClassDB::bind_method(
+                D_METHOD("get_tokens_until", "token", "stops"), &MaszynaParser::get_tokens_until, DEFVAL(Array()));
         ClassDB::bind_method(D_METHOD("parse"), &MaszynaParser::parse);
         ClassDB::bind_method(D_METHOD("get_parsed_metadata"), &MaszynaParser::get_parsed_metadata);
         ClassDB::bind_method(D_METHOD("push_metadata"), &MaszynaParser::push_metadata);
         ClassDB::bind_method(D_METHOD("pop_metadata"), &MaszynaParser::pop_metadata);
         ClassDB::bind_method(D_METHOD("clear_metadata"), &MaszynaParser::clear_metadata);
+        ClassDB::bind_method(D_METHOD("set_parameters"), &MaszynaParser::set_parameters);
     }
 
     MaszynaParser::MaszynaParser() {
+        default_stop_chars = Array::make(" ", "\t", "\n", "\r", ";");
         meta.emplace_back();
     }
 
-    void MaszynaParser::initialize(const PackedByteArray &p_buffer) {
+    Array MaszynaParser::get_stops(const Array &p_stops) const {
+        if (!p_stops.is_empty()) {
+            return p_stops;
+        }
+        return default_stop_chars;
+    }
+
+    void MaszynaParser::set_parameters(const Dictionary &p_parameters) {
+        parameters = p_parameters;
+    }
+
+    void MaszynaParser::initialize(const PackedByteArray &p_buffer, const Array &p_default_stop_chars) {
         this->buffer = p_buffer;
         length = static_cast<int>(p_buffer.size());
         cursor = 0;
+        if (!p_default_stop_chars.is_empty()) {
+            default_stop_chars = p_default_stop_chars;
+        }
     }
 
     int MaszynaParser::get8() {
@@ -66,7 +84,8 @@ namespace godot {
         return Vector3(p_tokens[0], p_tokens[1], p_tokens[2]);
     }
 
-    Array MaszynaParser::get_tokens(const int p_num, const Array &p_stop) {
+    Array MaszynaParser::get_tokens(const int p_num, const Array &p_stops) {
+        const Array stop_chars = get_stops(p_stops);
         Array tokens;
         bool maybe_comment = false;
         bool maybe_endcomment = false;
@@ -80,6 +99,7 @@ namespace godot {
 
                 if (c == '/') {
                     if (maybe_comment) {
+                        maybe_comment = false;
                         // Line comment detected
                         while (!eof_reached() && c != '\n' && c != '\r') {
                             c = static_cast<char>(get8());
@@ -113,7 +133,7 @@ namespace godot {
                     token += '/';
                 }
 
-                if (skip || p_stop.has(String::chr(c))) {
+                if (skip || stop_chars.has(String::chr(c))) {
                     break;
                 }
 
@@ -136,21 +156,20 @@ namespace godot {
         return tokens;
     }
 
-    String MaszynaParser::next_token(const Array &p_stop = Array::make(" ", '\t', '\n', '\r', ';')) {
-        Array tokens = get_tokens(1, p_stop);
+    String MaszynaParser::next_token(const Array &p_stops) {
+        Array tokens = get_tokens(1, p_stops);
         return tokens.size() > 0 ? tokens[0] : "";
     }
 
-    Vector3 MaszynaParser::next_vector3(const Array &p_stop) {
-        const Array tokens = get_tokens(3, p_stop);
+    Vector3 MaszynaParser::next_vector3(const Array &p_stops) {
+        const Array tokens = get_tokens(3, p_stops);
         return as_vector3(tokens);
     }
 
-    Array MaszynaParser::get_tokens_until(
-            const String &p_token, const Array &p_stop = Array::make(" ", '\t', '\n', '\r', ';')) {
+    Array MaszynaParser::get_tokens_until(const String &p_token, const Array &p_stops) {
         Array tokens;
         while (!eof_reached()) {
-            if (String upcoming_token = next_token(p_stop); !upcoming_token.is_empty()) {
+            if (String upcoming_token = next_token(p_stops); !upcoming_token.is_empty()) {
                 tokens.append(upcoming_token);
                 if (upcoming_token == p_token) {
                     break;

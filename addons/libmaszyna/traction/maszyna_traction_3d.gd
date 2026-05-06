@@ -12,8 +12,6 @@ enum Wires {JEZDNY, JEDNY_NOSNY, DWA_JEZDNE_NOSNY, DWA_JEZDNE_DWA_NOSNE}
 func str_or_none(x):
     return str(x) if x else "none"
 
-var _dirty := false
-
 @export var curve1:MaszynaTrackCurve
 @export var curve2:MaszynaTrackCurve
 @export var power_supply_name:String
@@ -21,11 +19,7 @@ var _dirty := false
 @export var max_current:float
 @export var resistivity:float
 @export_enum("cu", "al") var material:String
-@export var wire_thickness:float:  # mm
-    set(x):
-        wire_thickness = x
-        _dirty = true
-
+@export var wire_thickness:float  # mm
 @export_flags("Patyna:1", "Zerwanie:128") var damage_flag:int
 @export var min_height:float
 @export var segment_length:float
@@ -33,119 +27,69 @@ var _dirty := false
 @export var wire_offset:float
 @export var parallel:String = ""
 
+var _traction_rid: RID
 
 
-var _path1:Path3D
-var _path2:Path3D
-var _poly1:CSGPolygon3D
-var _poly2:CSGPolygon3D
+func _make_curve(source_curve: MaszynaTrackCurve) -> Curve3D:
+    var runtime_curve := Curve3D.new()
+    runtime_curve.bake_interval = 10.0
+    if not source_curve:
+        return runtime_curve
 
+    runtime_curve.add_point(source_curve.p1, Vector3.ZERO, Vector3.ZERO)
+    runtime_curve.add_point(source_curve.p2, Vector3.ZERO, Vector3.ZERO)
+    return runtime_curve
 
-func _generate_circle_polygon(radius: float, num_sides: int, position: Vector2) -> PackedVector2Array:
-    var angle_delta: float = (PI * 2) / num_sides
-    var vector: Vector2 = Vector2(radius, 0)
-    var polygon: PackedVector2Array
-
-    for _i in num_sides:
-        polygon.append(vector + position)
-        vector = vector.rotated(angle_delta)
-
-    return polygon
-
-
-func _init():
-    _path1 = Path3D.new()
-    _path2 = Path3D.new()
-    _poly1 = CSGPolygon3D.new()
-    _poly2 = CSGPolygon3D.new()
-
-
-    _poly1.position = Vector3.ZERO
-    _poly2.position = Vector3.ZERO
-
-
-
-    _poly1.path_interval = 10.0
-    _poly1.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
-    _poly2.path_interval = 10.0
-    _poly2.path_interval_type = CSGPolygon3D.PATH_INTERVAL_DISTANCE
-
-const VIS_WIDTH = 0.2
 
 func _update():
-    _update_path(_path1, curve1)
-    var center_y = Vector2(0, (curve2.p1-curve1.p1).y * 0.5)
-    var thickness_scale = 0.001
-    var wire_circle = _generate_circle_polygon(wire_thickness * thickness_scale, 6, Vector2.ZERO)
-    
+    if not TractionRenderingServer or not _traction_rid or not _traction_rid.is_valid():
+        return
 
-    _poly1.polygon = wire_circle
-    _poly2.polygon = wire_circle
-    _poly2.visible = not wires == Wires.JEZDNY
-    _poly1.mode = CSGPolygon3D.MODE_PATH
+    var runtime_curve1 := _make_curve(curve1)
+    var runtime_curve2 := _make_curve(curve2)
 
-    
-
-    if not wires == Wires.JEZDNY:
-        _update_path(_path2, curve2)
-        _poly2.visible = true
-        _poly2.mode = CSGPolygon3D.MODE_PATH
-    else:
-        _poly2.mode = CSGPolygon3D.MODE_DEPTH
-
+    TractionRenderingServer.set_traction_geometry(_traction_rid, runtime_curve1, runtime_curve2, wire_thickness, wires)
+    TractionRenderingServer.set_traction_transform(_traction_rid, global_transform)
+    TractionRenderingServer.set_traction_visible(_traction_rid, visible)
+    TractionRenderingServer.set_traction_scenario(_traction_rid, get_world_3d().scenario)
+    TractionRenderingServer.set_traction_material(_traction_rid, TRACTION_MATERIAL.get_rid())
 
 
 func _enter_tree():
-    add_child(_path1)
-    add_child(_path2)
-    add_child(_poly1)
-    add_child(_poly2)
-
-    _poly1.material = TRACTION_MATERIAL
-    _poly2.material = TRACTION_MATERIAL
-    
-    _poly1.path_node = _poly1.get_path_to(_path1)
-    _poly2.path_node = _poly2.get_path_to(_path2)
-    
-    _update()
+    if TractionRenderingServer:
+        _traction_rid = TractionRenderingServer.create_traction()
+        _update()
 
 
 func _exit_tree():
-    _poly1.path_node = NodePath("")
-    _poly2.path_node = NodePath("")
-    
-    remove_child(_path1)
-    remove_child(_path2)
-    remove_child(_poly1)
-    remove_child(_poly2)
-    
+    if TractionRenderingServer and _traction_rid and _traction_rid.is_valid():
+        TractionRenderingServer.free_traction(_traction_rid)
+        _traction_rid = RID()
 
-func _update_path(path:Path3D, curve:MaszynaTrackCurve):
-    var _curve = Curve3D.new()
-    _curve.add_point(curve.p1, Vector3.ZERO, Vector3.ZERO)
-    _curve.add_point(curve.p2, Vector3.ZERO, Vector3.ZERO)
-    path.curve = _curve
-    
+
+func _notification(what):
+    match what:
+        NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
+            if _traction_rid and TractionRenderingServer:
+                TractionRenderingServer.set_traction_transform(_traction_rid, global_transform)
+                TractionRenderingServer.set_traction_visible(_traction_rid, visible)
+
 
 func calculate_p1_direction():
-    var off = _path1.curve.get_closest_offset(curve1.p1)
-    var s1 = _path1.curve.sample_baked(off, true)
-    var s2 = _path1.curve.sample_baked(off+0.1, true)
-    if s1 == s2:
-        return (curve1.p2-curve1.p1).normalized()
-    else:
-        return (s2-s1).normalized()
+    if not curve1:
+        return Vector3.ZERO
+    return (curve1.p2-curve1.p1).normalized()
+
 
 func calculate_p2_direction():
-    var off = _path1.curve.get_closest_offset(curve1.p2)
-    var s1 = _path1.curve.sample_baked(off, true)
-    var s2 = _path1.curve.sample_baked(off-0.1, true)
-    if s1 == s2:
-        return (curve1.p1-curve1.p2).normalized()
-    else:
-        return (s2-s1).normalized()
+    if not curve1:
+        return Vector3.ZERO
+    return (curve1.p1-curve1.p2).normalized()
+
 
 func get_curve_center():
+    if not curve1:
+        return Vector3.ZERO
     var p1 = curve1.p1
     var p2 = curve1.p2
     return p1+(p2-p1)*0.5

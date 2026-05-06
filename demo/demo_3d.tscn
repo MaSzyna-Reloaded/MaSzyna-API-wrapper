@@ -964,9 +964,6 @@ model = ExtResource("21_sa6xs")
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
 [node name="MaszynaTrack3D" type="Node3D" parent="." unique_id=665070806]
-process_thread_group = 2
-process_thread_group_order = 0
-process_thread_messages = 0
 script = ExtResource("12_m0qth")
 rail_spacing = 1.5
 sleeper_model_name = "models/quark/podklad1"

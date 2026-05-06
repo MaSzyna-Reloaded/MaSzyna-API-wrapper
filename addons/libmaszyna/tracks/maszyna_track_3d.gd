@@ -83,6 +83,21 @@ static var _rail_material = preload("res://addons/libmaszyna/materials/rail.mate
 @export_group("Connectivity")
 @export var next_track: NodePath
 @export var previous_track: NodePath
+## Minimum distance from camera required to render the track.
+## When set to [code]0.0[/code], there is no near distance limit.
+@export var visibility_range_begin: float = 0.0:
+    set(x):
+        if not is_equal_approx(x, visibility_range_begin):
+            visibility_range_begin = x
+            _mark_dirty()
+
+## Maximum distance from camera allowed to render the track.
+## When set to [code]0.0[/code], there is no far distance limit.
+@export var visibility_range_end: float = 0.0:
+    set(x):
+        if not is_equal_approx(x, visibility_range_end):
+            visibility_range_end = x
+            _mark_dirty()
 
 var _track_rid: RID
 var _dirty = false
@@ -95,18 +110,15 @@ var _ballast_material: StandardMaterial3D = _unknown_material
 
 const DEBOUNCE_TIME = 0.1
 var _last_debouce:float
+var _range_check_interval: float = 1.0
+var _range_check_elapsed: float = 0.0
 
 func _enter_tree():
-    if TrackRenderingServer:
-        _track_rid = TrackRenderingServer.create_track()
-        TrackRenderingServer.set_track_scenario(_track_rid, get_world_3d().scenario)
-        _update_track_rendering()
     _initialize_curve_3d()
+    _apply_visibility_state(false)
     
 func _exit_tree():
-    if TrackRenderingServer and _track_rid and _track_rid.is_valid():
-        TrackRenderingServer.free_track(_track_rid)
-        _track_rid = RID()
+    _free_track()
     _free_curve_3d()
 
 func _initialize_curve_3d():
@@ -127,34 +139,38 @@ func _free_curve_3d():
     
 func _mark_dirty():
     _dirty = true
+    _range_check_elapsed = _range_check_interval
     
 func _ready():
     set_process(true)
     set_notify_transform(true)
-    if not Engine.is_editor_hint():
-        _update_track_rendering()
+    _apply_visibility_state(false)
 
 func _notification(what):
     match what:
         NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
-            if _track_rid and TrackRenderingServer:
+            if _track_rid and _track_rid.is_valid() and TrackRenderingServer:
                 TrackRenderingServer.set_track_transform(_track_rid, global_transform)
                 TrackRenderingServer.set_track_visible(_track_rid, visible)
         
 
-func _process(_delta) -> void:
-    if Engine.is_editor_hint():
-        if _dirty:
-            _process_dirty(_delta)
-            _dirty = false
+func _process(delta: float) -> void:
+    if _dirty:
+        _process_dirty(delta)
+        return
+
+    _range_check_elapsed += delta
+    if _range_check_elapsed >= _range_check_interval:
+        _apply_visibility_state()
 
 
 func _process_dirty(_delta: float) -> void:
+    _dirty = false
     var _current := (Time.get_ticks_msec()/1000.0)
     if _current - _last_debouce > DEBOUNCE_TIME:
         _free_curve_3d()
         _initialize_curve_3d()
-        _update_track_rendering()
+        _apply_visibility_state(true)
         _last_debouce = _current
 
 
@@ -203,3 +219,65 @@ func _update_curve3d():
     _curve.add_point(curve.p1, Vector3.ZERO, curve.c1)
     _curve.add_point(curve.p2, curve.c2, Vector3.ZERO)
     _curve.emit_changed()
+
+
+func _apply_visibility_state(force_reload: bool = false) -> void:
+    _range_check_elapsed = 0.0
+
+    if _should_render():
+        if force_reload or not (_track_rid and _track_rid.is_valid()):
+            _create_track()
+            _update_track_rendering()
+    else:
+        _free_track()
+
+
+func _should_render() -> bool:
+    if not is_inside_tree():
+        return false
+
+    if is_zero_approx(visibility_range_begin) and is_zero_approx(visibility_range_end):
+        return true
+
+    var camera: Camera3D = _get_active_camera()
+    if not is_instance_valid(camera):
+        return false
+
+    var distance: float = camera.global_position.distance_to(_get_visibility_reference_position())
+    if visibility_range_begin > 0.0 and distance < visibility_range_begin:
+        return false
+    if visibility_range_end > 0.0 and distance > visibility_range_end:
+        return false
+    return true
+
+
+func _get_active_camera() -> Camera3D:
+    if Engine.is_editor_hint():
+        return E3DEditorCameraTracker.get_camera()
+
+    var viewport: Viewport = get_viewport()
+    if viewport:
+        return viewport.get_camera_3d()
+    return null
+
+
+func _get_visibility_reference_position() -> Vector3:
+    if curve:
+        var local_center: Vector3 = curve.p1 + (curve.p2 - curve.p1) * 0.5
+        return global_transform * local_center
+    return global_position
+
+
+func _create_track() -> void:
+    if not TrackRenderingServer:
+        return
+
+    _free_track()
+    _track_rid = TrackRenderingServer.create_track()
+    TrackRenderingServer.set_track_scenario(_track_rid, get_world_3d().scenario)
+
+
+func _free_track() -> void:
+    if TrackRenderingServer and _track_rid and _track_rid.is_valid():
+        TrackRenderingServer.free_track(_track_rid)
+    _track_rid = RID()

@@ -34,6 +34,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
             var traction = traction_importer.import(p, context)
             if traction:
                 traction.name = name
+                traction.visibility_range_begin = range_min
+                traction.visibility_range_end = clampf(range_max, 0.0, 500.0)
                 context.traction.append(traction)
 
         "tractionpowersource":
@@ -42,6 +44,9 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
 
         "model":
             obj = model_importer.import(p, context)
+            if obj:
+                obj.visibility_range_begin = range_min
+                obj.visibility_range_end = clampf(range_max, 0.0, 500.0)
             #if obj and context.rotate:
             #    obj.rotation += Vector3(context.rotate)
 
@@ -51,6 +56,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 track.name = name
                 #track.range_max = range_max
                 #track.range_min = range_min
+                track.visibility_range_begin = range_min
+                track.visibility_range_end = clampf(range_max, 0.0, 500.0)
                 context.tracks.append(track)
 
         "memcell":

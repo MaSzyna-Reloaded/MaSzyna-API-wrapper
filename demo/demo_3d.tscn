@@ -78,7 +78,6 @@ script = ExtResource("1_ut343")
 [node name="DebugMenuFPS" parent="." unique_id=28357571 instance=ExtResource("2_qg2pq")]
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -1020,6 +1019,7 @@ wire_thickness = 3.0
 min_height = 0.4
 segment_length = 4.0
 wire_offset = 0.04
+visibility_range_end = 100.0
 metadata/_custom_type_script = "uid://do35jm13yiccm"
 
 [node name="Słup1" type="Node3D" parent="TractionExample" unique_id=1506328991]

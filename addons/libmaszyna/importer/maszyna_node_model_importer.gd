@@ -17,7 +17,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> E3DModelInstanc
         data_path_array.insert(0, "models")
         
     obj.data_path = "/".join(data_path_array)
-    obj.instancer = E3DModelInstance.Instancer.OPTIMIZED
+    obj.instancer = E3DModelInstance.Instancer.NODES
 
     obj.position = Vector3(float(loc_x), float(loc_y), float(loc_z))
     obj.rotate_object_local(Vector3.UP, deg_to_rad(float(rot_y)))

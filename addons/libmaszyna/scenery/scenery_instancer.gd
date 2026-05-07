@@ -55,36 +55,25 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 # create meshinstances for triangles grouped by material
 
     var triangles_group_started_usec := Time.get_ticks_usec()
-    var triangles_by_material = {}
-    for triangle in context.triangles:
-        # [texture, vertices, normals, uvs]
-        var texture: String = triangle[0]
-        var vertices: PackedVector3Array = triangle[1]
-        for chunk_key in _make_triangle_chunk_keys(texture, vertices):
-            if not chunk_key in triangles_by_material:
-                triangles_by_material[chunk_key] = []
-            triangles_by_material[chunk_key].append(triangle)
+    var triangle_chunks: Array = SceneryTrianglesBuilder.build_chunks(context.triangles, TRIANGLE_CHUNK_SIZE_M)
     var triangles_group_elapsed_usec := Time.get_ticks_usec() - triangles_group_started_usec
     
     var triangles_build_started_usec := Time.get_ticks_usec()
-    for chunk_key in triangles_by_material.keys():
-        var texture: String = chunk_key[0]
-        var chunk_origin := _get_triangle_chunk_origin(chunk_key[1], chunk_key[2])
+    for chunk in triangle_chunks:
+        var texture: String = chunk["texture"]
+        var chunk_x: int = chunk["chunk_x"]
+        var chunk_z: int = chunk["chunk_z"]
+        var chunk_origin: Vector3 = chunk["origin"]
         var node = MeshInstance3D.new()
         var mesh = ArrayMesh.new()
         var arrays: Array = []
         arrays.resize(Mesh.ARRAY_MAX)
-        arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array()
-        arrays[Mesh.ARRAY_NORMAL] = PackedVector3Array()
-        arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array()
-        for triangles in triangles_by_material[chunk_key]:
-            for vertex in triangles[1]:
-                arrays[Mesh.ARRAY_VERTEX].append(vertex - chunk_origin)
-            arrays[Mesh.ARRAY_NORMAL].append_array(triangles[2])
-            arrays[Mesh.ARRAY_TEX_UV].append_array(triangles[3])
+        arrays[Mesh.ARRAY_VERTEX] = chunk["vertices"]
+        arrays[Mesh.ARRAY_NORMAL] = chunk["normals"]
+        arrays[Mesh.ARRAY_TEX_UV] = chunk["uvs"]
         mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
         node.mesh = mesh
-        node.name = "%s_%s_%s" % [texture, chunk_key[1], chunk_key[2]]
+        node.name = "%s_%s_%s" % [texture, chunk_x, chunk_z]
         node.position = chunk_origin
         var material = MaterialManager.get_material("", texture)
         if material:
@@ -154,41 +143,6 @@ static func parse_file(filename: String, parameters: Dictionary, context: Maszyn
 static func _make_importer_callback(importer, context) -> Callable:
     var callback = func(p): return importer.import(p, context)
     return callback
-
-
-static func _make_triangle_chunk_keys(texture: String, vertices: PackedVector3Array) -> Array:
-    if vertices.is_empty():
-        return []
-
-    var min_x := INF
-    var max_x := -INF
-    var min_z := INF
-    var max_z := -INF
-
-    for vertex in vertices:
-        min_x = minf(min_x, vertex.x)
-        max_x = maxf(max_x, vertex.x)
-        min_z = minf(min_z, vertex.z)
-        max_z = maxf(max_z, vertex.z)
-
-    var min_chunk_x: int = int(floor(min_x / TRIANGLE_CHUNK_SIZE_M))
-    var max_chunk_x: int = int(floor(max_x / TRIANGLE_CHUNK_SIZE_M))
-    var min_chunk_z: int = int(floor(min_z / TRIANGLE_CHUNK_SIZE_M))
-    var max_chunk_z: int = int(floor(max_z / TRIANGLE_CHUNK_SIZE_M))
-
-    var chunk_keys: Array = []
-    for chunk_x in range(min_chunk_x, max_chunk_x + 1):
-        for chunk_z in range(min_chunk_z, max_chunk_z + 1):
-            chunk_keys.append([texture, chunk_x, chunk_z])
-    return chunk_keys
-
-
-static func _get_triangle_chunk_origin(chunk_x: int, chunk_z: int) -> Vector3:
-    return Vector3(
-        (chunk_x + 0.5) * TRIANGLE_CHUNK_SIZE_M,
-        0.0,
-        (chunk_z + 0.5) * TRIANGLE_CHUNK_SIZE_M
-    )
 
 
 func _set_owner_recursive(node, owner):

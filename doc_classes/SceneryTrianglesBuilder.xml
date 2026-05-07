@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="SceneryTrianglesBuilder" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Builds chunked scenery triangle batches.
+	</brief_description>
+	<description>
+		Utility class that groups scenery triangle records by texture and chunk coverage in the X/Z plane. It returns chunk-local arrays plus a chunk origin suitable for assigning to a [MeshInstance3D].
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="build_chunks" qualifiers="static">
+			<return type="Array" />
+			<param index="0" name="triangles" type="Array" />
+			<param index="1" name="chunk_size_m" type="float" />
+			<description>
+				Builds chunk-local triangle batches from importer triangle records.
+			</description>
+		</method>
+	</methods>
+</class>

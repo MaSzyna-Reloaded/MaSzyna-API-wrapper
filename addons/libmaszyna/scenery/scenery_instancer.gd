@@ -14,6 +14,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const _TIMING_MS := 0.001
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
+const MAX_INCLUDE_TIMING_DEPTH := 2
 
 
 func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
@@ -93,23 +94,24 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var attach_elapsed_usec := Time.get_ticks_usec() - attach_started_usec
     var total_elapsed_usec := Time.get_ticks_usec() - total_started_usec
 
-    #_print_timing_report(
-    #    root.filename,
-    #    clear_elapsed_usec,
-    #    parse_elapsed_usec,
-    #    tracks_elapsed_usec,
-    #    traction_elapsed_usec,
-    #    triangles_group_elapsed_usec,
-    #    triangles_build_elapsed_usec,
-    #    attach_elapsed_usec,
-    #    total_elapsed_usec,
-    #    context,
-    #    objects.size(),
-    #    triangles_by_material.size()
-    #)
+    _print_timing_report(
+        root.filename,
+        clear_elapsed_usec,
+        parse_elapsed_usec,
+        tracks_elapsed_usec,
+        traction_elapsed_usec,
+        triangles_group_elapsed_usec,
+        triangles_build_elapsed_usec,
+        attach_elapsed_usec,
+        total_elapsed_usec,
+        context,
+        objects.size(),
+        triangle_chunks.size()
+    )
 
 
 static func parse_file(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> Array:
+    var parse_started_usec := Time.get_ticks_usec()
     var abs_file = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename)
     var file := FileAccess.open(abs_file, FileAccess.READ)
     if not file:
@@ -136,6 +138,13 @@ static func parse_file(filename: String, parameters: Dictionary, context: Maszyn
     for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "firstinit"]:
         parser.unregister_handler(token)
     parser.unreference()
+
+    var parse_elapsed_usec := Time.get_ticks_usec() - parse_started_usec
+    if context.include_depth > 0 and context.include_depth <= MAX_INCLUDE_TIMING_DEPTH:
+        print(
+            "[SceneryInstancer] include level=%d file=%s parse=%.3fms objects=%d"
+            % [context.include_depth, filename, parse_elapsed_usec * _TIMING_MS, objects.size()]
+        )
 
     return objects
 

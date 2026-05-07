@@ -16,6 +16,7 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
         context.push_state()
+        context.include_depth += 1
         var objects := SceneryInstancer.parse_file(filename, parameters, context)
         context.pop_state()
         return objects

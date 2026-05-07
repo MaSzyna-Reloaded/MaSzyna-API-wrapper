@@ -2,6 +2,7 @@ extends RefCounted
 class_name MaszynaImporterContext
 
 var _states: Array[Dictionary] = []
+var include_depth: int = 0
 var rotate := Vector3.ZERO
 var origin := Vector3.ZERO
 var tracks: Array[MaszynaTrack3D] = []
@@ -31,6 +32,7 @@ func pop_origin():
 
 func push_state() -> void:
     _states.push_front({
+        "include_depth": include_depth,
         "rotate": rotate,
         "origin": origin,
         "rotates_size": _rotates.size(),
@@ -43,6 +45,7 @@ func pop_state() -> void:
         return
 
     var state: Dictionary = _states.pop_front()
+    include_depth = state["include_depth"]
     rotate = state["rotate"]
     origin = state["origin"]
 

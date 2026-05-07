@@ -1,6 +1,7 @@
 extends RefCounted
 class_name MaszynaImporterContext
 
+var _states: Array[Dictionary] = []
 var rotate := Vector3.ZERO
 var origin := Vector3.ZERO
 var tracks: Array[MaszynaTrack3D] = []
@@ -26,4 +27,27 @@ func push_origin(new_origin: Vector3):
 func pop_origin():
     if _origins.size() > 0:
         origin = _origins.pop_front()
-        
+
+
+func push_state() -> void:
+    _states.push_front({
+        "rotate": rotate,
+        "origin": origin,
+        "rotates_size": _rotates.size(),
+        "origins_size": _origins.size(),
+    })
+
+
+func pop_state() -> void:
+    if _states.is_empty():
+        return
+
+    var state: Dictionary = _states.pop_front()
+    rotate = state["rotate"]
+    origin = state["origin"]
+
+    while _rotates.size() > state["rotates_size"]:
+        _rotates.pop_front()
+
+    while _origins.size() > state["origins_size"]:
+        _origins.pop_front()

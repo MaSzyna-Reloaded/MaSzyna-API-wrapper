@@ -61,7 +61,7 @@ environment = SubResource("Environment_nd35h")
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=2029493538]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1461792, 5.782898, -0.9614258)
 script = ExtResource("3_fraxg")
-filename = "td.scn"
+filename = "zwierzyniec_sm42.scn"
 metadata/_custom_type_script = "uid://m0t4e4uurpbc"
 
 [node name="CanvasLayer" parent="." unique_id=28357571 instance=ExtResource("4_f81ma")]

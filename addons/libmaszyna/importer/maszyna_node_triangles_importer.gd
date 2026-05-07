@@ -1,9 +1,10 @@
 @tool
 extends RefCounted
 
-func import(p:MaszynaParser, context: MaszynaImporterContext):
+func import(p: MaszynaParser, context: MaszynaImporterContext):
     var material
     var texture
+    var basis := Basis.from_euler(context.rotate)
 
     var _n = p.next_token()
     match _n:
@@ -33,11 +34,11 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
         if not _stop in ["end", "endtri"]:
             push_error("!!! Incorrect triangle format ")
             return
-        var new_vector = Vector3(float(x), float(y), float(z))
+        var new_vector = basis * Vector3(float(x), float(y), float(z)) + context.origin
         #min_vertex = new_vector if new_vector < min_vertex else min_vertex
         #max_vertex = new_vector if new_vector > max_vertex else max_vertex
         vertices.append(new_vector)
-        normals.append(Vector3(float(nx), float(ny), float(nz)))
+        normals.append((basis * Vector3(float(nx), float(ny), float(nz))).normalized())
         uvs.append(Vector2(float(u), float(v)))
 
     vertices.reverse()

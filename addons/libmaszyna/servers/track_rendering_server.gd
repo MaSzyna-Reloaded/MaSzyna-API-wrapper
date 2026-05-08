@@ -870,7 +870,7 @@ func _get_switch_blade_sample_count(curve: Curve3D) -> int:
 
 
 func _lower_trackbed_edge(section: Array, lower_right: bool) -> void:
-    var indexes: Array[int] = [0, 1] if lower_right else [3, 4]
+    var indexes: Array = [0, 1] if lower_right else [3, 4]
     for section_index: int in indexes:
         var point: Array = section[section_index]
         point[0] = (point[0] as Vector3) + Vector3(0.0, -_SWITCH_TRACKBED_Z_FIGHT_OFFSET, 0.0)

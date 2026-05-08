@@ -4,8 +4,6 @@
 [ext_resource type="Script" uid="uid://m0t4e4uurpbc" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_fraxg"]
 [ext_resource type="Shader" uid="uid://cer53we0fnelj" path="res://addons/libmaszyna/environment/sky.gdshader" id="3_nk4av"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="4_f81ma"]
-[ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/tracks/maszyna_track_3d.gd" id="5_whf3y"]
-[ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/tracks/maszyna_track_curve.gd" id="6_nd35h"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_whf3y"]
 shader = ExtResource("3_nk4av")
@@ -39,18 +37,6 @@ volumetric_fog_detail_spread = 5.598199
 volumetric_fog_sky_affect = 0.405
 adjustment_enabled = true
 
-[sub_resource type="Resource" id="Resource_uccxj"]
-script = ExtResource("6_nd35h")
-p1 = Vector3(0, 10, 0)
-p2 = Vector3(0, 10, 100)
-metadata/_custom_type_script = "uid://dotmfqnin31lo"
-
-[sub_resource type="Resource" id="Resource_4xg7h"]
-script = ExtResource("6_nd35h")
-p1 = Vector3(0, 10, 0)
-p2 = Vector3(10, 10, 100)
-metadata/_custom_type_script = "uid://dotmfqnin31lo"
-
 [node name="DemoSceneryLoading" type="Node3D" unique_id=1784067886]
 
 [node name="Player" parent="." unique_id=1819896729 instance=ExtResource("2_f81ma")]
@@ -79,10 +65,3 @@ filename = "td.scn"
 metadata/_custom_type_script = "uid://m0t4e4uurpbc"
 
 [node name="CanvasLayer" parent="." unique_id=28357571 instance=ExtResource("4_f81ma")]
-
-[node name="MaszynaTrack3D" type="Node3D" parent="." unique_id=1115641954]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20.912197, 1.6505663, 0)
-script = ExtResource("5_whf3y")
-curve = SubResource("Resource_uccxj")
-curve2 = SubResource("Resource_4xg7h")
-metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"

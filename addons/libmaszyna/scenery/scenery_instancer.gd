@@ -14,7 +14,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const _TIMING_MS := 0.001
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const MAX_INCLUDE_TIMING_DEPTH := 2
+const MAX_INCLUDE_TIMING_DEPTH := 1
 
 
 func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
@@ -90,6 +90,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             continue
 
         if obj is Node:
+            _clear_owner_recursive(obj)
             root.add_child(obj)
             #_set_owner_recursive(obj, root)
     var attach_elapsed_usec := Time.get_ticks_usec() - attach_started_usec
@@ -111,7 +112,12 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     )
 
 
-static func parse_file(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> Array:
+func scenery_exists(filename: String):
+    var abs_file = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename)
+    return FileAccess.file_exists(abs_file)
+    
+    
+func parse_file(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> Array:
     var parse_started_usec := Time.get_ticks_usec()
     var abs_file = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename)
     var file := FileAccess.open(abs_file, FileAccess.READ)
@@ -217,6 +223,12 @@ func _set_owner_recursive(node, owner):
     node.owner = owner
     for child in node.get_children():
         _set_owner_recursive(child, owner)
+
+
+func _clear_owner_recursive(node: Node) -> void:
+    node.owner = null
+    for child: Node in node.get_children():
+        _clear_owner_recursive(child)
 
 
 func _get_meta_value(metadata, key:String) -> String:

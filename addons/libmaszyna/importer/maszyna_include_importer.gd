@@ -1,8 +1,6 @@
 @tool
 extends RefCounted
 
-const SceneryInstancer = preload("res://addons/libmaszyna/scenery/scenery_instancer.gd")
-
 func import(p: MaszynaParser, context: MaszynaImporterContext):
     var tokens = p.get_tokens_until("end")
     tokens.pop_back()

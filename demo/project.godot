@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="uid://1djubq5jy2wx"
+run/main_scene="uid://y5bhl8evt3df"
 run/print_header=false
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)

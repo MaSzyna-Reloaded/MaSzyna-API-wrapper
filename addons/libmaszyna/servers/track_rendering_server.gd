@@ -75,13 +75,10 @@ func free_track(track_rid: RID) -> void:
 func _reset_track_instances(state: TrackState) -> void:
     if state.primary_rail_mesh_instance.is_valid():
         RenderingServer.instance_set_base(state.primary_rail_mesh_instance, RID())
-        RenderingServer.instance_geometry_set_material_override(state.primary_rail_mesh_instance, RID())
     if state.secondary_rail_mesh_instance.is_valid():
         RenderingServer.instance_set_base(state.secondary_rail_mesh_instance, RID())
-        RenderingServer.instance_geometry_set_material_override(state.secondary_rail_mesh_instance, RID())
     if state.trackbed_mesh_instance.is_valid():
         RenderingServer.instance_set_base(state.trackbed_mesh_instance, RID())
-        RenderingServer.instance_geometry_set_material_override(state.trackbed_mesh_instance, RID())
 
 
 func set_track_transform(track_rid: RID, transform: Transform3D) -> void:
@@ -238,14 +235,17 @@ func set_sleeper_mesh(_track_rid: RID, _mesh: Mesh) -> void:
     pass
 
 
-func set_track_materials(track_rid: RID, trackbed_material: RID, primary_rail_material: RID, secondary_rail_material: RID) -> void:
+func set_track_materials(track_rid: RID, trackbed_material: Material, primary_rail_material: Material, secondary_rail_material: Material) -> void:
     var state: TrackState = _tracks.get(track_rid)
     if not state:
         return
 
-    RenderingServer.instance_geometry_set_material_override(state.primary_rail_mesh_instance, primary_rail_material)
-    RenderingServer.instance_geometry_set_material_override(state.secondary_rail_mesh_instance, secondary_rail_material)
-    RenderingServer.instance_geometry_set_material_override(state.trackbed_mesh_instance, trackbed_material)
+    if state.primary_rail_mesh and primary_rail_material:
+        state.primary_rail_mesh.surface_set_material(0, primary_rail_material)
+    if state.secondary_rail_mesh and secondary_rail_material:
+        state.secondary_rail_mesh.surface_set_material(0, secondary_rail_material)
+    if state.trackbed_mesh and trackbed_material:
+        state.trackbed_mesh.surface_set_material(0, trackbed_material)
 
 
 func _is_switch_curve(curve: Curve3D) -> bool:

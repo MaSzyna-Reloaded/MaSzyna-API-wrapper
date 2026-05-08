@@ -246,13 +246,17 @@ func _update_track_rendering():
     if not server or not _track_rid or not _track_rid.is_valid():
         return
 
-    var primary_rail_material: StandardMaterial3D = _rail_material
+    var primary_rail_material: Material = _rail_material
     if not material1.is_empty():
-        primary_rail_material = MaterialManager.get_material("", material1)
+        var loaded_primary_rail_material: Material = MaterialManager.get_material("", material1)
+        if loaded_primary_rail_material:
+            primary_rail_material = loaded_primary_rail_material
 
-    var secondary_rail_material: StandardMaterial3D = primary_rail_material
+    var secondary_rail_material: Material = primary_rail_material
     if _is_switch() and not material2.is_empty():
-        secondary_rail_material = MaterialManager.get_material("", material2)
+        var loaded_secondary_rail_material: Material = MaterialManager.get_material("", material2)
+        if loaded_secondary_rail_material:
+            secondary_rail_material = loaded_secondary_rail_material
 
     _trackbed_material = _unknown_material
     var trackbed_enabled: bool = not material2.is_empty()
@@ -261,7 +265,9 @@ func _update_track_rendering():
         switch_trackbed = _get_switch_trackbed_profile()
         trackbed_enabled = not switch_trackbed.is_empty()
     elif not material2.is_empty():
-        _trackbed_material = MaterialManager.get_material("", material2)
+        var loaded_trackbed_material: Material = MaterialManager.get_material("", material2)
+        if loaded_trackbed_material:
+            _trackbed_material = loaded_trackbed_material
 
     var next_trackbed: Dictionary = _get_next_trackbed_profile()
     var start_tex_height: float = tex_height + _get_roll_fix_height(curve.roll1 if curve else 0.0)
@@ -289,9 +295,9 @@ func _update_track_rendering():
     server.set_track_visible(_track_rid, visible)
     server.set_track_materials(
         _track_rid,
-        _trackbed_material.get_rid(),
-        primary_rail_material.get_rid(),
-        secondary_rail_material.get_rid()
+        _trackbed_material,
+        primary_rail_material,
+        secondary_rail_material
     )
 
 
@@ -361,7 +367,9 @@ func _get_switch_trackbed_profile() -> Dictionary:
         return {}
 
     var neighbor_roll1: float = neighbor.curve.roll1 if neighbor.curve else 0.0
-    _trackbed_material = MaterialManager.get_material("", neighbor.material2)
+    var loaded_trackbed_material: Material = MaterialManager.get_material("", neighbor.material2)
+    if loaded_trackbed_material:
+        _trackbed_material = loaded_trackbed_material
     return {
         "width": neighbor.width,
         "tex_height": neighbor.tex_height + _get_roll_fix_height(neighbor_roll1),

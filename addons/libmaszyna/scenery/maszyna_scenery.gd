@@ -28,7 +28,7 @@ func load() -> void:
                 for child: Node in children:
                     cached_node.remove_child(child)
                     _clear_owner_recursive(child)
-                    add_child(child, false, Node.INTERNAL_MODE_FRONT)
+                    add_child(child)
                 return
         super.load()
 

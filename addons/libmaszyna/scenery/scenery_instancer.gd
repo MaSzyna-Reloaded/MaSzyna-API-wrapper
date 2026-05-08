@@ -2,7 +2,7 @@
 extends Node
 
 static var sky_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
-static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
+static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_atmo_importer.gd").new()
 static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
 static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()

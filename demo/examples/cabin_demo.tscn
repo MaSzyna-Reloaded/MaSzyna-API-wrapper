@@ -109,7 +109,4 @@ velocity_multiplier = 0.2
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="Environment" unique_id=579365825]
 script = ExtResource("4_n50b0")
-world_environment = NodePath("../WorldEnvironment")
-sky_texture_offset = Vector2(0.49, 0.005)
-sky_texture_scale = Vector2(0.547, 0.865)
-sky_energy = 0.575
+model_filename = "skydome_clouds"

@@ -28,14 +28,14 @@
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_s18ef"]
 shader = ExtResource("2_ydn4r")
-shader_parameter/sky_offset = Vector2(0.49, 0.005)
+shader_parameter/sky_offset = Vector2(0.5, 6.55032e-05)
 shader_parameter/exposure = 0.85
 shader_parameter/tint_color = Color(1, 1, 1, 1)
 shader_parameter/sun_color = Color(10, 8, 1, 1)
 shader_parameter/sun_sunset_color = Color(10, 0, 0, 1)
 shader_parameter/sun_size = 0.2
 shader_parameter/sun_blur = 10.0
-shader_parameter/sky_scale = Vector2(0.547, 0.865)
+shader_parameter/sky_scale = Vector2(0.5, 0.9999345)
 
 [sub_resource type="Sky" id="Sky_eihw1"]
 sky_material = SubResource("ShaderMaterial_s18ef")
@@ -206,10 +206,7 @@ layout_mode = 2
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1464463242]
 script = ExtResource("2_py6pt")
-world_environment = NodePath("../WorldEnvironment")
-sky_texture_offset = Vector2(0.49, 0.005)
-sky_texture_scale = Vector2(0.547, 0.865)
-sky_energy = 0.85
+model_filename = "skj_day3mgly"
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)

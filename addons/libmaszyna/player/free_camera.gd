@@ -6,6 +6,8 @@
 extends Camera3D
 class_name FreeCamera3D
 
+enum AccelMode {NORMAL, MEDIUM, FAST}
+
 @export var sensitivity:float = 0.25
 @export var key_forward = KEY_UP
 @export var key_backward = KEY_DOWN
@@ -15,7 +17,7 @@ class_name FreeCamera3D
 @export var key_down= KEY_PAGEDOWN
 
 @export var enabled:bool = true
-@export var acceleration:float = 30:
+@export var acceleration:float = 10:
     set(x):
         acceleration = x
 
@@ -29,21 +31,24 @@ class_name FreeCamera3D
 @export var bound_min = Vector3.ZERO
 @export var bound_max = Vector3.ZERO
 @export var bound_enabled:bool = false
-# Mouse state
-var _mouse_position = Vector2(0.0, 0.0)
+
+const MOUSE_SMOOTHING: float = 24.0
+const MOVEMENT_SMOOTHING: float = 20.0
 
 # Movement state
-var _direction = Vector3(0.0, 0.0, 0.0)
-var _velocity = Vector3(0.0, 0.0, 0.0)
+var _direction: Vector3 = Vector3.ZERO
+var _smoothed_direction: Vector3 = Vector3.ZERO
+var _pending_mouse_delta: Vector2 = Vector2.ZERO
+var _mouse_look_velocity: Vector2 = Vector2.ZERO
 
 # Keyboard state
-var _w = 0.0
-var _s = 0.0
-var _a = 0.0
-var _d = 0.0
-var _q = 0.0
-var _e = 0.0
-var accel_mode = 0
+var _w: float = 0.0
+var _s: float = 0.0
+var _a: float = 0.0
+var _d: float = 0.0
+var _q: float = 0.0
+var _e: float = 0.0
+var accel_mode: AccelMode = AccelMode.NORMAL
 
 func _ready():
     Console.console_toggled.connect(_on_console_toggle)
@@ -56,10 +61,6 @@ func _input(event):
         return
 
     var hovered_control := get_viewport().gui_get_hovered_control()
-
-    # Receives mouse motion
-    if event is InputEventMouseMotion:
-        _mouse_position = event.relative
 
     # Receives mouse button input
     if event is InputEventMouseButton:
@@ -79,11 +80,11 @@ func _input(event):
     # Receives key input
     if event is InputEventKey:
         if event.is_command_or_control_pressed():
-            accel_mode = 2
+            accel_mode = AccelMode.FAST
         elif event.shift_pressed:
-            accel_mode = 1
+            accel_mode = AccelMode.MEDIUM
         else:
-            accel_mode = 0
+            accel_mode = AccelMode.NORMAL
 
         match event.physical_keycode:
             key_forward:
@@ -100,27 +101,43 @@ func _input(event):
                 _e = float(event.pressed)
 
     if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
-        _update_mouselook(event.relative)
+        _pending_mouse_delta += event.relative
 
 # Updates mouselook and movement every frame
-func _process(delta):
+func _process(delta: float) -> void:
+    _update_acceleration_mode()
     _update_movement(delta)
+    _update_mouselook(delta)
 
 # Updates camera movement
-func _update_movement(delta):
+func _update_movement(delta: float) -> void:
+    var step_delta: float = minf(delta, 0.05)
+    var smoothing_weight: float = _get_smoothing_weight(MOVEMENT_SMOOTHING, step_delta)
+
     # Computes desired direction from key states
-    _direction = Vector3(_d - _a , _e - _q, _s - _w)
+    _direction = Vector3(_d - _a, _e - _q, _s - _w)
+    if not _direction.is_zero_approx():
+        _direction = _direction.normalized()
 
-    var accel = acceleration_fast if accel_mode == 2 else acceleration_medium if accel_mode == 1 else acceleration
-    # Computes the change in velocity due to desired direction and "drag"
-    # The "drag" is a constant acceleration on the camera to bring it's velocity to 0
-    if _direction.is_zero_approx():
-        _velocity = lerp(_velocity, Vector3.ZERO, 0.1 * delta * deceleration * 4)
-    else:
-        _velocity = _direction * Vector3.ONE * 10 * velocity_multiplier * accel * delta
+    _smoothed_direction = _smoothed_direction.lerp(_direction, smoothing_weight)
 
-    # Checks if we should bother translating the camera
-    var new_position = transform.translated_local(_velocity * delta).origin
+    if _smoothed_direction.is_zero_approx():
+        _smoothed_direction = Vector3.ZERO
+        return
+
+    var accel: float = 0.0
+    
+    match accel_mode:
+        AccelMode.FAST:
+            accel = acceleration_fast
+        AccelMode.MEDIUM:
+            accel = acceleration_medium
+        _:
+            accel = acceleration
+        
+    var velocity: Vector3 = _smoothed_direction * accel * velocity_multiplier
+
+    var new_position: Vector3 = transform.translated_local(velocity * step_delta).origin
     if bound_enabled:
         new_position.x = clamp(new_position.x, bound_min.x, bound_max.x)
         new_position.y = clamp(new_position.y, bound_min.y, bound_max.y)
@@ -128,20 +145,43 @@ func _update_movement(delta):
     position = new_position
 
 # Updates mouse look
-func _update_mouselook(mouse_delta):
-    # pitch clamping fixed (no accumlation needed)
+func _update_mouselook(delta: float) -> void:
+    var step_delta: float = minf(delta, 0.05)
+    var smoothing_weight: float = _get_smoothing_weight(MOUSE_SMOOTHING, step_delta)
 
-    _mouse_position *= sensitivity
+    _mouse_look_velocity += _pending_mouse_delta
+    _pending_mouse_delta = Vector2.ZERO
+
+    var mouse_delta: Vector2 = _mouse_look_velocity * smoothing_weight
+    _mouse_look_velocity -= mouse_delta
+
+    if mouse_delta.is_zero_approx():
+        _mouse_look_velocity = Vector2.ZERO
+        return
+
     # Adjust mouse delta by sensitivity
-    var yaw_delta = mouse_delta.x * sensitivity
-    var pitch_delta = mouse_delta.y * sensitivity
+    var yaw_delta: float = mouse_delta.x * sensitivity
+    var pitch_delta: float = mouse_delta.y * sensitivity
 
     # Apply yaw rotation to the parent or self (horizontal rotation)
     rotate_y(deg_to_rad(-yaw_delta))
 
     # Get the current pitch from the camera's rotation
-    var current_pitch = rotation_degrees.x - pitch_delta
+    var current_pitch: float = rotation_degrees.x - pitch_delta
     current_pitch = clamp(current_pitch, -90, 90)
 
     # Apply the clamped pitch directly
     rotation_degrees.x = current_pitch
+
+
+func _update_acceleration_mode() -> void:
+    if Input.is_key_pressed(KEY_CTRL) or Input.is_key_pressed(KEY_META):
+        accel_mode = AccelMode.FAST
+    elif Input.is_key_pressed(KEY_SHIFT):
+        accel_mode = AccelMode.MEDIUM
+    else:
+        accel_mode = AccelMode.NORMAL
+
+
+func _get_smoothing_weight(response: float, delta: float) -> float:
+    return clampf(1.0 - exp(-maxf(response, 0.001) * delta), 0.0, 1.0)

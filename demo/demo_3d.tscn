@@ -965,11 +965,11 @@ metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
 [node name="MaszynaTrack3D" type="Node3D" parent="." unique_id=665070806]
 script = ExtResource("12_m0qth")
-rail_spacing = 1.5
+width = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_material = "tory/podsypka-2"
+material2 = "tory/podsypka-2"
 ballast_offset = -0.1
 previous_track = NodePath("../MaszynaTrack3D3")
 
@@ -981,22 +981,22 @@ metadata/_custom_type_script = "uid://bami2gx4l6pyl"
 
 [node name="MaszynaTrack3D2" type="Node3D" parent="." unique_id=1426965910]
 script = ExtResource("12_m0qth")
-rail_spacing = 1.5
+width = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_material = "tory/podsypka-2"
+material2 = "tory/podsypka-2"
 ballast_offset = -0.1
 previous_track = NodePath("../MaszynaTrack3D3")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 
 [node name="MaszynaTrack3D3" type="Node3D" parent="." unique_id=1077451802]
 script = ExtResource("12_m0qth")
-rail_spacing = 1.5
+width = 1.5
 sleeper_model_name = "models/quark/podklad1"
 sleeper_model_skin = "quark/podklad_betonowy1"
 sleeper_height = -0.25
-ballast_material = "tory/podsypka-2"
+material2 = "tory/podsypka-2"
 ballast_offset = -0.1
 next_track = NodePath("../MaszynaSwitch3D")
 metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"

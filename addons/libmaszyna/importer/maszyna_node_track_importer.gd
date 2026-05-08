@@ -10,7 +10,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaTrack3D:
         return null
         
     obj.length = float(p.next_token())
-    obj.rail_spacing = float(p.next_token())  # width
+    obj.width = float(p.next_token())
     obj.friction = float(p.next_token())
     var sound_distance = float(p.next_token())
     obj.quality_flag = int(p.next_token())
@@ -25,15 +25,12 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaTrack3D:
     if obj.visible:
         # FIXME: this is probably wrongly mapped
         obj.ballast_enabled = true
-        obj.ballast_material = p.next_token().to_lower()  # material1
-        var ballast_length_tiling = float(p.next_token())  # tex_length ??
-        var material2 = p.next_token().to_lower()  # material2
-        var tex_height = float(p.next_token())  # tex_height ???
-        var ballast_width_tiling = float(p.next_token())  # tex_width  ???
-        var tex_slope = float(p.next_token())
-        #obj.ballast_offset += tex_height
-        #obj.sleeper_height += tex_height
-        obj.position.y = tex_height
+        obj.material1 = p.next_token().to_lower()
+        obj.tex_length = float(p.next_token())
+        obj.material2 = p.next_token().to_lower()
+        obj.tex_height = float(p.next_token())
+        obj.tex_width = float(p.next_token())
+        obj.tex_slope = float(p.next_token())
     var curve_tokens = p.get_tokens(15)
     obj.curve = get_curve_from_tokens(curve_tokens)
 
@@ -46,18 +43,19 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaTrack3D:
         push_warning("Node track: curve2 is not supported yet")
         
     elif not nt == "endtrack":
-        # parameters
-        var params = {}
-        var key = nt
-        while true:
-            nt = p.next_token()
-            if nt == "endtrack":
+        var params: Dictionary = {}
+        var key: String = nt
+        while key != "endtrack":
+            var value: String = p.next_token()
+            if value == "endtrack":
                 break
-            if not key:
-                key = nt
+
+            if key == "railprofile":
+                obj.railprofile = value
             else:
-                params[key] = nt
-                key = null
+                params[key] = value
+
+            key = p.next_token()
         obj.parameters = params
     return obj
 

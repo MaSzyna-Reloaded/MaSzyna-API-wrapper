@@ -18,9 +18,25 @@ static var _rail_material = preload("res://addons/libmaszyna/materials/rail.mate
         _dirty = true
 
 @export_group("Rails")
-@export var rail_spacing: float = 1.6:
-    set(x):
-        rail_spacing = x
+@export var width: float = 1.6:
+    set(value):
+        if is_equal_approx(width, value):
+            return
+        width = value
+        _dirty = true
+
+@export var material1: String = "":
+    set(value):
+        if material1 == value:
+            return
+        material1 = value
+        _dirty = true
+
+@export var railprofile: String = "default":
+    set(value):
+        if railprofile == value:
+            return
+        railprofile = value
         _dirty = true
 
 @export_group("Sleepers")
@@ -44,15 +60,45 @@ static var _rail_material = preload("res://addons/libmaszyna/materials/rail.mate
         sleeper_height = x
         _dirty = true
 
-@export_group("Ballast")
+@export_group("Trackbed")
 @export var ballast_enabled: bool = true:
     set(x):
         ballast_enabled = x
         _dirty = true
 
-@export var ballast_material: String = "":
-    set(x):
-        ballast_material = x
+@export var material2: String = "":
+    set(value):
+        if material2 == value:
+            return
+        material2 = value
+        _dirty = true
+
+@export var tex_length: float = 4.0:
+    set(value):
+        if is_equal_approx(tex_length, value):
+            return
+        tex_length = value
+        _dirty = true
+
+@export var tex_height: float = 0.0:
+    set(value):
+        if is_equal_approx(tex_height, value):
+            return
+        tex_height = value
+        _dirty = true
+
+@export var tex_width: float = 0.0:
+    set(value):
+        if is_equal_approx(tex_width, value):
+            return
+        tex_width = value
+        _dirty = true
+
+@export var tex_slope: float = 0.0:
+    set(value):
+        if is_equal_approx(tex_slope, value):
+            return
+        tex_slope = value
         _dirty = true
 
 @export var ballast_uv_scale: float = 1.0:
@@ -104,9 +150,7 @@ var _dirty = false
 var _is_updating = false
 var _update_timer = 0.0
 var _curve:Curve3D
-var _sleeper_mesh: Mesh
-var _sleeper_material: StandardMaterial3D = _unknown_material
-var _ballast_material: StandardMaterial3D = _unknown_material
+var _trackbed_material: StandardMaterial3D = _unknown_material
 
 const DEBOUNCE_TIME = 0.1
 var _last_debouce:float
@@ -124,7 +168,7 @@ func _exit_tree():
 func _initialize_curve_3d():
     _curve = Curve3D.new()
     _curve.closed = false
-    _curve.bake_interval = 10
+    _curve.bake_interval = _get_curve_bake_interval()
     _curve.changed.connect(_mark_dirty)
     if curve:
         curve.changed.connect(_update_curve3d)
@@ -183,42 +227,92 @@ func _update_track_rendering():
     if not server or not _track_rid or not _track_rid.is_valid():
         return
 
-    _ballast_material = MaterialManager.get_material("", ballast_material)
-    _sleeper_material = MaterialManager.get_material("", sleeper_model_skin)
-    var sleeper_model = E3DModelManager.load_model("", sleeper_model_name)
+    var rail_material: StandardMaterial3D = _rail_material
+    if not material1.is_empty():
+        rail_material = MaterialManager.get_material("", material1)
 
-    _sleeper_mesh = null
-    if sleeper_model:
-        _sleeper_mesh = E3DModelTool.find_first_mesh(sleeper_model)
+    _trackbed_material = _unknown_material
+    if not material2.is_empty():
+        _trackbed_material = MaterialManager.get_material("", material2)
+
+    var next_trackbed: Dictionary = _get_next_trackbed_profile()
+    var start_tex_height: float = tex_height + _get_roll_fix_height(curve.roll1 if curve else 0.0)
 
     server.set_track_curve(
         _track_rid,
         _curve,
-        rail_spacing,
-        sleeper_spacing,
-        sleeper_height,
-        ballast_enabled,
-        ballast_height,
-        ballast_offset,
-        ballast_width_tiling,
-        ballast_length_tiling,
-        ballast_uv_scale
+        width,
+        tex_length,
+        start_tex_height,
+        tex_width,
+        tex_slope,
+        railprofile,
+        curve.roll1 if curve else 0.0,
+        curve.roll2 if curve else 0.0,
+        next_trackbed,
+        not material2.is_empty()
     )
     server.set_track_scenario(_track_rid, get_world_3d().scenario)
-    server.set_sleeper_mesh(_track_rid, _sleeper_mesh)
     server.set_track_transform(_track_rid, global_transform)
     server.set_track_visible(_track_rid, visible)
-    server.set_track_materials(_track_rid, _ballast_material.get_rid(), _rail_material.get_rid(), _sleeper_material.get_rid())
+    server.set_track_materials(_track_rid, _trackbed_material.get_rid(), rail_material.get_rid())
 
 
 func _update_curve3d():
     if not _curve:
         return
-    
+
+    var start_roll_fix: float = _get_roll_fix_height(curve.roll1)
+    var end_roll_fix: float = _get_roll_fix_height(curve.roll2)
+
+    _curve.bake_interval = _get_curve_bake_interval()
     _curve.clear_points()
-    _curve.add_point(curve.p1, Vector3.ZERO, curve.c1)
-    _curve.add_point(curve.p2, curve.c2, Vector3.ZERO)
+    _curve.add_point(curve.p1 + Vector3(0.0, start_roll_fix, 0.0), Vector3.ZERO, curve.c1)
+    _curve.add_point(curve.p2 + Vector3(0.0, end_roll_fix, 0.0), curve.c2, Vector3.ZERO)
+    _curve.set_point_tilt(0, curve.roll1)
+    _curve.set_point_tilt(1, curve.roll2)
     _curve.emit_changed()
+
+
+func _get_curve_bake_interval() -> float:
+    if not curve:
+        return 10.0
+
+    if not is_zero_approx(curve.radius):
+        return clamp(abs(curve.radius) * 0.02, 2.0, 10.0)
+
+    if curve.c1 == Vector3.ZERO and curve.c2 == Vector3.ZERO:
+        return 10.0
+
+    return clamp(curve.p1.distance_to(curve.p2) * 0.1, 2.0, 10.0)
+
+
+func _get_next_trackbed_profile() -> Dictionary:
+    var neighbor: MaszynaTrack3D = _resolve_track_node(next_track)
+    if not neighbor:
+        return {}
+
+    var neighbor_roll1: float = neighbor.curve.roll1 if neighbor.curve else 0.0
+    return {
+        "width": neighbor.width,
+        "tex_height": neighbor.tex_height + _get_roll_fix_height(neighbor_roll1),
+        "tex_width": neighbor.tex_width,
+        "tex_slope": neighbor.tex_slope,
+    }
+
+
+func _resolve_track_node(track_path: NodePath) -> MaszynaTrack3D:
+    if track_path.is_empty():
+        return null
+
+    var node: Node = get_node_or_null(track_path)
+    if node is MaszynaTrack3D:
+        return node as MaszynaTrack3D
+    return null
+
+
+func _get_roll_fix_height(roll_degrees: float) -> float:
+    return abs(sin(deg_to_rad(roll_degrees)) * 0.75)
 
 
 func _apply_visibility_state(force_reload: bool = false) -> void:

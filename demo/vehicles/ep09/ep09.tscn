@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://fv4an7lb63lu"]
 
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_1nw4k"]
-[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_m7eos"]
+[ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/vehicle/rail_vehicle_3d.gd" id="1_m7eos"]
 
 [node name="EP09" type="Node3D" unique_id=394866882]
 script = ExtResource("1_m7eos")
@@ -18,6 +18,7 @@ lights = Dictionary[String, bool]({
 "headlamp22": false,
 "headlamp23": false
 })
+controller_path = NodePath("TrainController")
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="ep09_lowpoly_interior" type="VisualInstance3D" parent="." unique_id=742765134]
@@ -77,3 +78,6 @@ model_filename = "104e_6"
 skins = ["104e-035", ""]
 exclude_node_names = ["cien"]
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
+
+[node name="TrainController" type="TrainController" parent="." unique_id=482622481]
+train_id = "ep09"

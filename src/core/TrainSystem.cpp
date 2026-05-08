@@ -2,10 +2,15 @@
 #include "./TrainSystem.hpp"
 
 namespace godot {
+    const char *TrainSystem::train_position_changed_signal = "train_position_changed";
+
     void TrainSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
+        ClassDB::bind_method(D_METHOD("is_train_registered", "train_id"), &TrainSystem::is_train_registered);
+        ClassDB::bind_method(D_METHOD("get_train", "train_id"), &TrainSystem::get_train);
         ClassDB::bind_method(D_METHOD("get_train_count"), &TrainSystem::get_train_count);
+        ClassDB::bind_method(D_METHOD("get_train_world_position", "train_id"), &TrainSystem::get_train_world_position);
         ClassDB::bind_method(
                 D_METHOD("get_config_property", "train_id", "property_name"), &TrainSystem::get_config_property);
         ClassDB::bind_method(
@@ -21,12 +26,18 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_command_supported", "command"), &TrainSystem::is_command_supported);
         ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainSystem::get_supported_commands);
         ClassDB::bind_method(D_METHOD("get_registered_trains"), &TrainSystem::get_registered_trains);
+        ClassDB::bind_method(D_METHOD("get_train_ids_in_rect", "rect"), &TrainSystem::get_train_ids_in_rect);
         ClassDB::bind_method(
                 D_METHOD("register_command", "train_id", "command", "callable"), &TrainSystem::register_command);
         ClassDB::bind_method(
                 D_METHOD("unregister_command", "train_id", "command", "callable"), &TrainSystem::unregister_command);
         ClassDB::bind_method(D_METHOD("get_train_state", "train_id"), &TrainSystem::get_train_state);
         ClassDB::bind_method(D_METHOD("log", "train_id", "loglevel", "line"), &TrainSystem::log);
+        ClassDB::bind_method(D_METHOD("_on_train_position_changed"), &TrainSystem::_on_train_position_changed);
+
+        ADD_SIGNAL(MethodInfo(
+                train_position_changed_signal, PropertyInfo(Variant::STRING, "train_id"),
+                PropertyInfo(Variant::VECTOR3, "position")));
     }
 
     int TrainSystem::get_train_count() const {
@@ -47,6 +58,17 @@ namespace godot {
         }
 
         return it->second;
+    }
+
+    Vector3 TrainSystem::get_train_world_position(const String &p_train_id) const {
+        const std::map<String, TrainController *>::const_iterator it = trains.find(p_train_id);
+
+        if (it == trains.end()) {
+            UtilityFunctions::push_error("Train is not registered: ", p_train_id);
+            return Vector3();
+        }
+
+        return it->second->get_world_position();
     }
 
     Dictionary TrainSystem::get_train_state(const String &p_train_id) {
@@ -91,6 +113,9 @@ namespace godot {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[p_train_id] = p_train;
+            p_train->connect(
+                    TrainController::position_changed_signal,
+                    Callable(this, "_on_train_position_changed").bind(p_train_id));
             log(p_train_id, GameLog::DEBUG, "Registered train");
         }
     }
@@ -164,8 +189,13 @@ namespace godot {
             commands.erase(i);
         }
 
+        TrainController *train = trains[p_train_id];
+        train->disconnect(
+                TrainController::position_changed_signal,
+                Callable(this, "_on_train_position_changed").bind(p_train_id));
+
         trains.erase(p_train_id);
-        DEBUG("Unregistered train %s", train_id);
+        DEBUG("Unregistered train %s", p_train_id);
     }
 
     bool TrainSystem::is_command_supported(const String &p_command) {
@@ -180,6 +210,17 @@ namespace godot {
         Array train_names;
         for (const auto &[first, second]: trains) {
             train_names.append(first);
+        }
+        return train_names;
+    }
+
+    Array TrainSystem::get_train_ids_in_rect(const Rect2 &p_rect) {
+        Array train_names;
+        for (const auto &[train_id, controller]: trains) {
+            const Vector3 pos = controller->get_world_position();
+            if (p_rect.has_point(Vector2(pos.x, pos.z))) {
+                train_names.append(train_id);
+            }
         }
         return train_names;
     }
@@ -253,5 +294,9 @@ namespace godot {
         for (auto &[train_id, train]: trains) {
             send_command(train_id, p_command, p_p1, p_p2);
         }
+    }
+
+    void TrainSystem::_on_train_position_changed(const Vector3 &p_position, const String &p_train_id) {
+        emit_signal(train_position_changed_signal, p_train_id, p_position);
     }
 } // namespace godot

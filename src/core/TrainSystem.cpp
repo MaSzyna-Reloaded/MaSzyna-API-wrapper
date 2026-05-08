@@ -1,10 +1,13 @@
 #include "../core/TrainController.hpp"
 #include "./TrainSystem.hpp"
+#include <godot_cpp/classes/node3d.hpp>
 
 namespace godot {
     void TrainSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
+        ClassDB::bind_method(D_METHOD("is_train_registered", "train_id"), &TrainSystem::is_train_registered);
+        ClassDB::bind_method(D_METHOD("get_train", "train_id"), &TrainSystem::get_train);
         ClassDB::bind_method(D_METHOD("get_train_count"), &TrainSystem::get_train_count);
         ClassDB::bind_method(
                 D_METHOD("get_config_property", "train_id", "property_name"), &TrainSystem::get_config_property);
@@ -21,6 +24,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_command_supported", "command"), &TrainSystem::is_command_supported);
         ClassDB::bind_method(D_METHOD("get_supported_commands"), &TrainSystem::get_supported_commands);
         ClassDB::bind_method(D_METHOD("get_registered_trains"), &TrainSystem::get_registered_trains);
+        ClassDB::bind_method(D_METHOD("get_train_ids_in_rect", "rect"), &TrainSystem::get_train_ids_in_rect);
         ClassDB::bind_method(
                 D_METHOD("register_command", "train_id", "command", "callable"), &TrainSystem::register_command);
         ClassDB::bind_method(
@@ -180,6 +184,29 @@ namespace godot {
         Array train_names;
         for (const auto &[first, second]: trains) {
             train_names.append(first);
+        }
+        return train_names;
+    }
+
+    Array TrainSystem::get_train_ids_in_rect(const Rect2 &p_rect) {
+        Array train_names;
+        for (const auto &[train_id, controller]: trains) {
+            Node *train_node = controller->get_parent();
+            Node3D *node3d = nullptr;
+            while (train_node) {
+                node3d = Object::cast_to<Node3D>(train_node);
+                if (node3d) {
+                    break;
+                }
+                train_node = train_node->get_parent();
+            }
+
+            if (node3d) {
+                Vector3 pos = node3d->get_global_position();
+                if (p_rect.has_point(Vector2(pos.x, pos.z))) {
+                    train_names.append(train_id);
+                }
+            }
         }
         return train_names;
     }

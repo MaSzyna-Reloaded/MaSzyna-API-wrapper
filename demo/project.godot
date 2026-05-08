@@ -30,7 +30,7 @@ run/disable_stderr.release=true
 [autoload]
 
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
-TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
+TrackRenderingServer="*res://addons/libmaszyna/tracks/track_rendering_server.gd"
 TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
@@ -41,6 +41,7 @@ E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
+TrackManager="*uid://c01n2va4so5bg"
 
 [debug]
 
@@ -157,6 +158,10 @@ change_vehicle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194336,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+
+[maszyna]
+
+track_curve_bake_interval=0.5
 
 [rendering]
 

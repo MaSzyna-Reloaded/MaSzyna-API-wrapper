@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://unrm26h4mwk4"]
 
 [ext_resource type="Script" uid="uid://bpk0y7dkvuqq8" path="res://addons/libmaszyna/editor/e3d_toolbar/toolbar_e3d_instance.gd" id="1_h4jha"]
+[ext_resource type="PackedScene" uid="uid://b6p4h8x4k2r5s" path="res://addons/libmaszyna/editor/e3d_toolbar/info_window.tscn" id="2_info"]
 
 [node name="ToolbarE3dInstance" type="HBoxContainer" unique_id=1889642562]
 anchors_preset = 15
@@ -15,4 +16,16 @@ layout_mode = 2
 disabled = true
 text = "Edit E3D"
 
+[node name="RebuildTopologyButton" type="Button" parent="." unique_id=581842767]
+layout_mode = 2
+text = "Rebuild tracks topology"
+
+[node name="ViewTopologyButton" type="Button" parent="." unique_id=581842768]
+layout_mode = 2
+text = "View topology"
+
+[node name="InfoWindow" parent="." unique_id=340930920 instance=ExtResource("2_info")]
+
 [connection signal="toggled" from="Editable" to="." method="_on_editable_toggled"]
+[connection signal="pressed" from="RebuildTopologyButton" to="." method="_on_rebuild_topology_button_pressed"]
+[connection signal="pressed" from="ViewTopologyButton" to="." method="_on_view_topology_button_pressed"]

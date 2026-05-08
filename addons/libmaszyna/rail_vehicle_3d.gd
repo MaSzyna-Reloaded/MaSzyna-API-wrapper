@@ -11,6 +11,26 @@ class_name RailVehicle3D
             _controller = null
             _dirty = true
 
+@export var start_track_name: String = "":
+    set(value):
+        if not start_track_name == value:
+            start_track_name = value
+            _needs_track_start_update = true
+            _dirty = true
+
+@export var start_track_offset: float = 0.0:
+    set(value):
+        if not is_equal_approx(start_track_offset, value):
+            start_track_offset = value
+            _needs_track_start_update = true
+            _dirty = true
+
+@export var direction: TrackManager.Direction = TrackManager.Direction.ALIGNED_WITH_CONSIST_FRONT:
+    set(value):
+        if not direction == value:
+            direction = value
+            _dirty = true
+
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
@@ -34,7 +54,10 @@ class_name RailVehicle3D
             head_display_node_path = x
             _needs_head_display_update = true
 
+var current_track_rid: RID
+var current_track_offset: float = 0.0
 var _dirty:bool = true
+var _needs_track_start_update: bool = true
 var _needs_head_display_update: bool = false
 var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
@@ -142,6 +165,30 @@ func get_controller() -> TrainController:
     else:
         return null
 
+
+func move_on_track(offset: float) -> void:
+    if not current_track_rid.is_valid():
+        _initialize_track_position()
+    if not current_track_rid.is_valid():
+        return
+    if TrackManager.is_topology_changed:
+        TrackManager.rebuild_topology()
+
+    var motion: TrackManager.TrackMotionResult = TrackManager.advance_on_track(
+        current_track_rid,
+        current_track_offset,
+        direction,
+        offset
+    )
+    if not motion.track_rid.is_valid():
+        return
+
+    current_track_rid = motion.track_rid
+    current_track_offset = motion.offset
+    direction = motion.direction
+    _apply_track_transform()
+
+
 func _update_head_display():
     if is_inside_tree():
         if head_display_node_path:
@@ -155,16 +202,9 @@ func _update_head_display():
             _needs_head_display_update = false
 
 
-func _process(delta):
+func _process(delta: float) -> void:
     if _dirty:
-        _dirty = false
-        if head_display_e3d_path:
-            _head_display_e3d = get_node_or_null(head_display_e3d_path)
-            if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
-
-        if controller_path and is_inside_tree():
-            _controller = get_node(controller_path)
+        _process_dirty()
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -173,13 +213,62 @@ func _process(delta):
 
     if not Engine.is_editor_hint():
         if _controller:
-            position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+            var velocity: float = _controller.state.get("velocity", 0.0)
+            if current_track_rid.is_valid():
+                move_on_track(delta * velocity)
+            else:
+                position += Vector3.FORWARD * delta * velocity
+
+
+func _process_dirty() -> void:
+    _dirty = false
+    if head_display_e3d_path:
+        _head_display_e3d = get_node_or_null(head_display_e3d_path)
+        if _head_display_e3d:
+            _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
+
+    if controller_path and is_inside_tree():
+        _controller = get_node(controller_path)
+
+    if _needs_track_start_update:
+        _initialize_track_position()
+        _needs_track_start_update = false
+    else:
+        _apply_track_transform()
+
+
+func _initialize_track_position() -> void:
+    current_track_rid = RID()
+    current_track_offset = 0.0
+    if start_track_name.is_empty():
+        return
+    var track_rid: RID = TrackManager.get_track_rid_by_name(start_track_name)
+    if not track_rid.is_valid():
+        return
+    var track_length: float = TrackManager.get_active_track_length(track_rid)
+    current_track_rid = track_rid
+    current_track_offset = clampf(start_track_offset, 0.0, track_length)
+    _apply_track_transform()
+
+
+func _apply_track_transform() -> void:
+    if not current_track_rid.is_valid():
+        return
+    var track_transform: Transform3D = TrackManager.sample_track_transform(current_track_rid, current_track_offset)
+    if direction == TrackManager.Direction.OPPOSITE_TO_CONSIST_FRONT:
+        track_transform.basis = track_transform.basis.rotated(track_transform.basis.y.normalized(), PI).orthonormalized()
+
+    # Add rail height offset
+    track_transform.origin.y += TrackManager.get_rail_height()
+
+    global_transform = track_transform
 
 func _schedule_head_display_update():
     _needs_head_display_update = true
 
 func _ready() -> void:
     _schedule_head_display_update()
+    _needs_track_start_update = true
     _dirty = true
 
     for instance:E3DModelInstance in find_children("", "E3DModelInstance", true, false):

@@ -11,6 +11,7 @@ func _ready():
         if win:
             win.visible = false
             menu.add_item(win.title)
+    TrackManager.rebuild_topology()
 
 
 func _input(event):

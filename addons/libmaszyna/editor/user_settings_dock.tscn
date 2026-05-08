@@ -68,6 +68,22 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "FXAA"
 
+[node name="HBoxContainer13" type="HBoxContainer" parent="VBoxContainer" unique_id=197411382]
+layout_mode = 2
+
+[node name="UseTAA" type="CheckButton" parent="VBoxContainer/HBoxContainer13" unique_id=571248169]
+layout_mode = 2
+button_pressed = true
+script = ExtResource("2_2cs74")
+section = "render"
+key = "use_taa"
+default = true
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer13" unique_id=967711408]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Use TAA"
+
 [node name="HBoxContainer5" type="HBoxContainer" parent="VBoxContainer" unique_id=1448764628]
 layout_mode = 2
 

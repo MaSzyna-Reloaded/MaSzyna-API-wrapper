@@ -34,15 +34,14 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaTrack3D:
     var curve_tokens = p.get_tokens(15)
     obj.curve = get_curve_from_tokens(curve_tokens)
 
-    var nt = p.next_token()
-    if nt.is_valid_float():
-        # second curve
-        curve_tokens = [nt] + p.get_tokens(14)
-        #obj.additional_curve = true
-        #obj.curve2 = get_curve_from_tokens(curve_tokens)
-        push_warning("Node track: curve2 is not supported yet")
-        
-    elif not nt == "endtrack":
+    var nt = ""
+    if type == "switch":
+        obj.curve2 = get_curve_from_tokens(p.get_tokens(15))
+        nt = p.next_token()
+    else:
+        nt = p.next_token()
+
+    if not nt == "endtrack":
         var params: Dictionary = {}
         var key: String = nt
         while key != "endtrack":

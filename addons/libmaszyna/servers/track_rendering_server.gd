@@ -3,9 +3,12 @@ extends Node
 
 
 class TrackState:
-    var rail_mesh_instance: RID = RID()
-    var rail_mesh: Mesh
+    var primary_rail_mesh_instance: RID = RID()
+    var primary_rail_mesh: Mesh
+    var secondary_rail_mesh_instance: RID = RID()
+    var secondary_rail_mesh: Mesh
     var curve: Curve3D
+    var curve2: Curve3D
 
     var trackbed_mesh_instance: RID = RID()
     var trackbed_mesh: Mesh
@@ -33,11 +36,14 @@ var _tracks: Dictionary[RID, TrackState] = {}
 var _next_track_id: int = 0
 var _rail_profile_cache: Dictionary = {}
 var _rail_profile_regex: RegEx
+const _SWITCH_BLADE_RATIO: float = 0.65
+const _SWITCH_TRACKBED_Z_FIGHT_OFFSET: float = 0.025
 
 
 func create_track() -> RID:
     var state: TrackState = TrackState.new()
-    state.rail_mesh_instance = RenderingServer.instance_create()
+    state.primary_rail_mesh_instance = RenderingServer.instance_create()
+    state.secondary_rail_mesh_instance = RenderingServer.instance_create()
     state.trackbed_mesh_instance = RenderingServer.instance_create()
 
     _next_track_id += 1
@@ -51,14 +57,31 @@ func free_track(track_rid: RID) -> void:
     if not state:
         return
 
-    if state.rail_mesh_instance.is_valid():
-        RenderingServer.free_rid(state.rail_mesh_instance)
+    _reset_track_instances(state)
+
+    if state.primary_rail_mesh_instance.is_valid():
+        RenderingServer.free_rid(state.primary_rail_mesh_instance)
+    if state.secondary_rail_mesh_instance.is_valid():
+        RenderingServer.free_rid(state.secondary_rail_mesh_instance)
     if state.trackbed_mesh_instance.is_valid():
         RenderingServer.free_rid(state.trackbed_mesh_instance)
 
-    state.rail_mesh = null
+    state.primary_rail_mesh = null
+    state.secondary_rail_mesh = null
     state.trackbed_mesh = null
     _tracks.erase(track_rid)
+
+
+func _reset_track_instances(state: TrackState) -> void:
+    if state.primary_rail_mesh_instance.is_valid():
+        RenderingServer.instance_set_base(state.primary_rail_mesh_instance, RID())
+        RenderingServer.instance_geometry_set_material_override(state.primary_rail_mesh_instance, RID())
+    if state.secondary_rail_mesh_instance.is_valid():
+        RenderingServer.instance_set_base(state.secondary_rail_mesh_instance, RID())
+        RenderingServer.instance_geometry_set_material_override(state.secondary_rail_mesh_instance, RID())
+    if state.trackbed_mesh_instance.is_valid():
+        RenderingServer.instance_set_base(state.trackbed_mesh_instance, RID())
+        RenderingServer.instance_geometry_set_material_override(state.trackbed_mesh_instance, RID())
 
 
 func set_track_transform(track_rid: RID, transform: Transform3D) -> void:
@@ -67,7 +90,8 @@ func set_track_transform(track_rid: RID, transform: Transform3D) -> void:
         return
 
     state.transform = transform
-    RenderingServer.instance_set_transform(state.rail_mesh_instance, state.transform)
+    RenderingServer.instance_set_transform(state.primary_rail_mesh_instance, state.transform)
+    RenderingServer.instance_set_transform(state.secondary_rail_mesh_instance, state.transform)
     RenderingServer.instance_set_transform(state.trackbed_mesh_instance, state.transform)
 
 
@@ -84,7 +108,8 @@ func set_track_visible(track_rid: RID, visible: bool) -> void:
         return
 
     state.visible = visible
-    RenderingServer.instance_set_visible(state.rail_mesh_instance, state.visible)
+    RenderingServer.instance_set_visible(state.primary_rail_mesh_instance, state.visible)
+    RenderingServer.instance_set_visible(state.secondary_rail_mesh_instance, state.visible)
     RenderingServer.instance_set_visible(state.trackbed_mesh_instance, state.visible)
 
 
@@ -100,13 +125,15 @@ func set_track_scenario(track_rid: RID, scenario: RID) -> void:
     if not state:
         return
 
-    RenderingServer.instance_set_scenario(state.rail_mesh_instance, scenario)
+    RenderingServer.instance_set_scenario(state.primary_rail_mesh_instance, scenario)
+    RenderingServer.instance_set_scenario(state.secondary_rail_mesh_instance, scenario)
     RenderingServer.instance_set_scenario(state.trackbed_mesh_instance, scenario)
 
 
 func set_track_curve(
     track_rid: RID,
     curve: Curve3D,
+    curve2: Curve3D,
     width: float,
     tex_length: float,
     tex_height: float,
@@ -115,47 +142,94 @@ func set_track_curve(
     railprofile: String,
     roll1: float,
     roll2: float,
+    roll3: float,
+    roll4: float,
     next_trackbed: Dictionary,
+    switch_trackbed: Dictionary,
     trackbed_enabled: bool
 ) -> void:
     var state: TrackState = _tracks.get(track_rid)
     if not state:
         return
     state.curve = curve
+    state.curve2 = curve2
 
-    RenderingServer.instance_set_base(state.rail_mesh_instance, RID())
+    RenderingServer.instance_set_base(state.primary_rail_mesh_instance, RID())
+    RenderingServer.instance_set_base(state.secondary_rail_mesh_instance, RID())
     RenderingServer.instance_set_base(state.trackbed_mesh_instance, RID())
 
     if not state.curve or state.curve.point_count < 2:
-        state.rail_mesh = null
+        state.primary_rail_mesh = null
+        state.secondary_rail_mesh = null
         state.trackbed_mesh = null
         return
 
     var length: float = state.curve.get_baked_length()
     if length <= 0.001:
-        state.rail_mesh = null
+        state.primary_rail_mesh = null
+        state.secondary_rail_mesh = null
         state.trackbed_mesh = null
         return
 
-    var rail_profile: Array = _get_rail_profile(railprofile)
-    state.rail_mesh = _create_rail_mesh(state.curve, width, roll1, roll2, rail_profile, tex_length)
-    RenderingServer.instance_set_base(state.rail_mesh_instance, state.rail_mesh.get_rid())
+    var rail_profile: Dictionary = _get_rail_profile(railprofile)
+    state.primary_rail_mesh = null
+    state.secondary_rail_mesh = null
 
     state.trackbed_mesh = null
-    if trackbed_enabled:
-        state.trackbed_mesh = _create_trackbed_mesh(
+    if _is_switch_curve(state.curve2):
+        var switch_geometry: Dictionary = _create_switch_rail_meshes(
             state.curve,
+            state.curve2,
             width,
             tex_length,
-            tex_height,
-            tex_width,
-            tex_slope,
             roll1,
             roll2,
-            next_trackbed,
+            roll3,
+            roll4,
             rail_profile
         )
+        state.primary_rail_mesh = switch_geometry.get("primary")
+        state.secondary_rail_mesh = switch_geometry.get("secondary")
+        if trackbed_enabled and not switch_trackbed.is_empty():
+            state.trackbed_mesh = _create_switch_trackbed_mesh(
+                state.curve,
+                state.curve2,
+                width,
+                tex_length,
+                switch_trackbed,
+                roll1,
+                roll2,
+                roll3,
+                roll4,
+                rail_profile
+            )
+    else:
+        state.primary_rail_mesh = _create_rail_mesh(
+            state.curve,
+            width,
+            roll1,
+            roll2,
+            rail_profile["rail"],
+            tex_length
+        )
+        if trackbed_enabled:
+            state.trackbed_mesh = _create_trackbed_mesh(
+                state.curve,
+                width,
+                tex_length,
+                tex_height,
+                tex_width,
+                tex_slope,
+                roll1,
+                roll2,
+                next_trackbed,
+                rail_profile["rail"]
+            )
 
+    if state.primary_rail_mesh:
+        RenderingServer.instance_set_base(state.primary_rail_mesh_instance, state.primary_rail_mesh.get_rid())
+    if state.secondary_rail_mesh:
+        RenderingServer.instance_set_base(state.secondary_rail_mesh_instance, state.secondary_rail_mesh.get_rid())
     if state.trackbed_mesh:
         RenderingServer.instance_set_base(state.trackbed_mesh_instance, state.trackbed_mesh.get_rid())
 
@@ -164,13 +238,18 @@ func set_sleeper_mesh(_track_rid: RID, _mesh: Mesh) -> void:
     pass
 
 
-func set_track_materials(track_rid: RID, trackbed_material: RID, rail_material: RID) -> void:
+func set_track_materials(track_rid: RID, trackbed_material: RID, primary_rail_material: RID, secondary_rail_material: RID) -> void:
     var state: TrackState = _tracks.get(track_rid)
     if not state:
         return
 
-    RenderingServer.instance_geometry_set_material_override(state.rail_mesh_instance, rail_material)
+    RenderingServer.instance_geometry_set_material_override(state.primary_rail_mesh_instance, primary_rail_material)
+    RenderingServer.instance_geometry_set_material_override(state.secondary_rail_mesh_instance, secondary_rail_material)
     RenderingServer.instance_geometry_set_material_override(state.trackbed_mesh_instance, trackbed_material)
+
+
+func _is_switch_curve(curve: Curve3D) -> bool:
+    return curve != null and curve.point_count >= 2 and curve.get_baked_length() > 0.001
 
 
 func _create_rail_mesh(
@@ -246,6 +325,176 @@ func _create_trackbed_mesh(
         tex_length
     )
     _append_loft_geometry(vertices, normals, uvs, indices, curve, start_section, end_section, tex_length, rail_height)
+
+    return _build_array_mesh(vertices, normals, uvs, indices)
+
+
+func _create_switch_rail_meshes(
+    primary_curve: Curve3D,
+    secondary_curve: Curve3D,
+    width: float,
+    tex_length: float,
+    roll1: float,
+    roll2: float,
+    roll3: float,
+    roll4: float,
+    rail_profile: Dictionary
+) -> Dictionary:
+    var primary_vertices: PackedVector3Array = PackedVector3Array()
+    var primary_normals: PackedVector3Array = PackedVector3Array()
+    var primary_uvs: PackedVector2Array = PackedVector2Array()
+    var primary_indices: PackedInt32Array = PackedInt32Array()
+    var secondary_vertices: PackedVector3Array = PackedVector3Array()
+    var secondary_normals: PackedVector3Array = PackedVector3Array()
+    var secondary_uvs: PackedVector2Array = PackedVector2Array()
+    var secondary_indices: PackedInt32Array = PackedInt32Array()
+
+    var regular_profile: Array = rail_profile["rail"]
+    var blade_profile: Array = rail_profile["blade"]
+    var rail_height: float = abs(float(regular_profile[0][1]))
+    var is_right_switch: bool = _is_right_switch(primary_curve, secondary_curve)
+    var blade_sample_count: int = _get_switch_blade_sample_count(primary_curve)
+
+    var primary_inner_mirrored: bool = is_right_switch
+    var primary_outer_mirrored: bool = not primary_inner_mirrored
+    var secondary_inner_mirrored: bool = not is_right_switch
+    var secondary_outer_mirrored: bool = not secondary_inner_mirrored
+
+    _append_switch_rail_geometry(
+        primary_vertices,
+        primary_normals,
+        primary_uvs,
+        primary_indices,
+        primary_curve,
+        regular_profile,
+        blade_profile,
+        width,
+        roll1,
+        roll2,
+        tex_length,
+        rail_height,
+        primary_inner_mirrored,
+        primary_outer_mirrored,
+        blade_sample_count
+    )
+    _append_switch_rail_geometry(
+        secondary_vertices,
+        secondary_normals,
+        secondary_uvs,
+        secondary_indices,
+        secondary_curve,
+        regular_profile,
+        blade_profile,
+        width,
+        roll3,
+        roll4,
+        tex_length,
+        rail_height,
+        secondary_inner_mirrored,
+        secondary_outer_mirrored,
+        blade_sample_count
+    )
+
+    return {
+        "primary": _build_array_mesh(primary_vertices, primary_normals, primary_uvs, primary_indices),
+        "secondary": _build_array_mesh(secondary_vertices, secondary_normals, secondary_uvs, secondary_indices),
+    }
+
+
+func _append_switch_rail_geometry(
+    vertices: PackedVector3Array,
+    normals: PackedVector3Array,
+    uvs: PackedVector2Array,
+    indices: PackedInt32Array,
+    curve: Curve3D,
+    regular_profile: Array,
+    blade_profile: Array,
+    width: float,
+    roll_start: float,
+    roll_end: float,
+    tex_length: float,
+    rail_height: float,
+    inner_mirrored: bool,
+    outer_mirrored: bool,
+    blade_sample_count: int
+) -> void:
+    var outer_start: Array = _build_rail_section(regular_profile, width, roll_start, outer_mirrored)
+    var outer_end: Array = _build_rail_section(regular_profile, width, roll_end, outer_mirrored)
+    _append_loft_geometry(vertices, normals, uvs, indices, curve, outer_start, outer_end, tex_length, rail_height)
+
+    var regular_start: Array = _build_rail_section(regular_profile, width, roll_start, inner_mirrored)
+    var regular_end: Array = _build_rail_section(regular_profile, width, roll_end, inner_mirrored)
+    var blade_start: Array = _build_rail_section(blade_profile, width, roll_start, inner_mirrored)
+
+    _append_loft_geometry_range(
+        vertices,
+        normals,
+        uvs,
+        indices,
+        curve,
+        blade_start,
+        regular_end,
+        tex_length,
+        rail_height,
+        0,
+        blade_sample_count
+    )
+    _append_loft_geometry_range(
+        vertices,
+        normals,
+        uvs,
+        indices,
+        curve,
+        regular_start,
+        regular_end,
+        tex_length,
+        rail_height,
+        max(blade_sample_count - 1, 0),
+        -1
+    )
+
+
+func _create_switch_trackbed_mesh(
+    primary_curve: Curve3D,
+    secondary_curve: Curve3D,
+    width: float,
+    tex_length: float,
+    trackbed_profile: Dictionary,
+    roll1: float,
+    roll2: float,
+    roll3: float,
+    roll4: float,
+    rail_profile: Dictionary
+) -> ArrayMesh:
+    var vertices: PackedVector3Array = PackedVector3Array()
+    var normals: PackedVector3Array = PackedVector3Array()
+    var uvs: PackedVector2Array = PackedVector2Array()
+    var indices: PackedInt32Array = PackedInt32Array()
+    var rail_height: float = abs(float(rail_profile["rail"][0][1]))
+    var is_right_switch: bool = _is_right_switch(primary_curve, secondary_curve)
+    var profile_width: float = float(trackbed_profile.get("width", width))
+    var tex_height: float = float(trackbed_profile.get("tex_height", 0.0))
+    var tex_width: float = float(trackbed_profile.get("tex_width", 0.0))
+    var tex_slope: float = float(trackbed_profile.get("tex_slope", 0.0))
+
+    var primary_start: Array = _build_trackbed_section(profile_width, tex_height, tex_width, tex_slope, roll1, rail_height, tex_length)
+    var primary_end: Array = _build_trackbed_section(profile_width, tex_height, tex_width, tex_slope, roll2, rail_height, tex_length)
+    var secondary_start: Array = _build_trackbed_section(profile_width, tex_height, tex_width, tex_slope, roll3, rail_height, tex_length)
+    var secondary_end: Array = _build_trackbed_section(profile_width, tex_height, tex_width, tex_slope, roll4, rail_height, tex_length)
+
+    if is_right_switch:
+        _lower_trackbed_edge(primary_start, true)
+        _lower_trackbed_edge(primary_end, true)
+        _lower_trackbed_edge(secondary_start, false)
+        _lower_trackbed_edge(secondary_end, false)
+    else:
+        _lower_trackbed_edge(primary_start, false)
+        _lower_trackbed_edge(primary_end, false)
+        _lower_trackbed_edge(secondary_start, true)
+        _lower_trackbed_edge(secondary_end, true)
+
+    _append_loft_geometry(vertices, normals, uvs, indices, primary_curve, primary_start, primary_end, tex_length, rail_height)
+    _append_loft_geometry(vertices, normals, uvs, indices, secondary_curve, secondary_start, secondary_end, tex_length, rail_height)
 
     return _build_array_mesh(vertices, normals, uvs, indices)
 
@@ -372,6 +621,34 @@ func _append_loft_geometry(
     tex_length: float,
     rail_height: float
 ) -> void:
+    _append_loft_geometry_range(
+        vertices,
+        normals,
+        uvs,
+        indices,
+        curve,
+        start_section,
+        end_section,
+        tex_length,
+        rail_height,
+        0,
+        -1
+    )
+
+
+func _append_loft_geometry_range(
+    vertices: PackedVector3Array,
+    normals: PackedVector3Array,
+    uvs: PackedVector2Array,
+    indices: PackedInt32Array,
+    curve: Curve3D,
+    start_section: Array,
+    end_section: Array,
+    tex_length: float,
+    rail_height: float,
+    start_sample: int,
+    end_sample: int
+) -> void:
     if start_section.size() < 2 or start_section.size() != end_section.size():
         return
 
@@ -379,13 +656,18 @@ func _append_loft_geometry(
     if baked_points.size() < 2:
         return
 
+    var first_sample: int = clampi(start_sample, 0, baked_points.size() - 1)
+    var last_sample: int = baked_points.size() - 1 if end_sample < 0 else clampi(end_sample, 0, baked_points.size() - 1)
+    if last_sample <= first_sample:
+        return
+
     var safe_tex_length: float = max(abs(tex_length), 0.001)
     var section_size: int = start_section.size()
     var base_vertex: int = vertices.size()
     var distance: float = 0.0
-    var total_length: float = max(curve.get_baked_length(), 0.001)
+    var total_length: float = max(_get_baked_segment_length(baked_points, first_sample, last_sample), 0.001)
 
-    for sample_index: int in range(baked_points.size()):
+    for sample_index: int in range(first_sample, last_sample + 1):
         var t: float = distance / total_length
         var frame: Transform3D = _build_curve_frame(baked_points, sample_index)
         frame.origin.y += rail_height
@@ -402,10 +684,17 @@ func _append_loft_geometry(
             normals.push_back((frame.basis * local_normal).normalized())
             uvs.push_back(Vector2(uv_x, distance / safe_tex_length))
 
-        if sample_index < baked_points.size() - 1:
+        if sample_index < last_sample:
             distance += baked_points[sample_index].distance_to(baked_points[sample_index + 1])
 
-    _append_loft_strip_indices(indices, baked_points.size(), section_size, base_vertex)
+    _append_loft_strip_indices(indices, last_sample - first_sample + 1, section_size, base_vertex)
+
+
+func _get_baked_segment_length(baked_points: PackedVector3Array, start_sample: int, end_sample: int) -> float:
+    var length: float = 0.0
+    for sample_index: int in range(start_sample, end_sample):
+        length += baked_points[sample_index].distance_to(baked_points[sample_index + 1])
+    return length
 
 
 func _build_curve_frame(baked_points: PackedVector3Array, sample_index: int) -> Transform3D:
@@ -474,7 +763,7 @@ func _build_array_mesh(
     return mesh
 
 
-func _get_rail_profile(profile_name: String) -> Array:
+func _get_rail_profile(profile_name: String) -> Dictionary:
     var normalized_name: String = profile_name.strip_edges()
     if normalized_name.is_empty():
         normalized_name = "default"
@@ -482,18 +771,23 @@ func _get_rail_profile(profile_name: String) -> Array:
     if _rail_profile_cache.has(normalized_name):
         return _rail_profile_cache[normalized_name]
 
-    var profile: Array = _load_rail_profile(normalized_name)
+    var profile: Dictionary = _load_rail_profile(normalized_name)
     if profile.is_empty():
-        profile = _DEFAULT_RAIL_PROFILE.duplicate(true)
+        profile = {
+            "rail": _DEFAULT_RAIL_PROFILE.duplicate(true),
+            "blade": _DEFAULT_RAIL_PROFILE.duplicate(true),
+        }
+    elif profile["blade"].is_empty():
+        profile["blade"] = (profile["rail"] as Array).duplicate(true)
 
     _rail_profile_cache[normalized_name] = profile
     return profile
 
 
-func _load_rail_profile(profile_name: String) -> Array:
+func _load_rail_profile(profile_name: String) -> Dictionary:
     var game_dir: String = UserSettings.get_maszyna_game_dir()
     if game_dir.is_empty():
-        return []
+        return {}
 
     var normalized_name: String = profile_name
     if normalized_name.begins_with("railprofile_"):
@@ -503,32 +797,45 @@ func _load_rail_profile(profile_name: String) -> Array:
         "railprofile_%s.txt" % normalized_name
     )
     if not FileAccess.file_exists(profile_path):
-        return []
+        return {}
 
     var file: FileAccess = FileAccess.open(profile_path, FileAccess.READ)
     if not file:
-        return []
+        return {}
 
-    var profile: Array = []
+    var rail_profile: Array = []
+    var blade_profile: Array = []
     var regex: RegEx = _get_rail_profile_regex()
+    var read_blade_profile: bool = false
     while not file.eof_reached():
         var line: String = file.get_line().strip_edges()
-        if line.begins_with("// switch blade"):
-            break
+        if line.is_empty():
+            continue
+        if line.begins_with("//"):
+            if line.begins_with("// switch blade"):
+                read_blade_profile = true
+            continue
 
         var matches: Array[RegExMatch] = regex.search_all(line)
         if matches.size() < 5:
             continue
 
-        profile.append([
+        var point := [
             float(matches[0].get_string()),
             float(matches[1].get_string()),
             float(matches[2].get_string()),
             float(matches[3].get_string()),
             float(matches[4].get_string()),
-        ])
+        ]
+        if read_blade_profile:
+            blade_profile.append(point)
+        else:
+            rail_profile.append(point)
 
-    return profile
+    return {
+        "rail": rail_profile,
+        "blade": blade_profile,
+    }
 
 
 func _get_rail_profile_regex() -> RegEx:
@@ -538,3 +845,33 @@ func _get_rail_profile_regex() -> RegEx:
     _rail_profile_regex = RegEx.new()
     _rail_profile_regex.compile("-?\\d+(?:\\.\\d+)?")
     return _rail_profile_regex
+
+
+func _is_right_switch(primary_curve: Curve3D, secondary_curve: Curve3D) -> bool:
+    var primary_tangent: Vector3 = _get_curve_tangent(primary_curve, 0)
+    var secondary_tangent: Vector3 = _get_curve_tangent(secondary_curve, 0)
+    return primary_tangent.signed_angle_to(secondary_tangent, Vector3.UP) < 0.0
+
+
+func _get_curve_tangent(curve: Curve3D, sample_index: int) -> Vector3:
+    var baked_points: PackedVector3Array = curve.get_baked_points()
+    if baked_points.size() < 2:
+        return Vector3.FORWARD
+    var clamped_index: int = clampi(sample_index, 0, baked_points.size() - 2)
+    var tangent: Vector3 = baked_points[clamped_index + 1] - baked_points[clamped_index]
+    if tangent.length_squared() <= 0.000001:
+        return Vector3.FORWARD
+    return tangent.normalized()
+
+
+func _get_switch_blade_sample_count(curve: Curve3D) -> int:
+    var sample_count: int = curve.get_baked_points().size()
+    return clampi(int(ceil(sample_count * _SWITCH_BLADE_RATIO)), 2, sample_count - 1)
+
+
+func _lower_trackbed_edge(section: Array, lower_right: bool) -> void:
+    var indexes: Array[int] = [0, 1] if lower_right else [3, 4]
+    for section_index: int in indexes:
+        var point: Array = section[section_index]
+        point[0] = (point[0] as Vector3) + Vector3(0.0, -_SWITCH_TRACKBED_Z_FIGHT_OFFSET, 0.0)
+        section[section_index] = point

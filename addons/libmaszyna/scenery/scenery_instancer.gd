@@ -39,6 +39,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     tracks.name = "Tracks"
     for item in context.tracks:
         tracks.add_child(item)
+    _finalize_track_links(tracks)
     if tracks.get_child_count() > 0:
         objects.insert(0, tracks)
     var tracks_elapsed_usec := Time.get_ticks_usec() - tracks_started_usec
@@ -152,6 +153,64 @@ static func parse_file(filename: String, parameters: Dictionary, context: Maszyn
 static func _make_importer_callback(importer, context) -> Callable:
     var callback = func(p): return importer.import(p, context)
     return callback
+
+
+static func _finalize_track_links(tracks_root: Node3D) -> void:
+    var tracks: Array[MaszynaTrack3D] = []
+    for child: Node in tracks_root.get_children():
+        if child is MaszynaTrack3D:
+            tracks.append(child as MaszynaTrack3D)
+
+    for track: MaszynaTrack3D in tracks:
+        track.previous_track = _resolve_track_link(tracks, track, true)
+        track.next_track = _resolve_track_link(tracks, track, false)
+
+
+static func _resolve_track_link(
+    tracks: Array[MaszynaTrack3D],
+    source_track: MaszynaTrack3D,
+    use_start_point: bool
+) -> NodePath:
+    var source_curve: MaszynaTrackCurve = source_track.curve
+    if not source_curve:
+        return NodePath()
+
+    var source_point: Vector3 = source_curve.p1 if use_start_point else source_curve.p2
+    var best_match: MaszynaTrack3D = null
+    var best_distance: float = INF
+
+    for candidate: MaszynaTrack3D in tracks:
+        if candidate == source_track:
+            continue
+
+        for candidate_point: Vector3 in _get_track_connection_points(candidate):
+            var distance: float = source_point.distance_to(candidate_point)
+            if distance <= 0.5 and distance < best_distance:
+                best_distance = distance
+                best_match = candidate
+
+    if not best_match:
+        return NodePath()
+
+    return source_track.get_path_to(best_match)
+
+
+static func _get_track_connection_points(track: MaszynaTrack3D) -> Array[Vector3]:
+    var points: Array[Vector3] = []
+    if track.curve:
+        _append_unique_point(points, track.curve.p1)
+        _append_unique_point(points, track.curve.p2)
+    if track.curve2:
+        _append_unique_point(points, track.curve2.p1)
+        _append_unique_point(points, track.curve2.p2)
+    return points
+
+
+static func _append_unique_point(points: Array[Vector3], point: Vector3) -> void:
+    for existing_point: Vector3 in points:
+        if existing_point.distance_to(point) <= 0.01:
+            return
+    points.append(point)
 
 
 func _set_owner_recursive(node, owner):

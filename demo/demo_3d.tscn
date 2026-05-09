@@ -54,9 +54,9 @@ fog_enabled = true
 fog_sky_affect = 0.4
 volumetric_fog_enabled = true
 volumetric_fog_density = 0.029
-volumetric_fog_anisotropy = 0.9
-volumetric_fog_length = 0.5
-volumetric_fog_detail_spread = 5.598199
+volumetric_fog_anisotropy = 0.0
+volumetric_fog_length = 0.4
+volumetric_fog_detail_spread = 1.0
 volumetric_fog_sky_affect = 0.405
 adjustment_enabled = true
 
@@ -226,6 +226,7 @@ clip_contents = true
 layout_mode = 2
 
 [node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]
+visible = null
 
 [node name="UserSettingsPanel" parent="." unique_id=1798306963 instance=ExtResource("12_eihw1")]
 

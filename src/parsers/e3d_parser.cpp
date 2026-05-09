@@ -86,15 +86,18 @@ namespace godot {
         result.visibility_light_threshold = p_file->get_float();
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA ambient
-        Color diffuse_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
+        const float diffuse_r = p_file->get_float();
+        const float diffuse_g = p_file->get_float();
+        const float diffuse_b = p_file->get_float();
+        const float diffuse_a = p_file->get_float();
+        Color diffuse_color = Color(diffuse_r, diffuse_g, diffuse_b, diffuse_a);
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA specular
-        Color selfillum_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
+        const float selfillum_r = p_file->get_float();
+        const float selfillum_g = p_file->get_float();
+        const float selfillum_b = p_file->get_float();
+        const float selfillum_a = p_file->get_float();
+        Color selfillum_color = Color(selfillum_r, selfillum_g, selfillum_b, selfillum_a);
         if (const auto transparent = result.flags & 32; transparent == 0u) {
             selfillum_color.a = 1.0;
             diffuse_color.a = 1.0;
@@ -106,8 +109,22 @@ namespace godot {
 
         result.lod_max_distance = p_file->get_float();
         result.lod_min_distance = p_file->get_float();
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_buffer(32); // skip attrs for lighting
+        result.near_atten_start = p_file->get_float();
+        result.near_atten_end = p_file->get_float();
+        result.use_near_atten = p_file->get_32() != 0;
+        result.far_atten_decay = static_cast<int>(p_file->get_32());
+        result.light_range = p_file->get_float();      // fFarDecayRadius
+        const float cos_falloff = p_file->get_float(); // fCosFalloffAngle
+        result.cos_hotspot_angle = p_file->get_float();
+        result.cos_view_angle = p_file->get_float();
+
+        result.light_angle = Math::rad_to_deg(Math::acos(Math::clamp(cos_falloff, -1.0f, 1.0f)));
+        // spot_attenuation in Godot controls BOTH distance and angular attenuation (softness).
+        // Since E3D has iFarAttenDecay for distance and a hotspot/falloff for angle,
+        // we'll leave it at 1.0 here and let the instancer decide based on all params.
+        result.light_attenuation = 1.0f;
+        result.diffuse_color = diffuse_color;
+
         result.index_count = p_file->get_32();
         result.first_index_idx = p_file->get_32();
         result.transparent = result.flags & 0b000001;
@@ -438,6 +455,19 @@ namespace godot {
                 submodel->set_transform(p_submodel.matrix);
                 return submodel;
             }
+            case E3DSubModel::SubModelType::SUBMODEL_FREE_SPOTLIGHT:
+                submodel->set_light_range(p_submodel.light_range);
+                submodel->set_light_attenuation(p_submodel.light_attenuation);
+                submodel->set_light_angle(p_submodel.light_angle);
+                submodel->set_near_atten_start(p_submodel.near_atten_start);
+                submodel->set_near_atten_end(p_submodel.near_atten_end);
+                submodel->set_use_near_atten(p_submodel.use_near_atten);
+                submodel->set_far_atten_decay(p_submodel.far_atten_decay);
+                submodel->set_cos_hotspot_angle(p_submodel.cos_hotspot_angle);
+                submodel->set_cos_view_angle(p_submodel.cos_view_angle);
+                submodel->set_transform(p_submodel.matrix);
+                submodel->set_diffuse_color(p_submodel.diffuse_color);
+                return submodel;
             default:
                 UtilityFunctions::push_error(
                         "Unsupported submodel (name: " + p_submodel.name + ", type: " + String::num(p_submodel.type) +

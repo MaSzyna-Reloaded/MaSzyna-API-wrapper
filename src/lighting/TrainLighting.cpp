@@ -32,7 +32,7 @@ namespace godot {
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 Variant::ARRAY, "light_position_list", "lights/list", &TrainLighting::set_light_position_list,
                 &TrainLighting::get_light_position_list, "light_position_list", PROPERTY_HINT_TYPE_STRING,
-                "LighListItem");
+                "LightListItem");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "light_source", "light/source", &TrainLighting::set_light_source,
                 &TrainLighting::get_light_source, "source", PROPERTY_HINT_ENUM,

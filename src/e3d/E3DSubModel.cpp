@@ -128,6 +128,34 @@ namespace godot {
         BIND_PROPERTY(
                 Variant::BOOL, "skip_rendering", "skip_rendering", &E3DSubModel::set_skip_rendering,
                 &E3DSubModel::get_skip_rendering, "p_skip_rendering");
+
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_range", "light_range", &E3DSubModel::set_light_range,
+                &E3DSubModel::get_light_range, "p_light_range");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_attenuation", "light_attenuation", &E3DSubModel::set_light_attenuation,
+                &E3DSubModel::get_light_attenuation, "p_light_attenuation");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_angle", "light_angle", &E3DSubModel::set_light_angle,
+                &E3DSubModel::get_light_angle, "p_light_angle");
+        BIND_PROPERTY(
+                Variant::FLOAT, "near_atten_start", "near_atten_start", &E3DSubModel::set_near_atten_start,
+                &E3DSubModel::get_near_atten_start, "p_near_atten_start");
+        BIND_PROPERTY(
+                Variant::FLOAT, "near_atten_end", "near_atten_end", &E3DSubModel::set_near_atten_end,
+                &E3DSubModel::get_near_atten_end, "p_near_atten_end");
+        BIND_PROPERTY(
+                Variant::BOOL, "use_near_atten", "use_near_atten", &E3DSubModel::set_use_near_atten,
+                &E3DSubModel::get_use_near_atten, "p_use_near_atten");
+        BIND_PROPERTY(
+                Variant::INT, "far_atten_decay", "far_atten_decay", &E3DSubModel::set_far_atten_decay,
+                &E3DSubModel::get_far_atten_decay, "p_far_atten_decay");
+        BIND_PROPERTY(
+                Variant::FLOAT, "cos_hotspot_angle", "cos_hotspot_angle", &E3DSubModel::set_cos_hotspot_angle,
+                &E3DSubModel::get_cos_hotspot_angle, "p_cos_hotspot_angle");
+        BIND_PROPERTY(
+                Variant::FLOAT, "cos_view_angle", "cos_view_angle", &E3DSubModel::set_cos_view_angle,
+                &E3DSubModel::get_cos_view_angle, "p_cos_view_angle");
     }
 
     void E3DSubModel::add_child(const Ref<E3DSubModel> &p_sub_model) {

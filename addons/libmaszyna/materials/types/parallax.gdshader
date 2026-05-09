@@ -149,5 +149,6 @@ void fragment() {
 
         NORMAL_MAP = decode_normal_from_rg(normal_sample);
         NORMAL_MAP_DEPTH = 1.0;
+
     }
 }

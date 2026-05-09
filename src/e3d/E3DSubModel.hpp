@@ -80,6 +80,17 @@ namespace godot {
             MAKE_MEMBER_GS_NR(bool, visible, true)
             MAKE_MEMBER_GS_NR(bool, skip_rendering, false)
 
+            MAKE_MEMBER_GS_NR(float, light_range, 0.0)
+            MAKE_MEMBER_GS_NR(float, light_attenuation, 1.0)
+            MAKE_MEMBER_GS_NR(float, light_angle, 45.0)
+            MAKE_MEMBER_GS_NR(float, near_attenuation_start, 0.0)
+            MAKE_MEMBER_GS_NR(float, near_attenuation_end, 0.0)
+            MAKE_MEMBER_GS_NR(bool, use_near_attenuation, false)
+            MAKE_MEMBER_GS_NR(int, far_attenuation_decay, 0)
+            MAKE_MEMBER_GS_NR(float, cos_hotspot_angle, 0.0)
+            MAKE_MEMBER_GS_NR(float, cos_view_angle, 0.0)
+            MAKE_MEMBER_GS_NR(float, light_energy, 0.0)
+
             void add_child(const Ref<E3DSubModel> &p_sub_model);
             void set_parent(E3DSubModel *p_sub_model);
             void clear();

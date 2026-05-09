@@ -100,6 +100,10 @@ For in-game logging, use `GameLog` but be aware that it'll only post log message
   the `E3DModel.FORMAT_VERSION` must be updated to invalidate the E3D cache automatically
 
 
+### MAKE_* macros
+
+* MAKE_* macros / macros.hpp are deprecated. Use straight and readable declarations.  
+
 ## Addon architecture rules
 
 * use sub-plugins https://docs.godotengine.org/en/stable/tutorials/plugins/editor/making_plugins.html#using-sub-plugins

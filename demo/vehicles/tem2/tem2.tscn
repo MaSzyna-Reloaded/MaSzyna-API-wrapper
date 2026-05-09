@@ -131,10 +131,11 @@ saturation_current = 49.0
 
 [node name="TEM2" type="Node3D" unique_id=347305240]
 script = ExtResource("1_ra284")
+model_instance_path = NodePath("TEM2")
 controller_path = NodePath("TEM2Controller")
 cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true
-low_poly_cabin_path = NodePath("TEM2_LowPolyCab")
+low_poly_cabin_path = NodePath("TEM2/TEM2_LowPolyCab")
 
 [node name="TEM2" type="VisualInstance3D" parent="." unique_id=1879275085]
 unique_name_in_owner = false
@@ -153,6 +154,20 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("2_q4wpc")
+lights_state = Dictionary[String, bool]({
+"endsignal12": false,
+"endsignal13": false,
+"endsignal22": false,
+"endsignal23": false,
+"endtab1": false,
+"endtab2": false,
+"headlamp11": false,
+"headlamp12": false,
+"headlamp13": false,
+"headlamp21": false,
+"headlamp22": false,
+"headlamp23": false
+})
 data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "tem2-122a"
 skins = ["tem2-122"]

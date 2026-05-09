@@ -108,8 +108,9 @@ run_clang_tidy() {
 
             if [ -z "${translation_unit}" ]; then
                 translation_unit="$(
-                    rg -l -m 1 --glob '*.cpp' --glob '*.cc' --glob '*.cxx' --glob '*.c' \
-                        "#include [\"<].*$(basename "${file}")[\">]" "${ROOT_DIR}/src" | head -n 1
+                    find "${ROOT_DIR}/src" -type f \
+                        \( -name '*.cpp' -o -name '*.cc' -o -name '*.cxx' -o -name '*.c' \) \
+                        -exec grep -l -m 1 "#include [\"<].*$(basename "${file}")[\">]" {} + | head -n 1
                 )"
                 translation_unit="${translation_unit#${ROOT_DIR}/}"
             fi

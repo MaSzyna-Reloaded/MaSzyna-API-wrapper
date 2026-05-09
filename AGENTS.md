@@ -16,6 +16,7 @@ Code generation:
 * GDSCRIPT: do not replace normal singleton/global access with `/root/...` lookups as a workaround
 * GDSCRIPT: do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
+* do not useset/get/has_meta for accessing/saving/loading node state
 
 General guidelines:
 
@@ -26,7 +27,7 @@ General guidelines:
 Custom nodes and Godot Editor:
 
 * place editor related code in addons/libmaszyna/editor
-* use libmaszyna.gd just for bootstraping and proxying to editor plugins
+* use libmaszyna.gd just for bootstrapping and proxying to editor plugins
 * make sure C++ singletons never inherit from RefCounted
 
 Documentation:

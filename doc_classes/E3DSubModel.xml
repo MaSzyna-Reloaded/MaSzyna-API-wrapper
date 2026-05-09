@@ -12,6 +12,12 @@
 		<member name="animation" type="int" setter="set_animation" getter="get_animation" enum="E3DSubModel.AnimationType" default="0">
 			The type of animation logic applied to this submodel (e.g., rotating wheels, moving clock hands, or wind effects).
 		</member>
+		<member name="cos_hotspot_angle" type="float" setter="set_cos_hotspot_angle" getter="get_cos_hotspot_angle" default="0.0">
+			Cosine of the inner hotspot cone angle.
+		</member>
+		<member name="cos_view_angle" type="float" setter="set_cos_view_angle" getter="get_cos_view_angle" default="0.0">
+			Cosine of the current viewing angle (used for visibility calculation).
+		</member>
 		<member name="diffuse_color" type="Color" setter="set_diffuse_color" getter="get_diffuse_color" default="Color(1, 1, 1, 1)">
 			The base color of the submodel's material.
 		</member>
@@ -20,6 +26,20 @@
 		</member>
 		<member name="dynamic_material_index" type="int" setter="set_dynamic_material_index" getter="get_dynamic_material_index" default="0">
 			The index mapping for the dynamic material state.
+		</member>
+		<member name="far_attenuation_decay" type="int" setter="set_far_attenuation_decay" getter="get_far_attenuation_decay" default="0">
+			The type of distance attenuation (0: none, 1 or 2: inverse distance powers).
+		</member>
+		<member name="light_angle" type="float" setter="set_light_angle" getter="get_light_angle" default="45.0">
+			The cone angle of the spotlight in degrees.
+		</member>
+		<member name="light_attenuation" type="float" setter="set_light_attenuation" getter="get_light_attenuation" default="1.0">
+			The attenuation factor of the light source.
+		</member>
+		<member name="light_energy" type="float" setter="set_light_energy" getter="get_light_energy" default="0.0">
+		</member>
+		<member name="light_range" type="float" setter="set_light_range" getter="get_light_range" default="0.0">
+			The maximum range of the light source.
 		</member>
 		<member name="lights_on_threshold" type="float" setter="set_lights_on_threshold" getter="get_lights_on_threshold" default="0.0">
 			The ambient light level threshold at which the submodel's self-illumination becomes active.
@@ -38,6 +58,12 @@
 		<member name="mesh" type="ArrayMesh" setter="set_mesh" getter="get_mesh">
 			The [ArrayMesh] containing the vertex data (positions, normals, UVs, colors) for this submodel.
 		</member>
+		<member name="near_attenuation_end" type="float" setter="set_near_attenuation_end" getter="get_near_attenuation_end" default="0.0">
+			Distance where the near attenuation ends.
+		</member>
+		<member name="near_attenuation_start" type="float" setter="set_near_attenuation_start" getter="get_near_attenuation_start" default="0.0">
+			Distance where the near attenuation starts (used for halo/aureola effects).
+		</member>
 		<member name="self_illumination" type="Color" setter="set_self_illumination" getter="get_self_illumination" default="Color(1, 1, 1, 1)">
 			The emissive color of the submodel, used for lights and glowing parts.
 		</member>
@@ -52,6 +78,9 @@
 		</member>
 		<member name="transform" type="Transform3D" setter="set_transform" getter="get_transform" default="Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)">
 			The local transformation matrix of the submodel relative to its parent.
+		</member>
+		<member name="use_near_attenuation" type="bool" setter="set_use_near_attenuation" getter="get_use_near_attenuation" default="false">
+			If [code]true[/code], near attenuation (halo effects) is enabled for this light source.
 		</member>
 		<member name="visibility_light" type="float" setter="set_visibility_light" getter="get_visibility_light" default="0.0">
 			Factor for visibility based on ambient light conditions.

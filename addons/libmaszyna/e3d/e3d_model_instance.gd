@@ -29,6 +29,13 @@ var _e3d_loaded: bool = false
 var _current_instancer: E3DInstancer
 var _current_editable: bool = false
 
+@export var lights_state: Dictionary[String, bool] = {}:
+    set(x):
+        lights_state = _merge_lights_state(x)
+        if is_inside_tree() and _e3d_loaded and _current_instancer:
+            _current_instancer.sync_lights(self)
+
+
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
 
 ## E3DModel to instantiate (leave empty, if you want to lazy load with [member model_filename])
@@ -106,6 +113,7 @@ func reload() -> void:
         else:
             _model = E3DModelManager.load_model(data_path, model_filename)
         if _model:
+            lights_state = _merge_lights_state(lights_state)
             submodels_aabb = E3DModelTool.get_aabb(_model)
             _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
 
@@ -135,14 +143,27 @@ func _enter_tree() -> void:
     if _model and _current_instancer:
         _current_instancer.instantiate(self, _model, _current_editable)
 
-
 func _exit_tree() -> void:
     if _current_instancer:
         _current_instancer.clear(self)
 
 
-func is_e3d_loaded():
+func is_e3d_loaded() -> bool:
     return _e3d_loaded
+
+
+func _merge_lights_state(new_state: Dictionary[String, bool]) -> Dictionary[String, bool]:
+    var state: Dictionary[String, bool] = {}
+    if _model:
+        for light_name in _model.lights.keys():
+            state[light_name] = false
+    state.merge(new_state, true)
+    if _model:
+        for light_name: String in new_state.keys():
+            if not _model.lights.has(light_name):
+                state.erase(light_name)
+    state.sort()
+    return state
 
 
 func _resolve_instancer():

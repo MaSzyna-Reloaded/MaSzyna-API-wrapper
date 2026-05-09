@@ -11,6 +11,19 @@ size = Vector3(4.5332, 4.72223, 17.0549)
 [node name="SM42-099" type="Node3D" unique_id=1967816975]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 script = ExtResource("1_iiqbf")
+model_instance_path = NodePath("SM42-099")
+lights = Dictionary[String, bool]({
+"endsignal12": false,
+"endsignal13": false,
+"endsignal22": false,
+"endsignal23": false,
+"headlamp11": true,
+"headlamp12": true,
+"headlamp13": true,
+"headlamp21": false,
+"headlamp22": false,
+"headlamp23": false
+})
 controller_path = NodePath("SM42v1")
 cabin_scene = ExtResource("2_htu7b")
 low_poly_cabin_path = NodePath("SM42-099-LowPolyCab")
@@ -34,6 +47,18 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"endsignal12": false,
+"endsignal13": false,
+"endsignal22": false,
+"endsignal23": false,
+"headlamp11": true,
+"headlamp12": true,
+"headlamp13": true,
+"headlamp21": false,
+"headlamp22": false,
+"headlamp23": false
+})
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da"
 skins = ["6d-907"]
@@ -85,6 +110,10 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"EndTab1": false,
+"EndTab2": false
+})
 data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
@@ -107,6 +136,10 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"EndTab1": false,
+"EndTab2": false
+})
 data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
@@ -129,6 +162,10 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"EndTab1": false,
+"EndTab2": false
+})
 data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
@@ -151,6 +188,10 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"EndTab1": false,
+"EndTab2": false
+})
 data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]
@@ -173,6 +214,10 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("4_c88oy")
+lights_state = Dictionary[String, bool]({
+"EndTab1": false,
+"EndTab2": false
+})
 data_path = "/dynamic/pkp/401w_v2"
 model_filename = "main/401w"
 skins = ["5217,1", "5217,2"]

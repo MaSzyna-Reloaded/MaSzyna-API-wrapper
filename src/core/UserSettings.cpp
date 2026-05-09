@@ -44,8 +44,9 @@ namespace godot {
         maszyna["game_dir"] = ".";
 
         Dictionary render;
-        render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_4X;
-        render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_4X;
+        render["msaa_3d"] = RenderingServer::VIEWPORT_MSAA_DISABLED;
+        render["anisotropic_filtering_level"] = RenderingServer::VIEWPORT_ANISOTROPY_DISABLED;
+        render["use_taa"] = true;
 
         defaults["e3d"] = e3d;
         defaults["maszyna"] = maszyna;

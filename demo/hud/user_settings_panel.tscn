@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://bbq6b2v2678h0"]
+
+[ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="1_755qg"]
+[ext_resource type="Script" uid="uid://ddxg6048u2fs4" path="res://hud/user_settings_panel.gd" id="1_r6syw"]
+
+[node name="UserSettingsPanel" type="PanelContainer" unique_id=1798306963]
+visible = false
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -292.0
+offset_top = 100.0
+offset_right = 292.0
+offset_bottom = 206.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+script = ExtResource("1_r6syw")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=970715192]
+layout_mode = 2
+
+[node name="GameDirNotSet" type="Label" parent="VBoxContainer" unique_id=1452678159]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.832245, 0.0664062, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
+theme_override_font_sizes/font_size = 26
+text = "MaSzyna game folder data is not set or invalid."
+horizontal_alignment = 1
+
+[node name="Maszyna Settings" parent="VBoxContainer" unique_id=1678337651 instance=ExtResource("1_755qg")]
+layout_mode = 2
+
+[connection signal="visibility_changed" from="." to="." method="_on_visibility_changed"]

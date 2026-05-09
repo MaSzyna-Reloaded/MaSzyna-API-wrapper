@@ -9,13 +9,13 @@
 [ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
 [ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="3_rrc65"]
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
-[ext_resource type="PackedScene" uid="uid://cpnfrm4urr642" path="res://addons/libmaszyna/editor/user_settings_dock.tscn" id="4_dyl8i"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
+[ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="12_m0qth"]
 [ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
@@ -213,31 +213,7 @@ layout_mode = 2
 
 [node name="DeveloperConsole" parent="." unique_id=495569075 instance=ExtResource("2_ig825")]
 
-[node name="UserSettingsPanel" type="PanelContainer" parent="." unique_id=1242102357]
-visible = false
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -292.0
-offset_top = 100.0
-offset_right = 292.0
-offset_bottom = 206.0
-grow_horizontal = 2
-size_flags_horizontal = 3
-
-[node name="VBoxContainer" type="VBoxContainer" parent="UserSettingsPanel" unique_id=1324972957]
-layout_mode = 2
-
-[node name="GameDirNotSet" type="Label" parent="UserSettingsPanel/VBoxContainer" unique_id=811810530]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 0.832245, 0.0664062, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 1)
-theme_override_font_sizes/font_size = 26
-text = "MaSzyna game folder data is not set or invalid."
-horizontal_alignment = 1
-
-[node name="Maszyna Settings" parent="UserSettingsPanel/VBoxContainer" unique_id=1669941723 instance=ExtResource("4_dyl8i")]
-layout_mode = 2
+[node name="UserSettingsPanel" parent="." unique_id=1798306963 instance=ExtResource("12_eihw1")]
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=1464463242]
 script = ExtResource("2_py6pt")
@@ -1047,4 +1023,3 @@ metadata/_custom_type_script = "uid://ciyrwbjgc1mu2"
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
-[connection signal="visibility_changed" from="UserSettingsPanel" to="." method="_on_user_settings_panel_visibility_changed"]

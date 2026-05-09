@@ -114,7 +114,6 @@ func _exit_tree():
     remove_autoload_singleton("E3DModelTool")
     remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")
-    remove_autoload_singleton("E3DParser")
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
     remove_autoload_singleton("Console")

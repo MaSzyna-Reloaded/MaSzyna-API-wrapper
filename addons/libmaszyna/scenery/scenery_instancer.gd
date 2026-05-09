@@ -3,6 +3,7 @@ extends Node
 
 static var sky_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
 static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_atmo_importer.gd").new()
+static var time_importer = preload("res://addons/libmaszyna/importer/maszyna_time_importer.gd").new()
 static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
 static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()
@@ -130,6 +131,7 @@ func parse_file(filename: String, parameters: Dictionary, context: MaszynaImport
     parser.initialize(file.get_buffer(file.get_length()))
     parser.register_handler("sky", _make_importer_callback(sky_importer, context))
     parser.register_handler("atmo", _make_importer_callback(atmo_importer, context))
+    parser.register_handler("time", _make_importer_callback(time_importer, context))
     parser.register_handler("node", _make_importer_callback(node_importer, context))
     parser.register_handler("event", _make_importer_callback(event_importer, context))
     parser.register_handler("origin", _make_importer_callback(origin_importer, context))

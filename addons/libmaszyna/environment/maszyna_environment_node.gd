@@ -8,53 +8,12 @@ class_name MaszynaEnvironmentNode
         if value == data_path:
             return
         data_path = value
-        _update_sky_shader()
 
 @export var model_filename: String = "":
     set(value):
         if value == model_filename:
             return
         model_filename = value
-        _update_sky_shader()
-
-
-func _ready() -> void:
-    if not UserSettings.config_changed.is_connected(_update_sky_shader):
-        UserSettings.config_changed.connect(_update_sky_shader)
-    _update_sky_shader()
-
-
-func _exit_tree() -> void:
-    if UserSettings.config_changed.is_connected(_update_sky_shader):
-        UserSettings.config_changed.disconnect(_update_sky_shader)
-
-
-func _update_sky_shader() -> void:
-    if not is_node_ready() or not MaterialManager:
-        return
-
-    var sky_material: ShaderMaterial = _get_sky_material()
-    if not sky_material:
-        return
-
-    var sky_data: Dictionary = _extract_sky_shader_data()
-    if not sky_data.get("texture"):
-        return
-
-    RenderingServer.global_shader_parameter_set("sky_texture", sky_data.get("texture"))
-    sky_material.set_shader_parameter("sky_offset", sky_data.get("offset", Vector2.ZERO))
-    sky_material.set_shader_parameter("sky_scale", sky_data.get("scale", Vector2.ONE))
-
-
-func _get_sky_material() -> ShaderMaterial:
-    var environment:Environment = get_viewport().get_camera_3d().get_world_3d().environment
-    if not environment:
-        return null
-
-    if not environment or not environment.sky:
-        return null
-
-    return environment.sky.sky_material as ShaderMaterial
 
 
 func _extract_sky_shader_data() -> Dictionary:

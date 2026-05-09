@@ -7,8 +7,6 @@ namespace godot {
 
     class TrainElectricEngine : public TrainEngine {
             GDCLASS(TrainElectricEngine, TrainEngine)
-        private:
-            const TrainController *_controller = memnew(TrainController);
 
         public:
             static void _bind_methods();

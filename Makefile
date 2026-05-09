@@ -6,6 +6,13 @@ DATE=$(shell date +"%Y%m%d")
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
 LIBMASZYNA_DEBUG:=""
+CMAKE_GODOTCPP_API_VERSION=4.6
+
+#Helper for CLion so it would see generated bindings
+generate-bindings:
+	cmake -B cmake-build-debug
+	cmake --build cmake-build-debug --target generate_bindings
+
 
 docs:
 	cd demo && godot --doctool .. --gdextension-docs
@@ -29,12 +36,12 @@ cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
 compile-debug:
-	cmake -B build-debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG)
+	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
 compile-release:
-	cmake -B build-release -DGODOTCPP_TARGET=template_release
+	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
@@ -43,10 +50,14 @@ compile-all: compile-debug compile-release
 
 cross-compile-release:
 	cmake -B build-linux64 \
-          -DGODOTCPP_TARGET="template_release"
+          -DCMAKE_BUILD_TYPE=Release \
+          -DGODOTCPP_TARGET="template_release" \
+           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -57,10 +68,15 @@ cross-compile-release:
 
 cross-compile-debug:
 	cmake -B build-linux64 \
-          -DGODOTCPP_TARGET="template_debug" -DLIBMASZYNA_DEBUG=ON
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DGODOTCPP_TARGET="template_debug" \
+          -DLIBMASZYNA_DEBUG=ON \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -71,14 +87,18 @@ cross-compile-debug:
 
 release-linux:
 	cmake -B build-linux64 \
-          -DGODOTCPP_TARGET="template_release"
+          -DCMAKE_BUILD_TYPE=Release \
+          -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
 
 
 release-windows:
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
+           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
@@ -105,7 +125,7 @@ watch-and-compile:
 
 $(CLANG_TIDY_BUILD_DIR)/compile_commands.json:
 	@echo "Style: configuring clang-tidy database..." && \
-	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMAKE_GODOTCPP_API_VERSION)
 
 
 style-check: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json

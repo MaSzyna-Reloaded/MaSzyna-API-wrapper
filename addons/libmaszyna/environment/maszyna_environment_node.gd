@@ -27,7 +27,7 @@ class_name MaszynaEnvironmentNode
 
 
 func _update_sky_shader():
-    if not is_node_ready():
+    if not is_node_ready() or not MaterialManager:
         return
 
     var shader_texture

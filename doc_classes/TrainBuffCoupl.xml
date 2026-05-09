@@ -109,7 +109,7 @@
 		<constant name="ALLOWED_ELEC_110V" value="512" enum="AllowedFlagBits">
 			Allows 110V electric cable connection.
 		</constant>
-		<constant name="ALLOWED_ELEC_3x400V" value="1024" enum="AllowedFlagBits">
+		<constant name="ALLOWED_ELEC_3X400_V" value="1024" enum="AllowedFlagBits">
 			Allows 3x400V electric cable connection.
 		</constant>
 		<constant name="POWER_24V" value="256" enum="PowerFlagBits">
@@ -118,7 +118,7 @@
 		<constant name="POWER_110V" value="512" enum="PowerFlagBits">
 			Indicates presence of 110V power.
 		</constant>
-		<constant name="POWER_3x400V" value="1024" enum="PowerFlagBits">
+		<constant name="POWER_3X400_V" value="1024" enum="PowerFlagBits">
 			Indicates presence of 3x400V power.
 		</constant>
 	</constants>

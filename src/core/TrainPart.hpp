@@ -21,10 +21,12 @@ namespace godot {
             bool _commands_registered = false;
 
         protected:
-            void _notification(int p_what);
+            // This method cannot be marked as override because it's not virtual in the base class (Wrapped).
+            // It is, however, used by GDCLASS macro to register notification callback.
+            void _notification(int p_what); // NOLINT(bugprone-derived-method-shadowing-base-method)
             bool enabled = true;
             bool enabled_changed = false;
-            bool _dirty = false;
+            bool dirty = false;
             TrainController *train_controller_node;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
@@ -39,16 +41,16 @@ namespace godot {
             /* Transfers data from Godot's node to original/internal Mover instance.
              * `mover` is always set */
 
-            virtual void _do_update_internal_mover(TMoverParameters *mover);
+            virtual void _do_update_internal_mover(TMoverParameters *p_mover);
 
             /* Transfers state from the original/internal Mover instance to Godot's Dictionary.
              * `mover` and `state` are always set
              * */
 
-            virtual void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) = 0;
-            virtual void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config);
+            virtual void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) = 0;
+            virtual void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config);
 
-            virtual void _do_process_mover(TMoverParameters *mover, double delta);
+            virtual void _do_process_mover(TMoverParameters *p_mover, double p_delta);
 
             virtual void _register_commands();
             virtual void _unregister_commands();
@@ -56,18 +58,20 @@ namespace godot {
             TMoverParameters *get_mover();
 
         public:
-            void _process(double delta) override;
-            virtual void _process_mover(double delta);
+            void _process(double p_delta) override;
+            virtual void _process_mover(double p_delta);
 
-            void register_command(const String &command, const Callable &callback);
-            void unregister_command(const String &command, const Callable &callback);
-            void send_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void broadcast_command(const String &command, const Variant &p1 = Variant(), const Variant &p2 = Variant());
-            void log(GameLog::LogLevel level, const String &line);
-            void log_debug(const String &line);
-            void log_info(const String &line);
-            void log_warning(const String &line);
-            void log_error(const String &line);
+            void register_command(const String &p_command, const Callable &p_callback);
+            void unregister_command(const String &p_command, const Callable &p_callback);
+            void
+            send_command(const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            void broadcast_command(
+                    const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            void log(GameLog::LogLevel p_level, const String &p_line);
+            void log_debug(const String &p_line);
+            void log_info(const String &p_line);
+            void log_warning(const String &p_line);
+            void log_error(const String &p_line);
 
             void set_enabled(bool p_value);
             bool get_enabled();

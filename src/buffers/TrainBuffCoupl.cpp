@@ -13,8 +13,8 @@ namespace godot {
                 &TrainBuffCoupl::get_buffer_stiffness_k, "value");
         BIND_PROPERTY(
                 Variant::FLOAT, "buffer_max_compression_tolerance", "buffer/max_compression_tolerance",
-                &TrainBuffCoupl::set_buffer_max_compression_tolerance, &TrainBuffCoupl::get_buffer_max_compression_tolerance,
-                "value");
+                &TrainBuffCoupl::set_buffer_max_compression_tolerance,
+                &TrainBuffCoupl::get_buffer_max_compression_tolerance, "value");
         BIND_PROPERTY(
                 Variant::FLOAT, "buffer_max_tension_tolerance", "buffer/max_tension_tolerance",
                 &TrainBuffCoupl::set_buffer_max_tension_tolerance, &TrainBuffCoupl::get_buffer_max_tension_tolerance,
@@ -42,18 +42,21 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "allowed_flag", "allowed_flag", &TrainBuffCoupl::set_allowed_flag,
                 &TrainBuffCoupl::get_allowed_flag, "value", PROPERTY_HINT_FLAGS,
-                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V electric cable,110V electric cable,3+400V electric cable");
+                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
+                "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "automatic_flag", "automatic_flag", &TrainBuffCoupl::set_automatic_flag,
                 &TrainBuffCoupl::get_automatic_flag, "value", PROPERTY_HINT_FLAGS,
-                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V electric cable,110V electric cable,3+400V electric cable");
+                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
+                "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "power_flag", "power_flag", &TrainBuffCoupl::set_power_flag, &TrainBuffCoupl::get_power_flag,
-                "value", PROPERTY_HINT_FLAGS, "24V,110V,3x400V");
+                Variant::INT, "power_flag", "power_flag", &TrainBuffCoupl::set_power_flag,
+                &TrainBuffCoupl::get_power_flag, "value", PROPERTY_HINT_FLAGS, "24V,110V,3x400V");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "power_coupling", "power_coupling", &TrainBuffCoupl::set_power_coupling,
                 &TrainBuffCoupl::get_power_coupling, "value", PROPERTY_HINT_FLAGS,
-                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V electric cable,110V electric cable,3+400V electric cable");
+                "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
+                "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY(
                 Variant::STRING, "control_type", "control_type", &TrainBuffCoupl::set_control_type,
                 &TrainBuffCoupl::get_control_type, "value");
@@ -76,24 +79,24 @@ namespace godot {
         BIND_ENUM_CONSTANT(ALLOWED_FIXED_COUPLING_LOCK)
         BIND_ENUM_CONSTANT(ALLOWED_ELEC_24V)
         BIND_ENUM_CONSTANT(ALLOWED_ELEC_110V)
-        BIND_ENUM_CONSTANT(ALLOWED_ELEC_3x400V)
+        BIND_ENUM_CONSTANT(ALLOWED_ELEC_3X400_V)
 
         BIND_ENUM_CONSTANT(POWER_24V)
         BIND_ENUM_CONSTANT(POWER_110V)
-        BIND_ENUM_CONSTANT(POWER_3x400V)
+        BIND_ENUM_CONSTANT(POWER_3X400_V)
     }
 
-    void TrainBuffCoupl::_do_update_internal_mover(TMoverParameters *mover) {
-        ASSERT_MOVER(mover)
+    void TrainBuffCoupl::_do_update_internal_mover(TMoverParameters *p_mover) {
+        ASSERT_MOVER(p_mover)
         TCoupling *coupler;
         if (buffer_location == BufferLocation::BUFFER_LOCATION_FRONT) {
-            coupler = &mover->Couplers[0];
+            coupler = &p_mover->Couplers[0];
         } else {
-            coupler = &mover->Couplers[1];
+            coupler = &p_mover->Couplers[1];
         }
         const double mass = train_controller_node->get_mass();
         const double max_velocity = train_controller_node->get_max_velocity();
-        std::map<CouplerType, TCouplerType> _coupler_types{
+        std::map<CouplerType, TCouplerType> coupler_types{
                 {COUPLER_TYPE_AUTOMATIC, TCouplerType::Automatic},
                 {COUPLER_TYPE_SCREW, TCouplerType::Screw},
                 {COUPLER_TYPE_CHAIN, TCouplerType::Chain},
@@ -101,8 +104,8 @@ namespace godot {
                 {COUPLER_TYPE_ARTICULATED, TCouplerType::Articulated},
         };
 
-        const std::map<CouplerType, TCouplerType>::iterator lookup = _coupler_types.find(coupler_type);
-        const TCouplerType resolved_type = lookup != _coupler_types.end() ? lookup->second : TCouplerType::NoCoupler;
+        const std::map<CouplerType, TCouplerType>::iterator lookup = coupler_types.find(coupler_type);
+        const TCouplerType resolved_type = lookup != coupler_types.end() ? lookup->second : TCouplerType::NoCoupler;
 
         coupler->CouplerType = resolved_type;
         coupler->SpringKC = coupler_stiffness_k;
@@ -122,9 +125,8 @@ namespace godot {
         coupler->PowerFlag = power_flag;
         coupler->control_type = control_type.ascii();
 
-        if (coupler->CouplerType != TCouplerType::NoCoupler
-            && coupler->CouplerType != TCouplerType::Bare
-            && coupler->CouplerType != TCouplerType::Articulated) {
+        if (coupler->CouplerType != TCouplerType::NoCoupler && coupler->CouplerType != TCouplerType::Bare &&
+            coupler->CouplerType != TCouplerType::Articulated) {
 
             coupler->SpringKC *= 1000;
             coupler->FmaxC *= 1000;
@@ -149,30 +151,30 @@ namespace godot {
         }
 
         if (buffer_location == BufferLocation::BUFFER_LOCATION_BOTH) {
-            mover->Couplers[0] = mover->Couplers[1];
+            p_mover->Couplers[0] = p_mover->Couplers[1];
         }
     }
 
-    void TrainBuffCoupl::_do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) {
+    void TrainBuffCoupl::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         // Expose the current config / state if needed
     }
 
-    void TrainBuffCoupl::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {
+    void TrainBuffCoupl::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         // Provide config dictionary entries
-        config.set("buffer_stiffness_k", buffer_stiffness_k);
-        config.set("buffer_max_compression_tolerance", buffer_max_compression_tolerance);
-        config.set("buffer_max_tension_tolerance", buffer_max_tension_tolerance);
-        config.set("coupler_stiffness_k", coupler_stiffness_k);
-        config.set("coupler_max_compression_tolerance", coupler_max_compression_tolerance);
-        config.set("coupler_max_tension_tolerance", coupler_max_tension_tolerance);
-        config.set("damping_beta", damping_beta);
+        p_config.set("buffer_stiffness_k", buffer_stiffness_k);
+        p_config.set("buffer_max_compression_tolerance", buffer_max_compression_tolerance);
+        p_config.set("buffer_max_tension_tolerance", buffer_max_tension_tolerance);
+        p_config.set("coupler_stiffness_k", coupler_stiffness_k);
+        p_config.set("coupler_max_compression_tolerance", coupler_max_compression_tolerance);
+        p_config.set("coupler_max_tension_tolerance", coupler_max_tension_tolerance);
+        p_config.set("damping_beta", damping_beta);
 
         // New flags and control properties
-        config.set("allowed_flag", allowed_flag);
-        config.set("automatic_flag", automatic_flag);
-        config.set("power_flag", power_flag);
-        config.set("power_coupling", power_coupling);
-        config.set("control_type", control_type);
+        p_config.set("allowed_flag", allowed_flag);
+        p_config.set("automatic_flag", automatic_flag);
+        p_config.set("power_flag", power_flag);
+        p_config.set("power_coupling", power_coupling);
+        p_config.set("control_type", control_type);
     }
 
     void TrainBuffCoupl::_register_commands() {
@@ -185,23 +187,29 @@ namespace godot {
         unregister_command("buffer_couple", Callable(this, "couple"));
         unregister_command("buffer_decouple", Callable(this, "decouple"));
         TrainPart::_unregister_commands();
-
     }
 
     void TrainBuffCoupl::couple() {
         const TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
 
-        UtilityFunctions::push_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        log_warning("[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+        UtilityFunctions::push_warning(
+                "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
+        log_warning(
+                "[TrainBuffCoupl] Coupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
     }
 
     void TrainBuffCoupl::decouple() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
 
-        UtilityFunctions::push_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
-        log_warning("[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles simultaneously");
+        UtilityFunctions::push_warning(
+                "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
+        log_warning(
+                "[TrainBuffCoupl] Decoupling is not supported yet as it requires to handle logic between 2 vehicles "
+                "simultaneously");
     }
-} //namespace godot
-
+} // namespace godot

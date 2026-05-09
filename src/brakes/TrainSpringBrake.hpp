@@ -3,12 +3,13 @@
 #include "macros.hpp"
 namespace godot {
     class TrainController;
-    class TrainSpringBrake: public TrainPart {
-        GDCLASS(TrainSpringBrake, TrainPart);
+    class TrainSpringBrake : public TrainPart {
+            GDCLASS(TrainSpringBrake, TrainPart);
+
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override {};
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override {};
             void _register_commands() override;
             void _unregister_commands() override;
 
@@ -30,4 +31,4 @@ namespace godot {
             void set_spring_brake_enabled(bool p_active);
             void spring_brake_release();
     };
-}// namespace godot
+} // namespace godot

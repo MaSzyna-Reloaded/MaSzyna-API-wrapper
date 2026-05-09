@@ -30,8 +30,7 @@ namespace godot {
                     {DIESEL, TEngineType::DieselEngine},
                     {STEAM, TEngineType::SteamEngine},
                     {DIESEL_ELECTRIC, TEngineType::DieselElectric},
-                    {MAIN, TEngineType::Main}
-            };
+                    {MAIN, TEngineType::Main}};
 
 
             TypedArray<MotorParameter> get_motor_param_table() {
@@ -49,9 +48,9 @@ namespace godot {
 
         protected:
             virtual EngineType get_engine_type() = 0;
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;
 

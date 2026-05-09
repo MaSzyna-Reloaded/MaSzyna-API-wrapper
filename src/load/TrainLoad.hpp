@@ -1,31 +1,28 @@
 #pragma once
-#include "../macros.hpp"
 #include "../core/TrainPart.hpp"
+#include "../macros.hpp"
 #include "../resources/load/LoadListItem.hpp"
 
 namespace godot {
     class TrainLoad : public TrainPart {
-        GDCLASS(TrainLoad, TrainPart)
+            GDCLASS(TrainLoad, TrainPart)
         private:
             static void _bind_methods();
             TypedArray<LoadListItem> load_list;
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;
 
         public:
-            enum LoadUnit {
-                LOAD_UNIT_TONS,
-                LOAD_UNIT_PIECES
-            };
+            enum LoadUnit { LOAD_UNIT_TONS, LOAD_UNIT_PIECES };
 
             MAKE_MEMBER_GS_NR(LoadUnit, load_unit, LoadUnit::LOAD_UNIT_TONS);
-            MAKE_MEMBER_GS_NR(TypedArray<String>, accepted_loads, TypedArray<String>());
-            MAKE_MEMBER_GS_NR(TypedArray<float>, minimum_load_offsets, TypedArray<float>())
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<String>, accepted_loads);
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<float>, minimum_load_offsets)
             MAKE_MEMBER_GS(float, max_load, 0.0f);
             MAKE_MEMBER_GS(double, overload_factor, 0.0f);
             MAKE_MEMBER_GS(float, load_speed, 0.0f);

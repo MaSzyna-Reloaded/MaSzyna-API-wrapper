@@ -19,10 +19,10 @@ namespace godot {
             double wheel_angle_rear_deg = 0.0;
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
-            void _do_process_mover(TMoverParameters *mover, double delta) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
+            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
 
         public:
             static void _bind_methods();

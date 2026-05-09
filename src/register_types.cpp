@@ -18,9 +18,9 @@
 #include "engines/TrainElectricSeriesEngine.hpp"
 #include "engines/TrainEngine.hpp"
 #include "lighting/TrainLighting.hpp"
+#include "load/TrainLoad.hpp"
 #include "loaders/E3DResourceFormatLoader.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
-#include "load/TrainLoad.hpp"
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
 #include "register_types.h"
@@ -160,8 +160,8 @@ extern "C" {
     // Initialization.
     GDExtensionBool GDE_EXPORT libmaszyna_library_init(
             const GDExtensionInterfaceGetProcAddress p_get_proc_address, const GDExtensionClassLibraryPtr p_library,
-            GDExtensionInitialization *r_initialization) {
-        const GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, r_initialization);
+            GDExtensionInitialization *p_r_initialization) {
+        const GDExtensionBinding::InitObject init_obj(p_get_proc_address, p_library, p_r_initialization);
 
         init_obj.register_initializer(initialize_libmaszyna_module);
         init_obj.register_terminator(uninitialize_libmaszyna_module);

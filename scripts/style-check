@@ -11,7 +11,8 @@ usage() {
 
 ensure_compile_commands() {
     if [ ! -f "${CLANG_TIDY_BUILD_DIR}/compile_commands.json" ] || \
-        [ ! -f "${CLANG_TIDY_BUILD_DIR}/godot-cpp/gen/include/godot_cpp/classes/engine.hpp" ]; then
+        [ ! -f "${CLANG_TIDY_BUILD_DIR}/godot-cpp/gen/include/godot_cpp/classes/engine.hpp" ] || \
+        [ ! -f "${CLANG_TIDY_BUILD_DIR}/godot-cpp/gen/include/godot_cpp/core/gdextension_interface_loader.hpp" ]; then
         echo "Style: configuring clang-tidy database..."
         cmake --log-level=ERROR -S "${ROOT_DIR}" -B "${CLANG_TIDY_BUILD_DIR}" \
             -DCMAKE_CXX_COMPILER=clang++ \

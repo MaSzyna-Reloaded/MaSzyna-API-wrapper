@@ -2,7 +2,7 @@
 #include "TrainDieselEngine.hpp"
 
 namespace godot {
-    class TrainDieselElectricEngine: public TrainDieselEngine {
+    class TrainDieselElectricEngine : public TrainDieselEngine {
             GDCLASS(TrainDieselElectricEngine, TrainDieselEngine)
 
         private:

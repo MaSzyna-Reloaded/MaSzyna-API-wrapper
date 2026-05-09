@@ -4,16 +4,19 @@
 
 namespace godot {
     class TrainController;
-    class TrainBuffCoupl: public TrainPart {
+    class TrainBuffCoupl : public TrainPart {
             GDCLASS(TrainBuffCoupl, TrainPart);
+
         private:
             static void _bind_methods();
+
         protected:
-            void _do_update_internal_mover(TMoverParameters *mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *mover, Dictionary &state) override;
-            void _do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) override;
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;
+
         public:
             enum CouplerType {
                 COUPLER_TYPE_AUTOMATIC,
@@ -36,20 +39,12 @@ namespace godot {
                 // The following are only valid together with fixed coupling lock, but included for completeness
                 ALLOWED_ELEC_24V = 256,
                 ALLOWED_ELEC_110V = 512,
-                ALLOWED_ELEC_3x400V = 1024
+                ALLOWED_ELEC_3X400_V = 1024
             };
 
-            enum PowerFlagBits {
-                POWER_24V = 256,
-                POWER_110V = 512,
-                POWER_3x400V = 1024
-            };
+            enum PowerFlagBits { POWER_24V = 256, POWER_110V = 512, POWER_3X400_V = 1024 };
 
-            enum BufferLocation {
-                BUFFER_LOCATION_FRONT,
-                BUFFER_LOCATION_BACK,
-                BUFFER_LOCATION_BOTH
-            };
+            enum BufferLocation { BUFFER_LOCATION_FRONT, BUFFER_LOCATION_BACK, BUFFER_LOCATION_BOTH };
 
             MAKE_MEMBER_GS(double, buffer_stiffness_k, 1.0);
             MAKE_MEMBER_GS(double, buffer_max_compression_tolerance, 0.1);
@@ -69,7 +64,7 @@ namespace godot {
             void couple();
             void decouple();
     };
-} //namespace godot
+} // namespace godot
 
 VARIANT_ENUM_CAST(TrainBuffCoupl::CouplerType)
 VARIANT_ENUM_CAST(TrainBuffCoupl::AllowedFlagBits)

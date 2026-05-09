@@ -22,11 +22,11 @@
 namespace libmaszyna::utils {
     template<typename EnumType>
     std::string enum_to_string();
-    template<typename Type_>
-    Type_ interpolate(Type_ const &First, Type_ const &Second, double const Factor) {
+    template<typename Type>
+    Type interpolate(Type const &p_first, Type const &p_second, double const p_factor) {
 
-        return static_cast<Type_>((First * (1.0 - Factor)) + (Second * Factor));
+        return static_cast<Type>((p_first * (1.0 - p_factor)) + (p_second * p_factor));
     }
 
-    double random(double a, double b);
+    double random(double p_a, double p_b);
 } // namespace libmaszyna::utils

@@ -5,7 +5,6 @@
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/array.hpp>
 #include <godot_cpp/variant/string.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <map>
 
 namespace godot {
@@ -21,12 +20,7 @@ namespace godot {
 
         public:
             static TrainSystem *get_instance() {
-                auto *instance = dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
-                if (!instance) {
-                    UtilityFunctions::push_error("TrainSystem has no singleton. Returning nullptr!");
-                }
-
-                return instance;
+                return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
             }
 
             void register_train(const String &train_id, TrainController *train);

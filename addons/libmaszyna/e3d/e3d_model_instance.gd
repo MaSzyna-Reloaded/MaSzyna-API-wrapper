@@ -26,6 +26,7 @@ enum Instancer {
 var _model: E3DModel
 var _dirty: bool = false
 var _e3d_loaded: bool = false
+var _current_instancer: E3DInstancer
 var _current_editable: bool = false
 
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
@@ -97,8 +98,8 @@ func reload() -> void:
     if is_inside_tree() and (model or model_filename):
         _e3d_loaded = false
         e3d_loading.emit()
-        if E3DNodesInstancer:
-            E3DNodesInstancer.clear(self)
+        if _current_instancer:
+            _current_instancer.clear(self)
         
         if model:
             _model = model
@@ -108,20 +109,21 @@ func reload() -> void:
             submodels_aabb = E3DModelTool.get_aabb(_model)
             _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
 
-        if instancer == Instancer.OPTIMIZED:
-            push_warning("Optimized instancer is not supported")
-        elif E3DNodesInstancer:
-            E3DNodesInstancer.instantiate(self, _model, _current_editable)
-        _e3d_loaded = true
-        e3d_loaded.emit()
+            _current_instancer = _resolve_instancer()
+             
+            if _current_instancer:
+                _current_instancer.instantiate(self, _model, _current_editable)
+                _e3d_loaded = true
+                e3d_loaded.emit()
+            else:
+                push_error("Selected instancer is not supported!")
     
 
 func _notification(what: int) -> void:
     match what:
         NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
-            if not instancer == Instancer.OPTIMIZED:
-                if E3DNodesInstancer:
-                    E3DNodesInstancer.sync(self)
+            if _current_instancer:
+                _current_instancer.sync(self)
 
 
 func _ready() -> void:
@@ -130,20 +132,22 @@ func _ready() -> void:
     
     
 func _enter_tree() -> void:
-    if _model:
-        if not instancer == Instancer.OPTIMIZED:
-            E3DNodesInstancer.instantiate(self, _model, _current_editable)
+    if _model and _current_instancer:
+        _current_instancer.instantiate(self, _model, _current_editable)
 
 
 func _exit_tree() -> void:
-    if _model:
-        _model = null
-        if not instancer == Instancer.OPTIMIZED:
-            if E3DNodesInstancer:
-                E3DNodesInstancer.clear(self)
-            else:
-                push_error("E3DNodesInstancer is not available anymore. Cannot clear E3D Instance!")
+    if _current_instancer:
+        _current_instancer.clear(self)
 
 
 func is_e3d_loaded():
     return _e3d_loaded
+
+
+func _resolve_instancer():
+    match instancer:
+        Instancer.NODES, Instancer.EDITABLE_NODES:
+            return E3DNodesInstancer
+        _:
+            push_error("Unsupported instancer " + instancer)

@@ -6,7 +6,6 @@
 #include <godot_cpp/classes/ref.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
 #include <godot_cpp/variant/string.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 #include <godot_cpp/variant/variant.hpp>
 
 namespace godot {
@@ -32,12 +31,7 @@ namespace godot {
             UserSettings();
 
             static UserSettings *get_instance() {
-                auto *instance = dynamic_cast<UserSettings *>(Engine::get_singleton()->get_singleton("UserSettings"));
-                if (!instance) {
-                    UtilityFunctions::push_error("UserSettings has no singleton. Returning nullptr!");
-                }
-
-                return instance;
+                return dynamic_cast<UserSettings *>(Engine::get_singleton()->get_singleton("UserSettings"));
             }
 
             void load_config();

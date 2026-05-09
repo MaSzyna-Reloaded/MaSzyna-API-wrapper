@@ -4,7 +4,6 @@
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/object.hpp>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 #include <vector>
 
@@ -14,12 +13,7 @@ namespace godot {
 
         public:
             static E3DParser *get_instance() {
-                auto *instance = dynamic_cast<E3DParser *>(Engine::get_singleton()->get_singleton("E3DParser"));
-                if (!instance) {
-                    UtilityFunctions::push_error("E3DParser has no singleton. Returning nullptr!");
-                }
-
-                return instance;
+                return dynamic_cast<E3DParser *>(Engine::get_singleton()->get_singleton("E3DParser"));
             }
 
             Ref<E3DModel> parse(const Ref<FileAccess> &p_file) const;

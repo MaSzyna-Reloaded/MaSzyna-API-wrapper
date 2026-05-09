@@ -29,12 +29,12 @@ cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
 compile-debug:
-	cmake -B build-debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG)
+	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
 compile-release:
-	cmake -B build-release -DGODOTCPP_TARGET=template_release
+	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
@@ -43,9 +43,11 @@ compile-all: compile-debug compile-release
 
 cross-compile-release:
 	cmake -B build-linux64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release"
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
@@ -57,9 +59,11 @@ cross-compile-release:
 
 cross-compile-debug:
 	cmake -B build-linux64 \
+          -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" -DLIBMASZYNA_DEBUG=ON
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
@@ -71,6 +75,7 @@ cross-compile-debug:
 
 release-linux:
 	cmake -B build-linux64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release"
 	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
 	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
@@ -78,6 +83,7 @@ release-linux:
 
 release-windows:
 	cmake -B build-win64 \
+          -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \

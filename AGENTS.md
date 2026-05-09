@@ -8,6 +8,11 @@ Code generation:
 * Follow DRY and KISS principles
 * use english comments (if needed)
 * GDSCRIPT: avoid type interference, use explicit type declaration
+* GDSCRIPT: do not use `!=` in `if` conditions, use `not ... == ...` instead
+* GDSCRIPT: do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
+* GDSCRIPT: do not add helper wrappers for simple signal connect/disconnect logic; connect signals directly in place
+* GDSCRIPT: do not wrap method callbacks in `Callable(...)` when direct signal method connection is sufficient
+* keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
 
 General guidelines:
 
@@ -23,7 +28,8 @@ Custom nodes and Godot Editor:
 
 Documentation:
 
-* after changes update Godot documentation in `doc_classes`
+* GDSCRIPT documentation belongs in code comments
+* do not update `doc_classes` XML for GDSCRIPT changes
 
 Build:
 

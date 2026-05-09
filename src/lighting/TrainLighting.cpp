@@ -31,8 +31,8 @@ namespace godot {
         mover->LightsWrap = wrap_light_selector;
         mover->LightsDefPos = default_selector_position;
         mover->LightPower = 0; //LightPower is used there but declared in the Param section in the .fiz file
-        mover->LightPowerSource.SourceType = _controller->power_source_map.at(light_source);
-        mover->AlterLightPowerSource.SourceType = _controller->power_source_map.at(alternative_light_source);
+        mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
+        mover->AlterLightPowerSource.SourceType = train_controller_node->power_source_map.at(alternative_light_source);
         mover->LightsPos = selector_position;
     }
 
@@ -40,7 +40,7 @@ namespace godot {
         ASSERT_MOVER(mover);
         state["light_position"] = mover->LightsPosNo;
         state["light_power"] = mover->LightPower;
-        state["power_source"] = _controller->tpower_source_map.at(mover->LightPowerSource.SourceType);
+        state["power_source"] = train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType);
     }
 
     void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *mover, Dictionary &config) {

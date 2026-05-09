@@ -35,7 +35,12 @@ namespace godot {
             static const char *LOG_UPDATED_SIGNAL;
 
             static GameLog *get_instance() {
-                return dynamic_cast<GameLog *>(Engine::get_singleton()->get_singleton("GameLog"));
+                auto *instance = dynamic_cast<GameLog *>(Engine::get_singleton()->get_singleton("GameLog"));
+                if (!instance) {
+                    UtilityFunctions::push_error("GameLog has no singleton. Returning nullptr!");
+                }
+
+                return instance;
             }
 
             enum LogLevel {

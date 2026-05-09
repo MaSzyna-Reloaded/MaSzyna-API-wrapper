@@ -3,16 +3,19 @@ extends E3DInstancer
 
 
 func instantiate(target_node: E3DModelInstance, model: E3DModel, editable: bool = false) -> void:
+    print_verbose("[E3DModelInstancee] Instantiating nodes for ", target_node)
     _do_add_submodels(target_node, target_node, model.submodels, editable)
 
 
 func clear(target_node: E3DModelInstance) -> void:
+    print_verbose("[E3DModelInstancee] Clearing nodes of ", target_node)
     for child: Node in target_node.get_children(true):
         target_node.remove_child(child)
         child.queue_free()
 
 
 func sync(target_node: E3DModelInstance) -> void:
+    print_verbose("[E3DModelInstancee] Syncing nodes of ", target_node)
     pass
 
 

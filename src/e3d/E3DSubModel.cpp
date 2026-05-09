@@ -128,6 +128,38 @@ namespace godot {
         BIND_PROPERTY(
                 Variant::BOOL, "skip_rendering", "skip_rendering", &E3DSubModel::set_skip_rendering,
                 &E3DSubModel::get_skip_rendering, "p_skip_rendering");
+
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_range", "light_range", &E3DSubModel::set_light_range,
+                &E3DSubModel::get_light_range, "p_light_range");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_attenuation", "light_attenuation", &E3DSubModel::set_light_attenuation,
+                &E3DSubModel::get_light_attenuation, "p_light_attenuation");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_angle", "light_angle", &E3DSubModel::set_light_angle,
+                &E3DSubModel::get_light_angle, "p_light_angle");
+        BIND_PROPERTY(
+                Variant::FLOAT, "near_attenuation_start", "near_attenuation_start",
+                &E3DSubModel::set_near_attenuation_start, &E3DSubModel::get_near_attenuation_start,
+                "p_near_attenuation_start");
+        BIND_PROPERTY(
+                Variant::FLOAT, "near_attenuation_end", "near_attenuation_end", &E3DSubModel::set_near_attenuation_end,
+                &E3DSubModel::get_near_attenuation_end, "p_near_attenuation_end");
+        BIND_PROPERTY(
+                Variant::BOOL, "use_near_attenuation", "use_near_attenuation", &E3DSubModel::set_use_near_attenuation,
+                &E3DSubModel::get_use_near_attenuation, "p_use_near_attenuation");
+        BIND_PROPERTY(
+                Variant::INT, "far_attenuation_decay", "far_attenuation_decay", &E3DSubModel::set_far_attenuation_decay,
+                &E3DSubModel::get_far_attenuation_decay, "p_far_attenuation_decay");
+        BIND_PROPERTY(
+                Variant::FLOAT, "cos_hotspot_angle", "cos_hotspot_angle", &E3DSubModel::set_cos_hotspot_angle,
+                &E3DSubModel::get_cos_hotspot_angle, "p_cos_hotspot_angle");
+        BIND_PROPERTY(
+                Variant::FLOAT, "cos_view_angle", "cos_view_angle", &E3DSubModel::set_cos_view_angle,
+                &E3DSubModel::get_cos_view_angle, "p_cos_view_angle");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_energy", "light_energy", &E3DSubModel::set_light_energy,
+                &E3DSubModel::get_light_energy, "p_light_energy");
     }
 
     void E3DSubModel::add_child(const Ref<E3DSubModel> &p_sub_model) {

@@ -4,6 +4,18 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
+@export_node_path("E3DModelInstance") var model_instance_path:NodePath = NodePath(""):
+    set(x):
+        if not x == model_instance_path:
+            model_instance_path = x
+            _dirty = true
+
+@export var lights:Dictionary[String, bool] = {}:
+    set(x):
+        if not x == lights:
+            lights = x
+            _sync_model_lights()
+
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
@@ -40,6 +52,7 @@ var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
+var _model_node:E3DModelInstance
 var _t:float = 0.0
 
 
@@ -157,14 +170,7 @@ func _update_head_display():
 
 func _process(delta):
     if _dirty:
-        _dirty = false
-        if head_display_e3d_path:
-            _head_display_e3d = get_node_or_null(head_display_e3d_path)
-            if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
-
-        if controller_path and is_inside_tree():
-            _controller = get_node(controller_path)
+        _process_dirty()
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -177,6 +183,45 @@ func _process(delta):
 
 func _schedule_head_display_update():
     _needs_head_display_update = true
+
+
+func _process_dirty() -> void:
+    if _dirty:
+        _dirty = false
+        if head_display_e3d_path:
+            _head_display_e3d = get_node_or_null(head_display_e3d_path)
+            if _head_display_e3d:
+                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
+
+        if is_inside_tree():
+            if controller_path:
+                _controller = get_node_or_null(controller_path)
+
+            var model_node: E3DModelInstance = null
+            if model_instance_path:
+                model_node = get_node_or_null(model_instance_path)
+            if _model_node:
+                _model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+            _model_node = model_node
+            if _model_node:
+                _model_node.e3d_loaded.connect(_on_model_node_e3d_loaded)
+            _sync_model_lights()
+
+
+func _sync_model_lights() -> void:
+    if not _model_node or not _model_node.is_e3d_loaded():
+        return
+    lights.merge(_model_node.lights_state, false)
+    for light_name: String in lights.keys():
+        if not _model_node.lights_state.has(light_name):
+            lights.erase(light_name)
+    lights.sort()
+    _model_node.lights_state = lights
+
+
+func _on_model_node_e3d_loaded() -> void:
+    _sync_model_lights()
+
 
 func _ready() -> void:
     _schedule_head_display_update()

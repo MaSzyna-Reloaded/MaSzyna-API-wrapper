@@ -8,13 +8,40 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="get_node" qualifiers="const">
+			<return type="E3DSubModel" />
+			<param index="0" name="p_path" type="NodePath" />
+			<description>
+				Finds and returns E3DSubModel by NodePath
+			</description>
+		</method>
+		<method name="get_node_or_null" qualifiers="const">
+			<return type="E3DSubModel" />
+			<param index="0" name="p_path" type="NodePath" />
+			<description>
+				Finds and returns E3DSubModel by NodePath. Returns null without an error, when not found. 
+			</description>
+		</method>
+		<method name="register_light">
+			<return type="void" />
+			<param index="0" name="p_name" type="String" />
+			<param index="1" name="p_entry" type="E3DModelLightDefinition" />
+			<description>
+				Registers a light.
+			</description>
+		</method>
+	</methods>
 	<members>
+		<member name="lights" type="Dictionary[String, E3DModelLightDefinition]" setter="set_lights" getter="get_lights" default="{}">
+			Returns dictionary of registered lights.
+		</member>
 		<member name="submodels" type="E3DSubModel[]" setter="set_submodels" getter="get_submodels" default="[]">
 			A list of top-level [E3DSubModel] resources that form the root of the model's hierarchy.
 		</member>
 	</members>
 	<constants>
-		<constant name="FORMAT_VERSION" value="20260504">
+		<constant name="FORMAT_VERSION" value="20260528">
 			Version of the serialized E3D model cache format.
 		</constant>
 	</constants>

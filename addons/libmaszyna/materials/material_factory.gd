@@ -81,8 +81,7 @@ func create(
     model_path: String = "",
     season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER,
     weather: MaterialManager.Weather = MaterialManager.Weather.WEATHER_CLEAR,
-    force_transparent: bool = false,
-    diffuse_color: Color = Color.WHITE
+    options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> Material:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)
     var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant.shader)
@@ -94,8 +93,7 @@ func create(
         shader_meta,
         shader_meta.texture_map,
         model_path,
-        force_transparent,
-        diffuse_color,
+        options,
     )
     return material
 
@@ -106,8 +104,7 @@ func apply(
     model_path: String,
     season: MaterialManager.Season,
     weather: MaterialManager.Weather,
-    force_transparent: bool,
-    diffuse_color: Color = Color.WHITE
+    options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> void:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)
     var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant.shader)
@@ -118,8 +115,7 @@ func apply(
         shader_meta,
         shader_meta.texture_map,
         model_path,
-        force_transparent,
-        diffuse_color
+        options,
     )
 
 
@@ -138,8 +134,7 @@ func _apply(
     shader_meta: MaszynaShaderMeta,
     texture_map: TextureMap,
     model_path: String,
-    force_transparent: bool,
-    diffuse_color: Color,
+    options: MaterialManager.MaterialOptions,
 ) -> void:
 
     if not material is ShaderMaterial or not shader_meta.base_material is ShaderMaterial:
@@ -151,12 +146,15 @@ func _apply(
         if property_name == "shader" or property_name == "render_priority" or property_name.begins_with("shader_parameter/"):
             target_shader_material.set(property_name, source_shader_material.get(property_name))
 
-    shader_meta.factory.call(mmat, variant, material, texture_map, model_path, diffuse_color)
+    shader_meta.factory.call(mmat, variant, material, texture_map, model_path, options)
     var transparency: MaterialManager.Transparency = MaterialManager.Transparency.Disabled
-    if mmat.transparent or force_transparent:
+    if mmat.transparent or options.force_transparent:
         transparency = MaterialManager.Transparency.AlphaScissor
     target_shader_material.set_shader_parameter("transparency", transparency)
     target_shader_material.set_shader_parameter("alpha_scissor_threshold", 0.5)
+    target_shader_material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
+    target_shader_material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
+    target_shader_material.set_shader_parameter("emission_energy", options.selfillum_energy)
 
 
 func _apply_default_material(
@@ -165,7 +163,7 @@ func _apply_default_material(
     material: ShaderMaterial,
     texture_map: TextureMap,
     model_path: String,
-    diffuse_color: Color,
+    options: MaterialManager.MaterialOptions,
 ) -> void:
     var diffuse_texture: String = variant.get_texture_path(texture_map.albedo)
     var normalmap_texture: String = variant.get_texture_path(texture_map.normalmap)
@@ -183,7 +181,7 @@ func _apply_default_material(
                 1.0
             ))
     else:
-        material.set_shader_parameter("albedo", diffuse_color)
+        material.set_shader_parameter("albedo", options.diffuse_color)
 
     if normalmap_texture:
         material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true))
@@ -197,6 +195,9 @@ func _apply_default_material(
 
     if variant.has_parameter("reflection"):
         material.set_shader_parameter("metallic", variant.get_parameter("reflection"))
+    material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
+    material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
+    material.set_shader_parameter("emission_energy", options.selfillum_energy)
 
 func _apply_parallax(
     mmat: MaszynaMaterial,
@@ -204,7 +205,7 @@ func _apply_parallax(
     material: ShaderMaterial,
     texture_map: TextureMap,
     model_path: String,
-    diffuse_color: Color,
+    options: MaterialManager.MaterialOptions,
 ) -> void:
     var diffuse_texture_path: String = variant.get_texture_path(texture_map.albedo)
     var normalmap_texture_path: String = variant.get_texture_path(texture_map.normalmap)
@@ -228,7 +229,7 @@ func _apply_parallax(
 
     var albedo_multiplier:Color = Color(1.0, 1.0, 1.0, 1.0)
     if not diffuse_texture_path:
-        albedo_multiplier = diffuse_color
+        albedo_multiplier = options.diffuse_color
 
     if variant.has_parameter("diffuse"):
         albedo_multiplier = Color(
@@ -267,7 +268,7 @@ func _apply_water(
     material: ShaderMaterial,
     texture_map: TextureMap,
     model_path: String,
-    diffuse_color: Color,
+    options: MaterialManager.MaterialOptions,
 ) -> void:
     var diffuse_texture_path: String = variant.get_texture_path(texture_map.albedo)
     var normalmap_texture_path: String = variant.get_texture_path(texture_map.normalmap)

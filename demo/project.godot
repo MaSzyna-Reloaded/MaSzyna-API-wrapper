@@ -35,13 +35,13 @@ TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_ser
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
+MaterialManager="*uid://wsbd7kr83ncg"
 MaterialParser="*uid://7b48fl428yqa"
+MaterialFactory="*uid://v144f3irjg7m"
 E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
-MaterialManager="*uid://wsbd7kr83ncg"
-MaterialFactory="*uid://v144f3irjg7m"
 
 [debug]
 

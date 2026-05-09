@@ -5,6 +5,8 @@
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/classes/object.hpp>
 
+#include <array>
+#include <string_view>
 #include <vector>
 
 namespace godot {
@@ -24,6 +26,12 @@ namespace godot {
         private:
             const int64_t max_31_b = 1LL << 31;
             const int64_t max_32_b = 1LL << 32;
+            static constexpr std::array<std::string_view, 19> NON_LIGHTS_TO_EXCLUDE = {
+                    "coupler1",      "coupler2",    "cctrl1",       "cctrl2",      "cpass1",
+                    "cpass2",        "cpneumatic1", "cpneumatic1r", "cpneumatic2", "cpneumatic2r",
+                    "external_only", "mechanik1",   "mechanik2",    "pneumatic1",  "pneumatic1r",
+                    "pneumatic2",    "pneumatic2r", "shutters1",    "shutters2",
+            };
 
             struct ChunkHeader {
                     String id;
@@ -69,6 +77,15 @@ namespace godot {
                     float gl_lines_size;
                     float lod_max_distance;
                     float lod_min_distance;
+                    float light_range;
+                    float light_attenuation;
+                    float light_angle;
+                    float near_attenuation_start;
+                    float near_attenuation_end;
+                    bool use_near_attenuation;
+                    int far_attenuation_decay;
+                    float cos_hotspot_angle;
+                    float cos_view_angle;
                     uint32_t index_count;
                     uint32_t first_index_idx;
                     uint32_t transparent;
@@ -78,6 +95,7 @@ namespace godot {
                     PackedInt32Array indices;
                     PackedFloat64Array tangents;
                     Transform3D matrix;
+                    float light_energy;
             };
 
             ChunkHeader _read_chunk_header(const Ref<FileAccess> &p_file) const;
@@ -89,5 +107,11 @@ namespace godot {
             std::vector<String> _buffer_to_strings(const PackedByteArray &p_buffer) const;
             Transform3D _read_matrix(const Ref<FileAccess> &p_file) const;
             Ref<E3DSubModel> _create_submodel(SubModelData &p_submodel) const;
+            void _register_lights(
+                    const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
+                    const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices) const;
+            NodePath _build_submodel_path(
+                    const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices,
+                    int p_index) const;
     };
 } // namespace godot

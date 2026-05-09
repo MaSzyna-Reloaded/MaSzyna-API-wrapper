@@ -12,11 +12,15 @@ var _managed_materials: Dictionary = {}
 
 enum Transparency { Disabled, Alpha, AlphaScissor }
 
-const _transparency_codes = {
-    Transparency.Disabled: "0",
-    Transparency.Alpha: "a",
-    Transparency.AlphaScissor: "s",
-}
+
+class MaterialOptions:
+    var diffuse_color: Color = Color.WHITE
+    var selfillum_color: Color = Color.WHITE
+    var selfillum_energy: float = 1.0
+    var selfillum_enabled: bool = false
+    var force_transparent: bool = false   # TODO: AphaCut/Alpha modes support
+    var alpha_scissor_threshold: float = 0.5
+
 
 @export var season: Season = Season.SEASON_SUMMER:
     set(x):
@@ -41,10 +45,9 @@ func load_material(model_path:String, material_name:String) -> MaszynaMaterial:
 func get_material(
     model_path:String,
     material_path:String,
-    transparent:Transparency = Transparency.Disabled,
-    diffuse_color: Color = Color(1.0, 1.0, 1.0)
+    options: MaterialOptions = MaterialOptions.new(),
 ) -> Material:
-    var cache_hash: String = _compute_cache_hash(model_path, material_path, transparent, diffuse_color)
+    var cache_hash: String = _compute_cache_hash(model_path, material_path, options)
     var managed_material: Dictionary = _managed_materials.get(cache_hash, {})
     if managed_material:
         var material_ref: WeakRef = managed_material.get("material_ref") as WeakRef
@@ -52,20 +55,19 @@ func get_material(
         if material:
             return material
         _managed_materials.erase(cache_hash)
-    var force_transparent := not transparent == Transparency.Disabled  # TODO: ALPHA
+    var force_transparent = options.force_transparent  # TODO: ALPHA
     var output: ShaderMaterial = _materials_cache.get(cache_hash) as ShaderMaterial
     if not output:
         var mmat: MaszynaMaterial = load_material(model_path, material_path)
-        output = MaterialFactory.create(mmat, model_path, season, weather, force_transparent, diffuse_color)
+        output = MaterialFactory.create(mmat, model_path, season, weather, options)
     else:
         var mmat: MaszynaMaterial = load_material(model_path, material_path)
-        MaterialFactory.apply(output, mmat, model_path, season, weather, force_transparent, diffuse_color)
+        MaterialFactory.apply(output, mmat, model_path, season, weather, options)
     _managed_materials[cache_hash] = {
         "material_ref": weakref(output),
         "model_path": model_path,
         "material_path": material_path,
-        "force_transparent": force_transparent,
-        "diffuse_color": diffuse_color,
+        "options": options,
     }
     _materials_cache.set(cache_hash, output)
     return output
@@ -107,14 +109,18 @@ func load_texture(model_path:String, material_name:String, normal:bool = false) 
 func _compute_cache_hash(
     model_path: String,
     material_path: String,
-    transparent: Transparency,
-    diffuse_color: Color,
+    options: MaterialOptions,
 ) -> String:
-    return model_path.path_join(("%s_t%s_%s.res" % [
-        material_path,
-        _transparency_codes[transparent],
-        "%x%x%x" % [diffuse_color.r8, diffuse_color.g8, diffuse_color.b8],
-    ]))
+    var options_hash = ":".join([
+        options.force_transparent,
+        options.diffuse_color.to_html(true),
+        options.alpha_scissor_threshold,
+        options.selfillum_enabled,
+        options.selfillum_color.to_html(true),
+        options.selfillum_energy,
+    ].map(str)).md5_text()
+    return model_path.path_join("%s_%s.res" % [material_path, options_hash])
+
 
 func _refresh_managed_materials() -> void:
     var cache_hashes: Array = _managed_materials.keys()
@@ -132,9 +138,7 @@ func _refresh_managed_material(cache_hash: String) -> void:
         return
     var model_path: String = managed_material.get("model_path", "")
     var material_path: String = managed_material.get("material_path", "")
-    var force_transparent: Transparency = managed_material.get("force_transparent", false)
-    var diffuse_color: Color = managed_material.get("diffuse_color", Color.WHITE)
+    var options:MaterialOptions = managed_material.get("options")
     var mmat: MaszynaMaterial = load_material(model_path, material_path)
-    mmat.transparent = mmat.transparent or force_transparent
-    MaterialFactory.apply(material, mmat, model_path, season, weather, force_transparent, diffuse_color)
+    MaterialFactory.apply(material, mmat, model_path, season, weather, options)
     _materials_cache.set(cache_hash, material)

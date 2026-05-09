@@ -18,6 +18,11 @@ uniform sampler2D texture_roughness : hint_roughness_r, filter_linear_mipmap, re
 uniform float specular : hint_range(0.0, 1.0, 0.01);
 uniform float metallic : hint_range(0.0, 1.0, 0.01);
 
+uniform bool emission_enabled = false;
+uniform vec4 emission_color : source_color = vec4(1.0);
+uniform float emission_energy : hint_range(0.0, 16.0);
+
+
 uniform vec3 uv1_scale;
 uniform vec3 uv1_offset;
 uniform vec3 uv2_scale;
@@ -43,4 +48,10 @@ void fragment() {
 	vec4 roughness_texture_channel = vec4(1.0, 0.0, 0.0, 0.0);
 	float roughness_tex = dot(texture(texture_roughness, base_uv), roughness_texture_channel);
 	ROUGHNESS = roughness_tex * roughness;
+
+    if(emission_enabled) {
+        EMISSION = emission_color.rgb * albedo_tex.rgb * emission_energy;
+    }
+
+
 }

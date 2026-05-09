@@ -13,14 +13,14 @@ const WEATHER_RAIN_KEY = "rain"
 const WEATHER_SNOW_KEY = "snow"
 
 
-const SEASONS_MAP: Dictionary[MaterialManager.Season, String] = {
+static var SEASONS_MAP: Dictionary[MaterialManager.Season, String] = {
     MaterialManager.Season.SEASON_WINTER: SEASON_WINTER_KEY,
     MaterialManager.Season.SEASON_SPRING: SEASON_SPRING_KEY,
     MaterialManager.Season.SEASON_SUMMER: SEASON_SUMMER_KEY,
     MaterialManager.Season.SEASON_AUTUMN: SEASON_AUTUMN_KEY,
 }
 
-const WEATHER_MAP: Dictionary[MaterialManager.Weather, String] = {
+static var WEATHER_MAP: Dictionary[MaterialManager.Weather, String] = {
     MaterialManager.Weather.WEATHER_CLEAR: WEATHER_CLEAR_KEY,
     MaterialManager.Weather.WEATHER_CLOUDY: WEATHER_CLOUDY_KEY,
     MaterialManager.Weather.WEATHER_RAIN: WEATHER_RAIN_KEY,

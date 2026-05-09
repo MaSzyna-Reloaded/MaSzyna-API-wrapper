@@ -21,6 +21,10 @@ uniform float metallic : hint_range(0.0, 1.0, 0.01);
 uniform sampler2D texture_normal : hint_roughness_normal, filter_linear_mipmap, repeat_enable;
 uniform float normal_scale : hint_range(-16.0, 16.0);
 
+uniform bool emission_enabled = false;
+uniform vec4 emission_color : source_color = vec4(1.0);
+uniform float emission_energy : hint_range(0.0, 16.0);
+
 uniform vec3 uv1_scale;
 uniform vec3 uv1_offset;
 uniform vec3 uv2_scale;
@@ -50,4 +54,10 @@ void fragment() {
 	// Normal Map: Enabled
 	NORMAL_MAP = texture(texture_normal, base_uv).rgb;
 	NORMAL_MAP_DEPTH = normal_scale;
+
+    if(emission_enabled) {
+        EMISSION = emission_color.rgb * albedo_tex.rgb * emission_energy;
+    }
+
+
 }

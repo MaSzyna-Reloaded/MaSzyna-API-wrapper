@@ -1,13 +1,23 @@
+#include "e3d/E3DModelLightDefinition.hpp"
 #include "parsers/e3d_parser.hpp"
 #include <godot_cpp/classes/array_mesh.hpp>
 #include <godot_cpp/classes/ref.hpp>
 
+#include <algorithm>
 #include <cmath>
 #include <map>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace godot {
+    static constexpr const char *LIGHT_ON_SUFFIX = "_on";
+    static constexpr const char *LIGHT_ON_ALT_SUFFIX = "_xon";
+    static constexpr const char *LIGHT_OFF_SUFFIX = "_off";
+    static constexpr const char *LIGHT_ON_PREFIX = "light_on";
+    static constexpr const char *LIGHT_OFF_PREFIX = "light_off";
+
     void E3DParser::_bind_methods() {
         ClassDB::bind_method(D_METHOD("parse", "file"), &E3DParser::parse);
     }
@@ -71,48 +81,70 @@ namespace godot {
 
     E3DParser::SubModelData E3DParser::_read_submodel(const Ref<FileAccess> &p_file, const int p_chunk_size) const {
         SubModelData result;
-        result.next_idx = u32s(p_file->get_32());
-        result.first_child_idx = u32s(p_file->get_32());
-        result.type = p_file->get_32();
-        result.name_idx = u32s(p_file->get_32());
-        result.anim = u32s(p_file->get_32());
-        result.flags = p_file->get_32() & 0xFFFF;
-        result.matrix_idx = u32s(p_file->get_32());
-        result.vertex_count = u32s(p_file->get_32());
-        result.first_vertex_idx = u32s(p_file->get_32());
-        result.material_idx = u32s(p_file->get_32());
+        result.next_idx = u32s(p_file->get_32());         // offset=0
+        result.first_child_idx = u32s(p_file->get_32());  // offset=4
+        result.type = p_file->get_32();                   // offset=8
+        result.name_idx = u32s(p_file->get_32());         // offset=12
+        result.anim = u32s(p_file->get_32());             // offset=16
+        result.flags = p_file->get_32() & 0xFFFF;         // offset=20
+        result.matrix_idx = u32s(p_file->get_32());       // offset=24
+        result.vertex_count = u32s(p_file->get_32());     // offset=28
+        result.first_vertex_idx = u32s(p_file->get_32()); // offset=32
+        result.material_idx = u32s(p_file->get_32());     // offset=36
         result.is_material_colored = (result.material_idx == 0);
-        result.lights_on_threshold = p_file->get_float();
-        result.visibility_light_threshold = p_file->get_float();
+        // ReSharper disable once CppExpressionWithoutSideEffects
+        p_file->get_float();                              // offset 40 UNUSED
+        result.lights_on_threshold = p_file->get_float(); // offset 44
+        // result.visibility_light_threshold = p_file->get_float();
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA ambient
-        Color diffuse_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
+        const float diffuse_r = p_file->get_float();
+        const float diffuse_g = p_file->get_float();
+        const float diffuse_b = p_file->get_float();
+        const float diffuse_a = p_file->get_float();
+        Color diffuse_color = Color(diffuse_r, diffuse_g, diffuse_b, diffuse_a);
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA specular
-        Color selfillum_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
+        const float selfillum_r = p_file->get_float();
+        const float selfillum_g = p_file->get_float();
+        const float selfillum_b = p_file->get_float();
+        const float selfillum_a = p_file->get_float();
+        Color selfillum_color = Color(selfillum_r, selfillum_g, selfillum_b, selfillum_a);
         if (const auto transparent = result.flags & 32; transparent == 0u) {
-            selfillum_color.a = 1.0;
             diffuse_color.a = 1.0;
         }
 
         result.selfillum_color = selfillum_color;
         result.diffuse_color = diffuse_color;
-        result.gl_lines_size = p_file->get_float();
+        result.gl_lines_size = p_file->get_float(); // offset=112
 
-        result.lod_max_distance = p_file->get_float();
-        result.lod_min_distance = p_file->get_float();
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_buffer(32); // skip attrs for lighting
-        result.index_count = p_file->get_32();
-        result.first_index_idx = p_file->get_32();
+        result.lod_max_distance = p_file->get_float();                     // offset=116
+        result.lod_min_distance = p_file->get_float();                     // offset=120
+        result.near_attenuation_start = p_file->get_float();               // offset=124
+        result.near_attenuation_end = p_file->get_float();                 // offset=128
+        result.use_near_attenuation = p_file->get_32() != 0;               // offset=132
+        result.far_attenuation_decay = static_cast<int>(p_file->get_32()); // offset=136
+        result.light_range = p_file->get_float();                          // fFarDecayRadius  // offset=140
+        const float cos_falloff = p_file->get_float();                     // fCosFalloffAngle // offset=144
+        result.cos_hotspot_angle = p_file->get_float();                    // offset=148
+        result.cos_view_angle = p_file->get_float();                       // offset=152
+
+        result.light_angle = Math::rad_to_deg(Math::acos(Math::clamp(cos_falloff, -1.0f, 1.0f)));
+        // spot_attenuation in Godot controls BOTH distance and angular attenuation (softness).
+        // Since E3D has iFarAttenDecay for distance and a hotspot/falloff for angle,
+        // we'll leave it at 1.0 here and let the instancer decide based on all params.
+        result.light_attenuation = 1.0f;
+        result.diffuse_color = diffuse_color;
+
+        result.index_count = p_file->get_32();     // offset=156
+        result.first_index_idx = p_file->get_32(); // Offset 160
+        result.light_energy = p_file->get_float(); // Offset 164
+
         result.transparent = result.flags & 0b000001;
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_buffer(p_chunk_size - 164); // read to the end of the chunk
+
+        p_file->get_buffer(p_chunk_size - 168); //  Offset 168: dev/unused data
+
+
         result.vertices = PackedVector3Array();
         result.normals = PackedVector3Array();
         result.uvs = PackedVector2Array();
@@ -352,7 +384,7 @@ namespace godot {
         if (!submodel_name.is_empty()) {
             submodel->set_name(submodel_name);
 
-            if (submodel_name.begins_with("Light_On")) {
+            if (submodel_name.to_lower().begins_with(LIGHT_ON_PREFIX)) {
                 submodel->set_visible(false);
             } else if (submodel_name.to_lower().ends_with("_on")) {
                 submodel->set_visible(false);
@@ -438,10 +470,23 @@ namespace godot {
                 submodel->set_transform(p_submodel.matrix);
                 return submodel;
             }
+            case E3DSubModel::SubModelType::SUBMODEL_FREE_SPOTLIGHT:
+                submodel->set_light_range(p_submodel.light_range);
+                submodel->set_light_attenuation(p_submodel.light_attenuation);
+                submodel->set_light_angle(p_submodel.light_angle);
+                submodel->set_near_attenuation_start(p_submodel.near_attenuation_start);
+                submodel->set_near_attenuation_end(p_submodel.near_attenuation_end);
+                submodel->set_use_near_attenuation(p_submodel.use_near_attenuation);
+                submodel->set_far_attenuation_decay(p_submodel.far_attenuation_decay);
+                submodel->set_cos_hotspot_angle(p_submodel.cos_hotspot_angle);
+                submodel->set_cos_view_angle(p_submodel.cos_view_angle);
+                submodel->set_transform(p_submodel.matrix);
+                submodel->set_diffuse_color(p_submodel.diffuse_color);
+                return submodel;
             default:
                 UtilityFunctions::push_error(
                         "Unsupported submodel (name: " + p_submodel.name + ", type: " + String::num(p_submodel.type) +
-                        ")"); //@TODO Display type name based on p_sumbodel.type
+                        ")"); //@TODO Display type name based on p_submodel.type
                 return submodel;
         }
     }
@@ -450,6 +495,7 @@ namespace godot {
         // Build a list of submodels first using a simple vector to avoid Variant conversions.
         std::vector<Ref<E3DSubModel>> submodels;
         std::vector<SubModelData> submodels_meta = _parse_file(p_file);
+        std::vector<int> parent_indices(submodels_meta.size(), -1);
         submodels.reserve(submodels_meta.size());
 
         for (SubModelData &i: submodels_meta) {
@@ -469,6 +515,7 @@ namespace godot {
                 while (child_idx > -1 && static_cast<size_t>(child_idx) < submodels.size()) {
                     const Ref<E3DSubModel> &child = submodels.at(child_idx);
                     child->set_parent(parent.ptr());
+                    parent_indices.at(child_idx) = static_cast<int>(i);
                     if (child_idx >= 0 && static_cast<size_t>(child_idx) < has_parent.size()) {
                         has_parent.at(child_idx) = true;
                     }
@@ -486,6 +533,108 @@ namespace godot {
             }
         }
 
+        _register_lights(model, submodels, submodels_meta, parent_indices);
+
         return model;
+    }
+
+    NodePath E3DParser::_build_submodel_path(
+            const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices, int p_index) const {
+        if (p_index < 0 || static_cast<size_t>(p_index) >= p_meta.size()) {
+            return NodePath();
+        }
+
+        std::vector<String> reversed_segments;
+        int current_index = p_index;
+        while (current_index > -1 && static_cast<size_t>(current_index) < p_meta.size()) {
+            const String segment = p_meta.at(current_index).name;
+            if (segment.is_empty()) {
+                return NodePath();
+            }
+
+            reversed_segments.push_back(segment);
+            current_index = p_parent_indices.at(current_index);
+        }
+
+        String path;
+        for (auto it = reversed_segments.rbegin(); it != reversed_segments.rend(); ++it) {
+            if (!path.is_empty()) {
+                path += "/";
+            }
+            path += *it;
+        }
+
+        return NodePath(path);
+    }
+
+    void E3DParser::_register_lights(
+            const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
+            const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices) const {
+
+        std::unordered_set<size_t> used_off;
+
+        for (size_t i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> &sm = p_submodels[i];
+            String sm_name = sm->get_name();
+            if (sm_name.is_empty()) {
+                continue;
+            }
+
+            String sm_name_lower = sm_name.to_lower();
+            String base_name;
+            String off_name;
+
+            if (sm_name_lower.ends_with(LIGHT_ON_SUFFIX)) {
+                base_name = sm_name.substr(0, sm_name.length() - String(LIGHT_ON_SUFFIX).length());
+                off_name = base_name + LIGHT_OFF_SUFFIX;
+            } else if (sm_name_lower.ends_with(LIGHT_ON_ALT_SUFFIX)) {
+                base_name = sm_name.substr(0, sm_name.length() - String(LIGHT_ON_ALT_SUFFIX).length());
+                off_name = base_name + LIGHT_OFF_SUFFIX;
+            } else if (sm_name_lower.begins_with(LIGHT_ON_PREFIX)) {
+                base_name = sm_name.substr(String(LIGHT_ON_PREFIX).length());
+                off_name = String(LIGHT_OFF_PREFIX) + base_name.to_lower();
+            } else {
+                continue;
+            }
+
+            if (base_name.is_empty()) {
+                continue;
+            }
+
+            String base_name_lower = base_name.to_lower();
+            if (std::find(
+                        E3DParser::NON_LIGHTS_TO_EXCLUDE.begin(), E3DParser::NON_LIGHTS_TO_EXCLUDE.end(),
+                        std::string_view(base_name_lower.utf8().get_data())) !=
+                E3DParser::NON_LIGHTS_TO_EXCLUDE.end()) {
+                continue;
+            }
+
+            String light_name = base_name;
+
+            if (p_model->get_lights().has(light_name)) {
+                UtilityFunctions::push_error("[E3DParser]: Duplicate light name: " + light_name);
+                continue;
+            }
+
+            Ref<E3DModelLightDefinition> entry;
+            entry.instantiate();
+            entry->set_on_submodel_path(_build_submodel_path(p_meta, p_parent_indices, static_cast<int>(i)));
+
+            String off_name_lower = off_name.to_lower();
+            int found_off_index = -1;
+
+            for (size_t j = 0; j < p_submodels.size(); j++) {
+                if (used_off.find(j) == used_off.end() && p_submodels[j]->get_name().to_lower() == off_name_lower) {
+                    found_off_index = static_cast<int>(j);
+                    used_off.insert(j);
+                    break;
+                }
+            }
+            if (found_off_index > -1) {
+                entry->set_off_submodel_path(_build_submodel_path(p_meta, p_parent_indices, found_off_index));
+            }
+
+            p_model->register_light(light_name, entry);
+        }
     }
 } // namespace godot

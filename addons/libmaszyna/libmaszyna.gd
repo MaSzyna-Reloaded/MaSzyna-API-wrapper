@@ -25,6 +25,15 @@ var user_settings_dock
 var user_settings_dock_scene = preload("res://addons/libmaszyna/editor/user_settings_dock.tscn")
 
 func _enter_tree():
+    add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
+    add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
+    add_autoload_singleton("MaterialManager", "res://addons/libmaszyna/materials/material_manager.gd")
+    add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
+    add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
+    add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
+    add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
+    add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
+
     set_input_event_forwarding_always_enabled()
     set_process(false)
 
@@ -41,14 +50,6 @@ func _enter_tree():
     
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
-    add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
-    add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
-    add_autoload_singleton("MaterialManager", "res://addons/libmaszyna/materials/material_manager.gd")
-    add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
-    add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
-    add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
-    add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
-    add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -104,6 +105,8 @@ func _exit_tree():
 
     if nodebank_editor_plugin:
         unregister_maszyna_editor_plugin(nodebank_editor_plugin)
+
+    await get_tree().process_frame
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")

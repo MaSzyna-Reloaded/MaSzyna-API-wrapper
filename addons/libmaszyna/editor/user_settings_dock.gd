@@ -7,15 +7,22 @@ func _on_browse_button_up():
 
 
 func _refresh():
-    UserSettings.load_config()
-    %LineEdit.text = UserSettings.get_maszyna_game_dir()
+    if UserSettings:
+        UserSettings.load_config()
+        %LineEdit.text = UserSettings.get_maszyna_game_dir()
 
 
 func _ready():
     if OS.has_feature("release") and not OS.has_feature("editor"):
         $VBoxContainer/GameDirSection.visible = false
     _refresh()
+
+func _enter_tree():
     get_tree().root.focus_entered.connect(_refresh)
+
+
+func _exit_tree():
+    get_tree().root.focus_entered.disconnect(_refresh)
 
 
 func _on_directory_selector_dialog_dir_selected(dir):
@@ -70,10 +77,6 @@ func _on_line_edit_text_changed(new_text):
 
 func _on_settings_updater_timeout():
     _refresh()
-
-
-func _on_fxaa_button_toggled(toggled_on):
-    UserSettings
 
 
 func _reload_e3d_models():

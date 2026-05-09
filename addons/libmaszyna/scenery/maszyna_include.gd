@@ -28,7 +28,7 @@ var _scenery:MaszynaSceneryNode
 func _ready() -> void:
     var node = self
     
-    if autoload:
+    if Engine.is_editor_hint() and autoload:
         self.load()
         
     set_process(true)

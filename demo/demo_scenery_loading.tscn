@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://m0t4e4uurpbc" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_fraxg"]
 [ext_resource type="PackedScene" uid="uid://cggqb75a8w8r" path="res://addons/debug_menu/debug_menu.tscn" id="4_f81ma"]
 [ext_resource type="Shader" uid="uid://ck1w2pkpwin11" path="res://addons/gnd_skydome/filmic_procedural_sky.gdshader" id="4_uccxj"]
-[ext_resource type="Script" uid="uid://pw1ljvn4g7cy" path="res://addons/gnd_skydome/SunShaftsCompositorEffect.gd" id="5_uccxj"]
+[ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="9_4xg7h"]
 
 [sub_resource type="FastNoiseLite" id="FastNoiseLite_uccxj"]
 seed = 10
@@ -57,8 +57,8 @@ shader_parameter/stars_energy = 2.0
 shader_parameter/stars_size_min = 0.01
 shader_parameter/stars_size_max = 0.03
 shader_parameter/stars_edge_softness = 0.25
-shader_parameter/gi_tint = Color(0.34744364, 0.4860088, 0.7754261, 1)
-shader_parameter/gi_energy_multiplier = 2.0125084146134036
+shader_parameter/gi_tint = Color(0.61416656, 0.64159715, 0.73097223, 1)
+shader_parameter/gi_energy_multiplier = 1.5300419517291963
 shader_parameter/sun_color = Color(1, 0.98, 0.9, 1)
 shader_parameter/sun_disk_size = 0.04
 shader_parameter/sun_disk_softness = 0.6
@@ -92,18 +92,18 @@ shader_parameter/cloud_shadow_color = Color(0.7213096, 0.75538087, 0.82624775, 1
 shader_parameter/cloud_forward_scatter = 1.5
 shader_parameter/cloud_backscatter = 0.39
 shader_parameter/sun_cloud_occlusion = 0.59416
-shader_parameter/custom_sun_dir = Vector3(-0.8586799, -0.03844324, -0.51106846)
-shader_parameter/custom_moon_dir = Vector3(0.4125069, 0.21591161, 0.8849973)
-shader_parameter/celestial_matrix = Basis(-0.6195282, -0.5045718, 0.6013253, 0, 0.76604444, 0.6427876, -0.7849744, 0.398225, -0.4745861)
+shader_parameter/custom_sun_dir = Vector3(-0.9376499, 0.1148826, -0.32804677)
+shader_parameter/custom_moon_dir = Vector3(0.6055511, 0.13233627, 0.784726)
+shader_parameter/celestial_matrix = Basis(-0.93084043, -0.23489125, 0.2799325, 0, 0.76604444, 0.6427876, -0.36542594, 0.59833264, -0.71306515)
 shader_parameter/rendered_day_of_year = 129.0
-shader_parameter/rendered_time_of_day = 19.72400000000016
+shader_parameter/rendered_time_of_day = 18.714444444444325
 shader_parameter/observer_latitude_deg = 50.0
-shader_parameter/cloud_time = 18550.344
+shader_parameter/cloud_time = 18544.286666666667
 shader_parameter/cloud_wind_direction = Vector2(0.9363292, 0.35112345)
 shader_parameter/cloud_wind_speed = 1.0
-shader_parameter/cloud_motion_time = 1345992.7680000009
+shader_parameter/cloud_motion_time = 1345556.64
 shader_parameter/cloud_motion_scale = 0.12
-shader_parameter/cloud_evolution_time = 448664.2560000003
+shader_parameter/cloud_evolution_time = 448518.88
 shader_parameter/cloud_evolution_strength = 0.18
 shader_parameter/cloud_evolution_scale = 0.018
 
@@ -113,8 +113,8 @@ sky_material = SubResource("ShaderMaterial_2mlfg")
 [sub_resource type="Environment" id="Environment_nd35h"]
 background_mode = 2
 sky = SubResource("Sky_72ctq")
-ambient_light_color = Color(0.3008219, 0.31226274, 0.3230078, 1)
-ambient_light_energy = 1.2650267
+ambient_light_color = Color(0.5703473, 0.55488217, 0.5004598, 1)
+ambient_light_energy = 1.8520861
 tonemap_mode = 4
 tonemap_white = 6.44
 tonemap_agx_white = 9.19
@@ -126,19 +126,19 @@ sdfgi_enabled = true
 glow_enabled = true
 glow_bloom = 0.2
 fog_enabled = true
-fog_light_color = Color(0.6311693, 0.43603623, 0.3480004, 1)
-fog_density = 0.038941726
+fog_light_color = Color(0.8814727, 0.5939068, 0.4391886, 1)
+fog_density = 0.01893751
 fog_aerial_perspective = 1.0
-fog_sky_affect = 0.6402694
-fog_depth_begin = 7.931831
-fog_depth_end = 547.44366
+fog_sky_affect = 0.35131958
+fog_depth_begin = 15.044441
+fog_depth_end = 814.16656
 volumetric_fog_enabled = true
-volumetric_fog_density = 0.037958767
-volumetric_fog_albedo = Color(0.58959824, 0.47441214, 0.42453235, 1)
-volumetric_fog_length = 13.279824
+volumetric_fog_density = 0.016176399
+volumetric_fog_albedo = Color(0.7542916, 0.5789621, 0.47829604, 1)
+volumetric_fog_length = 10.168057
 volumetric_fog_detail_spread = 2.0490615
-volumetric_fog_ambient_inject = 0.40581638
-volumetric_fog_sky_affect = 0.48114347
+volumetric_fog_ambient_inject = 0.19021538
+volumetric_fog_sky_affect = 0.49225694
 adjustment_enabled = true
 adjustment_contrast = 1.02
 
@@ -153,13 +153,17 @@ auto_exposure_max_sensitivity = 500.0
 [node name="DemoSceneryLoading" type="Node3D" unique_id=1784067886]
 script = ExtResource("1_nk4av")
 
+[node name="UserSettingsPanel" parent="." unique_id=1798306963 instance=ExtResource("9_4xg7h")]
+offset_bottom = 659.0
+skydome_path = NodePath("../Skydome")
+
 [node name="Skydome" type="Node" parent="." unique_id=1594806670]
 script = ExtResource("2_nd35h")
 directional_light_path = NodePath("../DirectionalLight3D")
 world_environment_path = NodePath("../WorldEnvironment")
 use_system_time = true
 day_of_year = 129
-time_of_day = 19.724
+time_of_day = 18.714444444444442
 day_light_energy = 4.0
 day_light_color = Color(0.97154576, 0.9127411, 0.77206504, 1)
 day_fog_distance_begin = 20.0
@@ -192,16 +196,16 @@ moon_color = Color(0.8602561, 0.8906728, 0.9238627, 1)
 moon_glow_strength = 0.099
 moon_eclipse_size = 0.355
 moon_glow_size = 0.865
-moon_phase_debug = 0.3962693306242233
+moon_phase_debug = 0.3948448533192863
 metadata/_custom_type_script = "uid://blkilnimp0sck"
 
 [node name="Player" parent="." unique_id=1819896729 instance=ExtResource("2_f81ma")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, 21.04, 1.959, -18.089)
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1934821577]
-transform = Transform3D(0.9063761, -0.091216564, 0.4125069, 0, 0.97641295, 0.21591161, -0.4224718, -0.19569713, 0.8849973, 5.83027, -6.14961, 0)
-light_color = Color(0.50584126, 0.5531878, 0.6066819, 1)
-light_energy = 0.23081493
+transform = Transform3D(-0.33023322, 0.10843762, -0.9376499, 0, 0.9933791, 0.1148826, 0.94389933, 0.037938055, -0.32804677, 5.83027, -6.14961, 0)
+light_color = Color(0.8619047, 0.50805885, 0.32707316, 1)
+light_energy = 4.0
 light_indirect_energy = 3.0
 light_volumetric_fog_energy = 4.197
 light_angular_distance = 0.18867494
@@ -221,7 +225,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1461792, 5.782898, -0.9614
 script = ExtResource("3_fraxg")
 use_cache = true
 filename = "td.scn"
-autoload = false
 metadata/_custom_type_script = "uid://m0t4e4uurpbc"
 
 [node name="CanvasLayer" parent="." unique_id=28357571 instance=ExtResource("4_f81ma")]

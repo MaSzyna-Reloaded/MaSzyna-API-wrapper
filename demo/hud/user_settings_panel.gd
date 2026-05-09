@@ -1,13 +1,29 @@
 extends PanelContainer
 
+@export_node_path("Skydome") var skydome_path: NodePath
 
+@onready var _time_section: VBoxContainer = $VBoxContainer/TimeSection
+@onready var _day_of_year_slider: HSlider = $VBoxContainer/TimeSection/DayOfYearRow/DayOfYearSlider
+@onready var _day_of_year_value: Label = $VBoxContainer/TimeSection/DayOfYearRow/DayOfYearValue
+@onready var _time_of_day_slider: HSlider = $VBoxContainer/TimeSection/TimeOfDayRow/TimeOfDaySlider
+@onready var _time_of_day_value: Label = $VBoxContainer/TimeSection/TimeOfDayRow/TimeOfDayValue
+
+
+# Called when the node enters the scene tree for the first time.
 func _ready() -> void:
     _auto_user_settings_visibility()
     UserSettings.game_dir_changed.connect(_on_gamedir_changed)
     UserSettings.config_changed.connect(_update_render_settings)
     UserSettings.setting_changed.connect(_on_user_setting_changed)
+    _day_of_year_slider.value_changed.connect(_on_day_of_year_changed)
+    _time_of_day_slider.value_changed.connect(_on_time_of_day_changed)
+    _sync_time_controls()
     _update_render_settings()
 
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+func _process(delta: float) -> void:
+    pass
+    
 
 func _input(event):
     if event.is_action_pressed("ui_cancel"):
@@ -60,3 +76,57 @@ func _reload_all_models():
 func _on_visibility_changed() -> void:
     var game_dir = UserSettings.get_maszyna_game_dir()
     $VBoxContainer/GameDirNotSet.visible = not game_dir or FileAccess.file_exists(game_dir)
+    _sync_time_controls()
+
+
+func _get_skydome() -> Skydome:
+    if skydome_path.is_empty():
+        return null
+
+    var node: Node = get_node_or_null(skydome_path)
+    if node is Skydome:
+        return node as Skydome
+
+    return null
+
+
+func _sync_time_controls() -> void:
+    var skydome: Skydome = _get_skydome()
+    if skydome == null:
+        return
+
+    _day_of_year_slider.set_value_no_signal(skydome.day_of_year)
+    _time_of_day_slider.set_value_no_signal(skydome.time_of_day)
+    _day_of_year_value.text = str(skydome.day_of_year)
+    _time_of_day_value.text = _format_time_of_day(skydome.time_of_day)
+
+
+func _on_day_of_year_changed(value: float) -> void:
+    var skydome: Skydome = _get_skydome()
+    if skydome == null:
+        return
+
+    skydome.use_system_time = false
+    skydome.day_of_year = int(round(value))
+    _day_of_year_value.text = str(skydome.day_of_year)
+
+
+func _on_time_of_day_changed(value: float) -> void:
+    var skydome: Skydome = _get_skydome()
+    if skydome == null:
+        return
+
+    skydome.use_system_time = false
+    skydome.time_of_day = value
+    _time_of_day_value.text = _format_time_of_day(skydome.time_of_day)
+
+
+func _format_time_of_day(value: float) -> String:
+    var total_minutes: int = int(round(value * 60.0))
+    var hours: int = total_minutes / 60
+    var minutes: int = total_minutes % 60
+    if hours >= 24 and minutes == 0:
+        return "24:00"
+    if hours >= 24:
+        hours = 0
+    return "%02d:%02d" % [hours, minutes]

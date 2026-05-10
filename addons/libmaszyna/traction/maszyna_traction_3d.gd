@@ -7,6 +7,8 @@ const TRACTION_CU_MATERIAL = preload("res://addons/libmaszyna/materials/traction
 const TRACTION_AL_PATINA_MATERIAL = preload("res://addons/libmaszyna/materials/traction_al_patina.material")
 const TRACTION_CU_PATINA_MATERIAL = preload("res://addons/libmaszyna/materials/traction_cu_patina.material")
 
+const RANGE_CHECK_INTERVAL := 1.0
+
 enum DamageFlag {
     PATINA=1,
     BREAK=128
@@ -65,9 +67,71 @@ func str_or_none(x):
 
 @export var wire_offset:float
 @export var parallel:String = ""
+## Minimum distance from camera required to render the traction.
+## When set to [code]0.0[/code], there is no near distance limit.
+@export var visibility_range_begin: float = 0.0:
+    set(x):
+        if not is_equal_approx(x, visibility_range_begin):
+            visibility_range_begin = x
+            _dirty = true
+            _range_check_elapsed = RANGE_CHECK_INTERVAL
+
+## Maximum distance from camera allowed to render the traction.
+## When set to [code]0.0[/code], there is no far distance limit.
+@export var visibility_range_end: float = 0.0:
+    set(x):
+        if not is_equal_approx(x, visibility_range_end):
+            visibility_range_end = x
+            _dirty = true
+            _range_check_elapsed = RANGE_CHECK_INTERVAL
 
 var _traction_rid: RID
-var _dirty: bool = true
+var _dirty: bool = false
+var _range_check_elapsed: float = 0.0
+var _lines_center:Vector3
+
+
+func _ready() -> void:
+    set_process(true)
+    set_notify_transform(true)
+    _apply_visibility_state()
+    _update()
+
+
+func _enter_tree():
+    visibility_changed.connect(_update_visibility)
+    _apply_visibility_state()
+        
+
+func _exit_tree():
+    if contact_line:
+        contact_line.changed.disconnect(_on_line_changed)
+    if support_line:
+        support_line.changed.disconnect(_on_line_changed)
+    visibility_changed.disconnect(_update_visibility)
+
+    if TractionRenderingServer and _traction_rid:
+        TractionRenderingServer.free_traction(_traction_rid)
+        _traction_rid = RID()
+
+
+func _notification(what):
+    match what:
+        NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
+            if _traction_rid and TractionRenderingServer:
+                TractionRenderingServer.set_traction_transform(_traction_rid, global_transform)
+                TractionRenderingServer.set_traction_visible(_traction_rid, visible)
+
+
+func _process(delta: float) -> void:
+    if Engine.is_editor_hint():
+        if _dirty:
+            _process_dirty(delta)
+            _dirty = false
+
+    _range_check_elapsed += delta
+    if _range_check_elapsed >= RANGE_CHECK_INTERVAL:
+        _apply_visibility_state()
 
 
 func _process_dirty(_delta: float) -> void:
@@ -82,6 +146,8 @@ func _update():
     var contact_p2: Vector3 = contact_line.p2 if contact_line else Vector3.ZERO
     var support_p1: Vector3 = support_line.p1 if support_line else Vector3.ZERO
     var support_p2: Vector3 = support_line.p2 if support_line else Vector3.ZERO
+
+    _lines_center = contact_line.p1+(contact_line.p2-contact_line.p1)*0.5
 
     TractionRenderingServer.set_traction_geometry(
         _traction_rid,
@@ -105,47 +171,10 @@ func _on_line_changed() -> void:
     _dirty = true
 
 
-func _enter_tree():
-    if TractionRenderingServer:
-        _traction_rid = TractionRenderingServer.create_traction()
-    visibility_changed.connect(_update_visibility)
-        
-
-func _exit_tree():
-    if contact_line:
-        contact_line.changed.disconnect(_on_line_changed)
-    if support_line:
-        support_line.changed.disconnect(_on_line_changed)
-    visibility_changed.disconnect(_update_visibility)
-
-    if TractionRenderingServer and _traction_rid and _traction_rid.is_valid():
-        TractionRenderingServer.free_traction(_traction_rid)
-        _traction_rid = RID()
-
-
-func _ready() -> void:
-    set_process(true)
-    set_notify_transform(true)
-    _update()
-
-
-func _notification(what):
-    match what:
-        NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
-            if _traction_rid and TractionRenderingServer:
-                TractionRenderingServer.set_traction_transform(_traction_rid, global_transform)
-                TractionRenderingServer.set_traction_visible(_traction_rid, visible)
-
-
 func _update_visibility():
     if _traction_rid and TractionRenderingServer:
         TractionRenderingServer.set_traction_visible(_traction_rid, visible)
 
-func _process(delta: float) -> void:
-    if Engine.is_editor_hint():
-        if _dirty:
-            _process_dirty(delta)
-            _dirty = false
 
 func _get_material():
     if damage_flag & DamageFlag.PATINA:
@@ -158,3 +187,40 @@ func _get_material():
             TRACTION_CU_MATERIAL if material == TractionMaterial.COPPER
             else TRACTION_AL_MATERIAL
         )
+
+
+func _apply_visibility_state() -> void:
+    _range_check_elapsed = 0.0
+    if not TractionRenderingServer:
+        return
+
+    var should_render = false
+
+    if not visibility_range_begin and not visibility_range_end:
+        should_render = true
+    else:
+        var camera: Camera3D = _get_active_camera()
+        if camera:
+            var distance := camera.global_position.distance_to(global_transform * _lines_center)
+            if (
+                (not visibility_range_end and distance >= visibility_range_begin)
+                or (not visibility_range_begin and distance <= visibility_range_end)
+            ):
+                should_render = true
+
+    if not _traction_rid and should_render:
+        _traction_rid = TractionRenderingServer.create_traction()
+        _update()
+    elif _traction_rid and not should_render:
+        TractionRenderingServer.free_traction(_traction_rid)
+        _traction_rid = RID()
+
+
+func _get_active_camera() -> Camera3D:
+    if Engine.is_editor_hint():
+        return E3DEditorCameraTracker.get_camera()
+
+    var viewport: Viewport = get_viewport()
+    if viewport:
+        return viewport.get_camera_3d()
+    return null

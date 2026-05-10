@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="MaszynaTrianglesImporter" inherits="RefCounted" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Parses MaSzyna triangle nodes into transformed arrays.
+	</brief_description>
+	<description>
+		Utility class used by the scenery loader to parse [code]triangles[/code] node payloads from a [code]MaszynaParser[/code] and return texture, vertex, normal, and UV arrays already transformed into world space.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="import_triangles" qualifiers="static">
+			<return type="Array" />
+			<param index="0" name="parser" type="MaszynaParser" />
+			<param index="1" name="rotate" type="Vector3" />
+			<param index="2" name="origin" type="Vector3" />
+			<description>
+				Parses a [code]triangles[/code] node from the current parser position.
+			</description>
+		</method>
+	</methods>
+</class>

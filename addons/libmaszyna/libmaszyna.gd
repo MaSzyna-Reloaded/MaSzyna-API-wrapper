@@ -7,12 +7,13 @@ var maszyna_environment_node_script = preload("res://addons/libmaszyna/environme
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
 var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
-var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
-var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
+var maszyna_track_3d_script = load("res://addons/libmaszyna/tracks/maszyna_track_3d.gd")
+var maszyna_switch_3d_script = load("res://addons/libmaszyna/tracks/maszyna_switch_3d.gd")
 
 # Editor plugins
 
 var maszyna_editor_plugins:Array[MaszynaEditorPluginDelegate] = []
+var e3d_editor_camera_tracker: E3DEditorCameraTracker
 
 var e3d_submodel_toolbar = preload("res://addons/libmaszyna/editor/toolbar_e3d_instance.tscn")
 var e3d_submodel_toolbar_instance
@@ -42,11 +43,13 @@ func _enter_tree():
 
     nodebank_panel_instance = nodebank_panel_scene.instantiate()
     nodebank_editor_plugin = NodebankEditorPluginDelegate.new()
+    e3d_editor_camera_tracker = E3DEditorCameraTracker.new()
     nodebank_panel_instance.set_plugin_runtime()
     nodebank_panel_instance.item_drag_started.connect(nodebank_editor_plugin.drag_start)
     nodebank_bottom_button = add_control_to_bottom_panel(nodebank_panel_instance, "Nodebank")
 
     register_maszyna_editor_plugin(nodebank_editor_plugin)
+    register_maszyna_editor_plugin(e3d_editor_camera_tracker)
     
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
@@ -105,6 +108,9 @@ func _exit_tree():
 
     if nodebank_editor_plugin:
         unregister_maszyna_editor_plugin(nodebank_editor_plugin)
+    if e3d_editor_camera_tracker:
+        unregister_maszyna_editor_plugin(e3d_editor_camera_tracker)
+        e3d_editor_camera_tracker = null
 
     await get_tree().process_frame
 

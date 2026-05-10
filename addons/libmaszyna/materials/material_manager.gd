@@ -82,7 +82,7 @@ func get_material(
             transparent = Transparency.Alpha
         else:
             transparent = Transparency.AlphaScissor
-            _m.alpha_scissor_threshold = 0.80  # Who knows...
+            _m.alpha_scissor_threshold = 0.70
 
     # End DETECT ALPHA FROM TEXTURE
 

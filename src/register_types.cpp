@@ -28,6 +28,8 @@
 #include "resources/engines/WWListItem.hpp"
 #include "resources/lighting/LightListItem.hpp"
 #include "resources/load/LoadListItem.hpp"
+#include "scenery/MaszynaTrianglesImporter.hpp"
+#include "scenery/SceneryTrianglesBuilder.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include "wheels/TrainWheels.hpp"
 #include <gdextension_interface.h>
@@ -61,6 +63,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DParser);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(MaszynaParser);
+        GDREGISTER_CLASS(MaszynaTrianglesImporter);
+        GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);

@@ -56,38 +56,39 @@
 		<method name="get_tokens">
 			<return type="Array" />
 			<param index="0" name="num" type="int" />
-			<param index="1" name="stop" type="Array" />
+			<param index="1" name="stops" type="Array" default="[]" />
 			<description>
-				Reads and returns a specified number of tokens.
+				Reads and returns a specified number of tokens. Uses [code]default_stop_chars[/code] when [code]stops[/code] is omitted or empty.
 			</description>
 		</method>
 		<method name="get_tokens_until">
 			<return type="Array" />
 			<param index="0" name="token" type="String" />
-			<param index="1" name="stop" type="Array" />
+			<param index="1" name="stops" type="Array" default="[]" />
 			<description>
-				Reads tokens until a specified token is encountered.
+				Reads tokens until a specified token is encountered. Uses [code]default_stop_chars[/code] when [code]stops[/code] is omitted or empty.
 			</description>
 		</method>
 		<method name="initialize">
 			<return type="void" />
 			<param index="0" name="buffer" type="PackedByteArray" />
+			<param index="1" name="default_stop_chars" type="Array" />
 			<description>
-				Initializes the parser with the file data.
+				Initializes the parser with the file data with optional stop chars array.
 			</description>
 		</method>
 		<method name="next_token">
 			<return type="String" />
-			<param index="0" name="stop" type="Array" />
+			<param index="0" name="stops" type="Array" default="[]" />
 			<description>
-				Reads and returns the next token.
+				Reads and returns the next token. Uses [code]default_stop_chars[/code] when [code]stops[/code] is omitted or empty.
 			</description>
 		</method>
 		<method name="next_vector3">
 			<return type="Vector3" />
-			<param index="0" name="stop" type="Array" />
+			<param index="0" name="stops" type="Array" default="[]" />
 			<description>
-				Reads and returns the next Vector3.
+				Reads and returns the next Vector3. Uses [code]default_stop_chars[/code] when [code]stops[/code] is omitted or empty.
 			</description>
 		</method>
 		<method name="parse">

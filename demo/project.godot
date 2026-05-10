@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="uid://1djubq5jy2wx"
+run/main_scene="uid://y5bhl8evt3df"
 run/print_header=false
 config/features=PackedStringArray("4.6", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
@@ -41,6 +41,7 @@ AudioStreamManager="*uid://cp8sgfk334adm"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
+SceneryInstancer="*uid://bbfn0tknb7ayr"
 
 [debug]
 
@@ -53,7 +54,7 @@ window/size/initial_position_type=3
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
+enabled=PackedStringArray("res://addons/gnd_skydome/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
 
 [input]
 

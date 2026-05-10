@@ -10,14 +10,14 @@ jobs:
       matrix:
         arch: [x86_64]
         target: [template_debug]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v4.2.3
+      - uses: actions/cache/restore@v5
         id: cache-restore
         with:
           path: |
@@ -33,17 +33,17 @@ jobs:
         run: sudo chmod 777 ci/docker/entrypoint.sh |
           docker compose run windows_${{ matrix.arch }} ${{ matrix.target }}
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: lib-windows-${{ matrix.target }}-${{ matrix.arch }}
           path: demo/bin/libmaszyna/windows
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: game-windows-${{ matrix.target }}-${{ matrix.arch }}
           path: build/windows
 
-      - uses: actions/cache/save@v4.2.3
+      - uses: actions/cache/save@v5
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
@@ -61,11 +61,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v4.2.3
+      - uses: actions/cache/restore@v5
         id: cache-restore
         with:
           path: |
@@ -81,17 +81,17 @@ jobs:
         run: sudo chmod 777 ci/docker/entrypoint.sh |
           docker compose run linux_${{ matrix.arch }} ${{ matrix.target }}
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: lib-linux-${{ matrix.target }}-${{ matrix.arch }}
           path: demo/bin/libmaszyna/linux
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: game-linux-${{ matrix.target }}-${{ matrix.arch }}
           path: build/linux
 
-      - uses: actions/cache/save@v4.2.3
+      - uses: actions/cache/save@v5
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
@@ -109,11 +109,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v4.2.3
+      - uses: actions/cache/restore@v5
         id: cache-restore
         with:
           path: |
@@ -129,17 +129,17 @@ jobs:
         run: sudo chmod 777 ci/docker/entrypoint.sh |
           docker compose run android_${{ matrix.arch }} ${{ matrix.target }}
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: lib-android-${{ matrix.target }}-${{ matrix.arch }}
           path: demo/bin/libmaszyna/android
 
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: game-android-${{ matrix.target }}-${{ matrix.arch }}
           path: build/android
 
-      - uses: actions/cache/save@v4.2.3
+      - uses: actions/cache/save@v5
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:

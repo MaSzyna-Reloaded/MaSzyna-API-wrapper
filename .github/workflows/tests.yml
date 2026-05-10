@@ -1,39 +1,45 @@
-name: Run Godot Tests
+name: godot-unit-tests
 
-on: [pull_request]
+on:
+  pull_request:
+  workflow_dispatch:
 
 jobs:
   run-tests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Check out the code
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v6
         with:
           submodules: recursive
 
-      - uses: actions/cache/restore@v4.2.3
+      - uses: actions/cache/restore@v5
         id: cache-restore
         with:
           path: |
             godot-cpp/
+            build-host/
+            build-linux64/
             .sconsign.dblite
-          key: godot-unit-tests
+          key: ${{ runner.os }}-unit-tests-host-template_debug
           restore-keys: |
-            godot-unit-tests
-            godot-unit-
+            ${{ runner.os }}-unit-tests-host-
+            ${{ runner.os }}-unit-tests-
       - name: Run tests
         run: sudo chmod 777 ci/docker/entrypoint.sh |
           docker compose run unit_tests
-      - uses: actions/upload-artifact@v4.6.2
+      - uses: actions/upload-artifact@v7
         with:
           name: gut-test-results
           path: demo/test_results.xml
-      - uses: actions/cache/save@v4.2.3
+      - uses: actions/cache/save@v5
         id: cache
         if: always() && steps.cache-restore.outputs.cache-hit != 'true'
         with:
           path: |
             godot-cpp/
+            build-host/
+            build-linux64/
             .sconsign.dblite
-          key: godot-unit-tests
+          key: ${{ runner.os }}-unit-tests-host-template_debug

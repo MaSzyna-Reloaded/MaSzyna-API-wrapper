@@ -53,7 +53,7 @@ Checks: "bugprone-*,
   -*-pro-bounds-avoid-unchecked-container-access,
   -*-unnecessary-value-param"
 WarningsAsErrors: "*"
-HeaderFilterRegex: '$^'
+HeaderFilterRegex: 'src/.*'
 ExcludeHeaderFilterRegex: '(^|.*/)(maszyna|gen|godot-cpp)/'
 RemovedArgs:
   - '-fno-gnu-unique'
@@ -119,4 +119,4 @@ CheckOptions:
   - key: readability-identifier-naming.MacroDefinitionCase
     value: 'UPPER_CASE'
   - key: readability-identifier-naming.IgnoredMacros
-    value: 'GDCLASS;VARIANT_ENUM_CAST'
+    value: 'GDCLASS;VARIANT_ENUM_CAST;ERR_FAIL_NULL_V;ERR_FAIL_COND_V_MSG;ERR_FAIL_COND_MSG'

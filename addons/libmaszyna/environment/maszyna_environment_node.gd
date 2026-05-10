@@ -27,7 +27,8 @@ class_name MaszynaEnvironmentNode
 
 
 func _update_sky_shader():
-    if not is_node_ready() or not MaterialManager:
+    # workaround for broken Godot nodes/plugin exiting order
+    if not is_node_ready() or not is_inside_tree() or not Engine.has_singleton("MaterialManager"):
         return
 
     var shader_texture
@@ -38,7 +39,7 @@ func _update_sky_shader():
     RenderingServer.global_shader_parameter_set("sky_texture", shader_texture)
 
 
-    var world:WorldEnvironment = get_node(world_environment)
+    var world: WorldEnvironment = get_node_or_null(world_environment)
 
     if world:
         var env:Environment = world.environment
@@ -48,6 +49,13 @@ func _update_sky_shader():
             sky.set_shader_parameter("exposure", sky_energy)
             sky.set_shader_parameter("sky_scale", sky_texture_scale)
 
+
 func _ready():
-    UserSettings.config_changed.connect(_update_sky_shader)
     _update_sky_shader()
+
+
+func _enter_tree() -> void:
+    UserSettings.config_changed.connect(_update_sky_shader)
+
+func _exit_tree() -> void:
+    UserSettings.config_changed.disconnect(_update_sky_shader)

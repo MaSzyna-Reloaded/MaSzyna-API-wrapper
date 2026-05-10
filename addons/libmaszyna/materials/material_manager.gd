@@ -37,11 +37,11 @@ func get_material(
         "%x%x%x" % [diffuse_color.r8, diffuse_color.g8, diffuse_color.b8],
     ]))
     var output:StandardMaterial3D
-    
+
     output = _materials_cache.get(_code) as StandardMaterial3D
     if output:
         return output
-    
+
     var _m:StandardMaterial3D = StandardMaterial3D.new()
 
     var project_data_dir = UserSettings.get_maszyna_game_dir()
@@ -111,7 +111,7 @@ func get_texture(texture_path):
 
 func load_texture(model_path, material_name, normal:bool=false) -> Texture:
     #var output:Texture
-    
+
     var project_data_dir = UserSettings.get_maszyna_game_dir()
 
     var data_dir = project_data_dir if project_data_dir else ""
@@ -135,7 +135,7 @@ func load_texture(model_path, material_name, normal:bool=false) -> Texture:
 
     if not final_path:
         return _unknown_texture
-    
+
     if FileAccess.file_exists(project_data_dir.path_join(final_path)):
         var texture:Texture2D = load(project_data_dir.path_join(final_path)) as Texture2D
         if texture:

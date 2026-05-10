@@ -30,8 +30,8 @@ func str_or_none(x):
             if contact_line:
                 contact_line.changed.disconnect(_on_line_changed)
             contact_line = x
-        if x:
-            contact_line.changed.connect(_on_line_changed)
+            if contact_line:
+                contact_line.changed.connect(_on_line_changed)
 
 @export var support_line: MaszynaTractionLine:
     set(x):
@@ -40,21 +40,21 @@ func str_or_none(x):
             if support_line:
                 support_line.changed.disconnect(_on_line_changed)
             support_line = x
-        if x:
-            support_line.changed.connect(_on_line_changed)
+            if support_line:
+                support_line.changed.connect(_on_line_changed)
 
 @export var material:TractionMaterial:
     set(x):
         if not material == x:
             material = x
             _dirty = true
-            
+
 @export_flags("Patina:1", "Break:128") var damage_flag:int = 0:
     set(x):
         if not damage_flag == x:
             damage_flag = x
             _dirty = true
-    
+
 @export var power_supply_name:String
 @export var nominal_voltage:float
 @export var max_current:float
@@ -109,7 +109,7 @@ func _enter_tree():
     if TractionRenderingServer:
         _traction_rid = TractionRenderingServer.create_traction()
     visibility_changed.connect(_update_visibility)
-        
+
 
 func _exit_tree():
     if contact_line:

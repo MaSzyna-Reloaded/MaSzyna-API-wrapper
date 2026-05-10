@@ -47,7 +47,7 @@ func _enter_tree():
     nodebank_bottom_button = add_control_to_bottom_panel(nodebank_panel_instance, "Nodebank")
 
     register_maszyna_editor_plugin(nodebank_editor_plugin)
-    
+
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
 
 
@@ -81,32 +81,39 @@ func _enter_tree():
 
     user_settings_dock = user_settings_dock_scene.instantiate()
     add_control_to_dock(DOCK_SLOT_RIGHT_UL, user_settings_dock)
-    
+
     for plugin in maszyna_editor_plugins:
         plugin._editor_plugin_enter_tree(self)
-        
+
     if maszyna_editor_plugins.size() > 0:
         set_process(true)
-        
-        
+
+
 func _exit_tree():
     for plugin in maszyna_editor_plugins:
         plugin._editor_plugin_exit_tree(self)
-        
-    remove_control_from_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
+
+    if e3d_submodel_toolbar_instance:
+        remove_control_from_container(CONTAINER_SPATIAL_EDITOR_MENU, e3d_submodel_toolbar_instance)
+        e3d_submodel_toolbar_instance.free()
+        e3d_submodel_toolbar_instance = null
 
     if nodebank_panel_instance:
+        nodebank_panel_instance.item_drag_started.disconnect(nodebank_editor_plugin.drag_start)
         remove_control_from_bottom_panel(nodebank_panel_instance)
         nodebank_panel_instance.free()
         nodebank_panel_instance = null
 
     if user_settings_dock:
         remove_control_from_docks(user_settings_dock)
+        user_settings_dock.free()
+        user_settings_dock = null
 
-    if nodebank_editor_plugin:
-        unregister_maszyna_editor_plugin(nodebank_editor_plugin)
+    for plugin in maszyna_editor_plugins.duplicate(false):
+        unregister_maszyna_editor_plugin(plugin)
 
-    await get_tree().process_frame
+    maszyna_editor_plugins.clear()
+    nodebank_editor_plugin = null
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
@@ -122,15 +129,16 @@ func _exit_tree():
     remove_autoload_singleton("Console")
     remove_autoload_singleton("MaszynaEnvironment")
 
+    print_verbose("Libmaszyna.gd _exit_tree finished!")
 
 func register_maszyna_editor_plugin(editor_plugin:MaszynaEditorPluginDelegate):
     maszyna_editor_plugins.append(editor_plugin)
-    
+
 func unregister_maszyna_editor_plugin(editor_plugin:MaszynaEditorPluginDelegate):
-    var idx = maszyna_editor_plugins.find(editor_plugin)
-    if idx > -1:
-        maszyna_editor_plugins.remove_at(idx)
-    
+    maszyna_editor_plugins.erase(editor_plugin)
+    editor_plugin.free()
+    editor_plugin = null
+
 func add_custom_project_setting(name: String, default_value, type: int, hint: int = PROPERTY_HINT_NONE, hint_string: String = "") -> void:
     if ProjectSettings.has_setting(name):
         return

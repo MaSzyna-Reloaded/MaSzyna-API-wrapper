@@ -7,7 +7,7 @@ func _on_browse_button_up():
 
 
 func _refresh():
-    if UserSettings:
+    if visible and is_inside_tree() and UserSettings:
         UserSettings.load_config()
         %LineEdit.text = UserSettings.get_maszyna_game_dir()
 
@@ -73,10 +73,6 @@ func call_func_with_message_window(title: String, message: String, callable: Cal
 
 func _on_line_edit_text_changed(new_text):
     UserSettings.save_maszyna_game_dir(new_text)
-
-
-func _on_settings_updater_timeout():
-    _refresh()
 
 
 func _reload_e3d_models():

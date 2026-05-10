@@ -100,7 +100,7 @@ func reload() -> void:
         e3d_loading.emit()
         if _current_instancer:
             _current_instancer.clear(self)
-        
+
         if model:
             _model = model
         else:
@@ -110,14 +110,14 @@ func reload() -> void:
             _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
 
             _current_instancer = _resolve_instancer()
-             
+
             if _current_instancer:
                 _current_instancer.instantiate(self, _model, _current_editable)
                 _e3d_loaded = true
                 e3d_loaded.emit()
             else:
                 push_error("Selected instancer is not supported!")
-    
+
 
 func _notification(what: int) -> void:
     match what:
@@ -129,8 +129,8 @@ func _notification(what: int) -> void:
 func _ready() -> void:
     set_notify_transform(true)
     reload()
-    
-    
+
+
 func _enter_tree() -> void:
     if _model and _current_instancer:
         _current_instancer.instantiate(self, _model, _current_editable)

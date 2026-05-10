@@ -7,7 +7,7 @@ class TrackState:
     var rail_material: ShaderMaterial
     var rail_mesh: Mesh
     var curve: Curve3D
-    
+
     var sleeper_chunk_multimesh_instances: Array[RID] = []
     var sleeper_chunk_multimeshes: Array[MultiMesh] = []
     var sleeper_material: ShaderMaterial
@@ -15,7 +15,7 @@ class TrackState:
     var ballast_mesh_instance: RID = RID()
     var ballast_mesh: Mesh
     var ballast_material: ShaderMaterial
-    
+
     var visible: bool = true
     var transform: Transform3D = Transform3D.IDENTITY
 
@@ -45,7 +45,7 @@ func create_track() -> RID:
     var state: TrackState = TrackState.new()
     state.rail_mesh_instance = RenderingServer.instance_create()
     state.ballast_mesh_instance = RenderingServer.instance_create()
-    
+
     _next_track_id += 1
     var track_rid: RID = rid_from_int64(_next_track_id)
     _tracks[track_rid] = state
@@ -81,7 +81,7 @@ func free_track(track_rid: RID) -> void:
     state.rail_material = null
     state.sleeper_material = null
     state.ballast_material = null
-    
+
     _tracks.erase(track_rid)
 
 
@@ -154,7 +154,7 @@ func set_track_curve(
 
     RenderingServer.instance_set_base(state.rail_mesh_instance, RID())
     RenderingServer.instance_set_base(state.ballast_mesh_instance, RID())
-    
+
     if not state.curve or state.curve.point_count < 2:
         state.rail_mesh = null
         state.ballast_mesh = null
@@ -204,7 +204,7 @@ func set_sleeper_mesh(track_rid: RID, mesh: Mesh) -> void:
 func set_track_materials(track_rid: RID, ballast_material: RID, rail_material: RID, sleeper_material: RID) -> void:
     var state: TrackState = _tracks.get(track_rid)
     if not state:
-        return    
+        return
     RenderingServer.instance_geometry_set_material_override(
         state.ballast_mesh_instance, ballast_material)
     RenderingServer.instance_geometry_set_material_override(

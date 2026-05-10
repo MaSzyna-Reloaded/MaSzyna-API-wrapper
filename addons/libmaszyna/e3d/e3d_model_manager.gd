@@ -30,21 +30,21 @@ func load_model(data_path:String, filename: String) -> E3DModel:
     var path = UserSettings.get_maszyna_game_dir().path_join(relpath)
 
     # check users cache
-    
+
     var cached_path = _make_cache_path(data_path, filename, path)
     var cache_hash = _make_cache_hash(path)
 
     output = _cache.get(cached_path, cache_hash) as E3DModel
     if output:
         return output
-    
+
     if FileAccess.file_exists(path):
         output = load(path) as E3DModel # load external e3d
         if output:
             _cache.set(cached_path, output, cache_hash)
             return _cache.get(cached_path)  # force use proper resource ref
         else:
-            push_warning("File is not an E3DModel: "+path)                        
+            push_warning("File is not an E3DModel: "+path)
     else:
         push_error("File does not exist: %s" % path)
     return output

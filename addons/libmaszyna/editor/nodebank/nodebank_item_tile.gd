@@ -33,4 +33,3 @@ func _get_drag_data(_at_position: Vector2) -> Variant:
 
 func _on_pressed() -> void:
     tile_selected.emit(_item_data)
-    

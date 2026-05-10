@@ -35,11 +35,11 @@ func load_library(force_rebuild: bool = false) -> PackedScene:
 
 func _parse_nodebank_txt(file:FileAccess) -> PackedScene:
     var root: Node = Node.new()
-    
+
     root.name = "Nodebank"
     file.seek(0)
     var buffer = file.get_buffer(file.get_length())
-    
+
     var parser: MaszynaParser = MaszynaParser.new()
     parser.initialize(buffer)
 
@@ -48,7 +48,7 @@ func _parse_nodebank_txt(file:FileAccess) -> PackedScene:
 
     while not parser.eof_reached():
         var token = parser.next_token(STOP_TOKENS).to_lower()
-        
+
         match token:
             "[":
                 if not pending_label:
@@ -68,7 +68,7 @@ func _parse_nodebank_txt(file:FileAccess) -> PackedScene:
                 token = token.strip_edges()
                 if not token in ["/", "?"]:
                     pending_label.append(token)
-                
+
     var scene: PackedScene = PackedScene.new()
     var err: Error = scene.pack(root)
     root.free()
@@ -125,9 +125,9 @@ func _parse_nodebank_node(parser: MaszynaParser) -> E3DModelInstance:
         _:
             push_warning("[Nodebank] Malformed node definition: "+" ".join(tokens))
             parser.get_tokens_until("endmodel", STOP_TOKENS)
-            
+
     return item
-    
+
 
 func _make_cache_hash(nodebank_path: String) -> String:
     return "%s:%s:%s" % [

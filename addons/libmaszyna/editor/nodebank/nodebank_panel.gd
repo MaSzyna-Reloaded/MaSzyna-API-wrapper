@@ -26,7 +26,7 @@ var _plugin_runtime := false
 @onready var _preview_renderer = $NodebankPreviewRenderer
 @onready var _preview_texture_rect: TextureRect = $Content/PreviewPanel/PreviewBox/PreviewHost/PreviewTexture
 
-    
+
 func _ready() -> void:
     if _plugin_runtime and visible:
         load_library(false)
@@ -35,21 +35,21 @@ func _ready() -> void:
         refresh_items()
 
 func _enter_tree() -> void:
-    UserSettings.game_dir_changed.connect(_on_game_dir_changed)    
- 
+    UserSettings.game_dir_changed.connect(_on_game_dir_changed)
+
 func _exit_tree() -> void:
-    UserSettings.game_dir_changed.disconnect(_on_game_dir_changed)  
+    UserSettings.game_dir_changed.disconnect(_on_game_dir_changed)
     if _library:
         _library.free()
 
 func set_plugin_runtime():
     _plugin_runtime = true
-    
+
 func load_library(force_rebuild: bool = false) -> void:
     _clear_items()
-    
+
     _library = NodebankLibraryBuilder.load_library(force_rebuild).instantiate()
-    
+
     _group_selector.clear()
 
     var groups: Array[Node] = _library.get_children()
@@ -66,15 +66,15 @@ func refresh_items() -> void:
     var is_searching: bool = not search_query.is_empty()
     var search_root = _library
     var filters: Array[Callable] = []
-    
+
     if search_query:
-        filters.append(func (x): 
+        filters.append(func (x):
             return (
                 x.model_filename.to_lower().contains(search_query)
                 or " ".join(x.skins).to_lower().contains(search_query)
             )
         )
-    
+
     if not is_searching and _current_group >= 0 and _current_group < _library.get_child_count():
         search_root = _library.get_child(_current_group)
         if not search_root:
@@ -87,32 +87,32 @@ func refresh_items() -> void:
         if is_searching:
             is_matching = filters.reduce(func(accum, filter: Callable): return accum and filter.call(item), true)
 
-        if is_matching:            
+        if is_matching:
             var grid_item = NodebankGridItem.new()
             grid_item.model = item
             results.append(grid_item)
-            
+
 
     var total_count: int = results.size()
     var total_pages: int = clampi(ceil(float(total_count) / ITEMS_PER_PAGE), 1, 999)
-    
+
     _current_page = clampi(_current_page, 0, total_pages - 1)
-    
+
     _status_label.text = "%d items" % total_count
     _page_label.text = "%d/%d" % [_current_page + 1, total_pages]
     _page_prev_button.disabled = _current_page <= 0
     _page_next_button.disabled = _current_page >= total_pages - 1
-    
+
     var start_idx: int = _current_page * ITEMS_PER_PAGE
     var end_idx: int = min(start_idx + ITEMS_PER_PAGE, total_count)
-    
+
     for result in results.slice(start_idx, end_idx):
         var tile: Button = NodebankItemTile.new()
         tile.configure(result, _preview_renderer)
         tile.tile_selected.connect(_on_item_selected)
         tile.tile_dragged.connect(_on_item_drag_started)
         _items_grid.add_child(tile)
-    
+
     _clear_preview()
 
 func _clear_items() -> void:

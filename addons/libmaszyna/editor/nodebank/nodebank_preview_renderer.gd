@@ -34,7 +34,7 @@ func _render_preview(item_data: NodebankGridItem) -> Texture2D:
     var instance = item_data.model.duplicate()
     var model = E3DModelManager.load_model(instance.data_path, instance.model_filename)
     instance.model = model
-    
+
     var viewport: SubViewport = SubViewport.new()
     viewport.size = Vector2i(PREVIEW_SIZE, PREVIEW_SIZE)
     viewport.transparent_bg = true
@@ -49,7 +49,7 @@ func _render_preview(item_data: NodebankGridItem) -> Texture2D:
     E3DNodesInstancer.instantiate(instance, instance.model, false)
 
     var aabb: AABB = E3DModelTool.get_aabb(instance.model)
-    
+
     if aabb.size.length_squared() <= 0.0:
         viewport.queue_free()
         return null
@@ -67,12 +67,12 @@ func _render_preview(item_data: NodebankGridItem) -> Texture2D:
     await RenderingServer.frame_pre_draw
     await RenderingServer.frame_post_draw
     await viewport.get_tree().process_frame
-    
+
 
     var image: Image = viewport.get_texture().get_image()
     viewport.queue_free()
 
-    
+
     if not image or image.get_width() <= 0 or image.get_height() <= 0:
         return null
 

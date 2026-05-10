@@ -25,7 +25,7 @@ func drag_end(editor_plugin:EditorPlugin) -> void:
     if not scene_root or not scene_root is Node3D:
         push_warning("Nodebank item can only be added to a 3D scene root.")
         return
-    
+
     if not _drag_data:
         push_warning("Nodebank drag data not set. Plugin is not working correctly.")
         return
@@ -38,18 +38,13 @@ func drag_end(editor_plugin:EditorPlugin) -> void:
     var undo_redo: EditorUndoRedoManager = editor_plugin.get_undo_redo()
     undo_redo.create_action("Add nodebank E3D model")
     undo_redo.add_do_method(parent, "add_child", instance, true)
-    undo_redo.add_do_method(self, "_set_node_owner", instance, scene_root)
+    undo_redo.add_do_method(instance, "propagate_call", "set_owner", [scene_root])
     undo_redo.add_undo_method(parent, "remove_child", instance)
     undo_redo.add_do_reference(instance)
     undo_redo.commit_action()
 
     EditorInterface.get_selection().clear()
     EditorInterface.get_selection().add_node(instance)
-
-func _set_node_owner(node: Node, scene_root: Node) -> void:
-    node.owner = scene_root
-    for child: Node in node.get_children():
-        _set_node_owner(child, scene_root)
 
 func _editor_plugin_enter_tree(editor_plugin: EditorPlugin) -> void:
     pass
@@ -60,7 +55,7 @@ func _editor_plugin_exit_tree(editor_plugin: EditorPlugin) -> void:
 func _editor_plugin_process(editor_plugin: EditorPlugin, _delta: float) -> void:
     if not _dragging or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
         return
-        
+
     # handle drop
     if not is_instance_valid(_drag_camera):
         var editor_viewport: SubViewport = EditorInterface.get_editor_viewport_3d(0)
@@ -77,7 +72,7 @@ func _editor_plugin_process(editor_plugin: EditorPlugin, _delta: float) -> void:
 func _editor_plugin_forward_3d_gui_input(editor_plugin: EditorPlugin, viewport_camera: Camera3D, event: InputEvent) -> int:
     if not _dragging:
         return editor_plugin.AFTER_GUI_INPUT_PASS
-        
+
     if not _drag_data:
         return editor_plugin.AFTER_GUI_INPUT_PASS
 

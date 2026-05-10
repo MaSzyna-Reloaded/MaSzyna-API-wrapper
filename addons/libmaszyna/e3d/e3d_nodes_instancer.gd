@@ -43,7 +43,7 @@ func _do_add_submodels(
 
 func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubModel):
     var obj
-    
+
     match submodel.submodel_type:
         E3DSubModel.SubModelType.SUBMODEL_TRANSFORM:
             obj = Node3D.new()

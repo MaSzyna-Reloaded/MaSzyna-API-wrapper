@@ -42,7 +42,7 @@ func create_traction() -> RID:
     _next_traction_id += 1
     var traction_rid: RID = rid_from_int64(_next_traction_id)
     _tractions[traction_rid] = state
-    
+
     return traction_rid
 
 

@@ -27,6 +27,12 @@ void set_door_open(bool p_state) {
 func _process(delta):
     return delta * 2
 ```
+### GDScript
+1. Do not add singleton existence guards like `Engine.has_singleton(...)` around normal project singleton usage unless explicitly requested
+2. Do not replace normal singleton/global access with `/root/...` lookups as a workaround
+3. Do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
+4. Do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
+5. In `if` conditions, do not use `!=`; use `not ... == ...`
 ### Classes
 1. Explicit privacy declarations
 ```hpp

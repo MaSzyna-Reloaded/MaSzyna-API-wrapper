@@ -22,7 +22,8 @@ func _is_submodel_valid(target_node: E3DModelInstance, submodel: E3DSubModel) ->
         return false
 
     match submodel.submodel_type:
-        E3DSubModel.SubModelType.SUBMODEL_TRANSFORM:
+        E3DSubModel.SubModelType.SUBMODEL_TRANSFORM, \
+        E3DSubModel.SubModelType.SUBMODEL_FREE_SPOTLIGHT:
             return true
         E3DSubModel.SubModelType.SUBMODEL_GL_TRIANGLES:
             return not target_node.exclude_node_names.any(

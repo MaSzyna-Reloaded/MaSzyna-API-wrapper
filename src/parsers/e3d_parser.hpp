@@ -69,6 +69,15 @@ namespace godot {
                     float gl_lines_size;
                     float lod_max_distance;
                     float lod_min_distance;
+                    float light_range;
+                    float light_attenuation;
+                    float light_angle;
+                    float near_atten_start;
+                    float near_atten_end;
+                    bool use_near_atten;
+                    int far_atten_decay;
+                    float cos_hotspot_angle;
+                    float cos_view_angle;
                     uint32_t index_count;
                     uint32_t first_index_idx;
                     uint32_t transparent;

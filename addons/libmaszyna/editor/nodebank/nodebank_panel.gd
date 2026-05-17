@@ -2,6 +2,7 @@
 extends VBoxContainer
 
 signal item_drag_started(item_data: NodebankGridItem)
+signal item_drag_end(item_data: NodebankGridItem)
 
 const ITEMS_PER_PAGE: int = 50
 
@@ -10,7 +11,8 @@ var _library: Node
 var _preview_request_id: int = 0
 var _current_page: int = 0
 var _current_group: int = -1
-var _plugin_runtime := false
+var _plugin_runtime: bool = false
+var _drag_preview: bool = false
 
 @onready var _group_selector: OptionButton = $Toolbar/GroupSelector
 @onready var _reload_button: Button = $Toolbar/ReloadButton
@@ -25,7 +27,8 @@ var _plugin_runtime := false
 @onready var _page_prev_button: Button = $Toolbar/PagePrev
 @onready var _preview_renderer = $NodebankPreviewRenderer
 @onready var _preview_texture_rect: TextureRect = $Content/PreviewPanel/PreviewBox/PreviewHost/PreviewTexture
-
+@onready var _drag_preview_panel := $DragPreviewPanel
+@onready var _drag_preview_texture_rect := $DragPreviewPanel/DragPreviewTexture
 
 func _ready() -> void:
     if _plugin_runtime and visible:
@@ -39,8 +42,10 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
     UserSettings.game_dir_changed.disconnect(_on_game_dir_changed)
+    _clear_items()
+    
     if _library:
-        _library.free()
+        _library.queue_free()
 
 func set_plugin_runtime():
     _plugin_runtime = true
@@ -110,12 +115,14 @@ func refresh_items() -> void:
         var tile: Button = NodebankItemTile.new()
         tile.configure(result, _preview_renderer)
         tile.tile_selected.connect(_on_item_selected)
-        tile.tile_dragged.connect(_on_item_drag_started)
+        tile.tile_dragged.connect(_on_item_dragged)
+        tile.tile_dropped.connect(_on_item_dropped)
         _items_grid.add_child(tile)
 
     _clear_preview()
 
 func _clear_items() -> void:
+    _stop_drag_preview()
     for child: Node in _items_grid.get_children():
         child.queue_free()
 
@@ -156,10 +163,40 @@ func _on_item_selected(item_data: NodebankGridItem) -> void:
     _preview_status.text = item_data.model.data_path.path_join(item_data.model.model_filename)
     _preview_texture_rect.texture = await _preview_renderer.get_preview(item_data)
 
-func _on_item_drag_started(item_data: NodebankGridItem) -> void:
+func _on_item_dragged(item_data: NodebankGridItem) -> void:
+    _drag_preview_texture_rect.texture = item_data.preview_texture
+    if item_data.preview_texture:
+        _drag_preview_panel.visible = true
+        _drag_preview = true
     item_drag_started.emit(item_data)
-
+    
+func _on_item_dropped(item_data: NodebankGridItem) -> void:
+    item_drag_end.emit(item_data)
+    _stop_drag_preview()
+    
 func _on_visibility_changed() -> void:
     if visible and _plugin_runtime:
         load_library(false)
         refresh_items()
+    elif not visible:
+        _stop_drag_preview()
+
+func _process(_delta: float) -> void:
+    if _drag_preview:
+        _process_drag_preview(_delta)
+
+func _process_drag_preview(_delta: float) -> void:
+    var mouse_position: Vector2 = get_local_mouse_position()
+    if not Rect2(Vector2.ZERO, size).has_point(mouse_position):
+        _drag_preview_panel.visible = false
+        return
+    elif not _drag_preview_panel.visible:
+        _drag_preview_panel.visible = true
+        
+    var preview_size: Vector2 = _drag_preview_panel.size
+    _drag_preview_panel.global_position = get_global_mouse_position() - preview_size * 0.5
+    
+func _stop_drag_preview() -> void:
+    _drag_preview = false
+    _drag_preview_texture_rect.texture = null
+    _drag_preview_panel.visible = false

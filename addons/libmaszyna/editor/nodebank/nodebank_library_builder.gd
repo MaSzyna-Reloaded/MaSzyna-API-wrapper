@@ -1,7 +1,7 @@
 @tool
 extends Node
 
-const EMPTY_NODEBANK = preload("res://addons/libmaszyna/editor/nodebank/empty_nodebank.tscn")
+const EMPTY_NODEBANK = preload("./empty_nodebank.tscn")
 const CACHE_FILE: String = "nodebank.tscn"
 const CACHE_VERSION: String = "4"
 const STOP_TOKENS: Array = [" ", ";", char(9), char(10), char(13)]

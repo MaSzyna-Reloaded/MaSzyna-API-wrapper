@@ -30,6 +30,9 @@ run/disable_stderr.release=true
 [autoload]
 
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
+TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
+TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
+NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://dokfadkw7wrhi"
@@ -38,9 +41,6 @@ E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
-TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
-TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
-NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 
 [debug]
 
@@ -53,7 +53,7 @@ window/size/initial_position_type=3
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
+enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg")
 
 [input]
 

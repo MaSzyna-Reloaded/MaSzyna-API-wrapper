@@ -98,3 +98,13 @@ For in-game logging, use `GameLog` but be aware that it'll only post log message
 
 * when public API of `E3DModel` or `E3DSubModel` changes,
   the `E3DModel.FORMAT_VERSION` must be updated to invalidate the E3D cache automatically
+
+
+## Addon architecture rules
+
+* use sub-plugins https://docs.godotengine.org/en/stable/tutorials/plugins/editor/making_plugins.html#using-sub-plugins
+* place editor plugins in `addons/libmaszyna/editor` directory
+* register all types and singletons in main plugin: `addons/libmaszyna/libmaszyna.gd`
+* register / unregister custom types and singletons in `_enable_plugin()` and `_disable_plugin()` methods,
+  see: https://docs.godotengine.org/en/stable/tutorials/plugins/editor/making_plugins.html#registering-autoloads-singletons-in-plugins
+* avoid leaking instances at runtime/editor exit

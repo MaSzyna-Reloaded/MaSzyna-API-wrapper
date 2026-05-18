@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://cpnfrm4urr642"]
 
-[ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/editor/user_settings_dock.gd" id="1_c24dg"]
-[ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/editor/user_settings_check_button.gd" id="2_2cs74"]
-[ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/editor/user_settings_dropdown.gd" id="3_hwkpe"]
+[ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/user_settings/user_settings_dock.gd" id="1_c24dg"]
+[ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/user_settings/user_settings_check_button.gd" id="2_2cs74"]
+[ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/user_settings/user_settings_dropdown.gd" id="3_hwkpe"]
 
 [node name="Maszyna Settings" type="PanelContainer" unique_id=1678337651]
 anchors_preset = 15
@@ -153,6 +153,7 @@ layout_mode = 2
 
 [node name="VolumetricFog" type="CheckButton" parent="VBoxContainer/HBoxContainer4" unique_id=1551217817]
 layout_mode = 2
+button_pressed = true
 script = ExtResource("2_2cs74")
 section = "render"
 key = "volumetric_fog_enabled"
@@ -220,7 +221,7 @@ layout_mode = 2
 
 [node name="OptionButton" type="OptionButton" parent="VBoxContainer/HBoxContainer10" unique_id=842794816]
 layout_mode = 2
-selected = 0
+selected = 1
 item_count = 6
 popup/item_0/text = "Disabled"
 popup/item_0/id = 0

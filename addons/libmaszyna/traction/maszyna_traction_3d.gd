@@ -112,10 +112,6 @@ func _enter_tree():
 
 
 func _exit_tree():
-    if contact_line:
-        contact_line.changed.disconnect(_on_line_changed)
-    if support_line:
-        support_line.changed.disconnect(_on_line_changed)
     visibility_changed.disconnect(_update_visibility)
 
     if TractionRenderingServer and _traction_rid and _traction_rid.is_valid():

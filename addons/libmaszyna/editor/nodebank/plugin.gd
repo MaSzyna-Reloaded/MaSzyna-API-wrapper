@@ -1,10 +1,15 @@
-extends MaszynaEditorPluginDelegate
-class_name NodebankEditorPluginDelegate
+@tool
+extends EditorPlugin
 
 var _dragging := false
 var _drag_data: NodebankGridItem
 var _drag_camera: Camera3D
 var _drag_position: Vector2 = Vector2.ZERO
+
+
+var nodebank_panel_scene = preload("./nodebank_panel.tscn")
+var nodebank_panel_instance
+var nodebank_bottom_button
 
 
 func drag_start(item_data: NodebankGridItem) -> void:
@@ -20,7 +25,7 @@ func drag_reset() -> void:
     _dragging = false
     _drag_position = Vector2.ZERO
 
-func drag_end(editor_plugin:EditorPlugin) -> void:
+func drag_end() -> void:
     var scene_root: Node = EditorInterface.get_edited_scene_root()
     if not scene_root or not scene_root is Node3D:
         push_warning("Nodebank item can only be added to a 3D scene root.")
@@ -35,7 +40,7 @@ func drag_end(editor_plugin:EditorPlugin) -> void:
     var instance: E3DModelInstance = _drag_data.model.duplicate()
     instance.position = parent.global_transform.affine_inverse() * world_position
 
-    var undo_redo: EditorUndoRedoManager = editor_plugin.get_undo_redo()
+    var undo_redo: EditorUndoRedoManager = get_undo_redo()
     undo_redo.create_action("Add nodebank E3D model")
     undo_redo.add_do_method(parent, "add_child", instance, true)
     undo_redo.add_do_method(instance, "propagate_call", "set_owner", [scene_root])
@@ -46,13 +51,25 @@ func drag_end(editor_plugin:EditorPlugin) -> void:
     EditorInterface.get_selection().clear()
     EditorInterface.get_selection().add_node(instance)
 
-func _editor_plugin_enter_tree(editor_plugin: EditorPlugin) -> void:
-    pass
+func _ready() -> void:
+    set_process(true)
 
-func _editor_plugin_exit_tree(editor_plugin: EditorPlugin) -> void:
+func _enter_tree() -> void:
+    set_input_event_forwarding_always_enabled()
+        
+    nodebank_panel_instance = nodebank_panel_scene.instantiate()
+    nodebank_panel_instance.set_plugin_runtime()
+    nodebank_panel_instance.item_drag_started.connect(drag_start)
+    nodebank_bottom_button = add_control_to_bottom_panel(nodebank_panel_instance, "Nodebank")
+
+func _exit_tree() -> void:
     drag_reset()
+    nodebank_panel_instance.item_drag_started.disconnect(drag_start)
+    remove_control_from_bottom_panel(nodebank_panel_instance)
+    nodebank_panel_instance.free()
+    nodebank_panel_instance = null
 
-func _editor_plugin_process(editor_plugin: EditorPlugin, _delta: float) -> void:
+func _process(_delta: float) -> void:
     if not _dragging or Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
         return
 
@@ -66,22 +83,22 @@ func _editor_plugin_process(editor_plugin: EditorPlugin, _delta: float) -> void:
                 _drag_position = editor_position
 
     if _drag_camera:
-        drag_end(editor_plugin)
+        drag_end()
         drag_reset()
 
-func _editor_plugin_forward_3d_gui_input(editor_plugin: EditorPlugin, viewport_camera: Camera3D, event: InputEvent) -> int:
+func _forward_3d_gui_input(viewport_camera: Camera3D, event: InputEvent) -> int:
     if not _dragging:
-        return editor_plugin.AFTER_GUI_INPUT_PASS
+        return AFTER_GUI_INPUT_PASS
 
     if not _drag_data:
-        return editor_plugin.AFTER_GUI_INPUT_PASS
+        return AFTER_GUI_INPUT_PASS
 
     if event is InputEventMouseMotion:
         var mouse_motion: InputEventMouseMotion = event as InputEventMouseMotion
         _drag_camera = viewport_camera
         _drag_position = mouse_motion.position
 
-    return editor_plugin.AFTER_GUI_INPUT_PASS
+    return AFTER_GUI_INPUT_PASS
 
 func _get_drop_world_position(viewport_camera: Camera3D, screen_position: Vector2) -> Vector3:
     var ray_origin: Vector3 = viewport_camera.project_ray_origin(screen_position)

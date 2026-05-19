@@ -11,7 +11,9 @@ size = Vector3(5.11954, 4.72223, 21.2475)
 [sub_resource type="BoxShape3D" id="BoxShape3D_3bq8j"]
 size = Vector3(5.11954, 4.72223, 21.2475)
 
-[node name="Impuls" type="Node3D" unique_id=741729485]
+[node name="Impuls" type="Node3D" unique_id=1294652985]
+script = ExtResource("1_4abai")
+metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="Impuls-024a" type="Node3D" parent="." unique_id=62371356]
 script = ExtResource("1_4abai")

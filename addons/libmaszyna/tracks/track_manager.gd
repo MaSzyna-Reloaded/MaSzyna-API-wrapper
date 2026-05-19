@@ -29,7 +29,6 @@ const UNDEFINED_TRACK = RID()
 class TrackSegment:
     var track_rid: RID = UNDEFINED_TRACK
     var type: int = 0
-    var name: String = ""
     var curve1: MaszynaTrackCurve:
         set(x):
             curve1 = x
@@ -69,6 +68,11 @@ class TrackSegment:
             return length2
         return length1
 
+    func get_active_curve() -> MaszynaTrackCurve:
+        if curve2 and switch_state == SwitchState.DIVERGING:
+            return curve2
+        return curve1
+        
     func update_length() -> void:
         length = 0.0
         length1 = 0.0
@@ -94,6 +98,7 @@ class TrackSegment:
             result.append(curve2.p2)
         _cached_endpoints = result
         return result
+        
 
 
 class EndpointRef:
@@ -154,8 +159,9 @@ func unregister_track(track_rid: RID) -> void:
     if existing_tween:
         existing_tween.kill()
         _switch_tweens.erase(track_rid)
-    if track.name:
-        _named_tracks.erase(track.name)
+    var track_name = _named_tracks.find_key(track_rid)
+    if track_name:
+        _named_tracks.erase(track_name)
     _remove_from_spatial_index(track)
     _remove_track_from_graph_members(track)
     _tracks.erase(track_rid)
@@ -163,21 +169,21 @@ func unregister_track(track_rid: RID) -> void:
     _mark_topology_changed()
     tracks_changed.emit()
 
-
-func get_track_by_name(name: String) -> TrackSegment:
-    var rid: Variant = _named_tracks.get(name)
-    if rid == null:
-        return null
-    return _tracks[rid]
-
-
+## Returns track RID registered by the unique name
 func get_track_rid_by_name(name: String) -> RID:
     var rid: Variant = _named_tracks.get(name)
     if rid == null:
         return UNDEFINED_TRACK
     return rid
 
-
+## Returns active track length
+func get_active_track_length(track_rid: RID) -> float:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if not track:
+        return 0.0
+    return track.get_active_length()
+    
+## Updates the track identified by RID
 func update_track(
     track_rid: RID,
     type: int,
@@ -191,8 +197,9 @@ func update_track(
         return
     var previous_endpoints: Array[Vector3] = track.get_endpoints()
     var changed_connected_endpoint: bool = _has_connected_endpoint_changed(track, previous_endpoints, curve1, curve2)
-    if track.name and not track.name == name and _named_tracks.get(track.name) == track_rid:
-        _named_tracks.erase(track.name)
+    var existing_name = _named_tracks.find_key(track_rid)
+    if name and existing_name and not existing_name == name and _named_tracks.get(existing_name) == track_rid:
+        _named_tracks.erase(existing_name)
     if name and _named_tracks.has(name):
         if not _named_tracks[name] == track_rid:
             push_error("Named track already exists: " + name)
@@ -201,7 +208,6 @@ func update_track(
         _named_tracks[name] = track_rid
 
     track.type = type
-    track.name = name
     track.curve1 = curve1
     track.curve2 = curve2
     track.width = width
@@ -213,6 +219,7 @@ func update_track(
     tracks_changed.emit()
 
 
+## Returns TrackSegment for provided RID (FIXME: TrackSegment should not be exposed)
 func get_track(track_rid: RID) -> TrackSegment:
     return _tracks.get(track_rid)
 
@@ -232,7 +239,7 @@ func sample_track_transform(track_rid: RID, offset: float) -> Transform3D:
     var track: TrackSegment = _tracks.get(track_rid)
     if not track:
         return Transform3D.IDENTITY
-    var curve_data: MaszynaTrackCurve = _get_active_curve(track)
+    var curve_data: MaszynaTrackCurve = track.get_active_curve()
     if not curve_data:
         return Transform3D.IDENTITY
 
@@ -461,8 +468,40 @@ func get_switch_track(track_rid: RID) -> TrackSegment:
 
     return target_track
 
+func get_switch_state(track_rid: RID) -> SwitchState:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.switch_state
+    else:
+        push_error("Track RID is not valid: ", track_rid)
+        return SwitchState.COMMON
 
-func set_switch_state(track_rid: RID, state: int) -> void:
+func get_track_name(track_rid: RID) -> String:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        var name = _named_tracks.find_key(track_rid)
+        return name if name else ""
+    else:
+        push_error("Track RID is not valid: ", track_rid)
+        return ""
+
+func get_track_curve1(track_rid: RID) -> MaszynaTrackCurve:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.curve1
+    else:
+        push_error("Track RID is not valid: ", track_rid)
+        return null
+
+func get_track_curve2(track_rid: RID) -> MaszynaTrackCurve:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.curve2
+    else:
+        push_error("Track RID is not valid: ", track_rid)
+        return null
+
+func set_switch_state(track_rid: RID, state: SwitchState) -> void:
     var track: TrackSegment = _tracks.get(track_rid)
     if not track:
         return
@@ -683,7 +722,7 @@ func _get_branch_endpoint_index(branch_index: int, is_end: bool) -> int:
 
 
 func _get_active_endpoint_index(track: TrackSegment, is_end: bool) -> int:
-    var branch_index: int = 1 if _get_active_curve(track) == track.curve2 else 0
+    var branch_index: int = 1 if track.get_active_curve() == track.curve2 else 0
     return _get_branch_endpoint_index(branch_index, is_end)
 
 
@@ -914,11 +953,6 @@ func _get_curve_common_endpoint_index(curve: MaszynaTrackCurve, other_curve: Mas
     return -1
 
 
-func _get_active_curve(track: TrackSegment) -> MaszynaTrackCurve:
-    if track.curve2 and track.switch_state == SwitchState.DIVERGING:
-        return track.curve2
-    return track.curve1
-
 
 func _build_domain_curve(curve_data: MaszynaTrackCurve) -> Curve3D:
     var curve: Curve3D = Curve3D.new()
@@ -986,9 +1020,3 @@ func _get_direction_sign(direction: Direction) -> float:
 
 func _get_direction_from_sign(direction_sign: float) -> Direction:
     return Direction.ALIGNED_WITH_CONSIST_FRONT if direction_sign < 0.0 else Direction.OPPOSITE_TO_CONSIST_FRONT
-
-func get_active_track_length(track_rid: RID) -> float:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if not track:
-        return 0.0
-    return track.get_active_length()

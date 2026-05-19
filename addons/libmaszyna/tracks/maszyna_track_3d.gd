@@ -6,7 +6,6 @@ static var _rail_material = preload("res://addons/libmaszyna/materials/rail.mate
 
 enum TrackEnvironment {FLAT, BRIDGE, TUNNEL, MOUNTAINS, CANYON, BANK}
 enum TrackDamageFlagBit {NONE=0, DESTROYED=128}
-enum SwitchState {STRAIGHT, DIVERGING}
 
 signal switching_started(from_state: int, to_state: int)
 signal switching_finished(state: int)
@@ -28,7 +27,7 @@ signal switching_finished(state: int)
 @export var quality_flag:int
 @export var friction:float = 0.0
 @export var parameters:Dictionary = {}
-@export var switch_state: SwitchState = SwitchState.STRAIGHT:
+@export var switch_state: TrackManager.SwitchState = TrackManager.SwitchState.COMMON:
     set(value):
         if switch_state == value:
             return
@@ -184,7 +183,11 @@ func _mark_dirty():
 func toggle_switch() -> void:
     if not _track_rid or not TrackManager:
         return
-    var next_state = SwitchState.STRAIGHT if switch_state == SwitchState.DIVERGING else SwitchState.DIVERGING
+    var next_state = (
+        TrackManager.SwitchState.COMMON
+        if switch_state == TrackManager.SwitchState.DIVERGING
+        else TrackManager.SwitchState.DIVERGING
+    )
     TrackManager.set_switch_state(_track_rid, next_state)
 
 

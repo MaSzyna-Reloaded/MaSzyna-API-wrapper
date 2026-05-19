@@ -79,7 +79,8 @@ func _sync_switch_handles() -> void:
             _switch_handles.erase(rid)
 
     for rid in current_rids:
-        var track = TrackManager.get_track(rid)
+        var track := TrackManager.get_track(rid)
+        
         if track and track.curve2: # Is a switch
             if not _switch_handles.has(rid):
                 var sh = _create_switch_handle(rid)
@@ -122,10 +123,13 @@ func _draw() -> void:
     var visible_rect = Rect2(cam.pos - Vector2(extent, extent), Vector2(extent * 2, extent * 2)).grow(50.0 / zoom)
 
     for rid in TrackManager.get_tracks_in_aabb(visible_rect):
-        var track = TrackManager.get_track(rid)
-        if track:
-            _draw_track_curves(track, cam.pos, cam.rot)
-            _draw_track_label(track, cam.pos, cam.rot)
+        var curve1 := TrackManager.get_track_curve1(rid)
+        var curve2 := TrackManager.get_track_curve2(rid)
+        var switch_state := TrackManager.get_switch_state(rid)
+        var track_name := TrackManager.get_track_name(rid)
+        
+        _draw_track_curves(curve1, curve2, switch_state, cam.pos, cam.rot)
+        _draw_track_label(track_name, curve1, cam.pos, cam.rot)
     _draw_trains(visible_rect, cam.pos, cam.rot)
 
 func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void:
@@ -146,20 +150,23 @@ func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void
             var font_size = 12
             draw_string(_font, view_pos + Vector2(square_size * 0.7, font_size * 0.3), train_id, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.GREEN)
 
-func _draw_track_curves(track, cam_pos: Vector2, cam_rot: float) -> void:
-    if not track or not track.curve1: return
-    if not track.curve2:
-        _draw_curve(track.curve1, track_color, cam_pos, cam_rot)
-        return
+func _draw_track_curves(
+    curve1: MaszynaTrackCurve,
+    curve2: MaszynaTrackCurve,
+    switch_state: TrackManager.SwitchState,
+    cam_pos: Vector2,
+    cam_rot: float
+) -> void:
+    if curve1:
+        _draw_curve(curve1, switch_active_color if switch_state == 0 else track_color, cam_pos, cam_rot)
+    if curve2:
+        _draw_curve(curve2, switch_active_color if switch_state != 0 else track_color, cam_pos, cam_rot)
 
-    _draw_curve(track.curve1, switch_active_color if track.switch_state == 0 else track_color, cam_pos, cam_rot)
-    _draw_curve(track.curve2, switch_active_color if track.switch_state != 0 else track_color, cam_pos, cam_rot)
-
-func _draw_track_label(track, cam_pos: Vector2, cam_rot: float) -> void:
-    if not track or track.name == "" or not track.curve1: return
-    var view_pos = _world_to_view_centered(_sample_bezier(track.curve1, 0.5), cam_pos, cam_rot)
+func _draw_track_label(track_name: String, curve1: MaszynaTrackCurve, cam_pos: Vector2, cam_rot: float) -> void:
+    if not track_name == "" or not curve1: return
+    var view_pos = _world_to_view_centered(_sample_bezier(curve1, 0.5), cam_pos, cam_rot)
     var font_size = 12
-    draw_string(_font, view_pos - _font.get_string_size(track.name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size) * 0.5 + Vector2(0, font_size * 0.25), track.name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_color)
+    draw_string(_font, view_pos - _font.get_string_size(track_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size) * 0.5 + Vector2(0, font_size * 0.25), track_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, label_color)
 
 func _draw_curve(curve: MaszynaTrackCurve, color: Color, cam_pos: Vector2, cam_rot: float) -> void:
     if not curve: return

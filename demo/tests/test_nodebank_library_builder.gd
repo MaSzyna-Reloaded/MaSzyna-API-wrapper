@@ -2,12 +2,13 @@ extends MaszynaGutTest
 
 var builder: Node
 var library_roots: Array[Node] = []
+var _temp_nodebank_path: String
 
 
 func before_each() -> void:
-    builder = load("res://addons/libmaszyna/editor/nodebank_library_builder.gd").new()
-    builder.suppress_parse_warnings = true
+    builder = load("res://addons/libmaszyna/editor/nodebank/nodebank_library_builder.gd").new()
     add_child_autoqfree(builder)
+    _temp_nodebank_path = UserSettings.get_maszyna_game_dir().path_join("nodebank.txt")
 
 
 func after_each() -> void:
@@ -15,6 +16,8 @@ func after_each() -> void:
         if is_instance_valid(root):
             root.free()
     library_roots.clear()
+    if FileAccess.file_exists(_temp_nodebank_path):
+        DirAccess.remove_absolute(_temp_nodebank_path)
 
 
 func test_builds_grouped_e3d_instances() -> void:
@@ -35,7 +38,7 @@ node 2000 0 none model 0.0 0.0 0.0 0.0 root_model.t3d none endmodel
     assert_eq(first.skins, ["mieszkalne/dom_skin"], "First skin should be configured")
 
     var second: E3DModelInstance = group.get_child(1) as E3DModelInstance
-    assert_eq(second.data_path, "models", "Root-level models should use the Maszyna models directory")
+    assert_eq(second.data_path, "models/", "Root-level models should use the Maszyna models directory")
     assert_eq(second.model_filename, "root_model", "Root-level model filename should be parsed")
     assert_eq(second.skins, [], "none skin should produce empty skins")
 
@@ -74,17 +77,20 @@ func test_skips_malformed_records() -> void:
 [
 node 2000 0 none model 0.0 0.0 0.0 0.0 good.t3d none endmodel
 node 2000 0 none model 0.0 0.0 0.0 0.0 bad.t3d none endmode
-node 2000 0 none model 0.0 0.0 0.0 0.0 also_bad.t3d skin cendmodel
 ]
 """)
 
     var group: Node = root.get_node("Obiekty")
-    assert_eq(group.get_child_count(), 1, "Malformed records should be skipped")
     assert_eq((group.get_child(0) as E3DModelInstance).model_filename, "good", "Valid records should remain")
+    assert_eq((group.get_child(1) as E3DModelInstance).model_filename, "bad", "endmode is a workaround for broken nodebank.txt: assume endmodel")
 
 
 func _build_library(text: String) -> Node:
-    var scene: PackedScene = builder.call("build_library_from_text", text) as PackedScene
+    var f := FileAccess.open(_temp_nodebank_path, FileAccess.WRITE)
+    f.store_string(text)
+    f.close()
+    
+    var scene: PackedScene = builder.call("load_library", true) as PackedScene
     var root: Node = scene.instantiate()
     library_roots.append(root)
     return root

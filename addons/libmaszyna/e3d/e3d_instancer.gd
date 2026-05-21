@@ -64,7 +64,6 @@ func _get_material_override(target_node: E3DModelInstance, submodel: E3DSubModel
             unprefixed_model_path,
             submodel.material_name,
             named_transparency,
-            false,
             submodel.diffuse_color,
         )
 

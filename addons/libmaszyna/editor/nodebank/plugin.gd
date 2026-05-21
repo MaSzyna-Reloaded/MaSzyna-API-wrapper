@@ -57,7 +57,7 @@ func drag_end() -> void:
 
 func _enter_tree() -> void:
     set_input_event_forwarding_always_enabled()
-        
+
     nodebank_panel_instance = nodebank_panel_scene.instantiate()
     nodebank_panel_instance.set_plugin_runtime()
     nodebank_panel_instance.item_drag_started.connect(drag_start)
@@ -81,15 +81,15 @@ func _process(_detla: float) -> void:
         else:
             # mouse is outside editor viewport
             _drag_camera = null
-            
+
         if _drag_preview_instance:
             # handle 3d preview
             _drag_preview_instance.visible = not _drag_camera == null
-            if _drag_camera:        
+            if _drag_camera:
                 var scene_root: Node = EditorInterface.get_edited_scene_root()
                 var world_position: Vector3 = _get_drop_world_position(_drag_camera, _drag_position)
                 _drag_preview_instance.position = scene_root.global_transform.affine_inverse() * world_position
-            
+
         # handle drop
         var mouse_pressed = Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT)
         if not mouse_pressed:

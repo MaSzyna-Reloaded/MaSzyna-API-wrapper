@@ -164,20 +164,6 @@ layout_mode = 2
 text = "Volumetric Fog
 "
 
-[node name="HBoxContainer9" type="HBoxContainer" parent="VBoxContainer" unique_id=1465897019]
-layout_mode = 2
-
-[node name="E3DAlphaTransparency" type="CheckButton" parent="VBoxContainer/HBoxContainer9" unique_id=1546210739]
-layout_mode = 2
-script = ExtResource("2_2cs74")
-section = "e3d"
-key = "use_alpha_transparency"
-
-[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer9" unique_id=1170979303]
-layout_mode = 2
-text = "E3D Alpha Transparency
-"
-
 [node name="HBoxContainer11" type="HBoxContainer" parent="VBoxContainer" unique_id=1150743320]
 layout_mode = 2
 

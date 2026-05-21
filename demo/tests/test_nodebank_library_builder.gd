@@ -1,14 +1,20 @@
 extends MaszynaGutTest
 
+const TEST_GAME_DIR: String = "user://gut/nodebank_library_builder"
+
 var builder: Node
 var library_roots: Array[Node] = []
+var _previous_game_dir: String = ""
 var _temp_nodebank_path: String
 
 
 func before_each() -> void:
     builder = load("res://addons/libmaszyna/editor/nodebank/nodebank_library_builder.gd").new()
     add_child_autoqfree(builder)
-    _temp_nodebank_path = UserSettings.get_maszyna_game_dir().path_join("nodebank.txt")
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    DirAccess.make_dir_recursive_absolute(TEST_GAME_DIR)
+    UserSettings.save_maszyna_game_dir(TEST_GAME_DIR)
+    _temp_nodebank_path = TEST_GAME_DIR.path_join("nodebank.txt")
 
 
 func after_each() -> void:
@@ -18,6 +24,8 @@ func after_each() -> void:
     library_roots.clear()
     if FileAccess.file_exists(_temp_nodebank_path):
         DirAccess.remove_absolute(_temp_nodebank_path)
+    DirAccess.remove_absolute(TEST_GAME_DIR)
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func test_builds_grouped_e3d_instances() -> void:

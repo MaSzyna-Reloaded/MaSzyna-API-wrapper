@@ -28,7 +28,7 @@ func configure(item_data: NodebankGridItem, preview_renderer: NodebankPreviewRen
 
 func _gui_input(event: InputEvent) -> void:
     if event is InputEventMouseButton:
-        
+
         var mouse_button: InputEventMouseButton = event as InputEventMouseButton
         if mouse_button.button_index == MOUSE_BUTTON_LEFT:
             if mouse_button.pressed:

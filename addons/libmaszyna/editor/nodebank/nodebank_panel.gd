@@ -43,7 +43,7 @@ func _enter_tree() -> void:
 func _exit_tree() -> void:
     UserSettings.game_dir_changed.disconnect(_on_game_dir_changed)
     _clear_items()
-    
+
     if _library:
         _library.queue_free()
 
@@ -169,11 +169,11 @@ func _on_item_dragged(item_data: NodebankGridItem) -> void:
         _drag_preview_panel.visible = true
         _drag_preview = true
     item_drag_started.emit(item_data)
-    
+
 func _on_item_dropped(item_data: NodebankGridItem) -> void:
     item_drag_end.emit(item_data)
     _stop_drag_preview()
-    
+
 func _on_visibility_changed() -> void:
     if visible and _plugin_runtime:
         load_library(false)
@@ -192,10 +192,10 @@ func _process_drag_preview(_delta: float) -> void:
         return
     elif not _drag_preview_panel.visible:
         _drag_preview_panel.visible = true
-        
+
     var preview_size: Vector2 = _drag_preview_panel.size
     _drag_preview_panel.global_position = get_global_mouse_position() - preview_size * 0.5
-    
+
 func _stop_drag_preview() -> void:
     _drag_preview = false
     _drag_preview_texture_rect.texture = null

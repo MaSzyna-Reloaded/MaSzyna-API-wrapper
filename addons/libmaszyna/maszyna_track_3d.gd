@@ -78,8 +78,8 @@ var _is_updating = false
 var _update_timer = 0.0
 var _curve:Curve3D
 var _sleeper_mesh: Mesh
-var _sleeper_material: StandardMaterial3D = _unknown_material
-var _ballast_material: StandardMaterial3D = _unknown_material
+var _sleeper_material: Material = _unknown_material
+var _ballast_material: Material = _unknown_material
 
 const DEBOUNCE_TIME = 0.1
 var _last_debouce:float
@@ -108,7 +108,7 @@ func _notification(what):
             if _track_rid and TrackRenderingServer:
                 TrackRenderingServer.set_track_transform(_track_rid, global_transform)
                 TrackRenderingServer.set_track_visible(_track_rid, visible)
-        
+
 
 func _process(_delta) -> void:
     if Engine.is_editor_hint():

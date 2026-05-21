@@ -3,6 +3,17 @@ extends Node
 class_name MaszynaEnvironmentNode
 
 @export_node_path("WorldEnvironment") var world_environment:NodePath = NodePath("")
+@export var season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER:
+    set(x):
+        if not x == season:
+            season = x
+            MaterialManager.season = season
+
+@export var weather: MaterialManager.Weather = MaterialManager.Weather.WEATHER_CLEAR:
+    set(x):
+        if not x == weather:
+            weather = x
+            MaterialManager.weather = weather
 
 @export var sky_texture = "sky/sky_altostratus015":
     set(x):
@@ -28,7 +39,7 @@ class_name MaszynaEnvironmentNode
 
 func _update_sky_shader():
     # workaround for broken Godot nodes/plugin exiting order
-    if not is_node_ready() or not is_inside_tree() or not Engine.has_singleton("MaterialManager"):
+    if not is_node_ready() or not is_inside_tree():
         return
 
     var shader_texture

@@ -35,12 +35,13 @@ TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_ser
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 MaszynaEnvironment="*uid://3nkx0u4dgdws"
 Console="*uid://d046w0soh2iou"
-MaterialManager="*uid://dokfadkw7wrhi"
 MaterialParser="*uid://7b48fl428yqa"
 E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
+MaterialManager="*uid://wsbd7kr83ncg"
+MaterialFactory="*uid://v144f3irjg7m"
 
 [debug]
 
@@ -50,6 +51,10 @@ file_logging/log_path="user://logs/app.log"
 
 window/size/mode=3
 window/size/initial_position_type=3
+
+[editor_overrides]
+
+text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 

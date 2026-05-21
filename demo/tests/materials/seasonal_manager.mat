@@ -1,0 +1,14 @@
+shader: normalmap
+texture1: base_diffuse:t
+spring: {
+    texture1: spring_diffuse
+}
+winter: {
+    shader: shadowlessnormalmap
+}
+cloudy: {
+    texture1: cloudy_diffuse
+}
+rain: {
+    shader: water
+}

@@ -16,6 +16,7 @@ func _enable_plugin():
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
     add_autoload_singleton("MaterialManager", "res://addons/libmaszyna/materials/material_manager.gd")
     add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
+    add_autoload_singleton("MaterialFactory", "res://addons/libmaszyna/materials/material_factory.gd")
     add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
@@ -48,7 +49,7 @@ func _enable_plugin():
         maszyna_switch_3d_script,
         null
     )
-    
+
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", true)
@@ -57,7 +58,7 @@ func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", false)
-    
+
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
     remove_custom_type("MaszynaTrack3D")
@@ -67,10 +68,11 @@ func _disable_plugin():
     remove_autoload_singleton("E3DModelTool")
     remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")
+    remove_autoload_singleton("MaterialFactory")
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
     remove_autoload_singleton("Console")
-    remove_autoload_singleton("MaszynaEnvironment")    
+    remove_autoload_singleton("MaszynaEnvironment")
 
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)

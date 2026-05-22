@@ -14,20 +14,45 @@ const _transparency_codes = {
     Transparency.AlphaScissor: "s",
 }
 
-var use_alpha_transparency:bool = false
+var use_alpha_transparency: bool = false
+
 
 func clear_cache():
     _materials_cache.clear()
     use_alpha_transparency = UserSettings.get_setting("e3d", "use_alpha_transparency", false)
 
+
 func load_material(model_path, material_name) -> MaszynaMaterial:
     return MaterialParser.parse(model_path, material_name)
 
+
+func _detect_texture_transparency(texture: Texture2D) -> Transparency:
+    if texture == null:
+        return Transparency.Disabled
+
+    var img: Image = texture.get_image()
+    if img == null or img.is_empty():
+        return Transparency.Disabled
+
+    match img.detect_alpha():
+        Image.ALPHA_NONE:
+            return Transparency.Disabled
+
+        Image.ALPHA_BIT:
+            return Transparency.AlphaScissor
+
+        Image.ALPHA_BLEND:
+            return Transparency.Alpha
+
+        _:
+            return Transparency.Disabled
+
+
 func get_material(
-    model_path:String,
-    material_path:String,
-    transparent:Transparency = Transparency.Disabled,
-    is_sky:bool = false,
+    model_path: String,
+    material_path: String,
+    transparent: Transparency = Transparency.Disabled,
+    is_sky: bool = false,
     diffuse_color: Color = Color(1.0, 1.0, 1.0)
 ) -> StandardMaterial3D:
     var _code = model_path.path_join(("%s_t%s_s%s_%s.res" % [
@@ -36,13 +61,13 @@ func get_material(
         "1" if is_sky else "0",
         "%x%x%x" % [diffuse_color.r8, diffuse_color.g8, diffuse_color.b8],
     ]))
-    var output:StandardMaterial3D
 
+    var output: StandardMaterial3D
     output = _materials_cache.get(_code) as StandardMaterial3D
     if output:
         return output
 
-    var _m:StandardMaterial3D = StandardMaterial3D.new()
+    var _m: StandardMaterial3D = StandardMaterial3D.new()
 
     var project_data_dir = UserSettings.get_maszyna_game_dir()
     var _mmat = load_material(model_path, material_path)
@@ -57,32 +82,28 @@ func get_material(
         _m.normal_texture = load_texture(model_path, _mmat.normal_texute_path, true)
         _m.normal_enabled = true
         _m.normal_scale = -5.0
+
     _mmat.apply_to_material(_m)
 
     _m.alpha_scissor_threshold = 0.5  # default
 
     # DETECT ALPHA FROM TEXTURE
-    var texture_alpha:bool = false
     if _m.albedo_texture:
-        var img:Image = _m.albedo_texture.get_image()
-        if img:
-            texture_alpha = not img.detect_alpha() == Image.ALPHA_NONE
+        var detected_transparency := _detect_texture_transparency(_m.albedo_texture)
 
-    if texture_alpha:
-        # FIXME: the legacy exe uses alpha channel mostly for rendering
-        # windows, so ALPHA or ALPHA_DEPTH_PRE_PASS should be enabled
-        # here. But both causes issues with rendering (priorirty and
-        # other artifcats).
-        #
-        # The safest mode is AlsphaScissor, but windows aren't properly
-        # rendered. Another approach is to use ALPHA_DEPTH_PRE_PASS
-        # and adjust sorting depth on meshinstances.
+        match detected_transparency:
+            Transparency.AlphaScissor:
+                if use_alpha_transparency:
+                    transparent = Transparency.Alpha
+                else:
+                    transparent = Transparency.AlphaScissor
+                    _m.alpha_scissor_threshold = 0.80  # Who knows...
 
-        if use_alpha_transparency:
-            transparent = Transparency.Alpha
-        else:
-            transparent = Transparency.AlphaScissor
-            _m.alpha_scissor_threshold = 0.80  # Who knows...
+            Transparency.Alpha:
+                transparent = Transparency.Alpha
+
+            Transparency.Disabled:
+                pass
 
     # End DETECT ALPHA FROM TEXTURE
 
@@ -90,9 +111,12 @@ func get_material(
     match transparent:
         Transparency.AlphaScissor:
             _m.transparency = StandardMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+
         Transparency.Alpha:
             _m.transparency = StandardMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
 
+        Transparency.Disabled:
+            pass
 
     if is_sky:
         _m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -109,22 +133,22 @@ func get_texture(texture_path):
     return load_texture("", texture_path)
 
 
-func load_texture(model_path, material_name, normal:bool=false) -> Texture:
-    #var output:Texture
+func load_texture(model_path, material_name, normal: bool = false) -> Texture:
+    # var output:Texture
 
     var project_data_dir = UserSettings.get_maszyna_game_dir()
 
     var data_dir = project_data_dir if project_data_dir else ""
-    if (project_data_dir.ends_with("\\")):
+    if project_data_dir.ends_with("\\"):
         project_data_dir = project_data_dir.trim_suffix("\\")
-    if (project_data_dir.ends_with("/")):
+    if project_data_dir.ends_with("/"):
         project_data_dir = project_data_dir.trim_suffix("/")
 
     var possible_paths = [
-        model_path.path_join(material_name+".dds"),
-        "textures".path_join(model_path.path_join(material_name+".dds")),
-        material_name+".dds",
-        "textures".path_join(material_name+".dds"),
+        model_path.path_join(material_name + ".dds"),
+        "textures".path_join(model_path.path_join(material_name + ".dds")),
+        material_name + ".dds",
+        "textures".path_join(material_name + ".dds"),
     ]
 
     var final_path = ""
@@ -137,7 +161,7 @@ func load_texture(model_path, material_name, normal:bool=false) -> Texture:
         return _unknown_texture
 
     if FileAccess.file_exists(project_data_dir.path_join(final_path)):
-        var texture:Texture2D = load(project_data_dir.path_join(final_path)) as Texture2D
+        var texture: Texture2D = load(project_data_dir.path_join(final_path)) as Texture2D
         if texture:
             return texture
         else:

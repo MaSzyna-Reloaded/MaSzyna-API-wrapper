@@ -27,7 +27,7 @@ func _is_submodel_valid(target_node: E3DModelInstance, submodel: E3DSubModel) ->
         E3DSubModel.SubModelType.SUBMODEL_GL_TRIANGLES:
             return not target_node.exclude_node_names.any(
                 func(node_name: Variant) -> bool:
-                    return submodel.resource_name == str(node_name)
+                    return submodel.resource_name.match(node_name)
             )
 
     return false
@@ -38,7 +38,7 @@ func _get_material_override(target_node: E3DModelInstance, submodel: E3DSubModel
     if submodel.dynamic_material:
         if target_node.skins.size() < submodel.dynamic_material_index + 1:
             push_warning(
-				"Model %s has no skins set, but submodel requires material #%s"
+                "Model %s has no skins set, but submodel requires material #%s"
                 % [target_node.name, submodel.dynamic_material_index]
             )
             return null

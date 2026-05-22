@@ -86,19 +86,11 @@ namespace godot {
         result.visibility_light_threshold = p_file->get_float();
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA ambient
-        Color diffuse_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
+        Color diffuse_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), p_file->get_float());
         // ReSharper disable once CppExpressionWithoutSideEffects
         p_file->get_buffer(16); // skip unused RGBA specular
-        Color selfillum_color = Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), 1.0);
-
-        // ReSharper disable once CppExpressionWithoutSideEffects
-        p_file->get_float(); // skip unused alpha
-        if (const auto transparent = result.flags & 32; transparent == 0u) {
-            selfillum_color.a = 1.0;
-            diffuse_color.a = 1.0;
-        }
+        Color selfillum_color =
+                Color(p_file->get_float(), p_file->get_float(), p_file->get_float(), p_file->get_float());
 
         result.selfillum_color = selfillum_color;
         result.diffuse_color = diffuse_color;

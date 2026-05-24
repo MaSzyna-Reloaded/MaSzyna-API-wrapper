@@ -5,6 +5,8 @@ GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
 DATE=$(shell date +"%Y%m%d")
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
+CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
+CLANG_TIDY_BINDINGS_FILE=$(CLANG_TIDY_BUILD_DIR)/godot-cpp/gen/include/godot_cpp/classes/node.hpp
 LIBMASZYNA_DEBUG:=""
 CMAKE_GODOTCPP_API_VERSION=4.6
 
@@ -35,7 +37,7 @@ cleanup-build-release:
 cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
-compile-debug:
+compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
@@ -66,7 +68,7 @@ cross-compile-release:
 	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
 
 
-cross-compile-debug:
+cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	cmake -B build-linux64 \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
@@ -123,16 +125,19 @@ watch-and-compile:
 	sh scripts/autocompile.sh
 
 
-$(CLANG_TIDY_BUILD_DIR)/compile_commands.json:
+$(CLANG_TIDY_COMPILE_COMMANDS_FILE):
 	@echo "Style: configuring clang-tidy database..." && \
-	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON $(CMAKE_GODOTCPP_API_VERSION)
+	cmake --log-level=ERROR -S . -B $(CLANG_TIDY_BUILD_DIR) -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 
+$(CLANG_TIDY_BINDINGS_FILE): $(CLANG_TIDY_BUILD_DIR)/CMakeCache.txt
+	@echo "Style: generating clang-tidy bindings..." && \
+	cmake --build $(CLANG_TIDY_BUILD_DIR) --target generate_bindings
 
-style-check: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
+style-check: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	@scripts/style-check $(STYLE_FILE)
 
 
-style-fix: $(CLANG_TIDY_BUILD_DIR)/compile_commands.json
+style-fix: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	@scripts/style-fix $(STYLE_FILE)
 
 docker-build-tests:

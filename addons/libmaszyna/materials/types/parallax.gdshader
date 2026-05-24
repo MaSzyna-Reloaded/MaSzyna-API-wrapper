@@ -18,13 +18,8 @@ uniform int transparency = 0;
 uniform bool use_alpha_scissor = false;
 uniform float alpha_scissor_threshold : hint_range(0.0, 1.0) = 0.5;
 
-const float height_strength = 0.65;
-
-const float parallax_full_distance = 12.0;
-const float parallax_fade_distance = 30.0;
-
-const float parallax_sign = -1.0;
-const bool invert_height = true;
+const float height_strength = 0.60;  // picked by trial & error for taste
+const float parallax_max_distance = 10.0;
 
 const bool debug_show_height = false;
 const bool debug_disable_parallax = false;
@@ -37,49 +32,24 @@ varying float v_dist;
 
 void vertex() {
     v_tangent_view = normalize(MODELVIEW_NORMAL_MATRIX * TANGENT);
-    v_binormal_view = normalize(MODELVIEW_NORMAL_MATRIX * -BINORMAL);
     v_normal_view = normalize(MODELVIEW_NORMAL_MATRIX * NORMAL);
+    v_binormal_view = normalize(cross(v_normal_view, v_tangent_view));
 
     v_position_view = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
     v_dist = length(v_position_view);
 }
 
-float glossiness_to_roughness(float source_glossiness) {
-    if (source_glossiness <= 0.0) {
-        return 0.6;
-    }
-
-    return clamp(sqrt(2.0 / (source_glossiness + 2.0)), 0.03, 1.0);
-}
-
 float read_height(vec2 uv) {
-    float h = texture(normal_texture, uv).b;
-
-    if (invert_height) {
-        h = 1.0 - h;
-    }
-
-    return clamp(h + height_offset, 0.0, 1.0);
+    // Kept raw for vendor parity; deep parallax in the original shader does not apply height_offset here.
+    return texture(normal_texture, uv).b;
 }
 
 vec2 apply_parallax_mapping(vec2 uv, vec3 view_dir_tangent, float fragment_distance) {
-    if (debug_disable_parallax || height_scale <= 0.0 || height_strength <= 0.0) {
+    if (debug_disable_parallax || height_scale <= 0.0) {
         return uv;
     }
 
-    if (fragment_distance >= parallax_fade_distance) {
-        return uv;
-    }
-
-    float distance_factor = 1.0 - smoothstep(
-        parallax_full_distance,
-        parallax_fade_distance,
-        fragment_distance
-    );
-
-    float effective_height_scale = height_scale * height_strength * distance_factor;
-
-    if (effective_height_scale <= 0.00001) {
+    if (fragment_distance > parallax_max_distance) {
         return uv;
     }
 
@@ -96,7 +66,7 @@ vec2 apply_parallax_mapping(vec2 uv, vec3 view_dir_tangent, float fragment_dista
     float layer_depth = 1.0 / num_layers;
     float current_layer_depth = 0.0;
 
-    vec2 p = parallax_sign * view_dir.xy * effective_height_scale;
+    vec2 p = view_dir.xy * (height_scale * height_strength);
     vec2 delta_uv = p / num_layers;
 
     vec2 current_uv = uv;
@@ -169,11 +139,13 @@ void fragment() {
         METALLIC = 0.0;
         ROUGHNESS = 1.0;
     } else {
+        float source_specularity = (diffuse_sample.r + diffuse_sample.g + diffuse_sample.b) * 0.5;
+        float source_reflection = reflection_strength * normal_sample.a;
+
         ALBEDO = diffuse_sample.rgb;
 
-        SPECULAR = specular_strength;
+        SPECULAR = clamp(max(source_specularity, source_reflection), 0.0, 1.0);
         METALLIC = 0.0;
-        ROUGHNESS = glossiness_to_roughness(glossiness);
 
         NORMAL_MAP = decode_normal_from_rg(normal_sample);
         NORMAL_MAP_DEPTH = 1.0;

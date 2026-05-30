@@ -2,12 +2,35 @@
 extends Node
 class_name MaszynaEnvironmentNode
 
-@export_node_path("WorldEnvironment") var world_environment:NodePath = NodePath("")
-@export var season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER:
+@export_category("Current Time")
+@export var use_system_time: bool = false:
     set(x):
-        if not x == season:
-            season = x
-            MaterialManager.season = season
+        use_system_time = x
+        update()
+
+@export_range(0.0, 23.9998) var current_time: float = 8.0:
+    set(x):
+        if not x == current_time:
+            current_time = x
+            _dirty_lat_lng = true
+
+@export_range(1, 31) var day: int = 3:
+    set(x):
+        if not x == day:
+            day = x
+            _dirty_lat_lng = true
+
+@export_range(1, 12) var month: int = 5:
+    set(x):
+        if not x == month:
+            month = x
+            _dirty_lat_lng = true
+
+@export_range(0, 9999) var year: int = 2026:
+    set(x):
+        if not x == year:
+            year = x
+            _dirty_lat_lng = true
 
 @export var weather: MaterialManager.Weather = MaterialManager.Weather.WEATHER_CLEAR:
     set(x):
@@ -15,58 +38,111 @@ class_name MaszynaEnvironmentNode
             weather = x
             MaterialManager.weather = weather
 
-@export var sky_texture = "sky/sky_altostratus015":
+@export_category("Location")
+@export var latitude: float = 50.271:
     set(x):
-        if not x == sky_texture:
-            sky_texture = x
-            _update_sky_shader()
+        if not x == latitude:
+            latitude = x
+            _dirty_lat_lng = true
 
-@export var sky_texture_offset = Vector2(0.0, 0.0):
+@export var longitude: float = 19.04:
     set(x):
-        sky_texture_offset = x
-        _update_sky_shader()
+        if not x == longitude:
+            longitude = x
+            _dirty_lat_lng = true
 
-@export var sky_texture_scale = Vector2(1.0, 1.0):
+@export_category("Configuration")
+@export var timezone_offset: int = 1:
     set(x):
-        sky_texture_scale = x
-        _update_sky_shader()
+        timezone_offset = x
+        update()
 
-@export var sky_energy: float = 0.75:
+@export_range(0.0, 1000.0) var simulation_speed: float = 1.0:
     set(x):
-        sky_energy = x
-        _update_sky_shader()
+        simulation_speed = x
+        update()
+
+@export var time_in_editor: bool = true:
+    set(x):
+        time_in_editor = x
+        update()
+
+@export_node_path("TimeOfDay") var time_of_day_path: NodePath:
+    set(x):
+        time_of_day_path = x
+        update()
+
+var season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER:
+    set(x):
+        if not x == season:
+            season = x
+            MaterialManager.season = season
+
+var _time_of_day: TimeOfDay
+var _dirty_lat_lng: bool = false
 
 
-func _update_sky_shader():
-    # workaround for broken Godot nodes/plugin exiting order
-    if not is_node_ready() or not is_inside_tree():
-        return
+func _ready() -> void:
+    update()
 
-    var shader_texture
-    if sky_texture:
-        shader_texture = MaterialManager.get_texture(sky_texture)
-    else:
-        shader_texture = null
-    RenderingServer.global_shader_parameter_set("sky_texture", shader_texture)
+func _process(delta: float) -> void:
+    if _dirty_lat_lng:
+        _dirty_lat_lng = false
+        if _time_of_day:
+            _time_of_day.latitude = latitude
+            _time_of_day.longitude = longitude
 
+            if use_system_time:
+                _time_of_day.set_from_datetime_dict(Time.get_datetime_dict_from_system())
+            else:
+                _time_of_day.current_time = current_time
+                _time_of_day.day = day
+                _time_of_day.month = month
+                _time_of_day.year = year
 
-    var world: WorldEnvironment = get_node_or_null(world_environment)
+            day = _time_of_day.day
+            month = _time_of_day.month
+            year = _time_of_day.year
+            current_time = _time_of_day.current_time
+            season = _season_from_year_day(_get_year_day(day, month, year))
 
-    if world:
-        var env:Environment = world.environment
-        var sky:ShaderMaterial = env.sky.sky_material
-        if sky:
-            sky.set_shader_parameter("sky_offset", sky_texture_offset)
-            sky.set_shader_parameter("exposure", sky_energy)
-            sky.set_shader_parameter("sky_scale", sky_texture_scale)
+func update() -> void:
+    _time_of_day = null
 
+    if is_inside_tree():
+        _time_of_day = get_node_or_null(time_of_day_path)
+        if _time_of_day:
+            _time_of_day.editor_time_enabled = time_in_editor
+            _time_of_day.system_sync = use_system_time
+            _time_of_day.minutes_per_day = 1440 / simulation_speed if simulation_speed > 0.0 else 0.0
+            _time_of_day.update_interval = _time_of_day.minutes_per_day * 0.001
+            _dirty_lat_lng = true
 
-func _ready():
-    _update_sky_shader()
+func _season_from_year_day(year_day: int) -> MaterialManager.Season:
+    # thresholds are taken from the original simulator code
+    if year_day <= 65:
+        return MaterialManager.Season.SEASON_WINTER
+    if year_day <= 158:
+        return MaterialManager.Season.SEASON_SPRING
+    if year_day <= 252:
+        return MaterialManager.Season.SEASON_SUMMER
+    if year_day <= 341:
+        return MaterialManager.Season.SEASON_AUTUMN
+    return MaterialManager.Season.SEASON_WINTER
 
+func _get_year_day(current_day: int, current_month: int, current_year: int) -> int:
+    var month_lengths: Array[int] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    var year_day: int = current_day
+    var month_index: int = 0
 
-func _enter_tree() -> void:
-    UserSettings.config_changed.connect(_update_sky_shader)
+    if _is_leap_year(current_year):
+        month_lengths[1] = 29
 
-func _exit_tree() -> void:
-    UserSettings.config_changed.disconnect(_update_sky_shader)
+    while month_index < current_month - 1:
+        year_day += month_lengths[month_index]
+        month_index += 1
+
+    return year_day
+
+func _is_leap_year(current_year: int) -> bool:
+    return ((current_year % 4) == 0 and not (current_year % 100) == 0) or (current_year % 400) == 0

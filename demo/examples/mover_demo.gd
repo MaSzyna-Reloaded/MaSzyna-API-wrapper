@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
         draw_dictionary(security_state, $%DebugSecurity)
         draw_dictionary(door_state, %DebugDoor)
 
-        $UI/MoverSwitches/General/HBoxContainer/MainCtrlPos.text = str(train_state.get("controller_main_position", 0))
+
 
 func _on_brake_level_value_changed(value):
     TrainSystem.broadcast_command("brake_level_set", value, null)

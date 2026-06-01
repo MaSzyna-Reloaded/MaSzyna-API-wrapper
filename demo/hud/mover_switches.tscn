@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_slxh6"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="5_fofk8"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="6_fofk8"]
+[ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="7_ucl"]
 
 [node name="MoverSwitches" type="HBoxContainer" unique_id=2006728460]
 size_flags_vertical = 3
@@ -25,4 +26,7 @@ layout_mode = 2
 layout_mode = 2
 
 [node name="Doors" parent="." unique_id=1529964687 instance=ExtResource("6_fofk8")]
+layout_mode = 2
+
+[node name="UCList" parent="." instance=ExtResource("7_ucl")]
 layout_mode = 2

@@ -31,22 +31,6 @@ layout_mode = 2
 text = "Backward"
 command = "direction_decrease"
 
-[node name="HBoxContainer" type="HBoxContainer" parent="." unique_id=963613819]
-layout_mode = 2
-
-[node name="MainIncrease" parent="HBoxContainer" unique_id=1925501479 instance=ExtResource("2_tjh4e")]
-layout_mode = 2
-text = "Main +"
-command = "main_controller_increase"
-
-[node name="MainDecrease" parent="HBoxContainer" unique_id=1033636801 instance=ExtResource("2_tjh4e")]
-layout_mode = 2
-text = "Main -"
-command = "main_controller_decrease"
-
-[node name="MainCtrlPos" type="Label" parent="HBoxContainer" unique_id=570945350]
-unique_name_in_owner = true
-layout_mode = 2
 
 [node name="HBoxContainer3" type="HBoxContainer" parent="." unique_id=756868696]
 layout_mode = 2

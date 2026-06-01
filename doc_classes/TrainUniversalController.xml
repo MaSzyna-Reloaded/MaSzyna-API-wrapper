@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainUniversalController" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Represents the universal controller (Zadajnik jazdy i hamowania) in a train.
+	</brief_description>
+	<description>
+		[TrainUniversalController] is a train part that handles the universal controller, grouping traction and braking controls together as defined by the UCList configuration in MaSzyna. It handles positions that map to both traction and braking states.
+	</description>
+	<tutorials>
+	</tutorials>
+	<members>
+		<member name="integrated_brake" type="bool" setter="set_integrated_brake" getter="get_integrated_brake" default="true">
+			Determines whether the integrated brake (ED/HD/auxiliary pneumatic) is supported on this controller.
+		</member>
+		<member name="integrated_brake_pn" type="bool" setter="set_integrated_brake_pn" getter="get_integrated_brake_pn" default="true">
+			Determines whether the train's pneumatic brake is supported on this controller.
+		</member>
+		<member name="selector_position" type="int" setter="set_selector_position" getter="get_selector_position" default="0">
+			The current position of the controller selector.
+		</member>
+		<member name="uc_list" type="UCListItem[]" setter="set_uc_list" getter="get_uc_list" default="[]">
+			An array of [UCListItem] resources defining the controller's positions.
+		</member>
+	</members>
+</class>

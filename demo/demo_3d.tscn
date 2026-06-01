@@ -31,6 +31,7 @@
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="15_rrc65"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
+[ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
@@ -65,7 +66,7 @@ shader_parameter/moon_texture_flip_u = false
 shader_parameter/moon_texture_flip_v = false
 shader_parameter/moon_size = 0.07
 shader_parameter/atm_moon_mie_tint = Color(0.137255, 0.184314, 0.292196, 1)
-shader_parameter/atm_moon_mie_intensity = 0.09948422372341155
+shader_parameter/atm_moon_mie_intensity = 0.0
 shader_parameter/atm_moon_partial_mie_phase = Vector3(0.36, 1.64, 1.6)
 shader_parameter/starmap_color = Color(0.709804, 0.709804, 0.709804, 0.854902)
 shader_parameter/starmap_texture = ExtResource("9_jg8su")
@@ -89,8 +90,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.020529518, 0.020529518)
-shader_parameter/cirrus_position2 = Vector2(0.020529518, 0.020529518)
+shader_parameter/cirrus_position1 = Vector2(0.14376585, 0.14376585)
+shader_parameter/cirrus_position2 = Vector2(0.14376585, 0.14376585)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -100,7 +101,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.102648705, 0.102648705)
+shader_parameter/cumulus_position = Vector2(0.7187264, 0.7187264)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -232,7 +233,6 @@ utc = 2.0
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -266,8 +266,8 @@ text = "Toggle controls"
 
 [node name="General" type="Container" parent="ControlWindows" unique_id=1974252148]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 24.0
 offset_top = 467.0
 offset_right = 387.0
@@ -282,8 +282,8 @@ train_controller = NodePath("")
 
 [node name="Diesel" type="Container" parent="ControlWindows" unique_id=1842182184]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 405.0
 offset_top = 467.0
 offset_right = 555.0
@@ -297,8 +297,8 @@ layout_mode = 2
 
 [node name="Brakes" type="Container" parent="ControlWindows" unique_id=2108387886]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 579.0
 offset_top = 467.0
 offset_right = 753.0
@@ -312,8 +312,8 @@ layout_mode = 2
 
 [node name="Doors" type="Container" parent="ControlWindows" unique_id=396795069]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 779.0
 offset_top = 467.0
 offset_right = 989.0
@@ -327,8 +327,8 @@ layout_mode = 2
 
 [node name="Security" type="Container" parent="ControlWindows" unique_id=2063708692]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 1011.0
 offset_top = 467.0
 offset_right = 1231.0
@@ -340,10 +340,25 @@ title = "Security"
 clip_contents = true
 layout_mode = 2
 
+[node name="UCList" type="Container" parent="ControlWindows" unique_id=901337577]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 1011.0
+offset_top = 467.0
+offset_right = 1231.0
+offset_bottom = 569.0
+script = ExtResource("3_rrc65")
+title = "Security"
+
+[node name="UCList2" parent="ControlWindows/UCList" unique_id=1787189492 instance=ExtResource("20_5crau")]
+clip_contents = true
+layout_mode = 2
+
 [node name="Gauges" type="Container" parent="ControlWindows" unique_id=833711953]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 24.0
 offset_top = 823.0
 offset_right = 1396.0

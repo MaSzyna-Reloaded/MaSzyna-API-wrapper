@@ -376,7 +376,8 @@ namespace godot {
             p_mover->P2FTrans = 0;
         }
 
-        p_mover->CntrlPipePress = 5 + (0.001 * (libmaszyna::utils::random(0, 10) - libmaszyna::utils::random(0, 10)));
+        p_mover->CntrlPipePress =
+                5 + (0.001 * (UtilityFunctions::randf_range(0.0, 10.0) - UtilityFunctions::randf_range(0.0, 10.0)));
         /* PipePress i HighPipePress musza byc skopiowane */
         p_mover->HighPipePress = pipe_pressure_max;
         p_mover->LowPipePress = pipe_pressure_min;

@@ -104,6 +104,10 @@ For in-game logging, use `GameLog` but be aware that it'll only post log message
 
 * MAKE_* macros / macros.hpp are deprecated. Use straight and readable declarations.  
 
+### Random generation
+
+* **Do not use C/C++ native random generation (`std::rand`, `random`, etc.). Always use Godot's built-in functions such as `godot::UtilityFunctions::randf_range`, `godot::UtilityFunctions::randi`, etc.**
+
 ## Addon architecture rules
 
 * use sub-plugins https://docs.godotengine.org/en/stable/tutorials/plugins/editor/making_plugins.html#using-sub-plugins

@@ -1896,6 +1896,7 @@ func _build_array_mesh(
 
     var mesh: ArrayMesh = ArrayMesh.new()
     mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+    mesh.regen_normal_maps()
     return mesh
 
 

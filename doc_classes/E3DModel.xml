@@ -13,14 +13,14 @@
 			<return type="E3DSubModel" />
 			<param index="0" name="p_path" type="NodePath" />
 			<description>
-				Finds and returns E3DSubModel by NodePath
+				Finds and returns [E3DSubModel] by [NodePath]
 			</description>
 		</method>
 		<method name="get_node_or_null" qualifiers="const">
 			<return type="E3DSubModel" />
 			<param index="0" name="p_path" type="NodePath" />
 			<description>
-				Finds and returns E3DSubModel by NodePath. Returns null without an error, when not found. 
+				Finds and returns [E3DSubModel] by [NodePath]. Returns null without an error, when not found.
 			</description>
 		</method>
 		<method name="register_light">

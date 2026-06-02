@@ -107,7 +107,7 @@ FILE(GLOB_RECURSE DOC_XML LIST_DIRECTORIES NO CONFIGURE_DEPENDS "${PROJECT_SOURC
 
 IF (DOC_XML)
     IF (GODOTCPP_TARGET MATCHES "editor|template_debug")
-        TARGET_DOC_SOURCES(${LIBNAME} ${DOC_XML})
+        TARGET_DOC_SOURCES(${LIBNAME} "${DOC_XML}") #Must be in order for Godot to properly read all the documentation
     ENDIF ()
 ENDIF ()
 

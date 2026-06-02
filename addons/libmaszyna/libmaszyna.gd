@@ -12,7 +12,6 @@ var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.
 var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
 
 func _enable_plugin():
-    add_autoload_singleton("MaszynaEnvironment", "res://addons/libmaszyna/environment/maszyna_environment.gd")
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
     add_autoload_singleton("MaterialManager", "res://addons/libmaszyna/materials/material_manager.gd")
     add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
@@ -72,7 +71,6 @@ func _disable_plugin():
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
     remove_autoload_singleton("Console")
-    remove_autoload_singleton("MaszynaEnvironment")
 
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)

@@ -1,8 +1,5 @@
 extends Node3D
 
-@onready var world = $WorldEnvironment
-
-
 func _ready():
     var menu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child in $ControlWindows.get_children():

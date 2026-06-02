@@ -79,8 +79,8 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
 func create(
     mmat: MaszynaMaterial,
     model_path: String = "",
-    season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER,
-    weather: MaterialManager.Weather = MaterialManager.Weather.WEATHER_CLEAR,
+    season: MaszynaEnvironment.Season = MaszynaEnvironment.Season.SEASON_SUMMER,
+    weather: MaszynaEnvironment.Weather = MaszynaEnvironment.Weather.WEATHER_CLEAR,
     options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> Material:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)
@@ -102,8 +102,8 @@ func apply(
     material: Material,
     mmat: MaszynaMaterial,
     model_path: String,
-    season: MaterialManager.Season,
-    weather: MaterialManager.Weather,
+    season: MaszynaEnvironment.Season,
+    weather: MaszynaEnvironment.Weather,
     options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> void:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)

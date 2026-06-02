@@ -97,7 +97,7 @@ func _build_library(text: String) -> Node:
     var f := FileAccess.open(_temp_nodebank_path, FileAccess.WRITE)
     f.store_string(text)
     f.close()
-    
+
     var scene: PackedScene = builder.call("load_library", true) as PackedScene
     var root: Node = scene.instantiate()
     library_roots.append(root)

@@ -32,7 +32,7 @@ class_name MaszynaEnvironmentNode
             year = x
             _dirty_lat_lng = true
 
-@export var weather: MaterialManager.Weather = MaterialManager.Weather.WEATHER_CLEAR:
+@export var weather: MaszynaEnvironment.Weather = MaszynaEnvironment.Weather.WEATHER_CLEAR:
     set(x):
         if not x == weather:
             weather = x
@@ -72,7 +72,7 @@ class_name MaszynaEnvironmentNode
         time_of_day_path = x
         update()
 
-var season: MaterialManager.Season = MaterialManager.Season.SEASON_SUMMER:
+var season: MaszynaEnvironment.Season = MaszynaEnvironment.Season.SEASON_SUMMER:
     set(x):
         if not x == season:
             season = x
@@ -85,6 +85,33 @@ var _dirty_lat_lng: bool = false
 func _ready() -> void:
     update()
 
+
+func set_date(next_year: int, next_month: int, next_day: int) -> void:
+    if _time_of_day:
+        # The order of date initialization matters!
+        # TimeOfDay from Sky3D addon implements some cleanups in setters
+        # but it should expose public interface to set full date instead.
+
+        _time_of_day.year = next_year    # first, update the year
+        _time_of_day.month = next_month  # second, update the month
+        _time_of_day.day = next_day      # then update the day
+
+        # because date could be cleaned (i.e. 31.04.2025 -> 1.05.2025)
+        # we shold fix should store here fixed properties
+        year = _time_of_day.year
+        month = _time_of_day.month
+        day = _time_of_day.day
+    else:
+        # FIXME: the date logic should be implemented in our code.
+        # We should not rely on the addon!
+        #
+        # This will be probably addressed later in Simulation/Environment server
+
+        year = next_year
+        month = next_month
+        day = next_day
+
+
 func _process(delta: float) -> void:
     if _dirty_lat_lng:
         _dirty_lat_lng = false
@@ -95,10 +122,8 @@ func _process(delta: float) -> void:
             if use_system_time:
                 _time_of_day.set_from_datetime_dict(Time.get_datetime_dict_from_system())
             else:
+                set_date(year, month, day)
                 _time_of_day.current_time = current_time
-                _time_of_day.day = day
-                _time_of_day.month = month
-                _time_of_day.year = year
 
             day = _time_of_day.day
             month = _time_of_day.month
@@ -118,17 +143,17 @@ func update() -> void:
             _time_of_day.update_interval = _time_of_day.minutes_per_day * 0.001
             _dirty_lat_lng = true
 
-func _season_from_year_day(year_day: int) -> MaterialManager.Season:
+func _season_from_year_day(year_day: int) -> MaszynaEnvironment.Season:
     # thresholds are taken from the original simulator code
     if year_day <= 65:
-        return MaterialManager.Season.SEASON_WINTER
+        return MaszynaEnvironment.Season.SEASON_WINTER
     if year_day <= 158:
-        return MaterialManager.Season.SEASON_SPRING
+        return MaszynaEnvironment.Season.SEASON_SPRING
     if year_day <= 252:
-        return MaterialManager.Season.SEASON_SUMMER
+        return MaszynaEnvironment.Season.SEASON_SUMMER
     if year_day <= 341:
-        return MaterialManager.Season.SEASON_AUTUMN
-    return MaterialManager.Season.SEASON_WINTER
+        return MaszynaEnvironment.Season.SEASON_AUTUMN
+    return MaszynaEnvironment.Season.SEASON_WINTER
 
 func _get_year_day(current_day: int, current_month: int, current_year: int) -> int:
     var month_lengths: Array[int] = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]

@@ -27,6 +27,4 @@ namespace libmaszyna::utils {
 
         return static_cast<Type>((p_first * (1.0 - p_factor)) + (p_second * p_factor));
     }
-
-    double random(double p_a, double p_b);
 } // namespace libmaszyna::utils

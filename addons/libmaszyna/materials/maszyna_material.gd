@@ -13,18 +13,18 @@ const WEATHER_RAIN_KEY = "rain"
 const WEATHER_SNOW_KEY = "snow"
 
 
-static var SEASONS_MAP: Dictionary[MaterialManager.Season, String] = {
-    MaterialManager.Season.SEASON_WINTER: SEASON_WINTER_KEY,
-    MaterialManager.Season.SEASON_SPRING: SEASON_SPRING_KEY,
-    MaterialManager.Season.SEASON_SUMMER: SEASON_SUMMER_KEY,
-    MaterialManager.Season.SEASON_AUTUMN: SEASON_AUTUMN_KEY,
+static var SEASONS_MAP: Dictionary[MaszynaEnvironment.Season, String] = {
+    MaszynaEnvironment.Season.SEASON_WINTER: SEASON_WINTER_KEY,
+    MaszynaEnvironment.Season.SEASON_SPRING: SEASON_SPRING_KEY,
+    MaszynaEnvironment.Season.SEASON_SUMMER: SEASON_SUMMER_KEY,
+    MaszynaEnvironment.Season.SEASON_AUTUMN: SEASON_AUTUMN_KEY,
 }
 
-static var WEATHER_MAP: Dictionary[MaterialManager.Weather, String] = {
-    MaterialManager.Weather.WEATHER_CLEAR: WEATHER_CLEAR_KEY,
-    MaterialManager.Weather.WEATHER_CLOUDY: WEATHER_CLOUDY_KEY,
-    MaterialManager.Weather.WEATHER_RAIN: WEATHER_RAIN_KEY,
-    MaterialManager.Weather.WEATHER_SNOW: WEATHER_SNOW_KEY,
+static var WEATHER_MAP: Dictionary[MaszynaEnvironment.Weather, String] = {
+    MaszynaEnvironment.Weather.WEATHER_CLEAR: WEATHER_CLEAR_KEY,
+    MaszynaEnvironment.Weather.WEATHER_CLOUDY: WEATHER_CLOUDY_KEY,
+    MaszynaEnvironment.Weather.WEATHER_RAIN: WEATHER_RAIN_KEY,
+    MaszynaEnvironment.Weather.WEATHER_SNOW: WEATHER_SNOW_KEY,
 }
 
 class MaszynaMaterialVariant extends RefCounted:
@@ -108,7 +108,7 @@ var default: MaszynaMaterialVariant = MaszynaMaterialVariant.new()
 var variants: Dictionary[String, MaszynaMaterialVariant] = {}
 
 
-func get_variant(season: MaterialManager.Season, weather: MaterialManager.Weather) -> MaszynaMaterialVariant:
+func get_variant(season: MaszynaEnvironment.Season, weather: MaszynaEnvironment.Weather) -> MaszynaMaterialVariant:
     var output: MaszynaMaterialVariant = default.duplicate()
     var season_key := SEASONS_MAP[season]
     if season_key in variants:

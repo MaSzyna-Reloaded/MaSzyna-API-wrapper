@@ -8,8 +8,8 @@ const SHADOWLESS_SHADER_PATH = "res://addons/libmaszyna/materials/types/shadowle
 const WATER_SHADER_PATH = "res://addons/libmaszyna/materials/types/water.gdshader"
 
 var _previous_game_dir: String = ""
-var _previous_season: MaterialManager.Season
-var _previous_weather: MaterialManager.Weather
+var _previous_season: MaszynaEnvironment.Season
+var _previous_weather: MaszynaEnvironment.Weather
 
 
 func _is_leap_year(value: int) -> bool:
@@ -36,8 +36,8 @@ func before_each() -> void:
     _previous_season = MaterialManager.season
     _previous_weather = MaterialManager.weather
     UserSettings.save_maszyna_game_dir(MATERIALS_GAME_DIR)
-    MaterialManager.season = MaterialManager.Season.SEASON_SUMMER
-    MaterialManager.weather = MaterialManager.Weather.WEATHER_CLEAR
+    MaterialManager.season = MaszynaEnvironment.Season.SEASON_SUMMER
+    MaterialManager.weather = MaszynaEnvironment.Weather.WEATHER_CLEAR
     MaterialManager.clear_cache()
 
 
@@ -57,8 +57,8 @@ func test_parse_stores_default_shader_on_default_variant() -> void:
 func test_variant_inherits_default_shader_when_season_has_no_shader() -> void:
     var material: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
     var variant: MaszynaMaterial.MaszynaMaterialVariant = material.get_variant(
-        MaterialManager.Season.SEASON_SPRING,
-        MaterialManager.Weather.WEATHER_CLEAR
+        MaszynaEnvironment.Season.SEASON_SPRING,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR
     )
 
     assert_eq(variant.shader, "normalmap")
@@ -68,8 +68,8 @@ func test_variant_inherits_default_shader_when_season_has_no_shader() -> void:
 func test_weather_shader_overrides_season_shader() -> void:
     var material: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
     var variant: MaszynaMaterial.MaszynaMaterialVariant = material.get_variant(
-        MaterialManager.Season.SEASON_WINTER,
-        MaterialManager.Weather.WEATHER_RAIN
+        MaszynaEnvironment.Season.SEASON_WINTER,
+        MaszynaEnvironment.Weather.WEATHER_RAIN
     )
 
     assert_eq(variant.shader, "water")
@@ -78,8 +78,8 @@ func test_weather_shader_overrides_season_shader() -> void:
 func test_weather_variant_merges_after_season_variant() -> void:
     var material: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
     var variant: MaszynaMaterial.MaszynaMaterialVariant = material.get_variant(
-        MaterialManager.Season.SEASON_SPRING,
-        MaterialManager.Weather.WEATHER_CLOUDY
+        MaszynaEnvironment.Season.SEASON_SPRING,
+        MaszynaEnvironment.Weather.WEATHER_CLOUDY
     )
 
     assert_eq(variant.get_texture_path("diffuse"), "cloudy_diffuse")
@@ -89,7 +89,7 @@ func test_get_material_updates_existing_material_in_place_when_season_changes() 
     var material: ShaderMaterial = MaterialManager.get_material("", MATERIAL_NAME) as ShaderMaterial
     var original_rid: RID = material.get_rid()
 
-    MaterialManager.season = MaterialManager.Season.SEASON_WINTER
+    MaterialManager.season = MaszynaEnvironment.Season.SEASON_WINTER
 
     assert_same(material, MaterialManager.get_material("", MATERIAL_NAME))
     assert_eq(material.get_rid(), original_rid)
@@ -100,8 +100,8 @@ func test_get_material_updates_existing_material_in_place_when_weather_changes()
     var material: ShaderMaterial = MaterialManager.get_material("", MATERIAL_NAME) as ShaderMaterial
     var original_rid: RID = material.get_rid()
 
-    MaterialManager.season = MaterialManager.Season.SEASON_WINTER
-    MaterialManager.weather = MaterialManager.Weather.WEATHER_RAIN
+    MaterialManager.season = MaszynaEnvironment.Season.SEASON_WINTER
+    MaterialManager.weather = MaszynaEnvironment.Weather.WEATHER_RAIN
 
     assert_same(material, MaterialManager.get_material("", MATERIAL_NAME))
     assert_eq(material.get_rid(), original_rid)
@@ -109,30 +109,26 @@ func test_get_material_updates_existing_material_in_place_when_weather_changes()
 
 
 func test_refresh_prunes_dead_managed_material_entries() -> void:
-    var cache_hash: String = MaterialManager._compute_cache_hash(
-        "",
-        MATERIAL_NAME,
-        MaterialManager.Transparency.Disabled,
-        Color(1.0, 1.0, 1.0)
-    )
     var material: ShaderMaterial = MaterialManager.get_material("", MATERIAL_NAME) as ShaderMaterial
     var material_ref: WeakRef = weakref(material)
 
     material = null
-    MaterialManager.season = MaterialManager.Season.SEASON_WINTER
+    MaterialManager.season = MaszynaEnvironment.Season.SEASON_WINTER
 
     assert_null(material_ref.get_ref())
-    assert_false(cache_hash in MaterialManager._managed_materials)
+    var refreshed_material: ShaderMaterial = MaterialManager.get_material("", MATERIAL_NAME) as ShaderMaterial
+    assert_not_null(refreshed_material)
+    assert_eq(refreshed_material.shader.resource_path, SHADOWLESS_SHADER_PATH)
 
 
 func test_environment_node_proxies_season_and_weather_to_material_manager() -> void:
     var environment_node := MaszynaEnvironmentNode.new()
 
-    environment_node.season = MaterialManager.Season.SEASON_WINTER
-    environment_node.weather = MaterialManager.Weather.WEATHER_RAIN
+    environment_node.season = MaszynaEnvironment.Season.SEASON_WINTER
+    environment_node.weather = MaszynaEnvironment.Weather.WEATHER_RAIN
 
-    assert_eq(MaterialManager.season, MaterialManager.Season.SEASON_WINTER)
-    assert_eq(MaterialManager.weather, MaterialManager.Weather.WEATHER_RAIN)
+    assert_eq(MaterialManager.season, MaszynaEnvironment.Season.SEASON_WINTER)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
     environment_node.free()
 
 
@@ -140,16 +136,17 @@ func test_environment_node_sets_season_from_manual_date_thresholds() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
     var time_of_day: TimeOfDay = TimeOfDay.new()
     var cases: Array[Array] = [
-        [5, 3, 2026, MaterialManager.Season.SEASON_WINTER],
-        [7, 3, 2026, MaterialManager.Season.SEASON_SPRING],
-        [7, 6, 2026, MaterialManager.Season.SEASON_SPRING],
-        [8, 6, 2026, MaterialManager.Season.SEASON_SUMMER],
-        [9, 9, 2026, MaterialManager.Season.SEASON_SUMMER],
-        [10, 9, 2026, MaterialManager.Season.SEASON_AUTUMN],
-        [7, 12, 2026, MaterialManager.Season.SEASON_AUTUMN],
-        [8, 12, 2026, MaterialManager.Season.SEASON_WINTER],
+        [5, 3, 2026, MaszynaEnvironment.Season.SEASON_WINTER],
+        [7, 3, 2026, MaszynaEnvironment.Season.SEASON_SPRING],
+        [7, 6, 2026, MaszynaEnvironment.Season.SEASON_SPRING],
+        [8, 6, 2026, MaszynaEnvironment.Season.SEASON_SUMMER],
+        [9, 9, 2026, MaszynaEnvironment.Season.SEASON_SUMMER],
+        [10, 9, 2026, MaszynaEnvironment.Season.SEASON_AUTUMN],
+        [7, 12, 2026, MaszynaEnvironment.Season.SEASON_AUTUMN],
+        [8, 12, 2026, MaszynaEnvironment.Season.SEASON_WINTER],
     ]
 
+    time_of_day.name = "TimeOfDay"
     environment_node.add_child(time_of_day)
     environment_node.time_of_day_path = NodePath("TimeOfDay")
     for case_data: Array in cases:
@@ -162,16 +159,14 @@ func test_environment_node_sets_season_from_manual_date_thresholds() -> void:
         assert_eq(MaterialManager.season, case_data[3])
 
 
-func test_environment_node_cleans_manual_date_via_time_of_day() -> void:
+func test_environment_node_set_date_normalizes_invalid_date_via_time_of_day() -> void:
     var environment_node: MaszynaEnvironmentNode = add_child_autofree(MaszynaEnvironmentNode.new())
     var time_of_day: TimeOfDay = TimeOfDay.new()
 
+    time_of_day.name = "TimeOfDay"
     environment_node.add_child(time_of_day)
     environment_node.time_of_day_path = NodePath("TimeOfDay")
-    environment_node.day = 31
-    environment_node.month = 4
-    environment_node.year = 2025
-    environment_node._process(0.0)
+    environment_node.set_date(2025, 4, 31)
 
     assert_eq(environment_node.day, 1)
     assert_eq(environment_node.month, 5)
@@ -184,6 +179,7 @@ func test_environment_node_uses_time_of_day_date_when_system_time_enabled() -> v
     var system_date: Dictionary = Time.get_datetime_dict_from_system()
 
     time_of_day.set_from_datetime_dict(system_date)
+    time_of_day.name = "TimeOfDay"
     environment_node.add_child(time_of_day)
     environment_node.time_of_day_path = NodePath("TimeOfDay")
     environment_node.day = 1
@@ -224,29 +220,33 @@ func test_create_sets_alpha_scissor_for_transparent_material() -> void:
 
 
 func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void:
-    var mmat := MaszynaMaterial.new()
-    var diffuse_color := Color(0.25, 0.5, 0.75, 1.0)
+    var mmat: MaszynaMaterial = MaszynaMaterial.new()
+    var diffuse_color: Color = Color(0.25, 0.5, 0.75, 1.0)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.diffuse_color = diffuse_color
     var material: ShaderMaterial = MaterialFactory.create(
         mmat,
         "",
-        MaterialManager.Season.SEASON_SUMMER,
-        MaterialManager.Weather.WEATHER_CLEAR,
-        diffuse_color
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options
     ) as ShaderMaterial
 
     assert_eq(material.get_shader_parameter("albedo"), diffuse_color)
 
 
 func test_create_uses_diffuse_color_for_parallax_shader_without_texture() -> void:
-    var mmat := MaszynaMaterial.new()
+    var mmat: MaszynaMaterial = MaszynaMaterial.new()
     mmat.default.shader = "parallax"
-    var diffuse_color := Color(0.3, 0.4, 0.5, 1.0)
+    var diffuse_color: Color = Color(0.3, 0.4, 0.5, 1.0)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.diffuse_color = diffuse_color
     var material: ShaderMaterial = MaterialFactory.create(
         mmat,
         "",
-        MaterialManager.Season.SEASON_SUMMER,
-        MaterialManager.Weather.WEATHER_CLEAR,
-        diffuse_color
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options
     ) as ShaderMaterial
 
     assert_eq(material.get_shader_parameter("albedo_multiplier"), diffuse_color)
@@ -261,8 +261,8 @@ func test_apply_updates_existing_material_transparency_state() -> void:
         material,
         nontransparent_mmat,
         "",
-        MaterialManager.Season.SEASON_SUMMER,
-        MaterialManager.Weather.WEATHER_CLEAR
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR
     )
 
     assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.Disabled)

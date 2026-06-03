@@ -1,4 +1,4 @@
-[gd_resource type="ShaderMaterial" format=3 uid="uid://dgq4ovg7dwhrv"]
+[gd_resource type="ShaderMaterial" format=3]
 
 [ext_resource type="Shader" uid="uid://benopl6slojhf" path="res://addons/libmaszyna/materials/types/sunlessnormalmap.gdshader" id="1_toujo"]
 

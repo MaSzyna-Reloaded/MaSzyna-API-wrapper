@@ -1,9 +1,6 @@
 @tool
 extends Node
 
-enum Weather {WEATHER_CLEAR, WEATHER_CLOUDY, WEATHER_RAIN, WEATHER_SNOW}
-enum Season {SEASON_WINTER, SEASON_SPRING, SEASON_SUMMER, SEASON_AUTUMN}
-
 static var UNKNOWN_MATERIAL = preload("res://addons/libmaszyna/materials/unknown.material")
 static var UNKNOWN_TEXTURE = preload("res://addons/libmaszyna/materials/missing_texture.png")
 
@@ -22,13 +19,13 @@ class MaterialOptions:
     var alpha_scissor_threshold: float = 0.5
 
 
-@export var season: Season = Season.SEASON_SUMMER:
+@export var season := MaszynaEnvironment.Season.SEASON_SUMMER:
     set(x):
         if not x == season:
             season = x
             _refresh_managed_materials()
 
-@export var weather: Weather = Weather.WEATHER_CLEAR:
+@export var weather := MaszynaEnvironment.Weather.WEATHER_CLEAR:
     set(x):
         if not x == weather:
             weather = x

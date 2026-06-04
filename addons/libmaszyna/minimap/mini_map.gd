@@ -138,8 +138,8 @@ func _draw() -> void:
 
     for rid in _cached_tracks:
         var is_switch: bool = TrackManager.track_is_switch(rid)
-        var curve1: MaszynaTrackCurve = TrackManager.track_get_curve1(rid)
-        var curve2: MaszynaTrackCurve = TrackManager.track_get_curve2(rid)
+        var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.SwitchTrack.TRACK_COMMON)
+        var curve2: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
         var switch_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(rid)
         var track_name: String = TrackManager.track_get_name(rid)
 

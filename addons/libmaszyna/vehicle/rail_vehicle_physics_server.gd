@@ -117,43 +117,44 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
         return
 
     var current_track_rid: RID = state.track_rid
-    var current_track_offset: float = clampf(state.track_offset, 0.0, TrackManager.track_get_length(state.track_rid, state.switch_track))
-    var current_track_direction: TrackManager.Direction = state.track_direction
     var current_switch_track: TrackManager.SwitchTrack = state.switch_track
+    var current_track_offset: float = clampf(state.track_offset, 0.0, TrackManager.track_get_length(current_track_rid, current_switch_track))
+    var current_track_direction: TrackManager.Direction = state.track_direction
     var remaining: float = absf(distance)
     var request_sign: float = -1.0 if distance < 0.0 else 1.0
+    # Convert movement relative to the vehicle front into curve offset movement.
+    # Positive sign moves toward the branch end, negative toward the branch start.
     var movement_sign: float = (
         -1.0 if current_track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
     ) * request_sign
-    var hop_count: int = 0
 
-    while remaining > 0.0001 and hop_count < 1024:
-        hop_count += 1
+    while remaining > 0.0001:
         if not TrackManager.track_exists(current_track_rid):
             break
-
         var current_length: float = TrackManager.track_get_length(current_track_rid, current_switch_track)
         if current_length <= 0.0:
             break
 
+        # Find the endpoint this movement heads toward on the occupied branch.
         var distance_to_endpoint: float = current_length - current_track_offset if movement_sign > 0.0 else current_track_offset
-        var endpoint_index: int = TrackManager.EndpointIndex.CURVE1_P2 if movement_sign > 0.0 else TrackManager.EndpointIndex.CURVE1_P1
+        var endpoint_index: int
         if TrackManager.track_is_switch(current_track_rid):
             endpoint_index = TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track) \
                 if movement_sign > 0.0 else TrackManager.switch_get_branch_start_endpoint(current_track_rid, current_switch_track)
-        var requested_distance: float = minf(remaining, distance_to_endpoint)
-        var next_offset_on_track: float = current_track_offset + movement_sign * requested_distance
-
-        if TrackManager.track_is_switch(current_track_rid):
+            # If the vehicle is reversing through a switch blade on a non-active
+            # branch, keep the branch it already occupies and force the switch back.
             var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(current_track_rid)
             if not active_track == current_switch_track:
-                var blade_boundary_offset: float = TrackManager.switch_get_blade_boundary_offset(
-                    current_track_rid,
-                    current_switch_track
-                )
+                var requested_distance: float = minf(remaining, distance_to_endpoint)
+                var next_offset_on_track: float = current_track_offset + movement_sign * requested_distance
+                var blade_boundary_offset: float = TrackManager.switch_get_blade_boundary_offset(current_track_rid, current_switch_track)
                 if current_track_offset > blade_boundary_offset and next_offset_on_track <= blade_boundary_offset:
                     TrackManager.switch_set_active_track(current_track_rid, current_switch_track)
+        else:
+            endpoint_index = TrackManager.EndpointIndex.CURVE1_P2 if movement_sign > 0.0 else TrackManager.EndpointIndex.CURVE1_P1
 
+        # Hot path: normal simulation steps stay within the current branch and
+        # return before asking topology for the next track.
         if remaining <= distance_to_endpoint:
             current_track_offset += movement_sign * remaining
             remaining = 0.0
@@ -162,40 +163,30 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
         current_track_offset = current_length if movement_sign > 0.0 else 0.0
         remaining -= distance_to_endpoint
 
-        var connection: TrackManager.EndpointRef = _get_motion_connection(
-            current_track_rid,
-            endpoint_index
-        )
+        # Large init/debug jumps cross endpoints by following the single
+        # unambiguous connection. Ambiguous nodes stop at the endpoint.
+        var connection: TrackManager.EndpointRef = _get_motion_connection(current_track_rid, endpoint_index)
         if not connection:
             break
 
-        var next_track_rid: RID = connection.track_rid
-        var next_endpoint_index: int = connection.endpoint_index
-        var next_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
-        if TrackManager.track_is_switch(next_track_rid):
-            next_switch_track = TrackManager.switch_get_endpoint_branch(next_track_rid, next_endpoint_index)
-        var next_movement_sign: float = 0.0
-        var next_start_endpoint: int = TrackManager.EndpointIndex.CURVE1_P1
-        var next_end_endpoint: int = TrackManager.EndpointIndex.CURVE1_P2
-        if TrackManager.track_is_switch(next_track_rid):
-            next_start_endpoint = TrackManager.switch_get_branch_start_endpoint(next_track_rid, next_switch_track)
-            next_end_endpoint = TrackManager.switch_get_branch_end_endpoint(next_track_rid, next_switch_track)
-        if next_endpoint_index == next_start_endpoint:
-            next_movement_sign = 1.0
-        elif next_endpoint_index == next_end_endpoint:
-            next_movement_sign = -1.0
-        if is_zero_approx(next_movement_sign):
-            break
-
-        current_track_rid = next_track_rid
-        current_switch_track = next_switch_track
-        current_track_offset = 0.0 if next_movement_sign > 0.0 else TrackManager.track_get_length(current_track_rid, current_switch_track)
+        current_track_rid = connection.track_rid
+        # The connection endpoint is where we enter the next track. For switches,
+        # that endpoint also tells which branch the vehicle now occupies.
+        if TrackManager.track_is_switch(current_track_rid):
+            current_switch_track = TrackManager.switch_get_endpoint_branch(current_track_rid, connection.endpoint_index)
+            var entered_at_end: bool = connection.endpoint_index == TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track)
+            movement_sign = -1.0 if entered_at_end else 1.0
+        else:
+            current_switch_track = TrackManager.SwitchTrack.TRACK_COMMON
+            movement_sign = -1.0 if connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2 else 1.0
+        # Entering at branch start means offset grows; entering at branch end
+        # means offset decreases from the branch length.
+        current_track_offset = 0.0 if movement_sign > 0.0 else TrackManager.track_get_length(current_track_rid, current_switch_track)
         current_track_direction = (
             TrackManager.Direction.DIRECTION_NORMAL
-            if next_movement_sign * request_sign < 0.0
+            if movement_sign * request_sign < 0.0
             else TrackManager.Direction.DIRECTION_REVERSED
         )
-        movement_sign = next_movement_sign
 
     state.track_rid = current_track_rid
     state.track_offset = current_track_offset
@@ -268,21 +259,28 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
         )
         var candidate_forced_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
         var has_candidate_forced_switch_track: bool = false
+
         if TrackManager.track_is_switch(raw_connection.track_rid):
             var common_endpoints: Array[TrackManager.EndpointIndex] = TrackManager.switch_get_common_endpoints(raw_connection.track_rid)
-            var is_common_endpoint: bool = common_endpoints.has(raw_connection.endpoint_index)
-            if is_common_endpoint:
-                candidate_connection.endpoint_index = TrackManager.switch_get_branch_start_endpoint(
-                    raw_connection.track_rid,
-                    TrackManager.switch_get_active_track(raw_connection.track_rid)
-                )
+            if common_endpoints.has(raw_connection.endpoint_index):
+                # Entering from the common point follows whichever branch is active;
+                # remap the shared endpoint to the active branch endpoint that
+                # represents the same physical point.
+                var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(raw_connection.track_rid)
+                var branch_start_endpoint: int = TrackManager.switch_get_branch_start_endpoint(raw_connection.track_rid, active_track)
+                candidate_connection.endpoint_index = branch_start_endpoint if common_endpoints.has(branch_start_endpoint) else TrackManager.switch_get_branch_end_endpoint(raw_connection.track_rid, active_track)
             else:
+                # Entering from a branch side physically selects that branch, even
+                # when the switch is currently set to another route. The actual
+                # switch state is forced only after the connection is proven unique.
                 candidate_forced_switch_track = TrackManager.switch_get_endpoint_branch(
                     raw_connection.track_rid,
                     raw_connection.endpoint_index
                 )
                 has_candidate_forced_switch_track = true
 
+        # Discard endpoints that cannot be used for motion on the selected route.
+        # Branch-side switch entry is allowed because it will force that branch.
         var is_motion_accessible: bool = false
         if TrackManager.track_is_switch(candidate_connection.track_rid):
             var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(candidate_connection.track_rid)
@@ -293,20 +291,31 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
                 or candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2
         if not is_motion_accessible and not has_candidate_forced_switch_track:
             continue
+
         if not unique_connection:
             unique_connection = candidate_connection
             unique_forced_switch_track = candidate_forced_switch_track
             has_unique_forced_switch_track = has_candidate_forced_switch_track
             continue
-        if not unique_connection.track_rid == candidate_connection.track_rid \
-        or not unique_connection.endpoint_index == candidate_connection.endpoint_index \
-        or not has_unique_forced_switch_track == has_candidate_forced_switch_track \
-        or (has_unique_forced_switch_track and not unique_forced_switch_track == candidate_forced_switch_track):
+
+        # More than one different usable target means the node is ambiguous.
+        # Identical candidates can happen at switch common points and still count
+        # as one route.
+        var is_same_candidate: bool = unique_connection.track_rid == candidate_connection.track_rid \
+            and unique_connection.endpoint_index == candidate_connection.endpoint_index \
+            and has_unique_forced_switch_track == has_candidate_forced_switch_track \
+            and (
+                not has_unique_forced_switch_track
+                or unique_forced_switch_track == candidate_forced_switch_track
+            )
+        if not is_same_candidate:
             return null
 
     if not unique_connection:
         return null
     if has_unique_forced_switch_track:
+        # Force branch-side switch entry only after ambiguity checks, so an
+        # ambiguous topology node cannot change switch state as a side effect.
         if not TrackManager.switch_get_active_track(unique_connection.track_rid) == unique_forced_switch_track:
             TrackManager.switch_set_active_track(unique_connection.track_rid, unique_forced_switch_track)
     return unique_connection

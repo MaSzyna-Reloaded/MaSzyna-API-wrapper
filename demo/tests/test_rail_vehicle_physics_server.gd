@@ -345,6 +345,75 @@ func test_vehicle_move_forces_switch_diverging_when_entering_from_diverging_bran
     )
 
 
+func test_vehicle_move_large_offset_forces_switch_when_entering_from_diverging_branch() -> void:
+    var start_rid: RID = _register_track(
+        _curve(Vector3(20.0, 0.0, 20.0), Vector3(10.0, 0.0, 10.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    var switch_rid: RID = _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
+        TrackManager.TrackType.TRACK_SWITCH
+    )
+    var next_rid: RID = _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(-10.0, 0.0, 0.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.topology_rebuild()
+    var vehicle_rid: RID = _create_vehicle()
+
+    RailVehiclePhysicsServer.vehicle_set_track(
+        vehicle_rid,
+        start_rid,
+        12.0,
+        TrackManager.Direction.DIRECTION_REVERSED
+    )
+    RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 25.0)
+
+    var expected_next_offset: float = 25.0 \
+        - (TrackManager.track_get_length(start_rid) - 12.0) \
+        - TrackManager.track_get_length(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.SwitchTrack.TRACK_DIVERGING)
+    _assert_vector_eq(
+        RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
+        _track_position(next_rid, expected_next_offset),
+        "large diverging-side entry should force diverging without incremental simulation"
+    )
+
+
+func test_vehicle_move_from_common_point_uses_active_switch_branch() -> void:
+    var start_rid: RID = _register_track(
+        _curve(Vector3(-10.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    var switch_rid: RID = _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
+        TrackManager.TrackType.TRACK_SWITCH
+    )
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    TrackManager.topology_rebuild()
+    var vehicle_rid: RID = _create_vehicle()
+
+    RailVehiclePhysicsServer.vehicle_set_track(
+        vehicle_rid,
+        start_rid,
+        8.0,
+        TrackManager.Direction.DIRECTION_REVERSED
+    )
+    RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 15.0)
+
+    _assert_vector_eq(
+        RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
+        _track_position(switch_rid, 13.0),
+        "common-point entry should follow the active diverging branch"
+    )
+
+
 func _create_vehicle() -> RID:
     var vehicle_rid: RID = RailVehiclePhysicsServer.vehicle_create()
     created_vehicle_rids.append(vehicle_rid)

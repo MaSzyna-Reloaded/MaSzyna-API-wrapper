@@ -127,38 +127,20 @@ class TrackSegment:
     ]
     var _cached_endpoints: Array[Vector3]
 
-    ## Returns length of the active branch.
-    func get_length() -> float:
-        if curve2 and active_track == SwitchTrack.TRACK_DIVERGING:
-            return length2
-        return length1
-
-    ## Returns length of the selected switch branch.
-    func switch_track_get_length(switch_track: int) -> float:
+    ## Returns length of the selected branch.
+    func get_length(switch_track: SwitchTrack) -> float:
         if switch_track == SwitchTrack.TRACK_DIVERGING and curve2:
             return length2
         return length1
 
-    ## Returns curve of the active branch.
-    func get_curve() -> MaszynaTrackCurve:
-        if curve2 and active_track == SwitchTrack.TRACK_DIVERGING:
-            return curve2
-        return curve1
-
-    ## Returns curve of the selected switch branch.
-    func switch_track_get_curve(switch_track: int) -> MaszynaTrackCurve:
+    ## Returns curve of the selected branch.
+    func get_curve(switch_track: SwitchTrack) -> MaszynaTrackCurve:
         if switch_track == SwitchTrack.TRACK_DIVERGING and curve2:
             return curve2
         return curve1
 
-    ## Returns baked curve of the active branch.
-    func get_domain_curve() -> Curve3D:
-        if domain_curve2 and active_track == SwitchTrack.TRACK_DIVERGING:
-            return domain_curve2
-        return domain_curve1
-
-    ## Returns baked curve of the selected switch branch.
-    func switch_track_get_domain_curve(switch_track: int) -> Curve3D:
+    ## Returns baked curve of the selected branch.
+    func get_domain_curve(switch_track: SwitchTrack) -> Curve3D:
         if switch_track == SwitchTrack.TRACK_DIVERGING and domain_curve2:
             return domain_curve2
         return domain_curve1
@@ -204,8 +186,8 @@ class TrackSegment:
 
     func update_switch_blade_boundary_offsets() -> void:
         switch_blade_boundary_offsets.clear()
-        switch_blade_boundary_offsets[SwitchTrack.TRACK_COMMON] = switch_track_get_length(SwitchTrack.TRACK_COMMON)
-        switch_blade_boundary_offsets[SwitchTrack.TRACK_DIVERGING] = switch_track_get_length(SwitchTrack.TRACK_DIVERGING)
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_COMMON] = get_length(SwitchTrack.TRACK_COMMON)
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_DIVERGING] = get_length(SwitchTrack.TRACK_DIVERGING)
         if not domain_curve1 or not domain_curve2:
             return
 
@@ -411,15 +393,15 @@ func track_get_length(
     if not track:
         return 0.0
     if track.type == TrackType.TRACK_SWITCH:
-        return track.switch_track_get_length(switch_track)
-    return track.get_length()
+        return track.get_length(switch_track)
+    return track.get_length(SwitchTrack.TRACK_COMMON)
 
 ## Returns length of the selected switch branch.
-func switch_track_get_length(track_rid: RID, switch_track: int) -> float:
+func switch_track_get_length(track_rid: RID, switch_track: SwitchTrack) -> float:
     var track: TrackSegment = _tracks.get(track_rid)
     if not track:
         return 0.0
-    return track.switch_track_get_length(switch_track)
+    return track.get_length(switch_track)
 
 ## Replaces the stored curves of a track.
 func track_update_curves(track_rid: RID, curve1: MaszynaTrackCurve, curve2: MaszynaTrackCurve) -> void:
@@ -534,7 +516,7 @@ func track_get_curve(
 ) -> MaszynaTrackCurve:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
-        return track.switch_track_get_curve(branch)
+        return track.get_curve(branch)
     push_error("Track RID is not valid: ", track_rid)
     return null
 
@@ -545,7 +527,7 @@ func track_get_domain_curve(
 ) -> Curve3D:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
-        return track.switch_track_get_domain_curve(branch)
+        return track.get_domain_curve(branch)
     push_error("Track RID is not valid: ", track_rid)
     return null
 
@@ -686,38 +668,6 @@ func track_get_name(track_rid: RID) -> String:
         return name if name else ""
     push_error("Track RID is not valid: ", track_rid)
     return ""
-
-## Returns the first curve of a track.
-func track_get_curve1(track_rid: RID) -> MaszynaTrackCurve:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if track:
-        return track.curve1
-    push_error("Track RID is not valid: ", track_rid)
-    return null
-
-## Returns the second curve of a track.
-func track_get_curve2(track_rid: RID) -> MaszynaTrackCurve:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if track:
-        return track.curve2
-    push_error("Track RID is not valid: ", track_rid)
-    return null
-
-## Returns the baked first curve of a track.
-func track_get_domain_curve1(track_rid: RID) -> Curve3D:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if track:
-        return track.domain_curve1
-    push_error("Track RID is not valid: ", track_rid)
-    return null
-
-## Returns the baked second curve of a track.
-func track_get_domain_curve2(track_rid: RID) -> Curve3D:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if track:
-        return track.domain_curve2
-    push_error("Track RID is not valid: ", track_rid)
-    return null
 
 ## Changes the active branch of a switch.
 func switch_set_active_track(track_rid: RID, active_track: SwitchTrack) -> void:

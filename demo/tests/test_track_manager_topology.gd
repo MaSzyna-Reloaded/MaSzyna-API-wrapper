@@ -85,9 +85,11 @@ func test_switch_branch_neighbors_with_common_end() -> void:
 
 
 func test_switch_metadata_getters_return_precomputed_values() -> void:
+    var common_curve: MaszynaTrackCurve = _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0))
+    var diverging_curve: MaszynaTrackCurve = _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0))
     var switch_rid: RID = _register_track(
-        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
-        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
+        common_curve,
+        diverging_curve,
         TrackManager.TrackType.TRACK_SWITCH
     )
 
@@ -106,10 +108,14 @@ func test_switch_metadata_getters_return_precomputed_values() -> void:
         TrackManager.switch_get_endpoint_branch(switch_rid, TrackManager.EndpointIndex.CURVE2_P2),
         TrackManager.SwitchTrack.TRACK_DIVERGING
     )
-    assert_eq(TrackManager.track_get_curve(switch_rid), TrackManager.track_get_curve1(switch_rid))
+    assert_eq(TrackManager.track_get_curve(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON), common_curve)
+    assert_eq(TrackManager.track_get_curve(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING), diverging_curve)
     assert_eq(
-        TrackManager.track_get_domain_curve(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING),
-        TrackManager.track_get_domain_curve2(switch_rid)
+        TrackManager.track_get_domain_curve(
+            switch_rid,
+            TrackManager.SwitchTrack.TRACK_DIVERGING
+        ).get_baked_length(),
+        TrackManager.track_get_length(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
     )
     assert_true(TrackManager.switch_get_blade_boundary_offset(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON) > 0.0)
 

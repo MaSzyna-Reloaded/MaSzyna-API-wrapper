@@ -266,13 +266,13 @@ func _get_track_data(track_rid: RID) -> TrackData:
     if not TrackManager.track_exists(track_rid):
         return track
 
-    var curve1: MaszynaTrackCurve = TrackManager.track_get_curve1(track_rid)
+    var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_COMMON)
     if not curve1:
         return track
 
     track.track_rid = track_rid
     track.curve1 = curve1
-    track.curve2 = TrackManager.track_get_curve2(track_rid)
+    track.curve2 = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
     track.width = TrackManager.track_get_width(track_rid)
     track.switch_common_endpoint_index = TrackManager.track_get_common_endpoint_index(track_rid)
     track.switch_f_offset1 = TrackManager.switch_get_f_offset1(track_rid)

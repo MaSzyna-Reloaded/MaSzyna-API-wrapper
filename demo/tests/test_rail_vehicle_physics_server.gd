@@ -337,7 +337,10 @@ func test_vehicle_move_forces_switch_diverging_when_entering_from_diverging_bran
     assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.SwitchTrack.TRACK_DIVERGING)
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        _track_position(switch_rid, TrackManager.track_get_length(switch_rid) - distance_on_switch),
+        _track_position(
+            switch_rid,
+            TrackManager.track_get_length(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING) - distance_on_switch
+        ),
         "diverging branch entry should force diverging switch route"
     )
 

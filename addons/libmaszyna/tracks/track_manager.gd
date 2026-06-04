@@ -310,11 +310,16 @@ func track_get_rid_by_name(name: String) -> RID:
         return UNDEFINED_TRACK
     return rid
 
-## Returns length of the active branch for [param track_rid].
-func track_get_length(track_rid: RID) -> float:
+## Returns length of the selected branch for [param track_rid].
+func track_get_length(
+    track_rid: RID,
+    switch_track: SwitchTrack = SwitchTrack.TRACK_COMMON,
+) -> float:
     var track: TrackSegment = _tracks.get(track_rid)
     if not track:
         return 0.0
+    if track.type == TrackType.TRACK_SWITCH:
+        return track.switch_track_get_length(switch_track)
     return track.get_length()
 
 ## Returns length of the selected switch branch.
@@ -542,6 +547,22 @@ func track_get_curve2(track_rid: RID) -> MaszynaTrackCurve:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
         return track.curve2
+    push_error("Track RID is not valid: ", track_rid)
+    return null
+
+## Returns the baked first curve of a track.
+func track_get_domain_curve1(track_rid: RID) -> Curve3D:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.domain_curve1
+    push_error("Track RID is not valid: ", track_rid)
+    return null
+
+## Returns the baked second curve of a track.
+func track_get_domain_curve2(track_rid: RID) -> Curve3D:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.domain_curve2
     push_error("Track RID is not valid: ", track_rid)
     return null
 

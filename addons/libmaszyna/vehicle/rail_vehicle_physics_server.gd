@@ -93,14 +93,14 @@ func vehicle_set_track(
     state.track_rid = track_rid
     state.track_direction = track_direction
     state.switch_track = TrackManager.switch_get_active_track(track_rid) if TrackManager.track_is_switch(track_rid) else TrackManager.SwitchTrack.TRACK_COMMON
-    state.track_offset = clampf(track_offset, 0.0, _get_track_length(track_rid, state.switch_track))
+    state.track_offset = clampf(track_offset, 0.0, TrackManager.track_get_length(track_rid, state.switch_track))
 
 
 func process_movement(vehicle_rid: RID, delta: float) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:
         return
-    if state.track_rid.is_valid() and not TrackManager.track_exists(state.track_rid):
+    if not state.track_rid == TrackManager.UNDEFINED_TRACK and not TrackManager.track_exists(state.track_rid):
         return
     if not state.controller_rid.is_valid():
         return
@@ -115,15 +115,13 @@ func process_movement(vehicle_rid: RID, delta: float) -> void:
 
 func vehicle_move(vehicle_rid: RID, distance: float) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
-    if not state or not state.track_rid.is_valid():
-        return
-    if not TrackManager.track_exists(state.track_rid):
+    if not state or not TrackManager.track_exists(state.track_rid):
         return
     if is_zero_approx(distance):
         return
 
     var current_track_rid: RID = state.track_rid
-    var current_track_offset: float = clampf(state.track_offset, 0.0, _get_track_length(state.track_rid, state.switch_track))
+    var current_track_offset: float = clampf(state.track_offset, 0.0, TrackManager.track_get_length(state.track_rid, state.switch_track))
     var current_track_direction: TrackManager.Direction = state.track_direction
     var current_switch_track: TrackManager.SwitchTrack = state.switch_track
     var remaining: float = absf(distance)
@@ -135,12 +133,10 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
 
     while remaining > 0.0001 and hop_count < 1024:
         hop_count += 1
-        if not current_track_rid.is_valid():
-            break
         if not TrackManager.track_exists(current_track_rid):
             break
 
-        var current_length: float = _get_track_length(current_track_rid, current_switch_track)
+        var current_length: float = TrackManager.track_get_length(current_track_rid, current_switch_track)
         if current_length <= 0.0:
             break
 
@@ -153,8 +149,8 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
             var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(current_track_rid)
             if not active_track == current_switch_track:
                 var blade_boundary_offset: float = current_length
-                var curve1: Curve3D = _build_domain_curve(TrackManager.track_get_curve1(current_track_rid))
-                var curve2: Curve3D = _build_domain_curve(TrackManager.track_get_curve2(current_track_rid))
+                var curve1: Curve3D = TrackManager.track_get_domain_curve1(current_track_rid)
+                var curve2: Curve3D = TrackManager.track_get_domain_curve2(current_track_rid)
                 if curve1 and curve2:
                     var branch_curve: Curve3D = curve2 if current_switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING else curve1
                     var frog_dist: float = minf(curve1.get_baked_length(), curve2.get_baked_length())
@@ -199,18 +195,19 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
             break
 
         var next_track_rid: RID = connection.track_rid
-        if not next_track_rid.is_valid():
-            break
-
         var next_endpoint_index: int = connection.endpoint_index
         var next_switch_track: TrackManager.SwitchTrack = _get_switch_track_from_endpoint(next_endpoint_index)
-        var next_movement_sign: float = _get_movement_sign_from_entry_endpoint(next_endpoint_index, next_switch_track)
+        var next_movement_sign: float = 0.0
+        if next_endpoint_index == _get_switch_track_endpoint_index(next_switch_track, false):
+            next_movement_sign = 1.0
+        elif next_endpoint_index == _get_switch_track_endpoint_index(next_switch_track, true):
+            next_movement_sign = -1.0
         if is_zero_approx(next_movement_sign):
             break
 
         current_track_rid = next_track_rid
         current_switch_track = next_switch_track
-        current_track_offset = 0.0 if next_movement_sign > 0.0 else _get_track_length(current_track_rid, current_switch_track)
+        current_track_offset = 0.0 if next_movement_sign > 0.0 else TrackManager.track_get_length(current_track_rid, current_switch_track)
         current_track_direction = (
             TrackManager.Direction.DIRECTION_NORMAL
             if next_movement_sign * request_sign < 0.0
@@ -226,22 +223,45 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
 
 func vehicle_get_transform(vehicle_rid: RID) -> Transform3D:
     var state: VehicleState = _vehicles.get(vehicle_rid)
-    if not state or not state.track_rid.is_valid():
-        return Transform3D.IDENTITY
-    if not TrackManager.track_exists(state.track_rid):
+    if not state or not TrackManager.track_exists(state.track_rid):
         return Transform3D.IDENTITY
 
-    var curve_data: MaszynaTrackCurve = _get_curve_data(state.track_rid, state.switch_track)
-    var curve: Curve3D = _build_domain_curve(curve_data)
+    var use_diverging: bool = (
+        TrackManager.track_is_switch(state.track_rid)
+        and state.switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING
+    )
+    var curve_data: MaszynaTrackCurve = TrackManager.track_get_curve2(state.track_rid) if use_diverging else TrackManager.track_get_curve1(state.track_rid)
+    var curve: Curve3D = TrackManager.track_get_domain_curve2(state.track_rid) if use_diverging else TrackManager.track_get_domain_curve1(state.track_rid)
     if not curve_data or not curve:
         return Transform3D.IDENTITY
 
     var length: float = curve.get_baked_length()
     var safe_offset: float = clampf(state.track_offset, 0.0, length)
     var origin: Vector3 = curve.sample_baked(safe_offset, true)
-    var tangent: Vector3 = _sample_curve_tangent(curve, safe_offset)
-    var roll: float = _sample_curve_roll(curve_data, safe_offset, length)
-    var track_transform: Transform3D = _build_track_transform(origin, tangent, roll)
+    var sample_distance: float = minf(0.1, length)
+    var previous_offset: float = clampf(safe_offset - sample_distance, 0.0, length)
+    var next_offset: float = clampf(safe_offset + sample_distance, 0.0, length)
+    if is_equal_approx(previous_offset, next_offset):
+        previous_offset = 0.0
+        next_offset = length
+    var forward: Vector3 = curve.sample_baked(next_offset, true) - curve.sample_baked(previous_offset, true)
+    if forward.length_squared() <= 0.000001:
+        forward = Vector3.FORWARD
+    else:
+        forward = forward.normalized()
+
+    var reference_up: Vector3 = Vector3.UP
+    if absf(forward.dot(reference_up)) > 0.999:
+        reference_up = Vector3.RIGHT
+
+    var z_axis: Vector3 = -forward
+    var x_axis: Vector3 = reference_up.cross(z_axis).normalized()
+    var y_axis: Vector3 = z_axis.cross(x_axis).normalized()
+    var roll: float = curve_data.roll1 if length <= 0.0 else lerpf(curve_data.roll1, curve_data.roll2, clampf(safe_offset / length, 0.0, 1.0))
+    var track_transform: Transform3D = Transform3D(
+        Basis(x_axis, y_axis, z_axis).orthonormalized().rotated(forward, deg_to_rad(roll)).orthonormalized(),
+        origin
+    )
     if state.track_direction == TrackManager.Direction.DIRECTION_REVERSED:
         track_transform.basis = track_transform.basis.rotated(track_transform.basis.y.normalized(), PI).orthonormalized()
     track_transform.origin.y += TrackManager.RAIL_HEIGHT
@@ -253,22 +273,6 @@ func controller_get_transform(controller_rid: RID) -> Transform3D:
     if not vehicle_rid.is_valid():
         return Transform3D.IDENTITY
     return vehicle_get_transform(vehicle_rid)
-
-
-func _get_track_length(track_rid: RID, switch_track: TrackManager.SwitchTrack) -> float:
-    if not track_rid.is_valid() or not TrackManager.track_exists(track_rid):
-        return 0.0
-    if TrackManager.track_is_switch(track_rid):
-        return TrackManager.switch_track_get_length(track_rid, switch_track)
-    return TrackManager.track_get_length(track_rid)
-
-
-func _get_curve_data(track_rid: RID, switch_track: TrackManager.SwitchTrack) -> MaszynaTrackCurve:
-    if not TrackManager.track_exists(track_rid):
-        return null
-    if TrackManager.track_is_switch(track_rid) and switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING:
-        return TrackManager.track_get_curve2(track_rid)
-    return TrackManager.track_get_curve1(track_rid)
 
 
 func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager.EndpointRef:
@@ -287,7 +291,13 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
         var candidate_forced_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
         var has_candidate_forced_switch_track: bool = false
         if TrackManager.track_is_switch(raw_connection.track_rid):
-            if _is_common_switch_endpoint(raw_connection.track_rid, raw_connection.endpoint_index):
+            var common_endpoint_index: int = TrackManager.track_get_common_endpoint_index(raw_connection.track_rid)
+            var is_common_endpoint: bool = raw_connection.endpoint_index == common_endpoint_index
+            if not is_common_endpoint and not common_endpoint_index == TrackManager.SwitchCommonPoint.POINT_NONE:
+                var endpoints: Array[Vector3] = TrackManager.track_get_endpoints(raw_connection.track_rid)
+                if raw_connection.endpoint_index < endpoints.size() and common_endpoint_index < endpoints.size():
+                    is_common_endpoint = endpoints[raw_connection.endpoint_index].distance_to(endpoints[common_endpoint_index]) <= _ENDPOINT_EPSILON
+            if is_common_endpoint:
                 candidate_connection.endpoint_index = _get_switch_track_endpoint_index(
                     TrackManager.switch_get_active_track(raw_connection.track_rid),
                     false
@@ -295,8 +305,16 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
             else:
                 candidate_forced_switch_track = _get_switch_track_from_endpoint(raw_connection.endpoint_index)
                 has_candidate_forced_switch_track = true
-        if not _is_motion_accessible_endpoint(candidate_connection.track_rid, candidate_connection.endpoint_index) \
-        and not has_candidate_forced_switch_track:
+
+        var is_motion_accessible: bool = false
+        if TrackManager.track_is_switch(candidate_connection.track_rid):
+            var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(candidate_connection.track_rid)
+            is_motion_accessible = candidate_connection.endpoint_index == _get_switch_track_endpoint_index(active_track, false) \
+                or candidate_connection.endpoint_index == _get_switch_track_endpoint_index(active_track, true)
+        else:
+            is_motion_accessible = candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P1 \
+                or candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2
+        if not is_motion_accessible and not has_candidate_forced_switch_track:
             continue
         if not unique_connection:
             unique_connection = candidate_connection
@@ -330,114 +348,3 @@ func _get_switch_track_from_endpoint(endpoint_index: int) -> TrackManager.Switch
     if endpoint_index >= TrackManager.EndpointIndex.CURVE2_P1:
         return TrackManager.SwitchTrack.TRACK_DIVERGING
     return TrackManager.SwitchTrack.TRACK_COMMON
-
-
-func _get_movement_sign_from_entry_endpoint(
-    endpoint_index: int,
-    switch_track: TrackManager.SwitchTrack
-) -> float:
-    if endpoint_index == _get_switch_track_endpoint_index(switch_track, false):
-        return 1.0
-    if endpoint_index == _get_switch_track_endpoint_index(switch_track, true):
-        return -1.0
-    return 0.0
-
-
-func _is_motion_accessible_endpoint(track_rid: RID, endpoint_index: int) -> bool:
-    if not TrackManager.track_exists(track_rid):
-        return false
-    if TrackManager.track_is_switch(track_rid):
-        var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(track_rid)
-        return endpoint_index == _get_switch_track_endpoint_index(active_track, false) \
-            or endpoint_index == _get_switch_track_endpoint_index(active_track, true)
-    return endpoint_index == TrackManager.EndpointIndex.CURVE1_P1 \
-        or endpoint_index == TrackManager.EndpointIndex.CURVE1_P2
-
-
-func _is_common_switch_endpoint(track_rid: RID, endpoint_index: int) -> bool:
-    if not TrackManager.track_exists(track_rid):
-        return false
-    var common_endpoint_index: int = TrackManager.track_get_common_endpoint_index(track_rid)
-    if common_endpoint_index == TrackManager.SwitchCommonPoint.POINT_NONE:
-        return false
-    if endpoint_index == common_endpoint_index:
-        return true
-    return _get_endpoint_position(track_rid, endpoint_index).distance_to(
-        _get_endpoint_position(track_rid, common_endpoint_index)
-    ) <= _ENDPOINT_EPSILON
-
-
-func _get_endpoint_position(track_rid: RID, endpoint_index: int) -> Vector3:
-    if not TrackManager.track_exists(track_rid):
-        return Vector3.ZERO
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P1:
-        return TrackManager.track_get_curve1(track_rid).p1
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P2:
-        return TrackManager.track_get_curve1(track_rid).p2
-    if endpoint_index == TrackManager.EndpointIndex.CURVE2_P1:
-        return TrackManager.track_get_curve2(track_rid).p1
-    if endpoint_index == TrackManager.EndpointIndex.CURVE2_P2:
-        return TrackManager.track_get_curve2(track_rid).p2
-    return Vector3.ZERO
-
-
-func _build_domain_curve(curve_data: MaszynaTrackCurve) -> Curve3D:
-    if not curve_data:
-        return null
-    var curve: Curve3D = Curve3D.new()
-    curve.closed = false
-    curve.bake_interval = float(ProjectSettings.get_setting("maszyna/track_curve_bake_interval", 10.0))
-    curve.add_point(
-        curve_data.p1 + Vector3(0.0, _get_roll_fix_height(curve_data.roll1), 0.0),
-        Vector3.ZERO,
-        curve_data.c1
-    )
-    curve.add_point(
-        curve_data.p2 + Vector3(0.0, _get_roll_fix_height(curve_data.roll2), 0.0),
-        curve_data.c2,
-        Vector3.ZERO
-    )
-    return curve
-
-
-func _sample_curve_tangent(curve: Curve3D, offset: float) -> Vector3:
-    var length: float = curve.get_baked_length()
-    if length <= 0.0:
-        return Vector3.FORWARD
-    var sample_distance: float = minf(0.1, length)
-    var previous_offset: float = clampf(offset - sample_distance, 0.0, length)
-    var next_offset: float = clampf(offset + sample_distance, 0.0, length)
-    if is_equal_approx(previous_offset, next_offset):
-        previous_offset = 0.0
-        next_offset = length
-    var tangent: Vector3 = curve.sample_baked(next_offset, true) - curve.sample_baked(previous_offset, true)
-    if tangent.length_squared() <= 0.000001:
-        return Vector3.FORWARD
-    return tangent.normalized()
-
-
-func _sample_curve_roll(curve_data: MaszynaTrackCurve, offset: float, length: float) -> float:
-    if length <= 0.0:
-        return curve_data.roll1
-    return lerpf(curve_data.roll1, curve_data.roll2, clampf(offset / length, 0.0, 1.0))
-
-
-func _build_track_transform(origin: Vector3, tangent: Vector3, roll_degrees: float) -> Transform3D:
-    var forward: Vector3 = tangent.normalized()
-    if forward.length_squared() <= 0.000001:
-        forward = Vector3.FORWARD
-
-    var reference_up: Vector3 = Vector3.UP
-    if absf(forward.dot(reference_up)) > 0.999:
-        reference_up = Vector3.RIGHT
-
-    var z_axis: Vector3 = -forward
-    var x_axis: Vector3 = reference_up.cross(z_axis).normalized()
-    var y_axis: Vector3 = z_axis.cross(x_axis).normalized()
-    var basis: Basis = Basis(x_axis, y_axis, z_axis).orthonormalized()
-    basis = basis.rotated(forward, deg_to_rad(roll_degrees)).orthonormalized()
-    return Transform3D(basis, origin)
-
-
-func _get_roll_fix_height(roll_degrees: float) -> float:
-    return absf(sin(deg_to_rad(roll_degrees)) * 0.75)

@@ -62,11 +62,6 @@ class_name MaszynaEnvironmentNode
         simulation_speed = x
         update()
 
-@export var time_in_editor: bool = true:
-    set(x):
-        time_in_editor = x
-        update()
-
 @export_node_path("TimeOfDay") var time_of_day_path: NodePath:
     set(x):
         time_of_day_path = x
@@ -137,7 +132,6 @@ func update() -> void:
     if is_inside_tree():
         _time_of_day = get_node_or_null(time_of_day_path)
         if _time_of_day:
-            _time_of_day.editor_time_enabled = time_in_editor
             _time_of_day.system_sync = use_system_time
             _time_of_day.minutes_per_day = 1440 / simulation_speed if simulation_speed > 0.0 else 0.0
             _time_of_day.update_interval = _time_of_day.minutes_per_day * 0.001

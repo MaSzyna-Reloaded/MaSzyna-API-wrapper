@@ -58,6 +58,9 @@ const UNDEFINED_TRACK = RID()
 
 ## Stores runtime data for one registered track.
 class TrackSegment:
+    const SWITCH_BLADE_SEGMENT_COUNT: int = 6
+    const SWITCH_BLADE_RATIO: float = 0.65
+
     ## Unique RID of the track.
     var track_rid: RID = UNDEFINED_TRACK
     ## Track type from [enum TrackType].
@@ -101,6 +104,16 @@ class TrackSegment:
     var switch_f_offset2: float = 0.0   # fOffset2
     ## Shared endpoint index for switch curves.
     var switch_common_endpoint_index: int = SwitchCommonPoint.POINT_NONE
+    ## Endpoints located at the shared switch point.
+    var switch_common_endpoints: Array[EndpointIndex] = []
+    ## Branch start endpoint indexed by [enum SwitchTrack].
+    var switch_branch_start_endpoints: Dictionary[int, int] = {}
+    ## Branch end endpoint indexed by [enum SwitchTrack].
+    var switch_branch_end_endpoints: Dictionary[int, int] = {}
+    ## Switch branch indexed by endpoint.
+    var switch_endpoint_branches: Dictionary[int, int] = {}
+    ## Blade boundary offset indexed by [enum SwitchTrack].
+    var switch_blade_boundary_offsets: Dictionary[int, float] = {}
     ## Marked true if switch diverges in right
     var switch_is_right: bool = false
     ## Axis-aligned bounding box used by the spatial index.
@@ -160,6 +173,8 @@ class TrackSegment:
         switch_is_right = false
         update_length()
         switch_common_endpoint_index = _get_curve_common_endpoint_index()
+        _update_switch_endpoint_metadata()
+        update_switch_blade_boundary_offsets()
 
         if curve1 and curve2:
             if not switch_common_endpoint_index == SwitchCommonPoint.POINT_NONE:
@@ -186,6 +201,27 @@ class TrackSegment:
         if domain_curve2:
             length2 = domain_curve2.get_baked_length()
             length += length2
+
+    func update_switch_blade_boundary_offsets() -> void:
+        switch_blade_boundary_offsets.clear()
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_COMMON] = switch_track_get_length(SwitchTrack.TRACK_COMMON)
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_DIVERGING] = switch_track_get_length(SwitchTrack.TRACK_DIVERGING)
+        if not domain_curve1 or not domain_curve2:
+            return
+
+        var frog_dist: float = minf(length1, length2)
+        var frog_step: float = 0.5
+        var frog_sample_distance: float = 0.0
+        while frog_sample_distance < frog_dist:
+            var point1: Vector3 = domain_curve1.sample_baked(frog_sample_distance)
+            var point2: Vector3 = domain_curve2.sample_baked(frog_sample_distance)
+            if point1.distance_to(point2) >= width:
+                frog_dist = frog_sample_distance
+                break
+            frog_sample_distance += frog_step
+
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_COMMON] = _get_switch_blade_boundary_offset(domain_curve1, frog_dist)
+        switch_blade_boundary_offsets[SwitchTrack.TRACK_DIVERGING] = _get_switch_blade_boundary_offset(domain_curve2, frog_dist)
 
     ## Returns cached endpoint positions for both curves.
     func get_endpoints() -> Array[Vector3]:
@@ -219,6 +255,62 @@ class TrackSegment:
         if curve.p2.distance_to(common_position) <= _ENDPOINT_EPSILON:
             return curve.p1 - curve.p2
         return Vector3.ZERO
+
+    func _update_switch_endpoint_metadata() -> void:
+        switch_common_endpoints.clear()
+        switch_branch_start_endpoints.clear()
+        switch_branch_end_endpoints.clear()
+        switch_endpoint_branches.clear()
+
+        if curve1:
+            switch_branch_start_endpoints[SwitchTrack.TRACK_COMMON] = EndpointIndex.CURVE1_P1
+            switch_branch_end_endpoints[SwitchTrack.TRACK_COMMON] = EndpointIndex.CURVE1_P2
+            switch_endpoint_branches[EndpointIndex.CURVE1_P1] = SwitchTrack.TRACK_COMMON
+            switch_endpoint_branches[EndpointIndex.CURVE1_P2] = SwitchTrack.TRACK_COMMON
+        if curve2:
+            switch_branch_start_endpoints[SwitchTrack.TRACK_DIVERGING] = EndpointIndex.CURVE2_P1
+            switch_branch_end_endpoints[SwitchTrack.TRACK_DIVERGING] = EndpointIndex.CURVE2_P2
+            switch_endpoint_branches[EndpointIndex.CURVE2_P1] = SwitchTrack.TRACK_DIVERGING
+            switch_endpoint_branches[EndpointIndex.CURVE2_P2] = SwitchTrack.TRACK_DIVERGING
+
+        if not curve1 or not curve2:
+            return
+        _append_common_switch_endpoint(curve1.p1, curve2.p1, EndpointIndex.CURVE1_P1, EndpointIndex.CURVE2_P1)
+        _append_common_switch_endpoint(curve1.p1, curve2.p2, EndpointIndex.CURVE1_P1, EndpointIndex.CURVE2_P2)
+        _append_common_switch_endpoint(curve1.p2, curve2.p1, EndpointIndex.CURVE1_P2, EndpointIndex.CURVE2_P1)
+        _append_common_switch_endpoint(curve1.p2, curve2.p2, EndpointIndex.CURVE1_P2, EndpointIndex.CURVE2_P2)
+
+    func _append_common_switch_endpoint(
+        point1: Vector3,
+        point2: Vector3,
+        endpoint1: EndpointIndex,
+        endpoint2: EndpointIndex
+    ) -> void:
+        if point1.distance_to(point2) > _ENDPOINT_EPSILON:
+            return
+        if not switch_common_endpoints.has(endpoint1):
+            switch_common_endpoints.append(endpoint1)
+        if not switch_common_endpoints.has(endpoint2):
+            switch_common_endpoints.append(endpoint2)
+
+    func _get_switch_blade_boundary_offset(branch_curve: Curve3D, frog_dist: float) -> float:
+        if frog_dist <= 0.0:
+            return 0.0
+        var sampled_points: PackedVector3Array = PackedVector3Array()
+        for sample_index: int in range(SWITCH_BLADE_SEGMENT_COUNT + 1):
+            var sample_distance: float = frog_dist * float(sample_index) / float(SWITCH_BLADE_SEGMENT_COUNT)
+            sampled_points.push_back(branch_curve.sample_baked(sample_distance, true))
+        if sampled_points.size() < 2:
+            return 0.0
+
+        var blade_boundary_offset: float = 0.0
+        var blade_sample_count: int = mini(
+            int(ceil(float(SWITCH_BLADE_SEGMENT_COUNT) * SWITCH_BLADE_RATIO)),
+            sampled_points.size() - 1
+        )
+        for sample_index: int in range(blade_sample_count):
+            blade_boundary_offset += sampled_points[sample_index].distance_to(sampled_points[sample_index + 1])
+        return blade_boundary_offset
 
 
 ## References one endpoint of a registered track.
@@ -388,8 +480,11 @@ func track_update(
     if name:
         _named_tracks[name] = track_rid
 
+    var previous_width: float = track.width
     track.type = type
     track.width = width
+    if not is_equal_approx(previous_width, width):
+        track.update_switch_blade_boundary_offsets()
     var points: Array[Vector3] = track.get_endpoints()
     if points:
         var rect = Rect2(Vector2(points[0].x, points[0].z), Vector2.ZERO)
@@ -431,6 +526,64 @@ func track_get_common_endpoint_index(track_rid: RID) -> int:
     if track:
         return track.switch_common_endpoint_index
     return SwitchCommonPoint.POINT_NONE
+
+## Returns curve for the selected branch.
+func track_get_curve(
+    track_rid: RID,
+    branch: SwitchTrack = SwitchTrack.TRACK_COMMON
+) -> MaszynaTrackCurve:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.switch_track_get_curve(branch)
+    push_error("Track RID is not valid: ", track_rid)
+    return null
+
+## Returns baked curve for the selected branch.
+func track_get_domain_curve(
+    track_rid: RID,
+    branch: SwitchTrack = SwitchTrack.TRACK_COMMON
+) -> Curve3D:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.switch_track_get_domain_curve(branch)
+    push_error("Track RID is not valid: ", track_rid)
+    return null
+
+## Returns endpoints located at the shared switch point.
+func switch_get_common_endpoints(track_rid: RID) -> Array[EndpointIndex]:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.switch_common_endpoints.duplicate()
+    var endpoints: Array[EndpointIndex] = []
+    return endpoints
+
+## Returns the start endpoint for a switch branch.
+func switch_get_branch_start_endpoint(track_rid: RID, branch: SwitchTrack) -> EndpointIndex:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track and track.switch_branch_start_endpoints.has(branch):
+        return track.switch_branch_start_endpoints[branch]
+    return EndpointIndex.CURVE1_P1
+
+## Returns the end endpoint for a switch branch.
+func switch_get_branch_end_endpoint(track_rid: RID, branch: SwitchTrack) -> EndpointIndex:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track and track.switch_branch_end_endpoints.has(branch):
+        return track.switch_branch_end_endpoints[branch]
+    return EndpointIndex.CURVE1_P2
+
+## Returns the switch branch that owns the endpoint.
+func switch_get_endpoint_branch(track_rid: RID, endpoint_index: int) -> SwitchTrack:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track and track.switch_endpoint_branches.has(endpoint_index):
+        return track.switch_endpoint_branches[endpoint_index]
+    return SwitchTrack.TRACK_COMMON
+
+## Returns the blade boundary offset for a switch branch.
+func switch_get_blade_boundary_offset(track_rid: RID, branch: SwitchTrack) -> float:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track and track.switch_blade_boundary_offsets.has(branch):
+        return track.switch_blade_boundary_offsets[branch]
+    return 0.0
 
 ## Returns the first clamped switch blade offset.
 func switch_get_f_offset1(track_rid: RID) -> float:

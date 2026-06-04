@@ -13,10 +13,6 @@ class VehicleState:
     var controller_rid: RID = RID()
 
 
-const _ENDPOINT_EPSILON: float = 0.25
-const _SWITCH_FORCE_SEGMENT_COUNT: int = 6
-const _SWITCH_FORCE_BLADE_RATIO: float = 0.65
-
 var _controllers: Dictionary[RID, ControllerState] = {}
 var _controller_vehicles: Dictionary[RID, RID] = {}
 var _vehicles: Dictionary[RID, VehicleState] = {}
@@ -141,41 +137,20 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
             break
 
         var distance_to_endpoint: float = current_length - current_track_offset if movement_sign > 0.0 else current_track_offset
-        var endpoint_index: int = _get_switch_track_endpoint_index(current_switch_track, movement_sign > 0.0)
+        var endpoint_index: int = TrackManager.EndpointIndex.CURVE1_P2 if movement_sign > 0.0 else TrackManager.EndpointIndex.CURVE1_P1
+        if TrackManager.track_is_switch(current_track_rid):
+            endpoint_index = TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track) \
+                if movement_sign > 0.0 else TrackManager.switch_get_branch_start_endpoint(current_track_rid, current_switch_track)
         var requested_distance: float = minf(remaining, distance_to_endpoint)
         var next_offset_on_track: float = current_track_offset + movement_sign * requested_distance
 
         if TrackManager.track_is_switch(current_track_rid):
             var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(current_track_rid)
             if not active_track == current_switch_track:
-                var blade_boundary_offset: float = current_length
-                var curve1: Curve3D = TrackManager.track_get_domain_curve1(current_track_rid)
-                var curve2: Curve3D = TrackManager.track_get_domain_curve2(current_track_rid)
-                if curve1 and curve2:
-                    var branch_curve: Curve3D = curve2 if current_switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING else curve1
-                    var frog_dist: float = minf(curve1.get_baked_length(), curve2.get_baked_length())
-                    var frog_step: float = 0.5
-                    var frog_sample_distance: float = 0.0
-                    while frog_sample_distance < frog_dist:
-                        var point1: Vector3 = curve1.sample_baked(frog_sample_distance)
-                        var point2: Vector3 = curve2.sample_baked(frog_sample_distance)
-                        if point1.distance_to(point2) >= TrackManager.track_get_width(current_track_rid):
-                            frog_dist = frog_sample_distance
-                            break
-                        frog_sample_distance += frog_step
-                    var sampled_points: PackedVector3Array = PackedVector3Array()
-                    if frog_dist > 0.0:
-                        for sample_index: int in range(_SWITCH_FORCE_SEGMENT_COUNT + 1):
-                            var sample_distance: float = frog_dist * float(sample_index) / float(_SWITCH_FORCE_SEGMENT_COUNT)
-                            sampled_points.push_back(branch_curve.sample_baked(sample_distance, true))
-                    if sampled_points.size() >= 2:
-                        blade_boundary_offset = 0.0
-                        var blade_sample_count: int = mini(
-                            int(ceil(float(_SWITCH_FORCE_SEGMENT_COUNT) * _SWITCH_FORCE_BLADE_RATIO)),
-                            sampled_points.size() - 1
-                        )
-                        for sample_index: int in range(blade_sample_count):
-                            blade_boundary_offset += sampled_points[sample_index].distance_to(sampled_points[sample_index + 1])
+                var blade_boundary_offset: float = TrackManager.switch_get_blade_boundary_offset(
+                    current_track_rid,
+                    current_switch_track
+                )
                 if current_track_offset > blade_boundary_offset and next_offset_on_track <= blade_boundary_offset:
                     TrackManager.switch_set_active_track(current_track_rid, current_switch_track)
 
@@ -196,11 +171,18 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
 
         var next_track_rid: RID = connection.track_rid
         var next_endpoint_index: int = connection.endpoint_index
-        var next_switch_track: TrackManager.SwitchTrack = _get_switch_track_from_endpoint(next_endpoint_index)
+        var next_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
+        if TrackManager.track_is_switch(next_track_rid):
+            next_switch_track = TrackManager.switch_get_endpoint_branch(next_track_rid, next_endpoint_index)
         var next_movement_sign: float = 0.0
-        if next_endpoint_index == _get_switch_track_endpoint_index(next_switch_track, false):
+        var next_start_endpoint: int = TrackManager.EndpointIndex.CURVE1_P1
+        var next_end_endpoint: int = TrackManager.EndpointIndex.CURVE1_P2
+        if TrackManager.track_is_switch(next_track_rid):
+            next_start_endpoint = TrackManager.switch_get_branch_start_endpoint(next_track_rid, next_switch_track)
+            next_end_endpoint = TrackManager.switch_get_branch_end_endpoint(next_track_rid, next_switch_track)
+        if next_endpoint_index == next_start_endpoint:
             next_movement_sign = 1.0
-        elif next_endpoint_index == _get_switch_track_endpoint_index(next_switch_track, true):
+        elif next_endpoint_index == next_end_endpoint:
             next_movement_sign = -1.0
         if is_zero_approx(next_movement_sign):
             break
@@ -226,12 +208,8 @@ func vehicle_get_transform(vehicle_rid: RID) -> Transform3D:
     if not state or not TrackManager.track_exists(state.track_rid):
         return Transform3D.IDENTITY
 
-    var use_diverging: bool = (
-        TrackManager.track_is_switch(state.track_rid)
-        and state.switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING
-    )
-    var curve_data: MaszynaTrackCurve = TrackManager.track_get_curve2(state.track_rid) if use_diverging else TrackManager.track_get_curve1(state.track_rid)
-    var curve: Curve3D = TrackManager.track_get_domain_curve2(state.track_rid) if use_diverging else TrackManager.track_get_domain_curve1(state.track_rid)
+    var curve_data: MaszynaTrackCurve = TrackManager.track_get_curve(state.track_rid, state.switch_track)
+    var curve: Curve3D = TrackManager.track_get_domain_curve(state.track_rid, state.switch_track)
     if not curve_data or not curve:
         return Transform3D.IDENTITY
 
@@ -291,26 +269,25 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
         var candidate_forced_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
         var has_candidate_forced_switch_track: bool = false
         if TrackManager.track_is_switch(raw_connection.track_rid):
-            var common_endpoint_index: int = TrackManager.track_get_common_endpoint_index(raw_connection.track_rid)
-            var is_common_endpoint: bool = raw_connection.endpoint_index == common_endpoint_index
-            if not is_common_endpoint and not common_endpoint_index == TrackManager.SwitchCommonPoint.POINT_NONE:
-                var endpoints: Array[Vector3] = TrackManager.track_get_endpoints(raw_connection.track_rid)
-                if raw_connection.endpoint_index < endpoints.size() and common_endpoint_index < endpoints.size():
-                    is_common_endpoint = endpoints[raw_connection.endpoint_index].distance_to(endpoints[common_endpoint_index]) <= _ENDPOINT_EPSILON
+            var common_endpoints: Array[TrackManager.EndpointIndex] = TrackManager.switch_get_common_endpoints(raw_connection.track_rid)
+            var is_common_endpoint: bool = common_endpoints.has(raw_connection.endpoint_index)
             if is_common_endpoint:
-                candidate_connection.endpoint_index = _get_switch_track_endpoint_index(
-                    TrackManager.switch_get_active_track(raw_connection.track_rid),
-                    false
+                candidate_connection.endpoint_index = TrackManager.switch_get_branch_start_endpoint(
+                    raw_connection.track_rid,
+                    TrackManager.switch_get_active_track(raw_connection.track_rid)
                 )
             else:
-                candidate_forced_switch_track = _get_switch_track_from_endpoint(raw_connection.endpoint_index)
+                candidate_forced_switch_track = TrackManager.switch_get_endpoint_branch(
+                    raw_connection.track_rid,
+                    raw_connection.endpoint_index
+                )
                 has_candidate_forced_switch_track = true
 
         var is_motion_accessible: bool = false
         if TrackManager.track_is_switch(candidate_connection.track_rid):
             var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(candidate_connection.track_rid)
-            is_motion_accessible = candidate_connection.endpoint_index == _get_switch_track_endpoint_index(active_track, false) \
-                or candidate_connection.endpoint_index == _get_switch_track_endpoint_index(active_track, true)
+            is_motion_accessible = candidate_connection.endpoint_index == TrackManager.switch_get_branch_start_endpoint(candidate_connection.track_rid, active_track) \
+                or candidate_connection.endpoint_index == TrackManager.switch_get_branch_end_endpoint(candidate_connection.track_rid, active_track)
         else:
             is_motion_accessible = candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P1 \
                 or candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2
@@ -333,18 +310,3 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
         if not TrackManager.switch_get_active_track(unique_connection.track_rid) == unique_forced_switch_track:
             TrackManager.switch_set_active_track(unique_connection.track_rid, unique_forced_switch_track)
     return unique_connection
-
-
-func _get_switch_track_endpoint_index(
-    switch_track: TrackManager.SwitchTrack,
-    is_end: bool
-) -> TrackManager.EndpointIndex:
-    if switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING:
-        return TrackManager.EndpointIndex.CURVE2_P2 if is_end else TrackManager.EndpointIndex.CURVE2_P1
-    return TrackManager.EndpointIndex.CURVE1_P2 if is_end else TrackManager.EndpointIndex.CURVE1_P1
-
-
-func _get_switch_track_from_endpoint(endpoint_index: int) -> TrackManager.SwitchTrack:
-    if endpoint_index >= TrackManager.EndpointIndex.CURVE2_P1:
-        return TrackManager.SwitchTrack.TRACK_DIVERGING
-    return TrackManager.SwitchTrack.TRACK_COMMON

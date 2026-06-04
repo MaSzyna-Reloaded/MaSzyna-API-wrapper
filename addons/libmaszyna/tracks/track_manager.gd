@@ -43,9 +43,6 @@ const INVALID_NODE_ID: int = -1
 
 const _ENDPOINT_EPSILON: float = 0.25
 const _GRID_CELL_SIZE: float = 500.0
-const _ENDPOINT_GRID_CELL_SIZE: float = _ENDPOINT_EPSILON
-const _SWITCH_FORCE_SEGMENT_COUNT: int = 6
-const _SWITCH_FORCE_BLADE_RATIO: float = 0.65
 const _TRACK_TYPE_GROUPS: Dictionary = {
     TrackType.TRACK_NORMAL: TrackTypeGroup.GROUP_RAIL,
     TrackType.TRACK_SWITCH: TrackTypeGroup.GROUP_RAIL,
@@ -301,7 +298,6 @@ func track_free(track_rid: RID) -> void:
     if track_name:
         _named_tracks.erase(track_name)
     _spatial_index.remove(track.track_rid)
-    _remove_track_from_graph_members(track)
     _tracks.erase(track_rid)
     _clear_topology()
     _mark_topology_changed()
@@ -334,8 +330,33 @@ func track_update_curves(track_rid: RID, curve1: MaszynaTrackCurve, curve2: Masz
     if not track:
         return
 
-    var previous_endpoints: Array[Vector3] = track.get_endpoints()
-    var changed_connected_endpoint: bool = _has_connected_endpoint_changed(track, previous_endpoints, curve1, curve2)
+    var previous_endpoints: Array[Vector3] = track.get_endpoints().duplicate()
+    var next_endpoints: Array[Vector3] = []
+    if curve1:
+        next_endpoints.append(curve1.p1)
+        next_endpoints.append(curve1.p2)
+    if curve2:
+        next_endpoints.append(curve2.p1)
+        next_endpoints.append(curve2.p2)
+
+    var changed_connected_endpoint: bool = false
+    for endpoint_index: int in range(previous_endpoints.size()):
+        var node: TrackNode = _get_node(track.node_ids[endpoint_index])
+        if not node:
+            continue
+        var has_external_connection: bool = false
+        for ref: EndpointRef in node.endpoint_refs:
+            if not ref.track_rid == track.track_rid:
+                has_external_connection = true
+                break
+        if not has_external_connection:
+            continue
+        if endpoint_index >= next_endpoints.size():
+            changed_connected_endpoint = true
+            break
+        if previous_endpoints[endpoint_index].distance_to(next_endpoints[endpoint_index]) > _ENDPOINT_EPSILON:
+            changed_connected_endpoint = true
+            break
 
     track.set_curves(curve1, curve2)
 
@@ -441,9 +462,6 @@ func track_get_endpoint_connections(track_rid: RID, endpoint_index: EndpointInde
     for ref: EndpointRef in node.endpoint_refs:
         if ref.track_rid == track_rid:
             continue
-        var candidate_track: TrackSegment = _tracks.get(ref.track_rid)
-        if not candidate_track:
-            continue
         var is_duplicate: bool = false
         for connection: EndpointRef in result:
             if connection.track_rid == ref.track_rid and connection.endpoint_index == ref.endpoint_index:
@@ -464,17 +482,21 @@ func switch_track_get_neighbors(track_rid: RID, switch_track: SwitchTrack) -> Br
     if switch_track == SwitchTrack.TRACK_DIVERGING and not track.curve2:
         return neighbors
 
-    var previous_endpoint_index: EndpointIndex = _get_switch_track_endpoint_index(track, switch_track, false)
-    var next_endpoint_index: EndpointIndex = _get_switch_track_endpoint_index(track, switch_track, true)
-    var previous_connection: EndpointRef = _get_unique_neighbor_connection(track_rid, previous_endpoint_index)
-    if previous_connection:
-        neighbors.previous_track_rid = previous_connection.track_rid
-        neighbors.previous_endpoint_index = previous_connection.endpoint_index
+    var previous_endpoint_index: EndpointIndex = EndpointIndex.CURVE1_P1
+    var next_endpoint_index: EndpointIndex = EndpointIndex.CURVE1_P2
+    if switch_track == SwitchTrack.TRACK_DIVERGING:
+        previous_endpoint_index = EndpointIndex.CURVE2_P1
+        next_endpoint_index = EndpointIndex.CURVE2_P2
 
-    var next_connection: EndpointRef = _get_unique_neighbor_connection(track_rid, next_endpoint_index)
-    if next_connection:
-        neighbors.next_track_rid = next_connection.track_rid
-        neighbors.next_endpoint_index = next_connection.endpoint_index
+    var previous_connections: Array[EndpointRef] = track_get_endpoint_connections(track_rid, previous_endpoint_index)
+    if previous_connections.size() == 1:
+        neighbors.previous_track_rid = previous_connections[0].track_rid
+        neighbors.previous_endpoint_index = previous_connections[0].endpoint_index
+
+    var next_connections: Array[EndpointRef] = track_get_endpoint_connections(track_rid, next_endpoint_index)
+    if next_connections.size() == 1:
+        neighbors.next_track_rid = next_connections[0].track_rid
+        neighbors.next_endpoint_index = next_connections[0].endpoint_index
 
     return neighbors
 
@@ -486,18 +508,17 @@ func track_is_switch(track_rid: RID) -> bool:
 ## Returns whether a switch diverges to the right.
 func switch_is_right(track_rid: RID) -> bool:
     var track: TrackSegment = _tracks.get(track_rid)
-    if not track or not track.type == TrackType.TRACK_SWITCH:
+    if not track:
         return false
-    return track.switch_is_right
+    return track.type == TrackType.TRACK_SWITCH and track.switch_is_right
 
 ## Returns the currently active branch of a switch.
 func switch_get_active_track(track_rid: RID) -> SwitchTrack:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
         return track.active_track
-    else:
-        push_error("Track RID is not valid: ", track_rid)
-        return SwitchTrack.TRACK_COMMON
+    push_error("Track RID is not valid: ", track_rid)
+    return SwitchTrack.TRACK_COMMON
 
 ## Returns the registered name of a track.
 func track_get_name(track_rid: RID) -> String:
@@ -505,27 +526,24 @@ func track_get_name(track_rid: RID) -> String:
     if track:
         var name = _named_tracks.find_key(track_rid)
         return name if name else ""
-    else:
-        push_error("Track RID is not valid: ", track_rid)
-        return ""
+    push_error("Track RID is not valid: ", track_rid)
+    return ""
 
 ## Returns the first curve of a track.
 func track_get_curve1(track_rid: RID) -> MaszynaTrackCurve:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
         return track.curve1
-    else:
-        push_error("Track RID is not valid: ", track_rid)
-        return null
+    push_error("Track RID is not valid: ", track_rid)
+    return null
 
 ## Returns the second curve of a track.
 func track_get_curve2(track_rid: RID) -> MaszynaTrackCurve:
     var track: TrackSegment = _tracks.get(track_rid)
     if track:
         return track.curve2
-    else:
-        push_error("Track RID is not valid: ", track_rid)
-        return null
+    push_error("Track RID is not valid: ", track_rid)
+    return null
 
 ## Changes the active branch of a switch.
 func switch_set_active_track(track_rid: RID, active_track: SwitchTrack) -> void:
@@ -623,16 +641,15 @@ func _rebuild_graph_ids() -> void:
     for track_rid: RID in _tracks.keys():
         if visited.has(track_rid):
             continue
-        var graph_id: int = _allocate_graph_id()
+        var graph_id: int = _next_graph_id
+        _next_graph_id += 1
         var queue: Array[RID] = [track_rid]
         while queue:
             var current_rid: RID = queue.pop_front()
             if visited.has(current_rid):
                 continue
             visited[current_rid] = true
-            var current_track: TrackSegment = _tracks.get(current_rid)
-            if not current_track:
-                continue
+            var current_track: TrackSegment = _tracks[current_rid]
             current_track.graph_id = graph_id
             if not _graph_members.has(graph_id):
                 _graph_members[graph_id] = []
@@ -651,16 +668,22 @@ func _rebuild_graph_ids() -> void:
                         queue.append(ref.track_rid)
 
 
-func _allocate_graph_id() -> int:
-    var graph_id: int = _next_graph_id
-    _next_graph_id += 1
-    return graph_id
-
-
 func _get_or_create_node(world_position: Vector3, track_rid: RID, endpoint_index: int) -> int:
-    var node_id: int = _find_own_node(world_position, track_rid)
+    var node_id: int = INVALID_NODE_ID
+    var track: TrackSegment = _tracks[track_rid]
+    for existing_node_id: int in track.node_ids:
+        var existing_node: TrackNode = _get_node(existing_node_id)
+        if not existing_node:
+            continue
+        if existing_node.world_position.distance_to(world_position) <= _ENDPOINT_EPSILON:
+            node_id = existing_node.id
+            break
     if node_id == INVALID_NODE_ID:
-        node_id = _create_node(world_position)
+        node_id = _nodes.size()
+        var new_node: TrackNode = TrackNode.new()
+        new_node.id = node_id
+        new_node.world_position = world_position
+        _nodes.append(new_node)
     var node: TrackNode = _nodes[node_id]
     node.endpoint_refs.append(EndpointRef.new(track_rid, endpoint_index))
     return node_id
@@ -671,29 +694,6 @@ func _get_node(node_id: int) -> TrackNode:
         return null
     return _nodes[node_id]
 
-
-func _get_unique_neighbor_connection(track_rid: RID, endpoint_index: EndpointIndex) -> EndpointRef:
-    var connections: Array[EndpointRef] = track_get_endpoint_connections(track_rid, endpoint_index)
-    if not connections.size() == 1:
-        return null
-    return EndpointRef.new(connections[0].track_rid, connections[0].endpoint_index)
-
-
-func _get_switch_track_endpoint_index(track: TrackSegment, switch_track: SwitchTrack, is_end: bool) -> EndpointIndex:
-    if switch_track == SwitchTrack.TRACK_DIVERGING and track.curve2:
-        return EndpointIndex.CURVE2_P2 if is_end else EndpointIndex.CURVE2_P1
-    return EndpointIndex.CURVE1_P2 if is_end else EndpointIndex.CURVE1_P1
-
-func _get_active_endpoint_index(track: TrackSegment, is_end: bool) -> EndpointIndex:
-    return _get_switch_track_endpoint_index(track, _get_active_switch_track(track), is_end)
-
-func _is_active_endpoint(track: TrackSegment, endpoint_index: EndpointIndex) -> bool:
-    return endpoint_index == _get_active_endpoint_index(track, false) or endpoint_index == _get_active_endpoint_index(track, true)
-
-func _get_active_switch_track(track: TrackSegment) -> int:
-    if track.type == TrackType.TRACK_SWITCH and track.curve2:
-        return track.active_track
-    return SwitchTrack.TRACK_COMMON
 
 func _add_track_topology(track: TrackSegment) -> void:
     track.node_ids = [
@@ -708,17 +708,6 @@ func _add_track_topology(track: TrackSegment) -> void:
     if track.curve2:
         track.node_ids[EndpointIndex.CURVE2_P1] = _get_or_create_node(track.curve2.p1, track.track_rid, EndpointIndex.CURVE2_P1)
         track.node_ids[EndpointIndex.CURVE2_P2] = _get_or_create_node(track.curve2.p2, track.track_rid, EndpointIndex.CURVE2_P2)
-
-func _remove_track_from_graph_members(track: TrackSegment) -> void:
-    if track.graph_id == -1:
-        return
-    var members: Array = _graph_members.get(track.graph_id, [])
-    members.erase(track.track_rid)
-    if members.is_empty():
-        _graph_members.erase(track.graph_id)
-    else:
-        _graph_members[track.graph_id] = members
-    track.graph_id = -1
 
 
 func _clear_topology() -> void:
@@ -739,30 +728,38 @@ func _connect_all_tracks() -> void:
         _add_track_topology(track)
 
     # 2. Collect all endpoints
-    var all_endpoints = []
+    var all_endpoints: Array[Dictionary] = []
     for track: TrackSegment in _tracks.values():
         for endpoint_index: int in range(EndpointIndex.CURVE2_P2 + 1):
             if not track.node_ids[endpoint_index] == INVALID_NODE_ID:
+                var position: Vector3 = Vector3.ZERO
+                match endpoint_index:
+                    EndpointIndex.CURVE1_P1:
+                        position = track.curve1.p1
+                    EndpointIndex.CURVE1_P2:
+                        position = track.curve1.p2
+                    EndpointIndex.CURVE2_P1:
+                        position = track.curve2.p1
+                    EndpointIndex.CURVE2_P2:
+                        position = track.curve2.p2
                 all_endpoints.append({
                     "track_rid": track.track_rid,
                     "endpoint_index": endpoint_index,
-                    "position": _get_endpoint_position(track, endpoint_index),
+                    "position": position,
                     "node_id": track.node_ids[endpoint_index]
                 })
 
     # 3. Merge endpoints that are close to each other
     for i in range(all_endpoints.size()):
         for j in range(i + 1, all_endpoints.size()):
-            var ep1 = all_endpoints[i]
-            var ep2 = all_endpoints[j]
+            var ep1: Dictionary = all_endpoints[i]
+            var ep2: Dictionary = all_endpoints[j]
 
             if ep1.node_id == ep2.node_id:
                 continue
 
-            var first_track: TrackSegment = _tracks.get(ep1.track_rid)
-            var second_track: TrackSegment = _tracks.get(ep2.track_rid)
-            if not first_track or not second_track:
-                continue
+            var first_track: TrackSegment = _tracks[ep1.track_rid]
+            var second_track: TrackSegment = _tracks[ep2.track_rid]
             var first_track_group: int = _TRACK_TYPE_GROUPS.get(first_track.type, TrackTypeGroup.GROUP_NONE)
             var second_track_group: int = _TRACK_TYPE_GROUPS.get(second_track.type, TrackTypeGroup.GROUP_NONE)
             if first_track_group == TrackTypeGroup.GROUP_NONE or not first_track_group == second_track_group:
@@ -771,28 +768,8 @@ func _connect_all_tracks() -> void:
             if ep1.position.distance_to(ep2.position) <= _ENDPOINT_EPSILON:
                 _merge_endpoint_nodes(ep1.track_rid, ep1.endpoint_index, ep2.track_rid, ep2.endpoint_index)
                 # Update node_id for subsequent checks
-                var new_node_id = _tracks.get(ep1.track_rid).node_ids[ep1.endpoint_index]
+                var new_node_id: int = _tracks[ep1.track_rid].node_ids[ep1.endpoint_index]
                 ep2.node_id = new_node_id
-
-func _create_node(world_position: Vector3) -> int:
-    var node_id: int = _nodes.size()
-    var node: TrackNode = TrackNode.new()
-    node.id = node_id
-    node.world_position = world_position
-    _nodes.append(node)
-    return node_id
-
-func _find_own_node(world_position: Vector3, track_rid: RID) -> int:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if not track:
-        return INVALID_NODE_ID
-    for node_id: int in track.node_ids:
-        var node: TrackNode = _get_node(node_id)
-        if not node:
-            continue
-        if node.world_position.distance_to(world_position) <= _ENDPOINT_EPSILON:
-            return node.id
-    return INVALID_NODE_ID
 
 func _merge_endpoint_nodes(
     first_track_rid: RID,
@@ -800,14 +777,10 @@ func _merge_endpoint_nodes(
     second_track_rid: RID,
     second_endpoint_index: int,
 ) -> void:
-    var first_track: TrackSegment = _tracks.get(first_track_rid)
-    var second_track: TrackSegment = _tracks.get(second_track_rid)
-    if not first_track or not second_track:
-        return
+    var first_track: TrackSegment = _tracks[first_track_rid]
+    var second_track: TrackSegment = _tracks[second_track_rid]
     var first_node_id: int = first_track.node_ids[first_endpoint_index]
     var second_node_id: int = second_track.node_ids[second_endpoint_index]
-    if first_node_id == INVALID_NODE_ID or second_node_id == INVALID_NODE_ID:
-        return
     if first_node_id == second_node_id:
         return
     var first_node: TrackNode = _get_node(first_node_id)
@@ -820,52 +793,6 @@ func _merge_endpoint_nodes(
         if ref_track:
             ref_track.node_ids[ref.endpoint_index] = first_node_id
     _nodes[second_node_id] = null
-
-func _has_external_connection(track_rid: RID, endpoint_index: int) -> bool:
-    var track: TrackSegment = _tracks.get(track_rid)
-    if not track:
-        return false
-    if endpoint_index < 0 or endpoint_index >= track.node_ids.size():
-        return false
-    var node: TrackNode = _get_node(track.node_ids[endpoint_index])
-    if not node:
-        return false
-    for ref: EndpointRef in node.endpoint_refs:
-        if not ref.track_rid == track_rid:
-            return true
-    return false
-
-func _get_endpoint_position(track: TrackSegment, endpoint_index: int) -> Vector3:
-    match endpoint_index:
-        EndpointIndex.CURVE1_P1:
-            if track.curve1:
-                return track.curve1.p1
-        EndpointIndex.CURVE1_P2:
-            if track.curve1:
-                return track.curve1.p2
-        EndpointIndex.CURVE2_P1:
-            if track.curve2:
-                return track.curve2.p1
-        EndpointIndex.CURVE2_P2:
-            if track.curve2:
-                return track.curve2.p2
-    return Vector3.ZERO
-
-func _has_connected_endpoint_changed(
-    track: TrackSegment,
-    previous_endpoints: Array[Vector3],
-    curve1: MaszynaTrackCurve,
-    curve2: MaszynaTrackCurve,
-) -> bool:
-    var next_endpoints: Array[Vector3] = track.get_endpoints()
-    for endpoint_index: int in range(previous_endpoints.size()):
-        if not _has_external_connection(track.track_rid, endpoint_index):
-            continue
-        if endpoint_index >= next_endpoints.size():
-            return true
-        if previous_endpoints[endpoint_index].distance_to(next_endpoints[endpoint_index]) > _ENDPOINT_EPSILON:
-            return true
-    return false
 
 func _mark_topology_changed() -> void:
     is_topology_changed = true

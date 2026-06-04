@@ -33,6 +33,8 @@ func _process(delta):
 3. Do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 4. Do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
 5. In `if` conditions, do not use `!=`; use `not ... == ...`
+6. If a script declares `class_name`, use that class name directly for construction and type declarations. Do not add `SomethingScript = preload("...")` constants just to call `.new()` on that class.
+7. Do not add private helper methods that only wrap one simple condition, loop, or single call. Inline the logic unless the helper removes real duplication or names a non-trivial concept.
 ### Classes
 1. Explicit privacy declarations
 ```hpp

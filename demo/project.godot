@@ -29,17 +29,19 @@ run/disable_stderr.release=true
 
 [autoload]
 
-MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
-TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
-TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
-NodebankLibraryBuilder="*uid://dv25nc25tcanw"
-Console="*uid://d046w0soh2iou"
-MaterialManager="*uid://wsbd7kr83ncg"
 MaterialParser="*uid://7b48fl428yqa"
 MaterialFactory="*uid://v144f3irjg7m"
+MaterialManager="*uid://wsbd7kr83ncg"
 E3DModelManager="*uid://b2v733o52i40x"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
+MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
+TrackManager="*uid://c01n2va4so5bg"
+TrackRenderingServer="*res://addons/libmaszyna/tracks/track_rendering_server.gd"
+TractionRenderingServer="*res://addons/libmaszyna/traction/traction_rendering_server.gd"
+RailVehiclePhysicsServer="*res://addons/libmaszyna/vehicle/rail_vehicle_physics_server.gd"
+NodebankLibraryBuilder="*uid://dv25nc25tcanw"
+Console="*uid://d046w0soh2iou"
 AudioStreamManager="*uid://cp8sgfk334adm"
 
 [debug]
@@ -51,13 +53,17 @@ file_logging/log_path="user://logs/app.log"
 window/size/mode=3
 window/size/initial_position_type=3
 
+[editor]
+
+movie_writer/movie_file="/home/marcin/Wideo/maszyna-reloaded.ogv"
+
 [editor_overrides]
 
 text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
+enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
 
 [input]
 
@@ -161,6 +167,10 @@ change_vehicle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194336,"physical_keycode":0,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
 ]
 }
+
+[maszyna]
+
+track_curve_bake_interval=0.5
 
 [rendering]
 

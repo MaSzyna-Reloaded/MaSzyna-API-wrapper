@@ -4,6 +4,7 @@
 #include "../engines/TrainEngine.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -16,6 +17,7 @@ namespace godot {
     const char *TrainController::radio_toggled = "radio_toggled";
     const char *TrainController::radio_channel_changed = "radio_channel_changed";
     const char *TrainController::config_changed = "config_changed";
+    const char *TrainController::position_changed_signal = "position_changed";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
@@ -58,10 +60,18 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
+        ClassDB::bind_method(D_METHOD("process_movement", "delta"), &TrainController::process_movement);
+        ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
+        ClassDB::bind_method(D_METHOD("get_world_position"), &TrainController::get_world_position);
+        ClassDB::bind_method(
+                D_METHOD("notify_world_position_changed"), &TrainController::notify_world_position_changed);
+        ClassDB::bind_method(D_METHOD("change_track"), &TrainController::change_track);
+        ClassDB::bind_method(D_METHOD("get_rid"), &TrainController::get_rid);
 
         BIND_PROPERTY(
                 Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
                 "train_id");
+
         BIND_PROPERTY(
                 Variant::STRING, "type_name", "type_name", &TrainController::set_type_name,
                 &TrainController::get_type_name, "type_name");
@@ -88,6 +98,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(config_changed));
+        ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -162,6 +173,10 @@ namespace godot {
         }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
+                if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
+                    rail_vehicle_physics_server != nullptr) {
+                    rid = rail_vehicle_physics_server->call("controller_create", this);
+                }
                 TrainSystem::get_instance()->register_train(train_id, this);
                 register_command("battery", Callable(this, "battery"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
@@ -184,6 +199,11 @@ namespace godot {
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 TrainSystem::get_instance()->unregister_train(train_id);
+                if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
+                    rail_vehicle_physics_server != nullptr && rid.is_valid()) {
+                    rail_vehicle_physics_server->call("controller_free", rid);
+                }
+                rid = RID();
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
@@ -258,6 +278,28 @@ namespace godot {
 
         _update_mover_config_if_dirty();
         _process_mover(p_delta);
+    }
+
+    Object *TrainController::_get_rail_vehicle_physics_server() const {
+        Engine *engine = Engine::get_singleton();
+        return engine->get_singleton("RailVehiclePhysicsServer");
+    }
+
+    double TrainController::process_movement(const double p_delta) {
+        const double velocity = state.get("velocity", 0.0);
+        return velocity * p_delta;
+    }
+
+    void TrainController::_emit_position_changed_if_needed() {
+        const Vector3 world_position = get_world_position();
+        if (world_position.distance_squared_to(last_emitted_position) >= 1.0) {
+            last_emitted_position = world_position;
+            emit_signal(position_changed_signal, last_emitted_position);
+        }
+    }
+
+    void TrainController::notify_world_position_changed() {
+        _emit_position_changed_if_needed();
     }
 
     void TrainController::_do_update_internal_mover(TMoverParameters *p_mover) const {
@@ -343,6 +385,29 @@ namespace godot {
 
     Dictionary TrainController::get_state() {
         return state;
+    }
+
+    void
+    TrainController::change_track(const String &p_track_name, const float p_track_offset, const int p_track_direction) {
+        UtilityFunctions::push_warning(
+                vformat("TrainController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d", p_track_name,
+                        p_track_offset, p_track_direction));
+    }
+
+    Vector3 TrainController::get_world_position() const {
+        return get_world_transform().get_origin();
+    }
+
+    Transform3D TrainController::get_world_transform() const {
+        if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
+            rail_vehicle_physics_server != nullptr && rid.is_valid()) {
+            return rail_vehicle_physics_server->call("controller_get_transform", rid);
+        }
+        return Transform3D();
+    }
+
+    RID TrainController::get_rid() const {
+        return rid;
     }
 
     void

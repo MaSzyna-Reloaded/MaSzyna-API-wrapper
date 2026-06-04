@@ -23,6 +23,28 @@ class_name RailVehicle3D
             _controller = null
             _dirty = true
 
+@export var start_track_name: String = "":
+    set(value):
+        if not start_track_name == value:
+            start_track_name = value
+            _pending_start_track_retry = not start_track_name.is_empty()
+            _dirty = true
+
+@export var start_track_offset: float = 0.0:
+    set(value):
+        if not is_equal_approx(start_track_offset, value):
+            start_track_offset = value
+            _pending_start_track_retry = not start_track_name.is_empty()
+            _dirty = true
+
+@export_enum("NORMAL", "REVERSED")
+var start_direction: int = TrackManager.Direction.DIRECTION_NORMAL:
+    set(value):
+        if not start_direction == value:
+            start_direction = value
+            _pending_start_track_retry = not start_track_name.is_empty()
+            _dirty = true
+
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
@@ -46,6 +68,8 @@ class_name RailVehicle3D
             head_display_node_path = x
             _needs_head_display_update = true
 
+@export var length := 0.0
+
 var _dirty:bool = true
 var _needs_head_display_update: bool = false
 var _head_display_e3d:E3DModelInstance
@@ -53,7 +77,11 @@ var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
 var _model_node:E3DModelInstance
+var _connected_model_node:E3DModelInstance
 var _t:float = 0.0
+var _syncing_controller: bool = false
+var _rid: RID = RID()
+var _pending_start_track_retry: bool = false
 
 
 func enter_cabin(player:MaszynaPlayer):
@@ -155,6 +183,7 @@ func get_controller() -> TrainController:
     else:
         return null
 
+
 func _update_head_display():
     if is_inside_tree():
         if head_display_node_path:
@@ -168,7 +197,7 @@ func _update_head_display():
             _needs_head_display_update = false
 
 
-func _process(delta):
+func _process(delta: float) -> void:
     if _dirty:
         _process_dirty()
 
@@ -178,34 +207,48 @@ func _process(delta):
         _update_head_display()
 
     if not Engine.is_editor_hint():
-        if _controller:
-            position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
-
-func _schedule_head_display_update():
-    _needs_head_display_update = true
+        if _rid.is_valid():
+            RailVehiclePhysicsServer.process_movement(_rid, delta)
+            global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+            if _controller:
+                _controller.notify_world_position_changed()
 
 
 func _process_dirty() -> void:
-    if _dirty:
-        _dirty = false
-        if head_display_e3d_path:
-            _head_display_e3d = get_node_or_null(head_display_e3d_path)
-            if _head_display_e3d:
-                _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
+    _dirty = false
+    if head_display_e3d_path:
+        _head_display_e3d = get_node_or_null(head_display_e3d_path)
+        if _head_display_e3d:
+            _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
 
-        if is_inside_tree():
-            if controller_path:
-                _controller = get_node_or_null(controller_path)
+    if is_inside_tree():
+        if controller_path and is_inside_tree():
+            _controller = get_node(controller_path)
 
+        if _rid.is_valid() and _controller:
+            var controller_rid: RID = _controller.get_rid()
+            if controller_rid.is_valid():
+                RailVehiclePhysicsServer.vehicle_bind_controller(_rid, controller_rid)
+
+        if model_instance_path:
             var model_node: E3DModelInstance = null
             if model_instance_path:
                 model_node = get_node_or_null(model_instance_path)
-            if _model_node:
-                _model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+            if _connected_model_node:
+                _connected_model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+                _connected_model_node = null
             _model_node = model_node
             if _model_node:
                 _model_node.e3d_loaded.connect(_on_model_node_e3d_loaded)
+                _connected_model_node = _model_node
             _sync_model_lights()
+
+        if _pending_start_track_retry:
+            _apply_start_track()
+
+
+func _schedule_head_display_update():
+    _needs_head_display_update = true
 
 
 func _sync_model_lights() -> void:
@@ -229,3 +272,50 @@ func _ready() -> void:
 
     for instance:E3DModelInstance in find_children("", "E3DModelInstance", true, false):
         instance.e3d_loaded.connect(_schedule_head_display_update)
+
+
+func move_on_track(distance: float) -> void:
+    if _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_move(_rid, distance)
+        global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+
+
+func _enter_tree() -> void:
+    if TrackManager and not TrackManager.tracks_changed.is_connected(_on_track_manager_tracks_changed):
+        TrackManager.tracks_changed.connect(_on_track_manager_tracks_changed)
+    if RailVehiclePhysicsServer:
+        _rid = RailVehiclePhysicsServer.vehicle_create()
+    _pending_start_track_retry = true if start_track_name else false
+    _dirty = true
+
+
+func _exit_tree() -> void:
+    if _connected_model_node:
+        _connected_model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+        _connected_model_node = null
+    if TrackManager and TrackManager.tracks_changed.is_connected(_on_track_manager_tracks_changed):
+        TrackManager.tracks_changed.disconnect(_on_track_manager_tracks_changed)
+    if RailVehiclePhysicsServer and _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_free(_rid)
+    _rid = RID()
+
+
+func _on_track_manager_tracks_changed() -> void:
+    if _pending_start_track_retry:
+        _apply_start_track()
+
+
+func _apply_start_track() -> void:
+    if start_track_name:
+        var track_rid: RID = TrackManager.track_get_rid_by_name(start_track_name)
+        if _rid and track_rid.is_valid():
+            print(self, " apply start track ", start_track_name, " ", start_track_offset)
+            _pending_start_track_retry = false
+            RailVehiclePhysicsServer.vehicle_set_track(
+                _rid,
+                track_rid,
+                start_track_offset,
+                start_direction
+            )
+
+            global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)

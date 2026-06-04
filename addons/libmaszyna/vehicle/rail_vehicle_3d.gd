@@ -210,9 +210,6 @@ func _process(delta: float) -> void:
         if _rid.is_valid():
             RailVehiclePhysicsServer.process_movement(_rid, delta)
             global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
-            if _controller:
-                _controller.notify_world_position_changed()
-
 
 func _process_dirty() -> void:
     _dirty = false

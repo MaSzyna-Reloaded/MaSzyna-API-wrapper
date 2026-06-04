@@ -67,7 +67,7 @@ shader_parameter/moon_texture_flip_u = false
 shader_parameter/moon_texture_flip_v = false
 shader_parameter/moon_size = 0.07
 shader_parameter/atm_moon_mie_tint = Color(0.137255, 0.184314, 0.292196, 1)
-shader_parameter/atm_moon_mie_intensity = 0.09948422372341155
+shader_parameter/atm_moon_mie_intensity = 0.0
 shader_parameter/atm_moon_partial_mie_phase = Vector3(0.36, 1.64, 1.6)
 shader_parameter/starmap_color = Color(0.709804, 0.709804, 0.709804, 0.854902)
 shader_parameter/starmap_texture = ExtResource("9_jg8su")
@@ -91,8 +91,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.020529518, 0.020529518)
-shader_parameter/cirrus_position2 = Vector2(0.020529518, 0.020529518)
+shader_parameter/cirrus_position1 = Vector2(0.40333515, 0.40333515)
+shader_parameter/cirrus_position2 = Vector2(0.40333515, 0.40333515)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -102,7 +102,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.102648705, 0.102648705)
+shader_parameter/cumulus_position = Vector2(2.016742, 2.016742)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -282,7 +282,6 @@ utc = 2.0
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -429,7 +428,6 @@ visible = null
 script = ExtResource("2_py6pt")
 current_time = 10.0
 simulation_speed = 100.0
-time_in_editor = false
 time_of_day_path = NodePath("../Sky3D/TimeOfDay")
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]

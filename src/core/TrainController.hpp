@@ -149,7 +149,6 @@ namespace godot {
             static void _bind_methods();
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
             RID get_rid() const;
-            void notify_world_position_changed();
             void set_track_direction(int p_track_direction);
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;

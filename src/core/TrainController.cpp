@@ -63,8 +63,6 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &TrainController::process_movement);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &TrainController::get_world_position);
-        ClassDB::bind_method(
-                D_METHOD("notify_world_position_changed"), &TrainController::notify_world_position_changed);
         ClassDB::bind_method(D_METHOD("change_track"), &TrainController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &TrainController::get_rid);
 
@@ -288,18 +286,6 @@ namespace godot {
     double TrainController::process_movement(const double p_delta) {
         const double velocity = state.get("velocity", 0.0);
         return velocity * p_delta;
-    }
-
-    void TrainController::_emit_position_changed_if_needed() {
-        const Vector3 world_position = get_world_position();
-        if (world_position.distance_squared_to(last_emitted_position) >= 1.0) {
-            last_emitted_position = world_position;
-            emit_signal(position_changed_signal, last_emitted_position);
-        }
-    }
-
-    void TrainController::notify_world_position_changed() {
-        _emit_position_changed_if_needed();
     }
 
     void TrainController::_do_update_internal_mover(TMoverParameters *p_mover) const {

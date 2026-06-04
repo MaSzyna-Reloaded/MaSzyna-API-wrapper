@@ -272,12 +272,13 @@ func _get_track_data(track_rid: RID) -> TrackData:
 
     track.track_rid = track_rid
     track.curve1 = curve1
-    track.curve2 = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    track.endpoints = TrackManager.track_get_endpoints(track_rid)
+    if track.endpoints.size() > TrackManager.EndpointIndex.CURVE2_P1:
+        track.curve2 = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
     track.width = TrackManager.track_get_width(track_rid)
     track.switch_common_endpoint_index = TrackManager.track_get_common_endpoint_index(track_rid)
     track.switch_f_offset1 = TrackManager.switch_get_f_offset1(track_rid)
     track.switch_f_offset2 = TrackManager.switch_get_f_offset2(track_rid)
-    track.endpoints = TrackManager.track_get_endpoints(track_rid)
     return track
 
 

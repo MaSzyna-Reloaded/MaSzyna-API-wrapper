@@ -210,6 +210,22 @@ func test_get_unique_endpoint_connection_returns_null_for_ambiguous_connections(
     assert_eq(previous_connection.endpoint_index, TrackManager.EndpointIndex.CURVE1_P1)
 
 
+func test_normal_track_does_not_build_secondary_rail_from_material2() -> void:
+    var track: TrackNormal3D = await _create_normal_track(
+        "normal_track_with_ballast_material2",
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0))
+    )
+    track.material1 = "rail_screw_used1"
+    track.material2 = "1435mm/tpbps-new2"
+    track._process_dirty(0.0)
+
+    var state: Variant = TrackRenderingServer._tracks[track._track_render_rid]
+
+    assert_not_null(state.primary_rail_mesh)
+    assert_null(state.secondary_rail_mesh)
+    assert_not_null(state.trackbed_mesh)
+
+
 func test_switch_blade_layout_uses_curve1_left_and_curve2_right_for_right_switch() -> void:
     var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(true, -0.05, 0.0, TrackManager.SWITCH_MAX_OFFSET)
 
@@ -226,6 +242,19 @@ func test_switch_blade_layout_uses_curve1_right_and_curve2_left_for_left_switch(
     assert_true(layout["secondary_blade_mirrored"], "left switch should place curve2 blade on the left rail")
     assert_almost_eq(layout["primary_blade_offset"], 0.0, 0.001)
     assert_almost_eq(layout["secondary_blade_offset"], 0.15, 0.001)
+
+
+func _create_normal_track(
+    track_name: String,
+    curve1: MaszynaTrackCurve
+) -> TrackNormal3D:
+    var track: TrackNormal3D = TrackNormal3D.new()
+    track.track_name = track_name
+    track.curve = curve1
+    add_child(track)
+    created_tracks.append(track)
+    await wait_idle_frames(2)
+    return track
 
 
 func _create_switch_track(

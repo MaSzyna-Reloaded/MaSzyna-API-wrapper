@@ -7,6 +7,7 @@ namespace godot {
     void GenericTrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_train_controller_node"), &GenericTrainPart::get_train_controller_node);
         ClassDB::bind_method(D_METHOD("get_train_state"), &GenericTrainPart::get_train_state);
+        ClassDB::bind_method(D_METHOD("update_state"), &GenericTrainPart::update_state);
         BIND_VIRTUAL_METHOD(GenericTrainPart, _process_train_part, 2);
         BIND_VIRTUAL_METHOD(GenericTrainPart, _get_train_part_state, 1);
     }
@@ -16,9 +17,16 @@ namespace godot {
     void GenericTrainPart::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {};
     void GenericTrainPart::_do_process_mover(TMoverParameters *p_mover, double p_delta) {};
     void GenericTrainPart::_process_train_part(const double p_delta) {};
+
     Dictionary GenericTrainPart::_get_train_part_state() {
         return internal_state;
     };
+
+    void GenericTrainPart::update_state(const Dictionary &p_state) {
+        internal_state.merge(p_state, true);
+        train_controller_node->get_state().merge(internal_state, true);
+    }
+
     void GenericTrainPart::_process_mover(const double p_delta) {
         call("_process_train_part", p_delta);
         // FIXME: this should not be called each frame, but only when state changes

@@ -13,7 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://cmluhfe2vkxcc" path="res://addons/libmaszyna/cabin/cabin_switch.tscn" id="72_a07r6"]
 [ext_resource type="Script" uid="uid://brxp2te1tebgk" path="res://addons/libmaszyna/cabin/cabin_spot_light_3d.gd" id="73_lxu5b"]
 [ext_resource type="Script" uid="uid://bw876lucal3mo" path="res://addons/libmaszyna/cabin/cabin_omni_light_3d.gd" id="74_q8ngl"]
-[ext_resource type="Texture2D" uid="uid://wf2pbnu62pgl" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
+[ext_resource type="Texture2D" uid="uid://cycwf1avry6mk" path="res://vehicles/sm42/czuwak_projector.png" id="75_p8gfg"]
 [ext_resource type="PackedScene" uid="uid://gp6wbsgcq48k" path="res://addons/libmaszyna/cabin/cabin_blinker.tscn" id="76_djwot"]
 
 [sub_resource type="AudioStream" id="AudioStream_hwnyj"]
@@ -193,6 +193,19 @@ visible = true
 visibility_parent = NodePath("")
 layers = 1
 script = ExtResource("1_6k4j1")
+lights_state = Dictionary[String, bool]({
+"awaria": false,
+"bocznikowanie": false,
+"czuwak": false,
+"ir-sfn": false,
+"nadmiar": false,
+"podswietlenie": false,
+"pozar1": false,
+"pozar2": false,
+"pozar3": false,
+"rtf": false,
+"uszk_lok_ster": false
+})
 data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_kabina"
 
@@ -397,6 +410,18 @@ command = "battery"
 state_property = "battery_enabled"
 action = "battery_toggle"
 controller_path = NodePath("../../../SM42v1")
+
+[node name="Horn" type="Node3D" parent="Switches" unique_id=997059306]
+script = ExtResource("70_sdo5w")
+switch_min_position = -1
+automatic_reset = true
+mesh_path = NodePath("../../Cabin/banan/podloga_glowna/horn")
+command_set = "horn"
+state_property = "horn"
+mesh_rotation = Vector3(0, 30, 0)
+action_increase = "horn1"
+action_decrease = "horn2"
+metadata/_custom_type_script = "uid://3hp38qtyx500"
 
 [node name="Lights" type="Node3D" parent="." unique_id=454038932]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)

@@ -252,3 +252,24 @@ else ()
         )
     ENDIF ()
 ENDIF ()
+
+SET(SRC_ADDON_GND_SFX "${PROJECT_SOURCE_DIR}/vendor/gnd-sfx/addons/gnd_sfx")
+SET(DST_ADDON_GND_SFX "${ADDONS_DEMO_DIR}/gnd_sfx")
+IF (UNIX)
+    # On UNIX: prefer symlinks; if destination already a symlink, do nothing.
+    IF (NOT IS_SYMLINK "${DST_ADDON_GND_SFX}")
+        MESSAGE(NOTICE "No symlinks detected, linking...")
+        ADD_CUSTOM_COMMAND(TARGET ${LIBNAME} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E rm -rf "${DST_ADDON_GND_SFX}"
+            COMMAND ${CMAKE_COMMAND} -E create_symlink "${SRC_ADDON_GND_SFX}" "${DST_ADDON_GND_SFX}"
+        )
+    ENDIF ()
+else ()
+    # Non-UNIX: copy directory; if destination is a symlink, omit copying.
+    IF (NOT IS_SYMLINK "${DST_ADDON_GND_SFX}")
+        ADD_CUSTOM_COMMAND(TARGET ${LIBNAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E rm -rf "${DST_ADDON_GND_SFX}"
+                COMMAND ${CMAKE_COMMAND} -E copy_directory "${SRC_ADDON_GND_SFX}" "${DST_ADDON_GND_SFX}"
+        )
+    ENDIF ()
+ENDIF ()

@@ -8,7 +8,7 @@ CLANG_TIDY_BUILD_DIR=build-clang-tidy
 CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
 CLANG_TIDY_BINDINGS_FILE=$(CLANG_TIDY_BUILD_DIR)/godot-cpp/gen/include/godot_cpp/classes/node.hpp
 LIBMASZYNA_DEBUG:=""
-CMAKE_GODOTCPP_API_VERSION=4.6
+CMAKE_GODOTCPP_API_VERSION=4.7
 
 #Helper for CLion so it would see generated bindings
 generate-bindings:

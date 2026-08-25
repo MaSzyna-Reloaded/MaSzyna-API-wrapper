@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="TrainPhysicsServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Server managing train physics execution.
+	</brief_description>
+	<description>
+		[TrainPhysicsServer] is a singleton responsible for centralized physics calculation of all registered trains ([TrainController]) and their parts ([TrainPart]). It internally uses a synchronization barrier, separating raw physics calculations from Godot API state updates. The server automatically connects to the Godot physics loop ([code]physics_frame[/code] signal) when the first train enters the scene.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="step_physics">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+				Triggers a single physics calculation step with the given [param delta] time step. It is called automatically by the server on every Godot physics frame.
+			</description>
+		</method>
+	</methods>
+</class>

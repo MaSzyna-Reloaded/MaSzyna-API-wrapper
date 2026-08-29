@@ -81,7 +81,6 @@ namespace godot {
                 static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int
         p_mover->LightsWrap = wrap_light_selector;
         p_mover->LightsDefPos = default_selector_position;
-        p_mover->LightPower = 0; // LightPower is used there but declared in the Param section in the .fiz file
         p_mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(light_source);
         p_mover->AlterLightPowerSource.SourceType =
                 train_controller_node->power_source_map.at(alternative_light_source);

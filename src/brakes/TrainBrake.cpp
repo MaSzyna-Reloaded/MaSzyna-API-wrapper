@@ -1,6 +1,7 @@
 #include "../brakes/TrainBrake.hpp"
 #include "../core/TrainController.hpp"
 #include "../core/utils.hpp"
+#include <algorithm>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -147,6 +148,155 @@ namespace godot {
                 &TrainBrake::set_main_pipe_minimum_unblocking_handle_position,
                 &TrainBrake::get_main_pipe_minimum_unblocking_handle_position,
                 "main_pipe_minimum_unblocking_handle_position")
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                Variant::ARRAY, "brake_pressure_table", "brake_pressure_table", &TrainBrake::set_brake_pressure_table,
+                &TrainBrake::get_brake_pressure_table, "brake_pressure_table", PROPERTY_HINT_TYPE_STRING,
+                "BrakePressureTableItem");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                Variant::ARRAY, "compressor_list", "compressor_list", &TrainBrake::set_compressor_list,
+                &TrainBrake::get_compressor_list, "compressor_list", PROPERTY_HINT_TYPE_STRING, "CompressorListItem");
+        BIND_PROPERTY(
+                Variant::FLOAT, "emergency_valve_area", "compressor/emergency_valve_area",
+                &TrainBrake::set_emergency_valve_area, &TrainBrake::get_emergency_valve_area, "emergency_valve_area")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "universal_brake_button_1", "universal_brake_button/1",
+                &TrainBrake::set_universal_brake_button_1, &TrainBrake::get_universal_brake_button_1,
+                "universal_brake_button_1", PROPERTY_HINT_FLAGS,
+                "Releaser,Bridge Emergency Valve,High Pressure Impulse,Assimilation,Anti-Skid Brake")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "universal_brake_button_2", "universal_brake_button/2",
+                &TrainBrake::set_universal_brake_button_2, &TrainBrake::get_universal_brake_button_2,
+                "universal_brake_button_2", PROPERTY_HINT_FLAGS,
+                "Releaser,Bridge Emergency Valve,High Pressure Impulse,Assimilation,Anti-Skid Brake")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "universal_brake_button_3", "universal_brake_button/3",
+                &TrainBrake::set_universal_brake_button_3, &TrainBrake::get_universal_brake_button_3,
+                "universal_brake_button_3", PROPERTY_HINT_FLAGS,
+                "Releaser,Bridge Emergency Valve,High Pressure Impulse,Assimilation,Anti-Skid Brake")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "brake_system", "cntrl/brake_system", &TrainBrake::set_brake_system,
+                &TrainBrake::get_brake_system, "brake_system", PROPERTY_HINT_ENUM,
+                "Individual,Pneumatic,ElectroPneumatic")
+        BIND_PROPERTY(
+                Variant::INT, "brake_ctrl_position_count", "cntrl/brake_ctrl_position_count",
+                &TrainBrake::set_brake_ctrl_position_count, &TrainBrake::get_brake_ctrl_position_count,
+                "brake_ctrl_position_count")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "brake_delays", "cntrl/brake_delays", &TrainBrake::set_brake_delays,
+                &TrainBrake::get_brake_delays, "brake_delays", PROPERTY_HINT_ENUM, "G:1,P:2,R:4,GP:3,PR:6,GPR:7,PR+Mg:14,GPR+Mg:15")
+        BIND_PROPERTY(
+                Variant::FLOAT, "brake_delay_1", "cntrl/brake_delay_1", &TrainBrake::set_brake_delay_1,
+                &TrainBrake::get_brake_delay_1, "brake_delay_1")
+        BIND_PROPERTY(
+                Variant::FLOAT, "brake_delay_2", "cntrl/brake_delay_2", &TrainBrake::set_brake_delay_2,
+                &TrainBrake::get_brake_delay_2, "brake_delay_2")
+        BIND_PROPERTY(
+                Variant::FLOAT, "brake_delay_3", "cntrl/brake_delay_3", &TrainBrake::set_brake_delay_3,
+                &TrainBrake::get_brake_delay_3, "brake_delay_3")
+        BIND_PROPERTY(
+                Variant::FLOAT, "brake_delay_4", "cntrl/brake_delay_4", &TrainBrake::set_brake_delay_4,
+                &TrainBrake::get_brake_delay_4, "brake_delay_4")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "brake_op_modes", "cntrl/brake_op_modes", &TrainBrake::set_brake_op_modes,
+                &TrainBrake::get_brake_op_modes, "brake_op_modes", PROPERTY_HINT_ENUM, "PN:3,PNEPMED:15")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "brake_handle_type", "cntrl/brake_handle_type", &TrainBrake::set_brake_handle_type,
+                &TrainBrake::get_brake_handle_type, "brake_handle_type", PROPERTY_HINT_ENUM,
+                "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
+                "MHZ_K5P,MHZ_K8P,MHZ_6P")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "anti_skid_brake_type", "cntrl/anti_skid_brake_type", &TrainBrake::set_anti_skid_brake_type,
+                &TrainBrake::get_anti_skid_brake_type, "anti_skid_brake_type", PROPERTY_HINT_ENUM,
+                "None,Manual,Automatic")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "local_brake_type", "cntrl/local_brake_type", &TrainBrake::set_local_brake_type,
+                &TrainBrake::get_local_brake_type, "local_brake_type", PROPERTY_HINT_ENUM,
+                "None,Manual,Pneumatic,Hydraulic")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "local_brake_handle_type", "cntrl/local_brake_handle_type",
+                &TrainBrake::set_local_brake_handle_type, &TrainBrake::get_local_brake_handle_type,
+                "local_brake_handle_type", PROPERTY_HINT_ENUM,
+                "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
+                "MHZ_K5P,MHZ_K8P,MHZ_6P")
+        BIND_PROPERTY(
+                Variant::BOOL, "manual_brake_present", "cntrl/manual_brake_present", &TrainBrake::set_manual_brake_present,
+                &TrainBrake::get_manual_brake_present, "manual_brake_present")
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "dynamic_brake_type", "cntrl/dynamic_brake_type", &TrainBrake::set_dynamic_brake_type,
+                &TrainBrake::get_dynamic_brake_type, "dynamic_brake_type", PROPERTY_HINT_ENUM,
+                "None:0,Passive:1,Switch:2,Reversal:4,Automatic:8")
+        BIND_PROPERTY(
+                Variant::BOOL, "local_brake_traxx", "cntrl/local_brake_traxx", &TrainBrake::set_local_brake_traxx,
+                &TrainBrake::get_local_brake_traxx, "local_brake_traxx")
+        BIND_PROPERTY(
+                Variant::BOOL, "release_parking_by_spring_brake", "cntrl/release_parking_by_spring_brake",
+                &TrainBrake::set_release_parking_by_spring_brake, &TrainBrake::get_release_parking_by_spring_brake,
+                "release_parking_by_spring_brake")
+        BIND_PROPERTY(
+                Variant::BOOL, "release_parking_by_spring_brake_when_door_open",
+                "cntrl/release_parking_by_spring_brake_when_door_open",
+                &TrainBrake::set_release_parking_by_spring_brake_when_door_open,
+                &TrainBrake::get_release_parking_by_spring_brake_when_door_open,
+                "release_parking_by_spring_brake_when_door_open")
+        BIND_PROPERTY(
+                Variant::BOOL, "spring_brake_cuts_off_drive", "cntrl/spring_brake_cuts_off_drive",
+                &TrainBrake::set_spring_brake_cuts_off_drive, &TrainBrake::get_spring_brake_cuts_off_drive,
+                "spring_brake_cuts_off_drive")
+        BIND_PROPERTY(
+                Variant::FLOAT, "spring_brake_drive_emergency_velocity", "cntrl/spring_brake_drive_emergency_velocity",
+                &TrainBrake::set_spring_brake_drive_emergency_velocity,
+                &TrainBrake::get_spring_brake_drive_emergency_velocity, "spring_brake_drive_emergency_velocity")
+
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_NO_HANDLE);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_WESTINGHOUSE);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_FV4A);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_M394);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_M254);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_FVE408);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_FVEL6);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_D2);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_KNORR);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_FD1);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_BS2);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_TESTH);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_ST113);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_P);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_T);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_EN57);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_K5P);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_K8P);
+        BIND_ENUM_CONSTANT(BRAKE_HANDLE_TYPE_MHZ_6P);
+
+        BIND_ENUM_CONSTANT(LOCAL_BRAKE_TYPE_NONE);
+        BIND_ENUM_CONSTANT(LOCAL_BRAKE_TYPE_MANUAL);
+        BIND_ENUM_CONSTANT(LOCAL_BRAKE_TYPE_PNEUMATIC);
+        BIND_ENUM_CONSTANT(LOCAL_BRAKE_TYPE_HYDRAULIC);
+
+        BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_NONE);
+        BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_MANUAL);
+        BIND_ENUM_CONSTANT(ANTI_SKID_BRAKE_AUTOMATIC);
+
+        BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_NONE);
+        BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_PASSIVE);
+        BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_SWITCH);
+        BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_REVERSAL);
+        BIND_ENUM_CONSTANT(DYNAMIC_BRAKE_AUTOMATIC);
+
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_G);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_P);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_R);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_GP);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_PR);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_PR_MG);
+        BIND_ENUM_CONSTANT(BRAKE_DELAY_GPR_MG);
+
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PN);
+        BIND_ENUM_CONSTANT(BRAKE_OP_MODE_PNEPMED);
+
+        BIND_ENUM_CONSTANT(BRAKE_SYSTEM_INDIVIDUAL);
+        BIND_ENUM_CONSTANT(BRAKE_SYSTEM_PNEUMATIC);
+        BIND_ENUM_CONSTANT(BRAKE_SYSTEM_ELECTRO_PNEUMATIC);
 
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
@@ -308,18 +458,25 @@ namespace godot {
 
     void TrainBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
         /* logika z Mover::LoadFiz_Brake */
-        p_mover->BrakeSystem = TBrakeSystem::Pneumatic;    // BrakeSystem
-        p_mover->BrakeCtrlPosNo = 6;                       // BCPN
-        p_mover->BrakeDelay[0] = 15;                       // BDelay1
-        p_mover->BrakeDelay[1] = 3;                        // BDelay2
-        p_mover->BrakeDelay[2] = 36;                       // BDelay3
-        p_mover->BrakeDelay[3] = 22;                       // BDelay4
-        p_mover->BrakeDelays = bdelay_G + bdelay_P;        // BrakeDelays
-        p_mover->BrakeHandle = TBrakeHandle::FV4a;         // BrakeHandle
-        p_mover->BrakeLocHandle = TBrakeHandle::FD1;       // LocBrakeHandle
-        p_mover->ASBType = 1;                              // ASB
-        p_mover->LocalBrake = TLocalBrake::PneumaticBrake; // LocalBrake
-        p_mover->MBrake = true;                            // ManualBrake
+        p_mover->BrakeSystem = brake_system_type_map.at(brake_system);        // BrakeSystem
+        p_mover->BrakeCtrlPosNo = brake_ctrl_position_count;                  // BCPN
+        p_mover->BrakeDelay[0] = brake_delay_1;                               // BDelay1
+        p_mover->BrakeDelay[1] = brake_delay_2;                               // BDelay2
+        p_mover->BrakeDelay[2] = brake_delay_3;                               // BDelay3
+        p_mover->BrakeDelay[3] = brake_delay_4;                               // BDelay4
+        p_mover->BrakeDelays = brake_delays;                                  // BrakeDelays
+        p_mover->BrakeOpModes = brake_op_modes;                               // BrakeOpModes
+        p_mover->BrakeHandle = brake_handle_type_map.at(brake_handle_type);   // BrakeHandle
+        p_mover->BrakeLocHandle = brake_handle_type_map.at(local_brake_handle_type); // LocBrakeHandle
+        p_mover->ASBType = anti_skid_brake_type;                             // ASB
+        p_mover->LocalBrake = local_brake_type_map.at(local_brake_type);     // LocalBrake
+        p_mover->MBrake = manual_brake_present;                              // ManualBrake
+        p_mover->LocHandleTimeTraxx = local_brake_traxx;                     // LocalBrakeTraxx
+        p_mover->DynamicBrakeType = dynamic_brake_type;                      // DynamicBrake
+        p_mover->ReleaseParkingBySpringBrake = release_parking_by_spring_brake;
+        p_mover->ReleaseParkingBySpringBrakeWhenDoorIsOpen = release_parking_by_spring_brake_when_door_open;
+        p_mover->SpringBrakeCutsOffDrive = spring_brake_cuts_off_drive;
+        p_mover->SpringBrakeDriveEmergencyVel = spring_brake_drive_emergency_velocity;
 
         /* FIXME: BrakeValve nie jest tylko enumem, jesli w FIZ wpisze sie nieznany symbol zawierający ESt, to EXE
          * ustawi BrakeValve=ESt3. Powinien to ogarnąć importer FIZ
@@ -391,7 +548,10 @@ namespace godot {
         p_mover->EmergencyValveOff = lower_emergency_closing_pressure;
         p_mover->EmergencyValveOn = higher_emergency_closing_pressure;
 
-        //@TODO: Figure out and implement equivalents for UniversalBrakeButtonFlag
+        p_mover->EmergencyValveArea = emergency_valve_area;
+        p_mover->UniversalBrakeButtonFlag[0] = universal_brake_button_1;
+        p_mover->UniversalBrakeButtonFlag[1] = universal_brake_button_2;
+        p_mover->UniversalBrakeButtonFlag[2] = universal_brake_button_3;
 
         p_mover->LockPipeOn = main_pipe_blocking_pressure;
         p_mover->LockPipeOff = main_pipe_unblocking_pressure;
@@ -419,6 +579,43 @@ namespace godot {
             p_mover->CabDependentCompressor = true;
         } else {
             p_mover->MaxCompressor_cabB = p_mover->MaxCompressor;
+        }
+
+        /* BPT: tabelka hamulcowa, wyszczegolnienie cisnien w rurze wg pozycji krana */
+        p_mover->BrakePressureTable.clear();
+        for (int i = 0; i < brake_pressure_table.size(); i++) {
+            const Ref<BrakePressureTableItem> &row = brake_pressure_table[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainBrake]: brake_pressure_table property is null at index " + String::num(i));
+                continue;
+            }
+            Maszyna::TBrakePressure entry;
+            entry.PipePressureVal = row->get_pipe_pressure();
+            entry.BrakePressureVal = row->get_brake_cylinder_pressure();
+            entry.FlowSpeedVal = row->get_fill_speed();
+            entry.BrakeType = brake_pressure_table_type_map.at(row->get_brake_type());
+            p_mover->BrakePressureTable[row->get_handle_position()] = entry;
+        }
+
+        /* CompressorList: programator sprezarek */
+        constexpr int MAX_COMPRESSOR_LIST = 8;
+        const int compressor_list_size = static_cast<int>(compressor_list.size());
+        if (compressor_list_size > MAX_COMPRESSOR_LIST) {
+            UtilityFunctions::push_warning(
+                    "[TrainBrake]: compressor_list has " + String::num(compressor_list_size) +
+                    " entries, exceeding the mover's limit of " + String::num(MAX_COMPRESSOR_LIST) + "; truncating.");
+        }
+        for (int i = 0; i < std::min(MAX_COMPRESSOR_LIST, compressor_list_size); i++) {
+            const Ref<CompressorListItem> &row = compressor_list[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning("[TrainBrake]: compressor_list property is null at index " + String::num(i));
+                continue;
+            }
+            p_mover->CompressorList[Maszyna::TCompressorList::cl_Allow][i + 1] = row->get_allow();
+            p_mover->CompressorList[Maszyna::TCompressorList::cl_SpeedFactor][i + 1] = row->get_speed_factor();
+            p_mover->CompressorList[Maszyna::TCompressorList::cl_MinFactor][i + 1] = row->get_min_pressure_factor();
+            p_mover->CompressorList[Maszyna::TCompressorList::cl_MaxFactor][i + 1] = row->get_max_pressure_factor();
         }
     }
 } // namespace godot

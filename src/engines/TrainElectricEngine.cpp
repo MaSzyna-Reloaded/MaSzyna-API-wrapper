@@ -162,8 +162,13 @@ namespace godot {
         p_state["converted_allowed"] = p_mover->ConverterAllow;
         p_state["converter_time_to_start"] = p_mover->ConverterStartDelayTimer;
         p_state["power_source"] = train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.SourceType);
-        p_state["accumulator/recharge_source"] =
-                train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+        // RAccumulator/RPowerCable are only initialized by _do_update_internal_mover() when
+        // SourceType is the matching variant (see the switch below) - reading them
+        // unconditionally reads uninitialized memory for every other source type.
+        if (p_mover->EnginePowerSource.SourceType == TPowerSource::Accumulator) {
+            p_state["accumulator/recharge_source"] =
+                    train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+        }
         p_state["current_collector/max_voltage"] = p_mover->EnginePowerSource.MaxVoltage;
         p_state["current_collector/max_current"] = p_mover->EnginePowerSource.MaxCurrent;
         p_state["current_collector/max_collector_lifting"] = p_mover->EnginePowerSource.CollectorParameters.MaxH;
@@ -178,9 +183,11 @@ namespace godot {
         p_state["current_collector/required_main_switch_voltage"] =
                 p_mover->EnginePowerSource.CollectorParameters.InsetV;
         p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
-        p_state["power_cable/source"] =
-                train_controller_node->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
-        p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
+        if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
+            p_state["power_cable/source"] =
+                    train_controller_node->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
+            p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
+        }
     }
 
     void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {

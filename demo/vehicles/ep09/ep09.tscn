@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="1_1nw4k"]
 [ext_resource type="Script" uid="uid://bmsduesjycv2v" path="res://addons/libmaszyna/rail_vehicle_3d.gd" id="1_m7eos"]
+[ext_resource type="Script" uid="uid://cgr3ycrer2twq" path="res://addons/libmaszyna/fiz/fiz_train_controller.gd" id="2_dgx17"]
 
 [node name="EP09" type="Node3D" unique_id=394866882]
 script = ExtResource("1_m7eos")
@@ -18,7 +19,25 @@ lights = Dictionary[String, bool]({
 "headlamp22": false,
 "headlamp23": false
 })
+controller_path = NodePath("FIZTrainController")
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
+
+[node name="FIZTrainController" type="TrainController" parent="." unique_id=798118975]
+mass = 85400.0
+power = 2920.0
+max_velocity = 160.0
+battery_voltage = 110.0
+reduced_mass = 12000.0
+sand_capacity = 730.0
+dimensions/length = 16.74
+dimensions/height = 4.12
+dimensions/width = 2.96
+dimensions/drag_coefficient = 0.3
+dimensions/floor_height = 0.0
+script = ExtResource("2_dgx17")
+data_path = "/dynamic/pkp/ep09_v1/"
+fiz_filename = "104e_1"
+metadata/_custom_type_script = "uid://cgr3ycrer2twq"
 
 [node name="ep09_lowpoly_interior" type="VisualInstance3D" parent="." unique_id=742765134]
 unique_name_in_owner = false

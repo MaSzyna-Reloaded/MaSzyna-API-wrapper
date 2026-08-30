@@ -64,7 +64,7 @@ func enter_cabin(player:MaszynaPlayer):
         return
 
     if controller_path:
-        var controller = get_node(controller_path)
+        var controller = _resolve_controller(controller_path)
         if controller:
             _cabin.controller_path = controller.get_path()
 
@@ -151,9 +151,18 @@ func leave_cabin(player:Node):
 
 func get_controller() -> TrainController:
     if controller_path:
-        return get_node(controller_path)
+        return _resolve_controller(controller_path)
     else:
         return null
+
+## Resolves controller_path to a TrainController, transparently unwrapping a FIZTrainController
+## wrapper if that's what the path points at (mirrors how model_instance_path always points at
+## an E3DModelInstance rather than a live mesh node directly).
+func _resolve_controller(node_path:NodePath) -> TrainController:
+    var node = get_node_or_null(node_path)
+    if node is FIZTrainController:
+        return node.get_controller()
+    return node as TrainController
 
 func _update_head_display():
     if is_inside_tree():
@@ -195,7 +204,7 @@ func _process_dirty() -> void:
 
         if is_inside_tree():
             if controller_path:
-                _controller = get_node_or_null(controller_path)
+                _controller = _resolve_controller(controller_path)
 
             var model_node: E3DModelInstance = null
             if model_instance_path:

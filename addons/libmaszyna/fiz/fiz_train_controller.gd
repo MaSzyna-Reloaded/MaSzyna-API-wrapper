@@ -30,6 +30,16 @@ class_name FIZTrainController
             fiz_filename = x
             _request_reload()
 
+## Forwarded to the built child TrainController's train_id (used for TrainSystem
+## registration/console lookups). Not derived from the FIZ file - it has no [code]Section:Key[/code]
+## mapping, same as on a hand-authored TrainController - so it must be set here explicitly.
+@export var train_id:String = "":
+    set(x):
+        if not x == train_id:
+            train_id = x
+            if _controller:
+                _controller.set_train_id(train_id)
+
 ## When false (default), the generated TrainController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
 ## into the .tscn (it's re-derived from the FIZ file on every load instead). Toggle via the
@@ -75,6 +85,8 @@ func _reload() -> void:
     var abs_fiz_path: String = (
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))
     _controller = FizTrainControllerInstancer.build(abs_fiz_path)
+    if train_id:
+        _controller.set_train_id(train_id)
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)

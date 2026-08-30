@@ -272,6 +272,29 @@ func parse_line_input(text : String) -> PackedStringArray:
     return out_array
 
 
+const _FALSE_TOKENS := ["false", "no", "off", "0"]
+
+## Console arguments are always plain text tokens - converted explicitly here rather than
+## relying on Godot's own String->Variant call coercion, since that coercion is inconsistent:
+## numeric strings ("0.5") do convert correctly when calling a bound method that expects a
+## float, but boolean strings do NOT - any non-empty string (including the literal text
+## "false") coerces to true, making it impossible to type a command that turns something off.
+## Every other token (including "true"/"yes"/"1") already coerces to true on its own, so only
+## the false case needs explicit handling. "0" is safe to include even for commands that take
+## an actual integer argument (e.g. main_controller_increase's step) - Godot's own bool->int
+## Variant coercion maps false back to 0, so the end result is identical either way.
+func _coerce_argument_tokens(arguments : PackedStringArray) -> Array:
+    var result : Array = []
+    for arg : String in arguments:
+        if arg.to_lower() in _FALSE_TOKENS:
+            result.append(false)
+        elif arg.is_valid_float():
+            result.append(arg.to_float())
+        else:
+            result.append(arg)
+    return result
+
+
 func on_text_entered(new_text : String) -> void:
     scroll_to_bottom()
     reset_autocomplete()
@@ -297,7 +320,7 @@ func on_text_entered(new_text : String) -> void:
 
             # Functions fail to call if passed the incorrect number of arguments, so fill out with blank strings.
 
-            console_commands[text_command].function.callv(arguments)
+            console_commands[text_command].function.callv(_coerce_argument_tokens(arguments))
         else:
             console_unknown_command.emit(text_command)
             print_line("[color=light_coral]	ERROR:[/color] Command not found.")

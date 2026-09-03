@@ -276,18 +276,25 @@ const _FALSE_TOKENS := ["false", "no", "off", "0"]
 
 ## Console arguments are always plain text tokens - converted explicitly here rather than
 ## relying on Godot's own String->Variant call coercion, since that coercion is inconsistent:
-## numeric strings ("0.5") do convert correctly when calling a bound method that expects a
-## float, but boolean strings do NOT - any non-empty string (including the literal text
+## numeric strings ("5", "0.5") do convert correctly when calling a bound method that expects
+## an int/float, but boolean strings do NOT - any non-empty string (including the literal text
 ## "false") coerces to true, making it impossible to type a command that turns something off.
 ## Every other token (including "true"/"yes"/"1") already coerces to true on its own, so only
 ## the false case needs explicit handling. "0" is safe to include even for commands that take
 ## an actual integer argument (e.g. main_controller_increase's step) - Godot's own bool->int
 ## Variant coercion maps false back to 0, so the end result is identical either way.
+##
+## Numeric tokens are still converted explicitly (rather than left as strings for Godot's own
+## coercion to handle) so the int/float distinction is preserved: "5" becomes an int and "0.5"
+## a float, matching whichever the target command's parameter actually expects, instead of
+## collapsing every number to float.
 func _coerce_argument_tokens(arguments : PackedStringArray) -> Array:
     var result : Array = []
     for arg : String in arguments:
         if arg.to_lower() in _FALSE_TOKENS:
             result.append(false)
+        elif arg.is_valid_int():
+            result.append(arg.to_int())
         elif arg.is_valid_float():
             result.append(arg.to_float())
         else:

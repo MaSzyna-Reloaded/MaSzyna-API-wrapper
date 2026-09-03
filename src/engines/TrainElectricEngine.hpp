@@ -9,6 +9,14 @@ namespace godot {
             GDCLASS(TrainElectricEngine, TrainEngine)
 
         public:
+            /* Which pantograph an individual command applies to - the mover supports at most
+             * two (Maszyna::end::front / ::rear); named FIRST/SECOND here rather than
+             * FRONT/REAR since which end is physically "front" depends on the active cab. */
+            enum PantographSelector {
+                PANTOGRAPH_FIRST,
+                PANTOGRAPH_SECOND,
+            };
+
             static void _bind_methods();
             TrainController::TrainPowerSource power_source = TrainController::POWER_SOURCE_NOT_DEFINED;
             MAKE_MEMBER_GS(int, collectors_no, 0);
@@ -60,6 +68,8 @@ namespace godot {
             TrainController::TrainPowerSource get_engine_power_source() const;
             void compressor(bool p_enabled);
             void converter(bool p_enabled);
+            void pantographs_valve(bool p_enabled);
+            void pantograph(PantographSelector p_selector, bool p_enabled);
             void _register_commands() override;
             void _unregister_commands() override;
 
@@ -68,3 +78,5 @@ namespace godot {
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
     };
 } // namespace godot
+
+VARIANT_ENUM_CAST(TrainElectricEngine::PantographSelector);

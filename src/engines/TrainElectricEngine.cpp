@@ -152,6 +152,11 @@ namespace godot {
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &TrainElectricEngine::compressor);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
+        ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &TrainElectricEngine::pantographs_valve);
+        ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &TrainElectricEngine::pantograph);
+
+        BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
     }
 
     void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
@@ -182,6 +187,15 @@ namespace godot {
         p_state["current_collector/overvoltage_relay"] = p_mover->EnginePowerSource.CollectorParameters.OVP;
         p_state["current_collector/required_main_switch_voltage"] =
                 p_mover->EnginePowerSource.CollectorParameters.InsetV;
+        // Live pantograph state - the mover only tracks a raised/lowered flag per pantograph
+        // (no continuous extension height), matching PantographsCheck()'s own boolean state
+        // machine; any raise/lower animation should tween in response to this flag changing,
+        // not read a position value from the mover.
+        p_state["current_collector/valve_active"] = p_mover->PantsValve.is_active;
+        p_state["current_collector/pantograph_first_active"] = p_mover->Pantographs[0].is_active;
+        p_state["current_collector/pantograph_first_voltage"] = p_mover->Pantographs[0].voltage;
+        p_state["current_collector/pantograph_second_active"] = p_mover->Pantographs[1].is_active;
+        p_state["current_collector/pantograph_second_voltage"] = p_mover->Pantographs[1].voltage;
         p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
         if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
             p_state["power_cable/source"] =
@@ -280,16 +294,33 @@ namespace godot {
         mover->CompressorSwitch(p_enabled);
     }
 
+    void TrainElectricEngine::pantographs_valve(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+    }
+
+    void TrainElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        const Maszyna::end end = (p_selector == PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
+        mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+    }
+
     void TrainElectricEngine::_register_commands() {
         TrainEngine::_register_commands();
         register_command("converter", Callable(this, "converter"));
         register_command("compressor", Callable(this, "compressor"));
+        register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantograph", Callable(this, "pantograph"));
     }
 
     void TrainElectricEngine::_unregister_commands() {
         TrainEngine::_unregister_commands();
         unregister_command("converter", Callable(this, "converter"));
         unregister_command("compressor", Callable(this, "compressor"));
+        unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        unregister_command("pantograph", Callable(this, "pantograph"));
     }
 
 

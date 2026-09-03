@@ -12,14 +12,14 @@
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
 [ext_resource type="Texture2D" uid="uid://cfqk60lpl5ljv" path="res://addons/sky_3d/assets/resources/SNoise.tres" id="4_ydfqx"]
-[ext_resource type="Texture2D" uid="uid://cr8hfekmcxxx" path="res://addons/sky_3d/assets/textures/noiseClouds.png" id="5_lnei4"]
+[ext_resource type="Texture2D" uid="uid://cecwdqjol0ckd" path="res://addons/sky_3d/assets/textures/noiseClouds.png" id="5_lnei4"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
-[ext_resource type="Texture2D" uid="uid://condyxjqond2i" path="res://addons/sky_3d/assets/thirdparty/textures/moon/MoonMap.png" id="6_wgi5e"]
-[ext_resource type="Texture2D" uid="uid://bum6csy21i4vm" path="res://addons/sky_3d/assets/textures/noise.jpg" id="7_iqpw1"]
+[ext_resource type="Texture2D" uid="uid://2r8ylu6rg5dp" path="res://addons/sky_3d/assets/thirdparty/textures/moon/MoonMap.png" id="6_wgi5e"]
+[ext_resource type="Texture2D" uid="uid://djpfuyxkryegn" path="res://addons/sky_3d/assets/textures/noise.jpg" id="7_iqpw1"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
-[ext_resource type="Texture2D" uid="uid://4wdfqvf2os05" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/StarField.jpg" id="8_mwrhi"]
-[ext_resource type="Texture2D" uid="uid://doayyxs362bku" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/Milkyway.jpg" id="9_jg8su"]
+[ext_resource type="Texture2D" uid="uid://bm7dot7t7u1q4" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/StarField.jpg" id="8_mwrhi"]
+[ext_resource type="Texture2D" uid="uid://c1vwcdcdvb74a" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/Milkyway.jpg" id="9_jg8su"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="Script" uid="uid://deo0gxkmk2ahd" path="res://addons/sky_3d/src/Sky3D.gd" id="10_54dc2"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
@@ -36,6 +36,7 @@
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
 [ext_resource type="PackedScene" uid="uid://fv4an7lb63lu" path="res://vehicles/ep09/ep09.tscn" id="26_jchga"]
+[ext_resource type="PackedScene" uid="uid://dq4uajtr3sv10" path="res://vehicles/su45/su45.tscn" id="30_5crau"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jcpdq"]
 shader = ExtResource("3_dcvyd")
@@ -424,6 +425,9 @@ lights = Dictionary[String, bool]({
 "headlamp22": true,
 "headlamp23": true
 })
+
+[node name="Su45" parent="." unique_id=1622995305 instance=ExtResource("30_5crau")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.084539, 0, 14.716293)
 
 [node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)

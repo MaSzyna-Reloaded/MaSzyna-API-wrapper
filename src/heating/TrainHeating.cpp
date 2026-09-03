@@ -44,6 +44,11 @@ namespace godot {
 
         switch (heating_source) {
             case TrainController::POWER_SOURCE_GENERATOR: {
+                // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
+                // (MOVER.h:551); HeatingCheck() dereferences it unconditionally whenever
+                // SourceType == Generator, so it must be pointed at a real double before that can
+                // run safely. enrot is the vehicle's own engine revolutions counter.
+                p_mover->HeatingPowerSource.EngineGenerator.engine_revolutions = &p_mover->enrot;
                 p_mover->HeatingPowerSource.EngineGenerator.revolutions_min = generator_min_rpm / 60.0;
                 p_mover->HeatingPowerSource.EngineGenerator.revolutions_max = generator_max_rpm / 60.0;
                 p_mover->HeatingPowerSource.EngineGenerator.voltage_min = generator_min_voltage;

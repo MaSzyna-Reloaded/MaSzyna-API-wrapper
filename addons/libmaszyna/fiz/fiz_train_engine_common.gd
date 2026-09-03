@@ -37,7 +37,7 @@ static func apply_engine_common(node: TrainEngine, kv: Dictionary, context: FizI
     if kv.has("TransEff"):
         node.set_gear_efficiency(FizLineUtil.get_float(kv, "TransEff"))
     if kv.has("Ftmax"):
-        node.set_traction_force_max(FizLineUtil.get_float(kv, "Ftmax"))
+        node.set_maximum_traction_force(FizLineUtil.get_float(kv, "Ftmax"))
     if kv.has("MotorBlowersSpeed"):
         node.set_motor_blowers_speed(FizLineUtil.get_float(kv, "MotorBlowersSpeed"))
     if kv.has("MotorBlowersSustainTime"):

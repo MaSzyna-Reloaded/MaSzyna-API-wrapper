@@ -221,8 +221,12 @@ namespace godot {
                 break;
             }
             case TrainController::POWER_SOURCE_GENERATOR: {
+                // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
+                // (MOVER.h:551) - nothing currently dereferences EnginePowerSource's copy of it,
+                // but HeatingPowerSource's copy does (see TrainHeating.cpp), so it's pointed at
+                // enrot (the vehicle's own engine revolutions counter) here too, defensively.
                 engine_generator &generator_params{p_mover->EnginePowerSource.EngineGenerator};
-                // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
+                generator_params.engine_revolutions = &p_mover->enrot;
                 break;
             }
             case TrainController::POWER_SOURCE_ACCUMULATOR: {

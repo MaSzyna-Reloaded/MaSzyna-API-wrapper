@@ -26,6 +26,7 @@
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
 [ext_resource type="PackedScene" uid="uid://fv4an7lb63lu" path="res://vehicles/ep09/ep09.tscn" id="26_jchga"]
+[ext_resource type="PackedScene" uid="uid://dq4uajtr3sv10" path="res://vehicles/su45/su45.tscn" id="30_5crau"]
 
 [sub_resource type="Curve3D" id="Curve3D_esmlu"]
 bake_interval = 1.0
@@ -261,6 +262,9 @@ lights = Dictionary[String, bool]({
 "headlamp22": true,
 "headlamp23": true
 })
+
+[node name="Su45" parent="." unique_id=1622995305 instance=ExtResource("30_5crau")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.084539, 0, 14.716293)
 
 [node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)

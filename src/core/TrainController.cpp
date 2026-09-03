@@ -83,11 +83,27 @@ namespace godot {
                 &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "category", "category", &TrainController::set_category, &TrainController::get_category,
-                "category", PROPERTY_HINT_ENUM, "Train,Road,Ship,Airplane");
+                "category", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"Train", CATEGORY_TRAIN},
+                         {"Road", CATEGORY_ROAD},
+                         {"Ship", CATEGORY_SHIP},
+                         {"Airplane", CATEGORY_AIRPLANE}}));
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "train_type", "train_type", &TrainController::set_train_type,
                 &TrainController::get_train_type, "train_type", PROPERTY_HINT_ENUM,
-                "Default,EZT,ET41,ET42,PseudoDiesel,ET22,SN61,EP05,ET40,T181,DMU");
+                enum_hint(
+                        {{"Default", TRAIN_TYPE_DEFAULT},
+                         {"EZT", TRAIN_TYPE_EZT},
+                         {"ET41", TRAIN_TYPE_ET41},
+                         {"ET42", TRAIN_TYPE_ET42},
+                         {"PseudoDiesel", TRAIN_TYPE_PSEUDODIESEL},
+                         {"ET22", TRAIN_TYPE_ET22},
+                         {"SN61", TRAIN_TYPE_SN61},
+                         {"EP05", TRAIN_TYPE_EP05},
+                         {"ET40", TRAIN_TYPE_ET40},
+                         {"T181", TRAIN_TYPE_181},
+                         {"DMU", TRAIN_TYPE_DMU}}));
         BIND_PROPERTY(
                 Variant::FLOAT, "reduced_mass", "reduced_mass", &TrainController::set_reduced_mass,
                 &TrainController::get_reduced_mass, "reduced_mass");

@@ -4,7 +4,11 @@ namespace godot {
     void TrainAIHints::_bind_methods() {
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "pantograph_state", "pantograph_state", &TrainAIHints::set_pantograph_state,
-                &TrainAIHints::get_pantograph_state, "pantograph_state", PROPERTY_HINT_ENUM, "Front,Rear,Both");
+                &TrainAIHints::get_pantograph_state, "pantograph_state", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"Front", PANTOGRAPH_STATE_FRONT},
+                         {"Rear", PANTOGRAPH_STATE_REAR},
+                         {"Both", PANTOGRAPH_STATE_BOTH}}));
         BIND_PROPERTY(
                 Variant::BOOL, "raise_pantographs_when_idle", "raise_pantographs_when_idle",
                 &TrainAIHints::set_raise_pantographs_when_idle, &TrainAIHints::get_raise_pantographs_when_idle,

@@ -111,7 +111,17 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "brake_method", "brake/method", &TrainBrake::set_brake_method,
                 &TrainBrake::get_brake_method, "brake_method", PROPERTY_HINT_ENUM,
-                "P10-Bg,P10-Bgu,FR513,FR510,Cosid,P10yBg,P10yBgu,Disk1,Disk1+Mg,Disk2");
+                enum_hint(
+                        {{"P10-Bgu", BRAKE_METHOD_P10_BGU},
+                         {"P10-Bg", BRAKE_METHOD_P10_BG},
+                         {"Disk1", BRAKE_METHOD_D1},
+                         {"Disk2", BRAKE_METHOD_D2},
+                         {"FR513", BRAKE_METHOD_FR513},
+                         {"Cosid", BRAKE_METHOD_COSID},
+                         {"P10yBg", BRAKE_METHOD_P10Y_BG},
+                         {"P10yBgu", BRAKE_METHOD_P10Y_BGU},
+                         {"FR510", BRAKE_METHOD_FR510},
+                         {"Disk1+Mg", BRAKE_METHOD_D1MG}}));
         BIND_PROPERTY(
                 Variant::FLOAT, "rapid_transfer", "rapid/transfer", &TrainBrake::set_rapid_transfer,
                 &TrainBrake::get_rapid_transfer, "rapid_transfer");

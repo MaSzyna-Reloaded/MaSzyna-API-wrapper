@@ -19,7 +19,7 @@ lights = Dictionary[String, bool]({
 "headlamp22": false,
 "headlamp23": false
 })
-controller_path = NodePath("FIZTrainController")
+controller_path = NodePath("FIZTrainController/TrainController")
 metadata/_custom_type_script = "uid://bmsduesjycv2v"
 
 [node name="FIZTrainController" type="Node" parent="." unique_id=798118975]

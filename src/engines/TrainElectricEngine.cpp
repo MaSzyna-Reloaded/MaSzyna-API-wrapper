@@ -66,7 +66,12 @@ namespace godot {
                 Variant::INT, "power_cable_power_source", "power/power_cable/source",
                 &TrainElectricEngine::set_power_cable_power_source, &TrainElectricEngine::get_power_cable_power_source,
                 "power_cable_power_source", PROPERTY_HINT_ENUM,
-                "NoPower,BioPower,MechPower,ElectricPower,SteamPower,Main");
+                enum_hint(
+                        {{"NoPower", TrainController::POWER_TYPE_NONE},
+                         {"BioPower", TrainController::POWER_TYPE_BIO},
+                         {"MechPower", TrainController::POWER_TYPE_MECH},
+                         {"ElectricPower", TrainController::POWER_TYPE_ELECTRIC},
+                         {"SteamPower", TrainController::POWER_TYPE_STEAM}}));
         BIND_PROPERTY(
                 Variant::FLOAT, "power_cable_steam_pressure", "power/power_cable/steam_pressure",
                 &TrainElectricEngine::set_power_cable_steam_pressure,

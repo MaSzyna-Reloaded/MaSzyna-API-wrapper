@@ -126,6 +126,10 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
 ## Builds a new, unparented TrainController + children from a FIZ file.
 static func build(fiz_path: String) -> TrainController:
     var controller := TrainController.new()
+    # Otherwise Godot auto-assigns an ugly, unstable "@TrainController@<N>" name (the counter
+    # increments per instance created this session), which breaks any NodePath saved against it
+    # the moment the node is rebuilt (e.g. RailVehicle3D.controller_path across scene reloads).
+    controller.name = "TrainController"
     build_into(controller, fiz_path)
     return controller
 

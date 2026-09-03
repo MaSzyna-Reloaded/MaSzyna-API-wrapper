@@ -77,10 +77,10 @@ static func _ensure_sections() -> void:
         {"prefix": "UCList:", "parser": null, "table_end": "END-UCL"},
         # engine family
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
-        # MotorParamTable0:/MotorParamTable: rows are recognized but not decoded yet - the
-        # exact left-to-right column order for readMPT0/readMPT wasn't confidently pinned down
-        # against real files, so it's left unmapped rather than guessed.
-        {"prefix": "MotorParamTable0:", "parser": null, "table_end": "END-MPT"},
+        # MotorParamTable0: is what ElectricSeriesMotor vehicles actually use (confirmed
+        # against the wiki and real files); MotorParamTable: (no "0") rows are still
+        # unmapped - it's a diesel-mechanical-transmission-specific format not implemented yet.
+        {"prefix": "MotorParamTable0:", "parser": electric_series_parser, "table_end": "END-MPT"},
         {"prefix": "MotorParamTable:", "parser": null, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
         {"prefix": "RList:", "parser": electric_series_parser, "table_end": "END-RL"},

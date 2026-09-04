@@ -30,6 +30,7 @@ func _make_throttle(position: int, fuel_dose: float, behavior: int) -> ThrottleP
     return item
 
 func test_defaults():
+    engine.update_mover()
     assert_eq(engine.get("mechanical/min_rpm"), 0.0)
     assert_eq(engine.get("mechanical/max_rpm"), 0.0)
     assert_eq(engine.get("mechanical/inertia"), 1.0)
@@ -39,6 +40,7 @@ func test_defaults():
     assert_eq((engine.get("throttle_table/positions") as Array).size(), 0)
     assert_eq(engine.torque_table.size(), 0)
     assert_eq((engine.get("torque_converter/table") as Array).size(), 0)
+    assert_true(train.config.get("engine_shake_enabled", false))
 
 func test_mechanical_and_torque_converter_round_trip():
     engine.set("mechanical/min_rpm", 600.0)

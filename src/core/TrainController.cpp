@@ -15,6 +15,7 @@ namespace godot {
     const char *TrainController::command_received = "command_received";
     const char *TrainController::radio_toggled = "radio_toggled";
     const char *TrainController::radio_channel_changed = "radio_channel_changed";
+    const char *TrainController::roof_light_changed = "roof_light_changed";
     const char *TrainController::config_changed = "config_changed";
 
     void TrainController::_bind_methods() {
@@ -51,6 +52,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
         ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
+        ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &TrainController::radio_channel_set);
         ClassDB::bind_method(
                 D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
         ClassDB::bind_method(
@@ -131,6 +133,9 @@ namespace godot {
         BIND_PROPERTY(
                 Variant::FLOAT, "floor_height", "dimensions/floor_height", &TrainController::set_floor_height,
                 &TrainController::get_floor_height, "floor_height");
+        BIND_PROPERTY(
+                Variant::FLOAT, "initial_velocity", "initial_velocity", &TrainController::set_initial_velocity,
+                &TrainController::get_initial_velocity, "initial_velocity");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
                 &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
@@ -161,6 +166,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
+        ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
@@ -212,6 +218,16 @@ namespace godot {
         return mover;
     }
 
+    void TrainController::initialize_mover_state() {
+        const bool driver_active = initial_velocity != 0.0;
+
+        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
+        mover->LocalBrakePosA = 0.0;
+        mover->BrakeCtrlPos =
+                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
+        mover->BrakeLevelSet(mover->BrakeCtrlPos);
+    }
+
     void TrainController::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
         const auto mover_type_name = std::string(type_name.utf8().ptr());
@@ -223,7 +239,7 @@ namespace godot {
         _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+        mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
 
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
@@ -231,6 +247,7 @@ namespace godot {
         dirty = true;
         dirty_prop = true;
         _update_mover_config_if_dirty();
+        initialize_mover_state();
 
         /* FIXME: remove test data */
         mover->CabActive = 1;
@@ -291,6 +308,7 @@ namespace godot {
 
                 emit_signal(power_changed_signal, prev_is_powered);
                 emit_signal(radio_channel_changed, prev_radio_channel);
+                emit_signal(roof_light_changed, prev_roof_light_enabled);
                 break;
             default:;
         }
@@ -347,6 +365,12 @@ namespace godot {
             prev_radio_channel = new_radio_channel; // FIXME: I don't like this
             emit_signal(radio_channel_changed, new_radio_channel);
         }
+
+        if (const bool new_roof_light_enabled = state.get("roof_light_enabled", false);
+            prev_roof_light_enabled != new_roof_light_enabled) {
+            prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
+            emit_signal(roof_light_changed, new_roof_light_enabled);
+        }
     }
 
     void TrainController::_process(const double p_delta) {
@@ -390,7 +414,11 @@ namespace godot {
         p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {}
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
+        // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
+        // property (see update_mover() below), so this is a thin alias, not new derivation.
+        p_config["max_speed"] = max_velocity;
+    }
 
     void TrainController::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
@@ -400,7 +428,8 @@ namespace godot {
             update_config(new_config);
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-            mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+            mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
+            initialize_mover_state();
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }

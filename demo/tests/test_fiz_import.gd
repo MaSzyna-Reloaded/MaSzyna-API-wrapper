@@ -58,6 +58,7 @@ func test_brake_and_bpt_table():
     assert_eq(brake.get_brake_ctrl_position_count(), 6)
     assert_eq(brake.get_brake_delay_1(), 15.0)
     assert_eq(brake.get_brake_handle_type(), TrainBrake.BRAKE_HANDLE_TYPE_FV4A)
+    assert_true(brake.get_manual_brake_present())
 
     var bpt: Array = brake.get_brake_pressure_table()
     assert_eq(bpt.size(), 3)

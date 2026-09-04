@@ -22,6 +22,7 @@ namespace godot {
             void _process_mover(double p_delta) override;
             virtual void _process_train_part(double p_delta);
             virtual Dictionary _get_train_part_state();
+            virtual Dictionary _get_train_part_config();
             Dictionary get_train_state();
     };
 } // namespace godot

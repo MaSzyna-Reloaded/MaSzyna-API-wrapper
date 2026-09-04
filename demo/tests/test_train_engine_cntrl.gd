@@ -51,3 +51,8 @@ func test_round_trip_and_update_without_crashing():
     assert_true(engine.get("cntrl/has_camshaft"))
     assert_eq(engine.get("fuel_pump/start_mode"), TrainEngine.START_MODE_AUTOMATIC)
     assert_true(train.state.has("main_switch_enabled"), "TrainEngine should keep functioning after configuring the Cntrl. section")
+
+
+func test_cntrl_oil_start_is_applied_to_diesel_engine():
+    FizTrainEngineCommon.apply_cntrl_engine_subset(engine, {"OilStart": "Automatic"})
+    assert_eq(engine.get_oil_pump_start_mode(), TrainEngine.START_MODE_AUTOMATIC)

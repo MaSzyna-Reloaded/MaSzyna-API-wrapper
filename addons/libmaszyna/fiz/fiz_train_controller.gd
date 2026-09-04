@@ -2,6 +2,9 @@
 extends Node
 class_name FIZTrainController
 
+## Emitted with null before removing the old controller, then with the initialized replacement.
+signal controller_changed(controller:TrainController)
+
 ## Live/no-import FIZ vehicle loader, analogous to E3DModelInstance for E3D models: set
 ## `data_path`/`fiz_filename` and this node (re)builds a child TrainController + its
 ## TrainPart children from that file via FizTrainControllerInstancer, in-editor and at
@@ -40,6 +43,17 @@ class_name FIZTrainController
             if _controller:
                 _controller.set_train_id(train_id)
 
+## Forwarded to the built child TrainController's initial_velocity. Not derived from the FIZ
+## file - same as train_id above. 0.0 (default) means the vehicle starts not-ready-to-depart
+## (battery off, matching the original engine's scenery velocity token); a non-zero value
+## marks it ready (battery on per battery_start_mode).
+@export var initial_velocity:float = 0.0:
+    set(x):
+        if not x == initial_velocity:
+            initial_velocity = x
+            if _controller:
+                _controller.set_initial_velocity(initial_velocity)
+
 ## When false (default), the generated TrainController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
 ## into the .tscn (it's re-derived from the FIZ file on every load instead). Toggle via the
@@ -75,9 +89,11 @@ func _reload() -> void:
     _reload_pending = false
 
     if _controller:
-        remove_child(_controller)
-        _controller.queue_free()
+        var previous_controller:TrainController = _controller
         _controller = null
+        controller_changed.emit(null)
+        remove_child(previous_controller)
+        previous_controller.queue_free()
 
     if not fiz_filename or not is_inside_tree():
         return
@@ -87,6 +103,7 @@ func _reload() -> void:
     _controller = FizTrainControllerInstancer.build(abs_fiz_path)
     if train_id:
         _controller.set_train_id(train_id)
+    _controller.set_initial_velocity(initial_velocity)
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)
@@ -95,6 +112,7 @@ func _reload() -> void:
     # editable children are owned by `self`'s own owner, i.e. the actual scene root, so they
     # show up in the Scene dock and survive scene serialization.
     _set_owner_recursive(_controller, owner if editable_in_editor else self)
+    controller_changed.emit(_controller)
 
 
 func _set_owner_recursive(node: Node, target_owner: Node) -> void:

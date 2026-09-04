@@ -56,6 +56,16 @@ enum ControllerMode { OnOff, On, Off }
         mesh_rotation = x if x else Vector3.ZERO
         _dirty = true
 
+## Some state domains don't start at the switch's own visual rest position - e.g. radio_channel's
+## real range is 1..10 (channel 0 isn't valid), but the physical knob's first notch is still the
+## visual "zero" position, so switch_position=1 must render as ONE STEP from rest, not two.
+## Subtracted from switch_position before computing mesh rotation/position only - command
+## dispatch and clamping (switch_min/max_position) still use the real, unshifted switch_position.
+@export var value_offset:int = 0:
+    set(x):
+        value_offset = x
+        _dirty = true
+
 @export var animation_speed = 10.0
 @export var sound_increase_stream:AudioStream
 @export var sound_decrease_stream:AudioStream
@@ -92,8 +102,9 @@ func _ready():
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
     controller_changed.connect(_on_controller_changed)
+    controller_changing.connect(_on_controller_changing)
 
-func _exit_tree() -> void:
+func _on_controller_changing() -> void:
     if _controller:
         _controller.command_received.disconnect(_on_command_received)
 
@@ -104,8 +115,8 @@ func _on_controller_changed() -> void:
 func _update_state() -> void:
     if state_property and _controller:
         switch_position = int(_controller.state.get(state_property, switch_position))
-    _target_mesh_position = switch_position * mesh_position
-    _target_mesh_rotation = switch_position * mesh_rotation
+    _target_mesh_position = (switch_position - value_offset) * mesh_position
+    _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
 
 func _on_command_received(p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
     if command_set and p_command == command_set:
@@ -149,15 +160,13 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-    if controller_path and not _controller:
-        _controller = get_node_or_null(controller_path)
 
 func _process_tool(delta):
     _t += delta
     if _t > 0.05:
         _t = 0.0
-        _target_mesh_position = switch_position * mesh_position
-        _target_mesh_rotation = switch_position * mesh_rotation
+        _target_mesh_position = (switch_position - value_offset) * mesh_position
+        _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
 
     if _setup_phase and mesh_path and not _mesh:
         _dirty = true

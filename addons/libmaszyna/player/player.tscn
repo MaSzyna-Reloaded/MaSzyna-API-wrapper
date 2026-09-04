@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://cqet31gklr3sb" path="res://addons/libmaszyna/player/free_camera.gd" id="1_iuonp"]
 [ext_resource type="Script" uid="uid://dc3kl1adyw5y0" path="res://addons/libmaszyna/player/player.gd" id="1_t4mm8"]
+[ext_resource type="Script" path="res://addons/libmaszyna/sound/train_sound_listener_3d.gd" id="3_listener"]
 
 [sub_resource type="SphereShape3D" id="SphereShape3D_mexgx"]
 radius = 2.0
@@ -12,6 +13,9 @@ script = ExtResource("1_t4mm8")
 [node name="Camera3D" type="Camera3D" parent="." unique_id=2023831069]
 fov = 45.0
 script = ExtResource("1_iuonp")
+
+[node name="TrainSoundListener3D" type="AudioListener3D" parent="."]
+script = ExtResource("3_listener")
 
 [node name="RailVehicleDetector" type="ShapeCast3D" parent="Camera3D" unique_id=626357363]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -1.88708)

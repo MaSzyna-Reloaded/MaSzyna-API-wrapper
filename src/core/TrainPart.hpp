@@ -87,5 +87,6 @@ namespace godot {
             /* High level method for getting the state of the Mover */
             Dictionary get_mover_state();
             void emit_config_changed_signal();
+            void mark_dirty();
     };
 } // namespace godot

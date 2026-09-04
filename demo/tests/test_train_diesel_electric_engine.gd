@@ -23,6 +23,7 @@ func _make_row(rpm: float, gen_power: float) -> WWListItem:
     return item
 
 func test_defaults():
+    engine.update_mover()
     assert_false(engine.generator_voltage_flat)
     assert_eq(engine.hyperbolic_speed, 1.0)
     assert_eq(engine.additional_speed, 1.0)
@@ -32,6 +33,7 @@ func test_defaults():
     assert_false(engine.shunt_mode_allowed)
     assert_eq(engine.heating_rpm, 0.0)
     assert_eq(engine.wwlist.size(), 0)
+    assert_true(train.config.get("engine_shake_enabled", false))
 
 func test_round_trip_and_wwlist_update():
     engine.generator_voltage_flat = true

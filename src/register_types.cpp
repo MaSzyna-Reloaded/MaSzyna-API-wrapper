@@ -43,6 +43,7 @@
 #include "speed_control/TrainSpeedControl.hpp"
 #include "switches/TrainSwitches.hpp"
 #include "systems/TrainAIHints.hpp"
+#include "systems/TrainHorns.hpp"
 #include "systems/TrainSecuritySystem.hpp"
 #include "wheels/TrainWheels.hpp"
 #include "wipers/TrainWipers.hpp"
@@ -94,6 +95,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainHeating);
         GDREGISTER_CLASS(TrainWheels);
         GDREGISTER_CLASS(TrainSecuritySystem);
+        GDREGISTER_CLASS(TrainHorns);
         GDREGISTER_CLASS(TrainAIHints);
         GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_CLASS(TrainLighting)

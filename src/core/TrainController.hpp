@@ -16,19 +16,25 @@ namespace godot {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
-            double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
+            void initialize_mover_state();
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
-            int radio_channel = 0;
+            // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
+            // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
+            // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's
+            // own switch_min_position clamp had already displayed the invalid 0 as channel 1
+            // before any command ran, so the real 0->1 transition produced no visible change.
+            int radio_channel = 1;
 
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
+            bool prev_roof_light_enabled = false;
 
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
@@ -156,6 +162,7 @@ namespace godot {
             static const char *command_received;
             static const char *radio_toggled;
             static const char *radio_channel_changed;
+            static const char *roof_light_changed;
             static const char *config_changed;
 
             Dictionary get_config() const;
@@ -190,8 +197,13 @@ namespace godot {
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);
-            MAKE_MEMBER_GS(int, radio_channel_min, 0);
-            MAKE_MEMBER_GS(int, radio_channel_max, 0);
+            // original engine hardcodes this same 1..10 range for every vehicle
+            // (OnCommand_radiochannelset: std::clamp((int)Command.param1, 1, 10)) - it is not
+            // actually per-vehicle configurable there, so these default to the same range rather
+            // than 0..0 (which silently clamped every radio_channel_increase/decrease/set call to
+            // a no-op on any vehicle that never overrides them, since none currently do).
+            MAKE_MEMBER_GS(int, radio_channel_min, 1);
+            MAKE_MEMBER_GS(int, radio_channel_max, 10);
             MAKE_MEMBER_GS_NR(Category, category, CATEGORY_TRAIN);
             MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
             MAKE_MEMBER_GS(double, reduced_mass, 0.0);
@@ -203,6 +215,14 @@ namespace godot {
             MAKE_MEMBER_GS(double, width, 0.0);
             MAKE_MEMBER_GS(double, drag_coefficient, 0.0);
             MAKE_MEMBER_GS(double, floor_height, 0.96);
+
+            // Mirrors the original engine's scenery-line velocity token (TDynamicObject::Init's
+            // `driveractive = (fVel != 0.0)`): a vehicle with initial_velocity == 0.0 is "not
+            // ready to depart" (ReadyFlag=false, battery stays off until switched on manually);
+            // any non-zero value (scenario authors commonly use 0.1 for a stationary-but-ready
+            // vehicle) marks it ready, so CheckLocomotiveParameters() turns the battery on per
+            // battery_start_mode.
+            MAKE_MEMBER_GS(double, initial_velocity, 0.0);
 
             /* Cntrl. (ogolne, bateria/przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
             MAKE_MEMBER_GS_NR(StartMode, battery_start_mode, START_MODE_MANUAL);

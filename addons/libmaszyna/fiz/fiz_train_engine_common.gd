@@ -88,6 +88,10 @@ static func apply_cntrl_engine_subset(node: TrainEngine, cntrl_kv: Dictionary) -
     if cntrl_kv.has("MotorBlowersStart"):
         node.set_motor_blowers_start_mode(
                 FizTrainControllerParser.parse_start_mode(FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), TrainEngine.START_MODE_MANUAL))
+    if node is TrainDieselEngine and cntrl_kv.has("OilStart"):
+        (node as TrainDieselEngine).set_oil_pump_start_mode(
+                FizTrainControllerParser.parse_start_mode(
+                        FizLineUtil.get_string(cntrl_kv, "OilStart"), TrainEngine.START_MODE_MANUAL))
 
     match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
         "optional": node.set_auto_relay_mode(TrainEngine.AUTO_RELAY_OPTIONAL)

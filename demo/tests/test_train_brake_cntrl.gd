@@ -16,7 +16,7 @@ func after_each():
     remove_child(train)
     train.free()
 
-func test_defaults_match_previous_hardcoded_behavior():
+func test_defaults_match_original_mover():
     assert_eq(brake.get("cntrl/brake_system"), TrainBrake.BRAKE_SYSTEM_PNEUMATIC)
     assert_eq(brake.get("cntrl/brake_ctrl_position_count"), 6)
     assert_eq(brake.get("cntrl/brake_delay_1"), 15.0)
@@ -29,7 +29,7 @@ func test_defaults_match_previous_hardcoded_behavior():
     assert_eq(brake.get("cntrl/local_brake_handle_type"), TrainBrake.BRAKE_HANDLE_TYPE_FD1)
     assert_eq(brake.get("cntrl/anti_skid_brake_type"), TrainBrake.ANTI_SKID_BRAKE_MANUAL)
     assert_eq(brake.get("cntrl/local_brake_type"), TrainBrake.LOCAL_BRAKE_TYPE_PNEUMATIC)
-    assert_true(brake.get("cntrl/manual_brake_present"))
+    assert_false(brake.get("cntrl/manual_brake_present"))
     assert_true(brake.get("cntrl/spring_brake_cuts_off_drive"))
 
 func test_round_trip_and_update_without_crashing():

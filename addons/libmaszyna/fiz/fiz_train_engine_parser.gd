@@ -7,13 +7,14 @@ class_name FizTrainEngineParser
 ## stashed Cntrl./Power: subsets, then delegates the remaining type-specific fields to the
 ## matching concrete engine parser. LoadFIZ_Engine: Mover.cpp:11119.
 ##
-## NOTE: only the ElectricSeriesMotor branch is fully wired up so far. Diesel/DieselElectric/
-## ElectricInductionMotor all have real, fully-bound Godot classes already
-## (TrainDieselEngine/TrainDieselElectricEngine/TrainElectricInductionEngine) - the type-
-## specific field mapping for those branches just isn't written yet, so those vehicles will
-## currently only get the common TrainEngine fields applied (see the TODO branches below).
+## NOTE: only the ElectricSeriesMotor and DieselElectric branches are fully wired up so far.
+## Diesel/ElectricInductionMotor still have real, fully-bound Godot classes already
+## (TrainDieselEngine/TrainElectricInductionEngine) - the type-specific field mapping for those
+## branches just isn't written yet, so those vehicles will currently only get the common
+## TrainEngine fields applied (see the TODO branch below).
 
 var electric_series_parser: FizTrainElectricSeriesEngineParser = FizTrainElectricSeriesEngineParser.new()
+var diesel_electric_parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
@@ -30,7 +31,13 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
             FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_series_parser.apply_engine_fields(kv, node)
-        TrainEngine.DIESEL, TrainEngine.DIESEL_ELECTRIC, TrainEngine.ELECTRIC_INDUCTION_MOTOR, \
+        TrainEngine.DIESEL_ELECTRIC:
+            node = diesel_electric_parser.create_node()
+            context.add_part("TrainEngine", node)
+            FizTrainEngineCommon.apply_engine_common(node, kv, context)
+            FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
+            diesel_electric_parser.apply_engine_fields(kv, node)
+        TrainEngine.DIESEL, TrainEngine.ELECTRIC_INDUCTION_MOTOR, \
         TrainEngine.WHEELS_DRIVEN, TrainEngine.DUMB, TrainEngine.STEAM:
             # TODO: type-specific field mapping not written yet - only common fields applied.
             push_warning(
@@ -48,6 +55,5 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
 func _create_stub_node(engine_type: int) -> TrainEngine:
     match engine_type:
         TrainEngine.DIESEL: return TrainDieselEngine.new()
-        TrainEngine.DIESEL_ELECTRIC: return TrainDieselElectricEngine.new()
         TrainEngine.ELECTRIC_INDUCTION_MOTOR: return TrainElectricInductionEngine.new()
         _: return null

@@ -94,6 +94,27 @@ static func apply_cntrl_engine_subset(node: TrainEngine, cntrl_kv: Dictionary) -
         "yes": node.set_auto_relay_mode(TrainEngine.AUTO_RELAY_YES)
 
 
+## Shared MotorParamTable0:/MotorParamTable: row parser - both sections share the same idx+6-
+## float row shape and populate the same TrainEngine.motor_param_table (MotorParameter
+## resources), which TrainEngine::_do_update_internal_mover already pushes into the mover's
+## MotorParam[] for every engine type (not just ElectricSeriesMotor - DieselElectric's
+## TractionForce() reads the same MotorParam[] table for its traction motor characteristics).
+## See fiz_train_electric_series_engine_parser.gd's class doc for the column-mapping confidence
+## caveat (all six columns are marked "?" on the wiki).
+static func parse_motor_param_row(p: MaszynaParser) -> MotorParameter:
+    var tokens: Array = p.get_tokens(7)
+    if tokens.size() < 7:
+        return null
+    var item := MotorParameter.new()
+    item.set_initial_voltage_constant(float(tokens[1])) # A ("fin")
+    # B ("bl") deliberately left unmapped - see fiz_train_electric_series_engine_parser.gd.
+    item.set_voltage_constant_multiplier(float(tokens[3])) # C (mfi)
+    item.set_saturation_current_multiplier(float(tokens[4])) # D (mIsat)
+    item.set_voltage_constant(float(tokens[5])) # E (fi)
+    item.set_saturation_current(float(tokens[6])) # F (Isat)
+    return item
+
+
 ## Power:'s fields, common to the whole TrainElectricEngine family (Series + Induction).
 ## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
 ## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.

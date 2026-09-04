@@ -77,18 +77,18 @@ static func _ensure_sections() -> void:
         {"prefix": "UCList:", "parser": null, "table_end": "END-UCL"},
         # engine family
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
-        # MotorParamTable0: is what ElectricSeriesMotor vehicles actually use (confirmed
-        # against the wiki and real files); MotorParamTable: (no "0") rows are still
-        # unmapped - it's a diesel-mechanical-transmission-specific format not implemented yet.
+        # MotorParamTable0: is what ElectricSeriesMotor vehicles use; MotorParamTable: (no "0")
+        # is the same row shape for DieselElectric vehicles' traction motors - both populate
+        # TrainEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
         {"prefix": "MotorParamTable0:", "parser": electric_series_parser, "table_end": "END-MPT"},
-        {"prefix": "MotorParamTable:", "parser": null, "table_end": "END-MPT"},
+        {"prefix": "MotorParamTable:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
         {"prefix": "RList:", "parser": electric_series_parser, "table_end": "END-RL"},
         {"prefix": "DList:", "parser": null, "table_end": "END-DL"},
         {"prefix": "DMList:", "parser": null, "table_end": "END-DML"},
         {"prefix": "HTCList:", "parser": null, "table_end": "END-HTCL"},
         {"prefix": "PmaxList:", "parser": null, "table_end": "END-PML"},
-        {"prefix": "WWList:", "parser": null, "table_end": "END-WWL"},
+        {"prefix": "WWList:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-WWL"},
         # sections with no Godot-class home yet (recognized so their rows aren't misparsed)
         {"prefix": "TurboPos:", "parser": null, "table_end": ""},
         {"prefix": "ffBrakeList:", "parser": null, "table_end": "endff"},

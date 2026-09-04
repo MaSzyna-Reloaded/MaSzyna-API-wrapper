@@ -43,6 +43,7 @@ static func _ensure_sections() -> void:
     var power_parser := FizTrainPowerParser.new()
     var engine_parser := FizTrainEngineParser.new()
     var electric_series_parser := engine_parser.electric_series_parser
+    var security_system_parser := FizTrainSecuritySystemParser.new()
 
     _sections = [
         # controller-mapped
@@ -72,7 +73,7 @@ static func _ensure_sections() -> void:
         {"prefix": "Switches:", "parser": null, "table_end": ""},
         {"prefix": "DimmerList:", "parser": null, "table_end": "endDimmerList"},
         {"prefix": "AI:", "parser": null, "table_end": ""},
-        {"prefix": "Security:", "parser": null, "table_end": ""},
+        {"prefix": "Security:", "parser": security_system_parser, "table_end": ""},
         {"prefix": "WiperList:", "parser": null, "table_end": "endwl"},
         {"prefix": "UCList:", "parser": null, "table_end": "END-UCL"},
         # engine family

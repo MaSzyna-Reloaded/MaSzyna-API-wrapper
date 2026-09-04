@@ -146,19 +146,9 @@ func _parse_rlist_row(p: MaszynaParser) -> void:
 
 
 func _parse_motor_param_row(p: MaszynaParser) -> void:
-    # idx A B C D E F - see the class-level doc comment for the column mapping and its
-    # confidence/uncertainty per column.
-    var tokens: Array = p.get_tokens(7)
-    if tokens.size() < 7:
-        return
-    var item := MotorParameter.new()
-    item.set_initial_voltage_constant(float(tokens[1])) # A ("fin") - best-effort, see doc comment
-    # B ("bl") deliberately left unmapped - see doc comment.
-    item.set_voltage_constant_multiplier(float(tokens[3])) # C (mfi)
-    item.set_saturation_current_multiplier(float(tokens[4])) # D (mIsat)
-    item.set_voltage_constant(float(tokens[5])) # E (fi)
-    item.set_saturation_current(float(tokens[6])) # F (Isat)
-    _motor_param_rows.append(item)
+    var item := FizTrainEngineCommon.parse_motor_param_row(p)
+    if item:
+        _motor_param_rows.append(item)
 
 
 func end_table(context: FizImportContext) -> void:

@@ -45,8 +45,9 @@ func _input(event):
                 var _tmp = coll.get_parent()
                 while _tmp and not _tmp is RailVehicle3D:
                     _tmp = _tmp.get_parent()
-                if event.is_action_pressed("change_vehicle") or not last_controlled_vehicle_path:
-                    controlled_vehicle_path = get_path_to(_tmp)
+                if _tmp and _tmp.cabin_scene:
+                    if event.is_action_pressed("change_vehicle") or not last_controlled_vehicle_path:
+                        controlled_vehicle_path = get_path_to(_tmp)
 
     if event.is_action_pressed("cabin_mode_toggle"):
         if not controlled_vehicle_path:

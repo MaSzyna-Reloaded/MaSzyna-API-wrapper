@@ -5,12 +5,6 @@
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://vehicles/impuls/impuls_head_display.tres" id="2_iawif"]
 [ext_resource type="PackedScene" uid="uid://cno8d0tylykmu" path="res://vehicles/impuls/impuls_cabin_a.tscn" id="2_tivfr"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_tsk56"]
-size = Vector3(5.11954, 4.72223, 21.2475)
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_3bq8j"]
-size = Vector3(5.11954, 4.72223, 21.2475)
-
 [node name="Impuls" type="Node3D" unique_id=741729485]
 
 [node name="Impuls-024a" type="Node3D" parent="." unique_id=62371356]
@@ -105,14 +99,6 @@ script = ExtResource("1_pes3o")
 data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
-
-[node name="Area3D-A" type="Area3D" parent="Impuls-024a" unique_id=186197418]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.326183)
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024a/Area3D-A" unique_id=2121185379]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0671234, 1.97558, -0.231311)
-shape = SubResource("BoxShape3D_tsk56")
 
 [node name="Impuls-024b" type="Node3D" parent="." unique_id=1161615865]
 script = ExtResource("1_4abai")
@@ -330,10 +316,3 @@ data_path = "/dynamic/pkp/impuls_v1"
 model_filename = "loads/36wea-a_passengers"
 skins = ["36wea-019a,1", "36wea-019a,2", "36wea-019a,3", "36wea-019a,4"]
 
-[node name="Area3D-A" type="Area3D" parent="Impuls-024d" unique_id=566175330]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0.326183)
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Impuls-024d/Area3D-A" unique_id=2052501684]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0671234, 1.97558, -0.231311)
-shape = SubResource("BoxShape3D_3bq8j")

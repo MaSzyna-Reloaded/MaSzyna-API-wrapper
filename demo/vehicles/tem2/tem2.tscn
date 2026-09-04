@@ -5,9 +5,6 @@
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_q4wpc"]
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="4_tujep"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_kol4m"]
-size = Vector3(4.5332, 4.72223, 17.0549)
-
 [sub_resource type="WWListItem" id="WWListItem_w7fy5"]
 rpm = 496.0
 
@@ -135,7 +132,7 @@ model_instance_path = NodePath("TEM2")
 controller_path = NodePath("TEM2Controller")
 cabin_scene = ExtResource("2_nt307")
 cabin_rotate_180deg = true
-low_poly_cabin_path = NodePath("TEM2/TEM2_LowPolyCab")
+low_poly_cabin_path = NodePath("TEM2_LowPolyCab")
 
 [node name="TEM2" type="VisualInstance3D" parent="." unique_id=1879275085]
 unique_name_in_owner = false
@@ -194,13 +191,6 @@ data_path = "/dynamic/pkp/tem2_v2"
 model_filename = "lowpoly/int_tem2"
 skins = ["tem2-122"]
 exclude_node_names = ["cien"]
-
-[node name="Area3D" type="Area3D" parent="." unique_id=440063590]
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=2078926479]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
-shape = SubResource("BoxShape3D_kol4m")
 
 [node name="TEM2Controller" type="TrainController" parent="." unique_id=183030337]
 train_id = "tem2"

@@ -5,9 +5,6 @@
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="2_ek7ou"]
 [ext_resource type="Script" uid="uid://cgr3ycrer2twq" path="res://addons/libmaszyna/fiz/fiz_train_controller.gd" id="3_bwld0"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_su45"]
-size = Vector3(2.9, 4.238, 18.99)
-
 [node name="Su45" type="Node3D" unique_id=1622995305]
 script = ExtResource("1_rtnt0")
 model_instance_path = NodePath("E3DModelInstance")
@@ -67,10 +64,3 @@ data_path = "dynamic/pkp/su45_v2"
 fiz_filename = "301d"
 train_id = "su45"
 metadata/_custom_type_script = "uid://cgr3ycrer2twq"
-
-[node name="Area3D" type="Area3D" parent="." unique_id=1622995306]
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1622995307]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.119, 0)
-shape = SubResource("BoxShape3D_su45")

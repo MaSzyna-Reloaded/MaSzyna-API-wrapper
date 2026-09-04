@@ -53,10 +53,15 @@ var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
 var _model_node:E3DModelInstance
+var _detection_area:Area3D
 var _t:float = 0.0
 
 
 func enter_cabin(player:MaszynaPlayer):
+    if not cabin_scene:
+        push_warning("%s has no cabin_scene; cabin entry not yet supported" % name)
+        return
+
     _camera = player.get_camera()
     _cabin = cabin_scene.instantiate() as Cabin3D
     if not _cabin:
@@ -215,6 +220,7 @@ func _process_dirty() -> void:
             if _model_node:
                 _model_node.e3d_loaded.connect(_on_model_node_e3d_loaded)
             _sync_model_lights()
+            _update_detection_area()
 
 
 func _sync_model_lights() -> void:
@@ -230,6 +236,35 @@ func _sync_model_lights() -> void:
 
 func _on_model_node_e3d_loaded() -> void:
     _sync_model_lights()
+    _update_detection_area()
+
+
+## Creates (once) and keeps in sync an Area3D/CollisionShape3D under this RailVehicle3D,
+## sized from the resolved model's AABB, so the player's raycaster can detect this vehicle
+## without requiring it to be hand-authored per vehicle scene.
+func _update_detection_area() -> void:
+    if Engine.is_editor_hint():
+        return
+    if not _model_node or not _model_node.is_e3d_loaded():
+        return
+    var aabb:AABB = _model_node.get_aabb()
+    if aabb.size == Vector3.ZERO:
+        return
+
+    if not _detection_area:
+        _detection_area = Area3D.new()
+        _detection_area.name = "RailVehicleDetectionArea"
+        _detection_area.monitoring = false
+        var shape_node := CollisionShape3D.new()
+        shape_node.shape = BoxShape3D.new()
+        _detection_area.add_child(shape_node)
+        add_child(_detection_area)
+
+    _detection_area.transform = _model_node.transform
+    var shape_node:CollisionShape3D = _detection_area.get_child(0)
+    var box:BoxShape3D = shape_node.shape
+    box.size = aabb.size
+    shape_node.position = aabb.get_center()
 
 
 func _ready() -> void:

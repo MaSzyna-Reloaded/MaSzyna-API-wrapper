@@ -34,7 +34,6 @@
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
-[ext_resource type="PackedScene" uid="uid://fv4an7lb63lu" path="res://vehicles/ep09/ep09.tscn" id="26_jchga"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jcpdq"]
@@ -90,8 +89,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.19190322, 0.19190322)
-shader_parameter/cirrus_position2 = Vector2(0.19190322, 0.19190322)
+shader_parameter/cirrus_position1 = Vector2(0.33072835, 0.33072835)
+shader_parameter/cirrus_position2 = Vector2(0.33072835, 0.33072835)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -101,7 +100,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.9593524, 0.9593524)
+shader_parameter/cumulus_position = Vector2(1.6536331, 1.6536331)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -432,6 +431,14 @@ file_name = "6d1"
 skin = "6d-1076"
 train_id = "sm42"
 
+[node name="EP09" type="Node3D" parent="." unique_id=426636050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.381563, 0, 128.24704)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/ep09_v1/"
+file_name = "104e_1"
+skin = "104e-035"
+train_id = "ep09"
+
 [node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)
 script = ExtResource("29_dcvyd")
@@ -439,21 +446,6 @@ data_path = "/dynamic/pkp/tem2_v2"
 file_name = "tem2-122a"
 skin = "tem2-122"
 train_id = "tem2"
-
-[node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)
-lights = Dictionary[String, bool]({
-"endsignal12": true,
-"endsignal13": true,
-"endsignal22": false,
-"endsignal23": false,
-"headlamp11": false,
-"headlamp12": false,
-"headlamp13": false,
-"headlamp21": true,
-"headlamp22": true,
-"headlamp23": true
-})
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1893813040]
 

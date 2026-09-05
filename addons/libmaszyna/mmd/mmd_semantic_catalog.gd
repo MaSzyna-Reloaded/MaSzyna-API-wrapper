@@ -126,6 +126,76 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Confirmed against Train.cpp's own cabin gauge dispatch table (horn_bt:/hornlow_bt:/
+        # hornhigh_bt:/whistle_bt: -> ggHornButton/ggHornLowButton/ggHornHighButton/
+        # ggWhistleButton) and TrainHorns' own low/high/whistle command+state model (see
+        # TrainHorns.hpp) - state_property is the RAW commanded press (unaffected by the
+        # emergency-brake override), matching the original's UpdateValue() calls firing straight
+        # from the command handler, not the combined "_active" (sound-triggering) state.
+        # hornlow_bt:/hornhigh_bt: are the dedicated per-slot buttons (present together on ~80
+        # real vehicles). action points at dedicated "horn_low"/"horn_high"/"whistle" InputMap
+        # actions (demo/project.godot) - matching TrainHorns' own command naming, not sm42_v1's
+        # older horn1/horn2 shim naming (that scene's own action_increase/action_decrease were
+        # updated to match).
+        #
+        # horn_bt: is the single SHARED button used instead on the far more common (~220 real
+        # vehicles) case where a vehicle has only one physical horn control. Confirmed real:
+        # OnCommand_hornlowactivate's AND OnCommand_hornhighactivate's own null-checks
+        # (`ggHornButton == nullptr && ggHornLow/HighButton == nullptr`) both pass as soon as
+        # ggHornButton alone exists - so in the original engine ONE horn_bt: button already
+        # responds to BOTH low and high (swinging the same gauge to -1.0/+1.0 depending on which
+        # was pressed), not low-only. Modeled as a CabinSwitch exactly like SM42's own
+        # hand-authored "Horn" node (demo/vehicles/sm42/sm_42_cabin.tscn) - a single bidirectional
+        # lever using TrainHorns' "horn" compatibility command (signed: >0 activates low, <0
+        # activates high) - rather than CabinButton, which can only carry one command and would
+        # leave one of the two keys permanently dead whenever only horn_bt: exists.
+        "horn_bt": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": -1,
+                "switch_max_position": 1,
+                "automatic_reset": true,
+                "command_set": "horn",
+                "state_property": "horn",
+                "action_increase": "horn_low",
+                "action_decrease": "horn_high",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "hornlow_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "horn_low",
+                "state_property": "horn_low_pressed",
+                "action": "horn_low",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "hornhigh_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "horn_high",
+                "state_property": "horn_high_pressed",
+                "action": "horn_high",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "whistle_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "whistle",
+                "state_property": "whistle_pressed",
+                "action": "whistle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "main_on_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {

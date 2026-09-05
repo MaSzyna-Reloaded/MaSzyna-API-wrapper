@@ -7,6 +7,27 @@ func test_parse_body_model_reads_top_level_models_key():
     assert_eq(MmdCabinInstancer.parse_body_model(FIXTURE_PATH), "test_body")
 
 
+func test_parse_passengers_model_reads_loads_block():
+    assert_eq(MmdCabinInstancer.parse_passengers_model(FIXTURE_PATH), "loads/test_passengers")
+
+
+func test_resolve_skins_maps_numbered_materials_directly_to_dynamic_slots():
+    var previous_game_dir:String = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir("res://tests/materials")
+    var numbered_skins:Array = MmdCabinInstancer.resolve_skins("", "multi_skin")
+    var single_skin:Array = MmdCabinInstancer.resolve_skins("", "nontransparent_manager")
+    UserSettings.save_maszyna_game_dir(previous_game_dir)
+
+    assert_eq(numbered_skins, ["multi_skin,1", "multi_skin,2"])
+    assert_eq(single_skin, ["nontransparent_manager"])
+
+
+func test_resolve_skins_preserves_explicit_slot_list():
+    assert_eq(
+            MmdCabinInstancer.resolve_skins("", "skin-a,1|skin-b,2|skin-c,3|skin-d,4"),
+            ["skin-a,1", "skin-b,2", "skin-c,3", "skin-d,4"])
+
+
 func test_cab1_bounds_and_driver_position():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     assert_eq(definition.cab_number, 1)

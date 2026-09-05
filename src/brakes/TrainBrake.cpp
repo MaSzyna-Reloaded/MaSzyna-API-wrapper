@@ -193,7 +193,8 @@ namespace godot {
                 "brake_ctrl_position_count")
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "brake_delays", "cntrl/brake_delays", &TrainBrake::set_brake_delays,
-                &TrainBrake::get_brake_delays, "brake_delays", PROPERTY_HINT_ENUM, "G:1,P:2,R:4,GP:3,PR:6,GPR:7,PR+Mg:14,GPR+Mg:15")
+                &TrainBrake::get_brake_delays, "brake_delays", PROPERTY_HINT_ENUM,
+                "G:1,P:2,R:4,GP:3,PR:6,GPR:7,PR+Mg:14,GPR+Mg:15")
         BIND_PROPERTY(
                 Variant::FLOAT, "brake_delay_1", "cntrl/brake_delay_1", &TrainBrake::set_brake_delay_1,
                 &TrainBrake::get_brake_delay_1, "brake_delay_1")
@@ -215,9 +216,9 @@ namespace godot {
                 "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
                 "MHZ_K5P,MHZ_K8P,MHZ_6P")
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "anti_skid_brake_type", "cntrl/anti_skid_brake_type", &TrainBrake::set_anti_skid_brake_type,
-                &TrainBrake::get_anti_skid_brake_type, "anti_skid_brake_type", PROPERTY_HINT_ENUM,
-                "None,Manual,Automatic")
+                Variant::INT, "anti_skid_brake_type", "cntrl/anti_skid_brake_type",
+                &TrainBrake::set_anti_skid_brake_type, &TrainBrake::get_anti_skid_brake_type, "anti_skid_brake_type",
+                PROPERTY_HINT_ENUM, "None,Manual,Automatic")
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "local_brake_type", "cntrl/local_brake_type", &TrainBrake::set_local_brake_type,
                 &TrainBrake::get_local_brake_type, "local_brake_type", PROPERTY_HINT_ENUM,
@@ -229,8 +230,8 @@ namespace godot {
                 "NoHandle,Westinghouse,FV4a,M394,M254,FVE408,FVel6,D2,Knorr,FD1,BS2,testH,St113,MHZ_P,MHZ_T,MHZ_EN57,"
                 "MHZ_K5P,MHZ_K8P,MHZ_6P")
         BIND_PROPERTY(
-                Variant::BOOL, "manual_brake_present", "cntrl/manual_brake_present", &TrainBrake::set_manual_brake_present,
-                &TrainBrake::get_manual_brake_present, "manual_brake_present")
+                Variant::BOOL, "manual_brake_present", "cntrl/manual_brake_present",
+                &TrainBrake::set_manual_brake_present, &TrainBrake::get_manual_brake_present, "manual_brake_present")
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "dynamic_brake_type", "cntrl/dynamic_brake_type", &TrainBrake::set_dynamic_brake_type,
                 &TrainBrake::get_dynamic_brake_type, "dynamic_brake_type", PROPERTY_HINT_ENUM,
@@ -468,21 +469,21 @@ namespace godot {
 
     void TrainBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
         /* logika z Mover::LoadFiz_Brake */
-        p_mover->BrakeSystem = brake_system_type_map.at(brake_system);        // BrakeSystem
-        p_mover->BrakeCtrlPosNo = brake_ctrl_position_count;                  // BCPN
-        p_mover->BrakeDelay[0] = brake_delay_1;                               // BDelay1
-        p_mover->BrakeDelay[1] = brake_delay_2;                               // BDelay2
-        p_mover->BrakeDelay[2] = brake_delay_3;                               // BDelay3
-        p_mover->BrakeDelay[3] = brake_delay_4;                               // BDelay4
-        p_mover->BrakeDelays = brake_delays;                                  // BrakeDelays
-        p_mover->BrakeOpModes = brake_op_modes;                               // BrakeOpModes
-        p_mover->BrakeHandle = brake_handle_type_map.at(brake_handle_type);   // BrakeHandle
+        p_mover->BrakeSystem = brake_system_type_map.at(brake_system);               // BrakeSystem
+        p_mover->BrakeCtrlPosNo = brake_ctrl_position_count;                         // BCPN
+        p_mover->BrakeDelay[0] = brake_delay_1;                                      // BDelay1
+        p_mover->BrakeDelay[1] = brake_delay_2;                                      // BDelay2
+        p_mover->BrakeDelay[2] = brake_delay_3;                                      // BDelay3
+        p_mover->BrakeDelay[3] = brake_delay_4;                                      // BDelay4
+        p_mover->BrakeDelays = brake_delays;                                         // BrakeDelays
+        p_mover->BrakeOpModes = brake_op_modes;                                      // BrakeOpModes
+        p_mover->BrakeHandle = brake_handle_type_map.at(brake_handle_type);          // BrakeHandle
         p_mover->BrakeLocHandle = brake_handle_type_map.at(local_brake_handle_type); // LocBrakeHandle
-        p_mover->ASBType = anti_skid_brake_type;                             // ASB
-        p_mover->LocalBrake = local_brake_type_map.at(local_brake_type);     // LocalBrake
-        p_mover->MBrake = manual_brake_present;                              // ManualBrake
-        p_mover->LocHandleTimeTraxx = local_brake_traxx;                     // LocalBrakeTraxx
-        p_mover->DynamicBrakeType = dynamic_brake_type;                      // DynamicBrake
+        p_mover->ASBType = anti_skid_brake_type;                                     // ASB
+        p_mover->LocalBrake = local_brake_type_map.at(local_brake_type);             // LocalBrake
+        p_mover->MBrake = manual_brake_present;                                      // ManualBrake
+        p_mover->LocHandleTimeTraxx = local_brake_traxx;                             // LocalBrakeTraxx
+        p_mover->DynamicBrakeType = dynamic_brake_type;                              // DynamicBrake
         p_mover->ReleaseParkingBySpringBrake = release_parking_by_spring_brake;
         p_mover->ReleaseParkingBySpringBrakeWhenDoorIsOpen = release_parking_by_spring_brake_when_door_open;
         p_mover->SpringBrakeCutsOffDrive = spring_brake_cuts_off_drive;
@@ -619,7 +620,8 @@ namespace godot {
         for (int i = 0; i < std::min(MAX_COMPRESSOR_LIST, compressor_list_size); i++) {
             const Ref<CompressorListItem> &row = compressor_list[i];
             if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning("[TrainBrake]: compressor_list property is null at index " + String::num(i));
+                UtilityFunctions::push_warning(
+                        "[TrainBrake]: compressor_list property is null at index " + String::num(i));
                 continue;
             }
             p_mover->CompressorList[Maszyna::TCompressorList::cl_Allow][i + 1] = row->get_allow();

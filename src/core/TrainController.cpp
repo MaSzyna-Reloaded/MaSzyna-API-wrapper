@@ -132,8 +132,9 @@ namespace godot {
                 Variant::FLOAT, "floor_height", "dimensions/floor_height", &TrainController::set_floor_height,
                 &TrainController::get_floor_height, "floor_height");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "battery_start_mode", "cntrl/battery_start_mode", &TrainController::set_battery_start_mode,
-                &TrainController::get_battery_start_mode, "battery_start_mode", PROPERTY_HINT_ENUM,
+                Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
+                &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
+                "battery_start_mode", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "ground_relay_start_mode", "cntrl/ground_relay_start_mode",
@@ -368,7 +369,7 @@ namespace godot {
 
         p_mover->CategoryFlag = category;
         p_mover->TrainType = train_type;
-        p_mover->SandCapacity = sand_capacity;
+        p_mover->SandCapacity = static_cast<int>(sand_capacity);
         p_mover->HeatingPower = heating_power;
         p_mover->LightPower = light_power;
 

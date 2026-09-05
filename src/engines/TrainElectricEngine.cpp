@@ -78,11 +78,12 @@ namespace godot {
                 &TrainElectricEngine::get_power_cable_steam_pressure, "power_cable_steam_pressure");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "physical_layout", "power/current_collector/physical_layout",
-                &TrainElectricEngine::set_physical_layout, &TrainElectricEngine::get_physical_layout,
-                "physical_layout", PROPERTY_HINT_FLAGS, "Front,Rear");
+                &TrainElectricEngine::set_physical_layout, &TrainElectricEngine::get_physical_layout, "physical_layout",
+                PROPERTY_HINT_FLAGS, "Front,Rear");
         BIND_PROPERTY(
-                Variant::FLOAT, "circuit_resistance", "circuit/resistance", &TrainElectricEngine::set_circuit_resistance,
-                &TrainElectricEngine::get_circuit_resistance, "circuit_resistance");
+                Variant::FLOAT, "circuit_resistance", "circuit/resistance",
+                &TrainElectricEngine::set_circuit_resistance, &TrainElectricEngine::get_circuit_resistance,
+                "circuit_resistance");
         BIND_PROPERTY(
                 Variant::INT, "imax_low", "circuit/imax_low", &TrainElectricEngine::set_imax_low,
                 &TrainElectricEngine::get_imax_low, "imax_low");

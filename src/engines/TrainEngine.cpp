@@ -72,8 +72,8 @@ namespace godot {
                 Variant::INT, "auto_relay_mode", "cntrl/auto_relay_mode", &TrainEngine::set_auto_relay_mode,
                 &TrainEngine::get_auto_relay_mode, "auto_relay_mode", PROPERTY_HINT_ENUM, "No,Yes,Optional");
         BIND_PROPERTY(
-                Variant::BOOL, "coupled_controllers", "cntrl/coupled_controllers", &TrainEngine::set_coupled_controllers,
-                &TrainEngine::get_coupled_controllers, "coupled_controllers");
+                Variant::BOOL, "coupled_controllers", "cntrl/coupled_controllers",
+                &TrainEngine::set_coupled_controllers, &TrainEngine::get_coupled_controllers, "coupled_controllers");
         BIND_PROPERTY(
                 Variant::BOOL, "has_camshaft", "cntrl/has_camshaft", &TrainEngine::set_has_camshaft,
                 &TrainEngine::get_has_camshaft, "has_camshaft");
@@ -94,8 +94,8 @@ namespace godot {
                 &TrainEngine::set_controller_step_down_delay, &TrainEngine::get_controller_step_down_delay,
                 "controller_step_down_delay");
         BIND_PROPERTY(
-                Variant::BOOL, "fast_series_circuit", "cntrl/fast_series_circuit", &TrainEngine::set_fast_series_circuit,
-                &TrainEngine::get_fast_series_circuit, "fast_series_circuit");
+                Variant::BOOL, "fast_series_circuit", "cntrl/fast_series_circuit",
+                &TrainEngine::set_fast_series_circuit, &TrainEngine::get_fast_series_circuit, "fast_series_circuit");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
 
@@ -156,7 +156,7 @@ namespace godot {
         p_mover->InitialCtrlDelay = initial_controller_delay;
         p_mover->CtrlDelay = controller_step_delay;
         p_mover->CtrlDownDelay = controller_step_down_delay;
-        p_mover->FastSerialCircuit = fast_series_circuit;
+        p_mover->FastSerialCircuit = static_cast<int>(fast_series_circuit);
 
         /* FIXME: for testing purposes */
         p_mover->GroundRelay = true;

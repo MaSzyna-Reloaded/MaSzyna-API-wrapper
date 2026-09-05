@@ -183,11 +183,12 @@ func test_sound_fields_do_not_desync_following_labels():
     assert_eq(radio.submodel_name, "radio_antenna")
 
 
-func test_position_at_submodel_instance_offsets_to_front_face_not_pivot_or_center():
+func test_position_at_submodel_instance_uses_visual_aabb_center_not_pivot():
     # a submodel's authored pivot (its transform origin) is frequently off to one side (e.g. its
-    # mounting point) - and even the mesh's own bare AABB center sits INSIDE solid geometry, which
-    # looks wrong for a light - so the light belongs at the AABB center pushed forward along local
-    # +Z by half the AABB's own depth (its driver-facing surface).
+    # mounting point) rather than at its visual center. A directional "push forward off the
+    # surface" correction was tried and reverted - confirmed real that a submodel's local Z
+    # orientation isn't consistent across vehicles' art (right on SU45, wrong on EP09/SM42) - so
+    # plain AABB center is the deliberate, safer default.
     var box_mesh := BoxMesh.new() # local AABB centered on the node's own origin
     var mesh_node:MeshInstance3D = add_child_autofree(MeshInstance3D.new())
     mesh_node.mesh = box_mesh
@@ -196,7 +197,7 @@ func test_position_at_submodel_instance_offsets_to_front_face_not_pivot_or_cente
     var widget:Node3D = add_child_autofree(Node3D.new())
     MmdCabinInstancer._position_at_submodel_instance(widget, mesh_node)
 
-    assert_eq(widget.global_position, mesh_node.global_position + Vector3(0.0, 0.0, box_mesh.size.z * 0.5))
+    assert_eq(widget.global_position, mesh_node.global_position)
 
 
 func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets():

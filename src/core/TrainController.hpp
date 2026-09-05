@@ -24,7 +24,12 @@ namespace godot {
             Dictionary state;
             Dictionary config;
             Dictionary internal_state;
-            int radio_channel = 0;
+            // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
+            // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
+            // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's
+            // own switch_min_position clamp had already displayed the invalid 0 as channel 1
+            // before any command ran, so the real 0->1 transition produced no visible change.
+            int radio_channel = 1;
 
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;

@@ -29,10 +29,19 @@ func test_compressor_sw_uses_compressor_command_and_state():
     assert_eq(entry["fixed_fields"]["action"], "compressor_toggle")
 
 
-func test_radiochannel_sw_is_a_passive_position_gauge_not_a_switch():
+func test_radiochannel_sw_is_an_interactive_multi_position_switch():
+    # some vehicles (Radmor-style radios) have a real turnable selector knob under this label -
+    # CabinGauge is display-only (no input), so it must be CabinSwitch like mainctrl.
     var entry:Dictionary = MmdSemanticCatalog.get_entry("radiochannel_sw")
-    assert_eq(entry["widget_class"], CabinGauge)
+    assert_eq(entry["widget_class"], CabinSwitch)
+    assert_eq(entry["fixed_fields"]["command_increase"], "radio_channel_increase")
+    assert_eq(entry["fixed_fields"]["command_decrease"], "radio_channel_decrease")
     assert_eq(entry["fixed_fields"]["state_property"], "radio_channel")
+    assert_eq(entry["fixed_fields"]["switch_min_position"], 1)
+    assert_eq(entry["fixed_fields"]["switch_max_position"], 10)
+    # channel 1 is the knob's physical rest position, not switch_position=0 (0 isn't a valid
+    # channel at all) - without this the knob renders one full step past rest for every channel.
+    assert_eq(entry["fixed_fields"]["value_offset"], 1)
 
 
 func test_radiochannelnext_sw_fires_increase_once_per_press():

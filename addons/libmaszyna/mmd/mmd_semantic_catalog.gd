@@ -384,25 +384,34 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # CORRECTED: radiochannel_sw: is NOT the switch that changes the channel - confirmed
-        # against vehicle/Train.cpp:11894 ({"radiochannel_sw:", ggRadioChannelSelector}) and
-        # :11370 (ggRadioChannelSelector.PutValue((RadioChannel())-1), called every frame from the
-        # gauge-update pass, not from a command handler) - it's a passive rotary POSITION
-        # indicator ("pokrętło"/knob), the same TGauge shape as tachometer/enrot, not a switch.
-        # The actual increase/decrease controls are the two SEPARATE momentary buttons below
-        # (radiochannelnext_sw:/radiochannelprev_sw:, vehicle/Train.cpp:11895-11896). state_property
-        # is the wrapper's own "radio_channel" (1-based, TrainController.cpp:436) - one step off
-        # from what the original's own gauge is actually fed (RadioChannel()-1, 0-based), so the
-        # knob's rest position will be rotated by one channel-step's worth of MMD scale versus a
-        # pixel-perfect port; same class of small domain mismatch as enrot/brakectrl, not a guess.
+        # radiochannel_sw: real vehicles carry different physical radio hardware - some (e.g.
+        # "Koliber" units) only have separate next/prev channel buttons
+        # (radiochannelnext_sw:/radiochannelprev_sw: below), others (e.g. "Radmor" units) have an
+        # actual turnable multi-position selector knob under this label - a real interactive
+        # control, not just a passive readout, so it needs the same CabinSwitch shape as mainctrl
+        # (mouse-turnable + command_increase/decrease), not CabinGauge (display-only, no input).
+        # switch_min/max_position match radio_channel_min/max's own real default range
+        # (TrainController.hpp - 1..10, the same range the original engine hardcodes universally
+        # in OnCommand_radiochannelset). value_offset=1: confirmed real in-game - channel 1
+        # (switch_position=1) was rendering the knob one full step past its physical rest
+        # position, and decrease could never visually return to rest, because the knob's own
+        # first notch corresponds to switch_position=1, not 0 (channel 0 isn't a valid radio
+        # channel at all) - the same "state domain doesn't start where the mesh's rest position
+        # is" mismatch as enrot/brakectrl, just an integer shift instead of a scale/unit one.
         "radiochannel_sw": {
-            "widget_class": CabinGauge,
+            "widget_class": CabinSwitch,
             "fixed_fields": {
+                "switch_min_position": 1,
+                "switch_max_position": 10,
+                "value_offset": 1,
+                "command_increase": "radio_channel_increase",
+                "command_decrease": "radio_channel_decrease",
                 "state_property": "radio_channel",
-                "max_value": 1.0,
+                "action_increase": "radio_channel_increase",
+                "action_decrease": "radio_channel_decrease",
             },
             "config_max_property": "",
-            "mesh_path_field": "target_mesh_path",
+            "mesh_path_field": "mesh_path",
         },
         # Momentary buttons (vehicle/Train.cpp:8103-8135: ggRadioChannelNext/Previous.UpdateValue
         # on press/release, exactly like ggHornButton) - controller_mode=On (not the CabinButton

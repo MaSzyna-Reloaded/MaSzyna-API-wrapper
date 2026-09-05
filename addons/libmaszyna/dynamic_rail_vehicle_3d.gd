@@ -142,6 +142,12 @@ func _rebuild() -> void:
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path)
 
+    var sound_diagnostics:Array[Dictionary] = []
+    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, fiz_controller.name, {}, sound_diagnostics)
+    for diagnostic:Dictionary in sound_diagnostics:
+        if diagnostic["severity"] != "info":
+            push_warning("DynamicRailVehicle3D: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
+
     _resolve_start_track()
 
     _vehicle = vehicle

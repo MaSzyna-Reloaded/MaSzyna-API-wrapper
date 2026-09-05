@@ -1,0 +1,25 @@
+models: test_body.t3d
+
+sounds:
+oilpump: 697_test-oilpump.wav
+fuelpump: [1007]test-fuelpump.wav
+horn1: horn-sn61-start.wav horn-sn61.wav horn-sn61-stop.wav 220
+battery: { soundbegin: battery-start.wav soundmain: battery-trwa.wav soundend: battery-stop.wav }
+compressor: { soundset: [ comp-a-start.wav|comp-a-mid.wav|comp-a-end.wav, comp-b-start.wav|comp-b-mid.wav|comp-b-end.wav ] range: 120 }
+engine: {
+ crossfade: 90
+ soundend: engine-stop.wav
+ sound400: silence1.wav pitch400: 400
+ sound600: engine-idle-1.wav pitch600: 600
+ sound1000: engine-idle-2.wav pitch1000: 1000 }
+unrecognizedlabel: { soundmain: unrecognized.wav }
+endsounds
+
+internaldata:
+cab1definition: -1.0 1.0 -2.0 1.0 2.0 -1.0
+driver1pos: 0.5 3.0 -3.0
+cab1model: test_kabina.t3d
+brakesound: { soundmain: internaldata_brakesound.wav }
+buzzer: [ buczek.wav bzyczek.wav ]
+mainctrl: nastawnik rot -0.056 0 0.1
+cab0definition: 0 0

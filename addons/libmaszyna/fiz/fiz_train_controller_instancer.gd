@@ -140,6 +140,16 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
         node.name = part_name
         target.add_child(node)
 
+    # TrainHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
+    # mover-level horn count config - see TrainHorns.hpp's header comment: a vehicle's 0-3 horn
+    # complement is implied entirely by which MMD cabin-button/sound labels it declares), so
+    # unlike every other TrainPart above it's attached unconditionally here rather than only when
+    # a matching section is found - every TrainController gets one, same as a hand-authored scene
+    # (e.g. sm_42v_1.tscn's own "Horns" node) would.
+    var horns := TrainHorns.new()
+    horns.name = "Horns"
+    target.add_child(horns)
+
 
 ## Builds a new, unparented TrainController + children from a FIZ file.
 static func build(fiz_path: String) -> TrainController:

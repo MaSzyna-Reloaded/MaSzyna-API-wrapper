@@ -19,3 +19,13 @@ var friction:float = 0.0
 var button_type:String = ""
 var source_file:String = ""
 var line:int = 0
+
+## Extension-less, normalized filenames from the instrument's `{ ... }` block sound fields
+## ("" when absent). A bracketed random-choice list (`soundinc: [ a.wav b.wav ]`) resolves to one
+## entry, chosen once and persisted via MmdImportContext.random_choices - same treatment as MMD's
+## random `include` lists. A nested sub-block (`soundinc: { soundmain: ... }`) keeps only its
+## soundmain: filename.
+var sound_increase:String = ""
+var sound_decrease:String = ""
+## Position (int, can be negative) -> filename, from numbered "soundN:"/"sound-N:" fields.
+var sound_positions:Dictionary = {}

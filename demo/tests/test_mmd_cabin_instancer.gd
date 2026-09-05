@@ -105,6 +105,58 @@ func test_cab0_definition_ends_the_instrument_section():
         assert_ne(descriptor.label, "driver0pos", "cab0's own fields must not leak in as an instrument")
 
 
+func test_bare_filename_sound_fields_are_parsed_and_extension_stripped():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var brakectrl:MmdInstrumentDescriptor = _find(definition, "brakectrl")
+    assert_not_null(brakectrl)
+    assert_eq(brakectrl.sound_increase, "brake_inc")
+    assert_eq(brakectrl.sound_decrease, "brake_dec")
+    # block form's "type:" (unrelated field, appears before the sound fields) must still parse
+    assert_eq(brakectrl.button_type, "return")
+
+
+func test_numbered_sound_position_fields_are_parsed():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var main_on:MmdInstrumentDescriptor = _find(definition, "main_on_bt")
+    assert_not_null(main_on)
+    assert_eq(main_on.sound_positions.get(1), "click_pos1")
+    assert_eq(main_on.sound_positions.get(-1), "click_neg1")
+
+
+func test_bracketed_random_sound_list_resolves_to_one_entry():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var fuelpump:MmdInstrumentDescriptor = _find(definition, "fuelpump_sw")
+    assert_not_null(fuelpump)
+    assert_true(
+            fuelpump.sound_increase in ["variant_a", "variant_b", "variant_c"],
+            "should resolve to exactly one of the bracketed candidates")
+
+
+func test_random_sound_choice_is_persisted_across_reparse():
+    var random_choices:Dictionary = {}
+    var first:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
+    var second:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, random_choices)
+    var fuelpump_first:MmdInstrumentDescriptor = _find(first, "fuelpump_sw")
+    var fuelpump_second:MmdInstrumentDescriptor = _find(second, "fuelpump_sw")
+    assert_eq(fuelpump_first.sound_increase, fuelpump_second.sound_increase)
+
+
+func test_nested_sound_subblock_extracts_only_soundmain():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var oilpump:MmdInstrumentDescriptor = _find(definition, "oilpump_sw")
+    assert_not_null(oilpump)
+    assert_eq(oilpump.sound_increase, "nested_click")
+
+
+func test_sound_fields_do_not_desync_following_labels():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    # oilpump_sw's nested soundinc:{...} block is the last instrument before the includes -
+    # if its brace-matching miscounted, the includes right after it would fail to parse.
+    var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")
+    assert_not_null(radio, "include right after a nested sound sub-block should still parse")
+    assert_eq(radio.submodel_name, "radio_antenna")
+
+
 func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescriptor:
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if descriptor.label == label:

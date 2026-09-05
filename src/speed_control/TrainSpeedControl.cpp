@@ -58,12 +58,12 @@ namespace godot {
                 "offset");
         BIND_PROPERTY(
                 Variant::FLOAT, "proportional_gain_positive", "proportional_gain_positive",
-                &TrainSpeedControl::set_proportional_gain_positive,
-                &TrainSpeedControl::get_proportional_gain_positive, "proportional_gain_positive");
+                &TrainSpeedControl::set_proportional_gain_positive, &TrainSpeedControl::get_proportional_gain_positive,
+                "proportional_gain_positive");
         BIND_PROPERTY(
                 Variant::FLOAT, "proportional_gain_negative", "proportional_gain_negative",
-                &TrainSpeedControl::set_proportional_gain_negative,
-                &TrainSpeedControl::get_proportional_gain_negative, "proportional_gain_negative");
+                &TrainSpeedControl::set_proportional_gain_negative, &TrainSpeedControl::get_proportional_gain_negative,
+                "proportional_gain_negative");
         BIND_PROPERTY(
                 Variant::FLOAT, "integral_gain_positive", "integral_gain_positive",
                 &TrainSpeedControl::set_integral_gain_positive, &TrainSpeedControl::get_integral_gain_positive,
@@ -97,7 +97,7 @@ namespace godot {
         p_mover->SpeedCtrlAutoTurnOffFlag = disables_on;
 
         constexpr int MAX_PRESET_SPEEDS = 10;
-        const int preset_speeds_size = preset_speeds.size();
+        const int preset_speeds_size = static_cast<int>(preset_speeds.size());
         if (preset_speeds_size > MAX_PRESET_SPEEDS) {
             UtilityFunctions::push_warning(
                     "[TrainSpeedControl]: preset_speeds has " + String::num_int64(preset_speeds_size) +

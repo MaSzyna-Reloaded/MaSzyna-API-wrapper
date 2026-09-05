@@ -15,8 +15,9 @@ namespace godot {
                 Variant::FLOAT, "oil_max_pressure", "oil_pump/pressure_maximum",
                 &TrainDieselEngine::set_oil_max_pressure, &TrainDieselEngine::get_oil_max_pressure, "oil_max_pressure");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "fuel_pump_start_mode", "fuel_pump/start_mode", &TrainDieselEngine::set_fuel_pump_start_mode,
-                &TrainDieselEngine::get_fuel_pump_start_mode, "fuel_pump_start_mode", PROPERTY_HINT_ENUM,
+                Variant::INT, "fuel_pump_start_mode", "fuel_pump/start_mode",
+                &TrainDieselEngine::set_fuel_pump_start_mode, &TrainDieselEngine::get_fuel_pump_start_mode,
+                "fuel_pump_start_mode", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "oil_pump_start_mode", "oil_pump/start_mode", &TrainDieselEngine::set_oil_pump_start_mode,
@@ -34,8 +35,8 @@ namespace godot {
                 Variant::FLOAT, "max_rpm", "mechanical/max_rpm", &TrainDieselEngine::set_max_rpm,
                 &TrainDieselEngine::get_max_rpm, "max_rpm");
         BIND_PROPERTY(
-                Variant::FLOAT, "fuel_cutoff_rpm", "mechanical/fuel_cutoff_rpm", &TrainDieselEngine::set_fuel_cutoff_rpm,
-                &TrainDieselEngine::get_fuel_cutoff_rpm, "fuel_cutoff_rpm");
+                Variant::FLOAT, "fuel_cutoff_rpm", "mechanical/fuel_cutoff_rpm",
+                &TrainDieselEngine::set_fuel_cutoff_rpm, &TrainDieselEngine::get_fuel_cutoff_rpm, "fuel_cutoff_rpm");
         BIND_PROPERTY(
                 Variant::FLOAT, "inertia", "mechanical/inertia", &TrainDieselEngine::set_inertia,
                 &TrainDieselEngine::get_inertia, "inertia");
@@ -61,14 +62,13 @@ namespace godot {
                 "tc_coupling_point");
         BIND_PROPERTY(
                 Variant::FLOAT, "tc_lockup_torque", "torque_converter/lockup_torque",
-                &TrainDieselEngine::set_tc_lockup_torque, &TrainDieselEngine::get_tc_lockup_torque,
-                "tc_lockup_torque");
+                &TrainDieselEngine::set_tc_lockup_torque, &TrainDieselEngine::get_tc_lockup_torque, "tc_lockup_torque");
         BIND_PROPERTY(
-                Variant::FLOAT, "tc_lockup_rate", "torque_converter/lockup_rate", &TrainDieselEngine::set_tc_lockup_rate,
-                &TrainDieselEngine::get_tc_lockup_rate, "tc_lockup_rate");
+                Variant::FLOAT, "tc_lockup_rate", "torque_converter/lockup_rate",
+                &TrainDieselEngine::set_tc_lockup_rate, &TrainDieselEngine::get_tc_lockup_rate, "tc_lockup_rate");
         BIND_PROPERTY(
-                Variant::FLOAT, "tc_unlock_rate", "torque_converter/unlock_rate", &TrainDieselEngine::set_tc_unlock_rate,
-                &TrainDieselEngine::get_tc_unlock_rate, "tc_unlock_rate");
+                Variant::FLOAT, "tc_unlock_rate", "torque_converter/unlock_rate",
+                &TrainDieselEngine::set_tc_unlock_rate, &TrainDieselEngine::get_tc_unlock_rate, "tc_unlock_rate");
         BIND_PROPERTY(
                 Variant::FLOAT, "tc_fill_rate_increase", "torque_converter/fill_rate_increase",
                 &TrainDieselEngine::set_tc_fill_rate_increase, &TrainDieselEngine::get_tc_fill_rate_increase,
@@ -112,8 +112,9 @@ namespace godot {
                 &TrainDieselEngine::set_retarder_torque_in_in, &TrainDieselEngine::get_retarder_torque_in_in,
                 "retarder_torque_in_in");
         BIND_PROPERTY(
-                Variant::FLOAT, "retarder_max_torque", "retarder/max_torque", &TrainDieselEngine::set_retarder_max_torque,
-                &TrainDieselEngine::get_retarder_max_torque, "retarder_max_torque");
+                Variant::FLOAT, "retarder_max_torque", "retarder/max_torque",
+                &TrainDieselEngine::set_retarder_max_torque, &TrainDieselEngine::get_retarder_max_torque,
+                "retarder_max_torque");
         BIND_PROPERTY(
                 Variant::FLOAT, "retarder_max_power", "retarder/max_power", &TrainDieselEngine::set_retarder_max_power,
                 &TrainDieselEngine::get_retarder_max_power, "retarder_max_power");

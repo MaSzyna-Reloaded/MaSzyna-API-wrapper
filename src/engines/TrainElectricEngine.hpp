@@ -58,7 +58,8 @@ namespace godot {
             /* Cntrl. (elektryczne) */
             MAKE_MEMBER_GS_NR(TrainEngine::StartMode, converter_start_mode, TrainEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(double, converter_start_delay, 0.0);
-            MAKE_MEMBER_GS_NR(TrainEngine::StartMode, converter_overload_relay_start_mode, TrainEngine::START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(
+                    TrainEngine::StartMode, converter_overload_relay_start_mode, TrainEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, converter_overload_relay_off_when_main_is_off, false);
             MAKE_MEMBER_GS_NR(TrainEngine::StartMode, pantograph_compressor_start_mode, TrainEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, pantograph_auto_valve, false);

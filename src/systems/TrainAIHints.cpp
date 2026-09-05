@@ -15,8 +15,8 @@ namespace godot {
                 "raise_pantographs_when_idle");
         BIND_PROPERTY(
                 Variant::FLOAT, "local_brake_acceleration_factor", "local_brake_acceleration_factor",
-                &TrainAIHints::set_local_brake_acceleration_factor,
-                &TrainAIHints::get_local_brake_acceleration_factor, "local_brake_acceleration_factor");
+                &TrainAIHints::set_local_brake_acceleration_factor, &TrainAIHints::get_local_brake_acceleration_factor,
+                "local_brake_acceleration_factor");
 
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_FRONT);
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_REAR);

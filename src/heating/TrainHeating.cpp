@@ -1,5 +1,5 @@
-#include "TrainHeating.hpp"
 #include "../core/TrainController.hpp"
+#include "TrainHeating.hpp"
 
 namespace godot {
     void TrainHeating::_bind_methods() {

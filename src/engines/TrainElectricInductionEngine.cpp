@@ -54,8 +54,9 @@ namespace godot {
                 Variant::FLOAT, "initial_force", "initial_force", &TrainElectricInductionEngine::set_initial_force,
                 &TrainElectricInductionEngine::get_initial_force, "value");
         BIND_PROPERTY(
-                Variant::FLOAT, "force_drop_rate", "force_drop_rate", &TrainElectricInductionEngine::set_force_drop_rate,
-                &TrainElectricInductionEngine::get_force_drop_rate, "value");
+                Variant::FLOAT, "force_drop_rate", "force_drop_rate",
+                &TrainElectricInductionEngine::set_force_drop_rate, &TrainElectricInductionEngine::get_force_drop_rate,
+                "value");
         BIND_PROPERTY(
                 Variant::FLOAT, "max_power", "max_power", &TrainElectricInductionEngine::set_max_power,
                 &TrainElectricInductionEngine::get_max_power, "value");
@@ -80,9 +81,9 @@ namespace godot {
                 &TrainElectricInductionEngine::set_motor_max_current,
                 &TrainElectricInductionEngine::get_motor_max_current, "value");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "max_power_table", "max_power_table", &TrainElectricInductionEngine::set_max_power_table,
-                &TrainElectricInductionEngine::get_max_power_table, "max_power_table", PROPERTY_HINT_TYPE_STRING,
-                "CurvePointItem");
+                Variant::ARRAY, "max_power_table", "max_power_table",
+                &TrainElectricInductionEngine::set_max_power_table, &TrainElectricInductionEngine::get_max_power_table,
+                "max_power_table", PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 Variant::ARRAY, "wwlist", "wwlist", &TrainElectricInductionEngine::set_wwlist,
                 &TrainElectricInductionEngine::get_wwlist, "wwlist", PROPERTY_HINT_TYPE_STRING, "WWListItem");

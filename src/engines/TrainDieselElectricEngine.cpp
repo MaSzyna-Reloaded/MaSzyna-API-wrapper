@@ -12,8 +12,9 @@ namespace godot {
                 &TrainDieselElectricEngine::set_generator_voltage_flat,
                 &TrainDieselElectricEngine::get_generator_voltage_flat, "value");
         BIND_PROPERTY(
-                Variant::FLOAT, "hyperbolic_speed", "hyperbolic_speed", &TrainDieselElectricEngine::set_hyperbolic_speed,
-                &TrainDieselElectricEngine::get_hyperbolic_speed, "value");
+                Variant::FLOAT, "hyperbolic_speed", "hyperbolic_speed",
+                &TrainDieselElectricEngine::set_hyperbolic_speed, &TrainDieselElectricEngine::get_hyperbolic_speed,
+                "value");
         BIND_PROPERTY(
                 Variant::FLOAT, "additional_speed", "additional_speed",
                 &TrainDieselElectricEngine::set_additional_speed, &TrainDieselElectricEngine::get_additional_speed,

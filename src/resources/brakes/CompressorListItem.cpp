@@ -9,10 +9,12 @@ namespace godot {
                 Variant::INT, "speed_factor", "speed_factor", &CompressorListItem::set_speed_factor,
                 &CompressorListItem::get_speed_factor, "speed_factor");
         BIND_PROPERTY(
-                Variant::INT, "min_pressure_factor", "min_pressure_factor", &CompressorListItem::set_min_pressure_factor,
-                &CompressorListItem::get_min_pressure_factor, "min_pressure_factor");
+                Variant::INT, "min_pressure_factor", "min_pressure_factor",
+                &CompressorListItem::set_min_pressure_factor, &CompressorListItem::get_min_pressure_factor,
+                "min_pressure_factor");
         BIND_PROPERTY(
-                Variant::INT, "max_pressure_factor", "max_pressure_factor", &CompressorListItem::set_max_pressure_factor,
-                &CompressorListItem::get_max_pressure_factor, "max_pressure_factor");
+                Variant::INT, "max_pressure_factor", "max_pressure_factor",
+                &CompressorListItem::set_max_pressure_factor, &CompressorListItem::get_max_pressure_factor,
+                "max_pressure_factor");
     }
 } // namespace godot

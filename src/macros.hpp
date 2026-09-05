@@ -10,7 +10,8 @@
  * integer literals, so a property's inspector labels can never drift out of sync with the
  * enum's actual (possibly non-sequential/bitflag) values.
  * <example>
- * enum_hint({{"Train", CATEGORY_TRAIN}, {"Road", CATEGORY_ROAD}, {"Ship", CATEGORY_SHIP}, {"Airplane", CATEGORY_AIRPLANE}})
+ * enum_hint({{"Train", CATEGORY_TRAIN}, {"Road", CATEGORY_ROAD}, {"Ship", CATEGORY_SHIP}, {"Airplane",
+ * CATEGORY_AIRPLANE}})
  * </example>
  */
 inline godot::String enum_hint(std::initializer_list<std::pair<const char *, int64_t>> p_entries) {

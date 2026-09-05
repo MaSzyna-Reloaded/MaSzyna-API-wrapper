@@ -69,6 +69,23 @@ static func _ensure_built() -> void:
             "state_property": "whistle_active",
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
+        # buzzer:/buzzershp: (internaldata:, not sounds: - see MmdSoundSourceParser.
+        # parse_internal_data()) drive a LOOPING sound while the alerter is actively unacknowledged
+        # (Train.cpp:10111-10151: dsbBuzzer/dsbBuzzerShp play() while is_beeping()/
+        # is_cabsignal_beeping(), stop() otherwise) - a SEPARATE, later-triggered stage from the
+        # light's own on/off click (TrainSecuritySystem::is_beeping(), Mover.cpp:186:
+        # `alert_timer > SoundSignalDelay` - the buzzer only starts SoundSignalDelay seconds after
+        # the light already began blinking, not simultaneously).
+        "buzzer": {
+            "event_name": &"buzzer",
+            "state_property": "beeping",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
+        },
+        "buzzershp": {
+            "event_name": &"buzzershp",
+            "state_property": "cabsignal_beeping",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
+        },
         "engine": {
             "event_name": &"engine",
             "state_property": "engine_rpm",

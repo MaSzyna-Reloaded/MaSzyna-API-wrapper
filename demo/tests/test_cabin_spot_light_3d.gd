@@ -12,8 +12,10 @@ func test_sound_plays_on_every_blink_transition_not_just_session_start():
     # blink transitions below are all driven manually via _on_blink_timeout()
     add_child_autofree(widget)
 
-    var stream_on := MaszynaAudioStream.new()
-    var stream_off := MaszynaAudioStream.new()
+    # AudioStreamGenerator (not MaszynaAudioStream) - it always instantiates a valid playback with
+    # no file dependency, so this test can trigger the real .play() call path without erroring.
+    var stream_on := AudioStreamGenerator.new()
+    var stream_off := AudioStreamGenerator.new()
     widget.sound_on = stream_on
     widget.sound_off = stream_off
     widget.enabled = true
@@ -32,7 +34,7 @@ func test_sound_does_not_replay_when_state_is_unchanged():
     var widget := CabinSpotLight3D.new()
     add_child_autofree(widget)
 
-    var stream_on := MaszynaAudioStream.new()
+    var stream_on := AudioStreamGenerator.new()
     widget.sound_on = stream_on
     widget.enabled = true
 

@@ -232,15 +232,20 @@ static func build_into(
             diagnostics.append(_diag("info", "MMD_BINDING_UNSUPPORTED", "MMD label '%s' is not in the supported catalog" % descriptor.label, definition.cab_number, descriptor.label, descriptor.submodel_name))
             continue
         var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
+        if entry.get("position_at_submodel", false):
+            # Some real cabins have multiple physical lamp housings sharing the SAME MMD-declared
+            # submodel base name (confirmed real: sm_42_cabin.tscn's own hand-authored reference
+            # has 3 "CzuwakOmni" lights for its one "i-security_aware:" label) - one widget per
+            # matched submodel instance, not just the first, unlike every other instrument label
+            # (which only ever has one real target mesh).
+            _build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, definition.cab_number, diagnostics)
+            continue
         var widget:Node = _build_widget(descriptor, controller, definition.cab_number, diagnostics)
         generated_root.add_child(widget)
-        # mesh_path/position_at_submodel must be resolved AFTER the widget has a place in the
-        # tree - the widget shares no common ancestor with `model`'s submodels until it's actually
-        # parented under the same generated_root.
-        if entry.get("position_at_submodel", false):
-            _position_at_submodel(widget as Node3D, descriptor, submodel_index, definition.cab_number, diagnostics)
-        else:
-            _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
+        # mesh_path must be resolved AFTER the widget has a place in the tree - the widget shares
+        # no common ancestor with `model`'s submodels until it's actually parented under the same
+        # generated_root.
+        _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
         widget.set("controller_path", widget.get_path_to(controller))
 
 
@@ -670,27 +675,67 @@ static func _wire_mesh_path(
     # descriptor.scale/offset/friction - see mmd_semantic_catalog.gd's header comment for why.
 
 
-## For a widget that IS the submodel's real-world stand-in (e.g. CabinSpotLight3D standing in for
-## an "i-*:" indicator light's submodel, rather than a lever/knob animating a separate target
-## mesh) - places `widget` directly at the found submodel's own transform instead of pointing a
-## mesh_path NodePath at it. `widget` must already be inside the tree, same requirement as
-## _wire_mesh_path().
-static func _position_at_submodel(
-        widget:Node3D, descriptor:MmdInstrumentDescriptor, submodel_index:Dictionary,
-        cab_number:int, diagnostics:Array[Dictionary]) -> void:
-    var matches:Array = submodel_index.get(descriptor.submodel_name.to_lower(), [])
-    if matches.size() == 1:
-        widget.global_transform = matches[0].global_transform
-    elif matches.is_empty():
+## Builds one CabinSpotLight3D per matched "<base>_on"/"<base>_off" submodel INSTANCE, not just
+## one widget total - some real cabins have multiple physical lamp housings sharing the same
+## MMD-declared base name (confirmed real: sm_42_cabin.tscn's own hand-authored reference has 3
+## "CzuwakOmni" lights for its one "i-security_aware:" label), unlike every other instrument label
+## (which only ever has one real target mesh, so _wire_mesh_path() builds exactly one widget).
+## on/off pairs are matched by index (real data doesn't guarantee they're declared in matching
+## relative order - the best available heuristic without per-instance correlation data); an index
+## missing one side just leaves that widget's corresponding target_path unset.
+##
+## "i-*:" labels declare a bare BASE name ("czuwak") that is never itself a real submodel - the
+## original engine's own TButton::Init() (Button.cpp:32-33) always searches for "<name>_on" and
+## "<name>_off" instead (confirmed real: SM42's own hand-authored cabin points its blinker at
+## ".../czuwak_on" directly, and real-vehicle diagnostics confirmed the bare name is never found -
+## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
+static func _build_indicator_lights(
+        descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
+        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, diagnostics:Array[Dictionary]) -> void:
+    var base_name:String = descriptor.submodel_name.to_lower()
+    var on_matches:Array = submodel_index.get(base_name + "_on", [])
+    var off_matches:Array = submodel_index.get(base_name + "_off", [])
+    var count:int = maxi(on_matches.size(), off_matches.size())
+
+    if count == 0:
         diagnostics.append(_diag(
                 "warning", "MMD_SUBMODEL_NOT_FOUND",
-                "Submodel '%s' not found (label '%s')" % [descriptor.submodel_name, descriptor.label],
+                "Submodel '%s_on'/'%s_off' not found (label '%s')" % [descriptor.submodel_name, descriptor.submodel_name, descriptor.label],
                 cab_number, descriptor.label, descriptor.submodel_name))
-    else:
-        diagnostics.append(_diag(
-                "warning", "MMD_SUBMODEL_AMBIGUOUS",
-                "Submodel '%s' has %d matches (label '%s') - light not positioned" % [descriptor.submodel_name, matches.size(), descriptor.label],
-                cab_number, descriptor.label, descriptor.submodel_name))
+        return
+
+    for i in range(count):
+        var widget:CabinSpotLight3D = entry["widget_class"].new()
+        widget.name = "%s_%s_%d" % [descriptor.label, descriptor.submodel_name, i]
+        for field_name:String in entry["fixed_fields"]:
+            widget.set(field_name, entry["fixed_fields"][field_name])
+        generated_root.add_child(widget)
+
+        var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
+        var off_node:Node3D = off_matches[i] if i < off_matches.size() else null
+        _position_at_submodel_instance(widget, on_node if on_node else off_node)
+        if on_node:
+            widget.on_target_path = widget.get_path_to(on_node)
+        if off_node:
+            widget.off_target_path = widget.get_path_to(off_node)
+        widget.controller_path = widget.get_path_to(controller)
+
+
+## Positions `widget` at `submodel`'s visual surface facing the driver, not its raw transform
+## origin/pivot (frequently off to one side, e.g. its mounting point) and not its bare AABB center
+## either (a light sitting exactly at a solid mesh's center is embedded inside the geometry,
+## looking wrong) - the AABB center pushed forward along local +Z by half the AABB's own depth,
+## landing it at the housing's front-facing surface instead. +Z (not -Z) because submodels share
+## the cab model's own axis convention, where -Z is the cab's forward/travel direction, so a
+## dashboard-mounted housing's driver-facing "open" side - the opposite of the cab's own front -
+## is +Z.
+static func _position_at_submodel_instance(widget:Node3D, submodel:Node3D) -> void:
+    var target_transform:Transform3D = submodel.global_transform
+    if submodel is VisualInstance3D:
+        var aabb:AABB = (submodel as VisualInstance3D).get_aabb()
+        var local_point:Vector3 = aabb.get_center() + Vector3(0.0, 0.0, aabb.size.z * 0.5)
+        target_transform.origin = submodel.to_global(local_point)
+    widget.global_transform = target_transform
 
 
 static func _tokenize_file(abs_path:String, context:MmdImportContext, parameters:Dictionary = {}) -> Array[String]:

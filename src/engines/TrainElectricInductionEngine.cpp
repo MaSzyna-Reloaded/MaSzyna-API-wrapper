@@ -83,6 +83,9 @@ namespace godot {
                 Variant::ARRAY, "max_power_table", "max_power_table", &TrainElectricInductionEngine::set_max_power_table,
                 &TrainElectricInductionEngine::get_max_power_table, "max_power_table", PROPERTY_HINT_TYPE_STRING,
                 "CurvePointItem");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                Variant::ARRAY, "wwlist", "wwlist", &TrainElectricInductionEngine::set_wwlist,
+                &TrainElectricInductionEngine::get_wwlist, "wwlist", PROPERTY_HINT_TYPE_STRING, "WWListItem");
     }
 
     TrainEngine::EngineType TrainElectricInductionEngine::get_engine_type() {
@@ -123,6 +126,24 @@ namespace godot {
                 continue;
             }
             p_mover->EIM_Pmax_Table.emplace(row->get_x(), row->get_y());
+        }
+
+        /* ffList:/ffBrakeList: -> DElist/RlistSize, read by TractionForce()'s
+         * ElectricInductionMotor branch to compute InverterFrequency (Mover.cpp:5895-5908).
+         * RlistSize mirrors TrainElectricSeriesEngine's own RList:-driven wiring exactly - it's
+         * a single mover-wide field, so only one engine part may legitimately drive it. */
+        const int max_delist = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
+        const int wwlist_size = static_cast<int>(wwlist.size());
+        p_mover->RlistSize = std::min(max_delist, wwlist_size);
+        for (int i = 0; i < p_mover->RlistSize; i++) {
+            const Ref<WWListItem> &row = wwlist[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainElectricInductionEngine]: wwlist property is null at index " + String::num(i));
+                continue;
+            }
+            p_mover->DElist[i].RPM = row->get_rpm();
+            p_mover->DElist[i].GenPower = row->get_max_power();
         }
     }
 } // namespace godot

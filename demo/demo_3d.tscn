@@ -36,7 +36,7 @@
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
 [ext_resource type="PackedScene" uid="uid://fv4an7lb63lu" path="res://vehicles/ep09/ep09.tscn" id="26_jchga"]
-[ext_resource type="PackedScene" uid="uid://dq4uajtr3sv10" path="res://vehicles/su45/su45.tscn" id="30_5crau"]
+[ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jcpdq"]
 shader = ExtResource("3_dcvyd")
@@ -91,8 +91,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.14376585, 0.14376585)
-shader_parameter/cirrus_position2 = Vector2(0.14376585, 0.14376585)
+shader_parameter/cirrus_position1 = Vector2(0.02811903, 0.02811903)
+shader_parameter/cirrus_position2 = Vector2(0.02811903, 0.02811903)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -102,7 +102,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.7187264, 0.7187264)
+shader_parameter/cumulus_position = Vector2(0.14059746, 0.14059746)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -234,6 +234,7 @@ utc = 2.0
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
+top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -347,8 +348,8 @@ custom_minimum_size = Vector2(100, 50)
 clip_contents = true
 offset_left = 1011.0
 offset_top = 467.0
-offset_right = 1231.0
-offset_bottom = 569.0
+offset_right = 1250.0
+offset_bottom = 573.0
 script = ExtResource("3_rrc65")
 title = "Security"
 
@@ -409,6 +410,30 @@ lights = Dictionary[String, bool]({
 [node name="Impuls" parent="." unique_id=2111644575 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.021647027, -0.019251347, -4.3020163)
 
+[node name="ST44-700" type="Node3D" parent="." unique_id=917708164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.254089, 0, 20.364653)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/st44_v2"
+file_name = "st44-700"
+skin = "st44-700"
+train_id = "st44"
+
+[node name="SU45" type="Node3D" parent="." unique_id=1297199175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/su45_v2"
+file_name = "301d"
+skin = "301d-154'96"
+train_id = "su45"
+
+[node name="SM42" type="Node3D" parent="." unique_id=769861990]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/sm42_v1"
+file_name = "6d"
+skin = "6d-1076"
+train_id = "sm42"
+
 [node name="TEM2" parent="." unique_id=803954038 instance=ExtResource("13_fe5ju")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
 lights = Dictionary[String, bool]({
@@ -425,9 +450,6 @@ lights = Dictionary[String, bool]({
 "headlamp22": true,
 "headlamp23": true
 })
-
-[node name="Su45" parent="." unique_id=1622995305 instance=ExtResource("30_5crau")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.084539, 0, 14.716293)
 
 [node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)

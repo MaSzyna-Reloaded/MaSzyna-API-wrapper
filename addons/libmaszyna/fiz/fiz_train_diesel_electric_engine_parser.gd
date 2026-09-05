@@ -99,7 +99,12 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
     item.set_max_voltage(float(tokens[2]))
     item.set_max_current(float(tokens[3]))
     if tokens.size() >= 7:
-        item.set_has_shunting(true)
+        # WWListItem.cpp's BIND_PROPERTY call for this field passes "shunting" as the method-name
+        # argument and "has_shunting" only as the inspector property path, so the GDScript-bound
+        # method is actually set_shunting()/get_shunting(), not set_has_shunting() - every other
+        # property in that file has matching name/path arguments, which is why only this one
+        # diverges. Confirmed by reading the WWListItem.cpp source and BIND_PROPERTY macro.
+        item.set_shunting(true)
         item.set_min_wakeup_voltage(float(tokens[4]))
         item.set_max_wakeup_voltage(float(tokens[5]))
         item.set_max_wakeup_power(float(tokens[6]))

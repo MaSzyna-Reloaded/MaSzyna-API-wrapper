@@ -1,0 +1,40 @@
+models: test_body.t3d
+animations: 4 0 0 4 2 0 -1
+endmodels
+
+sounds:
+oilpump: some_sound.wav
+endsounds
+
+internaldata:
+
+cab1definition:
+-1.0 1.0 -2.0 1.0 2.0 -1.0
+driver1pos:
+0.5 3.0 -3.0
+cab1model: test_kabina.t3d
+
+cab2definition:
+-1.0 1.0 -2.0 1.0 2.0 -1.0
+driver2pos:
+-0.5 3.0 -3.0
+cab2model: test_kabina.t3d
+
+// a line comment, should be stripped entirely
+mainctrl: nastawnik rot -0.056 0.0 0.1
+dirkey:kier rot -0.09 0.01 0.1
+/* a block
+   comment */
+brakectrl: { zasadniczy rot 0.073 0.0 0.1 type: return }
+security_reset_bt: czuwak rot -0.2 0 0.1
+tachometer: predkosciomierz rot 0.00635 0.0 0
+tachometer: predkosciomierz2 rot 0.00635 0.0 0
+unknownlabel: somemesh rot 0.1 0 0
+include test_cabin_params.inc antenna end
+include [ test_cabin_random_a.inc test_cabin_random_b.inc ] end
+
+cab0definition:
+-1.0 1.0 5.0 1.0 1.5 5.5
+driver0pos:
+0.0 2.0 -5.0
+cab0model: none

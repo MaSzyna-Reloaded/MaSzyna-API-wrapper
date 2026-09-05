@@ -24,6 +24,7 @@ static func build_into(
     context.random_choices = random_choices
 
     var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
+    _merge_ignition_and_shutdown_into_engine(definitions, abs_mmd_path, context)
 
     var events:Array[SfxEvent] = []
     var matched:Array[Dictionary] = []
@@ -65,3 +66,32 @@ static func build_into(
         trigger.trigger_threshold_max = entry.get("trigger_threshold_max", 1.0)
         trigger.controller_path = controller_path
         player.add_child(trigger, false, Node.INTERNAL_MODE_BACK)
+
+
+## ignition:/shutdown: are their own MMD labels living in internaldata: (see
+## MmdSoundSourceParser.parse_internal_data()'s header comment), not part of engine:'s own block -
+## but they're the SAME engine turning on/off, matching the hand-authored engine.tres reference's
+## own shape exactly (one event with start/stop clips AND the rpm crossfade automation together,
+## not three separate bank events/triggers for what is one physical engine). Splices their
+## sound_main into engine's own sound_begin/sound_end IN PLACE (mutating the `engine` entry already
+## in `definitions`), only if `engine` doesn't already declare its own soundbegin:/soundend: (rare
+## but real: some vehicles put a stop sample directly in the engine: block itself) - an explicit
+## in-block value always wins over the merge. ignition:/shutdown: never end up in MmdSoundCatalog
+## themselves (parse() never sees them - they're outside sounds:/endsounds), so there's nothing to
+## remove from `definitions` afterward.
+static func _merge_ignition_and_shutdown_into_engine(
+        definitions:Array[MmdSoundSourceDefinition], abs_mmd_path:String, context:MmdImportContext) -> void:
+    var engine:MmdSoundSourceDefinition = null
+    for definition:MmdSoundSourceDefinition in definitions:
+        if definition.label == "engine":
+            engine = definition
+            break
+    if not engine:
+        return # nothing to merge ignition:/shutdown: into
+
+    var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
+    for definition:MmdSoundSourceDefinition in internal_data:
+        if definition.label == "ignition" and engine.sound_begin.is_empty():
+            engine.sound_begin = definition.sound_main
+        elif definition.label == "shutdown" and engine.sound_end.is_empty():
+            engine.sound_end = definition.sound_main

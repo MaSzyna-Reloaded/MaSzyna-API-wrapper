@@ -189,7 +189,40 @@ static func _read_fiz_line(p: MaszynaParser) -> String:
     return bytes.get_string_from_utf8()
 
 
-static func _parse_file(abs_path: String, dir: String, context: FizImportContext, table_state: Dictionary) -> void:
+## Reads the (possibly multi-line) `include <file> [params...] end` directive - real data (e.g.
+## dynamic/pkp/sm42_v1/6da.fiz) spreads the filename and each positional param across separate
+## physical lines, unlike the common single-line form. `first_line_parser` must already be
+## positioned right after the "include" keyword on the current line; this keeps pulling further
+## lines from `p` whenever the current line's tokens run out. Returns the collected tokens
+## (filename first, then any params), excluding the trailing "end".
+static func _read_include_directive(p: MaszynaParser, first_line_parser: MaszynaParser) -> Array[String]:
+    var tokens: Array[String] = []
+    var current_parser := first_line_parser
+    while true:
+        var token: String = current_parser.next_token()
+        if token.is_empty():
+            if p.eof_reached():
+                break
+            var next_line: String = _read_fiz_line(p).strip_edges(true, false)
+            if next_line.is_empty() or next_line.find("#") != -1:
+                continue
+            current_parser = MaszynaParser.new()
+            current_parser.initialize(next_line.to_utf8_buffer())
+            continue
+        if token.to_lower() == _INCLUDE_END_KEYWORD:
+            break
+        tokens.append(token)
+    return tokens
+
+
+## `parameters` substitutes "(p1)", "(p2)", etc. directly in each raw line's text before any
+## tokenizing happens - positional args from an `include file p1 p2 end` directive that brought
+## this file in (empty for a top-level, non-included file). Confirmed necessary against real
+## data: dynamic/pkp/sm42_v1/6d.fiz.inc's `Param. ... M=(p1) ...` / `Brake: ... MaxBP=(p2) ...`
+## left mass at 0 (and cascaded into NaN velocity) with no substitution at all.
+static func _parse_file(
+        abs_path: String, dir: String, context: FizImportContext, table_state: Dictionary,
+        parameters: Dictionary = {}) -> void:
     context.include_depth += 1
     if context.include_depth > 32:
         push_error("FIZ include depth exceeded (circular include?): " + abs_path)
@@ -209,6 +242,9 @@ static func _parse_file(abs_path: String, dir: String, context: FizImportContext
     while not p.eof_reached():
         var raw_line: String = _read_fiz_line(p)
         var line: String = raw_line.strip_edges(true, false)
+        if not parameters.is_empty():
+            for key: String in parameters:
+                line = line.replace("(%s)" % key, str(parameters[key]))
 
         # FIZ-specific: a line containing an unescaped '#' anywhere is fully ignored. This is
         # distinct from `//`/`/* */`, which MaszynaParser's tokenizer already strips on its
@@ -235,12 +271,19 @@ static func _parse_file(abs_path: String, dir: String, context: FizImportContext
 
         # include <file> [params...] end - splices the referenced file's lines in place,
         # sharing the same table_state so an in-progress table can (rarely) continue across
-        # the include boundary, matching the original cParser's transparent splicing.
+        # the include boundary, matching the original cParser's transparent splicing. Real data
+        # (dynamic/pkp/sm42_v1/6da.fiz) spreads "include", the filename, and each param across
+        # separate physical lines rather than one line - _read_include_directive() keeps pulling
+        # further lines from `p` as needed instead of assuming everything fits on this one line.
         if first_token == _INCLUDE_KEYWORD:
-            var include_filename: String = line_parser.next_token()
-            if not include_filename.is_empty():
+            var include_tokens: Array[String] = _read_include_directive(p, line_parser)
+            if not include_tokens.is_empty():
+                var include_filename: String = include_tokens[0]
+                var include_params: Dictionary = {}
+                for i in range(1, include_tokens.size()):
+                    include_params["p%d" % i] = include_tokens[i]
                 var include_path: String = dir.path_join(include_filename)
-                _parse_file(include_path, include_path.get_base_dir(), context, table_state)
+                _parse_file(include_path, include_path.get_base_dir(), context, table_state, include_params)
             continue
         if first_token == _INCLUDE_END_KEYWORD:
             continue

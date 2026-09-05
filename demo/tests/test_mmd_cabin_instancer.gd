@@ -94,6 +94,20 @@ func test_indicator_light_label_is_parsed_as_bare_submodel_name():
     assert_not_null(radio, "include right after an i-*: indicator label should still parse")
 
 
+func test_block_form_indicator_light_reads_submodel_from_inside_the_block():
+    # confirmed real (dynamic/pkp/su45_v2/301d.mmd): "i-security_cabsignal: { i-shp soundinc:
+    # ... sounddec: ... }" - the submodel name is the block's FIRST token, not a token before "{"
+    # (unlike every other block-form instrument label).
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var indicator:MmdInstrumentDescriptor = _find(definition, "i-security_cabsignal")
+    assert_not_null(indicator)
+    assert_eq(indicator.submodel_name, "i-shp")
+    assert_eq(indicator.sound_increase, "shp_on")
+    assert_eq(indicator.sound_decrease, "shp_off")
+    var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")
+    assert_not_null(radio, "include right after a block-form i-*: indicator label should still parse")
+
+
 func test_include_substitutes_positional_parameter():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")

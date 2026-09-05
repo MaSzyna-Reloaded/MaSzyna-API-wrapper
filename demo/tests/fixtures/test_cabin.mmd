@@ -34,6 +34,7 @@ main_on_bt: { start1 mov -0.004 0 0.1 sound1: click_pos1.wav sound-1: click_neg1
 fuelpump_sw: { pompka_paliwa rot -0.2 0 0.1 soundinc: [ variant_a.wav variant_b.wav variant_c.wav ] }
 oilpump_sw: { przodreflprawy17 rot -0.2 0 0.1 soundinc: { soundmain: nested_click.wav amplitudefactor: 0.5 range: 2.0 } }
 i-security_aware: czuwak_lamp
+i-security_cabsignal: { i-shp soundinc: shp_on.wav sounddec: shp_off.wav }
 include test_cabin_params.inc antenna end
 include [ test_cabin_random_a.inc test_cabin_random_b.inc ] end
 

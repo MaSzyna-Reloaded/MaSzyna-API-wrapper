@@ -341,11 +341,18 @@ static func _parse_instrument(
 
 
 ## Parses an "i-*:" indicator light's shape (Train.cpp's TButton::Load(), Button.cpp:40-56): a
-## bare submodel base name, optionally followed by a `{ soundinc: ... sounddec: ... }` block for
-## on/off transition sounds - NOT the "submodel animation scale offset friction" shape every other
-## instrument label uses (the original engine shows/hides a matching "<name>_on"/"<name>_off"
-## submodel pair rather than animating one). MmdSemanticCatalog widgets for these labels ignore
-## animation_type/scale/offset/friction entirely (left at their MmdInstrumentDescriptor defaults).
+## bare submodel base name, OR a `{ submodel soundinc: ... sounddec: ... }` block whose FIRST
+## token (not the label itself) is the submodel name - the original engine peeks for "{" BEFORE
+## reading anything (Button.cpp:44-48: `if (Parser.peek() != "{") { Parser >> submodelname; } else
+## { submodelname = Parser.getToken(...); ... }`), so the submodel name always comes from INSIDE
+## the block in block form, never before it. Confirmed real and required: dynamic/pkp/su45_v2/
+## 301d.mmd uses exactly this block shape ("i-security_aware: { i-czuwak soundinc: ... sounddec:
+## ... }"), which a "submodel-name-then-optional-block" read (every other instrument label's
+## order) misparses as submodel_name="{" and never enters the block at all - not the "submodel
+## animation scale offset friction" shape every other instrument label uses (the original engine
+## shows/hides a matching "<name>_on"/"<name>_off" submodel pair rather than animating one).
+## MmdSemanticCatalog widgets for these labels ignore animation_type/scale/offset/friction
+## entirely (left at their MmdInstrumentDescriptor defaults).
 static func _parse_indicator(
         tokens:Array[String], i:int, descriptor:MmdInstrumentDescriptor,
         context:MmdImportContext, source_file:String) -> int:
@@ -356,25 +363,29 @@ static func _parse_indicator(
                 "Truncated indicator definition for '%s'" % descriptor.label, source_file, 0, descriptor.label)
         return 0
 
-    descriptor.submodel_name = tokens[i]
-    i += 1
+    if tokens[i] != "{":
+        descriptor.submodel_name = tokens[i]
+        return i + 1 - start
 
-    if i < tokens.size() and tokens[i] == "{":
+    i += 1 # consume "{"
+    if i < tokens.size():
+        descriptor.submodel_name = tokens[i]
         i += 1
-        while i < tokens.size() and tokens[i] != "}":
-            var token_lower:String = tokens[i].to_lower()
-            if token_lower == "soundinc:":
-                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "soundinc")
-                descriptor.sound_increase = result["value"]
-                i += 1 + int(result["consumed"])
-            elif token_lower == "sounddec:":
-                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "sounddec")
-                descriptor.sound_decrease = result["value"]
-                i += 1 + int(result["consumed"])
-            else:
-                i += 1
-        if i < tokens.size():
-            i += 1 # consume "}"
+
+    while i < tokens.size() and tokens[i] != "}":
+        var token_lower:String = tokens[i].to_lower()
+        if token_lower == "soundinc:":
+            var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "soundinc")
+            descriptor.sound_increase = result["value"]
+            i += 1 + int(result["consumed"])
+        elif token_lower == "sounddec:":
+            var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "sounddec")
+            descriptor.sound_decrease = result["value"]
+            i += 1 + int(result["consumed"])
+        else:
+            i += 1
+    if i < tokens.size():
+        i += 1 # consume "}"
 
     return i - start
 

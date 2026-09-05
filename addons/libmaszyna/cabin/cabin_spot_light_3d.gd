@@ -19,9 +19,13 @@ var _target_light_energy = 0.0
 @export var light_energy_on = 1.0
 @export var light_energy_off = 0.0
 @export var animation_speed = 20.0
-## Played on the enabled=false->true / true->false transition, matching CabinButton's own
-## sound_on/sound_off naming (so MmdCabinInstancer._apply_sound()'s existing "sound_on" in widget
-## duck-typed check already wires soundinc:/sounddec: here with no extra catalog plumbing).
+## Played on every on/off FLASH transition (not just the overall enabled=false->true/true->false
+## transition) - matches SM42's own hand-authored reference exactly (cabin_blinker.gd's `blink`
+## signal, connected in sm_42_cabin.gd's _on_czuwak_blink(), plays a click on every single blink
+## cycle while the alerter stays active, giving a realistic relay-clicking sound, not one click per
+## alert session). Field naming matches CabinButton's own sound_on/sound_off (so
+## MmdCabinInstancer._apply_sound()'s existing "sound_on" in widget duck-typed check already wires
+## soundinc:/sounddec: here with no extra catalog plumbing).
 @export var sound_on:AudioStream
 @export var sound_off:AudioStream
 @export var sound_max_distance:float = 3.0:
@@ -82,12 +86,6 @@ func _update_state():
     if _controller and state_property:
         enabled = true if _controller.state.get(state_property, false) else false
 
-    if not enabled == _sound_enabled_last:
-        _sound_enabled_last = enabled
-        _sound.stream = sound_on if enabled else sound_off
-        if _sound.stream:
-            _sound.play()
-
     var active_now:bool
     if blink_time <= 0.0:
         active_now = enabled
@@ -100,6 +98,14 @@ func _update_state():
         _blink_timer.stop()
         _blink_on = true
         active_now = false
+
+    # Compared against active_now (this flash's on/off state), not `enabled` (the overall alert
+    # session) - see this class's own header comment on sound_on/sound_off for why.
+    if not active_now == _sound_enabled_last:
+        _sound_enabled_last = active_now
+        _sound.stream = sound_on if active_now else sound_off
+        if _sound.stream:
+            _sound.play()
 
     _target_light_energy = light_energy_on if active_now else light_energy_off
     if _on_target:

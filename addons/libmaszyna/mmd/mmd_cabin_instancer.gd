@@ -303,15 +303,99 @@ static func _parse_instrument(
 
     if in_block:
         while i < tokens.size() and tokens[i] != "}":
-            if tokens[i].to_lower() == "type:" and i + 1 < tokens.size():
+            var token_lower:String = tokens[i].to_lower()
+            if token_lower == "type:" and i + 1 < tokens.size():
                 descriptor.button_type = tokens[i + 1].to_lower()
                 i += 2
+            elif token_lower == "soundinc:":
+                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "soundinc")
+                descriptor.sound_increase = result["value"]
+                i += 1 + int(result["consumed"])
+            elif token_lower == "sounddec:":
+                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "sounddec")
+                descriptor.sound_decrease = result["value"]
+                i += 1 + int(result["consumed"])
             else:
-                i += 1
+                var position:Variant = _parse_sound_position_label(token_lower)
+                if position != null:
+                    var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, token_lower)
+                    descriptor.sound_positions[position] = result["value"]
+                    i += 1 + int(result["consumed"])
+                else:
+                    i += 1
         if i < tokens.size():
             i += 1 # consume "}"
 
     return i - start
+
+
+## Returns the position for a "soundN:"/"sound-N:" field label (e.g. "sound-3:" -> -3, "sound0:"
+## -> 0), or null if `label` isn't in that shape (rules out "soundinc:"/"sounddec:"/"soundmain:"/
+## "type:", none of which have a valid-int remainder after stripping "sound" and ":").
+static func _parse_sound_position_label(label:String) -> Variant:
+    if not label.begins_with("sound") or not label.ends_with(":"):
+        return null
+    var middle:String = label.substr(5, label.length() - 6)
+    if middle.is_empty() or not middle.is_valid_int():
+        return null
+    return int(middle)
+
+
+## Reads one sound field's value starting at tokens[i] (right after its "soundX:" label) - a bare
+## filename, a bracketed random-choice list (resolved to one entry, frozen via
+## context.random_choices exactly like MMD's random `include` lists), or a nested `{ ... }`
+## sub-block (only its soundmain: is kept; other sub-fields are reported and discarded). Returns
+## {"value": normalized filename ("" if absent), "consumed": token count NOT including tokens[i]
+## itself - i.e. the caller's index should advance by 1 (the label) + this "consumed"}.
+static func _read_sound_field_value(
+        tokens:Array[String], i:int, context:MmdImportContext, source_file:String, field_key:String) -> Dictionary:
+    if i >= tokens.size():
+        return {"value": "", "consumed": 0}
+
+    if tokens[i] == "[":
+        var candidates:Array[String] = []
+        var j:int = i + 1
+        while j < tokens.size() and tokens[j] != "]":
+            candidates.append(tokens[j])
+            j += 1
+        if j < tokens.size():
+            j += 1 # consume "]"
+        if candidates.is_empty():
+            return {"value": "", "consumed": j - i}
+        var choice_key:String = "%s#%s#%s" % [source_file, field_key, "|".join(candidates)]
+        if not context.random_choices.has(choice_key):
+            context.random_choices[choice_key] = candidates[randi() % candidates.size()]
+        return {"value": _normalize_sound_filename(context.random_choices[choice_key]), "consumed": j - i}
+
+    if tokens[i] == "{":
+        var soundmain:String = ""
+        var j:int = i + 1
+        while j < tokens.size() and tokens[j] != "}":
+            if tokens[j].to_lower() == "soundmain:" and j + 1 < tokens.size():
+                soundmain = tokens[j + 1]
+                j += 2
+            else:
+                j += 1
+        if j < tokens.size():
+            j += 1 # consume "}"
+        context.add_diagnostic(
+                "info", "MMD_ANIMATION_UNSUPPORTED",
+                "Sound field '%s' uses a nested sub-block - only soundmain: is used, other parameters (amplitudefactor/range/etc.) are ignored" % field_key,
+                source_file, 0, field_key)
+        return {"value": _normalize_sound_filename(soundmain), "consumed": j - i}
+
+    return {"value": _normalize_sound_filename(tokens[i]), "consumed": 1}
+
+
+## Strips a trailing ".wav"/".ogg" - everything else (including a "[NNNN]" numeric prefix, which
+## is confirmed to be part of the literal filename on disk) is kept verbatim.
+static func _normalize_sound_filename(token:String) -> String:
+    if token.is_empty():
+        return ""
+    var lower:String = token.to_lower()
+    if lower.ends_with(".wav") or lower.ends_with(".ogg"):
+        return token.substr(0, token.length() - 4)
+    return token
 
 
 ## Strips ".t3d"/".e3d" and normalizes backslashes. Case-insensitive filesystem resolution
@@ -374,8 +458,57 @@ static func _build_widget(
         widget.set("switch_max_position", int(controller.config.get(config_max_property, fallback)))
 
     _apply_animation_shape(widget, descriptor, entry, controller, cab_number, diagnostics)
+    _apply_sound(widget, descriptor)
 
     return widget
+
+
+## Wires parsed MMD sound_increase/sound_decrease/sound_positions onto whichever sound fields the
+## widget actually has (CabinButton: sound_on/sound_off; CabinSwitch: sound_increase_stream/
+## sound_decrease_stream/sound_override/sound_override_negative) - duck-typed the same way
+## mesh_path/target_mesh_path already are. CabinKnob/CabinGauge have no sound fields at all today
+## (see mmd_semantic_catalog.gd's scope notes), so this is a no-op for those widget types.
+static func _apply_sound(widget:Node, descriptor:MmdInstrumentDescriptor) -> void:
+    if "sound_on" in widget:
+        if descriptor.sound_increase:
+            widget.set("sound_on", _build_audio_stream(descriptor.sound_increase))
+        if descriptor.sound_decrease:
+            widget.set("sound_off", _build_audio_stream(descriptor.sound_decrease))
+        return
+
+    if "sound_increase_stream" in widget:
+        if descriptor.sound_increase:
+            widget.set("sound_increase_stream", _build_audio_stream(descriptor.sound_increase))
+        if descriptor.sound_decrease:
+            widget.set("sound_decrease_stream", _build_audio_stream(descriptor.sound_decrease))
+        if not descriptor.sound_positions.is_empty():
+            var positive:Array[AudioStream] = []
+            var negative:Array[AudioStream] = []
+            for position:int in descriptor.sound_positions:
+                var stream:AudioStream = _build_audio_stream(descriptor.sound_positions[position])
+                if not stream:
+                    continue
+                if position > 0:
+                    while positive.size() < position:
+                        positive.append(null)
+                    positive[position - 1] = stream
+                elif position < 0:
+                    var idx:int = -position - 1
+                    while negative.size() <= idx:
+                        negative.append(null)
+                    negative[idx] = stream
+            if not positive.is_empty():
+                widget.set("sound_override", positive)
+            if not negative.is_empty():
+                widget.set("sound_override_negative", negative)
+
+
+static func _build_audio_stream(filename:String) -> AudioStream:
+    if filename.is_empty():
+        return null
+    var stream := MaszynaAudioStream.new()
+    stream.file_path = filename
+    return stream
 
 
 ## Sets the widget's mesh_rotation/mesh_position "full-swing" target directly from this vehicle's

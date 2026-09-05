@@ -129,6 +129,18 @@ func test_block_form_indicator_light_reads_submodel_from_inside_the_block():
     assert_not_null(radio, "include right after a block-form i-*: indicator label should still parse")
 
 
+func test_newly_catalogued_labels_parse_and_do_not_desync_the_include_that_follows():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    for label:String in ["battery_sw", "converter_sw", "compressor_sw", "radiochannel_sw", "radiochannelnext_sw", "radiochannelprev_sw", "pantfront_sw", "distcounter", "hvcurrent1"]:
+        assert_not_null(_find(definition, label), label)
+    var radio_indicator:MmdInstrumentDescriptor = _find(definition, "i-radio")
+    assert_not_null(radio_indicator)
+    assert_eq(radio_indicator.submodel_name, "radio_lamp")
+    assert_eq(radio_indicator.animation_type, "", "i-*: labels have no rot/mov shape at all")
+    var radio_sw:MmdInstrumentDescriptor = _find(definition, "radio_sw")
+    assert_not_null(radio_sw, "include right after the new catalog labels should still parse")
+
+
 func test_include_substitutes_positional_parameter():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")

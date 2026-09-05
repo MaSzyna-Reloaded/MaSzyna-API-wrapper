@@ -26,6 +26,11 @@ enum ControllerMode { OnOff, On, Off }
         _dirty = true
 
 @export var command = ""
+## Fixed leading argument sent before `pushed`, for commands that take a selector as their first
+## parameter (e.g. TrainElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
+## every single-argument command, which keeps existing widgets (fuelpump_sw, battery_sw, ...)
+## sending exactly the same single-argument call as before.
+@export var command_param:Variant
 @export var state_property = ""
 @export var controller_mode:ControllerMode = ControllerMode.OnOff
 @export var mesh_position:Vector3 = Vector3.ZERO:
@@ -134,7 +139,10 @@ func _on_pushed_changed():
 
     if _controller:
         if controller_mode == ControllerMode.OnOff:
-            _controller.send_command(command, pushed)
+            if not command_param == null:
+                _controller.send_command(command, command_param, pushed)
+            else:
+                _controller.send_command(command, pushed)
         elif pushed and controller_mode == ControllerMode.On:
             _controller.send_command(command, true)
         elif pushed and controller_mode == ControllerMode.Off:

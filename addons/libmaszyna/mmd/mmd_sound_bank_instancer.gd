@@ -24,7 +24,13 @@ static func build_into(
     context.random_choices = random_choices
 
     var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
-    _merge_ignition_and_shutdown_into_engine(definitions, abs_mmd_path, context)
+    var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
+    _merge_ignition_and_shutdown_into_engine(definitions, internal_data)
+    # buzzer:/buzzershp: (see MmdSoundCatalog) are their own catalog-matched events, unlike
+    # ignition:/shutdown: which only ever get merged into "engine" and never appear standalone.
+    for definition:MmdSoundSourceDefinition in internal_data:
+        if definition.label == "buzzer" or definition.label == "buzzershp":
+            definitions.append(definition)
 
     var events:Array[SfxEvent] = []
     var matched:Array[Dictionary] = []
@@ -80,7 +86,7 @@ static func build_into(
 ## themselves (parse() never sees them - they're outside sounds:/endsounds), so there's nothing to
 ## remove from `definitions` afterward.
 static func _merge_ignition_and_shutdown_into_engine(
-        definitions:Array[MmdSoundSourceDefinition], abs_mmd_path:String, context:MmdImportContext) -> void:
+        definitions:Array[MmdSoundSourceDefinition], internal_data:Array[MmdSoundSourceDefinition]) -> void:
     var engine:MmdSoundSourceDefinition = null
     for definition:MmdSoundSourceDefinition in definitions:
         if definition.label == "engine":
@@ -89,7 +95,6 @@ static func _merge_ignition_and_shutdown_into_engine(
     if not engine:
         return # nothing to merge ignition:/shutdown: into
 
-    var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
     for definition:MmdSoundSourceDefinition in internal_data:
         if definition.label == "ignition" and engine.sound_begin.is_empty():
             engine.sound_begin = definition.sound_main

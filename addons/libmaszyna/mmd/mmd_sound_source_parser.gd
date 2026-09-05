@@ -26,6 +26,13 @@ const _BARE_SINGLE_LABELS:Dictionary = {
     "fuelpump": true,
     "ignition": true,
     "shutdown": true,
+    # buzzer:/buzzershp: (Train.cpp:10362-10363's own "buzzer:"/"buzzershp:" -> dsbBuzzer/
+    # dsbBuzzerShp mapping table, sound_type::single) - bare form is usually a bracketed
+    # random-choice list of variants (confirmed real: dynamic/pkp/sm42_v1/6d.mmd's
+    # "buzzer: [ buczek.wav 24150_buczek_cashp.wav ... ]") but _read_random_set() already
+    # handles that transparently, same as every other bare label here.
+    "buzzer": true,
+    "buzzershp": true,
 }
 
 ## label -> bare form is 3 values (begin, main, end) + an optional trailing range - confirmed real
@@ -52,14 +59,15 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
     return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {})
 
 
-## ignition:/shutdown: (see MmdSoundBankInstancer's merge into "engine") live in the MMD's
+## ignition:/shutdown:/buzzer:/buzzershp: (see MmdSoundBankInstancer) live in the MMD's
 ## internaldata: section, BEFORE cab1definition:/cab2definition: - confirmed real, NOT inside
 ## sounds:/endsounds (dynamic/pkp/sm42_v1/6d.mmd: "ignition: { range: 150 soundmain:
-## 697_sm42-start-v2.wav }" at line 92, well past endsounds at line 81). internaldata: has dozens
-## of other sound-shaped fields (rainsound/tachoclock/couplerattach/buzzer/...) out of scope here -
-## only ignition:/shutdown: are kept, everything else is parsed just enough to stay token-aligned
-## (reusing the exact same generic block/bare consumption as parse() above) and then discarded,
-## with no diagnostic (this region isn't otherwise covered by MmdSoundCatalog).
+## 697_sm42-start-v2.wav }" at line 92 and "buzzer: [ buczek.wav ... ]" at line 85, both well past
+## endsounds at line 81). internaldata: has dozens of other sound-shaped fields (rainsound/
+## tachoclock/couplerattach/...) out of scope here - only these four are kept, everything else is
+## parsed just enough to stay token-aligned (reusing the exact same generic block/bare consumption
+## as parse() above) and then discarded, with no diagnostic (this region isn't otherwise covered
+## by MmdSoundCatalog).
 static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
     var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
@@ -72,7 +80,8 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
         end_index = cab2_index
     if end_index == -1:
         end_index = tokens.size()
-    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {"ignition": true, "shutdown": true})
+    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path,
+            {"ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true})
 
 
 static func _parse_labels_in_range(

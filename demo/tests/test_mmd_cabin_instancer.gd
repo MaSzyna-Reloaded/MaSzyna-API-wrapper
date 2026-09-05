@@ -207,6 +207,10 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var descriptor := MmdInstrumentDescriptor.new()
     descriptor.label = "i-security_aware"
     descriptor.submodel_name = "czuwak"
+    # confirmed real (dynamic/pkp/su45_v2/301d.mmd): "i-security_aware: { i-czuwak soundinc: ...
+    # sounddec: ... }" - the click sound on each on/off transition.
+    descriptor.sound_increase = "light_ca_start"
+    descriptor.sound_decrease = "light_ca_stop"
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
 
     var on_node:Node3D = add_child_autofree(Node3D.new())
@@ -225,6 +229,8 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     assert_eq(widget.global_position, on_node.global_position, "no depth offset - plain Node3D isn't a VisualInstance3D")
     assert_eq(widget.get_node(widget.on_target_path), on_node)
     assert_eq(widget.get_node(widget.off_target_path), off_node)
+    assert_eq((widget.sound_on as MaszynaAudioStream).file_path, "light_ca_start")
+    assert_eq((widget.sound_off as MaszynaAudioStream).file_path, "light_ca_stop")
     assert_eq(diagnostics.size(), 0)
 
 

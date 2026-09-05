@@ -709,6 +709,12 @@ static func _build_indicator_lights(
         widget.name = "%s_%s_%d" % [descriptor.label, descriptor.submodel_name, i]
         for field_name:String in entry["fixed_fields"]:
             widget.set(field_name, entry["fixed_fields"][field_name])
+        # unlike _build_widget(), this doesn't go through _apply_animation_shape() (indicator
+        # descriptors never have a rot/mov shape - see _parse_indicator()) but DOES still need
+        # _apply_sound() for soundinc:/sounddec: (confirmed real: SU45's own
+        # "i-security_aware: { i-czuwak soundinc: ... sounddec: ... }" - the click sound that
+        # plays on each on/off transition, matching CabinSpotLight3D's own sound_on/sound_off).
+        _apply_sound(widget, descriptor)
         generated_root.add_child(widget)
 
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null

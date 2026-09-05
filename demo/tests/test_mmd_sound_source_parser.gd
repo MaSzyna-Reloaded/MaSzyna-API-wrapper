@@ -96,29 +96,38 @@ func test_unrecognized_label_does_not_desync_following_labels():
     assert_null(_find(definitions, "endsounds"))
 
 
-func test_parse_internal_data_returns_only_ignition_and_shutdown():
+func test_parse_internal_data_returns_ignition_shutdown_buzzer_and_buzzershp():
     var context := MmdImportContext.new()
     context.base_dir = FIXTURE_PATH.get_base_dir()
     var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(FIXTURE_PATH, context)
 
     var ignition:MmdSoundSourceDefinition = null
+    var shutdown:MmdSoundSourceDefinition = null
+    var buzzer:MmdSoundSourceDefinition = null
+    var buzzershp:MmdSoundSourceDefinition = null
     for definition:MmdSoundSourceDefinition in definitions:
-        if definition.label == "ignition":
-            ignition = definition
+        match definition.label:
+            "ignition": ignition = definition
+            "shutdown": shutdown = definition
+            "buzzer": buzzer = definition
+            "buzzershp": buzzershp = definition
+
     assert_not_null(ignition)
     assert_eq(ignition.sound_main, "engine-start")
 
-    var shutdown:MmdSoundSourceDefinition = null
-    for definition:MmdSoundSourceDefinition in definitions:
-        if definition.label == "shutdown":
-            shutdown = definition
     assert_not_null(shutdown)
     assert_eq(shutdown.sound_main, "engine-shutdown-unused")
 
-    # rainsound:/cab1definition:/... are out of scope for this entry point - only ignition:/
-    # shutdown: are collected, but parsing must still stay aligned across them (not desync).
+    assert_not_null(buzzer)
+    assert_true(buzzer.sound_main in ["buczek", "24150_buczek_cashp"])
+
+    assert_not_null(buzzershp)
+    assert_eq(buzzershp.sound_main, "buzzershp-main")
+
+    # rainsound:/cab1definition:/... are out of scope for this entry point - only these four
+    # labels are collected, but parsing must still stay aligned across them (not desync).
     for definition:MmdSoundSourceDefinition in definitions:
-        assert_true(definition.label in ["ignition", "shutdown"])
+        assert_true(definition.label in ["ignition", "shutdown", "buzzer", "buzzershp"])
 
 
 func test_parsing_stays_bounded_to_sounds_section_and_does_not_leak_internaldata():

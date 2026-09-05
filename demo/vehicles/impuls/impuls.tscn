@@ -12,6 +12,7 @@ data_path = "/dynamic/pkp/impuls_v1"
 file_name = "36wea-a_kd"
 skin = "36wea-019a"
 head_display_material = ExtResource("2_iawif")
+train_id = "impuls-a"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
 [node name="Impuls-024b" type="Node3D" parent="." unique_id=1161615865]
@@ -21,6 +22,7 @@ data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-b_kd"
 skin = "36wea-019b,1|36wea-019b,2|36wea-019b,3|36wea-019c,4"
 head_display_material = ExtResource("2_iawif")
+train_id = "impuls-b"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
 [node name="Impuls-024c" type="Node3D" parent="." unique_id=1550835407]
@@ -30,6 +32,7 @@ data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-c_kd"
 skin = "36wea-019b,1|36wea-019c,2|36wea-019c,3|36wea-019c,4"
 head_display_material = ExtResource("2_iawif")
+train_id = "impuls-c"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
 [node name="Impuls-024d" type="Node3D" parent="." unique_id=1037242744]
@@ -39,4 +42,5 @@ data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-d_kd"
 skin = "36wea-019a,1|36wea-019a,2|36wea-019a,3|36wea-019a,4"
 head_display_material = ExtResource("2_iawif")
+train_id = "impuls-d"
 metadata/_custom_type_script = "uid://djd17om24oh3s"

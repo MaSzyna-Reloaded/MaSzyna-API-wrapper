@@ -28,11 +28,18 @@ class_name DynamicRailVehicle3D
             file_name = x
             _dirty = true
 
-## Single skin name applied to the exterior model's first dynamic-material slot.
+## Base skin name expanded to numbered dynamic-material slots, or an explicit pipe-separated
+## slot list when a vehicle uses mixed material names.
 @export var skin:String = "":
     set(x):
         if not x == skin:
             skin = x
+            _dirty = true
+
+@export var head_display_material:Material:
+    set(x):
+        if not x == head_display_material:
+            head_display_material = x
             _dirty = true
 
 ## Forwarded to the generated FIZTrainController.train_id (TrainSystem registration/console
@@ -120,6 +127,15 @@ func _rebuild() -> void:
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
 
+    var passengers_model:E3DModelInstance = null
+    var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
+    if passengers_filename:
+        passengers_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, passengers_filename)
+        passengers_model = E3DModelInstance.new()
+        passengers_model.name = "Passengers"
+        passengers_model.data_path = normalized_data_path
+        passengers_model.model_filename = passengers_filename
+
     var fiz_controller := FIZTrainController.new()
     fiz_controller.name = "FIZTrainController"
     fiz_controller.data_path = normalized_data_path
@@ -133,6 +149,8 @@ func _rebuild() -> void:
     if low_poly_model:
         vehicle.add_child(low_poly_model, false, INTERNAL_MODE_BACK)
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
+    if passengers_model:
+        vehicle.add_child(passengers_model, false, INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
     # FizTrainControllerInstancer.build() hardcodes the generated controller's name to
     # "TrainController", so this relative path is deterministic even though the controller
@@ -152,6 +170,18 @@ func _rebuild() -> void:
 
     _vehicle = vehicle
     add_child(_vehicle, false, INTERNAL_MODE_BACK)
+    _configure_head_display(vehicle, model)
+
+
+func _configure_head_display(vehicle:RailVehicle3D, model:E3DModelInstance) -> void:
+    if not head_display_material:
+        return
+    var head_display:MeshInstance3D = model.find_child("tablice_relacyjne", true, false) as MeshInstance3D
+    if not head_display:
+        return
+    vehicle.head_display_e3d_path = vehicle.get_path_to(model)
+    vehicle.head_display_material = head_display_material
+    vehicle.head_display_node_path = vehicle.get_path_to(head_display)
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by

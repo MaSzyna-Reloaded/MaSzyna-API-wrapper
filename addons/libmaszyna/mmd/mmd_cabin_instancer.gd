@@ -152,22 +152,21 @@ static func resolve_model_case(data_path:String, relpath:String) -> String:
     return relpath
 
 
-## A model can need more than one dynamic-material skin slot (index 0 -> "<skin>.mat", index 1
-## -> "<skin>,1.mat", etc.) - confirmed against real data: dynamic/pkp/st44_v2 ships
-## st44-700.mat + st44-700,1.mat + st44-700,2.mat + st44-700,3.mat for one cab model. Passing a
-## single-entry skins array leaves every slot beyond 0 with no material at all (silently missing
-## texture, not an error) - scan data_path for how many consecutive ",N.mat" files exist for
-## `skin` and size the array to match, rather than assuming a fixed slot count.
+## A model can need more than one dynamic-material skin slot. MaSzyna first looks for
+## "<skin>,1.mat" and, if present, maps consecutive numbered materials directly to slots 0-3.
+## The unnumbered "<skin>.mat" is only the fallback for a single-material model.
 static func resolve_skins(data_path:String, skin:String) -> Array:
     if skin.is_empty():
         return [skin]
+    if skin.contains("|"):
+        return Array(skin.split("|", false, 4))
     var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(data_path)
-    var skins:Array = [skin]
+    var skins:Array = []
     var n:int = 1
-    while FileAccess.file_exists(base_dir.path_join("%s,%d.mat" % [skin, n])):
+    while n <= 4 and FileAccess.file_exists(base_dir.path_join("%s,%d.mat" % [skin, n])):
         skins.append("%s,%d" % [skin, n])
         n += 1
-    return skins
+    return skins if not skins.is_empty() else [skin]
 
 
 ## Reads just the exterior body model filename from the MMD's own top-level `models:` section
@@ -196,6 +195,28 @@ static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
     if index == -1 or index + 1 >= tokens.size():
         return ""
     return _resolve_model_relpath(tokens[index + 1])
+
+
+## Reads the passenger visualization model from the MMD's top-level `loads:` block.
+static func parse_passengers_model(abs_mmd_path:String) -> String:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var loads_index:int = _find_label_index(tokens, "loads:")
+    if loads_index == -1 or loads_index + 1 >= tokens.size() or not tokens[loads_index + 1] == "{":
+        return ""
+
+    var depth:int = 0
+    for i:int in range(loads_index + 1, tokens.size()):
+        var token:String = tokens[i]
+        if token == "{":
+            depth += 1
+        elif token == "}":
+            depth -= 1
+            if depth == 0:
+                break
+        elif depth == 1 and token.to_lower() == "passengers:" and i + 1 < tokens.size():
+            return _resolve_model_relpath(tokens[i + 1])
+    return ""
 
 
 ## Builds real, interactive cabin widgets (CabinButton/CabinSwitch/CabinKnob/CabinGauge) plus

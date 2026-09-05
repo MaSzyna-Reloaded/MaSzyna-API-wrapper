@@ -12,10 +12,9 @@ enum ControllerMode { OnOff, On, Off }
         x = clampi(x, switch_min_position, switch_max_position)
         if not x == switch_position:
             _dirty = true
-            var _prev = switch_position
-            switch_position = _handle_position_change(_prev, x)
-            if not _prev == switch_position:
-                emit_signal("switch_position_changed", _prev, switch_position)
+            var previous_position:int = switch_position
+            switch_position = x
+            emit_signal("switch_position_changed", previous_position, switch_position)
 
 
 @export var switch_min_position:int = 0:
@@ -92,12 +91,27 @@ func _ready():
 
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    controller_changed.connect(_update_state)
+    controller_changed.connect(_on_controller_changed)
 
-func _update_state():
-    switch_position = _controller.state.get(state_property, switch_position)
+func _exit_tree() -> void:
+    if _controller:
+        _controller.command_received.disconnect(_on_command_received)
+
+func _on_controller_changed() -> void:
+    _controller.command_received.connect(_on_command_received)
+    _update_state()
+
+func _update_state() -> void:
+    if state_property and _controller:
+        switch_position = int(_controller.state.get(state_property, switch_position))
     _target_mesh_position = switch_position * mesh_position
     _target_mesh_rotation = switch_position * mesh_rotation
+
+func _on_command_received(p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
+    if command_set and p_command == command_set:
+        switch_position = int(p_p1) if p_p1 else 0
+    elif (p_command == command_increase or p_command == command_decrease):
+        _update_state()
 
 func _enter_tree():
     _setup_phase = true
@@ -111,22 +125,22 @@ func _input(event):
 
     if action_increase:
         if event.is_action_pressed(action_increase, false, true):
-            switch_position += 1
+            _set_position_from_input(switch_position + 1)
         if automatic_reset and event.is_action_released(action_increase, true):
-            switch_position = switch_reset_position
+            _set_position_from_input(switch_reset_position)
     if action_decrease:
         if event.is_action_pressed(action_decrease, false, true):
-            switch_position -= 1
+            _set_position_from_input(switch_position - 1)
         if automatic_reset and event.is_action_released(action_decrease, true):
-            switch_position = switch_reset_position
+            _set_position_from_input(switch_reset_position)
     if action_toggle:
         if event.is_action_pressed(action_toggle, false, true):
             if switch_position == switch_max_position:
-                switch_position = switch_min_position
+                _set_position_from_input(switch_min_position)
             else:
-                switch_position = switch_max_position
+                _set_position_from_input(switch_max_position)
         if automatic_reset and event.is_action_released(action_toggle, true):
-            switch_position = switch_reset_position
+            _set_position_from_input(switch_reset_position)
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:
@@ -184,15 +198,16 @@ func _on_switch_position_changed(previous, current):
     if _sound.stream:
         _sound.play()
 
-func _handle_position_change(prev, current) -> int:
-    if _controller:
-        var cmd = command_increase if current > prev else command_decrease
-        if cmd:
-            _controller.send_command(cmd)
-        if command_set:
-            _controller.send_command(command_set, current)
+func _set_position_from_input(p_position:int) -> void:
+    var previous_position:int = switch_position
+    switch_position = p_position
 
-    if state_property and _controller:
-        return _controller.state.get(state_property, current)
-    else:
-        return current
+    if previous_position == switch_position:
+        return
+
+    if _controller:
+        var command:String = command_increase if switch_position > previous_position else command_decrease
+        if command:
+            _controller.send_command(command)
+        if command_set:
+            _controller.send_command(command_set, switch_position)

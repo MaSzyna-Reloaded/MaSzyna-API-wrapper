@@ -47,6 +47,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, tc_lockup_speed, 1.0);
             MAKE_MEMBER_GS(double, tc_unlock_speed, 1.0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_converter_table)
+            /* V2NList: predkosc -> maksymalne obroty silnika (dizel_vel2nmax_Table) */
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, vel2nmax_table)
             MAKE_MEMBER_GS(bool, has_retarder, false);
             MAKE_MEMBER_GS_NR(RetarderPlacement, retarder_placement, RETARDER_PLACEMENT_AFTER_GEARBOX);
             MAKE_MEMBER_GS(double, retarder_torque_in_in, 1.0);

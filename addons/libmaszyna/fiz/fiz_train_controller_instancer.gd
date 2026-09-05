@@ -44,19 +44,28 @@ static func _ensure_sections() -> void:
     var engine_parser := FizTrainEngineParser.new()
     var electric_series_parser := engine_parser.electric_series_parser
     var security_system_parser := FizTrainSecuritySystemParser.new()
+    var spring_brake_parser := FizTrainSpringBrakeParser.new()
+    var ep_dynamic_brake_parser := FizTrainElectroPneumaticDynamicBrakeParser.new()
+    var speed_control_parser := FizTrainSpeedControlParser.new()
+    var switches_parser := FizTrainSwitchesParser.new()
+    var ai_hints_parser := FizTrainAIHintsParser.new()
+    var load_parser := FizTrainLoadParser.new()
+    var wipers_parser := FizTrainWipersParser.new()
+    var universal_controller_parser := FizTrainUniversalControllerParser.new()
+    var diesel_engine_parser := FizTrainDieselEngineParser.new()
 
     _sections = [
         # controller-mapped
         {"prefix": "Param.", "parser": controller_parser, "table_end": ""},
         {"prefix": "Dimensions:", "parser": controller_parser, "table_end": ""},
-        {"prefix": "Load:", "parser": null, "table_end": ""}, # TrainLoad - not yet implemented
+        {"prefix": "Load:", "parser": load_parser, "table_end": ""},
         {"prefix": "Wheels:", "parser": wheels_parser, "table_end": ""},
         # brake family (Cntrl. also starts the BPT table)
         {"prefix": "Brake:", "parser": brake_parser, "table_end": ""},
         {"prefix": "Cntrl.", "parser": cntrl_parser, "table_end": ""}, # BPT rows start after this line, see below
-        {"prefix": "SpringBrake:", "parser": null, "table_end": ""},
-        {"prefix": "Blending:", "parser": null, "table_end": ""},
-        {"prefix": "DCEMUED:", "parser": null, "table_end": ""},
+        {"prefix": "SpringBrake:", "parser": spring_brake_parser, "table_end": ""},
+        {"prefix": "Blending:", "parser": ep_dynamic_brake_parser, "table_end": ""},
+        {"prefix": "DCEMUED:", "parser": ep_dynamic_brake_parser, "table_end": ""},
         {"prefix": "CompressorList:", "parser": brake_parser, "table_end": "endCL"},
         # doors / couplers
         {"prefix": "Doors:", "parser": doors_parser, "table_end": ""},
@@ -65,17 +74,20 @@ static func _ensure_sections() -> void:
         {"prefix": "BuffCoupl.", "parser": buff_coupl_parser, "table_end": ""},
         # lighting / heating / power
         {"prefix": "Headlights:", "parser": lighting_parser, "table_end": ""},
-        {"prefix": "LightsList:", "parser": null, "table_end": "endL"}, # rows not decoded yet, see fiz_train_lighting_parser.gd
+        # LightsList: rows write into Mover's Lights[][], which nothing in src/maszyna/ ever
+        # reads (the real per-current-draw field is the separate iLights[] - never fed from
+        # this section at all) - genuinely no consumer, discard-only like TurboPos:.
+        {"prefix": "LightsList:", "parser": null, "table_end": "endL"},
         {"prefix": "Light:", "parser": lighting_parser, "table_end": ""},
         {"prefix": "Clima:", "parser": heating_parser, "table_end": ""},
         {"prefix": "Power:", "parser": power_parser, "table_end": ""},
-        {"prefix": "SpeedControl:", "parser": null, "table_end": ""},
-        {"prefix": "Switches:", "parser": null, "table_end": ""},
-        {"prefix": "DimmerList:", "parser": null, "table_end": "endDimmerList"},
-        {"prefix": "AI:", "parser": null, "table_end": ""},
+        {"prefix": "SpeedControl:", "parser": speed_control_parser, "table_end": ""},
+        {"prefix": "Switches:", "parser": switches_parser, "table_end": ""},
+        {"prefix": "DimmerList:", "parser": switches_parser, "table_end": "endDimmerList"},
+        {"prefix": "AI:", "parser": ai_hints_parser, "table_end": ""},
         {"prefix": "Security:", "parser": security_system_parser, "table_end": ""},
-        {"prefix": "WiperList:", "parser": null, "table_end": "endwl"},
-        {"prefix": "UCList:", "parser": null, "table_end": "END-UCL"},
+        {"prefix": "WiperList:", "parser": wipers_parser, "table_end": "endwl"},
+        {"prefix": "UCList:", "parser": universal_controller_parser, "table_end": "END-UCL"},
         # engine family
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
         # MotorParamTable0: is what ElectricSeriesMotor vehicles use; MotorParamTable: (no "0")
@@ -85,16 +97,21 @@ static func _ensure_sections() -> void:
         {"prefix": "MotorParamTable:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
         {"prefix": "RList:", "parser": electric_series_parser, "table_end": "END-RL"},
-        {"prefix": "DList:", "parser": null, "table_end": "END-DL"},
-        {"prefix": "DMList:", "parser": null, "table_end": "END-DML"},
-        {"prefix": "HTCList:", "parser": null, "table_end": "END-HTCL"},
-        {"prefix": "PmaxList:", "parser": null, "table_end": "END-PML"},
+        {"prefix": "DList:", "parser": diesel_engine_parser, "table_end": "END-DL"},
+        {"prefix": "DMList:", "parser": diesel_engine_parser, "table_end": "END-DML"},
+        {"prefix": "HTCList:", "parser": diesel_engine_parser, "table_end": "END-HTCL"},
+        {"prefix": "PmaxList:", "parser": engine_parser.electric_induction_parser, "table_end": "END-PML"},
         {"prefix": "WWList:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-WWL"},
-        # sections with no Godot-class home yet (recognized so their rows aren't misparsed)
+        {"prefix": "V2NList:", "parser": diesel_engine_parser, "table_end": "END-V2NL"},
+        # TurboPos: has no Godot-class home and is confirmed genuinely dead in this vendored
+        # physics (no LoadFIZ_TurboPos ever existed) - recognized so its lines aren't
+        # misparsed, data discarded with a warning.
         {"prefix": "TurboPos:", "parser": null, "table_end": ""},
-        {"prefix": "ffBrakeList:", "parser": null, "table_end": "endff"},
-        {"prefix": "ffList:", "parser": null, "table_end": "endff"},
-        {"prefix": "V2NList:", "parser": null, "table_end": "END-V2NL"},
+        # ffList:/ffBrakeList: share electric_induction_parser's wwlist target (DElist/
+        # RlistSize, read by TractionForce()'s ElectricInductionMotor branch) - first-write-
+        # wins if a file has both, see FizTrainElectricInductionEngineParser.end_table().
+        {"prefix": "ffBrakeList:", "parser": engine_parser.electric_induction_parser, "table_end": "endff"},
+        {"prefix": "ffList:", "parser": engine_parser.electric_induction_parser, "table_end": "endff"},
     ]
 
 

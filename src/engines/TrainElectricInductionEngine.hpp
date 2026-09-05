@@ -3,6 +3,7 @@
 #include "TrainElectricEngine.hpp"
 #include "macros.hpp"
 #include "resources/engines/CurvePointItem.hpp"
+#include "resources/engines/WWListItem.hpp"
 
 namespace godot {
     class TrainController;
@@ -12,11 +13,23 @@ namespace godot {
         public:
             static void _bind_methods();
 
+        private:
+            TypedArray<WWListItem> wwlist;
+
         protected:
             EngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
 
         public:
+            TypedArray<WWListItem> get_wwlist() {
+                return wwlist;
+            }
+
+            void set_wwlist(const TypedArray<WWListItem> &p_wwlist) {
+                wwlist.clear();
+                wwlist.append_array(p_wwlist);
+            }
+
             MAKE_MEMBER_GS(double, slip_current_ratio, 0.0);
             MAKE_MEMBER_GS(double, max_slip, 0.0);
             MAKE_MEMBER_GS(double, pole_pairs, 0.0);

@@ -97,6 +97,9 @@ namespace godot {
                 Variant::ARRAY, "torque_converter_table", "torque_converter/table",
                 &TrainDieselEngine::set_torque_converter_table, &TrainDieselEngine::get_torque_converter_table,
                 "torque_converter_table", PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                Variant::ARRAY, "vel2nmax_table", "vel2nmax_table", &TrainDieselEngine::set_vel2nmax_table,
+                &TrainDieselEngine::get_vel2nmax_table, "vel2nmax_table", PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
         BIND_PROPERTY(
                 Variant::BOOL, "has_retarder", "retarder/present", &TrainDieselEngine::set_has_retarder,
                 &TrainDieselEngine::get_has_retarder, "has_retarder");
@@ -228,6 +231,18 @@ namespace godot {
                 continue;
             }
             p_mover->hydro_TC_Table.emplace(row->get_x(), row->get_y());
+        }
+
+        p_mover->dizel_vel2nmax_Table.clear();
+        for (int i = 0; i < vel2nmax_table.size(); i++) {
+            const Ref<CurvePointItem> &row = vel2nmax_table[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainDieselEngine]: vel2nmax_table property is null at index " + String::num(i));
+                continue;
+            }
+            // matches readV2NMAXList (Mover.cpp:8476-8489): x unconverted, y (rpm) -> rev/s
+            p_mover->dizel_vel2nmax_Table.emplace(row->get_x(), row->get_y() / 60.0);
         }
 
         p_mover->hydro_R = has_retarder;

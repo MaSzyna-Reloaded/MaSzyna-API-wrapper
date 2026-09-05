@@ -82,6 +82,18 @@ func test_unrecognized_label_does_not_desync_following_labels():
     assert_not_null(radio, "include right after an unrecognized label should still parse")
 
 
+func test_indicator_light_label_is_parsed_as_bare_submodel_name():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    var indicator:MmdInstrumentDescriptor = _find(definition, "i-security_aware")
+    assert_not_null(indicator)
+    assert_eq(indicator.submodel_name, "czuwak_lamp")
+    assert_eq(indicator.animation_type, "", "i-*: labels have no rot/mov shape at all")
+    # if this single-token shape were force-fed through the 5-token instrument parser, the
+    # include right after it would desync.
+    var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")
+    assert_not_null(radio, "include right after an i-*: indicator label should still parse")
+
+
 func test_include_substitutes_positional_parameter():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     var radio:MmdInstrumentDescriptor = _find(definition, "radio_sw")

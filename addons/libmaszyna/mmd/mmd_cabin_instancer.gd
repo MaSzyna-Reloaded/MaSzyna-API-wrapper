@@ -721,20 +721,20 @@ static func _build_indicator_lights(
         widget.controller_path = widget.get_path_to(controller)
 
 
-## Positions `widget` at `submodel`'s visual surface facing the driver, not its raw transform
-## origin/pivot (frequently off to one side, e.g. its mounting point) and not its bare AABB center
-## either (a light sitting exactly at a solid mesh's center is embedded inside the geometry,
-## looking wrong) - the AABB center pushed forward along local +Z by half the AABB's own depth,
-## landing it at the housing's front-facing surface instead. +Z (not -Z) because submodels share
-## the cab model's own axis convention, where -Z is the cab's forward/travel direction, so a
-## dashboard-mounted housing's driver-facing "open" side - the opposite of the cab's own front -
-## is +Z.
+## Positions `widget` at `submodel`'s visual AABB center rather than its raw transform
+## origin/pivot (frequently off to one side, e.g. its mounting point). A directional "push forward
+## off the surface" correction was tried and reverted - confirmed real that a submodel's local Z
+## orientation is NOT consistent across vehicles' art (looked right on SU45, wrong on EP09/SM42),
+## so there is no single fixed direction/amount that works generically; plain AABB center is the
+## safer default even though it can leave the light slightly embedded in solid geometry on some
+## vehicles. Some vehicles (confirmed: SM42) combine multiple physically scattered lamp bulbs into
+## ONE submodel object - its AABB center is then a meaningless average point between them, a real
+## data limitation this can't correct for from geometry alone.
 static func _position_at_submodel_instance(widget:Node3D, submodel:Node3D) -> void:
     var target_transform:Transform3D = submodel.global_transform
     if submodel is VisualInstance3D:
-        var aabb:AABB = (submodel as VisualInstance3D).get_aabb()
-        var local_point:Vector3 = aabb.get_center() + Vector3(0.0, 0.0, aabb.size.z * 0.5)
-        target_transform.origin = submodel.to_global(local_point)
+        var local_center:Vector3 = (submodel as VisualInstance3D).get_aabb().get_center()
+        target_transform.origin = submodel.to_global(local_center)
     widget.global_transform = target_transform
 
 

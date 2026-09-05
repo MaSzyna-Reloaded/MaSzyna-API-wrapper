@@ -260,14 +260,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/su45_v2"
 file_name = "301d"
-skin = "301d-154'96"
+skin = "301d-225"
 train_id = "su45"
 
 [node name="SM42" type="Node3D" parent="." unique_id=769861990]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
 script = ExtResource("29_dcvyd")
 data_path = "dynamic/pkp/sm42_v1"
-file_name = "6d"
+file_name = "6d1"
 skin = "6d-1076"
 train_id = "sm42"
 

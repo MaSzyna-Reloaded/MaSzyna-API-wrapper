@@ -244,12 +244,12 @@ controller_path = NodePath("../../SM42v1")
 
 [node name="Horn1" type="Node" parent="SfxPlayer3D" unique_id=209300178]
 script = ExtResource("6_clokw")
-state_property = "horn1"
+state_property = "horn_low_active"
 sound_event = &"horn1"
 controller_path = NodePath("../../SM42v1")
 
 [node name="Horn2" type="Node" parent="SfxPlayer3D" unique_id=875255125]
 script = ExtResource("6_clokw")
-state_property = "horn2"
+state_property = "horn_high_active"
 sound_event = &"horn2"
 controller_path = NodePath("../../SM42v1")

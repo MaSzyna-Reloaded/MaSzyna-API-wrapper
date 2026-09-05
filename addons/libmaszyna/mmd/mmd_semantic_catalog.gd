@@ -330,18 +330,29 @@ static func _ensure_built() -> void:
         # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
         # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
         # Instead this reuses CabinSpotLight3D (already a generic, reusable addon widget - not
-        # SM42-specific) exactly the way demo/vehicles/sm42/sm_42_cabin.tscn's own "CzuwakOmni1"
-        # node uses it, positioned at the "czuwak" submodel MMD actually names (see
-        # _position_at_submodel()) instead of SM42's own 3 hand-placed lights (their exact 3D
-        # offsets are that specific cab's own hand-tuned art, not derivable from MMD - one light at
-        # the submodel's own transform is the closest generic equivalent). Numeric parameters
-        # (color/energy/range/angle/specular/volumetric fog) are copied from that same node -
-        # light_projector (a demo-specific texture asset, res://vehicles/sm42/czuwak_projector.png)
-        # is deliberately NOT copied: an addons/libmaszyna/ catalog can't depend on demo/ content.
+        # SM42-specific), positioned at the "czuwak" submodel MMD actually names (see
+        # _position_at_submodel()) instead of SM42's own 3 hand-placed "CzuwakOmni" lights (their
+        # exact 3D offsets are that specific cab's own hand-tuned art, not derivable from MMD - one
+        # light at the submodel's own transform is the closest generic equivalent). Numeric light
+        # parameters (color/energy/range/angle/specular/volumetric fog) are copied from
+        # CzuwakOmni1 - light_projector (a demo-specific texture asset,
+        # res://vehicles/sm42/czuwak_projector.png) is deliberately NOT copied: an
+        # addons/libmaszyna/ catalog can't depend on demo/ content.
+        #
+        # SM42's OWN CzuwakOmni1/2/3 have no state_property at all - the actual flashing there
+        # comes from a separate CabinBlinker node ("Czuwak", cabin_blinker.gd) with its own
+        # internal Timer, driving a `blink` signal a cabin-script handler uses to toggle those
+        # lights externally. blink_time (below) ports that same Timer-based flash directly into
+        # CabinSpotLight3D itself instead, so this stays one widget per MMD label.
         "i-security_aware": {
             "widget_class": CabinSpotLight3D,
             "fixed_fields": {
                 "state_property": "blinking",
+                # "blinking" (TrainSecuritySystem::is_blinking(), Mover.cpp) is a STATIC "alert
+                # active" flag, not a real-time oscillating value - blink_time (matching
+                # CabinBlinker's own default, cabin_blinker.gd) is what actually makes the light
+                # flash instead of just turning steadily on.
+                "blink_time": 0.2,
                 "light_color": Color(0.960938, 0.506832, 0.349091, 1.0),
                 "light_energy_on": 0.2,
                 "light_energy_off": 0.0,

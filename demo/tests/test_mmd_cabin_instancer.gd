@@ -183,6 +183,87 @@ func test_sound_fields_do_not_desync_following_labels():
     assert_eq(radio.submodel_name, "radio_antenna")
 
 
+func test_position_at_submodel_instance_offsets_to_front_face_not_pivot_or_center():
+    # a submodel's authored pivot (its transform origin) is frequently off to one side (e.g. its
+    # mounting point) - and even the mesh's own bare AABB center sits INSIDE solid geometry, which
+    # looks wrong for a light - so the light belongs at the AABB center pushed forward along local
+    # +Z by half the AABB's own depth (its driver-facing surface).
+    var box_mesh := BoxMesh.new() # local AABB centered on the node's own origin
+    var mesh_node:MeshInstance3D = add_child_autofree(MeshInstance3D.new())
+    mesh_node.mesh = box_mesh
+    mesh_node.position = Vector3(10.0, 0.0, 0.0)
+
+    var widget:Node3D = add_child_autofree(Node3D.new())
+    MmdCabinInstancer._position_at_submodel_instance(widget, mesh_node)
+
+    assert_eq(widget.global_position, mesh_node.global_position + Vector3(0.0, 0.0, box_mesh.size.z * 0.5))
+
+
+func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets():
+    # "i-*:" labels declare a bare base name that is never itself a real submodel - the original
+    # engine always searches "<name>_on"/"<name>_off" instead (Button.cpp:32-33), confirmed real
+    # by live diagnostics ("Submodel 'czuwak'/'ca' not found") once the bare name is looked up.
+    var descriptor := MmdInstrumentDescriptor.new()
+    descriptor.label = "i-security_aware"
+    descriptor.submodel_name = "czuwak"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
+
+    var on_node:Node3D = add_child_autofree(Node3D.new())
+    on_node.position = Vector3(1.0, 2.0, 3.0)
+    var off_node:Node3D = add_child_autofree(Node3D.new())
+    off_node.position = Vector3(9.0, 9.0, 9.0)
+    var submodel_index:Dictionary = {"czuwak_on": [on_node], "czuwak_off": [off_node]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
+    var widget:CabinSpotLight3D = generated_root.get_child(0)
+    assert_eq(widget.global_position, on_node.global_position, "no depth offset - plain Node3D isn't a VisualInstance3D")
+    assert_eq(widget.get_node(widget.on_target_path), on_node)
+    assert_eq(widget.get_node(widget.off_target_path), off_node)
+    assert_eq(diagnostics.size(), 0)
+
+
+func test_build_indicator_lights_builds_one_widget_per_matched_instance():
+    # confirmed real: sm_42_cabin.tscn's own hand-authored reference has 3 physical lamp housings
+    # ("CzuwakOmni1/2/3") for its one "i-security_aware:" label - one widget per matched submodel
+    # instance, not just the first, unlike every other instrument label.
+    var descriptor := MmdInstrumentDescriptor.new()
+    descriptor.label = "i-security_aware"
+    descriptor.submodel_name = "czuwak"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
+
+    var on_a:Node3D = add_child_autofree(Node3D.new())
+    var on_b:Node3D = add_child_autofree(Node3D.new())
+    var submodel_index:Dictionary = {"czuwak_on": [on_a, on_b]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 2)
+
+
+func test_build_indicator_lights_reports_missing_on_and_off():
+    var descriptor := MmdInstrumentDescriptor.new()
+    descriptor.label = "i-security_aware"
+    descriptor.submodel_name = "nowhere"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, {}, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 0)
+    assert_eq(diagnostics.size(), 1)
+    assert_eq(diagnostics[0]["code"], "MMD_SUBMODEL_NOT_FOUND")
+
+
 func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescriptor:
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if descriptor.label == label:

@@ -168,7 +168,12 @@ func _update_head_display():
             _needs_head_display_update = false
 
 
-func _process(delta):
+func _physics_process(delta: float) -> void:
+    if not Engine.is_editor_hint():
+        if _controller:
+            global_position += global_basis.z * delta * _controller.state.get("velocity", 0.0)
+
+func _process(delta: float) -> void:
     if _dirty:
         _process_dirty()
 
@@ -176,10 +181,6 @@ func _process(delta):
     if _t > 0.25 and _needs_head_display_update:
         _t = 0.0
         _update_head_display()
-
-    if not Engine.is_editor_hint():
-        if _controller:
-            position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
 
 func _schedule_head_display_update():
     _needs_head_display_update = true

@@ -25,6 +25,14 @@ func test_defaults_match_the_original_engines_universal_1_to_10_range():
     assert_eq(train.get("radio_channel/min"), 1)
     assert_eq(train.get("radio_channel/max"), 10)
 
+func test_radio_channel_starts_at_1_not_0():
+    # confirmed real: vehicle/Driver.h defaults iRadioChannel to 1, not 0 - starting at 0 (below
+    # the class's own valid 1..10 range) meant the very first radio_channel_increase call was
+    # visually invisible, since CabinSwitch's own switch_min_position clamp had already displayed
+    # the invalid 0 as channel 1 before any command ran.
+    await wait_idle_frames(2)
+    assert_eq(train.state["radio_channel"], 1)
+
 func test_radio_channel_set_is_a_valid_bound_command():
     train.send_command("radio_channel_set", 5)
     await wait_idle_frames(2)

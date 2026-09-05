@@ -1,4 +1,5 @@
 extends Node
+class_name CabinCommand
 
 @export var action_name:String = ""
 @export var command:String = ""

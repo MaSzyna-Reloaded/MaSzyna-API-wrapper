@@ -63,23 +63,30 @@ func enter_cabin(player:MaszynaPlayer):
         return
 
     _camera = player.get_camera()
-    _cabin = cabin_scene.instantiate() as Cabin3D
-    if not _cabin:
+    var cabin:Cabin3D = cabin_scene.instantiate() as Cabin3D
+    if not cabin:
         push_error("Root node of cabin scene must be a Cabin3D")
         return
+    _cabin = cabin
 
     if controller_path:
         var controller = _resolve_controller(controller_path)
         if controller:
-            _cabin.controller_path = controller.get_path()
+            cabin.controller_path = controller.get_path()
 
     # The sequence of adding, removing, hiding, showing nodes is very important
     # to reduce visual artifacts
 
     # first, mark cabin invisible and add it to the scene
-    _cabin.visible = false
+    cabin.visible = false
 
     var _jump_into_cabin = func():
+        # leave_cabin() may have already torn this same cabin down while this signal was still
+        # in flight (e.g. the player exits again immediately after entering) - _cabin no longer
+        # pointing at `cabin` means that already happened, so there's nothing left to jump into.
+        if not is_instance_valid(cabin) or not _cabin == cabin:
+            return
+
         # this subsequence must be called after cabin meshes were loaded
         # hide low poly cab
         if low_poly_cabin_path:
@@ -87,16 +94,16 @@ func enter_cabin(player:MaszynaPlayer):
             if low_poly_cabin:
                 low_poly_cabin.visible = false
 
-        var cabin_enter_camera_transform = _cabin.get_camera_transform()
+        var cabin_enter_camera_transform = cabin.get_camera_transform()
 
         # now remove the cam from the player
         player.remove_child(_camera)
 
         # and add the cam to the cabin
-        _cabin.add_child(_camera)
-        _camera.bound_enabled = _cabin.camera_bound_enabled
-        _camera.bound_min = _cabin.camera_bound_min
-        _camera.bound_max = _cabin.camera_bound_max
+        cabin.add_child(_camera)
+        _camera.bound_enabled = cabin.camera_bound_enabled
+        _camera.bound_min = cabin.camera_bound_min
+        _camera.bound_max = cabin.camera_bound_max
 
         # https://github.com/eu07/maszyna/blob/d187ce6b12fab1825c0c92c1346e7ecda401a440/Train.cpp#L9204
         _camera.bound_min.y += 0.5  # these "magic" values comes from the original source
@@ -119,22 +126,28 @@ func enter_cabin(player:MaszynaPlayer):
         _camera.velocity_multiplier = 0.2
 
     # cabin is not ready, because it is not added to the tree yet
-    _cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
+    cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
 
     # then add it to the scene
-    add_child(_cabin)
+    add_child(cabin)
 
     # then apply transforms
-    _cabin.global_transform = self.global_transform
+    cabin.global_transform = self.global_transform
     if cabin_rotate_180deg:
-        _cabin.rotate_y(deg_to_rad(180))
+        cabin.rotate_y(deg_to_rad(180))
 
     # wait for apply transforms
     await get_tree().process_frame
     await get_tree().process_frame
 
+    # leave_cabin() may have already torn this same cabin down while we were waiting (e.g. the
+    # player exits again immediately after entering) - _cabin no longer pointing at `cabin` means
+    # that already happened, and it (or whatever replaced it) is no longer ours to show.
+    if not is_instance_valid(cabin) or not _cabin == cabin:
+        return
+
     # show the cabin mesh
-    _cabin.visible = true
+    cabin.visible = true
 
 func leave_cabin(player:Node):
     if low_poly_cabin_path:

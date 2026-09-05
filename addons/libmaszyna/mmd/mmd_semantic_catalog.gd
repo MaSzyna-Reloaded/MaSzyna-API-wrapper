@@ -327,6 +327,36 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
+        # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
+        # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
+        # Instead this reuses CabinSpotLight3D (already a generic, reusable addon widget - not
+        # SM42-specific) exactly the way demo/vehicles/sm42/sm_42_cabin.tscn's own "CzuwakOmni1"
+        # node uses it, positioned at the "czuwak" submodel MMD actually names (see
+        # _position_at_submodel()) instead of SM42's own 3 hand-placed lights (their exact 3D
+        # offsets are that specific cab's own hand-tuned art, not derivable from MMD - one light at
+        # the submodel's own transform is the closest generic equivalent). Numeric parameters
+        # (color/energy/range/angle/specular/volumetric fog) are copied from that same node -
+        # light_projector (a demo-specific texture asset, res://vehicles/sm42/czuwak_projector.png)
+        # is deliberately NOT copied: an addons/libmaszyna/ catalog can't depend on demo/ content.
+        "i-security_aware": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {
+                "state_property": "blinking",
+                "light_color": Color(0.960938, 0.506832, 0.349091, 1.0),
+                "light_energy_on": 0.2,
+                "light_energy_off": 0.0,
+                "light_size": 0.696,
+                "light_specular": 2.014,
+                "light_volumetric_fog_energy": 16.0,
+                "shadow_enabled": true,
+                "spot_range": 2.129,
+                "spot_attenuation": 1.98,
+                "spot_angle": 69.32,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
     }
 
 

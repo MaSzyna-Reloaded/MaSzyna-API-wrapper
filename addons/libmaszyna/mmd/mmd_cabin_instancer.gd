@@ -96,7 +96,15 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                 var descriptor := MmdInstrumentDescriptor.new()
                 descriptor.label = label.trim_suffix(":")
                 descriptor.source_file = abs_mmd_path
-                var consumed:int = _parse_instrument(tokens, i, descriptor, context, abs_mmd_path)
+                # "i-*:" indicator lights (Train.cpp's TButton::Load(), Button.cpp:40-56) use a
+                # completely different, single-token shape ("i-security_aware: czuwak", no
+                # animation/scale/offset/friction at all) than every other instrument label -
+                # confirmed real and CONFIRMED to previously desync whatever follows it when force-
+                # fed through _parse_instrument()'s 5-token read (both fall inside the same
+                # cab1definition:/cab0definition: bounds this parser scans).
+                var consumed:int = (
+                        _parse_indicator(tokens, i, descriptor, context, abs_mmd_path) if descriptor.label.begins_with("i-")
+                        else _parse_instrument(tokens, i, descriptor, context, abs_mmd_path))
                 i += consumed
                 if not descriptor.submodel_name.is_empty():
                     instruments.append(descriptor)
@@ -226,10 +234,13 @@ static func build_into(
         var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
         var widget:Node = _build_widget(descriptor, controller, definition.cab_number, diagnostics)
         generated_root.add_child(widget)
-        # mesh_path must be computed AFTER the widget has a place in the tree - it's a path FROM
-        # the widget TO the target mesh node, and the widget shares no common ancestor with
-        # `model`'s submodels until it's actually parented under the same generated_root.
-        _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
+        # mesh_path/position_at_submodel must be resolved AFTER the widget has a place in the
+        # tree - the widget shares no common ancestor with `model`'s submodels until it's actually
+        # parented under the same generated_root.
+        if entry.get("position_at_submodel", false):
+            _position_at_submodel(widget as Node3D, descriptor, submodel_index, definition.cab_number, diagnostics)
+        else:
+            _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
         widget.set("controller_path", widget.get_path_to(controller))
 
 
@@ -323,6 +334,45 @@ static func _parse_instrument(
                     i += 1 + int(result["consumed"])
                 else:
                     i += 1
+        if i < tokens.size():
+            i += 1 # consume "}"
+
+    return i - start
+
+
+## Parses an "i-*:" indicator light's shape (Train.cpp's TButton::Load(), Button.cpp:40-56): a
+## bare submodel base name, optionally followed by a `{ soundinc: ... sounddec: ... }` block for
+## on/off transition sounds - NOT the "submodel animation scale offset friction" shape every other
+## instrument label uses (the original engine shows/hides a matching "<name>_on"/"<name>_off"
+## submodel pair rather than animating one). MmdSemanticCatalog widgets for these labels ignore
+## animation_type/scale/offset/friction entirely (left at their MmdInstrumentDescriptor defaults).
+static func _parse_indicator(
+        tokens:Array[String], i:int, descriptor:MmdInstrumentDescriptor,
+        context:MmdImportContext, source_file:String) -> int:
+    var start:int = i
+    if i >= tokens.size():
+        context.add_diagnostic(
+                "error", "MMD_INVALID_CAB_DEFINITION",
+                "Truncated indicator definition for '%s'" % descriptor.label, source_file, 0, descriptor.label)
+        return 0
+
+    descriptor.submodel_name = tokens[i]
+    i += 1
+
+    if i < tokens.size() and tokens[i] == "{":
+        i += 1
+        while i < tokens.size() and tokens[i] != "}":
+            var token_lower:String = tokens[i].to_lower()
+            if token_lower == "soundinc:":
+                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "soundinc")
+                descriptor.sound_increase = result["value"]
+                i += 1 + int(result["consumed"])
+            elif token_lower == "sounddec:":
+                var result:Dictionary = _read_sound_field_value(tokens, i + 1, context, source_file, "sounddec")
+                descriptor.sound_decrease = result["value"]
+                i += 1 + int(result["consumed"])
+            else:
+                i += 1
         if i < tokens.size():
             i += 1 # consume "}"
 
@@ -457,7 +507,10 @@ static func _build_widget(
         var fallback:Variant = widget.get("switch_max_position")
         widget.set("switch_max_position", int(controller.config.get(config_max_property, fallback)))
 
-    _apply_animation_shape(widget, descriptor, entry, controller, cab_number, diagnostics)
+    # "i-*:" indicator descriptors (see _parse_indicator()) never set animation_type - they have
+    # no "rot"/"mov" shape at all, so there's nothing for _apply_animation_shape() to compute.
+    if descriptor.animation_type:
+        _apply_animation_shape(widget, descriptor, entry, controller, cab_number, diagnostics)
     _apply_sound(widget, descriptor)
 
     return widget
@@ -604,6 +657,29 @@ static func _wire_mesh_path(
 
     # Animation shape (mesh_rotation/max_value) comes from entry["fixed_fields"] above, not from
     # descriptor.scale/offset/friction - see mmd_semantic_catalog.gd's header comment for why.
+
+
+## For a widget that IS the submodel's real-world stand-in (e.g. CabinSpotLight3D standing in for
+## an "i-*:" indicator light's submodel, rather than a lever/knob animating a separate target
+## mesh) - places `widget` directly at the found submodel's own transform instead of pointing a
+## mesh_path NodePath at it. `widget` must already be inside the tree, same requirement as
+## _wire_mesh_path().
+static func _position_at_submodel(
+        widget:Node3D, descriptor:MmdInstrumentDescriptor, submodel_index:Dictionary,
+        cab_number:int, diagnostics:Array[Dictionary]) -> void:
+    var matches:Array = submodel_index.get(descriptor.submodel_name.to_lower(), [])
+    if matches.size() == 1:
+        widget.global_transform = matches[0].global_transform
+    elif matches.is_empty():
+        diagnostics.append(_diag(
+                "warning", "MMD_SUBMODEL_NOT_FOUND",
+                "Submodel '%s' not found (label '%s')" % [descriptor.submodel_name, descriptor.label],
+                cab_number, descriptor.label, descriptor.submodel_name))
+    else:
+        diagnostics.append(_diag(
+                "warning", "MMD_SUBMODEL_AMBIGUOUS",
+                "Submodel '%s' has %d matches (label '%s') - light not positioned" % [descriptor.submodel_name, matches.size(), descriptor.label],
+                cab_number, descriptor.label, descriptor.submodel_name))
 
 
 static func _tokenize_file(abs_path:String, context:MmdImportContext, parameters:Dictionary = {}) -> Array[String]:

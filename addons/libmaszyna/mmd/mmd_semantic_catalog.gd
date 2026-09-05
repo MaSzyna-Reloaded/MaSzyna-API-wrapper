@@ -344,6 +344,183 @@ static func _ensure_built() -> void:
         # internal Timer, driving a `blink` signal a cabin-script handler uses to toggle those
         # lights externally. blink_time (below) ports that same Timer-based flash directly into
         # CabinSpotLight3D itself instead, so this stays one widget per MMD label.
+        # Confirmed against TrainController.cpp:46/265,429 - exact command+state pair already
+        # proven in production via SM42's own hand-authored Battery node.
+        "battery_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "battery",
+                "state_property": "battery_enabled",
+                "action": "battery_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against TrainElectricEngine.cpp:160,172,322 - converter()/converter_enabled.
+        "converter_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "converter",
+                "state_property": "converter_enabled",
+                "action": "converter_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against TrainElectricEngine.cpp:159,170,323 - compressor()/compressor_enabled -
+        # the switch label (vehicle/Train.cpp:11875, "compressor_sw:" -> ggCompressorButton), not
+        # to be confused with "compressor:"/"compressorb:" (the pressure GAUGE, still genuinely
+        # missing - no raw pressure value exists in the wrapper, only the enabled/allowed booleans).
+        "compressor_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "compressor",
+                "state_property": "compressor_enabled",
+                "action": "compressor_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # CORRECTED: radiochannel_sw: is NOT the switch that changes the channel - confirmed
+        # against vehicle/Train.cpp:11894 ({"radiochannel_sw:", ggRadioChannelSelector}) and
+        # :11370 (ggRadioChannelSelector.PutValue((RadioChannel())-1), called every frame from the
+        # gauge-update pass, not from a command handler) - it's a passive rotary POSITION
+        # indicator ("pokrętło"/knob), the same TGauge shape as tachometer/enrot, not a switch.
+        # The actual increase/decrease controls are the two SEPARATE momentary buttons below
+        # (radiochannelnext_sw:/radiochannelprev_sw:, vehicle/Train.cpp:11895-11896). state_property
+        # is the wrapper's own "radio_channel" (1-based, TrainController.cpp:436) - one step off
+        # from what the original's own gauge is actually fed (RadioChannel()-1, 0-based), so the
+        # knob's rest position will be rotated by one channel-step's worth of MMD scale versus a
+        # pixel-perfect port; same class of small domain mismatch as enrot/brakectrl, not a guess.
+        "radiochannel_sw": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "radio_channel",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # Momentary buttons (vehicle/Train.cpp:8103-8135: ggRadioChannelNext/Previous.UpdateValue
+        # on press/release, exactly like ggHornButton) - controller_mode=On (not the CabinButton
+        # default OnOff) so the command fires exactly ONCE per press, not once on press AND once on
+        # release: radio_channel_increase/decrease take an int step, not a persistent on/off state,
+        # so a second call on release would double-step the channel. Sending `true` as p1 relies
+        # on the same `p_step > 0 ? p_step : 1` guard as CabinSwitch's zero-arg call (both convert
+        # to step=1) - confirmed, not a guess, since main_on_bt/main_off_bt already prove
+        # ControllerMode.On/Off's single-shot-on-press behavior. No state_property: neither button
+        # has a wrapper-tracked "is pressed" readback, same as releaser_bt/security_reset_bt.
+        "radiochannelnext_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_channel_increase",
+                "controller_mode": CabinButton.ControllerMode.On,
+                "action": "radio_channel_increase",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "radiochannelprev_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_channel_decrease",
+                "controller_mode": CabinButton.ControllerMode.On,
+                "action": "radio_channel_decrease",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against TrainElectricEngine.cpp:313-318 - pantograph(PantographSelector,bool)
+        # takes the selector as its FIRST argument (TrainSystem.cpp:203-209 maps send_command's p1
+        # to the Callable's first arg, p2 to the second) - command_param supplies the fixed
+        # PANTOGRAPH_FIRST selector, pushed supplies the enabled bool as p2. state_property
+        # confirmed against TrainElectricEngine.cpp:201 (`Pantographs[0].is_active`) -
+        # MOVER.h:154's `end { front = 0, rear = 1 }` confirms index 0 really is the front
+        # pantograph, matching PANTOGRAPH_FIRST's own front mapping (TrainElectricEngine.cpp:316).
+        "pantfront_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "pantograph",
+                "command_param": TrainElectricEngine.PANTOGRAPH_FIRST,
+                "state_property": "current_collector/pantograph_first_active",
+                "action": "pantograph_front_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against TrainController.cpp:422 - internal_state["total_distance"] =
+        # p_mover->DistCounter, the exact same field the original engine's own distcounter: gauge
+        # binds (vehicle/Train.cpp:12370-12374, gauge.AssignDouble(&mvControlled->DistCounter)) -
+        # loaded with no explicit mul argument there, so max_value=1.0 (the same "no correction"
+        # convention as tachometer/enrot) is correct, not a guess.
+        "distcounter": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "total_distance",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # Confirmed against TrainController.cpp:443 - internal_state["current1"] =
+        # p_mover->ShowCurrent(1), matching the original engine's own hvcurrent1: gauge
+        # (vehicle/Train.cpp:12137-12142, gauge.AssignFloat(fHCurrent + 1)) in its default path
+        # (vehicle/Train.cpp:8638-8641, fHCurrent[1] = mvControlled->ShowCurrent(1) - a plain,
+        # unmultiplied passthrough). The one case NOT reproduced: when the vehicle is a
+        # multi-unit EZT with ShowNextCurrent toggled on, the original engine instead shows
+        # mvSecond's (the other physical unit's) ShowCurrent(1)*1.05 - a driver-facing "peek at
+        # next unit's ammeter" feature this wrapper has no command/state for at all, out of scope
+        # here.
+        "hvcurrent1": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current1",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # Confirmed against vehicle/Train.cpp:9160 (btLampkaRadio.Turn(mvOccupied->Radio)) - the
+        # indicator condition is the plain Radio flag itself, NOT gated by Power24v/110v
+        # availability (unlike e.g. the radio-call/radio-stop commands, which do check power) -
+        # so state_property is "radio_enabled" (TrainController.cpp:433), not "radio_powered".
+        # SM42's own hand-authored cabin has no real per-vehicle radio lamp to copy
+        # light_color/spot_range/etc. from (only its czuwak (alerter) lamps have real numeric
+        # data), so light_enabled is left at CabinSpotLight3D's own default (false) - the light
+        # itself stays off; only the on_target/off_target submodel pair and the click sound (if
+        # soundinc:/sounddec: are present) are driven from state.
+        "i-radio": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {
+                "state_property": "radio_enabled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Confirmed against Mover.cpp:183-188 (is_cabsignal_blinking(): `return power &&
+        # cabsignal_active` - same static "alert active" shape as is_blinking(), not a real-time
+        # oscillating value) and TrainSecuritySystem.cpp:64 (p_state["cabsignal_blinking"]).
+        # Same reasoning as i-radio above: SM42's own hand-authored cabin has no dedicated SHP
+        # indicator light to copy real numeric params from (only a "czuw_shp" SecurityAcknowledge
+        # BUTTON mesh, not a light), so light_enabled stays at its default (false); on_target/
+        # off_target submodel toggling and the click sound still work.
+        "i-security_cabsignal": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {
+                "state_property": "cabsignal_blinking",
+                "blink_time": 0.2,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
         "i-security_aware": {
             "widget_class": CabinSpotLight3D,
             "fixed_fields": {
@@ -353,6 +530,9 @@ static func _ensure_built() -> void:
                 # CabinBlinker's own default, cabin_blinker.gd) is what actually makes the light
                 # flash instead of just turning steadily on.
                 "blink_time": 0.2,
+                # the ONE catalog entry with real reference light data to copy (SM42's own
+                # CzuwakOmni1) - every other indicator label defaults to light_enabled=false.
+                "light_enabled": true,
                 "light_color": Color(0.960938, 0.506832, 0.349091, 1.0),
                 "light_energy_on": 0.2,
                 "light_energy_off": 0.0,

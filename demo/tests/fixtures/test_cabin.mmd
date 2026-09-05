@@ -38,6 +38,16 @@ fuelpump_sw: { pompka_paliwa rot -0.2 0 0.1 soundinc: [ variant_a.wav variant_b.
 oilpump_sw: { przodreflprawy17 rot -0.2 0 0.1 soundinc: { soundmain: nested_click.wav amplitudefactor: 0.5 range: 2.0 } }
 i-security_aware: czuwak_lamp
 i-security_cabsignal: { i-shp soundinc: shp_on.wav sounddec: shp_off.wav }
+battery_sw: bat rot -0.2 0 0.1
+converter_sw: przetw rot -0.2 0 0.1
+compressor_sw: sprezarka rot -0.2 0 0.1
+radiochannel_sw: kanal rot -0.056 0 0.1
+radiochannelnext_sw: kanal_nast rot -0.2 0 0.1
+radiochannelprev_sw: kanal_poprz rot -0.2 0 0.1
+pantfront_sw: pant1 rot -0.2 0 0.1
+distcounter: licznik rot 0.001 0 0
+hvcurrent1: amperomierz1 rot 0.01 0 0
+i-radio: radio_lamp
 include test_cabin_params.inc antenna end
 include [ test_cabin_random_a.inc test_cabin_random_b.inc ] end
 

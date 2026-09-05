@@ -16,6 +16,15 @@ var _target_light_energy = 0.0
         _dirty = true
 
 @export var state_property = ""
+## Most MMD indicator labels have no real per-vehicle lamp definition to derive
+## light_color/spot_range/etc. from anywhere in the MMD - SM42's own hand-authored reference only
+## has real numeric light data for its czuwak (alerter) lamps, so reusing those values for a
+## different indicator produces a visibly wrong light (wrong color/range/angle). Defaults to false
+## for this reason - only catalog entries with real reference light data (currently
+## i-security_aware) should opt in with light_enabled=true. When false, this widget still
+## shows/hides its on_target/off_target submodel pair and still plays its click sound exactly as
+## before - only the light itself (this node's own SpotLight3D energy) is suppressed.
+@export var light_enabled:bool = false
 @export var light_energy_on = 1.0
 @export var light_energy_off = 0.0
 @export var animation_speed = 20.0
@@ -107,7 +116,7 @@ func _update_state():
         if _sound.stream:
             _sound.play()
 
-    _target_light_energy = light_energy_on if active_now else light_energy_off
+    _target_light_energy = (light_energy_on if active_now else light_energy_off) if light_enabled else 0.0
     if _on_target:
         _on_target.visible = active_now
     if _off_target:

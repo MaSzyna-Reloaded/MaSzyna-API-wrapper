@@ -97,7 +97,27 @@ func _rebuild_generated() -> void:
     MmdCabinInstancer.build_into(_generated, definition, _controller, data_path, skin, build_diagnostics)
     _diagnostics.append_array(build_diagnostics)
 
+    _build_driver_aid_commands()
+
     print("DynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
         _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
     for d:Dictionary in _diagnostics:
         print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
+
+
+## Keyboard-only driver aids that have no cabin lever/MMD instrument of their own (nothing to
+## parse, nothing to animate) - demo/vehicles/sm42/sm_42_cabin.tscn wires the same thing by hand
+## via a plain "Commands/" CabinCommand node. brake_level_set_position/_str (TrainBrake.cpp) is
+## already generic across handle types - it resolves a NAMED position ("drive" -> Maszyna::bh_RP,
+## the original engine's own "running position" handle-position constant, McZapkie/hamulce.h) per
+## vehicle rather than a hardcoded value, so this "jump the brake handle to driving/release
+## position" shortcut is safe to attach unconditionally on every dynamically-built cabin, not just
+## SM42 - a vehicle whose handle type has no equivalent named position just gets no visible effect.
+func _build_driver_aid_commands() -> void:
+    var release_to_drive := CabinCommand.new()
+    release_to_drive.name = "BrakeLevelSet_Drive"
+    release_to_drive.action_name = "brake_level_drive"
+    release_to_drive.command = "brake_level_set_position"
+    release_to_drive.command_param = "drive"
+    _generated.add_child(release_to_drive)
+    release_to_drive.controller_path = release_to_drive.get_path_to(_controller)

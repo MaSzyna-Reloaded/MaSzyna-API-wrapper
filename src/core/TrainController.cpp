@@ -51,6 +51,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
         ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
+        ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &TrainController::radio_channel_set);
         ClassDB::bind_method(
                 D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
         ClassDB::bind_method(

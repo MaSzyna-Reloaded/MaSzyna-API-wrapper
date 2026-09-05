@@ -190,8 +190,13 @@ namespace godot {
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);
-            MAKE_MEMBER_GS(int, radio_channel_min, 0);
-            MAKE_MEMBER_GS(int, radio_channel_max, 0);
+            // original engine hardcodes this same 1..10 range for every vehicle
+            // (OnCommand_radiochannelset: std::clamp((int)Command.param1, 1, 10)) - it is not
+            // actually per-vehicle configurable there, so these default to the same range rather
+            // than 0..0 (which silently clamped every radio_channel_increase/decrease/set call to
+            // a no-op on any vehicle that never overrides them, since none currently do).
+            MAKE_MEMBER_GS(int, radio_channel_min, 1);
+            MAKE_MEMBER_GS(int, radio_channel_max, 10);
             MAKE_MEMBER_GS_NR(Category, category, CATEGORY_TRAIN);
             MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
             MAKE_MEMBER_GS(double, reduced_mass, 0.0);

@@ -12,14 +12,14 @@
 [ext_resource type="Script" uid="uid://dgifxvb2e4hww" path="res://addons/libmaszyna/e3d/e3d_model_instance.gd" id="4_drlsl"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
 [ext_resource type="Texture2D" uid="uid://cfqk60lpl5ljv" path="res://addons/sky_3d/assets/resources/SNoise.tres" id="4_ydfqx"]
-[ext_resource type="Texture2D" uid="uid://cr8hfekmcxxx" path="res://addons/sky_3d/assets/textures/noiseClouds.png" id="5_lnei4"]
+[ext_resource type="Texture2D" uid="uid://cecwdqjol0ckd" path="res://addons/sky_3d/assets/textures/noiseClouds.png" id="5_lnei4"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
-[ext_resource type="Texture2D" uid="uid://condyxjqond2i" path="res://addons/sky_3d/assets/thirdparty/textures/moon/MoonMap.png" id="6_wgi5e"]
-[ext_resource type="Texture2D" uid="uid://bum6csy21i4vm" path="res://addons/sky_3d/assets/textures/noise.jpg" id="7_iqpw1"]
+[ext_resource type="Texture2D" uid="uid://2r8ylu6rg5dp" path="res://addons/sky_3d/assets/thirdparty/textures/moon/MoonMap.png" id="6_wgi5e"]
+[ext_resource type="Texture2D" uid="uid://djpfuyxkryegn" path="res://addons/sky_3d/assets/textures/noise.jpg" id="7_iqpw1"]
 [ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
 [ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
-[ext_resource type="Texture2D" uid="uid://4wdfqvf2os05" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/StarField.jpg" id="8_mwrhi"]
-[ext_resource type="Texture2D" uid="uid://doayyxs362bku" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/Milkyway.jpg" id="9_jg8su"]
+[ext_resource type="Texture2D" uid="uid://bm7dot7t7u1q4" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/StarField.jpg" id="8_mwrhi"]
+[ext_resource type="Texture2D" uid="uid://c1vwcdcdvb74a" path="res://addons/sky_3d/assets/thirdparty/textures/milkyway/Milkyway.jpg" id="9_jg8su"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="Script" uid="uid://deo0gxkmk2ahd" path="res://addons/sky_3d/src/Sky3D.gd" id="10_54dc2"]
 [ext_resource type="PackedScene" uid="uid://bcxtf08c2yqx4" path="res://vehicles/sm42/sm_42.tscn" id="11_8gidn"]
@@ -27,7 +27,6 @@
 [ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="12_m0qth"]
-[ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="15_rrc65"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
@@ -91,8 +90,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.11604326, 0.11604326)
-shader_parameter/cirrus_position2 = Vector2(0.11604326, 0.11604326)
+shader_parameter/cirrus_position1 = Vector2(0.19190322, 0.19190322)
+shader_parameter/cirrus_position2 = Vector2(0.19190322, 0.19190322)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -102,7 +101,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.58014846, 0.58014846)
+shader_parameter/cumulus_position = Vector2(0.9593524, 0.9593524)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -234,7 +233,6 @@ utc = 2.0
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
-top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -434,22 +432,13 @@ file_name = "6d1"
 skin = "6d-1076"
 train_id = "sm42"
 
-[node name="TEM2" parent="." unique_id=803954038 instance=ExtResource("13_fe5ju")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
-lights = Dictionary[String, bool]({
-"endsignal12": true,
-"endsignal13": true,
-"endsignal22": false,
-"endsignal23": false,
-"endtab1": false,
-"endtab2": false,
-"headlamp11": false,
-"headlamp12": false,
-"headlamp13": false,
-"headlamp21": true,
-"headlamp22": true,
-"headlamp23": true
-})
+[node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/tem2_v2"
+file_name = "tem2-122a"
+skin = "tem2-122"
+train_id = "tem2"
 
 [node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)

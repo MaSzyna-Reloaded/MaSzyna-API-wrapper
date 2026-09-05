@@ -16,11 +16,16 @@ class_name MmdSoundSourceParser
 ## float, [NNNN] prefix) is confirmed to never itself contain ':', so this can't misfire on a
 ## following genuine label.
 
-## label -> bare value (if any) is this label's sound_main. Only Tier 1/2 labels confirmed to
-## appear this way in real data - "battery" is confirmed always block-form.
+## label -> bare value (if any) is this label's sound_main - matches audio/sound.cpp's own
+## sound_type::single legacy-form dispatch for these exact call sites (DynObj.cpp:6015/6036/6041/
+## 6705/6708 - engine/oil_pump/fuel_pump/engine_ignition/engine_shutdown all deserialize() with no
+## extra Legacyparameters, i.e. just one filename token in bare form). "battery" is confirmed
+## always block-form in real data instead.
 const _BARE_SINGLE_LABELS:Dictionary = {
     "oilpump": true,
     "fuelpump": true,
+    "ignition": true,
+    "shutdown": true,
 }
 
 ## label -> bare form is 3 values (begin, main, end) + an optional trailing range - confirmed real
@@ -37,7 +42,6 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
 
 static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
     var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
-
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "sounds:")
     if start_index == -1:
         return []
@@ -45,7 +49,35 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
     var end_index:int = MmdCabinInstancer._find_label_index(tokens, "endsounds", start_index)
     if end_index == -1:
         end_index = tokens.size()
+    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {})
 
+
+## ignition:/shutdown: (see MmdSoundBankInstancer's merge into "engine") live in the MMD's
+## internaldata: section, BEFORE cab1definition:/cab2definition: - confirmed real, NOT inside
+## sounds:/endsounds (dynamic/pkp/sm42_v1/6d.mmd: "ignition: { range: 150 soundmain:
+## 697_sm42-start-v2.wav }" at line 92, well past endsounds at line 81). internaldata: has dozens
+## of other sound-shaped fields (rainsound/tachoclock/couplerattach/buzzer/...) out of scope here -
+## only ignition:/shutdown: are kept, everything else is parsed just enough to stay token-aligned
+## (reusing the exact same generic block/bare consumption as parse() above) and then discarded,
+## with no diagnostic (this region isn't otherwise covered by MmdSoundCatalog).
+static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
+    if start_index == -1:
+        return []
+    start_index += 1
+    var end_index:int = MmdCabinInstancer._find_label_index(tokens, "cab1definition:", start_index)
+    var cab2_index:int = MmdCabinInstancer._find_label_index(tokens, "cab2definition:", start_index)
+    if cab2_index != -1 and (end_index == -1 or cab2_index < end_index):
+        end_index = cab2_index
+    if end_index == -1:
+        end_index = tokens.size()
+    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {"ignition": true, "shutdown": true})
+
+
+static func _parse_labels_in_range(
+        tokens:Array[String], start_index:int, end_index:int, context:MmdImportContext,
+        abs_mmd_path:String, only_labels:Dictionary) -> Array[MmdSoundSourceDefinition]:
     var definitions:Array[MmdSoundSourceDefinition] = []
     var i := start_index
     while i < end_index:
@@ -57,7 +89,8 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
         definition.label = label.trim_suffix(":")
         definition.source_file = abs_mmd_path
         i += _parse_one(tokens, i, definition, context, abs_mmd_path)
-        definitions.append(definition)
+        if only_labels.is_empty() or only_labels.has(definition.label):
+            definitions.append(definition)
     return definitions
 
 

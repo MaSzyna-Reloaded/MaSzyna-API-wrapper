@@ -96,6 +96,31 @@ func test_unrecognized_label_does_not_desync_following_labels():
     assert_null(_find(definitions, "endsounds"))
 
 
+func test_parse_internal_data_returns_only_ignition_and_shutdown():
+    var context := MmdImportContext.new()
+    context.base_dir = FIXTURE_PATH.get_base_dir()
+    var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(FIXTURE_PATH, context)
+
+    var ignition:MmdSoundSourceDefinition = null
+    for definition:MmdSoundSourceDefinition in definitions:
+        if definition.label == "ignition":
+            ignition = definition
+    assert_not_null(ignition)
+    assert_eq(ignition.sound_main, "engine-start")
+
+    var shutdown:MmdSoundSourceDefinition = null
+    for definition:MmdSoundSourceDefinition in definitions:
+        if definition.label == "shutdown":
+            shutdown = definition
+    assert_not_null(shutdown)
+    assert_eq(shutdown.sound_main, "engine-shutdown-unused")
+
+    # rainsound:/cab1definition:/... are out of scope for this entry point - only ignition:/
+    # shutdown: are collected, but parsing must still stay aligned across them (not desync).
+    for definition:MmdSoundSourceDefinition in definitions:
+        assert_true(definition.label in ["ignition", "shutdown"])
+
+
 func test_parsing_stays_bounded_to_sounds_section_and_does_not_leak_internaldata():
     # "brakesound:" appears ONLY under internaldata: in the fixture, never inside sounds:/
     # endsounds - confirmed real ambiguity (the same label can appear in both sections with

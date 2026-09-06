@@ -70,6 +70,28 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             exclude_node_names = x
             _dirty = true
 
+## Submodel tree paths (relative to the model root, e.g. [code]"banan/podswietlenie_on"[/code])
+## for which real alpha blending is forced, instead of the default alpha-scissor cutout.
+## Applies to the resolved submodel and all of its descendants (e.g. cabin instrument
+## backlight groups). Submodel names alone are not unique across the tree, so paths
+## are resolved via [method E3DModel.get_node_or_null].
+@export var force_alpha_submodel_paths:Array[NodePath] = []:
+    set(x):
+        if not x == force_alpha_submodel_paths:
+            force_alpha_submodel_paths = x
+            _dirty = true
+
+## When true, every submodel already flagged [code]material_transparent[/code] gets real alpha
+## blending instead of the default alpha-scissor cutout - unlike [member force_alpha_submodel_paths],
+## this is not limited to specific named submodels. Opaque submodels are unaffected. Intended for
+## self-contained models (e.g. a cabin interior) where alpha-scissor's crisp cutout looks wrong
+## across the board (glass, instrument backlight glow, ...), unlike mixed-purpose exterior content.
+@export var force_alpha:bool = false:
+    set(x):
+        if not x == force_alpha:
+            force_alpha = x
+            _dirty = true
+
 # Probably instancer should be set project-wide
 @export var instancer = Instancer.NODES:
     set(x):

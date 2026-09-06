@@ -103,6 +103,8 @@ namespace godot {
                 D_METHOD("decrease_light_selector_position"), &TrainLighting::decrease_light_selector_position);
         ClassDB::bind_method(D_METHOD("light", "light", "enabled"), &TrainLighting::light);
         ClassDB::bind_method(D_METHOD("light_switch", "light", "enabled"), &TrainLighting::light_switch);
+        ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &TrainLighting::roof_light);
+        ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &TrainLighting::devices_light);
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
     }
 
@@ -186,6 +188,13 @@ namespace godot {
                 (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
         p_state["lights/opposite_redmarker_right_enabled"] =
                 (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
+
+        // Cab interior lamp / instrument backlighting have no counterpart on the wrapped mover -
+        // gated only by 24V/110V power availability, matching the original engine's own
+        // "cablightlevel"/"lightpower" power gating (vehicle/Train.cpp).
+        const bool is_powered = p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable;
+        p_state["roof_light_enabled"] = roof_light_active && is_powered;
+        p_state["devices_light_enabled"] = devices_light_active && is_powered;
     }
 
     void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
@@ -197,6 +206,8 @@ namespace godot {
         register_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
         register_command("light", Callable(this, "light"));
         register_command("light_switch", Callable(this, "light_switch"));
+        register_command("roof_light", Callable(this, "roof_light"));
+        register_command("devices_light", Callable(this, "devices_light"));
         TrainPart::_register_commands();
     }
 
@@ -205,6 +216,8 @@ namespace godot {
         unregister_command("decrease_light_selector_position", Callable(this, "decrease_light_selector_position"));
         unregister_command("light", Callable(this, "light"));
         unregister_command("light_switch", Callable(this, "light_switch"));
+        unregister_command("roof_light", Callable(this, "roof_light"));
+        unregister_command("devices_light", Callable(this, "devices_light"));
         TrainPart::_unregister_commands();
     }
 
@@ -307,6 +320,14 @@ namespace godot {
             }
         }
         UtilityFunctions::push_warning("TrainLighting::light_switch() unknown light name: " + p_light);
+    }
+
+    void TrainLighting::roof_light(const bool p_enabled) {
+        roof_light_active = p_enabled;
+    }
+
+    void TrainLighting::devices_light(const bool p_enabled) {
+        devices_light_active = p_enabled;
     }
 
 } // namespace godot

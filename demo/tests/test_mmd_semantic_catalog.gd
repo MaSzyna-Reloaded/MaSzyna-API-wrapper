@@ -91,6 +91,23 @@ func test_i_radio_binds_radio_enabled_not_radio_powered():
     assert_false(entry["fixed_fields"].has("light_enabled"))
 
 
+func test_cab_light_indicator_and_spotlight_are_separate():
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-cablight")
+    assert_eq(entry["widget_class"], CabinIndicator3D)
+    assert_eq(entry["fixed_fields"]["state_property"], "roof_light_enabled")
+    assert_eq(entry["light_widget_class"], CabinSpotLight3D)
+    assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_enabled")
+    assert_true(entry["light_fixed_fields"]["light_enabled"])
+
+
+func test_instrument_light_indicator_and_omnilight_are_separate():
+    var entry:Dictionary = MmdSemanticCatalog.get_entry("i-instrumentlight")
+    assert_eq(entry["widget_class"], CabinIndicator3D)
+    assert_eq(entry["fixed_fields"]["state_property"], "devices_light_enabled")
+    assert_eq(entry["light_widget_class"], CabinOmniLight3D)
+    assert_eq(entry["light_fixed_fields"]["state_property"], "devices_light_enabled")
+
+
 func test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit():
     var expected:Dictionary = {
         "i-upperlight": "lights/front_headlight_upper_enabled",
@@ -120,7 +137,7 @@ func test_i_security_cabsignal_binds_cabsignal_blinking():
     assert_false(entry["fixed_fields"].has("light_enabled"))
 
 
-func test_i_security_aware_is_the_only_entry_opting_into_a_real_light():
+func test_i_security_aware_indicator_opts_into_an_integrated_light():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
     assert_true(entry["fixed_fields"]["light_enabled"])
 

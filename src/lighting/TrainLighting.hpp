@@ -55,5 +55,19 @@ namespace godot {
             };
             void increase_light_selector_position();
             void decrease_light_selector_position();
+            // Direct per-light override, independent of the selector/"light programator"
+            // (LightsPos + light_position_list) system above - sets/clears a single bit of
+            // iLights directly, for debugging/testing individual bulbs regardless of what the
+            // programator would normally compute. p_light matches the short name half of this
+            // class's own state keys (state key = "lights/" + p_light + "_enabled"): e.g.
+            // "front_headlight_left", "rear_redmarker_right".
+            void light(const String &p_light, bool p_enabled);
+            // Cab-relative toggle for the actual MMD cabin switches (upperlight_sw:/leftlight_sw:
+            // /rightlight_sw:/leftend_sw:/rightend_sw:/rearupperlight_sw:/rearleftlight_sw:/
+            // rearrightlight_sw:/rearleftend_sw:/rearrightend_sw:) - resolves which physical end
+            // to toggle from the currently active cab, unlike light() above (a fixed-end direct
+            // override for debugging). p_light is the MMD label's own suffix, e.g. "upper",
+            // "left", "leftend", "rearupper", "rearleftend".
+            void light_switch(const String &p_light, bool p_enabled);
     };
 } // namespace godot

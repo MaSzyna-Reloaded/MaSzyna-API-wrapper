@@ -557,6 +557,220 @@ static func _ensure_built() -> void:
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
+        # Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
+        # etc.) and TrainLighting::light_switch()'s own doc comment (TrainLighting.hpp) - these ten
+        # MMD switch labels are cab-relative: upperlight_sw:/leftlight_sw:/rightlight_sw:/
+        # leftend_sw:/rightend_sw: (no "rear" prefix) toggle whichever physical end is the
+        # CURRENTLY ACTIVE cab's own front, so their own switch position mirrors TrainLighting's
+        # "active_..." state; rearupperlight_sw:/etc. toggle the opposite end, mirroring
+        # "opposite_...". command_param is light_switch()'s own p_light argument - the MMD label's
+        # suffix after stripping "light"/"_sw" (confirmed real examples from that doc comment:
+        # "upper", "left", "leftend", "rearupper", "rearleftend"), NOT the full MMD label. action
+        # reuses the headlight_*_toggle/redmarker_*_toggle InputMap actions (demo/project.godot) -
+        # same one action per physical switch as headlight_left_toggle etc. already use for the
+        # keyboard-only fallback.
+        "upperlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "upper",
+                "state_property": "lights/active_headlight_upper_enabled",
+                "action": "headlight_upper_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "leftlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "left",
+                "state_property": "lights/active_headlight_left_enabled",
+                "action": "headlight_left_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rightlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "right",
+                "state_property": "lights/active_headlight_right_enabled",
+                "action": "headlight_right_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "leftend_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "leftend",
+                "state_property": "lights/active_redmarker_left_enabled",
+                "action": "redmarker_left_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rightend_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rightend",
+                "state_property": "lights/active_redmarker_right_enabled",
+                "action": "redmarker_right_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rearupperlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rearupper",
+                "state_property": "lights/opposite_headlight_upper_enabled",
+                "action": "headlight_rear_upper_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rearleftlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rearleft",
+                "state_property": "lights/opposite_headlight_left_enabled",
+                "action": "headlight_rear_left_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rearrightlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rearright",
+                "state_property": "lights/opposite_headlight_right_enabled",
+                "action": "headlight_rear_right_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rearleftend_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rearleftend",
+                "state_property": "lights/opposite_redmarker_left_enabled",
+                "action": "redmarker_rear_left_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "rearrightend_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "light_switch",
+                "command_param": "rearrightend",
+                "state_property": "lights/opposite_redmarker_right_enabled",
+                "action": "redmarker_rear_right_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against vehicle/Train.cpp:9199-9208 - these read the mover's own already-
+        # resolved per-end light bitmask (MOVER.h's iLights[front]/iLights[rear], tested against
+        # the `light::` bit flags) directly, not the raw selector position - iLights is the
+        # final, live "which bulbs are actually lit" result (already accounts for
+        # light_power/selector position/wiring), added to TrainLighting's own state
+        # (lights/front_headlight_upper_enabled etc., TrainLighting.cpp) specifically for these
+        # labels.
+        # "upper"=headlight_upper, "left/right light"=headlight_left/right (white),
+        # "left/right end"=redmarker_left/right (red tail/end-of-train markers) - confirmed via
+        # the same bit flags MOVER.h itself defines. No blink_time - these are steady on/off,
+        # unlike the alerter/SHP indicators. light_enabled stays at its default (false) - same
+        # "no real per-vehicle lamp reference data" reasoning as i-radio/i-security_cabsignal.
+        "i-upperlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/front_headlight_upper_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-leftlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/front_headlight_left_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rightlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/front_headlight_right_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-leftend": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/front_redmarker_left_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rightend": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/front_redmarker_right_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rearupperlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/rear_headlight_upper_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rearleftlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/rear_headlight_left_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rearrightlight": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/rear_headlight_right_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rearleftend": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/rear_redmarker_left_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-rearrightend": {
+            "widget_class": CabinSpotLight3D,
+            "fixed_fields": {"state_property": "lights/rear_redmarker_right_enabled"},
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
     }
 
 

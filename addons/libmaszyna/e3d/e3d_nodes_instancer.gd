@@ -24,7 +24,15 @@ func instantiate(target_node: E3DModelInstance, model: E3DModel, editable: bool 
             "off": model.get_node_or_null(light_info.off_submodel_path),
         }
 
-    _do_add_submodels(target_node, model, target_node, model.submodels, editable, entries, lights)
+    var force_alpha_submodels: Array[E3DSubModel] = []
+    for submodel_path: NodePath in target_node.force_alpha_submodel_paths:
+        var resolved_submodel: E3DSubModel = model.get_node_or_null(submodel_path)
+        if resolved_submodel:
+            force_alpha_submodels.append(resolved_submodel)
+
+    _do_add_submodels(
+        target_node, model, target_node, model.submodels, editable, entries, lights, force_alpha_submodels, false
+    )
 
     # prebuild LightNodeInfo dictionary
     var _instance_lights: Dictionary = {}
@@ -120,7 +128,9 @@ func _do_add_submodels(
     submodels: Array[E3DSubModel],
     editable: bool,
     entries: Array,
-    lights: Dictionary
+    lights: Dictionary,
+    force_alpha_submodels: Array[E3DSubModel],
+    force_alpha: bool
 ) -> void:
     for submodel: E3DSubModel in submodels:
         if _is_submodel_valid(target_node, submodel):
@@ -136,7 +146,12 @@ func _do_add_submodels(
                 elif submodel == off_submodel:
                     entries.append([light_name, "off", child, submodel])
 
-            _update_submodel_material(target_node, child, submodel)
+            var submodel_force_alpha: bool = (
+                force_alpha
+                or force_alpha_submodels.has(submodel)
+                or (target_node.force_alpha and submodel.material_transparent)
+            )
+            _update_submodel_material(target_node, child, submodel, submodel_force_alpha)
             var internal = InternalMode.INTERNAL_MODE_DISABLED if editable else InternalMode.INTERNAL_MODE_BACK
             parent.add_child(child, false, internal)
 
@@ -154,7 +169,17 @@ func _do_add_submodels(
             if Engine.is_editor_hint():
                 child.owner = target_node.owner if editable else target_node
             if submodel.submodels:
-                _do_add_submodels(target_node, model, child, submodel.submodels, editable, entries, lights)
+                _do_add_submodels(
+                    target_node,
+                    model,
+                    child,
+                    submodel.submodels,
+                    editable,
+                    entries,
+                    lights,
+                    force_alpha_submodels,
+                    submodel_force_alpha
+                )
 
 
 func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubModel, model: E3DModel, entries: Array):
@@ -177,7 +202,9 @@ func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubMo
             obj.name = submodel.resource_name
             obj.light_color = submodel.diffuse_color
             obj.light_color.a = 1.0
-            obj.light_volumetric_fog_energy = 4.0  # FIXME: guessing
+            obj.light_volumetric_fog_energy = ProjectSettings.get_setting(
+                "maszyna/vehicle_lights_volumetric_fog_energy", 4.0
+            )
             obj.shadow_enabled = true
             obj.distance_fade_enabled = true
             obj.distance_fade_begin = 150.0
@@ -196,13 +223,14 @@ func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubMo
 func _update_submodel_material(
     target_node: E3DModelInstance,
     subnode: Node,
-    submodel: E3DSubModel
+    submodel: E3DSubModel,
+    force_alpha: bool = false
 ) -> void:
     if not subnode is GeometryInstance3D:
         return
 
     var geometry_instance:GeometryInstance3D = subnode as GeometryInstance3D
-    var material:Material = _get_material_override(target_node, submodel)
+    var material:Material = _get_material_override(target_node, submodel, force_alpha)
     if material:
         geometry_instance.material_override = material
     if submodel.material_colored:

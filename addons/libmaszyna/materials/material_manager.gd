@@ -15,7 +15,8 @@ class MaterialOptions:
     var selfillum_color: Color = Color.WHITE
     var selfillum_energy: float = 1.0
     var selfillum_enabled: bool = false
-    var force_transparent: bool = false   # TODO: AphaCut/Alpha modes support
+    # E3D translucent submodels are rendered in a separate alpha-blended pass.
+    var force_transparent: bool = false
     var alpha_scissor_threshold: float = 0.5
 
 

@@ -10,6 +10,8 @@ var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_i
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
 var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
 var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
+var fiz_train_controller_script = preload("res://addons/libmaszyna/fiz/fiz_train_controller.gd")
+var fiz_import_plugin = preload("res://addons/libmaszyna/fiz/fiz_import_plugin.gd").new()
 
 func _enable_plugin():
     add_autoload_singleton("Console", "res://addons/libmaszyna/console/console.gd")
@@ -20,6 +22,7 @@ func _enable_plugin():
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
+    add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -49,12 +52,21 @@ func _enable_plugin():
         null
     )
 
+    add_custom_type(
+        "FIZTrainController",
+        "Node",
+        fiz_train_controller_script,
+        null
+    )
+
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", true)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", true)
 
 func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", false)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", false)
 
@@ -62,8 +74,10 @@ func _disable_plugin():
     remove_custom_type("MaszynaEnvironmentNode")
     remove_custom_type("MaszynaTrack3D")
     remove_custom_type("MaszynaSwitch3D")
+    remove_custom_type("FIZTrainController")
 
     remove_autoload_singleton("AudioStreamManager")
+    remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("E3DModelTool")
     remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")
@@ -74,8 +88,10 @@ func _disable_plugin():
 
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
+    add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():
+    remove_import_plugin(fiz_import_plugin)
     print_verbose("Libmaszyna.gd _exit_tree finished!")
 
 func add_custom_project_setting(name: String, default_value, type: int, hint: int = PROPERTY_HINT_NONE, hint_string: String = "") -> void:

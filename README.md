@@ -120,6 +120,37 @@ Project documentation: https://maszyna-reloaded.github.io/MaSzyna-API-wrapper/
 
 If you have found any bug, have a suggestion or want to join us - feel free to open an [issue](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/issues) or start a [discussion](https://github.com/MaSzyna-Reloaded/MaSzyna-API-wrapper/discussions)!
 
+### Rendering transparent elements
+
+E3D submodels flagged `material_transparent` (the original engine's own translucent-pass flag)
+render with a hard alpha-scissor cutout by default (`MaterialManager.Transparency.AlphaScissor`,
+threshold 0.5, no real blending) - this matches how most such content actually looks (window
+light masks, foliage) and avoids transparency sorting issues.
+
+Some content needs real alpha blending instead - most commonly a self-contained cabin interior,
+where the scissor cutout looks visibly wrong across the board (glass, instrument backlight glow).
+Two opt-in overrides exist on `E3DModelInstance` (`addons/libmaszyna/e3d/e3d_model_instance.gd`),
+both only affecting submodels already flagged `material_transparent` - opaque submodels are never
+pulled into the alpha-blended pass:
+
+- `force_alpha` (bool) - every `material_transparent` submodel in this model instance gets real
+  alpha blending. Set by `MmdCabinInstancer.build_into()` for every cabin's `CabModel`.
+- `force_alpha_submodel_paths` (`Array[NodePath]`) - a surgical alternative for forcing just one
+  named submodel subtree (and its descendants) within an otherwise alpha-scissor model. Submodel
+  names alone aren't unique across the tree, so entries are resolved via `E3DModel.get_node_or_null`.
+  `MmdCabinInstancer._resolve_force_alpha_submodel_paths()` populates this automatically for MMD
+  `i-*:` indicator descriptors whose `MmdSemanticCatalog` entry has `force_alpha: true` set (e.g.
+  `i-instrumentlight`'s `<base>_on`/`<base>_off` pair).
+
+Known limitation: the original engine's own shader (`mat_default.frag`) combines an alpha-test
+discard against a per-*material* `opacity` threshold with real per-pixel blending in the same
+pass; this port only has the discard (alpha-scissor) and the blend (alpha) as two separate,
+mutually exclusive modes, with no per-material threshold. Real alpha blending on content whose
+alpha channel isn't clean binary data (e.g. padding colors baked outside the intended cutout, or a
+channel repurposed for something else like a specular mask) can bleed through as an unwanted halo
+or partial see-through - which is why it isn't applied to all `material_transparent` E3D content
+by default, only where explicitly opted in above.
+
 ### Code Quality
 
 #### Formatting and style

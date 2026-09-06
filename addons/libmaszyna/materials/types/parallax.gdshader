@@ -127,6 +127,9 @@ void fragment() {
     vec4 diffuse_sample = texture(diffuse_texture, parallax_uv) * albedo_multiplier;
     vec4 normal_sample = texture(normal_texture, parallax_uv);
 
+#ifdef MASZYNA_ALPHA_BLEND
+    ALPHA = diffuse_sample.a;
+#endif
     if ((use_alpha_scissor || transparency == 2) && diffuse_sample.a < alpha_scissor_threshold) {
         discard;
     }

@@ -67,8 +67,29 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "animation", "animation", &E3DSubModel::set_animation, &E3DSubModel::get_animation,
                 "p_animation", PROPERTY_HINT_ENUM,
-                "NONE,ROTATE_VEC,ROTATE_XYZ,MOVE,JUMP_SECONDS,JUMP_MINUTES,JUMP_HOURS,JUMP_HOURS24,SECONDS,MINUTES,"
-                "HOURS,HOURS24,BILLBOARD,WIND,SKY,DIGITAL,DIGICLK,UNDEFINED,IK:256,IK1,IK2,UNKNOWN");
+                enum_hint(
+                        {{"NONE", ANIMATION_NONE},
+                         {"ROTATE_VEC", ANIMATION_ROTATE_VEC},
+                         {"ROTATE_XYZ", ANIMATION_ROTATE_XYZ},
+                         {"MOVE", ANIMATION_MOVE},
+                         {"JUMP_SECONDS", ANIMATION_JUMP_SECONDS},
+                         {"JUMP_MINUTES", ANIMATION_JUMP_MINUTES},
+                         {"JUMP_HOURS", ANIMATION_JUMP_HOURS},
+                         {"JUMP_HOURS24", ANIMATION_JUMP_HOURS24},
+                         {"SECONDS", ANIMATION_SECONDS},
+                         {"MINUTES", ANIMATION_MINUTES},
+                         {"HOURS", ANIMATION_HOURS},
+                         {"HOURS24", ANIMATION_HOURS24},
+                         {"BILLBOARD", ANIMATION_BILLBOARD},
+                         {"WIND", ANIMATION_WIND},
+                         {"SKY", ANIMATION_SKY},
+                         {"DIGITAL", ANIMATION_DIGITAL},
+                         {"DIGICLK", ANIMATION_DIGICLK},
+                         {"UNDEFINED", ANIMATION_UNDEFINED},
+                         {"IK", ANIMATION_IK},
+                         {"IK1", ANIMATION_IK1},
+                         {"IK2", ANIMATION_IK2},
+                         {"UNKNOWN", ANIMATION_UNKNOWN}}));
 
         BIND_PROPERTY(
                 Variant::FLOAT, "lights_on_threshold", "lights_on_threshold", &E3DSubModel::set_lights_on_threshold,

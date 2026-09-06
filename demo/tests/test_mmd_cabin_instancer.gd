@@ -312,6 +312,9 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
 
     var on_node:Node3D = add_child_autofree(Node3D.new())
     on_node.position = Vector3(1.0, 2.0, 3.0)
+    # SU45's ceiling-lamp mesh uses local -Z as world/cabin up, so an uncorrected SpotLight3D
+    # shines into the roof even though the light node exists and follows the correct state.
+    on_node.basis = Basis(Vector3.RIGHT, Vector3.BACK, Vector3.DOWN)
     var off_node:Node3D = add_child_autofree(Node3D.new())
     var submodel_index:Dictionary = {"cab_lamp_on": [on_node], "cab_lamp_off": [off_node]}
 
@@ -328,6 +331,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     assert_true(light.light_enabled)
     assert_true(light.on_target_path.is_empty())
     assert_eq(light.global_position, on_node.global_position)
+    assert_true((-light.global_basis.z).normalized().is_equal_approx(Vector3.DOWN))
     assert_eq(light.state_property, "roof_light_enabled")
     assert_eq(diagnostics.size(), 0)
 

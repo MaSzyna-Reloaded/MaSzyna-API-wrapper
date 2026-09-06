@@ -555,6 +555,7 @@ static func _ensure_built() -> void:
             "mesh_path_field": "",
             "position_at_submodel": true,
             "light_widget_class": CabinSpotLight3D,
+            "flip_upward_spotlight": true,
             "light_fixed_fields": {
                 "state_property": "roof_light_enabled",
                 "light_enabled": true,

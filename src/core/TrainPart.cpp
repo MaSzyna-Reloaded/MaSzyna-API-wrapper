@@ -8,6 +8,7 @@
 namespace godot {
     void TrainPart::_bind_methods() {
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &TrainPart::emit_config_changed_signal);
+        ClassDB::bind_method(D_METHOD("mark_dirty"), &TrainPart::mark_dirty);
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainPart::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &TrainPart::unregister_command);
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainPart::update_mover);
@@ -119,6 +120,10 @@ namespace godot {
 
     void TrainPart::emit_config_changed_signal() {
         emit_signal("config_changed");
+    }
+
+    void TrainPart::mark_dirty() {
+        dirty = true;
     }
 
     void TrainPart::_process(const double p_delta) {

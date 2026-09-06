@@ -2,6 +2,7 @@
 #include "../core/TrainController.hpp"
 #include "../core/utils.hpp"
 #include <algorithm>
+#include <cmath>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -465,6 +466,38 @@ namespace godot {
         p_state["brake_tank_volume"] = p_mover->Volume;
         p_state["brake_controller_position"] = brake_controller_pos;
         p_state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
+
+        p_state["brake_unit_force"] = p_mover->UnitBrakeForce;
+        const double brake_force_max_per_block =
+                p_mover->BrakeForceR(1.0, p_mover->Vel) /
+                (std::max(1, p_mover->NAxles) * std::max(1, p_mover->NBpA));
+        p_state["brake_force_ratio"] =
+                std::clamp(p_mover->UnitBrakeForce / std::max(1.0, brake_force_max_per_block), 0.0, 1.0);
+        p_state["brake_emergency_valve_flow"] = p_mover->EmergencyValveFlow;
+        // dpMainValve involves a division by vehicle length/spacing (Mover.cpp) that is briefly
+        // NaN before those geometry fields are configured (e.g. a freshly constructed
+        // TMoverParameters in tests) - guard so this never leaks a NaN into the shared state.
+        const double main_valve_flow = p_mover->dpMainValve;
+        p_state["brake_main_valve_flow"] = std::isnan(main_valve_flow) ? 0.0 : main_valve_flow;
+        p_state["brake_max_cylinder_pressure"] = p_mover->MaxBrakePress[3];
+        p_state["brake_max_control_pressure"] = p_mover->MaxBrakePress[0];
+        p_state["brake_ep_enabled"] = p_mover->BrakeSystem == TBrakeSystem::ElectroPneumatic;
+        p_state["brake_local_handle_available"] = p_mover->LocHandle != nullptr;
+        p_state["brake_control_pressure"] = p_mover->LocHandle ? p_mover->LocHandle->GetCP() : 0.0;
+        p_state["brake_local_aeim_position"] = p_mover->LocalBrakePosAEIM;
+        p_state["brake_edb_cylinder_pressure"] = p_mover->Hamulec ? p_mover->Hamulec->GetEDBCP() : 0.0;
+        p_state["brake_releaser_active"] = p_mover->Hamulec && p_mover->Hamulec->Releaser();
+        const int brake_sound_flags = p_mover->Hamulec ? p_mover->Hamulec->GetSoundFlag() : 0;
+        p_state["brake_accelerator_sound_active"] = (brake_sound_flags & sf_Acc) == sf_Acc;
+        const bool fv_sound_model =
+                p_mover->BrakeHandle == TBrakeHandle::FV4a || p_mover->BrakeHandle == TBrakeHandle::FVel6;
+        p_state["brake_handle_fv_sound_model"] = fv_sound_model;
+        p_state["brake_handle_sound_b"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_b) : 0.0;
+        p_state["brake_handle_sound_u"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_u) : 0.0;
+        p_state["brake_handle_sound_e"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_e) : 0.0;
+        p_state["brake_handle_sound_x"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_x) : 0.0;
+        p_state["brake_handle_sound_t"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_t) : 0.0;
+        p_state["max_speed"] = p_mover->Vmax;
     }
 
     void TrainBrake::_do_update_internal_mover(TMoverParameters *p_mover) {

@@ -33,6 +33,25 @@ const _BARE_SINGLE_LABELS:Dictionary = {
     # handles that transparently, same as every other bare label here.
     "buzzer": true,
     "buzzershp": true,
+    "brake": true,
+    "brakesound": true,
+    "unbrake": true,
+    "emergencybrake": true,
+    "slipperysound": true,
+    "airsound": true,
+    "airsound2": true,
+    "airsound3": true,
+    "airsound4": true,
+    "airsound5": true,
+    "localbrakesound": true,
+    "localbrakesound2": true,
+    "brakecylinderinc": true,
+    "brakecylinderdec": true,
+    "epbrakeinc": true,
+    "epbrakedec": true,
+    "brakeacc": true,
+    "springbrake": true,
+    "springbrakeoff": true,
 }
 
 ## label -> bare form is 3 values (begin, main, end) + an optional trailing range - confirmed real
@@ -44,6 +63,22 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
     "horn1": true,
     "horn2": true,
     "horn3": true,
+    "releaser": true,
+}
+
+const _BARE_PARAMETERS:Dictionary = {
+    "brake": [&"range", &"amplitude_factor", &"amplitude_offset"],
+    "brakesound": [&"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
+    "unbrake": [&"range"],
+    "slipperysound": [&"amplitude_factor", &"amplitude_offset"],
+    "airsound": [&"amplitude_factor", &"amplitude_offset"],
+    "airsound2": [&"amplitude_factor", &"amplitude_offset"],
+    "airsound3": [&"amplitude_factor", &"amplitude_offset"],
+    "airsound4": [&"amplitude_factor", &"amplitude_offset"],
+    "airsound5": [&"amplitude_factor", &"amplitude_offset"],
+    "localbrakesound": [&"amplitude_factor", &"amplitude_offset"],
+    "localbrakesound2": [&"amplitude_factor", &"amplitude_offset"],
+    "releaser": [&"range"],
 }
 
 
@@ -63,11 +98,14 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
 ## internaldata: section, BEFORE cab1definition:/cab2definition: - confirmed real, NOT inside
 ## sounds:/endsounds (dynamic/pkp/sm42_v1/6d.mmd: "ignition: { range: 150 soundmain:
 ## 697_sm42-start-v2.wav }" at line 92 and "buzzer: [ buczek.wav ... ]" at line 85, both well past
-## endsounds at line 81). internaldata: has dozens of other sound-shaped fields (rainsound/
-## tachoclock/couplerattach/...) out of scope here - only these four are kept, everything else is
-## parsed just enough to stay token-aligned (reusing the exact same generic block/bare consumption
-## as parse() above) and then discarded, with no diagnostic (this region isn't otherwise covered
-## by MmdSoundCatalog).
+## endsounds at line 81). The brake-related labels (brakesound:/slipperysound:/airsound(2-5):/
+## localbrakesound(2):) are the original engine's TTrain-owned cab-local pneumatic sounds
+## (Train.cpp:8548-8574) and are likewise real here (dynamic/pkp/su45_v2/301d.mmd:119-127) - kept
+## for MmdSoundBankInstancer/MmdSoundCatalog same as the other four. internaldata: has dozens of
+## other sound-shaped fields (rainsound/tachoclock/couplerattach/...) out of scope here - only
+## these labels are kept, everything else is parsed just enough to stay token-aligned (reusing the
+## exact same generic block/bare consumption as parse() above) and then discarded, with no
+## diagnostic (this region isn't otherwise covered by MmdSoundCatalog).
 static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
     var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
@@ -76,12 +114,39 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
     start_index += 1
     var end_index:int = MmdCabinInstancer._find_label_index(tokens, "cab1definition:", start_index)
     var cab2_index:int = MmdCabinInstancer._find_label_index(tokens, "cab2definition:", start_index)
-    if cab2_index != -1 and (end_index == -1 or cab2_index < end_index):
+    if not cab2_index == -1 and (end_index == -1 or cab2_index < end_index):
         end_index = cab2_index
     if end_index == -1:
         end_index = tokens.size()
-    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path,
-            {"ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true})
+    return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {
+        "ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true,
+        "brakesound": true, "slipperysound": true, "localbrakesound": true, "localbrakesound2": true,
+        "airsound": true, "airsound2": true, "airsound3": true, "airsound4": true, "airsound5": true,
+    })
+
+
+static func parse_vehicle_soundproofing(abs_mmd_path:String, context:MmdImportContext) -> Array[PackedFloat32Array]:
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
+    var end_index:int = MmdCabinInstancer._find_label_index(tokens, "cab1definition:", start_index + 1)
+    if start_index < 0 or end_index < 0:
+        return []
+    var depth:int = 0
+    for i:int in range(start_index + 1, end_index):
+        if tokens[i] == "{":
+            depth += 1
+        elif tokens[i] == "}":
+            depth -= 1
+        elif depth == 0 and tokens[i].to_lower() == "soundproofing:":
+            var result:Dictionary = _read_float_list(tokens, i + 1, 30)
+            var values:PackedFloat32Array = result["value"]
+            if values.size() < 30:
+                return []
+            var profile:Array[PackedFloat32Array] = []
+            for row:int in range(5):
+                profile.append(values.slice(row * 6, row * 6 + 6))
+            return profile
+    return []
 
 
 static func _parse_labels_in_range(
@@ -107,9 +172,11 @@ static func _parse_one(
         tokens:Array[String], i:int, definition:MmdSoundSourceDefinition,
         context:MmdImportContext, source_file:String) -> int:
     var start:int = i
+    if definition.label == "unbrake":
+        definition.amplitude_factor = 20.0
     if i < tokens.size() and tokens[i] == "{":
         i += 1
-        while i < tokens.size() and tokens[i] != "}":
+        while i < tokens.size() and not tokens[i] == "}":
             i += _parse_block_field(tokens, i, definition, context, source_file)
         if i < tokens.size():
             i += 1 # consume "}"
@@ -128,6 +195,15 @@ static func _parse_one(
                 "begin": definition.sound_begin = result["value"]
                 "main": definition.sound_main = result["value"]
                 "end": definition.sound_end = result["value"]
+
+    var parameters:Array = _BARE_PARAMETERS.get(definition.label, [])
+    for parameter:StringName in parameters:
+        if i >= tokens.size() or tokens[i].to_lower().ends_with(":"):
+            break
+        definition.set(parameter, float(tokens[i]))
+        if parameter == &"range":
+            definition.range_defined = true
+        i += 1
 
     # any remaining bare values (range, amplitude/frequency pairs, ...) aren't consumed in v1 -
     # skip up to the next "label:"-shaped token so the stream stays aligned.
@@ -172,14 +248,48 @@ static func _parse_block_field(
             if i < tokens.size():
                 definition.crossfade_percent = clampi(int(tokens[i]), 0, 100)
                 i += 1
-        "soundproofing:", "offset:":
-            i += _skip_value(tokens, i) # no gnd-sfx equivalent (soundproofing) / not in v1 scope (offset)
+        "soundproofing:":
+            var value:Dictionary = _read_float_list(tokens, i, 6)
+            definition.soundproofing = value["value"]
+            i += int(value["consumed"])
+        "offset:":
+            var value:Dictionary = _read_float_list(tokens, i, 3)
+            var numbers:PackedFloat32Array = value["value"]
+            if numbers.size() == 3:
+                definition.offset = Vector3(numbers[0], numbers[1], numbers[2])
+            i += int(value["consumed"])
+        "amplitudefactor:":
+            definition.amplitude_factor = float(tokens[i])
+            i += 1
+        "amplitudeoffset:":
+            definition.amplitude_offset = float(tokens[i])
+            i += 1
+        "frequencyfactor:":
+            definition.frequency_factor = float(tokens[i])
+            i += 1
+        "frequencyoffset:":
+            definition.frequency_offset = float(tokens[i])
+            i += 1
+        "range:":
+            definition.range = float(tokens[i])
+            definition.range_defined = true
+            i += 1
+        "placement:":
+            definition.placement = StringName(tokens[i].to_lower())
+            definition.placement_defined = true
+            i += 1
+        "pitchvariation:":
+            definition.pitch_variation = float(tokens[i])
+            i += 1
+        "startoffset:":
+            definition.start_offset = float(tokens[i])
+            i += 1
         _:
-            if key.begins_with("sound") and _threshold_from_key(key) != null:
+            if key.begins_with("sound") and not _threshold_from_key(key) == null:
                 var result:Dictionary = _read_random_set(tokens, i, context, source_file, key)
                 definition.chunks.append({"threshold": _threshold_from_key(key), "filename": result["value"], "pitch": 0.0})
                 i += int(result["consumed"])
-            elif key.begins_with("pitch") and _threshold_from_key(key) != null:
+            elif key.begins_with("pitch") and not _threshold_from_key(key) == null:
                 var threshold:int = _threshold_from_key(key)
                 if i < tokens.size():
                     var pitch:float = float(tokens[i])
@@ -198,6 +308,20 @@ static func _parse_block_field(
     return i - start
 
 
+static func _read_float_list(tokens:Array[String], i:int, count:int) -> Dictionary:
+    var values := PackedFloat32Array()
+    var start:int = i
+    var bracketed:bool = i < tokens.size() and tokens[i] == "["
+    if bracketed:
+        i += 1
+    while i < tokens.size() and values.size() < count and (not bracketed or not tokens[i] == "]"):
+        values.append(float(tokens[i]))
+        i += 1
+    if bracketed and i < tokens.size() and tokens[i] == "]":
+        i += 1
+    return {"value": values, "consumed": i - start}
+
+
 ## "sound1:" -> 1, "sound-3:" -> -3, "sound400:" -> 400, "pitch600:" -> 600. Returns null for
 ## "soundmain:"/"soundbegin:"/"soundend:"/"soundset:"/"pitchvariation:" (no valid-int remainder).
 static func _threshold_from_key(key:String) -> Variant:
@@ -214,7 +338,7 @@ static func _skip_value(tokens:Array[String], i:int) -> int:
         return 0
     if tokens[i] == "[":
         var j:int = i + 1
-        while j < tokens.size() and tokens[j] != "]":
+        while j < tokens.size() and not tokens[j] == "]":
             j += 1
         if j < tokens.size():
             j += 1 # consume "]"
@@ -233,12 +357,12 @@ static func _read_random_set(
     if i >= tokens.size():
         return {"value": "", "consumed": 0}
 
-    if tokens[i] != "[":
+    if not tokens[i] == "[":
         return {"value": _normalize_sound_filename(tokens[i]), "consumed": 1}
 
     var candidates:Array[String] = []
     var j:int = i + 1
-    while j < tokens.size() and tokens[j] != "]":
+    while j < tokens.size() and not tokens[j] == "]":
         var candidate:String = tokens[j].trim_suffix(",")
         if not candidate.is_empty():
             candidates.append(candidate)

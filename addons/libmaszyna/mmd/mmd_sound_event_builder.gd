@@ -25,7 +25,9 @@ class_name MmdSoundEventBuilder
 const _AUTOMATION_HEADROOM:float = 100000.0
 
 
-static func build(definition:MmdSoundSourceDefinition, event_name:StringName, sound_parameter:StringName = &"") -> SfxEvent:
+static func build(
+        definition:MmdSoundSourceDefinition, event_name:StringName,
+        sound_parameter:StringName = &"", parameterized:bool = false) -> SfxEvent:
     var event := SfxEvent.new()
     event.name = event_name
 
@@ -44,7 +46,50 @@ static func build(definition:MmdSoundSourceDefinition, event_name:StringName, so
         clip.stream = _build_stream(definition.sound_main, true)
         event.clips = [clip]
 
+    if parameterized:
+        event.parameter_modulations = [
+            _build_modulation(&"gain", SfxParameterModulation.Target.GAIN, 0.0, 100.0, 1.0),
+            _build_modulation(&"pitch", SfxParameterModulation.Target.PITCH, 0.1, 10.0, 1.0),
+            _build_modulation(&"soundproofing", SfxParameterModulation.Target.GAIN, 0.0, 1.0, 1.0),
+            _build_modulation(&"soundproofing", SfxParameterModulation.Target.UNIT_SIZE, 0.0, 1.0, 1.0),
+            _build_modulation(&"unit_size", SfxParameterModulation.Target.UNIT_SIZE, 0.1, 8.0, 1.0),
+        ]
+        event.spatial_config = _build_spatial_config(definition)
+
     return event
+
+
+static func _build_modulation(
+        parameter_name:StringName, target:int,
+        minimum:float, maximum:float, default_value:float) -> SfxParameterModulation:
+    var modulation := SfxParameterModulation.new()
+    modulation.parameter_name = parameter_name
+    modulation.target = target
+    modulation.min_domain = minimum
+    modulation.max_domain = maximum
+    modulation.default_value = default_value
+    var curve := Curve.new()
+    curve.min_domain = minimum
+    curve.max_domain = maximum
+    curve.min_value = minimum
+    curve.max_value = maximum
+    curve.add_point(Vector2(minimum, minimum))
+    curve.add_point(Vector2(maximum, maximum))
+    modulation.curve = curve
+    return modulation
+
+
+static func _build_spatial_config(definition:MmdSoundSourceDefinition) -> SfxSpatialConfig:
+    var config := SfxSpatialConfig.new()
+    config.position = definition.offset
+    if definition.range < 0.0:
+        config.attenuation_model = AudioStreamPlayer3D.ATTENUATION_DISABLED
+        config.max_distance = 0.0
+        config.panning_strength = 0.0
+    else:
+        config.unit_size = maxf(definition.range / 16.0, 0.01)
+        config.max_distance = minf(definition.range * 7.5, 2750.0)
+    return config
 
 
 static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> Array[SfxClip]:

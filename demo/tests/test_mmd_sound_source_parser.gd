@@ -96,21 +96,22 @@ func test_unrecognized_label_does_not_desync_following_labels():
     assert_null(_find(definitions, "endsounds"))
 
 
+const _INTERNAL_DATA_LABELS := [
+    "ignition", "shutdown", "buzzer", "buzzershp",
+    "brakesound", "slipperysound", "localbrakesound", "localbrakesound2",
+    "airsound", "airsound2",
+]
+
+
 func test_parse_internal_data_returns_ignition_shutdown_buzzer_and_buzzershp():
     var context := MmdImportContext.new()
     context.base_dir = FIXTURE_PATH.get_base_dir()
     var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(FIXTURE_PATH, context)
 
-    var ignition:MmdSoundSourceDefinition = null
-    var shutdown:MmdSoundSourceDefinition = null
-    var buzzer:MmdSoundSourceDefinition = null
-    var buzzershp:MmdSoundSourceDefinition = null
-    for definition:MmdSoundSourceDefinition in definitions:
-        match definition.label:
-            "ignition": ignition = definition
-            "shutdown": shutdown = definition
-            "buzzer": buzzer = definition
-            "buzzershp": buzzershp = definition
+    var ignition:MmdSoundSourceDefinition = _find(definitions, "ignition")
+    var shutdown:MmdSoundSourceDefinition = _find(definitions, "shutdown")
+    var buzzer:MmdSoundSourceDefinition = _find(definitions, "buzzer")
+    var buzzershp:MmdSoundSourceDefinition = _find(definitions, "buzzershp")
 
     assert_not_null(ignition)
     assert_eq(ignition.sound_main, "engine-start")
@@ -124,10 +125,44 @@ func test_parse_internal_data_returns_ignition_shutdown_buzzer_and_buzzershp():
     assert_not_null(buzzershp)
     assert_eq(buzzershp.sound_main, "buzzershp-main")
 
-    # rainsound:/cab1definition:/... are out of scope for this entry point - only these four
-    # labels are collected, but parsing must still stay aligned across them (not desync).
+    # rainsound:/cab1definition:/... are out of scope for this entry point - only the labels in
+    # _INTERNAL_DATA_LABELS are collected, but parsing must still stay aligned across them (not
+    # desync).
     for definition:MmdSoundSourceDefinition in definitions:
-        assert_true(definition.label in ["ignition", "shutdown", "buzzer", "buzzershp"])
+        assert_true(definition.label in _INTERNAL_DATA_LABELS)
+
+
+func test_parse_internal_data_returns_brake_related_labels():
+    var context := MmdImportContext.new()
+    context.base_dir = FIXTURE_PATH.get_base_dir()
+    var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(FIXTURE_PATH, context)
+
+    var brakesound:MmdSoundSourceDefinition = _find(definitions, "brakesound")
+    assert_not_null(brakesound)
+    assert_eq(brakesound.sound_main, "cab-brakesound")
+
+    var slipperysound:MmdSoundSourceDefinition = _find(definitions, "slipperysound")
+    assert_not_null(slipperysound)
+    assert_eq(slipperysound.sound_main, "cab-slippery")
+
+    var airsound:MmdSoundSourceDefinition = _find(definitions, "airsound")
+    assert_not_null(airsound)
+    assert_eq(airsound.sound_main, "cab-airsound")
+
+    var airsound2:MmdSoundSourceDefinition = _find(definitions, "airsound2")
+    assert_not_null(airsound2)
+    assert_eq(airsound2.sound_main, "cab-airsound2")
+
+    var localbrakesound:MmdSoundSourceDefinition = _find(definitions, "localbrakesound")
+    assert_not_null(localbrakesound)
+    assert_eq(localbrakesound.sound_begin, "local-start")
+    assert_eq(localbrakesound.sound_main, "local-mid")
+    assert_eq(localbrakesound.sound_end, "local-end")
+
+    var localbrakesound2:MmdSoundSourceDefinition = _find(definitions, "localbrakesound2")
+    assert_not_null(localbrakesound2)
+    assert_eq(localbrakesound2.sound_begin, "local2-start")
+    assert_eq(localbrakesound2.sound_main, "local2-mid")
 
 
 func test_parsing_stays_bounded_to_sounds_section_and_does_not_leak_internaldata():

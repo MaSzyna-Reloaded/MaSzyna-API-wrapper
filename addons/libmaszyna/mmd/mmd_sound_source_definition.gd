@@ -21,4 +21,16 @@ var chunks:Array[Dictionary] = []
 ## Percentage (0-100) of the gap between adjacent chunk thresholds that the crossfade porting in
 ## MmdSoundEventBuilder blends over - mirrors m_crossfaderange, "crossfade:" in MMD.
 var crossfade_percent:int = 0
+var amplitude_factor:float = 1.0
+var amplitude_offset:float = 0.0
+var frequency_factor:float = 1.0
+var frequency_offset:float = 0.0
+var range:float = 50.0
+var range_defined:bool = false
+var placement:StringName = &"general"
+var placement_defined:bool = false
+var offset:Vector3 = Vector3.ZERO
+var soundproofing:PackedFloat32Array = PackedFloat32Array()
+var pitch_variation:float = 0.0
+var start_offset:float = 0.0
 var source_file:String = ""

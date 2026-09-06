@@ -72,6 +72,7 @@ func _rebuild_generated() -> void:
 
     var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
     _last_cab_number = _select_cab_number()
+    cab_number = 1 if _last_cab_number == 1 else -1
     if cabin_occupied == 0:
         _diagnostics.append({
             "severity": "info", "code": "MMD_CABIN_OCCUPIED_UNKNOWN", "source_file": "", "line": 0,

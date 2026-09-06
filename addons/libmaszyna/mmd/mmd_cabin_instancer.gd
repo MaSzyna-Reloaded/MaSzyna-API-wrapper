@@ -754,7 +754,18 @@ static func _build_indicator_lights(
                 light.set(field_name, entry["light_fixed_fields"][field_name])
             generated_root.add_child(light)
             _position_at_submodel_instance(light, on_node if on_node else off_node)
+            if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
+                _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
             light.set("controller_path", light.get_path_to(controller))
+
+
+## Legacy cabin models do not use a consistent local axis for ceiling-lamp meshes. Preserve the
+## authored direction unless it points into the roof, in which case the useful cone is opposite.
+static func _flip_spotlight_if_pointing_up(light:SpotLight3D, reference:Node3D) -> void:
+    var cabin_up:Vector3 = reference.global_basis.y.normalized()
+    var light_direction:Vector3 = -light.global_basis.z.normalized()
+    if light_direction.dot(cabin_up) > 0.0:
+        light.rotate_object_local(Vector3.RIGHT, PI)
 
 
 ## Positions `widget` at `submodel`'s visual AABB center rather than its raw transform

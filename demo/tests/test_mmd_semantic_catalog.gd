@@ -97,6 +97,7 @@ func test_cab_light_indicator_and_spotlight_are_separate():
     assert_eq(entry["widget_class"], CabinIndicator3D)
     assert_eq(entry["fixed_fields"]["state_property"], "roof_light_enabled")
     assert_eq(entry["light_widget_class"], CabinSpotLight3D)
+    assert_true(entry["flip_upward_spotlight"])
     assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_enabled")
     assert_true(entry["light_fixed_fields"]["light_enabled"])
 

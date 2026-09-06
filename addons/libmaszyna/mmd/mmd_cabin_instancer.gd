@@ -726,7 +726,7 @@ static func _build_indicator_lights(
         return
 
     for i in range(count):
-        var widget:CabinSpotLight3D = entry["widget_class"].new()
+        var widget:Node3D = entry["widget_class"].new()
         widget.name = "%s_%s_%d" % [descriptor.label, descriptor.submodel_name, i]
         for field_name:String in entry["fixed_fields"]:
             widget.set(field_name, entry["fixed_fields"][field_name])
@@ -742,10 +742,19 @@ static func _build_indicator_lights(
         var off_node:Node3D = off_matches[i] if i < off_matches.size() else null
         _position_at_submodel_instance(widget, on_node if on_node else off_node)
         if on_node:
-            widget.on_target_path = widget.get_path_to(on_node)
+            widget.set("on_target_path", widget.get_path_to(on_node))
         if off_node:
-            widget.off_target_path = widget.get_path_to(off_node)
-        widget.controller_path = widget.get_path_to(controller)
+            widget.set("off_target_path", widget.get_path_to(off_node))
+        widget.set("controller_path", widget.get_path_to(controller))
+
+        if entry.has("light_widget_class"):
+            var light:Light3D = entry["light_widget_class"].new()
+            light.name = "%s_%s_%d_light" % [descriptor.label, descriptor.submodel_name, i]
+            for field_name:String in entry["light_fixed_fields"]:
+                light.set(field_name, entry["light_fixed_fields"][field_name])
+            generated_root.add_child(light)
+            _position_at_submodel_instance(light, on_node if on_node else off_node)
+            light.set("controller_path", light.get_path_to(controller))
 
 
 ## Positions `widget` at `submodel`'s visual AABB center rather than its raw transform

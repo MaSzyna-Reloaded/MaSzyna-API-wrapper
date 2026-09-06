@@ -240,6 +240,32 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Confirmed against demo/vehicles/sm42/sm_42_cabin.tscn's own hand-authored wiring
+        # (command/state_property/action copied verbatim) and now backed generically by
+        # TrainLighting::devices_light()/roof_light() (TrainLighting.cpp) instead of a
+        # per-vehicle script - state is power-gated the same way there (24V/110V availability).
+        "instrumentlight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "devices_light",
+                "state_property": "devices_light_enabled",
+                "action": "devices_light_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "cablight_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "roof_light",
+                "state_property": "roof_light_enabled",
+                "action": "cabin_light_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "radio_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -512,6 +538,54 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+        },
+        # i-* labels are indicator meshes in MaSzyna: the widget only switches the matching
+        # <submodel>_on/<submodel>_off pair. The optional light widget below is a separate Godot
+        # lighting effect anchored at the same submodel when that position exists.
+        # Numeric parameters come from SM42's hand-authored reference cabin.
+        "i-cablight": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "state_property": "roof_light_enabled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "light_widget_class": CabinSpotLight3D,
+            "light_fixed_fields": {
+                "state_property": "roof_light_enabled",
+                "light_enabled": true,
+                "light_color": Color(0.960938, 0.881759, 0.75824, 1.0),
+                "light_energy_on": 0.411,
+                "light_energy_off": 0.0,
+                "light_volumetric_fog_energy": 16.235,
+                "light_size": 1.0,
+                "light_specular": 5.297,
+                "spot_range": 2.785,
+                "spot_attenuation": 1.44,
+                "spot_angle": 63.62,
+                "spot_angle_attenuation": 1.27456,
+            },
+        },
+        "i-instrumentlight": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": {
+                "state_property": "devices_light_enabled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+            "light_widget_class": CabinOmniLight3D,
+            "light_fixed_fields": {
+                "state_property": "devices_light_enabled",
+                "light_color": Color(0.808594, 0.518647, 0.06633, 1.0),
+                "light_energy_on": 0.002,
+                "light_energy_off": 0.0,
+                "light_indirect_energy": 0.525,
+                "light_size": 0.078,
+                "omni_range": 0.564628,
+                "omni_attenuation": 1.41,
+            },
         },
         # Confirmed against Mover.cpp:183-188 (is_cabsignal_blinking(): `return power &&
         # cabsignal_active` - same static "alert active" shape as is_blinking(), not a real-time

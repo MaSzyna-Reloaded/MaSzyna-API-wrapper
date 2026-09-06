@@ -20,7 +20,7 @@ var _target_light_energy = 0.0
 ## light_color/spot_range/etc. from anywhere in the MMD - SM42's own hand-authored reference only
 ## has real numeric light data for its czuwak (alerter) lamps, so reusing those values for a
 ## different indicator produces a visibly wrong light (wrong color/range/angle). Defaults to false
-## for this reason - only catalog entries with real reference light data (currently
+## for this reason - only indicator widgets with real reference light data (currently
 ## i-security_aware) should opt in with light_enabled=true. When false, this widget still
 ## shows/hides its on_target/off_target submodel pair and still plays its click sound exactly as
 ## before - only the light itself (this node's own SpotLight3D energy) is suppressed.

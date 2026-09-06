@@ -1,7 +1,6 @@
 [gd_scene format=3 uid="uid://c5hi8nsm1d2hb"]
 
 [ext_resource type="Script" uid="uid://bbn3nd8ts8yjx" path="res://vehicles/sm42/sm_42v_1.gd" id="1_vib8j"]
-[ext_resource type="Script" uid="uid://b6080q3nwa3xs" path="res://vehicles/sm42/cabin_interior_lights.gd" id="2_qmqy7"]
 
 [sub_resource type="WWListItem" id="WWListItem_tqpff"]
 rpm = 496.0
@@ -170,9 +169,6 @@ close/delay = 3.0
 has_lock = true
 max_shift_plug = 3.0
 platform/max_shift = 3.0
-
-[node name="CabinInteriorLights" type="GenericTrainPart" parent="." unique_id=1668337540]
-script = ExtResource("2_qmqy7")
 
 [node name="TrainLightning" type="TrainLighting" parent="." unique_id=1232836093]
 lights/wrap_selector = true

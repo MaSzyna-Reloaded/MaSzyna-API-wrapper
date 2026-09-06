@@ -13,6 +13,8 @@ namespace godot {
         private:
             static void _bind_methods();
             TypedArray<LightListItem> light_position_list;
+            bool roof_light_active = false;
+            bool devices_light_active = false;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
@@ -69,5 +71,11 @@ namespace godot {
             // override for debugging). p_light is the MMD label's own suffix, e.g. "upper",
             // "left", "leftend", "rearupper", "rearleftend".
             void light_switch(const String &p_light, bool p_enabled);
+            // Cab interior lamp ("cablight_sw:") and instrument/dashboard backlighting
+            // ("instrumentlight_sw:") - both plain manual toggles with no counterpart on the
+            // wrapped mover itself, gated only by 24V/110V power availability (mirrors the
+            // original engine's own "cablightlevel"/"lightpower" power gating, vehicle/Train.cpp).
+            void roof_light(bool p_enabled);
+            void devices_light(bool p_enabled);
     };
 } // namespace godot

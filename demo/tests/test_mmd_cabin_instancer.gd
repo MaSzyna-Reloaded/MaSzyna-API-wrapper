@@ -304,6 +304,59 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     assert_eq(diagnostics[0]["code"], "MMD_SUBMODEL_NOT_FOUND")
 
 
+func test_build_cab_light_keeps_indicator_separate_from_spotlight():
+    var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
+    descriptor.label = "i-cablight"
+    descriptor.submodel_name = "cab_lamp"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
+
+    var on_node:Node3D = add_child_autofree(Node3D.new())
+    on_node.position = Vector3(1.0, 2.0, 3.0)
+    var off_node:Node3D = add_child_autofree(Node3D.new())
+    var submodel_index:Dictionary = {"cab_lamp_on": [on_node], "cab_lamp_off": [off_node]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 2)
+    var indicator:CabinIndicator3D = generated_root.get_child(0)
+    var light:CabinSpotLight3D = generated_root.get_child(1)
+    assert_eq(indicator.get_node(indicator.on_target_path), on_node)
+    assert_true(light.light_enabled)
+    assert_true(light.on_target_path.is_empty())
+    assert_eq(light.global_position, on_node.global_position)
+    assert_eq(light.state_property, "roof_light_enabled")
+    assert_eq(diagnostics.size(), 0)
+
+
+func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
+    var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
+    descriptor.label = "i-instrumentlight"
+    descriptor.submodel_name = "instrument_lamp"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
+
+    var on_node:Node3D = add_child_autofree(Node3D.new())
+    on_node.position = Vector3(3.0, 2.0, 1.0)
+    var submodel_index:Dictionary = {"instrument_lamp_on": [on_node]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 2)
+    var indicator:CabinIndicator3D = generated_root.get_child(0)
+    var light:CabinOmniLight3D = generated_root.get_child(1)
+    assert_eq(indicator.get_node(indicator.on_target_path), on_node)
+    assert_eq(light.global_position, on_node.global_position)
+    assert_eq(light.state_property, "devices_light_enabled")
+    assert_eq(diagnostics.size(), 0)
+
+
 func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescriptor:
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if descriptor.label == label:

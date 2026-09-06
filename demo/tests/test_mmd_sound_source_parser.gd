@@ -151,7 +151,7 @@ func test_parse_internal_data_returns_brake_related_labels():
 
     var airsound2:MmdSoundSourceDefinition = _find(definitions, "airsound2")
     assert_not_null(airsound2)
-    assert_eq(airsound2.sound_main, "cab-airsound2")
+    assert_eq(airsound2.sound_main, "[1007]cab-airsound2")
 
     var localbrakesound:MmdSoundSourceDefinition = _find(definitions, "localbrakesound")
     assert_not_null(localbrakesound)

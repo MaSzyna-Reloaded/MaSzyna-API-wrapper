@@ -443,11 +443,29 @@ namespace godot {
     }
 
     void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        // Hardware/setup facts - change only when the vehicle's brake config is (re)applied, not
+        // every tick, so they belong here rather than in _do_fetch_state_from_mover. Read from
+        // TrainBrake's own already-bound properties (the authoring source of truth) rather than
+        // re-deriving from mover internals a second time.
+        p_config["brake_ep_enabled"] = p_mover->BrakeSystem == TBrakeSystem::ElectroPneumatic;
+        p_config["brake_handle_type"] = get_brake_handle_type();
+        p_config["brake_local_handle_type"] = get_local_brake_handle_type();
+        p_config["brake_valve_type"] = get_valve_type();
+        // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
+        // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
+        // real local handle" from "has none" - local_brake_handle_type is the real signal.
+        p_config["brake_local_handle_available"] = get_local_brake_handle_type() != BRAKE_HANDLE_TYPE_NO_HANDLE;
+        p_config["brake_max_cylinder_pressure"] = get_max_cylinder_pressure();
+        p_config["brake_max_control_pressure"] =
+                get_max_aux_pressure() >= 0.01 ? get_max_aux_pressure() : get_max_cylinder_pressure();
+
         if (p_mover->Handle == nullptr) {
             return;
         }
         p_config["brakes_controller_position_min"] = p_mover->Handle->GetPos(bh_MIN);
         p_config["brakes_controller_position_max"] = p_mover->Handle->GetPos(bh_MAX);
+        p_config["brakes_controller_position_cutoff"] = p_mover->Handle->GetPos(bh_NP);
+        p_config["brakes_controller_position_emergency"] = p_mover->Handle->GetPos(bh_EB);
     }
 
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
@@ -474,30 +492,13 @@ namespace godot {
         p_state["brake_force_ratio"] =
                 std::clamp(p_mover->UnitBrakeForce / std::max(1.0, brake_force_max_per_block), 0.0, 1.0);
         p_state["brake_emergency_valve_flow"] = p_mover->EmergencyValveFlow;
-        // dpMainValve involves a division by vehicle length/spacing (Mover.cpp) that is briefly
-        // NaN before those geometry fields are configured (e.g. a freshly constructed
-        // TMoverParameters in tests) - guard so this never leaks a NaN into the shared state.
         const double main_valve_flow = p_mover->dpMainValve;
-        p_state["brake_main_valve_flow"] = std::isnan(main_valve_flow) ? 0.0 : main_valve_flow;
-        p_state["brake_max_cylinder_pressure"] = p_mover->MaxBrakePress[3];
-        p_state["brake_max_control_pressure"] = p_mover->MaxBrakePress[0];
-        p_state["brake_ep_enabled"] = p_mover->BrakeSystem == TBrakeSystem::ElectroPneumatic;
-        p_state["brake_local_handle_available"] = p_mover->LocHandle != nullptr;
+        p_state["brake_main_valve_flow"] = std::isfinite(main_valve_flow) ? main_valve_flow : 0.0;
+        p_state["brake_local_valve_flow"] = p_mover->dpLocalValve;
         p_state["brake_control_pressure"] = p_mover->LocHandle ? p_mover->LocHandle->GetCP() : 0.0;
         p_state["brake_local_aeim_position"] = p_mover->LocalBrakePosAEIM;
         p_state["brake_edb_cylinder_pressure"] = p_mover->Hamulec ? p_mover->Hamulec->GetEDBCP() : 0.0;
         p_state["brake_releaser_active"] = p_mover->Hamulec && p_mover->Hamulec->Releaser();
-        const int brake_sound_flags = p_mover->Hamulec ? p_mover->Hamulec->GetSoundFlag() : 0;
-        p_state["brake_accelerator_sound_active"] = (brake_sound_flags & sf_Acc) == sf_Acc;
-        const bool fv_sound_model =
-                p_mover->BrakeHandle == TBrakeHandle::FV4a || p_mover->BrakeHandle == TBrakeHandle::FVel6;
-        p_state["brake_handle_fv_sound_model"] = fv_sound_model;
-        p_state["brake_handle_sound_b"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_b) : 0.0;
-        p_state["brake_handle_sound_u"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_u) : 0.0;
-        p_state["brake_handle_sound_e"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_e) : 0.0;
-        p_state["brake_handle_sound_x"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_x) : 0.0;
-        p_state["brake_handle_sound_t"] = fv_sound_model ? p_mover->Handle->GetSound(s_fv4a_t) : 0.0;
-        p_state["max_speed"] = p_mover->Vmax;
     }
 
     void TrainBrake::_do_update_internal_mover(TMoverParameters *p_mover) {

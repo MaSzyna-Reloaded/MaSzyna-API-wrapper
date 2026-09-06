@@ -1,21 +1,13 @@
 extends RefCounted
 class_name MmdSoundBankInstancer
 
-## Orchestrator mirroring MmdCabinInstancer.build_into()'s role: given a vehicle's MMD file, parses
-## its `sounds:` section (MmdSoundSourceParser), builds one SfxEvent per MmdSoundCatalog-matched
-## label (MmdSoundEventBuilder) into a single SfxBank, and attaches a generated SfxPlayer3D (with
-## one TrainSoundTrigger child per matched label) under `vehicle`. A vehicle with no `sounds:` data,
-## or none of it in the catalog, gets no SfxPlayer3D at all - not an error, just nothing to play.
+const _INTERNAL_BRAKE_LABELS:Array[String] = [
+    "brakesound", "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
+    "localbrakesound", "localbrakesound2",
+]
+const _PLAYER_VOICE_COUNT:int = 24
 
 
-## `vehicle` is the RailVehicle3D DynamicRailVehicle3D builds internally - the generated
-## SfxPlayer3D/TrainSoundTrigger children are added under it as INTERNAL_MODE_BACK, same as its
-## ExteriorModel/FIZTrainController siblings. `fiz_controller_name` is the sibling
-## FIZTrainController node's name (e.g. "FIZTrainController") - its own child TrainController
-## isn't built yet at this point (FIZTrainController defers by one frame, same reason
-## DynamicRailVehicle3D._rebuild() sets RailVehicle3D.controller_path as a plain string NodePath
-## rather than resolving it with get_path_to()), so each trigger's controller_path is likewise a
-## deterministic string path, resolved lazily by TrainSoundTrigger itself once the node exists.
 static func build_into(
         vehicle:Node3D, abs_mmd_path:String, fiz_controller_name:String,
         random_choices:Dictionary, diagnostics:Array[Dictionary]) -> void:
@@ -23,69 +15,74 @@ static func build_into(
     context.base_dir = abs_mmd_path.get_base_dir()
     context.random_choices = random_choices
 
-    var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
+    var exterior_definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
     var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
-    var vehicle_soundproofing:Array[PackedFloat32Array] = MmdSoundSourceParser.parse_vehicle_soundproofing(abs_mmd_path, context)
-    _merge_ignition_and_shutdown_into_engine(definitions, internal_data)
-    # buzzer:/buzzershp: (see MmdSoundCatalog) are their own catalog-matched events, unlike
-    # ignition:/shutdown: which only ever get merged into "engine" and never appear standalone.
-    # The brake-related internaldata: labels are likewise their own catalog-matched events -
-    # "brakesound" is relabeled to "brakesound_cab" first since a `sounds:`-block "brakesound"
-    # (the exterior copy, DynObj.cpp) can exist in the very same file (dynamic/pkp/su45_v2/
-    # 301d.mmd:62 vs. :119) and would otherwise collide with it in MmdSoundCatalog/the SfxBank.
-    const _INTERNAL_BRAKE_LABELS := [
-        "slipperysound", "localbrakesound", "localbrakesound2",
-        "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
-    ]
-    for definition:MmdSoundSourceDefinition in internal_data:
-        if definition.label == "buzzer" or definition.label == "buzzershp":
-            definitions.append(definition)
-        elif definition.label == "brakesound":
-            definition.label = "brakesound_cab"
-            definitions.append(definition)
-        elif definition.label in _INTERNAL_BRAKE_LABELS:
-            definitions.append(definition)
+    var soundproofing:Array[PackedFloat32Array] = MmdSoundSourceParser.parse_vehicle_soundproofing(abs_mmd_path, context)
+    _merge_ignition_and_shutdown_into_engine(exterior_definitions, internal_data)
 
+    var cabin_definitions:Array[MmdSoundSourceDefinition] = []
+    for definition:MmdSoundSourceDefinition in internal_data:
+        if definition.label in ["ignition", "shutdown"]:
+            continue
+        if not definition.label in [
+                "buzzer", "buzzershp", "brakesound", "slipperysound", "airsound", "airsound2",
+                "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2"]:
+            continue
+        _apply_original_defaults(definition, true)
+        if definition.placement == &"internal":
+            cabin_definitions.append(definition)
+        else:
+            exterior_definitions.append(definition)
+
+    var routed_exterior:Array[MmdSoundSourceDefinition] = []
+    for definition:MmdSoundSourceDefinition in exterior_definitions:
+        _apply_original_defaults(definition, false)
+        if definition.placement == &"internal":
+            cabin_definitions.append(definition)
+        else:
+            routed_exterior.append(definition)
+
+    var controller_path := NodePath("../../%s/TrainController" % fiz_controller_name)
+    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, controller_path, soundproofing, context, abs_mmd_path)
+    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, controller_path, soundproofing, context, abs_mmd_path)
+    diagnostics.append_array(context.diagnostics)
+
+
+static func _build_player(
+        vehicle:Node3D, player_name:String, definitions:Array[MmdSoundSourceDefinition],
+        controller_path:NodePath, soundproofing:Array[PackedFloat32Array],
+        context:MmdImportContext, abs_mmd_path:String) -> void:
     var events:Array[SfxEvent] = []
-    var matched:Array[Dictionary] = []
+    var regular_definitions:Array[MmdSoundSourceDefinition] = []
     var brake_sources:Dictionary = {}
     for definition:MmdSoundSourceDefinition in definitions:
         if not MmdSoundCatalog.has_label(definition.label):
             context.warn_unsupported_label(definition.label, abs_mmd_path, 0)
             continue
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
-        var brake_controlled:bool = entry.get("controller", &"") == &"brake"
-        if brake_controlled:
+        if entry.get("controller", &"") == &"brake":
             _apply_brake_source_defaults(definition)
             brake_sources[definition.label] = definition
-        events.append(MmdSoundEventBuilder.build(
-                definition, entry["event_name"],
-                &"combined" if brake_controlled else entry.get("sound_parameter", &""),
-                brake_controlled))
-        matched.append(entry)
-
-    diagnostics.append_array(context.diagnostics)
-    if events.is_empty():
-        return
+            continue
+        var event:SfxEvent = MmdSoundEventBuilder.build(
+                definition, entry["event_name"], entry.get("sound_parameter", &""))
+        event.spatial_config = MmdSoundEventBuilder._build_spatial_config(definition)
+        events.append(event)
+        regular_definitions.append(definition)
 
     var bank := SfxBank.new()
     bank.events = events
-
     var player := SfxPlayer3D.new()
-    player.name = "SfxPlayer3D"
+    player.name = player_name
     player.bank = bank
-    # Matches sm_42.tscn's own hand-tuned, proven-working values - MMD's per-event `range:` has no
-    # equivalent here (gnd-sfx's max_distance is a whole-player setting, not per-event), so there
-    # is nothing vehicle-specific to derive these three from.
+    player.max_tracks = _PLAYER_VOICE_COUNT
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
-    player.max_distance = 100
+    player.max_distance = 100.0
     vehicle.add_child(player, false, Node.INTERNAL_MODE_BACK)
 
-    var controller_path := NodePath("../../%s/TrainController" % fiz_controller_name)
-    for entry:Dictionary in matched:
-        if entry.get("controller", &"") == &"brake":
-            continue
+    for definition:MmdSoundSourceDefinition in regular_definitions:
+        var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
         var trigger := TrainSoundTrigger.new()
         trigger.name = String(entry["event_name"]).capitalize()
         trigger.state_property = entry["state_property"]
@@ -97,44 +94,40 @@ static func build_into(
         trigger.controller_path = controller_path
         player.add_child(trigger, false, Node.INTERNAL_MODE_BACK)
 
-    if brake_sources:
+    if not brake_sources.is_empty():
         var brake_controller := TrainBrakeSoundController.new()
         brake_controller.name = "BrakeSoundController"
         brake_controller.sources = brake_sources
-        brake_controller.configured_soundproofing = vehicle_soundproofing
+        brake_controller.configured_soundproofing = soundproofing
         brake_controller.controller_path = controller_path
         player.add_child(brake_controller, false, Node.INTERNAL_MODE_BACK)
+
+
+static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_internal_data:bool) -> void:
+    if definition.placement_defined:
+        return
+    if from_internal_data:
+        definition.placement = &"external" if definition.label == "slipperysound" else &"internal"
+    elif definition.label == "engine":
+        definition.placement = &"engine"
+    elif MmdSoundCatalog.has_label(definition.label) \
+            and MmdSoundCatalog.get_entry(definition.label).get("controller", &"") == &"brake":
+        definition.placement = &"external"
 
 
 static func _apply_brake_source_defaults(definition:MmdSoundSourceDefinition) -> void:
     if definition.label == "brake" and definition.amplitude_factor > 10.0:
         definition.amplitude_factor = 1.0
         definition.amplitude_offset = 0.0
-    if definition.label in [
-            "brakesound_cab", "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
-            "localbrakesound", "localbrakesound2"]:
-        if not definition.placement_defined:
-            definition.placement = &"internal"
-        if not definition.range_defined:
-            definition.range = -1.0 if definition.label == "brakesound_cab" else 7.5
-    else:
-        if not definition.placement_defined:
-            definition.placement = &"external"
-        if not definition.range_defined and definition.label in ["brake", "brakesound", "slipperysound"]:
+    if not definition.range_defined:
+        if definition.label == "brakesound" and definition.placement == &"internal":
+            definition.range = -1.0
+        elif definition.label in _INTERNAL_BRAKE_LABELS:
+            definition.range = 7.5
+        elif definition.label in ["brake", "brakesound", "slipperysound"]:
             definition.range = 100.0
 
 
-## ignition:/shutdown: are their own MMD labels living in internaldata: (see
-## MmdSoundSourceParser.parse_internal_data()'s header comment), not part of engine:'s own block -
-## but they're the SAME engine turning on/off, matching the hand-authored engine.tres reference's
-## own shape exactly (one event with start/stop clips AND the rpm crossfade automation together,
-## not three separate bank events/triggers for what is one physical engine). Splices their
-## sound_main into engine's own sound_begin/sound_end IN PLACE (mutating the `engine` entry already
-## in `definitions`), only if `engine` doesn't already declare its own soundbegin:/soundend: (rare
-## but real: some vehicles put a stop sample directly in the engine: block itself) - an explicit
-## in-block value always wins over the merge. ignition:/shutdown: never end up in MmdSoundCatalog
-## themselves (parse() never sees them - they're outside sounds:/endsounds), so there's nothing to
-## remove from `definitions` afterward.
 static func _merge_ignition_and_shutdown_into_engine(
         definitions:Array[MmdSoundSourceDefinition], internal_data:Array[MmdSoundSourceDefinition]) -> void:
     var engine:MmdSoundSourceDefinition = null
@@ -143,8 +136,7 @@ static func _merge_ignition_and_shutdown_into_engine(
             engine = definition
             break
     if not engine:
-        return # nothing to merge ignition:/shutdown: into
-
+        return
     for definition:MmdSoundSourceDefinition in internal_data:
         if definition.label == "ignition" and engine.sound_begin.is_empty():
             engine.sound_begin = definition.sound_main

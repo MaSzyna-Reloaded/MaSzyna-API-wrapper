@@ -4,17 +4,46 @@
 #include "macros.hpp"
 #include "resources/lighting/LightListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
+#include <unordered_map>
 
 namespace godot {
     class TrainController;
     class TrainLighting : public TrainPart {
             GDCLASS(TrainLighting, TrainPart);
 
+        public:
+            enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
+            enum LightType {
+                LIGHT_TYPE_HEADLIGHT_UPPER,
+                LIGHT_TYPE_HEADLIGHT_LEFT,
+                LIGHT_TYPE_HEADLIGHT_RIGHT,
+                LIGHT_TYPE_REDMARKER_LEFT,
+                LIGHT_TYPE_REDMARKER_RIGHT,
+            };
+
         private:
             static void _bind_methods();
             TypedArray<LightListItem> light_position_list;
             bool roof_light_active = false;
             bool devices_light_active = false;
+
+            // This wrapper's own types for vehicle end / light kind - internal logic works with
+            // these, never with Maszyna::end / Maszyna::light directly. The maps below are the
+            // only place that translates to/from the Maszyna:: side (mirrors e.g.
+            // TrainDoors::Controls / door_controls_map, TrainController::StartMode /
+            // start_mode_map).
+            const std::unordered_map<LightEnd, Maszyna::end> light_end_map = {
+                    {LIGHT_END_FRONT, Maszyna::end::front},
+                    {LIGHT_END_REAR, Maszyna::end::rear},
+            };
+
+            const std::unordered_map<LightType, int> light_type_mask_map = {
+                    {LIGHT_TYPE_HEADLIGHT_UPPER, Maszyna::light::headlight_upper},
+                    {LIGHT_TYPE_HEADLIGHT_LEFT, Maszyna::light::headlight_left},
+                    {LIGHT_TYPE_HEADLIGHT_RIGHT, Maszyna::light::headlight_right},
+                    {LIGHT_TYPE_REDMARKER_LEFT, Maszyna::light::redmarker_left},
+                    {LIGHT_TYPE_REDMARKER_RIGHT, Maszyna::light::redmarker_right},
+            };
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;

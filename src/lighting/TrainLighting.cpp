@@ -1,35 +1,6 @@
 #include "TrainLighting.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
-#include <unordered_map>
 namespace godot {
-    namespace {
-        // This wrapper's own types for vehicle end / light kind - internal logic below works
-        // with these, never with Maszyna::end / Maszyna::light directly. The maps are the only
-        // place that translates to/from the Maszyna:: side (mirrors e.g. TrainDoors::Controls /
-        // door_controls_map, TrainController::StartMode / start_mode_map).
-        enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
-        enum LightType {
-            LIGHT_TYPE_HEADLIGHT_UPPER,
-            LIGHT_TYPE_HEADLIGHT_LEFT,
-            LIGHT_TYPE_HEADLIGHT_RIGHT,
-            LIGHT_TYPE_REDMARKER_LEFT,
-            LIGHT_TYPE_REDMARKER_RIGHT,
-        };
-
-        const std::unordered_map<LightEnd, Maszyna::end> LIGHT_END_MAP = {
-                {LIGHT_END_FRONT, Maszyna::end::front},
-                {LIGHT_END_REAR, Maszyna::end::rear},
-        };
-
-        const std::unordered_map<LightType, int> LIGHT_TYPE_MASK_MAP = {
-                {LIGHT_TYPE_HEADLIGHT_UPPER, Maszyna::light::headlight_upper},
-                {LIGHT_TYPE_HEADLIGHT_LEFT, Maszyna::light::headlight_left},
-                {LIGHT_TYPE_HEADLIGHT_RIGHT, Maszyna::light::headlight_right},
-                {LIGHT_TYPE_REDMARKER_LEFT, Maszyna::light::redmarker_left},
-                {LIGHT_TYPE_REDMARKER_RIGHT, Maszyna::light::redmarker_right},
-        };
-    } // namespace
-
     const char *TrainLighting::selector_position_changed_signal = "selector_position_changed";
 
     void TrainLighting::_bind_methods() {
@@ -132,28 +103,28 @@ namespace godot {
         // (iLights[front]/iLights[rear]) directly, not the raw selector position or
         // LightListItem table - iLights is the final, live "which bulbs are actually lit"
         // result (accounts for light_power/selector position/etc. already).
-        const int front_lights = p_mover->iLights[static_cast<int>(LIGHT_END_MAP.at(LIGHT_END_FRONT))];
-        const int rear_lights = p_mover->iLights[static_cast<int>(LIGHT_END_MAP.at(LIGHT_END_REAR))];
+        const int front_lights = p_mover->iLights[static_cast<int>(light_end_map.at(LIGHT_END_FRONT))];
+        const int rear_lights = p_mover->iLights[static_cast<int>(light_end_map.at(LIGHT_END_REAR))];
         p_state["lights/front_headlight_upper_enabled"] =
-                (front_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
+                (front_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
         p_state["lights/front_headlight_left_enabled"] =
-                (front_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
+                (front_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
         p_state["lights/front_headlight_right_enabled"] =
-                (front_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
+                (front_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
         p_state["lights/front_redmarker_left_enabled"] =
-                (front_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
+                (front_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
         p_state["lights/front_redmarker_right_enabled"] =
-                (front_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
+                (front_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
         p_state["lights/rear_headlight_upper_enabled"] =
-                (rear_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
+                (rear_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
         p_state["lights/rear_headlight_left_enabled"] =
-                (rear_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
+                (rear_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
         p_state["lights/rear_headlight_right_enabled"] =
-                (rear_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
+                (rear_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
         p_state["lights/rear_redmarker_left_enabled"] =
-                (rear_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
+                (rear_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
         p_state["lights/rear_redmarker_right_enabled"] =
-                (rear_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
+                (rear_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
 
         // Confirmed against vehicle/Train.h:220-227 (TTrain::cab_to_end(): `iCabn == 2 ? end::rear
         // : end::front`) and vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
@@ -166,28 +137,28 @@ namespace godot {
         // p_mover->CabActive (int, -1/0/1) mirrors iCabn's own front/rear meaning.
         const LightEnd active_end = (p_mover->CabActive < 0) ? LIGHT_END_REAR : LIGHT_END_FRONT;
         const LightEnd opposite_end = (active_end == LIGHT_END_FRONT) ? LIGHT_END_REAR : LIGHT_END_FRONT;
-        const int active_lights = p_mover->iLights[static_cast<int>(LIGHT_END_MAP.at(active_end))];
-        const int opposite_lights = p_mover->iLights[static_cast<int>(LIGHT_END_MAP.at(opposite_end))];
+        const int active_lights = p_mover->iLights[static_cast<int>(light_end_map.at(active_end))];
+        const int opposite_lights = p_mover->iLights[static_cast<int>(light_end_map.at(opposite_end))];
         p_state["lights/active_headlight_upper_enabled"] =
-                (active_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
+                (active_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
         p_state["lights/active_headlight_left_enabled"] =
-                (active_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
+                (active_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
         p_state["lights/active_headlight_right_enabled"] =
-                (active_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
+                (active_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
         p_state["lights/active_redmarker_left_enabled"] =
-                (active_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
+                (active_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
         p_state["lights/active_redmarker_right_enabled"] =
-                (active_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
+                (active_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
         p_state["lights/opposite_headlight_upper_enabled"] =
-                (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
+                (opposite_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_UPPER)) != 0;
         p_state["lights/opposite_headlight_left_enabled"] =
-                (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
+                (opposite_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_LEFT)) != 0;
         p_state["lights/opposite_headlight_right_enabled"] =
-                (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
+                (opposite_lights & light_type_mask_map.at(LIGHT_TYPE_HEADLIGHT_RIGHT)) != 0;
         p_state["lights/opposite_redmarker_left_enabled"] =
-                (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
+                (opposite_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_LEFT)) != 0;
         p_state["lights/opposite_redmarker_right_enabled"] =
-                (opposite_lights & LIGHT_TYPE_MASK_MAP.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
+                (opposite_lights & light_type_mask_map.at(LIGHT_TYPE_REDMARKER_RIGHT)) != 0;
 
         // Cab interior lamp / instrument backlighting have no counterpart on the wrapped mover -
         // gated only by 24V/110V power availability, matching the original engine's own
@@ -235,21 +206,21 @@ namespace godot {
     namespace {
         struct LightBit {
                 const char *name;
-                LightEnd end;
-                LightType type;
+                TrainLighting::LightEnd end;
+                TrainLighting::LightType type;
         };
 
         const LightBit LIGHT_BITS[] = {
-                {"front_headlight_upper", LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER},
-                {"front_headlight_left", LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT},
-                {"front_headlight_right", LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT},
-                {"front_redmarker_left", LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT},
-                {"front_redmarker_right", LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT},
-                {"rear_headlight_upper", LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER},
-                {"rear_headlight_left", LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT},
-                {"rear_headlight_right", LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT},
-                {"rear_redmarker_left", LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT},
-                {"rear_redmarker_right", LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT},
+                {"front_headlight_upper", TrainLighting::LIGHT_END_FRONT, TrainLighting::LIGHT_TYPE_HEADLIGHT_UPPER},
+                {"front_headlight_left", TrainLighting::LIGHT_END_FRONT, TrainLighting::LIGHT_TYPE_HEADLIGHT_LEFT},
+                {"front_headlight_right", TrainLighting::LIGHT_END_FRONT, TrainLighting::LIGHT_TYPE_HEADLIGHT_RIGHT},
+                {"front_redmarker_left", TrainLighting::LIGHT_END_FRONT, TrainLighting::LIGHT_TYPE_REDMARKER_LEFT},
+                {"front_redmarker_right", TrainLighting::LIGHT_END_FRONT, TrainLighting::LIGHT_TYPE_REDMARKER_RIGHT},
+                {"rear_headlight_upper", TrainLighting::LIGHT_END_REAR, TrainLighting::LIGHT_TYPE_HEADLIGHT_UPPER},
+                {"rear_headlight_left", TrainLighting::LIGHT_END_REAR, TrainLighting::LIGHT_TYPE_HEADLIGHT_LEFT},
+                {"rear_headlight_right", TrainLighting::LIGHT_END_REAR, TrainLighting::LIGHT_TYPE_HEADLIGHT_RIGHT},
+                {"rear_redmarker_left", TrainLighting::LIGHT_END_REAR, TrainLighting::LIGHT_TYPE_REDMARKER_LEFT},
+                {"rear_redmarker_right", TrainLighting::LIGHT_END_REAR, TrainLighting::LIGHT_TYPE_REDMARKER_RIGHT},
         };
     } // namespace
 
@@ -259,8 +230,8 @@ namespace godot {
 
         for (const LightBit &bit: LIGHT_BITS) {
             if (p_light == bit.name) {
-                const int end = static_cast<int>(LIGHT_END_MAP.at(bit.end));
-                const int mask = LIGHT_TYPE_MASK_MAP.at(bit.type);
+                const int end = static_cast<int>(light_end_map.at(bit.end));
+                const int mask = light_type_mask_map.at(bit.type);
                 if (p_enabled) {
                     mover->iLights[end] |= mask;
                 } else {
@@ -275,13 +246,15 @@ namespace godot {
     namespace {
         struct LightSwitchMask {
                 const char *suffix;
-                LightType type;
+                TrainLighting::LightType type;
         };
 
         const LightSwitchMask LIGHT_SWITCH_MASKS[] = {
-                {"upper", LIGHT_TYPE_HEADLIGHT_UPPER},    {"left", LIGHT_TYPE_HEADLIGHT_LEFT},
-                {"right", LIGHT_TYPE_HEADLIGHT_RIGHT},    {"leftend", LIGHT_TYPE_REDMARKER_LEFT},
-                {"rightend", LIGHT_TYPE_REDMARKER_RIGHT},
+                {"upper", TrainLighting::LIGHT_TYPE_HEADLIGHT_UPPER},
+                {"left", TrainLighting::LIGHT_TYPE_HEADLIGHT_LEFT},
+                {"right", TrainLighting::LIGHT_TYPE_HEADLIGHT_RIGHT},
+                {"leftend", TrainLighting::LIGHT_TYPE_REDMARKER_LEFT},
+                {"rightend", TrainLighting::LIGHT_TYPE_REDMARKER_RIGHT},
         };
     } // namespace
 
@@ -307,8 +280,8 @@ namespace godot {
 
         for (const LightSwitchMask &entry: LIGHT_SWITCH_MASKS) {
             if (suffix == entry.suffix) {
-                const int end = static_cast<int>(LIGHT_END_MAP.at(target_end));
-                const int mask = LIGHT_TYPE_MASK_MAP.at(entry.type);
+                const int end = static_cast<int>(light_end_map.at(target_end));
+                const int mask = light_type_mask_map.at(entry.type);
                 if (p_enabled) {
                     mover->iLights[end] |= mask;
                 } else {

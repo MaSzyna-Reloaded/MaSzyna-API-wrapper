@@ -89,8 +89,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.10352566, 0.10352566)
-shader_parameter/cirrus_position2 = Vector2(0.10352566, 0.10352566)
+shader_parameter/cirrus_position1 = Vector2(0.50862765, 0.50862765)
+shader_parameter/cirrus_position2 = Vector2(0.50862765, 0.50862765)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -100,7 +100,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.5175763, 0.5175763)
+shader_parameter/cumulus_position = Vector2(2.5428598, 2.5428598)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -439,6 +439,21 @@ data_path = "/dynamic/pkp/ep09_v1/"
 file_name = "104e_1"
 skin = "104e-035"
 train_id = "ep09"
+
+[node name="SM31" type="Node3D" parent="." unique_id=162152882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.559359, 0, 95.37102)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/sm31_v1/"
+file_name = "411d"
+train_id = "sm31"
+
+[node name="KA" type="Node3D" parent="." unique_id=754884786]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.47315, 0, 119.65934)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/road/clio"
+file_name = "clio"
+skin = "red"
+train_id = "clio"
 
 [node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)

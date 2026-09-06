@@ -42,6 +42,7 @@ E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
 FIZResourceLoaderRegistrar="*uid://c3g4562u11dp2"
+DebugMenu="*uid://cggqb75a8w8r"
 
 [debug]
 
@@ -58,7 +59,7 @@ text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
+enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
 
 [input]
 
@@ -262,6 +263,13 @@ redmarker_rear_right_toggle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":true,"ctrl_pressed":true,"meta_pressed":false,"pressed":false,"keycode":73,"physical_keycode":0,"key_label":0,"unicode":73,"location":0,"echo":false,"script":null)
 ]
 }
+
+[maszyna]
+
+sound/brake_volume_factor=4.0
+sound/brake_cabin_unit_size_factor=6.0
+sound/brake_exterior_unit_size_factor=8.0
+sound/brake_exterior_volume_factor=8.0
 
 [rendering]
 

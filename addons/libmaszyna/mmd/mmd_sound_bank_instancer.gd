@@ -25,21 +25,43 @@ static func build_into(
 
     var definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
     var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
+    var vehicle_soundproofing:Array[PackedFloat32Array] = MmdSoundSourceParser.parse_vehicle_soundproofing(abs_mmd_path, context)
     _merge_ignition_and_shutdown_into_engine(definitions, internal_data)
     # buzzer:/buzzershp: (see MmdSoundCatalog) are their own catalog-matched events, unlike
     # ignition:/shutdown: which only ever get merged into "engine" and never appear standalone.
+    # The brake-related internaldata: labels are likewise their own catalog-matched events -
+    # "brakesound" is relabeled to "brakesound_cab" first since a `sounds:`-block "brakesound"
+    # (the exterior copy, DynObj.cpp) can exist in the very same file (dynamic/pkp/su45_v2/
+    # 301d.mmd:62 vs. :119) and would otherwise collide with it in MmdSoundCatalog/the SfxBank.
+    const _INTERNAL_BRAKE_LABELS := [
+        "slipperysound", "localbrakesound", "localbrakesound2",
+        "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
+    ]
     for definition:MmdSoundSourceDefinition in internal_data:
         if definition.label == "buzzer" or definition.label == "buzzershp":
+            definitions.append(definition)
+        elif definition.label == "brakesound":
+            definition.label = "brakesound_cab"
+            definitions.append(definition)
+        elif definition.label in _INTERNAL_BRAKE_LABELS:
             definitions.append(definition)
 
     var events:Array[SfxEvent] = []
     var matched:Array[Dictionary] = []
+    var brake_sources:Dictionary = {}
     for definition:MmdSoundSourceDefinition in definitions:
         if not MmdSoundCatalog.has_label(definition.label):
             context.warn_unsupported_label(definition.label, abs_mmd_path, 0)
             continue
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
-        events.append(MmdSoundEventBuilder.build(definition, entry["event_name"], entry.get("sound_parameter", &"")))
+        var brake_controlled:bool = entry.get("controller", &"") == &"brake"
+        if brake_controlled:
+            _apply_brake_source_defaults(definition)
+            brake_sources[definition.label] = definition
+        events.append(MmdSoundEventBuilder.build(
+                definition, entry["event_name"],
+                &"combined" if brake_controlled else entry.get("sound_parameter", &""),
+                brake_controlled))
         matched.append(entry)
 
     diagnostics.append_array(context.diagnostics)
@@ -62,6 +84,8 @@ static func build_into(
 
     var controller_path := NodePath("../../%s/TrainController" % fiz_controller_name)
     for entry:Dictionary in matched:
+        if entry.get("controller", &"") == &"brake":
+            continue
         var trigger := TrainSoundTrigger.new()
         trigger.name = String(entry["event_name"]).capitalize()
         trigger.state_property = entry["state_property"]
@@ -72,6 +96,32 @@ static func build_into(
         trigger.trigger_threshold_max = entry.get("trigger_threshold_max", 1.0)
         trigger.controller_path = controller_path
         player.add_child(trigger, false, Node.INTERNAL_MODE_BACK)
+
+    if brake_sources:
+        var brake_controller := TrainBrakeSoundController.new()
+        brake_controller.name = "BrakeSoundController"
+        brake_controller.sources = brake_sources
+        brake_controller.configured_soundproofing = vehicle_soundproofing
+        brake_controller.controller_path = controller_path
+        player.add_child(brake_controller, false, Node.INTERNAL_MODE_BACK)
+
+
+static func _apply_brake_source_defaults(definition:MmdSoundSourceDefinition) -> void:
+    if definition.label == "brake" and definition.amplitude_factor > 10.0:
+        definition.amplitude_factor = 1.0
+        definition.amplitude_offset = 0.0
+    if definition.label in [
+            "brakesound_cab", "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
+            "localbrakesound", "localbrakesound2"]:
+        if not definition.placement_defined:
+            definition.placement = &"internal"
+        if not definition.range_defined:
+            definition.range = -1.0 if definition.label == "brakesound_cab" else 7.5
+    else:
+        if not definition.placement_defined:
+            definition.placement = &"external"
+        if not definition.range_defined and definition.label in ["brake", "brakesound", "slipperysound"]:
+            definition.range = 100.0
 
 
 ## ignition:/shutdown: are their own MMD labels living in internaldata: (see

@@ -8,6 +8,9 @@ var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
 
+@export var cab_number:int = 1
+@export var cab_window_open:bool = false
+
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
@@ -34,12 +37,23 @@ func _propagate_train_controller(node: Node, controller: TrainController):
 func set_train_controller(controller:TrainController):
     _propagate_train_controller(self, controller)
 
-func _process(delta):
-    if _dirty:
-        _dirty = false
-        if controller_path:
-            var controller:TrainController = get_node(controller_path)
-            set_train_controller(controller)
+
+func get_sound_listener_context() -> int:
+    if cab_window_open:
+        return 3
+    return 2 if cab_number > 0 else 0
+
+
+func _process(_delta:float) -> void:
+    _process_dirty()
+
+func _process_dirty() -> void:
+    if not _dirty:
+        return
+    _dirty = false
+    if controller_path:
+        var controller:TrainController = get_node(controller_path)
+        set_train_controller(controller)
             
 func _ready() -> void:
     _cabin_ready = true

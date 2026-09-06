@@ -88,6 +88,22 @@ func _disable_plugin():
 
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
+    add_custom_project_setting(
+        "maszyna/sound/brake_volume_factor", 2.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
+    )
+    add_custom_project_setting(
+        "maszyna/sound/brake_exterior_volume_factor", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
+    )
+    add_custom_project_setting(
+        "maszyna/sound/brake_cabin_unit_size_factor", 2.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
+    )
+    add_custom_project_setting(
+        "maszyna/sound/brake_exterior_unit_size_factor", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

@@ -53,6 +53,15 @@ class_name DynamicRailVehicle3D
             train_id = x
             _dirty = true
 
+## Forwarded to the generated FIZTrainController.initial_velocity. 0.0 (default) means the
+## vehicle starts not-ready-to-depart (battery off, matching the original engine's scenery
+## velocity token); a non-zero value marks it ready (battery on per battery_start_mode).
+@export var initial_velocity:float = 0.0:
+    set(x):
+        if not x == initial_velocity:
+            initial_velocity = x
+            _dirty = true
+
 ## Godot node name of a MaszynaTrack3D found anywhere in the scene tree.
 @export var start_track_name:String = "":
     set(x):
@@ -141,6 +150,7 @@ func _rebuild() -> void:
     fiz_controller.data_path = normalized_data_path
     fiz_controller.fiz_filename = file_name
     fiz_controller.train_id = train_id
+    fiz_controller.initial_velocity = initial_velocity
 
     var vehicle := RailVehicle3D.new()
     vehicle.name = "RailVehicle3D"

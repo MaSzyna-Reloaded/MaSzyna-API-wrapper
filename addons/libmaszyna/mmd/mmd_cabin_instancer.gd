@@ -239,6 +239,15 @@ static func build_into(
     model.data_path = data_path
     model.model_filename = model_relpath
     model.skins = resolve_skins(data_path, skin)
+    # A cabin interior is self-contained (glass, instrument backlight glow, ...) and, unlike
+    # mixed-purpose exterior E3D content, alpha-scissor's crisp cutout looks wrong across the
+    # board here - real alpha blending for every already-transparent-flagged submodel instead.
+    model.force_alpha = true
+    # Must be set before add_child() triggers the actual E3D build (E3DModelInstance._ready()) -
+    # the resolved submodel needs real alpha blending from the moment its material is first
+    # created, not as a later refresh.
+    model.force_alpha_submodel_paths = _resolve_force_alpha_submodel_paths(
+            data_path, model_relpath, definition.instruments)
     generated_root.add_child(model)
 
     if not model.is_e3d_loaded():
@@ -503,6 +512,59 @@ static func _resolve_model_relpath(model_token:String) -> String:
     if lower.ends_with(".t3d") or lower.ends_with(".e3d"):
         normalized = normalized.substr(0, normalized.length() - 4)
     return normalized
+
+
+## Resolves E3DModelInstance.force_alpha_submodel_paths for the on/off submodel pairs backing
+## "i-*:" indicator descriptors whose MmdSemanticCatalog entry has "force_alpha" set (currently
+## just i-instrumentlight - see mmd_semantic_catalog.gd). Runs BEFORE the cab's E3DModelInstance
+## is built, by loading the same (cached) E3DModel resource it will use, so the resolved paths
+## can be assigned before add_child() triggers the actual build.
+##
+## Walks the submodel tree at most once (via _index_submodel_paths()), skipped entirely when no
+## instrument in this cab needs it - a per-name recursive search repeated per label/suffix would
+## re-walk the tree from the root every time instead.
+static func _resolve_force_alpha_submodel_paths(
+        data_path:String, model_relpath:String, instruments:Array[MmdInstrumentDescriptor]) -> Array[NodePath]:
+    var paths:Array[NodePath] = []
+    var needs_force_alpha:bool = instruments.any(
+            func(descriptor:MmdInstrumentDescriptor) -> bool:
+                return (
+                        descriptor.label.begins_with("i-") and MmdSemanticCatalog.has_label(descriptor.label)
+                        and MmdSemanticCatalog.get_entry(descriptor.label).get("force_alpha", false)))
+    if not needs_force_alpha:
+        return paths
+
+    var e3d_model:E3DModel = E3DModelManager.load_model(data_path, model_relpath)
+    if not e3d_model:
+        return paths
+
+    var path_index:Dictionary = {}
+    _index_submodel_paths(e3d_model.submodels, path_index)
+
+    for descriptor:MmdInstrumentDescriptor in instruments:
+        if not descriptor.label.begins_with("i-") or not MmdSemanticCatalog.has_label(descriptor.label):
+            continue
+        if not MmdSemanticCatalog.get_entry(descriptor.label).get("force_alpha", false):
+            continue
+        for suffix:String in ["_on", "_off"]:
+            var path:NodePath = path_index.get((descriptor.submodel_name + suffix).to_lower(), NodePath(""))
+            if not path.is_empty():
+                paths.append(path)
+    return paths
+
+
+## Single-pass equivalent of _index_submodels() (below), but over the E3DSubModel resource tree
+## before it is instantiated, keyed by lowercased name to a NodePath from the model root instead
+## of by node reference. First match wins on a name collision, same as a DFS "find by name" would.
+static func _index_submodel_paths(submodels:Array, index:Dictionary, path_prefix:String = "") -> void:
+    for submodel:E3DSubModel in submodels:
+        var current_path:String = (
+                path_prefix.path_join(submodel.resource_name) if path_prefix else submodel.resource_name)
+        var name_lower:String = submodel.resource_name.to_lower()
+        if not index.has(name_lower):
+            index[name_lower] = NodePath(current_path)
+        if submodel.submodels:
+            _index_submodel_paths(submodel.submodels, index, current_path)
 
 
 ## Indexes by node reference, not NodePath - the correct mesh_path (a path FROM the widget TO

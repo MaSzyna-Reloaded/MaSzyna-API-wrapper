@@ -579,6 +579,11 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+            # Instrument backlight overlays are painted as a soft glow, not a hard-edged cutout -
+            # unlike most other on/off indicator meshes (e.g. i-cablight), they need real alpha
+            # blending (E3DModelInstance.force_alpha_submodel_paths) rather than the default
+            # alpha-scissor, or the glow renders as a crisp, wrong-looking silhouette.
+            "force_alpha": true,
             "light_widget_class": CabinOmniLight3D,
             "light_fixed_fields": {
                 "state_property": "devices_light_enabled",

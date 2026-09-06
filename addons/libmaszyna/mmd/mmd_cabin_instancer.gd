@@ -667,8 +667,13 @@ static func _build_audio_stream(filename:String) -> AudioStream:
 ## own MMD scale/animation_type - cabin geometry differs per vehicle, so this can't be a fixed
 ## per-label constant (see MmdSemanticCatalog's header comment). Matches the original engine's
 ## TGauge formula evaluated at value=1: `rot` -> rotation.y = scale*360 degrees; `mov` ->
-## position.z = scale (MMD's own local Z axis convention). `offset` has no equivalent on these
-## widgets (no baseline-shift concept) and is reported instead of silently dropped.
+## position.z = scale (MMD's own local Z axis convention). `offset` is a constant baseline shift,
+## independent of value, so it is written as-is (offset*360 for `rot`, offset for `mov`) into the
+## widget's mesh_rotation_offset/mesh_position_offset field - unlike `scale` it is never rescaled
+## by range_scale (it doesn't depend on the value domain) or by mmd_scale_multiplier (the original
+## engine's own gauge.Load(..., mul) only multiplies scale, per vehicle/Gauge.cpp:182). Widgets
+## without an offset field (e.g. CabinButton/CabinSwitch) still report it as unsupported instead
+## of silently dropping it.
 ##
 ## `entry["animation_range_config_properties"]`, when present, is `[min_key, max_key]` into
 ## controller.config - MMD's scale is calibrated against MaSzyna's raw value domain for a
@@ -704,6 +709,15 @@ static func _apply_animation_shape(
                 var rotation_vec:Vector3 = widget.get("mesh_rotation")
                 rotation_vec.y = mmd_scale * 360.0 * range_scale
                 widget.set("mesh_rotation", rotation_vec)
+                if "mesh_rotation_offset" in widget:
+                    var rotation_offset_vec:Vector3 = widget.get("mesh_rotation_offset")
+                    rotation_offset_vec.y = descriptor.offset * 360.0
+                    widget.set("mesh_rotation_offset", rotation_offset_vec)
+                elif not is_zero_approx(descriptor.offset):
+                    diagnostics.append(_diag(
+                            "info", "MMD_ANIMATION_UNSUPPORTED",
+                            "Label '%s' has a non-zero MMD offset (%s) but its widget has no mesh_rotation_offset field - ignored" % [descriptor.label, descriptor.offset],
+                            cab_number, descriptor.label, descriptor.submodel_name))
             else:
                 diagnostics.append(_diag(
                         "info", "MMD_ANIMATION_UNSUPPORTED",
@@ -714,6 +728,15 @@ static func _apply_animation_shape(
                 var position_vec:Vector3 = widget.get("mesh_position")
                 position_vec.z = mmd_scale * range_scale
                 widget.set("mesh_position", position_vec)
+                if "mesh_position_offset" in widget:
+                    var position_offset_vec:Vector3 = widget.get("mesh_position_offset")
+                    position_offset_vec.z = descriptor.offset
+                    widget.set("mesh_position_offset", position_offset_vec)
+                elif not is_zero_approx(descriptor.offset):
+                    diagnostics.append(_diag(
+                            "info", "MMD_ANIMATION_UNSUPPORTED",
+                            "Label '%s' has a non-zero MMD offset (%s) but its widget has no mesh_position_offset field - ignored" % [descriptor.label, descriptor.offset],
+                            cab_number, descriptor.label, descriptor.submodel_name))
             else:
                 diagnostics.append(_diag(
                         "info", "MMD_ANIMATION_UNSUPPORTED",
@@ -724,12 +747,11 @@ static func _apply_animation_shape(
                     "info", "MMD_ANIMATION_UNSUPPORTED",
                     "Label '%s' uses unsupported animation type '%s'" % [descriptor.label, descriptor.animation_type],
                     cab_number, descriptor.label, descriptor.submodel_name))
-
-    if not is_zero_approx(descriptor.offset):
-        diagnostics.append(_diag(
-                "info", "MMD_ANIMATION_UNSUPPORTED",
-                "Label '%s' has a non-zero MMD offset (%s) which the reused cabin widgets cannot represent - ignored" % [descriptor.label, descriptor.offset],
-                cab_number, descriptor.label, descriptor.submodel_name))
+            if not is_zero_approx(descriptor.offset):
+                diagnostics.append(_diag(
+                        "info", "MMD_ANIMATION_UNSUPPORTED",
+                        "Label '%s' has a non-zero MMD offset (%s) which the reused cabin widgets cannot represent - ignored" % [descriptor.label, descriptor.offset],
+                        cab_number, descriptor.label, descriptor.submodel_name))
 
 
 ## `widget` must already be inside the tree (a child of the same generated_root as `model`'s

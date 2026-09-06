@@ -37,6 +37,16 @@ enum ControllerMode { OnOff, On, Off }
         _target_mesh_rotation = x
         _dirty = true
 
+@export var mesh_position_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_position_offset = x
+        _dirty = true
+
+@export var mesh_rotation_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_rotation_offset = x
+        _dirty = true
+
 @export var speed = 10.0
 @export var step = 1.0
 
@@ -71,8 +81,8 @@ func _update_state():
         if state_property:
             value = _controller.state.get(state_property, value)
         _value_normalized = value / (value_max - value_min)
-        _target_mesh_position = mesh_position * _value_normalized
-        _target_mesh_rotation = mesh_rotation * _value_normalized
+        _target_mesh_position = mesh_position_offset + mesh_position * _value_normalized
+        _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * _value_normalized
 
 func _ready():
     if not Engine.is_editor_hint() and Console:

@@ -266,10 +266,10 @@ redmarker_rear_right_toggle={
 
 [maszyna]
 
-sound/brake_volume_factor=4.0
-sound/brake_cabin_unit_size_factor=6.0
+sound/brake_exterior_volume_factor=1.0
 sound/brake_exterior_unit_size_factor=8.0
-sound/brake_exterior_volume_factor=8.0
+sound/brake_cabin_unit_size_factor=6.0
+sound/brake_volume_factor=1.0
 
 [rendering]
 

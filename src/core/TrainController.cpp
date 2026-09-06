@@ -394,7 +394,11 @@ namespace godot {
         p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {}
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
+        // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
+        // property (see update_mover() below), so this is a thin alias, not new derivation.
+        p_config["max_speed"] = max_velocity;
+    }
 
     void TrainController::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {

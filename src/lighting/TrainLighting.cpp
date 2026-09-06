@@ -279,10 +279,8 @@ namespace godot {
         };
 
         const LightSwitchMask LIGHT_SWITCH_MASKS[] = {
-                {"upper", LIGHT_TYPE_HEADLIGHT_UPPER},
-                {"left", LIGHT_TYPE_HEADLIGHT_LEFT},
-                {"right", LIGHT_TYPE_HEADLIGHT_RIGHT},
-                {"leftend", LIGHT_TYPE_REDMARKER_LEFT},
+                {"upper", LIGHT_TYPE_HEADLIGHT_UPPER},    {"left", LIGHT_TYPE_HEADLIGHT_LEFT},
+                {"right", LIGHT_TYPE_HEADLIGHT_RIGHT},    {"leftend", LIGHT_TYPE_REDMARKER_LEFT},
                 {"rightend", LIGHT_TYPE_REDMARKER_RIGHT},
         };
     } // namespace

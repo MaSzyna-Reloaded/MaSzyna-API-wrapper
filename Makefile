@@ -1,4 +1,4 @@
-.PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix
+.PHONY: docs watch-and-compile docs-server docs-install cleanup style-check style-fix
 .DEFAULT_GOAL = compile-debug
 
 GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
@@ -148,5 +148,5 @@ docker-run-tests: docker-build-tests
 	docker run --rm godot-tests
 
 
-run-tests: compile
+run-tests: compile-debug
 	godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit

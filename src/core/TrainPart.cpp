@@ -1,3 +1,4 @@
+#include "../systems/TrainPhysicsServer.hpp"
 #include "./TrainSystem.hpp"
 #include "TrainController.hpp"
 #include "TrainPart.hpp"
@@ -68,6 +69,9 @@ namespace godot {
                                 String::num(con));
                     }
                 }
+                if (TrainPhysicsServer::get_instance() != nullptr) {
+                    TrainPhysicsServer::get_instance()->register_part(this);
+                }
                 if (enabled) {
                     _register_commands();
                     _commands_registered = true;
@@ -81,6 +85,9 @@ namespace godot {
                 if (train_controller_node != nullptr) {
                     train_controller_node->disconnect(
                             TrainController::mover_config_changed_signal, Callable(this, "update_mover"));
+                }
+                if (TrainPhysicsServer::get_instance() != nullptr) {
+                    TrainPhysicsServer::get_instance()->unregister_part(this);
                 }
                 train_controller_node = nullptr;
             } break;
@@ -121,19 +128,11 @@ namespace godot {
         emit_signal("config_changed");
     }
 
-    void TrainPart::_process(const double p_delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
+    void TrainPart::_flush_dirty_state() {
         if (dirty) {
             // emit_config_changed_signal();
             update_mover();
             dirty = false;
-        }
-
-        if (enabled) {
-            _process_mover(p_delta);
         }
 
         if (enabled_changed) {
@@ -152,11 +151,19 @@ namespace godot {
         }
     }
 
-    void TrainPart::_process_mover(const double p_delta) {
+    void TrainPart::_process_mover_thread_safe(const double p_delta) {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_process_mover(mover, p_delta);
+            }
+        }
+    }
+
+    void TrainPart::_post_process_mover_sync() {
+        if (train_controller_node != nullptr) {
+            const TMoverParameters *mover = train_controller_node->get_mover();
+            if (mover != nullptr) {
                 train_controller_node->get_state().merge(get_mover_state(), true);
             }
         }

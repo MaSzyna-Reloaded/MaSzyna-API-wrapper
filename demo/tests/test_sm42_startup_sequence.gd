@@ -5,9 +5,9 @@ var train: TrainController
 func before_each():
     train = load("res://tests/sm42_controller.tscn").instantiate()
     add_child(train)
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
     train.send_command("battery", true)
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
 
 func after_each():
     remove_child(train)
@@ -15,12 +15,12 @@ func after_each():
 
 func test_successful_enabling_oil_pump():
     train.send_command("oil_pump", true)
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
     assert_true(train.state["oil_pump_active"], "Oil pump should be active")
 
 func test_successful_enabling_fuel_pump():
     train.send_command("fuel_pump", true)
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
     assert_true(train.state["fuel_pump_active"], "Fuel pump should be active")
 
 func test_successful_pumping_the_oil():
@@ -43,7 +43,7 @@ func test_successful_turning_engine_on():
 
 func test_successful_brake_releasing():
     train.send_command("brake_level_set_position", "drive")
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
     train.send_command("brake_releaser", true)
     await wait_seconds(10)
     var value = train.state["brake_air_pressure"]

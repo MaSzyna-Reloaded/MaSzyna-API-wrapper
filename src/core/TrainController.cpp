@@ -132,6 +132,9 @@ namespace godot {
         BIND_PROPERTY(
                 Variant::FLOAT, "floor_height", "dimensions/floor_height", &TrainController::set_floor_height,
                 &TrainController::get_floor_height, "floor_height");
+        BIND_PROPERTY(
+                Variant::FLOAT, "initial_velocity", "initial_velocity", &TrainController::set_initial_velocity,
+                &TrainController::get_initial_velocity, "initial_velocity");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
                 &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
@@ -224,7 +227,7 @@ namespace godot {
         _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+        mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
 
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
@@ -401,7 +404,7 @@ namespace godot {
             update_config(new_config);
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-            mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+            mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }

@@ -16,7 +16,6 @@ namespace godot {
             GDCLASS(TrainController, Node)
         private:
             TMoverParameters *mover{};
-            double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
             bool dirty = false;      // Refreshes all elements
@@ -213,6 +212,14 @@ namespace godot {
             MAKE_MEMBER_GS(double, width, 0.0);
             MAKE_MEMBER_GS(double, drag_coefficient, 0.0);
             MAKE_MEMBER_GS(double, floor_height, 0.96);
+
+            // Mirrors the original engine's scenery-line velocity token (TDynamicObject::Init's
+            // `driveractive = (fVel != 0.0)`): a vehicle with initial_velocity == 0.0 is "not
+            // ready to depart" (ReadyFlag=false, battery stays off until switched on manually);
+            // any non-zero value (scenario authors commonly use 0.1 for a stationary-but-ready
+            // vehicle) marks it ready, so CheckLocomotiveParameters() turns the battery on per
+            // battery_start_mode.
+            MAKE_MEMBER_GS(double, initial_velocity, 0.0);
 
             /* Cntrl. (ogolne, bateria/przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
             MAKE_MEMBER_GS_NR(StartMode, battery_start_mode, START_MODE_MANUAL);

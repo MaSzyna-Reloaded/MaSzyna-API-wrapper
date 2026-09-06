@@ -40,6 +40,17 @@ class_name FIZTrainController
             if _controller:
                 _controller.set_train_id(train_id)
 
+## Forwarded to the built child TrainController's initial_velocity. Not derived from the FIZ
+## file - same as train_id above. 0.0 (default) means the vehicle starts not-ready-to-depart
+## (battery off, matching the original engine's scenery velocity token); a non-zero value
+## marks it ready (battery on per battery_start_mode).
+@export var initial_velocity:float = 0.0:
+    set(x):
+        if not x == initial_velocity:
+            initial_velocity = x
+            if _controller:
+                _controller.set_initial_velocity(initial_velocity)
+
 ## When false (default), the generated TrainController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
 ## into the .tscn (it's re-derived from the FIZ file on every load instead). Toggle via the
@@ -87,6 +98,7 @@ func _reload() -> void:
     _controller = FizTrainControllerInstancer.build(abs_fiz_path)
     if train_id:
         _controller.set_train_id(train_id)
+    _controller.set_initial_velocity(initial_velocity)
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)

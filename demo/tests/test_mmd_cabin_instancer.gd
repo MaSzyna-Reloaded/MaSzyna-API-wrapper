@@ -357,6 +357,35 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     assert_eq(diagnostics.size(), 0)
 
 
+func test_build_radio_indicator_adds_radio_power_led_omnilight():
+    var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
+    descriptor.label = "i-radio"
+    descriptor.submodel_name = "radio_lamp"
+    var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
+
+    var on_node:Node3D = add_child_autofree(Node3D.new())
+    on_node.position = Vector3(1.0, 2.0, 3.0)
+    var submodel_index:Dictionary = {"radio_lamp_on": [on_node]}
+
+    var generated_root:Node3D = add_child_autofree(Node3D.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+
+    assert_eq(generated_root.get_child_count(), 2)
+    var indicator:CabinSpotLight3D = generated_root.get_child(0)
+    var light:CabinOmniLight3D = generated_root.get_child(1)
+    assert_eq(indicator.get_node(indicator.on_target_path), on_node)
+    assert_eq(indicator.state_property, "radio_enabled")
+    assert_eq(light.global_position, on_node.global_position)
+    assert_eq(light.state_property, "radio_powered")
+    assert_eq(light.light_color, Color(0.0, 0.738281, 0.121986, 1.0))
+    assert_eq(light.light_energy_on, 0.05)
+    assert_almost_eq(light.omni_range, 0.1, 0.0001)
+    assert_eq(diagnostics.size(), 0)
+
+
 func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescriptor:
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if descriptor.label == label:

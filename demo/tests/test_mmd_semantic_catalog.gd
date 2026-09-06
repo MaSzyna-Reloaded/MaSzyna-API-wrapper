@@ -80,15 +80,16 @@ func test_hvcurrent1_binds_current1():
     assert_eq(entry["fixed_fields"]["state_property"], "current1")
 
 
-func test_i_radio_binds_radio_enabled_not_radio_powered():
+func test_i_radio_indicator_and_powered_omnilight_are_separate():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-radio")
     assert_eq(entry["widget_class"], CabinSpotLight3D)
     assert_eq(entry["fixed_fields"]["state_property"], "radio_enabled")
     assert_true(entry["position_at_submodel"])
-    # no real per-vehicle lamp data exists for this indicator - it must rely on
-    # CabinSpotLight3D's own light_enabled=false default rather than opting the light back in,
-    # so it doesn't visibly show the czuwak (alerter)'s own borrowed color/range instead.
-    assert_false(entry["fixed_fields"].has("light_enabled"))
+    assert_eq(entry["light_widget_class"], CabinOmniLight3D)
+    assert_eq(entry["light_fixed_fields"]["state_property"], "radio_powered")
+    assert_eq(entry["light_fixed_fields"]["light_color"], Color(0.0, 0.738281, 0.121986, 1.0))
+    assert_eq(entry["light_fixed_fields"]["light_energy_on"], 0.05)
+    assert_eq(entry["light_fixed_fields"]["omni_range"], 0.1)
 
 
 func test_cab_light_indicator_and_spotlight_are_separate():

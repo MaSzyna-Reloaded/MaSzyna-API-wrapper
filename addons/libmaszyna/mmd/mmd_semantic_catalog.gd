@@ -521,15 +521,9 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
-        # Confirmed against vehicle/Train.cpp:9160 (btLampkaRadio.Turn(mvOccupied->Radio)) - the
-        # indicator condition is the plain Radio flag itself, NOT gated by Power24v/110v
-        # availability (unlike e.g. the radio-call/radio-stop commands, which do check power) -
-        # so state_property is "radio_enabled" (TrainController.cpp:433), not "radio_powered".
-        # SM42's own hand-authored cabin has no real per-vehicle radio lamp to copy
-        # light_color/spot_range/etc. from (only its czuwak (alerter) lamps have real numeric
-        # data), so light_enabled is left at CabinSpotLight3D's own default (false) - the light
-        # itself stays off; only the on_target/off_target submodel pair and the click sound (if
-        # soundinc:/sounddec: are present) are driven from state.
+        # The E3D indicator follows the plain Radio flag, matching vehicle/Train.cpp:9160.
+        # The separate OmniLight follows radio_powered and copies SM42's hand-authored
+        # RadioPowerLed parameters; unlike the indicator mesh, its glow requires supply power.
         "i-radio": {
             "widget_class": CabinSpotLight3D,
             "fixed_fields": {
@@ -538,6 +532,15 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+            "light_widget_class": CabinOmniLight3D,
+            "light_fixed_fields": {
+                "state_property": "radio_powered",
+                "light_color": Color(0.0, 0.738281, 0.121986, 1.0),
+                "light_energy": 0.007,
+                "light_energy_on": 0.05,
+                "light_energy_off": 0.0,
+                "omni_range": 0.1,
+            },
         },
         # i-* labels are indicator meshes in MaSzyna: the widget only switches the matching
         # <submodel>_on/<submodel>_off pair. The optional light widget below is a separate Godot

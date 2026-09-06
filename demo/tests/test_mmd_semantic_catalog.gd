@@ -91,6 +91,27 @@ func test_i_radio_binds_radio_enabled_not_radio_powered():
     assert_false(entry["fixed_fields"].has("light_enabled"))
 
 
+func test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit():
+    var expected:Dictionary = {
+        "i-upperlight": "lights/front_headlight_upper_enabled",
+        "i-leftlight": "lights/front_headlight_left_enabled",
+        "i-rightlight": "lights/front_headlight_right_enabled",
+        "i-leftend": "lights/front_redmarker_left_enabled",
+        "i-rightend": "lights/front_redmarker_right_enabled",
+        "i-rearupperlight": "lights/rear_headlight_upper_enabled",
+        "i-rearleftlight": "lights/rear_headlight_left_enabled",
+        "i-rearrightlight": "lights/rear_headlight_right_enabled",
+        "i-rearleftend": "lights/rear_redmarker_left_enabled",
+        "i-rearrightend": "lights/rear_redmarker_right_enabled",
+    }
+    for label:String in expected:
+        var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
+        assert_eq(entry["widget_class"], CabinSpotLight3D, label)
+        assert_eq(entry["fixed_fields"]["state_property"], expected[label], label)
+        assert_true(entry["position_at_submodel"], label)
+        assert_false(entry["fixed_fields"].has("blink_time"), "%s is steady on/off, not blinking" % label)
+
+
 func test_i_security_cabsignal_binds_cabsignal_blinking():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_cabsignal")
     assert_eq(entry["widget_class"], CabinSpotLight3D)

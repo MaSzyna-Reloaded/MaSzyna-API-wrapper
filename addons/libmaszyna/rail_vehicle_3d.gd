@@ -4,6 +4,24 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
+## Fixed original-engine submodel naming convention for exterior lights (confirmed against
+## MaSzyna's own vehicle/DynObj.cpp:2379-2418, m_headlampNN/m_endsignalNN .Init() calls) - every
+## .e3d model converted from the original engine names these submodels the same way, so this is a
+## constant mapping, not a per-vehicle setting. Maps the e3d model's own light name to the
+## matching TrainController.state key (populated by TrainLighting, see TrainLighting.cpp).
+const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
+    "headlamp11": "lights/front_headlight_upper_enabled",
+    "headlamp12": "lights/front_headlight_right_enabled",
+    "headlamp13": "lights/front_headlight_left_enabled",
+    "headlamp21": "lights/rear_headlight_upper_enabled",
+    "headlamp22": "lights/rear_headlight_right_enabled",
+    "headlamp23": "lights/rear_headlight_left_enabled",
+    "endsignal12": "lights/front_redmarker_right_enabled",
+    "endsignal13": "lights/front_redmarker_left_enabled",
+    "endsignal22": "lights/rear_redmarker_right_enabled",
+    "endsignal23": "lights/rear_redmarker_left_enabled",
+}
+
 @export_node_path("E3DModelInstance") var model_instance_path:NodePath = NodePath(""):
     set(x):
         if not x == model_instance_path:
@@ -207,6 +225,7 @@ func _process(delta):
     if not Engine.is_editor_hint():
         if _controller:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+            _sync_lights_from_controller()
 
 func _schedule_head_display_update():
     _needs_head_display_update = true
@@ -245,6 +264,23 @@ func _sync_model_lights() -> void:
             lights.erase(light_name)
     lights.sort()
     _model_node.lights_state = lights
+
+
+## Applies TrainLighting's live on/off state (TrainController.state) to whichever of this
+## model's own registered lights match LIGHT_STATE_BINDINGS's fixed submodel names - lights not
+## in that table (e.g. cab interior lights) are left as they are, untouched.
+func _sync_lights_from_controller() -> void:
+    if not _model_node or not _model_node.is_e3d_loaded():
+        return
+    var changed:bool = false
+    for light_name:String in lights.keys():
+        if LIGHT_STATE_BINDINGS.has(light_name):
+            var new_value:bool = _controller.state.get(LIGHT_STATE_BINDINGS[light_name], false)
+            if not lights[light_name] == new_value:
+                lights[light_name] = new_value
+                changed = true
+    if changed:
+        _model_node.lights_state = lights
 
 
 func _on_model_node_e3d_loaded() -> void:

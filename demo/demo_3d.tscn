@@ -277,6 +277,21 @@ file_name = "104e_1"
 skin = "104e-035"
 train_id = "ep09"
 
+[node name="SM31" type="Node3D" parent="." unique_id=162152882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.559359, 0, 95.37102)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/sm31_v1/"
+file_name = "411d"
+train_id = "sm31"
+
+[node name="KA" type="Node3D" parent="." unique_id=754884786]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.47315, 0, 119.65934)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/road/clio"
+file_name = "clio"
+skin = "red"
+train_id = "clio"
+
 [node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)
 script = ExtResource("29_dcvyd")

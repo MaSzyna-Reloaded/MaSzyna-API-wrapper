@@ -18,6 +18,7 @@ namespace godot {
             TMoverParameters *mover{};
             int cabin_number = 0;
             void initialize_mover();
+            void initialize_mover_state();
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;

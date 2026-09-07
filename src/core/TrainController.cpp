@@ -216,6 +216,16 @@ namespace godot {
         return mover;
     }
 
+    void TrainController::initialize_mover_state() {
+        const bool driver_active = initial_velocity != 0.0;
+
+        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
+        mover->LocalBrakePosA = 0.0;
+        mover->BrakeCtrlPos = static_cast<int>(
+                std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
+        mover->BrakeLevelSet(mover->BrakeCtrlPos);
+    }
+
     void TrainController::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
         const auto mover_type_name = std::string(type_name.utf8().ptr());
@@ -235,6 +245,7 @@ namespace godot {
         dirty = true;
         dirty_prop = true;
         _update_mover_config_if_dirty();
+        initialize_mover_state();
 
         /* FIXME: remove test data */
         mover->CabActive = 1;
@@ -409,6 +420,7 @@ namespace godot {
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
             mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
+            initialize_mover_state();
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }

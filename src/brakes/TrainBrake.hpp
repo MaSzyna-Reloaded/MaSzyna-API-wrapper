@@ -290,7 +290,7 @@ namespace godot {
             MAKE_MEMBER_GS_NR(AntiSkidBrakeType, anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
             MAKE_MEMBER_GS_NR(LocalBrakeType, local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);
             MAKE_MEMBER_GS_NR(BrakeHandleType, local_brake_handle_type, BRAKE_HANDLE_TYPE_FD1);
-            MAKE_MEMBER_GS(bool, manual_brake_present, true);
+            MAKE_MEMBER_GS(bool, manual_brake_present, false);
             MAKE_MEMBER_GS_NR(DynamicBrakeType, dynamic_brake_type, DYNAMIC_BRAKE_NONE);
             MAKE_MEMBER_GS(bool, local_brake_traxx, false);
             MAKE_MEMBER_GS(bool, release_parking_by_spring_brake, false);

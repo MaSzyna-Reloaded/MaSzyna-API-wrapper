@@ -88,6 +88,8 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                 var model_token:String = tokens[i] if i < tokens.size() else "none"
                 i += 1
                 cab_data[n]["model_relpath"] = _resolve_model_relpath(model_token)
+            "clock:":
+                i += 1 # analog/digital clock type, not an instrument definition
             _:
                 if not label.ends_with(":"):
                     continue # stray value token, not a label - most likely a leftover from a

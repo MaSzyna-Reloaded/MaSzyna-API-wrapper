@@ -487,8 +487,7 @@ namespace godot {
 
         p_state["brake_unit_force"] = p_mover->UnitBrakeForce;
         const double brake_force_max_per_block =
-                p_mover->BrakeForceR(1.0, p_mover->Vel) /
-                (std::max(1, p_mover->NAxles) * std::max(1, p_mover->NBpA));
+                p_mover->BrakeForceR(1.0, p_mover->Vel) / (std::max(1, p_mover->NAxles) * std::max(1, p_mover->NBpA));
         p_state["brake_force_ratio"] =
                 std::clamp(p_mover->UnitBrakeForce / std::max(1.0, brake_force_max_per_block), 0.0, 1.0);
         p_state["brake_emergency_valve_flow"] = p_mover->EmergencyValveFlow;

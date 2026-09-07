@@ -64,8 +64,7 @@ static func _build_player(
             brake_sources[definition.label] = definition
             continue
         var event:SfxEvent = MmdSoundEventBuilder.build(
-                definition, entry["event_name"], entry.get("sound_parameter", &""))
-        event.spatial_config = MmdSoundEventBuilder._build_spatial_config(definition)
+                definition, entry["event_name"], entry.get("sound_parameter", &""), false, true)
         events.append(event)
         regular_definitions.append(definition)
 
@@ -90,6 +89,7 @@ static func _build_player(
             "sound_parameter": entry.get("sound_parameter", &""),
             "trigger_threshold_min": entry.get("trigger_threshold_min", 0.0),
             "trigger_threshold_max": entry.get("trigger_threshold_max", 1.0),
+            "source": definition,
         })
 
     TrainSoundSystem.register_bank(player, {

@@ -27,7 +27,8 @@ const _AUTOMATION_HEADROOM:float = 100000.0
 
 static func build(
         definition:MmdSoundSourceDefinition, event_name:StringName,
-        sound_parameter:StringName = &"", parameterized:bool = false) -> SfxEvent:
+        sound_parameter:StringName = &"", parameterized:bool = false,
+        soundproofed:bool = false) -> SfxEvent:
     var event := SfxEvent.new()
     event.name = event_name
 
@@ -50,10 +51,14 @@ static func build(
         event.parameter_modulations = [
             _build_modulation(&"gain", SfxParameterModulation.Target.GAIN, 0.0, 100.0, 1.0),
             _build_modulation(&"pitch", SfxParameterModulation.Target.PITCH, 0.1, 10.0, 1.0),
-            _build_modulation(&"soundproofing", SfxParameterModulation.Target.GAIN, 0.0, 1.0, 1.0),
-            _build_modulation(&"soundproofing", SfxParameterModulation.Target.UNIT_SIZE, 0.0, 1.0, 1.0),
             _build_modulation(&"unit_size", SfxParameterModulation.Target.UNIT_SIZE, 0.1, 8.0, 1.0),
         ]
+
+    if parameterized or soundproofed:
+        event.parameter_modulations.append_array([
+            _build_modulation(&"soundproofing", SfxParameterModulation.Target.GAIN, 0.0, 1.0, 1.0),
+            _build_modulation(&"soundproofing", SfxParameterModulation.Target.UNIT_SIZE, 0.0, 1.0, 1.0),
+        ])
         event.spatial_config = _build_spatial_config(definition)
 
     return event

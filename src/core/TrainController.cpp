@@ -221,8 +221,8 @@ namespace godot {
 
         mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
         mover->LocalBrakePosA = 0.0;
-        mover->BrakeCtrlPos = static_cast<int>(
-                std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
+        mover->BrakeCtrlPos =
+                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
         mover->BrakeLevelSet(mover->BrakeCtrlPos);
     }
 

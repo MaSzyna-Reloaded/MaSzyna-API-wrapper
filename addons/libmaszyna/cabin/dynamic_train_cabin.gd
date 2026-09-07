@@ -89,6 +89,16 @@ func _rebuild_generated() -> void:
     camera_bound_max = definition.bounds_max
     camera_bound_enabled = true
     driver_position = definition.driver_pos
+    shake_spring_stiffness = definition.shake_spring_stiffness
+    shake_spring_damping = definition.shake_spring_damping
+    shake_jolt_scale = definition.shake_jolt_scale
+    shake_jolt_limit = definition.shake_jolt_limit
+    shake_angle_scale = definition.shake_angle_scale
+    engine_shake_scale = definition.engine_shake_scale
+    engine_shake_fade_in_rpm = definition.engine_shake_fade_in_rpm
+    engine_shake_fade_in_factor = definition.engine_shake_fade_in_factor
+    engine_shake_fade_out_rpm = definition.engine_shake_fade_out_rpm
+    engine_shake_fade_out_factor = definition.engine_shake_fade_out_factor
 
     _generated = Node3D.new()
     _generated.name = "Generated"

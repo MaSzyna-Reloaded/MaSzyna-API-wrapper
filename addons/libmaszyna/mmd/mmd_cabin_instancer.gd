@@ -110,6 +110,22 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                     instruments.append(descriptor)
 
     var definition := MmdCabinDefinition.new()
+    var mechspring_index:int = _find_label_index(tokens, "mechspring:")
+    if mechspring_index >= 0:
+        var values:Array = _read_floats(tokens, mechspring_index + 1, 8)
+        definition.shake_spring_stiffness = values[0]
+        definition.shake_spring_damping = values[1]
+        definition.shake_jolt_scale = Vector3(values[2], values[3], values[4])
+        definition.shake_jolt_limit = values[5]
+        definition.shake_angle_scale = Vector2(values[6], values[7])
+    var enginespring_index:int = _find_label_index(tokens, "enginespring:")
+    if enginespring_index >= 0:
+        var values:Array = _read_floats(tokens, enginespring_index + 1, 5)
+        definition.engine_shake_scale = values[0]
+        definition.engine_shake_fade_in_rpm = values[1]
+        definition.engine_shake_fade_in_factor = values[2]
+        definition.engine_shake_fade_out_rpm = values[3]
+        definition.engine_shake_fade_out_factor = values[4]
     definition.cab_number = cab_number
     definition.bounds_min = cab_data[cab_number]["bounds_min"]
     definition.bounds_max = cab_data[cab_number]["bounds_max"]

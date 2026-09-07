@@ -171,6 +171,14 @@ file_path = "20786_control_6d_6"
 
 [node name="SM42Cabin" type="Node3D" unique_id=1273857723]
 script = ExtResource("1_bffp8")
+shake_spring_stiffness = 200.0
+shake_spring_damping = 0.02
+shake_jolt_scale = Vector3(0.2, 0.2, 0.03)
+shake_angle_scale = Vector2(0.02, 0.01)
+engine_shake_scale = 1.5
+engine_shake_fade_in_rpm = 100.0
+engine_shake_fade_out_rpm = 450.0
+engine_shake_fade_out_factor = 0.15
 camera_bound_min = Vector3(-1.65, 1.8, -3.4)
 camera_bound_max = Vector3(1.65, 2.05, -2.83)
 camera_bound_enabled = true

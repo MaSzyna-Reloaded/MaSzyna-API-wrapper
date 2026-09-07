@@ -189,6 +189,11 @@ namespace godot {
         p_state["diesel_fill"] = p_mover->dizel_fill;
     }
 
+    void TrainDieselEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        TrainEngine::_do_fetch_config_from_mover(p_mover, p_config);
+        p_config["engine_shake_enabled"] = true;
+    }
+
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
         TrainEngine::_do_update_internal_mover(p_mover);
 

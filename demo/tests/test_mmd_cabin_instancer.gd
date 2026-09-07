@@ -37,6 +37,18 @@ func test_cab1_bounds_and_driver_position():
     assert_eq(definition.model_relpath, "test_kabina")
 
 
+func test_camera_shake_parameters_are_read_from_mmd_preamble():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    assert_almost_eq(definition.shake_spring_stiffness, 200.0, 0.001)
+    assert_almost_eq(definition.shake_spring_damping, 0.02, 0.001)
+    assert_eq(definition.shake_jolt_scale, Vector3(0.2, 0.2, 0.03))
+    assert_eq(definition.shake_angle_scale, Vector2(0.02, 0.01))
+    assert_almost_eq(definition.engine_shake_scale, 1.5, 0.001)
+    assert_almost_eq(definition.engine_shake_fade_in_rpm, 100.0, 0.001)
+    assert_almost_eq(definition.engine_shake_fade_out_rpm, 450.0, 0.001)
+    assert_almost_eq(definition.engine_shake_fade_out_factor, 0.15, 0.001)
+
+
 func test_cab2_does_not_leak_cab1_driver_position():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 2, {})
     assert_eq(definition.cab_number, 2)

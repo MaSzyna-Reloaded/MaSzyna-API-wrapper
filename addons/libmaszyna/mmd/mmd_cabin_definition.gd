@@ -17,6 +17,18 @@ var driver_pos:Vector3 = Vector3.ZERO
 var driver_sitpos:Vector3 = Vector3.ZERO
 var driver_angle:Vector2 = Vector2.ZERO
 
+## Original MaSzyna camera spring parameters from the MMD preamble.
+var shake_spring_stiffness:float = 125.0
+var shake_spring_damping:float = 0.002
+var shake_jolt_scale:Vector3 = Vector3(0.2, 0.2, 0.1)
+var shake_jolt_limit:float = 0.15
+var shake_angle_scale:Vector2 = Vector2(0.05, 0.1)
+var engine_shake_scale:float = 2.0
+var engine_shake_fade_in_rpm:float = 90.0
+var engine_shake_fade_in_factor:float = 0.3
+var engine_shake_fade_out_rpm:float = 600.0
+var engine_shake_fade_out_factor:float = 0.5
+
 ## Cab model, relative to the MMD's own directory, with ".t3d" already swapped for ".e3d" and
 ## backslashes normalized - still needs case-insensitive filesystem resolution by the builder.
 var model_relpath:String = ""

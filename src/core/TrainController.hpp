@@ -34,6 +34,7 @@ namespace godot {
             bool prev_is_powered = false;
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
+            bool prev_roof_light_enabled = false;
 
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
@@ -161,6 +162,7 @@ namespace godot {
             static const char *command_received;
             static const char *radio_toggled;
             static const char *radio_channel_changed;
+            static const char *roof_light_changed;
             static const char *config_changed;
 
             Dictionary get_config() const;

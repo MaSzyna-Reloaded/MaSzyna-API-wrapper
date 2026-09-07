@@ -15,6 +15,7 @@ namespace godot {
     const char *TrainController::command_received = "command_received";
     const char *TrainController::radio_toggled = "radio_toggled";
     const char *TrainController::radio_channel_changed = "radio_channel_changed";
+    const char *TrainController::roof_light_changed = "roof_light_changed";
     const char *TrainController::config_changed = "config_changed";
 
     void TrainController::_bind_methods() {
@@ -165,6 +166,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
+        ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
@@ -306,6 +308,7 @@ namespace godot {
 
                 emit_signal(power_changed_signal, prev_is_powered);
                 emit_signal(radio_channel_changed, prev_radio_channel);
+                emit_signal(roof_light_changed, prev_roof_light_enabled);
                 break;
             default:;
         }
@@ -361,6 +364,12 @@ namespace godot {
         if (const int new_radio_channel = state.get("radio_channel", 0); prev_radio_channel != new_radio_channel) {
             prev_radio_channel = new_radio_channel; // FIXME: I don't like this
             emit_signal(radio_channel_changed, new_radio_channel);
+        }
+
+        if (const bool new_roof_light_enabled = state.get("roof_light_enabled", false);
+            prev_roof_light_enabled != new_roof_light_enabled) {
+            prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
+            emit_signal(roof_light_changed, new_roof_light_enabled);
         }
     }
 

@@ -44,6 +44,13 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
+## Interior cab glow (window self-illumination, see e3d_instancer.gd's emission_enabled shader
+## parameter) energy while roof_light_enabled is true - the imported .e3d selfillum data is
+## authored for the full-detail cabin's own real Light3D-lit interior, not for this simplified
+## stand-in seen only from outside, so it needs its own explicit value here rather than reusing
+## the imported one.
+@export var low_poly_cabin_emission_energy:float = 0.2
+@export var low_poly_cabin_emission_fade_time:float = 0.2
 
 @export_node_path("E3DModelInstance") var head_display_e3d_path:NodePath = NodePath(""):
     set(x):
@@ -72,6 +79,9 @@ var _camera:FreeCamera3D
 var _controller:TrainController
 var _model_node:E3DModelInstance
 var _detection_area:Area3D
+var _low_poly_cabin:E3DModelInstance
+var _low_poly_emissive_materials:Array[ShaderMaterial] = []
+var _low_poly_emission_tween:Tween
 var _t:float = 0.0
 
 
@@ -240,8 +250,12 @@ func _process_dirty() -> void:
                 _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
 
         if is_inside_tree():
+            if _controller:
+                _controller.roof_light_changed.disconnect(_on_roof_light_changed)
             if controller_path:
                 _controller = _resolve_controller(controller_path)
+            if _controller:
+                _controller.roof_light_changed.connect(_on_roof_light_changed)
 
             var model_node: E3DModelInstance = null
             if model_instance_path:
@@ -253,6 +267,14 @@ func _process_dirty() -> void:
                 _model_node.e3d_loaded.connect(_on_model_node_e3d_loaded)
             _sync_model_lights()
             _update_detection_area()
+
+            if _low_poly_cabin:
+                _low_poly_cabin.e3d_loaded.disconnect(_on_low_poly_cabin_e3d_loaded)
+            _low_poly_cabin = get_node_or_null(low_poly_cabin_path) if low_poly_cabin_path else null
+            if _low_poly_cabin:
+                _low_poly_cabin.e3d_loaded.connect(_on_low_poly_cabin_e3d_loaded)
+                if _low_poly_cabin.is_e3d_loaded():
+                    _on_low_poly_cabin_e3d_loaded()
 
 
 func _sync_model_lights() -> void:
@@ -286,6 +308,46 @@ func _sync_lights_from_controller() -> void:
 func _on_model_node_e3d_loaded() -> void:
     _sync_model_lights()
     _update_detection_area()
+
+
+## Collects the low-poly stand-in interior's self-illuminated submodels (window glow etc.) so
+## their emission_energy can be driven by roof_light_enabled below. Duplicated per-instance first
+## since _get_material_override() returns a MaterialManager-cached ShaderMaterial shared by every
+## vehicle using the same model+skin, which an in-place shader parameter edit would otherwise
+## desync between vehicle instances.
+func _on_low_poly_cabin_e3d_loaded() -> void:
+    _low_poly_emissive_materials.clear()
+    for mesh_instance:MeshInstance3D in _low_poly_cabin.find_children("", "MeshInstance3D", true, false):
+        var material:Material = mesh_instance.material_override
+        if material is ShaderMaterial and material.get_shader_parameter("emission_enabled"):
+            material = material.duplicate()
+            mesh_instance.material_override = material
+            _low_poly_emissive_materials.append(material)
+
+    var roof_light_enabled:bool = _controller and _controller.state.get("roof_light_enabled", false)
+    _set_low_poly_emission_energy(low_poly_cabin_emission_energy if roof_light_enabled else 0.0)
+
+
+## Fades the low-poly stand-in interior's window glow in/out with the roof light switch - driven
+## by TrainController's own roof_light_changed signal (emitted only on actual state changes, see
+## TrainController.cpp's _handle_mover_update()) rather than polled every _process, since this
+## only needs to react on the rare toggle, not track a continuously-changing value.
+func _on_roof_light_changed(enabled:bool) -> void:
+    if _low_poly_emission_tween:
+        _low_poly_emission_tween.kill()
+    var target_energy:float = low_poly_cabin_emission_energy if enabled else 0.0
+    var current_energy:float = (
+            _low_poly_emissive_materials[0].get_shader_parameter("emission_energy")
+            if _low_poly_emissive_materials
+            else target_energy)
+    _low_poly_emission_tween = create_tween()
+    _low_poly_emission_tween.tween_method(
+            _set_low_poly_emission_energy, current_energy, target_energy, low_poly_cabin_emission_fade_time)
+
+
+func _set_low_poly_emission_energy(value:float) -> void:
+    for material:ShaderMaterial in _low_poly_emissive_materials:
+        material.set_shader_parameter("emission_energy", value)
 
 
 ## Creates (once) and keeps in sync an Area3D/CollisionShape3D under this RailVehicle3D,

@@ -67,6 +67,9 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
 }
 
 const _BARE_PARAMETERS:Dictionary = {
+    "horn1": [&"range"],
+    "horn2": [&"range"],
+    "horn3": [&"range"],
     "brake": [&"range", &"amplitude_factor", &"amplitude_offset"],
     "brakesound": [&"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
     "unbrake": [&"range"],

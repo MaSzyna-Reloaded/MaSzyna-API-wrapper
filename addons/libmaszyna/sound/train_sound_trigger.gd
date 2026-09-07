@@ -9,6 +9,7 @@ enum TriggerMode { TOGGLE, CONTINUOUS }
 @export var trigger_threshold_max:float = 1.0
 @export var sound_event:StringName = &""
 @export var sound_parameter:StringName = &""
+@export var sound_placement:StringName = &"general"
 
 @export_node_path("TrainController") var controller_path:NodePath = NodePath("")
 
@@ -20,6 +21,10 @@ func _ready() -> void:
     _sfxplayer = get_parent() as SfxPlayer3D
     var vehicle:RailVehicle3D = _find_vehicle()
     var controller:TrainController = get_node_or_null(controller_path) as TrainController if controller_path else null
+    if not sound_placement == &"general":
+        var event:SfxEvent = _sfxplayer.bank.get_event(sound_event)
+        if event:
+            MmdSoundEventBuilder.add_soundproofing_modulations(event)
     _trigger_id = TrainSoundSystem.register_trigger(_sfxplayer, {
         "id": get_instance_id(),
         "vehicle": vehicle,
@@ -30,6 +35,7 @@ func _ready() -> void:
         "trigger_threshold_max": trigger_threshold_max,
         "sound_event": sound_event,
         "sound_parameter": sound_parameter,
+        "sound_placement": sound_placement,
     })
 
 

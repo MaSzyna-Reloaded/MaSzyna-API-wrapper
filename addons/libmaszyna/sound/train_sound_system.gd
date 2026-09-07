@@ -186,6 +186,9 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
         var parameters:Dictionary = {}
         if trigger_mode == TRIGGER_MODE_CONTINUOUS and parameter_name:
             parameters[parameter_name] = value
+        var source:MmdSoundSourceDefinition = trigger.get("source") as MmdSoundSourceDefinition
+        if source:
+            parameters[&"soundproofing"] = _soundproofing(runtime, source)
         if should_play and not activated:
             runtime.player.play(event_name, parameters)
             runtime.trigger_states[trigger_id] = true
@@ -220,6 +223,8 @@ func _inside_vehicle(vehicle:RailVehicle3D) -> bool:
 
 func _soundproofing(runtime:BankRuntime, source:MmdSoundSourceDefinition) -> float:
     if not source:
+        return 1.0
+    if source.placement == &"general":
         return 1.0
     var placement:int = _placement_index(source)
     var inside_source:bool = _inside_vehicle(runtime.vehicle)

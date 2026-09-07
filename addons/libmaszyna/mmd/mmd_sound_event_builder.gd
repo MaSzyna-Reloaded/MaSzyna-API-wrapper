@@ -23,6 +23,8 @@ class_name MmdSoundEventBuilder
 ## silently going quiet past its own threshold, which is what a literal port of the original
 ## engine's Chunkrange=100 default would do for any real chunk table (thresholds are always > 100).
 const _AUTOMATION_HEADROOM:float = 100000.0
+const _CROSSFADE_CURVE_SEGMENTS:int = 8
+const _CROSSFADE_LOG_FACTOR:float = -0.57
 
 
 static func build(
@@ -53,6 +55,10 @@ static func build(
             _build_modulation(&"pitch", SfxParameterModulation.Target.PITCH, 0.1, 10.0, 1.0),
             _build_modulation(&"unit_size", SfxParameterModulation.Target.UNIT_SIZE, 0.1, 8.0, 1.0),
         ]
+
+    if event_name == &"engine":
+        event.parameter_modulations.append(
+                _build_modulation(&"engine_gain", SfxParameterModulation.Target.GAIN, 0.0, 2.0, 1.0))
 
     if parameterized or soundproofed:
         add_soundproofing_modulations(event)
@@ -167,6 +173,10 @@ static func _build_automation(definition:MmdSoundSourceDefinition, sound_paramet
 
     var automation := SfxAutomation.new()
     automation.parameter_name = sound_parameter
+    # gnd-sfx's equal-power mode takes the square root of each fade curve. Storing the squared
+    # original gain preserves sound_source::update_crossfade()'s logarithmic approximation and
+    # avoids the linear mode's unity-sum normalization reducing the overlap.
+    automation.crossfade_mode = SfxAutomation.CrossfadeMode.EQUAL_POWER
     var clips:Array[SfxClip] = []
     var tracks:Array[SfxTrack] = []
     var max_threshold:float = 0.0
@@ -189,10 +199,11 @@ static func _build_automation(definition:MmdSoundSourceDefinition, sound_paramet
             var fade_out_width:float = maxf(0.0, fadeouts[idx] - fadeins[idx + 1])
             clip.fade_out_curve = _build_ramp_curve(false, fade_out_width)
 
-        var own_pitch:float = float(chunks[idx].get("pitch", 0.0))
-        if own_pitch > 0.0:
-            var pitch_span:float = maxf(maxf(clip.length, fade_in_width), 0.001)
-            clip.pitch_curve = _build_pitch_curve(chunks, idx, own_pitch, fadein, pitch_span)
+        var own_pitch:float = float(chunks[idx].get("pitch", 1.0))
+        if own_pitch <= 0.0:
+            own_pitch = 1.0
+        var pitch_span:float = maxf(maxf(clip.length, fade_in_width), 0.001)
+        clip.pitch_curve = _build_pitch_curve(chunks, idx, own_pitch, fadein, pitch_span)
 
         var track := SfxTrack.new()
         track.track_name = "chunk_%d" % int(threshold)
@@ -216,36 +227,39 @@ static func _build_ramp_curve(ascending:bool, width:float) -> Curve:
     var curve := Curve.new()
     curve.min_domain = 0.0
     curve.max_domain = width
-    if ascending:
-        curve.add_point(Vector2(0.0, 0.0))
-        curve.add_point(Vector2(width, 1.0))
-    else:
-        curve.add_point(Vector2(0.0, 1.0))
-        curve.add_point(Vector2(width, 0.0))
+    for point_index:int in range(_CROSSFADE_CURVE_SEGMENTS + 1):
+        var progress:float = float(point_index) / float(_CROSSFADE_CURVE_SEGMENTS)
+        var linear_gain:float = progress if ascending else 1.0 - progress
+        var gain:float = linear_gain / (
+                1.0 + (1.0 - linear_gain) * _CROSSFADE_LOG_FACTOR)
+        curve.add_point(Vector2(progress * width, gain * gain))
+        curve.set_point_left_mode(point_index, Curve.TANGENT_LINEAR)
+        curve.set_point_right_mode(point_index, Curve.TANGENT_LINEAR)
     return curve
 
 
-## Approximates update_crossfade()'s per-chunk pitch ratio (each sample is tuned to sound correct
-## at its OWN declared pitch value; when a neighbouring chunk's territory is entered during a
-## crossfade, its pitch bends toward that neighbour's ratio so the transition sounds smoother) -
-## not a byte-identical port (the original interpolates across the full inter-threshold gap using
-## real-time chunk-index bookkeeping gnd-sfx's clip-local pitch_curve has no equivalent for), but
-## the same underlying idea: 1.0 (natural pitch) exactly at this chunk's own threshold, bending
-## toward prev_pitch/own_pitch at the start of this clip's active range and toward
-## next_pitch/own_pitch at its end. Returns null (no pitch bend) if neither neighbour declared a
-## pitch value - most chunks in real data do (see MmdSoundSourceParser's pitchN: parsing).
+## Recreates update_crossfade()'s per-chunk pitch ratio in the clip's local parameter domain. Each
+## sample plays at natural pitch at its own threshold and bends toward the neighbouring sample's
+## declared pitch across the complete inter-threshold gap. The clip starts partway through the
+## previous gap when crossfade is below 100%, so its first point is sampled at that exact position.
 static func _build_pitch_curve(
         chunks:Array[Dictionary], idx:int, own_pitch:float, fadein:float, span:float) -> Curve:
     var ratio_from_prev:float = 1.0
     if idx > 0:
-        var previous_pitch:float = float(chunks[idx - 1].get("pitch", 0.0))
-        if previous_pitch > 0.0:
-            ratio_from_prev = previous_pitch / own_pitch
+        var previous_pitch:float = float(chunks[idx - 1].get("pitch", 1.0))
+        if previous_pitch <= 0.0:
+            previous_pitch = 1.0
+        var previous_threshold:float = float(chunks[idx - 1]["threshold"])
+        var own_threshold:float = float(chunks[idx]["threshold"])
+        var gap_progress:float = clampf(
+                (fadein - previous_threshold) / (own_threshold - previous_threshold), 0.0, 1.0)
+        ratio_from_prev = lerpf(previous_pitch / own_pitch, 1.0, gap_progress)
     var ratio_to_next:float = 1.0
     if idx < chunks.size() - 1:
-        var next_pitch:float = float(chunks[idx + 1].get("pitch", 0.0))
-        if next_pitch > 0.0:
-            ratio_to_next = next_pitch / own_pitch
+        var next_pitch:float = float(chunks[idx + 1].get("pitch", 1.0))
+        if next_pitch <= 0.0:
+            next_pitch = 1.0
+        ratio_to_next = next_pitch / own_pitch
 
     if is_equal_approx(ratio_from_prev, 1.0) and is_equal_approx(ratio_to_next, 1.0):
         return null
@@ -253,11 +267,17 @@ static func _build_pitch_curve(
     var curve := Curve.new()
     curve.min_domain = 0.0
     curve.max_domain = span
+    curve.min_value = minf(1.0, minf(ratio_from_prev, ratio_to_next))
+    curve.max_value = maxf(1.0, maxf(ratio_from_prev, ratio_to_next))
     curve.add_point(Vector2(0.0, ratio_from_prev))
     var home_x:float = clampf(float(chunks[idx]["threshold"]) - fadein, 0.0, span)
-    curve.add_point(Vector2(home_x, 1.0))
+    if home_x > 0.0:
+        curve.add_point(Vector2(home_x, 1.0))
     if home_x < span:
         curve.add_point(Vector2(span, ratio_to_next))
+    for point_index:int in range(curve.point_count):
+        curve.set_point_left_mode(point_index, Curve.TANGENT_LINEAR)
+        curve.set_point_right_mode(point_index, Curve.TANGENT_LINEAR)
     return curve
 
 

@@ -188,6 +188,8 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             parameters[parameter_name] = value
         var source:MmdSoundSourceDefinition = trigger.get("source") as MmdSoundSourceDefinition
         if source:
+            if source.label == "engine":
+                parameters[&"engine_gain"] = _engine_gain(runtime, state, source)
             parameters[&"soundproofing"] = _soundproofing(runtime, source)
         else:
             var placement:StringName = StringName(trigger.get("sound_placement", &"general"))
@@ -201,6 +203,17 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             runtime.trigger_states[trigger_id] = false
         if should_play and not parameters.is_empty() and runtime.player.is_playing(event_name):
             batch[event_name] = parameters
+
+
+func _engine_gain(
+        runtime:BankRuntime, state:Dictionary, source:MmdSoundSourceDefinition) -> float:
+    var rpm_ratio:float = clampf(float(state.get("engine_rpm_ratio", 0.0)), 0.0, 1.0)
+    var nominal_power:float = runtime.controller.get_power()
+    var load_ratio:float = 0.0
+    if nominal_power > 0.0:
+        load_ratio = maxf(float(state.get("engine_power", 0.0)) / nominal_power, 0.0)
+    var level:float = 0.25 * load_ratio + 0.75 * rpm_ratio
+    return clampf(source.amplitude_offset + source.amplitude_factor * level, 0.0, 2.0)
 
 
 func _refresh_context() -> void:

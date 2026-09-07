@@ -47,6 +47,7 @@ func test_chunks_produce_one_automation_with_clips_positioned_by_threshold():
     assert_eq(event.automations.size(), 1)
     var automation:SfxAutomation = event.automations[0]
     assert_eq(automation.parameter_name, &"rpm")
+    assert_eq(automation.crossfade_mode, SfxAutomation.CrossfadeMode.EQUAL_POWER)
     assert_eq(automation.clips.size(), 3)
 
     # sorted by threshold regardless of input order (400, 600, 1000)
@@ -87,7 +88,57 @@ func test_chunks_produce_one_automation_with_clips_positioned_by_threshold():
     assert_not_null(mid.pitch_curve)
     assert_not_null(high.pitch_curve)
 
+    # gnd-sfx square-roots equal-power curves at playback. The stored midpoint is therefore the
+    # square of MaSzyna's logarithmic crossfade gain (~0.699), preserving the original result.
+    assert_almost_eq(mid.fade_in_curve.sample(90.0), 0.489, 0.002)
+    assert_almost_eq(mid.fade_out_curve.sample(180.0), 0.489, 0.002)
+
+    # Each sample is natural at its own threshold and bends continuously towards neighbouring
+    # sample pitches over the complete threshold gap.
+    assert_almost_eq(low.pitch_curve.sample(0.0), 1.0, 0.001)
+    assert_almost_eq(low.pitch_curve.sample(200.0), 1.5, 0.001)
+    assert_almost_eq(mid.pitch_curve.sample(0.0), 0.7, 0.001)
+    assert_almost_eq(mid.pitch_curve.sample(180.0), 1.0, 0.001)
+    assert_almost_eq(mid.pitch_curve.sample(580.0), 1000.0 / 600.0, 0.001)
+    assert_almost_eq(high.pitch_curve.sample(0.0), 0.64, 0.001)
+    assert_almost_eq(high.pitch_curve.sample(360.0), 1.0, 0.001)
+
     assert_almost_eq(automation.max_domain, 101000.0, 0.01)
+
+
+func test_engine_event_has_separate_physical_gain_modulation() -> void:
+    var definition:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
+    definition.sound_main = "engine"
+    var event:SfxEvent = MmdSoundEventBuilder.build(definition, &"engine")
+
+    var modulation:SfxParameterModulation = _find_modulation(event, &"engine_gain")
+    assert_not_null(modulation)
+    assert_eq(modulation.target, SfxParameterModulation.Target.GAIN)
+    assert_almost_eq(modulation.min_domain, 0.0, 0.001)
+    assert_almost_eq(modulation.max_domain, 2.0, 0.001)
+    assert_almost_eq(modulation.curve.sample(1.25), 1.25, 0.001)
+
+
+func test_soundproofed_event_has_gain_unit_size_and_spatial_configuration() -> void:
+    var definition:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
+    definition.sound_main = "compressor"
+    definition.offset = Vector3(1.0, 2.0, 3.0)
+    definition.range = 160.0
+    var event:SfxEvent = MmdSoundEventBuilder.build(
+            definition, &"compressor", &"", false, true)
+
+    var proofing_modulations:Array[SfxParameterModulation] = []
+    for modulation:SfxParameterModulation in event.parameter_modulations:
+        if modulation.parameter_name == &"soundproofing":
+            proofing_modulations.append(modulation)
+    assert_eq(proofing_modulations.size(), 2)
+    assert_true(_has_modulation_target(
+            proofing_modulations, SfxParameterModulation.Target.GAIN))
+    assert_true(_has_modulation_target(
+            proofing_modulations, SfxParameterModulation.Target.UNIT_SIZE))
+    assert_eq(event.spatial_config.position, definition.offset)
+    assert_almost_eq(event.spatial_config.unit_size, 10.0, 0.001)
+    assert_almost_eq(event.spatial_config.max_distance, 1200.0, 0.001)
 
 
 func test_bookends_and_chunks_combine_into_one_event_with_both_shapes():
@@ -108,3 +159,19 @@ func test_bookends_and_chunks_combine_into_one_event_with_both_shapes():
 
     assert_eq(event.automations.size(), 1)
     assert_eq(event.automations[0].clips.size(), 1)
+    assert_eq(event.tracks.size(), 1)
+    assert_eq(event.automations[0].clips[0].track, event.tracks[0])
+
+
+func _find_modulation(event:SfxEvent, parameter_name:StringName) -> SfxParameterModulation:
+    for modulation:SfxParameterModulation in event.parameter_modulations:
+        if modulation.parameter_name == parameter_name:
+            return modulation
+    return null
+
+
+func _has_modulation_target(modulations:Array[SfxParameterModulation], target:int) -> bool:
+    for modulation:SfxParameterModulation in modulations:
+        if modulation.target == target:
+            return true
+    return false

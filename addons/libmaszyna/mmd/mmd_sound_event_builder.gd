@@ -99,6 +99,9 @@ static func _build_modulation(
     curve.max_value = maximum
     curve.add_point(Vector2(minimum, minimum))
     curve.add_point(Vector2(maximum, maximum))
+    for point_index:int in range(curve.point_count):
+        curve.set_point_left_mode(point_index, Curve.TANGENT_LINEAR)
+        curve.set_point_right_mode(point_index, Curve.TANGENT_LINEAR)
     modulation.curve = curve
     return modulation
 

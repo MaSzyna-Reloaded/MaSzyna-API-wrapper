@@ -12,6 +12,7 @@ signal controlled_vehicle_path_changed
 
 var last_controlled_vehicle_path:NodePath = NodePath()
 var controlled_vehicle:RailVehicle3D
+@onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
 var _dirty: bool = false
 
 func _ready() -> void:

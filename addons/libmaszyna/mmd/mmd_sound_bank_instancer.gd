@@ -9,7 +9,7 @@ const _PLAYER_VOICE_COUNT:int = 24
 
 
 static func build_into(
-        vehicle:Node3D, abs_mmd_path:String, fiz_controller_name:String,
+        vehicle:Node3D, abs_mmd_path:String, _fiz_controller_name:String,
         random_choices:Dictionary, diagnostics:Array[Dictionary]) -> void:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
@@ -42,16 +42,15 @@ static func build_into(
         else:
             routed_exterior.append(definition)
 
-    var controller_path := NodePath("../../%s/TrainController" % fiz_controller_name)
-    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, controller_path, soundproofing, context, abs_mmd_path)
-    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, controller_path, soundproofing, context, abs_mmd_path)
+    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false)
+    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true)
     diagnostics.append_array(context.diagnostics)
 
 
 static func _build_player(
         vehicle:Node3D, player_name:String, definitions:Array[MmdSoundSourceDefinition],
-        controller_path:NodePath, soundproofing:Array[PackedFloat32Array],
-        context:MmdImportContext, abs_mmd_path:String) -> void:
+        soundproofing:Array[PackedFloat32Array], context:MmdImportContext,
+        abs_mmd_path:String, cabin_only:bool) -> void:
     var events:Array[SfxEvent] = []
     var regular_definitions:Array[MmdSoundSourceDefinition] = []
     var brake_sources:Dictionary = {}
@@ -81,26 +80,25 @@ static func _build_player(
     player.max_distance = 100.0
     vehicle.add_child(player, false, Node.INTERNAL_MODE_BACK)
 
+    var triggers:Array[Dictionary] = []
     for definition:MmdSoundSourceDefinition in regular_definitions:
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
-        var trigger := TrainSoundTrigger.new()
-        trigger.name = String(entry["event_name"]).capitalize()
-        trigger.state_property = entry["state_property"]
-        trigger.trigger_mode = entry["trigger_mode"]
-        trigger.sound_event = entry["event_name"]
-        trigger.sound_parameter = entry.get("sound_parameter", &"")
-        trigger.trigger_threshold_min = entry.get("trigger_threshold_min", 0.0)
-        trigger.trigger_threshold_max = entry.get("trigger_threshold_max", 1.0)
-        trigger.controller_path = controller_path
-        player.add_child(trigger, false, Node.INTERNAL_MODE_BACK)
+        triggers.append({
+            "state_property": entry["state_property"],
+            "trigger_mode": entry["trigger_mode"],
+            "sound_event": entry["event_name"],
+            "sound_parameter": entry.get("sound_parameter", &""),
+            "trigger_threshold_min": entry.get("trigger_threshold_min", 0.0),
+            "trigger_threshold_max": entry.get("trigger_threshold_max", 1.0),
+        })
 
-    if not brake_sources.is_empty():
-        var brake_controller := TrainBrakeSoundController.new()
-        brake_controller.name = "BrakeSoundController"
-        brake_controller.sources = brake_sources
-        brake_controller.configured_soundproofing = soundproofing
-        brake_controller.controller_path = controller_path
-        player.add_child(brake_controller, false, Node.INTERNAL_MODE_BACK)
+    TrainSoundSystem.register_bank(player, {
+        "vehicle": vehicle,
+        "cabin_only": cabin_only,
+        "triggers": triggers,
+        "brake_sources": brake_sources,
+        "soundproofing": soundproofing,
+    })
 
 
 static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_internal_data:bool) -> void:

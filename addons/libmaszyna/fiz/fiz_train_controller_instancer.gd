@@ -150,11 +150,6 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
     horns.name = "Horns"
     target.add_child(horns)
 
-    var sound_context := TrainSoundContext.new()
-    sound_context.name = "SoundContext"
-    target.add_child(sound_context)
-
-
 ## Builds a new, unparented TrainController + children from a FIZ file.
 static func build(fiz_path: String) -> TrainController:
     var controller := TrainController.new()

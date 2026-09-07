@@ -75,6 +75,8 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
     ),
 }
 
+var _alpha_blend_shaders: Dictionary[int, Shader] = {}
+
 
 func create(
     mmat: MaszynaMaterial,
@@ -143,18 +145,41 @@ func _apply(
     var source_shader_material: ShaderMaterial = shader_meta.base_material as ShaderMaterial
     for property: Dictionary in source_shader_material.get_property_list():
         var property_name: String = property.get("name", "")
-        if property_name == "shader" or property_name == "render_priority" or property_name.begins_with("shader_parameter/"):
+        if property_name == "shader":
+            target_shader_material.shader = (
+                _get_alpha_blend_shader(source_shader_material.shader)
+                if options.force_transparent
+                else source_shader_material.shader
+            )
+        elif property_name == "render_priority" or property_name.begins_with("shader_parameter/"):
             target_shader_material.set(property_name, source_shader_material.get(property_name))
 
     shader_meta.factory.call(mmat, variant, material, texture_map, model_path, options)
     var transparency: MaterialManager.Transparency = MaterialManager.Transparency.Disabled
-    if mmat.transparent or options.force_transparent:
+    if options.force_transparent:
+        transparency = MaterialManager.Transparency.Alpha
+    elif mmat.transparent:
         transparency = MaterialManager.Transparency.AlphaScissor
     target_shader_material.set_shader_parameter("transparency", transparency)
     target_shader_material.set_shader_parameter("alpha_scissor_threshold", 0.5)
     target_shader_material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
     target_shader_material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     target_shader_material.set_shader_parameter("emission_energy", options.selfillum_energy)
+
+
+func _get_alpha_blend_shader(source_shader: Shader) -> Shader:
+    var cache_key: int = source_shader.get_instance_id()
+    var cached_shader: Shader = _alpha_blend_shaders.get(cache_key)
+    if cached_shader:
+        return cached_shader
+
+    var alpha_blend_shader: Shader = Shader.new()
+    alpha_blend_shader.code = source_shader.code.replace(
+        "shader_type spatial;",
+        "shader_type spatial;\n#define MASZYNA_ALPHA_BLEND",
+    )
+    _alpha_blend_shaders[cache_key] = alpha_blend_shader
+    return alpha_blend_shader
 
 
 func _apply_default_material(

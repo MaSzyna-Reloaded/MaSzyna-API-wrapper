@@ -4,6 +4,24 @@ class_name RailVehicle3D
 
 # FIXME: Head Display implementation is experimental and only for demo purposes
 
+## Fixed original-engine submodel naming convention for exterior lights (confirmed against
+## MaSzyna's own vehicle/DynObj.cpp:2379-2418, m_headlampNN/m_endsignalNN .Init() calls) - every
+## .e3d model converted from the original engine names these submodels the same way, so this is a
+## constant mapping, not a per-vehicle setting. Maps the e3d model's own light name to the
+## matching TrainController.state key (populated by TrainLighting, see TrainLighting.cpp).
+const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
+    "headlamp11": "lights/front_headlight_upper_enabled",
+    "headlamp12": "lights/front_headlight_right_enabled",
+    "headlamp13": "lights/front_headlight_left_enabled",
+    "headlamp21": "lights/rear_headlight_upper_enabled",
+    "headlamp22": "lights/rear_headlight_right_enabled",
+    "headlamp23": "lights/rear_headlight_left_enabled",
+    "endsignal12": "lights/front_redmarker_right_enabled",
+    "endsignal13": "lights/front_redmarker_left_enabled",
+    "endsignal22": "lights/rear_redmarker_right_enabled",
+    "endsignal23": "lights/rear_redmarker_left_enabled",
+}
+
 @export_node_path("E3DModelInstance") var model_instance_path:NodePath = NodePath(""):
     set(x):
         if not x == model_instance_path:
@@ -53,28 +71,40 @@ var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
 var _model_node:E3DModelInstance
+var _detection_area:Area3D
 var _t:float = 0.0
 
 
 func enter_cabin(player:MaszynaPlayer):
-    _camera = player.get_camera()
-    _cabin = cabin_scene.instantiate() as Cabin3D
-    if not _cabin:
-        push_error("Root node of cabin scene must be a Cabin3D")
+    if not cabin_scene:
+        push_warning("%s has no cabin_scene; cabin entry not yet supported" % name)
         return
 
+    _camera = player.get_camera()
+    var cabin:Cabin3D = cabin_scene.instantiate() as Cabin3D
+    if not cabin:
+        push_error("Root node of cabin scene must be a Cabin3D")
+        return
+    _cabin = cabin
+
     if controller_path:
-        var controller = get_node(controller_path)
+        var controller = _resolve_controller(controller_path)
         if controller:
-            _cabin.controller_path = controller.get_path()
+            cabin.controller_path = controller.get_path()
 
     # The sequence of adding, removing, hiding, showing nodes is very important
     # to reduce visual artifacts
 
     # first, mark cabin invisible and add it to the scene
-    _cabin.visible = false
+    cabin.visible = false
 
     var _jump_into_cabin = func():
+        # leave_cabin() may have already torn this same cabin down while this signal was still
+        # in flight (e.g. the player exits again immediately after entering) - _cabin no longer
+        # pointing at `cabin` means that already happened, so there's nothing left to jump into.
+        if not is_instance_valid(cabin) or not _cabin == cabin:
+            return
+
         # this subsequence must be called after cabin meshes were loaded
         # hide low poly cab
         if low_poly_cabin_path:
@@ -82,16 +112,16 @@ func enter_cabin(player:MaszynaPlayer):
             if low_poly_cabin:
                 low_poly_cabin.visible = false
 
-        var cabin_enter_camera_transform = _cabin.get_camera_transform()
+        var cabin_enter_camera_transform = cabin.get_camera_transform()
 
         # now remove the cam from the player
         player.remove_child(_camera)
 
         # and add the cam to the cabin
-        _cabin.add_child(_camera)
-        _camera.bound_enabled = _cabin.camera_bound_enabled
-        _camera.bound_min = _cabin.camera_bound_min
-        _camera.bound_max = _cabin.camera_bound_max
+        cabin.add_child(_camera)
+        _camera.bound_enabled = cabin.camera_bound_enabled
+        _camera.bound_min = cabin.camera_bound_min
+        _camera.bound_max = cabin.camera_bound_max
 
         # https://github.com/eu07/maszyna/blob/d187ce6b12fab1825c0c92c1346e7ecda401a440/Train.cpp#L9204
         _camera.bound_min.y += 0.5  # these "magic" values comes from the original source
@@ -114,22 +144,28 @@ func enter_cabin(player:MaszynaPlayer):
         _camera.velocity_multiplier = 0.2
 
     # cabin is not ready, because it is not added to the tree yet
-    _cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
+    cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
 
     # then add it to the scene
-    add_child(_cabin)
+    add_child(cabin)
 
     # then apply transforms
-    _cabin.global_transform = self.global_transform
+    cabin.global_transform = self.global_transform
     if cabin_rotate_180deg:
-        _cabin.rotate_y(deg_to_rad(180))
+        cabin.rotate_y(deg_to_rad(180))
 
     # wait for apply transforms
     await get_tree().process_frame
     await get_tree().process_frame
 
+    # leave_cabin() may have already torn this same cabin down while we were waiting (e.g. the
+    # player exits again immediately after entering) - _cabin no longer pointing at `cabin` means
+    # that already happened, and it (or whatever replaced it) is no longer ours to show.
+    if not is_instance_valid(cabin) or not _cabin == cabin:
+        return
+
     # show the cabin mesh
-    _cabin.visible = true
+    cabin.visible = true
 
 func leave_cabin(player:Node):
     if low_poly_cabin_path:
@@ -151,9 +187,18 @@ func leave_cabin(player:Node):
 
 func get_controller() -> TrainController:
     if controller_path:
-        return get_node(controller_path)
+        return _resolve_controller(controller_path)
     else:
         return null
+
+## Resolves controller_path to a TrainController, transparently unwrapping a FIZTrainController
+## wrapper if that's what the path points at (mirrors how model_instance_path always points at
+## an E3DModelInstance rather than a live mesh node directly).
+func _resolve_controller(node_path:NodePath) -> TrainController:
+    var node = get_node_or_null(node_path)
+    if node is FIZTrainController:
+        return node.get_controller()
+    return node as TrainController
 
 func _update_head_display():
     if is_inside_tree():
@@ -180,6 +225,7 @@ func _process(delta):
     if not Engine.is_editor_hint():
         if _controller:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+            _sync_lights_from_controller()
 
 func _schedule_head_display_update():
     _needs_head_display_update = true
@@ -195,7 +241,7 @@ func _process_dirty() -> void:
 
         if is_inside_tree():
             if controller_path:
-                _controller = get_node_or_null(controller_path)
+                _controller = _resolve_controller(controller_path)
 
             var model_node: E3DModelInstance = null
             if model_instance_path:
@@ -206,6 +252,7 @@ func _process_dirty() -> void:
             if _model_node:
                 _model_node.e3d_loaded.connect(_on_model_node_e3d_loaded)
             _sync_model_lights()
+            _update_detection_area()
 
 
 func _sync_model_lights() -> void:
@@ -219,8 +266,54 @@ func _sync_model_lights() -> void:
     _model_node.lights_state = lights
 
 
+## Applies TrainLighting's live on/off state (TrainController.state) to whichever of this
+## model's own registered lights match LIGHT_STATE_BINDINGS's fixed submodel names - lights not
+## in that table (e.g. cab interior lights) are left as they are, untouched.
+func _sync_lights_from_controller() -> void:
+    if not _model_node or not _model_node.is_e3d_loaded():
+        return
+    var changed:bool = false
+    for light_name:String in lights.keys():
+        if LIGHT_STATE_BINDINGS.has(light_name):
+            var new_value:bool = _controller.state.get(LIGHT_STATE_BINDINGS[light_name], false)
+            if not lights[light_name] == new_value:
+                lights[light_name] = new_value
+                changed = true
+    if changed:
+        _model_node.lights_state = lights
+
+
 func _on_model_node_e3d_loaded() -> void:
     _sync_model_lights()
+    _update_detection_area()
+
+
+## Creates (once) and keeps in sync an Area3D/CollisionShape3D under this RailVehicle3D,
+## sized from the resolved model's AABB, so the player's raycaster can detect this vehicle
+## without requiring it to be hand-authored per vehicle scene.
+func _update_detection_area() -> void:
+    if Engine.is_editor_hint():
+        return
+    if not _model_node or not _model_node.is_e3d_loaded():
+        return
+    var aabb:AABB = _model_node.get_aabb()
+    if aabb.size == Vector3.ZERO:
+        return
+
+    if not _detection_area:
+        _detection_area = Area3D.new()
+        _detection_area.name = "RailVehicleDetectionArea"
+        _detection_area.monitoring = false
+        var shape_node := CollisionShape3D.new()
+        shape_node.shape = BoxShape3D.new()
+        _detection_area.add_child(shape_node)
+        add_child(_detection_area)
+
+    _detection_area.transform = _model_node.transform
+    var shape_node:CollisionShape3D = _detection_area.get_child(0)
+    var box:BoxShape3D = shape_node.shape
+    box.size = aabb.size
+    shape_node.position = aabb.get_center()
 
 
 func _ready() -> void:

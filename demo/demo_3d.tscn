@@ -27,7 +27,6 @@
 [ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
 [ext_resource type="PackedScene" uid="uid://dqwt31s3qnglp" path="res://vehicles/impuls/impuls.tscn" id="12_hsov8"]
 [ext_resource type="Script" uid="uid://ciyrwbjgc1mu2" path="res://addons/libmaszyna/maszyna_track_3d.gd" id="12_m0qth"]
-[ext_resource type="PackedScene" uid="uid://xh8isp1j28uj" path="res://vehicles/tem2/tem2.tscn" id="13_fe5ju"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
 [ext_resource type="Script" uid="uid://bami2gx4l6pyl" path="res://addons/libmaszyna/maszyna_switch_3d.gd" id="15_rrc65"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
@@ -35,7 +34,7 @@
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
-[ext_resource type="PackedScene" uid="uid://fv4an7lb63lu" path="res://vehicles/ep09/ep09.tscn" id="26_jchga"]
+[ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_jcpdq"]
 shader = ExtResource("3_dcvyd")
@@ -90,8 +89,8 @@ shader_parameter/cirrus_absorption = 2.0
 shader_parameter/cirrus_sky_tint_fade = 0.5
 shader_parameter/cirrus_size = 1.0
 shader_parameter/cirrus_uv = Vector2(0.16, 0.11)
-shader_parameter/cirrus_position1 = Vector2(0.14376585, 0.14376585)
-shader_parameter/cirrus_position2 = Vector2(0.14376585, 0.14376585)
+shader_parameter/cirrus_position1 = Vector2(0.0072596455, 0.0072596455)
+shader_parameter/cirrus_position2 = Vector2(0.0072596455, 0.0072596455)
 shader_parameter/cirrus_texture = ExtResource("4_ydfqx")
 shader_parameter/cumulus_visible = true
 shader_parameter/cumulus_intensity = 0.6
@@ -101,7 +100,7 @@ shader_parameter/cumulus_absorption = 2.0
 shader_parameter/cumulus_noise_freq = 2.7
 shader_parameter/cumulus_sky_tint_fade = 0.0
 shader_parameter/cumulus_size = 0.5
-shader_parameter/cumulus_position = Vector2(0.7187264, 0.7187264)
+shader_parameter/cumulus_position = Vector2(0.036298133, 0.036298133)
 shader_parameter/cumulus_texture = ExtResource("5_lnei4")
 shader_parameter/cumulus_partial_mie_phase = Vector3(0.957564, 1.042436, 0.412)
 shader_parameter/cumulus_mie_intensity = 1.0
@@ -233,6 +232,7 @@ utc = 2.0
 
 [node name="TopBar" type="Container" parent="." unique_id=1102380660]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
+top_level = true
 clip_contents = true
 anchors_preset = 10
 anchor_right = 1.0
@@ -346,8 +346,8 @@ custom_minimum_size = Vector2(100, 50)
 clip_contents = true
 offset_left = 1011.0
 offset_top = 467.0
-offset_right = 1231.0
-offset_bottom = 569.0
+offset_right = 1250.0
+offset_bottom = 573.0
 script = ExtResource("3_rrc65")
 title = "Security"
 
@@ -408,37 +408,60 @@ lights = Dictionary[String, bool]({
 [node name="Impuls" parent="." unique_id=2111644575 instance=ExtResource("12_hsov8")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.021647027, -0.019251347, -4.3020163)
 
-[node name="TEM2" parent="." unique_id=803954038 instance=ExtResource("13_fe5ju")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.3788, 0, 0)
-lights = Dictionary[String, bool]({
-"endsignal12": true,
-"endsignal13": true,
-"endsignal22": false,
-"endsignal23": false,
-"endtab1": false,
-"endtab2": false,
-"headlamp11": false,
-"headlamp12": false,
-"headlamp13": false,
-"headlamp21": true,
-"headlamp22": true,
-"headlamp23": true
-})
+[node name="ST44-700" type="Node3D" parent="." unique_id=917708164]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.254089, 0, 20.364653)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/st44_v2"
+file_name = "st44-700"
+skin = "st44-700"
+train_id = "st44"
 
-[node name="EP09" parent="." unique_id=1451239513 instance=ExtResource("26_jchga")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.282572, -4.7683716e-07, 169.09251)
-lights = Dictionary[String, bool]({
-"endsignal12": true,
-"endsignal13": true,
-"endsignal22": false,
-"endsignal23": false,
-"headlamp11": false,
-"headlamp12": false,
-"headlamp13": false,
-"headlamp21": true,
-"headlamp22": true,
-"headlamp23": true
-})
+[node name="SU45" type="Node3D" parent="." unique_id=1297199175]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/su45_v2"
+file_name = "301d"
+skin = "301d-225"
+train_id = "su45"
+
+[node name="SM42" type="Node3D" parent="." unique_id=769861990]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
+script = ExtResource("29_dcvyd")
+data_path = "dynamic/pkp/sm42_v1"
+file_name = "6d1"
+skin = "6d-1076"
+train_id = "sm42"
+
+[node name="EP09" type="Node3D" parent="." unique_id=426636050]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30.381563, 0, 128.24704)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/ep09_v1/"
+file_name = "104e_1"
+skin = "104e-035"
+train_id = "ep09"
+
+[node name="SM31" type="Node3D" parent="." unique_id=162152882]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.559359, 0, 95.37102)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/sm31_v1/"
+file_name = "411d"
+train_id = "sm31"
+
+[node name="KA" type="Node3D" parent="." unique_id=754884786]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.47315, 0, 119.65934)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/road/clio"
+file_name = "clio"
+skin = "red"
+train_id = "clio"
+
+[node name="TEM2-122" type="Node3D" parent="." unique_id=225663093]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7.8897715, 0, -2.9857445)
+script = ExtResource("29_dcvyd")
+data_path = "/dynamic/pkp/tem2_v2"
+file_name = "tem2-122a"
+skin = "tem2-122"
+train_id = "tem2"
 
 [node name="Dekoracje" type="Node3D" parent="." unique_id=1893813040]
 

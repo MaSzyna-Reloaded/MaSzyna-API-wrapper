@@ -8,9 +8,6 @@
 [ext_resource type="Resource" uid="uid://djicmpoi3aix0" path="res://vehicles/sm42/sm42_sound_bank.tres" id="5_liqvc"]
 [ext_resource type="Script" uid="uid://b31tkvci2ani6" path="res://addons/libmaszyna/sound/train_sound_trigger.gd" id="6_clokw"]
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_uljbo"]
-size = Vector3(4.5332, 4.72223, 17.0549)
-
 [node name="SM42-099" type="Node3D" unique_id=1967816975]
 transform = Transform3D(-1, 0, -8.74228e-08, 0, 1, 0, 8.74228e-08, 0, -1, 0, 0, 0)
 script = ExtResource("1_iiqbf")
@@ -88,13 +85,6 @@ data_path = "/dynamic/pkp/sm42_v1"
 model_filename = "6da_interior"
 skins = ["6d-907"]
 exclude_node_names = ["cien"]
-
-[node name="Area3D" type="Area3D" parent="." unique_id=1817539912]
-monitoring = false
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D" unique_id=1381651767]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.53125, 1.97558, 0.243691)
-shape = SubResource("BoxShape3D_uljbo")
 
 [node name="401W-1" type="VisualInstance3D" parent="." unique_id=1515864927]
 unique_name_in_owner = false
@@ -254,12 +244,14 @@ controller_path = NodePath("../../SM42v1")
 
 [node name="Horn1" type="Node" parent="SfxPlayer3D" unique_id=209300178]
 script = ExtResource("6_clokw")
-state_property = "horn1"
+state_property = "horn_low_active"
 sound_event = &"horn1"
+sound_placement = &"external"
 controller_path = NodePath("../../SM42v1")
 
 [node name="Horn2" type="Node" parent="SfxPlayer3D" unique_id=875255125]
 script = ExtResource("6_clokw")
-state_property = "horn2"
+state_property = "horn_high_active"
 sound_event = &"horn2"
+sound_placement = &"external"
 controller_path = NodePath("../../SM42v1")

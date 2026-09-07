@@ -158,6 +158,9 @@ void fragment() {
     vec4 normal_sample = texture(normal_texture, parallax_uv);
     vec4 specgloss_sample = texture(specgloss_texture, parallax_uv);
 
+#ifdef MASZYNA_ALPHA_BLEND
+    ALPHA = diffuse_sample.a;
+#endif
     if (alpha_test_failed(diffuse_sample.a)) {
         discard;
     }

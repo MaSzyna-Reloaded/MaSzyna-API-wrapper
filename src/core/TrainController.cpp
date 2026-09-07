@@ -51,6 +51,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
         ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
+        ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &TrainController::radio_channel_set);
         ClassDB::bind_method(
                 D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
         ClassDB::bind_method(
@@ -81,6 +82,83 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
                 &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "category", "category", &TrainController::set_category, &TrainController::get_category,
+                "category", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"Train", CATEGORY_TRAIN},
+                         {"Road", CATEGORY_ROAD},
+                         {"Ship", CATEGORY_SHIP},
+                         {"Airplane", CATEGORY_AIRPLANE}}));
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "train_type", "train_type", &TrainController::set_train_type,
+                &TrainController::get_train_type, "train_type", PROPERTY_HINT_ENUM,
+                enum_hint(
+                        {{"Default", TRAIN_TYPE_DEFAULT},
+                         {"EZT", TRAIN_TYPE_EZT},
+                         {"ET41", TRAIN_TYPE_ET41},
+                         {"ET42", TRAIN_TYPE_ET42},
+                         {"PseudoDiesel", TRAIN_TYPE_PSEUDODIESEL},
+                         {"ET22", TRAIN_TYPE_ET22},
+                         {"SN61", TRAIN_TYPE_SN61},
+                         {"EP05", TRAIN_TYPE_EP05},
+                         {"ET40", TRAIN_TYPE_ET40},
+                         {"T181", TRAIN_TYPE_181},
+                         {"DMU", TRAIN_TYPE_DMU}}));
+        BIND_PROPERTY(
+                Variant::FLOAT, "reduced_mass", "reduced_mass", &TrainController::set_reduced_mass,
+                &TrainController::get_reduced_mass, "reduced_mass");
+        BIND_PROPERTY(
+                Variant::FLOAT, "sand_capacity", "sand_capacity", &TrainController::set_sand_capacity,
+                &TrainController::get_sand_capacity, "sand_capacity");
+        BIND_PROPERTY(
+                Variant::FLOAT, "heating_power", "heating_power", &TrainController::set_heating_power,
+                &TrainController::get_heating_power, "heating_power");
+        BIND_PROPERTY(
+                Variant::FLOAT, "light_power", "light_power", &TrainController::set_light_power,
+                &TrainController::get_light_power, "light_power");
+        BIND_PROPERTY(
+                Variant::FLOAT, "length", "dimensions/length", &TrainController::set_length,
+                &TrainController::get_length, "length");
+        BIND_PROPERTY(
+                Variant::FLOAT, "height", "dimensions/height", &TrainController::set_height,
+                &TrainController::get_height, "height");
+        BIND_PROPERTY(
+                Variant::FLOAT, "width", "dimensions/width", &TrainController::set_width, &TrainController::get_width,
+                "width");
+        BIND_PROPERTY(
+                Variant::FLOAT, "drag_coefficient", "dimensions/drag_coefficient",
+                &TrainController::set_drag_coefficient, &TrainController::get_drag_coefficient, "drag_coefficient");
+        BIND_PROPERTY(
+                Variant::FLOAT, "floor_height", "dimensions/floor_height", &TrainController::set_floor_height,
+                &TrainController::get_floor_height, "floor_height");
+        BIND_PROPERTY(
+                Variant::FLOAT, "initial_velocity", "initial_velocity", &TrainController::set_initial_velocity,
+                &TrainController::get_initial_velocity, "initial_velocity");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
+                &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
+                "battery_start_mode", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "ground_relay_start_mode", "cntrl/ground_relay_start_mode",
+                &TrainController::set_ground_relay_start_mode, &TrainController::get_ground_relay_start_mode,
+                "ground_relay_start_mode", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "compartment_lights_start_mode", "cntrl/compartment_lights_start_mode",
+                &TrainController::set_compartment_lights_start_mode,
+                &TrainController::get_compartment_lights_start_mode, "compartment_lights_start_mode",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(
+                Variant::BOOL, "automatic_cab_activation", "cntrl/automatic_cab_activation",
+                &TrainController::set_automatic_cab_activation, &TrainController::get_automatic_cab_activation,
+                "automatic_cab_activation");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "inactive_cab_flag", "cntrl/inactive_cab_flag", &TrainController::set_inactive_cab_flag,
+                &TrainController::get_inactive_cab_flag, "inactive_cab_flag", PROPERTY_HINT_FLAGS,
+                "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
+                "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
         ADD_SIGNAL(MethodInfo(mover_config_changed_signal));
         ADD_SIGNAL(MethodInfo(mover_initialized_signal));
@@ -107,10 +185,45 @@ namespace godot {
         BIND_ENUM_CONSTANT(POWER_TYPE_MECH);
         BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
         BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
+
+        BIND_ENUM_CONSTANT(CATEGORY_TRAIN);
+        BIND_ENUM_CONSTANT(CATEGORY_ROAD);
+        BIND_ENUM_CONSTANT(CATEGORY_SHIP);
+        BIND_ENUM_CONSTANT(CATEGORY_AIRPLANE);
+
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_DEFAULT);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_EZT);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET41);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET42);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_PSEUDODIESEL);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET22);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_SN61);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_EP05);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_ET40);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_181);
+        BIND_ENUM_CONSTANT(TRAIN_TYPE_DMU);
+
+        BIND_ENUM_CONSTANT(START_MODE_DISABLED);
+        BIND_ENUM_CONSTANT(START_MODE_MANUAL);
+        BIND_ENUM_CONSTANT(START_MODE_AUTOMATIC);
+        BIND_ENUM_CONSTANT(START_MODE_MANUAL_WITH_AUTO_FALLBACK);
+        BIND_ENUM_CONSTANT(START_MODE_CONVERTER);
+        BIND_ENUM_CONSTANT(START_MODE_BATTERY);
+        BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
     }
 
     TMoverParameters *TrainController::get_mover() const {
         return mover;
+    }
+
+    void TrainController::initialize_mover_state() {
+        const bool driver_active = initial_velocity != 0.0;
+
+        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
+        mover->LocalBrakePosA = 0.0;
+        mover->BrakeCtrlPos =
+                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
+        mover->BrakeLevelSet(mover->BrakeCtrlPos);
     }
 
     void TrainController::initialize_mover() {
@@ -124,7 +237,7 @@ namespace godot {
         _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+        mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
 
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
@@ -132,6 +245,7 @@ namespace godot {
         dirty = true;
         dirty_prop = true;
         _update_mover_config_if_dirty();
+        initialize_mover_state();
 
         /* FIXME: remove test data */
         mover->CabActive = 1;
@@ -264,15 +378,38 @@ namespace godot {
         p_mover->Mass = mass;
         p_mover->Power = power;
         p_mover->Vmax = max_velocity;
+        p_mover->Mred = reduced_mass;
 
         p_mover->ComputeMass();
+
+        p_mover->CategoryFlag = category;
+        p_mover->TrainType = train_type;
+        p_mover->SandCapacity = static_cast<int>(sand_capacity);
+        p_mover->HeatingPower = heating_power;
+        p_mover->LightPower = light_power;
+
+        p_mover->Dim.L = length;
+        p_mover->Dim.H = height;
+        p_mover->Dim.W = width;
+        p_mover->Cx = drag_coefficient;
+        p_mover->Floor = static_cast<float>(floor_height);
+
+        p_mover->BatteryStart = start_mode_map.at(battery_start_mode);
+        p_mover->GroundRelayStart = start_mode_map.at(ground_relay_start_mode);
+        p_mover->CompartmentLights.start_type = start_mode_map.at(compartment_lights_start_mode);
+        p_mover->AutomaticCabActivation = automatic_cab_activation;
+        p_mover->InactiveCabFlag = inactive_cab_flag;
 
         // FIXME: move to TrainPower
         p_mover->BatteryVoltage = battery_voltage;
         p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {}
+    void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
+        // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
+        // property (see update_mover() below), so this is a thin alias, not new derivation.
+        p_config["max_speed"] = max_velocity;
+    }
 
     void TrainController::update_mover() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
@@ -282,7 +419,8 @@ namespace godot {
             update_config(new_config);
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-            mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+            mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
+            initialize_mover_state();
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }

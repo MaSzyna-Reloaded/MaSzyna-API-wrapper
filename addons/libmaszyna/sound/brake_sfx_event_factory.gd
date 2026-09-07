@@ -15,14 +15,14 @@ class_name BrakeSfxEventFactory
 ## one-shot, since gnd-sfx's own automation-domain-entry tracking already triggers it exactly once
 ## per pulse with no runtime edge-detection needed.
 ##
-## Runtime control (TrainBrakeSoundController) is correspondingly trivial: play() each event once,
+## Runtime control (TrainSoundSystem) is correspondingly trivial: play() each event once,
 ## lazily, the first time it's fed (never stop() - an inactive automation costs nothing, and the
 ## curves themselves fade gain to ~0 at rest), then just copy TrainController.state values into
 ## modulate()/set_parameters() every frame. It never decides gain/pitch/which-sample-plays itself.
 
 ## event_name -> ordered MMD labels composing it (first one present in a vehicle's `sources` wins
 ## as the "primary" label for purposes like soundproofing/placement lookups that need exactly one -
-## see TrainBrakeSoundController). Mirrors MmdSoundCatalog's own label -> event_name map; kept here
+## see TrainSoundSystem). Mirrors MmdSoundCatalog's own label -> event_name map; kept here
 ## too (not just derived from the catalog) since it's this factory's own composition decision.
 const EVENT_LABEL_GROUPS := {
     &"brake_shoe": ["brakesound", "brake"],
@@ -95,7 +95,7 @@ static func build_events(sources:Dictionary, config:Dictionary) -> Array[SfxEven
         events.append(pipe_hiss)
 
     # At most one instance of any of these ambient/effect events should ever play per vehicle -
-    # also makes a later config-driven rebuild (TrainBrakeSoundController re-running this factory
+    # also makes a later config-driven rebuild (TrainSoundSystem re-running this factory
     # after config_changed) safe: play()-ing the newly-built replacement event under the same name
     # stops whatever instance of the old event object was still running under that name first
     # (SfxPlaybackRuntime.play(), matched by event_name not object identity), instead of leaking it.
@@ -618,7 +618,7 @@ static func _apply_continuous_release(track:SfxTrack) -> void:
 ## formula shaping - so they stay identity-curve SfxParameterModulations exactly as
 ## MmdSoundEventBuilder._build_modulation already builds for every other parameterized event.
 ## "gain" here is only ever fed the operator's own maszyna/sound/brake_*_volume_factor
-## ProjectSettings trim (TrainBrakeSoundController._volume_factor()) - a deliberate coarse,
+## ProjectSettings trim (TrainSoundSystem._volume_factor()) - a deliberate coarse,
 ## listener-position-only knob on top of correctly-calibrated per-event data, not a substitute for
 ## it. A per-track "pitch" modulation is deliberately NOT included - per-track pitch shaping lives
 ## in each automation's own pitch_curve instead, since a pitch modulation would apply event-globally

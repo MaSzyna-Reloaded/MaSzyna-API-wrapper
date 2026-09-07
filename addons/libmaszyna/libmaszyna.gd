@@ -22,6 +22,7 @@ func _enable_plugin():
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
+    add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
 
     add_custom_type(
@@ -76,6 +77,7 @@ func _disable_plugin():
     remove_custom_type("MaszynaSwitch3D")
     remove_custom_type("FIZTrainController")
 
+    remove_autoload_singleton("TrainSoundSystem")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("E3DModelTool")

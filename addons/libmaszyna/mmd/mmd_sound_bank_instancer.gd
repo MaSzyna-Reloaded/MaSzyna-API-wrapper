@@ -6,6 +6,10 @@ const _INTERNAL_BRAKE_LABELS:Array[String] = [
     "localbrakesound", "localbrakesound2",
 ]
 const _PLAYER_VOICE_COUNT:int = 24
+const _HORN_LABELS:Array[String] = ["horn1", "horn2", "horn3"]
+const _HORN_RANGE_UNIT_DIVISOR:float = 24.0
+const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
+static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
 
 
 static func build_into(
@@ -65,6 +69,8 @@ static func _build_player(
             continue
         var event:SfxEvent = MmdSoundEventBuilder.build(
                 definition, entry["event_name"], entry.get("sound_parameter", &""), false, true)
+        if definition.label in _HORN_LABELS:
+            _apply_horn_spatial_config(event, definition)
         events.append(event)
         regular_definitions.append(definition)
 
@@ -102,15 +108,27 @@ static func _build_player(
 
 
 static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_internal_data:bool) -> void:
+    if definition.label in _HORN_LABELS and not definition.soundproofing.size() == 6:
+        definition.soundproofing = _HORN_SOUNDPROOFING
     if definition.placement_defined:
         return
     if from_internal_data:
         definition.placement = &"external" if definition.label == "slipperysound" else &"internal"
     elif definition.label == "engine":
         definition.placement = &"engine"
+    elif definition.label in _HORN_LABELS:
+        definition.placement = &"external"
     elif MmdSoundCatalog.has_label(definition.label) \
             and MmdSoundCatalog.get_entry(definition.label).get("controller", &"") == &"brake":
         definition.placement = &"external"
+
+
+static func _apply_horn_spatial_config(event:SfxEvent, definition:MmdSoundSourceDefinition) -> void:
+    if definition.range < 0.0:
+        return
+    event.spatial_config.unit_size = maxf(definition.range / _HORN_RANGE_UNIT_DIVISOR, 0.01)
+    event.spatial_config.max_distance = minf(
+            definition.range * _HORN_MAX_DISTANCE_FACTOR, 2750.0)
 
 
 static func _apply_brake_source_defaults(definition:MmdSoundSourceDefinition) -> void:

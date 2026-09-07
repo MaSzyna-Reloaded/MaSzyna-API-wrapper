@@ -189,6 +189,10 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
         var source:MmdSoundSourceDefinition = trigger.get("source") as MmdSoundSourceDefinition
         if source:
             parameters[&"soundproofing"] = _soundproofing(runtime, source)
+        else:
+            var placement:StringName = StringName(trigger.get("sound_placement", &"general"))
+            if not placement == &"general":
+                parameters[&"soundproofing"] = _placement_soundproofing(runtime, placement)
         if should_play and not activated:
             runtime.player.play(event_name, parameters)
             runtime.trigger_states[trigger_id] = true
@@ -226,15 +230,22 @@ func _soundproofing(runtime:BankRuntime, source:MmdSoundSourceDefinition) -> flo
         return 1.0
     if source.placement == &"general":
         return 1.0
-    var placement:int = _placement_index(source)
+    return _placement_soundproofing(runtime, source.placement, source.soundproofing)
+
+
+func _placement_soundproofing(
+        runtime:BankRuntime, placement_name:StringName,
+        source_profile:PackedFloat32Array = PackedFloat32Array()) -> float:
+    var placement:int = _placement_index(placement_name)
     var inside_source:bool = _inside_vehicle(runtime.vehicle)
     if placement == 0 and inside_source:
-        return _source_profile_value(source, runtime.soundproofing, placement, _listener.listener_context)
+        return _source_profile_value(
+                source_profile, runtime.soundproofing, placement, _listener.listener_context)
     if not _listener or not _listener.listener_vehicle:
         return 0.0 if placement == 0 else _profile_value(runtime.soundproofing, placement, EXTERIOR_CONTEXT)
     var source_context:int = _listener.listener_context if inside_source else EXTERIOR_CONTEXT
     var proofing:float = _source_profile_value(
-            source, runtime.soundproofing, placement, source_context)
+            source_profile, runtime.soundproofing, placement, source_context)
     if not _listener.listener_vehicle == runtime.vehicle:
         proofing *= _profile_value(
                 _vehicle_profile(_listener.listener_vehicle), 2, _listener.listener_context)
@@ -242,10 +253,10 @@ func _soundproofing(runtime:BankRuntime, source:MmdSoundSourceDefinition) -> flo
 
 
 func _source_profile_value(
-        source:MmdSoundSourceDefinition, profile:Array[PackedFloat32Array],
+        source_profile:PackedFloat32Array, profile:Array[PackedFloat32Array],
         placement:int, context:int) -> float:
-    if source.soundproofing.size() == 6 and not is_equal_approx(source.soundproofing[context], -1.0):
-        return sqrt(clampf(source.soundproofing[context], 0.0, 1.0))
+    if source_profile.size() == 6 and not is_equal_approx(source_profile[context], -1.0):
+        return sqrt(clampf(source_profile[context], 0.0, 1.0))
     return _profile_value(profile, placement, context)
 
 
@@ -264,8 +275,8 @@ func _vehicle_profile(vehicle:RailVehicle3D) -> Array[PackedFloat32Array]:
     return []
 
 
-func _placement_index(source:MmdSoundSourceDefinition) -> int:
-    match source.placement:
+func _placement_index(placement:StringName) -> int:
+    match placement:
         &"internal": return 0
         &"engine": return 1
         &"external": return 2

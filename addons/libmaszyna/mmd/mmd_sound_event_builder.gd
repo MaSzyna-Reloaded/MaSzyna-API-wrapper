@@ -55,13 +55,26 @@ static func build(
         ]
 
     if parameterized or soundproofed:
-        event.parameter_modulations.append_array([
-            _build_modulation(&"soundproofing", SfxParameterModulation.Target.GAIN, 0.0, 1.0, 1.0),
-            _build_modulation(&"soundproofing", SfxParameterModulation.Target.UNIT_SIZE, 0.0, 1.0, 1.0),
-        ])
+        add_soundproofing_modulations(event)
         event.spatial_config = _build_spatial_config(definition)
 
     return event
+
+
+static func add_soundproofing_modulations(event:SfxEvent) -> void:
+    var has_gain:bool = false
+    var has_unit_size:bool = false
+    for modulation:SfxParameterModulation in event.parameter_modulations:
+        if not modulation.parameter_name == &"soundproofing":
+            continue
+        has_gain = has_gain or modulation.target == SfxParameterModulation.Target.GAIN
+        has_unit_size = has_unit_size or modulation.target == SfxParameterModulation.Target.UNIT_SIZE
+    if not has_gain:
+        event.parameter_modulations.append(
+                _build_modulation(&"soundproofing", SfxParameterModulation.Target.GAIN, 0.0, 1.0, 1.0))
+    if not has_unit_size:
+        event.parameter_modulations.append(
+                _build_modulation(&"soundproofing", SfxParameterModulation.Target.UNIT_SIZE, 0.0, 1.0, 1.0))
 
 
 static func _build_modulation(

@@ -127,6 +127,13 @@ func test_indicator_light_label_is_parsed_as_bare_submodel_name():
     assert_not_null(radio, "include right after an i-*: indicator label should still parse")
 
 
+func test_clock_type_does_not_desync_following_indicator_labels():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    assert_not_null(_find(definition, "i-security_aware"))
+    assert_not_null(_find(definition, "i-cablight"))
+    assert_not_null(_find(definition, "i-instrumentlight"))
+
+
 func test_block_form_indicator_light_reads_submodel_from_inside_the_block():
     # confirmed real (dynamic/pkp/su45_v2/301d.mmd): "i-security_cabsignal: { i-shp soundinc:
     # ... sounddec: ... }" - the submodel name is the block's FIRST token, not a token before "{"

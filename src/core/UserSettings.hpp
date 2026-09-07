@@ -24,6 +24,8 @@ namespace godot {
             void _setup_defaults();
             void _apply_defaults();
 
+            static String _get_override_cfg_path();
+
         protected:
             static void _bind_methods();
 
@@ -42,6 +44,9 @@ namespace godot {
 
             String get_maszyna_game_dir() const;
             void save_maszyna_game_dir(const String &p_path);
+
+            String get_current_graphics_backend() const;
+            void save_graphics_backend(const String &p_backend);
     };
 
 } // namespace godot

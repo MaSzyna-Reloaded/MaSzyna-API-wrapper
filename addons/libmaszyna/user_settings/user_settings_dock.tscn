@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://bgejg0pbyfexc" path="res://addons/libmaszyna/user_settings/user_settings_dock.gd" id="1_c24dg"]
 [ext_resource type="Script" uid="uid://bc8likdrai4yp" path="res://addons/libmaszyna/user_settings/user_settings_check_button.gd" id="2_2cs74"]
 [ext_resource type="Script" uid="uid://c3o4dhxm72pj1" path="res://addons/libmaszyna/user_settings/user_settings_dropdown.gd" id="3_hwkpe"]
+[ext_resource type="Script" uid="uid://477phvth1tx" path="res://addons/libmaszyna/user_settings/graphics_backend_dropdown.gd" id="4_gfxbk"]
 
 [node name="Maszyna Settings" type="PanelContainer" unique_id=1678337651]
 anchors_preset = 15
@@ -229,30 +230,61 @@ key = "anisotropic_filtering_level"
 layout_mode = 2
 text = "Anisotropic filtering level"
 
+[node name="HBoxContainer14" type="HBoxContainer" parent="VBoxContainer" unique_id=1245961832]
+layout_mode = 2
+
+[node name="GraphicsBackendDropdown" type="OptionButton" parent="VBoxContainer/HBoxContainer14" unique_id=1245961833]
+unique_name_in_owner = true
+layout_mode = 2
+selected = 0
+item_count = 4
+popup/item_0/text = "Vulkan"
+popup/item_0/id = 0
+popup/item_1/text = "OpenGL3 (Compatibility)"
+popup/item_1/id = 1
+popup/item_2/text = "D3D12 (Windows)"
+popup/item_2/id = 2
+popup/item_3/text = "Metal (macOS)"
+popup/item_3/id = 3
+script = ExtResource("4_gfxbk")
+
+[node name="Label3" type="Label" parent="VBoxContainer/HBoxContainer14" unique_id=1245961834]
+layout_mode = 2
+text = "Graphics Backend"
+
 [node name="InfoMessageWindow" type="Window" parent="." unique_id=308881657]
 unique_name_in_owner = true
 initial_position = 4
-size = Vector2i(300, 100)
+size = Vector2i(420, 180)
 visible = false
+wrap_controls = false
 unresizable = true
 
-[node name="FlowContainer" type="FlowContainer" parent="InfoMessageWindow" unique_id=496315848]
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -160.0
-offset_top = -11.5
-offset_right = 160.0
-offset_bottom = 11.5
+[node name="VBoxContainer" type="VBoxContainer" parent="InfoMessageWindow" unique_id=496315848]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_override_constants/separation = 12
+alignment = 1
 
-[node name="Label" type="Label" parent="InfoMessageWindow/FlowContainer" unique_id=1784172189]
+[node name="Label" type="Label" parent="InfoMessageWindow/VBoxContainer" unique_id=1784172189]
 layout_mode = 2
 size_flags_horizontal = 3
+size_flags_vertical = 3
 horizontal_alignment = 1
+vertical_alignment = 1
+autowrap_mode = 3
+
+[node name="CloseButton" type="Button" parent="InfoMessageWindow/VBoxContainer" unique_id=1245961901]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "OK"
 
 [connection signal="visibility_changed" from="." to="." method="_refresh"]
 [connection signal="text_changed" from="VBoxContainer/GameDirSection/LineEdit" to="." method="_on_line_edit_text_changed"]
@@ -260,3 +292,5 @@ horizontal_alignment = 1
 [connection signal="dir_selected" from="VBoxContainer/GameDirSection/DirectorySelectorDialog" to="." method="_on_directory_selector_dialog_dir_selected"]
 [connection signal="button_up" from="VBoxContainer/HBoxContainer2/ClearCacheButton" to="." method="_on_clear_cache_button_button_up"]
 [connection signal="button_up" from="VBoxContainer/HBoxContainer2/ReloadModelsButton" to="." method="_on_reload_models_button_button_up"]
+[connection signal="close_requested" from="InfoMessageWindow" to="." method="_close_message_window"]
+[connection signal="pressed" from="InfoMessageWindow/VBoxContainer/CloseButton" to="." method="_close_message_window"]

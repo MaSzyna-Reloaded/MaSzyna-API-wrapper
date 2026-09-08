@@ -20,36 +20,36 @@ namespace godot {
 
         private:
             static void _bind_methods();
-            MAKE_MEMBER_GS(float, oil_min_pressure, 0.0);
-            MAKE_MEMBER_GS(float, oil_max_pressure, 0.65);
+            MAKE_MEMBER_GS(float, oil_pump_pressure_minimum, 0.0);
+            MAKE_MEMBER_GS(float, oil_pump_pressure_maximum, 0.65);
             MAKE_MEMBER_GS_NR(StartMode, fuel_pump_start_mode, START_MODE_MANUAL);
             MAKE_MEMBER_GS_NR(StartMode, oil_pump_start_mode, START_MODE_MANUAL);
             MAKE_MEMBER_GS_NR(StartMode, water_pump_start_mode, START_MODE_MANUAL);
 
             /* Engine: (Kont.), przekladnia mechaniczna */
-            MAKE_MEMBER_GS(double, min_rpm, 0.0);
-            MAKE_MEMBER_GS(double, max_rpm, 0.0);
-            MAKE_MEMBER_GS(double, fuel_cutoff_rpm, 0.0);
-            MAKE_MEMBER_GS(double, inertia, 1.0);
-            MAKE_MEMBER_GS(double, clutch_engage_speed, 0.5);
-            MAKE_MEMBER_GS(double, clutch_disengage_speed, 0.9);
-            MAKE_MEMBER_GS(bool, has_torque_converter, false);
-            MAKE_MEMBER_GS(double, tc_max_torque_ratio, 2.0);
-            MAKE_MEMBER_GS(double, tc_coupling_point, 0.85);
-            MAKE_MEMBER_GS(double, tc_lockup_torque, 3000.0);
-            MAKE_MEMBER_GS(double, tc_lockup_rate, 1.0);
-            MAKE_MEMBER_GS(double, tc_unlock_rate, 1.0);
-            MAKE_MEMBER_GS(double, tc_fill_rate_increase, 1.0);
-            MAKE_MEMBER_GS(double, tc_fill_rate_decrease, 1.0);
-            MAKE_MEMBER_GS(double, tc_torque_in_in, 4.5);
-            MAKE_MEMBER_GS(double, tc_torque_in_out, 0.0);
-            MAKE_MEMBER_GS(double, tc_torque_out_out, 0.0);
-            MAKE_MEMBER_GS(double, tc_lockup_speed, 1.0);
-            MAKE_MEMBER_GS(double, tc_unlock_speed, 1.0);
+            MAKE_MEMBER_GS(double, mechanical_min_rpm, 0.0);
+            MAKE_MEMBER_GS(double, mechanical_max_rpm, 0.0);
+            MAKE_MEMBER_GS(double, mechanical_fuel_cutoff_rpm, 0.0);
+            MAKE_MEMBER_GS(double, mechanical_inertia, 1.0);
+            MAKE_MEMBER_GS(double, mechanical_clutch_engage_speed, 0.5);
+            MAKE_MEMBER_GS(double, mechanical_clutch_disengage_speed, 0.9);
+            MAKE_MEMBER_GS(bool, torque_converter_present, false);
+            MAKE_MEMBER_GS(double, torque_converter_max_torque_ratio, 2.0);
+            MAKE_MEMBER_GS(double, torque_converter_coupling_point, 0.85);
+            MAKE_MEMBER_GS(double, torque_converter_lockup_torque, 3000.0);
+            MAKE_MEMBER_GS(double, torque_converter_lockup_rate, 1.0);
+            MAKE_MEMBER_GS(double, torque_converter_unlock_rate, 1.0);
+            MAKE_MEMBER_GS(double, torque_converter_fill_rate_increase, 1.0);
+            MAKE_MEMBER_GS(double, torque_converter_fill_rate_decrease, 1.0);
+            MAKE_MEMBER_GS(double, torque_converter_torque_in_in, 4.5);
+            MAKE_MEMBER_GS(double, torque_converter_torque_in_out, 0.0);
+            MAKE_MEMBER_GS(double, torque_converter_torque_out_out, 0.0);
+            MAKE_MEMBER_GS(double, torque_converter_lockup_speed, 1.0);
+            MAKE_MEMBER_GS(double, torque_converter_unlock_speed, 1.0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_converter_table)
             /* V2NList: predkosc -> maksymalne obroty silnika (dizel_vel2nmax_Table) */
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, vel2nmax_table)
-            MAKE_MEMBER_GS(bool, has_retarder, false);
+            MAKE_MEMBER_GS(bool, retarder_present, false);
             MAKE_MEMBER_GS_NR(RetarderPlacement, retarder_placement, RETARDER_PLACEMENT_AFTER_GEARBOX);
             MAKE_MEMBER_GS(double, retarder_torque_in_in, 1.0);
             MAKE_MEMBER_GS(double, retarder_max_torque, 1.0);
@@ -59,13 +59,13 @@ namespace godot {
             MAKE_MEMBER_GS(double, retarder_min_velocity, 1.0);
 
             /* DList: tabela przepustnicy */
-            MAKE_MEMBER_GS(double, max_torque, 1.0);
-            MAKE_MEMBER_GS(double, max_torque_rpm, 1.0);
-            MAKE_MEMBER_GS(double, max_rpm_torque, 2.0);
-            MAKE_MEMBER_GS(double, nominal_fuel_dose, 0.0);
-            MAKE_MEMBER_GS(double, resistance_torque, 0.0);
-            MAKE_MEMBER_GS(double, nominal_fuel_consumption_rate, 250.0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<ThrottlePositionItem>, throttle_table)
+            MAKE_MEMBER_GS(double, throttle_table_max_torque, 1.0);
+            MAKE_MEMBER_GS(double, throttle_table_max_torque_rpm, 1.0);
+            MAKE_MEMBER_GS(double, throttle_table_max_rpm_torque, 2.0);
+            MAKE_MEMBER_GS(double, throttle_table_nominal_fuel_dose, 0.0);
+            MAKE_MEMBER_GS(double, throttle_table_resistance_torque, 0.0);
+            MAKE_MEMBER_GS(double, throttle_table_nominal_fuel_consumption_rate, 250.0);
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<ThrottlePositionItem>, throttle_table_positions)
 
             /* DMList: charakterystyka momentu obrotowego */
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_table)

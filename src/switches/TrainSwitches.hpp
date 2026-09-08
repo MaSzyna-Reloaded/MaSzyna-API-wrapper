@@ -37,6 +37,6 @@ namespace godot {
             MAKE_MEMBER_GS(bool, modern_dimmer, false);
             MAKE_MEMBER_GS(bool, dimmer_list_cycle, false);
             MAKE_MEMBER_GS(int, dimmer_list_default_position, 0);
-            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<DimmerListItem>, dimmer_list)
+            MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<DimmerListItem>, dimmer_list_positions)
     };
 } // namespace godot

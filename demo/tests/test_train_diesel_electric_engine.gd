@@ -56,5 +56,20 @@ func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
     # TrainDieselElectricEngine inherits TrainDieselEngine's mechanical-transmission
     # properties, but a diesel-electric vehicle should simply leave them at their defaults.
     await wait_idle_frames(2)
-    assert_false(engine.get("torque_converter/present"))
-    assert_false(engine.get("retarder/present"))
+    assert_false(engine.torque_converter_present)
+    assert_false(engine.retarder_present)
+
+func test_fiz_wwlist_row_uses_canonical_shunting_property():
+    var context: FizImportContext = FizImportContext.new()
+    context.add_part("TrainEngine", engine)
+    var parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
+    var header: MaszynaParser = MaszynaParser.new()
+    header.initialize(PackedByteArray())
+    parser.parse(header, context, "WWList:")
+    var row: MaszynaParser = MaszynaParser.new()
+    row.initialize("696 100 3000 800 100 200 50".to_utf8_buffer())
+    parser.parse_row(row, context)
+    parser.end_table(context)
+
+    assert_eq(engine.wwlist.size(), 1)
+    assert_true((engine.wwlist[0] as WWListItem).has_shunting)

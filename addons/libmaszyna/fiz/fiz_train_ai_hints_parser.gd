@@ -19,8 +19,8 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     context.add_part("TrainAIHints", node)
 
     if kv.has("Pantstate"):
-        node.set_pantograph_state(FizLineUtil.get_int(kv, "Pantstate", TrainAIHints.PANTOGRAPH_STATE_FRONT))
+        node.pantograph_state = FizLineUtil.get_int(kv, "Pantstate", TrainAIHints.PANTOGRAPH_STATE_FRONT)
     if kv.has("LocalBrakeAccFactor"):
-        node.set_local_brake_acceleration_factor(FizLineUtil.get_float(kv, "LocalBrakeAccFactor"))
+        node.local_brake_acceleration_factor = FizLineUtil.get_float(kv, "LocalBrakeAccFactor")
     if kv.has("IdlePantUp"):
-        node.set_raise_pantographs_when_idle(FizLineUtil.get_bool(kv, "IdlePantUp"))
+        node.raise_pantographs_when_idle = FizLineUtil.get_bool(kv, "IdlePantUp")

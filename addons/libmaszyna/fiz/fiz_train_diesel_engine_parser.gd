@@ -47,19 +47,19 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
             var node := _get_node(context)
             if node:
                 if kv.has("Mmax"):
-                    node.set_max_torque(FizLineUtil.get_float(kv, "Mmax"))
+                    node.throttle_table_max_torque = FizLineUtil.get_float(kv, "Mmax")
                 if kv.has("nMmax"):
-                    node.set_max_torque_rpm(FizLineUtil.get_float(kv, "nMmax"))
+                    node.throttle_table_max_torque_rpm = FizLineUtil.get_float(kv, "nMmax")
                 if kv.has("nmax"):
-                    node.set_max_rpm(FizLineUtil.get_float(kv, "nmax"))
+                    node.mechanical_max_rpm = FizLineUtil.get_float(kv, "nmax")
                 if kv.has("Mnmax"):
-                    node.set_max_rpm_torque(FizLineUtil.get_float(kv, "Mnmax"))
+                    node.throttle_table_max_rpm_torque = FizLineUtil.get_float(kv, "Mnmax")
                 if kv.has("nominalfill"):
-                    node.set_nominal_fuel_dose(FizLineUtil.get_float(kv, "nominalfill"))
+                    node.throttle_table_nominal_fuel_dose = FizLineUtil.get_float(kv, "nominalfill")
                 if kv.has("Mstand"):
-                    node.set_resistance_torque(FizLineUtil.get_float(kv, "Mstand"))
+                    node.throttle_table_resistance_torque = FizLineUtil.get_float(kv, "Mstand")
                 if kv.has("NomFuelConsRate"):
-                    node.set_nominal_fuel_consumption_rate(FizLineUtil.get_float(kv, "NomFuelConsRate"))
+                    node.throttle_table_nominal_fuel_consumption_rate = FizLineUtil.get_float(kv, "NomFuelConsRate")
         "DMList:":
             _active_table = "DMList"
             _torque_rows = []
@@ -86,9 +86,9 @@ func _parse_throttle_row(p: MaszynaParser) -> void:
     if tokens.size() < 3:
         return
     var item := ThrottlePositionItem.new()
-    item.set_throttle_position(int(tokens[0]))
-    item.set_fuel_dose(float(tokens[1]))
-    item.set_clutch_behavior(int(tokens[2]))
+    item.throttle_position = int(tokens[0])
+    item.fuel_dose = float(tokens[1])
+    item.clutch_behavior = int(tokens[2])
     _throttle_rows.append(item)
 
 
@@ -97,8 +97,8 @@ func _parse_curve_row(p: MaszynaParser, rows: Array[CurvePointItem]) -> void:
     if tokens.size() < 2:
         return
     var item := CurvePointItem.new()
-    item.set_x(float(tokens[0]))
-    item.set_y(float(tokens[1]))
+    item.x = float(tokens[0])
+    item.y = float(tokens[1])
     rows.append(item)
 
 
@@ -108,16 +108,16 @@ func end_table(context: FizImportContext) -> void:
         match _active_table:
             "DList":
                 if not _throttle_rows.is_empty():
-                    node.set_throttle_table(_throttle_rows)
+                    node.throttle_table_positions = _throttle_rows
             "DMList":
                 if not _torque_rows.is_empty():
-                    node.set_torque_table(_torque_rows)
+                    node.torque_table = _torque_rows
             "HTCList":
                 if not _tc_rows.is_empty():
-                    node.set_torque_converter_table(_tc_rows)
+                    node.torque_converter_table = _tc_rows
             "V2NList":
                 if not _v2n_rows.is_empty():
-                    node.set_vel2nmax_table(_v2n_rows)
+                    node.vel2nmax_table = _v2n_rows
     _throttle_rows = []
     _torque_rows = []
     _tc_rows = []

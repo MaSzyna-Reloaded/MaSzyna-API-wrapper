@@ -84,10 +84,10 @@ namespace godot {
             TypedArray<MotorParameter> motor_param_table;
 
             /* Engine: (wspolne pola dla wszystkich typow napedu) */
-            MAKE_MEMBER_GS(int, gear_teeth_motor, 0);
-            MAKE_MEMBER_GS(int, gear_teeth_wheel, 0);
-            MAKE_MEMBER_GS(double, gear_efficiency, 1.0);
-            MAKE_MEMBER_GS(double, traction_force_max, 0.0);
+            MAKE_MEMBER_GS(int, transmission_gear_teeth_motor, 0);
+            MAKE_MEMBER_GS(int, transmission_gear_teeth_wheel, 0);
+            MAKE_MEMBER_GS(double, transmission_efficiency, 1.0);
+            MAKE_MEMBER_GS(double, maximum_traction_force, 0.0);
             MAKE_MEMBER_GS(double, motor_blowers_speed, 0.0);
             MAKE_MEMBER_GS(double, motor_blowers_sustain_time, 0.0);
             MAKE_MEMBER_GS(double, motor_blowers_start_velocity, -1.0);
@@ -96,20 +96,20 @@ namespace godot {
             MAKE_MEMBER_GS_NR(StartMode, motor_blowers_start_mode, START_MODE_MANUAL);
 
             /* Cntrl. (wspolne pola sterowania nastawnikiem i rozrusznikiem) */
-            MAKE_MEMBER_GS(int, main_controller_position_count, 0);
-            MAKE_MEMBER_GS(int, shunt_controller_position_count, 0);
-            MAKE_MEMBER_GS(int, direction_change_max_position, 0);
-            MAKE_MEMBER_GS(bool, eim_control_additional_zeros, false);
-            MAKE_MEMBER_GS(bool, eim_control_emergency, false);
-            MAKE_MEMBER_GS_NR(EimControlType, eim_control_type, EIM_CONTROL_TYPE_0);
-            MAKE_MEMBER_GS_NR(AutoRelayMode, auto_relay_mode, AUTO_RELAY_NO);
-            MAKE_MEMBER_GS(bool, coupled_controllers, false);
-            MAKE_MEMBER_GS(bool, has_camshaft, false);
-            MAKE_MEMBER_GS(bool, series_shunt_on_series_position, false);
-            MAKE_MEMBER_GS(double, initial_controller_delay, 0.0);
-            MAKE_MEMBER_GS(double, controller_step_delay, 0.0);
-            MAKE_MEMBER_GS(double, controller_step_down_delay, 0.0);
-            MAKE_MEMBER_GS(bool, fast_series_circuit, false);
+            MAKE_MEMBER_GS(int, cntrl_main_controller_position_count, 0);
+            MAKE_MEMBER_GS(int, cntrl_shunt_controller_position_count, 0);
+            MAKE_MEMBER_GS(int, cntrl_direction_change_max_position, 0);
+            MAKE_MEMBER_GS(bool, cntrl_eim_control_additional_zeros, false);
+            MAKE_MEMBER_GS(bool, cntrl_eim_control_emergency, false);
+            MAKE_MEMBER_GS_NR(EimControlType, cntrl_eim_control_type, EIM_CONTROL_TYPE_0);
+            MAKE_MEMBER_GS_NR(AutoRelayMode, cntrl_auto_relay_mode, AUTO_RELAY_NO);
+            MAKE_MEMBER_GS(bool, cntrl_coupled_controllers, false);
+            MAKE_MEMBER_GS(bool, cntrl_has_camshaft, false);
+            MAKE_MEMBER_GS(bool, cntrl_series_shunt_on_series_position, false);
+            MAKE_MEMBER_GS(double, cntrl_initial_controller_delay, 0.0);
+            MAKE_MEMBER_GS(double, cntrl_controller_step_delay, 0.0);
+            MAKE_MEMBER_GS(double, cntrl_controller_step_down_delay, 0.0);
+            MAKE_MEMBER_GS(bool, cntrl_fast_series_circuit, false);
 
         protected:
             virtual EngineType get_engine_type() = 0;

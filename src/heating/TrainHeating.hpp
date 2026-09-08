@@ -20,14 +20,14 @@ namespace godot {
             MAKE_MEMBER_GS_NR(
                     TrainController::TrainPowerSource, heating_source,
                     TrainController::TrainPowerSource::POWER_SOURCE_GENERATOR);
-            MAKE_MEMBER_GS_NR(TrainEngine::EngineType, generator_engine, TrainEngine::EngineType::MAIN);
-            MAKE_MEMBER_GS(double, generator_min_rpm, 0.0);
-            MAKE_MEMBER_GS(double, generator_min_voltage, 0.0);
-            MAKE_MEMBER_GS(double, generator_max_rpm, 0.0);
-            MAKE_MEMBER_GS(double, generator_max_voltage, 0.0);
+            MAKE_MEMBER_GS_NR(TrainEngine::EngineType, heating_generator_engine, TrainEngine::EngineType::MAIN);
+            MAKE_MEMBER_GS(double, heating_generator_min_rpm, 0.0);
+            MAKE_MEMBER_GS(double, heating_generator_min_voltage, 0.0);
+            MAKE_MEMBER_GS(double, heating_generator_max_rpm, 0.0);
+            MAKE_MEMBER_GS(double, heating_generator_max_voltage, 0.0);
             MAKE_MEMBER_GS_NR(
-                    TrainController::TrainPowerType, power_cable_power_type,
+                    TrainController::TrainPowerType, heating_power_cable_type,
                     TrainController::TrainPowerType::POWER_TYPE_ELECTRIC);
-            MAKE_MEMBER_GS(double, max_voltage, 0.0);
+            MAKE_MEMBER_GS(double, heating_max_voltage, 0.0);
     };
 } // namespace godot

@@ -4,15 +4,9 @@
 namespace godot {
 
     void TrainHorns::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::BOOL, "low_horn_enabled", "low_horn_enabled", &TrainHorns::set_low_horn_enabled,
-                &TrainHorns::get_low_horn_enabled, "state");
-        BIND_PROPERTY(
-                Variant::BOOL, "high_horn_enabled", "high_horn_enabled", &TrainHorns::set_high_horn_enabled,
-                &TrainHorns::get_high_horn_enabled, "state");
-        BIND_PROPERTY(
-                Variant::BOOL, "whistle_enabled", "whistle_enabled", &TrainHorns::set_whistle_enabled,
-                &TrainHorns::get_whistle_enabled, "state");
+        BIND_PROPERTY(TrainHorns, Variant::BOOL, low_horn_enabled);
+        BIND_PROPERTY(TrainHorns, Variant::BOOL, high_horn_enabled);
+        BIND_PROPERTY(TrainHorns, Variant::BOOL, whistle_enabled);
         ClassDB::bind_method(D_METHOD("set_horn_low", "state"), &TrainHorns::set_horn_low);
         ClassDB::bind_method(D_METHOD("set_horn_high", "state"), &TrainHorns::set_horn_high);
         ClassDB::bind_method(D_METHOD("set_whistle", "state"), &TrainHorns::set_whistle);

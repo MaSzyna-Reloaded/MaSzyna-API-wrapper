@@ -27,11 +27,11 @@ namespace godot {
             MAKE_MEMBER_GS(double, nominal_voltage, 0.0);
             MAKE_MEMBER_GS(double, winding_resistance, 0.0);
             MAKE_MEMBER_GS(double, max_rpm, 0.0);
-            MAKE_MEMBER_GS_NR(FanType, fan_type, FAN_TYPE_NONE);
-            MAKE_MEMBER_GS(double, fan_max_rpm, 1.0);
-            MAKE_MEMBER_GS(double, fan_cutoff_resistance, 0.0);
-            MAKE_MEMBER_GS(double, fan_min_current, 50.0);
-            MAKE_MEMBER_GS(double, fan_speed, 0.5);
+            MAKE_MEMBER_GS_NR(FanType, resistor_fan_type, FAN_TYPE_NONE);
+            MAKE_MEMBER_GS(double, resistor_fan_max_rpm, 1.0);
+            MAKE_MEMBER_GS(double, resistor_fan_cutoff_resistance, 0.0);
+            MAKE_MEMBER_GS(double, resistor_fan_min_current, 50.0);
+            MAKE_MEMBER_GS(double, resistor_fan_speed, 0.5);
             MAKE_MEMBER_GS(double, dynamic_brake_resistance, 5.8);
             MAKE_MEMBER_GS(double, dynamic_brake_resistance_1, 5.8);
             MAKE_MEMBER_GS(double, dynamic_brake_resistance_2, 5.8);

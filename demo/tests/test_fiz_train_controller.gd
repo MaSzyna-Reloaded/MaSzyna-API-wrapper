@@ -54,7 +54,7 @@ func test_builds_child_controller_from_data_path_and_filename():
     # (non-internal) child count or the Scene dock - see FIZTrainController.editable_in_editor.
     assert_eq(node.get_child_count(), 0, "the built TrainController should be internal by default")
     assert_eq(node.get_child_count(true), 1, "the built TrainController should still be reachable as an internal child")
-    assert_eq(controller.get_mass(), 74000.0)
+    assert_eq(controller.mass, 74000.0)
     assert_not_null(controller.get_node_or_null("TrainWheels"))
     assert_not_null(controller.get_node_or_null("TrainBrake"))
     assert_not_null(controller.get_node_or_null("TrainDoors"))

@@ -49,20 +49,20 @@ func create_node() -> TrainDieselElectricEngine:
 func apply_engine_fields(kv: Dictionary, node: TrainDieselElectricEngine) -> void:
     if kv.has("Flat"):
         # Original quirk: compares to the literal string "1", not the normal Yes/No convention.
-        node.set_generator_voltage_flat(FizLineUtil.get_string(kv, "Flat") == "1")
+        node.generator_voltage_flat = FizLineUtil.get_string(kv, "Flat") == "1"
     if kv.has("Vhyp"):
-        node.set_hyperbolic_speed(FizLineUtil.get_float(kv, "Vhyp") / 3.6)
+        node.hyperbolic_speed = FizLineUtil.get_float(kv, "Vhyp") / 3.6
     if kv.has("Vadd"):
-        node.set_additional_speed(FizLineUtil.get_float(kv, "Vadd") / 3.6)
+        node.additional_speed = FizLineUtil.get_float(kv, "Vadd") / 3.6
     if kv.has("Cr"):
-        node.set_power_correction_ratio(FizLineUtil.get_float(kv, "Cr"))
+        node.power_correction_ratio = FizLineUtil.get_float(kv, "Cr")
     if kv.has("RelayType"):
-        node.set_shunt_relay_type(FizLineUtil.get_int(kv, "RelayType"))
+        node.shunt_relay_type = FizLineUtil.get_int(kv, "RelayType")
     if kv.has("ShuntMode"):
         # Same literal-"1" quirk as Flat.
-        node.set_shunt_mode_allowed(FizLineUtil.get_string(kv, "ShuntMode") == "1")
+        node.shunt_mode_allowed = FizLineUtil.get_string(kv, "ShuntMode") == "1"
     if kv.has("HeatingRPM"):
-        node.set_heating_rpm(FizLineUtil.get_float(kv, "HeatingRPM"))
+        node.heating_rpm = FizLineUtil.get_float(kv, "HeatingRPM")
 
 
 ## Standard section-parser interface, used for "WWList:" and "MotorParamTable:" (registered
@@ -94,20 +94,15 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
     if tokens.size() < 4:
         return
     var item := WWListItem.new()
-    item.set_rpm(float(tokens[0]))
-    item.set_max_power(float(tokens[1]))
-    item.set_max_voltage(float(tokens[2]))
-    item.set_max_current(float(tokens[3]))
+    item.rpm = float(tokens[0])
+    item.max_power = float(tokens[1])
+    item.max_voltage = float(tokens[2])
+    item.max_current = float(tokens[3])
     if tokens.size() >= 7:
-        # WWListItem.cpp's BIND_PROPERTY call for this field passes "shunting" as the method-name
-        # argument and "has_shunting" only as the inspector property path, so the GDScript-bound
-        # method is actually set_shunting()/get_shunting(), not set_has_shunting() - every other
-        # property in that file has matching name/path arguments, which is why only this one
-        # diverges. Confirmed by reading the WWListItem.cpp source and BIND_PROPERTY macro.
-        item.set_shunting(true)
-        item.set_min_wakeup_voltage(float(tokens[4]))
-        item.set_max_wakeup_voltage(float(tokens[5]))
-        item.set_max_wakeup_power(float(tokens[6]))
+        item.has_shunting = true
+        item.min_wakeup_voltage = float(tokens[4])
+        item.max_wakeup_voltage = float(tokens[5])
+        item.max_wakeup_power = float(tokens[6])
     _wwlist_rows.append(item)
 
 
@@ -124,8 +119,8 @@ func end_table(context: FizImportContext) -> void:
         _motor_param_rows = []
         return
     if not _wwlist_rows.is_empty():
-        node.set_wwlist(_wwlist_rows)
+        node.wwlist = _wwlist_rows
     if not _motor_param_rows.is_empty():
-        node.set_motor_param_table(_motor_param_rows)
+        node.motor_param_table = _motor_param_rows
     _wwlist_rows = []
     _motor_param_rows = []

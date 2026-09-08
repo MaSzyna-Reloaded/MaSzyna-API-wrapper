@@ -159,7 +159,7 @@
 		</member>
 		<member name="permit_default" type="int" setter="set_permit_default" getter="get_permit_default" default="1">
 			[code]Doors:DoorPermitListDefault[/code]
-			By default, the position of the knob is set from the permit_list entry where the positions are numbered starting from 1
+			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1
 		</member>
 		<member name="permit_light_blinking" type="int" setter="set_permit_light_blinking" getter="get_permit_light_blinking" enum="TrainDoors.PermitLight" default="0">
 			[code]Doors:DoorsPermitLightBlinking[/code]

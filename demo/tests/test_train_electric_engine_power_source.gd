@@ -23,7 +23,7 @@ func after_each():
 
 func test_current_collector_power_source_does_not_crash_on_process():
     var engine := TrainElectricSeriesEngine.new()
-    engine.set("power/source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_child(engine)
     await wait_idle_frames(3)
 
@@ -34,7 +34,7 @@ func test_current_collector_power_source_does_not_crash_on_process():
 
 
 func test_default_power_source_does_not_crash_on_process():
-    # The compiled default (power/source == NotDefined) hits the same unconditional-read path.
+    # The compiled default (power_source == NotDefined) hits the same unconditional-read path.
     var engine := TrainElectricSeriesEngine.new()
     train.add_child(engine)
     await wait_idle_frames(3)
@@ -44,8 +44,8 @@ func test_default_power_source_does_not_crash_on_process():
 
 func test_accumulator_power_source_still_reports_recharge_source():
     var engine := TrainElectricSeriesEngine.new()
-    engine.set("power/source", TrainController.POWER_SOURCE_ACCUMULATOR)
-    engine.set("power/accumulator/recharge_source", TrainController.POWER_SOURCE_GENERATOR)
+    engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
+    engine.power_accumulator_recharge_source = TrainController.POWER_SOURCE_GENERATOR
     train.add_child(engine)
     await wait_idle_frames(3)
 

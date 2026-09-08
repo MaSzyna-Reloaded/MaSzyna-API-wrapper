@@ -61,39 +61,24 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
-        BIND_PROPERTY(
-                Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
-                "train_id");
-        BIND_PROPERTY(
-                Variant::STRING, "type_name", "type_name", &TrainController::set_type_name,
-                &TrainController::get_type_name, "type_name");
-        BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity,
-                &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(
-                Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min,
-                &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(
-                Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max,
-                &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(TrainController, Variant::STRING, train_id);
+        BIND_PROPERTY(TrainController, Variant::STRING, type_name);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, mass);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, power);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, max_velocity);
+        BIND_PROPERTY(TrainController, Variant::INT, radio_channel_min, "radio_channel");
+        BIND_PROPERTY(TrainController, Variant::INT, radio_channel_max, "radio_channel");
         /* FIXME: move to TrainPower section? */
+        BIND_PROPERTY_W_HINT(TrainController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
-                Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
-                &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "category", "category", &TrainController::set_category, &TrainController::get_category,
-                "category", PROPERTY_HINT_ENUM,
+                TrainController, Variant::INT, category, PROPERTY_HINT_ENUM,
                 enum_hint(
                         {{"Train", CATEGORY_TRAIN},
                          {"Road", CATEGORY_ROAD},
                          {"Ship", CATEGORY_SHIP},
                          {"Airplane", CATEGORY_AIRPLANE}}));
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "train_type", "train_type", &TrainController::set_train_type,
-                &TrainController::get_train_type, "train_type", PROPERTY_HINT_ENUM,
+                TrainController, Variant::INT, train_type, PROPERTY_HINT_ENUM,
                 enum_hint(
                         {{"Default", TRAIN_TYPE_DEFAULT},
                          {"EZT", TRAIN_TYPE_EZT},
@@ -106,58 +91,28 @@ namespace godot {
                          {"ET40", TRAIN_TYPE_ET40},
                          {"T181", TRAIN_TYPE_181},
                          {"DMU", TRAIN_TYPE_DMU}}));
-        BIND_PROPERTY(
-                Variant::FLOAT, "reduced_mass", "reduced_mass", &TrainController::set_reduced_mass,
-                &TrainController::get_reduced_mass, "reduced_mass");
-        BIND_PROPERTY(
-                Variant::FLOAT, "sand_capacity", "sand_capacity", &TrainController::set_sand_capacity,
-                &TrainController::get_sand_capacity, "sand_capacity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "heating_power", "heating_power", &TrainController::set_heating_power,
-                &TrainController::get_heating_power, "heating_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "light_power", "light_power", &TrainController::set_light_power,
-                &TrainController::get_light_power, "light_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "length", "dimensions/length", &TrainController::set_length,
-                &TrainController::get_length, "length");
-        BIND_PROPERTY(
-                Variant::FLOAT, "height", "dimensions/height", &TrainController::set_height,
-                &TrainController::get_height, "height");
-        BIND_PROPERTY(
-                Variant::FLOAT, "width", "dimensions/width", &TrainController::set_width, &TrainController::get_width,
-                "width");
-        BIND_PROPERTY(
-                Variant::FLOAT, "drag_coefficient", "dimensions/drag_coefficient",
-                &TrainController::set_drag_coefficient, &TrainController::get_drag_coefficient, "drag_coefficient");
-        BIND_PROPERTY(
-                Variant::FLOAT, "floor_height", "dimensions/floor_height", &TrainController::set_floor_height,
-                &TrainController::get_floor_height, "floor_height");
-        BIND_PROPERTY(
-                Variant::FLOAT, "initial_velocity", "initial_velocity", &TrainController::set_initial_velocity,
-                &TrainController::get_initial_velocity, "initial_velocity");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, reduced_mass);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, sand_capacity);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, heating_power);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, light_power);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_length, "dimensions");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_height, "dimensions");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_width, "dimensions");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_drag_coefficient, "dimensions");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_floor_height, "dimensions");
+        BIND_PROPERTY(TrainController, Variant::FLOAT, initial_velocity);
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
-                &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
-                "battery_start_mode", PROPERTY_HINT_ENUM,
+                TrainController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "ground_relay_start_mode", "cntrl/ground_relay_start_mode",
-                &TrainController::set_ground_relay_start_mode, &TrainController::get_ground_relay_start_mode,
-                "ground_relay_start_mode", PROPERTY_HINT_ENUM,
+                TrainController, Variant::INT, cntrl_ground_relay_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "compartment_lights_start_mode", "cntrl/compartment_lights_start_mode",
-                &TrainController::set_compartment_lights_start_mode,
-                &TrainController::get_compartment_lights_start_mode, "compartment_lights_start_mode",
-                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY(
-                Variant::BOOL, "automatic_cab_activation", "cntrl/automatic_cab_activation",
-                &TrainController::set_automatic_cab_activation, &TrainController::get_automatic_cab_activation,
-                "automatic_cab_activation");
+                TrainController, Variant::INT, cntrl_compartment_lights_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(TrainController, Variant::BOOL, cntrl_automatic_cab_activation, "cntrl");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "inactive_cab_flag", "cntrl/inactive_cab_flag", &TrainController::set_inactive_cab_flag,
-                &TrainController::get_inactive_cab_flag, "inactive_cab_flag", PROPERTY_HINT_FLAGS,
+                TrainController, Variant::INT, cntrl_inactive_cab_flag, "cntrl", PROPERTY_HINT_FLAGS,
                 "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
                 "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
@@ -397,17 +352,17 @@ namespace godot {
         p_mover->HeatingPower = heating_power;
         p_mover->LightPower = light_power;
 
-        p_mover->Dim.L = length;
-        p_mover->Dim.H = height;
-        p_mover->Dim.W = width;
-        p_mover->Cx = drag_coefficient;
-        p_mover->Floor = static_cast<float>(floor_height);
+        p_mover->Dim.L = dimensions_length;
+        p_mover->Dim.H = dimensions_height;
+        p_mover->Dim.W = dimensions_width;
+        p_mover->Cx = dimensions_drag_coefficient;
+        p_mover->Floor = static_cast<float>(dimensions_floor_height);
 
-        p_mover->BatteryStart = start_mode_map.at(battery_start_mode);
-        p_mover->GroundRelayStart = start_mode_map.at(ground_relay_start_mode);
-        p_mover->CompartmentLights.start_type = start_mode_map.at(compartment_lights_start_mode);
-        p_mover->AutomaticCabActivation = automatic_cab_activation;
-        p_mover->InactiveCabFlag = inactive_cab_flag;
+        p_mover->BatteryStart = start_mode_map.at(cntrl_battery_start_mode);
+        p_mover->GroundRelayStart = start_mode_map.at(cntrl_ground_relay_start_mode);
+        p_mover->CompartmentLights.start_type = start_mode_map.at(cntrl_compartment_lights_start_mode);
+        p_mover->AutomaticCabActivation = cntrl_automatic_cab_activation;
+        p_mover->InactiveCabFlag = cntrl_inactive_cab_flag;
 
         // FIXME: move to TrainPower
         p_mover->BatteryVoltage = battery_voltage;

@@ -270,7 +270,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
             MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);
             MAKE_MEMBER_GS(bool, releaser_enabled_only_at_no_power_pos, false)
-            MAKE_MEMBER_GS(double, emergency_valve_area, 0.0);
+            MAKE_MEMBER_GS(double, compressor_emergency_valve_area, 0.0);
             MAKE_MEMBER_GS(int, universal_brake_button_1, 0);
             MAKE_MEMBER_GS(int, universal_brake_button_2, 0);
             MAKE_MEMBER_GS(int, universal_brake_button_3, 0);
@@ -278,25 +278,25 @@ namespace godot {
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CompressorListItem>, compressor_list)
 
             /* Cntrl. (czesc dotyczaca hamulca) */
-            MAKE_MEMBER_GS_NR(BrakeSystemType, brake_system, BRAKE_SYSTEM_PNEUMATIC);
-            MAKE_MEMBER_GS(int, brake_ctrl_position_count, 6);
-            MAKE_MEMBER_GS_NR(BrakeDelaySetting, brake_delays, BRAKE_DELAY_GP);
-            MAKE_MEMBER_GS(double, brake_delay_1, 15.0);
-            MAKE_MEMBER_GS(double, brake_delay_2, 3.0);
-            MAKE_MEMBER_GS(double, brake_delay_3, 36.0);
-            MAKE_MEMBER_GS(double, brake_delay_4, 22.0);
-            MAKE_MEMBER_GS_NR(BrakeOperationMode, brake_op_modes, BRAKE_OP_MODE_PNEPMED);
-            MAKE_MEMBER_GS_NR(BrakeHandleType, brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
-            MAKE_MEMBER_GS_NR(AntiSkidBrakeType, anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
-            MAKE_MEMBER_GS_NR(LocalBrakeType, local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);
-            MAKE_MEMBER_GS_NR(BrakeHandleType, local_brake_handle_type, BRAKE_HANDLE_TYPE_FD1);
-            MAKE_MEMBER_GS(bool, manual_brake_present, false);
-            MAKE_MEMBER_GS_NR(DynamicBrakeType, dynamic_brake_type, DYNAMIC_BRAKE_NONE);
-            MAKE_MEMBER_GS(bool, local_brake_traxx, false);
-            MAKE_MEMBER_GS(bool, release_parking_by_spring_brake, false);
-            MAKE_MEMBER_GS(bool, release_parking_by_spring_brake_when_door_open, false);
-            MAKE_MEMBER_GS(bool, spring_brake_cuts_off_drive, true);
-            MAKE_MEMBER_GS(double, spring_brake_drive_emergency_velocity, -1.0);
+            MAKE_MEMBER_GS_NR(BrakeSystemType, cntrl_brake_system, BRAKE_SYSTEM_PNEUMATIC);
+            MAKE_MEMBER_GS(int, cntrl_brake_ctrl_position_count, 6);
+            MAKE_MEMBER_GS_NR(BrakeDelaySetting, cntrl_brake_delays, BRAKE_DELAY_GP);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_1, 15.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 3.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 36.0);
+            MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 22.0);
+            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_PNEPMED);
+            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
+            MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
+            MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);
+            MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_local_brake_handle_type, BRAKE_HANDLE_TYPE_FD1);
+            MAKE_MEMBER_GS(bool, cntrl_manual_brake_present, false);
+            MAKE_MEMBER_GS_NR(DynamicBrakeType, cntrl_dynamic_brake_type, DYNAMIC_BRAKE_NONE);
+            MAKE_MEMBER_GS(bool, cntrl_local_brake_traxx, false);
+            MAKE_MEMBER_GS(bool, cntrl_release_parking_by_spring_brake, false);
+            MAKE_MEMBER_GS(bool, cntrl_release_parking_by_spring_brake_when_door_open, false);
+            MAKE_MEMBER_GS(bool, cntrl_spring_brake_cuts_off_drive, true);
+            MAKE_MEMBER_GS(double, cntrl_spring_brake_drive_emergency_velocity, -1.0);
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;

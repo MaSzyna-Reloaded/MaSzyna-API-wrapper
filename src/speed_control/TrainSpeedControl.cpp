@@ -4,87 +4,31 @@
 
 namespace godot {
     void TrainSpeedControl::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::BOOL, "speed_control_enabled", "speed_control_enabled",
-                &TrainSpeedControl::set_speed_control_enabled, &TrainSpeedControl::get_speed_control_enabled,
-                "enabled");
-        BIND_PROPERTY(
-                Variant::FLOAT, "delay", "delay", &TrainSpeedControl::set_delay, &TrainSpeedControl::get_delay,
-                "delay");
-        BIND_PROPERTY(
-                Variant::BOOL, "impulse_lever", "impulse_lever", &TrainSpeedControl::set_impulse_lever,
-                &TrainSpeedControl::get_impulse_lever, "impulse_lever");
+        BIND_PROPERTY(TrainSpeedControl, Variant::BOOL, speed_control_enabled);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, delay);
+        BIND_PROPERTY(TrainSpeedControl, Variant::BOOL, impulse_lever);
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "disables_on", "disables_on", &TrainSpeedControl::set_disables_on,
-                &TrainSpeedControl::get_disables_on, "disables_on", PROPERTY_HINT_FLAGS,
-                "Main Controller Movement,Braking");
-        BIND_PROPERTY(
-                Variant::PACKED_FLOAT64_ARRAY, "preset_speeds", "preset_speeds", &TrainSpeedControl::set_preset_speeds,
-                &TrainSpeedControl::get_preset_speeds, "preset_speeds");
-        BIND_PROPERTY(
-                Variant::BOOL, "override_manual_power", "override_manual_power",
-                &TrainSpeedControl::set_override_manual_power, &TrainSpeedControl::get_override_manual_power,
-                "override_manual_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "initial_power", "initial_power", &TrainSpeedControl::set_initial_power,
-                &TrainSpeedControl::get_initial_power, "initial_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "full_power_velocity", "full_power_velocity",
-                &TrainSpeedControl::set_full_power_velocity, &TrainSpeedControl::get_full_power_velocity,
-                "full_power_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "start_velocity", "start_velocity", &TrainSpeedControl::set_start_velocity,
-                &TrainSpeedControl::get_start_velocity, "start_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "velocity_step", "velocity_step", &TrainSpeedControl::set_velocity_step,
-                &TrainSpeedControl::get_velocity_step, "velocity_step");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power_step", "power_step", &TrainSpeedControl::set_power_step,
-                &TrainSpeedControl::get_power_step, "power_step");
-        BIND_PROPERTY(
-                Variant::FLOAT, "min_power", "min_power", &TrainSpeedControl::set_min_power,
-                &TrainSpeedControl::get_min_power, "min_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_power", "max_power", &TrainSpeedControl::set_max_power,
-                &TrainSpeedControl::get_max_power, "max_power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "min_velocity", "min_velocity", &TrainSpeedControl::set_min_velocity,
-                &TrainSpeedControl::get_min_velocity, "min_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_velocity", "max_velocity", &TrainSpeedControl::set_max_velocity,
-                &TrainSpeedControl::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "offset", "offset", &TrainSpeedControl::set_offset, &TrainSpeedControl::get_offset,
-                "offset");
-        BIND_PROPERTY(
-                Variant::FLOAT, "proportional_gain_positive", "proportional_gain_positive",
-                &TrainSpeedControl::set_proportional_gain_positive, &TrainSpeedControl::get_proportional_gain_positive,
-                "proportional_gain_positive");
-        BIND_PROPERTY(
-                Variant::FLOAT, "proportional_gain_negative", "proportional_gain_negative",
-                &TrainSpeedControl::set_proportional_gain_negative, &TrainSpeedControl::get_proportional_gain_negative,
-                "proportional_gain_negative");
-        BIND_PROPERTY(
-                Variant::FLOAT, "integral_gain_positive", "integral_gain_positive",
-                &TrainSpeedControl::set_integral_gain_positive, &TrainSpeedControl::get_integral_gain_positive,
-                "integral_gain_positive");
-        BIND_PROPERTY(
-                Variant::FLOAT, "integral_gain_negative", "integral_gain_negative",
-                &TrainSpeedControl::set_integral_gain_negative, &TrainSpeedControl::get_integral_gain_negative,
-                "integral_gain_negative");
-        BIND_PROPERTY(
-                Variant::BOOL, "brake_intervention", "brake_intervention", &TrainSpeedControl::set_brake_intervention,
-                &TrainSpeedControl::get_brake_intervention, "brake_intervention");
-        BIND_PROPERTY(
-                Variant::FLOAT, "brake_intervention_max_velocity", "brake_intervention_max_velocity",
-                &TrainSpeedControl::set_brake_intervention_max_velocity,
-                &TrainSpeedControl::get_brake_intervention_max_velocity, "brake_intervention_max_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power_up_speed", "power_up_speed", &TrainSpeedControl::set_power_up_speed,
-                &TrainSpeedControl::get_power_up_speed, "power_up_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power_down_speed", "power_down_speed", &TrainSpeedControl::set_power_down_speed,
-                &TrainSpeedControl::get_power_down_speed, "power_down_speed");
+                TrainSpeedControl, Variant::INT, disables_on, PROPERTY_HINT_FLAGS, "Main Controller Movement,Braking");
+        BIND_PROPERTY(TrainSpeedControl, Variant::PACKED_FLOAT64_ARRAY, preset_speeds);
+        BIND_PROPERTY(TrainSpeedControl, Variant::BOOL, override_manual_power);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, initial_power);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, full_power_velocity);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, start_velocity);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, velocity_step);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, power_step);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, min_power);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, max_power);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, min_velocity);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, max_velocity);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, offset);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, proportional_gain_positive);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, proportional_gain_negative);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, integral_gain_positive);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, integral_gain_negative);
+        BIND_PROPERTY(TrainSpeedControl, Variant::BOOL, brake_intervention);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, brake_intervention_max_velocity);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, power_up_speed);
+        BIND_PROPERTY(TrainSpeedControl, Variant::FLOAT, power_down_speed);
     }
 
     void TrainSpeedControl::_do_update_internal_mover(TMoverParameters *p_mover) {

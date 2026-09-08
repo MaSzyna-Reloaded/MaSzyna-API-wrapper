@@ -11,20 +11,20 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     var node := TrainHeating.new()
 
     if kv.has("Heating"):
-        node.set_heating_source(FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Heating")))
+        node.heating_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Heating"))
     if kv.has("HGeneratorEngine"):
-        node.set_generator_engine(FizTrainEngineCommon.parse_engine_type(FizLineUtil.get_string(kv, "HGeneratorEngine")))
+        node.heating_generator_engine = FizTrainEngineCommon.parse_engine_type(FizLineUtil.get_string(kv, "HGeneratorEngine"))
     if kv.has("HGeneratorMinRPM"):
-        node.set_generator_min_rpm(FizLineUtil.get_float(kv, "HGeneratorMinRPM"))
+        node.heating_generator_min_rpm = FizLineUtil.get_float(kv, "HGeneratorMinRPM")
     if kv.has("HGeneratorMaxRPM"):
-        node.set_generator_max_rpm(FizLineUtil.get_float(kv, "HGeneratorMaxRPM"))
+        node.heating_generator_max_rpm = FizLineUtil.get_float(kv, "HGeneratorMaxRPM")
     if kv.has("HGeneratorMinVoltage"):
-        node.set_generator_min_voltage(FizLineUtil.get_float(kv, "HGeneratorMinVoltage"))
+        node.heating_generator_min_voltage = FizLineUtil.get_float(kv, "HGeneratorMinVoltage")
     if kv.has("HGeneratorMaxVoltage"):
-        node.set_generator_max_voltage(FizLineUtil.get_float(kv, "HGeneratorMaxVoltage"))
+        node.heating_generator_max_voltage = FizLineUtil.get_float(kv, "HGeneratorMaxVoltage")
     if kv.has("HMaxVoltage"):
-        node.set_max_voltage(FizLineUtil.get_float(kv, "HMaxVoltage"))
+        node.heating_max_voltage = FizLineUtil.get_float(kv, "HMaxVoltage")
     if kv.has("HPowerTrans"):
-        node.set_power_cable_power_type(FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(kv, "HPowerTrans")))
+        node.heating_power_cable_type = FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(kv, "HPowerTrans"))
 
     context.add_part("TrainHeating", node)

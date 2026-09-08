@@ -2,6 +2,9 @@
 extends Node
 class_name FIZTrainController
 
+## Emitted with null before removing the old controller, then with the initialized replacement.
+signal controller_changed(controller:TrainController)
+
 ## Live/no-import FIZ vehicle loader, analogous to E3DModelInstance for E3D models: set
 ## `data_path`/`fiz_filename` and this node (re)builds a child TrainController + its
 ## TrainPart children from that file via FizTrainControllerInstancer, in-editor and at
@@ -86,9 +89,11 @@ func _reload() -> void:
     _reload_pending = false
 
     if _controller:
-        remove_child(_controller)
-        _controller.queue_free()
+        var previous_controller:TrainController = _controller
         _controller = null
+        controller_changed.emit(null)
+        remove_child(previous_controller)
+        previous_controller.queue_free()
 
     if not fiz_filename or not is_inside_tree():
         return
@@ -107,6 +112,7 @@ func _reload() -> void:
     # editable children are owned by `self`'s own owner, i.e. the actual scene root, so they
     # show up in the Scene dock and survive scene serialization.
     _set_owner_recursive(_controller, owner if editable_in_editor else self)
+    controller_changed.emit(_controller)
 
 
 func _set_owner_recursive(node: Node, target_owner: Node) -> void:

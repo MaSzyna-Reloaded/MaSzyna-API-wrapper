@@ -102,8 +102,9 @@ func _ready():
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
     controller_changed.connect(_on_controller_changed)
+    controller_changing.connect(_on_controller_changing)
 
-func _exit_tree() -> void:
+func _on_controller_changing() -> void:
     if _controller:
         _controller.command_received.disconnect(_on_command_received)
 
@@ -159,8 +160,6 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
-    if controller_path and not _controller:
-        _controller = get_node_or_null(controller_path)
 
 func _process_tool(delta):
     _t += delta

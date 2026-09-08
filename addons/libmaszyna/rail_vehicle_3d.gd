@@ -38,7 +38,6 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
     set(x):
         if not x == controller_path:
             controller_path = x
-            _controller = null
             _dirty = true
 
 @export var cabin_scene:PackedScene
@@ -77,6 +76,7 @@ var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
+var _fiz_controller:FIZTrainController
 var _model_node:E3DModelInstance
 var _detection_area:Area3D
 var _low_poly_cabin:E3DModelInstance
@@ -122,47 +122,25 @@ func enter_cabin(player:MaszynaPlayer):
             if low_poly_cabin:
                 low_poly_cabin.visible = false
 
-        var cabin_enter_camera_transform = cabin.get_camera_transform()
-
         # now remove the cam from the player
         player.remove_child(_camera)
 
         # and add the cam to the cabin
         cabin.add_child(_camera)
-        _camera.bound_enabled = cabin.camera_bound_enabled
-        _camera.bound_min = cabin.camera_bound_min
-        _camera.bound_max = cabin.camera_bound_max
-
-        # https://github.com/eu07/maszyna/blob/d187ce6b12fab1825c0c92c1346e7ecda401a440/Train.cpp#L9204
-        _camera.bound_min.y += 0.5  # these "magic" values comes from the original source
-        _camera.bound_max.y += 1.8  # (see link above)
-
-        # then apply camera transforms
-        if cabin_enter_camera_transform:
-            _camera.global_transform = cabin_enter_camera_transform
-
-            # FIXME: there is something strange with some cabin's rotation
-            if cabin_rotate_180deg:
-                _camera.global_basis = global_basis
-            else:
-                _camera.global_basis = global_basis.rotated(Vector3.UP, deg_to_rad(180))
-
-        else:
-            _camera.position = Vector3(0, 3, 0)
+        _apply_cabin_camera_configuration()
 
         # and tune the camera settings
         _camera.velocity_multiplier = 0.2
 
     # cabin is not ready, because it is not added to the tree yet
     cabin.cabin_ready.connect(_jump_into_cabin, CONNECT_ONE_SHOT)
+    cabin.camera_configuration_changed.connect(_apply_cabin_camera_configuration)
 
-    # then add it to the scene
-    add_child(cabin)
-
-    # then apply transforms
-    cabin.global_transform = self.global_transform
+    # cabin_ready can fire synchronously in add_child(), so configure the transform first.
+    cabin.transform = Transform3D.IDENTITY
     if cabin_rotate_180deg:
         cabin.rotate_y(deg_to_rad(180))
+    add_child(cabin)
 
     # wait for apply transforms
     await get_tree().process_frame
@@ -191,9 +169,50 @@ func leave_cabin(player:Node):
     _camera.global_transform.origin.y += 1.75
     _camera.look_at(self.global_position+Vector3(0, 1.75, -5))
     _camera.velocity_multiplier = 1.0
+    _cabin.camera_configuration_changed.disconnect(_apply_cabin_camera_configuration)
     _cabin.get_parent().remove_child(_cabin)
     _cabin.queue_free()
     _cabin = null
+
+
+func _apply_cabin_camera_configuration() -> void:
+    if not _cabin or not _camera.get_parent() == _cabin:
+        return
+    _camera.bound_enabled = _cabin.camera_bound_enabled
+    _camera.bound_min = _cabin.camera_bound_min
+    _camera.bound_max = _cabin.camera_bound_max
+
+    # Original engine camera bounds include the driver's height allowance.
+    _camera.bound_min.y += 0.5
+    _camera.bound_max.y += 1.8
+    _camera.global_transform = _cabin.get_camera_transform()
+    if cabin_rotate_180deg:
+        _camera.global_basis = global_basis
+    else:
+        _camera.global_basis = global_basis.rotated(Vector3.UP, deg_to_rad(180))
+
+
+func _on_controller_changed(controller:TrainController) -> void:
+    if _controller == controller:
+        return
+    if _controller:
+        _controller.roof_light_changed.disconnect(_on_roof_light_changed)
+    _controller = controller
+    if _controller:
+        _controller.roof_light_changed.connect(_on_roof_light_changed)
+    if _cabin:
+        _cabin.set_train_controller(_controller)
+    _on_roof_light_changed(_controller and _controller.state.get("roof_light_enabled", false))
+
+
+func _exit_tree() -> void:
+    if _fiz_controller:
+        _fiz_controller.controller_changed.disconnect(_on_controller_changed)
+        _fiz_controller = null
+    if _controller:
+        _controller.roof_light_changed.disconnect(_on_roof_light_changed)
+        _controller = null
+
 
 func get_controller() -> TrainController:
     if controller_path:
@@ -250,12 +269,18 @@ func _process_dirty() -> void:
                 _head_display_e3d.e3d_loaded.connect(func(): _needs_head_display_update = true)
 
         if is_inside_tree():
-            if _controller:
-                _controller.roof_light_changed.disconnect(_on_roof_light_changed)
-            if controller_path:
-                _controller = _resolve_controller(controller_path)
-            if _controller:
-                _controller.roof_light_changed.connect(_on_roof_light_changed)
+            var controller_node:Node = get_node_or_null(controller_path) if controller_path else null
+            var fiz_controller:FIZTrainController = controller_node as FIZTrainController
+            if not fiz_controller and controller_path:
+                var parent_path:NodePath = NodePath(String(controller_path).get_base_dir())
+                fiz_controller = get_node_or_null(parent_path) as FIZTrainController if parent_path else null
+            if not _fiz_controller == fiz_controller:
+                if _fiz_controller:
+                    _fiz_controller.controller_changed.disconnect(_on_controller_changed)
+                _fiz_controller = fiz_controller
+                if _fiz_controller:
+                    _fiz_controller.controller_changed.connect(_on_controller_changed)
+            _on_controller_changed(get_controller())
 
             var model_node: E3DModelInstance = null
             if model_instance_path:

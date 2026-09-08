@@ -255,7 +255,8 @@ func _placement_soundproofing(
         return _source_profile_value(
                 source_profile, runtime.soundproofing, placement, _listener.listener_context)
     if not _listener or not _listener.listener_vehicle:
-        return 0.0 if placement == 0 else _profile_value(runtime.soundproofing, placement, EXTERIOR_CONTEXT)
+        return 0.0 if placement == 0 else _source_profile_value(
+                source_profile, runtime.soundproofing, placement, EXTERIOR_CONTEXT)
     var source_context:int = _listener.listener_context if inside_source else EXTERIOR_CONTEXT
     var proofing:float = _source_profile_value(
             source_profile, runtime.soundproofing, placement, source_context)

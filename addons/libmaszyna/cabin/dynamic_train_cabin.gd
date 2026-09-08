@@ -29,10 +29,28 @@ func _ready() -> void:
     # before add_child() - resolve it here directly rather than waiting for Cabin3D's own
     # _process()-based dirty resolution, which only runs a frame later.
     if controller_path:
-        _controller = get_node_or_null(controller_path)
-    _rebuild_generated()
+        set_train_controller(get_node_or_null(controller_path))
     _cabin_ready = true
     cabin_ready.emit()
+
+
+func set_train_controller(controller:TrainController) -> void:
+    if _controller == controller:
+        return
+    if _controller:
+        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
+    _controller = controller
+    super.set_train_controller(controller)
+    if _controller:
+        _controller.mover_config_changed.connect(_on_mover_config_changed)
+    _rebuild_generated()
+
+
+func _exit_tree() -> void:
+    if _controller:
+        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
+    _controller = null
+    _shake_controller = null
 
 
 func get_diagnostics() -> Array[Dictionary]:
@@ -46,7 +64,7 @@ func reload() -> void:
 ## Only the cab1<->cab2 sign flip triggers a rebuild - any other mover config change is not
 ## this class's concern.
 func _on_mover_config_changed() -> void:
-    if _select_cab_number() != _last_cab_number:
+    if not _select_cab_number() == _last_cab_number:
         _rebuild_generated()
 
 
@@ -66,9 +84,6 @@ func _rebuild_generated() -> void:
     _diagnostics.clear()
     if not mmd_filename or not _controller:
         return
-
-    if not _controller.mover_config_changed.is_connected(_on_mover_config_changed):
-        _controller.mover_config_changed.connect(_on_mover_config_changed)
 
     var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
     _last_cab_number = _select_cab_number()
@@ -109,6 +124,7 @@ func _rebuild_generated() -> void:
     _diagnostics.append_array(build_diagnostics)
 
     _build_driver_aid_commands()
+    camera_configuration_changed.emit()
 
     print("DynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
         _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])

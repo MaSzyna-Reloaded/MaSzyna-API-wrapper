@@ -2,6 +2,8 @@ extends Node3D
 class_name Cabin3D
 
 signal cabin_ready
+## Emitted after rebuilding the cabin's driver position and camera bounds.
+signal camera_configuration_changed
 
 var _dirty = true
 var _cabin_ready:bool = false
@@ -53,8 +55,12 @@ func _propagate_train_controller(node: Node, controller: TrainController):
                 child.controller_path = child.get_path_to(controller)
             else:
                 child.controller_path = NodePath("")
+            if child is BaseCabinTool3D:
+                child.set_train_controller(controller)
 
-func set_train_controller(controller:TrainController):
+func set_train_controller(controller:TrainController) -> void:
+    controller_path = controller.get_path() if controller else NodePath("")
+    _shake_controller = controller
     _propagate_train_controller(self, controller)
 
 
@@ -75,9 +81,9 @@ func _process_dirty() -> void:
     if not _dirty:
         return
     _dirty = false
-    if controller_path:
-        _shake_controller = get_node(controller_path)
-        set_train_controller(_shake_controller)
+    if controller_path or _shake_controller:
+        var controller:TrainController = get_node_or_null(controller_path) if controller_path else null
+        set_train_controller(controller)
 
 func _process_engine_shake(delta:float) -> void:
     var shake_vector:Vector3 = Vector3.ZERO

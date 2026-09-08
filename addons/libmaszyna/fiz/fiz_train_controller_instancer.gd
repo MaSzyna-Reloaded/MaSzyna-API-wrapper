@@ -260,8 +260,10 @@ static func _parse_file(
         # own - a `//`-only line naturally yields zero tokens below, no special-casing needed.
         if line.find("#") != -1:
             if table_state["prefix"] == "BPT":
+                table_state["parser"].end_table(context)
                 table_state["prefix"] = ""
                 table_state["parser"] = null
+                table_state["end"] = ""
             continue
 
         if line.is_empty():

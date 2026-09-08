@@ -26,9 +26,9 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     context.add_part("TrainUniversalController", node)
 
     if kv.has("IntegratedBrakePN"):
-        node.set_integrated_brake_pn(FizLineUtil.get_bool(kv, "IntegratedBrakePN"))
+        node.integrated_brake_pn = FizLineUtil.get_bool(kv, "IntegratedBrakePN")
     if kv.has("IntegratedBrake"):
-        node.set_integrated_brake(FizLineUtil.get_bool(kv, "IntegratedBrake"))
+        node.integrated_brake = FizLineUtil.get_bool(kv, "IntegratedBrake")
     _rows = []
 
 
@@ -37,15 +37,15 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     if tokens.size() < 10:
         return
     var item := UniversalControllerListItem.new()
-    item.set_pneumatic_brake_position(int(tokens[1]))
-    item.set_min_percentage(float(tokens[2]))
-    item.set_max_percentage(float(tokens[3]))
-    item.set_target_value(float(tokens[4]))
-    item.set_increase_speed(float(tokens[5]))
-    item.set_decrease_speed(float(tokens[6]))
-    item.set_bounce_back_position(int(tokens[7]))
-    item.set_nearest_stable_up(int(tokens[8]))
-    item.set_nearest_stable_down(int(tokens[9]))
+    item.pneumatic_brake_position = int(tokens[1])
+    item.min_percentage = float(tokens[2])
+    item.max_percentage = float(tokens[3])
+    item.target_value = float(tokens[4])
+    item.increase_speed = float(tokens[5])
+    item.decrease_speed = float(tokens[6])
+    item.bounce_back_position = int(tokens[7])
+    item.nearest_stable_up = int(tokens[8])
+    item.nearest_stable_down = int(tokens[9])
     _rows.append(item)
 
 
@@ -54,6 +54,6 @@ func end_table(context: FizImportContext) -> void:
     if node == null:
         _rows = []
         return
-    if not _rows.is_empty():
-        (node as TrainUniversalController).set_positions(_rows)
+    if _rows:
+        (node as TrainUniversalController).positions = _rows
     _rows = []

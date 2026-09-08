@@ -13,7 +13,7 @@ class_name FizTrainEngineCommon
 ## LoadFIZ_EngineDecode: Mover.cpp:11689. Used by Engine: and by other sections that reference
 ## an engine type (Light:/Clima: generator engine).
 static func parse_engine_type(value: String, default_value: int = TrainEngine.NONE) -> int:
-    if value.is_empty():
+    if not value:
         return default_value
     match value.to_lower():
         "electricseriesmotor": return TrainEngine.ELECTRIC_SERIES_MOTOR
@@ -32,70 +32,70 @@ static func apply_engine_common(node: TrainEngine, kv: Dictionary, context: FizI
     if kv.has("Trans"):
         var parts: PackedStringArray = FizLineUtil.get_string(kv, "Trans").split(":")
         if parts.size() == 2:
-            node.set_gear_teeth_motor(parts[0].to_int())
-            node.set_gear_teeth_wheel(parts[1].to_int())
+            node.gear_teeth_motor = parts[0].to_int()
+            node.gear_teeth_wheel = parts[1].to_int()
     if kv.has("TransEff"):
-        node.set_gear_efficiency(FizLineUtil.get_float(kv, "TransEff"))
+        node.gear_efficiency = FizLineUtil.get_float(kv, "TransEff")
     if kv.has("Ftmax"):
-        node.set_maximum_traction_force(FizLineUtil.get_float(kv, "Ftmax"))
+        node.maximum_traction_force = FizLineUtil.get_float(kv, "Ftmax")
     if kv.has("MotorBlowersSpeed"):
-        node.set_motor_blowers_speed(FizLineUtil.get_float(kv, "MotorBlowersSpeed"))
+        node.motor_blowers_speed = FizLineUtil.get_float(kv, "MotorBlowersSpeed")
     if kv.has("MotorBlowersSustainTime"):
-        node.set_motor_blowers_sustain_time(FizLineUtil.get_float(kv, "MotorBlowersSustainTime"))
+        node.motor_blowers_sustain_time = FizLineUtil.get_float(kv, "MotorBlowersSustainTime")
     if kv.has("MotorBlowersStartVelocity"):
-        node.set_motor_blowers_start_velocity(FizLineUtil.get_float(kv, "MotorBlowersStartVelocity"))
+        node.motor_blowers_start_velocity = FizLineUtil.get_float(kv, "MotorBlowersStartVelocity")
     if kv.has("InvNo"):
-        node.set_inverters_count(FizLineUtil.get_int(kv, "InvNo"))
+        node.inverters_count = FizLineUtil.get_int(kv, "InvNo")
 
     # PressureSwitch's absent-key default (true, unless the vehicle is EZT) differs from the
     # compiled default (false).
     var pressure_switch_default: bool = context.train_type != TrainController.TRAIN_TYPE_EZT
-    node.set_pressure_switch_present(FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default))
+    node.pressure_switch_present = FizLineUtil.get_bool(kv, "PressureSwitch", pressure_switch_default)
 
 
 ## The controller-position-count subset of Cntrl. (stashed on context.cntrl_kv by
 ## FizTrainCntrlParser, since Cntrl. conventionally precedes Engine: in real files).
 static func apply_cntrl_engine_subset(node: TrainEngine, cntrl_kv: Dictionary) -> void:
-    if cntrl_kv.is_empty():
+    if not cntrl_kv:
         return
     if cntrl_kv.has("MCPN"):
-        node.set_main_controller_position_count(FizLineUtil.get_int(cntrl_kv, "MCPN"))
+        node.main_controller_position_count = FizLineUtil.get_int(cntrl_kv, "MCPN")
     if cntrl_kv.has("SCPN"):
-        node.set_shunt_controller_position_count(FizLineUtil.get_int(cntrl_kv, "SCPN"))
+        node.shunt_controller_position_count = FizLineUtil.get_int(cntrl_kv, "SCPN")
     if cntrl_kv.has("DirChangeMaxPos"):
-        node.set_direction_change_max_position(FizLineUtil.get_int(cntrl_kv, "DirChangeMaxPos"))
+        node.direction_change_max_position = FizLineUtil.get_int(cntrl_kv, "DirChangeMaxPos")
     if cntrl_kv.has("CoupledCtrl"):
-        node.set_coupled_controllers(FizLineUtil.get_bool(cntrl_kv, "CoupledCtrl"))
+        node.coupled_controllers = FizLineUtil.get_bool(cntrl_kv, "CoupledCtrl")
     if cntrl_kv.has("Camshaft"):
-        node.set_has_camshaft(FizLineUtil.get_bool(cntrl_kv, "Camshaft"))
+        node.has_camshaft = FizLineUtil.get_bool(cntrl_kv, "Camshaft")
     if cntrl_kv.has("ScndS"):
-        node.set_series_shunt_on_series_position(FizLineUtil.get_bool(cntrl_kv, "ScndS"))
+        node.series_shunt_on_series_position = FizLineUtil.get_bool(cntrl_kv, "ScndS")
     if cntrl_kv.has("IniCDelay"):
-        node.set_initial_controller_delay(FizLineUtil.get_float(cntrl_kv, "IniCDelay"))
+        node.initial_controller_delay = FizLineUtil.get_float(cntrl_kv, "IniCDelay")
     if cntrl_kv.has("SCDelay"):
-        node.set_controller_step_delay(FizLineUtil.get_float(cntrl_kv, "SCDelay"))
+        node.controller_step_delay = FizLineUtil.get_float(cntrl_kv, "SCDelay")
     # SCDDelay's absent-key default (== SCDelay) differs from the compiled default (0.0).
-    node.set_controller_step_down_delay(
+    node.controller_step_down_delay = (
             FizLineUtil.get_float(cntrl_kv, "SCDDelay", FizLineUtil.get_float(cntrl_kv, "SCDelay")))
     if cntrl_kv.has("FSCircuit"):
-        node.set_fast_series_circuit(FizLineUtil.get_bool(cntrl_kv, "FSCircuit"))
+        node.fast_series_circuit = FizLineUtil.get_bool(cntrl_kv, "FSCircuit")
     if cntrl_kv.has("EIMCtrlAddZeros"):
-        node.set_eim_control_additional_zeros(FizLineUtil.get_bool(cntrl_kv, "EIMCtrlAddZeros"))
+        node.eim_control_additional_zeros = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlAddZeros")
     if cntrl_kv.has("EIMCtrlEmergency"):
-        node.set_eim_control_emergency(FizLineUtil.get_bool(cntrl_kv, "EIMCtrlEmergency"))
+        node.eim_control_emergency = FizLineUtil.get_bool(cntrl_kv, "EIMCtrlEmergency")
     if cntrl_kv.has("EIMCtrlType"):
-        node.set_eim_control_type(clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3))
+        node.eim_control_type = clampi(FizLineUtil.get_int(cntrl_kv, "EIMCtrlType"), 0, 3)
     if cntrl_kv.has("MotorBlowersStart"):
-        node.set_motor_blowers_start_mode(
+        node.motor_blowers_start_mode = (
                 FizTrainControllerParser.parse_start_mode(FizLineUtil.get_string(cntrl_kv, "MotorBlowersStart"), TrainEngine.START_MODE_MANUAL))
     if node is TrainDieselEngine and cntrl_kv.has("OilStart"):
-        (node as TrainDieselEngine).set_oil_pump_start_mode(
+        (node as TrainDieselEngine).oil_pump_start_mode = (
                 FizTrainControllerParser.parse_start_mode(
                         FizLineUtil.get_string(cntrl_kv, "OilStart"), TrainEngine.START_MODE_MANUAL))
 
     match FizLineUtil.get_string(cntrl_kv, "AutoRelay").to_lower():
-        "optional": node.set_auto_relay_mode(TrainEngine.AUTO_RELAY_OPTIONAL)
-        "yes": node.set_auto_relay_mode(TrainEngine.AUTO_RELAY_YES)
+        "optional": node.auto_relay_mode = TrainEngine.AUTO_RELAY_OPTIONAL
+        "yes": node.auto_relay_mode = TrainEngine.AUTO_RELAY_YES
 
 
 ## Shared MotorParamTable0:/MotorParamTable: row parser - both sections share the same idx+6-
@@ -110,12 +110,12 @@ static func parse_motor_param_row(p: MaszynaParser) -> MotorParameter:
     if tokens.size() < 7:
         return null
     var item := MotorParameter.new()
-    item.set_initial_voltage_constant(float(tokens[1])) # A ("fin")
+    item.initial_voltage_constant = float(tokens[1]) # A ("fin")
     # B ("bl") deliberately left unmapped - see fiz_train_electric_series_engine_parser.gd.
-    item.set_voltage_constant_multiplier(float(tokens[3])) # C (mfi)
-    item.set_saturation_current_multiplier(float(tokens[4])) # D (mIsat)
-    item.set_voltage_constant(float(tokens[5])) # E (fi)
-    item.set_saturation_current(float(tokens[6])) # F (Isat)
+    item.voltage_constant_multiplier = float(tokens[3]) # C (mfi)
+    item.saturation_current_multiplier = float(tokens[4]) # D (mIsat)
+    item.voltage_constant = float(tokens[5]) # E (fi)
+    item.saturation_current = float(tokens[6]) # F (Isat)
     return item
 
 
@@ -123,37 +123,37 @@ static func parse_motor_param_row(p: MaszynaParser) -> MotorParameter:
 ## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
 ## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.
 static func apply_power(node: TrainElectricEngine, power_kv: Dictionary) -> void:
-    if power_kv.is_empty():
+    if not power_kv:
         return
     if power_kv.has("EnginePower"):
-        node.set_engine_power_source(FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(power_kv, "EnginePower")))
+        node.engine_power_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(power_kv, "EnginePower"))
     if power_kv.has("CollectorsNo"):
-        node.set_number_of_collectors(FizLineUtil.get_int(power_kv, "CollectorsNo"))
+        node.number_of_collectors = FizLineUtil.get_int(power_kv, "CollectorsNo")
     if power_kv.has("MinH"):
-        node.set_min_collector_lifting(FizLineUtil.get_float(power_kv, "MinH"))
+        node.min_collector_lifting = FizLineUtil.get_float(power_kv, "MinH")
     if power_kv.has("MaxH"):
-        node.set_max_collector_lifting(FizLineUtil.get_float(power_kv, "MaxH"))
+        node.max_collector_lifting = FizLineUtil.get_float(power_kv, "MaxH")
     if power_kv.has("CSW"):
-        node.set_collector_sliding_width(FizLineUtil.get_float(power_kv, "CSW"))
+        node.collector_sliding_width = FizLineUtil.get_float(power_kv, "CSW")
     if power_kv.has("PhysicalLayout"):
-        node.set_physical_layout(FizLineUtil.get_int(power_kv, "PhysicalLayout", 3))
+        node.physical_layout = FizLineUtil.get_int(power_kv, "PhysicalLayout", 3)
     if power_kv.has("OverVoltProt"):
-        node.set_overvoltage_relay(FizLineUtil.get_bool(power_kv, "OverVoltProt"))
+        node.overvoltage_relay = FizLineUtil.get_bool(power_kv, "OverVoltProt")
     if power_kv.has("TransducerInputV"):
-        node.set_transducer_input_voltage(FizLineUtil.get_float(power_kv, "TransducerInputV"))
+        node.transducer_input_voltage = FizLineUtil.get_float(power_kv, "TransducerInputV")
     if power_kv.has("PowerTrans"):
-        node.set_power_cable_power_source(FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(power_kv, "PowerTrans")))
+        node.power_cable_power_source = FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(power_kv, "PowerTrans"))
     if power_kv.has("SteamPress"):
-        node.set_power_cable_steam_pressure(FizLineUtil.get_float(power_kv, "SteamPress"))
+        node.power_cable_steam_pressure = FizLineUtil.get_float(power_kv, "SteamPress")
 
     var max_voltage: float = FizLineUtil.get_float(power_kv, "MaxVoltage")
     if power_kv.has("MaxVoltage"):
-        node.set_max_voltage(max_voltage)
+        node.max_voltage = max_voltage
     if power_kv.has("MaxCurrent"):
-        node.set_max_current(FizLineUtil.get_float(power_kv, "MaxCurrent"))
+        node.max_current = FizLineUtil.get_float(power_kv, "MaxCurrent")
     # MinV/InsetV's absent-key defaults (fractions of MaxVoltage) differ from the compiled
     # defaults (0.0) whenever MaxVoltage is set.
-    node.set_min_main_switch_voltage(FizLineUtil.get_float(power_kv, "MinV", 0.5 * max_voltage))
-    node.set_required_main_switch_voltage(FizLineUtil.get_float(power_kv, "InsetV", 0.6 * max_voltage))
-    node.set_min_pantograph_tank_pressure(FizLineUtil.get_float(power_kv, "MinPress", 3.5))
-    node.set_max_pantograph_tank_pressure(FizLineUtil.get_float(power_kv, "MaxPress", 5.0))
+    node.min_main_switch_voltage = FizLineUtil.get_float(power_kv, "MinV", 0.5 * max_voltage)
+    node.required_main_switch_voltage = FizLineUtil.get_float(power_kv, "InsetV", 0.6 * max_voltage)
+    node.min_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MinPress", 3.5)
+    node.max_pantograph_tank_pressure = FizLineUtil.get_float(power_kv, "MaxPress", 5.0)

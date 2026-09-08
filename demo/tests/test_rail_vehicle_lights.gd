@@ -1,6 +1,19 @@
 extends MaszynaGutTest
 
 
+func test_enter_cabin_does_nothing_when_controller_has_no_cabins() -> void:
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    var controller:TrainController = TrainController.new()
+    controller.name = "TrainController"
+    vehicle.add_child(controller)
+    vehicle.controller_path = NodePath("TrainController")
+    add_child_autoqfree(vehicle)
+
+    vehicle.enter_cabin(null)
+
+    assert_null(vehicle._cabin)
+
+
 func test_model_instance_path_updates_lights_and_preserves_shared_state() -> void:
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     var first_model: E3DModelInstance = E3DModelInstance.new()

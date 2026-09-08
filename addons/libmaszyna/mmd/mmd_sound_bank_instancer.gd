@@ -14,7 +14,7 @@ static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.
 
 static func build_into(
         vehicle:Node3D, abs_mmd_path:String, _fiz_controller_name:String,
-        random_choices:Dictionary, diagnostics:Array[Dictionary]) -> void:
+        random_choices:Dictionary) -> void:
     var context := MmdImportContext.new()
     context.base_dir = abs_mmd_path.get_base_dir()
     context.random_choices = random_choices
@@ -48,7 +48,6 @@ static func build_into(
 
     _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false)
     _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true)
-    diagnostics.append_array(context.diagnostics)
 
 
 static func _build_player(
@@ -60,7 +59,6 @@ static func _build_player(
     var brake_sources:Dictionary = {}
     for definition:MmdSoundSourceDefinition in definitions:
         if not MmdSoundCatalog.has_label(definition.label):
-            context.warn_unsupported_label(definition.label, abs_mmd_path, 0)
             continue
         var entry:Dictionary = MmdSoundCatalog.get_entry(definition.label)
         if entry.get("controller", &"") == &"brake":
@@ -154,7 +152,7 @@ static func _merge_ignition_and_shutdown_into_engine(
     if not engine:
         return
     for definition:MmdSoundSourceDefinition in internal_data:
-        if definition.label == "ignition" and engine.sound_begin.is_empty():
+        if definition.label == "ignition" and not engine.sound_begin:
             engine.sound_begin = definition.sound_main
-        elif definition.label == "shutdown" and engine.sound_end.is_empty():
+        elif definition.label == "shutdown" and not engine.sound_end:
             engine.sound_end = definition.sound_main

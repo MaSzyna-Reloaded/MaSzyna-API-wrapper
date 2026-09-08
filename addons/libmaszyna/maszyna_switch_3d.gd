@@ -85,10 +85,10 @@ func _auto_link_track(track: MaszynaTrack3D):
     
     # Only link the end that is actually AT the switch junction
     if p_start.distance_to(inlet_pos) < 0.5:
-        if track.previous_track.is_empty():
+        if not track.previous_track:
             track.previous_track = track.get_path_to(self)
     elif p_end.distance_to(inlet_pos) < 0.5:
-        if track.next_track.is_empty():
+        if not track.next_track:
             track.next_track = track.get_path_to(self)
 
 func toggle():

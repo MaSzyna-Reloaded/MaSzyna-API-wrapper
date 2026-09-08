@@ -1,9 +1,18 @@
 extends Node
 
+enum ListenerContext {
+    REAR_CAB,
+    ENGINE,
+    FRONT_CAB,
+    WINDOW,
+    ATTACHED_CAMERA,
+    FREE_CAMERA,
+}
+
 const TRIGGER_INTERVAL:float = 0.05
 const TRIGGER_MODE_TOGGLE:int = 0
 const TRIGGER_MODE_CONTINUOUS:int = 1
-const EXTERIOR_CONTEXT:int = 5
+const EXTERIOR_CONTEXT:int = ListenerContext.FREE_CAMERA
 const VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_volume_factor"
 const EXTERIOR_VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_volume_factor"
 const CABIN_UNIT_SIZE_FACTOR_SETTING:StringName = &"maszyna/sound/brake_cabin_unit_size_factor"
@@ -135,11 +144,11 @@ func _resolve_controller(runtime:BankRuntime) -> void:
 
 
 func _ensure_brake_events(runtime:BankRuntime) -> void:
-    if runtime.events_built or runtime.brake_sources.is_empty():
+    if runtime.events_built or not runtime.brake_sources:
         return
     var built:Array[SfxEvent] = BrakeSfxEventFactory.build_events(
             runtime.brake_sources, runtime.controller.config)
-    if built.is_empty():
+    if not built:
         return
     var events:Array[SfxEvent] = runtime.player.bank.events.duplicate()
     events.append_array(built)
@@ -201,7 +210,7 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
         elif not should_play and activated:
             runtime.player.stop(event_name, false)
             runtime.trigger_states[trigger_id] = false
-        if should_play and not parameters.is_empty() and runtime.player.is_playing(event_name):
+        if should_play and parameters and runtime.player.is_playing(event_name):
             batch[event_name] = parameters
 
 

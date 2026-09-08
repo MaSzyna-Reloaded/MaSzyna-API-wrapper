@@ -22,7 +22,6 @@
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
-[ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
 
 [sub_resource type="Curve3D" id="Curve3D_esmlu"]
@@ -231,7 +230,6 @@ script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/impuls_v1"
 file_name = "36wea-a_kd"
 skin = "36wea-019a"
-head_display_material = ExtResource("28_tdoik")
 train_id = "impuls-a"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
@@ -241,7 +239,6 @@ script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-b_kd"
 skin = "36wea-019b,1|36wea-019b,2|36wea-019b,3|36wea-019c,4"
-head_display_material = ExtResource("28_tdoik")
 train_id = "impuls-b"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
@@ -251,7 +248,6 @@ script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-c_kd"
 skin = "36wea-019b,1|36wea-019c,2|36wea-019c,3|36wea-019c,4"
-head_display_material = ExtResource("28_tdoik")
 train_id = "impuls-c"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
@@ -261,14 +257,13 @@ script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/impuls_v1"
 file_name = "31wea-d_kd"
 skin = "36wea-019a,1|36wea-019a,2|36wea-019a,3|36wea-019a,4"
-head_display_material = ExtResource("28_tdoik")
 train_id = "impuls-d"
 metadata/_custom_type_script = "uid://djd17om24oh3s"
 
 [node name="ST44-700" type="Node3D" parent="." unique_id=917708164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8.254089, 0, 20.364653)
 script = ExtResource("29_dcvyd")
-data_path = "dynamic/pkp/st44_v2"
+data_path = "/dynamic/pkp/st44_v2"
 file_name = "st44-700"
 skin = "st44-700"
 train_id = "st44"
@@ -276,7 +271,7 @@ train_id = "st44"
 [node name="SU45" type="Node3D" parent="." unique_id=1297199175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
 script = ExtResource("29_dcvyd")
-data_path = "dynamic/pkp/su45_v2"
+data_path = "/dynamic/pkp/su45_v2"
 file_name = "301d"
 skin = "301d-225"
 train_id = "su45"
@@ -284,7 +279,7 @@ train_id = "su45"
 [node name="SM42" type="Node3D" parent="." unique_id=769861990]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
 script = ExtResource("29_dcvyd")
-data_path = "dynamic/pkp/sm42_v1"
+data_path = "/dynamic/pkp/sm42_v1"
 file_name = "6d1"
 skin = "6d-1076"
 train_id = "sm42"
@@ -292,7 +287,7 @@ train_id = "sm42"
 [node name="SM42-907" type="Node3D" parent="." unique_id=1204789574]
 transform = Transform3D(-0.9996828, 0, 0.025186649, 0, 1, 0, -0.025186649, 0, -0.9996828, -25.735577, 0.16, 180.73814)
 script = ExtResource("29_dcvyd")
-data_path = "dynamic/pkp/sm42_v1"
+data_path = "/dynamic/pkp/sm42_v1"
 file_name = "6da"
 skin = "6d-907"
 train_id = "sm42-907"

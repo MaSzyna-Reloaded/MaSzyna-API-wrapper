@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainSwitches" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainSwitches" inherits="TrainPart" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Configures cab control panel switch behavior (impulse vs. toggle) and the headlight dimmer.
 	</brief_description>
@@ -25,11 +25,11 @@
 			[code]DimmerList[/code]
 			The dimmer switch's position table.
 		</member>
-		<member name="dimmer_list/cycle" type="bool" setter="set_dimmer_list_cycle" getter="get_dimmer_list_cycle" default="false">
+		<member name="dimmer_list_cycle" type="bool" setter="set_dimmer_list_cycle" getter="get_dimmer_list_cycle" default="false">
 			[code]DimmerList:Cycle[/code]
 			Whether the dimmer switch can be rotated all the way around.
 		</member>
-		<member name="dimmer_list/default_position" type="int" setter="set_dimmer_list_default_position" getter="get_dimmer_list_default_position" default="0">
+		<member name="dimmer_list_default_position" type="int" setter="set_dimmer_list_default_position" getter="get_dimmer_list_default_position" default="0">
 			[code]DimmerList:DefaultPos[/code]
 		</member>
 		<member name="modern_dimmer" type="bool" setter="set_modern_dimmer" getter="get_modern_dimmer" default="false">

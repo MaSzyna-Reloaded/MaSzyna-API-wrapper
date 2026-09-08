@@ -26,7 +26,7 @@
 		<method name="next_permit_preset">
 			<return type="void" />
 			<description>
-				Activate next permission preset. See [member TrainDoors.permit_list].
+				Activate next permission preset. See [member TrainDoors.permit/list].
 			</description>
 		</method>
 		<method name="operate_doors">
@@ -83,20 +83,20 @@
 		<method name="previous_permit_preset">
 			<return type="void" />
 			<description>
-				Activate previous permission preset. See [member TrainDoors.permit_list].
+				Activate previous permission preset. See [member TrainDoors.permit/list].
 			</description>
 		</method>
 	</methods>
 	<members>
-		<member name="close_auto_close_remote" type="bool" setter="set_close_auto_close_remote" getter="get_close_auto_close_remote" default="false">
+		<member name="auto_close_remote" type="bool" setter="set_auto_close_remote" getter="get_auto_close_remote" default="false">
 			[code]Doors:DoorAutoCloseRemote[/code]
 			Automatic closing of centrally open doors after a certain period of time
 		</member>
-		<member name="close_auto_close_velocity" type="float" setter="set_close_auto_close_velocity" getter="get_close_auto_close_velocity" default="-1.0">
+		<member name="auto_close_velocity" type="float" setter="set_auto_close_velocity" getter="get_auto_close_velocity" default="-1.0">
 			[code]Doors:DoorAutoCloseVel[/code]
 			The speed at which the automatic door closing occurs
 		</member>
-		<member name="close_auto_close_warning" type="bool" setter="set_close_auto_close_warning" getter="get_close_auto_close_warning" default="false">
+		<member name="auto_close_warning" type="bool" setter="set_auto_close_warning" getter="get_auto_close_warning" default="false">
 			[code]Doors:DoorClosureWarningAuto[/code]
 			When the door closing button is pressed, a buzz sound is activated automatically, and when released, the doors close
 		</member>
@@ -159,7 +159,7 @@
 		</member>
 		<member name="permit_default" type="int" setter="set_permit_default" getter="get_permit_default" default="1">
 			[code]Doors:DoorPermitListDefault[/code]
-			By default, the position of the knob is set from the permit_list entry where the positions are numbered starting from 1
+			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1
 		</member>
 		<member name="permit_light_blinking" type="int" setter="set_permit_light_blinking" getter="get_permit_light_blinking" enum="TrainDoors.PermitLight" default="0">
 			[code]Doors:DoorsPermitLightBlinking[/code]

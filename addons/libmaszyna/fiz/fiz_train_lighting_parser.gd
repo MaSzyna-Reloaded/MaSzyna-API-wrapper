@@ -33,32 +33,32 @@ func _parse_light(kv: Dictionary, context: FizImportContext) -> void:
     var node := _get_node(context)
 
     if kv.has("Light"):
-        node.set_light_source(FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Light")))
+        node.light_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Light"))
     if kv.has("LGeneratorEngine"):
-        node.set_generator_engine(FizTrainEngineCommon.parse_engine_type(FizLineUtil.get_string(kv, "LGeneratorEngine")))
+        node.generator_engine = FizTrainEngineCommon.parse_engine_type(FizLineUtil.get_string(kv, "LGeneratorEngine"))
     if kv.has("AlterLight"):
-        node.set_alternative_light_source(FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "AlterLight")))
+        node.alternative_light_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "AlterLight"))
     if kv.has("AlterLMaxVoltage"):
-        node.set_alternative_max_voltage(FizLineUtil.get_float(kv, "AlterLMaxVoltage"))
+        node.alternative_max_voltage = FizLineUtil.get_float(kv, "AlterLMaxVoltage")
 
     # LMaxVoltage feeds TrainController.battery_voltage, not a TrainLighting property - see
     # doc_classes/TrainController.xml ([code]Light:LMaxVoltage[/code]).
     if kv.has("LMaxVoltage"):
-        context.controller.set_battery_voltage(FizLineUtil.get_float(kv, "LMaxVoltage"))
+        context.controller.battery_voltage = FizLineUtil.get_float(kv, "LMaxVoltage")
 
 
 func _parse_headlights(kv: Dictionary, context: FizImportContext) -> void:
     var node := _get_node(context)
     if kv.has("DimmedMultiplier"):
-        node.set_head_light_dimmed_multiplier(FizLineUtil.get_float(kv, "DimmedMultiplier"))
+        node.head_light_dimmed_multiplier = FizLineUtil.get_float(kv, "DimmedMultiplier")
     if kv.has("NormalMultiplier"):
-        node.set_head_light_normal_multiplier(FizLineUtil.get_float(kv, "NormalMultiplier"))
+        node.head_light_normal_multiplier = FizLineUtil.get_float(kv, "NormalMultiplier")
     if kv.has("HighbeamDimmedMultiplier"):
-        node.set_high_beam_dimmed_multiplier(FizLineUtil.get_float(kv, "HighbeamDimmedMultiplier"))
+        node.high_beam_dimmed_multiplier = FizLineUtil.get_float(kv, "HighbeamDimmedMultiplier")
     if kv.has("HighBeamMultiplier"):
-        node.set_high_beam_normal_multiplier(FizLineUtil.get_float(kv, "HighBeamMultiplier"))
+        node.high_beam_normal_multiplier = FizLineUtil.get_float(kv, "HighBeamMultiplier")
     if kv.has("LampRed") or kv.has("LampGreen") or kv.has("LampBlue"):
-        node.set_head_light_color(Color(
+        node.head_light_color = Color(
                 FizLineUtil.get_float(kv, "LampRed", 255.0) / 255.0,
                 FizLineUtil.get_float(kv, "LampGreen", 255.0) / 255.0,
-                FizLineUtil.get_float(kv, "LampBlue", 255.0) / 255.0))
+                FizLineUtil.get_float(kv, "LampBlue", 255.0) / 255.0)

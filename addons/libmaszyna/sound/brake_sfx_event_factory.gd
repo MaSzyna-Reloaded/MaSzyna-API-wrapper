@@ -129,7 +129,7 @@ static func _build_brake_shoe(
     if friction_def and _has_sound(friction_def):
         automations.append(_brake_friction_automation(friction_def, max_speed))
 
-    if automations.is_empty():
+    if not automations:
         return null
     event.automations = automations
 
@@ -142,7 +142,7 @@ static func _build_brake_shoe(
 
 static func _brake_friction_automation(
         definition:MmdSoundSourceDefinition, max_speed:float) -> SfxAutomation:
-    if not definition.chunks.is_empty():
+    if definition.chunks:
         var built:Dictionary = MmdSoundEventBuilder._build_automation(definition, &"speed")
         var chunk_automation:SfxAutomation = built["automation"]
         var maximum_chunk_gain:float = maxf(
@@ -300,7 +300,7 @@ static func _build_pulse_event(
                 primary = definition
             automations.append(_pulse_automation(definition, StringName(pulse_parameters[key])))
 
-    if automations.is_empty():
+    if not automations:
         return null
     var event := SfxEvent.new()
     event.name = event_name
@@ -334,7 +334,7 @@ static func _build_spring_brake(
         automations.append(_domain_clip_automation(activate_definition, true))
     if release_definition and _has_sound(release_definition):
         automations.append(_domain_clip_automation(release_definition, false))
-    if automations.is_empty():
+    if not automations:
         return null
     var event := SfxEvent.new()
     event.name = &"springbrake"
@@ -377,7 +377,7 @@ static func _build_local_brake_hiss(
     if engage_def and _has_sound(engage_def):
         automations.append(_signed_flow_automation(
                 engage_def, &"brake_local_valve_flow", 1.0, 1.0, 1.0, 0.05))
-    if automations.is_empty():
+    if not automations:
         return null
     event.automations = automations
     var primary:MmdSoundSourceDefinition = release_def if release_def else engage_def
@@ -455,7 +455,7 @@ static func _build_pipe_hiss(sources:Dictionary, config:Dictionary) -> SfxEvent:
                 0.001 if fv_sound_model else 10.0,
                 10.0))
 
-    if automations.is_empty():
+    if not automations:
         return null
     event.automations = automations
     event.parameter_modulations = _generic_modulations()
@@ -548,7 +548,7 @@ static func _signed_flow_automation(
 static func _automation_for(
         definition:MmdSoundSourceDefinition, parameter_name:StringName,
         min_value:float, max_value:float) -> SfxAutomation:
-    if not definition.chunks.is_empty():
+    if definition.chunks:
         var built:Dictionary = MmdSoundEventBuilder._build_automation(definition, parameter_name)
         var chunk_automation:SfxAutomation = built["automation"]
         for clip:SfxClip in chunk_automation.clips:
@@ -633,8 +633,8 @@ static func _generic_modulations() -> Array[SfxParameterModulation]:
 
 
 static func _has_sound(definition:MmdSoundSourceDefinition) -> bool:
-    return (not definition.sound_main.is_empty() or not definition.sound_begin.is_empty()
-            or not definition.sound_end.is_empty() or not definition.chunks.is_empty())
+    return (true if definition.sound_main or definition.sound_begin
+            or definition.sound_end or definition.chunks else false)
 
 
 ## Picks one representative filename for definitions used as a plain pulse-triggered clip (no
@@ -646,13 +646,13 @@ static func _has_sound(definition:MmdSoundSourceDefinition) -> bool:
 ## used by the primary reference vehicle (SU45, Pneumatic-not-ElectroPneumatic) and can be
 ## revisited if audibly wrong for a vehicle that does use them.
 static func _primary_sound(definition:MmdSoundSourceDefinition) -> String:
-    if not definition.sound_main.is_empty():
+    if definition.sound_main:
         return definition.sound_main
-    if not definition.sound_begin.is_empty():
+    if definition.sound_begin:
         return definition.sound_begin
-    if not definition.sound_end.is_empty():
+    if definition.sound_end:
         return definition.sound_end
-    if not definition.chunks.is_empty():
+    if definition.chunks:
         var chunks:Array[Dictionary] = definition.chunks.duplicate()
         chunks.sort_custom(func(a:Dictionary, b:Dictionary) -> bool: return int(a["threshold"]) < int(b["threshold"]))
         return chunks[0]["filename"]

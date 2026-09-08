@@ -33,11 +33,23 @@
 		</method>
 	</methods>
 	<members>
+		<member name="actuator_charge_valve_cross_section" type="float" setter="set_actuator_charge_valve_cross_section" getter="get_actuator_charge_valve_cross_section" default="0.0">
+			Cross-section of the actuator's charging valve, l/m
+		</member>
+		<member name="actuator_discharge_valve_cross_section" type="float" setter="set_actuator_discharge_valve_cross_section" getter="get_actuator_discharge_valve_cross_section" default="0.0">
+			Cross-section of the actuator's discharging valve, l/m
+		</member>
 		<member name="brake_signal_braked_state_pressure" type="float" setter="set_brake_signal_braked_state_pressure" getter="get_brake_signal_braked_state_pressure" default="0.0">
 			Brake signal switching pressure to braking state, bar
 		</member>
 		<member name="brake_signal_released_state_pressure" type="float" setter="set_brake_signal_released_state_pressure" getter="get_brake_signal_released_state_pressure" default="0.0">
 			Brake signal switching pressure to the released state, bar
+		</member>
+		<member name="max_spring_actuator_filling_force" type="float" setter="set_max_spring_actuator_filling_force" getter="get_max_spring_actuator_filling_force" default="0.0">
+			Maximum filling pressure of spring actuators, bar
+		</member>
+		<member name="pneumatic_brake_valve_cross_section" type="float" setter="set_pneumatic_brake_valve_cross_section" getter="get_pneumatic_brake_valve_cross_section" default="0.0">
+			Cross-section of the valve connecting to the pneumatic brake, l/m
 		</member>
 		<member name="pressure_force_coefficient" type="float" setter="set_pressure_force_coefficient" getter="get_pressure_force_coefficient" default="0.0">
 			Pressure force coefficient, kN/bar
@@ -48,23 +60,11 @@
 		<member name="spring_actuator_chamber_volume" type="float" setter="set_spring_actuator_chamber_volume" getter="get_spring_actuator_chamber_volume" default="1.0">
 			Volume of the spring actuator chambers, l
 		</member>
-		<member name="spring_actuator_max_filling_force" type="float" setter="set_spring_actuator_max_filling_force" getter="get_spring_actuator_max_filling_force" default="0.0">
-			Maximum filling pressure of spring actuators, bar
-		</member>
 		<member name="spring_actuator_preload_pressure" type="float" setter="set_spring_actuator_preload_pressure" getter="get_spring_actuator_preload_pressure" default="0.0">
 			Spring actuator preload pressure, bar
 		</member>
 		<member name="spring_full_balance_pressure" type="float" setter="set_spring_full_balance_pressure" getter="get_spring_full_balance_pressure" default="0.0">
 			Full spring pressure equilibrium pressure, bar
-		</member>
-		<member name="valve_cross_section_actuator_charge" type="float" setter="set_valve_cross_section_actuator_charge" getter="get_valve_cross_section_actuator_charge" default="0.0">
-			Cross-section of the actuator's charging valve, l/m
-		</member>
-		<member name="valve_cross_section_actuator_discharge" type="float" setter="set_valve_cross_section_actuator_discharge" getter="get_valve_cross_section_actuator_discharge" default="0.0">
-			Cross-section of the actuator's discharging valve, l/m
-		</member>
-		<member name="valve_cross_section_pneumatic_brake" type="float" setter="set_valve_cross_section_pneumatic_brake" getter="get_valve_cross_section_pneumatic_brake" default="0.0">
-			Cross-section of the valve connecting to the pneumatic brake, l/m
 		</member>
 	</members>
 </class>

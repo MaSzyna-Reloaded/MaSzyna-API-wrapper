@@ -1,14 +1,23 @@
 extends Node3D
 class_name CabinIndicator3D
 
+signal state_changed(active:bool)
+
 var _controller:TrainController
 var _on_target:Node3D
 var _off_target:Node3D
 var _dirty:bool = false
 var _update_elapsed:float = 0.0
+var _active:bool = false
+var _blink_on:bool = true
+var _blink_timer:Timer
+var _sound:SfxPlayer3D
 
 @export var enabled:bool = false
 @export var state_property:String = ""
+@export var blink_time:float = 0.0
+@export var sound_on_event:SfxEvent
+@export var sound_off_event:SfxEvent
 @export_node_path("TrainController") var controller_path:NodePath = "":
     set(value):
         controller_path = value
@@ -37,6 +46,19 @@ func _process(delta:float) -> void:
         _update_state()
 
 
+func _ready() -> void:
+    if blink_time > 0.0:
+        _blink_timer = Timer.new()
+        add_child(_blink_timer)
+        _blink_timer.wait_time = blink_time
+        _blink_timer.timeout.connect(_on_blink_timeout)
+
+
+func _on_blink_timeout() -> void:
+    _blink_on = not _blink_on
+    _update_state()
+
+
 func _process_dirty() -> void:
     if not _controller and controller_path:
         _controller = get_node(controller_path)
@@ -50,7 +72,20 @@ func _process_dirty() -> void:
 func _update_state() -> void:
     if _controller and state_property:
         enabled = true if _controller.state.get(state_property, false) else false
+    var active:bool = enabled
+    if _blink_timer:
+        if enabled:
+            if _blink_timer.is_stopped():
+                _blink_on = true
+                _blink_timer.start()
+            active = _blink_on
+        else:
+            _blink_timer.stop()
+            _blink_on = true
     if _on_target:
-        _on_target.visible = enabled
+        _on_target.visible = active
     if _off_target:
-        _off_target.visible = not enabled
+        _off_target.visible = not active
+    if not _active == active:
+        _active = active
+        state_changed.emit(_active)

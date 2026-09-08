@@ -17,6 +17,7 @@ namespace godot {
         private:
             TMoverParameters *mover{};
             int cabin_number = 0;
+            int cabin_count = 0;
             void initialize_mover();
             void initialize_mover_state();
             bool dirty = false;      // Refreshes all elements
@@ -167,6 +168,8 @@ namespace godot {
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
+            int get_cabin_count() const;
+            void set_cabin_count(int p_count);
             void _process(double p_delta) override;
             void _notification(int p_what);
             void send_command(

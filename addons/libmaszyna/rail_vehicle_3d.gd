@@ -86,6 +86,9 @@ var _t:float = 0.0
 
 
 func enter_cabin(player:MaszynaPlayer):
+    var controller:TrainController = get_controller()
+    if not controller or controller.cabin_count == 0:
+        return
     if not cabin_scene:
         push_warning("%s has no cabin_scene; cabin entry not yet supported" % name)
         return
@@ -97,10 +100,7 @@ func enter_cabin(player:MaszynaPlayer):
         return
     _cabin = cabin
 
-    if controller_path:
-        var controller = _resolve_controller(controller_path)
-        if controller:
-            cabin.controller_path = controller.get_path()
+    cabin.controller_path = controller.get_path()
 
     # The sequence of adding, removing, hiding, showing nodes is very important
     # to reduce visual artifacts

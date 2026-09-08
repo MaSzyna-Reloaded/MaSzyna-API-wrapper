@@ -17,10 +17,7 @@ class_name DynamicTrainCabin
 @export var mmd_filename:String = ""
 @export var skin:String = ""
 
-var _controller:TrainController
 var _generated:Node3D
-var _diagnostics:Array[Dictionary] = []
-var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
 
 
@@ -35,71 +32,54 @@ func _ready() -> void:
 
 
 func set_train_controller(controller:TrainController) -> void:
-    if _controller == controller:
+    if _train_controller == controller:
         return
-    if _controller:
-        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
-    _controller = controller
+    if _train_controller:
+        _train_controller.mover_config_changed.disconnect(_on_mover_config_changed)
     super.set_train_controller(controller)
-    if _controller:
-        _controller.mover_config_changed.connect(_on_mover_config_changed)
-    _rebuild_generated()
+    if _train_controller:
+        _train_controller.mover_config_changed.connect(_on_mover_config_changed)
+    _rebuild()
 
 
 func _exit_tree() -> void:
-    if _controller:
-        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
-    _controller = null
-    _shake_controller = null
-
-
-func get_diagnostics() -> Array[Dictionary]:
-    return _diagnostics
+    if _train_controller:
+        _train_controller.mover_config_changed.disconnect(_on_mover_config_changed)
+    _train_controller = null
 
 
 func reload() -> void:
-    _rebuild_generated()
+    _rebuild()
 
 
 ## Only the cab1<->cab2 sign flip triggers a rebuild - any other mover config change is not
 ## this class's concern.
 func _on_mover_config_changed() -> void:
     if not _select_cab_number() == _last_cab_number:
-        _rebuild_generated()
+        _rebuild()
 
 
 func _select_cab_number() -> int:
-    if not _controller:
+    if not _train_controller:
         return 1
-    var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
+    var cabin_occupied:int = _train_controller.state.get("cabin_occupied", 0)
     return 2 if cabin_occupied < 0 else 1
 
 
-func _rebuild_generated() -> void:
+func _rebuild() -> void:
     if _generated:
         remove_child(_generated)
         _generated.queue_free()
         _generated = null
 
-    _diagnostics.clear()
-    if not mmd_filename or not _controller:
+    if not mmd_filename or not _train_controller:
         return
 
-    var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
     _last_cab_number = _select_cab_number()
-    cab_number = 1 if _last_cab_number == 1 else -1
-    if cabin_occupied == 0:
-        _diagnostics.append({
-            "severity": "info", "code": "MMD_CABIN_OCCUPIED_UNKNOWN", "source_file": "", "line": 0,
-            "cabin_number": _last_cab_number, "mmd_label": "", "submodel_name": "",
-            "message": "cabin_occupied is 0 at build time - defaulting to cab1",
-        })
 
-    var abs_mmd_path:String = (
-            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(mmd_filename + ".mmd"))
-    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(abs_mmd_path, _last_cab_number, _random_choices)
-    _diagnostics.append_array(definition.diagnostics)
-
+    var definition:MmdCabinDefinition = MmdManager.load_cabin(data_path, mmd_filename, _last_cab_number)
+    if not definition:
+        return
     camera_bound_min = definition.bounds_min
     camera_bound_max = definition.bounds_max
     camera_bound_enabled = true
@@ -119,17 +99,11 @@ func _rebuild_generated() -> void:
     _generated.name = "Generated"
     add_child(_generated, false, INTERNAL_MODE_BACK)
 
-    var build_diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer.build_into(_generated, definition, _controller, data_path, skin, build_diagnostics)
-    _diagnostics.append_array(build_diagnostics)
+    MmdCabinInstancer.build_into(_generated, definition, _train_controller, data_path, skin)
 
     _build_driver_aid_commands()
     camera_configuration_changed.emit()
 
-    print("DynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
-        _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
-    for d:Dictionary in _diagnostics:
-        print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
 
 
 ## Keyboard-only driver aids that have no cabin lever/MMD instrument of their own (nothing to
@@ -147,4 +121,4 @@ func _build_driver_aid_commands() -> void:
     release_to_drive.command = "brake_level_set_position"
     release_to_drive.command_param = "drive"
     _generated.add_child(release_to_drive)
-    release_to_drive.controller_path = release_to_drive.get_path_to(_controller)
+    release_to_drive.controller_path = release_to_drive.get_path_to(_train_controller)

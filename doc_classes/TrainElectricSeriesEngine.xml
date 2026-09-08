@@ -59,4 +59,12 @@
 			Motor winding resistance, in ohms
 		</member>
 	</members>
+	<constants>
+		<constant name="FAN_TYPE_NONE" value="0" enum="FanType">
+		</constant>
+		<constant name="FAN_TYPE_YES" value="1" enum="FanType">
+		</constant>
+		<constant name="FAN_TYPE_AUTOMATIC" value="2" enum="FanType">
+		</constant>
+	</constants>
 </class>

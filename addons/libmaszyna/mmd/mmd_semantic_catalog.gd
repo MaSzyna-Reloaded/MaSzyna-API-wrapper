@@ -525,7 +525,7 @@ static func _ensure_built() -> void:
         # The separate OmniLight follows radio_powered and copies SM42's hand-authored
         # RadioPowerLed parameters; unlike the indicator mesh, its glow requires supply power.
         "i-radio": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {
                 "state_property": "radio_enabled",
             },
@@ -558,7 +558,6 @@ static func _ensure_built() -> void:
             "flip_upward_spotlight": true,
             "light_fixed_fields": {
                 "state_property": "roof_light_enabled",
-                "light_enabled": true,
                 "light_color": Color(0.960938, 0.881759, 0.75824, 1.0),
                 "light_energy_on": 0.411,
                 "light_energy_off": 0.0,
@@ -579,11 +578,6 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
-            # Instrument backlight overlays are painted as a soft glow, not a hard-edged cutout -
-            # unlike most other on/off indicator meshes (e.g. i-cablight), they need real alpha
-            # blending (E3DModelInstance.force_alpha_submodel_paths) rather than the default
-            # alpha-scissor, or the glow renders as a crisp, wrong-looking silhouette.
-            "force_alpha": true,
             "light_widget_class": CabinOmniLight3D,
             "light_fixed_fields": {
                 "state_property": "devices_light_enabled",
@@ -604,7 +598,7 @@ static func _ensure_built() -> void:
         # BUTTON mesh, not a light), so light_enabled stays at its default (false); on_target/
         # off_target submodel toggling and the click sound still work.
         "i-security_cabsignal": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {
                 "state_property": "cabsignal_blinking",
                 "blink_time": 0.2,
@@ -614,7 +608,7 @@ static func _ensure_built() -> void:
             "position_at_submodel": true,
         },
         "i-security_aware": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {
                 "state_property": "blinking",
                 # "blinking" (TrainSecuritySystem::is_blinking(), Mover.cpp) is a STATIC "alert
@@ -622,9 +616,10 @@ static func _ensure_built() -> void:
                 # CabinBlinker's own default, cabin_blinker.gd) is what actually makes the light
                 # flash instead of just turning steadily on.
                 "blink_time": 0.2,
-                # the ONE catalog entry with real reference light data to copy (SM42's own
-                # CzuwakOmni1) - every other indicator label defaults to light_enabled=false.
-                "light_enabled": true,
+            },
+            "light_widget_class": CabinSpotLight3D,
+            "light_follows_indicator": true,
+            "light_fixed_fields": {
                 "light_color": Color(0.960938, 0.506832, 0.349091, 1.0),
                 "light_energy_on": 0.2,
                 "light_energy_off": 0.0,
@@ -785,70 +780,70 @@ static func _ensure_built() -> void:
         # unlike the alerter/SHP indicators. light_enabled stays at its default (false) - same
         # "no real per-vehicle lamp reference data" reasoning as i-radio/i-security_cabsignal.
         "i-upperlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/front_headlight_upper_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-leftlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/front_headlight_left_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rightlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/front_headlight_right_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-leftend": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/front_redmarker_left_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rightend": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/front_redmarker_right_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rearupperlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/rear_headlight_upper_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rearleftlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/rear_headlight_left_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rearrightlight": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/rear_headlight_right_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rearleftend": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/rear_redmarker_left_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
         "i-rearrightend": {
-            "widget_class": CabinSpotLight3D,
+            "widget_class": CabinIndicator3D,
             "fixed_fields": {"state_property": "lights/rear_redmarker_right_enabled"},
             "config_max_property": "",
             "mesh_path_field": "",

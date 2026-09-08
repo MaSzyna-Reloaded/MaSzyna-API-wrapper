@@ -82,7 +82,7 @@ func test_hvcurrent1_binds_current1():
 
 func test_i_radio_indicator_and_powered_omnilight_are_separate():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-radio")
-    assert_eq(entry["widget_class"], CabinSpotLight3D)
+    assert_eq(entry["widget_class"], CabinIndicator3D)
     assert_eq(entry["fixed_fields"]["state_property"], "radio_enabled")
     assert_true(entry["position_at_submodel"])
     assert_eq(entry["light_widget_class"], CabinOmniLight3D)
@@ -99,7 +99,7 @@ func test_cab_light_indicator_and_spotlight_are_separate():
     assert_eq(entry["light_widget_class"], CabinSpotLight3D)
     assert_true(entry["flip_upward_spotlight"])
     assert_eq(entry["light_fixed_fields"]["state_property"], "roof_light_enabled")
-    assert_true(entry["light_fixed_fields"]["light_enabled"])
+    assert_false(entry.has("light_follows_indicator"))
 
 
 func test_instrument_light_indicator_and_omnilight_are_separate():
@@ -125,7 +125,7 @@ func test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit():
     }
     for label:String in expected:
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
-        assert_eq(entry["widget_class"], CabinSpotLight3D, label)
+        assert_eq(entry["widget_class"], CabinIndicator3D, label)
         assert_eq(entry["fixed_fields"]["state_property"], expected[label], label)
         assert_true(entry["position_at_submodel"], label)
         assert_false(entry["fixed_fields"].has("blink_time"), "%s is steady on/off, not blinking" % label)
@@ -133,18 +133,20 @@ func test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit():
 
 func test_i_security_cabsignal_binds_cabsignal_blinking():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_cabsignal")
-    assert_eq(entry["widget_class"], CabinSpotLight3D)
+    assert_eq(entry["widget_class"], CabinIndicator3D)
     assert_eq(entry["fixed_fields"]["state_property"], "cabsignal_blinking")
     assert_eq(entry["fixed_fields"]["blink_time"], 0.2)
     assert_false(entry["fixed_fields"].has("light_enabled"))
 
 
-func test_i_security_aware_indicator_opts_into_an_integrated_light():
+func test_i_security_aware_indicator_uses_a_separate_light():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
-    assert_true(entry["fixed_fields"]["light_enabled"])
+    assert_eq(entry["widget_class"], CabinIndicator3D)
+    assert_eq(entry["light_widget_class"], CabinSpotLight3D)
+    assert_true(entry["light_follows_indicator"])
 
 
-func test_cabin_spot_light_3d_defaults_light_enabled_to_false():
+func test_cabin_spot_light_3d_defaults_to_disabled():
     var widget := CabinSpotLight3D.new()
     add_child_autofree(widget)
-    assert_false(widget.light_enabled)
+    assert_false(widget.enabled)

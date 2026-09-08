@@ -14,7 +14,7 @@ func before_each():
     # (RAccumulator.RechargeSource is read uninitialized), unrelated to relay_list itself.
     # The property is registered under its grouped inspector path ("power/source"), not
     # "engine_power_source", so it must be set via Object.set() rather than dot notation.
-    engine.set("power/source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
+    engine.set("engine_power_source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
     train.add_child(engine)
     await wait_idle_frames(2)
 

@@ -36,8 +36,3 @@ var model_relpath:String = ""
 ## Ordered, duplicate-preserving list of every instrument/manipulator line found between this
 ## cab's `cabNdefinition:` and the following `cab0definition:`/EOF.
 var instruments:Array[MmdInstrumentDescriptor] = []
-
-## Parse-time diagnostics (severity/code/source_file/line/cabin_number/mmd_label/
-## submodel_name/message), collected while building this definition. MmdCabinInstancer.
-## build_into() appends its own build-time diagnostics to the same shape separately.
-var diagnostics:Array[Dictionary] = []

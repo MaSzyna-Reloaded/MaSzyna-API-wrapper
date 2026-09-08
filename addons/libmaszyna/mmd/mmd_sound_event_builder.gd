@@ -34,8 +34,8 @@ static func build(
     var event := SfxEvent.new()
     event.name = event_name
 
-    var has_bookends:bool = not definition.sound_begin.is_empty() or not definition.sound_end.is_empty()
-    var has_chunks:bool = not definition.chunks.is_empty()
+    var has_bookends:bool = true if definition.sound_begin or definition.sound_end else false
+    var has_chunks:bool = true if definition.chunks else false
 
     if has_chunks:
         var built:Dictionary = _build_automation(definition, sound_parameter)
@@ -44,7 +44,7 @@ static func build(
 
     if has_bookends:
         event.clips = _build_begin_main_end_clips(definition)
-    elif not has_chunks and not definition.sound_main.is_empty():
+    elif not has_chunks and definition.sound_main:
         var clip := SfxClip.new()
         clip.stream = _build_stream(definition.sound_main, true)
         event.clips = [clip]
@@ -127,18 +127,18 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
     # so it starts right as the begin clip finishes.
     var main_offset:float = _stream_length(definition.sound_begin)
 
-    if not definition.sound_begin.is_empty():
+    if definition.sound_begin:
         var begin_clip := SfxClip.new()
         begin_clip.stream = _build_stream(definition.sound_begin, false)
         clips.append(begin_clip)
 
-    if not definition.sound_main.is_empty():
+    if definition.sound_main:
         var main_clip := SfxClip.new()
         main_clip.stream = _build_stream(definition.sound_main, true)
         main_clip.offset = main_offset
         clips.append(main_clip)
 
-    if not definition.sound_end.is_empty():
+    if definition.sound_end:
         var end_clip := SfxClip.new()
         end_clip.stream = _build_stream(definition.sound_end, false)
         end_clip.trigger_mode = SfxClip.TriggerMode.TRIGGER_SUSTAIN
@@ -298,7 +298,7 @@ static func _build_stream(filename:String, loop:bool) -> MaszynaAudioStream:
 ## since that function push_errors on a miss - appropriate when actually resolving a clip to play,
 ## not for this best-effort lookup where "unknown length" is an expected, silent outcome.
 static func _stream_length(filename:String) -> float:
-    if filename.is_empty():
+    if not filename:
         return 0.0
     var path:String = "%s/sounds/%s.ogg" % [UserSettings.get_maszyna_game_dir(), filename.to_lower()]
     if not ResourceLoader.exists(path):

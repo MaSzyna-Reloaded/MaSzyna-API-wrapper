@@ -22,8 +22,8 @@ func after_each():
     train.free()
 
 func test_defaults_match_the_original_engines_universal_1_to_10_range():
-    assert_eq(train.get("radio_channel_min"), 1)
-    assert_eq(train.get("radio_channel_max"), 10)
+    assert_eq(train.get("radio_channel/min"), 1)
+    assert_eq(train.get("radio_channel/max"), 10)
 
 func test_radio_channel_starts_at_1_not_0():
     # confirmed real: vehicle/Driver.h defaults iRadioChannel to 1, not 0 - starting at 0 (below

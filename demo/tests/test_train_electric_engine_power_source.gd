@@ -23,7 +23,7 @@ func after_each():
 
 func test_current_collector_power_source_does_not_crash_on_process():
     var engine := TrainElectricSeriesEngine.new()
-    engine.set("engine_power_source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
+    engine.set("power/source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
     train.add_child(engine)
     await wait_idle_frames(3)
 
@@ -44,8 +44,8 @@ func test_default_power_source_does_not_crash_on_process():
 
 func test_accumulator_power_source_still_reports_recharge_source():
     var engine := TrainElectricSeriesEngine.new()
-    engine.set("engine_power_source", TrainController.POWER_SOURCE_ACCUMULATOR)
-    engine.set("accumulator_recharge_source", TrainController.POWER_SOURCE_GENERATOR)
+    engine.set("power/source", TrainController.POWER_SOURCE_ACCUMULATOR)
+    engine.set("power/accumulator/recharge_source", TrainController.POWER_SOURCE_GENERATOR)
     train.add_child(engine)
     await wait_idle_frames(3)
 

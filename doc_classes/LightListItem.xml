@@ -9,34 +9,34 @@
 	<tutorials>
 	</tutorials>
 	<members>
-		<member name="cabin_a_head_light" type="bool" setter="set_cabin_a_head_light" getter="get_cabin_a_head_light" default="false">
+		<member name="cabin_a/head_light" type="bool" setter="set_cabin_a_head_light" getter="get_cabin_a_head_light" default="false">
 			State of the head light in cabin A indicating whether it is lit up or not
 		</member>
-		<member name="cabin_a_left_red_signal" type="bool" setter="set_cabin_a_left_red_signal" getter="get_cabin_a_left_red_signal" default="false">
+		<member name="cabin_a/left/red_signal" type="bool" setter="set_cabin_a_left_red_signal" getter="get_cabin_a_left_red_signal" default="false">
 			State of the left red signal in cabin A indicating whether it is lit up or not
 		</member>
-		<member name="cabin_a_left_white_signal" type="bool" setter="set_cabin_a_left_white_signal" getter="get_cabin_a_left_white_signal" default="false">
+		<member name="cabin_a/left/white_signal" type="bool" setter="set_cabin_a_left_white_signal" getter="get_cabin_a_left_white_signal" default="false">
 			State of the left white signal in cabin A indicating whether it is lit up or not
 		</member>
-		<member name="cabin_a_right_red_signal" type="bool" setter="set_cabin_a_right_red_signal" getter="get_cabin_a_right_red_signal" default="false">
+		<member name="cabin_a/right/red_signal" type="bool" setter="set_cabin_a_right_red_signal" getter="get_cabin_a_right_red_signal" default="false">
 			State of the right red signal in cabin A indicating whether it is lit up or not
 		</member>
-		<member name="cabin_a_right_white_signal" type="bool" setter="set_cabin_a_right_white_signal" getter="get_cabin_a_right_white_signal" default="false">
+		<member name="cabin_a/right/white_signal" type="bool" setter="set_cabin_a_right_white_signal" getter="get_cabin_a_right_white_signal" default="false">
 			State of the right white signal in cabin A indicating whether it is lit up or not
 		</member>
-		<member name="cabin_b_head_light" type="bool" setter="set_cabin_b_head_light" getter="get_cabin_b_head_light" default="false">
+		<member name="cabin_b/head_light" type="bool" setter="set_cabin_b_head_light" getter="get_cabin_b_head_light" default="false">
 			State of the head light in cabin B indicating whether it is lit up or not
 		</member>
-		<member name="cabin_b_left_red_signal" type="bool" setter="set_cabin_b_left_red_signal" getter="get_cabin_b_left_red_signal" default="false">
+		<member name="cabin_b/left/red_signal" type="bool" setter="set_cabin_b_left_red_signal" getter="get_cabin_b_left_red_signal" default="false">
 			State of the left red signal in cabin B indicating whether it is lit up or not
 		</member>
-		<member name="cabin_b_left_white_signal" type="bool" setter="set_cabin_b_left_white_signal" getter="get_cabin_b_left_white_signal" default="false">
+		<member name="cabin_b/left/white_signal" type="bool" setter="set_cabin_b_left_white_signal" getter="get_cabin_b_left_white_signal" default="false">
 			State of the left white signal in cabin B indicating whether it is lit up or not
 		</member>
-		<member name="cabin_b_right_red_signal" type="bool" setter="set_cabin_b_right_red_signal" getter="get_cabin_b_right_red_signal" default="false">
+		<member name="cabin_b/right/red_signal" type="bool" setter="set_cabin_b_right_red_signal" getter="get_cabin_b_right_red_signal" default="false">
 			State of the right red signal in cabin B indicating whether it is lit up or not
 		</member>
-		<member name="cabin_b_right_white_signal" type="bool" setter="set_cabin_b_right_white_signal" getter="get_cabin_b_right_white_signal" default="false">
+		<member name="cabin_b/right/white_signal" type="bool" setter="set_cabin_b_right_white_signal" getter="get_cabin_b_right_white_signal" default="false">
 			State of the right white signal in cabin B indicating whether it is lit up or not
 		</member>
 	</members>

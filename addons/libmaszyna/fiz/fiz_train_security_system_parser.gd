@@ -29,19 +29,19 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         var flags: Array[String] = []
         for token: String in tokens:
             flags.append(token.strip_edges().to_lower())
-        node.aware_system_active = "active" in flags
-        node.aware_system_cabsignal = "cabsignal" in flags
-        node.aware_system_separate_acknowledge = "separateacknowledge" in flags
-        node.aware_system_sifa = "sifa" in flags
+        node.set_aware_system_active("active" in flags)
+        node.set_aware_system_cabsignal("cabsignal" in flags)
+        node.set_aware_system_separate_acknowledge("separateacknowledge" in flags)
+        node.set_aware_system_sifa("sifa" in flags)
     if kv.has("AwareDelay"):
-        node.aware_delay = FizLineUtil.get_float(kv, "AwareDelay")
+        node.set_aware_delay(FizLineUtil.get_float(kv, "AwareDelay"))
     if kv.has("SoundSignalDelay"):
-        node.sound_signal_delay = FizLineUtil.get_float(kv, "SoundSignalDelay")
+        node.set_sound_signal_delay(FizLineUtil.get_float(kv, "SoundSignalDelay"))
     if kv.has("MaxHoldTime"):
-        node.ca_max_hold_time = FizLineUtil.get_float(kv, "MaxHoldTime")
+        node.set_ca_max_hold_time(FizLineUtil.get_float(kv, "MaxHoldTime"))
     if kv.has("EmergencyBrakeDelay"):
-        node.emergency_brake_delay = FizLineUtil.get_float(kv, "EmergencyBrakeDelay")
+        node.set_emergency_brake_delay(FizLineUtil.get_float(kv, "EmergencyBrakeDelay"))
     if kv.has("RadioStop"):
-        node.radio_stop_enabled = FizLineUtil.get_bool(kv, "RadioStop")
+        node.set_radio_stop_enabled(FizLineUtil.get_bool(kv, "RadioStop"))
     if kv.has("SHPDist"):
-        node.shp_magnet_distance = FizLineUtil.get_float(kv, "SHPDist")
+        node.set_shp_magnet_distance(FizLineUtil.get_float(kv, "SHPDist"))

@@ -29,9 +29,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         var node := _get_node(context)
         if node:
             if kv.has("Cycle"):
-                node.dimmer_list_cycle = FizLineUtil.get_bool(kv, "Cycle")
+                node.set_dimmer_list_cycle(FizLineUtil.get_bool(kv, "Cycle"))
             if kv.has("Default"):
-                node.dimmer_list_default_position = FizLineUtil.get_int(kv, "Default")
+                node.set_dimmer_list_default_position(FizLineUtil.get_int(kv, "Default"))
         _dimmer_rows = []
         return
 
@@ -40,28 +40,28 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     context.add_part("TrainSwitches", node)
 
     if kv.has("Pantograph"):
-        node.pantograph_impulse = FizLineUtil.get_string(kv, "Pantograph").to_lower() == "impulse"
+        node.set_pantograph_impulse(FizLineUtil.get_string(kv, "Pantograph").to_lower() == "impulse")
     if kv.has("Converter"):
-        node.converter_impulse = FizLineUtil.get_string(kv, "Converter").to_lower() == "impulse"
+        node.set_converter_impulse(FizLineUtil.get_string(kv, "Converter").to_lower() == "impulse")
     if kv.has("MotorConnectors"):
-        node.motor_connectors_impulse = FizLineUtil.get_string(kv, "MotorConnectors").to_lower() == "impulse"
+        node.set_motor_connectors_impulse(FizLineUtil.get_string(kv, "MotorConnectors").to_lower() == "impulse")
     if kv.has("RelayResetButton1"):
-        node.relay_reset_button_1 = FizLineUtil.get_int(kv, "RelayResetButton1")
+        node.set_relay_reset_button_1(FizLineUtil.get_int(kv, "RelayResetButton1"))
     if kv.has("RelayResetButton2"):
-        node.relay_reset_button_2 = FizLineUtil.get_int(kv, "RelayResetButton2")
+        node.set_relay_reset_button_2(FizLineUtil.get_int(kv, "RelayResetButton2"))
     if kv.has("RelayResetButton3"):
-        node.relay_reset_button_3 = FizLineUtil.get_int(kv, "RelayResetButton3")
+        node.set_relay_reset_button_3(FizLineUtil.get_int(kv, "RelayResetButton3"))
     if kv.has("PantographPresets"):
         var tokens: PackedStringArray = FizLineUtil.get_string(kv, "PantographPresets").split("|")
         var presets := PackedInt32Array()
         for token: String in tokens:
             if token.strip_edges().is_valid_int():
                 presets.append(token.strip_edges().to_int())
-        node.pantograph_presets = presets
+        node.set_pantograph_presets(presets)
     if kv.has("PantographPresetDefault"):
-        node.pantograph_preset_default = FizLineUtil.get_int(kv, "PantographPresetDefault")
+        node.set_pantograph_preset_default(FizLineUtil.get_int(kv, "PantographPresetDefault"))
     if kv.has("ModernDimmer"):
-        node.modern_dimmer = FizLineUtil.get_bool(kv, "ModernDimmer")
+        node.set_modern_dimmer(FizLineUtil.get_bool(kv, "ModernDimmer"))
 
 
 func _get_node(context: FizImportContext) -> TrainSwitches:
@@ -74,9 +74,9 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     if tokens.size() < 3:
         return
     var item := DimmerListItem.new()
-    item.high_beam = String(tokens[0]).to_lower() in ["1", "yes", "true"]
-    item.dimmed = String(tokens[1]).to_lower() in ["1", "yes", "true"]
-    item.off = String(tokens[2]).to_lower() in ["1", "yes", "true"]
+    item.set_high_beam(String(tokens[0]).to_lower() in ["1", "yes", "true"])
+    item.set_dimmed(String(tokens[1]).to_lower() in ["1", "yes", "true"])
+    item.set_off(String(tokens[2]).to_lower() in ["1", "yes", "true"])
     _dimmer_rows.append(item)
 
 
@@ -86,5 +86,5 @@ func end_table(context: FizImportContext) -> void:
         _dimmer_rows = []
         return
     if _dimmer_rows:
-        node.dimmer_list = _dimmer_rows
+        node.set_dimmer_list(_dimmer_rows)
     _dimmer_rows = []

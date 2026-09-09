@@ -129,10 +129,10 @@
 		</method>
 	</methods>
 	<members>
-		<member name="automatic_cab_activation" type="bool" setter="set_automatic_cab_activation" getter="get_automatic_cab_activation" default="true">
+		<member name="cntrl/automatic_cab_activation" type="bool" setter="set_automatic_cab_activation" getter="get_automatic_cab_activation" default="true">
 			[code]Cntrl.AutomaticCabActivation[/code]
 		</member>
-		<member name="battery_start_mode" type="int" setter="set_battery_start_mode" getter="get_battery_start_mode" enum="TrainController.StartMode" default="1">
+		<member name="cntrl/battery_start_mode" type="int" setter="set_battery_start_mode" getter="get_battery_start_mode" enum="TrainController.StartMode" default="1">
 			[code]Cntrl.BatteryStart[/code]
 		</member>
 		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
@@ -145,39 +145,39 @@
 			[code]Param.Category[/code]
 			The vehicle's category (train, road, ship, airplane).
 		</member>
-		<member name="compartment_lights_start_mode" type="int" setter="set_compartment_lights_start_mode" getter="get_compartment_lights_start_mode" enum="TrainController.StartMode" default="0">
+		<member name="cntrl/compartment_lights_start_mode" type="int" setter="set_compartment_lights_start_mode" getter="get_compartment_lights_start_mode" enum="TrainController.StartMode" default="0">
 			[code]Cntrl.CompartmentLightsStart[/code]
 		</member>
 		<member name="config" type="Dictionary" setter="" getter="get_config" default="{}">
 			Returns a dictionary with all config properties of the train.
 			This is a shortcut for iterating over [method TrainSystem.get_supported_config_properties] to read each from [method TrainSystem.get_config_property].
 		</member>
-		<member name="drag_coefficient" type="float" setter="set_drag_coefficient" getter="get_drag_coefficient" default="0.0">
+		<member name="dimensions/drag_coefficient" type="float" setter="set_drag_coefficient" getter="get_drag_coefficient" default="0.0">
 			[code]Dimensions:Cx[/code]
 			Aerodynamic drag coefficient.
 		</member>
-		<member name="floor_height" type="float" setter="set_floor_height" getter="get_floor_height" default="0.96">
+		<member name="dimensions/floor_height" type="float" setter="set_floor_height" getter="get_floor_height" default="0.96">
 			[code]Dimensions:Floor[/code]
 			Floor height above the rail head, in meters; used to position universal cargo loads.
 		</member>
-		<member name="ground_relay_start_mode" type="int" setter="set_ground_relay_start_mode" getter="get_ground_relay_start_mode" enum="TrainController.StartMode" default="1">
+		<member name="cntrl/ground_relay_start_mode" type="int" setter="set_ground_relay_start_mode" getter="get_ground_relay_start_mode" enum="TrainController.StartMode" default="1">
 			[code]Cntrl.GroundRelayStart[/code]
 		</member>
 		<member name="heating_power" type="float" setter="set_heating_power" getter="get_heating_power" default="0.0">
 			[code]Param.HeatingP[/code]
 			Power drawn for heating, in kW.
 		</member>
-		<member name="height" type="float" setter="set_height" getter="get_height" default="0.0">
+		<member name="dimensions/height" type="float" setter="set_height" getter="get_height" default="0.0">
 			[code]Dimensions:H[/code]
 			Vehicle height, in meters.
 		</member>
-		<member name="inactive_cab_flag" type="int" setter="set_inactive_cab_flag" getter="get_inactive_cab_flag" default="0">
+		<member name="cntrl/inactive_cab_flag" type="int" setter="set_inactive_cab_flag" getter="get_inactive_cab_flag" default="0">
 			[code]Cntrl.InactiveCabFlag[/code]
 			Bitmask of automatic actions performed on cab deactivation/activation.
 		</member>
 		<member name="initial_velocity" type="float" setter="set_initial_velocity" getter="get_initial_velocity" default="0.0">
 		</member>
-		<member name="length" type="float" setter="set_length" getter="get_length" default="0.0">
+		<member name="dimensions/length" type="float" setter="set_length" getter="get_length" default="0.0">
 			[code]Dimensions:L[/code]
 			Vehicle length, in meters.
 		</member>
@@ -194,10 +194,10 @@
 		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
 			[code]Param.PWR[/code]
 		</member>
-		<member name="radio_channel_max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="10">
+		<member name="radio_channel/max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="10">
 			Maximum radio channel number
 		</member>
-		<member name="radio_channel_min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="1">
+		<member name="radio_channel/min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="1">
 			Minimum radio channel number
 		</member>
 		<member name="reduced_mass" type="float" setter="set_reduced_mass" getter="get_reduced_mass" default="0.0">
@@ -223,7 +223,7 @@
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
 			Train type name
 		</member>
-		<member name="width" type="float" setter="set_width" getter="get_width" default="0.0">
+		<member name="dimensions/width" type="float" setter="set_width" getter="get_width" default="0.0">
 			[code]Dimensions:W[/code]
 			Vehicle width, in meters.
 		</member>

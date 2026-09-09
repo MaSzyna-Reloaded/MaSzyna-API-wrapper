@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     engine = TrainElectricInductionEngine.new()
-    engine.set("engine_power_source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
+    engine.set("power/source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
     train.add_child(engine)
     await wait_idle_frames(2)
 

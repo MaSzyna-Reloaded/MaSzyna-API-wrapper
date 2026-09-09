@@ -30,7 +30,7 @@
 		<member name="rpm" type="float" setter="set_rpm" getter="get_rpm" default="0.0">
 			Target RPM at this controller position.
 		</member>
-		<member name="shunting" type="bool" setter="set_shunting" getter="get_shunting" default="false">
+		<member name="has_shunting" type="bool" setter="set_shunting" getter="get_shunting" default="false">
 			If [code]true[/code], shunting is available for this controller position. It is not related to shunting maneuvers or maneuvering at all
 		</member>
 	</members>

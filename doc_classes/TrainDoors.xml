@@ -88,31 +88,31 @@
 		</method>
 	</methods>
 	<members>
-		<member name="auto_close_remote" type="bool" setter="set_auto_close_remote" getter="get_auto_close_remote" default="false">
+		<member name="close/auto_close_remote" type="bool" setter="set_auto_close_remote" getter="get_auto_close_remote" default="false">
 			[code]Doors:DoorAutoCloseRemote[/code]
 			Automatic closing of centrally open doors after a certain period of time
 		</member>
-		<member name="auto_close_velocity" type="float" setter="set_auto_close_velocity" getter="get_auto_close_velocity" default="-1.0">
+		<member name="close/auto_close_velocity" type="float" setter="set_auto_close_velocity" getter="get_auto_close_velocity" default="-1.0">
 			[code]Doors:DoorAutoCloseVel[/code]
 			The speed at which the automatic door closing occurs
 		</member>
-		<member name="auto_close_warning" type="bool" setter="set_auto_close_warning" getter="get_auto_close_warning" default="false">
+		<member name="close/auto_close_warning" type="bool" setter="set_auto_close_warning" getter="get_auto_close_warning" default="false">
 			[code]Doors:DoorClosureWarningAuto[/code]
 			When the door closing button is pressed, a buzz sound is activated automatically, and when released, the doors close
 		</member>
-		<member name="close_delay" type="float" setter="set_close_delay" getter="get_close_delay" default="0.0">
+		<member name="close/delay" type="float" setter="set_close_delay" getter="get_close_delay" default="0.0">
 			[code]Doors:DoorCloseDelay[/code]
 			Door closing delay, in seconds
 		</member>
-		<member name="close_method" type="int" setter="set_close_method" getter="get_close_method" enum="TrainDoors.Controls" default="0">
+		<member name="close/method" type="int" setter="set_close_method" getter="get_close_method" enum="TrainDoors.Controls" default="0">
 			[code]Doors:CloseCtrl[/code]
 			Determines method of closing doors
 		</member>
-		<member name="close_speed" type="float" setter="set_close_speed" getter="get_close_speed" default="1.0">
+		<member name="close/speed" type="float" setter="set_close_speed" getter="get_close_speed" default="1.0">
 			[code]Doors:CloseSpeed[/code]
 			Animation speed for closing doors
 		</member>
-		<member name="close_warning" type="bool" setter="set_close_warning" getter="get_close_warning" default="false">
+		<member name="close/warning" type="bool" setter="set_close_warning" getter="get_close_warning" default="false">
 			[code]Doors:DoorClosureWarning[/code]
 			Only a buzzer (used before closing the doors, like in EN57 EMUs)
 		</member>
@@ -129,43 +129,43 @@
 			[code]Doors:DoorMaxShiftPlug[/code]
 			Bounce distance for Plug-type doors (sliding bounce), in meters
 		</member>
-		<member name="mirror_close_velocity" type="float" setter="set_mirror_close_velocity" getter="get_mirror_close_velocity" default="5.0">
+		<member name="mirror/close_velocity" type="float" setter="set_mirror_close_velocity" getter="get_mirror_close_velocity" default="5.0">
 			[code]Doors:MirrorVelClose[/code]
 			Vehicle speed at which automatic closure of exterior mirrors occurs
 		</member>
-		<member name="mirror_max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="90.0">
+		<member name="mirror/max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="90.0">
 			[code]Doors:MirrorMaxShift[/code]
 			Rotation angle for a fully unfolded mirror
 		</member>
-		<member name="open_delay" type="float" setter="set_open_delay" getter="get_open_delay" default="0.0">
+		<member name="open/delay" type="float" setter="set_open_delay" getter="get_open_delay" default="0.0">
 			[code]Doors:DoorOpenDelay[/code]
 			Door opening delay, in seconds
 		</member>
-		<member name="open_method" type="int" setter="set_open_method" getter="get_open_method" enum="TrainDoors.Controls" default="0">
+		<member name="open/method" type="int" setter="set_open_method" getter="get_open_method" enum="TrainDoors.Controls" default="0">
 			[code]Doors:OpenCtrl[/code]
 			Determines method of opening doors
 		</member>
-		<member name="open_speed" type="float" setter="set_open_speed" getter="get_open_speed" default="1.0">
+		<member name="open/speed" type="float" setter="set_open_speed" getter="get_open_speed" default="1.0">
 			[code]Doors:OpenSpeed[/code]
 			Animation speed for opening doors
 		</member>
-		<member name="open_time" type="float" setter="set_open_time" getter="get_open_time" default="-1.0">
+		<member name="open/time" type="float" setter="set_open_time" getter="get_open_time" default="-1.0">
 			[code]Doors:DoorStayOpen[/code]
 			Time period for which door would stay opened
 		</member>
-		<member name="open_with_permit" type="float" setter="set_open_with_permit" getter="get_open_with_permit" default="-1.0">
+		<member name="open/with_permit" type="float" setter="set_open_with_permit" getter="get_open_with_permit" default="-1.0">
 			[code]Doors:DoorOpenWithPermit[/code]
 			Opening the train doors by holding down the momentary open permission button for specified number of seconds
 		</member>
-		<member name="permit_default" type="int" setter="set_permit_default" getter="get_permit_default" default="1">
+		<member name="permit/default" type="int" setter="set_permit_default" getter="get_permit_default" default="1">
 			[code]Doors:DoorPermitListDefault[/code]
 			By default, the position of the knob is set from the permit/list entry where the positions are numbered starting from 1
 		</member>
-		<member name="permit_light_blinking" type="int" setter="set_permit_light_blinking" getter="get_permit_light_blinking" enum="TrainDoors.PermitLight" default="0">
+		<member name="permit/light_blinking" type="int" setter="set_permit_light_blinking" getter="get_permit_light_blinking" enum="TrainDoors.PermitLight" default="0">
 			[code]Doors:DoorsPermitLightBlinking[/code]
 			Configuration of the permission light on the door
 		</member>
-		<member name="permit_list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[0, 0, 0]">
+		<member name="permit/list" type="Array" setter="set_permit_list" getter="get_permit_list" default="[0, 0, 0]">
 			[code]Doors:DoorPermitList[/code]
 			Door programmer configuration
 			[codeblocks]
@@ -175,23 +175,23 @@
 			3 - Permission for both-sided doors
 			[/codeblocks]
 		</member>
-		<member name="permit_required" type="bool" setter="set_permit_required" getter="get_permit_required" default="false">
+		<member name="permit/required" type="bool" setter="set_permit_required" getter="get_permit_required" default="false">
 			[code]Doors:DoorNeedPermit[/code]
 			Opening the doors by passengers requires permission from the train driver
 		</member>
-		<member name="platform_max_shift" type="float" setter="set_platform_max_shift" getter="get_platform_max_shift" default="0.0">
+		<member name="platform/max_shift" type="float" setter="set_platform_max_shift" getter="get_platform_max_shift" default="0.0">
 			[code]Doors:PlatformMaxShift[/code]
 			Shift value in meters or rotation angle for a fully deployed platform
 		</member>
-		<member name="platform_max_speed" type="float" setter="set_platform_max_speed" getter="get_platform_max_speed" default="0.0">
+		<member name="platform/max_speed" type="float" setter="set_platform_max_speed" getter="get_platform_max_speed" default="0.0">
 			[code]Doors:PlatformMaxSpeed[/code]
 			Maximum speed of opening the platform
 		</member>
-		<member name="platform_speed" type="float" setter="set_platform_speed" getter="get_platform_speed" default="0.5">
+		<member name="platform/speed" type="float" setter="set_platform_speed" getter="get_platform_speed" default="0.5">
 			[code]Doors:PlatformSpeed[/code]
 			The speed of the animation platform, where 1.0 corresponds to an animation lasting one second, the value 0.5 corresponds to two seconds, etc
 		</member>
-		<member name="platform_type" type="int" setter="set_platform_type" getter="get_platform_type" enum="TrainDoors.PlatformType" default="1">
+		<member name="platform/type" type="int" setter="set_platform_type" getter="get_platform_type" enum="TrainDoors.PlatformType" default="1">
 			[code]Doors:PlatformOpenMethod[/code]
 			The type of the platform
 		</member>

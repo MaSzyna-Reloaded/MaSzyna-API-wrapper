@@ -20,11 +20,11 @@ func test_param_and_dimensions_defaults():
     assert_eq(train.heating_power, 0.0)
     assert_eq(train.light_power, 0.0)
     assert_eq(train.cabin_count, 0)
-    assert_eq(train.get_length(), 0.0)
-    assert_eq(train.get_height(), 0.0)
-    assert_eq(train.get_width(), 0.0)
-    assert_eq(train.get_drag_coefficient(), 0.0)
-    assert_eq(train.get_floor_height(), 0.96)
+    assert_eq(train.length, 0.0)
+    assert_eq(train.height, 0.0)
+    assert_eq(train.width, 0.0)
+    assert_eq(train.drag_coefficient, 0.0)
+    assert_eq(train.floor_height, 0.96)
 
 func test_param_and_dimensions_round_trip_and_update():
     train.category = TrainController.CATEGORY_ROAD
@@ -33,11 +33,11 @@ func test_param_and_dimensions_round_trip_and_update():
     train.sand_capacity = 300.0
     train.heating_power = 20.0
     train.light_power = 0.56
-    train.set_length(15.5)
-    train.set_height(4.3)
-    train.set_width(2.9)
-    train.set_drag_coefficient(1.2)
-    train.set_floor_height(1.1)
+    train.length = 15.5
+    train.height = 4.3
+    train.width = 2.9
+    train.drag_coefficient = 1.2
+    train.floor_height = 1.1
     train.cabin_count = 2
     await wait_idle_frames(2)
 
@@ -47,11 +47,11 @@ func test_param_and_dimensions_round_trip_and_update():
     assert_eq(train.sand_capacity, 300.0)
     assert_eq(train.heating_power, 20.0)
     assert_eq(train.light_power, 0.56)
-    assert_eq(train.get_length(), 15.5)
-    assert_eq(train.get_height(), 4.3)
-    assert_eq(train.get_width(), 2.9)
-    assert_eq(train.get_drag_coefficient(), 1.2)
-    assert_almost_eq(train.get_floor_height(), 1.1, 0.001)
+    assert_eq(train.length, 15.5)
+    assert_eq(train.height, 4.3)
+    assert_eq(train.width, 2.9)
+    assert_eq(train.drag_coefficient, 1.2)
+    assert_almost_eq(train.floor_height, 1.1, 0.001)
     assert_eq(train.cabin_count, 2)
     assert_true(train.state.has("mass_total"), "TrainController should keep functioning after configuring Param/Dimensions")
 

@@ -45,24 +45,24 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
 func _parse_param(kv: Dictionary, context: FizImportContext) -> void:
     var controller: TrainController = context.controller
     if kv.has("M"):
-        controller.set_mass(FizLineUtil.get_float(kv, "M"))
+        controller.mass = FizLineUtil.get_float(kv, "M")
     if kv.has("Mred"):
-        controller.set_reduced_mass(FizLineUtil.get_float(kv, "Mred"))
+        controller.reduced_mass = FizLineUtil.get_float(kv, "Mred")
     if kv.has("Vmax"):
-        controller.set_max_velocity(FizLineUtil.get_float(kv, "Vmax"))
+        controller.max_velocity = FizLineUtil.get_float(kv, "Vmax")
     if kv.has("PWR"):
-        controller.set_power(FizLineUtil.get_float(kv, "PWR"))
+        controller.power = FizLineUtil.get_float(kv, "PWR")
     if kv.has("SandCap"):
-        controller.set_sand_capacity(FizLineUtil.get_float(kv, "SandCap"))
+        controller.sand_capacity = FizLineUtil.get_float(kv, "SandCap")
     if kv.has("HeatingP"):
-        controller.set_heating_power(FizLineUtil.get_float(kv, "HeatingP"))
+        controller.heating_power = FizLineUtil.get_float(kv, "HeatingP")
     if kv.has("LightP"):
-        controller.set_light_power(FizLineUtil.get_float(kv, "LightP"))
+        controller.light_power = FizLineUtil.get_float(kv, "LightP")
 
     if kv.has("Category"):
         var category_str: String = FizLineUtil.get_string(kv, "Category").to_lower()
         if _CATEGORY_MAP.has(category_str):
-            controller.set_category(_CATEGORY_MAP[category_str])
+            controller.category = _CATEGORY_MAP[category_str]
         else:
             push_warning("FIZ Param.Category: unknown value '%s'" % category_str)
 
@@ -71,25 +71,25 @@ func _parse_param(kv: Dictionary, context: FizImportContext) -> void:
     # when Type= wasn't in this line.
     var train_type: int = _TRAIN_TYPE_MAP.get(FizLineUtil.get_string(kv, "Type").to_lower(), TrainController.TRAIN_TYPE_DEFAULT)
     if kv.has("Type"):
-        controller.set_train_type(train_type)
+        controller.train_type = train_type
     context.train_type = train_type
 
 
 func _parse_dimensions(kv: Dictionary, context: FizImportContext) -> void:
     var controller: TrainController = context.controller
     if kv.has("L"):
-        controller.set_length(FizLineUtil.get_float(kv, "L"))
+        controller.length = FizLineUtil.get_float(kv, "L")
     var height: float = FizLineUtil.get_float(kv, "H")
     if kv.has("H"):
-        controller.set_height(height)
+        controller.height = height
     if kv.has("W"):
-        controller.set_width(FizLineUtil.get_float(kv, "W"))
+        controller.width = FizLineUtil.get_float(kv, "W")
     # Cx's FIZ-format default (0.3) differs from TrainController's compiled default (0.0).
-    controller.set_drag_coefficient(FizLineUtil.get_float(kv, "Cx", 0.3))
+    controller.drag_coefficient = FizLineUtil.get_float(kv, "Cx", 0.3)
 
     # Floor's default is conditional on H, which differs from the compiled default (0.96).
     var floor_height: float = height if height <= 2.0 else 0.0
-    controller.set_floor_height(FizLineUtil.get_float(kv, "Floor", floor_height))
+    controller.floor_height = FizLineUtil.get_float(kv, "Floor", floor_height)
 
 
 ## Called by FizTrainCntrlParser with the full Cntrl. key/value set - applies only the
@@ -97,9 +97,9 @@ func _parse_dimensions(kv: Dictionary, context: FizImportContext) -> void:
 func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
     var controller: TrainController = context.controller
     if kv.has("AutomaticCabActivation"):
-        controller.set_automatic_cab_activation(FizLineUtil.get_bool(kv, "AutomaticCabActivation"))
+        controller.automatic_cab_activation = FizLineUtil.get_bool(kv, "AutomaticCabActivation")
     if kv.has("BatteryStart"):
-        controller.set_battery_start_mode(
+        controller.battery_start_mode = (
                 parse_start_mode(FizLineUtil.get_string(kv, "BatteryStart"), TrainController.START_MODE_MANUAL))
 
     # GroundRelayStart's default depends on TrainType (EZT), which differs from the compiled
@@ -107,14 +107,14 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
     var ground_relay_default: int = (
             TrainController.START_MODE_AUTOMATIC if context.train_type == TrainController.TRAIN_TYPE_EZT
             else TrainController.START_MODE_MANUAL)
-    controller.set_ground_relay_start_mode(
+    controller.ground_relay_start_mode = (
             parse_start_mode(FizLineUtil.get_string(kv, "GroundRelayStart"), ground_relay_default))
 
     if kv.has("CompartmentLightsStart"):
-        controller.set_compartment_lights_start_mode(
+        controller.compartment_lights_start_mode = (
                 parse_start_mode(FizLineUtil.get_string(kv, "CompartmentLightsStart"), TrainController.START_MODE_DISABLED))
     if kv.has("InactiveCabFlag"):
-        controller.set_inactive_cab_flag(FizLineUtil.get_int(kv, "InactiveCabFlag"))
+        controller.inactive_cab_flag = FizLineUtil.get_int(kv, "InactiveCabFlag")
 
 
 ## Shared `...Start=` device activation mode decode (TrainController.StartMode - the enum this

@@ -56,5 +56,5 @@ func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
     # TrainDieselElectricEngine inherits TrainDieselEngine's mechanical-transmission
     # properties, but a diesel-electric vehicle should simply leave them at their defaults.
     await wait_idle_frames(2)
-    assert_false(engine.get("torque_converter/present"))
-    assert_false(engine.get("retarder/present"))
+    assert_false(engine.get("has_torque_converter"))
+    assert_false(engine.get("has_retarder"))

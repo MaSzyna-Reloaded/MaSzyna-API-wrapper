@@ -24,9 +24,9 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     context.add_part("TrainWipers", node)
 
     if kv.has("Angle"):
-        node.set_angle(FizLineUtil.get_float(kv, "Angle"))
+        node.angle = FizLineUtil.get_float(kv, "Angle")
     if kv.has("Default"):
-        node.set_default_position(FizLineUtil.get_int(kv, "Default"))
+        node.default_position = FizLineUtil.get_int(kv, "Default")
     _rows = []
 
 
@@ -35,10 +35,10 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     if tokens.size() < 4:
         return
     var item := WiperListItem.new()
-    item.set_wiper_mask(int(tokens[0]))
-    item.set_transit_time(float(tokens[1]))
-    item.set_period(float(tokens[2]))
-    item.set_return_delay(float(tokens[3]))
+    item.wiper_mask = int(tokens[0])
+    item.transit_time = float(tokens[1])
+    item.period = float(tokens[2])
+    item.return_delay = float(tokens[3])
     _rows.append(item)
 
 
@@ -48,5 +48,5 @@ func end_table(context: FizImportContext) -> void:
         _rows = []
         return
     if _rows:
-        (node as TrainWipers).set_positions(_rows)
+        (node as TrainWipers).positions = _rows
     _rows = []

@@ -21,15 +21,15 @@
 			Whether the converter switch is impulse-type. Defaults to bistable (false) if not specified in the FIZ
 			file.
 		</member>
-		<member name="dimmer_list/positions" type="DimmerListItem[]" setter="set_dimmer_list" getter="get_dimmer_list" default="[]">
+		<member name="dimmer_list" type="DimmerListItem[]" setter="set_dimmer_list" getter="get_dimmer_list" default="[]">
 			[code]DimmerList[/code]
 			The dimmer switch's position table.
 		</member>
-		<member name="dimmer_list/cycle" type="bool" setter="set_dimmer_list_cycle" getter="get_dimmer_list_cycle" default="false">
+		<member name="dimmer_list_cycle" type="bool" setter="set_dimmer_list_cycle" getter="get_dimmer_list_cycle" default="false">
 			[code]DimmerList:Cycle[/code]
 			Whether the dimmer switch can be rotated all the way around.
 		</member>
-		<member name="dimmer_list/default_position" type="int" setter="set_dimmer_list_default_position" getter="get_dimmer_list_default_position" default="0">
+		<member name="dimmer_list_default_position" type="int" setter="set_dimmer_list_default_position" getter="get_dimmer_list_default_position" default="0">
 			[code]DimmerList:DefaultPos[/code]
 		</member>
 		<member name="modern_dimmer" type="bool" setter="set_modern_dimmer" getter="get_modern_dimmer" default="false">
@@ -55,15 +55,15 @@
 			Pantograph selector switch presets; each value is a bitmask (1 = pantograph over the active cab, 2 =
 			pantograph over the opposite cab).
 		</member>
-		<member name="relay_reset_button/1" type="int" setter="set_relay_reset_button_1" getter="get_relay_reset_button_1" default="0">
+		<member name="relay_reset_button_1" type="int" setter="set_relay_reset_button_1" getter="get_relay_reset_button_1" default="0">
 			[code]Switches:RelayResetButton1[/code]
 			Bitmask of relays reset by button 1.
 		</member>
-		<member name="relay_reset_button/2" type="int" setter="set_relay_reset_button_2" getter="get_relay_reset_button_2" default="0">
+		<member name="relay_reset_button_2" type="int" setter="set_relay_reset_button_2" getter="get_relay_reset_button_2" default="0">
 			[code]Switches:RelayResetButton2[/code]
 			Bitmask of relays reset by button 2.
 		</member>
-		<member name="relay_reset_button/3" type="int" setter="set_relay_reset_button_3" getter="get_relay_reset_button_3" default="0">
+		<member name="relay_reset_button_3" type="int" setter="set_relay_reset_button_3" getter="get_relay_reset_button_3" default="0">
 			[code]Switches:RelayResetButton3[/code]
 			Bitmask of relays reset by button 3.
 		</member>

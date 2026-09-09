@@ -66,117 +66,117 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
 
 func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
     if kv.has("AirLeakRate"):
-        node.set_air_leak_multiplier(FizLineUtil.get_float(kv, "AirLeakRate") * 0.01)
+        node.air_leak_multiplier = FizLineUtil.get_float(kv, "AirLeakRate") * 0.01
 
     var method_str: String = FizLineUtil.get_string(kv, "BM").to_lower()
     if method_str:
         if _METHOD_MAP.has(method_str):
-            node.set_brake_method(_METHOD_MAP[method_str])
+            node.brake_method = _METHOD_MAP[method_str]
         else:
             push_warning("FIZ Brake:BM: unmapped value '%s'" % method_str)
 
     if kv.has("MBF"):
-        node.set_max_brake_force(FizLineUtil.get_float(kv, "MBF"))
+        node.max_brake_force = FizLineUtil.get_float(kv, "MBF")
     if kv.has("TBF"):
-        node.set_traction_brake_force(FizLineUtil.get_float(kv, "TBF"))
+        node.traction_brake_force = FizLineUtil.get_float(kv, "TBF")
 
     if kv.has("MaxBP"):
         var max_cylinder_pressure: float = FizLineUtil.get_float(kv, "MaxBP")
-        node.set_max_cylinder_pressure(max_cylinder_pressure)
+        node.max_cylinder_pressure = max_cylinder_pressure
         if kv.has("BCN"):
-            node.set_cylinder_count(FizLineUtil.get_int(kv, "BCN"))
-        node.set_max_aux_pressure(FizLineUtil.get_float(kv, "MaxLBP", max_cylinder_pressure))
+            node.cylinder_count = FizLineUtil.get_int(kv, "BCN")
+        node.max_aux_pressure = FizLineUtil.get_float(kv, "MaxLBP", max_cylinder_pressure)
         if kv.has("TareMaxBP"):
-            node.set_max_tare_pressure(FizLineUtil.get_float(kv, "TareMaxBP"))
+            node.max_tare_pressure = FizLineUtil.get_float(kv, "TareMaxBP")
         if kv.has("MedMaxBP"):
-            node.set_max_medium_pressure(FizLineUtil.get_float(kv, "MedMaxBP"))
+            node.max_medium_pressure = FizLineUtil.get_float(kv, "MedMaxBP")
         if kv.has("MaxASBP"):
-            node.set_max_antislip_pressure(FizLineUtil.get_float(kv, "MaxASBP"))
+            node.max_antislip_pressure = FizLineUtil.get_float(kv, "MaxASBP")
 
     if kv.has("BCR"):
-        node.set_cylinder_radius(FizLineUtil.get_float(kv, "BCR"))
+        node.cylinder_radius = FizLineUtil.get_float(kv, "BCR")
     if kv.has("BCD"):
-        node.set_cylinder_distance(FizLineUtil.get_float(kv, "BCD"))
+        node.cylinder_distance = FizLineUtil.get_float(kv, "BCD")
     if kv.has("BCS"):
-        node.set_cylinder_spring_force(FizLineUtil.get_float(kv, "BCS"))
+        node.cylinder_spring_force = FizLineUtil.get_float(kv, "BCS")
     if kv.has("BSA"):
-        node.set_piston_stroke_adjuster_resistance(FizLineUtil.get_float(kv, "BSA"))
+        node.piston_stroke_adjuster_resistance = FizLineUtil.get_float(kv, "BSA")
     # rig_effectiveness' FIZ-format default (1.0) differs from TrainBrake's compiled default (0.0).
-    node.set_rig_effectiveness(FizLineUtil.get_float(kv, "BRE", 1.0))
+    node.rig_effectiveness = FizLineUtil.get_float(kv, "BRE", 1.0)
     if kv.has("BCM"):
-        node.set_cylinder_gear_ratio(FizLineUtil.get_float(kv, "BCM"))
+        node.cylinder_gear_ratio = FizLineUtil.get_float(kv, "BCM")
     if kv.has("BCMlo"):
-        node.set_cylinder_gear_ratio_low(FizLineUtil.get_float(kv, "BCMlo"))
+        node.cylinder_gear_ratio_low = FizLineUtil.get_float(kv, "BCMlo")
     if kv.has("BCMHi"):
-        node.set_cylinder_gear_ratio_high(FizLineUtil.get_float(kv, "BCMHi"))
+        node.cylinder_gear_ratio_high = FizLineUtil.get_float(kv, "BCMHi")
     if kv.has("Size"):
-        node.set_est_valve_size(FizLineUtil.get_int(kv, "Size"))
+        node.est_valve_size = FizLineUtil.get_int(kv, "Size")
     if kv.has("NBpA"):
-        node.set_friction_elements_per_axle(FizLineUtil.get_int(kv, "NBpA"))
+        node.friction_elements_per_axle = FizLineUtil.get_int(kv, "NBpA")
 
     if kv.has("LPOn"):
-        node.set_main_pipe_blocking_pressure(FizLineUtil.get_float(kv, "LPOn"))
+        node.main_pipe_blocking_pressure = FizLineUtil.get_float(kv, "LPOn")
     if kv.has("LPOff"):
-        node.set_main_pipe_unblocking_pressure(FizLineUtil.get_float(kv, "LPOff"))
+        node.main_pipe_unblocking_pressure = FizLineUtil.get_float(kv, "LPOff")
     if kv.has("HandlePipeUnlockPos"):
-        node.set_main_pipe_minimum_unblocking_handle_position(FizLineUtil.get_int(kv, "HandlePipeUnlockPos"))
+        node.main_pipe_minimum_unblocking_handle_position = FizLineUtil.get_int(kv, "HandlePipeUnlockPos")
 
     var high_pressure: float = FizLineUtil.get_float(kv, "HiPP", 5.0)
     if kv.has("HiPP"):
-        node.set_pipe_pressure_max(high_pressure)
-    node.set_pipe_pressure_min(FizLineUtil.get_float(kv, "LoPP", minf(high_pressure, 3.5)))
+        node.pipe_pressure_max = high_pressure
+    node.pipe_pressure_min = FizLineUtil.get_float(kv, "LoPP", minf(high_pressure, 3.5))
 
     if kv.has("Vv"):
-        node.set_main_tank_volume(FizLineUtil.get_float(kv, "Vv"))
+        node.main_tank_volume = FizLineUtil.get_float(kv, "Vv")
     if kv.has("BVV"):
-        node.set_aux_tank_volume(FizLineUtil.get_float(kv, "BVV"))
+        node.aux_tank_volume = FizLineUtil.get_float(kv, "BVV")
 
     if kv.has("MinCP"):
-        node.set_compressor_pressure_cab_a_min(FizLineUtil.get_float(kv, "MinCP"))
+        node.compressor_pressure_cab_a_min = FizLineUtil.get_float(kv, "MinCP")
     if kv.has("MaxCP"):
-        node.set_compressor_pressure_cab_a_max(FizLineUtil.get_float(kv, "MaxCP"))
+        node.compressor_pressure_cab_a_max = FizLineUtil.get_float(kv, "MaxCP")
     if kv.has("MinCP_B"):
-        node.set_compressor_pressure_cab_b_min(FizLineUtil.get_float(kv, "MinCP_B"))
+        node.compressor_pressure_cab_b_min = FizLineUtil.get_float(kv, "MinCP_B")
     if kv.has("MaxCP_B"):
-        node.set_compressor_pressure_cab_b_max(FizLineUtil.get_float(kv, "MaxCP_B"))
+        node.compressor_pressure_cab_b_max = FizLineUtil.get_float(kv, "MaxCP_B")
     if kv.has("CompressorSpeed"):
-        node.set_compressor_speed(FizLineUtil.get_float(kv, "CompressorSpeed"))
+        node.compressor_speed = FizLineUtil.get_float(kv, "CompressorSpeed")
     if kv.has("CompressorPower"):
         match FizLineUtil.get_string(kv, "CompressorPower").to_lower():
-            "main": node.set_compressor_power(TrainBrake.COMPRESSOR_POWER_MAIN)
-            "converter": node.set_compressor_power(TrainBrake.COMPRESSOR_POWER_CONVERTER)
-            "engine": node.set_compressor_power(TrainBrake.COMPRESSOR_POWER_ENGINE)
-            "coupler1": node.set_compressor_power(TrainBrake.COMPRESSOR_POWER_COUPLER1)
-            "coupler2": node.set_compressor_power(TrainBrake.COMPRESSOR_POWER_COUPLER2)
+            "main": node.compressor_power = TrainBrake.COMPRESSOR_POWER_MAIN
+            "converter": node.compressor_power = TrainBrake.COMPRESSOR_POWER_CONVERTER
+            "engine": node.compressor_power = TrainBrake.COMPRESSOR_POWER_ENGINE
+            "coupler1": node.compressor_power = TrainBrake.COMPRESSOR_POWER_COUPLER1
+            "coupler2": node.compressor_power = TrainBrake.COMPRESSOR_POWER_COUPLER2
     if kv.has("CompressorTankValve"):
-        node.set_compressor_tank_valve_active(FizLineUtil.get_bool(kv, "CompressorTankValve"))
+        node.compressor_tank_valve_active = FizLineUtil.get_bool(kv, "CompressorTankValve")
     if kv.has("EVArea"):
-        node.set_emergency_valve_area(FizLineUtil.get_float(kv, "EVArea"))
+        node.emergency_valve_area = FizLineUtil.get_float(kv, "EVArea")
     if kv.has("MinEVP"):
-        node.set_lower_emergency_closing_pressure(FizLineUtil.get_float(kv, "MinEVP"))
+        node.lower_emergency_closing_pressure = FizLineUtil.get_float(kv, "MinEVP")
     if kv.has("MaxEVP"):
-        node.set_higher_emergency_closing_pressure(FizLineUtil.get_float(kv, "MaxEVP"))
+        node.higher_emergency_closing_pressure = FizLineUtil.get_float(kv, "MaxEVP")
 
     if kv.has("UBB1"):
-        node.set_universal_brake_button_1(FizLineUtil.get_int(kv, "UBB1"))
+        node.universal_brake_button_1 = FizLineUtil.get_int(kv, "UBB1")
     if kv.has("UBB2"):
-        node.set_universal_brake_button_2(FizLineUtil.get_int(kv, "UBB2"))
+        node.universal_brake_button_2 = FizLineUtil.get_int(kv, "UBB2")
     if kv.has("UBB3"):
-        node.set_universal_brake_button_3(FizLineUtil.get_int(kv, "UBB3"))
+        node.universal_brake_button_3 = FizLineUtil.get_int(kv, "UBB3")
 
     if kv.has("RM"):
-        node.set_rapid_transfer(FizLineUtil.get_float(kv, "RM"))
+        node.rapid_transfer = FizLineUtil.get_float(kv, "RM")
     if kv.has("RV"):
-        node.set_rapid_switching_speed(FizLineUtil.get_float(kv, "RV"))
+        node.rapid_switching_speed = FizLineUtil.get_float(kv, "RV")
 
     var valve_str: String = FizLineUtil.get_string(kv, "BrakeValve").to_lower()
     if valve_str:
         if _VALVE_MAP.has(valve_str):
-            node.set_valve_type(_VALVE_MAP[valve_str])
+            node.valve_type = _VALVE_MAP[valve_str]
         elif valve_str.find("est") != -1:
-            node.set_valve_type(TrainBrake.BRAKE_VALVE_EST3)
+            node.valve_type = TrainBrake.BRAKE_VALVE_EST3
         else:
-            node.set_valve_type(TrainBrake.BRAKE_VALVE_OTHER)
+            node.valve_type = TrainBrake.BRAKE_VALVE_OTHER
 
 
 ## Called by FizTrainCntrlParser with the full Cntrl. key/value set - applies only the
@@ -186,70 +186,70 @@ func apply_cntrl(kv: Dictionary, node: TrainBrake, context: FizImportContext) ->
     match FizLineUtil.get_string(kv, "BrakeSystem").to_lower():
         "pneumatic": brake_system = TrainBrake.BRAKE_SYSTEM_PNEUMATIC
         "electropneumatic": brake_system = TrainBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC
-    node.set_brake_system(brake_system)
+    node.brake_system = brake_system
     context.brake_system = brake_system
 
     if brake_system == TrainBrake.BRAKE_SYSTEM_INDIVIDUAL:
         return
 
     if kv.has("BCPN"):
-        node.set_brake_ctrl_position_count(FizLineUtil.get_int(kv, "BCPN"))
+        node.brake_ctrl_position_count = FizLineUtil.get_int(kv, "BCPN")
     if kv.has("BDelay1"):
-        node.set_brake_delay_1(FizLineUtil.get_float(kv, "BDelay1"))
+        node.brake_delay_1 = FizLineUtil.get_float(kv, "BDelay1")
     if kv.has("BDelay2"):
-        node.set_brake_delay_2(FizLineUtil.get_float(kv, "BDelay2"))
+        node.brake_delay_2 = FizLineUtil.get_float(kv, "BDelay2")
     if kv.has("BDelay3"):
-        node.set_brake_delay_3(FizLineUtil.get_float(kv, "BDelay3"))
+        node.brake_delay_3 = FizLineUtil.get_float(kv, "BDelay3")
     if kv.has("BDelay4"):
-        node.set_brake_delay_4(FizLineUtil.get_float(kv, "BDelay4"))
+        node.brake_delay_4 = FizLineUtil.get_float(kv, "BDelay4")
 
     var delays_str: String = FizLineUtil.get_string(kv, "BrakeDelays").to_lower()
     const _DELAY_MAP := {"g": 1, "p": 2, "r": 4, "gp": 3, "pr": 6, "gpr": 7, "gpr+mg": 15, "pr+mg": 14}
     if _DELAY_MAP.has(delays_str):
-        node.set_brake_delays(_DELAY_MAP[delays_str])
+        node.brake_delays = _DELAY_MAP[delays_str]
 
     var op_modes_str: String = FizLineUtil.get_string(kv, "BrakeOpModes").to_lower()
     match op_modes_str:
-        "pn": node.set_brake_op_modes(TrainBrake.BRAKE_OP_MODE_PN)
-        "pnepmed": node.set_brake_op_modes(TrainBrake.BRAKE_OP_MODE_PNEPMED)
+        "pn": node.brake_op_modes = TrainBrake.BRAKE_OP_MODE_PN
+        "pnepmed": node.brake_op_modes = TrainBrake.BRAKE_OP_MODE_PNEPMED
         "pnep": pass # TODO: exact bitmask for the intermediate PN+EP-only mode is unverified.
 
     var handle_str: String = FizLineUtil.get_string(kv, "BrakeHandle").to_lower()
     if _HANDLE_TYPE_MAP.has(handle_str):
-        node.set_brake_handle_type(_HANDLE_TYPE_MAP[handle_str])
+        node.brake_handle_type = _HANDLE_TYPE_MAP[handle_str]
     var loc_handle_str: String = FizLineUtil.get_string(kv, "LocBrakeHandle").to_lower()
     if _HANDLE_TYPE_MAP.has(loc_handle_str):
-        node.set_local_brake_handle_type(_HANDLE_TYPE_MAP[loc_handle_str])
+        node.local_brake_handle_type = _HANDLE_TYPE_MAP[loc_handle_str]
 
     var local_brake_str: String = FizLineUtil.get_string(kv, "LocalBrake").to_lower()
     if _LOCAL_BRAKE_TYPE_MAP.has(local_brake_str):
-        node.set_local_brake_type(_LOCAL_BRAKE_TYPE_MAP[local_brake_str])
+        node.local_brake_type = _LOCAL_BRAKE_TYPE_MAP[local_brake_str]
     if kv.has("ManualBrake"):
-        node.set_manual_brake_present(FizLineUtil.get_bool(kv, "ManualBrake"))
+        node.manual_brake_present = FizLineUtil.get_bool(kv, "ManualBrake")
 
     match FizLineUtil.get_string(kv, "ASB").to_lower():
-        "manual": node.set_anti_skid_brake_type(TrainBrake.ANTI_SKID_BRAKE_MANUAL)
-        "automatic": node.set_anti_skid_brake_type(TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC)
-        "yes": node.set_anti_skid_brake_type(TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC)
+        "manual": node.anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_MANUAL
+        "automatic": node.anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC
+        "yes": node.anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC
 
     var dynamic_str: String = FizLineUtil.get_string(kv, "DynamicBrake").to_lower()
     match dynamic_str:
-        "passive": node.set_dynamic_brake_type(TrainBrake.DYNAMIC_BRAKE_PASSIVE)
-        "switch": node.set_dynamic_brake_type(TrainBrake.DYNAMIC_BRAKE_SWITCH)
-        "reversal": node.set_dynamic_brake_type(TrainBrake.DYNAMIC_BRAKE_REVERSAL)
-        "automatic": node.set_dynamic_brake_type(TrainBrake.DYNAMIC_BRAKE_AUTOMATIC)
+        "passive": node.dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_PASSIVE
+        "switch": node.dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_SWITCH
+        "reversal": node.dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_REVERSAL
+        "automatic": node.dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_AUTOMATIC
 
     if kv.has("LocalBrakeTraxx"):
-        node.set_local_brake_traxx(FizLineUtil.get_bool(kv, "LocalBrakeTraxx"))
+        node.local_brake_traxx = FizLineUtil.get_bool(kv, "LocalBrakeTraxx")
     if kv.has("ReleaseParkingBySpringBrake"):
-        node.set_release_parking_by_spring_brake(FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrake"))
+        node.release_parking_by_spring_brake = FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrake")
     if kv.has("ReleaseParkingBySpringBrakeWhenDoorIsOpen"):
-        node.set_release_parking_by_spring_brake_when_door_open(
+        node.release_parking_by_spring_brake_when_door_open = (
                 FizLineUtil.get_bool(kv, "ReleaseParkingBySpringBrakeWhenDoorIsOpen"))
     if kv.has("SpringBrakeCutsOffDrive"):
-        node.set_spring_brake_cuts_off_drive(FizLineUtil.get_bool(kv, "SpringBrakeCutsOffDrive"))
+        node.spring_brake_cuts_off_drive = FizLineUtil.get_bool(kv, "SpringBrakeCutsOffDrive")
     if kv.has("SpringBrakeDriveEmergencyVel"):
-        node.set_spring_brake_drive_emergency_velocity(FizLineUtil.get_float(kv, "SpringBrakeDriveEmergencyVel"))
+        node.spring_brake_drive_emergency_velocity = FizLineUtil.get_float(kv, "SpringBrakeDriveEmergencyVel")
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:
@@ -276,14 +276,14 @@ func _parse_bpt_row(p: MaszynaParser) -> void:
     if tokens.size() < 5:
         return
     var item := BrakePressureTableItem.new()
-    item.set_handle_position(int(tokens[0]))
-    item.set_pipe_pressure(float(tokens[1]))
-    item.set_brake_cylinder_pressure(float(tokens[2]))
-    item.set_fill_speed(float(tokens[3]))
+    item.handle_position = int(tokens[0])
+    item.pipe_pressure = float(tokens[1])
+    item.brake_cylinder_pressure = float(tokens[2])
+    item.fill_speed = float(tokens[3])
     match String(tokens[4]).to_lower():
-        "pneumatic", "p": item.set_brake_type(BrakePressureTableItem.BRAKE_TYPE_PNEUMATIC)
-        "electropneumatic", "ep": item.set_brake_type(BrakePressureTableItem.BRAKE_TYPE_ELECTRO_PNEUMATIC)
-        _: item.set_brake_type(BrakePressureTableItem.BRAKE_TYPE_INDIVIDUAL)
+        "pneumatic", "p": item.brake_type = BrakePressureTableItem.BRAKE_TYPE_PNEUMATIC
+        "electropneumatic", "ep": item.brake_type = BrakePressureTableItem.BRAKE_TYPE_ELECTRO_PNEUMATIC
+        _: item.brake_type = BrakePressureTableItem.BRAKE_TYPE_INDIVIDUAL
     _bpt_rows.append(item)
 
 
@@ -292,10 +292,10 @@ func _parse_compressor_row(p: MaszynaParser) -> void:
     if tokens.size() < 4:
         return
     var item := CompressorListItem.new()
-    item.set_allow(int(tokens[0]))
-    item.set_speed_factor(int(tokens[1]))
-    item.set_min_pressure_factor(int(tokens[2]))
-    item.set_max_pressure_factor(int(tokens[3]))
+    item.allow = int(tokens[0])
+    item.speed_factor = int(tokens[1])
+    item.min_pressure_factor = int(tokens[2])
+    item.max_pressure_factor = int(tokens[3])
     _compressor_rows.append(item)
 
 
@@ -304,9 +304,9 @@ func end_table(context: FizImportContext) -> void:
     if node == null:
         return
     if _bpt_rows:
-        node.set_brake_pressure_table(_bpt_rows)
+        node.brake_pressure_table = _bpt_rows
         _bpt_rows = []
     if _compressor_rows:
-        node.set_compressor_list(_compressor_rows)
+        node.compressor_list = _compressor_rows
         _compressor_rows = []
     _active_table = ""

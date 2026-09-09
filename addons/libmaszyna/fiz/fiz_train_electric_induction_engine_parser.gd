@@ -40,49 +40,49 @@ func create_node() -> TrainElectricInductionEngine:
 ## FizTrainEngineCommon via FizTrainEngineParser).
 func apply_engine_fields(kv: Dictionary, node: TrainElectricInductionEngine) -> void:
     if kv.has("dfic"):
-        node.set_slip_current_ratio(FizLineUtil.get_float(kv, "dfic"))
+        node.slip_current_ratio = FizLineUtil.get_float(kv, "dfic")
     if kv.has("dfmax"):
-        node.set_max_slip(FizLineUtil.get_float(kv, "dfmax"))
+        node.max_slip = FizLineUtil.get_float(kv, "dfmax")
     if kv.has("p"):
-        node.set_pole_pairs(FizLineUtil.get_float(kv, "p"))
+        node.pole_pairs = FizLineUtil.get_float(kv, "p")
     if kv.has("cfu"):
-        node.set_nominal_uf_ratio(FizLineUtil.get_float(kv, "cfu"))
+        node.nominal_uf_ratio = FizLineUtil.get_float(kv, "cfu")
     if kv.has("cim"):
-        node.set_current_torque_ratio(FizLineUtil.get_float(kv, "cim"))
+        node.current_torque_ratio = FizLineUtil.get_float(kv, "cim")
     if kv.has("icif"):
-        node.set_current_three_phase_ratio(FizLineUtil.get_float(kv, "icif"))
+        node.current_three_phase_ratio = FizLineUtil.get_float(kv, "icif")
     if kv.has("Uzmax"):
-        node.set_max_supply_voltage(FizLineUtil.get_float(kv, "Uzmax"))
+        node.max_supply_voltage = FizLineUtil.get_float(kv, "Uzmax")
     if kv.has("Uzh"):
-        node.set_max_supply_voltage_braking(FizLineUtil.get_float(kv, "Uzh"))
+        node.max_supply_voltage_braking = FizLineUtil.get_float(kv, "Uzh")
     if kv.has("DU"):
-        node.set_inverter_voltage_drop(FizLineUtil.get_float(kv, "DU"))
+        node.inverter_voltage_drop = FizLineUtil.get_float(kv, "DU")
     if kv.has("I0"):
-        node.set_no_load_current(FizLineUtil.get_float(kv, "I0"))
+        node.no_load_current = FizLineUtil.get_float(kv, "I0")
     if kv.has("fcfu"):
-        node.set_inverter_uf_setpoint(FizLineUtil.get_float(kv, "fcfu"))
+        node.inverter_uf_setpoint = FizLineUtil.get_float(kv, "fcfu")
     if kv.has("fcfuH"):
-        node.set_inverter_uf_setpoint_braking(FizLineUtil.get_float(kv, "fcfuH"))
+        node.inverter_uf_setpoint_braking = FizLineUtil.get_float(kv, "fcfuH")
     if kv.has("F0"):
-        node.set_initial_force(FizLineUtil.get_float(kv, "F0"))
+        node.initial_force = FizLineUtil.get_float(kv, "F0")
     if kv.has("a1"):
-        node.set_force_drop_rate(FizLineUtil.get_float(kv, "a1"))
+        node.force_drop_rate = FizLineUtil.get_float(kv, "a1")
     if kv.has("Pmax"):
-        node.set_max_power(FizLineUtil.get_float(kv, "Pmax"))
+        node.max_power = FizLineUtil.get_float(kv, "Pmax")
     if kv.has("Fh"):
-        node.set_max_braking_force(FizLineUtil.get_float(kv, "Fh"))
+        node.max_braking_force = FizLineUtil.get_float(kv, "Fh")
     if kv.has("Ph"):
-        node.set_max_braking_power(FizLineUtil.get_float(kv, "Ph"))
+        node.max_braking_power = FizLineUtil.get_float(kv, "Ph")
     # NOTE: matches TrainElectricInductionEngine::_do_update_internal_mover's existing
     # (already-wired) assignment exactly: eimc_p_Vh0 <- braking_decay_velocity, eimc_p_Vh1 <-
     # braking_decay_start_velocity - the property names read as though this should be swapped,
     # but the FIZ key must land in the eimc[] slot the C++ side already pushes it from.
     if kv.has("Vh0"):
-        node.set_braking_decay_velocity(FizLineUtil.get_float(kv, "Vh0"))
+        node.braking_decay_velocity = FizLineUtil.get_float(kv, "Vh0")
     if kv.has("Vh1"):
-        node.set_braking_decay_start_velocity(FizLineUtil.get_float(kv, "Vh1"))
+        node.braking_decay_start_velocity = FizLineUtil.get_float(kv, "Vh1")
     if kv.has("Imax"):
-        node.set_motor_max_current(FizLineUtil.get_float(kv, "Imax"))
+        node.motor_max_current = FizLineUtil.get_float(kv, "Imax")
 
 
 ## Standard section-parser interface, used for "ffList:"/"ffBrakeList:" (both share this
@@ -117,8 +117,8 @@ func _parse_ff_row(p: MaszynaParser) -> void:
     if tokens.size() < 2:
         return
     var item := WWListItem.new()
-    item.set_rpm(float(tokens[0]))
-    item.set_max_power(float(tokens[1]))
+    item.rpm = float(tokens[0])
+    item.max_power = float(tokens[1])
     _wwlist_rows.append(item)
 
 
@@ -127,8 +127,8 @@ func _parse_curve_row(p: MaszynaParser) -> void:
     if tokens.size() < 2:
         return
     var item := CurvePointItem.new()
-    item.set_x(float(tokens[0]))
-    item.set_y(float(tokens[1]))
+    item.x = float(tokens[0])
+    item.y = float(tokens[1])
     _max_power_rows.append(item)
 
 
@@ -148,10 +148,10 @@ func end_table(context: FizImportContext) -> void:
                         "FIZ: ffList:/ffBrakeList: both present in the same file - keeping the " +
                         "first one parsed, discarding this table's rows.")
             else:
-                node.set_wwlist(_wwlist_rows)
+                node.wwlist = _wwlist_rows
     elif _active_table == "PmaxList":
         if _max_power_rows:
-            node.set_max_power_table(_max_power_rows)
+            node.max_power_table = _max_power_rows
 
     _wwlist_rows = []
     _max_power_rows = []

@@ -9,7 +9,6 @@ Code generation:
 * use english comments (if needed)
 * GDSCRIPT: avoid type interference, use explicit type declaration
 * GDSCRIPT: do not use `!=` in `if` conditions, use `not ... == ...` instead
-* GDSCRIPT: do not use `is_empty()` in conditions for strings, arrays, or dictionaries; use the value directly (`if value` / `if not value`)
 * GDSCRIPT: do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
 * GDSCRIPT: do not add helper wrappers for simple signal connect/disconnect logic; connect signals directly in place
 * GDSCRIPT: do not wrap method callbacks in `Callable(...)` when direct signal method connection is sufficient
@@ -17,7 +16,6 @@ Code generation:
 * GDSCRIPT: do not replace normal singleton/global access with `/root/...` lookups as a workaround
 * GDSCRIPT: do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
-* handle errors and warnings where they occur; do not pass diagnostic/result collector parameters through call chains or expand public APIs only to report them
 * do not useset/get/has_meta for accessing/saving/loading node state
 
 General guidelines:

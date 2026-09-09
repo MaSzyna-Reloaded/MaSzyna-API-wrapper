@@ -47,8 +47,9 @@ func test_internal_buzzers_route_to_the_cabin_bank() -> void:
 func test_build_creates_independent_exterior_and_cabin_banks() -> void:
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     add_child(vehicle)
+    var diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(
-            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), "", {})
+            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), "", {}, diagnostics)
 
     var exterior:SfxPlayer3D = vehicle.get_node("ExteriorSfxPlayer3D") as SfxPlayer3D
     var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D

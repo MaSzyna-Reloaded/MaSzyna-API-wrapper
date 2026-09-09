@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainElectricSeriesEngine" inherits="TrainElectricEngine" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainElectricSeriesEngine" inherits="TrainElectricEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Subclass of TrainElectricEngine. Adds additional parameters for more specific engines
 	</brief_description>
@@ -59,12 +59,4 @@
 			Motor winding resistance, in ohms
 		</member>
 	</members>
-	<constants>
-		<constant name="FAN_TYPE_NONE" value="0" enum="FanType">
-		</constant>
-		<constant name="FAN_TYPE_YES" value="1" enum="FanType">
-		</constant>
-		<constant name="FAN_TYPE_AUTOMATIC" value="2" enum="FanType">
-		</constant>
-	</constants>
 </class>

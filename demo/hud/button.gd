@@ -23,7 +23,7 @@ func _process(delta):
     if _dirty:
         _dirty = false
 
-        if not _controller and controller:
+        if not _controller and not controller.is_empty():
             _controller = get_node(controller)
             disabled = false
         else:

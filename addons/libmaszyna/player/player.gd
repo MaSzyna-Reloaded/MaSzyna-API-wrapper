@@ -1,8 +1,6 @@
 extends Node3D
 class_name MaszynaPlayer
 
-@export var head_outside_cab:bool = false
-
 signal controlled_vehicle_changed
 signal controlled_vehicle_path_changed
 

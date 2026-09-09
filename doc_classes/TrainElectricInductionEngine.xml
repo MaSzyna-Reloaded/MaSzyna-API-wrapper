@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainElectricInductionEngine" inherits="TrainElectricEngine" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainElectricInductionEngine" inherits="TrainElectricEngine" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Subclass of TrainElectricEngine for inverter-fed asynchronous (induction) traction motors.
 	</brief_description>
@@ -95,8 +95,6 @@
 		<member name="slip_current_ratio" type="float" setter="set_slip_current_ratio" getter="get_slip_current_ratio" default="0.0">
 			[code]Engine:dfic[/code]
 			Ratio of motor current to the difference between field and motor speed.
-		</member>
-		<member name="wwlist" type="WWListItem[]" setter="set_wwlist" getter="get_wwlist" default="[]">
 		</member>
 	</members>
 </class>

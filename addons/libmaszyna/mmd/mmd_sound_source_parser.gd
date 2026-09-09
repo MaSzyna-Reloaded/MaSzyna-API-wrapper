@@ -108,7 +108,7 @@ static func parse(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSou
 ## other sound-shaped fields (rainsound/tachoclock/couplerattach/...) out of scope here - only
 ## these labels are kept, everything else is parsed just enough to stay token-aligned (reusing the
 ## exact same generic block/bare consumption as parse() above) and then discarded, with no
-## warning (this region isn't otherwise covered by MmdSoundCatalog).
+## diagnostic (this region isn't otherwise covered by MmdSoundCatalog).
 static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -> Array[MmdSoundSourceDefinition]:
     var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
     var start_index:int = MmdCabinInstancer._find_label_index(tokens, "internaldata:")
@@ -166,7 +166,7 @@ static func _parse_labels_in_range(
         definition.label = label.trim_suffix(":")
         definition.source_file = abs_mmd_path
         i += _parse_one(tokens, i, definition, context, abs_mmd_path)
-        if not only_labels or only_labels.has(definition.label):
+        if only_labels.is_empty() or only_labels.has(definition.label):
             definitions.append(definition)
     return definitions
 
@@ -329,7 +329,7 @@ static func _read_float_list(tokens:Array[String], i:int, count:int) -> Dictiona
 ## "soundmain:"/"soundbegin:"/"soundend:"/"soundset:"/"pitchvariation:" (no valid-int remainder).
 static func _threshold_from_key(key:String) -> Variant:
     var middle:String = key.substr(5, key.length() - 6) # strip "sound"/"pitch" prefix (5 chars) and trailing ":"
-    if not middle or not middle.is_valid_int():
+    if middle.is_empty() or not middle.is_valid_int():
         return null
     return int(middle)
 
@@ -367,12 +367,12 @@ static func _read_random_set(
     var j:int = i + 1
     while j < tokens.size() and not tokens[j] == "]":
         var candidate:String = tokens[j].trim_suffix(",")
-        if candidate:
+        if not candidate.is_empty():
             candidates.append(candidate)
         j += 1
     if j < tokens.size():
         j += 1 # consume "]"
-    if not candidates:
+    if candidates.is_empty():
         return {"value": "", "consumed": j - i}
 
     var choice_key:String = "%s#%s#%s" % [source_file, field_key, "|".join(candidates)]
@@ -385,7 +385,7 @@ static func _read_random_set(
 ## verbatim, same rule as MmdCabinInstancer._normalize_sound_filename(). Does NOT split on "|" -
 ## soundset:'s caller does that itself after this returns the whole chosen candidate.
 static func _normalize_sound_filename(token:String) -> String:
-    if not token:
+    if token.is_empty():
         return ""
     var lower:String = token.to_lower()
     if lower.ends_with(".wav") or lower.ends_with(".ogg"):

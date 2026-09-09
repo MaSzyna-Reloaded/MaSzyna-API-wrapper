@@ -3,7 +3,7 @@ extends MaszynaGutTest
 var train: TrainController
 
 func before_each():
-    train = load("res://tests/fixtures/sm42_controller.tscn").instantiate()
+    train = load("res://tests/sm42_controller.tscn").instantiate()
     add_child(train)
     await wait_idle_frames(2)
     train.send_command("battery", true)

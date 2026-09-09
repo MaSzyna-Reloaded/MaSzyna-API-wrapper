@@ -236,7 +236,7 @@ func _update_traction_meshes(
             f += step
 
     state.primary_mesh = _create_segment_mesh(primary_segments, wire_thickness)
-    state.secondary_mesh = _create_segment_mesh(secondary_segments, wire_thickness) if secondary_segments else null
+    state.secondary_mesh = _create_segment_mesh(secondary_segments, wire_thickness) if not secondary_segments.is_empty() else null
 
 func _get_segment_axis_hint(start_point: Vector3, end_point: Vector3, fallback_axis: Vector3) -> Vector3:
     var segment_direction: Vector3 = (end_point - start_point).normalized()
@@ -248,7 +248,7 @@ func _get_segment_axis_hint(start_point: Vector3, end_point: Vector3, fallback_a
 
 func _create_segment_mesh(segments: Array[SegmentData], wire_thickness: float) -> ArrayMesh:
     var mesh: ArrayMesh = ArrayMesh.new()
-    if not segments:
+    if segments.is_empty():
         return mesh
 
     var width: float = max(wire_thickness * WIRE_THICKNESS_SCALE, MIN_SEGMENT_WIDTH)

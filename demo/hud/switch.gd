@@ -45,7 +45,7 @@ func _process(delta):
 
 
         $Label.text = label
-        if not _controller and controller:
+        if not _controller and not controller.is_empty():
             _controller = get_node(controller)
             $Switch.disabled = false
         else:

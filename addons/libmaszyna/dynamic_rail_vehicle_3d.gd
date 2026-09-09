@@ -16,9 +16,8 @@ class_name DynamicRailVehicle3D
 
 @export var data_path:String = "":
     set(x):
-        var normalized_path:String = x if not x or x.begins_with("/") else "/" + x
-        if not normalized_path == data_path:
-            data_path = normalized_path
+        if not x == data_path:
+            data_path = x
             _dirty = true
 
 ## Base filename, without extension, shared by this vehicle's .e3d (exterior model), .fiz
@@ -35,6 +34,12 @@ class_name DynamicRailVehicle3D
     set(x):
         if not x == skin:
             skin = x
+            _dirty = true
+
+@export var head_display_material:Material:
+    set(x):
+        if not x == head_display_material:
+            head_display_material = x
             _dirty = true
 
 ## Forwarded to the generated FIZTrainController.train_id (TrainSystem registration/console
@@ -94,53 +99,58 @@ func _rebuild() -> void:
     if not data_path or not file_name:
         return
 
-    var mmd_definition:MmdVehicleDefinition = MmdManager.load_vehicle(data_path, file_name)
-    if not mmd_definition:
-        return
-    var abs_mmd_path:String = MmdManager.get_source_path(data_path, file_name)
+    # E3DInstancer._get_material_override() builds its material-search path by dropping
+    # data_path's FIRST "/"-separated segment - meant to strip the artifact empty segment from a
+    # LEADING slash, not the "dynamic" directory name itself. Every hand-authored vehicle scene
+    # except su45 (whose skin is consequently broken the same way) uses a leading slash
+    # (e.g. "/dynamic/pkp/ep09_v1/") for exactly this reason. Normalize here so operators don't
+    # need to know about this quirk.
+    var normalized_data_path:String = data_path if data_path.begins_with("/") else "/" + data_path
+
+    var abs_mmd_path:String = (
+            UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
     # The exterior body model filename is NOT the same as file_name in general (confirmed
     # against real data: dynamic/pkp/st44_v2's body model isn't named after its .fiz/.mmd base) -
     # it comes from the MMD's own top-level "models:" line. Fall back to file_name only if that
     # can't be read, rather than silently building an ExteriorModel with no model at all.
-    var body_model_filename:String = mmd_definition.body_model
-    if not body_model_filename:
+    var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
+    if body_model_filename.is_empty():
         body_model_filename = file_name
-    body_model_filename = MmdCabinInstancer.resolve_model_case(data_path, body_model_filename)
+    body_model_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, body_model_filename)
 
     var model := E3DModelInstance.new()
-    model.name = "Model"
-    model.data_path = data_path
+    model.name = "ExteriorModel"
+    model.data_path = normalized_data_path
     model.model_filename = body_model_filename
-    model.skins = MmdCabinInstancer.resolve_skins(data_path, skin)
+    model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
 
     # Optional: the lower-detail interior seen from outside (through windows) before the player
     # enters the cabin. Most MMD files don't declare one - only build it if present.
     var low_poly_model:E3DModelInstance = null
-    var lowpoly_filename:String = mmd_definition.lowpoly_interior_model
+    var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path)
     if lowpoly_filename:
-        lowpoly_filename = MmdCabinInstancer.resolve_model_case(data_path, lowpoly_filename)
+        lowpoly_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, lowpoly_filename)
         low_poly_model = E3DModelInstance.new()
         low_poly_model.name = "LowPolyInterior"
-        low_poly_model.data_path = data_path
+        low_poly_model.data_path = normalized_data_path
         low_poly_model.model_filename = lowpoly_filename
-        low_poly_model.skins = MmdCabinInstancer.resolve_skins(data_path, skin)
+        low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
 
     var passengers_model:E3DModelInstance = null
-    var passengers_filename:String = mmd_definition.passengers_model
+    var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
     if passengers_filename:
-        passengers_filename = MmdCabinInstancer.resolve_model_case(data_path, passengers_filename)
+        passengers_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, passengers_filename)
         passengers_model = E3DModelInstance.new()
         passengers_model.name = "Passengers"
-        passengers_model.data_path = data_path
+        passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
 
     var fiz_controller := FIZTrainController.new()
     fiz_controller.name = "FIZTrainController"
-    fiz_controller.data_path = data_path
+    fiz_controller.data_path = normalized_data_path
     fiz_controller.fiz_filename = file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
-    fiz_controller.controller_changed.connect(_on_fiz_controller_changed.bind(mmd_definition.cabin_count))
 
     var vehicle := RailVehicle3D.new()
     vehicle.name = "RailVehicle3D"
@@ -158,19 +168,30 @@ func _rebuild() -> void:
     # resolve it with get_path_to() here, RailVehicle3D's own _process_dirty() will do that once
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
-    vehicle.cabin_scene = _build_cabin_scene(data_path)
+    vehicle.cabin_scene = _build_cabin_scene(normalized_data_path)
 
-    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, fiz_controller.name, {})
+    var sound_diagnostics:Array[Dictionary] = []
+    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, fiz_controller.name, {}, sound_diagnostics)
+    for diagnostic:Dictionary in sound_diagnostics:
+        if diagnostic["severity"] != "info":
+            push_warning("DynamicRailVehicle3D: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
     _resolve_start_track()
 
     _vehicle = vehicle
     add_child(_vehicle, false, INTERNAL_MODE_BACK)
+    _configure_head_display(vehicle, model)
 
 
-func _on_fiz_controller_changed(controller:TrainController, cabin_count:int) -> void:
-    if controller:
-        controller.cabin_count = cabin_count
+func _configure_head_display(vehicle:RailVehicle3D, model:E3DModelInstance) -> void:
+    if not head_display_material:
+        return
+    var head_display:MeshInstance3D = model.find_child("tablice_relacyjne", true, false) as MeshInstance3D
+    if not head_display:
+        return
+    vehicle.head_display_e3d_path = vehicle.get_path_to(model)
+    vehicle.head_display_material = head_display_material
+    vehicle.head_display_node_path = vehicle.get_path_to(head_display)
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by
@@ -185,7 +206,7 @@ func _build_cabin_scene(normalized_data_path:String) -> PackedScene:
     var packed := PackedScene.new()
     var err:Error = packed.pack(cabin)
     cabin.free()
-    if not err == OK:
+    if err != OK:
         push_error("DynamicRailVehicle3D: could not pack cabin scene for %s/%s" % [data_path, file_name])
         return null
     return packed

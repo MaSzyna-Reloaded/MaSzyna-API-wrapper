@@ -64,7 +64,7 @@ func _process_dirty(delta):
     if not max_value == 0.0:
         _target_mesh_rotation = mesh_rotation_offset + (value/max_value) * mesh_rotation
 
-    if not _mesh and target_mesh_path:
+    if not _mesh and not target_mesh_path.is_empty():
         _mesh = get_node_or_null(target_mesh_path)
         if _mesh:
             _mesh_original_basis = _mesh.basis

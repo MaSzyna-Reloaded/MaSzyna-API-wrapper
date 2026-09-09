@@ -309,7 +309,7 @@ func on_text_entered(new_text : String) -> void:
 
 
 
-    if new_text.strip_edges():
+    if not new_text.strip_edges().is_empty():
         add_input_history(new_text)
         print_line("[i]> " + new_text + "[/i]")
         var text_split := parse_line_input(new_text)

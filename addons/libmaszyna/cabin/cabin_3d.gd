@@ -9,7 +9,7 @@ var _dirty = true
 var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
-var _train_controller:TrainController
+var _shake_controller:TrainController
 var _engine_angle:float = PI * 0.5
 var _shake_velocity:Vector3 = Vector3.ZERO
 var _shake_offset:Vector3 = Vector3.ZERO
@@ -17,6 +17,9 @@ var _shake_accumulator:float = 0.0
 
 const SHAKE_STEP:float = 1.0 / 50.0
 const SPRING_REST_LENGTH:float = 0.01
+
+@export var cab_number:int = 1
+@export var cab_window_open:bool = false
 
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
     set(x):
@@ -57,8 +60,14 @@ func _propagate_train_controller(node: Node, controller: TrainController):
 
 func set_train_controller(controller:TrainController) -> void:
     controller_path = controller.get_path() if controller else NodePath("")
-    _train_controller = controller
+    _shake_controller = controller
     _propagate_train_controller(self, controller)
+
+
+func get_sound_listener_context() -> int:
+    if cab_window_open:
+        return 3
+    return 2 if cab_number > 0 else 0
 
 
 func _process(delta:float) -> void:
@@ -72,14 +81,14 @@ func _process_dirty() -> void:
     if not _dirty:
         return
     _dirty = false
-    if controller_path or _train_controller:
+    if controller_path or _shake_controller:
         var controller:TrainController = get_node_or_null(controller_path) if controller_path else null
         set_train_controller(controller)
 
 func _process_engine_shake(delta:float) -> void:
     var shake_vector:Vector3 = Vector3.ZERO
-    if _train_controller and _train_controller.config.get("engine_shake_enabled", false):
-        var engine_revolutions:float = absf(float(_train_controller.state.get("engine_rpm_count", 0.0)))
+    if _shake_controller and _shake_controller.config.get("engine_shake_enabled", false):
+        var engine_revolutions:float = absf(float(_shake_controller.state.get("engine_rpm_count", 0.0)))
         if engine_revolutions > 0.0:
             _engine_angle = fmod(_engine_angle + engine_revolutions * delta, TAU)
             var fade_in:float = clampf(
@@ -110,10 +119,10 @@ func get_camera_shake_offset() -> Vector3:
 
 func get_camera_shake_roll() -> float:
     return atan(_shake_velocity.x * shake_angle_scale.x)
-
+            
 func _ready() -> void:
     _cabin_ready = true
-    cabin_ready.emit()
+    cabin_ready.emit()                
 
 func is_cabin_ready() -> bool:
     return _cabin_ready

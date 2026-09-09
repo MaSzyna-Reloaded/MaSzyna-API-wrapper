@@ -27,7 +27,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
 
     var coupler_type: int = _COUPLER_TYPE_MAP.get(FizLineUtil.get_string(kv, "CType").to_lower(), TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC)
     if kv.has("CType"):
-        node.coupler_type = coupler_type
+        node.set_coupler_type(coupler_type)
 
     # kC/FmaxC/kB/FmaxB are given in kN / kN*m^-1 and converted to base SI (x1000) for "real"
     # coupler types only; Bare/Articulated use hardcoded physical constants in the original
@@ -38,35 +38,35 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     var unit_mult: float = 1000.0 if is_real_coupler else 1.0
 
     if kv.has("kC"):
-        node.coupler_stiffness_k = FizLineUtil.get_float(kv, "kC") * unit_mult
+        node.set_coupler_stiffness_k(FizLineUtil.get_float(kv, "kC") * unit_mult)
     if kv.has("DmaxC"):
-        node.coupler_max_compression_tolerance = FizLineUtil.get_float(kv, "DmaxC")
+        node.set_coupler_max_compression_tolerance(FizLineUtil.get_float(kv, "DmaxC"))
     if kv.has("FmaxC"):
-        node.coupler_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxC") * unit_mult
+        node.set_coupler_max_tension_tolerance(FizLineUtil.get_float(kv, "FmaxC") * unit_mult)
 
     if kv.has("kB"):
-        node.buffer_stiffness_k = FizLineUtil.get_float(kv, "kB") * unit_mult
+        node.set_buffer_stiffness_k(FizLineUtil.get_float(kv, "kB") * unit_mult)
     if kv.has("DmaxB"):
-        node.buffer_max_compression_tolerance = FizLineUtil.get_float(kv, "DmaxB")
+        node.set_buffer_max_compression_tolerance(FizLineUtil.get_float(kv, "DmaxB"))
     if kv.has("FmaxB"):
-        node.buffer_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxB") * unit_mult
+        node.set_buffer_max_tension_tolerance(FizLineUtil.get_float(kv, "FmaxB") * unit_mult)
 
     if kv.has("beta"):
-        node.damping_beta = FizLineUtil.get_float(kv, "beta")
+        node.set_damping_beta(FizLineUtil.get_float(kv, "beta"))
 
     if kv.has("AllowedFlag"):
         var allowed: int = FizLineUtil.get_int(kv, "AllowedFlag")
         if allowed < 0:
             allowed = -allowed | ALLOWED_FIXED_COUPLING_LOCK
-        node.allowed_flag = allowed
+        node.set_allowed_flag(allowed)
     if kv.has("AutomaticFlag"):
-        node.automatic_flag = FizLineUtil.get_int(kv, "AutomaticFlag")
+        node.set_automatic_flag(FizLineUtil.get_int(kv, "AutomaticFlag"))
     if kv.has("PowerCoupling"):
-        node.power_coupling = FizLineUtil.get_int(kv, "PowerCoupling")
+        node.set_power_coupling(FizLineUtil.get_int(kv, "PowerCoupling"))
     if kv.has("PowerFlag"):
-        node.power_flag = FizLineUtil.get_int(kv, "PowerFlag")
+        node.set_power_flag(FizLineUtil.get_int(kv, "PowerFlag"))
     if kv.has("ControlType"):
-        node.control_type = FizLineUtil.get_string(kv, "ControlType")
+        node.set_control_type(FizLineUtil.get_string(kv, "ControlType"))
 
     context.add_part(_part_name_for(prefix, context), node)
 

@@ -18,7 +18,7 @@ static func read_key_values(p: MaszynaParser) -> Dictionary:
     var result: Dictionary = {}
     while not p.eof_reached():
         var token: String = p.next_token(_STOPS)
-        if not token:
+        if token.is_empty():
             continue
         var eq: int = token.find("=")
         if eq <= 0:
@@ -37,14 +37,14 @@ static func has_key(kv: Dictionary, key: String) -> bool:
 
 static func get_float(kv: Dictionary, key: String, default_value: float = 0.0) -> float:
     var v: String = kv.get(key, "")
-    if not v:
+    if v.is_empty():
         return default_value
     return v.to_float()
 
 
 static func get_int(kv: Dictionary, key: String, default_value: int = 0) -> int:
     var v: String = kv.get(key, "")
-    if not v:
+    if v.is_empty():
         return default_value
     return v.to_int()
 
@@ -53,6 +53,6 @@ static func get_int(kv: Dictionary, key: String, default_value: int = 0) -> int:
 ## including an absent key - is false.
 static func get_bool(kv: Dictionary, key: String, default_value: bool = false) -> bool:
     var v: String = kv.get(key, "")
-    if not v:
+    if v.is_empty():
         return default_value
     return v.to_lower() == "yes"

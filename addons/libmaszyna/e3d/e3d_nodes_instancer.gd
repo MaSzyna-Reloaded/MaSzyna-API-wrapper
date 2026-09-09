@@ -24,7 +24,15 @@ func instantiate(target_node: E3DModelInstance, model: E3DModel, editable: bool 
             "off": model.get_node_or_null(light_info.off_submodel_path),
         }
 
-    _do_add_submodels(target_node, model, target_node, model.submodels, editable, entries, lights, false)
+    var force_alpha_submodels: Array[E3DSubModel] = []
+    for submodel_path: NodePath in target_node.force_alpha_submodel_paths:
+        var resolved_submodel: E3DSubModel = model.get_node_or_null(submodel_path)
+        if resolved_submodel:
+            force_alpha_submodels.append(resolved_submodel)
+
+    _do_add_submodels(
+        target_node, model, target_node, model.submodels, editable, entries, lights, force_alpha_submodels, false
+    )
 
     # prebuild LightNodeInfo dictionary
     var _instance_lights: Dictionary = {}
@@ -55,7 +63,7 @@ func instantiate(target_node: E3DModelInstance, model: E3DModel, editable: bool 
     var _light_on_nodes: Dictionary = {}
     for light_name: String in _instance_lights.keys():
         var resolved_light_info: LightNodeInfo = _instance_lights[light_name]
-        if resolved_light_info.light_on_node_path:
+        if not resolved_light_info.light_on_node_path.is_empty():
             _light_on_nodes[resolved_light_info.light_on_node_path] = resolved_light_info
 
     # assign instance lights to the global registry
@@ -121,6 +129,7 @@ func _do_add_submodels(
     editable: bool,
     entries: Array,
     lights: Dictionary,
+    force_alpha_submodels: Array[E3DSubModel],
     force_alpha: bool
 ) -> void:
     for submodel: E3DSubModel in submodels:
@@ -138,7 +147,9 @@ func _do_add_submodels(
                     entries.append([light_name, "off", child, submodel])
 
             var submodel_force_alpha: bool = (
-                force_alpha or (target_node.force_alpha and submodel.material_transparent)
+                force_alpha
+                or force_alpha_submodels.has(submodel)
+                or (target_node.force_alpha and submodel.material_transparent)
             )
             _update_submodel_material(target_node, child, submodel, submodel_force_alpha)
             var internal = InternalMode.INTERNAL_MODE_DISABLED if editable else InternalMode.INTERNAL_MODE_BACK
@@ -166,6 +177,7 @@ func _do_add_submodels(
                     editable,
                     entries,
                     lights,
+                    force_alpha_submodels,
                     submodel_force_alpha
                 )
 

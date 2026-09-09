@@ -53,7 +53,7 @@ func _process(delta):
         $SpinBox.step = step
 
         $Label.text = label
-        if not _controller and controller:
+        if not _controller and not controller.is_empty():
             _controller = get_node(controller)
             #$SpinBox.disabled = false
         else:

@@ -209,11 +209,11 @@ static func _read_include_directive(p: MaszynaParser, first_line_parser: Maszyna
     var current_parser := first_line_parser
     while true:
         var token: String = current_parser.next_token()
-        if not token:
+        if token.is_empty():
             if p.eof_reached():
                 break
             var next_line: String = _read_fiz_line(p).strip_edges(true, false)
-            if not next_line or not next_line.find("#") == -1:
+            if next_line.is_empty() or next_line.find("#") != -1:
                 continue
             current_parser = MaszynaParser.new()
             current_parser.initialize(next_line.to_utf8_buffer())
@@ -251,7 +251,7 @@ static func _parse_file(
     while not p.eof_reached():
         var raw_line: String = _read_fiz_line(p)
         var line: String = raw_line.strip_edges(true, false)
-        if parameters:
+        if not parameters.is_empty():
             for key: String in parameters:
                 line = line.replace("(%s)" % key, str(parameters[key]))
 
@@ -266,7 +266,7 @@ static func _parse_file(
                 table_state["end"] = ""
             continue
 
-        if not line:
+        if line.is_empty():
             if table_state["prefix"] == "BPT":
                 table_state["parser"].end_table(context)
                 table_state["prefix"] = ""
@@ -277,7 +277,7 @@ static func _parse_file(
         var line_parser := MaszynaParser.new()
         line_parser.initialize(line.to_utf8_buffer())
         var first_token: String = line_parser.next_token()
-        if not first_token:
+        if first_token.is_empty():
             continue # line was entirely a `//`/`/* */` comment
 
         # include <file> [params...] end - splices the referenced file's lines in place,
@@ -288,7 +288,7 @@ static func _parse_file(
         # further lines from `p` as needed instead of assuming everything fits on this one line.
         if first_token == _INCLUDE_KEYWORD:
             var include_tokens: Array[String] = _read_include_directive(p, line_parser)
-            if include_tokens:
+            if not include_tokens.is_empty():
                 var include_filename: String = include_tokens[0]
                 var include_params: Dictionary = {}
                 for i in range(1, include_tokens.size()):
@@ -305,7 +305,7 @@ static func _parse_file(
                 matched_section = section
                 break
 
-        if matched_section:
+        if not matched_section.is_empty():
             _dispatch_header(matched_section, line, context, table_state)
             continue
 

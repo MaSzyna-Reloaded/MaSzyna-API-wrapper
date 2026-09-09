@@ -3,7 +3,7 @@ extends MaszynaGutTest
 var train: TrainController
 
 func before_each():
-    train = load("res://tests/fixtures/sm42_controller.tscn").instantiate()
+    train = load("res://tests/sm42_controller.tscn").instantiate()
     train.train_id = "TestTrain"
     train.battery_voltage = 110.0
     add_child(train)

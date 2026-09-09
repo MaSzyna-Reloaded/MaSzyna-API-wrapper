@@ -136,10 +136,6 @@ namespace godot {
         BIND_PROPERTY(
                 Variant::FLOAT, "initial_velocity", "initial_velocity", &TrainController::set_initial_velocity,
                 &TrainController::get_initial_velocity, "initial_velocity");
-        ADD_GROUP("Cabin", "cabin_");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "cabin_count", "cabin_count", &TrainController::set_cabin_count,
-                &TrainController::get_cabin_count, "cabin_count", PROPERTY_HINT_RANGE, "0,2,1");
         BIND_PROPERTY_W_HINT(
                 Variant::INT, "battery_start_mode", "cntrl/battery_start_mode",
                 &TrainController::set_battery_start_mode, &TrainController::get_battery_start_mode,
@@ -422,7 +418,6 @@ namespace godot {
         // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
         // property (see update_mover() below), so this is a thin alias, not new derivation.
         p_config["max_speed"] = max_velocity;
-        p_config["cabin_count"] = cabin_count;
     }
 
     void TrainController::update_mover() {
@@ -491,21 +486,6 @@ namespace godot {
     void TrainController::update_config(const Dictionary &p_config) {
         config.merge(p_config, true);
         emit_signal(config_changed);
-    }
-
-    int TrainController::get_cabin_count() const {
-        return cabin_count;
-    }
-
-    void TrainController::set_cabin_count(const int p_count) {
-        const int value = p_count < 0 ? 0 : (p_count > 2 ? 2 : p_count);
-        if (cabin_count == value) {
-            return;
-        }
-        cabin_count = value;
-        Dictionary cabin_config;
-        cabin_config["cabin_count"] = cabin_count;
-        update_config(cabin_config);
     }
 
     Dictionary TrainController::get_state() {

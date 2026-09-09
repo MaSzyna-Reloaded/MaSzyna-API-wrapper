@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainSecuritySystem" inherits="TrainPart" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainSecuritySystem" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Class used to handle all security systems like CA/SHP and SIFA
 	</brief_description>
@@ -23,19 +23,19 @@
 			[code]Security:AwareDelay[/code]
 			Delay between activation of the aware system, in seconds
 		</member>
-		<member name="aware_system_active" type="bool" setter="set_aware_system_active" getter="get_aware_system_active" default="false">
+		<member name="aware_system/active" type="bool" setter="set_aware_system_active" getter="get_aware_system_active" default="false">
 			[code]Security:AwareSystem=Active[/code]
 			Is the aware system active
 		</member>
-		<member name="aware_system_cabsignal" type="bool" setter="set_aware_system_cabsignal" getter="get_aware_system_cabsignal" default="false">
+		<member name="aware_system/cabsignal" type="bool" setter="set_aware_system_cabsignal" getter="get_aware_system_cabsignal" default="false">
 			[code]Security:AwareSystem=CabSignal[/code]
 			Is the CabSignal aware system available
 		</member>
-		<member name="aware_system_separate_acknowledge" type="bool" setter="set_aware_system_separate_acknowledge" getter="get_aware_system_separate_acknowledge" default="false">
+		<member name="aware_system/separate_acknowledge" type="bool" setter="set_aware_system_separate_acknowledge" getter="get_aware_system_separate_acknowledge" default="false">
 			[code]Security:AwareSystem=SeparateAcknowledge[/code]
 			Is the SeparateAcknowledge aware system available
 		</member>
-		<member name="aware_system_sifa" type="bool" setter="set_aware_system_sifa" getter="get_aware_system_sifa" default="false">
+		<member name="aware_system/sifa" type="bool" setter="set_aware_system_sifa" getter="get_aware_system_sifa" default="false">
 			[code]Security:AwareSystem=SIFA[/code]
 			Is the SIFA aware system available
 		</member>
@@ -43,7 +43,7 @@
 			[code]Security:MaxHoldTime[/code]
 			The duration of holding down the CA [b]dead man's[/b] button, after which warning lights are turned on.
 		</member>
-		<member name="emergency_brake_delay" type="float" setter="set_emergency_brake_delay" getter="get_emergency_brake_delay" default="0.0">
+		<member name="emergency_brake/delay" type="float" setter="set_emergency_brake_delay" getter="get_emergency_brake_delay" default="0.0">
 			[code]Security:EmergencyBrakeDelay[/code]
 			Time from sound signal activation to emergency brake activation in seconds.
 		</member>
@@ -51,7 +51,7 @@
 			[code]Security:EmergencyBrakeWarningSignal[/code]
 			Definition of optional, automatic activation of the vehicle siren during emergency braking implementation
 		</member>
-		<member name="radio_stop_enabled" type="bool" setter="set_radio_stop_enabled" getter="get_radio_stop_enabled" default="false">
+		<member name="radio_stop/enabled" type="bool" setter="set_radio_stop_enabled" getter="get_radio_stop_enabled" default="false">
 			[code]Security:RadioStop[/code]
 			Definition of the operation of the Radio-Stop signal.
 		</member>

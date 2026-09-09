@@ -273,16 +273,17 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1)
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
 
-    assert_eq(generated_root.get_child_count(), 3)
-    var widget:CabinIndicator3D = generated_root.get_child(0)
-    var sound:CabinIndicatorSound3D = generated_root.get_child(1)
+    assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
+    var widget:CabinSpotLight3D = generated_root.get_child(0)
     assert_eq(widget.global_position, on_node.global_position, "no depth offset - plain Node3D isn't a VisualInstance3D")
     assert_eq(widget.get_node(widget.on_target_path), on_node)
     assert_eq(widget.get_node(widget.off_target_path), off_node)
-    assert_eq((sound.sound_on as MaszynaAudioStream).file_path, "light_ca_start")
-    assert_eq((sound.sound_off as MaszynaAudioStream).file_path, "light_ca_stop")
+    assert_eq((widget.sound_on as MaszynaAudioStream).file_path, "light_ca_start")
+    assert_eq((widget.sound_off as MaszynaAudioStream).file_path, "light_ca_stop")
+    assert_eq(diagnostics.size(), 0)
 
 
 func test_build_indicator_lights_builds_one_widget_per_matched_instance():
@@ -300,9 +301,10 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1)
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
 
-    assert_eq(generated_root.get_child_count(), 4)
+    assert_eq(generated_root.get_child_count(), 2)
 
 
 func test_build_indicator_lights_reports_missing_on_and_off():
@@ -313,10 +315,12 @@ func test_build_indicator_lights_reports_missing_on_and_off():
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, {}, generated_root, 1)
+    var diagnostics:Array[Dictionary] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, {}, generated_root, 1, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 0)
-    assert_push_warning("MMD_SUBMODEL_NOT_FOUND")
+    assert_eq(diagnostics.size(), 1)
+    assert_eq(diagnostics[0]["code"], "MMD_SUBMODEL_NOT_FOUND")
 
 
 func test_build_cab_light_keeps_indicator_separate_from_spotlight():
@@ -335,17 +339,20 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1)
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
     var light:CabinSpotLight3D = generated_root.get_child(1)
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
-    assert_false("on_target_path" in light)
+    assert_true(light.light_enabled)
+    assert_true(light.on_target_path.is_empty())
     assert_eq(light.global_position, on_node.global_position)
     assert_true((-light.global_basis.z).normalized().is_equal_approx(Vector3.DOWN))
     assert_eq(light.state_property, "roof_light_enabled")
+    assert_eq(diagnostics.size(), 0)
 
 
 func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
@@ -360,8 +367,9 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1)
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -369,6 +377,7 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
     assert_eq(light.global_position, on_node.global_position)
     assert_eq(light.state_property, "devices_light_enabled")
+    assert_eq(diagnostics.size(), 0)
 
 
 func test_build_radio_indicator_adds_radio_power_led_omnilight():
@@ -383,11 +392,12 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1)
+            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
-    var indicator:CabinIndicator3D = generated_root.get_child(0)
+    var indicator:CabinSpotLight3D = generated_root.get_child(0)
     var light:CabinOmniLight3D = generated_root.get_child(1)
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
     assert_eq(indicator.state_property, "radio_enabled")
@@ -396,6 +406,7 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
     assert_eq(light.light_color, Color(0.0, 0.738281, 0.121986, 1.0))
     assert_eq(light.light_energy_on, 0.05)
     assert_almost_eq(light.omni_range, 0.1, 0.0001)
+    assert_eq(diagnostics.size(), 0)
 
 
 func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescriptor:

@@ -3,9 +3,11 @@ class_name TrainSoundListener3D
 
 signal context_changed
 
+const EXTERIOR_CONTEXT:int = 5
+
 var listener_vehicle:RailVehicle3D
 var listener_cabin:Cabin3D
-var listener_context:int = TrainSoundSystem.ListenerContext.FREE_CAMERA
+var listener_context:int = EXTERIOR_CONTEXT
 
 var _player:MaszynaPlayer
 var _camera:Camera3D
@@ -35,15 +37,7 @@ func is_inside_vehicle(vehicle:RailVehicle3D) -> bool:
 func _refresh_context() -> void:
     var cabin:Cabin3D = _camera_cabin()
     var vehicle:RailVehicle3D = _player.controlled_vehicle if not cabin == null else null
-    var context:int = TrainSoundSystem.ListenerContext.FREE_CAMERA
-    if not cabin == null:
-        if _player.head_outside_cab:
-            context = TrainSoundSystem.ListenerContext.WINDOW
-        else:
-            var controller:TrainController = vehicle.get_controller()
-            var cabin_occupied:int = int(controller.state.get("cabin_occupied", 0)) if controller else 0
-            context = (TrainSoundSystem.ListenerContext.REAR_CAB
-                    if cabin_occupied < 0 else TrainSoundSystem.ListenerContext.FRONT_CAB)
+    var context:int = cabin.get_sound_listener_context() if not cabin == null else EXTERIOR_CONTEXT
     if listener_vehicle == vehicle and listener_cabin == cabin and listener_context == context:
         return
     listener_vehicle = vehicle

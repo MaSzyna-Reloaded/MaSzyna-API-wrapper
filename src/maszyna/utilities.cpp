@@ -16,13 +16,9 @@ Copyright (C) 2007-2014 Maciej Cierniak
 #include "utilities.h"
 #include <algorithm>
 #include <iomanip>
-#include <random>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unordered_map>
-
-#define RANDOM_ENGINE_TYPE std::mt19937
-#define LOCAL_RANDOM_ENGINE_TYPE std::mt19937
 
 namespace Maszyna {
 
@@ -32,8 +28,10 @@ namespace Maszyna {
     bool DebugCameraFlag = false;
     bool DebugTractionFlag = false;
 
-    RANDOM_ENGINE_TYPE random_engine;
-    LOCAL_RANDOM_ENGINE_TYPE local_random_engine;
+    // Random()/LocalRandom() are defined in src/core/utils.cpp, not here: the actual RNG engines
+    // (and the thread_local storage needed for them to be safe under TrainPhysicsServer's
+    // WorkerThreadPool-based concurrent consist stepping) live in our own code, not in this
+    // vendored-adjacent Maszyna utility file.
 
     double Max0R(double x1, double x2) {
         if (x1 > x2)
@@ -99,16 +97,6 @@ namespace Maszyna {
             } else {
                 return false;
             }
-    }
-
-    double Random(double a, double b) {
-        unsigned long val = random_engine();
-        return interpolate(a, b, (double)val / random_engine.max());
-    }
-
-    double LocalRandom(double a, double b) {
-        unsigned long val = local_random_engine();
-        return interpolate(a, b, (double)val / random_engine.max());
     }
 
     bool FuzzyLogic(double Test, double Threshold, double Probability) {

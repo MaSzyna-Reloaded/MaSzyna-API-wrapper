@@ -183,10 +183,6 @@ namespace godot {
         p_state["doors_right_step_operating"] = right_door.step_folding || right_door.step_unfolding;
     }
 
-    void TrainDoors::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {
-        p_mover->update_doors(p_delta);
-    }
-
     void TrainDoors::next_permit_preset() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);

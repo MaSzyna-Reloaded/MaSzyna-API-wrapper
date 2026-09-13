@@ -2,6 +2,7 @@
 #include "../core/TrainPart.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/TrainEngine.hpp"
+#include "../systems/TrainPhysicsServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/core/math.hpp>
@@ -110,21 +111,23 @@ namespace godot {
     }
 
     TMoverParameters *TrainController::get_mover() const {
-        return mover;
+        return TrainPhysicsServer::get_instance() != nullptr ? TrainPhysicsServer::get_instance()->get_mover(mover_rid)
+                                                               : nullptr;
     }
 
     void TrainController::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
         const auto mover_type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
-        mover = std::make_unique<TMoverParameters>(initial_vel, mover_type_name, name, this->cabin_number).release();
+        mover_rid = TrainPhysicsServer::get_instance()->create_mover(initial_vel, mover_type_name, name, this->cabin_number);
+        TMoverParameters *mover = get_mover();
 
         dirty = true;
         dirty_prop = true;
         _update_mover_config_if_dirty();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+        mover->CheckLocomotiveParameters(true, 0); // FIXME: missing parameters
 
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
@@ -141,7 +144,7 @@ namespace godot {
         mover->CabActivisationAuto();
         mover->CabActivisation();
 
-        /* switch_physics() raczej trzeba zostawic */
+        /* switch_physics() probably needs to be left here */
         mover->switch_physics(true);
 
         DEBUG("[MaSzyna::TMoverParameters] Mover initialized successfully");
@@ -163,6 +166,9 @@ namespace godot {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
                 TrainSystem::get_instance()->register_train(train_id, this);
+                if (TrainPhysicsServer::get_instance() != nullptr) {
+                    TrainPhysicsServer::get_instance()->register_controller(this);
+                }
                 register_command("battery", Callable(this, "battery"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
@@ -184,6 +190,10 @@ namespace godot {
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 TrainSystem::get_instance()->unregister_train(train_id);
+                if (TrainPhysicsServer::get_instance() != nullptr) {
+                    TrainPhysicsServer::get_instance()->unregister_controller(this);
+                    TrainPhysicsServer::get_instance()->free_mover(mover_rid);
+                }
                 break;
             case NOTIFICATION_READY:
                 initialize_mover();
@@ -204,7 +214,7 @@ namespace godot {
             emit_signal(mover_config_changed_signal);
 
             dirty = false;
-            dirty_prop = true; // sforsowanie odswiezenia stanu lokalnych propsow
+            dirty_prop = true; // forcing refresh of local properties state
         }
 
         if (dirty_prop) {
@@ -213,7 +223,11 @@ namespace godot {
         }
     }
 
-    void TrainController::_process_mover(const double p_delta) {
+    void TrainController::_process_mover_thread_safe(const double p_delta) {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
         TLocation mock_location;
         TRotation mock_rotation;
         mover->ComputeTotalForce(p_delta);
@@ -221,7 +235,9 @@ namespace godot {
         mover->ComputeMovement(
                 p_delta, p_delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mock_location,
                 mock_rotation);
+    }
 
+    void TrainController::_post_process_mover_sync() {
         _handle_mover_update();
     }
 
@@ -250,16 +266,6 @@ namespace godot {
         }
     }
 
-    void TrainController::_process(const double p_delta) {
-        /* nie daj borze w edytorze */
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        _update_mover_config_if_dirty();
-        _process_mover(p_delta);
-    }
-
     void TrainController::_do_update_internal_mover(TMoverParameters *p_mover) const {
         p_mover->Mass = mass;
         p_mover->Power = power;
@@ -282,7 +288,7 @@ namespace godot {
             update_config(new_config);
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-            mover->CheckLocomotiveParameters(true, 0); // FIXME: brakujace parametery
+            mover->CheckLocomotiveParameters(true, 0); // FIXME: missing parameters
         } else {
             UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
         }
@@ -359,25 +365,25 @@ namespace godot {
     }
 
     void TrainController::battery(const bool p_enabled) const {
-        mover->BatterySwitch(p_enabled);
+        get_mover()->BatterySwitch(p_enabled);
     }
 
     void TrainController::main_controller_increase(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
-        mover->IncMainCtrl(step);
+        get_mover()->IncMainCtrl(step);
     }
 
     void TrainController::main_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
-        mover->DecMainCtrl(step);
+        get_mover()->DecMainCtrl(step);
     }
 
     void TrainController::direction_increase() const {
-        mover->DirectionForward();
+        get_mover()->DirectionForward();
     }
 
     void TrainController::direction_decrease() const {
-        mover->DirectionBackward();
+        get_mover()->DirectionBackward();
     }
 
     void TrainController::radio_channel_increase(const int p_step) {
@@ -395,6 +401,6 @@ namespace godot {
     }
 
     void TrainController::radio(const bool p_enabled) {
-        mover->Radio = p_enabled;
+        get_mover()->Radio = p_enabled;
     }
 } // namespace godot

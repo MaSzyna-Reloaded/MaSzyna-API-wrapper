@@ -9,6 +9,33 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 TrainEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
+        BIND_PROPERTY(TrainEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
+        BIND_PROPERTY(TrainEngine, Variant::INT, transmission_gear_teeth_wheel, "transmission");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, transmission_efficiency, "transmission");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, maximum_traction_force);
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, motor_blowers_speed, "motor_blowers");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, motor_blowers_sustain_time, "motor_blowers");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, motor_blowers_start_velocity, "motor_blowers");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, pressure_switch_present);
+        BIND_PROPERTY(TrainEngine, Variant::INT, inverters_count);
+        BIND_PROPERTY_W_HINT(
+                TrainEngine, Variant::INT, motor_blowers_start_mode, "motor_blowers", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(TrainEngine, Variant::INT, cntrl_main_controller_position_count, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::INT, cntrl_shunt_controller_position_count, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::INT, cntrl_direction_change_max_position, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_eim_control_additional_zeros, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_eim_control_emergency, "cntrl");
+        BIND_PROPERTY_W_HINT(TrainEngine, Variant::INT, cntrl_eim_control_type, "cntrl", PROPERTY_HINT_ENUM, "0,1,2,3");
+        BIND_PROPERTY_W_HINT(
+                TrainEngine, Variant::INT, cntrl_auto_relay_mode, "cntrl", PROPERTY_HINT_ENUM, "No,Yes,Optional");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_coupled_controllers, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_has_camshaft, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_series_shunt_on_series_position, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, cntrl_initial_controller_delay, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, cntrl_controller_step_delay, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::FLOAT, cntrl_controller_step_down_delay, "cntrl");
+        BIND_PROPERTY(TrainEngine, Variant::BOOL, cntrl_fast_series_circuit, "cntrl");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
 
@@ -21,10 +48,55 @@ namespace godot {
         BIND_ENUM_CONSTANT(STEAM);
         BIND_ENUM_CONSTANT(DIESEL_ELECTRIC);
         BIND_ENUM_CONSTANT(MAIN);
+
+        BIND_ENUM_CONSTANT(START_MODE_DISABLED);
+        BIND_ENUM_CONSTANT(START_MODE_MANUAL);
+        BIND_ENUM_CONSTANT(START_MODE_AUTOMATIC);
+        BIND_ENUM_CONSTANT(START_MODE_MANUAL_WITH_AUTO_FALLBACK);
+        BIND_ENUM_CONSTANT(START_MODE_CONVERTER);
+        BIND_ENUM_CONSTANT(START_MODE_BATTERY);
+        BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
+
+        BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_0);
+        BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_1);
+        BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_2);
+        BIND_ENUM_CONSTANT(EIM_CONTROL_TYPE_3);
+
+        BIND_ENUM_CONSTANT(AUTO_RELAY_NO);
+        BIND_ENUM_CONSTANT(AUTO_RELAY_YES);
+        BIND_ENUM_CONSTANT(AUTO_RELAY_OPTIONAL);
     }
 
     void TrainEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
         p_mover->EngineType = engine_type_map.at(get_engine_type());
+
+        p_mover->Transmision.NToothM = transmission_gear_teeth_motor;
+        p_mover->Transmision.NToothW = transmission_gear_teeth_wheel;
+        p_mover->Transmision.Efficiency = transmission_efficiency;
+        p_mover->Ftmax = maximum_traction_force;
+        p_mover->HasControlPressureSwitch = pressure_switch_present;
+        p_mover->InvertersNo = inverters_count;
+        for (auto &fan: p_mover->MotorBlowers) {
+            fan.speed = static_cast<float>(motor_blowers_speed);
+            fan.sustain_time = static_cast<float>(motor_blowers_sustain_time);
+            fan.min_start_velocity = static_cast<float>(motor_blowers_start_velocity);
+            fan.start_type = start_mode_map.at(motor_blowers_start_mode);
+        }
+
+        p_mover->MainCtrlPosNo = cntrl_main_controller_position_count;
+        p_mover->ScndCtrlPosNo = cntrl_shunt_controller_position_count;
+        p_mover->MainCtrlMaxDirChangePos = cntrl_direction_change_max_position;
+        p_mover->EIMCtrlAdditionalZeros = cntrl_eim_control_additional_zeros;
+        p_mover->EIMCtrlEmergency = cntrl_eim_control_emergency;
+        p_mover->EIMCtrlType = cntrl_eim_control_type;
+        p_mover->AutoRelayType = cntrl_auto_relay_mode;
+        p_mover->CoupledCtrl = cntrl_coupled_controllers;
+        p_mover->HasCamshaft = cntrl_has_camshaft;
+        p_mover->ScndS = cntrl_series_shunt_on_series_position;
+        p_mover->InitialCtrlDelay = cntrl_initial_controller_delay;
+        p_mover->CtrlDelay = cntrl_controller_step_delay;
+        p_mover->CtrlDownDelay = cntrl_controller_step_down_delay;
+        p_mover->FastSerialCircuit = static_cast<int>(cntrl_fast_series_circuit);
 
         /* FIXME: for testing purposes */
         p_mover->GroundRelay = true;

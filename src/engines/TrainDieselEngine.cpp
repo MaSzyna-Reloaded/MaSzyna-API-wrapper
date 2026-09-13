@@ -1,6 +1,7 @@
 #include "TrainDieselEngine.hpp"
 #include "macros.hpp"
 
+#include <algorithm>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -9,11 +10,68 @@ namespace godot {
     void TrainDieselEngine::_bind_methods() {
         BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, oil_pump_pressure_minimum, "oil_pump");
         BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, oil_pump_pressure_maximum, "oil_pump");
-        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, maximum_traction_force);
+        BIND_PROPERTY_W_HINT(
+                TrainDieselEngine, Variant::INT, fuel_pump_start_mode, "fuel_pump", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY_W_HINT(
+                TrainDieselEngine, Variant::INT, oil_pump_start_mode, "oil_pump", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY_W_HINT(
+                TrainDieselEngine, Variant::INT, water_pump_start_mode, "water_pump", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_min_rpm, "mechanical");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_max_rpm, "mechanical");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_fuel_cutoff_rpm, "mechanical");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_inertia, "mechanical");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_clutch_engage_speed, "mechanical/clutch");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, mechanical_clutch_disengage_speed, "mechanical/clutch");
+        BIND_PROPERTY(TrainDieselEngine, Variant::BOOL, torque_converter_present, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_max_torque_ratio, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_coupling_point, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_lockup_torque, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_lockup_rate, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_unlock_rate, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_fill_rate_increase, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_fill_rate_decrease, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_torque_in_in, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_torque_in_out, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_torque_out_out, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_lockup_speed, "torque_converter");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, torque_converter_unlock_speed, "torque_converter");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                TrainDieselEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
+                TrainDieselEngine, Variant::ARRAY, torque_converter_table, "torque_converter",
+                PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                TrainDieselEngine, Variant::ARRAY, vel2nmax_table, PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
+        BIND_PROPERTY(TrainDieselEngine, Variant::BOOL, retarder_present, "retarder");
+        BIND_PROPERTY_W_HINT(
+                TrainDieselEngine, Variant::INT, retarder_placement, "retarder", PROPERTY_HINT_ENUM,
+                "AfterGearbox,BetweenGearboxAndTC,BetweenTCAndEngine");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_torque_in_in, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_max_torque, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_max_power, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_fill_rate_increase, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_fill_rate_decrease, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, retarder_min_velocity, "retarder");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, throttle_table_max_torque, "throttle_table_positions");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, throttle_table_max_torque_rpm, "throttle_table_positions");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, throttle_table_max_rpm_torque, "throttle_table_positions");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, throttle_table_nominal_fuel_dose, "throttle_table_positions");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, throttle_table_resistance_torque, "throttle_table_positions");
+        BIND_PROPERTY(
+                TrainDieselEngine, Variant::FLOAT, throttle_table_nominal_fuel_consumption_rate,
+                "throttle_table_positions");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                TrainDieselEngine, Variant::ARRAY, throttle_table_positions, "throttle_table_positions",
+                PROPERTY_HINT_TYPE_STRING, "ThrottlePositionItem");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                TrainDieselEngine, Variant::ARRAY, torque_table, PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &TrainDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &TrainDieselEngine::oil_pump);
+
+        BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_AFTER_GEARBOX);
+        BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC);
+        BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_TC_AND_ENGINE);
     }
 
     TrainEngine::EngineType TrainDieselEngine::get_engine_type() {
@@ -39,43 +97,115 @@ namespace godot {
         p_state["diesel_fill"] = p_mover->dizel_fill;
     }
 
+    void TrainDieselEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        TrainEngine::_do_fetch_config_from_mover(p_mover, p_config);
+        p_config["engine_shake_enabled"] = true;
+    }
+
     void TrainDieselEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
         TrainEngine::_do_update_internal_mover(p_mover);
 
         // FIXME: test data
         p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
-        p_mover->dizel_nmin = 100; // nie wiem skad to sie ustawia, w FIZ stonki nie ma
         // end test data
 
         p_mover->OilPump.pressure_minimum = oil_pump_pressure_minimum;
         p_mover->OilPump.pressure_maximum = oil_pump_pressure_maximum;
+        p_mover->FuelPump.start_type = start_mode_map.at(fuel_pump_start_mode);
+        p_mover->OilPump.start_type = start_mode_map.at(oil_pump_start_mode);
+        p_mover->WaterPump.start_type = start_mode_map.at(water_pump_start_mode);
 
-        p_mover->Ftmax = maximum_traction_force;
+        p_mover->dizel_nmin = mechanical_min_rpm;
+        p_mover->dizel_nmax = mechanical_max_rpm;
+        p_mover->dizel_nmax_cutoff = mechanical_fuel_cutoff_rpm;
+        p_mover->dizel_AIM = mechanical_inertia;
+        p_mover->engageupspeed = mechanical_clutch_engage_speed;
+        p_mover->engagedownspeed = mechanical_clutch_disengage_speed;
 
-        /* FIXME: move to TrainDieselElectricEngine */
-        /* tablica rezystorow rozr. (eng. Starting resistor array) WWList aka DEList aka TDESchemeTable */
-        constexpr int MAX = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
-        const int wwlist_size = static_cast<int>(wwlist.size());
-        p_mover->MainCtrlPosNo = wwlist_size - 1;
-        for (int i = 0; i < std::min(MAX, wwlist_size); i++) {
-            const Ref<WWListItem> &row = wwlist[i];
-            if (row == nullptr || !row.is_valid() || row.is_null()) {
+        p_mover->hydro_TC = torque_converter_present;
+        p_mover->hydro_TC_TMMax = torque_converter_max_torque_ratio;
+        p_mover->hydro_TC_CouplingPoint = torque_converter_coupling_point;
+        p_mover->hydro_TC_LockupTorque = torque_converter_lockup_torque;
+        p_mover->hydro_TC_LockupRate = torque_converter_lockup_rate;
+        p_mover->hydro_TC_UnlockRate = torque_converter_unlock_rate;
+        p_mover->hydro_TC_FillRateInc = torque_converter_fill_rate_increase;
+        p_mover->hydro_TC_FillRateDec = torque_converter_fill_rate_decrease;
+        p_mover->hydro_TC_TorqueInIn = torque_converter_torque_in_in;
+        p_mover->hydro_TC_TorqueInOut = torque_converter_torque_in_out;
+        p_mover->hydro_TC_TorqueOutOut = torque_converter_torque_out_out;
+        p_mover->hydro_TC_LockupSpeed = torque_converter_lockup_speed;
+        p_mover->hydro_TC_UnlockSpeed = torque_converter_unlock_speed;
+
+        p_mover->hydro_TC_Table.clear();
+        for (int i = 0; i < torque_converter_table.size(); i++) {
+            const Ref<CurvePointItem> &row = torque_converter_table[i];
+            if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[TrainDieselEngine]: wwlist property is null at index " + String::num(i));
-                return;
+                        "[TrainDieselEngine]: torque_converter_table property is null at index " + String::num(i));
+                continue;
             }
+            p_mover->hydro_TC_Table.emplace(row->get_x(), row->get_y());
+        }
 
-            p_mover->DElist[i].RPM = row->get_rpm();
-            p_mover->DElist[i].GenPower = row->get_max_power();
-            p_mover->DElist[i].Umax = row->get_max_voltage();
-            p_mover->DElist[i].Imax = row->get_max_current();
-            if (row->get_has_shunting()) {
-                p_mover->SST[i].Umin = row->get_min_wakeup_voltage();
-                p_mover->SST[i].Umax = row->get_max_wakeup_voltage();
-                p_mover->SST[i].Pmax = row->get_max_wakeup_power();
-                p_mover->SST[i].Pmin = std::sqrt(std::pow(p_mover->SST[i].Umin, 2) / 47.6);
-                p_mover->SST[i].Pmax = std::min(p_mover->SST[i].Pmax, std::pow(p_mover->SST[i].Umax, 2) / 47.6);
+        p_mover->dizel_vel2nmax_Table.clear();
+        for (int i = 0; i < vel2nmax_table.size(); i++) {
+            const Ref<CurvePointItem> &row = vel2nmax_table[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainDieselEngine]: vel2nmax_table property is null at index " + String::num(i));
+                continue;
             }
+            // matches readV2NMAXList (Mover.cpp:8476-8489): x unconverted, y (rpm) -> rev/s
+            p_mover->dizel_vel2nmax_Table.emplace(row->get_x(), row->get_y() / 60.0);
+        }
+
+        p_mover->hydro_R = retarder_present;
+        p_mover->hydro_R_Placement = retarder_placement;
+        p_mover->hydro_R_TorqueInIn = retarder_torque_in_in;
+        p_mover->hydro_R_MaxTorque = retarder_max_torque;
+        p_mover->hydro_R_MaxPower = retarder_max_power;
+        p_mover->hydro_R_FillRateInc = retarder_fill_rate_increase;
+        p_mover->hydro_R_FillRateDec = retarder_fill_rate_decrease;
+        p_mover->hydro_R_MinVel = retarder_min_velocity;
+
+        /* DList: tabela przepustnicy */
+        p_mover->dizel_Mmax = throttle_table_max_torque;
+        p_mover->dizel_nMmax = throttle_table_max_torque_rpm;
+        p_mover->dizel_Mnmax = throttle_table_max_rpm_torque;
+        p_mover->dizel_nominalfill = throttle_table_nominal_fuel_dose;
+        p_mover->dizel_Mstand = throttle_table_resistance_torque;
+        p_mover->dizel_NominalFuelConsumptionRate = throttle_table_nominal_fuel_consumption_rate;
+
+        constexpr int MAX_THROTTLE_TABLE = Maszyna::ResArraySize + 1;
+        const int throttle_table_size = static_cast<int>(throttle_table_positions.size());
+        if (throttle_table_size > MAX_THROTTLE_TABLE) {
+            UtilityFunctions::push_warning(
+                    "[TrainDieselEngine]: throttle_table_positions has " + String::num_int64(throttle_table_size) +
+                    " entries, exceeding the mover's limit of " + String::num_int64(MAX_THROTTLE_TABLE) +
+                    "; truncating.");
+        }
+        for (int i = 0; i < std::min(MAX_THROTTLE_TABLE, throttle_table_size); i++) {
+            const Ref<ThrottlePositionItem> &row = throttle_table_positions[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainDieselEngine]: throttle_table_positions property is null at index " + String::num(i));
+                continue;
+            }
+            p_mover->RList[i].Relay = row->get_throttle_position();
+            p_mover->RList[i].R = row->get_fuel_dose();
+            p_mover->RList[i].Mn = row->get_clutch_behavior();
+        }
+
+        /* DMList: charakterystyka momentu obrotowego silnika spalinowego */
+        p_mover->dizel_Momentum_Table.clear();
+        for (int i = 0; i < torque_table.size(); i++) {
+            const Ref<CurvePointItem> &row = torque_table[i];
+            if (row == nullptr || !row.is_valid()) {
+                UtilityFunctions::push_warning(
+                        "[TrainDieselEngine]: torque_table property is null at index " + String::num(i));
+                continue;
+            }
+            p_mover->dizel_Momentum_Table.emplace(row->get_x() / 60.0, row->get_y());
         }
     }
 

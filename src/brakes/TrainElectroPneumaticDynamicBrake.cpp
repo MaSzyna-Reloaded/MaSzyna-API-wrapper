@@ -17,6 +17,13 @@ namespace godot {
         BIND_PROPERTY(
                 TrainElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_brake_delay, "electro_pneumatic");
         BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::BOOL, ep_brake_fuse);
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::FLOAT, blending_max_velocity, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::FLOAT, blending_min_velocity, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::FLOAT, blending_reference_velocity, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::FLOAT, blending_max_deceleration, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::BOOL, blending_velocity_correction, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::BOOL, blending_load_correction, "blending");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::FLOAT, blending_min_ed_brake_request, "blending");
 
         BIND_ENUM_CONSTANT(NONE)
         BIND_ENUM_CONSTANT(FRONT)
@@ -50,6 +57,14 @@ namespace godot {
         p_mover->DCEMUED_EP_max_Vel = electro_pneumatic_max_ep_brake_engagement_speed;
         p_mover->DCEMUED_EP_min_Im = electro_pneumatic_min_regenerative_braking;
         p_mover->EpFuseSwitch(ep_brake_fuse);
+
+        p_mover->MED_Vmax = blending_max_velocity;
+        p_mover->MED_Vmin = blending_min_velocity;
+        p_mover->MED_Vref = blending_reference_velocity;
+        p_mover->MED_amax = blending_max_deceleration;
+        p_mover->MED_EPVC = blending_velocity_correction;
+        p_mover->MED_Ncor = blending_load_correction;
+        p_mover->MED_MinBrakeReqED = blending_min_ed_brake_request;
     }
 
     void TrainElectroPneumaticDynamicBrake::set_ep_brake_force(const int p_value) {

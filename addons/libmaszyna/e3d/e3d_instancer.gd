@@ -56,18 +56,18 @@ func _is_submodel_valid(target_node: E3DModelInstance, submodel: E3DSubModel) ->
     return false
 
 
-func _get_material_override(target_node: E3DModelInstance, submodel: E3DSubModel) -> Material:
+func _get_material_override(target_node: E3DModelInstance, submodel: E3DSubModel, force_alpha: bool = false) -> Material:
     var unprefixed_model_path: String = "/".join(target_node.data_path.split("/").slice(1))
     var options = MaterialManager.MaterialOptions.new()
 
     # TODO: handle more material options here (selfillum, diffuse_color, etc)
-    options.force_transparent = submodel.material_transparent
-    options.selfillum_energy = options.selfillum_color.a  # legacy renderer
+    options.force_transparent = force_alpha
     options.selfillum_color = (
         submodel.self_illumination
         if submodel.self_illumination and not submodel.self_illumination == Color.BLACK
         else Color.WHITE
     )
+    options.selfillum_energy = options.selfillum_color.a  # legacy renderer
     options.selfillum_enabled = options.selfillum_energy > 0.0 and submodel.lights_on_threshold >= 1.0  # legacy renderer logic
 
     if submodel.dynamic_material:

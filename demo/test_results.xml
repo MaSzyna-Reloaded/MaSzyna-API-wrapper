@@ -1,0 +1,495 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="GutTests" failures="0" tests="202" >
+  <testsuite name="tests/test_brake_pressure_table.gd" tests="3" failures="0" skipped="0" time="0.125382" >
+      <testcase name="test_default_row_has_expected_defaults" assertions="5" status="pass" classname="tests/test_brake_pressure_table.gd" time="0.084509" >
+      </testcase>
+      <testcase name="test_row_round_trips_values" assertions="5" status="pass" classname="tests/test_brake_pressure_table.gd" time="0.013512" >
+      </testcase>
+      <testcase name="test_brake_pressure_table_accepts_negative_handle_positions" assertions="2" status="pass" classname="tests/test_brake_pressure_table.gd" time="0.027361" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_cabin_button.gd" tests="1" failures="0" skipped="0" time="0.020416" >
+      <testcase name="test_monostable_on_mode_fires_command_once_on_press_via_real_input_event" assertions="2" status="pass" classname="tests/test_cabin_button.gd" time="0.020416" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_cabin_spot_light_3d.gd" tests="3" failures="0" skipped="0" time="0.000775" >
+      <testcase name="test_sound_plays_on_every_blink_transition_not_just_session_start" assertions="3" status="pass" classname="tests/test_cabin_spot_light_3d.gd" time="0.00042" >
+      </testcase>
+      <testcase name="test_sound_does_not_replay_when_state_is_unchanged" assertions="1" status="pass" classname="tests/test_cabin_spot_light_3d.gd" time="0.000129" >
+      </testcase>
+      <testcase name="test_light_enabled_false_suppresses_light_but_not_submodel_or_sound" assertions="4" status="pass" classname="tests/test_cabin_spot_light_3d.gd" time="0.000226" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_cabin_switch.gd" tests="3" failures="0" skipped="0" time="0.067644" >
+      <testcase name="test_value_offset_shifts_rotation_but_not_switch_position_or_clamping" assertions="3" status="pass" classname="tests/test_cabin_switch.gd" time="0.000228" >
+      </testcase>
+      <testcase name="test_value_offset_defaults_to_zero_matching_prior_behavior" assertions="1" status="pass" classname="tests/test_cabin_switch.gd" time="0.000144" >
+      </testcase>
+      <testcase name="test_value_offset_also_applies_after_a_real_process_frame" assertions="1" status="pass" classname="tests/test_cabin_switch.gd" time="0.067272" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_compressor_list.gd" tests="4" failures="0" skipped="0" time="0.082788" >
+      <testcase name="test_default_row_has_expected_defaults" assertions="4" status="pass" classname="tests/test_compressor_list.gd" time="0.013708" >
+      </testcase>
+      <testcase name="test_row_round_trips_values" assertions="4" status="pass" classname="tests/test_compressor_list.gd" time="0.014016" >
+      </testcase>
+      <testcase name="test_compressor_list_property_accepts_items" assertions="2" status="pass" classname="tests/test_compressor_list.gd" time="0.027519" >
+      </testcase>
+      <testcase name="test_oversized_compressor_list_is_truncated_without_crashing" assertions="1" status="pass" classname="tests/test_compressor_list.gd" time="0.027545" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_console_focus.gd" tests="2" failures="0" skipped="0" time="0.241161" >
+      <testcase name="test_line_edit_keeps_editing_on_submit" assertions="1" status="pass" classname="tests/test_console_focus.gd" time="0.110007" >
+      </testcase>
+      <testcase name="test_submit_keeps_focus_and_editing_state" assertions="7" status="pass" classname="tests/test_console_focus.gd" time="0.131154" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_e3d_lights_state.gd" tests="2" failures="0" skipped="0" time="0.192969" >
+      <testcase name="test_model_instance_synchronizes_lights_state_with_model" assertions="3" status="pass" classname="tests/test_e3d_lights_state.gd" time="0.096337" >
+      </testcase>
+      <testcase name="test_nodes_instancer_maps_light_on_prefix_family" assertions="6" status="pass" classname="tests/test_e3d_lights_state.gd" time="0.096632" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_e3d_model_node_path.gd" tests="6" failures="0" skipped="0" time="0.000551" >
+      <testcase name="test_get_node_or_null_resolves_nested_path" assertions="1" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000133" >
+      </testcase>
+      <testcase name="test_get_node_returns_root_node" assertions="1" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000103" >
+      </testcase>
+      <testcase name="test_get_node_or_null_returns_null_for_invalid_path" assertions="1" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000081" >
+      </testcase>
+      <testcase name="test_get_node_or_null_returns_null_for_empty_path" assertions="1" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000071" >
+      </testcase>
+      <testcase name="test_get_node_or_null_returns_null_for_duplicate_sibling_names" assertions="1" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000078" >
+      </testcase>
+      <testcase name="test_light_definition_stores_node_paths" assertions="2" status="pass" classname="tests/test_e3d_model_node_path.gd" time="0.000085" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_e3d_model_tool.gd" tests="4" failures="0" skipped="0" time="0.385479" >
+      <testcase name="test_returns_first_root_mesh" assertions="1" status="pass" classname="tests/test_e3d_model_tool.gd" time="0.095552" >
+      </testcase>
+      <testcase name="test_returns_nested_mesh_when_root_has_no_mesh" assertions="1" status="pass" classname="tests/test_e3d_model_tool.gd" time="0.09664" >
+      </testcase>
+      <testcase name="test_returns_null_when_model_has_no_mesh" assertions="1" status="pass" classname="tests/test_e3d_model_tool.gd" time="0.096627" >
+      </testcase>
+      <testcase name="test_uses_depth_first_preorder" assertions="1" status="pass" classname="tests/test_e3d_model_tool.gd" time="0.09666" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_fiz_import.gd" tests="6" failures="0" skipped="0" time="0.082697" >
+      <testcase name="test_param_and_dimensions" assertions="10" status="pass" classname="tests/test_fiz_import.gd" time="0.013854" >
+      </testcase>
+      <testcase name="test_cntrl_general_subset" assertions="3" status="pass" classname="tests/test_fiz_import.gd" time="0.013583" >
+      </testcase>
+      <testcase name="test_wheels" assertions="7" status="pass" classname="tests/test_fiz_import.gd" time="0.013913" >
+      </testcase>
+      <testcase name="test_brake_and_bpt_table" assertions="16" status="pass" classname="tests/test_fiz_import.gd" time="0.013959" >
+      </testcase>
+      <testcase name="test_doors" assertions="5" status="pass" classname="tests/test_fiz_import.gd" time="0.013565" >
+      </testcase>
+      <testcase name="test_buff_coupl" assertions="5" status="pass" classname="tests/test_fiz_import.gd" time="0.013823" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_fiz_train_controller.gd" tests="4" failures="0" skipped="0" time="0.145055" >
+      <testcase name="test_builds_child_controller_from_data_path_and_filename" assertions="8" status="pass" classname="tests/test_fiz_train_controller.gd" time="0.027498" >
+      </testcase>
+      <testcase name="test_native_mover_still_updates" assertions="2" status="pass" classname="tests/test_fiz_train_controller.gd" time="0.034853" >
+      </testcase>
+      <testcase name="test_editable_in_editor_toggles_internal_mode" assertions="3" status="pass" classname="tests/test_fiz_train_controller.gd" time="0.041425" >
+      </testcase>
+      <testcase name="test_reassigning_fiz_filename_clears_previous_controller" assertions="3" status="pass" classname="tests/test_fiz_train_controller.gd" time="0.041279" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_material_manager_variants.gd" tests="18" failures="0" skipped="0" time="0.029099" >
+      <testcase name="test_parse_stores_default_shader_on_default_variant" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.013534" >
+      </testcase>
+      <testcase name="test_variant_inherits_default_shader_when_season_has_no_shader" assertions="2" status="pass" classname="tests/test_material_manager_variants.gd" time="0.00061" >
+      </testcase>
+      <testcase name="test_weather_shader_overrides_season_shader" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000576" >
+      </testcase>
+      <testcase name="test_weather_variant_merges_after_season_variant" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.00058" >
+      </testcase>
+      <testcase name="test_get_material_updates_existing_material_in_place_when_season_changes" assertions="3" status="pass" classname="tests/test_material_manager_variants.gd" time="0.00174" >
+      </testcase>
+      <testcase name="test_get_material_updates_existing_material_in_place_when_weather_changes" assertions="3" status="pass" classname="tests/test_material_manager_variants.gd" time="0.002037" >
+      </testcase>
+      <testcase name="test_refresh_prunes_dead_managed_material_entries" assertions="3" status="pass" classname="tests/test_material_manager_variants.gd" time="0.001699" >
+      </testcase>
+      <testcase name="test_environment_node_proxies_season_and_weather_to_material_manager" assertions="2" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000468" >
+      </testcase>
+      <testcase name="test_environment_node_sets_season_from_manual_date_thresholds" assertions="16" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000828" >
+      </testcase>
+      <testcase name="test_environment_node_set_date_normalizes_invalid_date_via_time_of_day" assertions="3" status="pass" classname="tests/test_material_manager_variants.gd" time="0.00055" >
+      </testcase>
+      <testcase name="test_environment_node_uses_time_of_day_date_when_system_time_enabled" assertions="4" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000517" >
+      </testcase>
+      <testcase name="test_get_material_uses_default_shader_before_variant_override" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.001006" >
+      </testcase>
+      <testcase name="test_texture_transparency_suffix_sets_material_transparent" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000545" >
+      </testcase>
+      <testcase name="test_create_sets_alpha_scissor_for_transparent_material" assertions="2" status="pass" classname="tests/test_material_manager_variants.gd" time="0.00081" >
+      </testcase>
+      <testcase name="test_create_sets_alpha_blending_for_e3d_translucent_submodel" assertions="2" status="pass" classname="tests/test_material_manager_variants.gd" time="0.001422" >
+      </testcase>
+      <testcase name="test_create_uses_diffuse_color_for_default_shader_without_texture" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000612" >
+      </testcase>
+      <testcase name="test_create_uses_diffuse_color_for_parallax_shader_without_texture" assertions="1" status="pass" classname="tests/test_material_manager_variants.gd" time="0.000553" >
+      </testcase>
+      <testcase name="test_apply_updates_existing_material_transparency_state" assertions="2" status="pass" classname="tests/test_material_manager_variants.gd" time="0.001012" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_mmd_cabin_instancer.gd" tests="32" failures="0" skipped="0" time="0.034112" >
+      <testcase name="test_parse_body_model_reads_top_level_models_key" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000923" >
+      </testcase>
+      <testcase name="test_parse_passengers_model_reads_loads_block" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001113" >
+      </testcase>
+      <testcase name="test_resolve_skins_maps_numbered_materials_directly_to_dynamic_slots" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000472" >
+      </testcase>
+      <testcase name="test_resolve_skins_preserves_explicit_slot_list" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000241" >
+      </testcase>
+      <testcase name="test_cab1_bounds_and_driver_position" assertions="5" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001281" >
+      </testcase>
+      <testcase name="test_cab2_does_not_leak_cab1_driver_position" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001185" >
+      </testcase>
+      <testcase name="test_instruments_are_shared_between_cabs" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.002175" >
+      </testcase>
+      <testcase name="test_plain_form_instrument_is_parsed" assertions="5" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001258" >
+      </testcase>
+      <testcase name="test_colon_glued_label_and_value_are_split" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001168" >
+      </testcase>
+      <testcase name="test_block_form_instrument_captures_button_type" assertions="3" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001183" >
+      </testcase>
+      <testcase name="test_line_and_block_comments_are_stripped" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001181" >
+      </testcase>
+      <testcase name="test_duplicate_labels_are_preserved_in_order" assertions="3" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001197" >
+      </testcase>
+      <testcase name="test_unrecognized_label_does_not_desync_following_labels" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001147" >
+      </testcase>
+      <testcase name="test_indicator_light_label_is_parsed_as_bare_submodel_name" assertions="4" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001215" >
+      </testcase>
+      <testcase name="test_block_form_indicator_light_reads_submodel_from_inside_the_block" assertions="5" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001215" >
+      </testcase>
+      <testcase name="test_newly_catalogued_labels_parse_and_do_not_desync_the_include_that_follows" assertions="13" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001292" >
+      </testcase>
+      <testcase name="test_include_substitutes_positional_parameter" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001158" >
+      </testcase>
+      <testcase name="test_random_include_choice_is_persisted_across_reparse" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.002177" >
+      </testcase>
+      <testcase name="test_cab0_definition_ends_the_instrument_section" assertions="26" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001617" >
+      </testcase>
+      <testcase name="test_bare_filename_sound_fields_are_parsed_and_extension_stripped" assertions="4" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001191" >
+      </testcase>
+      <testcase name="test_numbered_sound_position_fields_are_parsed" assertions="3" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001174" >
+      </testcase>
+      <testcase name="test_bracketed_random_sound_list_resolves_to_one_entry" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001124" >
+      </testcase>
+      <testcase name="test_random_sound_choice_is_persisted_across_reparse" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.002139" >
+      </testcase>
+      <testcase name="test_nested_sound_subblock_extracts_only_soundmain" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001158" >
+      </testcase>
+      <testcase name="test_sound_fields_do_not_desync_following_labels" assertions="2" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.001162" >
+      </testcase>
+      <testcase name="test_position_at_submodel_instance_uses_visual_aabb_center_not_pivot" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000234" >
+      </testcase>
+      <testcase name="test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets" assertions="7" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000669" >
+      </testcase>
+      <testcase name="test_build_indicator_lights_builds_one_widget_per_matched_instance" assertions="1" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000347" >
+      </testcase>
+      <testcase name="test_build_indicator_lights_reports_missing_on_and_off" assertions="3" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000311" >
+      </testcase>
+      <testcase name="test_build_cab_light_keeps_indicator_separate_from_spotlight" assertions="8" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000452" >
+      </testcase>
+      <testcase name="test_build_instrument_light_keeps_indicator_separate_from_omnilight" assertions="5" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.00041" >
+      </testcase>
+      <testcase name="test_build_radio_indicator_adds_radio_power_led_omnilight" assertions="9" status="pass" classname="tests/test_mmd_cabin_instancer.gd" time="0.000543" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_mmd_semantic_catalog.gd" tests="16" failures="0" skipped="0" time="0.003713" >
+      <testcase name="test_battery_sw_uses_battery_command_and_state" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000206" >
+      </testcase>
+      <testcase name="test_converter_sw_uses_converter_command_and_state" assertions="3" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000195" >
+      </testcase>
+      <testcase name="test_compressor_sw_uses_compressor_command_and_state" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000196" >
+      </testcase>
+      <testcase name="test_radiochannel_sw_is_an_interactive_multi_position_switch" assertions="7" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000244" >
+      </testcase>
+      <testcase name="test_radiochannelnext_sw_fires_increase_once_per_press" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.00019" >
+      </testcase>
+      <testcase name="test_radiochannelprev_sw_fires_decrease_once_per_press" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000204" >
+      </testcase>
+      <testcase name="test_pantfront_sw_sends_front_selector_as_command_param" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000193" >
+      </testcase>
+      <testcase name="test_distcounter_binds_total_distance" assertions="2" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.00015" >
+      </testcase>
+      <testcase name="test_hvcurrent1_binds_current1" assertions="2" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000146" >
+      </testcase>
+      <testcase name="test_i_radio_indicator_and_powered_omnilight_are_separate" assertions="8" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000294" >
+      </testcase>
+      <testcase name="test_cab_light_indicator_and_spotlight_are_separate" assertions="6" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000244" >
+      </testcase>
+      <testcase name="test_instrument_light_indicator_and_omnilight_are_separate" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000225" >
+      </testcase>
+      <testcase name="test_front_and_rear_light_indicators_bind_to_the_correct_ilights_bit" assertions="40" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000858" >
+      </testcase>
+      <testcase name="test_i_security_cabsignal_binds_cabsignal_blinking" assertions="4" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000183" >
+      </testcase>
+      <testcase name="test_i_security_aware_indicator_opts_into_an_integrated_light" assertions="1" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.000075" >
+      </testcase>
+      <testcase name="test_cabin_spot_light_3d_defaults_light_enabled_to_false" assertions="1" status="pass" classname="tests/test_mmd_semantic_catalog.gd" time="0.00011" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_mmd_sound_bank_instancer.gd" tests="2" failures="0" skipped="0" time="0.001792" >
+      <testcase name="test_ignition_merges_into_empty_engine_sound_begin_but_explicit_soundend_wins_over_shutdown" assertions="4" status="pass" classname="tests/test_mmd_sound_bank_instancer.gd" time="0.001619" >
+      </testcase>
+      <testcase name="test_buzzer_and_buzzershp_are_catalog_matched_as_standalone_events" assertions="4" status="pass" classname="tests/test_mmd_sound_bank_instancer.gd" time="0.000173" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_mmd_sound_event_builder.gd" tests="5" failures="0" skipped="0" time="0.00167" >
+      <testcase name="test_sound_main_only_produces_one_looping_clip" assertions="4" status="pass" classname="tests/test_mmd_sound_event_builder.gd" time="0.000228" >
+      </testcase>
+      <testcase name="test_begin_main_end_produces_three_clips_with_sustain_release" assertions="7" status="pass" classname="tests/test_mmd_sound_event_builder.gd" time="0.000315" >
+      </testcase>
+      <testcase name="test_begin_only_omits_main_and_end_clips" assertions="2" status="pass" classname="tests/test_mmd_sound_event_builder.gd" time="0.000208" >
+      </testcase>
+      <testcase name="test_chunks_produce_one_automation_with_clips_positioned_by_threshold" assertions="27" status="pass" classname="tests/test_mmd_sound_event_builder.gd" time="0.000598" >
+      </testcase>
+      <testcase name="test_bookends_and_chunks_combine_into_one_event_with_both_shapes" assertions="6" status="pass" classname="tests/test_mmd_sound_event_builder.gd" time="0.000321" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_mmd_sound_source_parser.gd" tests="12" failures="0" skipped="0" time="0.010893" >
+      <testcase name="test_bare_single_filename_is_parsed_as_sound_main" assertions="2" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000842" >
+      </testcase>
+      <testcase name="test_numeric_filename_prefix_is_kept_and_extension_stripped" assertions="2" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000806" >
+      </testcase>
+      <testcase name="test_bare_multipart_horn_is_parsed_into_begin_main_end" assertions="4" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000843" >
+      </testcase>
+      <testcase name="test_block_begin_main_end_is_parsed" assertions="4" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000851" >
+      </testcase>
+      <testcase name="test_soundset_resolves_one_random_candidate_and_splits_into_begin_main_end" assertions="4" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000818" >
+      </testcase>
+      <testcase name="test_soundset_random_choice_is_persisted_across_reparse" assertions="1" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.001429" >
+      </testcase>
+      <testcase name="test_numbered_chunks_are_parsed_with_threshold_and_pitch" assertions="6" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.00089" >
+      </testcase>
+      <testcase name="test_crossfade_percent_is_parsed" assertions="2" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000803" >
+      </testcase>
+      <testcase name="test_unrecognized_label_does_not_desync_following_labels" assertions="2" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.00077" >
+      </testcase>
+      <testcase name="test_parse_internal_data_returns_ignition_shutdown_buzzer_and_buzzershp" assertions="18" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000963" >
+      </testcase>
+      <testcase name="test_parse_internal_data_returns_brake_related_labels" assertions="15" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.001101" >
+      </testcase>
+      <testcase name="test_parsing_stays_bounded_to_sounds_section_and_does_not_leak_internaldata" assertions="2" status="pass" classname="tests/test_mmd_sound_source_parser.gd" time="0.000777" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_nodebank_library_builder.gd" tests="4" failures="0" skipped="0" time="0.30166" >
+      <testcase name="test_builds_grouped_e3d_instances" assertions="7" status="pass" classname="tests/test_nodebank_library_builder.gd" time="0.011715" >
+      </testcase>
+      <testcase name="test_merges_duplicate_group_labels" assertions="2" status="pass" classname="tests/test_nodebank_library_builder.gd" time="0.089738" >
+      </testcase>
+      <testcase name="test_ignores_extra_tokens_after_skin" assertions="1" status="pass" classname="tests/test_nodebank_library_builder.gd" time="0.10349" >
+      </testcase>
+      <testcase name="test_skips_malformed_records" assertions="2" status="pass" classname="tests/test_nodebank_library_builder.gd" time="0.096717" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_rail_vehicle_lights.gd" tests="3" failures="0" skipped="0" time="0.372315" >
+      <testcase name="test_model_instance_path_updates_lights_and_preserves_shared_state" assertions="3" status="pass" classname="tests/test_rail_vehicle_lights.gd" time="0.123771" >
+      </testcase>
+      <testcase name="test_lights_property_updates_selected_model" assertions="1" status="pass" classname="tests/test_rail_vehicle_lights.gd" time="0.124267" >
+      </testcase>
+      <testcase name="test_model_reload_reapplies_vehicle_lights" assertions="1" status="pass" classname="tests/test_rail_vehicle_lights.gd" time="0.124277" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_relay_list.gd" tests="4" failures="0" skipped="0" time="0.082459" >
+      <testcase name="test_default_row_has_expected_defaults" assertions="6" status="pass" classname="tests/test_relay_list.gd" time="0.013678" >
+      </testcase>
+      <testcase name="test_row_round_trips_values" assertions="6" status="pass" classname="tests/test_relay_list.gd" time="0.013762" >
+      </testcase>
+      <testcase name="test_relay_list_property_accepts_items" assertions="2" status="pass" classname="tests/test_relay_list.gd" time="0.027491" >
+      </testcase>
+      <testcase name="test_oversized_relay_list_is_truncated_without_crashing" assertions="1" status="pass" classname="tests/test_relay_list.gd" time="0.027528" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_sm42_startup_sequence.gd" tests="6" failures="0" skipped="0" time="32.257516" >
+      <testcase name="test_successful_enabling_oil_pump" assertions="1" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="0.041174" >
+      </testcase>
+      <testcase name="test_successful_enabling_fuel_pump" assertions="1" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="0.041532" >
+      </testcase>
+      <testcase name="test_successful_pumping_the_oil" assertions="1" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="2.042592" >
+      </testcase>
+      <testcase name="test_successful_turning_engine_on" assertions="1" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="7.037965" >
+      </testcase>
+      <testcase name="test_successful_brake_releasing" assertions="1" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="10.032579" >
+      </testcase>
+      <testcase name="test_successful_moving_on" assertions="3" status="pass" classname="tests/test_sm42_startup_sequence.gd" time="13.061674" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_ai_hints.gd" tests="2" failures="0" skipped="0" time="0.040786" >
+      <testcase name="test_defaults" assertions="3" status="pass" classname="tests/test_train_ai_hints.gd" time="0.013238" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="4" status="pass" classname="tests/test_train_ai_hints.gd" time="0.027548" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_battery.gd" tests="3" failures="0" skipped="0" time="2.028377" >
+      <testcase name="test_successful_battery_enabling" assertions="1" status="pass" classname="tests/test_train_battery.gd" time="0.000219" >
+      </testcase>
+      <testcase name="test_not_enabling_battery_when_battery_voltage_is_zero" assertions="1" status="pass" classname="tests/test_train_battery.gd" time="0.013236" >
+      </testcase>
+      <testcase name="test_successful_battery_voltage_drop_after_two_seconds" assertions="1" status="pass" classname="tests/test_train_battery.gd" time="2.014922" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_brake_cntrl.gd" tests="2" failures="0" skipped="0" time="0.040987" >
+      <testcase name="test_defaults_match_previous_hardcoded_behavior" assertions="14" status="pass" classname="tests/test_train_brake_cntrl.gd" time="0.013534" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="6" status="pass" classname="tests/test_train_brake_cntrl.gd" time="0.027453" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_brake_universal_buttons.gd" tests="2" failures="0" skipped="0" time="0.041069" >
+      <testcase name="test_defaults" assertions="4" status="pass" classname="tests/test_train_brake_universal_buttons.gd" time="0.013458" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="5" status="pass" classname="tests/test_train_brake_universal_buttons.gd" time="0.027611" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_controller_cntrl.gd" tests="2" failures="0" skipped="0" time="0.041065" >
+      <testcase name="test_defaults" assertions="3" status="pass" classname="tests/test_train_controller_cntrl.gd" time="0.013433" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="4" status="pass" classname="tests/test_train_controller_cntrl.gd" time="0.027632" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_controller_param_dimensions.gd" tests="2" failures="0" skipped="0" time="0.041257" >
+      <testcase name="test_param_and_dimensions_defaults" assertions="11" status="pass" classname="tests/test_train_controller_param_dimensions.gd" time="0.013713" >
+      </testcase>
+      <testcase name="test_param_and_dimensions_round_trip_and_update" assertions="12" status="pass" classname="tests/test_train_controller_param_dimensions.gd" time="0.027544" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_controller_radio_channel.gd" tests="5" failures="0" skipped="0" time="0.151633" >
+      <testcase name="test_defaults_match_the_original_engines_universal_1_to_10_range" assertions="2" status="pass" classname="tests/test_train_controller_radio_channel.gd" time="0.013417" >
+      </testcase>
+      <testcase name="test_radio_channel_starts_at_1_not_0" assertions="1" status="pass" classname="tests/test_train_controller_radio_channel.gd" time="0.027519" >
+      </testcase>
+      <testcase name="test_radio_channel_set_is_a_valid_bound_command" assertions="1" status="pass" classname="tests/test_train_controller_radio_channel.gd" time="0.027583" >
+      </testcase>
+      <testcase name="test_radio_channel_increase_actually_changes_state" assertions="1" status="pass" classname="tests/test_train_controller_radio_channel.gd" time="0.041802" >
+      </testcase>
+      <testcase name="test_radio_channel_decrease_actually_changes_state" assertions="1" status="pass" classname="tests/test_train_controller_radio_channel.gd" time="0.041312" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_diesel_electric_engine.gd" tests="3" failures="0" skipped="0" time="0.068772" >
+      <testcase name="test_defaults" assertions="9" status="pass" classname="tests/test_train_diesel_electric_engine.gd" time="0.013376" >
+      </testcase>
+      <testcase name="test_round_trip_and_wwlist_update" assertions="4" status="pass" classname="tests/test_train_diesel_electric_engine.gd" time="0.027838" >
+      </testcase>
+      <testcase name="test_inherited_mechanical_fields_stay_at_defaults_when_unused" assertions="2" status="pass" classname="tests/test_train_diesel_electric_engine.gd" time="0.027558" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_diesel_engine_mechanical.gd" tests="4" failures="0" skipped="0" time="0.096542" >
+      <testcase name="test_defaults" assertions="9" status="pass" classname="tests/test_train_diesel_engine_mechanical.gd" time="0.013606" >
+      </testcase>
+      <testcase name="test_mechanical_and_torque_converter_round_trip" assertions="8" status="pass" classname="tests/test_train_diesel_engine_mechanical.gd" time="0.027607" >
+      </testcase>
+      <testcase name="test_throttle_table_and_torque_curve_round_trip" assertions="4" status="pass" classname="tests/test_train_diesel_engine_mechanical.gd" time="0.027893" >
+      </testcase>
+      <testcase name="test_oversized_throttle_table_is_truncated_without_crashing" assertions="1" status="pass" classname="tests/test_train_diesel_engine_mechanical.gd" time="0.027436" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_electric_engine_circuit.gd" tests="3" failures="0" skipped="0" time="0.068883" >
+      <testcase name="test_circuit_defaults" assertions="9" status="pass" classname="tests/test_train_electric_engine_circuit.gd" time="0.013599" >
+      </testcase>
+      <testcase name="test_circuit_round_trip_and_update" assertions="5" status="pass" classname="tests/test_train_electric_engine_circuit.gd" time="0.027497" >
+      </testcase>
+      <testcase name="test_physical_layout_updates_without_crashing" assertions="1" status="pass" classname="tests/test_train_electric_engine_circuit.gd" time="0.027787" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_electric_engine_cntrl.gd" tests="2" failures="0" skipped="0" time="0.040995" >
+      <testcase name="test_defaults" assertions="3" status="pass" classname="tests/test_train_electric_engine_cntrl.gd" time="0.013424" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="3" status="pass" classname="tests/test_train_electric_engine_cntrl.gd" time="0.027571" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_electric_engine_power_source.gd" tests="3" failures="0" skipped="0" time="0.061925" >
+      <testcase name="test_current_collector_power_source_does_not_crash_on_process" assertions="2" status="pass" classname="tests/test_train_electric_engine_power_source.gd" time="0.020358" >
+      </testcase>
+      <testcase name="test_default_power_source_does_not_crash_on_process" assertions="1" status="pass" classname="tests/test_train_electric_engine_power_source.gd" time="0.02068" >
+      </testcase>
+      <testcase name="test_accumulator_power_source_still_reports_recharge_source" assertions="1" status="pass" classname="tests/test_train_electric_engine_power_source.gd" time="0.020887" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_electric_induction_engine.gd" tests="2" failures="0" skipped="0" time="0.041149" >
+      <testcase name="test_defaults" assertions="5" status="pass" classname="tests/test_train_electric_induction_engine.gd" time="0.013505" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="4" status="pass" classname="tests/test_train_electric_induction_engine.gd" time="0.027644" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_engine_cntrl.gd" tests="2" failures="0" skipped="0" time="0.040999" >
+      <testcase name="test_defaults" assertions="8" status="pass" classname="tests/test_train_engine_cntrl.gd" time="0.0135" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="5" status="pass" classname="tests/test_train_engine_cntrl.gd" time="0.027499" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_engine_common.gd" tests="2" failures="0" skipped="0" time="0.041333" >
+      <testcase name="test_defaults" assertions="7" status="pass" classname="tests/test_train_engine_common.gd" time="0.013752" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="6" status="pass" classname="tests/test_train_engine_common.gd" time="0.027581" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_ep_dynamic_brake_blending.gd" tests="2" failures="0" skipped="0" time="0.041079" >
+      <testcase name="test_blending_defaults" assertions="7" status="pass" classname="tests/test_train_ep_dynamic_brake_blending.gd" time="0.013488" >
+      </testcase>
+      <testcase name="test_blending_round_trip_and_update" assertions="8" status="pass" classname="tests/test_train_ep_dynamic_brake_blending.gd" time="0.027591" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_ep_fuse_switch.gd" tests="2" failures="0" skipped="0" time="0.055121" >
+      <testcase name="test_successful_ep_fuse_enabling" assertions="1" status="pass" classname="tests/test_train_ep_fuse_switch.gd" time="0.027401" >
+      </testcase>
+      <testcase name="test_successful_ep_fuse_disabling" assertions="1" status="pass" classname="tests/test_train_ep_fuse_switch.gd" time="0.02772" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_heating.gd" tests="3" failures="0" skipped="0" time="0.068695" >
+      <testcase name="test_defaults" assertions="6" status="pass" classname="tests/test_train_heating.gd" time="0.013643" >
+      </testcase>
+      <testcase name="test_generator_source_updates_without_crashing" assertions="1" status="pass" classname="tests/test_train_heating.gd" time="0.027439" >
+      </testcase>
+      <testcase name="test_power_cable_source_updates_without_crashing" assertions="1" status="pass" classname="tests/test_train_heating.gd" time="0.027613" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_speed_control.gd" tests="3" failures="0" skipped="0" time="0.068826" >
+      <testcase name="test_defaults" assertions="7" status="pass" classname="tests/test_train_speed_control.gd" time="0.013766" >
+      </testcase>
+      <testcase name="test_enabling_and_configuring_updates_state" assertions="2" status="pass" classname="tests/test_train_speed_control.gd" time="0.027485" >
+      </testcase>
+      <testcase name="test_oversized_preset_speeds_is_truncated_without_crashing" assertions="1" status="pass" classname="tests/test_train_speed_control.gd" time="0.027575" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_spring_brake.gd" tests="4" failures="0" skipped="0" time="0.165413" >
+      <testcase name="test_successful_activate_spring_brake" assertions="1" status="pass" classname="tests/test_train_spring_brake.gd" time="0.041025" >
+      </testcase>
+      <testcase name="test_successful_deactivate_spring_brake" assertions="1" status="pass" classname="tests/test_train_spring_brake.gd" time="0.041683" >
+      </testcase>
+      <testcase name="test_successful_enable_spring_brake" assertions="1" status="pass" classname="tests/test_train_spring_brake.gd" time="0.041303" >
+      </testcase>
+      <testcase name="test_successful_disable_spring_brake" assertions="1" status="pass" classname="tests/test_train_spring_brake.gd" time="0.041402" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_switches.gd" tests="2" failures="0" skipped="0" time="0.041208" >
+      <testcase name="test_defaults" assertions="6" status="pass" classname="tests/test_train_switches.gd" time="0.013614" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="5" status="pass" classname="tests/test_train_switches.gd" time="0.027594" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_universal_controller.gd" tests="5" failures="0" skipped="0" time="0.096383" >
+      <testcase name="test_default_position_parameters_have_expected_defaults" assertions="9" status="pass" classname="tests/test_train_universal_controller.gd" time="0.013651" >
+      </testcase>
+      <testcase name="test_position_parameters_round_trip_values" assertions="9" status="pass" classname="tests/test_train_universal_controller.gd" time="0.013874" >
+      </testcase>
+      <testcase name="test_positions_property_accepts_universal_controller_list_items" assertions="3" status="pass" classname="tests/test_train_universal_controller.gd" time="0.013578" >
+      </testcase>
+      <testcase name="test_selector_position_is_forwarded_to_mover" assertions="1" status="pass" classname="tests/test_train_universal_controller.gd" time="0.02758" >
+      </testcase>
+      <testcase name="test_oversized_positions_array_is_truncated_without_crashing" assertions="1" status="pass" classname="tests/test_train_universal_controller.gd" time="0.0277" >
+      </testcase>
+  </testsuite>
+  <testsuite name="tests/test_train_wipers.gd" tests="2" failures="0" skipped="0" time="0.041159" >
+      <testcase name="test_defaults" assertions="3" status="pass" classname="tests/test_train_wipers.gd" time="0.013584" >
+      </testcase>
+      <testcase name="test_round_trip_and_update_without_crashing" assertions="4" status="pass" classname="tests/test_train_wipers.gd" time="0.027575" >
+      </testcase>
+  </testsuite>
+</testsuites>

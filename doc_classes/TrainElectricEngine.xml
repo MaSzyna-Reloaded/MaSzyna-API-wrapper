@@ -23,8 +23,95 @@
 				Operate converter
 			</description>
 		</method>
+		<method name="pantograph">
+			<return type="void" />
+			<param index="0" name="selector" type="int" enum="TrainElectricEngine.PantographSelector" />
+			<param index="1" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="pantographs_valve">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
+		<member name="circuit_imax_high" type="int" setter="set_circuit_imax_high" getter="get_circuit_imax_high" default="0">
+			[code]Circuit:ImaxHi[/code]
+			Maximum current on "high" starting stage, in amperes.
+		</member>
+		<member name="circuit_imax_low" type="int" setter="set_circuit_imax_low" getter="get_circuit_imax_low" default="0">
+			[code]Circuit:ImaxLo[/code]
+			Maximum current on "low" starting stage, in amperes.
+		</member>
+		<member name="circuit_imin_high" type="int" setter="set_circuit_imin_high" getter="get_circuit_imin_high" default="0">
+			[code]Circuit:IminHi[/code]
+			Automatic starting relay switching current on the "high" stage; also used by the AI driver.
+		</member>
+		<member name="circuit_imin_low" type="int" setter="set_circuit_imin_low" getter="get_circuit_imin_low" default="0">
+			[code]Circuit:IminLo[/code]
+			Automatic starting relay switching current on the "low" stage; also used by the AI driver.
+		</member>
+		<member name="circuit_resistance" type="float" setter="set_circuit_resistance" getter="get_circuit_resistance" default="0.0">
+			[code]Circuit:CircuitRes[/code]
+			Motor and circuit resistance, in ohms.
+		</member>
+		<member name="circuit_tuhex_diff" type="float" setter="set_circuit_tuhex_diff" getter="get_circuit_tuhex_diff" default="10.0">
+			[code]Circuit:TUHEX_Diff[/code]
+			Hysteresis of the ED braking regulator.
+		</member>
+		<member name="circuit_tuhex_max_current" type="float" setter="set_circuit_tuhex_max_current" getter="get_circuit_tuhex_max_current" default="400.0">
+			[code]Circuit:TUHEX_MaxIw[/code]
+			Maximum excitation current during ED braking (limits max braking force).
+		</member>
+		<member name="circuit_tuhex_min_current" type="float" setter="set_circuit_tuhex_min_current" getter="get_circuit_tuhex_min_current" default="60.0">
+			[code]Circuit:TUHEX_MinIw[/code]
+			Minimum excitation current during ED braking, resulting from the traction motor's magnetization curve.
+		</member>
+		<member name="circuit_tuhex_stages" type="int" setter="set_circuit_tuhex_stages" getter="get_circuit_tuhex_stages" default="0">
+			[code]Circuit:TUHEX_Stages[/code]
+			Number of distinct ED braking stages. When greater than 0, [member circuit_tuhex_sum_1],
+			[member circuit_tuhex_sum_2] and [member circuit_tuhex_sum_3] should also be set.
+		</member>
+		<member name="circuit_tuhex_sum" type="float" setter="set_circuit_tuhex_sum" getter="get_circuit_tuhex_sum" default="750.0">
+			[code]Circuit:TUHEX_Sum[/code]
+			Current ED braking regulator setpoint (sum of excitation and rotor currents).
+		</member>
+		<member name="circuit_tuhex_sum_1" type="float" setter="set_circuit_tuhex_sum_1" getter="get_circuit_tuhex_sum_1" default="750.0">
+			[code]Circuit:TUHEX_Sum1[/code]
+			ED braking regulator setpoint 1.
+		</member>
+		<member name="circuit_tuhex_sum_2" type="float" setter="set_circuit_tuhex_sum_2" getter="get_circuit_tuhex_sum_2" default="750.0">
+			[code]Circuit:TUHEX_Sum2[/code]
+			ED braking regulator setpoint 2.
+		</member>
+		<member name="circuit_tuhex_sum_3" type="float" setter="set_circuit_tuhex_sum_3" getter="get_circuit_tuhex_sum_3" default="750.0">
+			[code]Circuit:TUHEX_Sum3[/code]
+			ED braking regulator setpoint 3.
+		</member>
+		<member name="cntrl_converter_overload_relay_off_when_main_is_off" type="bool" setter="set_cntrl_converter_overload_relay_off_when_main_is_off" getter="get_cntrl_converter_overload_relay_off_when_main_is_off" default="false">
+			[code]Cntrl.ConverterOverloadWhenMainIsOff[/code]
+		</member>
+		<member name="cntrl_converter_overload_relay_start_mode" type="int" setter="set_cntrl_converter_overload_relay_start_mode" getter="get_cntrl_converter_overload_relay_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.ConverterOverloadRelayStart[/code]
+		</member>
+		<member name="cntrl_converter_start_delay" type="float" setter="set_cntrl_converter_start_delay" getter="get_cntrl_converter_start_delay" default="0.0">
+			[code]Cntrl.ConverterStartDelay[/code]
+		</member>
+		<member name="cntrl_converter_start_mode" type="int" setter="set_cntrl_converter_start_mode" getter="get_cntrl_converter_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.ConverterStart[/code]
+		</member>
+		<member name="cntrl_main_switch_start_mode" type="int" setter="set_cntrl_main_switch_start_mode" getter="get_cntrl_main_switch_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.MainStart[/code]
+		</member>
+		<member name="cntrl_pantograph_auto_valve" type="bool" setter="set_cntrl_pantograph_auto_valve" getter="get_cntrl_pantograph_auto_valve" default="false">
+			[code]Cntrl.PantAutoValve[/code]
+		</member>
+		<member name="cntrl_pantograph_compressor_start_mode" type="int" setter="set_cntrl_pantograph_compressor_start_mode" getter="get_cntrl_pantograph_compressor_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.PantCompressorStart[/code]
+		</member>
 		<member name="power_accumulator_recharge_source" type="int" setter="set_power_accumulator_recharge_source" getter="get_power_accumulator_recharge_source" enum="TrainController.TrainPowerSource" default="0">
 			Power source for recharging the accumulator
 		</member>
@@ -60,6 +147,11 @@
 			NUmber of collectors on the train
 		</member>
 		<member name="power_current_collector_overvoltage_relay" type="bool" setter="set_power_current_collector_overvoltage_relay" getter="get_power_current_collector_overvoltage_relay" default="false">
+			Overvoltage relay presence.
+		</member>
+		<member name="power_current_collector_physical_layout" type="int" setter="set_power_current_collector_physical_layout" getter="get_power_current_collector_physical_layout" default="0">
+			[code]Power:PhysicalLayout[/code]
+			Bitmask of physically present pantographs: 1 - front, 2 - rear.
 		</member>
 		<member name="power_current_collector_required_main_switch_voltage" type="float" setter="set_power_current_collector_required_main_switch_voltage" getter="get_power_current_collector_required_main_switch_voltage" default="0.0">
 			Required voltage to switch the main switch on.
@@ -75,4 +167,10 @@
 			Input voltage for the transducer
 		</member>
 	</members>
+	<constants>
+		<constant name="PANTOGRAPH_FIRST" value="0" enum="PantographSelector">
+		</constant>
+		<constant name="PANTOGRAPH_SECOND" value="1" enum="PantographSelector">
+		</constant>
+	</constants>
 </class>

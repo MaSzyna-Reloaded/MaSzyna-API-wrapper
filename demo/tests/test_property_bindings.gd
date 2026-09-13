@@ -1,28 +1,43 @@
 extends MaszynaGutTest
 
 const BOUND_CLASSES: Array[StringName] = [
+    &"BrakePressureTableItem",
+    &"CompressorListItem",
+    &"CurvePointItem",
+    &"DimmerListItem",
     &"E3DModel",
     &"E3DSubModel",
     &"LightListItem",
     &"LoadListItem",
     &"MotorParameter",
+    &"RelayListItem",
+    &"ThrottlePositionItem",
+    &"TrainAIHints",
     &"TrainBrake",
     &"TrainBuffCoupl",
     &"TrainController",
+    &"TrainDieselElectricEngine",
     &"TrainDieselEngine",
     &"TrainDoors",
     &"TrainElectricEngine",
+    &"TrainElectricInductionEngine",
     &"TrainElectricSeriesEngine",
     &"TrainElectroPneumaticDynamicBrake",
     &"TrainEngine",
+    &"TrainHeating",
+    &"TrainHorns",
     &"TrainLighting",
     &"TrainLoad",
     &"TrainSecuritySystem",
+    &"TrainSpeedControl",
     &"TrainSpringBrake",
+    &"TrainSwitches",
     &"TrainUniversalController",
     &"TrainWheels",
+    &"TrainWipers",
     &"UniversalControllerListItem",
     &"WWListItem",
+    &"WiperListItem",
 ]
 
 
@@ -57,11 +72,10 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     var brake: TrainBrake = TrainBrake.new()
     brake.brake_force_max = 85.0
     assert_eq(brake.brake_force_max, 85.0)
-    assert_eq(brake.get_brake_force_max(), 85.0)
 
     var electric_engine: TrainElectricEngine = TrainElectricSeriesEngine.new()
     electric_engine.power_cable_source = TrainController.POWER_TYPE_STEAM
-    assert_eq(electric_engine.get_power_cable_source(), TrainController.POWER_TYPE_STEAM)
+    assert_eq(electric_engine.power_cable_source, TrainController.POWER_TYPE_STEAM)
 
     var lights: LightListItem = LightListItem.new()
     lights.cabin_a_left_white_signal = false

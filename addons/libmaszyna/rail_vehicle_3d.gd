@@ -40,6 +40,57 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
             controller_path = x
             _dirty = true
 
+@export_node_path("Node3D") var front_bogie_path:NodePath = NodePath(""):
+    set(x):
+        if not x == front_bogie_path:
+            front_bogie_path = x
+            _animation_bindings_dirty = true
+
+@export_node_path("Node3D") var rear_bogie_path:NodePath = NodePath(""):
+    set(x):
+        if not x == rear_bogie_path:
+            rear_bogie_path = x
+            _animation_bindings_dirty = true
+
+@export var front_rolling_wheel_paths:Array[NodePath] = []:
+    set(x):
+        if not x == front_rolling_wheel_paths:
+            front_rolling_wheel_paths = x
+            _animation_bindings_dirty = true
+
+@export var powered_wheel_paths:Array[NodePath] = []:
+    set(x):
+        if not x == powered_wheel_paths:
+            powered_wheel_paths = x
+            _animation_bindings_dirty = true
+
+@export var rear_rolling_wheel_paths:Array[NodePath] = []:
+    set(x):
+        if not x == rear_rolling_wheel_paths:
+            rear_rolling_wheel_paths = x
+            _animation_bindings_dirty = true
+
+@export var start_track_name:String = "":
+    set(x):
+        if not x == start_track_name:
+            start_track_name = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
+@export var start_track_offset:float = 0.0:
+    set(x):
+        if not is_equal_approx(x, start_track_offset):
+            start_track_offset = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
+@export_enum("NORMAL", "REVERSED") var start_direction:int = TrackManager.Direction.DIRECTION_NORMAL:
+    set(x):
+        if not x == start_direction:
+            start_direction = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
@@ -82,7 +133,18 @@ var _detection_area:Area3D
 var _low_poly_cabin:E3DModelInstance
 var _low_poly_emissive_materials:Array[ShaderMaterial] = []
 var _low_poly_emission_tween:Tween
+var _rid:RID = RID()
+var _pending_start_track_retry:bool = false
 var _t:float = 0.0
+var _animation_bindings_dirty:bool = true
+var _front_bogie_node:Node3D
+var _rear_bogie_node:Node3D
+var _front_rolling_wheel_nodes:Array[Node3D] = []
+var _powered_wheel_nodes:Array[Node3D] = []
+var _rear_rolling_wheel_nodes:Array[Node3D] = []
+var _node_rest_bases:Dictionary = {}
+var _bogie_rest_global_bases:Dictionary = {}
+var _bogie_configuration_warned:bool = false
 
 
 func enter_cabin(player:MaszynaPlayer):
@@ -200,12 +262,24 @@ func _on_controller_changed(controller:TrainController) -> void:
     _controller = controller
     if _controller:
         _controller.roof_light_changed.connect(_on_roof_light_changed)
+    if _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_bind_controller(
+            _rid,
+            _controller.get_rid() if _controller else RID(),
+        )
     if _cabin:
         _cabin.set_train_controller(_controller)
     _on_roof_light_changed(_controller and _controller.state.get("roof_light_enabled", false))
 
 
 func _exit_tree() -> void:
+    TrackManager.tracks_changed.disconnect(_on_track_manager_tracks_changed)
+    if _model_node:
+        _model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+        _model_node = null
+    if _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_free(_rid)
+        _rid = RID()
     if _fiz_controller:
         _fiz_controller.controller_changed.disconnect(_on_controller_changed)
         _fiz_controller = null
@@ -245,6 +319,10 @@ func _update_head_display():
 func _process(delta):
     if _dirty:
         _process_dirty()
+    if _animation_bindings_dirty:
+        _animation_bindings_dirty = false
+        _cache_animation_bindings()
+        _update_track_transform()
 
     _t += delta
     if _t > 0.25 and _needs_head_display_update:
@@ -252,8 +330,13 @@ func _process(delta):
         _update_head_display()
 
     if not Engine.is_editor_hint():
-        if _controller:
+        if _rid.is_valid() and start_track_name and not _pending_start_track_retry:
+            RailVehiclePhysicsServer.process_movement(_rid, delta)
+            _update_track_transform()
+        elif _controller and not start_track_name:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+            _update_wheel_animation_state()
+        if _controller:
             _sync_lights_from_controller()
 
 func _schedule_head_display_update():
@@ -301,6 +384,9 @@ func _process_dirty() -> void:
                 if _low_poly_cabin.is_e3d_loaded():
                     _on_low_poly_cabin_e3d_loaded()
 
+            if _pending_start_track_retry:
+                _apply_start_track()
+
 
 func _sync_model_lights() -> void:
     if not _model_node or not _model_node.is_e3d_loaded():
@@ -333,6 +419,7 @@ func _sync_lights_from_controller() -> void:
 func _on_model_node_e3d_loaded() -> void:
     _sync_model_lights()
     _update_detection_area()
+    _animation_bindings_dirty = true
 
 
 ## Collects the low-poly stand-in interior's self-illuminated submodels (window glow etc.) so
@@ -409,3 +496,170 @@ func _ready() -> void:
 
     for instance:E3DModelInstance in find_children("", "E3DModelInstance", true, false):
         instance.e3d_loaded.connect(_schedule_head_display_update)
+
+
+func _enter_tree() -> void:
+    TrackManager.tracks_changed.connect(_on_track_manager_tracks_changed)
+    _rid = RailVehiclePhysicsServer.vehicle_create()
+    _pending_start_track_retry = true if start_track_name else false
+    _dirty = true
+
+
+func move_on_track(distance:float) -> void:
+    if not _rid.is_valid():
+        return
+    RailVehiclePhysicsServer.vehicle_move(_rid, distance)
+    _update_track_transform()
+
+
+func _on_track_manager_tracks_changed() -> void:
+    if _pending_start_track_retry:
+        _apply_start_track()
+
+
+func _apply_start_track() -> void:
+    if not start_track_name:
+        return
+    var track_rid:RID = TrackManager.track_get_rid_by_name(start_track_name)
+    if not track_rid.is_valid():
+        return
+    _pending_start_track_retry = false
+    RailVehiclePhysicsServer.vehicle_set_track(
+        _rid,
+        track_rid,
+        start_track_offset,
+        start_direction,
+    )
+    _update_track_transform()
+
+
+func _resolve_animation_nodes(paths:Array[NodePath]) -> Array[Node3D]:
+    var nodes:Array[Node3D] = []
+    for path:NodePath in paths:
+        if not path == NodePath(""):
+            var node:Node3D = get_node_or_null(path) as Node3D
+            if node:
+                nodes.append(node)
+    return nodes
+
+
+func _capture_rest_basis(node:Node3D) -> void:
+    if node and not _node_rest_bases.has(node):
+        _node_rest_bases[node] = node.transform.basis.orthonormalized()
+
+
+func _cache_animation_bindings() -> void:
+    _front_bogie_node = get_node_or_null(front_bogie_path) as Node3D
+    _rear_bogie_node = get_node_or_null(rear_bogie_path) as Node3D
+    _front_rolling_wheel_nodes = _resolve_animation_nodes(front_rolling_wheel_paths)
+    _powered_wheel_nodes = _resolve_animation_nodes(powered_wheel_paths)
+    _rear_rolling_wheel_nodes = _resolve_animation_nodes(rear_rolling_wheel_paths)
+    _node_rest_bases.clear()
+    _bogie_rest_global_bases.clear()
+
+    for bogie_node:Node3D in [_front_bogie_node, _rear_bogie_node]:
+        if bogie_node:
+            _capture_rest_basis(bogie_node)
+            _bogie_rest_global_bases[bogie_node] = global_basis.inverse() * bogie_node.global_basis
+    for wheel_node:Node3D in _front_rolling_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+    for wheel_node:Node3D in _powered_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+    for wheel_node:Node3D in _rear_rolling_wheel_nodes:
+        _capture_rest_basis(wheel_node)
+
+
+func _apply_wheel_rotation(nodes:Array[Node3D], angle_degrees:float) -> void:
+    var angle_radians:float = deg_to_rad(angle_degrees)
+    for node:Node3D in nodes:
+        var rest_basis:Variant = _node_rest_bases.get(node)
+        if rest_basis is Basis:
+            node.transform.basis = (rest_basis as Basis) * Basis(Vector3.RIGHT, angle_radians)
+
+
+func _update_wheel_animation_state() -> void:
+    if not _controller:
+        return
+    _apply_wheel_rotation(
+        _front_rolling_wheel_nodes,
+        float(_controller.state.get("wheel_angle_front_deg", 0.0)),
+    )
+    _apply_wheel_rotation(
+        _powered_wheel_nodes,
+        float(_controller.state.get("wheel_angle_powered_deg", 0.0)),
+    )
+    _apply_wheel_rotation(
+        _rear_rolling_wheel_nodes,
+        float(_controller.state.get("wheel_angle_rear_deg", 0.0)),
+    )
+
+
+func _update_track_transform() -> void:
+    if not _rid.is_valid() or not start_track_name or _pending_start_track_retry:
+        return
+
+    var center_transform:Transform3D = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+    if not _front_bogie_node and not _rear_bogie_node:
+        global_transform = center_transform
+        _update_wheel_animation_state()
+        return
+    if not _front_bogie_node or not _rear_bogie_node:
+        global_transform = center_transform
+        if not _bogie_configuration_warned:
+            _bogie_configuration_warned = true
+            push_warning(
+                "RailVehicle3D '%s': front and rear bogie paths must be set together." % name
+            )
+        _update_wheel_animation_state()
+        return
+
+    _bogie_configuration_warned = false
+    var bogie_pivot_spacing:float = (
+        float(_controller.config.get("bogie_pivot_spacing", 0.0)) if _controller else 0.0
+    )
+    if bogie_pivot_spacing <= 0.0:
+        global_transform = center_transform
+        _update_wheel_animation_state()
+        return
+
+    var front_transform:Transform3D = RailVehiclePhysicsServer.vehicle_get_transform_at_distance(
+        _rid,
+        bogie_pivot_spacing * 0.5,
+    )
+    var rear_transform:Transform3D = RailVehiclePhysicsServer.vehicle_get_transform_at_distance(
+        _rid,
+        bogie_pivot_spacing * -0.5,
+    )
+    var body_forward:Vector3 = front_transform.origin - rear_transform.origin
+    if body_forward.is_zero_approx():
+        global_transform = center_transform
+        _update_wheel_animation_state()
+        return
+
+    body_forward = body_forward.normalized()
+    var average_up:Vector3 = (front_transform.basis.y + rear_transform.basis.y).normalized()
+    var z_axis:Vector3 = -body_forward
+    var x_axis:Vector3 = average_up.cross(z_axis).normalized()
+    var y_axis:Vector3 = z_axis.cross(x_axis).normalized()
+    global_transform = Transform3D(
+        Basis(x_axis, y_axis, z_axis).orthonormalized(),
+        (front_transform.origin + rear_transform.origin) * 0.5,
+    )
+
+    var body_yaw:float = atan2(-body_forward.x, body_forward.z)
+    var bogie_nodes:Array[Node3D] = [_front_bogie_node, _rear_bogie_node]
+    var bogie_transforms:Array[Transform3D] = [front_transform, rear_transform]
+    for index:int in range(bogie_nodes.size()):
+        var bogie_node:Node3D = bogie_nodes[index]
+        var bogie_forward:Vector3 = -bogie_transforms[index].basis.z.normalized()
+        var bogie_yaw:float = atan2(-bogie_forward.x, bogie_forward.z)
+        var rest_global_basis:Variant = _bogie_rest_global_bases.get(bogie_node)
+        if rest_global_basis is Basis:
+            var yaw_delta:float = -(bogie_yaw - body_yaw)
+            bogie_node.global_basis = (
+                global_basis
+                * Basis(Vector3.UP, yaw_delta)
+                * (rest_global_basis as Basis)
+            )
+
+    _update_wheel_animation_state()

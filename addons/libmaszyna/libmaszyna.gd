@@ -8,8 +8,9 @@ var maszyna_environment_node_script = preload("res://addons/libmaszyna/environme
 var maszyna_environment_node_icon = preload("res://addons/libmaszyna/environment/maszyna_environment_node_icon.png")
 var e3d_model_instance_script = preload("res://addons/libmaszyna/e3d/e3d_model_instance.gd")
 var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_instance.png")
-var maszyna_track_3d_script = preload("res://addons/libmaszyna/maszyna_track_3d.gd")
-var maszyna_switch_3d_script = preload("res://addons/libmaszyna/maszyna_switch_3d.gd")
+var track_3d_script = preload("res://addons/libmaszyna/tracks/track_3d.gd")
+var track_normal_3d_script = preload("res://addons/libmaszyna/tracks/track_normal_3d.gd")
+var track_switch_3d_script = preload("res://addons/libmaszyna/tracks/track_switch_3d.gd")
 var fiz_train_controller_script = preload("res://addons/libmaszyna/fiz/fiz_train_controller.gd")
 var fiz_import_plugin = preload("res://addons/libmaszyna/fiz/fiz_import_plugin.gd").new()
 
@@ -24,6 +25,8 @@ func _enable_plugin():
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
+    add_autoload_singleton("TrackManager", "res://addons/libmaszyna/tracks/track_manager.gd")
+    add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -40,16 +43,23 @@ func _enable_plugin():
     )
 
     add_custom_type(
-        "MaszynaTrack3D",
-        "Path3D",
-        maszyna_track_3d_script,
+        "Track3D",
+        "VisualInstance3D",
+        track_3d_script,
         null
     )
 
     add_custom_type(
-        "MaszynaSwitch3D",
-        "Node3D",
-        maszyna_switch_3d_script,
+        "TrackNormal3D",
+        "VisualInstance3D",
+        track_normal_3d_script,
+        null
+    )
+
+    add_custom_type(
+        "TrackSwitch3D",
+        "VisualInstance3D",
+        track_switch_3d_script,
         null
     )
 
@@ -62,22 +72,27 @@ func _enable_plugin():
 
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", true)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", true)
 
 func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", false)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", false)
 
     remove_custom_type("E3DModelInstance")
     remove_custom_type("MaszynaEnvironmentNode")
-    remove_custom_type("MaszynaTrack3D")
-    remove_custom_type("MaszynaSwitch3D")
+    remove_custom_type("Track3D")
+    remove_custom_type("TrackNormal3D")
+    remove_custom_type("TrackSwitch3D")
     remove_custom_type("FIZTrainController")
 
     remove_autoload_singleton("TrainSoundSystem")
+    remove_autoload_singleton("RailVehiclePhysicsServer")
+    remove_autoload_singleton("TrackManager")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("E3DModelTool")
@@ -90,6 +105,7 @@ func _disable_plugin():
 
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
+    add_custom_project_setting("maszyna/track_curve_bake_interval", 10.0, TYPE_FLOAT)
     add_custom_project_setting(
         "maszyna/sound/brake_volume_factor", 2.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"

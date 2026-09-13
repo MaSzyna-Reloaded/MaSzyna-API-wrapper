@@ -40,6 +40,27 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
             controller_path = x
             _dirty = true
 
+@export var start_track_name:String = "":
+    set(x):
+        if not x == start_track_name:
+            start_track_name = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
+@export var start_track_offset:float = 0.0:
+    set(x):
+        if not is_equal_approx(x, start_track_offset):
+            start_track_offset = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
+@export_enum("NORMAL", "REVERSED") var start_direction:int = TrackManager.Direction.DIRECTION_NORMAL:
+    set(x):
+        if not x == start_direction:
+            start_direction = x
+            _pending_start_track_retry = true if start_track_name else false
+            _dirty = true
+
 @export var cabin_scene:PackedScene
 @export var cabin_rotate_180deg:bool = false
 @export_node_path("E3DModelInstance") var low_poly_cabin_path:NodePath = NodePath("")
@@ -82,6 +103,8 @@ var _detection_area:Area3D
 var _low_poly_cabin:E3DModelInstance
 var _low_poly_emissive_materials:Array[ShaderMaterial] = []
 var _low_poly_emission_tween:Tween
+var _rid:RID = RID()
+var _pending_start_track_retry:bool = false
 var _t:float = 0.0
 
 
@@ -200,12 +223,24 @@ func _on_controller_changed(controller:TrainController) -> void:
     _controller = controller
     if _controller:
         _controller.roof_light_changed.connect(_on_roof_light_changed)
+    if _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_bind_controller(
+            _rid,
+            _controller.get_rid() if _controller else RID(),
+        )
     if _cabin:
         _cabin.set_train_controller(_controller)
     _on_roof_light_changed(_controller and _controller.state.get("roof_light_enabled", false))
 
 
 func _exit_tree() -> void:
+    TrackManager.tracks_changed.disconnect(_on_track_manager_tracks_changed)
+    if _model_node:
+        _model_node.e3d_loaded.disconnect(_on_model_node_e3d_loaded)
+        _model_node = null
+    if _rid.is_valid():
+        RailVehiclePhysicsServer.vehicle_free(_rid)
+        _rid = RID()
     if _fiz_controller:
         _fiz_controller.controller_changed.disconnect(_on_controller_changed)
         _fiz_controller = null
@@ -252,8 +287,12 @@ func _process(delta):
         _update_head_display()
 
     if not Engine.is_editor_hint():
-        if _controller:
+        if _rid.is_valid() and start_track_name and not _pending_start_track_retry:
+            RailVehiclePhysicsServer.process_movement(_rid, delta)
+            global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+        elif _controller and not start_track_name:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
+        if _controller:
             _sync_lights_from_controller()
 
 func _schedule_head_display_update():
@@ -300,6 +339,9 @@ func _process_dirty() -> void:
                 _low_poly_cabin.e3d_loaded.connect(_on_low_poly_cabin_e3d_loaded)
                 if _low_poly_cabin.is_e3d_loaded():
                     _on_low_poly_cabin_e3d_loaded()
+
+            if _pending_start_track_retry:
+                _apply_start_track()
 
 
 func _sync_model_lights() -> void:
@@ -409,3 +451,38 @@ func _ready() -> void:
 
     for instance:E3DModelInstance in find_children("", "E3DModelInstance", true, false):
         instance.e3d_loaded.connect(_schedule_head_display_update)
+
+
+func _enter_tree() -> void:
+    TrackManager.tracks_changed.connect(_on_track_manager_tracks_changed)
+    _rid = RailVehiclePhysicsServer.vehicle_create()
+    _pending_start_track_retry = true if start_track_name else false
+    _dirty = true
+
+
+func move_on_track(distance:float) -> void:
+    if not _rid.is_valid():
+        return
+    RailVehiclePhysicsServer.vehicle_move(_rid, distance)
+    global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+
+
+func _on_track_manager_tracks_changed() -> void:
+    if _pending_start_track_retry:
+        _apply_start_track()
+
+
+func _apply_start_track() -> void:
+    if not start_track_name:
+        return
+    var track_rid:RID = TrackManager.track_get_rid_by_name(start_track_name)
+    if not track_rid.is_valid():
+        return
+    _pending_start_track_retry = false
+    RailVehiclePhysicsServer.vehicle_set_track(
+        _rid,
+        track_rid,
+        start_track_offset,
+        start_direction,
+    )
+    global_transform = RailVehiclePhysicsServer.vehicle_get_transform(_rid)

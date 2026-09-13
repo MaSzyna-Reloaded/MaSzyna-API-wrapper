@@ -32,6 +32,8 @@ run/disable_stderr.release=true
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
+TrackManager="*res://addons/libmaszyna/tracks/track_manager.gd"
+RailVehiclePhysicsServer="*res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://wsbd7kr83ncg"
@@ -60,7 +62,7 @@ text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
+enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
 
 [input]
 
@@ -267,6 +269,7 @@ redmarker_rear_right_toggle={
 
 [maszyna]
 
+track_curve_bake_interval=0.5
 sound/brake_exterior_volume_factor=1.0
 sound/brake_exterior_unit_size_factor=8.0
 sound/brake_cabin_unit_size_factor=6.0

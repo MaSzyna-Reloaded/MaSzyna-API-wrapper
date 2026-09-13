@@ -62,21 +62,28 @@ class_name DynamicRailVehicle3D
             initial_velocity = x
             _dirty = true
 
-## Godot node name of a MaszynaTrack3D found anywhere in the scene tree.
+## TrackManager name of the track used to place the generated vehicle.
 @export var start_track_name:String = "":
     set(x):
         if not x == start_track_name:
             start_track_name = x
-            _dirty = true
+            _track_dirty = true
 
 ## Distance in meters along the track's baked curve.
 @export var start_track_offset:float = 0.0:
     set(x):
         if not x == start_track_offset:
             start_track_offset = x
-            _dirty = true
+            _track_dirty = true
+
+@export_enum("NORMAL", "REVERSED") var start_direction:int = TrackManager.Direction.DIRECTION_NORMAL:
+    set(x):
+        if not x == start_direction:
+            start_direction = x
+            _track_dirty = true
 
 var _dirty:bool = true
+var _track_dirty:bool = false
 var _vehicle:RailVehicle3D
 
 
@@ -87,7 +94,19 @@ func _ready() -> void:
 func _process(_delta:float) -> void:
     if _dirty:
         _dirty = false
+        _track_dirty = false
         _rebuild()
+    elif _track_dirty:
+        _track_dirty = false
+        _process_track_dirty()
+
+
+func _process_track_dirty() -> void:
+    if not _vehicle:
+        return
+    _vehicle.start_track_name = start_track_name
+    _vehicle.start_track_offset = start_track_offset
+    _vehicle.start_direction = start_direction
 
 
 func _rebuild() -> void:
@@ -114,7 +133,7 @@ func _rebuild() -> void:
     # it comes from the MMD's own top-level "models:" line. Fall back to file_name only if that
     # can't be read, rather than silently building an ExteriorModel with no model at all.
     var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
-    if body_model_filename.is_empty():
+    if not body_model_filename:
         body_model_filename = file_name
     body_model_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, body_model_filename)
 
@@ -169,14 +188,15 @@ func _rebuild() -> void:
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path)
+    vehicle.start_track_name = start_track_name
+    vehicle.start_track_offset = start_track_offset
+    vehicle.start_direction = start_direction
 
     var sound_diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, fiz_controller.name, {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
         if diagnostic["severity"] != "info":
             push_warning("DynamicRailVehicle3D: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
-
-    _resolve_start_track()
 
     _vehicle = vehicle
     add_child(_vehicle, false, INTERNAL_MODE_BACK)
@@ -210,13 +230,3 @@ func _build_cabin_scene(normalized_data_path:String) -> PackedScene:
         push_error("DynamicRailVehicle3D: could not pack cabin scene for %s/%s" % [data_path, file_name])
         return null
     return packed
-
-
-func _resolve_start_track() -> void:
-    if not start_track_name:
-        return
-    var track:MaszynaTrack3D = get_tree().root.find_child(start_track_name, true, false) as MaszynaTrack3D
-    if not track:
-        push_error("DynamicRailVehicle3D: start_track_name '%s' not found" % start_track_name)
-        return
-    global_transform = track.global_transform * track.curve.sample_baked_with_rotation(start_track_offset)

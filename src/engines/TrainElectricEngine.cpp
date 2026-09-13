@@ -66,13 +66,103 @@ namespace godot {
                 Variant::INT, "power_cable_power_source", "power/power_cable/source",
                 &TrainElectricEngine::set_power_cable_power_source, &TrainElectricEngine::get_power_cable_power_source,
                 "power_cable_power_source", PROPERTY_HINT_ENUM,
-                "NoPower,BioPower,MechPower,ElectricPower,SteamPower,Main");
+                enum_hint(
+                        {{"NoPower", TrainController::POWER_TYPE_NONE},
+                         {"BioPower", TrainController::POWER_TYPE_BIO},
+                         {"MechPower", TrainController::POWER_TYPE_MECH},
+                         {"ElectricPower", TrainController::POWER_TYPE_ELECTRIC},
+                         {"SteamPower", TrainController::POWER_TYPE_STEAM}}));
         BIND_PROPERTY(
                 Variant::FLOAT, "power_cable_steam_pressure", "power/power_cable/steam_pressure",
                 &TrainElectricEngine::set_power_cable_steam_pressure,
                 &TrainElectricEngine::get_power_cable_steam_pressure, "power_cable_steam_pressure");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "physical_layout", "power/current_collector/physical_layout",
+                &TrainElectricEngine::set_physical_layout, &TrainElectricEngine::get_physical_layout, "physical_layout",
+                PROPERTY_HINT_FLAGS, "Front,Rear");
+        BIND_PROPERTY(
+                Variant::FLOAT, "circuit_resistance", "circuit/resistance",
+                &TrainElectricEngine::set_circuit_resistance, &TrainElectricEngine::get_circuit_resistance,
+                "circuit_resistance");
+        BIND_PROPERTY(
+                Variant::INT, "imax_low", "circuit/imax_low", &TrainElectricEngine::set_imax_low,
+                &TrainElectricEngine::get_imax_low, "imax_low");
+        BIND_PROPERTY(
+                Variant::INT, "imax_high", "circuit/imax_high", &TrainElectricEngine::set_imax_high,
+                &TrainElectricEngine::get_imax_high, "imax_high");
+        BIND_PROPERTY(
+                Variant::INT, "imin_low", "circuit/imin_low", &TrainElectricEngine::set_imin_low,
+                &TrainElectricEngine::get_imin_low, "imin_low");
+        BIND_PROPERTY(
+                Variant::INT, "imin_high", "circuit/imin_high", &TrainElectricEngine::set_imin_high,
+                &TrainElectricEngine::get_imin_high, "imin_high");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_sum", "circuit/tuhex/sum", &TrainElectricEngine::set_tuhex_sum,
+                &TrainElectricEngine::get_tuhex_sum, "tuhex_sum");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_diff", "circuit/tuhex/diff", &TrainElectricEngine::set_tuhex_diff,
+                &TrainElectricEngine::get_tuhex_diff, "tuhex_diff");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_min_current", "circuit/tuhex/min_current",
+                &TrainElectricEngine::set_tuhex_min_current, &TrainElectricEngine::get_tuhex_min_current,
+                "tuhex_min_current");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_max_current", "circuit/tuhex/max_current",
+                &TrainElectricEngine::set_tuhex_max_current, &TrainElectricEngine::get_tuhex_max_current,
+                "tuhex_max_current");
+        BIND_PROPERTY(
+                Variant::INT, "tuhex_stages", "circuit/tuhex/stages", &TrainElectricEngine::set_tuhex_stages,
+                &TrainElectricEngine::get_tuhex_stages, "tuhex_stages");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_sum_1", "circuit/tuhex/sum_1", &TrainElectricEngine::set_tuhex_sum_1,
+                &TrainElectricEngine::get_tuhex_sum_1, "tuhex_sum_1");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_sum_2", "circuit/tuhex/sum_2", &TrainElectricEngine::set_tuhex_sum_2,
+                &TrainElectricEngine::get_tuhex_sum_2, "tuhex_sum_2");
+        BIND_PROPERTY(
+                Variant::FLOAT, "tuhex_sum_3", "circuit/tuhex/sum_3", &TrainElectricEngine::set_tuhex_sum_3,
+                &TrainElectricEngine::get_tuhex_sum_3, "tuhex_sum_3");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "converter_start_mode", "cntrl/converter_start_mode",
+                &TrainElectricEngine::set_converter_start_mode, &TrainElectricEngine::get_converter_start_mode,
+                "converter_start_mode", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(
+                Variant::FLOAT, "converter_start_delay", "cntrl/converter_start_delay",
+                &TrainElectricEngine::set_converter_start_delay, &TrainElectricEngine::get_converter_start_delay,
+                "converter_start_delay");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "converter_overload_relay_start_mode", "cntrl/converter_overload_relay_start_mode",
+                &TrainElectricEngine::set_converter_overload_relay_start_mode,
+                &TrainElectricEngine::get_converter_overload_relay_start_mode, "converter_overload_relay_start_mode",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(
+                Variant::BOOL, "converter_overload_relay_off_when_main_is_off",
+                "cntrl/converter_overload_relay_off_when_main_is_off",
+                &TrainElectricEngine::set_converter_overload_relay_off_when_main_is_off,
+                &TrainElectricEngine::get_converter_overload_relay_off_when_main_is_off,
+                "converter_overload_relay_off_when_main_is_off");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "pantograph_compressor_start_mode", "cntrl/pantograph_compressor_start_mode",
+                &TrainElectricEngine::set_pantograph_compressor_start_mode,
+                &TrainElectricEngine::get_pantograph_compressor_start_mode, "pantograph_compressor_start_mode",
+                PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(
+                Variant::BOOL, "pantograph_auto_valve", "cntrl/pantograph_auto_valve",
+                &TrainElectricEngine::set_pantograph_auto_valve, &TrainElectricEngine::get_pantograph_auto_valve,
+                "pantograph_auto_valve");
+        BIND_PROPERTY_W_HINT(
+                Variant::INT, "main_switch_start_mode", "cntrl/main_switch_start_mode",
+                &TrainElectricEngine::set_main_switch_start_mode, &TrainElectricEngine::get_main_switch_start_mode,
+                "main_switch_start_mode", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &TrainElectricEngine::compressor);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
+        ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &TrainElectricEngine::pantographs_valve);
+        ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &TrainElectricEngine::pantograph);
+
+        BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
+        BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
     }
 
     void TrainElectricEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
@@ -83,8 +173,13 @@ namespace godot {
         p_state["converted_allowed"] = p_mover->ConverterAllow;
         p_state["converter_time_to_start"] = p_mover->ConverterStartDelayTimer;
         p_state["power_source"] = train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.SourceType);
-        p_state["accumulator/recharge_source"] =
-                train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+        // RAccumulator/RPowerCable are only initialized by _do_update_internal_mover() when
+        // SourceType is the matching variant (see the switch below) - reading them
+        // unconditionally reads uninitialized memory for every other source type.
+        if (p_mover->EnginePowerSource.SourceType == TPowerSource::Accumulator) {
+            p_state["accumulator/recharge_source"] =
+                    train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+        }
         p_state["current_collector/max_voltage"] = p_mover->EnginePowerSource.MaxVoltage;
         p_state["current_collector/max_current"] = p_mover->EnginePowerSource.MaxCurrent;
         p_state["current_collector/max_collector_lifting"] = p_mover->EnginePowerSource.CollectorParameters.MaxH;
@@ -98,10 +193,21 @@ namespace godot {
         p_state["current_collector/overvoltage_relay"] = p_mover->EnginePowerSource.CollectorParameters.OVP;
         p_state["current_collector/required_main_switch_voltage"] =
                 p_mover->EnginePowerSource.CollectorParameters.InsetV;
+        // Live pantograph state - the mover only tracks a raised/lowered flag per pantograph
+        // (no continuous extension height), matching PantographsCheck()'s own boolean state
+        // machine; any raise/lower animation should tween in response to this flag changing,
+        // not read a position value from the mover.
+        p_state["current_collector/valve_active"] = p_mover->PantsValve.is_active;
+        p_state["current_collector/pantograph_first_active"] = p_mover->Pantographs[0].is_active;
+        p_state["current_collector/pantograph_first_voltage"] = p_mover->Pantographs[0].voltage;
+        p_state["current_collector/pantograph_second_active"] = p_mover->Pantographs[1].is_active;
+        p_state["current_collector/pantograph_second_voltage"] = p_mover->Pantographs[1].voltage;
         p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
-        p_state["power_cable/source"] =
-                train_controller_node->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
-        p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
+        if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
+            p_state["power_cable/source"] =
+                    train_controller_node->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
+            p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
+        }
     }
 
     void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -114,17 +220,25 @@ namespace godot {
                         train_controller_node->power_type_map.find(power_cable_power_source);
                 p_mover->EnginePowerSource.PowerType =
                         lookup != train_controller_node->power_type_map.end() ? lookup->second : TPowerType::NoPower;
+                break;
             }
             case TrainController::POWER_SOURCE_TRANSDUCER: {
                 p_mover->EnginePowerSource.Transducer.InputVoltage = transducer_input_voltage;
+                break;
             }
             case TrainController::POWER_SOURCE_GENERATOR: {
+                // engine_revolutions is an uninitialized raw pointer on a fresh TMoverParameters
+                // (MOVER.h:551) - nothing currently dereferences EnginePowerSource's copy of it,
+                // but HeatingPowerSource's copy does (see TrainHeating.cpp), so it's pointed at
+                // enrot (the vehicle's own engine revolutions counter) here too, defensively.
                 engine_generator &generator_params{p_mover->EnginePowerSource.EngineGenerator};
-                // GeneratorParams.engine_revolutions = &enrot; @TODO: Figure what the fuck is &enrot
+                generator_params.engine_revolutions = &p_mover->enrot;
+                break;
             }
             case TrainController::POWER_SOURCE_ACCUMULATOR: {
                 p_mover->EnginePowerSource.RAccumulator.RechargeSource =
                         train_controller_node->power_source_map.at(accumulator_recharge_source);
+                break;
             }
             case TrainController::POWER_SOURCE_CURRENTCOLLECTOR: {
                 p_mover->EnginePowerSource.CollectorParameters.MinH = min_collector_lifting;
@@ -138,6 +252,8 @@ namespace godot {
                 p_mover->EnginePowerSource.MaxVoltage = max_voltage;
                 p_mover->EnginePowerSource.MaxCurrent = max_current;
                 p_mover->EnginePowerSource.CollectorParameters.InsetV = required_main_switch_voltage;
+                p_mover->EnginePowerSource.CollectorParameters.PhysicalLayout = physical_layout;
+                break;
             }
             case TrainController::POWER_SOURCE_POWERCABLE: {
                 p_mover->EnginePowerSource.RPowerCable.PowerTrans =
@@ -145,11 +261,35 @@ namespace godot {
                 if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     p_mover->EnginePowerSource.RPowerCable.SteamPressure = power_cable_steam_pressure;
                 }
+                break;
             }
             case TrainController::POWER_SOURCE_HEATER:; // Not finished on MaSzyna's side
             case TrainController::POWER_SOURCE_NOT_DEFINED:;
             default:;
         }
+
+        /* Circuit: (elektryczny obwod napedowy), tylko pojazdy elektryczne i spalinowo-elektryczne */
+        p_mover->CircuitRes = circuit_resistance;
+        p_mover->ImaxLo = imax_low;
+        p_mover->ImaxHi = imax_high;
+        p_mover->IminLo = imin_low;
+        p_mover->IminHi = imin_high;
+        p_mover->TUHEX_Sum = tuhex_sum;
+        p_mover->TUHEX_Diff = tuhex_diff;
+        p_mover->TUHEX_MinIw = tuhex_min_current;
+        p_mover->TUHEX_MaxIw = tuhex_max_current;
+        p_mover->TUHEX_Stages = tuhex_stages;
+        p_mover->TUHEX_Sum1 = tuhex_sum_1;
+        p_mover->TUHEX_Sum2 = tuhex_sum_2;
+        p_mover->TUHEX_Sum3 = tuhex_sum_3;
+
+        p_mover->ConverterStart = start_mode_map.at(converter_start_mode);
+        p_mover->ConverterStartDelay = static_cast<float>(converter_start_delay);
+        p_mover->ConverterOverloadRelayStart = start_mode_map.at(converter_overload_relay_start_mode);
+        p_mover->ConverterOverloadRelayOffWhenMainIsOff = converter_overload_relay_off_when_main_is_off;
+        p_mover->PantographCompressorStart = start_mode_map.at(pantograph_compressor_start_mode);
+        p_mover->PantAutoValve = pantograph_auto_valve;
+        p_mover->MainsStart = start_mode_map.at(main_switch_start_mode);
     }
 
     void TrainElectricEngine::converter(const bool p_enabled) {
@@ -164,16 +304,33 @@ namespace godot {
         mover->CompressorSwitch(p_enabled);
     }
 
+    void TrainElectricEngine::pantographs_valve(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+    }
+
+    void TrainElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        const Maszyna::end end = (p_selector == PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
+        mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+    }
+
     void TrainElectricEngine::_register_commands() {
         TrainEngine::_register_commands();
         register_command("converter", Callable(this, "converter"));
         register_command("compressor", Callable(this, "compressor"));
+        register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantograph", Callable(this, "pantograph"));
     }
 
     void TrainElectricEngine::_unregister_commands() {
         TrainEngine::_unregister_commands();
         unregister_command("converter", Callable(this, "converter"));
         unregister_command("compressor", Callable(this, "compressor"));
+        unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        unregister_command("pantograph", Callable(this, "pantograph"));
     }
 
 

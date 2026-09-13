@@ -1,6 +1,31 @@
 #ifndef MACROS_HPP
 #define MACROS_HPP
 #include "core/utils.hpp"
+#include <godot_cpp/variant/string.hpp>
+#include <initializer_list>
+#include <utility>
+
+/**
+ * Builds a PROPERTY_HINT_ENUM hint string from real enum constants instead of hand-typed
+ * integer literals, so a property's inspector labels can never drift out of sync with the
+ * enum's actual (possibly non-sequential/bitflag) values.
+ * <example>
+ * enum_hint({{"Train", CATEGORY_TRAIN}, {"Road", CATEGORY_ROAD}, {"Ship", CATEGORY_SHIP}, {"Airplane",
+ * CATEGORY_AIRPLANE}})
+ * </example>
+ */
+inline godot::String enum_hint(std::initializer_list<std::pair<const char *, int64_t>> p_entries) {
+    godot::String result;
+    bool first = true;
+    for (const auto &entry: p_entries) {
+        if (!first) {
+            result += ",";
+        }
+        result += godot::String(entry.first) + ":" + godot::String::num_int64(entry.second);
+        first = false;
+    }
+    return result;
+}
 /**
  * Macro for generating private members with their setters and getters
  * @param type Member type

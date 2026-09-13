@@ -21,6 +21,11 @@ class_name CabinGauge
         mesh_rotation = x
         _dirty = true
 
+@export var mesh_rotation_offset = Vector3.ZERO:
+    set(x):
+        mesh_rotation_offset = x
+        _dirty = true
+
 @export var animation_speed = 4.0
 #@export var start_angle = 270.0
 
@@ -53,11 +58,11 @@ func _enter_tree():
 func _do_setup():
     _on_state_update_timer_timeout()
     if max_value:
-        _target_mesh_rotation = (value/max_value) * mesh_rotation
+        _target_mesh_rotation = mesh_rotation_offset + (value/max_value) * mesh_rotation
 
 func _process_dirty(delta):
     if not max_value == 0.0:
-        _target_mesh_rotation = (value/max_value) * mesh_rotation
+        _target_mesh_rotation = mesh_rotation_offset + (value/max_value) * mesh_rotation
 
     if not _mesh and not target_mesh_path.is_empty():
         _mesh = get_node_or_null(target_mesh_path)

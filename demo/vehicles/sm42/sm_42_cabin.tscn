@@ -419,8 +419,8 @@ mesh_path = NodePath("../../Cabin/banan/podloga_glowna/horn")
 command_set = "horn"
 state_property = "horn"
 mesh_rotation = Vector3(0, 30, 0)
-action_increase = "horn1"
-action_decrease = "horn2"
+action_increase = "horn_low"
+action_decrease = "horn_high"
 metadata/_custom_type_script = "uid://3hp38qtyx500"
 
 [node name="Lights" type="Node3D" parent="." unique_id=454038932]

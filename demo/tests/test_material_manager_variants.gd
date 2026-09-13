@@ -219,6 +219,22 @@ func test_create_sets_alpha_scissor_for_transparent_material() -> void:
     assert_eq(material.get_shader_parameter("alpha_scissor_threshold"), 0.5)
 
 
+func test_create_sets_alpha_blending_for_e3d_translucent_submodel() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", MATERIAL_NAME)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.force_transparent = true
+    var material: ShaderMaterial = MaterialFactory.create(
+        mmat,
+        "",
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options,
+    ) as ShaderMaterial
+
+    assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.Alpha)
+    assert_true(material.shader.code.contains("#define MASZYNA_ALPHA_BLEND"))
+
+
 func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void:
     var mmat: MaszynaMaterial = MaszynaMaterial.new()
     var diffuse_color: Color = Color(0.25, 0.5, 0.75, 1.0)

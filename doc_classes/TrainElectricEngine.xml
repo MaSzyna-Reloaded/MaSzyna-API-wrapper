@@ -25,6 +25,80 @@
 		</method>
 	</methods>
 	<members>
+		<member name="circuit/imax_high" type="int" setter="set_imax_high" getter="get_imax_high" default="0">
+			[code]Circuit:ImaxHi[/code]
+			Maximum current on "high" starting stage, in amperes.
+		</member>
+		<member name="circuit/imax_low" type="int" setter="set_imax_low" getter="get_imax_low" default="0">
+			[code]Circuit:ImaxLo[/code]
+			Maximum current on "low" starting stage, in amperes.
+		</member>
+		<member name="circuit/imin_high" type="int" setter="set_imin_high" getter="get_imin_high" default="0">
+			[code]Circuit:IminHi[/code]
+			Automatic starting relay switching current on the "high" stage; also used by the AI driver.
+		</member>
+		<member name="circuit/imin_low" type="int" setter="set_imin_low" getter="get_imin_low" default="0">
+			[code]Circuit:IminLo[/code]
+			Automatic starting relay switching current on the "low" stage; also used by the AI driver.
+		</member>
+		<member name="circuit/resistance" type="float" setter="set_circuit_resistance" getter="get_circuit_resistance" default="0.0">
+			[code]Circuit:CircuitRes[/code]
+			Motor and circuit resistance, in ohms.
+		</member>
+		<member name="circuit/tuhex/diff" type="float" setter="set_tuhex_diff" getter="get_tuhex_diff" default="10.0">
+			[code]Circuit:TUHEX_Diff[/code]
+			Hysteresis of the ED braking regulator.
+		</member>
+		<member name="circuit/tuhex/max_current" type="float" setter="set_tuhex_max_current" getter="get_tuhex_max_current" default="400.0">
+			[code]Circuit:TUHEX_MaxIw[/code]
+			Maximum excitation current during ED braking (limits max braking force).
+		</member>
+		<member name="circuit/tuhex/min_current" type="float" setter="set_tuhex_min_current" getter="get_tuhex_min_current" default="60.0">
+			[code]Circuit:TUHEX_MinIw[/code]
+			Minimum excitation current during ED braking, resulting from the traction motor's magnetization curve.
+		</member>
+		<member name="circuit/tuhex/stages" type="int" setter="set_tuhex_stages" getter="get_tuhex_stages" default="0">
+			[code]Circuit:TUHEX_Stages[/code]
+			Number of distinct ED braking stages. When greater than 0, [member circuit/tuhex/sum_1],
+			[member circuit/tuhex/sum_2] and [member circuit/tuhex/sum_3] should also be set.
+		</member>
+		<member name="circuit/tuhex/sum" type="float" setter="set_tuhex_sum" getter="get_tuhex_sum" default="750.0">
+			[code]Circuit:TUHEX_Sum[/code]
+			Current ED braking regulator setpoint (sum of excitation and rotor currents).
+		</member>
+		<member name="circuit/tuhex/sum_1" type="float" setter="set_tuhex_sum_1" getter="get_tuhex_sum_1" default="750.0">
+			[code]Circuit:TUHEX_Sum1[/code]
+			ED braking regulator setpoint 1.
+		</member>
+		<member name="circuit/tuhex/sum_2" type="float" setter="set_tuhex_sum_2" getter="get_tuhex_sum_2" default="750.0">
+			[code]Circuit:TUHEX_Sum2[/code]
+			ED braking regulator setpoint 2.
+		</member>
+		<member name="circuit/tuhex/sum_3" type="float" setter="set_tuhex_sum_3" getter="get_tuhex_sum_3" default="750.0">
+			[code]Circuit:TUHEX_Sum3[/code]
+			ED braking regulator setpoint 3.
+		</member>
+		<member name="cntrl/converter_overload_relay_off_when_main_is_off" type="bool" setter="set_converter_overload_relay_off_when_main_is_off" getter="get_converter_overload_relay_off_when_main_is_off" default="false">
+			[code]Cntrl.ConverterOverloadWhenMainIsOff[/code]
+		</member>
+		<member name="cntrl/converter_overload_relay_start_mode" type="int" setter="set_converter_overload_relay_start_mode" getter="get_converter_overload_relay_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.ConverterOverloadRelayStart[/code]
+		</member>
+		<member name="cntrl/converter_start_delay" type="float" setter="set_converter_start_delay" getter="get_converter_start_delay" default="0.0">
+			[code]Cntrl.ConverterStartDelay[/code]
+		</member>
+		<member name="cntrl/converter_start_mode" type="int" setter="set_converter_start_mode" getter="get_converter_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.ConverterStart[/code]
+		</member>
+		<member name="cntrl/main_switch_start_mode" type="int" setter="set_main_switch_start_mode" getter="get_main_switch_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.MainStart[/code]
+		</member>
+		<member name="cntrl/pantograph_auto_valve" type="bool" setter="set_pantograph_auto_valve" getter="get_pantograph_auto_valve" default="false">
+			[code]Cntrl.PantAutoValve[/code]
+		</member>
+		<member name="cntrl/pantograph_compressor_start_mode" type="int" setter="set_pantograph_compressor_start_mode" getter="get_pantograph_compressor_start_mode" enum="TrainEngine.StartMode" default="1">
+			[code]Cntrl.PantCompressorStart[/code]
+		</member>
 		<member name="power/accumulator/recharge_source" type="int" setter="set_accumulator_recharge_source" getter="get_accumulator_recharge_source" enum="TrainController.TrainPowerSource" default="0">
 			Power source for recharging the accumulator
 		</member>
@@ -57,6 +131,11 @@
 			NUmber of collectors on the train
 		</member>
 		<member name="power/current_collector/overvoltage_relay" type="bool" setter="set_overvoltage_relay" getter="get_overvoltage_relay" default="false">
+			Overvoltage relay presence.
+		</member>
+		<member name="power/current_collector/physical_layout" type="int" setter="set_physical_layout" getter="get_physical_layout" default="0">
+			[code]Power:PhysicalLayout[/code]
+			Bitmask of physically present pantographs: 1 - front, 2 - rear.
 		</member>
 		<member name="power/current_collector/required_main_switch_voltage" type="float" setter="set_required_main_switch_voltage" getter="get_required_main_switch_voltage" default="0.0">
 			Required voltage to switch the main switch on.

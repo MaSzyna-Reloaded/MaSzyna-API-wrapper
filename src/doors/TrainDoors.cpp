@@ -4,89 +4,38 @@
 namespace godot {
 
     void TrainDoors::_bind_methods() {
+        BIND_PROPERTY_W_HINT(TrainDoors, Variant::INT, type, PROPERTY_HINT_ENUM, "Shift,Rotate,Fold,Plug");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, open_time, "open");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, open_speed, "open");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, close_speed, "close");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, max_shift);
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "type", "type", &TrainDoors::set_type, &TrainDoors::get_type, "type", PROPERTY_HINT_ENUM,
-                "Shift,Rotate,Fold,Plug");
-        BIND_PROPERTY(
-                Variant::FLOAT, "open_time", "open/time", &TrainDoors::set_open_time, &TrainDoors::get_open_time,
-                "open_time");
-        BIND_PROPERTY(
-                Variant::FLOAT, "open_speed", "open/speed", &TrainDoors::set_open_speed, &TrainDoors::get_open_speed,
-                "open_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "close_speed", "close/speed", &TrainDoors::set_close_speed,
-                &TrainDoors::get_close_speed, "close_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_shift", "max_shift", &TrainDoors::set_max_shift, &TrainDoors::get_max_shift,
-                "max_shift");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "open_method", "open/method", &TrainDoors::set_open_method, &TrainDoors::get_open_method,
-                "open_method", PROPERTY_HINT_ENUM, "Passenger,Automatic,Driver,Conductor,Mixed");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "close_method", "close/method", &TrainDoors::set_close_method,
-                &TrainDoors::get_close_method, "close_method", PROPERTY_HINT_ENUM,
+                TrainDoors, Variant::INT, open_method, "open", PROPERTY_HINT_ENUM,
                 "Passenger,Automatic,Driver,Conductor,Mixed");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "voltage", "voltage", &TrainDoors::set_voltage, &TrainDoors::get_voltage, "voltage",
-                PROPERTY_HINT_ENUM, "Automatic,0V,12V,24V,112V");
-        BIND_PROPERTY(
-                Variant::BOOL, "close_warning", "close/warning", &TrainDoors::set_close_warning,
-                &TrainDoors::get_close_warning, "close_warning");
-        BIND_PROPERTY(
-                Variant::BOOL, "auto_close_warning", "close/auto_close_warning", &TrainDoors::set_auto_close_warning,
-                &TrainDoors::get_auto_close_warning, "auto_close_warning");
-        BIND_PROPERTY(
-                Variant::FLOAT, "open_delay", "open/delay", &TrainDoors::set_open_delay, &TrainDoors::get_open_delay,
-                "open_delay");
-        BIND_PROPERTY(
-                Variant::FLOAT, "close_delay", "close/delay", &TrainDoors::set_close_delay,
-                &TrainDoors::get_close_delay, "close_delay");
-        BIND_PROPERTY(
-                Variant::FLOAT, "open_with_permit", "open/with_permit", &TrainDoors::set_open_with_permit,
-                &TrainDoors::get_open_with_permit, "open_with_permit");
-        BIND_PROPERTY(
-                Variant::BOOL, "has_lock", "has_lock", &TrainDoors::set_has_lock, &TrainDoors::get_has_lock,
-                "has_lock");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_shift_plug", "max_shift_plug", &TrainDoors::set_max_shift_plug,
-                &TrainDoors::get_max_shift_plug, "max_shift_plug");
-        BIND_PROPERTY_ARRAY(
-                "permit_list", "permit/list", &TrainDoors::set_permit_list, &TrainDoors::get_permit_list,
-                "permit_list");
-        BIND_PROPERTY(
-                Variant::INT, "permit_default", "permit/default", &TrainDoors::set_permit_list_default,
-                &TrainDoors::get_permit_list_default, "permit_default");
-        BIND_PROPERTY(
-                Variant::BOOL, "auto_close_remote", "close/auto_close_remote", &TrainDoors::set_auto_close_remote,
-                &TrainDoors::get_auto_close_remote, "auto_close_remote");
-        BIND_PROPERTY(
-                Variant::FLOAT, "auto_close_velocity", "close/auto_close_velocity",
-                &TrainDoors::set_auto_close_velocity, &TrainDoors::get_auto_close_velocity, "auto_close_velocity");
-        BIND_PROPERTY(
-                Variant::FLOAT, "platform_max_speed", "platform/max_speed", &TrainDoors::set_platform_max_speed,
-                &TrainDoors::get_platform_max_speed, "platform_max_speed");
+                TrainDoors, Variant::INT, close_method, "close", PROPERTY_HINT_ENUM,
+                "Passenger,Automatic,Driver,Conductor,Mixed");
+        BIND_PROPERTY_W_HINT(TrainDoors, Variant::INT, voltage, PROPERTY_HINT_ENUM, "Automatic,0V,12V,24V,112V");
+        BIND_PROPERTY(TrainDoors, Variant::BOOL, close_warning, "close");
+        BIND_PROPERTY(TrainDoors, Variant::BOOL, close_auto_close_warning, "close");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, open_delay, "open");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, close_delay, "close");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, open_with_permit, "open");
+        BIND_PROPERTY(TrainDoors, Variant::BOOL, has_lock);
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, max_shift_plug);
+        BIND_PROPERTY_ARRAY(TrainDoors, permit_list, "permit");
+        BIND_PROPERTY(TrainDoors, Variant::INT, permit_default, "permit");
+        BIND_PROPERTY(TrainDoors, Variant::BOOL, close_auto_close_remote, "close");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, close_auto_close_velocity, "close");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, platform_max_speed, "platform");
+        BIND_PROPERTY_W_HINT(TrainDoors, Variant::INT, platform_type, "platform", PROPERTY_HINT_ENUM, "Shift,Rotate");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, platform_max_shift, "platform");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, platform_speed, "platform");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, mirror_max_shift, "mirror");
+        BIND_PROPERTY(TrainDoors, Variant::FLOAT, mirror_close_velocity, "mirror");
+        BIND_PROPERTY(TrainDoors, Variant::BOOL, permit_required, "permit");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "platform_type", "platform/type", &TrainDoors::set_platform_type,
-                &TrainDoors::get_platform_type, "platform_type", PROPERTY_HINT_ENUM, "Shift,Rotate");
-        BIND_PROPERTY(
-                Variant::FLOAT, "platform_max_shift", "platform/max_shift", &TrainDoors::set_platform_max_shift,
-                &TrainDoors::get_platform_max_shift, "platform_max_shift");
-        BIND_PROPERTY(
-                Variant::FLOAT, "platform_speed", "platform/speed", &TrainDoors::set_platform_speed,
-                &TrainDoors::get_platform_speed, "platform_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "mirror_max_shift", "mirror/max_shift", &TrainDoors::set_mirror_max_shift,
-                &TrainDoors::get_mirror_max_shift, "mirror_max_shift");
-        BIND_PROPERTY(
-                Variant::FLOAT, "mirror_close_velocity", "mirror/close_velocity",
-                &TrainDoors::set_mirror_close_velocity, &TrainDoors::get_mirror_close_velocity,
-                "mirror_close_velocity");
-        BIND_PROPERTY(
-                Variant::BOOL, "permit_required", "permit/required", &TrainDoors::set_permit_required,
-                &TrainDoors::get_permit_required, "permit_required");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "permit_light_blinking", "permit/light_blinking", &TrainDoors::set_permit_light_blinking,
-                &TrainDoors::get_permit_light_blinking, "permit_light_blinking", PROPERTY_HINT_ENUM,
+                TrainDoors, Variant::INT, permit_light_blinking, "permit", PROPERTY_HINT_ENUM,
                 "Continuous light,Flashing on permission w/step,Flashing on permission,Flashing always");
         ClassDB::bind_method(D_METHOD("next_permit_preset"), &TrainDoors::next_permit_preset);
         ClassDB::bind_method(D_METHOD("previous_permit_preset"), &TrainDoors::previous_permit_preset);
@@ -259,8 +208,8 @@ namespace godot {
         }
 
         p_mover->Doors.auto_duration = open_time;
-        p_mover->Doors.auto_velocity = auto_close_velocity;
-        p_mover->Doors.auto_include_remote = auto_close_remote;
+        p_mover->Doors.auto_velocity = close_auto_close_velocity;
+        p_mover->Doors.auto_include_remote = close_auto_close_remote;
         p_mover->Doors.permit_needed = permit_required;
         p_mover->Doors.permit_presets.clear();
         for (int i = 0; i < permit_list.size(); i++) {
@@ -270,7 +219,7 @@ namespace godot {
         }
 
         if (!p_mover->Doors.permit_presets.empty()) {
-            p_mover->Doors.permit_preset = permit_list_default;
+            p_mover->Doors.permit_preset = permit_default;
             p_mover->Doors.permit_preset =
                     std::min<int>(
                             static_cast<int>(p_mover->Doors.permit_presets.size()), p_mover->Doors.permit_preset) -
@@ -291,7 +240,7 @@ namespace godot {
         }
 
         p_mover->Doors.has_warning = close_warning;
-        p_mover->Doors.has_autowarning = auto_close_warning;
+        p_mover->Doors.has_autowarning = close_auto_close_warning;
         p_mover->Doors.has_lock = has_lock;
         bool const remote_control = {
                 (open_method == CONTROLS_DRIVER || open_method == CONTROLS_CONDUCTOR || open_method == CONTROLS_MIXED)};

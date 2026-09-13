@@ -99,6 +99,15 @@ For in-game logging, use `GameLog` but be aware that it'll only post log message
 * when public API of `E3DModel` or `E3DSubModel` changes,
   the `E3DModel.FORMAT_VERSION` must be updated to invalidate the E3D cache automatically
 
+### Godot properties
+
+* Property names exposed to Godot must use canonical `snake_case` without slashes.
+* A property's setter and getter must be named `set_<property_name>` and `get_<property_name>`; custom accessor names
+  are not allowed.
+* Inspector grouping paths may contain slashes and must be passed only through the optional grouping argument of the
+  `BIND_PROPERTY_*` macros. Grouping paths are not part of the public property name.
+* Collapse overlapping grouping segments in public names, for example `power/power_source` becomes `power_source`,
+  not `power_power_source`.
 
 ### MAKE_* macros
 

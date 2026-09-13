@@ -8,8 +8,7 @@ namespace godot {
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "motor_param_table", "motor_param_table", &TrainEngine::set_motor_param_table,
-                &TrainEngine::get_motor_param_table, "motor_param_table", PROPERTY_HINT_TYPE_STRING, "MotorParameter");
+                TrainEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         ADD_SIGNAL(MethodInfo("engine_start"));
         ADD_SIGNAL(MethodInfo("engine_stop"));
 

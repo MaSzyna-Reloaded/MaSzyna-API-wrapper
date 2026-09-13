@@ -44,3 +44,18 @@ Checks:
 
 * compile c++ plugin and check result
 * run Godot in headless mode outside sandbox, look for parse errors
+
+Commit style:
+
+* Commit messages must be written in English.
+* If the change has a GitHub Issue, prefix the first line with its number in the existing `(#NUMBER) Message` format.
+* The first line must name the subject and scope of the change briefly and unambiguously. Avoid generic verbs when they
+  do not identify what the commit changes. A title may name an area followed by a short clarification, for example
+  `Wire Devices Manager - web interface`.
+* After a blank line, add 2-3 `*` bullet points as a mini changelog. State specifically what was added, changed, or
+  fixed. Do not replace concrete changes with benefits or generic claims.
+* Do not add a file list; the diff already provides it.
+* Every commit message line, including the title and bullets, must be no longer than 80 characters. Wrap at a natural
+  boundary and indent bullet continuations by two spaces.
+* Do not add AI attribution, session links, or tool metadata to commit or pull request footers unless a maintainer
+  explicitly requests it.

@@ -11,9 +11,9 @@ namespace godot {
             GDCLASS(TrainDieselEngine, TrainEngine)
         private:
             static void _bind_methods();
-            MAKE_MEMBER_GS(float, oil_min_pressure, 0.0);
-            MAKE_MEMBER_GS(float, oil_max_pressure, 0.65);
-            MAKE_MEMBER_GS(double, traction_force_max, 0.0);
+            MAKE_MEMBER_GS(float, oil_pump_pressure_minimum, 0.0);
+            MAKE_MEMBER_GS(float, oil_pump_pressure_maximum, 0.65);
+            MAKE_MEMBER_GS(double, maximum_traction_force, 0.0);
             TypedArray<WWListItem> wwlist;
 
         protected:

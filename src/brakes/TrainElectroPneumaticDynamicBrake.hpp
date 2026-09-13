@@ -28,9 +28,9 @@ namespace godot {
 
         private:
             MAKE_MEMBER_GS_NR(CouplerCheck, coupler_check, CouplerCheck::NONE);
-            MAKE_MEMBER_GS(float, ed_braking_ep_delay, 0.0f);
-            MAKE_MEMBER_GS(float, min_ep_regenerative_braking, 0.0f);
-            MAKE_MEMBER_GS(float, max_ep_brake_engagement_speed, 0.0f);
+            MAKE_MEMBER_GS(float, electro_pneumatic_brake_delay, 0.0f);
+            MAKE_MEMBER_GS(float, electro_pneumatic_min_regenerative_braking, 0.0f);
+            MAKE_MEMBER_GS(float, electro_pneumatic_max_ep_brake_engagement_speed, 0.0f);
             MAKE_MEMBER_GS(bool, ep_brake_fuse, false);
     };
 } // namespace godot

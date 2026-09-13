@@ -7,19 +7,11 @@
 
 namespace godot {
     void TrainDieselEngine::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::FLOAT, "oil_min_pressure", "oil_pump/pressure_minimum",
-                &TrainDieselEngine::set_oil_min_pressure, &TrainDieselEngine::get_oil_min_pressure, "oil_min_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "oil_max_pressure", "oil_pump/pressure_maximum",
-                &TrainDieselEngine::set_oil_max_pressure, &TrainDieselEngine::get_oil_max_pressure, "oil_max_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "maximum_traction_force", "maximum_traction_force",
-                &TrainDieselEngine::set_traction_force_max, &TrainDieselEngine::get_traction_force_max,
-                "maximum_traction_force");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, oil_pump_pressure_minimum, "oil_pump");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, oil_pump_pressure_maximum, "oil_pump");
+        BIND_PROPERTY(TrainDieselEngine, Variant::FLOAT, maximum_traction_force);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "wwlist", "wwlist", &TrainDieselEngine::set_wwlist, &TrainDieselEngine::get_wwlist,
-                "wwlist", PROPERTY_HINT_TYPE_STRING, "WWListItem");
+                TrainDieselEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &TrainDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &TrainDieselEngine::oil_pump);
     }
@@ -55,10 +47,10 @@ namespace godot {
         p_mover->dizel_nmin = 100; // nie wiem skad to sie ustawia, w FIZ stonki nie ma
         // end test data
 
-        p_mover->OilPump.pressure_minimum = oil_min_pressure;
-        p_mover->OilPump.pressure_maximum = oil_max_pressure;
+        p_mover->OilPump.pressure_minimum = oil_pump_pressure_minimum;
+        p_mover->OilPump.pressure_maximum = oil_pump_pressure_maximum;
 
-        p_mover->Ftmax = traction_force_max;
+        p_mover->Ftmax = maximum_traction_force;
 
         /* FIXME: move to TrainDieselElectricEngine */
         /* tablica rezystorow rozr. (eng. Starting resistor array) WWList aka DEList aka TDESchemeTable */

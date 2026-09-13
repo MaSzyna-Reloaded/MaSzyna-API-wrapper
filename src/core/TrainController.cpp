@@ -59,28 +59,15 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
 
-        BIND_PROPERTY(
-                Variant::STRING, "train_id", "train_id", &TrainController::set_train_id, &TrainController::get_train_id,
-                "train_id");
-        BIND_PROPERTY(
-                Variant::STRING, "type_name", "type_name", &TrainController::set_type_name,
-                &TrainController::get_type_name, "type_name");
-        BIND_PROPERTY(Variant::FLOAT, "mass", "mass", &TrainController::set_mass, &TrainController::get_mass, "mass");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power", "power", &TrainController::set_power, &TrainController::get_power, "power");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_velocity", "max_velocity", &TrainController::set_max_velocity,
-                &TrainController::get_max_velocity, "max_velocity");
-        BIND_PROPERTY(
-                Variant::INT, "radio_channel_min", "radio_channel/min", &TrainController::set_radio_channel_min,
-                &TrainController::get_radio_channel_min, "radio_channel_min");
-        BIND_PROPERTY(
-                Variant::INT, "radio_channel_max", "radio_channel/max", &TrainController::set_radio_channel_max,
-                &TrainController::get_radio_channel_max, "radio_channel_max");
+        BIND_PROPERTY(TrainController, Variant::STRING, train_id);
+        BIND_PROPERTY(TrainController, Variant::STRING, type_name);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, mass);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, power);
+        BIND_PROPERTY(TrainController, Variant::FLOAT, max_velocity);
+        BIND_PROPERTY(TrainController, Variant::INT, radio_channel_min, "radio_channel");
+        BIND_PROPERTY(TrainController, Variant::INT, radio_channel_max, "radio_channel");
         /* FIXME: move to TrainPower section? */
-        BIND_PROPERTY_W_HINT(
-                Variant::FLOAT, "battery_voltage", "battery_voltage", &TrainController::set_battery_voltage,
-                &TrainController::get_battery_voltage, "battery_voltage", PROPERTY_HINT_RANGE, "0,500,1");
+        BIND_PROPERTY_W_HINT(TrainController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
 
         ADD_SIGNAL(MethodInfo(mover_config_changed_signal));
         ADD_SIGNAL(MethodInfo(mover_initialized_signal));

@@ -7,13 +7,8 @@
 
 namespace godot {
     void TrainElectricSeriesEngine::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::FLOAT, "nominal_voltage", "nominal_voltage", &TrainElectricSeriesEngine::set_nominal_voltage,
-                &TrainElectricSeriesEngine::get_nominal_voltage, "nominal_voltage");
-        BIND_PROPERTY(
-                Variant::FLOAT, "winding_resistance", "winding_resistance",
-                &TrainElectricSeriesEngine::set_winding_resistance, &TrainElectricSeriesEngine::get_winding_resistance,
-                "winding_resistance");
+        BIND_PROPERTY(TrainElectricSeriesEngine, Variant::FLOAT, nominal_voltage);
+        BIND_PROPERTY(TrainElectricSeriesEngine, Variant::FLOAT, winding_resistance);
     }
 
     TrainEngine::EngineType TrainElectricSeriesEngine::get_engine_type() {

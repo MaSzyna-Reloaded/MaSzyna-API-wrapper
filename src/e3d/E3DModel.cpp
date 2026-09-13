@@ -18,11 +18,8 @@ namespace godot {
 
     void E3DModel::_bind_methods() {
         BIND_CONSTANT(FORMAT_VERSION);
-        BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "submodels", "submodels", &E3DModel::set_submodels, &E3DModel::get_submodels,
-                "p_submodels", PROPERTY_HINT_ARRAY_TYPE, "E3DSubModel");
-        BIND_PROPERTY(
-                Variant::DICTIONARY, "lights", "lights", &E3DModel::set_lights, &E3DModel::get_lights, "p_lights");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(E3DModel, Variant::ARRAY, submodels, PROPERTY_HINT_ARRAY_TYPE, "E3DSubModel");
+        BIND_PROPERTY(E3DModel, Variant::DICTIONARY, lights);
         ClassDB::bind_method(D_METHOD("register_light", "p_name", "p_entry"), &E3DModel::register_light);
         ClassDB::bind_method(D_METHOD("get_node", "p_path"), &E3DModel::get_node);
         ClassDB::bind_method(D_METHOD("get_node_or_null", "p_path"), &E3DModel::get_node_or_null);

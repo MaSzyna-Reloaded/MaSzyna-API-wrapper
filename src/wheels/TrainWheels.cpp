@@ -4,38 +4,16 @@
 
 namespace godot {
     void TrainWheels::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::FLOAT, "powered_wheel_diameter", "powered_wheel_diameter",
-                &TrainWheels::set_powered_wheel_diameter, &TrainWheels::get_powered_wheel_diameter, "diameter");
-        BIND_PROPERTY(
-                Variant::FLOAT, "front_rolling_wheel_diameter", "front_rolling_wheel_diameter",
-                &TrainWheels::set_front_rolling_wheel_diameter, &TrainWheels::get_front_rolling_wheel_diameter,
-                "diameter");
-        BIND_PROPERTY(
-                Variant::FLOAT, "rear_rolling_wheel_diameter", "rear_rolling_wheel_diameter",
-                &TrainWheels::set_rear_rolling_wheel_diameter, &TrainWheels::get_rear_rolling_wheel_diameter,
-                "diameter");
-        BIND_PROPERTY(
-                Variant::FLOAT, "axle_inertial_moment", "axle_inertial_moment", &TrainWheels::set_axle_inertial_moment,
-                &TrainWheels::get_axle_inertial_moment, "moment");
-        BIND_PROPERTY(
-                Variant::FLOAT, "track_width", "track_width", &TrainWheels::set_track_width,
-                &TrainWheels::get_track_width, "width");
-        BIND_PROPERTY(
-                Variant::STRING, "axle_arrangement", "axle_arrangement", &TrainWheels::set_axle_arrangement,
-                &TrainWheels::get_axle_arrangement, "arrangement");
-        BIND_PROPERTY(
-                Variant::FLOAT, "bogie_axle_spacing", "bogie_axle_spacing", &TrainWheels::set_bogie_axle_spacing,
-                &TrainWheels::get_bogie_axle_spacing, "spacing");
-        BIND_PROPERTY(
-                Variant::FLOAT, "bogie_pivot_spacing", "bogie_pivot_spacing", &TrainWheels::set_bogie_pivot_spacing,
-                &TrainWheels::get_bogie_pivot_spacing, "spacing");
-        BIND_PROPERTY(
-                Variant::FLOAT, "minimum_curve_radius", "minimum_curve_radius", &TrainWheels::set_minimum_curve_radius,
-                &TrainWheels::get_minimum_curve_radius, "radius");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "bearing_type", "bearing_type", &TrainWheels::set_bearing_type,
-                &TrainWheels::get_bearing_type, "type", PROPERTY_HINT_ENUM, "Slide,Roll");
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, powered_wheel_diameter);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, front_rolling_wheel_diameter);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, rear_rolling_wheel_diameter);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, axle_inertial_moment);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, track_width);
+        BIND_PROPERTY(TrainWheels, Variant::STRING, axle_arrangement);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, bogie_axle_spacing);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, bogie_pivot_spacing);
+        BIND_PROPERTY(TrainWheels, Variant::FLOAT, minimum_curve_radius);
+        BIND_PROPERTY_W_HINT(TrainWheels, Variant::INT, bearing_type, PROPERTY_HINT_ENUM, "Slide,Roll");
 
         BIND_ENUM_CONSTANT(BEARING_TYPE_SLIDE);
         BIND_ENUM_CONSTANT(BEARING_TYPE_ROLL);

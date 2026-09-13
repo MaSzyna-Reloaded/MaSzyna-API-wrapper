@@ -4,20 +4,11 @@
 
 namespace godot {
     void TrainUniversalController::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::BOOL, "integrated_brake_pn", "integrated_brake_pn",
-                &TrainUniversalController::set_integrated_brake_pn, &TrainUniversalController::get_integrated_brake_pn,
-                "enabled");
-        BIND_PROPERTY(
-                Variant::BOOL, "integrated_brake", "integrated_brake", &TrainUniversalController::set_integrated_brake,
-                &TrainUniversalController::get_integrated_brake, "enabled");
-        BIND_PROPERTY(
-                Variant::INT, "selector_position", "selector_position",
-                &TrainUniversalController::set_selector_position, &TrainUniversalController::get_selector_position,
-                "position");
+        BIND_PROPERTY(TrainUniversalController, Variant::BOOL, integrated_brake_pn);
+        BIND_PROPERTY(TrainUniversalController, Variant::BOOL, integrated_brake);
+        BIND_PROPERTY(TrainUniversalController, Variant::INT, selector_position);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "positions", "positions", &TrainUniversalController::set_positions,
-                &TrainUniversalController::get_positions, "positions", PROPERTY_HINT_TYPE_STRING,
+                TrainUniversalController, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING,
                 "UniversalControllerListItem");
     }
 

@@ -29,11 +29,11 @@
 			[code]Engine:Ftmax[/code]
 			Maximum traction force, in kN
 		</member>
-		<member name="oil_pump/pressure_maximum" type="float" setter="set_oil_max_pressure" getter="get_oil_max_pressure" default="0.65">
+		<member name="oil_pump_pressure_maximum" type="float" setter="set_oil_pump_pressure_maximum" getter="get_oil_pump_pressure_maximum" default="0.65">
 			[code]Engine:OilMaxPressure[/code]
 			Minimum oil pressure required for the engine to start
 		</member>
-		<member name="oil_pump/pressure_minimum" type="float" setter="set_oil_min_pressure" getter="get_oil_min_pressure" default="0.0">
+		<member name="oil_pump_pressure_minimum" type="float" setter="set_oil_pump_pressure_minimum" getter="get_oil_pump_pressure_minimum" default="0.0">
 			[code]Engine:OilMinPressure[/code]
 			Minimum oil pressure required for the engine to start
 		</member>

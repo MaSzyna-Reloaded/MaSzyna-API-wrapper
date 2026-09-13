@@ -7,146 +7,51 @@
 namespace godot {
     void TrainBrake::_bind_methods() {
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "valve_type", "valve/type", &TrainBrake::set_valve_type, &TrainBrake::get_valve_type,
-                "valve_type", PROPERTY_HINT_ENUM,
+                TrainBrake, Variant::INT, valve_type, "valve", PROPERTY_HINT_ENUM,
                 "NoValve,W,W_Lu_VI,W_Lu_L,W_Lu_XR,K,Kg,Kp,Kss,Kkg,Kkp,Kks,Hikg1,Hikss,Hikp1,KE,SW,EStED,NESt3,ESt3,LSt,"
                 "ESt4,ESt3AL2,EP1,EP2,M483,CV1_L_TR,CV1,CV1_R,Other")
-        BIND_PROPERTY(
-                Variant::INT, "friction_elements_per_axle", "friction_elements_per_axle",
-                &TrainBrake::set_friction_elements_per_axle, &TrainBrake::get_friction_elements_per_axle,
-                "friction_elements_per_axle");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_brake_force", "brake_force/max", &TrainBrake::set_max_brake_force,
-                &TrainBrake::get_max_brake_force, "max_brake_force");
-        BIND_PROPERTY(
-                Variant::INT, "est_valve_size", "est_valve/size", &TrainBrake::set_valve_size,
-                &TrainBrake::get_valve_size, "valve_size");
-        BIND_PROPERTY(
-                Variant::FLOAT, "traction_brake_force", "brake_force/traction", &TrainBrake::set_traction_brake_force,
-                &TrainBrake::get_traction_brake_force, "traction_brake_force");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_cylinder_pressure", "max_cylinder_pressure",
-                &TrainBrake::set_max_cylinder_pressure, &TrainBrake::get_max_cylinder_pressure,
-                "max_cylinder_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_aux_pressure", "max_aux_pressure", &TrainBrake::set_max_aux_pressure,
-                &TrainBrake::get_max_aux_pressure, "max_aux_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_tare_pressure", "max_tare_pressure", &TrainBrake::set_max_tare_pressure,
-                &TrainBrake::get_max_tare_pressure, "max_tare_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_medium_pressure", "max_medium_pressure", &TrainBrake::set_max_medium_pressure,
-                &TrainBrake::get_max_medium_pressure, "max_medium_pressure");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_antislip_pressure", "max_antislip_pressure",
-                &TrainBrake::set_max_antislip_pressure, &TrainBrake::get_max_antislip_pressure,
-                "max_antislip_pressure");
-        BIND_PROPERTY(
-                Variant::INT, "cylinder_count", "cylinder/count", &TrainBrake::set_cylinder_count,
-                &TrainBrake::get_cylinder_count, "cylinder_count");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_radius", "cylinder/radius", &TrainBrake::set_cylinder_radius,
-                &TrainBrake::get_cylinder_radius, "cylinder_radius");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_distance", "cylinder/distance", &TrainBrake::set_cylinder_distance,
-                &TrainBrake::get_cylinder_distance, "cylinder_distance");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_spring_force", "cylinder/spring_force",
-                &TrainBrake::set_cylinder_spring_force, &TrainBrake::get_cylinder_spring_force,
-                "cylinder_spring_force");
-        BIND_PROPERTY(
-                Variant::FLOAT, "piston_stroke_adjuster_resistance", "piston_stroke/adjuster_resistance",
-                &TrainBrake::set_piston_stroke_adjuster_resistance, &TrainBrake::get_piston_stroke_adjuster_resistance,
-                "");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_gear_ratio", "cylinder/gear_ratio", &TrainBrake::set_cylinder_gear_ratio,
-                &TrainBrake::get_cylinder_gear_ratio, "cylinder_gear_ratio");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_gear_ratio_low", "cylinder/gear_ratio_low",
-                &TrainBrake::set_cylinder_gear_ratio_low, &TrainBrake::get_cylinder_gear_ratio_low,
-                "cylinder_gear_ratio_low");
-        BIND_PROPERTY(
-                Variant::FLOAT, "cylinder_gear_ratio_high", "cylinder/gear_ratio_high",
-                &TrainBrake::set_cylinder_gear_ratio_high, &TrainBrake::get_cylinder_gear_ratio_high,
-                "cylinder_gear_ratio_high");
-        BIND_PROPERTY(
-                Variant::FLOAT, "pipe_pressure_min", "pipe/pressure_min", &TrainBrake::set_pipe_pressure_min,
-                &TrainBrake::get_pipe_pressure_min, "pipe_pressure_min");
-        BIND_PROPERTY(
-                Variant::FLOAT, "pipe_pressure_max", "pipe/pressure_max", &TrainBrake::set_pipe_pressure_max,
-                &TrainBrake::get_pipe_pressure_max, "pipe_pressure_max");
-        BIND_PROPERTY(
-                Variant::FLOAT, "main_tank_volume", "tank/volume_main", &TrainBrake::set_main_tank_volume,
-                &TrainBrake::get_main_tank_volume, "main_tank_volume");
-        BIND_PROPERTY(
-                Variant::FLOAT, "aux_tank_volume", "tank/volume_aux", &TrainBrake::set_aux_tank_volume,
-                &TrainBrake::get_aux_tank_volume, "aux_tank_volume");
-        BIND_PROPERTY(
-                Variant::FLOAT, "compressor_pressure_cab_a_min", "compressor/cab_a/min_pressure",
-                &TrainBrake::set_compressor_pressure_cab_a_min, &TrainBrake::get_compressor_pressure_cab_a_min,
-                "compressor_pressure_min");
-        BIND_PROPERTY(
-                Variant::FLOAT, "compressor_pressure_cab_a_max", "compressor/cab_a/max_pressure",
-                &TrainBrake::set_compressor_pressure_cab_a_max, &TrainBrake::get_compressor_pressure_cab_a_max,
-                "compressor_pressure_max");
-        BIND_PROPERTY(
-                Variant::FLOAT, "compressor_pressure_cab_b_min", "compressor/cab_b/min_pressure",
-                &TrainBrake::set_compressor_pressure_cab_b_min, &TrainBrake::get_compressor_pressure_cab_b_min,
-                "compressor_pressure_min");
-        BIND_PROPERTY(
-                Variant::FLOAT, "compressor_pressure_cab_b_max", "compressor/cab_b/max_pressure",
-                &TrainBrake::set_compressor_pressure_cab_b_max, &TrainBrake::get_compressor_pressure_cab_b_max,
-                "compressor_pressure_max");
-        BIND_PROPERTY(
-                Variant::FLOAT, "compressor_speed", "compressor/speed", &TrainBrake::set_compressor_speed,
-                &TrainBrake::get_compressor_speed, "compressor_speed");
+        BIND_PROPERTY(TrainBrake, Variant::INT, friction_elements_per_axle);
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, brake_force_max, "brake_force");
+        BIND_PROPERTY(TrainBrake, Variant::INT, est_valve_size, "est_valve");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, brake_force_traction, "brake_force");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, max_cylinder_pressure);
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, max_aux_pressure);
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, max_tare_pressure);
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, max_medium_pressure);
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, max_antislip_pressure);
+        BIND_PROPERTY(TrainBrake, Variant::INT, cylinder_count, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_radius, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_distance, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_spring_force, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, piston_stroke_adjuster_resistance, "piston_stroke");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_gear_ratio, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_gear_ratio_low, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, cylinder_gear_ratio_high, "cylinder");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, pipe_pressure_min, "pipe");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, pipe_pressure_max, "pipe");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, tank_volume_main, "tank");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, tank_volume_aux, "tank");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_cab_a_min_pressure, "compressor/cab_a");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_cab_a_max_pressure, "compressor/cab_a");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_cab_b_min_pressure, "compressor/cab_b");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_cab_b_max_pressure, "compressor/cab_b");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_speed, "compressor");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "compressor_power", "compressor/power", &TrainBrake::set_compressor_power,
-                &TrainBrake::get_compressor_power, "compressor_power", PROPERTY_HINT_ENUM,
+                TrainBrake, Variant::INT, compressor_power, "compressor", PROPERTY_HINT_ENUM,
                 "Main,Unused,Converter,Engine,Coupler1,Coupler2");
-        BIND_PROPERTY(
-                Variant::FLOAT, "rig_effectiveness", "rig_effectiveness", &TrainBrake::set_rig_effectiveness,
-                &TrainBrake::get_rig_effectiveness, "rig_effectiveness");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, rig_effectiveness);
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "brake_method", "brake/method", &TrainBrake::set_brake_method,
-                &TrainBrake::get_brake_method, "brake_method", PROPERTY_HINT_ENUM,
+                TrainBrake, Variant::INT, brake_method, "brake", PROPERTY_HINT_ENUM,
                 "P10-Bg,P10-Bgu,FR513,FR510,Cosid,P10yBg,P10yBgu,Disk1,Disk1+Mg,Disk2");
-        BIND_PROPERTY(
-                Variant::FLOAT, "rapid_transfer", "rapid/transfer", &TrainBrake::set_rapid_transfer,
-                &TrainBrake::get_rapid_transfer, "rapid_transfer");
-        BIND_PROPERTY(
-                Variant::FLOAT, "rapid_switching_speed", "rapid/switching_speed",
-                &TrainBrake::set_rapid_switching_speed, &TrainBrake::get_rapid_switching_speed,
-                "rapid_switching_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "air_leak_multiplier", "air_leak_multiplier", &TrainBrake::set_air_leak_multiplier,
-                &TrainBrake::get_air_leak_multiplier, "air_leak_multiplier")
-        BIND_PROPERTY(
-                Variant::BOOL, "compressor_tank_valve_active", "compressor/tank_valve_active",
-                &TrainBrake::set_compressor_tank_valve_active, &TrainBrake::get_compressor_tank_valve_active,
-                "compressor_tank_valve_active")
-        BIND_PROPERTY(
-                Variant::FLOAT, "lower_emergency_closing_pressure", "compressor/lower_emergency_closing_pressure",
-                &TrainBrake::set_lower_emergency_closing_pressure, &TrainBrake::get_lower_emergency_closing_pressure,
-                "lower_emergency_closing_pressure")
-        BIND_PROPERTY(
-                Variant::FLOAT, "higher_emergency_closing_pressure", "compressor/higher_emergency_closing_pressure",
-                &TrainBrake::set_higher_emergency_closing_pressure, &TrainBrake::get_higher_emergency_closing_pressure,
-                "higher_emergency_closing_pressure")
-        BIND_PROPERTY(
-                Variant::FLOAT, "main_pipe_blocking_pressure", "main_pipe/blocking_pressure",
-                &TrainBrake::set_main_pipe_blocking_pressure, &TrainBrake::get_main_pipe_blocking_pressure,
-                "main_pipe_blocking_pressure")
-        BIND_PROPERTY(
-                Variant::FLOAT, "main_pipe_unblocking_pressure", "main_pipe/unblocking_pressure",
-                &TrainBrake::set_main_pipe_unblocking_pressure, &TrainBrake::get_main_pipe_unblocking_pressure,
-                "main_pipe_unblocking_pressure")
-        BIND_PROPERTY(
-                Variant::FLOAT, "main_pipe_minimum_unblocking_handle_position",
-                "main_pipe/minimum_unblocking_handle_position",
-                &TrainBrake::set_main_pipe_minimum_unblocking_handle_position,
-                &TrainBrake::get_main_pipe_minimum_unblocking_handle_position,
-                "main_pipe_minimum_unblocking_handle_position")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, rapid_transfer, "rapid");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, rapid_switching_speed, "rapid");
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, air_leak_multiplier)
+        BIND_PROPERTY(TrainBrake, Variant::BOOL, compressor_tank_valve_active, "compressor")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_lower_emergency_closing_pressure, "compressor")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, compressor_higher_emergency_closing_pressure, "compressor")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_blocking_pressure, "main_pipe")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_unblocking_pressure, "main_pipe")
+        BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_minimum_unblocking_handle_position, "main_pipe")
 
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_MAIN);
         BIND_ENUM_CONSTANT(COMPRESSOR_POWER_UNUSED);
@@ -336,9 +241,9 @@ namespace godot {
         p_mover->BrakeSubsystem = it != brake_valve_to_subsystem_map.end() ? it->second : TBrakeSubSystem::ss_None;
 
         p_mover->NBpA = CLAMP<int, int, int>(friction_elements_per_axle, 0, 4);
-        p_mover->MaxBrakeForce = max_brake_force;
-        p_mover->BrakeValveSize = valve_size;
-        p_mover->TrackBrakeForce = traction_brake_force * 1000.0;
+        p_mover->MaxBrakeForce = brake_force_max;
+        p_mover->BrakeValveSize = est_valve_size;
+        p_mover->TrackBrakeForce = brake_force_traction * 1000.0;
         p_mover->MaxBrakePress[3] = max_cylinder_pressure;
         if (max_cylinder_pressure > 0.0) {
             p_mover->BrakeCylNo = cylinder_count;
@@ -364,7 +269,7 @@ namespace godot {
                 p_mover->LoadFlag = (cylinder_gear_ratio_low > 0.0 || max_tare_pressure > 0.0) ? 1 : 0;
 
                 p_mover->BrakeVolume = M_PI * std::pow(cylinder_radius, 2) * cylinder_distance * cylinder_count;
-                p_mover->BrakeVVolume = aux_tank_volume;
+                p_mover->BrakeVVolume = tank_volume_aux;
 
                 const std::unordered_map<BrakeMethod, int>::const_iterator lookup;
                 p_mover->BrakeMethod = lookup != brake_method_map.find(brake_method) ? brake_method : 0;
@@ -381,15 +286,15 @@ namespace godot {
         /* PipePress i HighPipePress musza byc skopiowane */
         p_mover->HighPipePress = pipe_pressure_max;
         p_mover->LowPipePress = pipe_pressure_min;
-        p_mover->VeselVolume = main_tank_volume;
-        p_mover->MinCompressor = compressor_pressure_cab_a_min;
-        p_mover->MaxCompressor = compressor_pressure_cab_a_max;
-        p_mover->MinCompressor_cabB = compressor_pressure_cab_b_min;
-        p_mover->MaxCompressor_cabB = compressor_pressure_cab_b_max;
+        p_mover->VeselVolume = tank_volume_main;
+        p_mover->MinCompressor = compressor_cab_a_min_pressure;
+        p_mover->MaxCompressor = compressor_cab_a_max_pressure;
+        p_mover->MinCompressor_cabB = compressor_cab_b_min_pressure;
+        p_mover->MaxCompressor_cabB = compressor_cab_b_max_pressure;
 
         p_mover->CompressorTankValve = compressor_tank_valve_active;
-        p_mover->EmergencyValveOff = lower_emergency_closing_pressure;
-        p_mover->EmergencyValveOn = higher_emergency_closing_pressure;
+        p_mover->EmergencyValveOff = compressor_lower_emergency_closing_pressure;
+        p_mover->EmergencyValveOn = compressor_higher_emergency_closing_pressure;
 
         //@TODO: Figure out and implement equivalents for UniversalBrakeButtonFlag
 

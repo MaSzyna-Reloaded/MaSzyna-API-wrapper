@@ -2,29 +2,14 @@
 
 namespace godot {
     void TrainLoad::_bind_methods() {
-        BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "load_list", "load_list", &TrainLoad::set_load_list, &TrainLoad::get_load_list,
-                "load_list", PROPERTY_HINT_ARRAY_TYPE, "LoadListItem")
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "load_unit", "load_unit", &TrainLoad::set_load_unit, &TrainLoad::get_load_unit,
-                "load_unit", PROPERTY_HINT_ENUM, "Tons,Pieces");
-        BIND_PROPERTY(
-                Variant::FLOAT, "overload_factor", "overload_factor", &TrainLoad::set_overload_factor,
-                &TrainLoad::get_overload_factor, "overload_factor");
-        BIND_PROPERTY(
-                Variant::FLOAT, "load_speed", "load_speed", &TrainLoad::set_load_speed, &TrainLoad::get_load_speed,
-                "load_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "unload_speed", "unload_speed", &TrainLoad::set_unload_speed,
-                &TrainLoad::get_unload_speed, "unload_speed");
-        BIND_PROPERTY(
-                Variant::FLOAT, "max_load", "max_load", &TrainLoad::set_max_load, &TrainLoad::get_max_load, "max_load");
-        BIND_PROPERTY_ARRAY(
-                "minimum_load_offsets", "minimum_load_offsets", &TrainLoad::set_minimum_load_offsets,
-                &TrainLoad::get_minimum_load_offsets, "minimum_load_offsets");
-        BIND_PROPERTY_ARRAY(
-                "accepted_loads", "accepted_loads", &TrainLoad::set_accepted_loads, &TrainLoad::get_accepted_loads,
-                "accepted_loads");
+        BIND_PROPERTY_W_HINT_RES_ARRAY(TrainLoad, Variant::ARRAY, load_list, PROPERTY_HINT_ARRAY_TYPE, "LoadListItem")
+        BIND_PROPERTY_W_HINT(TrainLoad, Variant::INT, load_unit, PROPERTY_HINT_ENUM, "Tons,Pieces");
+        BIND_PROPERTY(TrainLoad, Variant::FLOAT, overload_factor);
+        BIND_PROPERTY(TrainLoad, Variant::FLOAT, load_speed);
+        BIND_PROPERTY(TrainLoad, Variant::FLOAT, unload_speed);
+        BIND_PROPERTY(TrainLoad, Variant::FLOAT, max_load);
+        BIND_PROPERTY_ARRAY(TrainLoad, minimum_load_offsets);
+        BIND_PROPERTY_ARRAY(TrainLoad, accepted_loads);
         BIND_ENUM_CONSTANT(LOAD_UNIT_TONS);
         BIND_ENUM_CONSTANT(LOAD_UNIT_PIECES);
     }

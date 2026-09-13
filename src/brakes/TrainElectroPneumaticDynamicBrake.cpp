@@ -7,23 +7,16 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("switch_ep_fuse", "value"), &TrainElectroPneumaticDynamicBrake::switch_ep_fuse);
 
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "coupler_check", "coupler_check", &TrainElectroPneumaticDynamicBrake::set_coupler_check,
-                &TrainElectroPneumaticDynamicBrake::get_coupler_check, "value", PROPERTY_HINT_ENUM, "None,Front,Back");
+                TrainElectroPneumaticDynamicBrake, Variant::INT, coupler_check, PROPERTY_HINT_ENUM, "None,Front,Back");
         BIND_PROPERTY(
-                Variant::FLOAT, "min_regenerative_braking", "electro_pneumatic/min_regenerative_braking",
-                &TrainElectroPneumaticDynamicBrake::set_min_ep_regenerative_braking,
-                &TrainElectroPneumaticDynamicBrake::get_min_ep_regenerative_braking, "value");
+                TrainElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_min_regenerative_braking,
+                "electro_pneumatic");
         BIND_PROPERTY(
-                Variant::FLOAT, "max_ep_brake_engagement_speed", "electro_pneumatic/max_ep_brake_engagement_speed",
-                &TrainElectroPneumaticDynamicBrake::set_max_ep_brake_engagement_speed,
-                &TrainElectroPneumaticDynamicBrake::get_max_ep_brake_engagement_speed, "value");
+                TrainElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_max_ep_brake_engagement_speed,
+                "electro_pneumatic");
         BIND_PROPERTY(
-                Variant::FLOAT, "electro_pneumatic_brake_delay", "electro_pneumatic/electro_pneumatic_brake_delay",
-                &TrainElectroPneumaticDynamicBrake::set_ed_braking_ep_delay,
-                &TrainElectroPneumaticDynamicBrake::get_ed_braking_ep_delay, "value");
-        BIND_PROPERTY(
-                Variant::BOOL, "ep_brake_fuse", "ep_brake_fuse", &TrainElectroPneumaticDynamicBrake::set_ep_brake_fuse,
-                &TrainElectroPneumaticDynamicBrake::get_ep_brake_fuse, "fuse_state");
+                TrainElectroPneumaticDynamicBrake, Variant::FLOAT, electro_pneumatic_brake_delay, "electro_pneumatic");
+        BIND_PROPERTY(TrainElectroPneumaticDynamicBrake, Variant::BOOL, ep_brake_fuse);
 
         BIND_ENUM_CONSTANT(NONE)
         BIND_ENUM_CONSTANT(FRONT)
@@ -53,9 +46,9 @@ namespace godot {
 
     void TrainElectroPneumaticDynamicBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
         p_mover->DCEMUED_CC = coupler_check;
-        p_mover->DCEMUED_EP_delay = ed_braking_ep_delay;
-        p_mover->DCEMUED_EP_max_Vel = max_ep_brake_engagement_speed;
-        p_mover->DCEMUED_EP_min_Im = min_ep_regenerative_braking;
+        p_mover->DCEMUED_EP_delay = electro_pneumatic_brake_delay;
+        p_mover->DCEMUED_EP_max_Vel = electro_pneumatic_max_ep_brake_engagement_speed;
+        p_mover->DCEMUED_EP_min_Im = electro_pneumatic_min_regenerative_braking;
         p_mover->EpFuseSwitch(ep_brake_fuse);
     }
 

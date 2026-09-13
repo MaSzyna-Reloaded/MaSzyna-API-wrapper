@@ -7,44 +7,19 @@
 
 namespace godot {
     void TrainSecuritySystem::_bind_methods() {
-        BIND_PROPERTY(
-                Variant::BOOL, "aware_system_active", "aware_system/active",
-                &TrainSecuritySystem::set_aware_system_active, &TrainSecuritySystem::get_aware_system_active, "state");
-        BIND_PROPERTY(
-                Variant::BOOL, "aware_system_cabsignal", "aware_system/cabsignal",
-                &TrainSecuritySystem::set_aware_system_cab_signal, &TrainSecuritySystem::get_aware_system_cab_signal,
-                "state");
-        BIND_PROPERTY(
-                Variant::BOOL, "aware_system_separate_acknowledge", "aware_system/separate_acknowledge",
-                &TrainSecuritySystem::set_aware_system_separate_acknowledge,
-                &TrainSecuritySystem::get_aware_system_separate_acknowledge, "state");
-        BIND_PROPERTY(
-                Variant::BOOL, "aware_system_sifa", "aware_system/sifa", &TrainSecuritySystem::set_aware_system_sifa,
-                &TrainSecuritySystem::get_aware_system_sifa, "state");
-        BIND_PROPERTY(
-                Variant::FLOAT, "aware_delay", "aware_delay", &TrainSecuritySystem::set_aware_delay,
-                &TrainSecuritySystem::get_aware_delay, "delay");
-        BIND_PROPERTY(
-                Variant::FLOAT, "emergency_brake_delay", "emergency_brake/delay",
-                &TrainSecuritySystem::set_emergency_brake_delay, &TrainSecuritySystem::get_emergency_brake_delay,
-                "delay");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::BOOL, aware_system_active, "aware_system");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::BOOL, aware_system_cabsignal, "aware_system");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::BOOL, aware_system_separate_acknowledge, "aware_system");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::BOOL, aware_system_sifa, "aware_system");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, aware_delay);
+        BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, emergency_brake_delay, "emergency_brake");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "emergency_signal", "emergency_signal", &TrainSecuritySystem::set_emergency_signal,
-                &TrainSecuritySystem::get_emergency_signal, "signal", PROPERTY_HINT_ENUM,
+                TrainSecuritySystem, Variant::INT, emergency_signal, PROPERTY_HINT_ENUM,
                 "SIREN_LOW_TONE,SIREN_HIGH_TONE,WHISTLE");
-        BIND_PROPERTY(
-                Variant::BOOL, "radio_stop_enabled", "radio_stop/enabled", &TrainSecuritySystem::set_radio_stop_enabled,
-                &TrainSecuritySystem::get_radio_stop_enabled, "state");
-        BIND_PROPERTY(
-                Variant::FLOAT, "sound_signal_delay", "sound_signal_delay",
-                &TrainSecuritySystem::set_sound_signal_delay, &TrainSecuritySystem::get_sound_signal_delay, "delay");
-        BIND_PROPERTY(
-                Variant::FLOAT, "shp_magnet_distance", "shp_magnet_distance",
-                &TrainSecuritySystem::set_shp_magnet_distance, &TrainSecuritySystem::get_shp_magnet_distance,
-                "distance");
-        BIND_PROPERTY(
-                Variant::FLOAT, "ca_max_hold_time", "ca_max_hold_time", &TrainSecuritySystem::set_ca_max_hold_time,
-                &TrainSecuritySystem::get_ca_max_hold_time, "delay");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::BOOL, radio_stop_enabled, "radio_stop");
+        BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, sound_signal_delay);
+        BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, shp_magnet_distance);
+        BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, ca_max_hold_time);
         ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::security_acknowledge);
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
@@ -80,7 +55,7 @@ namespace godot {
         p_mover->SecuritySystem.set_enabled(enabled);
 
         p_mover->SecuritySystem.vigilance_enabled = aware_system_active;
-        p_mover->SecuritySystem.cabsignal_enabled = aware_system_cab_signal;
+        p_mover->SecuritySystem.cabsignal_enabled = aware_system_cabsignal;
         p_mover->SecuritySystem.separate_acknowledge = aware_system_separate_acknowledge;
         p_mover->SecuritySystem.is_sifa = aware_system_sifa;
 

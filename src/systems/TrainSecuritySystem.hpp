@@ -27,7 +27,7 @@ namespace godot {
             void security_acknowledge(bool p_enabled);
 
             MAKE_MEMBER_GS(bool, aware_system_active, false);
-            MAKE_MEMBER_GS(bool, aware_system_cab_signal, false);
+            MAKE_MEMBER_GS(bool, aware_system_cabsignal, false);
             MAKE_MEMBER_GS(bool, aware_system_separate_acknowledge, false);
             MAKE_MEMBER_GS(bool, aware_system_sifa, false);
             MAKE_MEMBER_GS(double, aware_delay, 0.0);

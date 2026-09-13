@@ -139,10 +139,10 @@
 		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
 			[code]Param.PWR[/code]
 		</member>
-		<member name="radio_channel/max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="0">
+		<member name="radio_channel_max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="0">
 			Maximum radio channel number
 		</member>
-		<member name="radio_channel/min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="0">
+		<member name="radio_channel_min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="0">
 			Minimum radio channel number
 		</member>
 		<member name="state" type="Dictionary" setter="" getter="get_state" default="{}">

@@ -3,63 +3,37 @@
 namespace godot {
     void TrainBuffCoupl::_bind_methods() {
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "coupler_type", "coupler/type", &TrainBuffCoupl::set_coupler_type,
-                &TrainBuffCoupl::get_coupler_type, "value", PROPERTY_HINT_ENUM,
+                TrainBuffCoupl, Variant::INT, coupler_type, "coupler", PROPERTY_HINT_ENUM,
                 "Automatic,Screw,Chain,Bare,Articulated");
 
         // Buffer properties
-        BIND_PROPERTY(
-                Variant::FLOAT, "buffer_stiffness_k", "buffer/stiffness_k", &TrainBuffCoupl::set_buffer_stiffness_k,
-                &TrainBuffCoupl::get_buffer_stiffness_k, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "buffer_max_compression_tolerance", "buffer/max_compression_tolerance",
-                &TrainBuffCoupl::set_buffer_max_compression_tolerance,
-                &TrainBuffCoupl::get_buffer_max_compression_tolerance, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "buffer_max_tension_tolerance", "buffer/max_tension_tolerance",
-                &TrainBuffCoupl::set_buffer_max_tension_tolerance, &TrainBuffCoupl::get_buffer_max_tension_tolerance,
-                "value");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, buffer_stiffness_k, "buffer");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, buffer_max_compression_tolerance, "buffer");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, buffer_max_tension_tolerance, "buffer");
 
         // Coupler properties
-        BIND_PROPERTY(
-                Variant::FLOAT, "coupler_stiffness_k", "coupler/stiffness_k", &TrainBuffCoupl::set_coupler_stiffness_k,
-                &TrainBuffCoupl::get_coupler_stiffness_k, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "coupler_max_compression_tolerance", "coupler/max_compression_tolerance",
-                &TrainBuffCoupl::set_coupler_max_compression_tolerance,
-                &TrainBuffCoupl::get_coupler_max_compression_tolerance, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "coupler_max_tension_tolerance", "coupler/max_tension_tolerance",
-                &TrainBuffCoupl::set_coupler_max_tension_tolerance, &TrainBuffCoupl::get_coupler_max_tension_tolerance,
-                "value");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, coupler_stiffness_k, "coupler");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, coupler_max_compression_tolerance, "coupler");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, coupler_max_tension_tolerance, "coupler");
 
         // Damping
-        BIND_PROPERTY(
-                Variant::FLOAT, "damping_beta", "damping_beta", &TrainBuffCoupl::set_damping_beta,
-                &TrainBuffCoupl::get_damping_beta, "value");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::FLOAT, damping_beta);
 
         // Coupler capability flags and control
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "allowed_flag", "allowed_flag", &TrainBuffCoupl::set_allowed_flag,
-                &TrainBuffCoupl::get_allowed_flag, "value", PROPERTY_HINT_FLAGS,
+                TrainBuffCoupl, Variant::INT, allowed_flag, PROPERTY_HINT_FLAGS,
                 "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
                 "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "automatic_flag", "automatic_flag", &TrainBuffCoupl::set_automatic_flag,
-                &TrainBuffCoupl::get_automatic_flag, "value", PROPERTY_HINT_FLAGS,
+                TrainBuffCoupl, Variant::INT, automatic_flag, PROPERTY_HINT_FLAGS,
                 "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
                 "electric cable,110V electric cable,3+400V electric cable");
+        BIND_PROPERTY_W_HINT(TrainBuffCoupl, Variant::INT, power_flag, PROPERTY_HINT_FLAGS, "24V,110V,3x400V");
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "power_flag", "power_flag", &TrainBuffCoupl::set_power_flag,
-                &TrainBuffCoupl::get_power_flag, "value", PROPERTY_HINT_FLAGS, "24V,110V,3x400V");
-        BIND_PROPERTY_W_HINT(
-                Variant::INT, "power_coupling", "power_coupling", &TrainBuffCoupl::set_power_coupling,
-                &TrainBuffCoupl::get_power_coupling, "value", PROPERTY_HINT_FLAGS,
+                TrainBuffCoupl, Variant::INT, power_coupling, PROPERTY_HINT_FLAGS,
                 "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
                 "electric cable,110V electric cable,3+400V electric cable");
-        BIND_PROPERTY(
-                Variant::STRING, "control_type", "control_type", &TrainBuffCoupl::set_control_type,
-                &TrainBuffCoupl::get_control_type, "value");
+        BIND_PROPERTY(TrainBuffCoupl, Variant::STRING, control_type);
         ClassDB::bind_method(D_METHOD("couple"), &TrainBuffCoupl::couple);
         ClassDB::bind_method(D_METHOD("decouple"), &TrainBuffCoupl::decouple);
 

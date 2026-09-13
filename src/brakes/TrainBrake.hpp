@@ -112,10 +112,10 @@ namespace godot {
 
             MAKE_MEMBER_GS_NR(
                     TrainBrakeValve, valve_type, static_cast<TrainBrakeValve>(static_cast<int>(TBrakeValve::NoValve)));
-            MAKE_MEMBER_GS(int, valve_size, 0);
+            MAKE_MEMBER_GS(int, est_valve_size, 0);
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
-            MAKE_MEMBER_GS(double, max_brake_force, 1.0);
-            MAKE_MEMBER_GS(double, traction_brake_force, 0.0);
+            MAKE_MEMBER_GS(double, brake_force_max, 1.0);
+            MAKE_MEMBER_GS(double, brake_force_traction, 0.0);
             MAKE_MEMBER_GS(double, max_cylinder_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_aux_pressure, 0.0);
             MAKE_MEMBER_GS(double, max_antislip_pressure, 0.0);
@@ -131,12 +131,12 @@ namespace godot {
             MAKE_MEMBER_GS(double, cylinder_gear_ratio_high, 0.0);
             MAKE_MEMBER_GS(double, pipe_pressure_max, 5.0);
             MAKE_MEMBER_GS(double, pipe_pressure_min, 3.5);
-            MAKE_MEMBER_GS(double, main_tank_volume, 0.0);
-            MAKE_MEMBER_GS(double, aux_tank_volume, 0.0);
-            MAKE_MEMBER_GS(double, compressor_pressure_cab_a_min, 0.0);
-            MAKE_MEMBER_GS(double, compressor_pressure_cab_a_max, 0.0);
-            MAKE_MEMBER_GS(double, compressor_pressure_cab_b_min, 0.0);
-            MAKE_MEMBER_GS(double, compressor_pressure_cab_b_max, 0.0);
+            MAKE_MEMBER_GS(double, tank_volume_main, 0.0);
+            MAKE_MEMBER_GS(double, tank_volume_aux, 0.0);
+            MAKE_MEMBER_GS(double, compressor_cab_a_min_pressure, 0.0);
+            MAKE_MEMBER_GS(double, compressor_cab_a_max_pressure, 0.0);
+            MAKE_MEMBER_GS(double, compressor_cab_b_min_pressure, 0.0);
+            MAKE_MEMBER_GS(double, compressor_cab_b_max_pressure, 0.0);
             MAKE_MEMBER_GS(double, compressor_speed, 0.0);
             MAKE_MEMBER_GS(double, rapid_transfer, 1.0);
             MAKE_MEMBER_GS(double, rapid_switching_speed, 55.0);
@@ -146,8 +146,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, air_leak_multiplier, 1.0);
 
             MAKE_MEMBER_GS(bool, compressor_tank_valve_active, false);
-            MAKE_MEMBER_GS(double, lower_emergency_closing_pressure, -1.0);
-            MAKE_MEMBER_GS(double, higher_emergency_closing_pressure, -1.0);
+            MAKE_MEMBER_GS(double, compressor_lower_emergency_closing_pressure, -1.0);
+            MAKE_MEMBER_GS(double, compressor_higher_emergency_closing_pressure, -1.0);
             MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, 0.0);
             MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
             MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);

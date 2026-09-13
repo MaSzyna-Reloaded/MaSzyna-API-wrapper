@@ -35,7 +35,7 @@ varying float v_dist;
 void vertex() {
     v_tangent_view = normalize(MODELVIEW_NORMAL_MATRIX * TANGENT);
     v_normal_view = normalize(MODELVIEW_NORMAL_MATRIX * NORMAL);
-    v_binormal_view = normalize(cross(v_normal_view, v_tangent_view));
+    v_binormal_view = normalize(MODELVIEW_NORMAL_MATRIX * -BINORMAL);
 
     v_position_view = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
     v_dist = length(v_position_view);

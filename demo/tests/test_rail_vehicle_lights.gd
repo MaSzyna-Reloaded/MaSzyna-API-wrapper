@@ -88,6 +88,33 @@ func test_model_reload_reapplies_vehicle_lights() -> void:
     assert_eq(model_node.lights_state, {"front": true}, "Vehicle lights should be reapplied after model reload")
 
 
+func test_model_instance_lifecycle_disconnects_only_connected_model_node() -> void:
+    var vehicle: RailVehicle3D = RailVehicle3D.new()
+    var first_model: E3DModelInstance = E3DModelInstance.new()
+    var second_model: E3DModelInstance = E3DModelInstance.new()
+
+    first_model.name = "FirstModel"
+    second_model.name = "SecondModel"
+    vehicle.add_child(first_model)
+    vehicle.add_child(second_model)
+    add_child(vehicle)
+
+    vehicle.model_instance_path = NodePath("FirstModel")
+    await wait_idle_frames(2)
+    assert_true(first_model.e3d_loaded.is_connected(vehicle._on_model_node_e3d_loaded))
+
+    vehicle.model_instance_path = NodePath("SecondModel")
+    await wait_idle_frames(2)
+    assert_false(first_model.e3d_loaded.is_connected(vehicle._on_model_node_e3d_loaded))
+    assert_true(second_model.e3d_loaded.is_connected(vehicle._on_model_node_e3d_loaded))
+
+    remove_child(vehicle)
+    await wait_idle_frames(2)
+    assert_false(second_model.e3d_loaded.is_connected(vehicle._on_model_node_e3d_loaded))
+
+    vehicle.queue_free()
+
+
 func _create_model_with_lights(light_names: Array[String]) -> E3DModel:
     var model: E3DModel = E3DModel.new()
 

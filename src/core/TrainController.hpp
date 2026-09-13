@@ -2,6 +2,9 @@
 #include "../maszyna/McZapkie/MOVER.h"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/rid.hpp>
+#include <godot_cpp/variant/transform3d.hpp>
+#include <godot_cpp/variant/vector3.hpp>
 
 
 namespace godot {
@@ -39,6 +42,8 @@ namespace godot {
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
+            Object *_get_rail_vehicle_physics_server() const;
+            void _emit_position_changed_if_needed();
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -164,6 +169,7 @@ namespace godot {
             static const char *radio_channel_changed;
             static const char *roof_light_changed;
             static const char *config_changed;
+            static const char *position_changed_signal;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
@@ -189,8 +195,13 @@ namespace godot {
             void unregister_command(const String &p_command, const Callable &p_callable);
             void update_state();
             void update_mover();
+            double process_movement(double p_delta);
             TMoverParameters *get_mover() const;
             static void _bind_methods();
+            void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
+            RID get_rid() const;
+            Vector3 get_world_position() const;
+            Transform3D get_world_transform() const;
             MAKE_MEMBER_GS(String, train_id, "");
             MAKE_MEMBER_GS(String, type_name, "");
             MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
@@ -231,6 +242,10 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_automatic_cab_activation, true);
             MAKE_MEMBER_GS(int, cntrl_inactive_cab_flag, 0);
             Dictionary get_state();
+
+        private:
+            RID rid;
+            Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };
 } // namespace godot
 

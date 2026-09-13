@@ -15,41 +15,17 @@
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
 [ext_resource type="PackedScene" uid="uid://bbq6b2v2678h0" path="res://hud/user_settings_panel.tscn" id="12_eihw1"]
-[ext_resource type="Script" uid="uid://q5rsmctbnhqt" path="res://addons/libmaszyna/tracks/maszyna_track_curve.gd" id="22_track_curve"]
 [ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="13_nxmm0"]
-[ext_resource type="Script" uid="uid://crnc02lngpqkm" path="res://addons/libmaszyna/tracks/track_normal_3d.gd" id="23_track_normal"]
-[ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="17_l04v0"]
 [ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
 [ext_resource type="E3DModel" uid="uid://buxg17oldnjq6" path="res://e3d_models/dzik.e3d" id="21_sa6xs"]
+[ext_resource type="Script" uid="uid://q5rsmctbnhqt" path="res://addons/libmaszyna/tracks/maszyna_track_curve.gd" id="22_track_curve"]
+[ext_resource type="Script" uid="uid://crnc02lngpqkm" path="res://addons/libmaszyna/tracks/track_normal_3d.gd" id="23_track_normal"]
 [ext_resource type="Script" uid="uid://do35jm13yiccm" path="res://addons/libmaszyna/traction/maszyna_traction_3d.gd" id="24_6m450"]
 [ext_resource type="Script" uid="uid://dotmfqnin31lo" path="res://addons/libmaszyna/traction/maszyna_traction_line.gd" id="25_jchga"]
+[ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
-
-[sub_resource type="Curve3D" id="Curve3D_esmlu"]
-bake_interval = 1.0
-_data = {
-"points": PackedVector3Array(0, 0, 0, 1.747859, 0, -10.183362, -23.444, 0, 147.67, -0.66759187, 0, 10.310684, 0.5981633, 0, -9.238388, -18.450117, 0, 118.57468, 0, 0, 0, 0, 0, 0, -19.849932, 0, 92.16108, -0.32857656, 0, 20.483587, 0.2021752, 0, -12.603679, -23.086369, 0, 33.718567, -4.9744463, 0, 11.582247, 9.18649, 0, -21.389355, -18.339779, 0, -1.9824181, -18.185575, 0, 14.532068, 44.758102, 0, -35.766136, 16.563, 0, -58.599, -57.281147, 0, 1.1720206, 59.472244, 0, -1.2168522, 157.24503, 0, -142.292, -52.9003, 0, -27.202703, 0, 0, 0, 308.38873, 0, -64.57),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0, 0, 0, 0)
-}
-point_count = 8
-
-[sub_resource type="Curve3D" id="Curve3D_qg2pq"]
-bake_interval = 1.0
-_data = {
-"points": PackedVector3Array(0, 0, 0, 0.33323526, 0, -1.6563102, -23.444, 0, 147.67, -0.4298226, 0, 1.6339101, 2.5139513, 0, -9.556432, -22.4919, 0, 142.93768, -1.8886186, 0, 9.699405, 0.873898, 0, -4.48809, -15.035694, 0, 115.70701, 0.22356537, 0, 4.5669103, -0.8960822, 0, -18.304832, -14.647063, 0, 102.64885, 1.2548047, 0, 18.283747, 0, 0, 0, -18.23222, 0, 50.409576),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
-}
-point_count = 5
-
-[sub_resource type="Curve3D" id="Curve3D_rrc65"]
-bake_interval = 1.0
-_data = {
-"points": PackedVector3Array(0, 0, 0, 1.1770676, 0, -46.7242, -28.74, 0, 300, 0, 0, 0, 0, 0, 0, -25.37695, 0, 166.50227, -0.114873014, 0, 1.8130357, 0.13763739, 0, -2.172325, -25.246233, 0, 161.31343, -0.28505298, 0, 2.1579351, 0.34607038, 0, -2.6198547, -24.655928, 0, 155.12242, -0.4241746, 0, 2.608348, 0, 0, 0, -23.444, 0, 147.67),
-"tilts": PackedFloat32Array(0, 0, 0, 0, 0)
-}
-point_count = 5
 
 [sub_resource type="Resource" id="TrackCurve_common"]
 script = ExtResource("22_track_curve")
@@ -271,8 +247,8 @@ layout_mode = 2
 
 [node name="MiniMap" type="Container" parent="ControlWindows" unique_id=67657945]
 top_level = true
-clip_contents = true
 custom_minimum_size = Vector2(100, 50)
+clip_contents = true
 offset_left = 1014.0
 offset_top = 589.0
 offset_right = 1250.0
@@ -294,6 +270,7 @@ script = ExtResource("2_py6pt")
 current_time = 10.0
 timezone_offset = 2
 simulation_speed = 100.0
+tonemap_agx_contrast = 1.0
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, -18.508982, 1.959, 168.0919)
@@ -358,6 +335,8 @@ data_path = "dynamic/pkp/st44_v2"
 file_name = "st44-700"
 skin = "st44-700"
 train_id = "st44"
+start_track_name = "left_diverging_track"
+start_track_offset = 100.0
 
 [node name="SU45" type="Node3D" parent="." unique_id=1297199175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.22263, 0, 14.716293)
@@ -366,6 +345,8 @@ data_path = "dynamic/pkp/su45_v2"
 file_name = "301d"
 skin = "301d-225"
 train_id = "su45"
+start_track_name = "common"
+start_track_offset = 120.0
 
 [node name="SM42" type="Node3D" parent="." unique_id=769861990]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18.48359, 0, 26.163708)
@@ -374,6 +355,8 @@ data_path = "dynamic/pkp/sm42_v1"
 file_name = "6d1"
 skin = "6d-1076"
 train_id = "sm42"
+start_track_name = "left_diverging_track"
+start_track_offset = 180.0
 
 [node name="SM42-907" type="Node3D" parent="." unique_id=1204789574]
 transform = Transform3D(-0.9996828, 0, 0.025186649, 0, 1, 0, -0.025186649, 0, -0.9996828, -25.735577, 0.16, 180.73814)
@@ -402,9 +385,11 @@ script = ExtResource("29_dcvyd")
 data_path = "/dynamic/pkp/sm31_v1/"
 file_name = "411d"
 train_id = "sm31"
+start_track_name = "common"
+start_track_offset = 17.23
 
 [node name="KA" type="Node3D" parent="." unique_id=754884786]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24.47315, 0, 119.65934)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.631773, 0, 119.65934)
 script = ExtResource("29_dcvyd")
 data_path = "/dynamic/road/clio"
 file_name = "clio"
@@ -1196,9 +1181,24 @@ script = ExtResource("4_drlsl")
 model = ExtResource("21_sa6xs")
 metadata/_custom_type_script = "uid://dgifxvb2e4hww"
 
-[node name="TrackExample" type="Node3D" parent="."]
+[node name="TrackExample" type="Node3D" parent="." unique_id=371000835]
 
-[node name="CommonTrack" type="VisualInstance3D" parent="TrackExample"]
+[node name="CommonTrack" type="VisualInstance3D" parent="TrackExample" unique_id=136143682]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.8, 0, -18)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("23_track_normal")
 material1 = "rail_screw_used1"
 material2 = "1435mm/tpbps-new2"
@@ -1206,9 +1206,25 @@ tex_length = 6.0
 tex_height = 0.2
 tex_width = 0.5
 tex_slope = 1.1
+track_name = "common"
 curve = SubResource("TrackCurve_common")
 
-[node name="DivergingTrack" type="VisualInstance3D" parent="TrackExample"]
+[node name="DivergingTrack" type="VisualInstance3D" parent="TrackExample" unique_id=309524581]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.19, 0, -15)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("23_track_normal")
 material1 = "rail_screw_used1"
 material2 = "1435mm/tpbps-new2"
@@ -1219,7 +1235,22 @@ tex_slope = 1.1
 track_name = "diverging"
 curve = SubResource("TrackCurve_diverging")
 
-[node name="StartTrack" type="VisualInstance3D" parent="TrackExample"]
+[node name="StartTrack" type="VisualInstance3D" parent="TrackExample" unique_id=604604820]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.8, 0, 386)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("23_track_normal")
 material1 = "rail_screw_used1"
 material2 = "1435mm/tpbps-new2"
@@ -1230,7 +1261,22 @@ tex_slope = 1.1
 track_name = "start"
 curve = SubResource("TrackCurve_start")
 
-[node name="Switch" type="VisualInstance3D" parent="TrackExample"]
+[node name="Switch" type="VisualInstance3D" parent="TrackExample" unique_id=240651396]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.494999, 0, 183)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("25_track_switch")
 diverging_curve = SubResource("TrackCurve_switch_diverging")
 material1 = "rail_screw_used1"
@@ -1242,7 +1288,22 @@ tex_width = 0.5
 tex_slope = 1.1
 curve = SubResource("TrackCurve_switch_common")
 
-[node name="Switch2" type="VisualInstance3D" parent="TrackExample"]
+[node name="Switch2" type="VisualInstance3D" parent="TrackExample" unique_id=1545905703]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.860001, 0, 100)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("25_track_switch")
 diverging_curve = SubResource("TrackCurve_switch2_diverging")
 material1 = "rail_screw_used1"
@@ -1254,7 +1315,22 @@ tex_width = 0.5
 tex_slope = 1.1
 curve = SubResource("TrackCurve_switch2_common")
 
-[node name="DivergingTrack2" type="VisualInstance3D" parent="TrackExample"]
+[node name="DivergingTrack2" type="VisualInstance3D" parent="TrackExample" unique_id=1784592109]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.53, 0, -10)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("23_track_normal")
 material1 = "rail_screw_used1"
 material2 = "1435mm/tpbps-new2"
@@ -1265,7 +1341,22 @@ tex_slope = 1.1
 track_name = "diverging2"
 curve = SubResource("TrackCurve_diverging2")
 
-[node name="LeftSwitch" type="VisualInstance3D" parent="TrackExample"]
+[node name="LeftSwitch" type="VisualInstance3D" parent="TrackExample" unique_id=1173733212]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29.15, 0, 118)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("25_track_switch")
 diverging_curve = SubResource("TrackCurve_left_switch_diverging")
 active_track = 1
@@ -1278,7 +1369,22 @@ tex_width = 0.5
 tex_slope = 1.1
 curve = SubResource("TrackCurve_left_switch_common")
 
-[node name="LeftDivergingTrack" type="VisualInstance3D" parent="TrackExample"]
+[node name="LeftDivergingTrack" type="VisualInstance3D" parent="TrackExample" unique_id=1553601117]
+unique_name_in_owner = false
+process_mode = 0
+process_priority = 0
+process_physics_priority = 0
+process_thread_group = 0
+physics_interpolation_mode = 0
+auto_translate_mode = 0
+editor_description = ""
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 0, 0)
+rotation_edit_mode = 0
+rotation_order = 2
+top_level = false
+visible = true
+visibility_parent = NodePath("")
+layers = 1
 script = ExtResource("23_track_normal")
 material1 = "rail_screw_used1"
 material2 = "1435mm/tpbps-new2"

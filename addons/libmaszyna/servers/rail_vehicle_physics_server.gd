@@ -117,6 +117,15 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state or not TrackManager.track_exists(state.track_rid):
         return
+    _move_vehicle_state(state, distance, true)
+    if state.controller_rid.is_valid():
+        var controller_state: ControllerState = _controllers.get(state.controller_rid)
+        var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
+        if controller:
+            controller._emit_position_changed_if_needed()
+
+
+func _move_vehicle_state(state: VehicleState, distance: float, force_switch_state: bool) -> void:
     if is_zero_approx(distance):
         return
 
@@ -152,7 +161,11 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
                 var requested_distance: float = minf(remaining, distance_to_endpoint)
                 var next_offset_on_track: float = current_track_offset + movement_sign * requested_distance
                 var blade_boundary_offset: float = TrackManager.switch_get_blade_boundary_offset(current_track_rid, current_switch_track)
-                if current_track_offset > blade_boundary_offset and next_offset_on_track <= blade_boundary_offset:
+                if (
+                    force_switch_state
+                    and current_track_offset > blade_boundary_offset
+                    and next_offset_on_track <= blade_boundary_offset
+                ):
                     TrackManager.switch_set_active_track(current_track_rid, current_switch_track)
         else:
             endpoint_index = TrackManager.EndpointIndex.CURVE1_P2 if movement_sign > 0.0 else TrackManager.EndpointIndex.CURVE1_P1
@@ -169,7 +182,11 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
 
         # Large init/debug jumps cross endpoints by following the single
         # unambiguous connection. Ambiguous nodes stop at the endpoint.
-        var connection: TrackManager.EndpointRef = _get_motion_connection(current_track_rid, endpoint_index)
+        var connection: TrackManager.EndpointRef = _get_motion_connection(
+            current_track_rid,
+            endpoint_index,
+            force_switch_state,
+        )
         if not connection:
             break
 
@@ -196,18 +213,29 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
     state.track_offset = current_track_offset
     state.track_direction = current_track_direction
     state.switch_track = current_switch_track
-    if state.controller_rid.is_valid():
-        var controller_state: ControllerState = _controllers.get(state.controller_rid)
-        var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
-        if controller:
-            controller._emit_position_changed_if_needed()
 
 
 func vehicle_get_transform(vehicle_rid: RID) -> Transform3D:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state or not TrackManager.track_exists(state.track_rid):
         return Transform3D.IDENTITY
+    return _get_vehicle_transform(state)
 
+
+func vehicle_get_transform_at_distance(vehicle_rid: RID, distance: float) -> Transform3D:
+    var state: VehicleState = _vehicles.get(vehicle_rid)
+    if not state or not TrackManager.track_exists(state.track_rid):
+        return Transform3D.IDENTITY
+    var sampled_state: VehicleState = VehicleState.new()
+    sampled_state.track_rid = state.track_rid
+    sampled_state.track_offset = state.track_offset
+    sampled_state.track_direction = state.track_direction
+    sampled_state.switch_track = state.switch_track
+    _move_vehicle_state(sampled_state, distance, false)
+    return _get_vehicle_transform(sampled_state)
+
+
+func _get_vehicle_transform(state: VehicleState) -> Transform3D:
     var curve_data: MaszynaTrackCurve = TrackManager.track_get_curve(state.track_rid, state.switch_track)
     var curve: Curve3D = TrackManager.track_get_domain_curve(state.track_rid, state.switch_track)
     if not curve_data or not curve:
@@ -253,7 +281,11 @@ func controller_get_transform(controller_rid: RID) -> Transform3D:
     return vehicle_get_transform(vehicle_rid)
 
 
-func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager.EndpointRef:
+func _get_motion_connection(
+    track_rid: RID,
+    endpoint_index: int,
+    force_switch_state: bool = true,
+) -> TrackManager.EndpointRef:
     if not TrackManager.track_exists(track_rid):
         return null
     var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(track_rid, endpoint_index)
@@ -322,7 +354,7 @@ func _get_motion_connection(track_rid: RID, endpoint_index: int) -> TrackManager
 
     if not unique_connection:
         return null
-    if has_unique_forced_switch_track:
+    if has_unique_forced_switch_track and force_switch_state:
         # Force branch-side switch entry only after ambiguity checks, so an
         # ambiguous topology node cannot change switch state as a side effect.
         if not TrackManager.switch_get_active_track(unique_connection.track_rid) == unique_forced_switch_track:

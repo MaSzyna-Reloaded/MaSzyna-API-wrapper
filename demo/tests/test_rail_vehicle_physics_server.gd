@@ -127,6 +127,72 @@ func test_vehicle_move_crosses_connected_tracks() -> void:
     )
 
 
+func test_vehicle_transform_at_distance_crosses_tracks_without_moving_vehicle() -> void:
+    var first_rid:RID = _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    _register_track(
+        _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    TrackManager.topology_rebuild()
+    var vehicle_rid:RID = _create_vehicle()
+    RailVehiclePhysicsServer.vehicle_set_track(
+        vehicle_rid,
+        first_rid,
+        8.0,
+        TrackManager.Direction.DIRECTION_REVERSED
+    )
+
+    var sampled_transform:Transform3D = (
+        RailVehiclePhysicsServer.vehicle_get_transform_at_distance(vehicle_rid, 5.0)
+    )
+
+    _assert_vector_eq(
+        sampled_transform.origin,
+        Vector3(13.0, TrackManager.RAIL_HEIGHT, 0.0),
+        "sample should continue on the connected track",
+    )
+    _assert_vector_eq(
+        RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
+        Vector3(8.0, TrackManager.RAIL_HEIGHT, 0.0),
+        "sample should not move the vehicle",
+    )
+
+
+func test_vehicle_transform_at_distance_does_not_change_switch_state() -> void:
+    var start_rid:RID = _register_track(
+        _curve(Vector3(20.0, 0.0, 20.0), Vector3(10.0, 0.0, 10.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    var switch_rid:RID = _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
+        TrackManager.TrackType.TRACK_SWITCH
+    )
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.topology_rebuild()
+    var vehicle_rid:RID = _create_vehicle()
+    RailVehiclePhysicsServer.vehicle_set_track(
+        vehicle_rid,
+        start_rid,
+        12.0,
+        TrackManager.Direction.DIRECTION_REVERSED
+    )
+
+    RailVehiclePhysicsServer.vehicle_get_transform_at_distance(vehicle_rid, 5.0)
+
+    assert_eq(
+        TrackManager.switch_get_active_track(switch_rid),
+        TrackManager.SwitchTrack.TRACK_COMMON,
+        "sampling through a diverging branch should not move the switch",
+    )
+
+
 func test_vehicle_move_stops_at_ambiguous_shared_node() -> void:
     var source_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),

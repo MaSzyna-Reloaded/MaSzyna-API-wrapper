@@ -79,6 +79,59 @@ func test_start_track_name_initializes_and_clamps_offset() -> void:
     _assert_vector_eq(vehicle.global_position, _rail_position(10.0, 0.0), "vehicle should be placed at track end")
 
 
+func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> void:
+    _register_track(
+        _demo_curve(
+            Vector3(0.0, 0.0, 0.0),
+            Vector3(10.0, 0.0, 10.0),
+            Vector3(10.0, 0.0, 0.0),
+            Vector3(0.0, 0.0, -10.0),
+        ),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL,
+        "curve",
+    )
+    TrackManager.topology_rebuild()
+
+    var controller:TrainController = _create_controller()
+    controller.update_config({"bogie_pivot_spacing": 6.0})
+    controller.state["wheel_angle_powered_deg"] = 90.0
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    var front_bogie:Node3D = Node3D.new()
+    front_bogie.name = "FrontBogie"
+    front_bogie.position.z = -3.0
+    var powered_wheel:Node3D = Node3D.new()
+    powered_wheel.name = "PoweredWheel"
+    front_bogie.add_child(powered_wheel)
+    vehicle.add_child(front_bogie)
+    var rear_bogie:Node3D = Node3D.new()
+    rear_bogie.name = "RearBogie"
+    rear_bogie.position.z = 3.0
+    vehicle.add_child(rear_bogie)
+    vehicle.front_bogie_path = NodePath("FrontBogie")
+    vehicle.rear_bogie_path = NodePath("RearBogie")
+    vehicle.powered_wheel_paths = [NodePath("FrontBogie/PoweredWheel")]
+    vehicle.start_track_name = "curve"
+    vehicle.start_track_offset = TrackManager.track_get_length(created_tracks[0]) * 0.5
+    vehicle.start_direction = TrackManager.Direction.DIRECTION_REVERSED
+    add_child(vehicle)
+    vehicle.controller_path = vehicle.get_path_to(controller)
+    created_vehicles.append(vehicle)
+    await wait_idle_frames(2)
+
+    var front_forward:Vector3 = -front_bogie.global_basis.z.normalized()
+    var rear_forward:Vector3 = -rear_bogie.global_basis.z.normalized()
+    assert_true(
+        front_forward.distance_to(rear_forward) > 0.05,
+        "bogies should follow different tangents on a curved track",
+    )
+    _assert_vector_eq(
+        powered_wheel.transform.basis.y.normalized(),
+        Vector3.BACK,
+        "powered wheel should rotate around its local X axis",
+    )
+
+
 func test_start_track_name_retries_after_tracks_changed_when_track_is_added_later() -> void:
     var fixture: Dictionary = await _create_vehicle("late_track", 4.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]

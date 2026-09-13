@@ -5,37 +5,15 @@
 namespace godot {
     void TrainDieselElectricEngine::_bind_methods() {
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                Variant::ARRAY, "wwlist", "wwlist", &TrainDieselElectricEngine::set_wwlist,
-                &TrainDieselElectricEngine::get_wwlist, "wwlist", PROPERTY_HINT_TYPE_STRING, "WWListItem");
-        BIND_PROPERTY(
-                Variant::BOOL, "generator_voltage_flat", "generator_voltage_flat",
-                &TrainDieselElectricEngine::set_generator_voltage_flat,
-                &TrainDieselElectricEngine::get_generator_voltage_flat, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "hyperbolic_speed", "hyperbolic_speed",
-                &TrainDieselElectricEngine::set_hyperbolic_speed, &TrainDieselElectricEngine::get_hyperbolic_speed,
-                "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "additional_speed", "additional_speed",
-                &TrainDieselElectricEngine::set_additional_speed, &TrainDieselElectricEngine::get_additional_speed,
-                "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "rpm_change_rate", "rpm_change_rate", &TrainDieselElectricEngine::set_rpm_change_rate,
-                &TrainDieselElectricEngine::get_rpm_change_rate, "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "power_correction_ratio", "power_correction_ratio",
-                &TrainDieselElectricEngine::set_power_correction_ratio,
-                &TrainDieselElectricEngine::get_power_correction_ratio, "value");
-        BIND_PROPERTY(
-                Variant::INT, "shunt_relay_type", "shunt_relay_type", &TrainDieselElectricEngine::set_shunt_relay_type,
-                &TrainDieselElectricEngine::get_shunt_relay_type, "value");
-        BIND_PROPERTY(
-                Variant::BOOL, "shunt_mode_allowed", "shunt_mode_allowed",
-                &TrainDieselElectricEngine::set_shunt_mode_allowed, &TrainDieselElectricEngine::get_shunt_mode_allowed,
-                "value");
-        BIND_PROPERTY(
-                Variant::FLOAT, "heating_rpm", "heating_rpm", &TrainDieselElectricEngine::set_heating_rpm,
-                &TrainDieselElectricEngine::get_heating_rpm, "value");
+                TrainDieselElectricEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::BOOL, generator_voltage_flat);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::FLOAT, hyperbolic_speed);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::FLOAT, additional_speed);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::FLOAT, rpm_change_rate);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::FLOAT, power_correction_ratio);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::INT, shunt_relay_type);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::BOOL, shunt_mode_allowed);
+        BIND_PROPERTY(TrainDieselElectricEngine, Variant::FLOAT, heating_rpm);
     }
 
     TrainEngine::EngineType TrainDieselElectricEngine::get_engine_type() {

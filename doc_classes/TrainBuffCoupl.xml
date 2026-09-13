@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="TrainBuffCoupl" inherits="TrainPart" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="TrainBuffCoupl" inherits="TrainPart" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Handles train buffers and coupling mechanisms.
 	</brief_description>
@@ -29,28 +29,28 @@
 		<member name="automatic_flag" type="int" setter="set_automatic_flag" getter="get_automatic_flag" default="0">
 			Bitmask defining which connections are established automatically during coupling.
 		</member>
-		<member name="buffer/max_compression_tolerance" type="float" setter="set_buffer_max_compression_tolerance" getter="get_buffer_max_compression_tolerance" default="0.1">
+		<member name="buffer_max_compression_tolerance" type="float" setter="set_buffer_max_compression_tolerance" getter="get_buffer_max_compression_tolerance" default="0.1">
 			Maximum allowed compression distance for the buffer (in meters).
 		</member>
-		<member name="buffer/max_tension_tolerance" type="float" setter="set_buffer_max_tension_tolerance" getter="get_buffer_max_tension_tolerance" default="1000.0">
+		<member name="buffer_max_tension_tolerance" type="float" setter="set_buffer_max_tension_tolerance" getter="get_buffer_max_tension_tolerance" default="1000.0">
 			Maximum allowed tension force for the buffer (in kN).
 		</member>
-		<member name="buffer/stiffness_k" type="float" setter="set_buffer_stiffness_k" getter="get_buffer_stiffness_k" default="1.0">
+		<member name="buffer_stiffness_k" type="float" setter="set_buffer_stiffness_k" getter="get_buffer_stiffness_k" default="1.0">
 			Stiffness coefficient for the buffer.
 		</member>
 		<member name="control_type" type="String" setter="set_control_type" getter="get_control_type" default="&quot;&quot;">
 			Identifier for the control system type, used for checking compatibility between multiple units.
 		</member>
-		<member name="coupler/max_compression_tolerance" type="float" setter="set_coupler_max_compression_tolerance" getter="get_coupler_max_compression_tolerance" default="0.1">
+		<member name="coupler_max_compression_tolerance" type="float" setter="set_coupler_max_compression_tolerance" getter="get_coupler_max_compression_tolerance" default="0.1">
 			Maximum allowed compression distance for the coupler (in meters).
 		</member>
-		<member name="coupler/max_tension_tolerance" type="float" setter="set_coupler_max_tension_tolerance" getter="get_coupler_max_tension_tolerance" default="1000.0">
+		<member name="coupler_max_tension_tolerance" type="float" setter="set_coupler_max_tension_tolerance" getter="get_coupler_max_tension_tolerance" default="1000.0">
 			Maximum allowed tension force for the coupler (in kN).
 		</member>
-		<member name="coupler/stiffness_k" type="float" setter="set_coupler_stiffness_k" getter="get_coupler_stiffness_k" default="1.0">
+		<member name="coupler_stiffness_k" type="float" setter="set_coupler_stiffness_k" getter="get_coupler_stiffness_k" default="1.0">
 			Stiffness coefficient for the coupler.
 		</member>
-		<member name="coupler/type" type="int" setter="set_coupler_type" getter="get_coupler_type" enum="TrainBuffCoupl.CouplerType" default="0">
+		<member name="coupler_type" type="int" setter="set_coupler_type" getter="get_coupler_type" enum="TrainBuffCoupl.CouplerType" default="0">
 			The type of coupler mechanism (e.g., Automatic, Screw, Chain).
 		</member>
 		<member name="damping_beta" type="float" setter="set_damping_beta" getter="get_damping_beta" default="0.0">

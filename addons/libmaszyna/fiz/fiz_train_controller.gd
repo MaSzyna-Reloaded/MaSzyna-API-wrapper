@@ -41,7 +41,7 @@ signal controller_changed(controller:TrainController)
         if not x == train_id:
             train_id = x
             if _controller:
-                _controller.set_train_id(train_id)
+                _controller.train_id = train_id
 
 ## Forwarded to the built child TrainController's initial_velocity. Not derived from the FIZ
 ## file - same as train_id above. 0.0 (default) means the vehicle starts not-ready-to-depart
@@ -52,7 +52,7 @@ signal controller_changed(controller:TrainController)
         if not x == initial_velocity:
             initial_velocity = x
             if _controller:
-                _controller.set_initial_velocity(initial_velocity)
+                _controller.initial_velocity = initial_velocity
 
 ## When false (default), the generated TrainController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
@@ -102,8 +102,8 @@ func _reload() -> void:
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))
     _controller = FizTrainControllerInstancer.build(abs_fiz_path)
     if train_id:
-        _controller.set_train_id(train_id)
-    _controller.set_initial_velocity(initial_velocity)
+        _controller.train_id = train_id
+    _controller.initial_velocity = initial_velocity
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)

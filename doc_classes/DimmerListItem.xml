@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="DimmerListItem" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="DimmerListItem" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A single position of the headlight dimmer switch (DimmerList).
 	</brief_description>
 	<description>
 		Each [DimmerListItem] corresponds to one line of the [code]DimmerList:[/code] table. Its index within
-		[member TrainSwitches.dimmer_list] corresponds to the switch position, starting from 0.
+		[member TrainSwitches.dimmer_list_positions] corresponds to the switch position, starting from 0.
 		[b]Not wired to the mover[/b] - see [TrainSwitches].
 	</description>
 	<tutorials>

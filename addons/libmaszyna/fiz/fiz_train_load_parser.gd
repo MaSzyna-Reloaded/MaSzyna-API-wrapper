@@ -20,20 +20,20 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     context.add_part("TrainLoad", node)
 
     if kv.has("MaxLoad"):
-        node.set_max_load(FizLineUtil.get_float(kv, "MaxLoad"))
+        node.max_load = FizLineUtil.get_float(kv, "MaxLoad")
     if kv.has("LoadQ"):
         match FizLineUtil.get_string(kv, "LoadQ").to_lower():
-            "pieces": node.set_load_unit(TrainLoad.LOAD_UNIT_PIECES)
-            "tonns", "tons": node.set_load_unit(TrainLoad.LOAD_UNIT_TONS)
+            "pieces": node.load_unit = TrainLoad.LOAD_UNIT_PIECES
+            "tonns", "tons": node.load_unit = TrainLoad.LOAD_UNIT_TONS
     if kv.has("LoadAccepted"):
         var loads: PackedStringArray = FizLineUtil.get_string(kv, "LoadAccepted").split(",")
         var accepted: Array[String] = []
         for load: String in loads:
             accepted.append(load.strip_edges())
-        node.set_accepted_loads(accepted)
+        node.accepted_loads = accepted
     if kv.has("LoadSpeed"):
-        node.set_load_speed(FizLineUtil.get_float(kv, "LoadSpeed"))
+        node.load_speed = FizLineUtil.get_float(kv, "LoadSpeed")
     if kv.has("UnLoadSpeed"):
-        node.set_unload_speed(FizLineUtil.get_float(kv, "UnLoadSpeed"))
+        node.unload_speed = FizLineUtil.get_float(kv, "UnLoadSpeed")
     if kv.has("OverLoadFactor"):
-        node.set_overload_factor(FizLineUtil.get_float(kv, "OverLoadFactor"))
+        node.overload_factor = FizLineUtil.get_float(kv, "OverLoadFactor")

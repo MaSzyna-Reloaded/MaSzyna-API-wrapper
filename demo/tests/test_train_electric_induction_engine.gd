@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     engine = TrainElectricInductionEngine.new()
-    engine.set("power/source", TrainController.POWER_SOURCE_CURRENTCOLLECTOR)
+    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_child(engine)
     await wait_idle_frames(2)
 
@@ -58,3 +58,13 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.max_power, 1200.0)
     assert_eq(engine.max_power_table.size(), 2)
     assert_true(train.state.has("main_switch_enabled"), "TrainElectricInductionEngine should keep functioning after configuring EIM parameters")
+
+func test_apply_power_uses_canonical_current_collector_properties():
+    var line: MaszynaParser = MaszynaParser.new()
+    line.initialize("CollectorsNo=2 MaxVoltage=3000.0 MaxCurrent=800.0".to_utf8_buffer())
+    var power_kv: Dictionary = FizLineUtil.read_key_values(line)
+    FizTrainEngineCommon.apply_power(engine, power_kv)
+
+    assert_eq(engine.power_current_collector_number_of_collectors, 2)
+    assert_eq(engine.power_current_collector_max_voltage, 3000.0)
+    assert_eq(engine.power_current_collector_max_current, 800.0)

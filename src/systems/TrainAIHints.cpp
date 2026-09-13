@@ -3,20 +3,13 @@
 namespace godot {
     void TrainAIHints::_bind_methods() {
         BIND_PROPERTY_W_HINT(
-                Variant::INT, "pantograph_state", "pantograph_state", &TrainAIHints::set_pantograph_state,
-                &TrainAIHints::get_pantograph_state, "pantograph_state", PROPERTY_HINT_ENUM,
+                TrainAIHints, Variant::INT, pantograph_state, PROPERTY_HINT_ENUM,
                 enum_hint(
                         {{"Front", PANTOGRAPH_STATE_FRONT},
                          {"Rear", PANTOGRAPH_STATE_REAR},
                          {"Both", PANTOGRAPH_STATE_BOTH}}));
-        BIND_PROPERTY(
-                Variant::BOOL, "raise_pantographs_when_idle", "raise_pantographs_when_idle",
-                &TrainAIHints::set_raise_pantographs_when_idle, &TrainAIHints::get_raise_pantographs_when_idle,
-                "raise_pantographs_when_idle");
-        BIND_PROPERTY(
-                Variant::FLOAT, "local_brake_acceleration_factor", "local_brake_acceleration_factor",
-                &TrainAIHints::set_local_brake_acceleration_factor, &TrainAIHints::get_local_brake_acceleration_factor,
-                "local_brake_acceleration_factor");
+        BIND_PROPERTY(TrainAIHints, Variant::BOOL, raise_pantographs_when_idle);
+        BIND_PROPERTY(TrainAIHints, Variant::FLOAT, local_brake_acceleration_factor);
 
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_FRONT);
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_REAR);

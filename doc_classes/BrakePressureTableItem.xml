@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="BrakePressureTableItem" inherits="Resource" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="BrakePressureTableItem" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		A single row of the brake pressure table (BPT), mapping a brake handle position to pipe/cylinder pressure and brake type.
 	</brief_description>
@@ -33,4 +33,12 @@
 			Pressure in the main (train) pipe for this handle position, in MPa.
 		</member>
 	</members>
+	<constants>
+		<constant name="BRAKE_TYPE_PNEUMATIC" value="0" enum="BrakeType">
+		</constant>
+		<constant name="BRAKE_TYPE_ELECTRO_PNEUMATIC" value="1" enum="BrakeType">
+		</constant>
+		<constant name="BRAKE_TYPE_INDIVIDUAL" value="2" enum="BrakeType">
+		</constant>
+	</constants>
 </class>

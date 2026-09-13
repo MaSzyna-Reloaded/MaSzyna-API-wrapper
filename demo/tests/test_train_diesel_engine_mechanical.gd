@@ -31,55 +31,55 @@ func _make_throttle(position: int, fuel_dose: float, behavior: int) -> ThrottleP
 
 func test_defaults():
     engine.update_mover()
-    assert_eq(engine.get("mechanical/min_rpm"), 0.0)
-    assert_eq(engine.get("mechanical/max_rpm"), 0.0)
-    assert_eq(engine.get("mechanical/inertia"), 1.0)
-    assert_false(engine.get("torque_converter/present"))
-    assert_false(engine.get("retarder/present"))
-    assert_eq(engine.get("retarder/placement"), TrainDieselEngine.RETARDER_PLACEMENT_AFTER_GEARBOX)
-    assert_eq((engine.get("throttle_table/positions") as Array).size(), 0)
+    assert_eq(engine.mechanical_min_rpm, 0.0)
+    assert_eq(engine.mechanical_max_rpm, 0.0)
+    assert_eq(engine.mechanical_inertia, 1.0)
+    assert_false(engine.torque_converter_present)
+    assert_false(engine.retarder_present)
+    assert_eq(engine.retarder_placement, TrainDieselEngine.RETARDER_PLACEMENT_AFTER_GEARBOX)
+    assert_eq((engine.throttle_table_positions as Array).size(), 0)
     assert_eq(engine.torque_table.size(), 0)
-    assert_eq((engine.get("torque_converter/table") as Array).size(), 0)
+    assert_eq((engine.torque_converter_table as Array).size(), 0)
     assert_true(train.config.get("engine_shake_enabled", false))
 
 func test_mechanical_and_torque_converter_round_trip():
-    engine.set("mechanical/min_rpm", 600.0)
-    engine.set("mechanical/max_rpm", 2000.0)
-    engine.set("mechanical/fuel_cutoff_rpm", 2100.0)
-    engine.set("mechanical/inertia", 1.5)
-    engine.set("mechanical/clutch/engage_speed", 0.6)
-    engine.set("mechanical/clutch/disengage_speed", 0.8)
-    engine.set("torque_converter/present", true)
-    engine.set("torque_converter/max_torque_ratio", 2.5)
-    engine.set("torque_converter/coupling_point", 0.9)
-    engine.set("retarder/present", true)
-    engine.set("retarder/placement", TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC)
-    engine.set("retarder/max_torque", 500.0)
-    engine.set("torque_converter/table", [_make_point(0.0, 4.89), _make_point(1.0, 0.0)])
+    engine.mechanical_min_rpm = 600.0
+    engine.mechanical_max_rpm = 2000.0
+    engine.mechanical_fuel_cutoff_rpm = 2100.0
+    engine.mechanical_inertia = 1.5
+    engine.mechanical_clutch_engage_speed = 0.6
+    engine.mechanical_clutch_disengage_speed = 0.8
+    engine.torque_converter_present = true
+    engine.torque_converter_max_torque_ratio = 2.5
+    engine.torque_converter_coupling_point = 0.9
+    engine.retarder_present = true
+    engine.retarder_placement = TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC
+    engine.retarder_max_torque = 500.0
+    engine.torque_converter_table = [_make_point(0.0, 4.89), _make_point(1.0, 0.0)]
     await wait_idle_frames(2)
 
-    assert_eq(engine.get("mechanical/min_rpm"), 600.0)
-    assert_eq(engine.get("mechanical/max_rpm"), 2000.0)
-    assert_true(engine.get("torque_converter/present"))
-    assert_eq(engine.get("torque_converter/max_torque_ratio"), 2.5)
-    assert_true(engine.get("retarder/present"))
-    assert_eq(engine.get("retarder/placement"), TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC)
-    assert_eq((engine.get("torque_converter/table") as Array).size(), 2)
+    assert_eq(engine.mechanical_min_rpm, 600.0)
+    assert_eq(engine.mechanical_max_rpm, 2000.0)
+    assert_true(engine.torque_converter_present)
+    assert_eq(engine.torque_converter_max_torque_ratio, 2.5)
+    assert_true(engine.retarder_present)
+    assert_eq(engine.retarder_placement, TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC)
+    assert_eq((engine.torque_converter_table as Array).size(), 2)
     assert_true(train.state.has("main_switch_enabled"), "TrainDieselEngine should keep functioning after configuring mechanical/torque converter/retarder")
 
 func test_throttle_table_and_torque_curve_round_trip():
-    engine.set("throttle_table/max_torque", 1400.0)
-    engine.set("throttle_table/max_torque_rpm", 1200.0)
-    engine.set("throttle_table/nominal_fuel_dose", 1.0)
-    engine.set("throttle_table/nominal_fuel_consumption_rate", 210.0)
-    engine.set("throttle_table/positions", [
+    engine.throttle_table_max_torque = 1400.0
+    engine.throttle_table_max_torque_rpm = 1200.0
+    engine.throttle_table_nominal_fuel_dose = 1.0
+    engine.throttle_table_nominal_fuel_consumption_rate = 210.0
+    engine.throttle_table_positions = [
         _make_throttle(0, 0.0, ThrottlePositionItem.CLUTCH_BEHAVIOR_NONE),
         _make_throttle(1, 0.15, ThrottlePositionItem.CLUTCH_BEHAVIOR_HALF_CLUTCH_MIN_RPM),
-    ])
+    ]
     engine.torque_table = [_make_point(850, 1450), _make_point(2000, 2174)]
     await wait_idle_frames(2)
 
-    var throttle_table: Array = engine.get("throttle_table/positions")
+    var throttle_table: Array = engine.throttle_table_positions
     assert_eq(throttle_table.size(), 2)
     assert_eq((throttle_table[1] as ThrottlePositionItem).fuel_dose, 0.15)
     assert_eq(engine.torque_table.size(), 2)
@@ -89,7 +89,7 @@ func test_oversized_throttle_table_is_truncated_without_crashing():
     var rows: Array[ThrottlePositionItem] = []
     for i in range(70):
         rows.append(_make_throttle(i, 0.0, ThrottlePositionItem.CLUTCH_BEHAVIOR_NONE))
-    engine.set("throttle_table/positions", rows)
+    engine.throttle_table_positions = rows
     await wait_idle_frames(2)
 
     assert_true(is_instance_valid(engine), "TrainDieselEngine should keep functioning after an oversized throttle_table")

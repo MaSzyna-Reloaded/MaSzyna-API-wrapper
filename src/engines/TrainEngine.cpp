@@ -74,6 +74,15 @@ namespace godot {
 
         p_mover->Transmision.NToothM = transmission_gear_teeth_motor;
         p_mover->Transmision.NToothW = transmission_gear_teeth_wheel;
+        // Original engine: LoadFIZ_Engine (Mover.cpp) derives Ratio from the teeth counts
+        // itself right after parsing "Trans=" - NToothM/NToothW alone are never read anywhere
+        // else in Mover.cpp. Without this, Transmision.Ratio stays at its compiled default
+        // (1.0), silently dropping the real gear ratio out of Mw/Fw/Ft (ElectricSeriesMotor
+        // case, Mover.cpp ~line 5791) and undertractioning every geared vehicle.
+        p_mover->Transmision.Ratio =
+                transmission_gear_teeth_motor > 0
+                        ? static_cast<double>(transmission_gear_teeth_wheel) / transmission_gear_teeth_motor
+                        : 1.0;
         p_mover->Transmision.Efficiency = transmission_efficiency;
         p_mover->Ftmax = maximum_traction_force;
         p_mover->HasControlPressureSwitch = pressure_switch_present;

@@ -106,6 +106,26 @@ static func _ensure_built() -> void:
             # lever visibly over/under-rotates. See _apply_animation_shape()'s doc comment.
             "animation_range_config_properties": ["brakes_controller_position_min", "brakes_controller_position_max"],
         },
+        # "localbrake:" - independent/loco brake handle (Train.cpp:10026, ggLocalBrake), a
+        # draggable gauge like mainctrl/brakectrl, not a passive display. Real input is
+        # OnCommand_independentbrakeincrease/decrease (Train.cpp:1447-1524), bound by default to
+        # num_1/num_7 - there was previously no equivalent command anywhere in this wrapper, so
+        # the handle could never move. Unlike brakectrl, local_brake_set takes an
+        # already-normalized 0..1 level directly (LocalBrakePosA is normalized in the mover
+        # itself, no raw Handle-position range to rescale against).
+        "localbrake": {
+            "widget_class": CabinKnob,
+            "fixed_fields": {
+                "value_min": 0.0,
+                "value_max": 1.0,
+                "command": "local_brake_set",
+                "state_property": "brake_local_position_normalized",
+                "action_increase": "local_brake_increase",
+                "action_decrease": "local_brake_decrease",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "security_reset_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -684,6 +704,20 @@ static func _ensure_built() -> void:
         "i-conv_ovld": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "converter_overload" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Confirmed against the original engine: "i-comp_ovld:" -> btLampkaNadmSpr
+        # (Train.cpp:9882/Train.h:693), but nothing in the original ever assigns that button a
+        # value - Train.h marks it "// TODO: implement" and it stays permanently unlit there too.
+        # Mapped here to a state key that's never populated (always reads false via
+        # CabinIndicator3D's state.get(..., false) fallback) purely to silence the
+        # MMD_BINDING_UNSUPPORTED diagnostic - matching the original's own dead widget, not adding
+        # new Mover/engine state for a fault the original never actually tracks.
+        "i-comp_ovld": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/compressor_overload_unimplemented" },
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,

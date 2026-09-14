@@ -215,6 +215,19 @@ namespace godot {
         _update_mover_config_if_dirty();
         initialize_mover_state();
 
+        // Original engine: Mover.cpp's LoadFIZ sets Battery live at load time whenever
+        // BatteryStart isn't Disabled (BatteryStart==Manual still means "starts on, player can
+        // turn it off", not "starts off"). Without this, Battery stays at its compiled-false
+        // default until an explicit battery() command, and any vehicle with GroundRelayStart
+        // Manual (the default for non-EZT stock) permanently trips GroundRelay on that first
+        // powerless tick, since GroundRelay's manual latch never self-clears. Done here, once,
+        // after CheckLocomotiveParameters() has had its two chances to run (above) and settle
+        // BatteryStart to its final, validated value (e.g. forced to Disabled for an invalid/
+        // zero NominalBatteryVoltage) - not in _do_update_internal_mover(), which also reruns on
+        // later runtime property edits and would otherwise force Battery back on after the
+        // player (or a test) explicitly turns it off.
+        mover->Battery = (mover->BatteryStart != Maszyna::start_t::disabled);
+
         /* FIXME: remove test data */
         mover->CabActive = 1;
         mover->CabMaster = true;

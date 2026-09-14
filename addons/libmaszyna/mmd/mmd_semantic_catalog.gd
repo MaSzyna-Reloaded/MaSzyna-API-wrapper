@@ -672,24 +672,28 @@ static func _ensure_built() -> void:
             "fixed_fields": { "state_property": "slipping_wheels" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-motor_ovld": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "fuse_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-conv_ovld": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "converter_overload" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-trainheating": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "heating_enabled" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         # These mirror the original's own combined conditions (not single-flag passthroughs) -
         # see TrainElectricEngine.cpp's own comment on "indicators/*" for the exact Train.cpp
@@ -699,36 +703,42 @@ static func _ensure_built() -> void:
             "fixed_fields": { "state_property": "indicators/contactors_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-diff_relay": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/diff_relay_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-resistors": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/resistors_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-vent_ovld": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/vent_overload_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-highcurrent": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/highcurrent_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         "i-mainbreaker": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/mainbreaker_active" },
             "config_max_property": "",
             "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         # The E3D indicator follows the plain Radio flag, matching vehicle/Train.cpp:9160.
         # The separate OmniLight follows radio_powered and copies SM42's hand-authored

@@ -69,12 +69,21 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_pantograph_auto_valve, false);
             MAKE_MEMBER_GS_NR(TrainEngine::StartMode, cntrl_main_switch_start_mode, TrainEngine::START_MODE_MANUAL);
 
+            /* Voltage of the overhead wire each pantograph is currently touching, fed in once
+             * per frame from outside (RailVehicle3D's own geometric wire lookup against
+             * TractionPowerServer - the mover has no scenery/geometry access of its own).
+             * 0.0 (the default) means "not touching a wire", same as a lowered pantograph. */
+            float pantograph_first_wire_voltage = 0.0f;
+            float pantograph_second_wire_voltage = 0.0f;
+
             void set_power_source(TrainController::TrainPowerSource p_source);
             TrainController::TrainPowerSource get_power_source() const;
             void compressor(bool p_enabled);
             void converter(bool p_enabled);
+            void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
             void pantograph(PantographSelector p_selector, bool p_enabled);
+            void set_pantograph_wire_voltage(PantographSelector p_selector, float p_voltage);
             void _register_commands() override;
             void _unregister_commands() override;
 

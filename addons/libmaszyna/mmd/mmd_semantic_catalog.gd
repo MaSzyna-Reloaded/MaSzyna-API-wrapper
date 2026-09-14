@@ -116,6 +116,37 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Confirmed against the original engine (Train.cpp:4061-4080,
+        # OnCommand_motoroverloadrelayreset -> MoverParameters->FuseOn(), "zbij nadmiarowy") and
+        # Train.cpp:10052 ("fuse_bt:" -> ggFuseButton). No controller_mode override, no
+        # state_property, same shape as security_reset_bt/releaser_bt above - fuse_reset() takes
+        # no arguments and isn't a persistent toggle.
+        "fuse_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "fuse_reset",
+                "action": "fuse_reset",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Converter-specific counterpart to fuse_bt above - confirmed against the original engine
+        # (Train.cpp:3567-3585, OnCommand_converteroverloadrelayreset ->
+        # RelayReset(relay_t::primaryconverteroverload), and Train.cpp:10053
+        # "converterfuse_bt:" -> ggConverterFuseButton). state_property reuses the existing
+        # converter_overload reading (TrainEngine.cpp - MoverParameters->ConvOvldFlag).
+        "converterfuse_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "converter_fuse_reset",
+                "state_property": "converter_overload",
+                "action": "converter_fuse_reset",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "releaser_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -343,6 +374,21 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
             "mmd_scale_multiplier": 0.1,
+        },
+        # Confirmed against the original engine's own source (Train.cpp:10487-10492, "hvoltage:"
+        # loads a gauge and binds it to fHVoltage, itself computed as
+        # max(PantographVoltage, GetTrainsetHighVoltage()) - Train.cpp:6944-6946, see
+        # TrainElectricEngine.cpp's own comment on current_collector/voltage). Not in the
+        # pressure-family mmd_scale_multiplier list above, so default mul=1.0 like tachometer/
+        # enrot/oilpress.
+        "hvoltage": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current_collector/voltage",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
         },
         "oilpress": {
             "widget_class": CabinGauge,

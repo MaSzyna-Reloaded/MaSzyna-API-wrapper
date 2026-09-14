@@ -80,6 +80,7 @@ namespace godot {
             }
 
             void main_switch(bool p_enabled);
+            void fuse_reset();
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 

@@ -7,6 +7,7 @@ namespace godot {
     class TrainController;
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
+        ClassDB::bind_method(D_METHOD("fuse_reset"), &TrainEngine::fuse_reset);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 TrainEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         BIND_PROPERTY(TrainEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
@@ -148,6 +149,10 @@ namespace godot {
         p_state["line_breaker_delay"] = p_mover->CtrlDelay;
         p_state["line_breaker_initial_delay"] = p_mover->InitialCtrlDelay;
         p_state["line_breaker_closes_at_no_power"] = p_mover->LineBreakerClosesOnlyAtNoPowerPos;
+        // Original engine: "fuse_bt:"/ggFuseButton (Train.cpp:10052), read here for its light and
+        // reset via fuse_reset()/FuseOn() below - not electric-motor specific, so this lives on
+        // the shared base rather than TrainElectricEngine.
+        p_state["fuse_active"] = p_mover->FuseFlag;
 
         if (!previous_main_switch && (static_cast<bool>(p_state["main_switch_enabled"]))) {
             emit_signal("engine_start");
@@ -166,11 +171,22 @@ namespace godot {
         mover->MainSwitch(p_enabled);
     }
 
+    void TrainEngine::fuse_reset() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_motoroverloadrelayreset (Train.cpp:4061) calls this same
+        // FuseOn() on press - "zbij nadmiarowy", clearing the overload/fast-fuse trip
+        // (MoverParameters->FuseFlag) that blocks Mains/converter/compressor from re-enabling.
+        mover->FuseOn();
+    }
+
     void TrainEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
+        register_command("fuse_reset", Callable(this, "fuse_reset"));
     }
 
     void TrainEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
+        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
     }
 } // namespace godot

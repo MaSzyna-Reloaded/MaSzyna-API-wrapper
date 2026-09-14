@@ -4,6 +4,9 @@
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 
+#include <algorithm>
+#include <cmath>
+
 namespace godot {
     void TrainElectricEngine::_bind_methods() {
         BIND_PROPERTY_W_HINT(
@@ -86,8 +89,12 @@ namespace godot {
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &TrainElectricEngine::compressor);
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
+        ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &TrainElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &TrainElectricEngine::pantographs_valve);
         ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &TrainElectricEngine::pantograph);
+        ClassDB::bind_method(
+                D_METHOD("set_pantograph_wire_voltage", "selector", "voltage"),
+                &TrainElectricEngine::set_pantograph_wire_voltage);
 
         BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
         BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
@@ -135,6 +142,12 @@ namespace godot {
         p_state["current_collector/pantograph_first_voltage"] = p_mover->Pantographs[0].voltage;
         p_state["current_collector/pantograph_second_active"] = p_mover->Pantographs[1].is_active;
         p_state["current_collector/pantograph_second_voltage"] = p_mover->Pantographs[1].voltage;
+        // Matches the original engine's own "hvoltage:" cabin gauge source (Train.cpp:6944-6946,
+        // fHVoltage = max(PantographVoltage, GetTrainsetHighVoltage())) for every engine type
+        // that isn't DieselElectric/ElectricInductionMotor - GetTrainsetHighVoltage() only
+        // matters for a multi-unit consist sharing line voltage across couplers, so it's omitted
+        // here rather than guessed at.
+        p_state["current_collector/voltage"] = p_mover->PantographVoltage;
         p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
         if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
             p_state["power_cable/source"] =
@@ -145,6 +158,10 @@ namespace godot {
 
     void TrainElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
         TrainEngine::_do_update_internal_mover(p_mover);
+        // Pantographs[*].voltage/PantFrontVolt/PantRearVolt/PantographVoltage are NOT set here:
+        // this only runs when the controller is dirty (effectively once, at startup), but wire
+        // voltage changes every frame as the vehicle moves - see set_pantograph_wire_voltage(),
+        // which writes them straight to the mover instead.
         p_mover->EnginePowerSource.SourceType = train_controller_node->power_source_map.at(power_source);
 
         switch (power_source) {
@@ -241,6 +258,15 @@ namespace godot {
         mover->CompressorSwitch(p_enabled);
     }
 
+    void TrainElectricEngine::converter_fuse_reset() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_converteroverloadrelayreset (Train.cpp:3567-3585) ->
+        // RelayReset(relay_t::primaryconverteroverload), "converterfuse_bt:"/ggConverterFuseButton
+        // (Train.cpp:10053) - the converter-specific counterpart to fuse_reset()/FuseOn() above.
+        mover->RelayReset(Maszyna::primaryconverteroverload);
+    }
+
     void TrainElectricEngine::pantographs_valve(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
@@ -252,11 +278,46 @@ namespace godot {
         ASSERT_MOVER(mover);
         const Maszyna::end end = (p_selector == PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+        // The mover also gates every pantograph on a separate master air valve (PantsValve -
+        // PantographsCheck(), Mover.cpp) that the original engine opens from its own
+        // "raise selected pantograph" key command (Train.cpp's
+        // OnCommand_pantographraiseselected calls OperatePantographsValve itself) for vehicles -
+        // like every one wired through this wrapper's cabin today - that have no separate
+        // master-valve switch of their own ("pantvalves_sw:"/ggPantValvesButton in Train.cpp is
+        // genuinely absent from this vehicle's cabin, and nothing here has a keybind path
+        // either). Without this, no pantograph could ever be raised through the cabin, on any
+        // vehicle. Only opened here, never closed: PantographsCheck() ANDs it with each
+        // pantograph's own individual valve, so leaving it open doesn't keep a lowered
+        // pantograph powered - closing it here on every lower would also drop any OTHER,
+        // still-raised pantograph sharing the same master valve on a two-pantograph vehicle.
+        if (p_enabled) {
+            mover->OperatePantographsValve(Maszyna::operation_t::enable);
+        }
+    }
+
+    void TrainElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Written straight to the mover, like the other per-frame-relevant setters above
+        // (pantograph(), pantographs_valve()) - _do_update_internal_mover() only runs when the
+        // controller is dirty (effectively once, at startup), so stashing this in a member for
+        // that path to pick up later would mean every subsequent frame's wire voltage is ignored.
+        if (p_selector == PANTOGRAPH_FIRST) {
+            pantograph_first_wire_voltage = p_voltage;
+            mover->Pantographs[0].voltage = p_voltage;
+            mover->PantFrontVolt = mover->Pantographs[0].is_active ? p_voltage : 0.0;
+        } else {
+            pantograph_second_wire_voltage = p_voltage;
+            mover->Pantographs[1].voltage = p_voltage;
+            mover->PantRearVolt = mover->Pantographs[1].is_active ? p_voltage : 0.0;
+        }
+        mover->PantographVoltage = std::max(std::fabs(mover->PantFrontVolt), std::fabs(mover->PantRearVolt));
     }
 
     void TrainElectricEngine::_register_commands() {
         TrainEngine::_register_commands();
         register_command("converter", Callable(this, "converter"));
+        register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
         register_command("pantograph", Callable(this, "pantograph"));
@@ -265,6 +326,7 @@ namespace godot {
     void TrainElectricEngine::_unregister_commands() {
         TrainEngine::_unregister_commands();
         unregister_command("converter", Callable(this, "converter"));
+        unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
         unregister_command("pantograph", Callable(this, "pantograph"));

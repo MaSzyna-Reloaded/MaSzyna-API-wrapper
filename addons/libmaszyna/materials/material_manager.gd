@@ -55,7 +55,8 @@ func get_material(
         _managed_materials.erase(cache_hash)
     var force_transparent = options.force_transparent  # TODO: ALPHA
     var output: ShaderMaterial = _materials_cache.get(cache_hash) as ShaderMaterial
-    if not output:
+    var is_newly_created:bool = not output
+    if is_newly_created:
         var mmat: MaszynaMaterial = load_material(model_path, material_path)
         output = MaterialFactory.create(mmat, model_path, season, weather, options)
     else:
@@ -67,7 +68,12 @@ func get_material(
         "material_path": material_path,
         "options": options,
     }
-    _materials_cache.set(cache_hash, output)
+    # _materials_cache.set() writes a resource file to disk (see ResourceCache::set() in
+    # src/core/ResourceCache.cpp) - only actually needed the first time this hash is seen, not
+    # on every lookup. A scenery with hundreds of track/model segments sharing the same handful
+    # of materials was otherwise doing hundreds of redundant disk writes per load.
+    if is_newly_created:
+        _materials_cache.set(cache_hash, output)
     return output
 
 func get_texture(texture_path:String) -> Texture:

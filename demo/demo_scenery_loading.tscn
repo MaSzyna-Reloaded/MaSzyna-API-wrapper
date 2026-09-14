@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dacvr0rfpjx5a"]
+
+[ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="1_env"]
+[ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://b1awg5iad35ss" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_scenery"]
+[ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
+
+[node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
+
+[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
+script = ExtResource("1_env")
+current_time = 10.0
+tonemap_agx_contrast = 1.0
+
+[node name="Player" parent="." unique_id=88536137 instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
+
+[node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
+script = ExtResource("3_scenery")
+filename = "td.scn"
+
+[node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]

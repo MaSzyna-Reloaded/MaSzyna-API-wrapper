@@ -82,6 +82,18 @@ class_name DynamicRailVehicle3D
             start_direction = x
             _track_dirty = true
 
+## Toggle via the "Edit FIZ" 3D-viewport toolbar button (see
+## addons/libmaszyna/editor/fiz_toolbar/) when the wrapped vehicle's FIZTrainController needs to
+## be visible/selectable in the Scene dock for inspection - by default _vehicle is added as an
+## INTERNAL child (see class doc above), and the Scene dock skips internal nodes and their whole
+## subtree outright regardless of node ownership, so nothing under it can otherwise be reached.
+## Mirrors FIZTrainController.editable_in_editor exactly.
+var editable_in_editor:bool = false:
+    set(x):
+        if not editable_in_editor == x:
+            editable_in_editor = x
+            _apply_editable_in_editor()
+
 var _dirty:bool = true
 var _track_dirty:bool = false
 var _vehicle:RailVehicle3D
@@ -111,15 +123,34 @@ func _process_track_dirty() -> void:
 
 func _rebuild() -> void:
     if _vehicle:
-        remove_child(_vehicle)
-        _vehicle.queue_free()
+        _vehicle.free()
         _vehicle = null
 
-    var vehicle:RailVehicle3D = MaszynaRailVehicle3DInstancer.build(
+    var vehicle:RailVehicle3D = DynamicRailVehicle3DManager.load(
             data_path, file_name, skin, train_id, initial_velocity, head_display_material)
     if not vehicle:
         return
 
     _vehicle = vehicle
-    add_child(_vehicle, false, INTERNAL_MODE_BACK)
+    add_child(_vehicle, false, INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK)
+    _set_owner_recursive(_vehicle, owner if editable_in_editor else self)
     _process_track_dirty()
+
+
+## Internal mode can only be chosen at add_child() time, so making _vehicle visible/hidden in
+## the Scene dock means removing and re-adding it with the other mode (see editable_in_editor
+## above).
+func _apply_editable_in_editor() -> void:
+    if not _vehicle:
+        return
+    var idx:int = _vehicle.get_index()
+    remove_child(_vehicle)
+    add_child(_vehicle, false, INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK)
+    move_child(_vehicle, idx)
+    _set_owner_recursive(_vehicle, owner if editable_in_editor else self)
+
+
+func _set_owner_recursive(node:Node, target_owner:Node) -> void:
+    node.owner = target_owner
+    for child:Node in node.get_children(true):
+        _set_owner_recursive(child, target_owner)

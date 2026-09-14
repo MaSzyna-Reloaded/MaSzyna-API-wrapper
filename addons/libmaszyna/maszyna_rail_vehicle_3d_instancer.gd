@@ -29,6 +29,16 @@ const MAX_WHEEL_AXLES:int = 20
 static func build(
         data_path:String, file_name:String, skin:String, train_id:String,
         initial_velocity:float, head_display_material:Material) -> RailVehicle3D:
+    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity)
+    if vehicle:
+        _initialize_instance(vehicle, file_name, head_display_material)
+    return vehicle
+
+
+## Only declarative nodes belong in a PackedScene template; runtime sound pools and bindings do not.
+static func _build_structure(
+        data_path:String, file_name:String, skin:String, train_id:String,
+        initial_velocity:float) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -102,19 +112,27 @@ static func build(
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
-    _bind_animation_paths(vehicle, model)
+    return vehicle
 
+
+static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_display_material:Material) -> void:
+    var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
+    _bind_animation_paths(vehicle, model)
+    var abs_mmd_path:String = UserSettings.get_maszyna_game_dir().path_join(model.data_path).path_join(file_name + ".mmd")
     var sound_diagnostics:Array[Dictionary] = []
-    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, fiz_controller.name, {}, sound_diagnostics)
+    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FIZTrainController", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
         if diagnostic["severity"] != "info":
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
-    _configure_head_display(vehicle, model, head_display_material)
-    return vehicle
+    configure_head_display(vehicle, model, head_display_material)
 
 
-static func _configure_head_display(
+## Public: also called by DynamicRailVehicle3DManager to (re-)apply the per-instance
+## head_display_material onto a cached vehicle template's fresh instantiate()'d copy, since
+## unlike data_path/file_name/skin it isn't part of that template's cache key (see
+## DynamicRailVehicle3DManager's own doc comment for why).
+static func configure_head_display(
         vehicle:RailVehicle3D, model:E3DModelInstance, head_display_material:Material) -> void:
     if not head_display_material:
         return

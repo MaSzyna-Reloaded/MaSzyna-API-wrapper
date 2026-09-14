@@ -5,6 +5,8 @@ extends Node
 const UNKNOWN_MATERIAL = preload("res://addons/libmaszyna/materials/unknown.material")
 const _SWITCH_SEGMENT_COUNT: int = 6
 const _SWITCH_BLADE_RATIO: float = 0.65
+const _MIN_CURVED_MESH_SEGMENT_LENGTH: float = 2.0
+const _MAX_MESH_SEGMENT_LENGTH: float = 10.0
 
 
 class TrackState:
@@ -89,6 +91,7 @@ var DEFAULT_RAIL_PROFILE:RailProfile = RailProfile.new(
     )
 
 var _tracks: Dictionary[RID, TrackState] = {}
+var _track_render_rids_by_track: Dictionary[RID, RID] = {}
 var _next_track_render_id: int = 0
 var _rail_profile_cache: Dictionary = {}
 var _rail_profile_regex: RegEx = RegEx.new()
@@ -104,7 +107,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
-    TrackManager.tracks_changed.connect(_on_tracks_changed)
+    TrackManager.topology_rebuilt.connect(_on_topology_rebuilt)
 
 
 func create_track(track_rid: RID) -> RID:
@@ -120,6 +123,7 @@ func create_track(track_rid: RID) -> RID:
     _next_track_render_id += 1
     var track_render_rid: RID = rid_from_int64(_next_track_render_id)
     _tracks[track_render_rid] = state
+    _track_render_rids_by_track[track_rid] = track_render_rid
     return track_render_rid
 
 
@@ -150,6 +154,8 @@ func free_track(track_render_rid: RID) -> void:
     state.trackbed_mesh = null
     state.trackbed_stitch_mesh = null
 
+    if _track_render_rids_by_track.get(state.track_rid) == track_render_rid:
+        _track_render_rids_by_track.erase(state.track_rid)
     _tracks.erase(track_render_rid)
 
 
@@ -624,7 +630,27 @@ func rebuild_track(track_render_rid: RID) -> void:
             )
 
     set_switch_blade_offsets(track_render_rid, track.switch_f_offset1, track.switch_f_offset2)
+    if not TrackManager.is_topology_changed:
+        _rebuild_track_and_neighbor_stitches(track_render_rid)
+
+
+func _rebuild_track_and_neighbor_stitches(track_render_rid: RID) -> void:
     rebuild_track_stitches(track_render_rid)
+    var state: TrackState = _tracks.get(track_render_rid)
+    if not state:
+        return
+    var rebuilt_neighbors: Dictionary[RID, bool] = {}
+    var endpoints: Array[Vector3] = TrackManager.track_get_endpoints(state.track_rid)
+    for endpoint_index_value: int in range(endpoints.size()):
+        var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+            state.track_rid,
+            endpoint_index_value
+        )
+        for connection: TrackManager.EndpointRef in connections:
+            var neighbor_render_rid: RID = _get_track_render_rid_by_track_rid(connection.track_rid)
+            if neighbor_render_rid.is_valid() and not rebuilt_neighbors.has(neighbor_render_rid):
+                rebuilt_neighbors[neighbor_render_rid] = true
+                rebuild_track_stitches(neighbor_render_rid)
 
 
 func rebuild_track_stitches(track_render_rid: RID) -> void:
@@ -713,9 +739,7 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
     )
 
 
-func _on_tracks_changed() -> void:
-    if TrackManager.is_topology_changed:
-        return
+func _on_topology_rebuilt() -> void:
     for track_render_rid: RID in _tracks.keys():
         rebuild_track_stitches(track_render_rid)
 
@@ -723,11 +747,7 @@ func _on_tracks_changed() -> void:
 func _get_track_render_rid_by_track_rid(track_rid: RID) -> RID:
     if not track_rid.is_valid():
         return RID()
-    for track_render_rid: RID in _tracks.keys():
-        var state: TrackState = _tracks[track_render_rid]
-        if state.track_rid == track_rid:
-            return track_render_rid
-    return RID()
+    return _track_render_rids_by_track.get(track_rid, RID())
 
 
 func _owns_trackbed_stitch(
@@ -902,7 +922,7 @@ func _append_stitch_geometry(
 func _build_curve(curve_data: MaszynaTrackCurve) -> Curve3D:
     var curve: Curve3D = Curve3D.new()
     curve.closed = false
-    curve.bake_interval = float(ProjectSettings.get_setting("maszyna/track_curve_bake_interval", 10.0))
+    curve.bake_interval = _get_mesh_curve_bake_interval(curve_data)
     curve.add_point(
         curve_data.p1 + Vector3(0.0, _get_roll_fix_height(curve_data.roll1), 0.0),
         Vector3.ZERO,
@@ -916,6 +936,22 @@ func _build_curve(curve_data: MaszynaTrackCurve) -> Curve3D:
     curve.set_point_tilt(0, curve_data.roll1)
     curve.set_point_tilt(1, curve_data.roll2)
     return curve
+
+
+func _get_mesh_curve_bake_interval(curve_data: MaszynaTrackCurve) -> float:
+    if not is_zero_approx(curve_data.radius):
+        return clampf(
+            abs(curve_data.radius) * 0.02,
+            _MIN_CURVED_MESH_SEGMENT_LENGTH,
+            _MAX_MESH_SEGMENT_LENGTH
+        )
+    if curve_data.c1.is_zero_approx() and curve_data.c2.is_zero_approx():
+        return _MAX_MESH_SEGMENT_LENGTH
+    return clampf(
+        curve_data.p1.distance_to(curve_data.p2) * 0.1,
+        _MIN_CURVED_MESH_SEGMENT_LENGTH,
+        _MAX_MESH_SEGMENT_LENGTH
+    )
 
 
 func _get_roll_fix_height(roll_degrees: float) -> float:
@@ -944,12 +980,10 @@ func _resolve_trackbed_material(state: TrackState, track: TrackData) -> Material
 
 
 func _get_track_state_by_track_rid(track_rid: RID) -> TrackState:
-    if not track_rid.is_valid():
+    var track_render_rid: RID = _get_track_render_rid_by_track_rid(track_rid)
+    if not track_render_rid.is_valid():
         return null
-    for state: TrackState in _tracks.values():
-        if state.track_rid == track_rid:
-            return state
-    return null
+    return _tracks.get(track_render_rid)
 
 
 func _has_trackbed_profile_options(state: TrackState) -> bool:
@@ -1378,7 +1412,11 @@ func _build_trackbed_section(
 
     return [
         [
-            Vector3(spread, -tex_height - rail_height, 0.0),
+            Vector3(
+                spread * cos_roll - tex_height * sin_roll,
+                -spread * sin_roll - tex_height * cos_roll - rail_height,
+                0.0
+            ),
             Vector3(normal_x, normal_y, 0.0).normalized(),
             0.5 - map_outer
         ],
@@ -1406,7 +1444,11 @@ func _build_trackbed_section(
             0.5 + map_inner
         ],
         [
-            Vector3(-spread, -tex_height - rail_height, 0.0),
+            Vector3(
+                -spread * cos_roll - tex_height * sin_roll,
+                spread * sin_roll - tex_height * cos_roll - rail_height,
+                0.0
+            ),
             Vector3(-normal_x, normal_y, 0.0).normalized(),
             0.5 + map_outer
         ],
@@ -1897,7 +1939,12 @@ func _build_array_mesh(
 
     var mesh: ArrayMesh = ArrayMesh.new()
     mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-    mesh.regen_normal_maps()
+    # regen_normal_maps() computes tangents for normal-mapped rail/ballast textures (the arrays
+    # above never set ARRAY_TANGENT), but costs ~7-9ms PER CALL almost independent of mesh size -
+    # for a real scenery with hundreds of track segments (2-3 calls each: rail, trackbed, and
+    # switch secondary rail), that alone was ~2.1-2.3s of a ~3s scenery load, confirmed by
+    # profiling. Skipped here; the tradeoff is flatter-looking (untangented) normal-map shading
+    # on rails/ballast specifically, not missing geometry or broken base-color/roughness texturing.
     return mesh
 
 

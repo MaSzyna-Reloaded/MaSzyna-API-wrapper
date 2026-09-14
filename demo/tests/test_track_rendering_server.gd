@@ -226,6 +226,40 @@ func test_normal_track_does_not_build_secondary_rail_from_material2() -> void:
     assert_not_null(state.trackbed_mesh)
 
 
+func test_mesh_curve_sampling_matches_maszyna_geometry_fidelity() -> void:
+    var straight: MaszynaTrackCurve = _curve(
+        Vector3.ZERO,
+        Vector3(100.0, 0.0, 0.0)
+    )
+    var curved: MaszynaTrackCurve = _curve(
+        Vector3.ZERO,
+        Vector3(100.0, 0.0, 0.0),
+        Vector3(30.0, 0.0, 0.0),
+        Vector3(-30.0, 0.0, 0.0)
+    )
+    var radius_curve: MaszynaTrackCurve = _curve(
+        Vector3.ZERO,
+        Vector3(100.0, 0.0, 0.0)
+    )
+    radius_curve.radius = 200.0
+
+    assert_almost_eq(TrackRenderingServer._get_mesh_curve_bake_interval(straight), 10.0, 0.001)
+    assert_almost_eq(TrackRenderingServer._get_mesh_curve_bake_interval(curved), 10.0, 0.001)
+    assert_almost_eq(TrackRenderingServer._get_mesh_curve_bake_interval(radius_curve), 4.0, 0.001)
+
+
+func test_track_render_lookup_is_removed_with_render_track() -> void:
+    var track_rid: RID = TrackManager.track_create()
+    created_track_rids.append(track_rid)
+    var track_render_rid: RID = TrackRenderingServer.create_track(track_rid)
+
+    assert_eq(TrackRenderingServer._get_track_render_rid_by_track_rid(track_rid), track_render_rid)
+
+    TrackRenderingServer.free_track(track_render_rid)
+
+    assert_false(TrackRenderingServer._get_track_render_rid_by_track_rid(track_rid).is_valid())
+
+
 func test_switch_blade_layout_uses_curve1_left_and_curve2_right_for_right_switch() -> void:
     var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(true, -0.05, 0.0, TrackManager.SWITCH_MAX_OFFSET)
 

@@ -46,6 +46,20 @@ func test_vehicle_set_track_initializes_normal_track_state() -> void:
     )
 
 
+func test_vehicle_set_track_follows_connected_tracks_for_initial_offsets() -> void:
+    for index:int in range(3):
+        _register_track(_curve(Vector3(index * 10, 0, 0), Vector3((index + 1) * 10, 0, 0)))
+    TrackManager.topology_rebuild()
+    var vehicle_rid:RID = _create_vehicle()
+    for direction:TrackManager.Direction in [TrackManager.Direction.DIRECTION_NORMAL, TrackManager.Direction.DIRECTION_REVERSED]:
+        RailVehiclePhysicsServer.vehicle_set_track(vehicle_rid, created_tracks[2], -15.0, direction)
+        _assert_vector_eq(RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
+            Vector3(5.0, TrackManager.RAIL_HEIGHT, 0.0))
+        RailVehiclePhysicsServer.vehicle_set_track(vehicle_rid, created_tracks[0], 25.0, direction)
+        _assert_vector_eq(RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
+            Vector3(25.0, TrackManager.RAIL_HEIGHT, 0.0))
+
+
 func test_vehicle_set_track_initializes_switch_state_from_active_branch() -> void:
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),

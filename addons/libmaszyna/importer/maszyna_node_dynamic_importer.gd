@@ -1,0 +1,120 @@
+@tool
+extends RefCounted
+
+const MAX_FIZ_INCLUDE_DEPTH:int = 4
+
+## Ports deserialize_dynamic()'s placement math (simulationstateserializer.cpp) onto
+## DynamicRailVehicle3D. Field order: datafolder, skinfile, mmdfile, [pathname - only when not
+## inside a trainset, see below], offset, drivertype, [couplingdata - only inside a trainset],
+## [velocity - only when not inside a trainset], loadcount, [loadtype if loadcount != 0],
+## optional trailing destination, "enddynamic".
+##
+## Placement offset is NOT simply trainset_offset: the original computes
+## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements
+## trainset.offset by the vehicle's own physical length (from its .fiz Dimensions: L=) for the
+## NEXT vehicle in the consist - read directly and synchronously here (not via
+## FIZTrainController's own async pipeline, which only finishes loading after scene
+## construction, too late to affect this vehicle's own placement).
+func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehicle3D:
+    var data_folder:String = _resolve_data_path(p.next_token().replace("\\", "/").to_lower())
+    var skin_file:String = p.next_token().to_lower()
+    var mmd_file:String = p.next_token().to_lower()
+    var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
+    var offset:float = float(p.next_token())
+    var _driver_type:String = p.next_token()
+    var _coupling_data:String = p.next_token() if context.trainset_open else "3"
+    var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
+    var load_count:int = int(p.next_token())
+    var _load_type:String = p.next_token() if load_count != 0 else ""
+
+    var trainset_offset:float = context.trainset_offset if context.trainset_open else 0.0
+    var start_offset:float = trainset_offset if is_equal_approx(offset, -1.0) else trainset_offset - offset
+
+    var vehicle := DynamicRailVehicle3D.new()
+    vehicle.data_path = data_folder
+    vehicle.file_name = mmd_file
+    vehicle.skin = skin_file
+    vehicle.start_track_name = path_name
+    vehicle.start_track_offset = start_offset
+    vehicle.initial_velocity = velocity
+
+    if context.trainset_open:
+        var length:float = _read_vehicle_length(data_folder, mmd_file, context)
+        if length > 0.0:
+            context.trainset_offset -= length
+
+    var next_token:String = p.next_token()
+    if not next_token == "enddynamic":
+        # optional trailing destination parameter, not used yet
+        p.get_tokens_until("enddynamic")
+
+    return vehicle
+
+
+## Same convention as maszyna_node_model_importer.gd's data_path handling: the .scn token gives
+## a path relative to the "dynamic" data root (e.g. "pkp/303e_v1"), not a full path - prepend
+## "dynamic" when it isn't already there. Real game data paths are lowercase on disk even when
+## the .scn token itself uses mixed/upper case (e.g. "PKP/303E_V1").
+func _resolve_data_path(data_folder:String) -> String:
+    var data_path_array:Array = data_folder.split("/")
+    if not data_path_array or not data_path_array[0] == "dynamic":
+        data_path_array.insert(0, "dynamic")
+    return "/".join(data_path_array)
+
+
+## Reads just the "Dimensions: L=..." value out of a vehicle's .fiz file - not the full FIZ
+## import pipeline, just enough for trainset offset chaining. Uses MaszynaParser (the same
+## whitespace-agnostic tokenizer every other .fiz/.scn reader in this addon uses) rather than
+## splitting by line: some .fiz files (e.g. 303e-ep-tv.fiz) spell "include" across three separate
+## lines ("include" / "303e-ep.fiz" / "end"), which a line-oriented reader silently misses
+## entirely - the token itself doesn't care where the line breaks fall.
+func _read_vehicle_length(data_path:String, file_name:String, context:MaszynaImporterContext) -> float:
+    var abs_path:String = UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(file_name + ".fiz")
+    return _read_length_from_fiz_file(abs_path, 0, context)
+
+
+func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImporterContext) -> float:
+    if depth > MAX_FIZ_INCLUDE_DEPTH:
+        return 0.0
+    var file := FileAccess.open(abs_path, FileAccess.READ)
+    if not file:
+        context.cacheable = false
+        return 0.0
+    context.register_dependency(abs_path, file.get_length())
+
+    var base_dir:String = abs_path.get_base_dir()
+    var parser := MaszynaParser.new()
+    parser.initialize(file.get_buffer(file.get_length()), [])
+
+    while not parser.eof_reached():
+        var token:String = parser.next_token()
+        if token.is_empty():
+            break
+
+        var lower_token:String = token.to_lower()
+        if lower_token == "include":
+            var include_filename:String = parser.next_token()
+            var included_length:float = _read_length_from_fiz_file(
+                base_dir.path_join(include_filename), depth + 1, context
+            )
+            if included_length > 0.0:
+                return included_length
+        elif lower_token == "dimensions:":
+            var length:float = _read_dimensions_length(parser)
+            if length > 0.0:
+                return length
+
+    return 0.0
+
+
+## "Dimensions:" is followed by space-separated key=value tokens (L=, H=, W=, Cx=, ...) with no
+## explicit terminator - stop at the first token that isn't itself a key=value pair, which marks
+## the start of the next statement.
+func _read_dimensions_length(parser:MaszynaParser) -> float:
+    while not parser.eof_reached():
+        var token:String = parser.next_token()
+        if token.is_empty() or not token.contains("="):
+            break
+        if token.to_lower().begins_with("l="):
+            return token.substr(2).to_float()
+    return 0.0

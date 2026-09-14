@@ -70,6 +70,17 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
             rear_rolling_wheel_paths = x
             _animation_bindings_dirty = true
 
+## Pantograph mount point, local to the vehicle (x: forward/back, y: up, z: left/right) -
+## mirrors TAnimPant::vPos from the original engine. Vector3.ZERO (the default) approximates a
+## single-unit vehicle's pantograph as sitting directly above its own pivot - fine for whether a
+## wire is found at all (wires_find_above only needs the point to be under the wire and within
+## width, not at the pantograph's exact height), override for multi-unit vehicles where that's
+## off by more than a car length.
+@export var pantograph_front_offset:Vector3 = Vector3.ZERO
+@export var pantograph_rear_offset:Vector3 = Vector3.ZERO
+## Lateral tolerance for wire contact, mirrors TAnimPant::fWidth.
+@export var pantograph_collector_width:float = 0.5
+
 @export var start_track_name:String = "":
     set(x):
         if not x == start_track_name:
@@ -127,6 +138,7 @@ var _head_display_e3d:E3DModelInstance
 var _cabin:Cabin3D
 var _camera:FreeCamera3D
 var _controller:TrainController
+var _electric_engine:Node
 var _fiz_controller:FIZTrainController
 var _model_node:E3DModelInstance
 var _detection_area:Area3D
@@ -260,8 +272,12 @@ func _on_controller_changed(controller:TrainController) -> void:
     if _controller:
         _controller.roof_light_changed.disconnect(_on_roof_light_changed)
     _controller = controller
+    _electric_engine = null
     if _controller:
         _controller.roof_light_changed.connect(_on_roof_light_changed)
+        var electric_engines:Array = _controller.find_children("*", "TrainElectricEngine", true, false)
+        if not electric_engines.is_empty():
+            _electric_engine = electric_engines[0]
     if _rid.is_valid():
         RailVehiclePhysicsServer.vehicle_bind_controller(
             _rid,
@@ -333,6 +349,7 @@ func _process(delta):
         if _rid.is_valid() and start_track_name and not _pending_start_track_retry:
             RailVehiclePhysicsServer.process_movement(_rid, delta)
             _update_track_transform()
+            _update_pantograph_power()
         elif _controller and not start_track_name:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
             _update_wheel_animation_state()
@@ -663,3 +680,57 @@ func _update_track_transform() -> void:
             )
 
     _update_wheel_animation_state()
+
+
+## Finds which traction wire (if any) is above each raised pantograph and feeds its voltage
+## into the mover - port of the original engine's per-vehicle update_traction() call
+## (DynObj.cpp:8190), which this wrapper never had until now (see TractionPowerServer).
+func _update_pantograph_power() -> void:
+    if not _electric_engine or not _controller:
+        return
+
+    var forward:Vector3 = -global_transform.basis.z
+    var up:Vector3 = global_transform.basis.y
+    var left:Vector3 = -global_transform.basis.x
+    var assumed_voltage:float = max(
+        absf(_controller.state.get("current_collector/pantograph_first_voltage", 0.0)),
+        absf(_controller.state.get("current_collector/pantograph_second_voltage", 0.0)),
+    )
+
+    # Gated purely on the mover's own raised/lowered flag - a vehicle with no pantograph never
+    # reports these as true, so there's no separate "is this vehicle even electric" check needed.
+    var front_active:bool = _controller.state.get("current_collector/pantograph_first_active", false)
+    var rear_active:bool = _controller.state.get("current_collector/pantograph_second_active", false)
+    var active_count:int = int(front_active) + int(rear_active)
+    var current_per_pantograph:float = (
+        _controller.state.get("current0", 0.0) / active_count if active_count > 0 else 0.0
+    )
+
+    _electric_engine.call(
+        "set_pantograph_wire_voltage",
+        TrainElectricEngine.PANTOGRAPH_FIRST,
+        (
+            _pantograph_wire_voltage(pantograph_front_offset, forward, up, left, assumed_voltage, current_per_pantograph)
+            if front_active else 0.0
+        ),
+    )
+    _electric_engine.call(
+        "set_pantograph_wire_voltage",
+        TrainElectricEngine.PANTOGRAPH_SECOND,
+        (
+            _pantograph_wire_voltage(pantograph_rear_offset, forward, up, left, assumed_voltage, current_per_pantograph)
+            if rear_active else 0.0
+        ),
+    )
+
+
+func _pantograph_wire_voltage(
+    offset:Vector3, forward:Vector3, up:Vector3, left:Vector3, assumed_voltage:float, current:float
+) -> float:
+    var contact_point:Vector3 = global_transform * offset
+    var wire_rid:RID = TractionPowerServer.wires_find_above(
+        contact_point, up, forward, left, pantograph_collector_width
+    )
+    if not wire_rid.is_valid():
+        return 0.0
+    return TractionPowerServer.wire_get_voltage(wire_rid, assumed_voltage, current)

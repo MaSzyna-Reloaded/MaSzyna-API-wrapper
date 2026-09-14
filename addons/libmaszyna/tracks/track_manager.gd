@@ -29,6 +29,7 @@ signal switching_started(track_rid: RID, from_track: int, to_track: int)
 signal switching_finished(track_rid: RID, active_track: int)
 ## Emitted when track data changes.
 signal tracks_changed
+signal topology_rebuilt
 ## Emitted when cached topology becomes outdated.
 signal topology_changed
 
@@ -452,14 +453,21 @@ func track_update(
     var track: TrackSegment = _tracks.get(track_rid)
     if not track:
         return
-    var existing_name:Variant = _named_tracks.find_key(track_rid)
-    if name and existing_name and not existing_name == name and _named_tracks.get(existing_name) == track_rid:
-        _named_tracks.erase(existing_name)
-    if name and _named_tracks.has(name):
-        if not _named_tracks[name] == track_rid:
-            push_error("Named track already exists: " + name)
-            return
+    # find_key() is an O(n) linear scan over every named track - only worth paying for when
+    # this update actually carries a name that might need to replace a previous one. Most real
+    # scenery tracks are unnamed (an empty/placeholder name in the .scn), so skipping this for
+    # them turns an O(n) per-track cost into O(1) for the common case.
     if name:
+        var existing_name:Variant = _named_tracks.find_key(track_rid)
+        if existing_name and not existing_name == name and _named_tracks.get(existing_name) == track_rid:
+            _named_tracks.erase(existing_name)
+    # A duplicate name only means by-name lookup resolves to whichever track claimed it first -
+    # it must not stop this track from getting its own width/type/AABB configured below (that
+    # used to return early here, silently leaving every same-named track after the first with
+    # none of that ever set).
+    if name and _named_tracks.has(name) and not _named_tracks[name] == track_rid:
+        push_error("Named track already exists: " + name)
+    elif name:
         _named_tracks[name] = track_rid
 
     var previous_width: float = track.width
@@ -756,6 +764,7 @@ func topology_rebuild() -> void:
 
     _rebuild_graph_ids()
     is_topology_changed = false
+    topology_rebuilt.emit()
     tracks_changed.emit()
 
 
@@ -874,10 +883,28 @@ func _connect_all_tracks() -> void:
                     "node_id": track.node_ids[endpoint_index]
                 })
 
-    # 3. Merge endpoints that are close to each other
-    for i in range(all_endpoints.size()):
-        for j in range(i + 1, all_endpoints.size()):
-            var ep1: Dictionary = all_endpoints[i]
+    # Only endpoints in neighboring spatial cells can be within the connection tolerance.
+    var endpoint_cells:Dictionary = {}
+    for index:int in range(all_endpoints.size()):
+        var position:Vector3 = all_endpoints[index]["position"]
+        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_EPSILON), floori(position.z / _ENDPOINT_EPSILON))
+        if not endpoint_cells.has(cell):
+            endpoint_cells[cell] = []
+        endpoint_cells[cell].append(index)
+
+    for i:int in range(all_endpoints.size()):
+        var ep1:Dictionary = all_endpoints[i]
+        var position:Vector3 = ep1["position"]
+        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_EPSILON), floori(position.z / _ENDPOINT_EPSILON))
+        var candidates:Array[int] = []
+        for dx:int in range(-1, 2):
+            for dz:int in range(-1, 2):
+                for candidate:int in endpoint_cells.get(cell + Vector2i(dx, dz), []):
+                    if candidate > i:
+                        candidates.append(candidate)
+        # Preserve the merge order and node identifiers of the original pairwise traversal.
+        candidates.sort()
+        for j:int in candidates:
             var ep2: Dictionary = all_endpoints[j]
 
             if ep1.node_id == ep2.node_id:

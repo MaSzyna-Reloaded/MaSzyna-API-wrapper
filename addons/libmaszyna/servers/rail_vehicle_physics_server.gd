@@ -94,6 +94,9 @@ func vehicle_set_track(
     state.track_direction = track_direction
     state.switch_track = TrackManager.switch_get_active_track(track_rid) if TrackManager.track_is_switch(track_rid) else TrackManager.SwitchTrack.TRACK_COMMON
     state.track_offset = clampf(track_offset, 0.0, TrackManager.track_get_length(track_rid, state.switch_track))
+    var remaining_offset:float = track_offset - state.track_offset
+    var direction_sign:float = -1.0 if track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
+    _move_vehicle_state(state, remaining_offset * direction_sign, false)
 
 
 func process_movement(vehicle_rid: RID, delta: float) -> void:

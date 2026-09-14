@@ -114,8 +114,8 @@ func _get_aabb() -> AABB:
 func _process(_delta: float) -> void:
     if Engine.is_editor_hint():
         if _dirty:
-            _process_dirty(_delta)
             _dirty = false
+            _process_dirty(_delta)
 
 
 func _process_dirty(_delta: float) -> void:
@@ -125,6 +125,7 @@ func _process_dirty(_delta: float) -> void:
 ## Reloads the configured E3D model and recreates the current instance using the selected instancer.
 func reload() -> void:
     if is_inside_tree() and (model or model_filename):
+        _dirty = false
         _e3d_loaded = false
         e3d_loading.emit()
         if _current_instancer:

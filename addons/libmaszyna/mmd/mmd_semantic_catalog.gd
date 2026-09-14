@@ -106,12 +106,117 @@ static func _ensure_built() -> void:
             # lever visibly over/under-rotates. See _apply_animation_shape()'s doc comment.
             "animation_range_config_properties": ["brakes_controller_position_min", "brakes_controller_position_max"],
         },
+        # "localbrake:" - independent/loco brake handle (Train.cpp:10026, ggLocalBrake), a
+        # draggable gauge like mainctrl/brakectrl, not a passive display. Real input is
+        # OnCommand_independentbrakeincrease/decrease (Train.cpp:1447-1524), bound by default to
+        # num_1/num_7 - there was previously no equivalent command anywhere in this wrapper, so
+        # the handle could never move. Unlike brakectrl, local_brake_set takes an
+        # already-normalized 0..1 level directly (LocalBrakePosA is normalized in the mover
+        # itself, no raw Handle-position range to rescale against).
+        "localbrake": {
+            "widget_class": CabinKnob,
+            "fixed_fields": {
+                "value_min": 0.0,
+                "value_max": 1.0,
+                "command": "local_brake_set",
+                "state_property": "brake_local_position_normalized",
+                "action_increase": "local_brake_increase",
+                "action_decrease": "local_brake_decrease",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "security_reset_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": true,
                 "command": "security_acknowledge",
                 "action": "security_acknowledge",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against the original engine (Train.cpp:4061-4080,
+        # OnCommand_motoroverloadrelayreset -> MoverParameters->FuseOn(), "zbij nadmiarowy") and
+        # Train.cpp:10052 ("fuse_bt:" -> ggFuseButton). No controller_mode override, no
+        # state_property, same shape as security_reset_bt/releaser_bt above - fuse_reset() takes
+        # no arguments and isn't a persistent toggle.
+        "fuse_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "fuse_reset",
+                "action": "fuse_reset",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Converter-specific counterpart to fuse_bt above - confirmed against the original engine
+        # (Train.cpp:3567-3585, OnCommand_converteroverloadrelayreset ->
+        # RelayReset(relay_t::primaryconverteroverload), and Train.cpp:10053
+        # "converterfuse_bt:" -> ggConverterFuseButton). state_property reuses the existing
+        # converter_overload reading (TrainEngine.cpp - MoverParameters->ConvOvldFlag).
+        # Confirmed against Train.cpp:1917-1939 (OnCommand_sandboxactivate) and Train.cpp:10044
+        # ("sand_bt:" -> ggSandButton) - momentary, matching the original's press/release shape
+        # (sand only while held), same as fuse_bt/converterfuse_bt above.
+        "sand_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "sand",
+                "state_property": "sand_active",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against Train.cpp:5256-5296 (OnCommand_heatingtoggle/enable/disable) and
+        # Train.cpp:10116 ("trainheating_sw:" -> ggTrainHeatingButton) - "_sw" (switch), persistent
+        # toggle like compressor_sw/converter_sw.
+        "trainheating_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "heating",
+                "state_property": "heating_enabled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against Train.cpp:1839-1872 (OnCommand_alarmchaintoggle/enable/disable) and
+        # Train.cpp:10027 ("alarmchain:" -> ggAlarmChain) - manual emergency brake pull cord,
+        # persistent pulled/released state (no "_sw"/"_bt" suffix - a cord, not a rotary switch).
+        "alarmchain": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "alarm_chain",
+                "state_property": "alarm_chain_pulled",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Confirmed against Train.cpp:3947-4008 (OnCommand_motorconnectorsopen/close) and
+        # Train.cpp:10054 ("stlinoff_bt:" -> ggStLinOffButton) - "_bt" (button) not "_sw", so this
+        # is a persistent state toggle rather than a momentary press like fuse_bt above (matches
+        # compressor_sw/converter_sw's monostable:false shape, sending the CabinButton's own
+        # flipped `pushed` state as the command's bool argument).
+        "stlinoff_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "motor_connectors_open",
+                "state_property": "motor_connectors_open",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "converterfuse_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "converter_fuse_reset",
+                "state_property": "converter_overload",
+                "action": "converter_fuse_reset",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
@@ -344,6 +449,21 @@ static func _ensure_built() -> void:
             "mesh_path_field": "target_mesh_path",
             "mmd_scale_multiplier": 0.1,
         },
+        # Confirmed against the original engine's own source (Train.cpp:10487-10492, "hvoltage:"
+        # loads a gauge and binds it to fHVoltage, itself computed as
+        # max(PantographVoltage, GetTrainsetHighVoltage()) - Train.cpp:6944-6946, see
+        # TrainElectricEngine.cpp's own comment on current_collector/voltage). Not in the
+        # pressure-family mmd_scale_multiplier list above, so default mul=1.0 like tachometer/
+        # enrot/oilpress.
+        "hvoltage": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current_collector/voltage",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
         "oilpress": {
             "widget_class": CabinGauge,
             "fixed_fields": {
@@ -352,6 +472,19 @@ static func _ensure_built() -> void:
             },
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
+        },
+        # Train.cpp:10407-10412: gauge.Load(Parser, DynamicObject, 0.1); gauge.AssignDouble(
+        # &mvOccupied->Compressor) - main reservoir pressure gauge, part of the pressure-family
+        # mmd_scale_multiplier=0.1 group named in this section's own header comment above.
+        "compressor": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "compressor_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
         },
         # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
         # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
@@ -489,6 +622,21 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Same shape as pantfront_sw, PANTOGRAPH_SECOND/pantograph_second_active - pantograph()
+        # already takes the selector, no new C++ needed. Keybind confirmed against
+        # driverkeyboardinput.cpp:193 (plain "O" -> pantographtogglerear).
+        "pantrear_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "pantograph",
+                "command_param": TrainElectricEngine.PANTOGRAPH_SECOND,
+                "state_property": "current_collector/pantograph_second_active",
+                "action": "pantograph_rear_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Confirmed against TrainController.cpp:422 - internal_state["total_distance"] =
         # p_mover->DistCounter, the exact same field the original engine's own distcounter: gauge
         # binds (vehicle/Train.cpp:12370-12374, gauge.AssignDouble(&mvControlled->DistCounter)) -
@@ -520,6 +668,124 @@ static func _ensure_built() -> void:
             },
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
+        },
+        # Same source/shape as hvcurrent1 above, one motor circuit over (Train.cpp:10317
+        # "hvcurrent2:"/"hvcurrent2b:", ShowCurrent(2) - internal_state["current2"] already exposed
+        # by TrainController.cpp identically to current1).
+        "hvcurrent2": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current2",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # Train.cpp:10494-10498 "lvoltage:" ("woltomierz niskiego napiecia" - low voltage
+        # voltmeter) loads a plain gauge with no AssignFloat visible at the load site itself;
+        # ggLVoltage.GetValue() is read back elsewhere as a plain gauge value, not a computed
+        # one - power24_voltage (TrainController.cpp, p_mover->Power24vVoltage) is this wrapper's
+        # own low-voltage-circuit reading, same domain (24V control/battery circuit).
+        "lvoltage": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "power24_voltage",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+        },
+        # Instrument panel fault/status lamps - original engine's own mechanism (confirmed by the
+        # comment above battery_sw/i-cablight in this file, and mmd_cabin_instancer.gd:801-814) is
+        # an "<submodel>_on"/"<submodel>_off" mesh swap, fully automatic once state_property is
+        # set - no light_widget_class needed here (that's only for i-cablight/i-instrumentlight,
+        # which are also real light sources). Plain passthroughs of already-exposed state:
+        "i-slippery": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "slipping_wheels" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-motor_ovld": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "fuse_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-conv_ovld": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "converter_overload" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Confirmed against the original engine: "i-comp_ovld:" -> btLampkaNadmSpr
+        # (Train.cpp:9882/Train.h:693), but nothing in the original ever assigns that button a
+        # value - Train.h marks it "// TODO: implement" and it stays permanently unlit there too.
+        # Mapped here to a state key that's never populated (always reads false via
+        # CabinIndicator3D's state.get(..., false) fallback) purely to silence the
+        # MMD_BINDING_UNSUPPORTED diagnostic - matching the original's own dead widget, not adding
+        # new Mover/engine state for a fault the original never actually tracks.
+        "i-comp_ovld": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/compressor_overload_unimplemented" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-trainheating": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "heating_enabled" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # These mirror the original's own combined conditions (not single-flag passthroughs) -
+        # see TrainElectricEngine.cpp's own comment on "indicators/*" for the exact Train.cpp
+        # line references each one is confirmed against.
+        "i-contactors": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/contactors_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-diff_relay": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/diff_relay_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-resistors": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/resistors_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-vent_ovld": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/vent_overload_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-highcurrent": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/highcurrent_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-mainbreaker": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "indicators/mainbreaker_active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
         },
         # The E3D indicator follows the plain Radio flag, matching vehicle/Train.cpp:9160.
         # The separate OmniLight follows radio_powered and copies SM42's hand-authored

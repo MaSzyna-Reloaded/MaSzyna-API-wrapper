@@ -387,7 +387,18 @@ func wires_find_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector
         if is_zero_approx(front_dot):
             continue
         var t:float = -(wire.p1.dot(forward) - position.dot(forward)) / front_dot
-        if t < -0.001 or t > 1.001:
+        # Absolute-distance tolerance at each segment's own endpoints, not a fixed fraction of
+        # its length - a fraction (the previous 0.001 here) shrinks to a couple centimeters of
+        # real overlap for a typical ~20m span, tighter than the gap hand-authored scenery
+        # regularly leaves between adjacent traction pieces (confirmed live: a GUT test caught
+        # EP07-424 crossing td.scn get a real, reproducible single-to-few-frame
+        # pantograph_first_voltage=0.0 at one fixed point on the track, which Mover's own
+        # NoVoltRelay logic then correctly read as a genuine loss of contact and tripped Mains -
+        # not a Mover bug, a real gap in wire coverage at that exact seam). _ENDPOINT_EPSILON is
+        # this same file's own established "close enough to be one continuous wire" distance,
+        # already used for the electrical connectivity graph in _connect_wires() below.
+        var t_tolerance:float = _ENDPOINT_EPSILON / absf(front_dot)
+        if t < -t_tolerance or t > 1.0 + t_tolerance:
             continue
         var contact_point:Vector3 = wire.p1 + parametric * t
         var to_contact:Vector3 = contact_point - position

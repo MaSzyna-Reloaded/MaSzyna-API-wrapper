@@ -107,7 +107,7 @@ func _parse_wwlist_row(p: MaszynaParser) -> void:
 
 
 func _parse_motor_param_row(p: MaszynaParser) -> void:
-    var item := FizTrainEngineCommon.parse_motor_param_row(p)
+    var item := FizTrainEngineCommon.parse_motor_param_row(p, true)
     if item:
         _motor_param_rows.append(item)
 

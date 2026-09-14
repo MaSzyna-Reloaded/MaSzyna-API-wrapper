@@ -14,6 +14,15 @@ class_name FizTrainControllerInstancer
 const _INCLUDE_KEYWORD := "include"
 const _INCLUDE_END_KEYWORD := "end"
 
+## Bump whenever a fiz_train_*_parser.gd file's parsing/field-mapping LOGIC changes (not just
+## FIZ data) - mirrors E3DModel.FORMAT_VERSION (addons/libmaszyna/e3d/e3d_model_manager.gd), the
+## same on-disk-cache-invalidation pattern for the same reason: _make_cache_hash() below is keyed
+## on the source .fiz file's own mtime, so a parser bugfix with no change to the .fiz data itself
+## is otherwise silently served from a stale pre-fix cache entry until something touches that
+## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
+## had zero effect in a running game because of exactly this.
+const FIZ_PARSER_FORMAT_VERSION := 2
+
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
 ## `parse(p: MaszynaParser, context, prefix)` and, for table sections, `parse_row(p, context)` +
@@ -150,29 +159,66 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
     horns.name = "Horns"
     target.add_child(horns)
 
-## Builds a new, unparented TrainController + children from a FIZ file.
+## Same on-disk cache used by E3DModelManager for parsed E3D models (addons/libmaszyna/e3d/
+## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
+## edited .fiz (or an `include`d one - mtime isn't recursive, but editing a shared .fiz.inc
+## while iterating is rare enough not to warrant walking every include) invalidates the entry.
+## Stored as a PackedScene, not the TrainController Node directly - ResourceCache persists
+## godot::Resource instances, and PackedScene.instantiate() is the standard, engine-native way
+## to stamp out an independent copy of a template tree (see build() below).
+static var _cache = ResourceCache.create("fiz")
+
+static func _make_cache_path(fiz_path: String) -> String:
+    var relative_path: String = fiz_path.trim_prefix(UserSettings.get_maszyna_game_dir().path_join(""))
+    return relative_path + ".res"
+
+static func _make_cache_hash(fiz_path: String) -> String:
+    return ("%s:%s:%s" % [
+        FileAccess.get_modified_time(fiz_path), FIZ_PARSER_FORMAT_VERSION, fiz_path
+    ]).md5_text()
+
+## Builds a new, unparented TrainController + children from a FIZ file. A scenery routinely
+## repeats the same wagon/locomotive .fiz across many consist entries, so this turns an
+## O(vehicle count) FIZ text parse (section dispatch + per-line MaszynaParser allocations) into
+## O(distinct files) - build_scene()'s cached PackedScene is instantiate()'d instead.
 static func build(fiz_path: String) -> TrainController:
-    var controller := TrainController.new()
+    var scene: PackedScene = build_scene(fiz_path)
+    if not scene:
+        return null
+
+    var controller := scene.instantiate() as TrainController
     # Otherwise Godot auto-assigns an ugly, unstable "@TrainController@<N>" name (the counter
     # increments per instance created this session), which breaks any NodePath saved against it
     # the moment the node is rebuilt (e.g. RailVehicle3D.controller_path across scene reloads).
     controller.name = "TrainController"
-    build_into(controller, fiz_path)
     return controller
 
 
+## Builds (or reuses the cached) TrainController + children from a FIZ file, packed as a
+## PackedScene - each independent runtime instance (mass, wear, velocity, ...) then comes from
+## instantiate()'ing this template, never by sharing the template's own live node.
 static func build_scene(fiz_path: String) -> PackedScene:
-    var root := build(fiz_path)
+    var cache_path: String = _make_cache_path(fiz_path)
+    var cache_hash: String = _make_cache_hash(fiz_path)
+    var scene: PackedScene = _cache.get(cache_path, cache_hash) as PackedScene
+    if scene:
+        return scene
+
+    var root := TrainController.new()
+    root.name = "TrainController"
+    build_into(root, fiz_path)
     # PackedScene.pack() only includes nodes whose `owner` is set - without this, the packed
     # scene would contain just the root TrainController and silently drop every TrainPart child.
     for child: Node in root.get_children():
         child.owner = root
-    var scene := PackedScene.new()
+    scene = PackedScene.new()
     var err: Error = scene.pack(root)
     root.free()
     if err != OK:
         push_error("Could not pack FIZ scene for: " + fiz_path)
         return null
+
+    _cache.set(cache_path, scene, cache_hash)
     return scene
 
 

@@ -298,6 +298,20 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_spring_brake_cuts_off_drive, true);
             MAKE_MEMBER_GS(double, cntrl_spring_brake_drive_emergency_velocity, -1.0);
 
+        private:
+            // Original engine: Train.cpp's m_lastlocalbrakepressure/m_localbrakepressurechange -
+            // a heavily low-pass-filtered rate of change of LocBrakePress, used ONLY to drive the
+            // independent-brake hiss sound (rsSBHiss/rsSBHissU). Deliberately NOT the mover's own
+            // internal TFD1::GetPF() valve-flow field (dpLocalValve/"brake_local_valve_flow") -
+            // that tracks the handle model's own internal convergence state and can jump/step as
+            // it re-corrects, which is inaudible as a physical quantity but produces an audible
+            // looping/stepping hiss if used directly as a sound trigger. LocBrakePress itself
+            // (the actual cylinder pressure, also what drives the cab gauge) is smooth by
+            // comparison - matching the original's choice to key the sound off pressure change,
+            // not the internal valve state.
+            double local_brake_pressure_previous = -1.0;
+            double local_brake_pressure_change_rate = 0.0;
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
@@ -313,6 +327,10 @@ namespace godot {
             void brake_level_set_position_str(const String &p_position);
             void brake_level_increase();
             void brake_level_decrease();
+            void local_brake_set(double p_level);
+            void local_brake_increase();
+            void local_brake_decrease();
+            void alarm_chain(bool p_pulled);
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)

@@ -883,8 +883,24 @@ static func _position_at_submodel_instance(widget:Node3D, submodel:Node3D) -> vo
     var target_transform:Transform3D = submodel.global_transform
     if submodel is VisualInstance3D:
         var local_center:Vector3 = (submodel as VisualInstance3D).get_aabb().get_center()
-        target_transform.origin = submodel.to_global(local_center)
-    widget.global_transform = target_transform
+        if _is_vector3_finite(local_center):
+            target_transform.origin = submodel.to_global(local_center)
+    # Some real submodels (confirmed: indicator lamp meshes on at least one 303E cabin variant)
+    # end up with a non-finite global_transform (broken parent pivot chain in the source art, or
+    # the AABB-center fallback above) - RenderingServer rejects a NaN/Inf transform loudly
+    # (instance_set_transform "!v.is_finite()") for every such widget on every rebuild. Leaving
+    # the widget at its default (identity) transform is harmless here: none of these widgets
+    # render anything of their own, they only hold references to other nodes
+    # (CabinIndicator3D's on_target/off_target, Light3D's own separately-positioned instance).
+    if _is_vector3_finite(target_transform.origin) \
+            and _is_vector3_finite(target_transform.basis.x) \
+            and _is_vector3_finite(target_transform.basis.y) \
+            and _is_vector3_finite(target_transform.basis.z):
+        widget.global_transform = target_transform
+
+
+static func _is_vector3_finite(v:Vector3) -> bool:
+    return is_finite(v.x) and is_finite(v.y) and is_finite(v.z)
 
 
 static func _tokenize_file(abs_path:String, context:MmdImportContext, parameters:Dictionary = {}) -> Array[String]:

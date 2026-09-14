@@ -373,10 +373,10 @@ static func _build_local_brake_hiss(
     var automations:Array[SfxAutomation] = []
     if release_def and _has_sound(release_def):
         automations.append(_signed_flow_automation(
-                release_def, &"brake_local_valve_flow", -1.0, 1.0, 1.0, 0.05))
+                release_def, &"brake_loco_pressure_fall_rate", 1.0, 1.0, 1.0, 0.05))
     if engage_def and _has_sound(engage_def):
         automations.append(_signed_flow_automation(
-                engage_def, &"brake_local_valve_flow", 1.0, 1.0, 1.0, 0.05))
+                engage_def, &"brake_loco_pressure_rise_rate", 1.0, 1.0, 1.0, 0.05))
     if automations.is_empty():
         return null
     event.automations = automations
@@ -504,8 +504,9 @@ static func _signed_flow_automation(
         var span:float = gain_signal_max - minf(clip.offset, gain_signal_max)
         curve.min_domain = 0.0
         curve.max_domain = maxf(span, 0.001)
-        curve.add_point(Vector2(
-                0.0, clampf(output_scale * (offset + factor * absf(clip.offset)) / maximum_gain, 0.0, 1.0)))
+        var quiet_gain:float = clampf(output_scale * (offset + factor * absf(clip.offset)) / maximum_gain, 0.0, 1.0)
+        curve.add_point(Vector2(0.0, quiet_gain))
+        _add_biased_points(curve, 0.0, curve.max_domain, quiet_gain, 1.0, true)
         curve.add_point(Vector2(curve.max_domain, 1.0))
     else:
         var start_signal:float = minf(start, domain_max)
@@ -516,14 +517,18 @@ static func _signed_flow_automation(
         clip.length = domain_max - start_signal
         curve.min_domain = 0.0
         curve.max_domain = maxf(clip.length, 0.001)
-        curve.add_point(Vector2(0.0, clampf(
-                output_scale * (offset + factor * domain_max) / maximum_gain, 0.0, 1.0)))
+        var loud_gain:float = clampf(output_scale * (offset + factor * domain_max) / maximum_gain, 0.0, 1.0)
+        curve.add_point(Vector2(0.0, loud_gain))
         var saturation_end:float = domain_max - saturation_signal
+        var falloff_start:float = 0.0
+        var falloff_start_gain:float = loud_gain
         if saturation_end > 0.0:
             curve.add_point(Vector2(saturation_end, 1.0))
-        curve.add_point(Vector2(
-                curve.max_domain,
-                clampf(output_scale * (offset + factor * start_signal) / maximum_gain, 0.0, 1.0)))
+            falloff_start = saturation_end
+            falloff_start_gain = 1.0
+        var quiet_gain:float = clampf(output_scale * (offset + factor * start_signal) / maximum_gain, 0.0, 1.0)
+        _add_biased_points(curve, falloff_start, curve.max_domain, falloff_start_gain, quiet_gain, false)
+        curve.add_point(Vector2(curve.max_domain, quiet_gain))
     clip.fade_in_curve = curve
     var track := SfxTrack.new()
     track.track_name = StringName(definition.label)
@@ -532,6 +537,23 @@ static func _signed_flow_automation(
     clip.track = track
     automation.clips = [clip]
     return automation
+
+
+## Adds intermediate Curve points between (x_low, gain_low) and (x_high, gain_high) (both
+## endpoints must already exist on the curve - this only fills the middle), biased to linger near
+## one endpoint's gain across most of the range and transition quickly near the other, instead of
+## the default near-linear interpolation two bare points give.
+## `bias_toward_low = true` keeps gain near gain_low for most of the range, rising sharply only
+## near x_high; `false` mirrors this toward gain_high.
+static func _add_biased_points(
+        curve:Curve, x_low:float, x_high:float, gain_low:float, gain_high:float,
+        bias_toward_low:bool, exponent:float = 3.0, steps:int = 5) -> void:
+    if x_high <= x_low:
+        return
+    for i in range(1, steps):
+        var t:float = float(i) / float(steps)
+        var eased:float = pow(t, exponent) if bias_toward_low else 1.0 - pow(1.0 - t, exponent)
+        curve.add_point(Vector2(lerpf(x_low, x_high, t), lerpf(gain_low, gain_high, eased)))
 
 
 ## Builds one SfxAutomation for `definition` keyed on `parameter_name`, spanning [min_value,

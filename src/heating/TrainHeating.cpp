@@ -18,6 +18,7 @@ namespace godot {
                 TrainHeating, Variant::INT, heating_power_cable_type, "heating/power_cable", PROPERTY_HINT_ENUM,
                 "NoPower,BioPower,MechPower,ElectricPower,SteamPower");
         BIND_PROPERTY(TrainHeating, Variant::FLOAT, heating_max_voltage, "heating");
+        ClassDB::bind_method(D_METHOD("heating", "enabled"), &TrainHeating::heating);
     }
 
     void TrainHeating::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -54,5 +55,23 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         p_state["heating_enabled"] = p_mover->Heating;
         p_state["heating_power"] = p_mover->HeatingPower;
+    }
+
+    void TrainHeating::heating(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_heatingenable/disable (Train.cpp:5256-5296) ->
+        // HeatingSwitch(State) - "trainheating_sw:"/ggTrainHeatingButton (Train.cpp:10116).
+        mover->HeatingSwitch(p_enabled);
+    }
+
+    void TrainHeating::_register_commands() {
+        TrainPart::_register_commands();
+        register_command("heating", Callable(this, "heating"));
+    }
+
+    void TrainHeating::_unregister_commands() {
+        TrainPart::_unregister_commands();
+        unregister_command("heating", Callable(this, "heating"));
     }
 } // namespace godot

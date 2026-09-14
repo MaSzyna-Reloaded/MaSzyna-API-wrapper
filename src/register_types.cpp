@@ -40,6 +40,8 @@
 #include "resources/load/LoadListItem.hpp"
 #include "resources/switches/DimmerListItem.hpp"
 #include "resources/wipers/WiperListItem.hpp"
+#include "scenery/MaszynaTrianglesImporter.hpp"
+#include "scenery/SceneryTrianglesBuilder.hpp"
 #include "speed_control/TrainSpeedControl.hpp"
 #include "switches/TrainSwitches.hpp"
 #include "systems/TrainAIHints.hpp"
@@ -79,6 +81,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelLightDefinition);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(MaszynaParser);
+        GDREGISTER_CLASS(MaszynaTrianglesImporter);
+        GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
         GDREGISTER_CLASS(GenericTrainPart);

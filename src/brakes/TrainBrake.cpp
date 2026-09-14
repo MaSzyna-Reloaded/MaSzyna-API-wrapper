@@ -227,6 +227,10 @@ namespace godot {
                 D_METHOD("brake_level_set_position_str", "position"), &TrainBrake::brake_level_set_position_str);
         ClassDB::bind_method(D_METHOD("brake_level_increase"), &TrainBrake::brake_level_increase);
         ClassDB::bind_method(D_METHOD("brake_level_decrease"), &TrainBrake::brake_level_decrease);
+        ClassDB::bind_method(D_METHOD("local_brake_set", "level"), &TrainBrake::local_brake_set);
+        ClassDB::bind_method(D_METHOD("local_brake_increase"), &TrainBrake::local_brake_increase);
+        ClassDB::bind_method(D_METHOD("local_brake_decrease"), &TrainBrake::local_brake_decrease);
+        ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &TrainBrake::alarm_chain);
     }
 
     void TrainBrake::_register_commands() {
@@ -235,6 +239,10 @@ namespace godot {
         register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         register_command("brake_level_increase", Callable(this, "brake_level_increase"));
         register_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+        register_command("local_brake_set", Callable(this, "local_brake_set"));
+        register_command("local_brake_increase", Callable(this, "local_brake_increase"));
+        register_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
+        register_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
     void TrainBrake::_unregister_commands() {
@@ -243,6 +251,18 @@ namespace godot {
         unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
         unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+        unregister_command("local_brake_set", Callable(this, "local_brake_set"));
+        unregister_command("local_brake_increase", Callable(this, "local_brake_increase"));
+        unregister_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
+        unregister_command("alarm_chain", Callable(this, "alarm_chain"));
+    }
+
+    void TrainBrake::alarm_chain(const bool p_pulled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle/enable/disable) ->
+        // AlarmChainSwitch(State) - manual emergency brake pull cord.
+        mover->AlarmChainSwitch(p_pulled);
     }
 
     void TrainBrake::brake_releaser(const bool p_pressed) {
@@ -298,6 +318,33 @@ namespace godot {
         mover->DecBrakeLevel();
     }
 
+    // Original engine: "localbrake:"/ggLocalBrake (Train.cpp:10026) is the independent/loco
+    // brake handle - a draggable gauge like mainctrl/brakectrl, not a passive display. Real
+    // input is OnCommand_independentbrakeincrease/decrease (Train.cpp:1447-1524), bound by
+    // default to num_1/num_7 (eu07_input-keyboard.ini) - there was previously no equivalent
+    // command in this wrapper at all, so the handle could never move.
+    void TrainBrake::local_brake_set(const double p_level) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        // LocalBrakePosA is already normalized 0..1 in the mover (unlike the main brake's
+        // arbitrary Handle-position units), so no range conversion is needed here.
+        mover->LocalBrakePosA = CLAMP(p_level, 0.0, 1.0);
+    }
+
+    void TrainBrake::local_brake_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        // One notch per call, mirroring this wrapper's main_controller_increase(step=1)
+        // convention for a single cab-click/command invocation.
+        mover->IncLocalBrakeLevel(1);
+    }
+
+    void TrainBrake::local_brake_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->DecLocalBrakeLevel(1);
+    }
+
     void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         // Hardware/setup facts - change only when the vehicle's brake config is (re)applied, not
         // every tick, so they belong here rather than in _do_fetch_state_from_mover. Read from
@@ -333,13 +380,28 @@ namespace godot {
             brake_controller_pos_normalized =
                     (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);
         }
+        // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle) - "alarmchain:"/ggAlarmChain
+        // (Train.cpp:10027), manual emergency brake pull cord.
+        p_state["alarm_chain_pulled"] = p_mover->AlarmChainFlag;
         p_state["brake_air_pressure"] = p_mover->BrakePress;
         p_state["brake_loco_pressure"] = p_mover->LocBrakePress;
         p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;
         p_state["pipe_pressure"] = p_mover->PipePress;
+        // "przewod zasilajacy" (feed pipe) - shared with the pantograph reservoir by default
+        // (bPantKurek3=true, see TrainElectricEngine.cpp's pantograph_tank_pressure comment) and
+        // with the local/independent brake valve's own flow (Hamulec->GetHPFlow, Mover.cpp:4755).
+        p_state["feed_pipe_pressure"] = p_mover->ScndPipePress;
         p_state["brake_tank_volume"] = p_mover->Volume;
+        // Original engine: "compressor:"/"compressorb:" (Train.cpp:10407-10412), a gauge bound
+        // straight to mvOccupied->Compressor - "cisnienie w ukladzie zasilajacym" (MOVER.h:1455),
+        // the main reservoir pressure. Lives here, not TrainEngine, matching this file's existing
+        // compressor command surface (CompressorTankValve/CompressorSpeed/CompressorPower below).
+        p_state["compressor_pressure"] = p_mover->Compressor;
         p_state["brake_controller_position"] = brake_controller_pos;
         p_state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
+        // LocalBrakePosA ("nastawa hamulca pomocniczego") is already normalized 0..1 in the
+        // mover, unlike the main brake's arbitrary Handle-position units above.
+        p_state["brake_local_position_normalized"] = p_mover->LocalBrakePosA;
 
         p_state["brake_unit_force"] = p_mover->UnitBrakeForce;
         const double brake_force_max_per_block =
@@ -350,6 +412,22 @@ namespace godot {
         const double main_valve_flow = p_mover->dpMainValve;
         p_state["brake_main_valve_flow"] = std::isfinite(main_valve_flow) ? main_valve_flow : 0.0;
         p_state["brake_local_valve_flow"] = p_mover->dpLocalValve;
+        // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered
+        // rate of LocBrakePress change, factor 0.1/frame) - see this member's own doc comment in
+        // TrainBrake.hpp for why the sound layer needs this instead of the raw dpLocalValve
+        // field above. Published as two already-non-negative magnitudes, matching how
+        // brake_sfx_event_factory.gd's local-brake-hiss automation consumes them (one track per
+        // sign, same shape as the original's separate rsSBHiss/rsSBHissU sounds).
+        {
+            const double dt = get_process_delta_time();
+            if (local_brake_pressure_previous >= 0.0 && dt > 0.0) {
+                const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / dt);
+                local_brake_pressure_change_rate = local_brake_pressure_change_rate * 0.9 + raw_rate * 0.1;
+            }
+            local_brake_pressure_previous = p_mover->LocBrakePress;
+        }
+        p_state["brake_loco_pressure_fall_rate"] = std::max(0.0, -local_brake_pressure_change_rate);
+        p_state["brake_loco_pressure_rise_rate"] = std::max(0.0, local_brake_pressure_change_rate);
         p_state["brake_control_pressure"] = p_mover->LocHandle ? p_mover->LocHandle->GetCP() : 0.0;
         p_state["brake_local_aeim_position"] = p_mover->LocalBrakePosAEIM;
         p_state["brake_edb_cylinder_pressure"] = p_mover->Hamulec ? p_mover->Hamulec->GetEDBCP() : 0.0;

@@ -25,6 +25,7 @@ namespace godot {
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 TrainSwitches, Variant::ARRAY, dimmer_list_positions, "dimmer_list_positions",
                 PROPERTY_HINT_TYPE_STRING, "DimmerListItem");
+        ClassDB::bind_method(D_METHOD("sand", "active"), &TrainSwitches::sand);
     }
 
     void TrainSwitches::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -39,5 +40,24 @@ namespace godot {
     void TrainSwitches::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         // RelayResetButtonX/PantographPresets/ModernDimmer/DimmerList are not wired to the
         // mover: see the class-level note in TrainSwitches.hpp.
+        p_state["sand_active"] = p_mover->SandDose;
+    }
+
+    void TrainSwitches::sand(const bool p_active) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Train.cpp:1917-1939 (OnCommand_sandboxactivate) -> SandboxManual(State),
+        // "sand_bt:"/ggSandButton (Train.cpp:10044) - momentary, active only while held.
+        mover->SandboxManual(p_active);
+    }
+
+    void TrainSwitches::_register_commands() {
+        TrainPart::_register_commands();
+        register_command("sand", Callable(this, "sand"));
+    }
+
+    void TrainSwitches::_unregister_commands() {
+        TrainPart::_unregister_commands();
+        unregister_command("sand", Callable(this, "sand"));
     }
 } // namespace godot

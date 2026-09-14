@@ -97,24 +97,51 @@ static func apply_cntrl_engine_subset(node: TrainEngine, cntrl_kv: Dictionary) -
         "yes": node.cntrl_auto_relay_mode = TrainEngine.AUTO_RELAY_YES
 
 
-## Shared MotorParamTable0:/MotorParamTable: row parser - both sections share the same idx+6-
-## float row shape and populate the same TrainEngine.motor_param_table (MotorParameter
-## resources), which TrainEngine::_do_update_internal_mover already pushes into the mover's
-## MotorParam[] for every engine type (not just ElectricSeriesMotor - DieselElectric's
-## TractionForce() reads the same MotorParam[] table for its traction motor characteristics).
-## See fiz_train_electric_series_engine_parser.gd's class doc for the column-mapping confidence
-## caveat (all six columns are marked "?" on the wiki).
-static func parse_motor_param_row(p: MaszynaParser) -> MotorParameter:
-    var tokens: Array = p.get_tokens(7)
-    if tokens.size() < 7:
+## Shared MotorParamTable0:/MotorParamTable: row parser. These are TWO DIFFERENT sections in the
+## original, dispatched to two DIFFERENT reader functions purely by whether the header has a
+## trailing "0" (Mover.cpp:9737 issection("MotorParamTable0:") -> startMPT0 -> readMPT0(),
+## Mover.cpp:9729 issection("MotorParamTable:") -> startMPT -> readMPT() -> EngineType switch) -
+## NOT the same row shape, despite the near-identical header text. Verified directly against both
+## real readers (not the wiki, which marks every column "?"):
+## - "MotorParamTable0:" (what ElectricSeriesMotor vehicles - e.g. 303e-ep.fiz - actually use) ->
+##   readMPT0 (Mover.cpp:8948), default (non-DieselEngine) case: idx, mfi, mIsat, mfi0, fi, Isat,
+##   fi0 - SIX mandatory fields, then an optional 7th auto-shunt flag (int==1). Previously
+##   misread as readMPTElectricSeries's shape (below), which silently dropped mfi0/fi0 entirely
+##   and read "fi" from the wrong column (0.11 instead of the real ~140) - fi is the back-EMF
+##   constant Current() (Mover.cpp:271) uses to taper current/torque as motor RPM rises, so
+##   reading it 1000x too small meant the motor never lost torque with speed: unbounded
+##   acceleration at any fixed controller notch, confirmed against a live run of the actual
+##   original executable (ammeter drops quickly and speed plateaus around 50 km/h on notch 6,
+##   which this wrapper's sim could not reproduce until this fix).
+## - "MotorParamTable:" (no "0" - what this wrapper's DieselElectric parser uses) -> readMPT() ->
+##   readMPTElectricSeries (Mover.cpp:9004) for ElectricSeriesMotor: idx, mfi, mIsat, fi, Isat,
+##   optional 5th auto-shunt flag - OR readMPTDieselElectric (Mover.cpp:9028) for DieselElectric:
+##   idx, mfi, mIsat, fi, Isat, then two REQUIRED trailing columns as MPTRelay[]'s
+##   shunting_up/shunting_down thresholds (p_is_diesel_electric selects this variant - this
+##   wrapper has no plain-ElectricSeriesMotor caller for "MotorParamTable:" today, only
+##   "MotorParamTable0:", so that reader's shape is documented here for completeness but unused).
+static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool = false) -> MotorParameter:
+    var tokens: Array = p.get_tokens(8)
+    var min_tokens: int = (7 if p_is_diesel_electric else 7)
+    if tokens.size() < min_tokens:
         return null
     var item := MotorParameter.new()
-    item.initial_voltage_constant = float(tokens[1]) # A ("fin")
-    # B ("bl") deliberately left unmapped - see fiz_train_electric_series_engine_parser.gd.
-    item.voltage_constant_multiplier = float(tokens[3]) # C (mfi)
-    item.saturation_current_multiplier = float(tokens[4]) # D (mIsat)
-    item.voltage_constant = float(tokens[5]) # E (fi)
-    item.saturation_current = float(tokens[6]) # F (Isat)
+    if p_is_diesel_electric:
+        item.voltage_constant_multiplier = float(tokens[1])   # mfi
+        item.saturation_current_multiplier = float(tokens[2]) # mIsat
+        item.voltage_constant = float(tokens[3])               # fi
+        item.saturation_current = float(tokens[4])             # Isat
+        item.shunting_up = float(tokens[5])
+        item.shunting_down = float(tokens[6])
+    else:
+        item.voltage_constant_multiplier = float(tokens[1])          # mfi
+        item.saturation_current_multiplier = float(tokens[2])        # mIsat
+        item.initial_voltage_constant_multiplier = float(tokens[3])  # mfi0
+        item.voltage_constant = float(tokens[4])                     # fi
+        item.saturation_current = float(tokens[5])                   # Isat
+        item.initial_voltage_constant = float(tokens[6])             # fi0
+        if tokens.size() >= 8:
+            item.auto_switch = (int(tokens[7]) == 1)
     return item
 
 

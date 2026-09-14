@@ -8,24 +8,13 @@ class_name FizTrainElectricSeriesEngineParser
 ## table, using the standard parse()/parse_row()/end_table() interface) - all configure the
 ## same node created by FizTrainEngineParser. Series-motor branch of LoadFIZ_Engine:
 ## Mover.cpp:11119, LoadFIZ_Circuit: Mover.cpp:11416, LoadFIZ_RList: Mover.cpp:11444,
-## readRList: Mover.cpp:9231, readMPT0: Mover.cpp:9069.
+## readRList: Mover.cpp:9095, readMPT0: Mover.cpp:8948.
 ##
-## MotorParamTable0: column mapping (idx A B C D E F, per
-## https://wiki.eu07.pl/index.php/Plik_charakterystyki, "Zmienne dla pojazdow elektrycznych z
-## rozruchem oporowym" section, which documents its own worked example under the literal
-## header "MotorParamTable0:" matching real files exactly): the wiki names every column -
-## A=fin, B=bl, C=mfi, D=mIsat, E=fi, F=Isat - but marks EVERY one of them with a trailing "?",
-## i.e. the community itself isn't confident about any of these six names, not just some of
-## them. C/D/E/F are mapped here to MotorParameter's voltage_constant_multiplier/
-## saturation_current_multiplier/voltage_constant/saturation_current (the closest plausible
-## match to mfi/mIsat/fi/Isat); A is mapped to initial_voltage_constant on a similarly
-## best-effort basis ("fin" plausibly abbreviating "fi initial"/fi0); B ("bl") is left
-## unmapped, since nothing about it is identifiable at all against MotorParameter's remaining
-## fields. Populating the table at all (rather than leaving it empty) is what fixes a real
-## crash-adjacent bug - see test_train_electric_engine_power_source.gd's sibling investigation
-## - but the exact per-column values should be treated as approximate pending a more
-## authoritative source (e.g. reading Mover.cpp's readMPT0 field-by-field) if precise traction
-## behavior ever matters.
+## MotorParamTable0: column mapping - see FizTrainEngineCommon.parse_motor_param_row's own doc
+## comment for the authoritative order (idx, mfi, mIsat, mfi0, fi, Isat, fi0, [auto-shunt flag]),
+## verified directly against readMPT0 (Mover.cpp:8948) - the reader this header text actually
+## dispatches to, NOT readMPTElectricSeries (a different, 4-column reader for the separate,
+## unsuffixed "MotorParamTable:" header) - rather than the wiki's own "?"-marked column names.
 
 var _relay_rows: Array[RelayListItem] = []
 var _motor_param_rows: Array[MotorParameter] = []
@@ -45,7 +34,14 @@ func apply_engine_fields(kv: Dictionary, node: TrainElectricSeriesEngine) -> voi
         # floors to 0.01 when the key resolves to 0, matching the original's division-by-zero guard.
         node.winding_resistance = maxf(FizLineUtil.get_float(kv, "WindingRes"), 0.01)
     if kv.has("nmax"):
-        node.max_rpm = FizLineUtil.get_float(kv, "nmax") / 60.0
+        # max_rpm holds raw RPM, matching its name and the FIZ's own "nmax" units -
+        # TrainElectricSeriesEngine::_do_update_internal_mover does the RPM->rev/s conversion
+        # (p_mover->nmax = max_rpm/60.0, mirroring the original's own LoadFIZ_Engine "nmax /= 60.0",
+        # Mover.cpp:10884). Dividing here too silently double-converted it (3600x too small),
+        # making Mover's own motor-overspeed damage check (Mover.cpp:446, FuzzyLogic(abs(enrot),
+        # nmax*1.11, ...)) fire at a tiny fraction of a km/h instead of near the real max speed -
+        # this is what caused the "wylacznik szybki wybija po paru sekundach" bug.
+        node.max_rpm = FizLineUtil.get_float(kv, "nmax")
 
 
 ## Standard section-parser interface, used for "Circuit:", "RList:" and "MotorParamTable0:"

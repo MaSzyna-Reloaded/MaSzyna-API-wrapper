@@ -16,7 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="uid://1djubq5jy2wx"
+run/main_scene="uid://dacvr0rfpjx5a"
 run/print_header=false
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
@@ -32,6 +32,7 @@ run/disable_stderr.release=true
 MaszynaModelManager="*res://addons/libmaszyna/e3d/e3d_model_manager.gd"
 TrackRenderingServer="*res://addons/libmaszyna/servers/track_rendering_server.gd"
 TractionRenderingServer="*res://addons/libmaszyna/servers/traction_rendering_server.gd"
+TractionPowerServer="*res://addons/libmaszyna/servers/traction_power_server.gd"
 TrackManager="*res://addons/libmaszyna/tracks/track_manager.gd"
 RailVehiclePhysicsServer="*res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
@@ -40,12 +41,14 @@ MaterialManager="*uid://wsbd7kr83ncg"
 MaterialParser="*uid://7b48fl428yqa"
 MaterialFactory="*uid://v144f3irjg7m"
 E3DModelManager="*uid://b2v733o52i40x"
+DynamicRailVehicle3DManager="*res://addons/libmaszyna/dynamic_rail_vehicle_3d_manager.gd"
 E3DNodesInstancer="*uid://dl44jll5gimwi"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
 TrainSoundSystem="*res://addons/libmaszyna/sound/train_sound_system.gd"
 FIZResourceLoaderRegistrar="*uid://c3g4562u11dp2"
 DebugMenu="*uid://cggqb75a8w8r"
+SceneryInstancer="*uid://d33kyubri6utw"
 
 [debug]
 
@@ -62,7 +65,7 @@ text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
+enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/scenery_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
 
 [input]
 
@@ -79,6 +82,16 @@ brake_level_decrease={
 brake_level_drive={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194444,"physical_keycode":0,"key_label":0,"unicode":54,"location":0,"echo":false,"script":null)
+]
+}
+local_brake_increase={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194439,"physical_keycode":0,"key_label":0,"unicode":49,"location":0,"echo":false,"script":null)
+]
+}
+local_brake_decrease={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":4194445,"physical_keycode":0,"key_label":0,"unicode":55,"location":0,"echo":false,"script":null)
 ]
 }
 direction_increase={
@@ -204,6 +217,21 @@ compressor_toggle={
 pantograph_front_toggle={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":80,"physical_keycode":0,"key_label":0,"unicode":112,"location":0,"echo":false,"script":null)
+]
+}
+pantograph_rear_toggle={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":79,"physical_keycode":0,"key_label":0,"unicode":111,"location":0,"echo":false,"script":null)
+]
+}
+fuse_reset={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":78,"physical_keycode":0,"key_label":0,"unicode":110,"location":0,"echo":false,"script":null)
+]
+}
+converter_fuse_reset={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":true,"meta_pressed":false,"pressed":false,"keycode":78,"physical_keycode":0,"key_label":0,"unicode":110,"location":0,"echo":false,"script":null)
 ]
 }
 radio_channel_increase={

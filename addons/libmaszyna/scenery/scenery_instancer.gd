@@ -21,6 +21,14 @@ const CACHE_DIRECTORY:String = "scenery_compiled"
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 
 
+## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
+## E3DModelManager.clear_cache()/MaterialManager.clear_cache() - nothing previously cleared this
+## one, so a stale/corrupt compiled-scenery cache entry (e.g. from a killed process mid-write)
+## had no way to be cleared from the settings UI.
+static func clear_cache() -> void:
+    _cache.clear()
+
+
 ## Parses root.filename and (re-)populates root with everything the scenery declares.
 ##
 ## Tracks and traction are built directly against TrackManager/TrackRenderingServer/

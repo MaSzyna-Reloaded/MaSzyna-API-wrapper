@@ -29,5 +29,9 @@ namespace godot {
                     TrainController::TrainPowerType, heating_power_cable_type,
                     TrainController::TrainPowerType::POWER_TYPE_ELECTRIC);
             MAKE_MEMBER_GS(double, heating_max_voltage, 0.0);
+
+            void heating(bool p_enabled);
+            void _register_commands() override;
+            void _unregister_commands() override;
     };
 } // namespace godot

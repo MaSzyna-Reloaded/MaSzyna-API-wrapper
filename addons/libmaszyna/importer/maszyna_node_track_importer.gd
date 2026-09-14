@@ -1,0 +1,102 @@
+@tool
+extends RefCounted
+
+## String spelling used by the .scn "track" node's environment token, in the same order as
+## Track3D.TrackEnvironment (FLAT, BRIDGE, TUNNEL, MOUNTAINS, CANYON, BANK) - matches the
+## original engine's own environment name list.
+const ENVIRONMENT_NAMES:Array[String] = ["flat", "bridge", "tunnel", "mountains", "canyon", "bank"]
+
+
+## Plain data holder - scenery-loaded tracks are built directly against TrackManager/
+## TrackRenderingServer's RID-based API (see scenery_instancer.gd's _build_track()), not as
+## TrackNormal3D/TrackSwitch3D nodes. A scenery can have thousands of these; a Node per segment
+## (each with its own @tool script and _process()) is real, avoidable overhead that only actually
+## benefits hand-authored scenes edited directly in demo_3d.tscn-style scenes.
+class TrackData extends RefCounted:
+    var type:int # TrackManager.TrackType
+    var track_name:String = ""
+    var curve:MaszynaTrackCurve
+    var diverging_curve:MaszynaTrackCurve
+    var length:float = 0.0
+    var width:float = 1.5
+    var friction:float = 0.0
+    var quality_flag:int = 0
+    var damage_flag:int = 0
+    var environment:int = 0 # Track3D.TrackEnvironment
+    var visible:bool = true
+    var material1:String = ""
+    var material2:String = ""
+    var tex_length:float = 4.0
+    var tex_height:float = 0.0
+    var tex_width:float = 0.0
+    var tex_slope:float = 0.0
+    var railprofile:String = "default"
+    var parameters:Dictionary = {}
+
+
+func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
+    var type_token = p.next_token()
+    if type_token not in ["switch", "normal"]:
+        return null
+
+    var data := TrackData.new()
+    data.type = TrackManager.TrackType.TRACK_SWITCH if type_token == "switch" else TrackManager.TrackType.TRACK_NORMAL
+
+    data.length = float(p.next_token())
+    data.width = float(p.next_token())
+    data.friction = float(p.next_token())
+    var _sound_distance = float(p.next_token())
+    data.quality_flag = int(p.next_token())
+    data.damage_flag = int(p.next_token())
+    data.environment = _parse_environment(p.next_token())
+    data.visible = p.as_bool(p.next_token())
+    if data.visible:
+        data.material1 = p.next_token().to_lower()
+        data.tex_length = float(p.next_token())
+        data.material2 = p.next_token().to_lower()
+        data.tex_height = float(p.next_token())
+        data.tex_width = float(p.next_token())
+        data.tex_slope = float(p.next_token())
+    data.curve = get_curve_from_tokens(p.get_tokens(15))
+
+    var nt = ""
+    if type_token == "switch":
+        data.diverging_curve = get_curve_from_tokens(p.get_tokens(15))
+        nt = p.next_token()
+    else:
+        nt = p.next_token()
+
+    if not nt == "endtrack":
+        var params: Dictionary = {}
+        var key: String = nt
+        while key != "endtrack":
+            var value: String = p.next_token()
+            if value == "endtrack":
+                break
+
+            if key == "railprofile":
+                data.railprofile = value
+            else:
+                params[key] = value
+
+            key = p.next_token()
+        data.parameters = params
+    return data
+
+
+func get_curve_from_tokens(points) -> MaszynaTrackCurve:
+    var c = MaszynaTrackCurve.new()
+    c.p1 = Vector3(float(points[0]), float(points[1]), float(points[2]))
+    c.c1 = Vector3(float(points[4]), float(points[5]), float(points[6]))
+    c.c2 = Vector3(float(points[7]), float(points[8]), float(points[9]))
+    c.p2 = Vector3(float(points[10]), float(points[11]), float(points[12]))
+    c.roll1 = float(points[3])
+    c.roll2 = float(points[13])
+    c.radius = float(points[14])
+
+    return c
+
+
+func _parse_environment(token:String) -> int:
+    var index:int = ENVIRONMENT_NAMES.find(token.to_lower())
+    return index if index >= 0 else 0

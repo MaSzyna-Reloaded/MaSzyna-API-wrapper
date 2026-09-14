@@ -22,6 +22,7 @@ func _enable_plugin():
     add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
     add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
+    add_autoload_singleton("DynamicRailVehicle3DManager", "res://addons/libmaszyna/dynamic_rail_vehicle_3d_manager.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
@@ -72,6 +73,7 @@ func _enable_plugin():
 
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", true)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/scenery_toolbar", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", true)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", true)
@@ -79,6 +81,7 @@ func _enable_plugin():
 func _disable_plugin():
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/e3d_toolbar", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/fiz_toolbar", false)
+    EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/scenery_toolbar", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/tracks", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/nodebank", false)
     EditorInterface.set_plugin_enabled(PLUGIN_NAME + "/editor/user_settings_dock", false)
@@ -95,6 +98,7 @@ func _disable_plugin():
     remove_autoload_singleton("TrackManager")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
+    remove_autoload_singleton("DynamicRailVehicle3DManager")
     remove_autoload_singleton("E3DModelTool")
     remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")

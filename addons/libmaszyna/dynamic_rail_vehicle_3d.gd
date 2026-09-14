@@ -111,11 +111,10 @@ func _process_track_dirty() -> void:
 
 func _rebuild() -> void:
     if _vehicle:
-        remove_child(_vehicle)
-        _vehicle.queue_free()
+        _vehicle.free()
         _vehicle = null
 
-    var vehicle:RailVehicle3D = MaszynaRailVehicle3DInstancer.build(
+    var vehicle:RailVehicle3D = DynamicRailVehicle3DManager.load(
             data_path, file_name, skin, train_id, initial_velocity, head_display_material)
     if not vehicle:
         return

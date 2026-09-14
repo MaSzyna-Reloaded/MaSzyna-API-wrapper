@@ -8,6 +8,7 @@ namespace godot {
     void TrainEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &TrainEngine::main_switch);
         ClassDB::bind_method(D_METHOD("fuse_reset"), &TrainEngine::fuse_reset);
+        ClassDB::bind_method(D_METHOD("motor_connectors_open", "open"), &TrainEngine::motor_connectors_open);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 TrainEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         BIND_PROPERTY(TrainEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
@@ -153,6 +154,10 @@ namespace godot {
         // reset via fuse_reset()/FuseOn() below - not electric-motor specific, so this lives on
         // the shared base rather than TrainElectricEngine.
         p_state["fuse_active"] = p_mover->FuseFlag;
+        // Original engine: "stlinoff_bt:"/ggStLinOffButton (Train.cpp:10054), forces traction
+        // motor power connectors open regardless of Mains/controller state
+        // (connectorsoff/Mm==0.0 checks read StLinSwitchOff directly, Mover.cpp).
+        p_state["motor_connectors_open"] = p_mover->StLinSwitchOff;
 
         if (!previous_main_switch && (static_cast<bool>(p_state["main_switch_enabled"]))) {
             emit_signal("engine_start");
@@ -180,13 +185,23 @@ namespace godot {
         mover->FuseOn();
     }
 
+    void TrainEngine::motor_connectors_open(const bool p_open) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_motorconnectorsopen/close (Train.cpp:3947-4008) - a plain
+        // field flip, no dedicated setter method exists on the vendored Mover for this one.
+        mover->StLinSwitchOff = p_open;
+    }
+
     void TrainEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
         register_command("fuse_reset", Callable(this, "fuse_reset"));
+        register_command("motor_connectors_open", Callable(this, "motor_connectors_open"));
     }
 
     void TrainEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
         unregister_command("fuse_reset", Callable(this, "fuse_reset"));
+        unregister_command("motor_connectors_open", Callable(this, "motor_connectors_open"));
     }
 } // namespace godot

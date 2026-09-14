@@ -313,6 +313,7 @@ namespace godot {
             void brake_level_set_position_str(const String &p_position);
             void brake_level_increase();
             void brake_level_decrease();
+            void alarm_chain(bool p_pulled);
     };
 } // namespace godot
 VARIANT_ENUM_CAST(TrainBrake::CompressorPower)

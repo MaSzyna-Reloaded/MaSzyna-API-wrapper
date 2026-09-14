@@ -148,6 +148,28 @@ namespace godot {
         // matters for a multi-unit consist sharing line voltage across couplers, so it's omitted
         // here rather than guessed at.
         p_state["current_collector/voltage"] = p_mover->PantographVoltage;
+        // Cabin indicator lamp conditions ("i-*:" labels) - each mirrors the original engine's
+        // own Train.cpp condition exactly, not simplified passthroughs of a single flag:
+        // - i-contactors (Train.cpp:7396-7399, btLampkaStyczn)
+        // - i-diff_relay (Train.cpp:7401-7404, btLampkaPrzekRozn)
+        // - i-resistors (Train.cpp:7387-7390, btLampkaOpory)
+        // - i-vent_ovld (Train.cpp:7425, btLampkaNadmWent)
+        // - i-highcurrent (Train.cpp:7428, btLampkaWysRozr)
+        // i-mainbreaker (btLampkaWylSzybki, Train.cpp:7360-7364) drops the
+        // `m_linebreakerstate == 2` half of the original condition - that's TDriver AI state this
+        // wrapper has no equivalent of, so only the Mains half applies (correct for a
+        // player-driven vehicle, which is the only case this wrapper models).
+        // i-comp_ovld (btLampkaNadmSpr) is deliberately NOT exposed: confirmed against Train.cpp
+        // that nothing ever calls .Turn() on it there either - it's a declared but permanently
+        // inert indicator in the original engine too, not a gap on this side.
+        p_state["indicators/contactors_active"] =
+                (p_mover->StLinFlag || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0);
+        p_state["indicators/diff_relay_active"] =
+                (p_mover->GroundRelay || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0);
+        p_state["indicators/resistors_active"] = p_mover->StLinFlag ? p_mover->ResistorsFlagCheck() : false;
+        p_state["indicators/vent_overload_active"] = (p_mover->RventRot < 5.0) && p_mover->ResistorsFlagCheck();
+        p_state["indicators/highcurrent_active"] = !(p_mover->Imax < p_mover->ImaxHi);
+        p_state["indicators/mainbreaker_active"] = p_mover->Mains;
         p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
         if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
             p_state["power_cable/source"] =

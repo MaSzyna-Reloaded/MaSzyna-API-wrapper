@@ -227,6 +227,7 @@ namespace godot {
                 D_METHOD("brake_level_set_position_str", "position"), &TrainBrake::brake_level_set_position_str);
         ClassDB::bind_method(D_METHOD("brake_level_increase"), &TrainBrake::brake_level_increase);
         ClassDB::bind_method(D_METHOD("brake_level_decrease"), &TrainBrake::brake_level_decrease);
+        ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &TrainBrake::alarm_chain);
     }
 
     void TrainBrake::_register_commands() {
@@ -235,6 +236,7 @@ namespace godot {
         register_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         register_command("brake_level_increase", Callable(this, "brake_level_increase"));
         register_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+        register_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
     void TrainBrake::_unregister_commands() {
@@ -243,6 +245,15 @@ namespace godot {
         unregister_command("brake_level_set_position", Callable(this, "brake_level_set_position_str"));
         unregister_command("brake_level_increase", Callable(this, "brake_level_increase"));
         unregister_command("brake_level_decrease", Callable(this, "brake_level_decrease"));
+        unregister_command("alarm_chain", Callable(this, "alarm_chain"));
+    }
+
+    void TrainBrake::alarm_chain(const bool p_pulled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle/enable/disable) ->
+        // AlarmChainSwitch(State) - manual emergency brake pull cord.
+        mover->AlarmChainSwitch(p_pulled);
     }
 
     void TrainBrake::brake_releaser(const bool p_pressed) {
@@ -333,6 +344,9 @@ namespace godot {
             brake_controller_pos_normalized =
                     (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);
         }
+        // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle) - "alarmchain:"/ggAlarmChain
+        // (Train.cpp:10027), manual emergency brake pull cord.
+        p_state["alarm_chain_pulled"] = p_mover->AlarmChainFlag;
         p_state["brake_air_pressure"] = p_mover->BrakePress;
         p_state["brake_loco_pressure"] = p_mover->LocBrakePress;
         p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;

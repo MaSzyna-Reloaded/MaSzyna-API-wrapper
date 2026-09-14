@@ -21,6 +21,7 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
 @export var context_rotate: Vector3 = Vector3.ZERO
 @export var context_origin: Vector3 = Vector3.ZERO
 @export var autoload:bool = true
+@export var use_cache:bool = true
 
 ## Off by default: loaded content gets no owner and stays unselectable in the editor (matches
 ## E3DModelInstance/FIZTrainController's own default). Toggle via the "Edit SCN" editor toolbar

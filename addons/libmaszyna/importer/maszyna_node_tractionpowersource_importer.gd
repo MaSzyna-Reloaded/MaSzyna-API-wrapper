@@ -1,23 +1,11 @@
 @tool
 extends RefCounted
 
+const PowerSourceData = preload("res://addons/libmaszyna/importer/maszyna_power_source_data.gd")
+
 ## Plain data holder - mirrors maszyna_node_traction_importer.gd's TractionData doc comment:
 ## built directly against TractionPowerServer's RID-based API
 ## (scenery_instancer.gd's _build_power_source()) instead of a Node3D.
-class PowerSourceData extends RefCounted:
-    var name:String = ""
-    var position:Vector3 = Vector3.ZERO
-    var nominal_voltage:float = 0.0
-    var voltage_frequency:float = 0.0
-    var internal_resistance:float = 0.0
-    var max_output_current:float = 0.0
-    var fast_fuse_timeout:float = 0.0
-    var fast_fuse_repetition:float = 0.0
-    var slow_fuse_timeout:float = 0.0
-    var is_section:bool = false
-    var recuperation:bool = false
-
-
 func import(p:MaszynaParser, context:MaszynaImporterContext) -> PowerSourceData:
     var data := PowerSourceData.new()
     var position:Vector3 = p.next_vector3()

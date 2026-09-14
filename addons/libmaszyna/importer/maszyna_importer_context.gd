@@ -5,11 +5,13 @@ var _states: Array[Dictionary] = []
 var include_depth: int = 0
 var rotate := Vector3.ZERO
 var origin := Vector3.ZERO
-var tracks: Array = [] # Array[MaszynaNodeTrackImporter.TrackData]
-var traction: Array = []
-var power_sources: Array = []
+var tracks:Array[MaszynaTrackData] = []
+var traction:Array[MaszynaTractionData] = []
+var power_sources:Array[MaszynaPowerSourceData] = []
 var terrains: Array = []
 var triangles: Array = []
+var dependencies:Dictionary = {}
+var cacheable:bool = true
 
 ## Set by "trainset:"/"endtrainset:" (maszyna_trainset_importer.gd/maszyna_endtrainset_importer.gd)
 ## and consumed by maszyna_node_dynamic_importer.gd - mirrors scene::scratch_data::trainset_data
@@ -23,6 +25,37 @@ var trainset_velocity: float = 0.0
 var _rotates = []
 var _origins = []
 var _triangles = []
+var _active_files:Dictionary = {}
+
+
+func register_dependency(path:String, size:int = -1) -> void:
+    var normalized_path:String = path.simplify_path()
+    if not FileAccess.file_exists(normalized_path):
+        cacheable = false
+        return
+    var dependency_size:int = size
+    if dependency_size < 0:
+        var file:FileAccess = FileAccess.open(normalized_path, FileAccess.READ)
+        if not file:
+            cacheable = false
+            return
+        dependency_size = file.get_length()
+    dependencies[normalized_path] = {
+        "modified_time": FileAccess.get_modified_time(normalized_path),
+        "size": dependency_size,
+    }
+
+
+func begin_file(path:String) -> bool:
+    if _active_files.has(path):
+        cacheable = false
+        return false
+    _active_files[path] = true
+    return true
+
+
+func end_file(path:String) -> void:
+    _active_files.erase(path)
 
 func push_rotate(new_rotate: Vector3):
     _rotates.push_front(rotate)

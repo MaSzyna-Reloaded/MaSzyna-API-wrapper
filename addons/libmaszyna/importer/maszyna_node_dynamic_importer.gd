@@ -39,7 +39,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     vehicle.initial_velocity = velocity
 
     if context.trainset_open:
-        var length:float = _read_vehicle_length(data_folder, mmd_file)
+        var length:float = _read_vehicle_length(data_folder, mmd_file, context)
         if length > 0.0:
             context.trainset_offset -= length
 
@@ -68,17 +68,19 @@ func _resolve_data_path(data_folder:String) -> String:
 ## splitting by line: some .fiz files (e.g. 303e-ep-tv.fiz) spell "include" across three separate
 ## lines ("include" / "303e-ep.fiz" / "end"), which a line-oriented reader silently misses
 ## entirely - the token itself doesn't care where the line breaks fall.
-func _read_vehicle_length(data_path:String, file_name:String) -> float:
+func _read_vehicle_length(data_path:String, file_name:String, context:MaszynaImporterContext) -> float:
     var abs_path:String = UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(file_name + ".fiz")
-    return _read_length_from_fiz_file(abs_path, 0)
+    return _read_length_from_fiz_file(abs_path, 0, context)
 
 
-func _read_length_from_fiz_file(abs_path:String, depth:int) -> float:
+func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImporterContext) -> float:
     if depth > MAX_FIZ_INCLUDE_DEPTH:
         return 0.0
     var file := FileAccess.open(abs_path, FileAccess.READ)
     if not file:
+        context.cacheable = false
         return 0.0
+    context.register_dependency(abs_path, file.get_length())
 
     var base_dir:String = abs_path.get_base_dir()
     var parser := MaszynaParser.new()
@@ -92,7 +94,9 @@ func _read_length_from_fiz_file(abs_path:String, depth:int) -> float:
         var lower_token:String = token.to_lower()
         if lower_token == "include":
             var include_filename:String = parser.next_token()
-            var included_length:float = _read_length_from_fiz_file(base_dir.path_join(include_filename), depth + 1)
+            var included_length:float = _read_length_from_fiz_file(
+                base_dir.path_join(include_filename), depth + 1, context
+            )
             if included_length > 0.0:
                 return included_length
         elif lower_token == "dimensions:":

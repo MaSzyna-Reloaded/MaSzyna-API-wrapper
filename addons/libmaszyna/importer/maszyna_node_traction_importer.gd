@@ -9,31 +9,12 @@ const WIRES_INT_TO_ENUM = {
 }
 
 enum TractionMaterial {COPPER, ALUMINIUM}
+const TractionData = preload("res://addons/libmaszyna/importer/maszyna_traction_data.gd")
 
 
 ## Plain data holder - see maszyna_node_track_importer.gd's TrackData for why scenery-loaded
 ## traction is built directly against TractionRenderingServer's RID-based API
 ## (scenery_instancer.gd's _build_traction()) instead of MaszynaTraction3D nodes.
-class TractionData extends RefCounted:
-    var power_supply_name:String = ""
-    var nominal_voltage:float = 0.0
-    var max_current:float = 0.0
-    var resistivity:float = 0.0
-    var material:int = TractionMaterial.COPPER
-    var wire_thickness:float = 0.0
-    var damage_flag:int = 0
-    var contact_p1:Vector3 = Vector3.ZERO
-    var contact_p2:Vector3 = Vector3.ZERO
-    var support_p1:Vector3 = Vector3.ZERO
-    var support_p2:Vector3 = Vector3.ZERO
-    var min_height:float = 0.0
-    var segment_length:float = 0.0
-    var wires:int = TractionRenderingServer.Wires.CONTACT
-    var wire_offset:float = 0.0
-    var visible:bool = true
-    var parallel:String = ""
-
-
 func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TractionData:
     var data := TractionData.new()
     data.power_supply_name = p.next_token()

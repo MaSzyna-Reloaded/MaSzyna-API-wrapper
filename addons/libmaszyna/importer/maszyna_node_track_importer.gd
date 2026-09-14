@@ -5,6 +5,7 @@ extends RefCounted
 ## Track3D.TrackEnvironment (FLAT, BRIDGE, TUNNEL, MOUNTAINS, CANYON, BANK) - matches the
 ## original engine's own environment name list.
 const ENVIRONMENT_NAMES:Array[String] = ["flat", "bridge", "tunnel", "mountains", "canyon", "bank"]
+const TrackData = preload("res://addons/libmaszyna/importer/maszyna_track_data.gd")
 
 
 ## Plain data holder - scenery-loaded tracks are built directly against TrackManager/
@@ -12,28 +13,6 @@ const ENVIRONMENT_NAMES:Array[String] = ["flat", "bridge", "tunnel", "mountains"
 ## TrackNormal3D/TrackSwitch3D nodes. A scenery can have thousands of these; a Node per segment
 ## (each with its own @tool script and _process()) is real, avoidable overhead that only actually
 ## benefits hand-authored scenes edited directly in demo_3d.tscn-style scenes.
-class TrackData extends RefCounted:
-    var type:int # TrackManager.TrackType
-    var track_name:String = ""
-    var curve:MaszynaTrackCurve
-    var diverging_curve:MaszynaTrackCurve
-    var length:float = 0.0
-    var width:float = 1.5
-    var friction:float = 0.0
-    var quality_flag:int = 0
-    var damage_flag:int = 0
-    var environment:int = 0 # Track3D.TrackEnvironment
-    var visible:bool = true
-    var material1:String = ""
-    var material2:String = ""
-    var tex_length:float = 4.0
-    var tex_height:float = 0.0
-    var tex_width:float = 0.0
-    var tex_slope:float = 0.0
-    var railprofile:String = "default"
-    var parameters:Dictionary = {}
-
-
 func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
     var type_token = p.next_token()
     if type_token not in ["switch", "normal"]:

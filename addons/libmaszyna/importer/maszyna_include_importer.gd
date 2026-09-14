@@ -29,6 +29,7 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         context.pop_state()
         return objects
     else:
+        context.cacheable = false
         push_error("Cannot load include file: " + final_path)
         return []
 

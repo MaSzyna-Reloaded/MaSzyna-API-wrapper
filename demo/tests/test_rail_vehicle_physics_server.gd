@@ -268,7 +268,39 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(13.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(3.0, TrackManager.RAIL_HEIGHT, 0.0)
+    )
+
+
+func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
+    _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
+        null,
+        TrackManager.TrackType.TRACK_NORMAL
+    )
+    TrackManager.topology_rebuild()
+    var vehicle_rid: RID = _create_vehicle()
+    var controller: TrainController = _create_controller()
+    _set_controller_velocity(controller, 5.0)
+
+    RailVehiclePhysicsServer.vehicle_set_track(
+        vehicle_rid,
+        created_tracks[0],
+        4.0,
+        TrackManager.Direction.DIRECTION_NORMAL
+    )
+    var forward: Vector3 = -RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
+    RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
+
+    RailVehiclePhysicsServer.process_movement(vehicle_rid, 1.0)
+
+    var moved_by: Vector3 = (
+        RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin
+        - Vector3(4.0, TrackManager.RAIL_HEIGHT, 0.0)
+    )
+    assert_true(
+        moved_by.normalized().distance_to(forward) < 0.01,
+        "positive mover velocity should move the vehicle toward its own front, got %s vs front %s" % [moved_by, forward]
     )
 
 

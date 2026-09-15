@@ -112,5 +112,5 @@ func _process(delta: float) -> void:
             SceneryEditor.update_owners(self)
         
 func _process_dirty(_delta: float) -> void:
-    if autoload or filename.is_empty():
+    if autoload or not filename:
         self.load()

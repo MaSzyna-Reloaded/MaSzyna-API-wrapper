@@ -1,11 +1,20 @@
 extends MaszynaGutTest
 
+const MATERIALS_GAME_DIR = "res://tests/materials"
+
 var instancer: E3DInstancer
+var _previous_game_dir: String = ""
 
 
 func before_each() -> void:
     instancer = load("res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd").new()
     add_child_autoqfree(instancer)
+    _previous_game_dir = UserSettings.get_maszyna_game_dir()
+    UserSettings.save_maszyna_game_dir(MATERIALS_GAME_DIR)
+
+
+func after_each() -> void:
+    UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
 func test_model_instance_synchronizes_lights_state_with_model() -> void:
@@ -58,6 +67,32 @@ func test_nodes_instancer_maps_light_on_prefix_family() -> void:
     assert_true(light_on_node.visible, "On node should become visible when light is enabled")
     assert_false(light_off_node.visible, "Off node should become hidden when light is enabled")
     assert_true(spotlight_node.visible, "Spotlight should become visible when light is enabled")
+
+
+## Regression: e3d_instancer.gd's _get_material_override() never populated
+## MaterialOptions.diffuse_color from the real parsed submodel (left as a TODO, silently leaving
+## every textured/named-material submodel's albedo at the shader's default white) - unlike
+## test_material_manager_variants.gd's MaterialFactory-level coverage, which only ever built
+## MaterialOptions by hand and so never exercised this real instancing call path, this test goes
+## through the actual E3DInstancer entry point a real model load uses. Confirmed real: EP07's
+## "wylszybki_on"/"_off" main-breaker indicator lamp submodels, diffuse (0, 0.749, 0) over a
+## textured material, rendered white in-game despite the model file's own diffuse being green.
+func test_get_material_override_uses_real_submodel_diffuse_color() -> void:
+    var target_node: E3DModelInstance = load("res://addons/libmaszyna/e3d/e3d_model_instance.gd").new()
+    add_child_autoqfree(target_node)
+    target_node.data_path = "test"
+
+    var submodel: E3DSubModel = E3DSubModel.new()
+    submodel.resource_name = "wylszybki_on"
+    submodel.submodel_type = E3DSubModel.SUBMODEL_GL_TRIANGLES
+    submodel.material_name = "nontransparent_manager"
+    submodel.diffuse_color = Color(0.0, 0.749, 0.0, 1.0)
+
+    var material: ShaderMaterial = instancer._get_material_override(target_node, submodel) as ShaderMaterial
+
+    assert_not_null(material, "a submodel with material_name should get a material override")
+    if material:
+        assert_eq(material.get_shader_parameter("albedo"), submodel.diffuse_color)
 
 
 func _create_model_with_lights(light_names: Array[String]) -> E3DModel:

@@ -2,7 +2,7 @@ extends Cabin3D
 class_name DynamicTrainCabin
 
 ## MMD-driven cabin builder, analogous to E3DModelInstance/FIZTrainController: given
-## data_path/mmd_filename/skin it parses the vehicle's MMD file, resolves cab1/cab2 from the
+## data_path/mmd_filename/skin it parses the vehicle's MMD file, resolves cab0/cab1/cab2 from the
 ## controller's cabin_occupied state, and builds a real, interactive cabin (Etap A+B scope -
 ## see mmd_cabin_instancer.gd) instead of requiring a hand-authored cabin_scene.
 ##
@@ -38,17 +38,17 @@ func set_train_controller(controller:TrainController) -> void:
     if _controller == controller:
         return
     if _controller:
-        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
+        _controller.cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     _controller = controller
     super.set_train_controller(controller)
     if _controller:
-        _controller.mover_config_changed.connect(_on_mover_config_changed)
+        _controller.cabin_occupied_changed.connect(_on_cabin_occupied_changed)
     _rebuild_generated()
 
 
 func _exit_tree() -> void:
     if _controller:
-        _controller.mover_config_changed.disconnect(_on_mover_config_changed)
+        _controller.cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     _controller = null
     _shake_controller = null
 
@@ -61,9 +61,8 @@ func reload() -> void:
     _rebuild_generated()
 
 
-## Only the cab1<->cab2 sign flip triggers a rebuild - any other mover config change is not
-## this class's concern.
-func _on_mover_config_changed() -> void:
+## Rebuilds when the crew moves to another cab (cab0 = machine room, cab1, cab2).
+func _on_cabin_occupied_changed(_cabin_occupied:int) -> void:
     if not _select_cab_number() == _last_cab_number:
         _rebuild_generated()
 
@@ -71,8 +70,9 @@ func _on_mover_config_changed() -> void:
 func _select_cab_number() -> int:
     if not _controller:
         return 1
+    # Train.cpp:8684 (InitializeCab) - CabOccupied -1 loads cab2definition:, 0 cab0, 1 cab1.
     var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
-    return 2 if cabin_occupied < 0 else 1
+    return 2 if cabin_occupied < 0 else cabin_occupied
 
 
 func _rebuild_generated() -> void:
@@ -85,15 +85,8 @@ func _rebuild_generated() -> void:
     if not mmd_filename or not _controller:
         return
 
-    var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
     _last_cab_number = _select_cab_number()
-    cab_number = 1 if _last_cab_number == 1 else -1
-    if cabin_occupied == 0:
-        _diagnostics.append({
-            "severity": "info", "code": "MMD_CABIN_OCCUPIED_UNKNOWN", "source_file": "", "line": 0,
-            "cabin_number": _last_cab_number, "mmd_label": "", "submodel_name": "",
-            "message": "cabin_occupied is 0 at build time - defaulting to cab1",
-        })
+    cab_number = -1 if _last_cab_number == 2 else _last_cab_number
 
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(mmd_filename + ".mmd"))
@@ -103,6 +96,7 @@ func _rebuild_generated() -> void:
     camera_bound_min = definition.bounds_min
     camera_bound_max = definition.bounds_max
     camera_bound_enabled = true
+    has_cab_model = true if definition.model_relpath else false
     driver_position = definition.driver_pos
     shake_spring_stiffness = definition.shake_spring_stiffness
     shake_spring_damping = definition.shake_spring_damping

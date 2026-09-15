@@ -63,7 +63,7 @@ func instantiate(target_node: E3DModelInstance, model: E3DModel, editable: bool 
     var _light_on_nodes: Dictionary = {}
     for light_name: String in _instance_lights.keys():
         var resolved_light_info: LightNodeInfo = _instance_lights[light_name]
-        if not resolved_light_info.light_on_node_path.is_empty():
+        if resolved_light_info.light_on_node_path:
             _light_on_nodes[resolved_light_info.light_on_node_path] = resolved_light_info
 
     # assign instance lights to the global registry

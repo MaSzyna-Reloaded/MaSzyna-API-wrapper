@@ -152,7 +152,8 @@ func _parse_vector4(value: Array) -> Vector4:
     return Vector4.ZERO
 
 func _clean_texture_path(path:String) -> String:
-    return path.split(":")[0]
+    # utilities.cpp:537 (deserialize_random_set) - the original swaps "\\" for "/" in texture paths.
+    return path.split(":")[0].replace("\\", "/")
 
 func _texture_requires_transparency(path:String) -> bool:
     var _parts:PackedStringArray = path.split(":")

@@ -113,7 +113,9 @@ func process_movement(vehicle_rid: RID, delta: float) -> void:
     var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
     if not controller:
         return
-    vehicle_move(vehicle_rid, controller.process_movement(delta))
+    # TrainController.process_movement() is front-relative (mirrors mover->V);
+    # this server's track-offset math is rear-relative - negate at the boundary.
+    vehicle_move(vehicle_rid, -controller.process_movement(delta))
 
 
 func vehicle_move(vehicle_rid: RID, distance: float) -> void:

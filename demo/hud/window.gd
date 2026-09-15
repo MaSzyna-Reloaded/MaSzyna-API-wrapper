@@ -112,7 +112,7 @@ func _draw() -> void:
             CLOSE_BUTTON_STROKE
         )
 
-    if title.is_empty():
+    if not title:
         return
 
     var font: Font = get_theme_default_font()

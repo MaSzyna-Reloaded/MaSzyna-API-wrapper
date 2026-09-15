@@ -60,8 +60,9 @@ func _get_material_override(target_node: E3DModelInstance, submodel: E3DSubModel
     var unprefixed_model_path: String = "/".join(target_node.data_path.split("/").slice(1))
     var options = MaterialManager.MaterialOptions.new()
 
-    # TODO: handle more material options here (selfillum, diffuse_color, etc)
+    # TODO: handle more material options here (selfillum, etc)
     options.force_transparent = force_alpha
+    options.diffuse_color = submodel.diffuse_color
     options.selfillum_color = (
         submodel.self_illumination
         if submodel.self_illumination and not submodel.self_illumination == Color.BLACK

@@ -12,7 +12,7 @@ var _preview_material: StandardMaterial3D
 
 func get_preview(item_data: NodebankGridItem) -> Texture2D:
     var source_path: String = _get_source_path(item_data)
-    if source_path.is_empty() or not FileAccess.file_exists(source_path):
+    if not source_path or not FileAccess.file_exists(source_path):
         return null
 
     var cache_path: String = _make_cache_path(item_data)

@@ -5,6 +5,7 @@
 #include "controllers/TrainUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericTrainPart.hpp"
+#include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
@@ -96,6 +97,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TrainElectricSeriesEngine);
         GDREGISTER_CLASS(TrainElectricInductionEngine);
         GDREGISTER_CLASS(TrainController);
+        GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_CLASS(TrainHeating);
         GDREGISTER_CLASS(TrainWheels);
         GDREGISTER_CLASS(TrainSecuritySystem);

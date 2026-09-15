@@ -92,6 +92,13 @@ in any layer before.
    `BrakeLevelSet_Drive` there for the exact pattern:
    `action_name`/`command`/`command_param`/`controller_path`).
 
+**Sending commands:** code outside the train composition (player, UI, console) sends
+commands through the high-level API, `TrainSystem.send_command(train_id, command, p1, p2)`,
+using the train id it already tracks (e.g. `MaszynaPlayer.last_controlled_train_id`) - never
+`vehicle.get_controller().send_command(...)`. Direct `TrainController` access is fine only
+where the composition already holds that controller (e.g. `TrainPart`s, cabin nodes bound via
+`controller_path`).
+
 ## Verifying
 
 Rebuild (`make compile-debug`) after any C++ change, then run the full GUT suite

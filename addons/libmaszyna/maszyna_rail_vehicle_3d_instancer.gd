@@ -23,13 +23,26 @@ const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
 const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
 const MAX_WHEEL_AXLES:int = 20
 
+## Fixed original-engine submodel naming convention for pantograph arms
+## (DynObj.cpp's animpantrd1prefix:/rd2/rg1/rg2/sl tokens - configurable in
+## principle, but confirmed identical across every real vehicle checked,
+## e.g. dynamic/pkp/303e_v1/303e-ep-tv.mmd, dynamic/pkp/ep09_v1/104e_1.mmd,
+## dynamic/pkp/sr61_v2/sr61v1.mmd - same simplification already made above
+## for WHEEL_SUBMODEL_PREFIX). Order matches RailVehicle3D's own
+## pantograph_*_arm_paths index meaning (lower arm pair, upper arm pair,
+## slider); the trailing pantograph number (1=front, 2=rear) is appended by
+## _find_pantograph_arm_paths() below.
+const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
+    "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
+]
+
 
 ## Builds a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
 ## DynamicRailVehicle3D). Returns null if data_path/file_name are missing.
 static func build(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material) -> RailVehicle3D:
-    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity)
+        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
+    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity, cabin_number)
     if vehicle:
         _initialize_instance(vehicle, file_name, head_display_material)
     return vehicle
@@ -38,7 +51,7 @@ static func build(
 ## Only declarative nodes belong in a PackedScene template; runtime sound pools and bindings do not.
 static func _build_structure(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float) -> RailVehicle3D:
+        initial_velocity:float, cabin_number:int = 0) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -66,6 +79,13 @@ static func _build_structure(
     model.data_path = normalized_data_path
     model.model_filename = body_model_filename
     model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
+    # Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab)
+    # lives in one vehicle-local frame where +Z is the direction of travel: the original draws
+    # all of them under the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp,
+    # vFront) (DynObj.cpp:2506-2508; opengl33renderer.cpp:1174, 2856, 2976). RailVehicle3D uses
+    # Godot's -Z forward, so each of them gets the same 180 degree yaw - the cab via
+    # cabin_rotate_180deg below.
+    model.rotation.y = PI
 
     # Optional: the lower-detail interior seen from outside (through windows) before the player
     # enters the cabin. Most MMD files don't declare one - only build it if present.
@@ -78,6 +98,7 @@ static func _build_structure(
         low_poly_model.data_path = normalized_data_path
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
+        low_poly_model.rotation.y = PI
 
     var passengers_model:E3DModelInstance = null
     var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
@@ -87,6 +108,7 @@ static func _build_structure(
         passengers_model.name = "Passengers"
         passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
+        passengers_model.rotation.y = PI
 
     var fiz_controller := FIZTrainController.new()
     fiz_controller.name = "FIZTrainController"
@@ -94,6 +116,7 @@ static func _build_structure(
     fiz_controller.fiz_filename = file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
+    fiz_controller.cabin_number = cabin_number
 
     var vehicle := RailVehicle3D.new()
     vehicle.name = "RailVehicle3D"
@@ -112,6 +135,8 @@ static func _build_structure(
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
+    vehicle.cabin_rotate_180deg = true
+    vehicle.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
     return vehicle
 
 
@@ -189,8 +214,31 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
         var wheel:Node3D = _find_submodel(submodel_index, ["%s%d" % [WHEEL_SUBMODEL_PREFIX, axle_index]])
         if wheel:
             powered_wheel_paths.append(vehicle.get_path_to(wheel))
-    if not powered_wheel_paths.is_empty():
+    if powered_wheel_paths:
         vehicle.powered_wheel_paths = powered_wheel_paths
+
+    var front_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 1)
+    if front_arm_paths:
+        vehicle.pantograph_front_arm_paths = front_arm_paths
+    var rear_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 2)
+    if rear_arm_paths:
+        vehicle.pantograph_rear_arm_paths = rear_arm_paths
+
+
+## Returns all 5 arm/slider paths for the given pantograph number (1=front,
+## 2=rear), or [] if any single one is missing - RailVehicle3D only enables
+## the raise simulation for an end with all 5 configured, so a partial match
+## is treated the same as none (matches _resolve_animation_paths()'s
+## "front and rear bogie must be set together" precedent above, per-end here).
+static func _find_pantograph_arm_paths(
+        vehicle:RailVehicle3D, submodel_index:Dictionary, pantograph_number:int) -> Array[NodePath]:
+    var paths:Array[NodePath] = []
+    for prefix:String in PANTOGRAPH_ARM_SUBMODEL_PREFIXES:
+        var node:Node3D = _find_submodel(submodel_index, ["%s%d" % [prefix, pantograph_number]])
+        if not node:
+            return []
+        paths.append(vehicle.get_path_to(node))
+    return paths
 
 
 static func _find_submodel(submodel_index:Dictionary, names:Array[String]) -> Node3D:

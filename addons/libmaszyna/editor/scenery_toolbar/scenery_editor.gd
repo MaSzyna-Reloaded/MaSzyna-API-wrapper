@@ -15,7 +15,7 @@ static func update_owners(root:Node3D) -> void:
     # notices root's children gained or lost an owner and keeps showing root
     # as childless. Reparenting one child in place (a real
     # add_child()/remove_child() pair) is enough to trigger a full dock resync.
-    if Engine.is_editor_hint() and not children.is_empty() and root.is_inside_tree():
+    if Engine.is_editor_hint() and children and root.is_inside_tree():
         var nudge:Node = children[0]
         var idx:int = nudge.get_index()
         root.remove_child(nudge)

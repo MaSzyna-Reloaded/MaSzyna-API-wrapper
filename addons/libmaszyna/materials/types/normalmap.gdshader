@@ -59,7 +59,7 @@ void fragment() {
 	NORMAL_MAP_DEPTH = normal_scale;
 
     if(emission_enabled) {
-        EMISSION = emission_color.rgb * albedo_tex.rgb * emission_energy;
+        EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;
     }
 
 

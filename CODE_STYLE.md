@@ -33,6 +33,8 @@ func _process(delta):
 3. Do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 4. Do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
 5. In `if` conditions, do not use `!=`; use `not ... == ...`
+6. Send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API. Access a
+   `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
 ### Classes
 1. Explicit privacy declarations
 ```hpp

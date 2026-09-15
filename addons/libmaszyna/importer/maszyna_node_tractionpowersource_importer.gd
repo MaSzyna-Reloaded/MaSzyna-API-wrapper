@@ -25,6 +25,6 @@ func import(p:MaszynaParser, context:MaszynaImporterContext) -> PowerSourceData:
         data.recuperation = true
     elif token == "section":
         data.is_section = true
-    while not token.is_empty() and not token == "end":
+    while token and not token == "end":
         token = p.next_token()
     return data

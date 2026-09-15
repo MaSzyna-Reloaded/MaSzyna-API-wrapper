@@ -15,7 +15,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 4
+const CACHE_FORMAT_VERSION:int = 6
 const CACHE_DIRECTORY:String = "scenery_compiled"
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)

@@ -55,6 +55,8 @@ func test_build_creates_independent_exterior_and_cabin_banks() -> void:
     var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
     assert_not_null(exterior)
     assert_not_null(cabin)
+    assert_eq(exterior.max_tracks, 16)
+    assert_eq(cabin.max_tracks, 16)
     assert_ne(exterior.bank, cabin.bank)
     assert_not_null(exterior.bank.get_event(&"engine"))
     assert_null(exterior.bank.get_event(&"buzzer"))

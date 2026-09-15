@@ -9,14 +9,20 @@
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
 script = ExtResource("1_env")
-current_time = 10.0
-tonemap_agx_contrast = 1.0
+current_time = 6.22
+month = 10
+cloudiness = 0.51
+day_light_shadow_max_distance = 1000.0
+tonemap_agx_contrast = 1.1
+fog_density = 0.398
+fog_range_start = 28.0
+fog_range_end = 431.0
 
 [node name="Player" parent="." unique_id=88536137 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
 
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
-filename = "td.scn"
+filename = "stary_jawor_eszelon.scn"
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]

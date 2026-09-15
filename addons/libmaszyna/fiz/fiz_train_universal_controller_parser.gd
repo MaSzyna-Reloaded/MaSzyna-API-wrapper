@@ -54,6 +54,6 @@ func end_table(context: FizImportContext) -> void:
     if node == null:
         _rows = []
         return
-    if not _rows.is_empty():
+    if _rows:
         (node as TrainUniversalController).positions = _rows
     _rows = []

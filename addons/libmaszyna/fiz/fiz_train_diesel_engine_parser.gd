@@ -107,16 +107,16 @@ func end_table(context: FizImportContext) -> void:
     if node:
         match _active_table:
             "DList":
-                if not _throttle_rows.is_empty():
+                if _throttle_rows:
                     node.throttle_table_positions = _throttle_rows
             "DMList":
-                if not _torque_rows.is_empty():
+                if _torque_rows:
                     node.torque_table = _torque_rows
             "HTCList":
-                if not _tc_rows.is_empty():
+                if _tc_rows:
                     node.torque_converter_table = _tc_rows
             "V2NList":
-                if not _v2n_rows.is_empty():
+                if _v2n_rows:
                     node.vel2nmax_table = _v2n_rows
     _throttle_rows = []
     _torque_rows = []

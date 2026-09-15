@@ -72,7 +72,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     # DoorVoltage's absent-key default depends on whether doors are remote-controlled, which
     # differs from the compiled default (0/unset) for driver/conductor/mixed doors.
     var voltage_str: String = FizLineUtil.get_string(kv, "DoorVoltage")
-    if voltage_str.is_empty():
+    if not voltage_str:
         var remote: bool = open_method in [TrainDoors.CONTROLS_DRIVER, TrainDoors.CONTROLS_CONDUCTOR, TrainDoors.CONTROLS_MIXED]
         if remote:
             node.voltage = TrainDoors.VOLTAGE_24
@@ -87,11 +87,11 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     if kv.has("DoorNeedPermit"):
         node.permit_required = FizLineUtil.get_bool(kv, "DoorNeedPermit")
     var permit_list_str: String = FizLineUtil.get_string(kv, "DoorPermitList")
-    if not permit_list_str.is_empty():
+    if permit_list_str:
         var permit_list: Array = []
         for part: String in permit_list_str.split("|", false):
             permit_list.append(part.to_int())
-        if not permit_list.is_empty():
+        if permit_list:
             node.permit_list = permit_list
             node.permit_default = FizLineUtil.get_int(kv, "DoorPermitListDefault", 1)
     if kv.has("DoorsPermitLightBlinking"):

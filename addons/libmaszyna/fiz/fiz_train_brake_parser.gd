@@ -69,7 +69,7 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         node.air_leak_multiplier = FizLineUtil.get_float(kv, "AirLeakRate") * 0.01
 
     var method_str: String = FizLineUtil.get_string(kv, "BM").to_lower()
-    if not method_str.is_empty():
+    if method_str:
         if _METHOD_MAP.has(method_str):
             node.brake_method = _METHOD_MAP[method_str]
         else:
@@ -170,7 +170,7 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         node.rapid_switching_speed = FizLineUtil.get_float(kv, "RV")
 
     var valve_str: String = FizLineUtil.get_string(kv, "BrakeValve").to_lower()
-    if not valve_str.is_empty():
+    if valve_str:
         if _VALVE_MAP.has(valve_str):
             node.valve_type = _VALVE_MAP[valve_str]
         elif valve_str.find("est") != -1:
@@ -302,10 +302,10 @@ func end_table(context: FizImportContext) -> void:
     var node: TrainBrake = context.get_part("TrainBrake")
     if node == null:
         return
-    if not _bpt_rows.is_empty():
+    if _bpt_rows:
         node.brake_pressure_table = _bpt_rows
         _bpt_rows = []
-    if not _compressor_rows.is_empty():
+    if _compressor_rows:
         node.compressor_list = _compressor_rows
         _compressor_rows = []
     _active_table = ""

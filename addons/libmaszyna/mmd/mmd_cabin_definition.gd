@@ -5,7 +5,7 @@ class_name MmdCabinDefinition
 ## Produced by MmdCabinInstancer.parse() and consumed by MmdCabinInstancer.build_into() - this
 ## class knows nothing about Cabin3D, E3DModelInstance, or TrainController.
 
-## 1 or -1, matching TrainController.state["cabin_occupied"] (cab1/cab2).
+## MMD cab section number: 0 (machine room), 1 or 2.
 var cab_number:int = 1
 
 ## Raw MMD camera bounds - RailVehicle3D.enter_cabin() adds the +0.5/+1.8 Y offset itself,

@@ -35,6 +35,13 @@ var DEFAULT_SHADER:MaszynaShaderMeta = MaszynaShaderMeta.new(
 )
 
 var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
+    # mat_default.frag - the plain textured material, same as no "shader:" at all.
+    "default": DEFAULT_SHADER,
+    "detail_normalmap": MaszynaShaderMeta.new(
+        _apply_detail_normalmap,
+        preload("./types/detail_normalmap.tres"),
+        TextureMap.new("diffuse", "normalmap", "detailnormalmap"),
+    ),
     "shadowlessnormalmap": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/shadowlessnormalmap.tres"),
@@ -193,6 +200,13 @@ func _apply_default_material(
     var diffuse_texture: String = variant.get_texture_path(texture_map.albedo)
     var normalmap_texture: String = variant.get_texture_path(texture_map.normalmap)
 
+    # albedo defaults to this submodel's own parsed E3D diffuse color (e.g. a lamp lens'
+    # green/yellow tint over a neutral texture) - a .mat variant's own "diffuse:" override, when
+    # present, takes precedence, matching the untextured branch below. Previously this was only
+    # ever set for untextured submodels, leaving every textured one (including colored indicator
+    # lamps like EP07's wylszybki_on/off, confirmed real: diffuse (0, 0.749, 0) over texture
+    # "kran_zasadniczy") stuck at the shader's default white regardless of the model's own color.
+    material.set_shader_parameter("albedo", options.diffuse_color)
     if diffuse_texture:
         var albedo_texture: Texture = MaterialManager.load_texture(model_path, diffuse_texture)
         if albedo_texture is Texture2D and _texture_has_alpha(albedo_texture):
@@ -205,8 +219,6 @@ func _apply_default_material(
                 variant.get_parameter("diffuse"),
                 1.0
             ))
-    else:
-        material.set_shader_parameter("albedo", options.diffuse_color)
 
     if normalmap_texture:
         material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true))
@@ -223,6 +235,25 @@ func _apply_default_material(
     material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
     material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     material.set_shader_parameter("emission_energy", options.selfillum_energy)
+
+## mat_detail_normalmap.frag: the default material plus a tiled detail normal map
+## (texture_detailnormalmap, param_detail_scale, param_detail_height_scale - both default to 1.0).
+func _apply_detail_normalmap(
+    mmat: MaszynaMaterial,
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    material: ShaderMaterial,
+    texture_map: TextureMap,
+    model_path: String,
+    options: MaterialManager.MaterialOptions,
+) -> void:
+    _apply_default_material(mmat, variant, material, texture_map, model_path, options)
+    var detail_normalmap_texture: String = variant.get_texture_path(texture_map.detail_normalmap)
+    if detail_normalmap_texture:
+        material.set_shader_parameter(
+            "texture_detail_normal", MaterialManager.load_texture(model_path, detail_normalmap_texture, true))
+    material.set_shader_parameter("detail_scale", variant.get_parameter("detail_scale", 1.0))
+    material.set_shader_parameter("detail_height_scale", variant.get_parameter("detail_height_scale", 1.0))
+
 
 func _apply_parallax(
     mmat: MaszynaMaterial,

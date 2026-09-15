@@ -387,6 +387,10 @@ namespace godot {
         p_state["brake_loco_pressure"] = p_mover->LocBrakePress;
         p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;
         p_state["pipe_pressure"] = p_mover->PipePress;
+        // "przewod zasilajacy" (feed pipe) - shared with the pantograph reservoir by default
+        // (bPantKurek3=true, see TrainElectricEngine.cpp's pantograph_tank_pressure comment) and
+        // with the local/independent brake valve's own flow (Hamulec->GetHPFlow, Mover.cpp:4755).
+        p_state["feed_pipe_pressure"] = p_mover->ScndPipePress;
         p_state["brake_tank_volume"] = p_mover->Volume;
         // Original engine: "compressor:"/"compressorb:" (Train.cpp:10407-10412), a gauge bound
         // straight to mvOccupied->Compressor - "cisnienie w ukladzie zasilajacym" (MOVER.h:1455),

@@ -33,7 +33,14 @@ func apply_engine_fields(kv: Dictionary, node: TrainElectricSeriesEngine) -> voi
         # floors to 0.01 when the key resolves to 0, matching the original's division-by-zero guard.
         node.winding_resistance = maxf(FizLineUtil.get_float(kv, "WindingRes"), 0.01)
     if kv.has("nmax"):
-        node.max_rpm = FizLineUtil.get_float(kv, "nmax") / 60.0
+        # max_rpm holds raw RPM, matching its name and the FIZ's own "nmax" units -
+        # TrainElectricSeriesEngine::_do_update_internal_mover does the RPM->rev/s conversion
+        # (p_mover->nmax = max_rpm/60.0, mirroring the original's own LoadFIZ_Engine "nmax /= 60.0",
+        # Mover.cpp:10884). Dividing here too silently double-converted it (3600x too small),
+        # making Mover's own motor-overspeed damage check (Mover.cpp:446, FuzzyLogic(abs(enrot),
+        # nmax*1.11, ...)) fire at a tiny fraction of a km/h instead of near the real max speed -
+        # this is what caused the "wylacznik szybki wybija po paru sekundach" bug.
+        node.max_rpm = FizLineUtil.get_float(kv, "nmax")
 
 
 ## Standard section-parser interface, used for "Circuit:", "RList:" and "MotorParamTable0:"

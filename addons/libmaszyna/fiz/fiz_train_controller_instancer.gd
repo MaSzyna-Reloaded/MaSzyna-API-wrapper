@@ -14,6 +14,15 @@ class_name FizTrainControllerInstancer
 const _INCLUDE_KEYWORD := "include"
 const _INCLUDE_END_KEYWORD := "end"
 
+## Bump whenever a fiz_train_*_parser.gd file's parsing/field-mapping LOGIC changes (not just
+## FIZ data) - mirrors E3DModel.FORMAT_VERSION (addons/libmaszyna/e3d/e3d_model_manager.gd), the
+## same on-disk-cache-invalidation pattern for the same reason: _make_cache_hash() below is keyed
+## on the source .fiz file's own mtime, so a parser bugfix with no change to the .fiz data itself
+## is otherwise silently served from a stale pre-fix cache entry until something touches that
+## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
+## had zero effect in a running game because of exactly this.
+const FIZ_PARSER_FORMAT_VERSION := 1
+
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
 ## `parse(p: MaszynaParser, context, prefix)` and, for table sections, `parse_row(p, context)` +
@@ -164,7 +173,9 @@ static func _make_cache_path(fiz_path: String) -> String:
     return relative_path + ".res"
 
 static func _make_cache_hash(fiz_path: String) -> String:
-    return ("%s:%s" % [FileAccess.get_modified_time(fiz_path), fiz_path]).md5_text()
+    return ("%s:%s:%s" % [
+        FileAccess.get_modified_time(fiz_path), FIZ_PARSER_FORMAT_VERSION, fiz_path
+    ]).md5_text()
 
 ## Builds a new, unparented TrainController + children from a FIZ file. A scenery routinely
 ## repeats the same wagon/locomotive .fiz across many consist entries, so this turns an

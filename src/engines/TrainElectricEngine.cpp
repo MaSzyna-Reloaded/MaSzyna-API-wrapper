@@ -129,6 +129,15 @@ namespace godot {
                 p_mover->EnginePowerSource.CollectorParameters.MinPress;
         p_state["current_collector/max_pantograph_tank_pressure"] =
                 p_mover->EnginePowerSource.CollectorParameters.MaxPress;
+        // Diagnostic exposure for the pantograph pressure switch (Mover.cpp ~851-913): PantPress
+        // is the pantograph's own reservoir pressure (fed straight from ScndPipePress by default,
+        // MOVER.h's bPantKurek3=true), and drives an interlock that force-opens Mains for
+        // non-EZT vehicles once armed (PantPress reached >=4.6 with 24V/110V control power up)
+        // and PantPress then drops below MinPress - a one-shot latch, not a continuous relay like
+        // NoVoltRelay/OvervoltageRelay above, so it needs its own state to diagnose separately
+        // from those.
+        p_state["current_collector/pantograph_tank_pressure"] = p_mover->PantPress;
+        p_state["current_collector/pantograph_pressure_switch_armed"] = p_mover->PantPressSwitchActive;
         p_state["current_collector/overvoltage_relay"] =
                 p_mover->EnginePowerSource.CollectorParameters.OVP;
         p_state["current_collector/required_main_switch_voltage"] =

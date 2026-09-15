@@ -155,6 +155,11 @@ namespace godot {
         p_state["engine_rpm_count"] = p_mover->enrot;
         p_state["engine_rpm_ratio"] = p_mover->EngineRPMRatio();
         p_state["engine_current"] = p_mover->Im;
+        // Diagnostic: the live motor overload relay threshold (Mover.cpp ~1586-1596, toggled
+        // between ImaxLo/ImaxHi every tick) - not itself in the FIZ, but everything it's derived
+        // from is, so a wrong value here points at a missing/miswired Circuit: field.
+        p_state["circuit_imax"] = p_mover->Imax;
+        p_state["circuit_nmax_rpm"] = p_mover->nmax * 60.0;
         p_state["engine_damage"] = p_mover->EngDmgFlag;
         p_state["main_switch_time"] = p_mover->MainsInitTimeCountdown;
         p_state["main_no_power_pos"] = p_mover->IsMainCtrlNoPowerPos();

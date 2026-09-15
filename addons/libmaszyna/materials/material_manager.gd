@@ -3,9 +3,11 @@ extends Node
 
 static var UNKNOWN_MATERIAL = preload("res://addons/libmaszyna/materials/unknown.material")
 static var UNKNOWN_TEXTURE = preload("res://addons/libmaszyna/materials/missing_texture.png")
+const DDSTextureLoader = preload("res://addons/libmaszyna/materials/dds_texture_loader.gd")
 
 var _materials_cache = ResourceCache.create("materials")
 var _managed_materials: Dictionary = {}
+var _dds_cache: Dictionary = {}
 
 enum Transparency { Disabled, Alpha, AlphaScissor }
 
@@ -35,6 +37,7 @@ class MaterialOptions:
 
 func clear_cache() -> void:
     _materials_cache.clear()
+    _dds_cache.clear()
     _refresh_managed_materials()
 
 func load_material(model_path:String, material_name:String) -> MaszynaMaterial:
@@ -102,12 +105,29 @@ func load_texture(model_path:String, material_name:String, normal:bool = false) 
     if not final_path:
         return UNKNOWN_TEXTURE
 
-    if FileAccess.file_exists(project_data_dir.path_join(final_path)):
-        var texture:Texture2D = load(project_data_dir.path_join(final_path)) as Texture2D
-        if texture:
-            return texture
-        return UNKNOWN_TEXTURE
+    var full_path:String = project_data_dir.path_join(final_path)
+    var max_size:int = int(ProjectSettings.get_setting("maszyna/dds_maxtexturesize", 1024))
+    var texture:Texture2D = _load_dds_clamped(full_path, max_size)
+    if not texture:
+        texture = load(full_path) as Texture2D
+    if texture:
+        return texture
     return UNKNOWN_TEXTURE
+
+
+## Loads a .dds with its top mipmap levels discarded down to max_size - port of the original
+## engine's iMaxTextureSize/maxtexturesize clamp (Texture.cpp), which this wrapper had no
+## equivalent of. Cached by path+max_size since this bypasses Godot's own load() resource
+## cache, and the same texture file is commonly referenced by several distinct materials
+## (e.g. a shared normal map across dynamic skin slots).
+func _load_dds_clamped(full_path:String, max_size:int) -> Texture2D:
+    var cache_key:String = "%s:%d" % [full_path, max_size]
+    if _dds_cache.has(cache_key):
+        return _dds_cache[cache_key]
+    var texture:Texture2D = DDSTextureLoader.load_texture(full_path, max_size)
+    if texture:
+        _dds_cache[cache_key] = texture
+    return texture
 
 
 func _compute_cache_hash(

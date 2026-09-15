@@ -15,33 +15,47 @@ const MAX_FIZ_INCLUDE_DEPTH:int = 4
 ## NEXT vehicle in the consist - read directly and synchronously here (not via
 ## FIZTrainController's own async pipeline, which only finishes loading after scene
 ## construction, too late to affect this vehicle's own placement).
+##
+## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle
+## reversed in the consist" - confirmed against simulationstateserializer.cpp:983
+## (`vehicle->Init(..., ( offset == -1.0 ), params)`) and DynObj.cpp:1807
+## (`iDirection = (Reversed ? 0 : 1)`). Previously only used here for the offset-math branch,
+## never for direction - a real vehicle placed with offset: -1.0 (e.g. a reversed EZT member)
+## silently always imported as DIRECTION_NORMAL.
 func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehicle3D:
     var data_folder:String = _resolve_data_path(p.next_token().replace("\\", "/").to_lower())
     var skin_file:String = p.next_token().to_lower()
     var mmd_file:String = p.next_token().to_lower()
     var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
     var offset:float = float(p.next_token())
-    var _driver_type:String = p.next_token()
+    var driver_type:String = p.next_token()
     var _coupling_data:String = p.next_token() if context.trainset_open else "3"
     var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
     var load_count:int = int(p.next_token())
     var _load_type:String = p.next_token() if load_count != 0 else ""
 
+    var reversed:bool = is_equal_approx(offset, -1.0)
     var trainset_offset:float = context.trainset_offset if context.trainset_open else 0.0
-    var start_offset:float = trainset_offset if is_equal_approx(offset, -1.0) else trainset_offset - offset
+    var start_offset:float = trainset_offset if reversed else trainset_offset - offset
+    var length:float = _read_vehicle_length(data_folder, mmd_file, context)
 
     var vehicle := DynamicRailVehicle3D.new()
     vehicle.data_path = data_folder
     vehicle.file_name = mmd_file
     vehicle.skin = skin_file
     vehicle.start_track_name = path_name
-    vehicle.start_track_offset = start_offset
+    # start_offset marks the vehicle's front; start_track_offset is its center, which the
+    # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
+    vehicle.start_track_offset = start_offset - 0.5 * length
+    vehicle.start_direction = (
+        TrackManager.Direction.DIRECTION_REVERSED if reversed else TrackManager.Direction.DIRECTION_NORMAL
+    )
     vehicle.initial_velocity = velocity
+    # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.
+    vehicle.cabin_number = 1 if driver_type == "headdriver" else (-1 if driver_type == "reardriver" else 0)
 
     if context.trainset_open:
-        var length:float = _read_vehicle_length(data_folder, mmd_file, context)
-        if length > 0.0:
-            context.trainset_offset -= length
+        context.trainset_offset -= length
 
     var next_token:String = p.next_token()
     if not next_token == "enddynamic":
@@ -88,7 +102,7 @@ func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImpor
 
     while not parser.eof_reached():
         var token:String = parser.next_token()
-        if token.is_empty():
+        if not token:
             break
 
         var lower_token:String = token.to_lower()
@@ -113,7 +127,7 @@ func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImpor
 func _read_dimensions_length(parser:MaszynaParser) -> float:
     while not parser.eof_reached():
         var token:String = parser.next_token()
-        if token.is_empty() or not token.contains("="):
+        if not token or not token.contains("="):
             break
         if token.to_lower().begins_with("l="):
             return token.substr(2).to_float()

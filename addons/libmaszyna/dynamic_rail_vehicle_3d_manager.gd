@@ -32,8 +32,10 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # for FIZ `include`s.
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
-    # Invalidate templates that serialized generated audio voices and omitted runtime bindings.
-    return ("structure-v2:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # The hash cannot see changes to MaszynaRailVehicle3DInstancer's own code - bump this tag
+    # whenever that code changes the cached structure. v6: MaSzyna->Godot vehicle-frame
+    # conversion applied to every vehicle model and the cab.
+    return ("structure-v7:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
@@ -41,7 +43,7 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
 ## for MaszynaRailVehicle3DInstancer.build() - same signature, cached.
 func load(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material) -> RailVehicle3D:
+        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -73,6 +75,7 @@ func load(
     if fiz_controller:
         fiz_controller.train_id = train_id
         fiz_controller.initial_velocity = initial_velocity
+        fiz_controller.cabin_number = cabin_number
     MaszynaRailVehicle3DInstancer._initialize_instance(vehicle, file_name, head_display_material)
     return vehicle
 

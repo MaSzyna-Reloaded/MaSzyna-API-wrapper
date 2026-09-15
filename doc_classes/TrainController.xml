@@ -28,6 +28,13 @@
 				Broadcasts command to all trains (including self)
 			</description>
 		</method>
+		<method name="cab_change" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="direction" type="int" />
+			<description>
+				Moves the crew to the next cab in [param direction] ([code]1[/code] forward, [code]-1[/code] backward), like the original [code]TTrain::CabChange()[/code]: cab 1, machine room (cab 0), cab 2.
+			</description>
+		</method>
 		<method name="direction_decrease" qualifiers="const">
 			<return type="void" />
 			<description>
@@ -132,6 +139,9 @@
 		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
 			[code]Light:LMaxVoltage[/code]
 		</member>
+		<member name="cabin_number" type="int" setter="set_cabin_number" getter="get_cabin_number" default="0">
+			Cab occupied at spawn: [code]1[/code] cab 1, [code]-1[/code] cab 2, [code]0[/code] none (falls back to cab 1). Set from the scenery driver type ([code]headdriver[/code]/[code]reardriver[/code]).
+		</member>
 		<member name="category" type="int" setter="set_category" getter="get_category" enum="TrainController.Category" default="1">
 			[code]Param.Category[/code]
 			The vehicle's category (train, road, ship, airplane).
@@ -226,6 +236,12 @@
 		</member>
 	</members>
 	<signals>
+		<signal name="cabin_occupied_changed">
+			<param index="0" name="cabin_occupied" type="int" />
+			<description>
+				Emitted when the occupied cab changes ([code]1[/code] cab 1, [code]0[/code] machine room, [code]-1[/code] cab 2).
+			</description>
+		</signal>
 		<signal name="command_received">
 			<param index="0" name="command" type="String" />
 			<param index="1" name="p1" type="Variant" />

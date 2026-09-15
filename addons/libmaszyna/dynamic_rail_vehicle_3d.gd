@@ -62,6 +62,14 @@ class_name DynamicRailVehicle3D
             initial_velocity = x
             _dirty = true
 
+## Forwarded to the generated FIZTrainController.cabin_number: 1 = cab 1 (headdriver), -1 = cab 2
+## (reardriver), 0 = nobody (original engine's scenery driver type, DynObj.cpp:1812-1825).
+@export var cabin_number:int = 0:
+    set(x):
+        if not x == cabin_number:
+            cabin_number = x
+            _dirty = true
+
 ## TrackManager name of the track used to place the generated vehicle.
 @export var start_track_name:String = "":
     set(x):
@@ -127,7 +135,7 @@ func _rebuild() -> void:
         _vehicle = null
 
     var vehicle:RailVehicle3D = DynamicRailVehicle3DManager.load(
-            data_path, file_name, skin, train_id, initial_velocity, head_display_material)
+            data_path, file_name, skin, train_id, initial_velocity, head_display_material, cabin_number)
     if not vehicle:
         return
 

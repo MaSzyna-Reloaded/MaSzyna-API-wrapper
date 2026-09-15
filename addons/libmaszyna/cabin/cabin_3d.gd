@@ -19,6 +19,9 @@ const SHAKE_STEP:float = 1.0 / 50.0
 const SPRING_REST_LENGTH:float = 0.01
 
 @export var cab_number:int = 1
+## False when the cab has no hi-fi model (MMD "cabNmodel: none" or missing) - the vehicle's
+## low-poly interior then stays fully visible instead (DynObj.cpp:1214).
+@export var has_cab_model:bool = true
 @export var cab_window_open:bool = false
 
 @export_node_path("TrainController") var controller_path:NodePath = NodePath(""):

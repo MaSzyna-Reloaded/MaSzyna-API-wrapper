@@ -4,7 +4,7 @@ extends RefCounted
 
 func import(p: MaszynaParser, _context: MaszynaImporterContext) -> Array:
     var tokens = p.get_tokens_until("endtime")
-    if tokens.is_empty():
+    if not tokens:
         return []
 
     var start_time:float = parse_hhmm_to_float(tokens[0])

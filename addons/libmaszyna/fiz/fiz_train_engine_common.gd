@@ -13,7 +13,7 @@ class_name FizTrainEngineCommon
 ## LoadFIZ_EngineDecode: Mover.cpp:11689. Used by Engine: and by other sections that reference
 ## an engine type (Light:/Clima: generator engine).
 static func parse_engine_type(value: String, default_value: int = TrainEngine.NONE) -> int:
-    if value.is_empty():
+    if not value:
         return default_value
     match value.to_lower():
         "electricseriesmotor": return TrainEngine.ELECTRIC_SERIES_MOTOR
@@ -56,7 +56,7 @@ static func apply_engine_common(node: TrainEngine, kv: Dictionary, context: FizI
 ## The controller-position-count subset of Cntrl. (stashed on context.cntrl_kv by
 ## FizTrainCntrlParser, since Cntrl. conventionally precedes Engine: in real files).
 static func apply_cntrl_engine_subset(node: TrainEngine, cntrl_kv: Dictionary) -> void:
-    if cntrl_kv.is_empty():
+    if not cntrl_kv:
         return
     if cntrl_kv.has("MCPN"):
         node.cntrl_main_controller_position_count = FizLineUtil.get_int(cntrl_kv, "MCPN")
@@ -149,7 +149,7 @@ static func parse_motor_param_row(p: MaszynaParser, p_is_diesel_electric: bool =
 ## Stashed on context.power_kv by FizTrainPowerParser. LoadFIZ_Power: Mover.cpp:11058,
 ## LoadFIZ_PowerParamsDecode (CurrentCollector case): Mover.cpp:11547.
 static func apply_power(node: TrainElectricEngine, power_kv: Dictionary) -> void:
-    if power_kv.is_empty():
+    if not power_kv:
         return
     if power_kv.has("EnginePower"):
         node.power_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(power_kv, "EnginePower"))

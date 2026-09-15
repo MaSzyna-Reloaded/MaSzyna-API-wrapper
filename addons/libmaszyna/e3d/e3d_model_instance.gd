@@ -150,15 +150,7 @@ func reload() -> void:
                 push_error("Selected instancer is not supported!")
 
 
-func _notification(what: int) -> void:
-    match what:
-        NOTIFICATION_TRANSFORM_CHANGED, NOTIFICATION_VISIBILITY_CHANGED:
-            if _current_instancer:
-                _current_instancer.sync(self)
-
-
 func _ready() -> void:
-    set_notify_transform(true)
     reload()
 
 

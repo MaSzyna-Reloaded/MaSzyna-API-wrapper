@@ -24,6 +24,30 @@ This skill is the repeatable workflow for pinning down which of these it is,
 using the real vendored source as ground truth instead of guessing from the
 wrapper's code alone.
 
+## Source layer mapping
+
+The original engine is split across several files with different jobs, and
+each has a specific counterpart on this wrapper's side - knowing which one
+you actually need saves a lot of grepping in the wrong place.
+
+| Original (`~/src/maszyna`) | Job | This wrapper's counterpart |
+| --- | --- | --- |
+| `McZapkie/Mover.cpp` / `MOVER.h` (`TMoverParameters`) | Physics/electrical core: relays, valves, pressures, engine curves, per-tick `Update()` state machine | `src/maszyna/McZapkie/` - **vendored byte-identical**, never edited (see Hard constraints below) |
+| `DynObj.cpp` / `DynObj.h` (`TDynamicObject`) | Per-vehicle *scene* layer sitting on top of Mover: submodel animation (`UpdatePant`, `UpdateDoorTranslate`, wheel spin), geometry-derived config read from the model file at load time, wire/traction contact search dispatch | **Not vendored at all** (see `feedback_vendoring_scope` memory - only narrow, isolated pieces may ever be vendored, never this file wholesale). Reimplemented piecemeal in GDScript, mainly `addons/libmaszyna/rail_vehicle_3d.gd` (e.g. `_update_pantograph_raise_state`/`_apply_pantograph_animation` are a from-scratch port of `DynObj.cpp`'s pantograph block, not a vendored copy) |
+| `Train.cpp` (`TTrain`) | Player cab: `OnCommand_*` handlers, `user_command::` table, cab mesh label (`ggXxxButton`) → command wiring, indicator lamp conditions | `src/core/TrainController.cpp` (`send_command`/`register_command` dispatch, mirrors `OnCommand_*`) + `src/engines/*.cpp` (one `TrainXxxEngine` per subsystem, e.g. `TrainElectricEngine` for pantograph/converter/compressor) + `addons/libmaszyna/mmd/mmd_semantic_catalog.gd` (MMD label → command mapping, mirrors `Train.cpp`'s `Load()` label table) |
+| `scene.cpp` (`basic_cell::update_traction`) / `Traction.cpp` (`TTractionPowerSource`, network) | Scenery-level overhead wire geometry search and electrical network solve | `addons/libmaszyna/servers/traction_power_server.gd` (`TractionPowerServer`) |
+| Track/switch topology (scattered across `scene.cpp`/track pieces) | Track graph, switch state, vehicle-on-track offset math | `addons/libmaszyna/servers/rail_vehicle_physics_server.gd` (`RailVehiclePhysicsServer`) + `addons/libmaszyna/tracks/track_manager.gd` |
+| `LoadFIZ_*` functions (`Mover.cpp`) | `.fiz` per-vehicle config parsing, including original engine's fallback defaults when a key is absent | `addons/libmaszyna/fiz/fiz_train_*_parser.gd` - must match the *default*, not just the parsed value, when a key is missing |
+| `.mmd` cab file parsing (`Train.cpp`'s `Load()`, incl. `animpant*prefix:`/`animwheelprefix:` etc. submodel-name tokens) | Cab layout, submodel animation binding by name convention | `addons/libmaszyna/maszyna_rail_vehicle_3d_instancer.gd` (auto-wires bogie/wheel/pantograph-arm `NodePath`s by the *practical* real-data naming convention rather than parsing the prefix tokens themselves - confirmed identical across every real vehicle checked, e.g. `bogie1`/`wheel01`/`ramiedolne1_pant01`; see that file's own doc comments) + `addons/libmaszyna/mmd/mmd_cabin_instancer.gd`/`mmd_semantic_catalog.gd` |
+
+Two-minute rule of thumb: if the question is "what value does a flag/relay
+have, or when does it flip" → `Mover.cpp`/`MOVER.h`. If it's "why doesn't
+this animate/light up visually" or "how is this per-vehicle number derived
+from the model" → `DynObj.cpp` (read-only reference) and this wrapper's
+GDScript layer. If it's "why doesn't pressing this button do anything" →
+`Train.cpp` + this wrapper's `mmd_semantic_catalog.gd`/engine command
+registration.
+
 ## Step 1 — get the real symptom, not a paraphrase
 
 Ask (or read from the operator's report) for the *exact* in-game

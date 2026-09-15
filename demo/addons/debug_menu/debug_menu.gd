@@ -191,14 +191,14 @@ func update_settings_label() -> void:
         var antialiasing_3d_string := ""
         if viewport.scaling_3d_mode == Viewport.SCALING_3D_MODE_FSR2:
             # The FSR2 scaling mode includes its own temporal antialiasing implementation.
-            antialiasing_3d_string += (" + " if not antialiasing_3d_string.is_empty() else "") + "FSR 2.2"
+            antialiasing_3d_string += (" + " if antialiasing_3d_string else "") + "FSR 2.2"
         if viewport.scaling_3d_mode != Viewport.SCALING_3D_MODE_FSR2 and viewport.use_taa:
             # Godot's own TAA is ignored when using FSR2 scaling mode, as FSR2 provides its own TAA implementation.
-            antialiasing_3d_string += (" + " if not antialiasing_3d_string.is_empty() else "") + "TAA"
+            antialiasing_3d_string += (" + " if antialiasing_3d_string else "") + "TAA"
         if viewport.msaa_3d >= Viewport.MSAA_2X:
-            antialiasing_3d_string += (" + " if not antialiasing_3d_string.is_empty() else "") + "%d× MSAA" % pow(2, viewport.msaa_3d)
+            antialiasing_3d_string += (" + " if antialiasing_3d_string else "") + "%d× MSAA" % pow(2, viewport.msaa_3d)
         if viewport.screen_space_aa == Viewport.SCREEN_SPACE_AA_FXAA:
-            antialiasing_3d_string += (" + " if not antialiasing_3d_string.is_empty() else "") + "FXAA"
+            antialiasing_3d_string += (" + " if antialiasing_3d_string else "") + "FXAA"
 
         settings.text += "3D scale (%s): %d%% = %d×%d" % [
                 scaling_3d_mode_string,
@@ -207,7 +207,7 @@ func update_settings_label() -> void:
                 viewport_render_size.y * viewport.scaling_3d_scale,
         ]
 
-        if not antialiasing_3d_string.is_empty():
+        if antialiasing_3d_string:
             settings.text += "\n3D Antialiasing: %s" % antialiasing_3d_string
 
         var environment := viewport.get_camera_3d().get_world_3d().environment
@@ -232,7 +232,7 @@ func update_settings_label() -> void:
     if viewport.msaa_2d >= Viewport.MSAA_2X:
         antialiasing_2d_string = "%d× MSAA" % pow(2, viewport.msaa_2d)
 
-    if not antialiasing_2d_string.is_empty():
+    if antialiasing_2d_string:
         settings.text += "\n2D Antialiasing: %s" % antialiasing_2d_string
 
 
@@ -450,12 +450,12 @@ func _process(_delta: float) -> void:
                 fps_cap = mini(Engine.max_fps, low_processor_max_fps)
             frame_time.text += " (cap: " + str(fps_cap) + " FPS"
 
-            if not vsync_string.is_empty():
+            if vsync_string:
                 frame_time.text += " + " + vsync_string
 
             frame_time.text += ")"
         else:
-            if not vsync_string.is_empty():
+            if vsync_string:
                 frame_time.text += " (" + vsync_string + ")"
 
         frame_number.text = "Frame: " + str(Engine.get_frames_drawn())

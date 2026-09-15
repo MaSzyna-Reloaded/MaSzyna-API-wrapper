@@ -85,6 +85,6 @@ func end_table(context: FizImportContext) -> void:
     if node == null:
         _dimmer_rows = []
         return
-    if not _dimmer_rows.is_empty():
+    if _dimmer_rows:
         node.dimmer_list_positions = _dimmer_rows
     _dimmer_rows = []

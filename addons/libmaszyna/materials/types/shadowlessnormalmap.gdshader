@@ -53,7 +53,7 @@ void fragment() {
 	ROUGHNESS = roughness_tex * roughness;
 
     if(emission_enabled) {
-        EMISSION = emission_color.rgb * albedo_tex.rgb * emission_energy;
+        EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;
     }
 
 

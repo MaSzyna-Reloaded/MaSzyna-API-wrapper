@@ -118,7 +118,7 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
 ## class owns; TrainEngine.StartMode is a duplicate of the same values to avoid a circular
 ## include, see TrainController.hpp). Used by Cntrl., Engine:, and other sections.
 static func parse_start_mode(value: String, default_value: int) -> int:
-    if value.is_empty():
+    if not value:
         return default_value
     match value.to_lower():
         "disabled": return TrainController.START_MODE_DISABLED
@@ -134,7 +134,7 @@ static func parse_start_mode(value: String, default_value: int) -> int:
 ## Power-source decode (TrainController.TrainPowerSource - the enum this class owns).
 ## LoadFIZ_SourceDecode: Mover.cpp:11677. Used by Light:/Clima:/Power:.
 static func parse_power_source(value: String, default_value: int = TrainController.POWER_SOURCE_NOT_DEFINED) -> int:
-    if value.is_empty():
+    if not value:
         return default_value
     match value.to_lower():
         "transducer": return TrainController.POWER_SOURCE_TRANSDUCER
@@ -151,7 +151,7 @@ static func parse_power_source(value: String, default_value: int = TrainControll
 ## Power-type decode (TrainController.TrainPowerType - the enum this class owns).
 ## LoadFIZ_PowerDecode: Mover.cpp:11668.
 static func parse_power_type(value: String, default_value: int = TrainController.POWER_TYPE_NONE) -> int:
-    if value.is_empty():
+    if not value:
         return default_value
     match value.to_lower():
         "biopower": return TrainController.POWER_TYPE_BIO

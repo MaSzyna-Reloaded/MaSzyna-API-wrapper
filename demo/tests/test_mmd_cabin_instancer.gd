@@ -348,7 +348,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var light:CabinSpotLight3D = generated_root.get_child(1)
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
     assert_true(light.light_enabled)
-    assert_true(light.on_target_path.is_empty())
+    assert_true(not light.on_target_path)
     assert_eq(light.global_position, on_node.global_position)
     assert_true((-light.global_basis.z).normalized().is_equal_approx(Vector3.DOWN))
     assert_eq(light.state_property, "roof_light_enabled")

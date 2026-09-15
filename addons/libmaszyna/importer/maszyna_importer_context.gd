@@ -89,7 +89,7 @@ func push_state() -> void:
 
 
 func pop_state() -> void:
-    if _states.is_empty():
+    if not _states:
         return
 
     var state: Dictionary = _states.pop_front()

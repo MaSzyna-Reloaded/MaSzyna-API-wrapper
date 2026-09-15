@@ -154,6 +154,27 @@ func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void
     assert_eq(material.get_shader_parameter("albedo"), diffuse_color)
 
 
+func test_create_uses_diffuse_color_for_default_shader_with_texture() -> void:
+    # Regression: "albedo" used to only be set from options.diffuse_color for untextured
+    # submodels - every textured submodel (nontransparent_manager.mat has texture1: base_diffuse)
+    # stayed stuck at the shader's default white, even when the E3D file's own diffuse color was
+    # something else entirely (confirmed real: EP07's "wylszybki_on"/"_off" indicator lamp
+    # submodels, diffuse (0, 0.749, 0) over a neutral texture, rendered white instead of green).
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", NONTRANSPARENT_MATERIAL_NAME)
+    var diffuse_color: Color = Color(0.0, 0.749, 0.0, 1.0)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.diffuse_color = diffuse_color
+    var material: ShaderMaterial = MaterialFactory.create(
+        mmat,
+        "",
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options
+    ) as ShaderMaterial
+
+    assert_eq(material.get_shader_parameter("albedo"), diffuse_color)
+
+
 func test_create_uses_diffuse_color_for_parallax_shader_without_texture() -> void:
     var mmat: MaszynaMaterial = MaszynaMaterial.new()
     mmat.default.shader = "parallax"
@@ -186,3 +207,21 @@ func test_apply_updates_existing_material_transparency_state() -> void:
 
     assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.Disabled)
     assert_eq(material.get_shader_parameter("alpha_scissor_threshold"), 0.5)
+
+
+func test_default_shader_name_uses_default_material() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "default_shader_manager") as ShaderMaterial
+
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/default.gdshader")
+
+
+## mat_detail_normalmap.frag - normalmap plus a tiled detail normal map.
+func test_detail_normalmap_shader_applies_detail_parameters() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", "detail_normalmap_manager")
+    var material: ShaderMaterial = MaterialManager.get_material("", "detail_normalmap_manager") as ShaderMaterial
+
+    assert_eq(mmat.default.get_texture_path("detailnormalmap"), "fx/t_detail_normal_3")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/detail_normalmap.gdshader")
+    assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
+    assert_almost_eq(float(material.get_shader_parameter("detail_height_scale")), 0.45, 0.00001)
+    assert_not_null(material.get_shader_parameter("texture_detail_normal"))

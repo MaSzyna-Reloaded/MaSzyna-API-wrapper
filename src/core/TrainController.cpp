@@ -228,6 +228,19 @@ namespace godot {
         // player (or a test) explicitly turns it off.
         mover->Battery = (mover->BatteryStart != Maszyna::start_t::disabled);
 
+        // Original engine: Load() (Mover.cpp:11692) calls ComputeConstans() once, after every
+        // physical parameter (TotalMass, Dim, Cx, BearingType, NPoweredAxles, TrackW - all
+        // already applied above by the two _update_mover_config_if_dirty() passes) is settled -
+        // it derives FrictConst1/FrictConst2s/FrictConst2d, the per-vehicle rolling/air-drag
+        // resistance coefficients FrictionForce() (called every tick from ComputeTotalForce())
+        // actually uses. Never called anywhere else in the original either (a single call at
+        // load time is correct - the original itself never updates curve-dependent resistance
+        // terms after that point). Without this, every one of this wrapper's vehicles ran with
+        // zero rolling/air resistance: free acceleration to unrealistic speeds and near-zero
+        // coasting deceleration, since FrictConst1/2s/2d all silently stayed at their
+        // compiled-zero defaults.
+        mover->ComputeConstans();
+
         /* FIXME: remove test data */
         mover->CabActive = 1;
         mover->CabMaster = true;
@@ -483,6 +496,12 @@ namespace godot {
         internal_state["train_damage"] = p_mover->DamageFlag;
         internal_state["controller_second_position"] = p_mover->ScndCtrlPos;
         internal_state["controller_main_position"] = p_mover->MainCtrlPos;
+        // Diagnostic: the delayed/rate-limited shadow of MainCtrlPos that RList[] resistor
+        // lookups actually key off (Mover.cpp's internal auto-relay/resistor-stepping state
+        // machine) - a wrong RList[] mapping or array-bounds issue lets this race far ahead of
+        // MainCtrlPos, landing on unpopulated (zero-resistance) table slots.
+        internal_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
+        internal_state["circuit_rlist_size"] = p_mover->RlistSize;
     }
 
     Dictionary TrainController::get_config() const {

@@ -8,12 +8,13 @@ class_name FizTrainElectricSeriesEngineParser
 ## table, using the standard parse()/parse_row()/end_table() interface) - all configure the
 ## same node created by FizTrainEngineParser. Series-motor branch of LoadFIZ_Engine:
 ## Mover.cpp:11119, LoadFIZ_Circuit: Mover.cpp:11416, LoadFIZ_RList: Mover.cpp:11444,
-## readRList: Mover.cpp:9231, readMPT0: Mover.cpp:9069.
+## readRList: Mover.cpp:9095, readMPT0: Mover.cpp:8948.
 ##
 ## MotorParamTable0: column mapping - see FizTrainEngineCommon.parse_motor_param_row's own doc
-## comment for the authoritative order (idx, mfi, mIsat, fi, Isat, [auto-shunt flag]), verified
-## directly against readMPTElectricSeries (Mover.cpp:9004) rather than the wiki's own "?"-marked
-## column names.
+## comment for the authoritative order (idx, mfi, mIsat, mfi0, fi, Isat, fi0, [auto-shunt flag]),
+## verified directly against readMPT0 (Mover.cpp:8948) - the reader this header text actually
+## dispatches to, NOT readMPTElectricSeries (a different, 4-column reader for the separate,
+## unsuffixed "MotorParamTable:" header) - rather than the wiki's own "?"-marked column names.
 
 var _relay_rows: Array[RelayListItem] = []
 var _motor_param_rows: Array[MotorParameter] = []

@@ -136,6 +136,14 @@ namespace godot {
             p_mover->MotorParam[i].fi = row->get_voltage_constant();
             p_mover->MotorParam[i].mfi = row->get_voltage_constant_multiplier();
             p_mover->MotorParam[i].Isat = row->get_saturation_current();
+            // readMPT0's default case (Mover.cpp:8948, what "MotorParamTable0:" rows actually go
+            // through) reads these two as real columns, unlike readMPTElectricSeries - see
+            // FizTrainEngineCommon.parse_motor_param_row's doc comment for the full story. fi0 in
+            // particular feeds Current()'s back-EMF term (Mover.cpp:389, "U1 = U + Mn*n*fi0*fi"),
+            // so leaving it at TMotorParameters's compiled-zero default here (matching the
+            // never-set case for the OTHER reader) would silently kill that back-EMF term.
+            p_mover->MotorParam[i].mfi0 = row->get_initial_voltage_constant_multiplier();
+            p_mover->MotorParam[i].fi0 = row->get_initial_voltage_constant();
             p_mover->MPTRelay[i].Iup = row->get_shunting_up();     // bocznikowanie
             p_mover->MPTRelay[i].Idown = row->get_shunting_down(); // bocznikowanie;
         }

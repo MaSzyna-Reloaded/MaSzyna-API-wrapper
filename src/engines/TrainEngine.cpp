@@ -109,14 +109,18 @@ namespace godot {
         p_mover->CtrlDownDelay = cntrl_controller_step_down_delay;
         p_mover->FastSerialCircuit = static_cast<int>(cntrl_fast_series_circuit);
 
-        /* FIXME: for testing purposes */
-        p_mover->GroundRelay = true;
-        p_mover->NoVoltRelay = true;
-        p_mover->OvervoltageRelay = true;
-        p_mover->DamageFlag = 0;
-        p_mover->EngDmgFlag = 0;
-        p_mover->ConvOvldFlag = false;
-        /* end testing */
+        // Original engine: GroundRelay/NoVoltRelay/OvervoltageRelay/DamageFlag/EngDmgFlag/
+        // ConvOvldFlag are all live, self-computed Mover state (relay checks recomputed every
+        // Update() tick from real voltage/current, e.g. the ElectricSeriesMotor NoVoltRelay/
+        // OvervoltageRelay block, Mover.cpp ~5627) and already default to their "healthy" values
+        // in TMoverParameters's own constructor (MOVER.h:1590/1600/1601/401/1517/1518/1589).
+        // This method reruns on every dirty-flag config reapply (not just once at startup - see
+        // [[mover-parity-check]]), so force-resetting them here on every rerun was silently
+        // wiping real relay trips/damage the simulation had legitimately produced since the last
+        // reapply - matching the "traction voltage drops and the engine cuts out, needs the main
+        // switch re-engaged" symptom (NoVoltRelay/OvervoltageRelay flip Mains off for real, then
+        // a later config reapply cosmetically closes the relay again without also restoring
+        // Mains, so the panel looks fine but the loco is still dead).
 
         /* motor param table */
         constexpr int MAX = Maszyna::MotorParametersArraySize;

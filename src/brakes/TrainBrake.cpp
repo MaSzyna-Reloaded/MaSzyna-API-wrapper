@@ -388,6 +388,11 @@ namespace godot {
         p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;
         p_state["pipe_pressure"] = p_mover->PipePress;
         p_state["brake_tank_volume"] = p_mover->Volume;
+        // Original engine: "compressor:"/"compressorb:" (Train.cpp:10407-10412), a gauge bound
+        // straight to mvOccupied->Compressor - "cisnienie w ukladzie zasilajacym" (MOVER.h:1455),
+        // the main reservoir pressure. Lives here, not TrainEngine, matching this file's existing
+        // compressor command surface (CompressorTankValve/CompressorSpeed/CompressorPower below).
+        p_state["compressor_pressure"] = p_mover->Compressor;
         p_state["brake_controller_position"] = brake_controller_pos;
         p_state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
         // LocalBrakePosA ("nastawa hamulca pomocniczego") is already normalized 0..1 in the

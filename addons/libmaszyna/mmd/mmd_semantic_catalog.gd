@@ -473,6 +473,19 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
+        # Train.cpp:10407-10412: gauge.Load(Parser, DynamicObject, 0.1); gauge.AssignDouble(
+        # &mvOccupied->Compressor) - main reservoir pressure gauge, part of the pressure-family
+        # mmd_scale_multiplier=0.1 group named in this section's own header comment above.
+        "compressor": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "compressor_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
         # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
         # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
         # Instead this reuses CabinSpotLight3D (already a generic, reusable addon widget - not

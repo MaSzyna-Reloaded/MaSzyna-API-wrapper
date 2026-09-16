@@ -193,6 +193,13 @@ func _apply_default_material(
     var diffuse_texture: String = variant.get_texture_path(texture_map.albedo)
     var normalmap_texture: String = variant.get_texture_path(texture_map.normalmap)
 
+    # albedo defaults to this submodel's own parsed E3D diffuse color (e.g. a lamp lens'
+    # green/yellow tint over a neutral texture) - a .mat variant's own "diffuse:" override, when
+    # present, takes precedence, matching the untextured branch below. Previously this was only
+    # ever set for untextured submodels, leaving every textured one (including colored indicator
+    # lamps like EP07's wylszybki_on/off, confirmed real: diffuse (0, 0.749, 0) over texture
+    # "kran_zasadniczy") stuck at the shader's default white regardless of the model's own color.
+    material.set_shader_parameter("albedo", options.diffuse_color)
     if diffuse_texture:
         var albedo_texture: Texture = MaterialManager.load_texture(model_path, diffuse_texture)
         if albedo_texture is Texture2D and _texture_has_alpha(albedo_texture):
@@ -205,8 +212,6 @@ func _apply_default_material(
                 variant.get_parameter("diffuse"),
                 1.0
             ))
-    else:
-        material.set_shader_parameter("albedo", options.diffuse_color)
 
     if normalmap_texture:
         material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true))

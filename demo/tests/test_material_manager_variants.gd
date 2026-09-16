@@ -154,6 +154,27 @@ func test_create_uses_diffuse_color_for_default_shader_without_texture() -> void
     assert_eq(material.get_shader_parameter("albedo"), diffuse_color)
 
 
+func test_create_uses_diffuse_color_for_default_shader_with_texture() -> void:
+    # Regression: "albedo" used to only be set from options.diffuse_color for untextured
+    # submodels - every textured submodel (nontransparent_manager.mat has texture1: base_diffuse)
+    # stayed stuck at the shader's default white, even when the E3D file's own diffuse color was
+    # something else entirely (confirmed real: EP07's "wylszybki_on"/"_off" indicator lamp
+    # submodels, diffuse (0, 0.749, 0) over a neutral texture, rendered white instead of green).
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", NONTRANSPARENT_MATERIAL_NAME)
+    var diffuse_color: Color = Color(0.0, 0.749, 0.0, 1.0)
+    var options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new()
+    options.diffuse_color = diffuse_color
+    var material: ShaderMaterial = MaterialFactory.create(
+        mmat,
+        "",
+        MaszynaEnvironment.Season.SEASON_SUMMER,
+        MaszynaEnvironment.Weather.WEATHER_CLEAR,
+        options
+    ) as ShaderMaterial
+
+    assert_eq(material.get_shader_parameter("albedo"), diffuse_color)
+
+
 func test_create_uses_diffuse_color_for_parallax_shader_without_texture() -> void:
     var mmat: MaszynaMaterial = MaszynaMaterial.new()
     mmat.default.shader = "parallax"

@@ -8,6 +8,10 @@ const VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_volume_factor"
 const EXTERIOR_VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_volume_factor"
 const CABIN_UNIT_SIZE_FACTOR_SETTING:StringName = &"maszyna/sound/brake_cabin_unit_size_factor"
 const EXTERIOR_UNIT_SIZE_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_unit_size_factor"
+const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
+## Update cadence for a bank right at the culling distance edge - banks closer to the listener
+## interpolate down to 0.0 (every physics frame), matching prior behavior for nearby vehicles.
+const FAR_UPDATE_INTERVAL:float = 0.5
 
 var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
     PackedFloat32Array([1.0, sqrt(0.2), 1.0, sqrt(0.65), sqrt(0.2), sqrt(0.2)]),
@@ -30,6 +34,9 @@ class BankRuntime extends RefCounted:
     var trigger_elapsed:float = 0.0
     var events_built:bool = false
     var anchored_cabin_instance_id:int = 0
+    var sound_update_elapsed:float = 0.0
+    var culled:bool = false
+    var last_batch:Dictionary = {}
 
 
 var _banks:Dictionary = {}
@@ -98,11 +105,36 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
 
 func _physics_process(delta:float) -> void:
     var states:Dictionary = {}
+    var culling_distance:float = float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0))
+    var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO
     for runtime:BankRuntime in _banks.values():
         if not is_instance_valid(runtime.controller):
             _resolve_controller(runtime)
         if not runtime.controller or not runtime.enabled:
             continue
+
+        # Vehicles beyond every event's own max_distance are already inaudible - skip building
+        # their sound state entirely instead of paying full per-frame cost (soundproofing,
+        # play()/set_parameters()) for a scenery's worth of parked, unheard rolling stock.
+        var distance:float = (
+                runtime.vehicle.global_position.distance_to(listener_position)
+                if runtime.vehicle and _listener else 0.0)
+        if distance > culling_distance:
+            if not runtime.culled:
+                runtime.culled = true
+                runtime.player.stop(false)
+            continue
+        runtime.culled = false
+
+        # Between the listener and the culling distance, update less often the farther away a
+        # vehicle is - its sound is already quiet there, so a coarser update rate is inaudible.
+        runtime.sound_update_elapsed += delta
+        var update_interval:float = lerpf(
+                0.0, FAR_UPDATE_INTERVAL, clampf(distance / culling_distance, 0.0, 1.0))
+        if runtime.sound_update_elapsed < update_interval:
+            continue
+        runtime.sound_update_elapsed = fmod(runtime.sound_update_elapsed, maxf(update_interval, 0.001))
+
         _ensure_brake_events(runtime)
         var controller_id:int = runtime.controller.get_instance_id()
         if not states.has(controller_id):
@@ -114,7 +146,12 @@ func _physics_process(delta:float) -> void:
         if runtime.trigger_elapsed >= TRIGGER_INTERVAL:
             runtime.trigger_elapsed = fmod(runtime.trigger_elapsed, TRIGGER_INTERVAL)
             _update_triggers(runtime, state, batch)
-        runtime.player.set_parameters(batch)
+        # Skip the modulate()/_apply_voice_state chain entirely when nothing actually changed
+        # since last update - an idle in-range vehicle (engine off, no brake activity) would
+        # otherwise still rebuild and re-apply the same voice state every update tick.
+        if not batch == runtime.last_batch:
+            runtime.player.set_parameters(batch)
+            runtime.last_batch = batch
 
 
 func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:

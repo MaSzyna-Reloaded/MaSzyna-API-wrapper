@@ -130,6 +130,10 @@ func _enter_tree():
         "maszyna/sound/brake_exterior_unit_size_factor", 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
     )
+    add_custom_project_setting(
+        "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,5000.0,10.0,or_greater"
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

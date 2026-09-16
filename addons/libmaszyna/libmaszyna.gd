@@ -111,6 +111,10 @@ func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
     add_custom_project_setting("maszyna/track_curve_bake_interval", 10.0, TYPE_FLOAT)
     add_custom_project_setting(
+        "maszyna/dds_maxtexturesize", 1024, TYPE_INT,
+        PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"
+    )
+    add_custom_project_setting(
         "maszyna/sound/brake_volume_factor", 2.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
     )

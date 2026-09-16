@@ -163,6 +163,15 @@ var _electric_engine:Node
 var _fiz_controller:FIZTrainController
 var _model_node:E3DModelInstance
 var _detection_area:Area3D
+var _visibility_notifier:VisibleOnScreenNotifier3D
+## True until proven otherwise by the visibility notifier's first evaluation, so nothing is
+## wrongly culled before it has a chance to fire.
+var _is_visible:bool = true
+## Forces one full bogie/wheel/pantograph detail refresh even when nothing moved - set when
+## regaining visibility, so a vehicle that moved while off-screen snaps to its correct pose
+## instead of staying frozen at whatever it looked like when it went off-screen.
+var _force_detail_refresh:bool = true
+var _last_center_transform:Transform3D = Transform3D.IDENTITY
 var _low_poly_cabin:E3DModelInstance
 var _low_poly_emissive_materials:Array[ShaderMaterial] = []
 var _low_poly_emission_tween:Tween
@@ -365,6 +374,7 @@ func _process(delta):
     if _animation_bindings_dirty:
         _animation_bindings_dirty = false
         _cache_animation_bindings()
+        _force_detail_refresh = true
         _update_track_transform()
 
     _t += delta
@@ -379,8 +389,10 @@ func _process(delta):
             _update_pantograph_raise_state(delta)
             _update_pantograph_power()
         elif _controller and not start_track_name:
-            position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
-            _update_wheel_animation_state()
+            var velocity:float = _controller.state.get("velocity", 0.0)
+            position += Vector3.FORWARD * delta * velocity
+            if _is_visible and not is_zero_approx(velocity):
+                _update_wheel_animation_state()
             _update_pantograph_raise_state(delta)
             _update_pantograph_power()
         if _controller:
@@ -511,7 +523,9 @@ func _set_low_poly_emission_energy(value:float) -> void:
 
 ## Creates (once) and keeps in sync an Area3D/CollisionShape3D under this RailVehicle3D,
 ## sized from the resolved model's AABB, so the player's raycaster can detect this vehicle
-## without requiring it to be hand-authored per vehicle scene.
+## without requiring it to be hand-authored per vehicle scene. Also creates a
+## VisibleOnScreenNotifier3D from the same AABB, driving _is_visible below - gates the
+## bogie/wheel/pantograph-arm animation cost, which is invisible off-screen anyway.
 func _update_detection_area() -> void:
     if Engine.is_editor_hint():
         return
@@ -535,6 +549,24 @@ func _update_detection_area() -> void:
     var box:BoxShape3D = shape_node.shape
     box.size = aabb.size
     shape_node.position = aabb.get_center()
+
+    if not _visibility_notifier:
+        _visibility_notifier = VisibleOnScreenNotifier3D.new()
+        _visibility_notifier.name = "RailVehicleVisibilityNotifier"
+        _visibility_notifier.screen_entered.connect(_on_screen_entered)
+        _visibility_notifier.screen_exited.connect(_on_screen_exited)
+        add_child(_visibility_notifier)
+    _visibility_notifier.transform = _model_node.transform
+    _visibility_notifier.aabb = aabb
+
+
+func _on_screen_entered() -> void:
+    _is_visible = true
+    _force_detail_refresh = true
+
+
+func _on_screen_exited() -> void:
+    _is_visible = false
 
 
 func _ready() -> void:
@@ -726,13 +758,22 @@ func _update_track_transform() -> void:
     if not _rid.is_valid() or not start_track_name or _pending_start_track_retry:
         return
 
+    # global_transform (coarse position) always stays current, even off-screen - the
+    # detection area, track occupancy, and the visibility notifier's own position all depend
+    # on it. Only the bogie/wheel detail below is expensive enough to be worth gating.
     var center_transform:Transform3D = RailVehiclePhysicsServer.vehicle_get_transform(_rid)
+    var moved:bool = not center_transform == _last_center_transform
+    _last_center_transform = center_transform
+    global_transform = center_transform
+
+    if not _is_visible or not (moved or _force_detail_refresh):
+        return
+    _force_detail_refresh = false
+
     if not _front_bogie_node and not _rear_bogie_node:
-        global_transform = center_transform
         _update_wheel_animation_state()
         return
     if not _front_bogie_node or not _rear_bogie_node:
-        global_transform = center_transform
         if not _bogie_configuration_warned:
             _bogie_configuration_warned = true
             push_warning(
@@ -746,7 +787,6 @@ func _update_track_transform() -> void:
         float(_controller.config.get("bogie_pivot_spacing", 0.0)) if _controller else 0.0
     )
     if bogie_pivot_spacing <= 0.0:
-        global_transform = center_transform
         _update_wheel_animation_state()
         return
 
@@ -760,7 +800,6 @@ func _update_track_transform() -> void:
     )
     var body_forward:Vector3 = front_transform.origin - rear_transform.origin
     if body_forward.is_zero_approx():
-        global_transform = center_transform
         _update_wheel_animation_state()
         return
 
@@ -888,7 +927,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
         _controller.state.get("current_collector/pantograph_first_active", false),
         delta,
     )
-    if not _pantograph_front_geometry.is_empty():
+    if _is_visible and not _pantograph_front_geometry.is_empty():
         _apply_pantograph_animation(_pantograph_front_arm_nodes, _pantograph_front_geometry)
 
     _pantograph_rear_converged = _update_pantograph_arm(
@@ -897,7 +936,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
         _controller.state.get("current_collector/pantograph_second_active", false),
         delta,
     )
-    if not _pantograph_rear_geometry.is_empty():
+    if _is_visible and not _pantograph_rear_geometry.is_empty():
         _apply_pantograph_animation(_pantograph_rear_arm_nodes, _pantograph_rear_geometry)
 
 

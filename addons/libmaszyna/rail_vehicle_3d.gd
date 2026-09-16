@@ -706,17 +706,19 @@ func _apply_wheel_rotation(nodes:Array[Node3D], angle_degrees:float) -> void:
 func _update_wheel_animation_state() -> void:
     if not _controller:
         return
+    # Mover's wheel angle deltas are proportional to +V; on Godot's -Z-forward
+    # axes that spins wheels backward relative to travel, so negate here.
     _apply_wheel_rotation(
         _front_rolling_wheel_nodes,
-        float(_controller.state.get("wheel_angle_front_deg", 0.0)),
+        -float(_controller.state.get("wheel_angle_front_deg", 0.0)),
     )
     _apply_wheel_rotation(
         _powered_wheel_nodes,
-        float(_controller.state.get("wheel_angle_powered_deg", 0.0)),
+        -float(_controller.state.get("wheel_angle_powered_deg", 0.0)),
     )
     _apply_wheel_rotation(
         _rear_rolling_wheel_nodes,
-        float(_controller.state.get("wheel_angle_rear_deg", 0.0)),
+        -float(_controller.state.get("wheel_angle_rear_deg", 0.0)),
     )
 
 

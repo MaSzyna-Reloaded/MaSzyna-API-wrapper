@@ -96,7 +96,7 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
     runtime.trigger_states.erase(trigger_id)
 
 
-func _process(delta:float) -> void:
+func _physics_process(delta:float) -> void:
     var states:Dictionary = {}
     for runtime:BankRuntime in _banks.values():
         if not is_instance_valid(runtime.controller):

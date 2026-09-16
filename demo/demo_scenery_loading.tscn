@@ -17,6 +17,6 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
 
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
-filename = "td.scn"
+filename = "zwierzyniec_sm42.scn"
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]

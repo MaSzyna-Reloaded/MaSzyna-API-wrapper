@@ -374,6 +374,22 @@ func wire_get_voltage(wire_rid:RID, assumed_voltage:float, current:float) -> flo
 ## span (if any) passes above `position` within the collector's `width`,
 ## along the plane swept by the pantograph as the vehicle moves in `forward`.
 func wires_find_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> RID:
+    return _find_wire_above(position, up, forward, left, width).rid
+
+
+## Same query as wires_find_above(), but also returns the wire's height above
+## `position` (mirrors the original's own PantTraction - the raise-mechanics
+## code in RailVehicle3D needs the actual distance, not just contact/no
+## contact) as {rid: RID, height: float}. `height` is INF when no wire is
+## found - the original's own "no wire in reach" state (scene.cpp resets
+## PantTraction to DBL_MAX every scan before searching), which the raise
+## simulation relies on to keep extending the pantograph to its own joint
+## limit rather than stopping.
+func wire_find_above_with_height(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
+    return _find_wire_above(position, up, forward, left, width)
+
+
+func _find_wire_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
     var query_center:Vector2 = Vector2(position.x, position.z)
     var query_aabb:Rect2 = Rect2(query_center - Vector2.ONE * _QUERY_MARGIN, Vector2.ONE * _QUERY_MARGIN * 2.0)
     var best_rid:RID = RID()
@@ -411,4 +427,4 @@ func wires_find_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector
         if vertical < best_height:
             best_height = vertical
             best_rid = wire_rid
-    return best_rid
+    return {"rid": best_rid, "height": best_height}

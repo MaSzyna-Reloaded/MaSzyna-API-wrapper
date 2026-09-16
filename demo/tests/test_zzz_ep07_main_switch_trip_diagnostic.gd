@@ -87,7 +87,17 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
     controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
-    await wait_idle_frames(2)
+    # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
+    # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
+    # voltage instead of a fixed short wait, same as test_ep07_controller_actual_position_diagnostic
+    # below and test_zzz_ep07_pantograph_power_smoke.gd - main_switch must not be sent before
+    # EnginePowerSourceVoltage() has anything to report, since MainSwitchCheck's powerisavailable
+    # check is evaluated once at the moment of the command and silently refuses the close
+    # otherwise (it isn't retried later just because voltage shows up afterward).
+    for i in range(20):
+        await wait_seconds(0.5)
+        if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
+            break
     _dump_diagnostic_state(controller, "after pantograph")
     controller.send_command("direction_increase")
     await wait_idle_frames(2)

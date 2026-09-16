@@ -23,6 +23,19 @@ const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
 const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
 const MAX_WHEEL_AXLES:int = 20
 
+## Fixed original-engine submodel naming convention for pantograph arms
+## (DynObj.cpp's animpantrd1prefix:/rd2/rg1/rg2/sl tokens - configurable in
+## principle, but confirmed identical across every real vehicle checked,
+## e.g. dynamic/pkp/303e_v1/303e-ep-tv.mmd, dynamic/pkp/ep09_v1/104e_1.mmd,
+## dynamic/pkp/sr61_v2/sr61v1.mmd - same simplification already made above
+## for WHEEL_SUBMODEL_PREFIX). Order matches RailVehicle3D's own
+## pantograph_*_arm_paths index meaning (lower arm pair, upper arm pair,
+## slider); the trailing pantograph number (1=front, 2=rear) is appended by
+## _find_pantograph_arm_paths() below.
+const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
+    "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
+]
+
 
 ## Builds a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
 ## DynamicRailVehicle3D). Returns null if data_path/file_name are missing.
@@ -191,6 +204,29 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
             powered_wheel_paths.append(vehicle.get_path_to(wheel))
     if not powered_wheel_paths.is_empty():
         vehicle.powered_wheel_paths = powered_wheel_paths
+
+    var front_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 1)
+    if not front_arm_paths.is_empty():
+        vehicle.pantograph_front_arm_paths = front_arm_paths
+    var rear_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 2)
+    if not rear_arm_paths.is_empty():
+        vehicle.pantograph_rear_arm_paths = rear_arm_paths
+
+
+## Returns all 5 arm/slider paths for the given pantograph number (1=front,
+## 2=rear), or [] if any single one is missing - RailVehicle3D only enables
+## the raise simulation for an end with all 5 configured, so a partial match
+## is treated the same as none (matches _resolve_animation_paths()'s
+## "front and rear bogie must be set together" precedent above, per-end here).
+static func _find_pantograph_arm_paths(
+        vehicle:RailVehicle3D, submodel_index:Dictionary, pantograph_number:int) -> Array[NodePath]:
+    var paths:Array[NodePath] = []
+    for prefix:String in PANTOGRAPH_ARM_SUBMODEL_PREFIXES:
+        var node:Node3D = _find_submodel(submodel_index, ["%s%d" % [prefix, pantograph_number]])
+        if not node:
+            return []
+        paths.append(vehicle.get_path_to(node))
+    return paths
 
 
 static func _find_submodel(submodel_index:Dictionary, names:Array[String]) -> Node3D:

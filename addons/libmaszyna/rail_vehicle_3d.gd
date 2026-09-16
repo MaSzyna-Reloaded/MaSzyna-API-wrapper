@@ -81,6 +81,27 @@ const LIGHT_STATE_BINDINGS:Dictionary[String, String] = {
 ## Lateral tolerance for wire contact, mirrors TAnimPant::fWidth.
 @export var pantograph_collector_width:float = 0.5
 
+## Exterior pantograph arm submodels driving the raise/lower animation and
+## the mechanical-raise timing that gates when voltage may appear - mirrors
+## the original engine's own TAnim::smElement[0..4] (DynObj.cpp's
+## UpdatePant()): [0]/[1] are the lower arm's mirrored pair, [2]/[3] the
+## upper arm's, [4] the slider. Must be either empty or exactly 5 entries;
+## leave empty to skip raise/animation simulation for that end entirely
+## (voltage then follows the mover's is_active flag alone, today's
+## behavior, same as a vehicle with no exterior pantograph rig configured).
+@export var pantograph_front_arm_paths:Array[NodePath] = []:
+    set(x):
+        if not x == pantograph_front_arm_paths:
+            pantograph_front_arm_paths = x
+            _animation_bindings_dirty = true
+
+## Same as pantograph_front_arm_paths, for the rear pantograph.
+@export var pantograph_rear_arm_paths:Array[NodePath] = []:
+    set(x):
+        if not x == pantograph_rear_arm_paths:
+            pantograph_rear_arm_paths = x
+            _animation_bindings_dirty = true
+
 @export var start_track_name:String = "":
     set(x):
         if not x == start_track_name:
@@ -157,6 +178,12 @@ var _rear_rolling_wheel_nodes:Array[Node3D] = []
 var _node_rest_bases:Dictionary = {}
 var _bogie_rest_global_bases:Dictionary = {}
 var _bogie_configuration_warned:bool = false
+var _pantograph_front_arm_nodes:Array[Node3D] = []
+var _pantograph_rear_arm_nodes:Array[Node3D] = []
+var _pantograph_front_geometry:Dictionary = {}
+var _pantograph_rear_geometry:Dictionary = {}
+var _pantograph_front_converged:bool = true
+var _pantograph_rear_converged:bool = true
 
 
 func enter_cabin(player:MaszynaPlayer):
@@ -349,10 +376,13 @@ func _process(delta):
         if _rid.is_valid() and start_track_name and not _pending_start_track_retry:
             RailVehiclePhysicsServer.process_movement(_rid, delta)
             _update_track_transform()
+            _update_pantograph_raise_state(delta)
             _update_pantograph_power()
         elif _controller and not start_track_name:
             position += Vector3.FORWARD * delta * _controller.state.get("velocity", 0.0)
             _update_wheel_animation_state()
+            _update_pantograph_raise_state(delta)
+            _update_pantograph_power()
         if _controller:
             _sync_lights_from_controller()
 
@@ -565,6 +595,72 @@ func _capture_rest_basis(node:Node3D) -> void:
         _node_rest_bases[node] = node.transform.basis.orthonormalized()
 
 
+## Unlike _resolve_animation_nodes() above, this preserves each entry's
+## position (null where a path is empty or unresolved) since the raise
+## simulation below indexes this array positionally (0/1 lower arm, 2/3
+## upper arm, 4 slider, per DynObj.cpp's smElement[0..4]) - a compacted
+## array would silently misassign which node plays which role.
+func _resolve_pantograph_arm_nodes(paths:Array[NodePath]) -> Array[Node3D]:
+    var nodes:Array[Node3D] = []
+    if not paths.size() == 5:
+        return nodes
+    for path:NodePath in paths:
+        nodes.append(get_node_or_null(path) as Node3D if not path == NodePath("") else null)
+    return nodes
+
+
+## Derives the arm-linkage geometry the raise simulation needs (arm lengths,
+## rest angles) from the configured nodes' own rest pivots, the same
+## quantities the original engine reads from the model file itself
+## (DynObj.cpp:5210-5231) - just measured directly between the NodePath-
+## configured nodes here rather than by walking a submodel parent/child
+## chain, since this wrapper wires them independently by NodePath. Returns
+## {} when the end isn't configured (fewer than 5 nodes, any missing, or a
+## degenerate zero-length arm).
+func _cache_pantograph_geometry(nodes:Array[Node3D]) -> Dictionary:
+    if not nodes.size() == 5:
+        return {}
+    for node:Node3D in nodes:
+        if not node:
+            return {}
+
+    var lower_to_upper:Vector3 = (
+        nodes[0].global_basis.inverse() * (nodes[2].global_position - nodes[0].global_position)
+    )
+    var len_l1:float = Vector2(lower_to_upper.y, lower_to_upper.z).length()
+    var angle_l0:float = atan2(absf(lower_to_upper.z), absf(lower_to_upper.y))
+    var horiz:float = -absf(lower_to_upper.y)
+
+    var upper_to_slider:Vector3 = (
+        nodes[2].global_basis.inverse() * (nodes[4].global_position - nodes[2].global_position)
+    )
+    var len_u1:float = Vector2(upper_to_slider.y, upper_to_slider.z).length()
+    var angle_u0:float = atan2(absf(upper_to_slider.z), absf(upper_to_slider.y))
+    horiz += absf(upper_to_slider.y)
+
+    if len_l1 <= 0.0 or len_u1 <= 0.0:
+        return {}
+
+    # fHeight (DynObj.cpp:5248) is the slider mesh's own extent above its own
+    # pivot in the original - approximated here with a small fixed constant
+    # (matching AKP_4E's own hardcoded default, DynObj.cpp:81) rather than
+    # reading mesh vertex bounds, since it's a minor correction term on top
+    # of len_u1 above, not the arm's own swing geometry.
+    var height:float = 0.07
+
+    return {
+        "len_l1": len_l1,
+        "len_u1": len_u1,
+        "horiz": horiz,
+        "angle_l0": angle_l0,
+        "angle_u0": angle_u0,
+        "angle_l": angle_l0,
+        "angle_u": angle_u0,
+        "height": height,
+        "pant_wys": len_l1 * sin(angle_l0) + len_u1 * sin(angle_u0) + height,
+    }
+
+
 func _cache_animation_bindings() -> void:
     _front_bogie_node = get_node_or_null(front_bogie_path) as Node3D
     _rear_bogie_node = get_node_or_null(rear_bogie_path) as Node3D
@@ -584,6 +680,19 @@ func _cache_animation_bindings() -> void:
         _capture_rest_basis(wheel_node)
     for wheel_node:Node3D in _rear_rolling_wheel_nodes:
         _capture_rest_basis(wheel_node)
+
+    _pantograph_front_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_front_arm_paths)
+    _pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths)
+    _pantograph_front_geometry = _cache_pantograph_geometry(_pantograph_front_arm_nodes)
+    _pantograph_rear_geometry = _cache_pantograph_geometry(_pantograph_rear_arm_nodes)
+    _pantograph_front_converged = _pantograph_front_geometry.is_empty()
+    _pantograph_rear_converged = _pantograph_rear_geometry.is_empty()
+    for arm_node:Node3D in _pantograph_front_arm_nodes:
+        if arm_node:
+            _capture_rest_basis(arm_node)
+    for arm_node:Node3D in _pantograph_rear_arm_nodes:
+        if arm_node:
+            _capture_rest_basis(arm_node)
 
 
 func _apply_wheel_rotation(nodes:Array[Node3D], angle_degrees:float) -> void:
@@ -682,6 +791,23 @@ func _update_track_transform() -> void:
     _update_wheel_animation_state()
 
 
+## TODO: everything from here to the end of the file (electrical wire lookup +
+## mechanical raise simulation + arm animation) is pantograph-specific and has grown large enough
+## to justify splitting into its own module (e.g. a PantographController resource/node owned per
+## RailVehicle3D) rather than living directly on this class - not done now to keep this change
+## minimal, but flagged for the next time this area needs non-trivial work.
+##
+## Shared body-frame axes for the pantograph wire lookup, used by both the
+## electrical (_update_pantograph_power) and mechanical-raise
+## (_update_pantograph_raise_state) code below.
+func _pantograph_frame_axes() -> Dictionary:
+    return {
+        "forward": -global_transform.basis.z,
+        "up": global_transform.basis.y,
+        "left": -global_transform.basis.x,
+    }
+
+
 ## Finds which traction wire (if any) is above each raised pantograph and feeds its voltage
 ## into the mover - port of the original engine's per-vehicle update_traction() call
 ## (DynObj.cpp:8190), which this wrapper never had until now (see TractionPowerServer).
@@ -689,18 +815,24 @@ func _update_pantograph_power() -> void:
     if not _electric_engine or not _controller:
         return
 
-    var forward:Vector3 = -global_transform.basis.z
-    var up:Vector3 = global_transform.basis.y
-    var left:Vector3 = -global_transform.basis.x
+    var axes:Dictionary = _pantograph_frame_axes()
     var assumed_voltage:float = max(
         absf(_controller.state.get("current_collector/pantograph_first_voltage", 0.0)),
         absf(_controller.state.get("current_collector/pantograph_second_voltage", 0.0)),
     )
 
-    # Gated purely on the mover's own raised/lowered flag - a vehicle with no pantograph never
-    # reports these as true, so there's no separate "is this vehicle even electric" check needed.
-    var front_active:bool = _controller.state.get("current_collector/pantograph_first_active", false)
-    var rear_active:bool = _controller.state.get("current_collector/pantograph_second_active", false)
+    # Gated on the mover's own raised/lowered flag AND (when this end has an arm rig configured)
+    # the mechanical raise having actually finished - DynObj.cpp:3660/3703's "PantDiff < 0.01"
+    # tolerance, ported in _update_pantograph_raise_state(). A vehicle with no pantograph never
+    # reports is_active true, so there's no separate "is this vehicle even electric" check needed.
+    var front_active:bool = (
+        _controller.state.get("current_collector/pantograph_first_active", false)
+        and _pantograph_front_converged
+    )
+    var rear_active:bool = (
+        _controller.state.get("current_collector/pantograph_second_active", false)
+        and _pantograph_rear_converged
+    )
     var active_count:int = int(front_active) + int(rear_active)
     var current_per_pantograph:float = (
         _controller.state.get("current0", 0.0) / active_count if active_count > 0 else 0.0
@@ -710,7 +842,7 @@ func _update_pantograph_power() -> void:
         "set_pantograph_wire_voltage",
         TrainElectricEngine.PANTOGRAPH_FIRST,
         (
-            _pantograph_wire_voltage(pantograph_front_offset, forward, up, left, assumed_voltage, current_per_pantograph)
+            _pantograph_wire_voltage(pantograph_front_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
             if front_active else 0.0
         ),
     )
@@ -718,7 +850,7 @@ func _update_pantograph_power() -> void:
         "set_pantograph_wire_voltage",
         TrainElectricEngine.PANTOGRAPH_SECOND,
         (
-            _pantograph_wire_voltage(pantograph_rear_offset, forward, up, left, assumed_voltage, current_per_pantograph)
+            _pantograph_wire_voltage(pantograph_rear_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
             if rear_active else 0.0
         ),
     )
@@ -734,3 +866,109 @@ func _pantograph_wire_voltage(
     if not wire_rid.is_valid():
         return 0.0
     return TractionPowerServer.wire_get_voltage(wire_rid, assumed_voltage, current)
+
+
+## Mechanical raise simulation - port of the pressure-gated arm angle
+## integration in DynObj.cpp's TDynamicObject::Update() (lines 3648-3799),
+## which the vendored Mover has no equivalent of (that logic lives in
+## DynObj.cpp, which this repo deliberately does not vendor - see
+## feedback_vendoring_scope). Drives both the exterior arm animation and,
+## via _pantograph_front_converged/_rear_converged, whether
+## _update_pantograph_power() above is allowed to energize the pantograph -
+## the fix for voltage otherwise appearing the instant "P" is pressed.
+func _update_pantograph_raise_state(delta:float) -> void:
+    if not _controller:
+        return
+
+    _pantograph_front_converged = _update_pantograph_arm(
+        _pantograph_front_geometry,
+        _pantograph_front_arm_nodes,
+        _controller.state.get("current_collector/pantograph_first_active", false),
+        delta,
+    )
+    if not _pantograph_front_geometry.is_empty():
+        _apply_pantograph_animation(_pantograph_front_arm_nodes, _pantograph_front_geometry)
+
+    _pantograph_rear_converged = _update_pantograph_arm(
+        _pantograph_rear_geometry,
+        _pantograph_rear_arm_nodes,
+        _controller.state.get("current_collector/pantograph_second_active", false),
+        delta,
+    )
+    if not _pantograph_rear_geometry.is_empty():
+        _apply_pantograph_animation(_pantograph_rear_arm_nodes, _pantograph_rear_geometry)
+
+
+## Integrates one pantograph end's arm angle in place (geometry is a
+## Dictionary, passed by reference) and returns whether it's raised AND has
+## actually reached the overhead wire - an unconfigured end (empty
+## geometry) always reports converged, preserving today's is_active-only
+## gating for vehicles with no arm rig set up.
+func _update_pantograph_arm(geometry:Dictionary, arm_nodes:Array[Node3D], is_active:bool, delta:float) -> bool:
+    if geometry.is_empty():
+        return true
+
+    var pant_press:float = float(_controller.state.get("current_collector/pantograph_tank_pressure", 0.0))
+    var power_available:bool = (
+        bool(_controller.state.get("power24_available", false))
+        or bool(_controller.state.get("power110_available", false))
+    )
+    var is_ezt:bool = (_controller.train_type & TrainController.TRAIN_TYPE_EZT) == TrainController.TRAIN_TYPE_EZT
+    var pressure_threshold:float = 2.45 if is_ezt else 3.45
+
+    # DynObj.cpp:3743-3752 - the compressor must have built up enough pressure (and control power
+    # must be up) before the arm can move at all; this is the actual multi-second delay.
+    var pantspeedfactor:float = 0.0
+    if pant_press > pressure_threshold and power_available:
+        pantspeedfactor = maxf(0.0, 0.015 * pant_press * delta)
+
+    var axes:Dictionary = _pantograph_frame_axes()
+    # The lower arm's own real pivot (nodes[0]) - not pantograph_front_offset/_rear_offset, which
+    # default to Vector3.ZERO and are never configured for dynamically-spawned vehicles (see
+    # project_traction_power_layer memory) - is the physically correct roof-height reference for
+    # "how far above the pantograph is the wire". Using the vehicle-origin-relative offset instead
+    # measured a wildly exaggerated height, driving the arm to swing all the way to its joint
+    # limit trying to reach an unreachable target (confirmed live: the pantograph fully extended
+    # into a vertical mast instead of a normal scissor raise).
+    var contact_point:Vector3 = arm_nodes[0].global_position
+    var wire:Dictionary = TractionPowerServer.wire_find_above_with_height(
+        contact_point, axes.up, axes.forward, axes.left, pantograph_collector_width
+    )
+    # wire.height is INF when no wire is found - the arm then keeps rising, capped only by its
+    # own joint limit below, matching scene.cpp:1069's per-scan PantTraction=DBL_MAX reset.
+    var pant_diff:float = float(wire.height) - float(geometry.pant_wys)
+
+    var k:float = geometry.angle_l
+    if pantspeedfactor > 0.0 and is_active:
+        if pant_diff > 0.001:
+            k += minf(pantspeedfactor, 0.55 * pant_diff)
+        elif pant_diff < -0.001:
+            k += 0.4 * pant_diff
+    else:
+        if k > geometry.angle_l0:
+            k -= 0.15 * delta
+        if k < geometry.angle_l0:
+            k = geometry.angle_l0
+
+    if not is_equal_approx(k, geometry.angle_l):
+        var angle_u:float = acos((geometry.len_l1 * cos(k) + geometry.horiz) / geometry.len_u1)
+        if k + angle_u < PI:
+            geometry.angle_l = k
+            geometry.angle_u = angle_u
+            geometry.pant_wys = geometry.len_l1 * sin(k) + geometry.len_u1 * sin(angle_u) + geometry.height
+
+    return is_active and pant_diff < 0.01
+
+
+## Exact port of TDynamicObject::UpdatePant() (DynObj.cpp:576-590): each
+## mirrored arm half rotates the same magnitude about the opposite local X
+## direction to stay visually symmetric.
+func _apply_pantograph_animation(nodes:Array[Node3D], geometry:Dictionary) -> void:
+    var a_deg:float = rad_to_deg(geometry.angle_l - geometry.angle_l0)
+    var b_deg:float = rad_to_deg(geometry.angle_u - geometry.angle_u0)
+    var c_deg:float = a_deg + b_deg
+    _apply_wheel_rotation([nodes[0]], -a_deg)
+    _apply_wheel_rotation([nodes[1]], a_deg)
+    _apply_wheel_rotation([nodes[2]], c_deg)
+    _apply_wheel_rotation([nodes[3]], -c_deg)
+    _apply_wheel_rotation([nodes[4]], -b_deg)

@@ -45,18 +45,24 @@ func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
     if not controller:
         return
 
-    # Only the commands the real cabin's battery_sw/pantfront_sw switches actually send - no
-    # separate master pantograph-valve command, since this vehicle's cabin has no such switch
-    # (confirmed against its .mmd) and nothing in this wrapper sends one via keybind either. If
-    # this ever needs a third command again, that's a real regression, not a missing test setup
-    # step - see TrainElectricEngine::pantograph()'s own comment for why it's self-contained.
+    # Same startup sequence a real driver uses on a cold EP07: battery, then the (main) compressor
+    # to actually build air pressure - PantPress mirrors ScndPipePress (Mover.cpp's
+    # UpdatePantVolume, bPantKurek3 branch), so without this the reservoir never fills and the
+    # pantograph raise simulation added in RailVehicle3D._update_pantograph_raise_state() would
+    # never see enough pressure to move at all, regardless of "pantograph" being sent. No separate
+    # master pantograph-valve command - this vehicle's cabin has no such switch (confirmed against
+    # its .mmd) and nothing in this wrapper sends one via keybind either. If this ever needs a
+    # fourth command again, that's a real regression, not a missing test setup step - see
+    # TrainElectricEngine::pantograph()'s own comment for why it's otherwise self-contained.
     controller.send_command("battery", true)
+    await wait_seconds(0.5)
+    controller.send_command("compressor", true)
     await wait_seconds(0.5)
     controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
 
     var voltage:float = 0.0
     var active:bool = false
-    for i in range(20):
+    for i in range(60):
         await wait_seconds(0.5)
         active = controller.state.get("current_collector/pantograph_first_active", false)
         voltage = controller.state.get("current_collector/pantograph_first_voltage", 0.0)

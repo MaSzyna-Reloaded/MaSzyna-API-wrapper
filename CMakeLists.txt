@@ -2,6 +2,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 3.17)
 SET(CMAKE_CXX_STANDARD 17)
 SET(CMAKE_CXX_EXTENSIONS ON)
 SET(CMAKE_COLOR_DIAGNOSTICS ON)
+set(GODOTCPP_PRECISION "double" CACHE STRING "" FORCE)
+set(
+    GODOTCPP_CUSTOM_API_FILE
+    "${CMAKE_SOURCE_DIR}/extension_api.json"
+    CACHE FILEPATH "" FORCE
+)
 OPTION(LIBMASZYNA_DEBUG "If the build should contain custom library logger" OFF)
 # Do not hard‑force a generator; allow users to select one suitable for cross‑compiling.
 # Silence unused variable warning when specified from toolchain

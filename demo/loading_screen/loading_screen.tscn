@@ -40,8 +40,8 @@ tracks/0/path = NodePath("VBoxContainer:visible")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 1,
 "values": [true]
 }
@@ -52,8 +52,8 @@ tracks/1/path = NodePath(".:visible")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 1,
 "values": [true]
 }
@@ -64,8 +64,8 @@ tracks/2/path = NodePath("Black:color")
 tracks/2/interp = 1
 tracks/2/loop_wrap = true
 tracks/2/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 0,
 "values": [Color(0, 0, 0, 0)]
 }
@@ -76,8 +76,8 @@ tracks/3/path = NodePath("Background:visible")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 1,
 "values": [true]
 }
@@ -88,8 +88,8 @@ tracks/4/path = NodePath("Background:modulate")
 tracks/4/interp = 1
 tracks/4/loop_wrap = true
 tracks/4/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 0,
 "values": [Color(0.991164, 0.991164, 0.991164, 1)]
 }
@@ -100,8 +100,8 @@ tracks/5/path = NodePath("VBoxContainer/MarginContainer/VBoxContainer:modulate")
 tracks/5/interp = 1
 tracks/5/loop_wrap = true
 tracks/5/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 0,
 "values": [Color(1, 1, 1, 1)]
 }
@@ -112,8 +112,8 @@ tracks/6/path = NodePath("VBoxContainer/MarginContainer/VBoxContainer:visible")
 tracks/6/interp = 1
 tracks/6/loop_wrap = true
 tracks/6/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 1,
 "values": [true]
 }
@@ -128,8 +128,8 @@ tracks/0/path = NodePath("VBoxContainer:visible")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0.7, 1.7),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0.7, 1.7),
+"transitions": PackedFloat64Array(1, 1),
 "update": 1,
 "values": [true, false]
 }
@@ -140,8 +140,8 @@ tracks/1/path = NodePath(".:visible")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0.7, 2.7),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0.7, 2.7),
+"transitions": PackedFloat64Array(1, 1),
 "update": 1,
 "values": [true, false]
 }
@@ -152,8 +152,8 @@ tracks/2/path = NodePath("Background:visible")
 tracks/2/interp = 1
 tracks/2/loop_wrap = true
 tracks/2/keys = {
-"times": PackedFloat32Array(0.7, 1.7),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0.7, 1.7),
+"transitions": PackedFloat64Array(1, 1),
 "update": 1,
 "values": [true, false]
 }
@@ -164,8 +164,8 @@ tracks/3/path = NodePath("Black:color")
 tracks/3/interp = 1
 tracks/3/loop_wrap = true
 tracks/3/keys = {
-"times": PackedFloat32Array(0.7, 1.7, 2.7),
-"transitions": PackedFloat32Array(1, 1, 1),
+"times": PackedFloat64Array(0.7, 1.7, 2.7),
+"transitions": PackedFloat64Array(1, 1, 1),
 "update": 0,
 "values": [Color(0, 0, 0, 0), Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
 }
@@ -176,8 +176,8 @@ tracks/4/path = NodePath("VBoxContainer/MarginContainer/VBoxContainer:modulate")
 tracks/4/interp = 1
 tracks/4/loop_wrap = true
 tracks/4/keys = {
-"times": PackedFloat32Array(0, 0.333333),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0, 0.333333),
+"transitions": PackedFloat64Array(1, 1),
 "update": 1,
 "values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
 }
@@ -188,8 +188,8 @@ tracks/5/path = NodePath("VBoxContainer/MarginContainer/VBoxContainer:visible")
 tracks/5/interp = 1
 tracks/5/loop_wrap = true
 tracks/5/keys = {
-"times": PackedFloat32Array(0),
-"transitions": PackedFloat32Array(1),
+"times": PackedFloat64Array(0),
+"transitions": PackedFloat64Array(1),
 "update": 1,
 "values": [true]
 }
@@ -204,8 +204,8 @@ tracks/0/path = NodePath("Black:color")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
 tracks/0/keys = {
-"times": PackedFloat32Array(0, 1),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0, 1),
+"transitions": PackedFloat64Array(1, 1),
 "update": 0,
 "values": [Color(0, 0, 0, 1), Color(0, 0, 0, 0)]
 }
@@ -216,8 +216,8 @@ tracks/1/path = NodePath("VBoxContainer/MarginContainer/VBoxContainer:modulate")
 tracks/1/interp = 1
 tracks/1/loop_wrap = true
 tracks/1/keys = {
-"times": PackedFloat32Array(0, 1.5),
-"transitions": PackedFloat32Array(1, 1),
+"times": PackedFloat64Array(0, 1.5),
+"transitions": PackedFloat64Array(1, 1),
 "update": 1,
 "values": [Color(1, 1, 1, 0), Color(1, 1, 1, 1)]
 }

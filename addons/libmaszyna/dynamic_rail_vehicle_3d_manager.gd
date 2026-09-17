@@ -32,8 +32,8 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # for FIZ `include`s.
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
-    # Invalidate templates that reference the former RailVehicle3D GDScript resource.
-    return ("structure-v3:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # Invalidate templates created before vehicle SFX players received 16 voices.
+    return ("structure-v4:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

@@ -41,6 +41,7 @@ func test_cached_vehicles_have_independent_registered_sound_pools() -> void:
         assert_eq(TrainSoundSystem._banks.size(), initial_banks + 2 * (index + 1))
         for player_name:String in ["ExteriorSfxPlayer3D", "CabinSfxPlayer3D"]:
             var player:SfxPlayer3D = vehicle.get_node(player_name)
+            assert_eq(player.max_tracks, 16)
             assert_eq(player.get_child_count(), 0, "runtime voices should be allocated lazily")
             var registration:Variant = TrainSoundSystem._banks[player.get_instance_id()]
             assert_same(registration.vehicle, vehicle)

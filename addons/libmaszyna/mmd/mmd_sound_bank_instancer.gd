@@ -5,7 +5,7 @@ const _INTERNAL_BRAKE_LABELS:Array[String] = [
     "brakesound", "airsound", "airsound2", "airsound3", "airsound4", "airsound5",
     "localbrakesound", "localbrakesound2",
 ]
-const _PLAYER_VOICE_COUNT_SETTING:StringName = &"gnd_sfx/max_tracks"
+const _VEHICLE_PLAYER_VOICE_COUNT:int = 16
 const _HORN_LABELS:Array[String] = ["horn1", "horn2", "horn3"]
 const _HORN_RANGE_UNIT_DIVISOR:float = 24.0
 const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
@@ -79,7 +79,7 @@ static func _build_player(
     var player := SfxPlayer3D.new()
     player.name = player_name
     player.bank = bank
-    player.max_tracks = int(ProjectSettings.get_setting(_PLAYER_VOICE_COUNT_SETTING, 4))
+    player.max_tracks = _VEHICLE_PLAYER_VOICE_COUNT
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
     player.max_distance = 100.0

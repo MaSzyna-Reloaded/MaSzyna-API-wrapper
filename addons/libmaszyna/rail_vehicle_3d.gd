@@ -312,7 +312,7 @@ func _on_controller_changed(controller:TrainController) -> void:
     if _controller:
         _controller.roof_light_changed.connect(_on_roof_light_changed)
         var electric_engines:Array = _controller.find_children("*", "TrainElectricEngine", true, false)
-        if not electric_engines.is_empty():
+        if electric_engines:
             _electric_engine = electric_engines[0]
     if _rid.is_valid():
         RailVehiclePhysicsServer.vehicle_bind_controller(
@@ -717,8 +717,8 @@ func _cache_animation_bindings() -> void:
     _pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths)
     _pantograph_front_geometry = _cache_pantograph_geometry(_pantograph_front_arm_nodes)
     _pantograph_rear_geometry = _cache_pantograph_geometry(_pantograph_rear_arm_nodes)
-    _pantograph_front_converged = _pantograph_front_geometry.is_empty()
-    _pantograph_rear_converged = _pantograph_rear_geometry.is_empty()
+    _pantograph_front_converged = not _pantograph_front_geometry
+    _pantograph_rear_converged = not _pantograph_rear_geometry
     for arm_node:Node3D in _pantograph_front_arm_nodes:
         if arm_node:
             _capture_rest_basis(arm_node)
@@ -927,7 +927,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
         _controller.state.get("current_collector/pantograph_first_active", false),
         delta,
     )
-    if _is_visible and not _pantograph_front_geometry.is_empty():
+    if _is_visible and _pantograph_front_geometry:
         _apply_pantograph_animation(_pantograph_front_arm_nodes, _pantograph_front_geometry)
 
     _pantograph_rear_converged = _update_pantograph_arm(
@@ -936,7 +936,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
         _controller.state.get("current_collector/pantograph_second_active", false),
         delta,
     )
-    if _is_visible and not _pantograph_rear_geometry.is_empty():
+    if _is_visible and _pantograph_rear_geometry:
         _apply_pantograph_animation(_pantograph_rear_arm_nodes, _pantograph_rear_geometry)
 
 
@@ -946,7 +946,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
 ## geometry) always reports converged, preserving today's is_active-only
 ## gating for vehicles with no arm rig set up.
 func _update_pantograph_arm(geometry:Dictionary, arm_nodes:Array[Node3D], is_active:bool, delta:float) -> bool:
-    if geometry.is_empty():
+    if not geometry:
         return true
 
     var pant_press:float = float(_controller.state.get("current_collector/pantograph_tank_pressure", 0.0))

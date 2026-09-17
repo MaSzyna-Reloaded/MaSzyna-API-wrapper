@@ -153,9 +153,9 @@ func end_table(context: FizImportContext) -> void:
         _relay_rows = []
         _motor_param_rows = []
         return
-    if not _relay_rows.is_empty():
+    if _relay_rows:
         node.relay_list = _relay_rows
-    if not _motor_param_rows.is_empty():
+    if _motor_param_rows:
         node.motor_param_table = _motor_param_rows
     _relay_rows = []
     _motor_param_rows = []

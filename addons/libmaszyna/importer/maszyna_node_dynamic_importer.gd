@@ -88,7 +88,7 @@ func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImpor
 
     while not parser.eof_reached():
         var token:String = parser.next_token()
-        if token.is_empty():
+        if not token:
             break
 
         var lower_token:String = token.to_lower()
@@ -113,7 +113,7 @@ func _read_length_from_fiz_file(abs_path:String, depth:int, context:MaszynaImpor
 func _read_dimensions_length(parser:MaszynaParser) -> float:
     while not parser.eof_reached():
         var token:String = parser.next_token()
-        if token.is_empty() or not token.contains("="):
+        if not token or not token.contains("="):
             break
         if token.to_lower().begins_with("l="):
             return token.substr(2).to_float()

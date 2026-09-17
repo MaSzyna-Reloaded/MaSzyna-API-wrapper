@@ -52,7 +52,7 @@ func test_bound_properties_use_canonical_names_and_accessors() -> void:
             var property_name: StringName = StringName(property["name"])
             var setter: StringName = ClassDB.class_get_property_setter(bound_class, property_name)
             var getter: StringName = ClassDB.class_get_property_getter(bound_class, property_name)
-            if setter.is_empty() or getter.is_empty():
+            if not setter or not getter:
                 continue
 
             assert_false(String(property_name).contains("/"), "%s.%s contains a slash" % [bound_class, property_name])

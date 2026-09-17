@@ -140,8 +140,8 @@ func end_table(context: FizImportContext) -> void:
         return
 
     if _active_table == "ff":
-        if not _wwlist_rows.is_empty():
-            if not node.wwlist.is_empty():
+        if _wwlist_rows:
+            if node.wwlist:
                 # first-write-wins: ffList:/ffBrakeList: target the same DElist-backed
                 # property - whichever of the two appeared first in the file keeps it.
                 push_warning(
@@ -150,7 +150,7 @@ func end_table(context: FizImportContext) -> void:
             else:
                 node.wwlist = _wwlist_rows
     elif _active_table == "PmaxList":
-        if not _max_power_rows.is_empty():
+        if _max_power_rows:
             node.max_power_table = _max_power_rows
 
     _wwlist_rows = []

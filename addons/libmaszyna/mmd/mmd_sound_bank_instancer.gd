@@ -154,7 +154,7 @@ static func _merge_ignition_and_shutdown_into_engine(
     if not engine:
         return
     for definition:MmdSoundSourceDefinition in internal_data:
-        if definition.label == "ignition" and engine.sound_begin.is_empty():
+        if definition.label == "ignition" and not engine.sound_begin:
             engine.sound_begin = definition.sound_main
-        elif definition.label == "shutdown" and engine.sound_end.is_empty():
+        elif definition.label == "shutdown" and not engine.sound_end:
             engine.sound_end = definition.sound_main

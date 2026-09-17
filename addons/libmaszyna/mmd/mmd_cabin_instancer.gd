@@ -108,7 +108,7 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                         _parse_indicator(tokens, i, descriptor, context, abs_mmd_path) if descriptor.label.begins_with("i-")
                         else _parse_instrument(tokens, i, descriptor, context, abs_mmd_path))
                 i += consumed
-                if not descriptor.submodel_name.is_empty():
+                if descriptor.submodel_name:
                     instruments.append(descriptor)
 
     var definition := MmdCabinDefinition.new()
@@ -146,7 +146,7 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
 ## Falls back to `relpath` unchanged if no case-insensitive match exists either - the caller's
 ## own MMD_MODEL_NOT_FOUND still fires in that case.
 static func resolve_model_case(data_path:String, relpath:String) -> String:
-    if relpath.is_empty():
+    if not relpath:
         return relpath
     var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(data_path)
     if FileAccess.file_exists(base_dir.path_join(relpath + ".e3d")):
@@ -161,7 +161,7 @@ static func resolve_model_case(data_path:String, relpath:String) -> String:
     var wanted:String = (file_part + ".e3d").to_lower()
     dir_access.list_dir_begin()
     var entry:String = dir_access.get_next()
-    while not entry.is_empty():
+    while entry:
         if not dir_access.current_is_dir() and entry.to_lower() == wanted:
             dir_access.list_dir_end()
             return dir_part.path_join(entry.substr(0, entry.length() - 4)) # strip ".e3d"
@@ -174,7 +174,7 @@ static func resolve_model_case(data_path:String, relpath:String) -> String:
 ## "<skin>,1.mat" and, if present, maps consecutive numbered materials directly to slots 0-3.
 ## The unnumbered "<skin>.mat" is only the fallback for a single-material model.
 static func resolve_skins(data_path:String, skin:String) -> Array:
-    if skin.is_empty():
+    if not skin:
         return [skin]
     if skin.contains("|"):
         return Array(skin.split("|", false, 4))
@@ -184,7 +184,7 @@ static func resolve_skins(data_path:String, skin:String) -> Array:
     while n <= 4 and FileAccess.file_exists(base_dir.path_join("%s,%d.mat" % [skin, n])):
         skins.append("%s,%d" % [skin, n])
         n += 1
-    return skins if not skins.is_empty() else [skin]
+    return skins if skins else [skin]
 
 
 ## Reads just the exterior body model filename from the MMD's own top-level `models:` section
@@ -244,7 +244,7 @@ static func parse_passengers_model(abs_mmd_path:String) -> String:
 static func build_into(
         generated_root:Node3D, definition:MmdCabinDefinition, controller:TrainController,
         data_path:String, skin:String, diagnostics:Array[Dictionary]) -> void:
-    if definition.model_relpath.is_empty():
+    if not definition.model_relpath:
         diagnostics.append(_diag("error", "MMD_MODEL_NOT_FOUND", "Cab %d has no model (model: none)" % definition.cab_number, definition.cab_number))
         return
 
@@ -450,7 +450,7 @@ static func _parse_sound_position_label(label:String) -> Variant:
     if not label.begins_with("sound") or not label.ends_with(":"):
         return null
     var middle:String = label.substr(5, label.length() - 6)
-    if middle.is_empty() or not middle.is_valid_int():
+    if not middle or not middle.is_valid_int():
         return null
     return int(middle)
 
@@ -474,7 +474,7 @@ static func _read_sound_field_value(
             j += 1
         if j < tokens.size():
             j += 1 # consume "]"
-        if candidates.is_empty():
+        if not candidates:
             return {"value": "", "consumed": j - i}
         var choice_key:String = "%s#%s#%s" % [source_file, field_key, "|".join(candidates)]
         if not context.random_choices.has(choice_key):
@@ -504,7 +504,7 @@ static func _read_sound_field_value(
 ## Strips a trailing ".wav"/".ogg" - everything else (including a "[NNNN]" numeric prefix, which
 ## is confirmed to be part of the literal filename on disk) is kept verbatim.
 static func _normalize_sound_filename(token:String) -> String:
-    if token.is_empty():
+    if not token:
         return ""
     var lower:String = token.to_lower()
     if lower.ends_with(".wav") or lower.ends_with(".ogg"):
@@ -521,7 +521,7 @@ static func _normalize_sound_filename(token:String) -> String:
 ## "#" with no space (e.g. "main/(p1).t3d#") - strip it before touching the extension, or the
 ## ".t3d"/".e3d" suffix check below never matches and the resolved path is left corrupted.
 static func _resolve_model_relpath(model_token:String) -> String:
-    if model_token.is_empty() or model_token.to_lower() == "none":
+    if not model_token or model_token.to_lower() == "none":
         return ""
     var normalized:String = model_token.replace("\\", "/")
     if normalized.ends_with("#"):
@@ -566,7 +566,7 @@ static func _resolve_force_alpha_submodel_paths(
             continue
         for suffix:String in ["_on", "_off"]:
             var path:NodePath = path_index.get((descriptor.submodel_name + suffix).to_lower(), NodePath(""))
-            if not path.is_empty():
+            if path:
                 paths.append(path)
     return paths
 
@@ -598,7 +598,7 @@ static func _index_submodel_paths(submodels:Array, index:Dictionary, path_prefix
 ## submodel names happen to match MMD's declared case exactly ("nastawnik"/"zasadniczy"), but
 ## su45_v2/kabina-su45-a.e3d's brake gauge submodels are actually "przglknob06"/"przglknob05"
 ## while 301d.mmd declares them "PrzGlKnob06"/"PrzGlKnob05" - a case-sensitive lookup silently
-## fails to bind these, leaving those gauges dead with no diagnostic (matches.is_empty() still
+## fails to bind these, leaving those gauges dead with no diagnostic (not matches still
 ## fires correctly, but only after realizing the exact-case assumption was wrong).
 static func _index_submodels(node:Node, index:Dictionary) -> void:
     for child:Node in node.get_children(true):
@@ -651,7 +651,7 @@ static func _apply_sound(widget:Node, descriptor:MmdInstrumentDescriptor) -> voi
             widget.set("sound_increase_stream", _build_audio_stream(descriptor.sound_increase))
         if descriptor.sound_decrease:
             widget.set("sound_decrease_stream", _build_audio_stream(descriptor.sound_decrease))
-        if not descriptor.sound_positions.is_empty():
+        if descriptor.sound_positions:
             var positive:Array[AudioStream] = []
             var negative:Array[AudioStream] = []
             for position:int in descriptor.sound_positions:
@@ -667,14 +667,14 @@ static func _apply_sound(widget:Node, descriptor:MmdInstrumentDescriptor) -> voi
                     while negative.size() <= idx:
                         negative.append(null)
                     negative[idx] = stream
-            if not positive.is_empty():
+            if positive:
                 widget.set("sound_override", positive)
-            if not negative.is_empty():
+            if negative:
                 widget.set("sound_override_negative", negative)
 
 
 static func _build_audio_stream(filename:String) -> AudioStream:
-    if filename.is_empty():
+    if not filename:
         return null
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
@@ -783,7 +783,7 @@ static func _wire_mesh_path(
     var matches:Array = submodel_index.get(descriptor.submodel_name.to_lower(), [])
     if matches.size() == 1:
         widget.set(mesh_path_field, widget.get_path_to(matches[0]))
-    elif matches.is_empty():
+    elif not matches:
         diagnostics.append(_diag(
                 "warning", "MMD_SUBMODEL_NOT_FOUND",
                 "Submodel '%s' not found (label '%s')" % [descriptor.submodel_name, descriptor.label],
@@ -920,14 +920,14 @@ static func _tokenize_file(abs_path:String, context:MmdImportContext, parameters
 
     var p := MaszynaParser.new()
     p.initialize(buffer)
-    if not parameters.is_empty():
+    if parameters:
         p.set_parameters(parameters)
 
     var dir:String = abs_path.get_base_dir()
     var tokens:Array[String] = []
     while not p.eof_reached():
         var token:String = p.next_token()
-        if token.is_empty():
+        if not token:
             continue
         # ":" is not a MaszynaParser stop char, so a label glued directly to its first value with
         # no space (real data: "radiostop_sw:radiostop") comes back as one token - split it into
@@ -955,18 +955,18 @@ static func _handle_include(p:MaszynaParser, dir:String, context:MmdImportContex
 
     if is_random:
         var t:String = p.next_token()
-        while not t.is_empty() and t != _RANDOM_INCLUDE_CLOSE:
+        while t and t != _RANDOM_INCLUDE_CLOSE:
             candidates.append(t)
             t = p.next_token()
 
     var params:Array[String] = []
     var t2:String = p.next_token()
-    while not t2.is_empty() and t2.to_lower() != _INCLUDE_END_KEYWORD:
+    while t2 and t2.to_lower() != _INCLUDE_END_KEYWORD:
         params.append(t2)
         t2 = p.next_token()
 
     if is_random:
-        if candidates.is_empty():
+        if not candidates:
             context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "Empty random include list", current_file)
             return []
         # Keyed by the include site's own content (not call order), so a later re-parse of the
@@ -976,7 +976,7 @@ static func _handle_include(p:MaszynaParser, dir:String, context:MmdImportContex
             context.random_choices[choice_key] = candidates[randi() % candidates.size()]
         include_filename = context.random_choices[choice_key]
 
-    if include_filename.is_empty():
+    if not include_filename:
         context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "Empty include filename", current_file)
         return []
 

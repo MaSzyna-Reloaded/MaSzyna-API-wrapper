@@ -31,7 +31,7 @@ func _find_parent_fiz(node: Node):
 ## by walking up the tree like a hand-authored RailVehicle3D scene.
 func _find_child_fiz(node: Node) -> FIZTrainController:
     var found:Array = node.find_children("", "FIZTrainController", true, false)
-    return found[0] as FIZTrainController if not found.is_empty() else null
+    return found[0] as FIZTrainController if found else null
 
 
 func _on_selection_changed():

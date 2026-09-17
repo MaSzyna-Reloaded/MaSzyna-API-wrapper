@@ -17,6 +17,7 @@ Code generation:
 * GDSCRIPT: do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
 * do not useset/get/has_meta for accessing/saving/loading node state
+* GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
 
 General guidelines:
 

@@ -202,14 +202,14 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
         var wheel:Node3D = _find_submodel(submodel_index, ["%s%d" % [WHEEL_SUBMODEL_PREFIX, axle_index]])
         if wheel:
             powered_wheel_paths.append(vehicle.get_path_to(wheel))
-    if not powered_wheel_paths.is_empty():
+    if powered_wheel_paths:
         vehicle.powered_wheel_paths = powered_wheel_paths
 
     var front_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 1)
-    if not front_arm_paths.is_empty():
+    if front_arm_paths:
         vehicle.pantograph_front_arm_paths = front_arm_paths
     var rear_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 2)
-    if not rear_arm_paths.is_empty():
+    if rear_arm_paths:
         vehicle.pantograph_rear_arm_paths = rear_arm_paths
 
 

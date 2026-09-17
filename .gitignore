@@ -41,6 +41,8 @@ Info.plist
 # Vendor and generated files
 /docs/vendor
 /vendor
+# Dumped from a double-precision Godot by CMakeLists.txt on the first configure
+/extension_api.json
 
 # Virtual environments
 /venv/

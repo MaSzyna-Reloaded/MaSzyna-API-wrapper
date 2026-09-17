@@ -17,7 +17,8 @@ ensure_compile_commands() {
         cmake --log-level=ERROR -S "${ROOT_DIR}" -B "${CLANG_TIDY_BUILD_DIR}" \
             -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DLIBMASZYNA_STYLE_CHECK=ON
         cmake --build "${CLANG_TIDY_BUILD_DIR}" --target generate_bindings
     fi
 }

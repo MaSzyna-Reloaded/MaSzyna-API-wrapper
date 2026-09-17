@@ -193,6 +193,8 @@ var _pantograph_front_geometry:Dictionary = {}
 var _pantograph_rear_geometry:Dictionary = {}
 var _pantograph_front_converged:bool = true
 var _pantograph_rear_converged:bool = true
+var _pantograph_wire_cache:Array[Dictionary] = [{}, {}, {}, {}]
+const _PANTOGRAPH_CACHE_DISTANCE:float = 5.0
 
 
 func enter_cabin(player:MaszynaPlayer):
@@ -309,6 +311,7 @@ func _on_controller_changed(controller:TrainController) -> void:
         _controller.roof_light_changed.disconnect(_on_roof_light_changed)
     _controller = controller
     _electric_engine = null
+    _pantograph_wire_cache = [{}, {}, {}, {}]
     if _controller:
         _controller.roof_light_changed.connect(_on_roof_light_changed)
         var electric_engines:Array = _controller.find_children("*", "TrainElectricEngine", true, false)
@@ -384,17 +387,21 @@ func _process(delta):
 
     if not Engine.is_editor_hint():
         if _rid.is_valid() and start_track_name and not _pending_start_track_retry:
-            RailVehiclePhysicsServer.process_movement(_rid, delta)
-            _update_track_transform()
-            _update_pantograph_raise_state(delta)
-            _update_pantograph_power()
+            var velocity:float = float(_controller.state.get("velocity", 0.0)) if _controller else 0.0
+            if not is_zero_approx(velocity):
+                RailVehiclePhysicsServer.process_movement(_rid, delta)
+                _update_track_transform()
+            if _electric_engine:
+                _update_pantograph_raise_state(delta)
+                _update_pantograph_power()
         elif _controller and not start_track_name:
             var velocity:float = _controller.state.get("velocity", 0.0)
             position += Vector3.FORWARD * delta * velocity
             if _is_visible and not is_zero_approx(velocity):
                 _update_wheel_animation_state()
-            _update_pantograph_raise_state(delta)
-            _update_pantograph_power()
+            if _electric_engine:
+                _update_pantograph_raise_state(delta)
+                _update_pantograph_power()
         if _controller:
             _sync_lights_from_controller()
 
@@ -853,7 +860,7 @@ func _pantograph_frame_axes() -> Dictionary:
 ## into the mover - port of the original engine's per-vehicle update_traction() call
 ## (DynObj.cpp:8190), which this wrapper never had until now (see TractionPowerServer).
 func _update_pantograph_power() -> void:
-    if not _electric_engine or not _controller:
+    if Engine.is_editor_hint() or not _electric_engine or not _controller:
         return
 
     var axes:Dictionary = _pantograph_frame_axes()
@@ -883,7 +890,7 @@ func _update_pantograph_power() -> void:
         "set_pantograph_wire_voltage",
         TrainElectricEngine.PANTOGRAPH_FIRST,
         (
-            _pantograph_wire_voltage(pantograph_front_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
+            _pantograph_wire_voltage(2, pantograph_front_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
             if front_active else 0.0
         ),
     )
@@ -891,19 +898,18 @@ func _update_pantograph_power() -> void:
         "set_pantograph_wire_voltage",
         TrainElectricEngine.PANTOGRAPH_SECOND,
         (
-            _pantograph_wire_voltage(pantograph_rear_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
+            _pantograph_wire_voltage(3, pantograph_rear_offset, axes.forward, axes.up, axes.left, assumed_voltage, current_per_pantograph)
             if rear_active else 0.0
         ),
     )
 
 
 func _pantograph_wire_voltage(
-    offset:Vector3, forward:Vector3, up:Vector3, left:Vector3, assumed_voltage:float, current:float
+    index:int, offset:Vector3, forward:Vector3, up:Vector3, left:Vector3, assumed_voltage:float, current:float
 ) -> float:
     var contact_point:Vector3 = global_transform * offset
-    var wire_rid:RID = TractionPowerServer.wires_find_above(
-        contact_point, up, forward, left, pantograph_collector_width
-    )
+    var wire:Dictionary = _find_pantograph_wire(index, contact_point, up, forward, left)
+    var wire_rid:RID = wire["rid"]
     if not wire_rid.is_valid():
         return 0.0
     return TractionPowerServer.wire_get_voltage(wire_rid, assumed_voltage, current)
@@ -918,10 +924,10 @@ func _pantograph_wire_voltage(
 ## _update_pantograph_power() above is allowed to energize the pantograph -
 ## the fix for voltage otherwise appearing the instant "P" is pressed.
 func _update_pantograph_raise_state(delta:float) -> void:
-    if not _controller:
+    if Engine.is_editor_hint() or not _controller or not _electric_engine:
         return
 
-    _pantograph_front_converged = _update_pantograph_arm(
+    _pantograph_front_converged = _update_pantograph_arm(0,
         _pantograph_front_geometry,
         _pantograph_front_arm_nodes,
         _controller.state.get("current_collector/pantograph_first_active", false),
@@ -930,7 +936,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
     if _is_visible and _pantograph_front_geometry:
         _apply_pantograph_animation(_pantograph_front_arm_nodes, _pantograph_front_geometry)
 
-    _pantograph_rear_converged = _update_pantograph_arm(
+    _pantograph_rear_converged = _update_pantograph_arm(1,
         _pantograph_rear_geometry,
         _pantograph_rear_arm_nodes,
         _controller.state.get("current_collector/pantograph_second_active", false),
@@ -945,7 +951,7 @@ func _update_pantograph_raise_state(delta:float) -> void:
 ## actually reached the overhead wire - an unconfigured end (empty
 ## geometry) always reports converged, preserving today's is_active-only
 ## gating for vehicles with no arm rig set up.
-func _update_pantograph_arm(geometry:Dictionary, arm_nodes:Array[Node3D], is_active:bool, delta:float) -> bool:
+func _update_pantograph_arm(index:int, geometry:Dictionary, arm_nodes:Array[Node3D], is_active:bool, delta:float) -> bool:
     if not geometry:
         return true
 
@@ -972,9 +978,7 @@ func _update_pantograph_arm(geometry:Dictionary, arm_nodes:Array[Node3D], is_act
     # limit trying to reach an unreachable target (confirmed live: the pantograph fully extended
     # into a vertical mast instead of a normal scissor raise).
     var contact_point:Vector3 = arm_nodes[0].global_position
-    var wire:Dictionary = TractionPowerServer.wire_find_above_with_height(
-        contact_point, axes.up, axes.forward, axes.left, pantograph_collector_width
-    )
+    var wire:Dictionary = _find_pantograph_wire(index, contact_point, axes.up, axes.forward, axes.left)
     # wire.height is INF when no wire is found - the arm then keeps rising, capped only by its
     # own joint limit below, matching scene.cpp:1069's per-scan PantTraction=DBL_MAX reset.
     var pant_diff:float = float(wire.height) - float(geometry.pant_wys)
@@ -999,6 +1003,22 @@ func _update_pantograph_arm(geometry:Dictionary, arm_nodes:Array[Node3D], is_act
             geometry.pant_wys = geometry.len_l1 * sin(k) + geometry.len_u1 * sin(angle_u) + geometry.height
 
     return is_active and pant_diff < 0.01
+
+
+func _find_pantograph_wire(index:int, contact_point:Vector3, up:Vector3, forward:Vector3, left:Vector3) -> Dictionary:
+    var cache:Dictionary = _pantograph_wire_cache[index]
+    var horizontal:Vector2 = Vector2(contact_point.x, contact_point.z)
+    var last_search:Vector2 = cache.get("position", Vector2(INF, INF))
+    if cache.get("searched", false) \
+            and horizontal.distance_to(last_search) < _PANTOGRAPH_CACHE_DISTANCE:
+        return cache["result"]
+    var result:Dictionary = TractionPowerServer.wire_find_above_with_height(
+            contact_point, up, forward, left, pantograph_collector_width)
+    cache["result"] = result
+    cache["position"] = horizontal
+    cache["searched"] = true
+    _pantograph_wire_cache[index] = cache
+    return result
 
 
 ## Exact port of TDynamicObject::UpdatePant() (DynObj.cpp:576-590): each

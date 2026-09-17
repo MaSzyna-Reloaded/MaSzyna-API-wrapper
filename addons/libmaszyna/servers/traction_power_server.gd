@@ -388,7 +388,6 @@ func wires_find_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector
 func wire_find_above_with_height(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
     return _find_wire_above(position, up, forward, left, width)
 
-
 func _find_wire_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
     var query_center:Vector2 = Vector2(position.x, position.z)
     var query_aabb:Rect2 = Rect2(query_center - Vector2.ONE * _QUERY_MARGIN, Vector2.ONE * _QUERY_MARGIN * 2.0)

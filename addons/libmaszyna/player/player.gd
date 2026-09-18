@@ -68,6 +68,12 @@ func _input(event):
                     if train_id and (event.is_action_pressed("change_vehicle") or not last_controlled_train_id):
                         start_train_id = train_id
 
+    # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
+    if controlled_vehicle and event.is_action_pressed("cabin_previous"):
+        TrainSystem.send_command(last_controlled_train_id, "cab_change", 1)
+    if controlled_vehicle and event.is_action_pressed("cabin_next"):
+        TrainSystem.send_command(last_controlled_train_id, "cab_change", -1)
+
     if event.is_action_pressed("cabin_mode_toggle"):
         if not controlled_vehicle:
             if last_controlled_train_id:

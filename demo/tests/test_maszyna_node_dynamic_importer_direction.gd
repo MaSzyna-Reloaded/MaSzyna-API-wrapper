@@ -86,3 +86,15 @@ func test_trainset_vehicles_of_different_length_touch_without_overlap() -> void:
             second.start_track_offset - third.start_track_offset, (LONG_LENGTH + SHORT_LENGTH) * 0.5, 0.001,
             "centers of neighbouring vehicles must be half their lengths apart")
     assert_almost_eq(context.trainset_offset, 20.0 - SHORT_LENGTH - LONG_LENGTH - SHORT_LENGTH, 0.001)
+
+
+## DynObj.cpp:1812-1825 - the driver type picks the occupied cab.
+func test_driver_type_selects_occupied_cab() -> void:
+    var context:MaszynaImporterContext = _trainset_context(20.0)
+    var head:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 headdriver 3 0 enddynamic")
+    var rear:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 reardriver 3 0 enddynamic")
+    var nobody:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
+
+    assert_eq(head.cabin_number, 1)
+    assert_eq(rear.cabin_number, -1)
+    assert_eq(nobody.cabin_number, 0)

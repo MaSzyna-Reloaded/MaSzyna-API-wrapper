@@ -54,6 +54,15 @@ signal controller_changed(controller:TrainController)
             if _controller:
                 _controller.initial_velocity = initial_velocity
 
+## Forwarded to the built child TrainController's cabin_number: 1 = cab 1, -1 = cab 2, 0 = none
+## (original engine's scenery driver type, DynObj.cpp:1812-1825).
+@export var cabin_number:int = 0:
+    set(x):
+        if not x == cabin_number:
+            cabin_number = x
+            if _controller:
+                _controller.cabin_number = cabin_number
+
 ## When false (default), the generated TrainController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
 ## into the .tscn (it's re-derived from the FIZ file on every load instead). Toggle via the
@@ -104,6 +113,7 @@ func _reload() -> void:
     if train_id:
         _controller.train_id = train_id
     _controller.initial_velocity = initial_velocity
+    _controller.cabin_number = cabin_number
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)

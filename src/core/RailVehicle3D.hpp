@@ -39,6 +39,7 @@ namespace godot {
             int start_direction = 0;
             Ref<PackedScene> cabin_scene;
             bool cabin_rotate_180deg = false;
+            bool joint_cabs = false;
             NodePath low_poly_cabin_path;
             double low_poly_cabin_emission_energy = 0.2;
             double low_poly_cabin_emission_fade_time = 0.2;
@@ -98,6 +99,7 @@ namespace godot {
             void _sync_model_lights();
             void _sync_lights_from_controller();
             void _on_low_poly_cabin_e3d_loaded();
+            void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();
@@ -181,6 +183,8 @@ namespace godot {
             Ref<PackedScene> get_cabin_scene() const;
             void set_cabin_rotate_180deg(bool p_value);
             bool get_cabin_rotate_180deg() const;
+            void set_joint_cabs(bool p_value);
+            bool get_joint_cabs() const;
             void set_low_poly_cabin_path(const NodePath &p_value);
             NodePath get_low_poly_cabin_path() const;
             void set_low_poly_cabin_emission_energy(double p_value);

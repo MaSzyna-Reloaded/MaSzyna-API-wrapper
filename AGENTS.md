@@ -7,6 +7,10 @@ Code generation:
 * Keep code clean and do minimal code changes
 * Follow DRY and KISS principles
 * use english comments (if needed)
+* send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API; call a
+  `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
+* for unclear/critical sections, or logic ported from the original engine instead of wrapped from Mover,
+  leave a short comment pointing to the original source (e.g. `Train.cpp:8516`, `DynObj.cpp:1812`)
 * GDSCRIPT: avoid type interference, use explicit type declaration
 * GDSCRIPT: do not use `!=` in `if` conditions, use `not ... == ...` instead
 * GDSCRIPT: do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`

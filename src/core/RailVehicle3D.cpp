@@ -96,6 +96,7 @@ namespace godot {
                 PropertyInfo(Variant::OBJECT, "cabin_scene", PROPERTY_HINT_RESOURCE_TYPE, "PackedScene"),
                 "set_cabin_scene", "get_cabin_scene");
         BIND_RAIL_PROPERTY(cabin_rotate_180deg, Variant::BOOL);
+        BIND_RAIL_PROPERTY(joint_cabs, Variant::BOOL);
         BIND_RAIL_NODE_PATH(low_poly_cabin_path, "E3DModelInstance");
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_energy, Variant::FLOAT);
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_fade_time, Variant::FLOAT);
@@ -121,6 +122,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("_schedule_head_display_update"), &RailVehicle3D::_schedule_head_display_update);
         ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loaded"), &RailVehicle3D::_on_model_node_e3d_loaded);
         ClassDB::bind_method(D_METHOD("_on_low_poly_cabin_e3d_loaded"), &RailVehicle3D::_on_low_poly_cabin_e3d_loaded);
+        ClassDB::bind_method(
+                D_METHOD("_update_low_poly_cabs_visibility"), &RailVehicle3D::_update_low_poly_cabs_visibility);
         ClassDB::bind_method(D_METHOD("_on_roof_light_changed", "enabled"), &RailVehicle3D::_on_roof_light_changed);
         ClassDB::bind_method(
                 D_METHOD("_set_low_poly_emission_energy", "value"), &RailVehicle3D::_set_low_poly_emission_energy);
@@ -167,6 +170,7 @@ namespace godot {
         cabin->connect(
                 "cabin_ready", Callable(this, "_jump_into_cabin").bind(cabin, p_player), Object::CONNECT_ONE_SHOT);
         cabin->connect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
+        cabin->connect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
         cabin->set_transform(Transform3D());
         if (cabin_rotate_180deg) {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
@@ -182,12 +186,7 @@ namespace godot {
             return;
         }
 
-        if (!low_poly_cabin_path.is_empty()) {
-            Node3D *poly_cabin = node_at<Node3D>(this, low_poly_cabin_path);
-            if (poly_cabin != nullptr) {
-                poly_cabin->set_visible(false);
-            }
-        }
+        _update_low_poly_cabs_visibility();
 
         p_player->remove_child(camera);
         cabin->add_child(camera);
@@ -205,13 +204,6 @@ namespace godot {
     }
 
     void RailVehicle3D::leave_cabin(Node *p_player) {
-        if (!low_poly_cabin_path.is_empty()) {
-            Node3D *poly_cabin = node_at<Node3D>(this, low_poly_cabin_path);
-            if (poly_cabin != nullptr) {
-                poly_cabin->set_visible(true);
-            }
-        }
-
         Transform3D camera_transform = camera->get_global_transform();
         cabin->remove_child(camera);
         p_player->add_child(camera);
@@ -223,9 +215,11 @@ namespace godot {
         camera->look_at(get_global_position() + Vector3(0.0, 1.75, -5.0));
         camera->set("velocity_multiplier", 1.0);
         cabin->disconnect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
+        cabin->disconnect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
         cabin->get_parent()->remove_child(cabin);
         cabin->queue_free();
         cabin = nullptr;
+        _update_low_poly_cabs_visibility();
     }
 
     void RailVehicle3D::_apply_cabin_camera_configuration() {
@@ -240,7 +234,10 @@ namespace godot {
         camera->set("bound_min", bound_min);
         camera->set("bound_max", bound_max);
         camera->set_global_transform(cabin->call("get_camera_transform"));
-        if (cabin_rotate_180deg) {
+        // Original engine looks along VectorFront * CabOccupied (drivermode.cpp:1071), so cab 2
+        // faces the opposite way.
+        const bool rear_cab = static_cast<int>(cabin->get("cab_number")) < 0;
+        if (cabin_rotate_180deg != rear_cab) {
             camera->set_global_basis(get_global_basis());
         } else {
             camera->set_global_basis(
@@ -532,6 +529,27 @@ namespace godot {
         const bool roof_light_enabled =
                 controller != nullptr && bool(controller->get_state().get("roof_light_enabled", false));
         _set_low_poly_emission_energy(roof_light_enabled ? low_poly_cabin_emission_energy : 0.0);
+        _update_low_poly_cabs_visibility();
+    }
+
+    // Original engine: the low-poly interior stays rendered from inside the cab (Render_interior(),
+    // opengl33renderer.cpp:1123); only its occupied "cabN" submodel is hidden - or all of them
+    // with jointcabs: - so the hi-fi cab doesn't overlap it (DynObj.cpp:1211-1219, 2236-2250).
+    // A cab without a hi-fi model keeps every low-poly cab visible (DynObj.cpp:1214).
+    void RailVehicle3D::_update_low_poly_cabs_visibility() {
+        if (low_poly_cabin == nullptr) {
+            return;
+        }
+        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get("cab_number"));
+        const int occupied_cab_index = cab_number < 0 ? 2 : cab_number;
+        const bool hifi_cab = cabin != nullptr && bool(cabin->get("has_cab_model"));
+        for (int cab_index = 0; cab_index < 3; ++cab_index) {
+            Node3D *cab_node =
+                    Object::cast_to<Node3D>(low_poly_cabin->find_child("cab" + itos(cab_index), true, false));
+            if (cab_node != nullptr) {
+                cab_node->set_visible(!hifi_cab || (!joint_cabs && cab_index != occupied_cab_index));
+            }
+        }
     }
 
     void RailVehicle3D::_on_roof_light_changed(bool p_enabled) {
@@ -1100,6 +1118,12 @@ namespace godot {
     }
     bool RailVehicle3D::get_cabin_rotate_180deg() const {
         return cabin_rotate_180deg;
+    }
+    void RailVehicle3D::set_joint_cabs(bool p_value) {
+        joint_cabs = p_value;
+    }
+    bool RailVehicle3D::get_joint_cabs() const {
+        return joint_cabs;
     }
     void RailVehicle3D::set_low_poly_cabin_path(const NodePath &p_value) {
         if (low_poly_cabin_path != p_value) {

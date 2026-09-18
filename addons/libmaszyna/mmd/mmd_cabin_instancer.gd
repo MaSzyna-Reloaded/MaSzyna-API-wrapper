@@ -37,17 +37,20 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
     # parse to [first cab1definition:/cab2definition:, first cab0definition: at or after it) so
     # the preamble is skipped outright and a later desync from some other unrecognized,
     # non-uniform label (e.g. a bare "clock: analog") can't run past the real end of the section.
-    var start_index:int = _find_label_index(tokens, "cab1definition:")
-    if start_index == -1:
+    # Cab 0 (machine room) is parsed from cab0definition: to the end of the file - the original
+    # InitializeCab() loop only stops at cab0definition: (Train.cpp:8908), which cab 0 is already past.
+    var start_index:int = _find_label_index(tokens, "cab0definition:" if cab_number == 0 else "cab1definition:")
+    if start_index == -1 and not cab_number == 0:
         start_index = _find_label_index(tokens, "cab2definition:")
     if start_index == -1:
-        context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "No cab1definition:/cab2definition: found", abs_mmd_path)
+        context.add_diagnostic("error", "MMD_INVALID_CAB_DEFINITION", "No cab%ddefinition: found" % cab_number, abs_mmd_path)
         start_index = tokens.size()
-    var end_index:int = _find_label_index(tokens, "cab0definition:", start_index)
+    var end_index:int = tokens.size() if cab_number == 0 else _find_label_index(tokens, "cab0definition:", start_index)
     if end_index == -1:
         end_index = tokens.size()
 
     var cab_data:Dictionary = {
+        0: _empty_cab_data(),
         1: _empty_cab_data(),
         2: _empty_cab_data(),
     }
@@ -60,31 +63,31 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
         i += 1
 
         match label:
-            "cab1definition:", "cab2definition:":
-                var n:int = 1 if label == "cab1definition:" else 2
+            "cab0definition:", "cab1definition:", "cab2definition:":
+                var n:int = int(label.substr(3, 1))
                 var values:Array = _read_floats(tokens, i, 6)
                 i += 6
                 cab_data[n]["bounds_min"] = Vector3(values[0], values[1], values[2])
                 cab_data[n]["bounds_max"] = Vector3(values[3], values[4], values[5])
             "cablight:":
                 i += 9 # ambient cab light color block - not wired to anything in Etap A+B
-            "driver1angle:", "driver2angle:":
-                var n:int = 1 if label == "driver1angle:" else 2
+            "driver0angle:", "driver1angle:", "driver2angle:":
+                var n:int = int(label.substr(6, 1))
                 var values:Array = _read_floats(tokens, i, 2)
                 i += 2
                 cab_data[n]["driver_angle"] = Vector2(values[0], values[1])
-            "driver1pos:", "driver2pos:":
-                var n:int = 1 if label == "driver1pos:" else 2
+            "driver0pos:", "driver1pos:", "driver2pos:":
+                var n:int = int(label.substr(6, 1))
                 var values:Array = _read_floats(tokens, i, 3)
                 i += 3
                 cab_data[n]["driver_pos"] = Vector3(values[0], values[1], values[2])
-            "driver1sitpos:", "driver2sitpos:":
-                var n:int = 1 if label == "driver1sitpos:" else 2
+            "driver0sitpos:", "driver1sitpos:", "driver2sitpos:":
+                var n:int = int(label.substr(6, 1))
                 var values:Array = _read_floats(tokens, i, 3)
                 i += 3
                 cab_data[n]["driver_sitpos"] = Vector3(values[0], values[1], values[2])
-            "cab1model:", "cab2model:":
-                var n:int = 1 if label == "cab1model:" else 2
+            "cab0model:", "cab1model:", "cab2model:":
+                var n:int = int(label.substr(3, 1))
                 var model_token:String = tokens[i] if i < tokens.size() else "none"
                 i += 1
                 cab_data[n]["model_relpath"] = _resolve_model_relpath(model_token)
@@ -215,6 +218,17 @@ static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
     return _resolve_model_relpath(tokens[index + 1])
 
 
+## Reads `jointcabs:` from the MMD (DynObj.cpp:6626) - all virtual cabs share one location and
+## model, so the whole low-poly cab is hidden from inside any of them.
+static func parse_joint_cabs(abs_mmd_path:String) -> bool:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var index:int = _find_label_index(tokens, "jointcabs:")
+    if index == -1 or index + 1 >= tokens.size():
+        return false
+    return tokens[index + 1].to_lower() in ["true", "yes", "1"]
+
+
 ## Reads the passenger visualization model from the MMD's top-level `loads:` block.
 static func parse_passengers_model(abs_mmd_path:String) -> String:
     var context := MmdImportContext.new()
@@ -245,7 +259,8 @@ static func build_into(
         generated_root:Node3D, definition:MmdCabinDefinition, controller:TrainController,
         data_path:String, skin:String, diagnostics:Array[Dictionary]) -> void:
     if not definition.model_relpath:
-        diagnostics.append(_diag("error", "MMD_MODEL_NOT_FOUND", "Cab %d has no model (model: none)" % definition.cab_number, definition.cab_number))
+        # Valid in the original (e.g. su46 cab0) - the low-poly interior is shown instead.
+        diagnostics.append(_diag("info", "MMD_MODEL_NOT_FOUND", "Cab %d has no model (model: none)" % definition.cab_number, definition.cab_number))
         return
 
     var model_relpath:String = resolve_model_case(data_path, definition.model_relpath)
@@ -780,7 +795,8 @@ static func _apply_animation_shape(
 static func _wire_mesh_path(
         widget:Node, descriptor:MmdInstrumentDescriptor, submodel_index:Dictionary,
         mesh_path_field:String, cab_number:int, diagnostics:Array[Dictionary]) -> void:
-    var matches:Array = submodel_index.get(descriptor.submodel_name.to_lower(), [])
+    # Submodel nodes carry Godot-validated names ("a.swmasz1" -> "a_swmasz1").
+    var matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower(), [])
     if matches.size() == 1:
         widget.set(mesh_path_field, widget.get_path_to(matches[0]))
     elif not matches:
@@ -815,7 +831,7 @@ static func _wire_mesh_path(
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
         submodel_index:Dictionary, generated_root:Node3D, cab_number:int, diagnostics:Array[Dictionary]) -> void:
-    var base_name:String = descriptor.submodel_name.to_lower()
+    var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
     var off_matches:Array = submodel_index.get(base_name + "_off", [])
     var count:int = maxi(on_matches.size(), off_matches.size())

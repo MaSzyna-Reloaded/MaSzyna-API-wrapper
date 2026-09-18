@@ -17,6 +17,7 @@ namespace godot {
     const char *TrainController::radio_toggled = "radio_toggled";
     const char *TrainController::radio_channel_changed = "radio_channel_changed";
     const char *TrainController::roof_light_changed = "roof_light_changed";
+    const char *TrainController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *TrainController::config_changed = "config_changed";
     const char *TrainController::position_changed_signal = "position_changed";
 
@@ -47,6 +48,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
+        ClassDB::bind_method(D_METHOD("cab_change", "direction"), &TrainController::cab_change);
         ClassDB::bind_method(
                 D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
         ClassDB::bind_method(
@@ -111,6 +113,7 @@ namespace godot {
         BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_drag_coefficient, "dimensions");
         BIND_PROPERTY(TrainController, Variant::FLOAT, dimensions_floor_height, "dimensions");
         BIND_PROPERTY(TrainController, Variant::FLOAT, initial_velocity);
+        BIND_PROPERTY(TrainController, Variant::INT, cabin_number);
         BIND_PROPERTY_W_HINT(
                 TrainController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
@@ -132,6 +135,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
+        ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(
@@ -229,9 +233,13 @@ namespace godot {
         mover->ComputeConstans();
 
         /* FIXME: remove test data */
-        mover->CabActive = 1;
+        // Original engine: the scenery's driver type picks the cab (DynObj.cpp:1812-1825).
+        // FIXME: a vehicle without a driver stays in cab 0 there; here it still starts in cab 1.
+        if (mover->CabOccupied == 0) {
+            mover->CabOccupied = 1;
+        }
+        mover->CabActive = mover->CabOccupied;
         mover->CabMaster = true;
-        mover->CabOccupied = 1;
         mover->AutomaticCabActivation = true;
         mover->CabActivisationAuto();
         mover->CabActivisation();
@@ -263,6 +271,7 @@ namespace godot {
                 }
                 TrainSystem::get_instance()->register_train(train_id, this);
                 register_command("battery", Callable(this, "battery"));
+                register_command("cab_change", Callable(this, "cab_change"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
                 register_command("direction_increase", Callable(this, "direction_increase"));
@@ -274,6 +283,7 @@ namespace godot {
                 break;
             case NOTIFICATION_EXIT_TREE:
                 unregister_command("battery", Callable(this, "battery"));
+                unregister_command("cab_change", Callable(this, "cab_change"));
                 unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
                 unregister_command("direction_increase", Callable(this, "direction_increase"));
@@ -358,6 +368,11 @@ namespace godot {
             prev_roof_light_enabled != new_roof_light_enabled) {
             prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
             emit_signal(roof_light_changed, new_roof_light_enabled);
+        }
+
+        if (const int new_cabin_occupied = state.get("cabin_occupied", 0); prev_cabin_occupied != new_cabin_occupied) {
+            prev_cabin_occupied = new_cabin_occupied;
+            emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
     }
 
@@ -542,6 +557,21 @@ namespace godot {
 
     void TrainController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
+    }
+
+    // Original engine: TTrain::CabChange() (Train.cpp:8516) - steps 1 -> 0 (machine room) -> -1.
+    void TrainController::cab_change(const int p_direction) const {
+        mover->CabDeactivisationAuto();
+        mover->ChangeCab(p_direction);
+        mover->CabActivisationAuto();
+    }
+
+    void TrainController::set_cabin_number(const int p_value) {
+        cabin_number = p_value;
+    }
+
+    int TrainController::get_cabin_number() const {
+        return cabin_number;
     }
 
     void TrainController::main_controller_increase(const int p_step) const {

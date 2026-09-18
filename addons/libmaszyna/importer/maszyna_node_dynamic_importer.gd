@@ -28,7 +28,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     var mmd_file:String = p.next_token().to_lower()
     var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
     var offset:float = float(p.next_token())
-    var _driver_type:String = p.next_token()
+    var driver_type:String = p.next_token()
     var _coupling_data:String = p.next_token() if context.trainset_open else "3"
     var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
     var load_count:int = int(p.next_token())
@@ -51,6 +51,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
         TrackManager.Direction.DIRECTION_REVERSED if reversed else TrackManager.Direction.DIRECTION_NORMAL
     )
     vehicle.initial_velocity = velocity
+    # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.
+    vehicle.cabin_number = 1 if driver_type == "headdriver" else (-1 if driver_type == "reardriver" else 0)
 
     if context.trainset_open:
         context.trainset_offset -= length

@@ -38,6 +38,7 @@ namespace godot {
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
             bool prev_roof_light_enabled = false;
+            int prev_cabin_occupied = 0;
 
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
@@ -168,6 +169,7 @@ namespace godot {
             static const char *radio_toggled;
             static const char *radio_channel_changed;
             static const char *roof_light_changed;
+            static const char *cabin_occupied_changed;
             static const char *config_changed;
             static const char *position_changed_signal;
 
@@ -179,6 +181,7 @@ namespace godot {
                     const StringName &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant()) const;
             void battery(bool p_enabled) const;
+            void cab_change(int p_direction) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
             void direction_increase() const;
@@ -197,6 +200,8 @@ namespace godot {
             void update_mover();
             double process_movement(double p_delta);
             TMoverParameters *get_mover() const;
+            void set_cabin_number(int p_value);
+            int get_cabin_number() const;
             static void _bind_methods();
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
             RID get_rid() const;

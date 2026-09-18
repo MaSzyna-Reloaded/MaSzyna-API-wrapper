@@ -41,8 +41,8 @@ const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
 ## DynamicRailVehicle3D). Returns null if data_path/file_name are missing.
 static func build(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material) -> RailVehicle3D:
-    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity)
+        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
+    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity, cabin_number)
     if vehicle:
         _initialize_instance(vehicle, file_name, head_display_material)
     return vehicle
@@ -51,7 +51,7 @@ static func build(
 ## Only declarative nodes belong in a PackedScene template; runtime sound pools and bindings do not.
 static func _build_structure(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float) -> RailVehicle3D:
+        initial_velocity:float, cabin_number:int = 0) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -116,6 +116,7 @@ static func _build_structure(
     fiz_controller.fiz_filename = file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
+    fiz_controller.cabin_number = cabin_number
 
     var vehicle := RailVehicle3D.new()
     vehicle.name = "RailVehicle3D"
@@ -135,6 +136,7 @@ static func _build_structure(
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     vehicle.cabin_rotate_180deg = true
+    vehicle.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
     return vehicle
 
 

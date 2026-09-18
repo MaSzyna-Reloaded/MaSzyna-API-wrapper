@@ -37,22 +37,23 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     var reversed:bool = is_equal_approx(offset, -1.0)
     var trainset_offset:float = context.trainset_offset if context.trainset_open else 0.0
     var start_offset:float = trainset_offset if reversed else trainset_offset - offset
+    var length:float = _read_vehicle_length(data_folder, mmd_file, context)
 
     var vehicle := DynamicRailVehicle3D.new()
     vehicle.data_path = data_folder
     vehicle.file_name = mmd_file
     vehicle.skin = skin_file
     vehicle.start_track_name = path_name
-    vehicle.start_track_offset = start_offset
+    # start_offset marks the vehicle's front; start_track_offset is its center, which the
+    # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
+    vehicle.start_track_offset = start_offset - 0.5 * length
     vehicle.start_direction = (
         TrackManager.Direction.DIRECTION_REVERSED if reversed else TrackManager.Direction.DIRECTION_NORMAL
     )
     vehicle.initial_velocity = velocity
 
     if context.trainset_open:
-        var length:float = _read_vehicle_length(data_folder, mmd_file, context)
-        if length > 0.0:
-            context.trainset_offset -= length
+        context.trainset_offset -= length
 
     var next_token:String = p.next_token()
     if not next_token == "enddynamic":

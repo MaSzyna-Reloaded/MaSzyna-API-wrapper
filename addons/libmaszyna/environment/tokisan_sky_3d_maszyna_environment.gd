@@ -10,11 +10,16 @@ const SUN_DISK_INTENSITY: float = 30.0
 const MOON_COLOR: Color = Color.WHITE
 const STARMAP_COLOR: Color = Color(0.709804, 0.709804, 0.709804, 0.854902)
 const STAR_FIELD_COLOR: Color = Color.WHITE
+const MINIMUM_FOG_RANGE: float = 0.001
+const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
+const MAXIMUM_FOG_OPACITY: float = 0.999
+const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
 
 var sky_dome: SkyDome
 var time_of_day: TimeOfDay
 var sun_light: DirectionalLight3D
 var moon_light: DirectionalLight3D
+var environment: Environment
 
 
 func create_sky() -> Sky:
@@ -26,7 +31,9 @@ func create_sky() -> Sky:
     return sky
 
 
-func create_nodes(world_environment: WorldEnvironment, environment: Environment) -> void:
+func create_nodes(world_environment: WorldEnvironment, p_environment: Environment) -> void:
+    environment = p_environment
+
     sun_light = DirectionalLight3D.new()
     sun_light.name = &"SunLight"
     sun_light.shadow_enabled = true
@@ -53,6 +60,7 @@ func create_nodes(world_environment: WorldEnvironment, environment: Environment)
 
 
 func bind_nodes(world_environment: WorldEnvironment) -> void:
+    environment = world_environment.environment
     sun_light = world_environment.get_node_or_null("SunLight") as DirectionalLight3D
     moon_light = world_environment.get_node_or_null("MoonLight") as DirectionalLight3D
     sky_dome = world_environment.get_node_or_null(NodePath(SKY_DOME_NAME)) as SkyDome
@@ -76,6 +84,7 @@ func apply_visual_configuration() -> void:
 
     # Tokisan's screen-space fog bypasses Godot's Environment fog.
     sky_dome.fog_visible = false
+    _apply_fog_configuration()
 
     sky_dome.sun_disk_intensity = SUN_DISK_INTENSITY * celestial_visibility
     sky_dome.moon_color = MOON_COLOR.lerp(
@@ -109,6 +118,30 @@ func apply_visual_configuration() -> void:
         environment_node.night_light_shadow_max_distance,
         environment_node.night_light_volumetric_fog_energy
     )
+
+
+func _apply_fog_configuration() -> void:
+    var effective_fog_end: float = maxf(
+        environment_node.fog_range_end, environment_node.fog_range_start + MINIMUM_FOG_RANGE
+    )
+    var volumetric_fog_length: float = maxf(
+        effective_fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH
+    )
+
+    environment.fog_density = environment_node.fog_density
+    environment.fog_depth_begin = environment_node.fog_range_start
+    environment.fog_depth_end = effective_fog_end
+    environment.fog_sky_affect = environment_node.fog_density
+    environment.volumetric_fog_density = _fog_opacity_to_exponential_density(
+        environment_node.fog_density * VOLUMETRIC_FOG_OPACITY_SCALE, volumetric_fog_length
+    )
+    environment.volumetric_fog_length = volumetric_fog_length
+    environment.volumetric_fog_sky_affect = 1.0
+
+
+func _fog_opacity_to_exponential_density(opacity: float, distance: float) -> float:
+    var effective_opacity: float = clampf(opacity, 0.0, MAXIMUM_FOG_OPACITY)
+    return -log(1.0 - effective_opacity) / distance
 
 
 func _apply_directional_light_configuration(

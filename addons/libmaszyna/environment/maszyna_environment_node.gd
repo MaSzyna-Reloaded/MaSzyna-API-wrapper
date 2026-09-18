@@ -3,10 +3,6 @@ extends Node
 class_name MaszynaEnvironmentNode
 
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
-const MINIMUM_FOG_RANGE: float = 0.001
-const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
-const MAXIMUM_FOG_OPACITY: float = 0.999
-const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
 
 @export_category("Current Time")
 @export var use_system_time: bool = false:
@@ -43,6 +39,7 @@ const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
         if not value == weather:
             weather = value
             MaterialManager.weather = weather
+            _dirty_visuals = true
 
 @export_category("Location")
 @export_range(-90.0, 90.0, 0.001, "suffix:°") var latitude: float = 50.271:
@@ -248,8 +245,12 @@ func _exit_tree() -> void:
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     _process_dirty()
+    _sky_environment.process(delta)
+    _sync_time()
+    # Running time is only mirrored here; it must not be re-applied as a configuration change.
+    _dirty_time = false
 
 
 func update() -> void:
@@ -311,7 +312,7 @@ func _create_world_environment() -> WorldEnvironment:
 
 
 func _create_sky_environment() -> MaszynaSkyEnvironment:
-    return TokisanSky3DMaszynaEnvironment.new(self)
+    return GndSkydomeMaszynaEnvironment.new(self)
 
 
 func _create_environment() -> Environment:
@@ -327,6 +328,14 @@ func _create_environment() -> Environment:
     environment.fog_sun_scatter = 0.07
     environment.volumetric_fog_anisotropy = 0.0
     environment.volumetric_fog_detail_spread = 1.0
+    # Glow tuned as in forest-test-scene materials/environment_filmic.tres; the luminance cap keeps
+    # small specular highlights (e.g. rain streaks) from blooming into large blobs.
+    environment.glow_normalized = true
+    environment.glow_intensity = 1.37
+    environment.glow_strength = 0.8
+    environment.glow_bloom = 0.3
+    environment.glow_hdr_threshold = 1.37
+    environment.glow_hdr_luminance_cap = 0.18
     return environment
 
 
@@ -334,10 +343,6 @@ func _apply_visual_configuration() -> void:
     if not _environment or not _sky_environment:
         return
 
-    var effective_fog_end: float = maxf(fog_range_end, fog_range_start + MINIMUM_FOG_RANGE)
-    var volumetric_fog_length: float = maxf(
-        effective_fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH
-    )
     var fog_active: bool = fog_enabled and fog_density > 0.0
 
     _sky_environment.apply_visual_configuration()
@@ -353,23 +358,9 @@ func _apply_visual_configuration() -> void:
     _environment.glow_enabled = true
     _environment.adjustment_enabled = adjustment_enabled
     _environment.fog_enabled = fog_active
-    _environment.fog_density = fog_density
-    _environment.fog_depth_begin = fog_range_start
-    _environment.fog_depth_end = effective_fog_end
-    _environment.fog_sky_affect = fog_density
     _environment.volumetric_fog_enabled = (
         fog_active and bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
     )
-    _environment.volumetric_fog_density = _fog_opacity_to_exponential_density(
-        fog_density * VOLUMETRIC_FOG_OPACITY_SCALE, volumetric_fog_length
-    )
-    _environment.volumetric_fog_length = volumetric_fog_length
-    _environment.volumetric_fog_sky_affect = 1.0
-
-
-func _fog_opacity_to_exponential_density(opacity: float, distance: float) -> float:
-    var effective_opacity: float = clampf(opacity, 0.0, MAXIMUM_FOG_OPACITY)
-    return -log(1.0 - effective_opacity) / distance
 
 
 func _on_user_settings_changed() -> void:
@@ -381,7 +372,10 @@ func _apply_time_configuration() -> void:
         return
 
     _sky_environment.apply_time_configuration()
+    _sync_time()
 
+
+func _sync_time() -> void:
     var normalized_date: Vector3i = _sky_environment.get_date()
     year = normalized_date.x
     month = normalized_date.y

@@ -136,6 +136,18 @@ func _enter_tree():
         "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,5000.0,10.0,or_greater"
     )
+    add_custom_project_setting(
+        "maszyna/weather/wind_speed", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.01,or_greater"
+    )
+    add_custom_project_setting(
+        "maszyna/weather/wind_strength", 4.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.01,or_greater"
+    )
+    add_custom_project_setting(
+        "maszyna/weather/wind_turbulence", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,4.0,0.01,or_greater"
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

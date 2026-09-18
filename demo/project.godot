@@ -67,7 +67,7 @@ text_editor/behavior/files/trim_trailing_whitespace_on_save=true
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/scenery_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
+enabled=PackedStringArray("res://addons/debug_menu/plugin.cfg", "res://addons/gnd_sfx/plugin.cfg", "res://addons/gnd_skydome/plugin.cfg", "res://addons/gnd_weather/plugin.cfg", "res://addons/gut/plugin.cfg", "res://addons/libmaszyna/editor/e3d_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/fiz_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/nodebank/plugin.cfg", "res://addons/libmaszyna/editor/scenery_toolbar/plugin.cfg", "res://addons/libmaszyna/editor/tracks/plugin.cfg", "res://addons/libmaszyna/editor/user_settings_dock/plugin.cfg", "res://addons/libmaszyna/plugin.cfg", "res://addons/sky_3d/plugin.cfg")
 
 [input]
 
@@ -317,6 +317,30 @@ anti_aliasing/quality/screen_space_aa=1
 [shader_globals]
 
 sky_texture={
+"type": "sampler2D",
+"value": ""
+}
+gnd_wind_direction={
+"type": "vec2",
+"value": Vector2(0.8, 0.3)
+}
+gnd_wind_speed={
+"type": "float",
+"value": 1.0
+}
+gnd_wind_strength={
+"type": "float",
+"value": 4.0
+}
+gnd_wind_time={
+"type": "float",
+"value": 0.0
+}
+gnd_wind_turbulence={
+"type": "float",
+"value": 1.0
+}
+gnd_wind_pattern={
 "type": "sampler2D",
 "value": ""
 }

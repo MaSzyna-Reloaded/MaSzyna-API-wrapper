@@ -3,7 +3,7 @@ extends RefCounted
 
 ## Original engine's "sky:" token only ever carried a legacy skybox model filename
 ## (deserialize_sky(), simulationstateserializer.cpp - "sky model", nothing else defined).
-## The current sky is TokisanSky3DMaszynaEnvironment's fully procedural day/night dome, which has
+## The current sky is fully procedural (MaszynaEnvironmentNode), which has
 ## no equivalent model to load - there is nothing left to import here, just consume the token so
 ## the parser stream stays in sync. Scenario time still applies via "time:" (see
 ## maszyna_time_importer.gd), against whichever MaszynaEnvironmentNode is already live in the

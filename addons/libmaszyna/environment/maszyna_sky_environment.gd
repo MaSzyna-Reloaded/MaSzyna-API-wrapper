@@ -34,3 +34,7 @@ func _init(node: Node) -> void:
 
 
 @abstract func get_current_time() -> float
+
+
+func process(_delta: float) -> void:
+    pass

@@ -96,8 +96,25 @@ in any layer before.
 commands through the high-level API, `TrainSystem.send_command(train_id, command, p1, p2)`,
 using the train id it already tracks (e.g. `MaszynaPlayer.last_controlled_train_id`) - never
 `vehicle.get_controller().send_command(...)`. Direct `TrainController` access is fine only
-where the composition already holds that controller (e.g. `TrainPart`s, cabin nodes bound via
-`controller_path`).
+where the composition already holds that controller (e.g. `TrainPart`s).
+
+**Cabin controls are a separate layer (#94):** `CabinButton`/`CabinSwitch`/`CabinKnob`/
+`CabinCommand` never send vehicle commands. They only report manipulations
+(`hold`/`release`/`toggle`/`increase`/`decrease`/`set`) with
+`CabinSystem.act(train_id, cab, control_id, action, value)`. `control_id` is the MMD label, set by
+`MmdCabinInstancer._build_widget()`. What a manipulation does is decided by handlers registered in
+`CabinSystem` by `LegacyCabinLogicDelegate` (`addons/libmaszyna/cabin/legacy_cabin/`), which
+`DynamicTrainCabin` adds to every MMD-built cabin:
+- `forward_commands.gd` wires every remaining control straight to its vehicle command (from the
+  control's `command`/`controller_mode`/`command_set`/... set from `MmdSemanticCatalog`);
+- controls with their own cab logic from `Train.cpp` (`OnCommand_*` state, timers) get a dedicated
+  behaviour file, e.g. `main_switch.gd` (line breaker held for `InitialCtrlDelay`).
+
+A new cab control that only maps to a vehicle command needs no code there, just the catalog entry.
+One whose original behaviour lives in `TTrain` gets a new `legacy_cabin/<name>.gd` behaviour that
+claims its control ids. Behaviours reach the train only through `CabinState.vehicle_state()` /
+`send_vehicle_command()`, never the Mover. Anything they need to read is exposed in
+`TrainController.state` first.
 
 ## Verifying
 

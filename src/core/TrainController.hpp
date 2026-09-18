@@ -40,6 +40,14 @@ namespace godot {
             bool prev_roof_light_enabled = false;
             int prev_cabin_occupied = 0;
 
+            // Hasler speed recorder (Train.cpp:6917-6940 fTachoVelocity/fTachoVelocityJump/fTachoCount)
+            double tacho_velocity = 0.0;
+            double tacho_velocity_jump = 0.0;
+            double tacho_count = 0.0;
+            double tacho_time = 0.0;
+            bool tacho_clock_active = false;
+            void _update_tachometer(double p_delta);
+
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
@@ -177,7 +185,7 @@ namespace godot {
             void update_config(const Dictionary &p_config);
             void _process(double p_delta) override;
             void _notification(int p_what);
-            void send_command(
+            Variant send_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant()) const;
             void battery(bool p_enabled) const;

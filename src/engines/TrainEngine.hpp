@@ -79,7 +79,7 @@ namespace godot {
                 motor_param_table.append_array(p_motor_param_table);
             }
 
-            void main_switch(bool p_enabled);
+            bool main_switch(bool p_enabled);
             void fuse_reset();
             void motor_connectors_open(bool p_open);
             static void _bind_methods();

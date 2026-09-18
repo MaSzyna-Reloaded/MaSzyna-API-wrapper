@@ -128,6 +128,9 @@ func _process_tool(delta):
         _mesh.transform.basis = new_basis
         _mesh.position = _mesh_original_position + _current_position
 
+func _apply_control_value(p_value:Variant) -> void:
+    pushed = bool(p_value)
+
 func _play_sound():
     _sound.stream = sound_on if pushed else sound_off
     if _sound.stream:
@@ -137,15 +140,9 @@ func _on_pushed_changed():
     if pushed:
         button_pushed.emit()
 
-    if _controller:
-        if controller_mode == ControllerMode.OnOff:
-            if not command_param == null:
-                _controller.send_command(command, command_param, pushed)
-            else:
-                _controller.send_command(command, pushed)
-        elif pushed and controller_mode == ControllerMode.On:
-            _controller.send_command(command, true)
-        elif pushed and controller_mode == ControllerMode.Off:
-            _controller.send_command(command, false)
+    if monostable:
+        _act(&"hold" if pushed else &"release")
+    else:
+        _act(&"toggle", pushed)
 
     _play_sound()

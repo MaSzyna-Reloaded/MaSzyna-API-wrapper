@@ -90,6 +90,18 @@ static func _ensure_built() -> void:
             "state_property": "cabsignal_beeping",
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
+        # Hasler recorder ticking (Train.cpp:8323-8335, dsbHasler): chunks sound1..soundN are picked
+        # by speed in km/h (pitch fTachoVelocity * 0.01, sound.cpp:477 compute_combined_point() * 100),
+        # silent below the first chunk (sound.cpp:436). tachometer_clock_speed is 0 while the
+        # fTachoCount hysteresis keeps the recorder stopped.
+        "tachoclock": {
+            "event_name": &"tachoclock",
+            "state_property": "tachometer_clock_speed",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CONTINUOUS,
+            "sound_parameter": &"speed",
+            "trigger_threshold_min": 1.0,
+            "trigger_threshold_max": 10000.0,
+        },
         "engine": {
             "event_name": &"engine",
             "state_property": "engine_rpm",

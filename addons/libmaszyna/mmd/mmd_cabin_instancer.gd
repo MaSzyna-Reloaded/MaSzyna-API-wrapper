@@ -516,7 +516,7 @@ static func _read_sound_field_value(
     return {"value": _normalize_sound_filename(tokens[i]), "consumed": 1}
 
 
-## Strips a trailing ".wav"/".ogg" - everything else (including a "[NNNN]" numeric prefix, which
+## Strips a trailing ".wav"/".ogg"/".flac" - everything else (including a "[NNNN]" numeric prefix, which
 ## is confirmed to be part of the literal filename on disk) is kept verbatim.
 static func _normalize_sound_filename(token:String) -> String:
     if not token:
@@ -524,6 +524,9 @@ static func _normalize_sound_filename(token:String) -> String:
     var lower:String = token.to_lower()
     if lower.ends_with(".wav") or lower.ends_with(".ogg"):
         return token.substr(0, token.length() - 4)
+    # the game data ships every sound as .ogg, also those an MMD still names *.flac
+    if lower.ends_with(".flac"):
+        return token.substr(0, token.length() - 5)
     return token
 
 
@@ -630,6 +633,8 @@ static func _build_widget(
     var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
     var widget:Node = entry["widget_class"].new()
     widget.name = "%s_%s" % [descriptor.label, descriptor.submodel_name]
+    if "control_id" in widget:
+        widget.control_id = StringName(descriptor.label)
 
     for field_name:String in entry["fixed_fields"]:
         widget.set(field_name, entry["fixed_fields"][field_name])

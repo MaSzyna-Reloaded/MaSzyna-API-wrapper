@@ -164,6 +164,11 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     assert_true(
             controller.state.get("velocity", 0.0) > 2.0,
             "vehicle should have accelerated past 2 m/s across 5 controller notches")
+    # Hasler (Train.cpp:6917-6940): wheel-based speed, jumpy needle and the tachoclock gate are
+    # all live once the loco has been moving for more than a second.
+    assert_gt(float(controller.state.get("tachometer_speed", 0.0)), 1.0, "Hasler should see the speed")
+    assert_gt(float(controller.state.get("tachometer_speed_jump", 0.0)), 0.0, "Hasler needle should move")
+    assert_gt(float(controller.state.get("tachometer_clock_speed", 0.0)), 1.0, "Hasler should be ticking")
 
 
 ## Diagnostic for the reported "rozpedza sie do 140+ km/h nawet na main_controller_position=5/6"

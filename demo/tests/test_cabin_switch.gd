@@ -52,3 +52,32 @@ func test_value_offset_also_applies_after_a_real_process_frame():
     await wait_idle_frames(10)
 
     assert_eq(widget._target_mesh_rotation, Vector3.ZERO, "channel 1 must still be rest position after _process_tool()'s own periodic refresh")
+
+
+func _key_event(action:String, echo:bool) -> InputEventKey:
+    var source:InputEventKey = InputMap.action_get_events(action)[0] as InputEventKey
+    var event := InputEventKey.new()
+    event.keycode = source.keycode
+    event.physical_keycode = source.physical_keycode
+    event.pressed = true
+    event.echo = echo
+    return event
+
+
+## OnCommand_mastercontrollerincrease acts on key repeat too (Train.cpp:1096) - holding + keeps
+## stepping the controller; controls without repeat_on_hold (e.g. the reverser) ignore the echo.
+func test_repeat_on_hold_steps_on_key_echo():
+    var widget := CabinSwitch.new()
+    widget.switch_max_position = 10
+    widget.action_increase = "main_controller_increase"
+    widget.repeat_on_hold = true
+    add_child_autofree(widget)
+
+    widget._input(_key_event("main_controller_increase", false))
+    widget._input(_key_event("main_controller_increase", true))
+    widget._input(_key_event("main_controller_increase", true))
+    assert_eq(widget.switch_position, 3, "press + two key repeats step three times")
+
+    widget.repeat_on_hold = false
+    widget._input(_key_event("main_controller_increase", true))
+    assert_eq(widget.switch_position, 3, "without repeat_on_hold the key repeat is ignored")

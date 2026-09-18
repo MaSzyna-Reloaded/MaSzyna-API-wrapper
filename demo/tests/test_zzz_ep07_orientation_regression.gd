@@ -89,7 +89,16 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
         await wait_idle_frames(1)
         _dump_orientation("parked frame %d" % i, rail_vehicle, controller)
     var forward_while_parked:Vector3 = _forward(rail_vehicle)
+    # td.scn's trainset velocity is 0.0 - the original spawns such a vehicle cold
+    # (Mover.cpp:8943 only turns Battery on for a vehicle ready to depart).
+    assert_false(
+        controller.state.get("battery_enabled", true),
+        "EP07-424 on td.scn should spawn with its battery off, like in the original",
+    )
 
+    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
+    controller.send_command("battery", true)
+    await wait_idle_frames(2)
     controller.send_command("security_acknowledge", true)
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)

@@ -12,11 +12,23 @@ func after_each():
     remove_child(train)
     train.free()
 
-# Original engine: Mover.cpp's LoadFIZ sets Battery live at load time whenever BatteryStart
-# isn't Disabled (TrainController's compiled default is Manual, matching the FIZ-absent
-# fallback) - "Manual" means the player can turn it off, not that it starts off.
-func test_battery_should_be_initially_turned_on_for_manual_start():
-    assert_true(train.state["battery_enabled"], "Battery should start on for BatteryStart=Manual")
+# Original engine: Battery defaults to false and CheckLocomotiveParameters() only turns it on
+# for a vehicle spawned ready to depart (Mover.cpp:8943), i.e. with a non-zero scenery velocity
+# (DynObj.cpp:1851, `driveractive = (fVel != 0.0)`).
+func test_battery_starts_off_when_not_ready_to_depart():
+    assert_false(train.state["battery_enabled"], "Battery should start off for initial_velocity == 0")
+
+func test_battery_starts_on_when_ready_to_depart():
+    var ready_train := TrainController.new()
+    ready_train.train_id = "TestTrainReady"
+    ready_train.battery_voltage = 110.0
+    ready_train.initial_velocity = 10.0
+    add_child(ready_train)
+
+    assert_true(ready_train.state["battery_enabled"], "Battery should start on for initial_velocity != 0")
+
+    remove_child(ready_train)
+    ready_train.free()
 
 func test_successful_battery_enabling():
     train.send_command("battery", true)
@@ -41,6 +53,8 @@ func test_battery_start_disabled_from_zero_voltage_blocks_switching():
     disabled_train.free()
 
 func test_successful_battery_voltage_drop_after_two_seconds():
+    train.send_command("battery", true)
+    await wait_idle_frames(2)
     var before = train.state["battery_voltage"]
     await wait_seconds(2)
     var after = train.state["battery_voltage"]

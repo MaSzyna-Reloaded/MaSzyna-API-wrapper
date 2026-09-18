@@ -58,6 +58,7 @@ func _dump_diagnostic_state(controller:TrainController, label:String) -> void:
         "current_collector/pantograph_first_voltage", "compressor_pressure",
         "current_collector/pantograph_tank_pressure",
         "current_collector/pantograph_pressure_switch_armed", "feed_pipe_pressure",
+        "battery_enabled", "pipe_pressure", "brake_pipe_pressure",
         "brake_air_pressure", "converter_enabled", "engine_current", "Im", "Mm", "Ft",
         "controller_main_position", "controller_main_actual_position", "circuit_rlist_size",
         "main_no_power_pos", "main_switch_time",
@@ -82,6 +83,9 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     if not controller:
         return
 
+    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
+    controller.send_command("battery", true)
+    await wait_idle_frames(2)
     controller.send_command("security_acknowledge", true)
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
@@ -184,6 +188,9 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     if not controller:
         return
 
+    # Battery on arms the cab signal (Mover.cpp:131), so acknowledge only once it is powered.
+    controller.send_command("battery", true)
+    await wait_idle_frames(2)
     controller.send_command("security_acknowledge", true)
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)

@@ -759,9 +759,11 @@ namespace godot {
             return;
         }
         const Dictionary state = controller->get_state();
-        _apply_wheel_rotation(front_rolling_wheel_nodes, -double(state.get("wheel_angle_front_deg", 0.0)));
-        _apply_wheel_rotation(powered_wheel_nodes, -double(state.get("wheel_angle_powered_deg", 0.0)));
-        _apply_wheel_rotation(rear_rolling_wheel_nodes, -double(state.get("wheel_angle_rear_deg", 0.0)));
+        // Same sign as the original's UpdateAxle() (DynObj.cpp:489) - the wheel submodels live in
+        // the MaSzyna vehicle frame, which MaszynaRailVehicle3DInstancer converts as a whole.
+        _apply_wheel_rotation(front_rolling_wheel_nodes, double(state.get("wheel_angle_front_deg", 0.0)));
+        _apply_wheel_rotation(powered_wheel_nodes, double(state.get("wheel_angle_powered_deg", 0.0)));
+        _apply_wheel_rotation(rear_rolling_wheel_nodes, double(state.get("wheel_angle_rear_deg", 0.0)));
     }
 
     void RailVehicle3D::_update_track_transform() {
@@ -799,10 +801,15 @@ namespace godot {
             _update_wheel_animation_state();
             return;
         }
+        // RailVehiclePhysicsServer's track-offset distance is rear-relative (see
+        // process_movement()'s own comment on this), so a positive distance here actually
+        // samples toward the vehicle's rear, not its front - swapped from what the "front"/
+        // "rear" naming below implies. Confirmed live: this flipped the whole vehicle 180
+        // degrees the instant it started moving (test_rail_vehicle_idle_orientation_regression.gd).
         const Transform3D front_transform =
-                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * 0.5);
-        const Transform3D rear_transform =
                 physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * -0.5);
+        const Transform3D rear_transform =
+                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * 0.5);
         Vector3 body_forward = front_transform.origin - rear_transform.origin;
         if (body_forward.is_zero_approx()) {
             _update_wheel_animation_state();

@@ -32,8 +32,10 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # for FIZ `include`s.
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
-    # Invalidate templates created before vehicle SFX players received 16 voices.
-    return ("structure-v4:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # The hash cannot see changes to MaszynaRailVehicle3DInstancer's own code - bump this tag
+    # whenever that code changes the cached structure. v6: MaSzyna->Godot vehicle-frame
+    # conversion applied to every vehicle model and the cab.
+    return ("structure-v6:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

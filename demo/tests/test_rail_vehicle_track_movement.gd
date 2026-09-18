@@ -127,8 +127,8 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
     )
     _assert_vector_eq(
         powered_wheel.transform.basis.y.normalized(),
-        Vector3.FORWARD,
-        "powered wheel should rotate around its local X axis",
+        Vector3.BACK,
+        "powered wheel should rotate +angle around its local X axis, like the original's UpdateAxle()",
     )
 
 

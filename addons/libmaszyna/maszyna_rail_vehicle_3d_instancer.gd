@@ -79,6 +79,13 @@ static func _build_structure(
     model.data_path = normalized_data_path
     model.model_filename = body_model_filename
     model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
+    # Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab)
+    # lives in one vehicle-local frame where +Z is the direction of travel: the original draws
+    # all of them under the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp,
+    # vFront) (DynObj.cpp:2506-2508; opengl33renderer.cpp:1174, 2856, 2976). RailVehicle3D uses
+    # Godot's -Z forward, so each of them gets the same 180 degree yaw - the cab via
+    # cabin_rotate_180deg below.
+    model.rotation.y = PI
 
     # Optional: the lower-detail interior seen from outside (through windows) before the player
     # enters the cabin. Most MMD files don't declare one - only build it if present.
@@ -91,6 +98,7 @@ static func _build_structure(
         low_poly_model.data_path = normalized_data_path
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
+        low_poly_model.rotation.y = PI
 
     var passengers_model:E3DModelInstance = null
     var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
@@ -100,6 +108,7 @@ static func _build_structure(
         passengers_model.name = "Passengers"
         passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
+        passengers_model.rotation.y = PI
 
     var fiz_controller := FIZTrainController.new()
     fiz_controller.name = "FIZTrainController"
@@ -125,6 +134,7 @@ static func _build_structure(
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
+    vehicle.cabin_rotate_180deg = true
     return vehicle
 
 

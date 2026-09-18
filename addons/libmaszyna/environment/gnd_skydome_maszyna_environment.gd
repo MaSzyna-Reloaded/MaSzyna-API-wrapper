@@ -31,9 +31,6 @@ const RAINBOW_RAIN_START: float = 0.2
 const RAINBOW_RAIN_END: float = 0.5
 const RAINBOW_CLOUD_FADE_START: float = 0.2
 const RAINBOW_CLOUD_FADE_END: float = 0.5
-# Rain specular range as in forest-test-scene levels/test_biomes.tscn.
-const RAIN_SPECULAR_FADE_START: float = 0.1
-const RAIN_SPECULAR_FADE_END: float = 3.0
 const SECONDS_PER_HOUR: float = 3600.0
 const SECONDS_PER_DAY: int = 86400
 const MAXIMUM_DAY_OF_YEAR: int = 365
@@ -77,8 +74,8 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
     weather.name = WEATHER_NAME
     weather.skydome_path = NodePath("../%s" % SKYDOME_NAME)
     weather.world_environment_path = NodePath("..")
-    weather.rain_specular_fade_start = RAIN_SPECULAR_FADE_START
-    weather.rain_specular_fade_end = RAIN_SPECULAR_FADE_END
+    # Rain look comes from the gnd_weather/* project settings (WeatherSettings).
+    weather.apply_project_settings = true
     world_environment.add_child(weather, false, Node.INTERNAL_MODE_BACK)
 
 

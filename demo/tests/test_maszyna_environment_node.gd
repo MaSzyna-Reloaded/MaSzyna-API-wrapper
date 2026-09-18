@@ -152,12 +152,16 @@ func test_maps_wind_strength_to_weather_global_wind() -> void:
     assert_almost_eq(weather.global_wind_strength, 5.0, 0.000001)
 
 
-func test_applies_skydome_project_settings() -> void:
+func test_applies_skydome_and_weather_project_settings() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
     var skydome: Skydome = _get_skydome_environment(environment_node).skydome
 
     assert_almost_eq(skydome.day_light_energy, 2.0, 0.000001)
     assert_eq(skydome.clouds_color_shadow, Color(0.8515625, 0.8515625, 0.8515625, 1.0))
+    assert_almost_eq(_get_skydome_environment(environment_node).weather.visual_intensity, 1.0, 0.000001)
+    assert_almost_eq(
+        _get_skydome_environment(environment_node).weather.precipitation_wind_strength, 10.0, 0.000001
+    )
 
 
 func test_maps_fog_controls_to_skydome_and_weather() -> void:

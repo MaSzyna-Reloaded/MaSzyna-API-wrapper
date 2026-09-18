@@ -29,7 +29,7 @@ static func build_into(
         if definition.label in ["ignition", "shutdown"]:
             continue
         if not definition.label in [
-                "buzzer", "buzzershp", "brakesound", "slipperysound", "airsound", "airsound2",
+                "buzzer", "buzzershp", "tachoclock", "brakesound", "slipperysound", "airsound", "airsound2",
                 "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2"]:
             continue
         _apply_original_defaults(definition, true)

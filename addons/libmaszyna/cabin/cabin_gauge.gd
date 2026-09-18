@@ -26,6 +26,7 @@ class_name CabinGauge
         mesh_rotation_offset = x
         _dirty = true
 
+## Needle smoothing rate; 0 moves the needle instantly (e.g. the jumping Hasler needle).
 @export var animation_speed = 4.0
 #@export var start_angle = 270.0
 
@@ -82,6 +83,8 @@ func _process_tool(_delta):
     if _setup_phase and _mesh and value:
         _current_rotation = _target_mesh_rotation
         _setup_phase = false
+    elif animation_speed <= 0.0:
+        _current_rotation = _target_mesh_rotation
     else:
         _current_rotation = _current_rotation.lerp(_target_mesh_rotation, _delta * animation_speed)
 

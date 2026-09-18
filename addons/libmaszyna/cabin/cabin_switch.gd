@@ -187,6 +187,9 @@ func _process_tool(delta):
         _mesh.transform.basis = new_basis
         _mesh.position = _mesh_original_position + _current_position
 
+func _apply_control_value(p_value:Variant) -> void:
+    switch_position = int(p_value)
+
 func _play_sound():
 
     if _sound.stream:
@@ -214,9 +217,4 @@ func _set_position_from_input(p_position:int) -> void:
     if previous_position == switch_position:
         return
 
-    if _controller:
-        var command:String = command_increase if switch_position > previous_position else command_decrease
-        if command:
-            _controller.send_command(command)
-        if command_set:
-            _controller.send_command(command_set, switch_position)
+    _act(&"increase" if switch_position > previous_position else &"decrease", switch_position)

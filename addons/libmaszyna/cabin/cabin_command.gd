@@ -4,6 +4,8 @@ class_name CabinCommand
 @export var action_name:String = ""
 @export var command:String = ""
 @export var command_param:String
+## Cabin control id - the key press is reported to CabinSystem under this id.
+@export var control_id:StringName = &""
 @export_node_path("TrainController") var controller_path:NodePath = NodePath("")
 
 func _input(event):
@@ -11,4 +13,5 @@ func _input(event):
         if event.is_action_pressed(action_name):
             var controller:TrainController = get_node(controller_path)
             if controller:
-                controller.send_command(command, command_param)
+                CabinSystem.act(
+                        controller.train_id, int(controller.state.get("cabin_occupied", 1)), control_id, &"hold")

@@ -67,6 +67,29 @@ func test_build_creates_independent_exterior_and_cabin_banks() -> void:
     await wait_idle_frames(2)
 
 
+## Train.cpp:8323-8335 - the Hasler (tachoclock:) is one cab event whose soundN chunks are
+## crossfaded by speed in km/h.
+func test_tachoclock_builds_one_cabin_event_with_speed_chunks() -> void:
+    var vehicle:RailVehicle3D = RailVehicle3D.new()
+    add_child(vehicle)
+    var diagnostics:Array[Dictionary] = []
+    MmdSoundBankInstancer.build_into(
+            vehicle, ProjectSettings.globalize_path(FIXTURE_PATH), "", {}, diagnostics)
+
+    var cabin:SfxPlayer3D = vehicle.get_node("CabinSfxPlayer3D") as SfxPlayer3D
+    var event:SfxEvent = cabin.bank.get_event(&"tachoclock")
+    assert_not_null(event)
+    if event:
+        assert_eq(event.automations.size(), 1)
+        var automation:SfxAutomation = event.automations[0]
+        assert_eq(automation.parameter_name, &"speed")
+        assert_eq(automation.clips.size(), 3)
+    assert_eq(MmdSoundCatalog.get_entry("tachoclock")["state_property"], "tachometer_clock_speed")
+
+    vehicle.queue_free()
+    await wait_idle_frames(2)
+
+
 func test_original_default_placements_keep_engine_and_horns_external() -> void:
     var engine:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
     engine.label = "engine"

@@ -391,10 +391,13 @@ static func _ensure_built() -> void:
         # (confirmed: tachometer, oilpress) uses the default mul=1.0, i.e. no correction. This is
         # NOT a per-vehicle hardcoded guess - mmd_scale_multiplier is the same fixed correction
         # factor the original engine itself applies for this label, on every vehicle.
+        # Train.cpp:10274-10278: tachometer: is the jumpy Hasler needle (AssignFloat(&fTachoVelocityJump)).
         "tachometer": {
             "widget_class": CabinGauge,
             "fixed_fields": {
-                "state_property": "speed",
+                "state_property": "tachometer_speed_jump",
+                # the value itself already jumps once per second - show each jump as is
+                "animation_speed": 0.0,
                 "max_value": 1.0,
             },
             "config_max_property": "",

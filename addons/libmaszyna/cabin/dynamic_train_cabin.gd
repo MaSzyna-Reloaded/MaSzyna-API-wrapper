@@ -118,6 +118,12 @@ func _rebuild_generated() -> void:
     _diagnostics.append_array(build_diagnostics)
 
     _build_driver_aid_commands()
+    # cabin logic of the original engine (CabinSystem callbacks) - added last, after every control
+    var logic := LegacyCabinLogicDelegate.new()
+    logic.name = "LegacyCabinLogic"
+    logic.controller = _controller
+    logic.cab = cab_number
+    _generated.add_child(logic)
     camera_configuration_changed.emit()
 
     print("DynamicTrainCabin: built cab %d from %s - %d instruments parsed, %d generated children" % [
@@ -138,6 +144,7 @@ func _build_driver_aid_commands() -> void:
     var release_to_drive := CabinCommand.new()
     release_to_drive.name = "BrakeLevelSet_Drive"
     release_to_drive.action_name = "brake_level_drive"
+    release_to_drive.control_id = &"brake_level_drive"
     release_to_drive.command = "brake_level_set_position"
     release_to_drive.command_param = "drive"
     _generated.add_child(release_to_drive)

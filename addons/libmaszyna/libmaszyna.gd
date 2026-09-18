@@ -136,6 +136,39 @@ func _enter_tree():
         "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,5000.0,10.0,or_greater"
     )
+    add_custom_project_setting(
+        "maszyna/weather/wind_turbulence", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,4.0,0.01,or_greater"
+    )
+    add_custom_project_setting(MaszynaSkyEnvironment.SHADOW_ENABLED_SETTING, true, TYPE_BOOL)
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_BLUR_SETTING, 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.01,or_greater"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_OPACITY_SETTING, 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_BIAS_SETTING, 0.1, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.001,or_greater"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_NORMAL_BIAS_SETTING, 2.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.001,or_greater"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_MAX_DISTANCE_SETTING, 100.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10000.0,1.0,suffix:m"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING, 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,16.0,0.001,or_greater"
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

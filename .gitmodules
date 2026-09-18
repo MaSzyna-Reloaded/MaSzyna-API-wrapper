@@ -7,3 +7,9 @@
 [submodule "vendor/gnd-sfx"]
     path = vendor/gnd-sfx
     url = https://github.com/GamesNotDeveloped/godot-sfx.git
+[submodule "vendor/gnd-skydome"]
+    path = vendor/gnd-skydome
+    url = https://github.com/GamesNotDeveloped/godot-skydome.git
+[submodule "vendor/gnd-weather"]
+    path = vendor/gnd-weather
+    url = git@github.com:GamesNotDeveloped/godot-weather-system.git

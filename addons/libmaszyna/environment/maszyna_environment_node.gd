@@ -3,12 +3,22 @@ extends Node
 class_name MaszynaEnvironmentNode
 
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
-const MINIMUM_FOG_RANGE: float = 0.001
-const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
-const MAXIMUM_FOG_OPACITY: float = 0.999
-const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
+const WEATHER_PRESETS: Dictionary = {
+    MaszynaEnvironment.Weather.WEATHER_CLEAR: {
+        "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.5, "wind_strength": 0.2,
+    },
+    MaszynaEnvironment.Weather.WEATHER_CLOUDY: {
+        "precipitation": 0.0, "cloudiness": 0.7, "fog_density": 1.0, "wind_strength": 0.4,
+    },
+    MaszynaEnvironment.Weather.WEATHER_RAIN: {
+        "precipitation": 0.8, "cloudiness": 0.9, "fog_density": 2.0, "wind_strength": 0.6,
+    },
+    MaszynaEnvironment.Weather.WEATHER_SNOW: {
+        "precipitation": 0.0, "cloudiness": 0.9, "fog_density": 2.0, "wind_strength": 0.5,
+    },
+}
 
-@export_category("Current Time")
+@export_category("Time")
 @export var use_system_time: bool = false:
     set(value):
         use_system_time = value
@@ -38,11 +48,15 @@ const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
             year = value
             _dirty_time = true
 
-@export var weather: MaszynaEnvironment.Weather = MaszynaEnvironment.Weather.WEATHER_CLEAR:
+@export_range(-12, 14, 1) var timezone_offset: int = 1:
     set(value):
-        if not value == weather:
-            weather = value
-            MaterialManager.weather = weather
+        timezone_offset = value
+        _dirty_time = true
+
+@export_range(0.0, 1000.0) var simulation_speed: float = 1.0:
+    set(value):
+        simulation_speed = value
+        _dirty_time = true
 
 @export_category("Location")
 @export_range(-90.0, 90.0, 0.001, "suffix:°") var latitude: float = 50.271:
@@ -57,18 +71,16 @@ const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
             longitude = value
             _dirty_time = true
 
-@export_category("Configuration")
-@export_range(-12, 14, 1) var timezone_offset: int = 1:
+@export_category("Weather")
+## Preset: changing it after the node is ready sets precipitation, cloudiness, fog density and
+## wind strength (WEATHER_PRESETS); loading a scene keeps the saved values.
+@export var weather: MaszynaEnvironment.Weather = MaszynaEnvironment.Weather.WEATHER_CLEAR:
     set(value):
-        timezone_offset = value
-        _dirty_time = true
+        if not value == weather:
+            weather = value
+            _dirty_weather_preset = is_node_ready()
+            _dirty_visuals = true
 
-@export_range(0.0, 1000.0) var simulation_speed: float = 1.0:
-    set(value):
-        simulation_speed = value
-        _dirty_time = true
-
-@export_category("Visuals")
 @export_range(0.0, 1.0, 0.01) var cloudiness: float = 0.5:
     set(value):
         cloudiness = value
@@ -80,100 +92,35 @@ var wind_direction: float = deg_to_rad(135.0):
         wind_direction = value
         _dirty_visuals = true
 
-@export_group("Day", "day_")
-@export_subgroup("Light", "day_light_")
-@export var day_light_shadow_enabled: bool = true:
+@export_range(0.0, 1.0, 0.01) var wind_strength: float = 0.3:
     set(value):
-        day_light_shadow_enabled = value
+        wind_strength = value
         _dirty_visuals = true
 
-@export var day_light_shadow_mode: DirectionalLight3D.ShadowMode = (
-    DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-):
+@export_range(0.0, 1.0, 0.01) var precipitation: float = 0.0:
     set(value):
-        day_light_shadow_mode = value
+        precipitation = value
         _dirty_visuals = true
 
-@export_range(0.0, 10.0, 0.01, "or_greater") var day_light_shadow_blur: float = 1.0:
+@export_group("Fog")
+@export var fog_enabled: bool = true:
     set(value):
-        day_light_shadow_blur = value
+        fog_enabled = value
         _dirty_visuals = true
 
-@export_range(0.0, 1.0, 0.01) var day_light_shadow_opacity: float = 1.0:
+## Multiplier of the sky backend's own day/night fog density.
+@export_range(0.0, 4.0, 0.01, "or_greater") var fog_density: float = 1.0:
     set(value):
-        day_light_shadow_opacity = value
+        fog_density = value
         _dirty_visuals = true
 
-@export_range(0.0, 10.0, 0.001, "or_greater") var day_light_shadow_bias: float = 0.1:
+## Multiplier of the sky backend's own day/night fog distances.
+@export_range(0.1, 4.0, 0.01, "or_greater") var fog_range: float = 1.0:
     set(value):
-        day_light_shadow_bias = value
+        fog_range = value
         _dirty_visuals = true
 
-@export_range(0.0, 10.0, 0.001, "or_greater")
-var day_light_shadow_normal_bias: float = 2.0:
-    set(value):
-        day_light_shadow_normal_bias = value
-        _dirty_visuals = true
-
-@export_range(0.0, 10000.0, 1.0, "suffix:m")
-var day_light_shadow_max_distance: float = 100.0:
-    set(value):
-        day_light_shadow_max_distance = value
-        _dirty_visuals = true
-
-@export_range(0.0, 16.0, 0.001, "or_greater")
-var day_light_volumetric_fog_energy: float = 1.0:
-    set(value):
-        day_light_volumetric_fog_energy = value
-        _dirty_visuals = true
-
-@export_group("Night", "night_")
-@export_subgroup("Light", "night_light_")
-@export var night_light_shadow_enabled: bool = true:
-    set(value):
-        night_light_shadow_enabled = value
-        _dirty_visuals = true
-
-@export var night_light_shadow_mode: DirectionalLight3D.ShadowMode = (
-    DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-):
-    set(value):
-        night_light_shadow_mode = value
-        _dirty_visuals = true
-
-@export_range(0.0, 10.0, 0.01, "or_greater") var night_light_shadow_blur: float = 1.0:
-    set(value):
-        night_light_shadow_blur = value
-        _dirty_visuals = true
-
-@export_range(0.0, 1.0, 0.01) var night_light_shadow_opacity: float = 1.0:
-    set(value):
-        night_light_shadow_opacity = value
-        _dirty_visuals = true
-
-@export_range(0.0, 10.0, 0.001, "or_greater") var night_light_shadow_bias: float = 0.1:
-    set(value):
-        night_light_shadow_bias = value
-        _dirty_visuals = true
-
-@export_range(0.0, 10.0, 0.001, "or_greater")
-var night_light_shadow_normal_bias: float = 2.0:
-    set(value):
-        night_light_shadow_normal_bias = value
-        _dirty_visuals = true
-
-@export_range(0.0, 10000.0, 1.0, "suffix:m")
-var night_light_shadow_max_distance: float = 100.0:
-    set(value):
-        night_light_shadow_max_distance = value
-        _dirty_visuals = true
-
-@export_range(0.0, 16.0, 0.001, "or_greater")
-var night_light_volumetric_fog_energy: float = 1.0:
-    set(value):
-        night_light_volumetric_fog_energy = value
-        _dirty_visuals = true
-
+@export_category("Adjustments")
 @export_group("Tone Mapping")
 @export var tonemap_mode: Environment.ToneMapper = Environment.TONE_MAPPER_AGX:
     set(value):
@@ -200,27 +147,6 @@ var night_light_volumetric_fog_energy: float = 1.0:
         adjustment_enabled = value
         _dirty_visuals = true
 
-@export_group("Fog")
-@export var fog_enabled: bool = true:
-    set(value):
-        fog_enabled = value
-        _dirty_visuals = true
-
-@export_range(0.0, 1.0, 0.001) var fog_density: float = 0.2:
-    set(value):
-        fog_density = value
-        _dirty_visuals = true
-
-@export_range(0.0, 5000.0, 1.0, "suffix:m") var fog_range_start: float = 200.0:
-    set(value):
-        fog_range_start = value
-        _dirty_visuals = true
-
-@export_range(0.0, 5000.0, 1.0, "suffix:m") var fog_range_end: float = 1000.0:
-    set(value):
-        fog_range_end = value
-        _dirty_visuals = true
-
 var season: MaszynaEnvironment.Season = MaszynaEnvironment.Season.SEASON_SUMMER:
     set(value):
         if not value == season:
@@ -232,10 +158,12 @@ var _environment: Environment
 var _sky_environment: MaszynaSkyEnvironment
 var _dirty_time: bool = true
 var _dirty_visuals: bool = true
+var _dirty_weather_preset: bool = false
 
 
 func _ready() -> void:
     _ensure_environment()
+    _sky_environment.apply_light_configuration()
     update()
     _process_dirty()
 
@@ -248,8 +176,12 @@ func _exit_tree() -> void:
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
     _process_dirty()
+    _sky_environment.process(delta)
+    _sync_time()
+    # Running time is only mirrored here; it must not be re-applied as a configuration change.
+    _dirty_time = false
 
 
 func update() -> void:
@@ -273,6 +205,10 @@ func set_date(next_year: int, next_month: int, next_day: int) -> void:
 
 
 func _process_dirty() -> void:
+    if _dirty_weather_preset:
+        _dirty_weather_preset = false
+        _apply_weather_preset()
+
     if _dirty_visuals:
         _dirty_visuals = false
         _apply_visual_configuration()
@@ -311,7 +247,7 @@ func _create_world_environment() -> WorldEnvironment:
 
 
 func _create_sky_environment() -> MaszynaSkyEnvironment:
-    return TokisanSky3DMaszynaEnvironment.new(self)
+    return GndSkydomeMaszynaEnvironment.new(self)
 
 
 func _create_environment() -> Environment:
@@ -327,18 +263,34 @@ func _create_environment() -> Environment:
     environment.fog_sun_scatter = 0.07
     environment.volumetric_fog_anisotropy = 0.0
     environment.volumetric_fog_detail_spread = 1.0
+    # Glow tuned as in forest-test-scene materials/environment_filmic.tres; the luminance cap keeps
+    # small specular highlights (e.g. rain streaks) from blooming into large blobs.
+    environment.glow_normalized = true
+    environment.glow_intensity = 1.37
+    environment.glow_strength = 0.8
+    environment.glow_bloom = 0.3
+    environment.glow_hdr_threshold = 1.37
+    environment.glow_hdr_luminance_cap = 0.18
     return environment
 
 
+func _apply_weather_preset() -> void:
+    var preset: Dictionary = WEATHER_PRESETS[weather]
+    precipitation = preset["precipitation"]
+    cloudiness = preset["cloudiness"]
+    fog_density = preset["fog_density"]
+    wind_strength = preset["wind_strength"]
+
+
 func _apply_visual_configuration() -> void:
+    MaterialManager.weather = (
+        MaszynaEnvironment.Weather.WEATHER_RAIN if precipitation > 0.0 else weather
+    )
     if not _environment or not _sky_environment:
         return
 
-    var effective_fog_end: float = maxf(fog_range_end, fog_range_start + MINIMUM_FOG_RANGE)
-    var volumetric_fog_length: float = maxf(
-        effective_fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH
-    )
-    var fog_active: bool = fog_enabled and fog_density > 0.0
+    # fog_density is a multiplier; zero fades the fog out instead of switching it off.
+    var fog_active: bool = fog_enabled
 
     _sky_environment.apply_visual_configuration()
 
@@ -353,23 +305,9 @@ func _apply_visual_configuration() -> void:
     _environment.glow_enabled = true
     _environment.adjustment_enabled = adjustment_enabled
     _environment.fog_enabled = fog_active
-    _environment.fog_density = fog_density
-    _environment.fog_depth_begin = fog_range_start
-    _environment.fog_depth_end = effective_fog_end
-    _environment.fog_sky_affect = fog_density
     _environment.volumetric_fog_enabled = (
         fog_active and bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
     )
-    _environment.volumetric_fog_density = _fog_opacity_to_exponential_density(
-        fog_density * VOLUMETRIC_FOG_OPACITY_SCALE, volumetric_fog_length
-    )
-    _environment.volumetric_fog_length = volumetric_fog_length
-    _environment.volumetric_fog_sky_affect = 1.0
-
-
-func _fog_opacity_to_exponential_density(opacity: float, distance: float) -> float:
-    var effective_opacity: float = clampf(opacity, 0.0, MAXIMUM_FOG_OPACITY)
-    return -log(1.0 - effective_opacity) / distance
 
 
 func _on_user_settings_changed() -> void:
@@ -381,7 +319,10 @@ func _apply_time_configuration() -> void:
         return
 
     _sky_environment.apply_time_configuration()
+    _sync_time()
 
+
+func _sync_time() -> void:
     var normalized_date: Vector3i = _sky_environment.get_date()
     year = normalized_date.x
     month = normalized_date.y

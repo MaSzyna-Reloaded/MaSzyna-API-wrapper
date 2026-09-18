@@ -32,6 +32,10 @@ const MAX_WHEEL_AXLES:int = 20
 ## pantograph_*_arm_paths index meaning (lower arm pair, upper arm pair,
 ## slider); the trailing pantograph number (1=front, 2=rear) is appended by
 ## _find_pantograph_arm_paths() below.
+## Whole vehicle body excludes rain (negative precipitation delta), sized from FIZ Dimensions.
+const RAIN_VOLUME_NAME:StringName = &"RainExclusion"
+const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
+
 const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
     "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
 ]
@@ -118,10 +122,15 @@ static func _build_structure(
     fiz_controller.initial_velocity = initial_velocity
     fiz_controller.cabin_number = cabin_number
 
+    var rain_volume := RainVolume.new()
+    rain_volume.name = RAIN_VOLUME_NAME
+    rain_volume.precipitation_delta = RAIN_EXCLUSION_PRECIPITATION_DELTA
+
     var vehicle := RailVehicle3D.new()
     vehicle.name = "RailVehicle3D"
     vehicle.add_child(model, false, Node.INTERNAL_MODE_BACK)
     vehicle.add_child(fiz_controller, false, Node.INTERNAL_MODE_BACK)
+    vehicle.add_child(rain_volume, false, Node.INTERNAL_MODE_BACK)
     if low_poly_model:
         vehicle.add_child(low_poly_model, false, Node.INTERNAL_MODE_BACK)
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
@@ -151,6 +160,21 @@ static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_d
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
     configure_head_display(vehicle, model, head_display_material)
+
+    # FIZ Dimensions are known only once FIZTrainController has built its deferred controller.
+    var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
+    var rain_volume:RainVolume = vehicle.get_node(NodePath(RAIN_VOLUME_NAME)) as RainVolume
+    fiz_controller.controller_changed.connect(_fit_rain_volume.bind(rain_volume))
+
+
+static func _fit_rain_volume(controller:TrainController, rain_volume:RainVolume) -> void:
+    if not controller:
+        return
+    rain_volume.size = Vector3(
+        controller.dimensions_width, controller.dimensions_height, controller.dimensions_length
+    )
+    # Vehicle origin lies on the rail level, so the box is lifted by half of its height.
+    rain_volume.position.y = controller.dimensions_height * 0.5
 
 
 ## Public: also called by DynamicRailVehicle3DManager to (re-)apply the per-instance

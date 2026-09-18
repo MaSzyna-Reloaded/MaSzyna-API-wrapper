@@ -414,3 +414,21 @@ func _find(definition:MmdCabinDefinition, label:String) -> MmdInstrumentDescript
         if descriptor.label == label:
             return descriptor
     return null
+
+
+## Original feeds ggLocalBrake with LocalBrakePosA * LocalBrakePosNo (Train.cpp:7850), so the
+## full normalized 0..1 travel must rotate as far as MMD scale * 10 revolutions.
+func test_localbrake_rotation_is_scaled_by_local_brake_position_count():
+    var descriptor := MmdInstrumentDescriptor.new()
+    descriptor.label = "localbrake"
+    descriptor.animation_type = "rot"
+    descriptor.scale = -0.0125
+    var widget:CabinKnob = autofree(CabinKnob.new())
+    var controller:TrainController = add_child_autofree(TrainController.new())
+    var diagnostics:Array[Dictionary] = []
+
+    MmdCabinInstancer._apply_animation_shape(
+        widget, descriptor, MmdSemanticCatalog.get_entry("localbrake"), controller, 1, diagnostics
+    )
+
+    assert_almost_eq(widget.mesh_rotation.y, -0.0125 * 10.0 * 360.0, 0.0001)

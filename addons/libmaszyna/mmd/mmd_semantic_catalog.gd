@@ -129,6 +129,9 @@ static func _ensure_built() -> void:
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
+            # The original feeds the gauge LocalBrakePosA * LocalBrakePosNo (Train.cpp:7850,
+            # LocalBrakePosNo = 10 in hamulce.h:39), so MMD scale is calibrated for 0..10.
+            "mmd_scale_multiplier": 10.0,
         },
         "security_reset_bt": {
             "widget_class": CabinButton,

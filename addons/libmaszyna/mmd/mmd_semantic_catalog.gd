@@ -44,6 +44,8 @@ static func _ensure_built() -> void:
                 "state_property": "controller_main_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
+                # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
+                "repeat_on_hold": true,
             },
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
@@ -69,6 +71,8 @@ static func _ensure_built() -> void:
                 "state_property": "controller_main_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
+                # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
+                "repeat_on_hold": true,
             },
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",

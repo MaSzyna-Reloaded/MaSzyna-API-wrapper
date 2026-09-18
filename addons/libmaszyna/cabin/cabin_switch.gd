@@ -80,6 +80,9 @@ enum ControllerMode { OnOff, On, Off }
 @export var action_increase = ""
 @export var action_decrease = ""
 @export var action_toggle = ""
+## Holding action_increase/action_decrease keeps stepping at the keyboard repeat rate, like the
+## original's key-repeat-driven controllers (e.g. OnCommand_mastercontrollerincrease).
+@export var repeat_on_hold:bool = false
 
 var _mesh:MeshInstance3D
 var _mesh_original_basis:Basis
@@ -135,12 +138,12 @@ func _input(event):
         return
 
     if action_increase:
-        if event.is_action_pressed(action_increase, false, true):
+        if event.is_action_pressed(action_increase, repeat_on_hold, true):
             _set_position_from_input(switch_position + 1)
         if automatic_reset and event.is_action_released(action_increase, true):
             _set_position_from_input(switch_reset_position)
     if action_decrease:
-        if event.is_action_pressed(action_decrease, false, true):
+        if event.is_action_pressed(action_decrease, repeat_on_hold, true):
             _set_position_from_input(switch_position - 1)
         if automatic_reset and event.is_action_released(action_decrease, true):
             _set_position_from_input(switch_reset_position)

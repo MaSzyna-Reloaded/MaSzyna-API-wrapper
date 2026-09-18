@@ -5,9 +5,32 @@ class_name GndSkydomeMaszynaEnvironment
 const SKYDOME_NAME: StringName = &"Skydome"
 const SUN_LIGHT_NAME: StringName = &"SunLight"
 const WEATHER_NAME: StringName = &"Weather"
-const WIND_SPEED_SETTING: StringName = &"maszyna/weather/wind_speed"
-const WIND_STRENGTH_SETTING: StringName = &"maszyna/weather/wind_strength"
 const WIND_TURBULENCE_SETTING: StringName = &"maszyna/weather/wind_turbulence"
+# Weather response to rain and wind strength, as in forest-test-scene ui/WeatherControlsCanvas.gd.
+const WIND_SPEED_MIN: float = 0.15
+const WIND_SPEED_MAX: float = 3.0
+const WIND_STRENGTH_MIN: float = 0.4
+const WIND_STRENGTH_MAX: float = 5.0
+const STORM_RAIN_START: float = 0.4
+# Rain thickens the current fog up to RAIN_FOG_BOOST times (from RAIN_FOG_START precipitation).
+const RAIN_FOG_START: float = 0.6
+const RAIN_FOG_BOOST: float = 2.0
+# Skydome's day/night densities are tuned for exponential fog and barely show in depth fog, so the
+# visible fog comes from Skydome's fog_density boost (0.15 in forest-test-scene).
+const FOG_INTENSITY: float = 0.15
+# Skydome's own day/night fog values scaled by MaszynaEnvironmentNode.fog_density / fog_range.
+const FOG_DENSITY_PROPERTIES: Array[StringName] = [
+    &"day_fog_density", &"night_fog_density", &"day_vol_fog_density", &"night_vol_fog_density",
+]
+const FOG_RANGE_PROPERTIES: Array[StringName] = [
+    &"day_fog_distance_begin", &"day_fog_distance", &"night_fog_distance_begin",
+    &"night_fog_distance", &"day_vol_fog_length", &"night_vol_fog_length",
+]
+const RAINBOW_INTENSITY_MAX: float = 0.12
+const RAINBOW_RAIN_START: float = 0.2
+const RAINBOW_RAIN_END: float = 0.5
+const RAINBOW_CLOUD_FADE_START: float = 0.2
+const RAINBOW_CLOUD_FADE_END: float = 0.5
 # Rain specular range as in forest-test-scene levels/test_biomes.tscn.
 const RAIN_SPECULAR_FADE_START: float = 0.1
 const RAIN_SPECULAR_FADE_END: float = 3.0
@@ -45,6 +68,8 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
     skydome.world_environment_path = NodePath("..")
     skydome.directional_light_path = NodePath("../%s" % SUN_LIGHT_NAME)
     skydome.fog_mode = Skydome.FogModeOverride.DEPTH
+    # Sky look comes from the gnd_skydome/* project settings (SkydomeSettings).
+    skydome.apply_project_settings = true
     world_environment.add_child(skydome, false, Node.INTERNAL_MODE_BACK)
 
     # Weather drives Skydome clouds, wind, fog density and lightning on its own.
@@ -67,34 +92,41 @@ func apply_visual_configuration() -> void:
     if not skydome:
         return
 
+    var precipitation: float = environment_node.precipitation
     weather.cloud_density = environment_node.cloudiness
-    weather.storm_fog_intensity = (
-        environment_node.fog_density if environment_node.fog_enabled else 0.0
-    )
-    weather.precipitation_intensity = (
-        1.0 if environment_node.weather == MaszynaEnvironment.Weather.WEATHER_RAIN else 0.0
+    weather.precipitation_intensity = precipitation
+    weather.cloud_overcast_intensity = precipitation
+    weather.storm_intensity = clampf(inverse_lerp(STORM_RAIN_START, 1.0, precipitation), 0.0, 1.0)
+    var rain_fog: float = clampf(inverse_lerp(RAIN_FOG_START, 1.0, precipitation), 0.0, 1.0)
+    weather.storm_fog_intensity = clampf(
+        FOG_INTENSITY * environment_node.fog_density * lerpf(1.0, RAIN_FOG_BOOST, rain_fog),
+        0.0,
+        1.0
     )
     weather.global_wind_direction = Vector2.from_angle(environment_node.wind_direction)
-    weather.global_wind_speed = float(ProjectSettings.get_setting(WIND_SPEED_SETTING, 1.0))
-    weather.global_wind_strength = float(ProjectSettings.get_setting(WIND_STRENGTH_SETTING, 4.0))
+    weather.global_wind_speed = lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, environment_node.wind_strength)
+    weather.global_wind_strength = lerpf(
+        WIND_STRENGTH_MIN, WIND_STRENGTH_MAX, environment_node.wind_strength
+    )
     weather.global_wind_turbulence = float(
         ProjectSettings.get_setting(WIND_TURBULENCE_SETTING, 1.0)
     )
+    skydome.rainbow_intensity = (
+        RAINBOW_INTENSITY_MAX
+        * smoothstep(RAINBOW_RAIN_START, RAINBOW_RAIN_END, precipitation)
+        * (1.0 - smoothstep(RAINBOW_CLOUD_FADE_START, RAINBOW_CLOUD_FADE_END, environment_node.cloudiness))
+    )
 
-    # Skydome owns the Environment fog; only its general sliders are driven from here.
-    skydome.day_fog_distance_begin = environment_node.fog_range_start
-    skydome.day_fog_distance = environment_node.fog_range_end
-    skydome.night_fog_distance_begin = environment_node.fog_range_start
-    skydome.night_fog_distance = environment_node.fog_range_end
+    # Skydome keeps its day/night fog blend; the node only scales it.
+    for property: StringName in FOG_DENSITY_PROPERTIES:
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * environment_node.fog_density)
+    for property: StringName in FOG_RANGE_PROPERTIES:
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * environment_node.fog_range)
 
-    # Shadow opacity is left to Skydome, which derives it from cloud coverage.
-    sun_light.shadow_enabled = environment_node.day_light_shadow_enabled
-    sun_light.directional_shadow_mode = environment_node.day_light_shadow_mode
-    sun_light.shadow_blur = environment_node.day_light_shadow_blur
-    sun_light.shadow_bias = environment_node.day_light_shadow_bias
-    sun_light.shadow_normal_bias = environment_node.day_light_shadow_normal_bias
-    sun_light.directional_shadow_max_distance = environment_node.day_light_shadow_max_distance
-    sun_light.light_volumetric_fog_energy = environment_node.day_light_volumetric_fog_energy
+
+## Skydome later overrides shadow opacity from cloud coverage.
+func apply_light_configuration() -> void:
+    _apply_directional_light_settings(sun_light)
 
 
 func set_date(year: int, month: int, day: int) -> Vector3i:

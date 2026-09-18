@@ -73,33 +73,47 @@ func test_maps_cloudiness_and_wind_to_weather() -> void:
     assert_eq(skydome_environment.weather.skydome_path, NodePath("../Skydome"))
 
 
-func test_maps_rain_weather_to_precipitation() -> void:
+func test_weather_preset_sets_weather_controls() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
     var weather: WeatherNode = _get_skydome_environment(environment_node).weather
 
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_RAIN
     environment_node._process(0.0)
 
-    assert_almost_eq(weather.precipitation_intensity, 1.0, 0.000001)
+    assert_almost_eq(environment_node.precipitation, 0.8, 0.000001)
+    assert_almost_eq(environment_node.cloudiness, 0.9, 0.000001)
+    assert_almost_eq(environment_node.fog_density, 2.0, 0.000001)
+    assert_almost_eq(environment_node.wind_strength, 0.6, 0.000001)
+    assert_almost_eq(weather.precipitation_intensity, 0.8, 0.000001)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
 
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_SNOW
     environment_node._process(0.0)
 
     assert_almost_eq(weather.precipitation_intensity, 0.0, 0.000001)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_SNOW)
 
 
-func test_applies_day_light_shadow_configuration() -> void:
+func test_applies_rendering_light_settings_on_ready() -> void:
+    var settings: Dictionary = {
+        MaszynaSkyEnvironment.SHADOW_ENABLED_SETTING: false,
+        MaszynaSkyEnvironment.SHADOW_MODE_SETTING: DirectionalLight3D.SHADOW_ORTHOGONAL,
+        MaszynaSkyEnvironment.SHADOW_BLUR_SETTING: 0.5,
+        MaszynaSkyEnvironment.SHADOW_BIAS_SETTING: 0.2,
+        MaszynaSkyEnvironment.SHADOW_NORMAL_BIAS_SETTING: 1.5,
+        MaszynaSkyEnvironment.SHADOW_MAX_DISTANCE_SETTING: 250.0,
+        MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING: 12.5,
+    }
+    var previous: Dictionary = {}
+    for setting: StringName in settings:
+        previous[setting] = ProjectSettings.get_setting(setting)
+        ProjectSettings.set_setting(setting, settings[setting])
+
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
     var sun_light: DirectionalLight3D = _get_skydome_environment(environment_node).sun_light
 
-    environment_node.day_light_shadow_enabled = false
-    environment_node.day_light_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-    environment_node.day_light_shadow_blur = 0.5
-    environment_node.day_light_shadow_bias = 0.2
-    environment_node.day_light_shadow_normal_bias = 1.5
-    environment_node.day_light_shadow_max_distance = 250.0
-    environment_node.day_light_volumetric_fog_energy = 12.5
-    environment_node._process(0.0)
+    for setting: StringName in previous:
+        ProjectSettings.set_setting(setting, previous[setting])
 
     assert_false(sun_light.shadow_enabled)
     assert_eq(sun_light.directional_shadow_mode, DirectionalLight3D.SHADOW_ORTHOGONAL)
@@ -109,40 +123,75 @@ func test_applies_day_light_shadow_configuration() -> void:
     assert_almost_eq(sun_light.directional_shadow_max_distance, 250.0, 0.000001)
     assert_almost_eq(sun_light.light_volumetric_fog_energy, 12.5, 0.000001)
 
+func test_maps_rain_intensity_to_storm_overcast_and_rainbow() -> void:
+    var environment_node: MaszynaEnvironmentNode = _create_environment_node()
+    var skydome_environment: GndSkydomeMaszynaEnvironment = (
+        _get_skydome_environment(environment_node)
+    )
+
+    environment_node.fog_enabled = false
+    environment_node.cloudiness = 0.0
+    environment_node.precipitation = 0.8
+    environment_node._process(0.0)
+
+    assert_almost_eq(skydome_environment.weather.precipitation_intensity, 0.8, 0.000001)
+    assert_almost_eq(skydome_environment.weather.cloud_overcast_intensity, 0.8, 0.000001)
+    assert_almost_eq(skydome_environment.weather.storm_intensity, 2.0 / 3.0, 0.000001)
+    assert_almost_eq(skydome_environment.weather.storm_fog_intensity, 0.225, 0.000001)
+    assert_almost_eq(skydome_environment.skydome.rainbow_intensity, 0.12, 0.000001)
+
+
+func test_maps_wind_strength_to_weather_global_wind() -> void:
+    var environment_node: MaszynaEnvironmentNode = _create_environment_node()
+    var weather: WeatherNode = _get_skydome_environment(environment_node).weather
+
+    environment_node.wind_strength = 1.0
+    environment_node._process(0.0)
+
+    assert_almost_eq(weather.global_wind_speed, 3.0, 0.000001)
+    assert_almost_eq(weather.global_wind_strength, 5.0, 0.000001)
+
+
+func test_applies_skydome_project_settings() -> void:
+    var environment_node: MaszynaEnvironmentNode = _create_environment_node()
+    var skydome: Skydome = _get_skydome_environment(environment_node).skydome
+
+    assert_almost_eq(skydome.day_light_energy, 2.0, 0.000001)
+    assert_eq(skydome.clouds_color_shadow, Color(0.8515625, 0.8515625, 0.8515625, 1.0))
+
 
 func test_maps_fog_controls_to_skydome_and_weather() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
     var skydome: Skydome = _get_skydome_environment(environment_node).skydome
     var weather: WeatherNode = _get_skydome_environment(environment_node).weather
 
-    environment_node.fog_density = 0.4
-    environment_node.fog_range_start = 250.0
-    environment_node.fog_range_end = 800.0
+    environment_node.fog_density = 2.0
+    environment_node.fog_range = 0.5
     environment_node._process(0.0)
 
     assert_true(environment_node._environment.fog_enabled)
-    assert_almost_eq(environment_node._environment.fog_depth_begin, 250.0, 0.000001)
-    assert_almost_eq(environment_node._environment.fog_depth_end, 800.0, 0.000001)
+    assert_almost_eq(skydome.day_fog_density, 0.01, 0.000001)
+    assert_almost_eq(skydome.night_fog_density, 0.04, 0.000001)
+    assert_almost_eq(skydome.day_fog_distance, 235.0, 0.000001)
+    assert_almost_eq(skydome.night_vol_fog_density, 0.242, 0.000001)
+    assert_almost_eq(skydome.night_fog_distance, 100.0, 0.000001)
     assert_eq(
         environment_node._environment.volumetric_fog_enabled,
         bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
     )
-    assert_almost_eq(weather.storm_fog_intensity, 0.4, 0.000001)
+    assert_almost_eq(weather.storm_fog_intensity, 0.3, 0.000001)
     assert_eq(skydome.fog_mode, Skydome.FogModeOverride.DEPTH)
     assert_eq(environment_node._environment.fog_mode, Environment.FOG_MODE_DEPTH)
 
 
 func test_fog_switch_disables_all_fog_layers() -> void:
     var environment_node: MaszynaEnvironmentNode = _create_environment_node()
-    var weather: WeatherNode = _get_skydome_environment(environment_node).weather
 
-    environment_node.fog_density = 0.4
     environment_node.fog_enabled = false
     environment_node._process(0.0)
 
     assert_false(environment_node._environment.fog_enabled)
     assert_false(environment_node._environment.volumetric_fog_enabled)
-    assert_almost_eq(weather.storm_fog_intensity, 0.0, 0.000001)
 
 
 func test_applies_time_and_location_as_solar_time() -> void:
@@ -196,14 +245,21 @@ func test_changing_simulation_speed_keeps_running_time() -> void:
 
 
 func test_proxies_season_and_weather_to_material_manager() -> void:
-    var environment_node: MaszynaEnvironmentNode = MaszynaEnvironmentNode.new()
+    var environment_node: MaszynaEnvironmentNode = _create_environment_node()
 
     environment_node.season = MaszynaEnvironment.Season.SEASON_WINTER
-    environment_node.weather = MaszynaEnvironment.Weather.WEATHER_RAIN
 
     assert_eq(MaterialManager.season, MaszynaEnvironment.Season.SEASON_WINTER)
+
+    environment_node.precipitation = 0.0
+    environment_node._process(0.0)
+
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_CLEAR)
+
+    environment_node.precipitation = 0.5
+    environment_node._process(0.0)
+
     assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
-    environment_node.free()
 
 
 func test_sets_season_from_manual_date_thresholds() -> void:

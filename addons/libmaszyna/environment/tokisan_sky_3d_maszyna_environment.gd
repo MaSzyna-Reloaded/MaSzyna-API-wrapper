@@ -10,7 +10,10 @@ const SUN_DISK_INTENSITY: float = 30.0
 const MOON_COLOR: Color = Color.WHITE
 const STARMAP_COLOR: Color = Color(0.709804, 0.709804, 0.709804, 0.854902)
 const STAR_FIELD_COLOR: Color = Color.WHITE
-const MINIMUM_FOG_RANGE: float = 0.001
+# Fog baseline scaled by MaszynaEnvironmentNode.fog_density / fog_range.
+const FOG_DENSITY: float = 0.2
+const FOG_RANGE_START: float = 200.0
+const FOG_RANGE_END: float = 1000.0
 const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
 const MAXIMUM_FOG_OPACITY: float = 0.999
 const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
@@ -96,44 +99,19 @@ func apply_visual_configuration() -> void:
     sky_dome.star_field_color = STAR_FIELD_COLOR.lerp(
         Color(0.0, 0.0, 0.0, 1.0), 1.0 - celestial_visibility
     )
-    _apply_directional_light_configuration(
-        sun_light,
-        environment_node.day_light_shadow_enabled,
-        environment_node.day_light_shadow_mode,
-        environment_node.day_light_shadow_blur,
-        environment_node.day_light_shadow_opacity,
-        environment_node.day_light_shadow_bias,
-        environment_node.day_light_shadow_normal_bias,
-        environment_node.day_light_shadow_max_distance,
-        environment_node.day_light_volumetric_fog_energy
-    )
-    _apply_directional_light_configuration(
-        moon_light,
-        environment_node.night_light_shadow_enabled,
-        environment_node.night_light_shadow_mode,
-        environment_node.night_light_shadow_blur,
-        environment_node.night_light_shadow_opacity,
-        environment_node.night_light_shadow_bias,
-        environment_node.night_light_shadow_normal_bias,
-        environment_node.night_light_shadow_max_distance,
-        environment_node.night_light_volumetric_fog_energy
-    )
 
 
 func _apply_fog_configuration() -> void:
-    var effective_fog_end: float = maxf(
-        environment_node.fog_range_end, environment_node.fog_range_start + MINIMUM_FOG_RANGE
-    )
-    var volumetric_fog_length: float = maxf(
-        effective_fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH
-    )
+    var fog_density: float = clampf(FOG_DENSITY * environment_node.fog_density, 0.0, 1.0)
+    var fog_end: float = FOG_RANGE_END * environment_node.fog_range
+    var volumetric_fog_length: float = maxf(fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH)
 
-    environment.fog_density = environment_node.fog_density
-    environment.fog_depth_begin = environment_node.fog_range_start
-    environment.fog_depth_end = effective_fog_end
-    environment.fog_sky_affect = environment_node.fog_density
+    environment.fog_density = fog_density
+    environment.fog_depth_begin = FOG_RANGE_START * environment_node.fog_range
+    environment.fog_depth_end = fog_end
+    environment.fog_sky_affect = fog_density
     environment.volumetric_fog_density = _fog_opacity_to_exponential_density(
-        environment_node.fog_density * VOLUMETRIC_FOG_OPACITY_SCALE, volumetric_fog_length
+        fog_density * VOLUMETRIC_FOG_OPACITY_SCALE, volumetric_fog_length
     )
     environment.volumetric_fog_length = volumetric_fog_length
     environment.volumetric_fog_sky_affect = 1.0
@@ -144,25 +122,9 @@ func _fog_opacity_to_exponential_density(opacity: float, distance: float) -> flo
     return -log(1.0 - effective_opacity) / distance
 
 
-func _apply_directional_light_configuration(
-    light: DirectionalLight3D,
-    shadow_enabled: bool,
-    shadow_mode: DirectionalLight3D.ShadowMode,
-    shadow_blur: float,
-    shadow_opacity: float,
-    shadow_bias: float,
-    shadow_normal_bias: float,
-    shadow_max_distance: float,
-    volumetric_fog_energy: float
-) -> void:
-    light.shadow_enabled = shadow_enabled
-    light.directional_shadow_mode = shadow_mode
-    light.shadow_blur = shadow_blur
-    light.shadow_opacity = shadow_opacity
-    light.shadow_bias = shadow_bias
-    light.shadow_normal_bias = shadow_normal_bias
-    light.directional_shadow_max_distance = shadow_max_distance
-    light.light_volumetric_fog_energy = volumetric_fog_energy
+func apply_light_configuration() -> void:
+    _apply_directional_light_settings(sun_light)
+    _apply_directional_light_settings(moon_light)
 
 
 func set_date(year: int, month: int, day: int) -> Vector3i:

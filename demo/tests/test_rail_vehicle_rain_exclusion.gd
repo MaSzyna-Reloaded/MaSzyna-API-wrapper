@@ -52,3 +52,18 @@ func test_real_vehicle_excludes_rain_over_its_body() -> void:
         )
     )
     assert_almost_eq(rain_volume.precipitation_delta, -1.0, 0.000001)
+
+
+func test_rain_volumes_beyond_active_distance_are_ignored() -> void:
+    var near_volume: RainVolume = add_child_autofree(RainVolume.new())
+    var far_volume: RainVolume = add_child_autofree(RainVolume.new())
+    var world_3d: World3D = near_volume.get_world_3d()
+    far_volume.position = Vector3(0.0, 0.0, 100.0)
+
+    WeatherServer.set_weather_observer_sample(world_3d, Vector3.ZERO)
+    WeatherServer.set_rain_volume_active_distance(world_3d, 10.0)
+    var active_volumes: Array = WeatherServer._get_active_rain_volumes(world_3d)
+    WeatherServer.clear_weather_state(world_3d)
+
+    assert_true(active_volumes.has(near_volume))
+    assert_false(active_volumes.has(far_volume))

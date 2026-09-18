@@ -336,8 +336,38 @@ namespace godot {
         mover->ComputeMovement(
                 p_delta, p_delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mock_location,
                 mock_rotation);
+        _update_tachometer(p_delta);
 
         _handle_mover_update();
+    }
+
+    // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
+    // sound gate (Train.cpp:8323-8335).
+    void TrainController::_update_tachometer(const double p_delta) {
+        const double max_tacho = 3.0;
+        tacho_velocity = std::min(std::abs(11.31 * mover->WheelDiameter * mover->nrot), mover->Vmax * 1.05);
+
+        // the needle jumps once per simulation second, with a small random error
+        const double previous_second = std::floor(tacho_time);
+        tacho_time += p_delta;
+        if (std::floor(tacho_time) != previous_second) {
+            tacho_velocity_jump = tacho_velocity > 1.0 ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
+                                                                          UtilityFunctions::randf_range(0.0, 3.0)) *
+                                                                                 0.5
+                                                       : 0.0;
+        }
+
+        // ticking starts ~1 s after moving off and fades out slowly after stopping
+        if (tacho_velocity > 1.0) {
+            tacho_count = std::min(max_tacho, tacho_count + p_delta * 3.0);
+        } else if (tacho_count > 0.0) {
+            tacho_count = std::max(0.0, tacho_count - p_delta * 0.66);
+        }
+        if (tacho_count >= 3.0) {
+            tacho_clock_active = true;
+        } else if (tacho_count < 1.0) {
+            tacho_clock_active = false;
+        }
     }
 
     void TrainController::update_state() {
@@ -469,6 +499,10 @@ namespace godot {
         internal_state["mass_total"] = p_mover->TotalMass;
         internal_state["velocity"] = p_mover->V;
         internal_state["speed"] = p_mover->Vel;
+        internal_state["tachometer_speed"] = tacho_velocity;
+        internal_state["tachometer_speed_jump"] = tacho_velocity_jump;
+        // tachoclock chunk parameter; 0 keeps the sound stopped (Train.cpp:8323-8335)
+        internal_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
         internal_state["total_distance"] = p_mover->DistCounter;
         internal_state["direction"] = p_mover->DirActive;
         internal_state["cabin"] = p_mover->CabActive;
@@ -551,8 +585,8 @@ namespace godot {
         TrainSystem::get_instance()->broadcast_command(p_command, p_p1, p_p2);
     }
 
-    void TrainController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
-        TrainSystem::get_instance()->send_command(train_id, String(p_command), p_p1, p_p2);
+    Variant TrainController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
+        return TrainSystem::get_instance()->send_command(train_id, String(p_command), p_p1, p_p2);
     }
 
     void TrainController::battery(const bool p_enabled) const {

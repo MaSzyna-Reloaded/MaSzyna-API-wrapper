@@ -44,6 +44,8 @@ static func _ensure_built() -> void:
                 "state_property": "controller_main_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
+                # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
+                "repeat_on_hold": true,
             },
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
@@ -69,6 +71,8 @@ static func _ensure_built() -> void:
                 "state_property": "controller_main_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
+                # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
+                "repeat_on_hold": true,
             },
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
@@ -125,6 +129,9 @@ static func _ensure_built() -> void:
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
+            # The original feeds the gauge LocalBrakePosA * LocalBrakePosNo (Train.cpp:7850,
+            # LocalBrakePosNo = 10 in hamulce.h:39), so MMD scale is calibrated for 0..10.
+            "mmd_scale_multiplier": 10.0,
         },
         "security_reset_bt": {
             "widget_class": CabinButton,
@@ -391,10 +398,13 @@ static func _ensure_built() -> void:
         # (confirmed: tachometer, oilpress) uses the default mul=1.0, i.e. no correction. This is
         # NOT a per-vehicle hardcoded guess - mmd_scale_multiplier is the same fixed correction
         # factor the original engine itself applies for this label, on every vehicle.
+        # Train.cpp:10274-10278: tachometer: is the jumpy Hasler needle (AssignFloat(&fTachoVelocityJump)).
         "tachometer": {
             "widget_class": CabinGauge,
             "fixed_fields": {
-                "state_property": "speed",
+                "state_property": "tachometer_speed_jump",
+                # the value itself already jumps once per second - show each jump as is
+                "animation_speed": 0.0,
                 "max_value": 1.0,
             },
             "config_max_property": "",

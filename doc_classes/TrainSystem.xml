@@ -99,13 +99,13 @@
 			</description>
 		</method>
 		<method name="send_command">
-			<return type="void" />
+			<return type="Variant" />
 			<param index="0" name="train_id" type="String" />
 			<param index="1" name="command" type="String" />
 			<param index="2" name="p1" type="Variant" default="null" />
 			<param index="3" name="p2" type="Variant" default="null" />
 			<description>
-				Sends a command to a specified train
+				Sends a command to a specified train and returns the command handler's result (e.g. whether it was accepted). Returns [code]null[/code] when the train or command is unknown, or when the handler returns nothing.
 			</description>
 		</method>
 		<method name="unregister_command">
@@ -126,4 +126,19 @@
 			</description>
 		</method>
 	</methods>
+	<signals>
+		<signal name="train_position_changed">
+			<param index="0" name="train_id" type="String" />
+			<param index="1" name="position" type="Vector3" />
+			<description>
+				Emitted when a registered train changes its world position.
+			</description>
+		</signal>
+		<signal name="train_unregistered">
+			<param index="0" name="train_id" type="String" />
+			<description>
+				Emitted after a train was removed from the registry.
+			</description>
+		</signal>
+	</signals>
 </class>

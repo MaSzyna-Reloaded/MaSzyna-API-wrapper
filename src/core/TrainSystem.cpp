@@ -1,8 +1,10 @@
 #include "../core/TrainController.hpp"
 #include "./TrainSystem.hpp"
+#include "../core/TrainPart.hpp"
 
 namespace godot {
     const char *TrainSystem::train_position_changed_signal = "train_position_changed";
+    const char *TrainSystem::train_unregistered_signal = "train_unregistered";
 
     void TrainSystem::_bind_methods() {
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
@@ -38,6 +40,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 train_position_changed_signal, PropertyInfo(Variant::STRING, "train_id"),
                 PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(train_unregistered_signal, PropertyInfo(Variant::STRING, "train_id")));
     }
 
     int TrainSystem::get_train_count() const {
@@ -196,6 +199,7 @@ namespace godot {
 
         trains.erase(p_train_id);
         DEBUG("Unregistered train %s", p_train_id);
+        emit_signal(train_unregistered_signal, p_train_id);
     }
 
     bool TrainSystem::is_command_supported(const String &p_command) {
@@ -225,22 +229,24 @@ namespace godot {
         return train_names;
     }
 
-    void TrainSystem::send_command(
+    Variant TrainSystem::send_command(
             const String &p_train_id, const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         const std::map<String, TrainController *>::iterator it = trains.find(p_train_id);
 
         if (it == trains.end()) {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is not registered");
-            return;
+            return Variant();
         }
         TrainController *train = it->second;
+        // handler's return value (#43: whether the command was accepted); Variant() when not dispatched
+        Variant result;
         if (is_command_supported(p_command)) {
 
             Dictionary trains = static_cast<Dictionary>(commands[p_command]);
 
             if (!trains.has(p_train_id)) {
                 log(p_train_id, GameLog::LogLevel::WARNING, "train cannot handle command: " + p_command);
-                return;
+                return Variant();
             }
 
             if (const Callable c = trains[p_train_id]; c.is_valid()) {
@@ -252,7 +258,14 @@ namespace godot {
                 if (argc > 1) {
                     args.append(p_p2);
                 }
-                const Variant call = c.callv(args);
+                result = c.callv(args);
+                // refresh the handling part's state right away, so the command's effect is visible
+                // to whoever reads the train state next (not only after that part's own _process)
+                // FIXME(#57, #184): workaround for state being copied per TrainPart in _process -
+                // a stale read made the cabin line breaker logic see a just-closed breaker as open.
+                if (TrainPart *part = Object::cast_to<TrainPart>(c.get_object()); part != nullptr) {
+                    train->get_state().merge(part->get_mover_state(), true);
+                }
 #if DEBUG_MODE
                 int arg_required = 0;
                 if (p1.get_type() != Variant::NIL) {
@@ -283,6 +296,7 @@ namespace godot {
 
         train->update_state();
         train->emit_command_received_signal(p_command, p_p1, p_p2);
+        return result;
     }
 
     void TrainSystem::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {

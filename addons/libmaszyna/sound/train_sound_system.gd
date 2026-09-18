@@ -352,15 +352,20 @@ func _primary_source(runtime:BankRuntime, event_name:StringName) -> MmdSoundSour
     for label:String in BrakeSfxEventFactory.EVENT_LABEL_GROUPS.get(event_name, []):
         if runtime.brake_sources.has(label):
             return runtime.brake_sources[label] as MmdSoundSourceDefinition
+    for trigger:Dictionary in runtime.triggers:
+        if StringName(trigger.get("sound_event", &"")) == event_name:
+            return trigger.get("source") as MmdSoundSourceDefinition
     return null
 
 
 func _update_spatial_anchors(runtime:BankRuntime) -> void:
     var cabin:Cabin3D = _listener.listener_cabin if _listener else null
+    # Home/End rebuilds the controls inside the same cabin node, so the occupied cab is part of the key.
+    var anchor_key:int = hash([cabin.get_instance_id(), cabin.cab_number]) if cabin else 0
     if not cabin or not cabin.get_parent() == runtime.vehicle \
-            or cabin.get_instance_id() == runtime.anchored_cabin_instance_id:
+            or anchor_key == runtime.anchored_cabin_instance_id:
         return
-    runtime.anchored_cabin_instance_id = cabin.get_instance_id()
+    runtime.anchored_cabin_instance_id = anchor_key
     var brake_anchor:Vector3 = _cabin_anchor(runtime.vehicle, cabin, "brakectrl_")
     var local_anchor:Vector3 = _cabin_anchor(runtime.vehicle, cabin, "localbrake_")
     if local_anchor == Vector3.ZERO:
@@ -372,6 +377,10 @@ func _update_spatial_anchors(runtime:BankRuntime) -> void:
         local_anchor = fallback
     _apply_anchor(runtime, &"pipe_hiss", brake_anchor)
     _apply_anchor(runtime, &"local_brake_hiss", local_anchor)
+    # Train.cpp:10281 - the Hasler ticks from its own needle (dsbHasler->offset(gauge.model_offset())).
+    var tacho_anchor:Vector3 = _cabin_anchor(runtime.vehicle, cabin, "tachometer_")
+    if not tacho_anchor == Vector3.ZERO:
+        _apply_anchor(runtime, &"tachoclock", tacho_anchor)
 
 
 func _apply_anchor(runtime:BankRuntime, event_name:StringName, position:Vector3) -> void:
@@ -387,7 +396,9 @@ func _cabin_anchor(vehicle:RailVehicle3D, cabin:Cabin3D, prefix:String) -> Vecto
     var widget:Node = cabin.find_child("%s*" % prefix, true, false)
     if not widget:
         return Vector3.ZERO
-    var mesh_path:NodePath = widget.get("mesh_path")
+    var mesh_path:Variant = widget.get("mesh_path")
+    if mesh_path == null:
+        mesh_path = widget.get("target_mesh_path")
     var mesh:Node3D = widget.get_node_or_null(mesh_path) as Node3D if mesh_path else null
     return vehicle.to_local(mesh.global_position) if mesh else Vector3.ZERO
 

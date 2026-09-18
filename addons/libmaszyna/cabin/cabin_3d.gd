@@ -68,9 +68,11 @@ func set_train_controller(controller:TrainController) -> void:
 
 
 func get_sound_listener_context() -> int:
+    # sound.cpp:981-1008 - soundproofing column is CabOccupied + 1 (cab2 = 0, machine room = 1,
+    # cab1 = 2), open window = 3.
     if cab_window_open:
         return 3
-    return 2 if cab_number > 0 else 0
+    return cab_number + 1
 
 
 func _process(delta:float) -> void:

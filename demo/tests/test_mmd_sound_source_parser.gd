@@ -97,7 +97,7 @@ func test_unrecognized_label_does_not_desync_following_labels():
 
 
 const _INTERNAL_DATA_LABELS := [
-    "ignition", "shutdown", "buzzer", "buzzershp",
+    "ignition", "shutdown", "buzzer", "buzzershp", "tachoclock",
     "brakesound", "slipperysound", "localbrakesound", "localbrakesound2",
     "airsound", "airsound2",
 ]

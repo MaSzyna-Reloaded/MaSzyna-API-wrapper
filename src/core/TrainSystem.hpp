@@ -41,7 +41,7 @@ namespace godot {
             void register_command(const String &p_train_id, const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_train_id, const String &p_command, const Callable &p_callback);
             Array get_supported_commands();
-            void send_command(
+            Variant send_command(
                     const String &p_train_id, const String &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant());
             void broadcast_command(
@@ -51,6 +51,7 @@ namespace godot {
             void log(const String &p_train_id, GameLog::LogLevel p_level, const String &p_line);
 
             static const char *train_position_changed_signal;
+            static const char *train_unregistered_signal;
 
         protected:
             static void _bind_methods();

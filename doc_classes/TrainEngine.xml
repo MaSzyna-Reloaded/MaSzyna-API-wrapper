@@ -10,10 +10,10 @@
 	</tutorials>
 	<methods>
 		<method name="main_switch">
-			<return type="void" />
+			<return type="bool" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
-				Operate main switch
+				Operate main switch immediately (vehicle level, no cab hold logic). Returns whether the main switch state was changed.
 			</description>
 		</method>
 	</methods>

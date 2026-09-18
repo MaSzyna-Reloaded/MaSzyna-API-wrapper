@@ -122,7 +122,7 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
     if end_index == -1:
         end_index = tokens.size()
     return _parse_labels_in_range(tokens, start_index, end_index, context, abs_mmd_path, {
-        "ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true,
+        "ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true, "tachoclock": true,
         "brakesound": true, "slipperysound": true, "localbrakesound": true, "localbrakesound2": true,
         "airsound": true, "airsound2": true, "airsound3": true, "airsound4": true, "airsound5": true,
     })
@@ -381,7 +381,7 @@ static func _read_random_set(
     return {"value": _normalize_sound_filename(context.random_choices[choice_key]), "consumed": j - i}
 
 
-## Strips a trailing ".wav"/".ogg" - everything else ("[NNNN]" numeric prefixes included) is kept
+## Strips a trailing ".wav"/".ogg"/".flac" - everything else ("[NNNN]" numeric prefixes included) is kept
 ## verbatim, same rule as MmdCabinInstancer._normalize_sound_filename(). Does NOT split on "|" -
 ## soundset:'s caller does that itself after this returns the whole chosen candidate.
 static func _normalize_sound_filename(token:String) -> String:
@@ -390,4 +390,7 @@ static func _normalize_sound_filename(token:String) -> String:
     var lower:String = token.to_lower()
     if lower.ends_with(".wav") or lower.ends_with(".ogg"):
         return token.substr(0, token.length() - 4)
+    # the game data ships every sound as .ogg, also those an MMD still names *.flac
+    if lower.ends_with(".flac"):
+        return token.substr(0, token.length() - 5)
     return token

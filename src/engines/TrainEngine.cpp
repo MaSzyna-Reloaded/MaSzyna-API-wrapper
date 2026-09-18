@@ -152,6 +152,9 @@ namespace godot {
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         const bool previous_main_switch = (p_state.get("main_switch_enabled", false));
         p_state["main_switch_enabled"] = p_mover->Mains;
+        // cab layer's line breaker hold timer only runs while this holds (Train.cpp:6795)
+        p_state["main_switch_closable"] = p_mover->MainSwitchCheck();
+        p_state["engine_type"] = get_engine_type();
         p_state["Mm"] = p_mover->Mm;
         p_state["Mw"] = p_mover->Mw;
         p_state["Fw"] = p_mover->Fw;
@@ -196,10 +199,12 @@ namespace godot {
         p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
     }
 
-    void TrainEngine::main_switch(const bool p_enabled) {
+    bool TrainEngine::main_switch(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-        mover->MainSwitch(p_enabled);
+        if (mover == nullptr) {
+            return false;
+        }
+        return mover->MainSwitch(p_enabled);
     }
 
     void TrainEngine::fuse_reset() {

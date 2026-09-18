@@ -98,13 +98,13 @@
 			</description>
 		</method>
 		<method name="send_command" qualifiers="const">
-			<return type="void" />
+			<return type="Variant" />
 			<param index="0" name="command" type="StringName" />
 			<param index="1" name="p1" type="Variant" default="null" />
 			<param index="2" name="p2" type="Variant" default="null" />
 			<description>
 				Sends command to train controlled by this node.
-				This is a shortcut for [method TrainSystem.send_command].
+				This is a shortcut for [method TrainSystem.send_command] and returns its result.
 			</description>
 		</method>
 		<method name="unregister_command">

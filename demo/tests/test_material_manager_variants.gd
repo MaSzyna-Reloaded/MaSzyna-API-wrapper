@@ -207,3 +207,21 @@ func test_apply_updates_existing_material_transparency_state() -> void:
 
     assert_eq(material.get_shader_parameter("transparency"), MaterialManager.Transparency.Disabled)
     assert_eq(material.get_shader_parameter("alpha_scissor_threshold"), 0.5)
+
+
+func test_default_shader_name_uses_default_material() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "default_shader_manager") as ShaderMaterial
+
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/default.gdshader")
+
+
+## mat_detail_normalmap.frag - normalmap plus a tiled detail normal map.
+func test_detail_normalmap_shader_applies_detail_parameters() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", "detail_normalmap_manager")
+    var material: ShaderMaterial = MaterialManager.get_material("", "detail_normalmap_manager") as ShaderMaterial
+
+    assert_eq(mmat.default.get_texture_path("detailnormalmap"), "fx/t_detail_normal_3")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/detail_normalmap.gdshader")
+    assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
+    assert_almost_eq(float(material.get_shader_parameter("detail_height_scale")), 0.45, 0.00001)
+    assert_not_null(material.get_shader_parameter("texture_detail_normal"))

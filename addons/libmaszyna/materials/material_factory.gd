@@ -35,6 +35,13 @@ var DEFAULT_SHADER:MaszynaShaderMeta = MaszynaShaderMeta.new(
 )
 
 var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
+    # mat_default.frag - the plain textured material, same as no "shader:" at all.
+    "default": DEFAULT_SHADER,
+    "detail_normalmap": MaszynaShaderMeta.new(
+        _apply_detail_normalmap,
+        preload("./types/detail_normalmap.tres"),
+        TextureMap.new("diffuse", "normalmap", "detailnormalmap"),
+    ),
     "shadowlessnormalmap": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/shadowlessnormalmap.tres"),
@@ -228,6 +235,25 @@ func _apply_default_material(
     material.set_shader_parameter("emission_enabled", options.selfillum_enabled)
     material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     material.set_shader_parameter("emission_energy", options.selfillum_energy)
+
+## mat_detail_normalmap.frag: the default material plus a tiled detail normal map
+## (texture_detailnormalmap, param_detail_scale, param_detail_height_scale - both default to 1.0).
+func _apply_detail_normalmap(
+    mmat: MaszynaMaterial,
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    material: ShaderMaterial,
+    texture_map: TextureMap,
+    model_path: String,
+    options: MaterialManager.MaterialOptions,
+) -> void:
+    _apply_default_material(mmat, variant, material, texture_map, model_path, options)
+    var detail_normalmap_texture: String = variant.get_texture_path(texture_map.detail_normalmap)
+    if detail_normalmap_texture:
+        material.set_shader_parameter(
+            "texture_detail_normal", MaterialManager.load_texture(model_path, detail_normalmap_texture, true))
+    material.set_shader_parameter("detail_scale", variant.get_parameter("detail_scale", 1.0))
+    material.set_shader_parameter("detail_height_scale", variant.get_parameter("detail_height_scale", 1.0))
+
 
 func _apply_parallax(
     mmat: MaszynaMaterial,

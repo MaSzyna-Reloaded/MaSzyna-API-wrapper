@@ -177,6 +177,6 @@ namespace godot {
     /// `material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray,
     /// force_alpha: bool) -> Material`, used by instance_build()
     void E3DRenderingServer::set_material_resolver(const Callable &p_material_resolver) {
-        material_resolver = p_material_resolver;
+        material_resolver.set_callable(p_material_resolver);
     }
 } // namespace godot

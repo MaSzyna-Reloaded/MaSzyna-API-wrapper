@@ -8,7 +8,7 @@
 namespace godot {
     E3DNodesBackend::E3DNodesBackend(const bool p_editable) : editable(p_editable) {}
 
-    void E3DNodesBackend::build(E3DInstanceData &p_instance, const Callable &p_material_resolver) {
+    void E3DNodesBackend::build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) {
         Node3D *target = Object::cast_to<Node3D>(ObjectDB::get_instance(p_instance.node_id));
         ERR_FAIL_NULL_MSG(target, "NODES instancer requires a node attached with instance_attach_node()");
 
@@ -76,7 +76,7 @@ namespace godot {
             E3DInstanceData &p_instance, Node3D *p_target, Node3D *p_parent, const TypedArray<E3DSubModel> &p_submodels,
             const HashMap<E3DSubModel *, LightRole> &p_light_roles, const String &p_parent_light_name,
             const Vector<E3DSubModel *> &p_force_alpha_submodels, const bool p_force_alpha,
-            const Callable &p_material_resolver) {
+            E3DMaterialResolver &p_material_resolver) {
         const bool is_editor = Engine::get_singleton()->is_editor_hint();
 
         for (int i = 0; i < p_submodels.size(); i++) {
@@ -109,7 +109,7 @@ namespace godot {
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
                 const Ref<Material> material =
-                        _resolve_material(p_material_resolver, p_instance, submodel.ptr(), force_alpha);
+                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
                 if (material.is_valid()) {
                     geometry->set_material_override(material);
                 }

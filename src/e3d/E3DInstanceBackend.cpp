@@ -36,17 +36,6 @@ namespace godot {
                (p_instance.force_alpha && p_submodel->get_material_transparent());
     }
 
-    /// `p_material_resolver(submodel, data_path, skins, force_alpha) -> Material`,
-    /// see MaterialManager.get_submodel_material()
-    Ref<Material> E3DInstanceBackend::_resolve_material(
-            const Callable &p_material_resolver, const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
-            const bool p_force_alpha) {
-        if (!p_material_resolver.is_valid()) {
-            return {};
-        }
-        return p_material_resolver.call(Ref(p_submodel), p_instance.data_path, p_instance.skins, p_force_alpha);
-    }
-
     bool E3DInstanceBackend::_requires_alpha_depth_prepass_sorting(const Ref<Material> &p_material) {
         const Ref<BaseMaterial3D> base_material = p_material;
         return base_material.is_valid() &&

@@ -60,8 +60,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var world_3d:World3D = root.get_world_3d()
     var compiled:MaszynaCompiledScenery
     if root.use_cache:
-        await _report_progress(root, 0.0, "Reading cache")
-        compiled = _load_cached(cache_path, source_path, parameters_hash)
+        compiled = await _load_cached_with_progress(root, cache_path, source_path, parameters_hash)
 
     if compiled:
         await _report_progress(root, 0.3, "Building tracks and traction")
@@ -89,6 +88,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
         PARSE_PROGRESS, 0.6
     )
+    await _report_progress(root, 0.6, "Building triangles")
     objects.append_array(_build_triangle_nodes(context.triangles))
 
     if root.use_cache and context.cacheable:
@@ -159,8 +159,10 @@ static func _instantiate_server_data(
     if root._track_rids.size() > 0:
         TrackManager.topology_rebuild()
 
+    # E3D models by path - a scenery places the same few hundred models thousands of times
+    var loaded_models:Dictionary[String, E3DModel] = {}
     for model_data:MaszynaModelData in models:
-        var e3d_rid:RID = _build_model(model_data, world_3d)
+        var e3d_rid:RID = _build_model(model_data, world_3d, loaded_models)
         if e3d_rid.is_valid():
             root._e3d_rids.append(e3d_rid)
         built_count += 1
@@ -288,6 +290,21 @@ static func _instantiate_cached_nodes(packed_scene:PackedScene) -> Array:
         objects.append(child)
     scene_root.free()
     return objects
+
+
+## Compiled sceneries are hundreds of MB - read on a worker thread, so the main thread keeps
+## drawing frames (loading screen, the selector dissolving into it) instead of freezing
+static func _load_cached_with_progress(
+    root:MaszynaIncludeNode,
+    cache_path:String,
+    source_path:String,
+    parameters_hash:String,
+) -> MaszynaCompiledScenery:
+    var queue := SceneryLoadingTaskQueue.new()
+    var task_id:int = queue.submit(_load_cached.bind(cache_path, source_path, parameters_hash))
+    while not queue.is_done(task_id):
+        await _report_progress(root, 0.0, "Reading cache")
+    return queue.wait(task_id) as MaszynaCompiledScenery
 
 
 static func _load_cached(
@@ -428,14 +445,22 @@ func parse_subscene_task(
 ## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
 ## progress every frame: finished tasks / includes counted by _count_includes().
 func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -> MaszynaImporterContext:
-    var include_count:int = _count_includes(root.filename, {})
     var root_context := MaszynaImporterContext.new()
     root_context.rotate = root.context_rotate
     root_context.origin = root.context_origin
     var queue := SceneryLoadingTaskQueue.new()
+    # the prescan reads every included file - on a worker thread, like the parsing itself, so the
+    # main thread keeps drawing frames
+    var count_task_id:int = queue.submit(_count_includes.bind(root.filename, {}))
+    while not queue.is_done(count_task_id):
+        await _report_progress(root, 0.0, "Scanning includes")
+    var include_count:int = queue.wait(count_task_id)
+    var parsed_before:int = queue.get_completed_count()
     var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
     while not queue.is_done(task_id):
-        var parsed:float = minf(float(queue.get_completed_count()) / float(maxi(include_count, 1)), 1.0)
+        var parsed:float = minf(
+            float(queue.get_completed_count() - parsed_before) / float(maxi(include_count, 1)), 1.0
+        )
         await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     if not context:
@@ -568,8 +593,13 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
 
 ## Mirrors E3DModelInstance's own _create_instance() (addons/libmaszyna/e3d/e3d_model_instance.gd)
 ## with the OPTIMIZED instancer, minus the Node.
-static func _build_model(model_data:MaszynaModelData, world_3d:World3D) -> RID:
-    var model:E3DModel = E3DModelManager.load_model(model_data.data_path, model_data.model_filename)
+static func _build_model(
+    model_data:MaszynaModelData, world_3d:World3D, loaded_models:Dictionary[String, E3DModel]
+) -> RID:
+    var model_path:String = model_data.data_path.path_join(model_data.model_filename)
+    if not loaded_models.has(model_path):
+        loaded_models[model_path] = E3DModelManager.load_model(model_data.data_path, model_data.model_filename)
+    var model:E3DModel = loaded_models[model_path]
     if not model:
         return RID()
     var e3d_rid:RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_OPTIMIZED)

@@ -25,7 +25,7 @@ namespace godot {
             E3DOptimizedBackend optimized_backend;
             E3DNodesBackend nodes_backend{false};
             E3DNodesBackend editable_nodes_backend{true};
-            Callable material_resolver;
+            E3DMaterialResolver material_resolver;
 
             E3DInstanceBackend &_get_backend(const E3DInstanceData &p_instance);
             void _rebuild_if_built(E3DInstanceData &p_instance);

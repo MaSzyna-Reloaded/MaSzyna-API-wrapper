@@ -1,4 +1,5 @@
 #pragma once
+#include "E3DMaterialResolver.hpp"
 #include "E3DModel.hpp"
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/core/object_id.hpp>
@@ -58,7 +59,7 @@ namespace godot {
         public:
             virtual ~E3DInstanceBackend() = default;
 
-            virtual void build(E3DInstanceData &p_instance, const Callable &p_material_resolver) = 0;
+            virtual void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) = 0;
             virtual void clear(E3DInstanceData &p_instance) = 0;
             /// Applies transform, visibility, layers and lights state
             virtual void update(const E3DInstanceData &p_instance) = 0;
@@ -69,9 +70,6 @@ namespace godot {
             static bool _is_force_alpha(
                     const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
                     const Vector<E3DSubModel *> &p_force_alpha_submodels, bool p_parent_force_alpha);
-            static Ref<Material> _resolve_material(
-                    const Callable &p_material_resolver, const E3DInstanceData &p_instance, E3DSubModel *p_submodel,
-                    bool p_force_alpha);
             static bool _requires_alpha_depth_prepass_sorting(const Ref<Material> &p_material);
     };
 } // namespace godot

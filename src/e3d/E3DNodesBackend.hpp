@@ -26,7 +26,7 @@ namespace godot {
                     E3DInstanceData &p_instance, Node3D *p_target, Node3D *p_parent,
                     const TypedArray<E3DSubModel> &p_submodels, const HashMap<E3DSubModel *, LightRole> &p_light_roles,
                     const String &p_parent_light_name, const Vector<E3DSubModel *> &p_force_alpha_submodels,
-                    bool p_force_alpha, const Callable &p_material_resolver);
+                    bool p_force_alpha, E3DMaterialResolver &p_material_resolver);
             static Node3D *_create_submodel_node(E3DSubModel *p_submodel);
             static void
             _configure_spotlight(SpotLight3D *p_spotlight, const String &p_light_name, E3DSubModel *p_submodel);
@@ -35,7 +35,7 @@ namespace godot {
         public:
             explicit E3DNodesBackend(bool p_editable);
 
-            void build(E3DInstanceData &p_instance, const Callable &p_material_resolver) override;
+            void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) override;
             void clear(E3DInstanceData &p_instance) override;
             void update(const E3DInstanceData &p_instance) override;
     };

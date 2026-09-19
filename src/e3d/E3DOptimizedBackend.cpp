@@ -2,7 +2,7 @@
 #include <godot_cpp/classes/rendering_server.hpp>
 
 namespace godot {
-    void E3DOptimizedBackend::build(E3DInstanceData &p_instance, const Callable &p_material_resolver) {
+    void E3DOptimizedBackend::build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) {
         const TypedDictionary<String, E3DModelLightDefinition> lights = p_instance.model->get_lights();
         const Array light_names = lights.keys();
         for (int i = 0; i < light_names.size(); i++) {
@@ -71,7 +71,7 @@ namespace godot {
             E3DInstanceData &p_instance, const TypedArray<E3DSubModel> &p_submodels,
             const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,
             const Vector<E3DSubModel *> &p_force_alpha_submodels, const bool p_force_alpha,
-            const Callable &p_material_resolver) {
+            E3DMaterialResolver &p_material_resolver) {
         for (int i = 0; i < p_submodels.size(); i++) {
             const Ref<E3DSubModel> submodel = p_submodels[i];
             if (submodel.is_null() || !_is_submodel_valid(submodel.ptr(), p_instance.exclude_node_names)) {
@@ -98,7 +98,7 @@ namespace godot {
 
     void E3DOptimizedBackend::_add_submodel(
             E3DInstanceData &p_instance, E3DSubModel *p_submodel, const Transform3D &p_local_transform,
-            const Vector<E3DSubModel *> &p_chain, const bool p_force_alpha, const Callable &p_material_resolver) {
+            const Vector<E3DSubModel *> &p_chain, const bool p_force_alpha, E3DMaterialResolver &p_material_resolver) {
         RenderingServer *rs = RenderingServer::get_singleton();
         const RID rid = rs->instance_create();
         if (p_instance.node_id.is_valid()) {
@@ -117,7 +117,7 @@ namespace godot {
         rs->instance_geometry_set_visibility_range(
                 rid, range_begin, range_end, 0.0, 0.0, RenderingServer::VISIBILITY_RANGE_FADE_DISABLED);
 
-        const Ref<Material> material = _resolve_material(p_material_resolver, p_instance, p_submodel, p_force_alpha);
+        const Ref<Material> material = p_material_resolver.resolve(p_instance, p_submodel, p_force_alpha);
         if (material.is_valid()) {
             p_instance.materials.push_back(material);
             rs->instance_geometry_set_material_override(rid, material->get_rid());

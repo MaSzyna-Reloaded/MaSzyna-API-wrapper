@@ -53,6 +53,12 @@ namespace godot {
                 D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
         ClassDB::bind_method(
                 D_METHOD("main_controller_decrease", "step"), &TrainController::main_controller_decrease, DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("second_controller_increase", "step"), &TrainController::second_controller_increase,
+                DEFVAL(1));
+        ClassDB::bind_method(
+                D_METHOD("second_controller_decrease", "step"), &TrainController::second_controller_decrease,
+                DEFVAL(1));
         ClassDB::bind_method(D_METHOD("direction_increase"), &TrainController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &TrainController::direction_decrease);
         ClassDB::bind_method(D_METHOD("radio", "enabled"), &TrainController::radio);
@@ -310,6 +316,8 @@ namespace godot {
                 register_command("cab_change", Callable(this, "cab_change"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
+                register_command("second_controller_increase", Callable(this, "second_controller_increase"));
+                register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
                 register_command("direction_increase", Callable(this, "direction_increase"));
                 register_command("direction_decrease", Callable(this, "direction_decrease"));
                 register_command("radio", Callable(this, "radio"));
@@ -324,6 +332,8 @@ namespace godot {
                 unregister_command("cab_change", Callable(this, "cab_change"));
                 unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
+                unregister_command("second_controller_increase", Callable(this, "second_controller_increase"));
+                unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
                 unregister_command("direction_increase", Callable(this, "direction_increase"));
                 unregister_command("direction_decrease", Callable(this, "direction_decrease"));
                 unregister_command("radio", Callable(this, "radio"));
@@ -839,6 +849,17 @@ namespace godot {
     void TrainController::main_controller_decrease(const int p_step) const {
         const int step = p_step > 0 ? p_step : 1;
         mover->DecMainCtrl(step);
+    }
+
+    // Original engine: OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), regular mode
+    void TrainController::second_controller_increase(const int p_step) const {
+        const int step = p_step > 0 ? p_step : 1;
+        mover->IncScndCtrl(step);
+    }
+
+    void TrainController::second_controller_decrease(const int p_step) const {
+        const int step = p_step > 0 ? p_step : 1;
+        mover->DecScndCtrl(step);
     }
 
     void TrainController::direction_increase() const {

@@ -50,6 +50,24 @@ static func _ensure_built() -> void:
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
         },
+        # shunt (field weakening) controller: Train.cpp:10023 "scndctrl:" -> ggScndCtrl,
+        # OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), Num / and Num *
+        "scndctrl": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "switch_max_position": 10,
+                "command_increase": "second_controller_increase",
+                "command_decrease": "second_controller_decrease",
+                "state_property": "controller_second_position",
+                "action_increase": "second_controller_increase",
+                "action_decrease": "second_controller_decrease",
+                # toggle type acts on key repeat too (Train.cpp:1210)
+                "repeat_on_hold": true,
+            },
+            "config_max_property": "second_controller_position_max",
+            "mesh_path_field": "mesh_path",
+        },
         # jointctrl (combined main controller + local brake handle, e.g. SM42's nastawnik): the
         # negative range is the local brake (Train.cpp:7699-7714, shown by controller_joint_position).
         # Increase/decrease are handled by LegacyCabinJointController, not forwarded directly.

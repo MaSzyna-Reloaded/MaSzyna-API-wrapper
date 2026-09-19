@@ -20,21 +20,27 @@ var _environment_node: MaszynaEnvironmentNode
 var _time_slider_dragging: bool = false
 
 @onready var _weather_panel: PanelContainer = $WeatherControlsRoot/WeatherPanel
-@onready var _wind_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WindGroup/Row/WindValueLabel
-@onready var _rain_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/RainGroup/Row/RainValueLabel
-@onready var _cloud_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/CloudGroup/Row/CloudValueLabel
-@onready var _fog_density_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/FogDensityGroup/Row/FogDensityValueLabel
-@onready var _fog_range_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/FogRangeGroup/Row/FogRangeValueLabel
-@onready var _time_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeGroup/Row/TimeValueLabel
-@onready var _time_scale_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeScaleGroup/Row/TimeScaleValueLabel
-@onready var _wind_strength_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WindGroup/Row/WindSlider
-@onready var _wind_direction_button: OptionButton = $WeatherControlsRoot/WeatherPanel/Row/WindDirectionGroup/WindDirectionButton
-@onready var _rain_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/RainGroup/Row/RainSlider
-@onready var _cloud_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/CloudGroup/Row/CloudSlider
-@onready var _fog_density_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/FogDensityGroup/Row/FogDensitySlider
-@onready var _fog_range_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/FogRangeGroup/Row/FogRangeSlider
-@onready var _time_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeGroup/Row/TimeSlider
-@onready var _time_scale_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeScaleGroup/Row/TimeScaleSlider
+@onready var _wind_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row/WindValueLabel
+@onready var _rain_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row/RainValueLabel
+@onready var _cloud_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row/CloudValueLabel
+@onready var _fog_density_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row/FogDensityValueLabel
+@onready var _fog_range_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row/FogRangeValueLabel
+@onready var _time_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row/TimeValueLabel
+@onready var _day_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row/DayValueLabel
+@onready var _month_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row/MonthValueLabel
+@onready var _year_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row/YearValueLabel
+@onready var _day_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row/DaySlider
+@onready var _month_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row/MonthSlider
+@onready var _year_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row/YearSlider
+@onready var _time_scale_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row/TimeScaleValueLabel
+@onready var _wind_strength_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row/WindSlider
+@onready var _wind_direction_button: OptionButton = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindDirectionGroup/WindDirectionButton
+@onready var _rain_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row/RainSlider
+@onready var _cloud_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row/CloudSlider
+@onready var _fog_density_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row/FogDensitySlider
+@onready var _fog_range_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row/FogRangeSlider
+@onready var _time_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row/TimeSlider
+@onready var _time_scale_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row/TimeScaleSlider
 
 
 func _ready() -> void:
@@ -53,6 +59,9 @@ func _ready() -> void:
     _time_slider.drag_started.connect(_on_time_drag_started)
     _time_slider.drag_ended.connect(_on_time_drag_ended)
     _time_scale_slider.value_changed.connect(_on_time_scale_changed)
+    _day_slider.value_changed.connect(_on_day_changed)
+    _month_slider.value_changed.connect(_on_month_changed)
+    _year_slider.value_changed.connect(_on_year_changed)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -68,6 +77,12 @@ func _process(_delta: float) -> void:
     if not _time_slider_dragging:
         _time_slider.set_value_no_signal(_environment_node.current_time)
         _time_value_label.text = _format_time_label(_environment_node.current_time)
+    _day_slider.set_value_no_signal(_environment_node.day)
+    _day_value_label.text = str(_environment_node.day)
+    _month_slider.set_value_no_signal(_environment_node.month)
+    _month_value_label.text = str(_environment_node.month)
+    _year_slider.set_value_no_signal(_environment_node.year)
+    _year_value_label.text = str(_environment_node.year)
     _wind_strength_slider.set_value_no_signal(_environment_node.wind_strength)
     _wind_value_label.text = _format_percent(_environment_node.wind_strength)
     _wind_direction_button.select(_find_closest_direction_index(_environment_node.wind_direction))
@@ -116,6 +131,19 @@ func _on_fog_range_changed(value: float) -> void:
 func _on_time_changed(value: float) -> void:
     _time_value_label.text = _format_time_label(value)
     _environment_node.current_time = value
+
+
+# set_date() normalizes the date (e.g. 31.02 -> 03.03), the bar follows it in _process.
+func _on_day_changed(value: float) -> void:
+    _environment_node.set_date(_environment_node.year, _environment_node.month, int(value))
+
+
+func _on_month_changed(value: float) -> void:
+    _environment_node.set_date(_environment_node.year, int(value), _environment_node.day)
+
+
+func _on_year_changed(value: float) -> void:
+    _environment_node.set_date(int(value), _environment_node.month, _environment_node.day)
 
 
 func _on_time_drag_started() -> void:

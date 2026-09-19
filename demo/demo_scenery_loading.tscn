@@ -11,9 +11,9 @@
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
 script = ExtResource("1_env")
-current_time = 14.854
+current_time = 12.672
 day = 7
-month = 10
+month = 2
 simulation_speed = 10.0
 cloudiness = 0.35
 wind_strength = 0.2

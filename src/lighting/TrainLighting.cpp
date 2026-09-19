@@ -130,6 +130,9 @@ namespace godot {
         const bool is_powered = p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable;
         p_state["roof_light_enabled"] = roof_light_active && is_powered;
         p_state["devices_light_enabled"] = devices_light_active && is_powered;
+        // cab lighting level, halved without 110V (TTrain::Update, Train.cpp:8047-8051)
+        p_state["roof_light_level"] =
+                roof_light_active && is_powered ? (p_mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0;
     }
 
     void TrainLighting::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

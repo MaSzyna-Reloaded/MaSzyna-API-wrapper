@@ -91,6 +91,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("converter", "enabled"), &TrainElectricEngine::converter);
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &TrainElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &TrainElectricEngine::pantographs_valve);
+        ClassDB::bind_method(
+                D_METHOD("pantograph_compressor", "enabled"), &TrainElectricEngine::pantograph_compressor);
+        ClassDB::bind_method(
+                D_METHOD("pantograph_compressor_valve", "to_compressor"),
+                &TrainElectricEngine::pantograph_compressor_valve);
         ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &TrainElectricEngine::pantograph);
         ClassDB::bind_method(
                 D_METHOD("set_pantograph_wire_voltage", "selector", "voltage"),
@@ -138,6 +143,9 @@ namespace godot {
         // from those.
         p_state["current_collector/pantograph_tank_pressure"] = p_mover->PantPress;
         p_state["current_collector/pantograph_pressure_switch_armed"] = p_mover->PantPressSwitchActive;
+        // three-way valve: pantographs fed by the auxiliary compressor instead of the main tank
+        // (bPantKurek3 false, "pantcompressorvalve_sw:" position 1, Train.cpp:9572)
+        p_state["current_collector/pantograph_compressor_valve"] = !p_mover->bPantKurek3;
         p_state["current_collector/overvoltage_relay"] =
                 p_mover->EnginePowerSource.CollectorParameters.OVP;
         p_state["current_collector/required_main_switch_voltage"] =
@@ -304,6 +312,27 @@ namespace godot {
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
+    void TrainElectricEngine::pantograph_compressor(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_pantographcompressoractivate (Train.cpp:2912) - runs while held,
+        // starting only with low enough pressure and live 24V power
+        if (!p_enabled) {
+            mover->PantCompFlag = false;
+            return;
+        }
+        if (mover->PantPress < 4.8 && mover->Power24vIsAvailable) {
+            mover->PantCompFlag = true;
+        }
+    }
+
+    void TrainElectricEngine::pantograph_compressor_valve(const bool p_to_compressor) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        // Original engine: OnCommand_pantographcompressorvalveenable/disable (Train.cpp:2869-2909)
+        mover->bPantKurek3 = !p_to_compressor;
+    }
+
     void TrainElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
@@ -351,6 +380,8 @@ namespace godot {
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
+        register_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         register_command("pantograph", Callable(this, "pantograph"));
     }
 
@@ -360,6 +391,8 @@ namespace godot {
         unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        unregister_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
+        unregister_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         unregister_command("pantograph", Callable(this, "pantograph"));
     }
 

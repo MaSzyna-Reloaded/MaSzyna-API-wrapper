@@ -50,6 +50,24 @@ static func _ensure_built() -> void:
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
         },
+        # shunt (field weakening) controller: Train.cpp:10023 "scndctrl:" -> ggScndCtrl,
+        # OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), Num / and Num *
+        "scndctrl": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "switch_max_position": 10,
+                "command_increase": "second_controller_increase",
+                "command_decrease": "second_controller_decrease",
+                "state_property": "controller_second_position",
+                "action_increase": "second_controller_increase",
+                "action_decrease": "second_controller_decrease",
+                # toggle type acts on key repeat too (Train.cpp:1210)
+                "repeat_on_hold": true,
+            },
+            "config_max_property": "second_controller_position_max",
+            "mesh_path_field": "mesh_path",
+        },
         # jointctrl (combined main controller + local brake handle, e.g. SM42's nastawnik): the
         # negative range is the local brake (Train.cpp:7699-7714, shown by controller_joint_position).
         # Increase/decrease are handled by LegacyCabinJointController, not forwarded directly.
@@ -507,6 +525,17 @@ static func _ensure_built() -> void:
             "mesh_path_field": "target_mesh_path",
             "mmd_scale_multiplier": 0.1,
         },
+        # Train.cpp:10438-10443: pantograph tank pressure gauge, AssignDouble(&PantPress), scale 0.1.
+        "pantpress": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current_collector/pantograph_tank_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
         # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
         # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
         # Instead this reuses CabinSpotLight3D (already a generic, reusable addon widget - not
@@ -560,6 +589,32 @@ static func _ensure_built() -> void:
                 "command": "compressor",
                 "state_property": "compressor_enabled",
                 "action": "compressor_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Auxiliary pantograph compressor, runs while held (Train.cpp:10114 "pantcompressor_sw:" ->
+        # ggPantCompressorButton, OnCommand_pantographcompressoractivate, Shift+V).
+        "pantcompressor_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "pantograph_compressor",
+                "action": "pantograph_compressor_activate",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Three-way valve feeding the pantographs from the auxiliary compressor instead of the main
+        # tank (Train.cpp:10115 "pantcompressorvalve_sw:" -> ggPantCompressorValve,
+        # OnCommand_pantographcompressorvalvetoggle, Ctrl+V).
+        "pantcompressorvalve_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "pantograph_compressor_valve",
+                "state_property": "current_collector/pantograph_compressor_valve",
+                "action": "pantograph_compressor_valve_toggle",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
@@ -843,6 +898,7 @@ static func _ensure_built() -> void:
             "position_at_submodel": true,
             "light_widget_class": CabinSpotLight3D,
             "flip_upward_spotlight": true,
+            "spread_light_along_submodel": true,
             "light_fixed_fields": {
                 "state_property": "roof_light_enabled",
                 "light_enabled": true,
@@ -856,6 +912,7 @@ static func _ensure_built() -> void:
                 "spot_attenuation": 1.44,
                 "spot_angle": 63.62,
                 "spot_angle_attenuation": 1.27456,
+                "shadow_enabled": true,
             },
         },
         "i-instrumentlight": {
@@ -926,6 +983,8 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+            # the alerter lamp has to light the driver, whatever the lamp submodel's own axes are
+            "aim_at_driver": true,
         },
         # Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
         # etc.) and TrainLighting::light_switch()'s own doc comment (TrainLighting.hpp) - these ten

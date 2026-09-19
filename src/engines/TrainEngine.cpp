@@ -197,6 +197,7 @@ namespace godot {
 
     void TrainEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
+        p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
     }
 
     bool TrainEngine::main_switch(const bool p_enabled) {

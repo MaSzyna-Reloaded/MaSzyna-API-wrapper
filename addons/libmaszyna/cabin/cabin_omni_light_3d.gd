@@ -24,10 +24,13 @@ func _ready():
     pass
 
 func _update_state():
+    var level:float = 1.0
     if _controller and state_property:
-        enabled = true if _controller.state.get(state_property, false) else false
+        # a bool state or a 0..1 light level (e.g. roof_light_level)
+        level = float(_controller.state.get(state_property, false))
+        enabled = level > 0.0
 
-    _target_light_energy = light_energy_on if enabled else light_energy_off
+    _target_light_energy = lerpf(light_energy_off, light_energy_on, level) if enabled else light_energy_off
 
 func _process(delta):
     if _dirty:

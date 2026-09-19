@@ -333,6 +333,7 @@ namespace godot {
             void manual_brake_increase();
             void manual_brake_decrease();
             void auto_rewident(int p_brake_delay);
+            void brake_level_charging(bool p_active);
             void alarm_chain(bool p_pulled);
     };
 } // namespace godot

@@ -16,6 +16,7 @@ var cab:int = 1
 var _behaviours:Array = []
 var _battery:LegacyCabinBattery
 var _manual_brake:LegacyCabinManualBrake
+var _brake_charging:LegacyCabinBrakeCharging
 
 
 # FIXME(#184): train_id comes from the TrainController, see BaseCabinTool3D._act().
@@ -34,6 +35,8 @@ func _ready() -> void:
     if not _has_control(LegacyCabinManualBrake.CONTROL):
         _manual_brake = LegacyCabinManualBrake.new()
         _behaviours.append(_manual_brake)
+    _brake_charging = LegacyCabinBrakeCharging.new()
+    _behaviours.append(_brake_charging)
     for behaviour:RefCounted in _behaviours:
         behaviour.register(controller.train_id, cab)
 
@@ -47,6 +50,10 @@ func _unhandled_input(event:InputEvent) -> void:
                 "coupler_disconnect", 1 if cab < 0 else 0)
     if _battery and event.is_action_pressed(LegacyCabinBattery.ACTION, false, true):
         CabinSystem.act(controller.train_id, cab, LegacyCabinBattery.CONTROL, &"toggle")
+    if event.is_action_pressed(LegacyCabinBrakeCharging.ACTION, false, true):
+        CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
+    elif event.is_action_released(LegacyCabinBrakeCharging.ACTION, true):
+        CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
     if _manual_brake:
         # acts on key repeat too (Train.cpp:1811)
         if event.is_action_pressed(LegacyCabinManualBrake.ACTION_INCREASE, true, true):
@@ -68,3 +75,4 @@ func _exit_tree() -> void:
     _behaviours.clear()
     _battery = null
     _manual_brake = null
+    _brake_charging = null

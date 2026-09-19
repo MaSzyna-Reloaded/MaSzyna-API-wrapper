@@ -233,6 +233,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("manual_brake_increase"), &TrainBrake::manual_brake_increase);
         ClassDB::bind_method(D_METHOD("manual_brake_decrease"), &TrainBrake::manual_brake_decrease);
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &TrainBrake::auto_rewident);
+        ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &TrainBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &TrainBrake::alarm_chain);
     }
 
@@ -248,6 +249,7 @@ namespace godot {
         register_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         register_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         register_command("auto_rewident", Callable(this, "auto_rewident"));
+        register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -263,6 +265,7 @@ namespace godot {
         unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
         unregister_command("auto_rewident", Callable(this, "auto_rewident"));
+        unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -372,6 +375,23 @@ namespace godot {
         mover->BrakeDelaySwitch(p_brake_delay);
         mover->DecManualBrakeLevel(ManualBrakePosNo);
         mover->SpringBrake.Activate = false;
+    }
+
+    // Original engine: TTrain::OnCommand_trainbrakecharging (Train.cpp:1686) - held, the handle stays in the
+    // charging position -1; released, only self-returning EP handles go back to the running position
+    // (zero_charging_train_brake(), Train.cpp:960), an FV4a stays where it is
+    void TrainBrake::brake_level_charging(const bool p_active) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (p_active) {
+            mover->BrakeLevelSet(-1);
+            return;
+        }
+        if (mover->BrakeCtrlPos == -1 &&
+            (mover->BrakeHandle == TBrakeHandle::FVel6 || mover->BrakeHandle == TBrakeHandle::MHZ_EN57 ||
+             mover->BrakeHandle == TBrakeHandle::MHZ_K8P)) {
+            mover->BrakeLevelSet(0);
+        }
     }
 
     void TrainBrake::manual_brake_decrease() {

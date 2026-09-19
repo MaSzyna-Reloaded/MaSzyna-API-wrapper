@@ -15,8 +15,12 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 11
+const CACHE_FORMAT_VERSION:int = 12
 const CACHE_DIRECTORY:String = "scenery_compiled"
+## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
+const SUBSCENE_MIN_SIZE:int = 65536
+## Cached subscenes nested deeper are parsed as part of their parent's cache entry
+const SUBSCENE_MAX_DEPTH:int = 2
 ## Share of the loading progress taken by .scn parsing (the rest goes fairly fast)
 const PARSE_PROGRESS:float = 0.5
 ## Time spent building/attaching objects between progress reports
@@ -25,6 +29,9 @@ const PROGRESS_FRAME_BUDGET_MSEC:int = 100
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
 static var _last_report_msec:int = 0
 static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
+## Cache paths of subscenes being saved by queue workers - one writer per file
+static var _saving_subscenes:Dictionary = {}
+static var _saving_subscenes_mutex:Mutex = Mutex.new()
 
 
 ## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
@@ -228,12 +235,12 @@ static func _compile_scenery(
     parameters_hash:String,
     context:MaszynaImporterContext,
     objects:Array,
+    compiled:MaszynaCompiledScenery = MaszynaCompiledScenery.new(),
 ) -> MaszynaCompiledScenery:
     var packed_scene:PackedScene = _pack_objects(objects)
     if not packed_scene:
         return null
 
-    var compiled := MaszynaCompiledScenery.new()
     compiled.format_version = CACHE_FORMAT_VERSION
     compiled.source_path = source_path
     compiled.parameters_hash = parameters_hash
@@ -372,6 +379,49 @@ func parse_file_task(
     context.objects = parse_file(filename, parameters, context)
     context.merge_pending_includes()
     context.queue = null
+    return context
+
+
+## parse_file_task() of a subscene (see maszyna_include_importer.gd), read from / saved to the
+## cache. The cache key includes the inherited origin/rotate - parsed objects are already placed
+## in world coordinates.
+func parse_subscene_task(
+    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+) -> MaszynaImporterContext:
+    var source_path:String = _get_source_path(filename)
+    var state_hash:String = var_to_str([state["origin"], state["rotate"]]).md5_text()
+    var cache_path:String = _get_cache_path(source_path, state_hash)
+    var compiled:MaszynaCompiledSubscene = _load_cached(cache_path, source_path, state_hash) as MaszynaCompiledSubscene
+    if compiled:
+        var cached := MaszynaImporterContext.new()
+        cached.tracks.assign(compiled.tracks)
+        cached.traction.assign(compiled.traction)
+        cached.power_sources.assign(compiled.power_sources)
+        cached.models.assign(compiled.models)
+        cached.triangles.assign(compiled.triangles)
+        cached.dependencies = compiled.dependencies.duplicate(true)
+        cached.objects = _instantiate_cached_nodes(compiled.nodes)
+        return cached
+
+    state["subscene_depth"] = int(state["subscene_depth"]) + 1
+    var context:MaszynaImporterContext = parse_file_task(filename, parameters, state, queue)
+    if not context.cacheable:
+        return context
+
+    _saving_subscenes_mutex.lock()
+    var is_saving:bool = _saving_subscenes.has(cache_path)
+    _saving_subscenes[cache_path] = true
+    _saving_subscenes_mutex.unlock()
+    if is_saving:
+        return context
+
+    var subscene := MaszynaCompiledSubscene.new()
+    subscene.triangles = context.triangles
+    if _compile_scenery(source_path, state_hash, context, context.objects, subscene):
+        _cache.set(cache_path, subscene)
+    _saving_subscenes_mutex.lock()
+    _saving_subscenes.erase(cache_path)
+    _saving_subscenes_mutex.unlock()
     return context
 
 

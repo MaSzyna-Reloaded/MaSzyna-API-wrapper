@@ -15,6 +15,8 @@ const RESULT_LISTS:Array[String] = ["tracks", "traction", "power_sources", "mode
 
 var _states: Array[Dictionary] = []
 var include_depth: int = 0
+## Number of cached subscenes (SceneryInstancer.parse_subscene_task()) enclosing the parsed file
+var subscene_depth:int = 0
 var rotate := Vector3.ZERO
 var origin := Vector3.ZERO
 var tracks:Array[MaszynaTrackData] = []
@@ -97,6 +99,7 @@ func pop_origin():
 func get_state() -> Dictionary:
     return {
         "include_depth": include_depth,
+        "subscene_depth": subscene_depth,
         "rotate": rotate,
         "origin": origin,
         "trainset_open": trainset_open,
@@ -112,6 +115,7 @@ func get_state() -> Dictionary:
 static func from_state(state:Dictionary) -> MaszynaImporterContext:
     var context := MaszynaImporterContext.new()
     context.include_depth = state["include_depth"]
+    context.subscene_depth = state["subscene_depth"]
     context.rotate = state["rotate"]
     context.origin = state["origin"]
     context.trainset_open = state["trainset_open"]

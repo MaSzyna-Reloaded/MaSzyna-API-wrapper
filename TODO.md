@@ -59,6 +59,10 @@
   (whole `.scm` piece - key = path + hash of all params, reusable across sceneries). Results must be
   cached in local space (importers currently bake context origin/rotate into the data); invalidate
   by the dependency list like the compiled scenery cache.
+* Subscene cache (`SceneryInstancer.parse_subscene_task()`) is used only by queued parsing -
+  in-place `SceneryInstancer.parse_file()` (no queue) parses every include again.
+* Parse progress counts includes inside subscenes loaded from cache (`_count_includes()`), which
+  are never run as tasks - the parse bar jumps at the end when subscenes come from cache.
 * Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
   render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
   `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by

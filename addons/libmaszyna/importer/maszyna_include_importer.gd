@@ -12,7 +12,16 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
         if context.queue:
-            # parsed by a queue worker, the result is merged at the end of the current file
+            # parsed by a queue worker, the result is merged at the end of the current file.
+            # The original engine uses the same "include" for parameterised object instances and
+            # for subscenes - a large include without parameters is taken as a (cached) subscene.
+            if (
+                not parameters
+                and file.get_length() >= SceneryInstancer.SUBSCENE_MIN_SIZE
+                and not context.trainset_open
+                and context.subscene_depth < SceneryInstancer.SUBSCENE_MAX_DEPTH
+            ):
+                return [context.submit_include(SceneryInstancer.parse_subscene_task, filename, parameters)]
             return [context.submit_include(SceneryInstancer.parse_file_task, filename, parameters)]
         context.push_state()
         context.include_depth += 1

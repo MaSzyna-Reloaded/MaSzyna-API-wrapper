@@ -14,3 +14,12 @@
   the gauges only display it. Move key handling to `CabinSystem`/`LegacyCabinLogicDelegate`
   (once per `control_id`), widgets only display; then drop the workaround in
   `MmdCabinInstancer.build_into()` clearing `action*` on repeated labels.
+* Diesel-electric shunt mode on the second controller - `second_controller_increase/decrease`
+  only port the regular mode (`IncScndCtrl`/`DecScndCtrl`). With `ShuntModeAllow` and `ShuntMode`
+  the original moves the shunt power `AnPos` by 0.025 per step instead, clamped to 0..1
+  (`Train.cpp:1190-1197`, `1351-1357`); the `shuntmodepower:` gauge (`Train.cpp:10542`) is
+  unmapped too.
+* Pantograph auxiliary compressor keys without a cab switch - Shift+V/Ctrl+V reach the commands
+  only through the `pantcompressor_sw`/`pantcompressorvalve_sw` widgets. The original also allows
+  them in the machine room (cab 0) of the pantograph unit when the MMD has no such switch
+  (`Train.cpp:2872`, `2915`).

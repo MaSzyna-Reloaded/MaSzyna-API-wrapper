@@ -28,6 +28,8 @@ General guidelines:
 * IMPORTANT: do only what operator want, do not assume anything by yourself!
 * IMPORTANT: do not expand requested scope, API, or stored state unless operator explicitly asks for it
 * if you are not sure, ask operator for decision
+* whatever is left out of a task (not ported, skipped, deferred) goes to `TODO.md`, not only to the
+  session report, so it isn't forgotten
 
 Custom nodes and Godot Editor:
 

@@ -34,5 +34,6 @@ void fragment() {
 	}
 	// fade out at the box sides
 	a *= smoothstep(0.0, 0.12, UV.x) * smoothstep(1.0, 0.88, UV.x);
-	COLOR = vec4(line_color.rgb, line_color.a * a);
+	// input COLOR carries the node modulate (fade out)
+	COLOR *= vec4(line_color.rgb, line_color.a * a);
 }

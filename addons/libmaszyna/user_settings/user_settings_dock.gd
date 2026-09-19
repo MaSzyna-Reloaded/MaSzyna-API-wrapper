@@ -6,7 +6,11 @@ func _on_browse_button_up():
     %DirectorySelectorDialog.popup_centered()
 
 
+## Not while the scene itself is edited - the user's game dir would be saved into the .tscn
+## instead of the default "."
 func _refresh():
+    if is_part_of_edited_scene():
+        return
     if visible and is_inside_tree() and UserSettings:
         UserSettings.load_config()
         %LineEdit.text = UserSettings.get_maszyna_game_dir()

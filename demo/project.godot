@@ -16,6 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
+config/version="2026-09-19"
 run/main_scene="res://startup/startup.tscn"
 run/print_header=false
 config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")

@@ -2,9 +2,11 @@ extends Control
 
 ## Full screen scenario selector: <game_dir>/scenery/*.scn on the left, details of the selected
 ## one (MaszynaSceneryInfo) on the right. After "Wczytaj" the background dissolves into the
-## loading screen below. Escape quits.
+## loading screen below. Escape asks to quit (quit_requested).
 
 signal scenery_selected(filename: String)
+## Escape - the game fades out and quits
+signal quit_requested
 
 const DISSOLVE_TIME: float = 1.0
 
@@ -20,6 +22,7 @@ func _ready() -> void:
             _files.append(file)
             %List.add_item(file.get_basename())
     _show_details(-1)
+    %BuildLabel.text = "Pre-Alpha Demo Release %s" % ProjectSettings.get_setting("application/config/version")
 
 
 func open() -> void:
@@ -32,7 +35,7 @@ func open() -> void:
 func _unhandled_input(event: InputEvent) -> void:
     if visible and %Content.visible and event.is_action_pressed("ui_cancel"):
         get_viewport().set_input_as_handled()
-        get_tree().quit()
+        quit_requested.emit()
 
 
 func _on_list_item_selected(index: int) -> void:

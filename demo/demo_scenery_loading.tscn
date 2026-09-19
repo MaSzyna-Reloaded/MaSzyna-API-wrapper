@@ -7,7 +7,6 @@
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
-[ext_resource type="PackedScene" path="res://hud/help.tscn" id="12_help"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="6_weather_sfx"]
 [ext_resource type="Script" uid="uid://bdukhyjwpbfvl" path="res://demo_scenery_loading.gd" id="7_demo"]
@@ -19,22 +18,22 @@
 [ext_resource type="PackedScene" path="res://scenery_selector/scenery_selector_screen.tscn" id="10_scenery_selector"]
 [ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="11_loading_screen"]
 [ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
+[ext_resource type="PackedScene" uid="uid://pgf35en812s1" path="res://hud/help.tscn" id="12_help"]
+[ext_resource type="AudioStream" uid="uid://cn3nnquf55ipe" path="res://sounds/music/musinova-minimal-techno-ambient-loop-edit-483369.mp3" id="13_music"]
+[ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
-[ext_resource type="AudioStream" uid="uid://cn3nnquf55ipe" path="res://sounds/music/musinova-minimal-techno-ambient-loop-edit-483369.mp3" id="13_music"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 script = ExtResource("7_demo")
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
 script = ExtResource("1_env")
-current_time = 12.672
-day = 7
-month = 2
-simulation_speed = 10.0
-cloudiness = 0.35
+current_time = 16.222
+day = 19
+month = 9
+cloudiness = 0.0
 wind_strength = 0.2
-precipitation = 0.15
 fog_density = 0.5
 tonemap_mode = 3
 tonemap_agx_contrast = 1.1
@@ -51,10 +50,9 @@ script = ExtResource("3_scenery")
 [node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
 weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
-[node name="Music" type="AudioStreamPlayer" parent="."]
+[node name="Music" type="AudioStreamPlayer" parent="." unique_id=168087480]
 stream = ExtResource("13_music")
 autoplay = true
-weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
 [node name="TopBar" type="Container" parent="." unique_id=702463713]
 self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
@@ -97,6 +95,7 @@ mouse_filter = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 24.0
 offset_top = 467.0
 offset_right = 387.0
@@ -113,6 +112,7 @@ train_controller = NodePath("")
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 405.0
 offset_top = 467.0
 offset_right = 555.0
@@ -128,6 +128,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 579.0
 offset_top = 467.0
 offset_right = 753.0
@@ -143,6 +144,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 779.0
 offset_top = 467.0
 offset_right = 989.0
@@ -158,6 +160,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 1011.0
 offset_top = 467.0
 offset_right = 1231.0
@@ -173,6 +176,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 1011.0
 offset_top = 467.0
 offset_right = 1250.0
@@ -188,6 +192,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 24.0
 offset_top = 823.0
 offset_right = 1396.0
@@ -203,6 +208,7 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 1014.0
 offset_top = 589.0
 offset_right = 1250.0
@@ -218,14 +224,16 @@ layout_mode = 2
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 24.0
 offset_top = 45.0
 offset_right = 1250.0
-offset_bottom = 225.0
+offset_bottom = 238.0
 script = ExtResource("9_window")
 title = "Weather and Time"
 
 [node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
+clip_contents = true
 layout_mode = 2
 environment_node_path = NodePath("../../../MaszynaEnvironmentNode")
 
@@ -233,6 +241,7 @@ environment_node_path = NodePath("../../../MaszynaEnvironmentNode")
 top_level = true
 custom_minimum_size = Vector2(100, 50)
 clip_contents = true
+layout_mode = 0
 offset_left = 1270.0
 offset_top = 45.0
 offset_right = 1570.0
@@ -246,12 +255,29 @@ layout_mode = 2
 [node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
 scene_path = ""
 
-[node name="ScenerySelectorScreen" parent="." instance=ExtResource("10_scenery_selector")]
+[node name="ScenerySelectorScreen" parent="." unique_id=969482359 instance=ExtResource("10_scenery_selector")]
 visible = false
 
+[node name="SpinnerOverlay" parent="." unique_id=1959235682 instance=ExtResource("14_spinner")]
+visible = false
+
+[node name="FadeLayer" type="CanvasLayer" parent="." unique_id=1782001293]
+layer = 200
+
+[node name="Black" type="ColorRect" parent="FadeLayer" unique_id=1343566047]
+modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
 [connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
-[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
+[connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
 [connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]

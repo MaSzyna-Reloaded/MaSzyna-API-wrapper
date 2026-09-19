@@ -114,30 +114,32 @@ uniform int blur_amount = 16;
 uniform float blur_radius = 1;
 uniform vec2 blur_direction = vec2(1, 1);
 void fragment(){
+	// input COLOR carries the node modulate (fade out)
+	vec4 modulate = COLOR;
 	vec2 uv = FRAGCOORD.xy / (1.0 / SCREEN_PIXEL_SIZE).xy;
 
 	if (blur_type == 0)
 	{
 		vec4 xorgaussian = texture_xorgaussian(TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), 16, 4);
-		COLOR =  xorgaussian;
+		COLOR = modulate * xorgaussian;
 	}
 	else if (blur_type == 1)
 	{
 		vec4 monksgaussian_multipass = texture_monksgaussian_multipass(TEXTURE, uv, SCREEN_PIXEL_SIZE, blur_amount, blur_direction);
-		COLOR =  monksgaussian_multipass;
+		COLOR = modulate * monksgaussian_multipass;
 	}
 	else if (blur_type == 2)
 	{
 		vec4 nodevgaussian_singlepass = texture_nodevgaussian_singlepass(TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), blur_radius);
-		COLOR =  nodevgaussian_singlepass;
+		COLOR = modulate * nodevgaussian_singlepass;
 	}
 	else if (blur_type == 3)
 	{
 		vec4 nodevgaussian_multipass = texture_nodevgaussian_multipass(TEXTURE, uv, SCREEN_PIXEL_SIZE, float(blur_amount), blur_direction);
-		COLOR =  nodevgaussian_multipass;
+		COLOR = modulate * nodevgaussian_multipass;
 	}
 	else
 	{
-		COLOR =  texture(TEXTURE, uv);
+		COLOR = modulate * texture(TEXTURE, uv);
 	}
 }

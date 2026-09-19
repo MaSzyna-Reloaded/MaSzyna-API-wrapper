@@ -3,6 +3,7 @@
 [ext_resource type="Script" path="res://scenery_selector/scenery_selector_screen.gd" id="1_screen"]
 [ext_resource type="Shader" path="res://scenery_selector/scenery_selector_background.gdshader" id="2_shader"]
 [ext_resource type="Texture2D" uid="uid://drby1i7vhvo5f" path="res://loading_screen/loading_screen_bg.jpg" id="3_bg"]
+[ext_resource type="Texture2D" uid="uid://ba24yq4mnp1wc" path="res://loading_screen/logo.png" id="4_logo"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -168,6 +169,49 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_load_pressed")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_load_disabled")
 disabled = true
 text = "Wczytaj"
+
+[node name="Logo" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -256.0
+offset_top = 8.0
+offset_right = -16.0
+offset_bottom = 88.0
+grow_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("4_logo")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Footer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 64.0
+offset_top = -38.0
+offset_right = 864.0
+offset_bottom = -14.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_constants/separation = 12
+
+[node name="BuildLabel" type="Label" parent="Footer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.8)
+theme_override_font_sizes/font_size = 16
+text = "Pre-Alpha Demo Release"
+
+[node name="Link" type="LinkButton" parent="Footer"]
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_colors/font_color = Color(0.55, 0.75, 1, 1)
+theme_override_font_sizes/font_size = 16
+text = "https://maszyna-reloaded.pl"
+uri = "https://maszyna-reloaded.pl"
 
 [connection signal="item_selected" from="Content/HBoxContainer/ListPanel/VBoxContainer/List" to="." method="_on_list_item_selected"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/Buttons/LoadButton" to="." method="_on_load_button_pressed"]

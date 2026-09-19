@@ -6,6 +6,9 @@ signal loaded
 ## Emitted by SceneryInstancer before each loading stage (progress 0..1, stage description)
 signal load_progress(progress:float, message:String)
 
+## Milliseconds spent freeing content per frame while reloading
+const CLEAR_BUDGET_MSEC:int = 8
+
 var _dirty:bool = false
 var _editor_dirty:bool = false
 
@@ -53,35 +56,38 @@ func _exit_tree() -> void:
     _free_owned_rids()
 
 
-func _free_owned_rids() -> void:
-    for rid:RID in _track_render_rids:
-        if rid.is_valid():
-            TrackRenderingServer.free_track(rid)
-    for rid:RID in _track_rids:
-        if rid.is_valid():
-            TrackManager.track_free(rid)
-    for rid:RID in _traction_rids:
-        if rid.is_valid():
-            TractionRenderingServer.free_traction(rid)
-    for rid:RID in _wire_power_rids:
-        if rid.is_valid():
-            TractionPowerServer.wire_free(rid)
-    for rid:RID in _power_source_rids:
-        if rid.is_valid():
-            TractionPowerServer.power_source_free(rid)
-    for rid:RID in _e3d_rids:
-        E3DRenderingServer.instance_free(rid)
-    _track_rids.clear()
-    _track_render_rids.clear()
-    _traction_rids.clear()
-    _wire_power_rids.clear()
-    _power_source_rids.clear()
-    _e3d_rids.clear()
+## budget_msec > 0 spreads the freeing over frames, so whatever covers the screen (the loading
+## spinner) keeps animating; 0 frees everything at once (leaving the tree)
+func _free_owned_rids(budget_msec:int = 0) -> void:
+    var groups:Array = [
+        [_track_render_rids, TrackRenderingServer.free_track],
+        [_track_rids, TrackManager.track_free],
+        [_traction_rids, TractionRenderingServer.free_traction],
+        [_wire_power_rids, TractionPowerServer.wire_free],
+        [_power_source_rids, TractionPowerServer.power_source_free],
+        [_e3d_rids, E3DRenderingServer.instance_free],
+    ]
+    var frame_start:int = Time.get_ticks_msec()
+    for group:Array in groups:
+        var rids:Array[RID] = group[0]
+        var free_rid:Callable = group[1]
+        for rid:RID in rids:
+            if rid.is_valid():
+                free_rid.call(rid)
+            if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
+                await get_tree().process_frame
+                frame_start = Time.get_ticks_msec()
+        rids.clear()
 
-func _clear_content() -> void:
-    _free_owned_rids()
+
+func _clear_content(budget_msec:int = 0) -> void:
+    await _free_owned_rids(budget_msec)
+    var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
         child.free()
+        if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
+            await get_tree().process_frame
+            frame_start = Time.get_ticks_msec()
 
 
 func load() -> void:
@@ -90,7 +96,7 @@ func load() -> void:
 
     _dirty = false
     _loading = true
-    _clear_content()
+    await _clear_content(CLEAR_BUDGET_MSEC)
     if filename:
         await _load_content()
     _loading = false

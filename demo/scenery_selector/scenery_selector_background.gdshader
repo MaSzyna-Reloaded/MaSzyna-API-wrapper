@@ -27,5 +27,6 @@ void fragment() {
 	float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));
 	float n = 0.65 * value_noise(UV * dissolve_scale) + 0.35 * value_noise(UV * dissolve_scale * 4.0);
 	float threshold = dissolve * (1.0 + dissolve_softness);
-	COLOR = vec4(tint * luminance * brightness, color.a * smoothstep(threshold - dissolve_softness, threshold, n));
+	// input COLOR carries the node modulate
+	COLOR *= vec4(tint * luminance * brightness, color.a * smoothstep(threshold - dissolve_softness, threshold, n));
 }

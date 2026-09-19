@@ -15,8 +15,8 @@ signal scenery_loaded(first_train_id:String)
 var first_train_id:String = ""
 
 
-func _clear_content() -> void:
-    super._clear_content()
+func _clear_content(budget_msec:int = 0) -> void:
+    await super._clear_content(budget_msec)
     first_train_id = ""
 
 

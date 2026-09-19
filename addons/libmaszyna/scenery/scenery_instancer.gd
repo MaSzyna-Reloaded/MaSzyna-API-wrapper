@@ -499,7 +499,6 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
 func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
     for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit"]:
         parser.unregister_handler(token)
-    parser.unreference()
     context.end_file(_get_source_path(filename))
 
 

@@ -927,6 +927,8 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+            # the alerter lamp has to light the driver, whatever the lamp submodel's own axes are
+            "aim_at_driver": true,
         },
         # Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
         # etc.) and TrainLighting::light_switch()'s own doc comment (TrainLighting.hpp) - these ten

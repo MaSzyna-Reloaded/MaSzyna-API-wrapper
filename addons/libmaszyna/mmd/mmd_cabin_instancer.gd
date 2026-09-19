@@ -14,6 +14,8 @@ class_name MmdCabinInstancer
 ## (MaszynaParser has no cursor/position accessor to reconstruct it from mid-stream) - source
 ## file is still tracked. Re-add line numbers if MaszynaParser ever grows a position getter.
 
+## How far an aimed indicator light is moved out of its lamp mesh (see _aim_spotlight_at_driver()).
+const INDICATOR_LIGHT_OFFSET:float = 0.05
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
 const _INCLUDE_END_KEYWORD := "end"
@@ -301,7 +303,9 @@ static func build_into(
             # has 3 "CzuwakOmni" lights for its one "i-security_aware:" label) - one widget per
             # matched submodel instance, not just the first, unlike every other instrument label
             # (which only ever has one real target mesh).
-            _build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, definition.cab_number, diagnostics)
+            _build_indicator_lights(
+                    descriptor, entry, controller, submodel_index, generated_root, definition.cab_number,
+                    definition.driver_pos, diagnostics)
             continue
         var widget:Node = _build_widget(descriptor, controller, definition.cab_number, diagnostics)
         generated_root.add_child(widget)
@@ -841,7 +845,8 @@ static func _wire_mesh_path(
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
-        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, diagnostics:Array[Dictionary]) -> void:
+        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, driver_position:Vector3,
+        diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
     var off_matches:Array = submodel_index.get(base_name + "_off", [])
@@ -870,6 +875,8 @@ static func _build_indicator_lights(
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
         var off_node:Node3D = off_matches[i] if i < off_matches.size() else null
         _position_at_submodel_instance(widget, on_node if on_node else off_node)
+        if entry.get("aim_at_driver", false) and widget is SpotLight3D:
+            _aim_spotlight_at_driver(widget as SpotLight3D, generated_root, driver_position)
         if on_node:
             widget.set("on_target_path", widget.get_path_to(on_node))
         if off_node:
@@ -886,6 +893,23 @@ static func _build_indicator_lights(
             if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
                 _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
             light.set("controller_path", light.get_path_to(controller))
+
+
+## Quirk for indicator lamps lighting the cab (alerter): the lamp submodel's own axes are arbitrary
+## in legacy cab art (SU46's alerter lamp points at the windscreen) and one submodel may hold several
+## bulbs, so its orientation can't be trusted. The light is aimed at the driver's eyes instead (MMD
+## driverNpos:, same cab model space as generated_root) and moved a few centimetres towards them, out
+## of the lamp's own shadow casting mesh.
+static func _aim_spotlight_at_driver(light:SpotLight3D, generated_root:Node3D, driver_position:Vector3) -> void:
+    var target:Vector3 = generated_root.to_global(driver_position)
+    var direction:Vector3 = target - light.global_position
+    if direction.length_squared() < 0.0001:
+        return
+    light.global_position += direction.normalized() * INDICATOR_LIGHT_OFFSET
+    var up:Vector3 = generated_root.global_basis.y.normalized()
+    if absf(direction.normalized().dot(up)) > 0.99:
+        up = generated_root.global_basis.z.normalized()
+    light.look_at(target, up)
 
 
 ## Legacy cabin models do not use a consistent local axis for ceiling-lamp meshes. Preserve the

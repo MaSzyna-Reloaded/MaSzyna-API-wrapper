@@ -4,6 +4,7 @@
 [ext_resource type="Shader" path="res://scenery_selector/scenery_selector_background.gdshader" id="2_shader"]
 [ext_resource type="Texture2D" uid="uid://drby1i7vhvo5f" path="res://loading_screen/loading_screen_bg.jpg" id="3_bg"]
 [ext_resource type="Texture2D" uid="uid://ba24yq4mnp1wc" path="res://loading_screen/logo.png" id="4_logo"]
+[ext_resource type="PackedScene" path="res://scenery_selector/vehicle_viewer.tscn" id="5_viewer"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -99,25 +100,44 @@ theme_override_constants/margin_bottom = 48
 layout_mode = 2
 theme_override_constants/separation = 32
 
-[node name="ListPanel" type="PanelContainer" parent="Content/HBoxContainer"]
+[node name="LeftSlot" type="Control" parent="Content/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="ListPanel" type="PanelContainer" parent="Content/HBoxContainer/LeftSlot"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/ListPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/LeftSlot/ListPanel"]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Header" type="Label" parent="Content/HBoxContainer/ListPanel/VBoxContainer"]
+[node name="Header" type="Label" parent="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 text = "Scenariusze"
 
-[node name="List" type="ItemList" parent="Content/HBoxContainer/ListPanel/VBoxContainer"]
+[node name="List" type="ItemList" parent="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_font_sizes/font_size = 18
+
+[node name="VehicleViewer" parent="Content/HBoxContainer/LeftSlot" instance=ExtResource("5_viewer")]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="DetailsPanel" type="PanelContainer" parent="Content/HBoxContainer"]
 layout_mode = 2
@@ -241,6 +261,8 @@ theme_override_font_sizes/font_size = 16
 text = "https://maszyna-reloaded.pl"
 uri = "https://maszyna-reloaded.pl"
 
-[connection signal="item_selected" from="Content/HBoxContainer/ListPanel/VBoxContainer/List" to="." method="_on_list_item_selected"]
+[connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
+[connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
+[connection signal="item_selected" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/List" to="." method="_on_list_item_selected"]
 [connection signal="item_selected" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/Consists" to="." method="_on_consists_item_selected"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/Buttons/LoadButton" to="." method="_on_load_button_pressed"]

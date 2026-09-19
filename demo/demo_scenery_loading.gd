@@ -55,12 +55,17 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
         _bind_train_controller(win)
 
 
-func _on_scenery_selector_scenery_selected(filename: String, train_id: String) -> void:
+func _on_scenery_selector_scenery_selected(
+    filename: String, train_id: String, skin_overrides: Dictionary
+) -> void:
     _play_music()
     $TopBar.visible = false
     $ControlWindows.visible = false
-    $LoadingScreen.show_loading(filename.get_basename())
+    # the title from the .scn header ("//$n"), not the file name
+    var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
+    $LoadingScreen.show_loading(info.title if info.title else filename.get_basename())
     $MaszynaSceneryNode.filename = filename
+    $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
     await $Player.clear_start_train()
     # the consist chosen in the selector; an empty one lets the scenery pick its own driver
     $Player.start_train_id = train_id

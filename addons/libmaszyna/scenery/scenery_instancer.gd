@@ -225,11 +225,25 @@ static func _attach_objects(
         if not node:
             continue
 
+        _apply_skin_overrides(root, node)
         root.add_child(node)
         var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
         await _report_progress_throttled(root, progress, "Instancing %s" % node.name)
     if Engine.is_editor_hint():
         root.SceneryEditor.update_owners(root)
+
+
+## Vehicles are built from their properties once they enter the tree, so an overridden skin has
+## to be set before that (a trainset holds its vehicles as children)
+static func _apply_skin_overrides(root:MaszynaIncludeNode, node:Node) -> void:
+    if not root.skin_overrides:
+        return
+    var vehicles:Array[Node] = [node]
+    vehicles.append_array(node.find_children("", "DynamicRailVehicle3D", true, false))
+    for candidate:Node in vehicles:
+        var vehicle:DynamicRailVehicle3D = candidate as DynamicRailVehicle3D
+        if vehicle and root.skin_overrides.has(vehicle.train_id):
+            vehicle.skin = root.skin_overrides[vehicle.train_id]
 
 
 static func _compile_scenery(

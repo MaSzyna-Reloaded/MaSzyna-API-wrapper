@@ -17,10 +17,10 @@ class Vehicle:
     ## e.g. "dynamic/pkp/su42_v1"
     var data_path:String = ""
     var skin:String = ""
+    ## Base name of the vehicle's .mmd/.fiz files
+    var file_name:String = ""
     ## "headdriver" for the vehicle the player starts in, "reardriver", "passenger", ...
     var driver_type:String = ""
-    ## Side view of the vehicle from textures/mini/, empty when the data has none
-    var image_path:String = ""
 
 
 ## One "trainset ... endtrainset" block
@@ -131,32 +131,14 @@ static func read(filename:String) -> MaszynaSceneryInfo:
                     var vehicle := Vehicle.new()
                     vehicle.train_id = tokens[3]
                     vehicle.data_path = _resolve_data_path(tokens[5])
-                    vehicle.skin = tokens[6]
+                    # lowercased like maszyna_node_dynamic_importer.gd does - the data files are
+                    # lowercase, the .scn spells them however it likes
+                    vehicle.skin = tokens[6].to_lower()
+                    vehicle.file_name = tokens[7].to_lower()
                     vehicle.driver_type = tokens[9].to_lower()
-                    vehicle.image_path = _find_vehicle_image(vehicle)
                     trainset.vehicles.append(vehicle)
     info.description = "\n".join(description_lines)
     return info
-
-
-## Side view of a vehicle - textures/mini/<skin>.bmp in the original starter, falling back to
-## the vehicle type (its data folder without the _vN suffix), which is what the data has for
-## skins with no image of their own
-static func _find_vehicle_image(vehicle:Vehicle) -> String:
-    var mini_dir:String = UserSettings.get_maszyna_game_dir().path_join("textures/mini")
-    var vehicle_type:String = vehicle.data_path.get_file()
-    # "su42_v1" -> "su42"
-    var version_index:int = vehicle_type.rfind("_v")
-    var base_type:String = (
-        vehicle_type.left(version_index)
-        if version_index > 0 and vehicle_type.substr(version_index + 2).is_valid_int()
-        else vehicle_type
-    )
-    for image_name:String in [vehicle.skin.to_lower(), base_type, vehicle_type]:
-        var path:String = mini_dir.path_join(image_name + ".bmp")
-        if image_name and FileAccess.file_exists(path):
-            return path
-    return ""
 
 
 ## "PKP\\SU42_V1" -> "dynamic/pkp/su42_v1", same as maszyna_node_dynamic_importer.gd

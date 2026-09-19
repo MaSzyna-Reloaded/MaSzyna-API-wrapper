@@ -292,6 +292,7 @@ static func build_into(
     var submodel_index:Dictionary = {}
     _index_submodels(model, submodel_index)
 
+    var built_labels:Dictionary = {}
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if not MmdSemanticCatalog.has_label(descriptor.label):
             diagnostics.append(_diag("info", "MMD_BINDING_UNSUPPORTED", "MMD label '%s' is not in the supported catalog" % descriptor.label, definition.cab_number, descriptor.label, descriptor.submodel_name))
@@ -308,6 +309,15 @@ static func build_into(
                     definition.driver_pos, diagnostics)
             continue
         var widget:Node = _build_widget(descriptor, controller, definition.cab_number, diagnostics)
+        # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
+        # with one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237) -
+        # only its first widget takes the key, the others just follow the cabin state; every widget
+        # taking it toggled the control once per widget, cancelling itself out.
+        if built_labels.has(descriptor.label):
+            for field:String in ["action", "action_increase", "action_decrease"]:
+                if field in widget:
+                    widget.set(field, "")
+        built_labels[descriptor.label] = true
         generated_root.add_child(widget)
         # mesh_path must be resolved AFTER the widget has a place in the tree - the widget shares
         # no common ancestor with `model`'s submodels until it's actually parented under the same

@@ -13,18 +13,33 @@ signal cabin_view_changed(in_cabin:bool)
                 _auto_start_pending = false
             _dirty = true
 
+## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
+@export var sfx_bank:SfxBank
+
 var last_controlled_train_id:String = ""
 var controlled_vehicle:RailVehicle3D
 var _camera:FreeCamera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
 @onready var external_camera:ExternalCamera3D = $ExternalCamera3D
+## Player's head torch - follows the camera (the player's head) in the cab and on foot
+@onready var headlamp:SpotLight3D = $Camera3D/Headlamp
+## Screen-space near-field glow inside the headlamp cone (headlamp_glow.gdshader)
+@onready var headlamp_glow:MeshInstance3D = $Camera3D/HeadlampGlow
+## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
+@onready var sfx_player:SfxPlayer = $PlayerSfx
 var _dirty: bool = true
 var _auto_start_pending:bool = true
 var _released_train_id:String = ""
 var _cabin_view:bool = false
 
 func _ready() -> void:
-    pass
+    sfx_player.bank = sfx_bank
+    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    # the glow follows the spot: both are children of the camera, so their transform is view space
+    var glow_material:ShaderMaterial = (headlamp_glow.mesh as QuadMesh).material as ShaderMaterial
+    glow_material.set_shader_parameter(&"light_position", headlamp.position)
+    glow_material.set_shader_parameter(&"light_direction", -headlamp.transform.basis.z)
+    glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
 
 func _process(_delta:float) -> void:
     if _dirty:
@@ -63,6 +78,12 @@ func _process(_delta:float) -> void:
         camera.rotation.z = 0.0
 
 func _input(event):
+    if event.is_action_pressed("flashlight_toggle", false, true):
+        var enabled:bool = headlamp.visible
+        headlamp.visible = not enabled
+        headlamp_glow.visible = not enabled
+        # "toggle" automation: 0 - switching on click, 1 - switching off click
+        sfx_player.play_automation(&"flashlight", &"toggle", float(enabled))
     if event.is_action_pressed("change_vehicle") or event.is_action_pressed("cabin_mode_toggle", false, true):
         var detector:ShapeCast3D = get_camera().get_node("RailVehicleDetector")
         if not controlled_vehicle and detector.is_colliding():

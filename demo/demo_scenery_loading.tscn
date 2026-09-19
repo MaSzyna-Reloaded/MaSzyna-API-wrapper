@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
 [ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
+[ext_resource type="PackedScene" path="res://hud/help.tscn" id="12_help"]
 [ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
 [ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="6_weather_sfx"]
 [ext_resource type="Script" uid="uid://bdukhyjwpbfvl" path="res://demo_scenery_loading.gd" id="7_demo"]
@@ -218,6 +219,20 @@ title = "Weather and Time"
 [node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
 layout_mode = 2
 environment_node_path = NodePath("../../../MaszynaEnvironmentNode")
+
+[node name="Help" type="Container" parent="ControlWindows" unique_id=1837402256]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 1270.0
+offset_top = 45.0
+offset_right = 1570.0
+offset_bottom = 525.0
+script = ExtResource("9_window")
+title = "Help"
+
+[node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]
+layout_mode = 2
 
 [node name="Scenery" type="Container" parent="ControlWindows" unique_id=2011306675]
 top_level = true

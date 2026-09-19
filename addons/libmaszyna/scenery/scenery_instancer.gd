@@ -17,8 +17,13 @@ static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyn
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
 const CACHE_FORMAT_VERSION:int = 9
 const CACHE_DIRECTORY:String = "scenery_compiled"
+## Top-level .scn parsing: chunk size, time spent between progress reports, share of the progress
+const PARSE_CHUNK_BYTES:int = 512
+const PARSE_FRAME_BUDGET_MSEC:int = 100
+const PARSE_PROGRESS:float = 0.4
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
+static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
 
 
 ## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
@@ -46,9 +51,11 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var world_3d:World3D = root.get_world_3d()
     var compiled:MaszynaCompiledScenery
     if root.use_cache:
+        await _report_progress(root, 0.0, "Reading cache")
         compiled = _load_cached(cache_path, source_path, parameters_hash)
 
     if compiled:
+        await _report_progress(root, 0.3, "Building tracks and traction")
         _instantiate_server_data(
             root,
             world_3d,
@@ -56,23 +63,45 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             compiled.traction,
             compiled.power_sources,
         )
+        await _report_progress(root, 0.6, "Instancing objects")
         _attach_objects(root, _instantiate_cached_nodes(compiled.nodes))
+        await _wait_for_vehicles(root)
         return
 
+    await _report_progress(root, 0.0, "Scanning includes")
     var context := MaszynaImporterContext.new()
     context.rotate = root.context_rotate
     context.origin = root.context_origin
-    var objects:Array = parse_file(root.filename, parameters, context)
+    var objects:Array = await _parse_file_with_progress(root, parameters, context)
 
+    await _report_progress(root, PARSE_PROGRESS, "Building tracks and traction")
     _instantiate_server_data(root, world_3d, context.tracks, context.traction, context.power_sources)
     objects.append_array(_build_triangle_nodes(context.triangles))
 
     if root.use_cache and context.cacheable:
+        await _report_progress(root, 0.6, "Saving cache")
         compiled = _compile_scenery(source_path, parameters_hash, context, objects)
         if compiled:
             _cache.set(cache_path, compiled)
 
+    await _report_progress(root, 0.8, "Instancing objects")
     _attach_objects(root, objects)
+    await _wait_for_vehicles(root)
+
+
+## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
+static func _report_progress(root:MaszynaIncludeNode, progress:float, message:String) -> void:
+    root.load_progress.emit(progress, message)
+    await root.get_tree().process_frame
+
+
+## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached.
+static func _wait_for_vehicles(root:MaszynaIncludeNode) -> void:
+    var vehicles:Array[Node] = root.find_children("", "DynamicRailVehicle3D", true, false)
+    for vehicle:Node in vehicles:
+        while not (vehicle as DynamicRailVehicle3D).is_built():
+            await _report_progress(root, 0.9, "Instancing vehicles")
+    root.load_progress.emit(1.0, "")
 
 
 static func _instantiate_server_data(
@@ -285,15 +314,83 @@ func scenery_exists(filename: String):
 
 
 func parse_file(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> Array:
+    var parser:MaszynaParser = open_parser(filename, parameters, context)
+    if not parser:
+        return []
+    var objects:Array = parser.parse()
+    _close_parser(parser, filename, context)
+    return objects
+
+
+## Parses root's scenery in chunks, reporting progress about every PARSE_FRAME_BUDGET_MSEC.
+## Includes are not parsed recursively inside a handler (no frame could be yielded there) - the
+## include importer opens them (context.defer_includes) and parsing continues in them here.
+## Progress = opened includes / includes counted by _count_includes().
+func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary, context:MaszynaImporterContext) -> Array:
+    var include_count:int = _count_includes(root.filename, {})
+    var parser:MaszynaParser = open_parser(root.filename, parameters, context)
+    if not parser:
+        return []
+    var parsers:Array[MaszynaParser] = [parser]
+    var filenames:Array[String] = [root.filename]
+    var opened_includes:int = 0
+    var objects:Array = []
+    var frame_start:int = Time.get_ticks_msec()
+    context.defer_includes = true
+    while parsers:
+        parser = parsers.back()
+        if parser.eof_reached():
+            _close_parser(parser, filenames.back(), context)
+            parsers.pop_back()
+            filenames.pop_back()
+            if parsers:
+                context.pop_state()
+            continue
+        objects.append_array(parser.parse_chunk(PARSE_CHUNK_BYTES))
+        if context.pending_include_parser:
+            parsers.append(context.pending_include_parser)
+            filenames.append(context.pending_include_filename)
+            context.pending_include_parser = null
+            opened_includes += 1
+        if Time.get_ticks_msec() - frame_start >= PARSE_FRAME_BUDGET_MSEC:
+            var parsed:float = minf(float(opened_includes) / float(maxi(include_count, 1)), 1.0)
+            await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % filenames.back())
+            frame_start = Time.get_ticks_msec()
+    context.defer_includes = false
+    return objects
+
+
+## Grep-like prescan: every "include" in filename and, recursively, in the included files (each
+## occurrence counts, files are scanned once - counts caches the per-file totals). Parameterised
+## include paths that don't resolve to a file count as one include without children.
+func _count_includes(filename:String, counts:Dictionary) -> int:
+    if counts.has(filename):
+        return counts[filename]
+    counts[filename] = 0
+    var path:String = _get_source_path(filename)
+    if not FileAccess.file_exists(path):
+        return 0
+    var total:int = 0
+    for line:String in FileAccess.get_file_as_bytes(path).get_string_from_ascii().split("\n"):
+        var code:String = line.get_slice("//", 0)
+        if not code.containsn("include"):
+            continue
+        for found:RegExMatch in _include_regex.search_all(code):
+            total += 1 + _count_includes(include_importer.resolve_filename(found.get_string(1)), counts)
+    counts[filename] = total
+    return total
+
+
+func open_parser(filename: String, parameters: Dictionary, context: MaszynaImporterContext) -> MaszynaParser:
     var abs_file:String = _get_source_path(filename)
     if not context.begin_file(abs_file):
         push_error("Recursive scenery include: " + abs_file)
-        return []
+        return null
     var file := FileAccess.open(abs_file, FileAccess.READ)
     if not file:
         context.end_file(abs_file)
         push_error("Cannot load scenery: " + abs_file)
-        return []
+        return null
     context.register_dependency(abs_file, file.get_length())
 
     var parser := MaszynaParser.new()
@@ -312,15 +409,14 @@ func parse_file(filename: String, parameters: Dictionary, context: MaszynaImport
     parser.register_handler("trainset", _make_importer_callback(trainset_importer, context))
     parser.register_handler("endtrainset", _make_importer_callback(endtrainset_importer, context))
     parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
+    return parser
 
-    var objects = parser.parse()
 
+func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
     for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit"]:
         parser.unregister_handler(token)
     parser.unreference()
-    context.end_file(abs_file)
-
-    return objects
+    context.end_file(_get_source_path(filename))
 
 
 static func _make_importer_callback(importer, context) -> Callable:

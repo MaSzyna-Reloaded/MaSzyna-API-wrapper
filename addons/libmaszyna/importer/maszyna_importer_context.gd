@@ -12,6 +12,11 @@ var terrains: Array = []
 var triangles: Array = []
 var dependencies:Dictionary = {}
 var cacheable:bool = true
+## Set by SceneryInstancer's chunked parsing: "include" only opens the file into
+## pending_include_parser (interrupting the current parser) instead of parsing it recursively.
+var defer_includes:bool = false
+var pending_include_parser:MaszynaParser = null
+var pending_include_filename:String = ""
 
 ## Set by "trainset:"/"endtrainset:" (maszyna_trainset_importer.gd/maszyna_endtrainset_importer.gd)
 ## and consumed by maszyna_node_dynamic_importer.gd - mirrors scene::scratch_data::trainset_data

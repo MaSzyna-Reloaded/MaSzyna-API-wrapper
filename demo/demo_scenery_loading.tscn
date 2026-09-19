@@ -7,8 +7,22 @@
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
 [ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="6_weather_sfx"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
+[ext_resource type="PackedScene" uid="uid://karqply1tqnp" path="res://hud/mover_switches_general.tscn" id="3_l04v0"]
+[ext_resource type="PackedScene" uid="uid://b2knt6him76rc" path="res://hud/mover_switches_diesel.tscn" id="4_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://bn0vwl5vjwu45" path="res://hud/mover_switches_brakes.tscn" id="6_lsqkb"]
+[ext_resource type="PackedScene" uid="uid://ce8ab4bwjftcl" path="res://hud/mover_switches_doors.tscn" id="7_t705k"]
+[ext_resource type="PackedScene" uid="uid://bqm2tjc1181ek" path="res://hud/mover_switches_security.tscn" id="8_h5mje"]
+[ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
+[ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
+[ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
+[ext_resource type="Script" path="res://demo_scenery_loading.gd" id="7_demo"]
+[ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
+[ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
+[ext_resource type="PackedScene" path="res://hud/scenery_selector.tscn" id="10_scenery_selector"]
+[ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="11_loading_screen"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
+script = ExtResource("7_demo")
 
 [node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
 script = ExtResource("1_env")
@@ -29,7 +43,7 @@ sfx_bank = ExtResource("player_sfx_bank")
 
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
-filename = "td.scn"
+filename = ""
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
@@ -38,3 +52,187 @@ environment_node_path = NodePath("../MaszynaEnvironmentNode")
 
 [node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
 weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
+
+[node name="TopBar" type="Container" parent="."]
+self_modulate = Color(0.39215687, 0.39215687, 0.39215687, 0.1882353)
+top_level = true
+clip_contents = true
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 31.0
+grow_horizontal = 2
+script = ExtResource("8_top_bar")
+drag_enabled = false
+resize_enabled = false
+window_decorations = false
+allow_close = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="TopBar"]
+clip_contents = true
+layout_mode = 2
+
+[node name="MenuBar" type="MenuBar" parent="TopBar/HBoxContainer"]
+clip_contents = true
+layout_mode = 2
+
+[node name="PopupMenu" type="PopupMenu" parent="TopBar/HBoxContainer/MenuBar"]
+title = "Controls"
+system_menu_id = 2
+
+[node name="ToggleAllControls" type="Button" parent="TopBar/HBoxContainer"]
+clip_contents = true
+layout_mode = 2
+toggle_mode = true
+text = "Toggle controls"
+
+[node name="ControlWindows" type="Node" parent="."]
+
+[node name="General" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 24.0
+offset_top = 467.0
+offset_right = 387.0
+offset_bottom = 721.0
+script = ExtResource("9_window")
+title = "General"
+
+[node name="General" parent="ControlWindows/General" instance=ExtResource("3_l04v0")]
+clip_contents = true
+layout_mode = 2
+train_controller = NodePath("")
+
+[node name="Diesel" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 405.0
+offset_top = 467.0
+offset_right = 555.0
+offset_bottom = 622.0
+script = ExtResource("9_window")
+title = "Diesel"
+
+[node name="Diesel" parent="ControlWindows/Diesel" instance=ExtResource("4_lsqkb")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Brakes" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 579.0
+offset_top = 467.0
+offset_right = 753.0
+offset_bottom = 804.0
+script = ExtResource("9_window")
+title = "Brakes"
+
+[node name="Brakes" parent="ControlWindows/Brakes" instance=ExtResource("6_lsqkb")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Doors" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 779.0
+offset_top = 467.0
+offset_right = 989.0
+offset_bottom = 804.0
+script = ExtResource("9_window")
+title = "Doors"
+
+[node name="Doors" parent="ControlWindows/Doors" instance=ExtResource("7_t705k")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Security" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 1011.0
+offset_top = 467.0
+offset_right = 1231.0
+offset_bottom = 569.0
+script = ExtResource("9_window")
+title = "Security"
+
+[node name="Security" parent="ControlWindows/Security" instance=ExtResource("8_h5mje")]
+clip_contents = true
+layout_mode = 2
+
+[node name="UCList" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 1011.0
+offset_top = 467.0
+offset_right = 1250.0
+offset_bottom = 573.0
+script = ExtResource("9_window")
+title = "Security"
+
+[node name="UCList2" parent="ControlWindows/UCList" instance=ExtResource("20_5crau")]
+clip_contents = true
+layout_mode = 2
+
+[node name="Gauges" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 24.0
+offset_top = 823.0
+offset_right = 1396.0
+offset_bottom = 1061.0
+script = ExtResource("9_window")
+title = "Gauges"
+
+[node name="Gauges" parent="ControlWindows/Gauges" instance=ExtResource("9_ss847")]
+clip_contents = true
+layout_mode = 2
+
+[node name="MiniMap" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 1014.0
+offset_top = 589.0
+offset_right = 1250.0
+offset_bottom = 791.0
+script = ExtResource("9_window")
+title = "Mini Map"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="MiniMapControl" parent="ControlWindows/MiniMap" instance=ExtResource("11_minimap")]
+layout_mode = 2
+
+[node name="Scenery" type="Container" parent="ControlWindows"]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -190.0
+offset_top = -224.0
+offset_right = 190.0
+offset_bottom = 224.0
+script = ExtResource("9_window")
+title = "Scenery"
+
+[node name="ScenerySelector" parent="ControlWindows/Scenery" instance=ExtResource("10_scenery_selector")]
+layout_mode = 2
+
+[node name="LoadingScreen" parent="." instance=ExtResource("11_loading_screen")]
+visible = false
+scene_path = ""
+
+[connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
+[connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
+[connection signal="scenery_selected" from="ControlWindows/Scenery/ScenerySelector" to="." method="_on_scenery_selector_scenery_selected"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
+[connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]

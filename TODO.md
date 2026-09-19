@@ -41,3 +41,21 @@
   no cab window state yet.
 * Random pitch variation per sound source (`pitchvariation:`, default 0.975-1.025,
   `sound.cpp:375`) is parsed but not applied to any sound.
+
+## Vehicles
+
+* `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
+  `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
+  after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The
+  building belongs in a separate `DynamicRailVehicle3DFactory`.
+
+## Scenery loading
+
+* Include cache / instancing - e.g. `skp/skp_trawa.scm` includes `grass.inc` 24078 times, each
+  one parsed again and baked into world-space triangle chunks. Idea: the include importer
+  classifies each included file in the context (`path => mode, placement params`): `instanced`
+  (only `origin`/`rotate` + `triangles`, no nested includes - key = path + hash of the non-placement
+  params, per-occurrence `Transform3D`, rendered as MultiMesh per chunk/texture/range) or `full`
+  (whole `.scm` piece - key = path + hash of all params, reusable across sceneries). Results must be
+  cached in local space (importers currently bake context origin/rotate into the data); invalidate
+  by the dependency list like the compiled scenery cache.

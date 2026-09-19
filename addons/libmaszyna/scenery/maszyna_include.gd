@@ -3,20 +3,16 @@ extends Node3D
 class_name MaszynaIncludeNode
 
 signal loaded
+## Emitted by SceneryInstancer before each loading stage (progress 0..1, stage description)
+signal load_progress(progress:float, message:String)
 
 var _dirty:bool = false
 var _editor_dirty:bool = false
-var _filename_changed_at:int = 0
 
-const RELOAD_DEBOUNCE_MSEC:int = 500
 const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/scenery_editor.gd")
 
-@export var filename:String = "":
-    set(x):
-        if not filename == x:
-            _dirty = true
-            filename = x
-            _filename_changed_at = Time.get_ticks_msec()
+## Changing filename does not reload the content - call load() explicitly.
+@export var filename:String = ""
 @export var parameters:Dictionary = {}
 @export var context_rotate: Vector3 = Vector3.ZERO
 @export var context_origin: Vector3 = Vector3.ZERO
@@ -47,9 +43,9 @@ var _traction_rids:Array[RID] = []
 var _wire_power_rids:Array[RID] = []
 var _power_source_rids:Array[RID] = []
 
-## Initial loading uses the same dirty processing as filename changes, without the debounce.
+## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
-    _filename_changed_at = -RELOAD_DEBOUNCE_MSEC
+    _dirty = autoload
 
 
 func _exit_tree() -> void:
@@ -92,18 +88,18 @@ func load() -> void:
     _loading = true
     _clear_content()
     if filename:
-        _load_content()
+        await _load_content()
     _loading = false
     if filename:
         loaded.emit()
 
 
 func _load_content() -> void:
-    SceneryInstancer.instantiate(self, parameters)
+    await SceneryInstancer.instantiate(self, parameters)
 
 
 func _process(delta: float) -> void:
-    if _dirty and Time.get_ticks_msec() - _filename_changed_at >= RELOAD_DEBOUNCE_MSEC:
+    if _dirty:
         _dirty = false
         _process_dirty(delta)
     if _editor_dirty:
@@ -112,5 +108,4 @@ func _process(delta: float) -> void:
             SceneryEditor.update_owners(self)
         
 func _process_dirty(_delta: float) -> void:
-    if autoload or not filename:
-        self.load()
+    self.load()

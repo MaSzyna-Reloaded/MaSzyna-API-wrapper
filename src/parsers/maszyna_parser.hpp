@@ -18,6 +18,7 @@ namespace godot {
             Dictionary handlers;
             int cursor = 0;
             int length = 0;
+            bool interrupted = false;
             TypedArray<Dictionary> meta;
             Array default_stop_chars;
             Dictionary parameters;
@@ -43,6 +44,10 @@ namespace godot {
             Vector3 next_vector3(const Array &p_stops = Array());
             Array get_tokens_until(const String &p_token, const Array &p_stops = Array());
             Array parse();
+            Array parse_chunk(int p_bytes);
+            void interrupt();
+            int get_position() const;
+            int get_length() const;
             Dictionary get_parsed_metadata();
             void push_metadata();
             Dictionary pop_metadata();

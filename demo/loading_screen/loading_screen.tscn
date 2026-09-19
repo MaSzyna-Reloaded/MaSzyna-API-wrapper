@@ -229,6 +229,10 @@ _data = {
 &"fade_in": SubResource("Animation_6yp64")
 }
 
+[sub_resource type="SystemFont" id="SystemFont_title"]
+font_names = PackedStringArray("Impact", "Anton", "Haettenschweiler", "Oswald", "Sans-Serif")
+font_weight = 700
+
 [node name="LoadingScreen" type="PanelContainer" unique_id=974424848]
 anchors_preset = 15
 anchor_right = 1.0
@@ -239,6 +243,7 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_6lv5a")
 script = ExtResource("1_xq1lc")
+scene_path = "res://demo_3d.tscn"
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=2055655165]
 layout_mode = 2
@@ -262,6 +267,14 @@ custom_minimum_size = Vector2(0, 200)
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
+
+[node name="Title" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/outline_size = 6
+theme_override_fonts/font = SubResource("SystemFont_title")
+theme_override_font_sizes/font_size = 30
+horizontal_alignment = 1
 
 [node name="ProgressBar" type="ProgressBar" parent="VBoxContainer/MarginContainer/VBoxContainer" unique_id=1015951774]
 unique_name_in_owner = true

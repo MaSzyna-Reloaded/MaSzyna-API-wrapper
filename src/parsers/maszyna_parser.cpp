@@ -17,6 +17,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("get_tokens_until", "token", "stops"), &MaszynaParser::get_tokens_until, DEFVAL(Array()));
         ClassDB::bind_method(D_METHOD("parse"), &MaszynaParser::parse);
+        ClassDB::bind_method(D_METHOD("parse_chunk", "bytes"), &MaszynaParser::parse_chunk);
+        ClassDB::bind_method(D_METHOD("interrupt"), &MaszynaParser::interrupt);
+        ClassDB::bind_method(D_METHOD("get_position"), &MaszynaParser::get_position);
+        ClassDB::bind_method(D_METHOD("get_length"), &MaszynaParser::get_length);
         ClassDB::bind_method(D_METHOD("get_parsed_metadata"), &MaszynaParser::get_parsed_metadata);
         ClassDB::bind_method(D_METHOD("push_metadata"), &MaszynaParser::push_metadata);
         ClassDB::bind_method(D_METHOD("pop_metadata"), &MaszynaParser::pop_metadata);
@@ -201,8 +205,15 @@ namespace godot {
 
 
     Array MaszynaParser::parse() {
+        return parse_chunk(length);
+    }
+
+    // Stops at the first token boundary after p_bytes; a handler may read past it.
+    Array MaszynaParser::parse_chunk(const int p_bytes) {
         Array result;
-        while (!eof_reached()) {
+        const int end = cursor + p_bytes;
+        interrupted = false;
+        while (!eof_reached() && cursor < end && !interrupted) {
             if (String token = next_token(); handlers.has(token)) {
                 if (Callable callback = handlers[token]; callback.is_valid()) {
                     Variant parsed_v = callback.call(this);
@@ -217,6 +228,18 @@ namespace godot {
         }
 
         return result;
+    }
+
+    void MaszynaParser::interrupt() {
+        interrupted = true;
+    }
+
+    int MaszynaParser::get_position() const {
+        return cursor;
+    }
+
+    int MaszynaParser::get_length() const {
+        return length;
     }
 
     Dictionary MaszynaParser::get_parsed_metadata() {

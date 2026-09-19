@@ -111,6 +111,12 @@ func _ready() -> void:
     _dirty = true
 
 
+## false while a rebuild (building the vehicle in _process) is pending - true once it ran, even when
+## the vehicle failed to load
+func is_built() -> bool:
+    return not _dirty
+
+
 func get_controller() -> TrainController:
     return _vehicle.get_controller() if _vehicle else null
 

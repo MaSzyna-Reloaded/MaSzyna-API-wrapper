@@ -44,6 +44,8 @@ class BankRuntime extends RefCounted:
 
 
 var _banks:Dictionary = {}
+## The bank of a vehicle, so looking one up does not mean scanning every bank in the scenery
+var _banks_by_vehicle:Dictionary[RailVehicle3D, BankRuntime] = {}
 var _listener:TrainSoundListener3D
 var _next_trigger_id:int = 1
 
@@ -73,6 +75,8 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     runtime.vehicle = registration.get("vehicle") as RailVehicle3D
+    if runtime.vehicle:
+        _banks_by_vehicle[runtime.vehicle] = runtime
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
@@ -91,6 +95,8 @@ func register_trigger(player:SfxPlayer3D, descriptor:Dictionary) -> int:
         runtime = BankRuntime.new()
         runtime.player = player
         runtime.vehicle = descriptor.get("vehicle") as RailVehicle3D
+        if runtime.vehicle:
+            _banks_by_vehicle[runtime.vehicle] = runtime
         runtime.controller = descriptor.get("controller") as TrainController
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
@@ -385,11 +391,11 @@ func _profile_value(profile:Array[PackedFloat32Array], placement:int, context:in
     return DEFAULT_PROOFING[placement][context]
 
 
+## Looked up rather than searched: a scenery has hundreds of banks and this used to scan all of
+## them on every call, several times per frame
 func _vehicle_profile(vehicle:RailVehicle3D) -> Array[PackedFloat32Array]:
-    for runtime:BankRuntime in _banks.values():
-        if runtime.vehicle == vehicle:
-            return runtime.soundproofing
-    return []
+    var runtime:BankRuntime = _banks_by_vehicle.get(vehicle)
+    return runtime.soundproofing if runtime else []
 
 
 func _placement_index(placement:StringName) -> int:
@@ -476,4 +482,7 @@ func _parameter_value(raw:Variant) -> float:
 
 
 func _unregister_bank(bank_id:int) -> void:
+    var removed:BankRuntime = _banks.get(bank_id)
+    if removed and removed.vehicle:
+        _banks_by_vehicle.erase(removed.vehicle)
     _banks.erase(bank_id)

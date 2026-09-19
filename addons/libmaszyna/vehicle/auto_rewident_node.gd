@@ -27,30 +27,63 @@ const READY_FEED_PIPE_PRESSURE:float = 4.5
 ## Safety limit of the consist walk
 const MAX_CONSIST_VEHICLES:int = 256
 
-var _engine_ready:bool = false
-var _consist_ids:Array[String] = []
+var _controller:TrainController
 
 
-func _process(_delta:float) -> void:
+## In the original this is not polled at all: AutoRewident() runs inside CheckVehicles()
+## (Driver.cpp:2528) for the driving orders (Shunt / Loose_shunt / Obey_train / Bank), and
+## CheckVehicles() itself is called on events - an order change, PrepareEngine() completing
+## (Driver.cpp:2142), a direction change, a coupling change (Driver.cpp:2622).
+##
+## The wrapper has no driver (TController) layer with orders to hook into, so the only event it can
+## use is TrainController's consist_changed. What is left to poll is the engine becoming ready,
+## which is a threshold the original's AI watches in its own update too - and this timer stops for
+## good as soon as that happens, so a prepared vehicle costs nothing until something couples to it.
+const CHECK_INTERVAL:float = 0.5
+
+
+var _timer:Timer
+
+
+func _ready() -> void:
     if Engine.is_editor_hint():
         return
+    _timer = Timer.new()
+    _timer.wait_time = CHECK_INTERVAL
+    _timer.autostart = true
+    _timer.timeout.connect(_check_consist)
+    add_child(_timer)
+
+
+func _check_consist() -> void:
     var vehicle:RailVehicle3D = get_parent() as RailVehicle3D
     var controller:TrainController = vehicle.get_controller() if vehicle else null
-    if not controller or controller.cabin_number == 0 or not controller.is_node_ready():
+    if not controller or not controller.is_node_ready():
+        return
+    # a vehicle without a cab has no driver to inspect its consist, and cabin_number comes from the
+    # FIZ - it will not become one later, so there is nothing left for this node to watch
+    if controller.cabin_number == 0:
+        _timer.stop()
         return
 
+    if not _controller == controller:
+        _controller = controller
+        controller.consist_changed.connect(_on_consist_changed)
+
+    # PrepareEngine() completes once the engine reports ready, which is a threshold the original
+    # AI watches in its own update - the only thing left worth polling for
     if not _is_engine_ready(controller):
-        _engine_ready = false
         return
-    var consist:Array[TrainController] = _get_consist(controller)
-    var consist_ids:Array[String] = []
-    for member:TrainController in consist:
-        consist_ids.append(member.train_id)
-    if _engine_ready and consist_ids == _consist_ids:
-        return
-    _engine_ready = true
-    _consist_ids = consist_ids
-    _rewident(controller, consist)
+    _rewident(controller, _get_consist(controller))
+    # from here the consist can only change by coupling, and that arrives as a signal
+    _timer.stop()
+
+
+## A vehicle joined or left the consist (TrainController::couple()/uncouple()), the case the
+## original handles with CheckVehicles() (Driver.cpp:2622) - inspect it again once the engine of
+## the new consist reports ready.
+func _on_consist_changed() -> void:
+    _timer.start()
 
 
 ## The readiness condition of TController::PrepareEngine() (isready). Quirk: the converter and

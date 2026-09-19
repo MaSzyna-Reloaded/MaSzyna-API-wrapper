@@ -53,7 +53,7 @@ enum ControllerMode { OnOff, On, Off }
 @export var action_increase = ""
 @export var action_decrease = ""
 
-var _mesh:MeshInstance3D
+var _mesh:Node3D
 var _mesh_original_rotation:Vector3 = Vector3.ZERO
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO

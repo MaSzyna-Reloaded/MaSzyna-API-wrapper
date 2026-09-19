@@ -157,6 +157,9 @@ namespace godot {
 
             void set_camera(Camera3D *p_camera);
             float get_draw_distance() const;
+            /// Where the streaming camera is, for anything else that has to know what is near
+            Vector3 get_camera_position() const;
+            bool has_camera() const;
             int get_streamed_count() const;
             Dictionary get_statistics() const;
     };

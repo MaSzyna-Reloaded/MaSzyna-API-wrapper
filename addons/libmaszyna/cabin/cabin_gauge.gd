@@ -44,7 +44,7 @@ class_name CabinGauge
 #var _target = 0.0;
 var _current_rotation:Vector3 = Vector3.ZERO
 var _target_mesh_rotation:Vector3 = Vector3.ZERO
-var _mesh:MeshInstance3D = null
+var _mesh:Node3D = null
 var _mesh_original_basis:Basis
 #var _base_rot:Vector3 = Vector3.ZERO
 var _t = 0.0

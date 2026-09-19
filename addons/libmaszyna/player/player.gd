@@ -77,6 +77,18 @@ func _process(_delta:float) -> void:
         camera.h_offset = 0.0
         camera.rotation.z = 0.0
 
+## Clears start_train_id and waits until the player has left the cab (in _process), e.g. before
+## the scenery holding the vehicle is freed - the camera lives in the vehicle's cabin.
+func clear_start_train() -> void:
+    start_train_id = ""
+    if controlled_vehicle:
+        await controlled_vehicle_changed
+
+## Sets start_train_id unless the player already has one (e.g. from MaszynaSceneryNode.scenery_loaded)
+func set_start_train_if_empty(train_id:String) -> void:
+    if not start_train_id:
+        start_train_id = train_id
+
 func _input(event):
     if event.is_action_pressed("flashlight_toggle", false, true):
         var enabled:bool = headlamp.visible

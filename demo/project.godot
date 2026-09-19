@@ -16,7 +16,8 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="MaSzyna Reloaded"
 config/description="A port of MaSzyna Train Simulator"
-run/main_scene="uid://dacvr0rfpjx5a"
+config/version="2026-09-19"
+run/main_scene="res://startup/startup.tscn"
 run/print_header=false
 config/features=PackedStringArray("4.7", "Double Precision", "Forward Plus")
 boot_splash/bg_color=Color(0, 0, 0, 1)
@@ -46,7 +47,7 @@ MaterialParser="*uid://7b48fl428yqa"
 MaterialFactory="*uid://v144f3irjg7m"
 E3DModelManager="*uid://b2v733o52i40x"
 DynamicRailVehicle3DManager="*res://addons/libmaszyna/dynamic_rail_vehicle_3d_manager.gd"
-E3DNodesInstancer="*uid://dl44jll5gimwi"
+VehicleProfileManager="*res://addons/libmaszyna/vehicle_profile_manager.gd"
 E3DModelTool="*uid://df7a5f7f35wd1"
 AudioStreamManager="*uid://cp8sgfk334adm"
 TrainSoundSystem="*res://addons/libmaszyna/sound/train_sound_system.gd"
@@ -85,6 +86,10 @@ shader_night_sky_energy=0.165
 night_vol_fog_density=0.121
 clouds_color_shadow=Color(0.8515625, 0.8515625, 0.8515625, 1)
 clouds_shadow_angular_distance_clear=1.0
+sunshafts_intensity=0.45
+sunshafts_cloud_occlusion=0.35
+sunshafts_cloud_falloff=0.45
+clouds_shadow_angular_distance_overcast=4.0
 clouds_evolution_strength=0.775
 clouds_evolution_scale=0.198
 clouds_scroll_b=Vector2(0.002, 0)
@@ -192,7 +197,7 @@ brake_release={
 }
 security_acknowledge={
 "deadzone": 0.5,
-"events": [null, Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":0,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":32,"physical_keycode":0,"key_label":0,"unicode":32,"location":0,"echo":false,"script":null)
 ]
 }
 devices_light_toggle={
@@ -258,6 +263,11 @@ main_controller_decrease={
 battery_toggle={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":74,"physical_keycode":0,"key_label":0,"unicode":106,"location":0,"echo":false,"script":null)
+]
+}
+cab_activation_toggle={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":true,"meta_pressed":false,"pressed":false,"keycode":74,"physical_keycode":0,"key_label":0,"unicode":106,"location":0,"echo":false,"script":null)
 ]
 }
 cabin_mode_toggle={
@@ -411,21 +421,23 @@ redmarker_rear_right_toggle={
 rendering/shadow_blur=0.4
 rendering/shadow_exterior_max_distance=300.0
 rendering/shadow_cabin_max_distance=150.0
+rendering/shadow_cabin_mode=1
 track_curve_bake_interval=0.5
 sound/brake_exterior_volume_factor=1.0
-sound/brake_exterior_unit_size_factor=8.0
-sound/brake_cabin_unit_size_factor=6.0
+sound/brake_exterior_unit_size_factor=1.0
+sound/brake_cabin_unit_size_factor=1.0
 sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
+debug/physics_diagnostics=false
 
 [rendering]
 
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
-lights_and_shadows/directional_shadow/size=8192
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
+environment/defaults/default_clear_color=Color(0.05, 0.078, 0.15, 1)
 anti_aliasing/quality/use_taa=true
 
 [shader_globals]

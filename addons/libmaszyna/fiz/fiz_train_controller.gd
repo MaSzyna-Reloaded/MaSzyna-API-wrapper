@@ -117,8 +117,8 @@ func _reload() -> void:
 
     var internal_mode: int = INTERNAL_MODE_DISABLED if editable_in_editor else INTERNAL_MODE_BACK
     add_child(_controller, false, internal_mode)
-    # Mirrors e3d_nodes_instancer.gd's owner rule exactly: internal (non-editable) children
-    # are owned by `self` (excluded from serialization regardless, since they're internal);
+    # Mirrors the E3DRenderingServer NODES instancer's owner rule exactly: internal (non-editable)
+    # children are owned by `self` (excluded from serialization regardless, since they're internal);
     # editable children are owned by `self`'s own owner, i.e. the actual scene root, so they
     # show up in the Scene dock and survive scene serialization.
     _set_owner_recursive(_controller, owner if editable_in_editor else self)

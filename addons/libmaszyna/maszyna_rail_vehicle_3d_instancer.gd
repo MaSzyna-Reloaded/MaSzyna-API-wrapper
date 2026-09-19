@@ -64,7 +64,7 @@ static func _build_structure(
     if not data_path or not file_name:
         return null
 
-    # E3DInstancer._get_material_override() builds its material-search path by dropping
+    # MaterialManager.get_submodel_material() builds its material-search path by dropping
     # data_path's FIRST "/"-separated segment - meant to strip the artifact empty segment from a
     # LEADING slash, not the "dynamic" directory name itself. Every hand-authored vehicle scene
     # except su45 (whose skin is consequently broken the same way) uses a leading slash
@@ -295,7 +295,7 @@ static func _find_submodel(submodel_index:Dictionary, names:Array[String]) -> No
 ## (case-insensitive by default) - see mmd_cabin_instancer.gd's _index_submodels for the
 ## real-data case mismatch (su45_v2) this guards against.
 ##
-## get_children(true) is required: E3DNodesInstancer adds every submodel node as an INTERNAL
+## get_children(true) is required: the NODES instancer adds every submodel node as an INTERNAL
 ## child (INTERNAL_MODE_BACK), which plain get_children() silently skips.
 static func _index_submodels(node:Node, index:Dictionary) -> void:
     for child:Node in node.get_children(true):

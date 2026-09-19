@@ -274,11 +274,17 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+    var driver_position:Vector3 = Vector3(1.0, 2.0, 10.0)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, driver_position, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
     var widget:CabinSpotLight3D = generated_root.get_child(0)
-    assert_eq(widget.global_position, on_node.global_position, "no depth offset - plain Node3D isn't a VisualInstance3D")
+    # i-security_aware is aimed at the driver and moved out of the lamp mesh towards them
+    # (_aim_spotlight_at_driver()); no depth offset - plain Node3D isn't a VisualInstance3D
+    assert_almost_eq(
+            widget.global_position,
+            on_node.global_position + Vector3(0.0, 0.0, MmdCabinInstancer.INDICATOR_LIGHT_OFFSET),
+            Vector3.ONE * 0.0001)
     assert_eq(widget.get_node(widget.on_target_path), on_node)
     assert_eq(widget.get_node(widget.off_target_path), off_node)
     assert_eq((widget.sound_on as MaszynaAudioStream).file_path, "light_ca_start")
@@ -302,7 +308,7 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
 
@@ -316,7 +322,7 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, {}, generated_root, 1, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller, {}, generated_root, 1, Vector3.ZERO, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 0)
     assert_eq(diagnostics.size(), 1)
@@ -341,7 +347,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+            descriptor, entry, controller, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -369,7 +375,7 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+            descriptor, entry, controller, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -394,7 +400,7 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
     var controller:TrainController = add_child_autofree(TrainController.new())
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller, submodel_index, generated_root, 1, diagnostics)
+            descriptor, entry, controller, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinSpotLight3D = generated_root.get_child(0)

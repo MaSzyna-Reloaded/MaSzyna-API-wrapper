@@ -41,3 +41,75 @@
   no cab window state yet.
 * Random pitch variation per sound source (`pitchvariation:`, default 0.975-1.025,
   `sound.cpp:375`) is parsed but not applied to any sound.
+
+## Vehicles
+
+* `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
+  `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
+  after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The
+  building belongs in a separate `DynamicRailVehicle3DFactory`.
+
+## Scenery loading
+
+* Include cache / instancing - e.g. `skp/skp_trawa.scm` includes `grass.inc` 24078 times, each
+  one parsed again and baked into world-space triangle chunks. Idea: the include importer
+  classifies each included file in the context (`path => mode, placement params`): `instanced`
+  (only `origin`/`rotate` + `triangles`, no nested includes - key = path + hash of the non-placement
+  params, per-occurrence `Transform3D`, rendered as MultiMesh per chunk/texture/range) or `full`
+  (whole `.scm` piece - key = path + hash of all params, reusable across sceneries). Results must be
+  cached in local space (importers currently bake context origin/rotate into the data); invalidate
+  by the dependency list like the compiled scenery cache.
+* Subscene cache (`SceneryInstancer.parse_subscene_task()`) is used only by queued parsing -
+  in-place `SceneryInstancer.parse_file()` (no queue) parses every include again.
+* Parse progress counts includes inside subscenes loaded from cache (`_count_includes()`), which
+  are never run as tasks - the parse bar jumps at the end when subscenes come from cache.
+* Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
+  render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
+  `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by
+  `maszyna_node_model_importer.gd`.
+* Scenery models have no nodes, so they can't be picked/selected in the editor and don't follow
+  the `MaszynaIncludeNode` transform/visibility (world-space, like tracks and traction).
+* An `include` with no filename shows up while parsing the real data dir
+  (`maszyna_include_importer.gd` now reports it with the parser offset and skips it, instead of
+  trying to open the scenery directory). The source is unknown - no asset declares a
+  parameterised include path, so it is either a truncated file or a tokenizer misread.
+
+## Tests
+
+* Remove simulator game data from tests - CI has no game dir. Tests loading real sceneries or
+  vehicles (`td.scn`, `demo_scenery_loading.tscn`, `dynamic/pkp/...`): `test_zzz_ep07_*`
+  (cab_change, cabin_main_switch, main_switch_trip_diagnostic, orientation_regression,
+  pantograph_power_smoke, running_sounds), `test_zzz_scenery_scene_smoke.gd` (instantiates
+  `demo_scenery_loading.tscn` - a demo scene has no place in tests),
+  `test_zzz_sm42_exterior_model_rotation_regression.gd`, `test_zzz_su46_exterior_lights.gd`,
+  `test_zzz_su46_machine_room.gd`, `test_mmd_cabin_instancer.gd` (su45_v2),
+  `test_rail_vehicle_rain_exclusion.gd` (sm42_v1). Replace them with fixtures under
+  `demo/tests/fixtures/`: a cut `.scn` with just the track piece and trainset where the problem
+  shows, and fabricated vehicles (`RailVehicle3D`, a cabin with only the controls under test,
+  `TrainController` with a trimmed `.fiz`/`.mmd`, no e3d) - copied and cut from what the data-dir
+  scenery parses into.
+* Tests switch the game dir with `UserSettings.save_maszyna_game_dir()`, which writes the user's
+  `settings.cfg` (a failed/killed test leaves it pointing at a `user://gut/...` fixture dir):
+  `test_dynamic_rail_vehicle_manager.gd`, `test_e3d_lights_state.gd`,
+  `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,
+  `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the game-data tests
+  above. Needs a non-persistent game dir override for tests.
+
+## Physics performance
+
+* `RailVehiclePhysicsServer` step in C++ - the per-vehicle GDScript loop (track sampling,
+  neighbour scan, movement) is ~6.5 ms per physics tick for 149 vehicles on
+  `zwierzyniec_ed72.scn`; the Mover math itself is cheap. Needs a C++ snapshot of the track data.
+* Multi-core physics after the C++ step - keep the phases of `vehicle_table::update()`
+  (`DynObj.cpp:8181`: locations + neighbours, then per iteration forces of all, movement of all),
+  run them per island (a consist coupled by couplers plus vehicles within collision range -
+  `CouplerForce()`/`CollisionDetect()` write the neighbour's `V`/`AccS`, so single vehicles are
+  not independent) on `WorkerThreadPool::add_group_task` with a barrier between phases; no Godot
+  calls on the workers - state, signals and positions gathered on the main thread per tick.
+* Braked standing vehicles never switch their physics off: at `V == 0` `Sign(0) == 1`, so
+  `FTotal = FTrain - FStand` keeps `AccS` non-zero (`Mover.cpp:4603`, `ComputeTotalForce()`
+  activity test) - same in the original, only unbraked vehicles sleep.
+* Cab activation side effect not ported: `OnCommand_cabactivationenable/disable` also call
+  `SetLights()` when `LightsPosNo > 0` (`Train.cpp:2440`, `2463`).
+* A vehicle with switched off physics keeps its last `TrainController.state` (fetched only for
+  active vehicles, like the original skips `Update()`).

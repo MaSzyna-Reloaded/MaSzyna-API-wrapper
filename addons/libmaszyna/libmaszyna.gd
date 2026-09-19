@@ -20,9 +20,9 @@ func _enable_plugin():
     add_autoload_singleton("MaterialParser", "res://addons/libmaszyna/materials/material_parser.gd")
     add_autoload_singleton("MaterialFactory", "res://addons/libmaszyna/materials/material_factory.gd")
     add_autoload_singleton("E3DModelManager", "res://addons/libmaszyna/e3d/e3d_model_manager.gd")
-    add_autoload_singleton("E3DNodesInstancer", "res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd")
     add_autoload_singleton("E3DModelTool", "res://addons/libmaszyna/e3d/e3d_model_tool.gd")
     add_autoload_singleton("DynamicRailVehicle3DManager", "res://addons/libmaszyna/dynamic_rail_vehicle_3d_manager.gd")
+    add_autoload_singleton("VehicleProfileManager", "res://addons/libmaszyna/vehicle_profile_manager.gd")
     add_autoload_singleton("AudioStreamManager", "res://addons/libmaszyna/sound/audio_stream_manager.gd")
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("CabinSystem", "res://addons/libmaszyna/cabin/cabin_system.gd")
@@ -100,9 +100,9 @@ func _disable_plugin():
     remove_autoload_singleton("TrackManager")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
+    remove_autoload_singleton("VehicleProfileManager")
     remove_autoload_singleton("DynamicRailVehicle3DManager")
     remove_autoload_singleton("E3DModelTool")
-    remove_autoload_singleton("E3DNodesInstancer")
     remove_autoload_singleton("E3DModelManager")
     remove_autoload_singleton("MaterialFactory")
     remove_autoload_singleton("MaterialManager")
@@ -147,6 +147,10 @@ func _enter_tree():
     add_custom_project_setting(MaszynaSkyEnvironment.SHADOW_ENABLED_SETTING, true, TYPE_BOOL)
     add_custom_project_setting(
         MaszynaSkyEnvironment.SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS,
         TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
     )
     add_custom_project_setting(

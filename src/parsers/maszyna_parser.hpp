@@ -7,6 +7,7 @@
 #include <godot_cpp/variant/string.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
 #include <godot_cpp/variant/vector3.hpp>
+#include <string>
 #include <vector>
 
 namespace godot {
@@ -15,13 +16,19 @@ namespace godot {
 
         private:
             PackedByteArray buffer;
+            const uint8_t *data = nullptr; // buffer bytes, read directly in the tokenizer hot loop
             Dictionary handlers;
             int cursor = 0;
             int length = 0;
+            bool interrupted = false;
             TypedArray<Dictionary> meta;
             Array default_stop_chars;
+            bool default_stop_table[128] = {};
             Dictionary parameters;
             Array get_stops(const Array &p_stops) const;
+            static void _make_stop_table(const Array &p_stops, bool (&r_table)[128]);
+            static String _to_token(const std::string &p_raw);
+            String _read_token(const bool (&p_stop_table)[128]);
 
         protected:
             static void _bind_methods();
@@ -43,6 +50,10 @@ namespace godot {
             Vector3 next_vector3(const Array &p_stops = Array());
             Array get_tokens_until(const String &p_token, const Array &p_stops = Array());
             Array parse();
+            Array parse_chunk(int p_bytes);
+            void interrupt();
+            int get_position() const;
+            int get_length() const;
             Dictionary get_parsed_metadata();
             void push_metadata();
             Dictionary pop_metadata();

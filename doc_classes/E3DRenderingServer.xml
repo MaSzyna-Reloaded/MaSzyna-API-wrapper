@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="E3DRenderingServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		RID based server of E3D model instances.
+	</brief_description>
+	<description>
+		Singleton with an API similar to [RenderingServer]. An instance is created with [method instance_create], set up with the [code]instance_set_*[/code] methods and [method instance_attach_node], and built with [method instance_build]. The [enum Instancer] of an instance selects how it is built: [constant INSTANCER_OPTIMIZED] renders every submodel as a [RenderingServer] instance without creating any nodes (used for scenery models), [constant INSTANCER_NODES] and [constant INSTANCER_EDITABLE_NODES] build a [Node3D]/[MeshInstance3D]/[SpotLight3D] tree under the attached node. [code]E3DModelInstance[/code] is a node client of this server. [RenderingServer] instances are freed when the singleton is deleted.
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="instance_attach_node">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="node" type="Node3D" />
+			<description>
+				[constant INSTANCER_NODES] and [constant INSTANCER_EDITABLE_NODES] build their node tree under [param node]. [constant INSTANCER_OPTIMIZED] instances report [param node] as their owner (e.g. for picking in the editor). Rebuilds an already built instance.
+			</description>
+		</method>
+		<method name="instance_build">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				Builds (or rebuilds) the content of the [param instance]. Materials are resolved with the callable set by [method set_material_resolver].
+			</description>
+		</method>
+		<method name="instance_create">
+			<return type="RID" />
+			<param index="0" name="model" type="E3DModel" />
+			<param index="1" name="instancer" type="int" enum="E3DRenderingServer.Instancer" />
+			<description>
+				Creates an empty instance of the [param model]. It is rendered after [method instance_build].
+			</description>
+		</method>
+		<method name="instance_free">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<description>
+				Frees the [param instance] with its [RenderingServer] instances or generated nodes.
+			</description>
+		</method>
+		<method name="instance_set_layer_mask">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="mask" type="int" />
+			<description>
+				Render layers of an [constant INSTANCER_OPTIMIZED] instance.
+			</description>
+		</method>
+		<method name="instance_set_lights_state">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="lights_state" type="Dictionary" />
+			<description>
+				Light name to enabled state; shows the "on" or the "off" submodels of the model's lights (and the spotlights of [constant INSTANCER_NODES]).
+			</description>
+		</method>
+		<method name="instance_set_options">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="data_path" type="String" />
+			<param index="2" name="skins" type="PackedStringArray" />
+			<param index="3" name="exclude_node_names" type="Array" />
+			<param index="4" name="force_alpha" type="bool" />
+			<param index="5" name="force_alpha_submodel_paths" type="NodePath[]" />
+			<description>
+				Material lookup path and skins, submodels excluded from rendering and forced alpha blending (see [code]E3DModelInstance[/code]). Rebuilds an already built instance.
+			</description>
+		</method>
+		<method name="instance_set_scenario">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="scenario" type="RID" />
+			<description>
+				Scenario of an [constant INSTANCER_OPTIMIZED] instance. Rebuilds an already built instance.
+			</description>
+		</method>
+		<method name="instance_set_transform">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="transform" type="Transform3D" />
+			<description>
+				Global transform of an [constant INSTANCER_OPTIMIZED] instance. A node tree follows its attached node instead.
+			</description>
+		</method>
+		<method name="instance_set_visibility_range">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="begin" type="float" />
+			<param index="2" name="end" type="float" />
+			<description>
+				Limits the visibility range of all submodels of an [constant INSTANCER_OPTIMIZED] instance, [code]0[/code] - no limit. Rebuilds an already built instance.
+			</description>
+		</method>
+		<method name="instance_set_visible">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="visible" type="bool" />
+			<description>
+				Visibility of an [constant INSTANCER_OPTIMIZED] instance.
+			</description>
+		</method>
+		<method name="set_material_resolver">
+			<return type="void" />
+			<param index="0" name="material_resolver" type="Callable" />
+			<description>
+				Called as [code]material_resolver(submodel: E3DSubModel, data_path: String, skins: PackedStringArray, force_alpha: bool) -&gt; Material[/code] for every rendered submodel. Set by [code]MaterialManager[/code].
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
+			Renders submodels as [RenderingServer] instances, without nodes.
+		</constant>
+		<constant name="INSTANCER_NODES" value="1" enum="Instancer">
+			Builds an internal node tree under the attached node.
+		</constant>
+		<constant name="INSTANCER_EDITABLE_NODES" value="2" enum="Instancer">
+			Builds a node tree under the attached node, editable in the editor.
+		</constant>
+	</constants>
+</class>

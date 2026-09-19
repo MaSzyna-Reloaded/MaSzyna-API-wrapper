@@ -80,3 +80,22 @@
   `test_fiz_train_controller.gd`, `test_maszyna_node_dynamic_importer_direction.gd`,
   `test_material_manager_variants.gd`, `test_nodebank_library_builder.gd` and the game-data tests
   above. Needs a non-persistent game dir override for tests.
+
+## Physics performance
+
+* `RailVehiclePhysicsServer` step in C++ - the per-vehicle GDScript loop (track sampling,
+  neighbour scan, movement) is ~6.5 ms per physics tick for 149 vehicles on
+  `zwierzyniec_ed72.scn`; the Mover math itself is cheap. Needs a C++ snapshot of the track data.
+* Multi-core physics after the C++ step - keep the phases of `vehicle_table::update()`
+  (`DynObj.cpp:8181`: locations + neighbours, then per iteration forces of all, movement of all),
+  run them per island (a consist coupled by couplers plus vehicles within collision range -
+  `CouplerForce()`/`CollisionDetect()` write the neighbour's `V`/`AccS`, so single vehicles are
+  not independent) on `WorkerThreadPool::add_group_task` with a barrier between phases; no Godot
+  calls on the workers - state, signals and positions gathered on the main thread per tick.
+* Braked standing vehicles never switch their physics off: at `V == 0` `Sign(0) == 1`, so
+  `FTotal = FTrain - FStand` keeps `AccS` non-zero (`Mover.cpp:4603`, `ComputeTotalForce()`
+  activity test) - same in the original, only unbraked vehicles sleep.
+* Cab activation side effect not ported: `OnCommand_cabactivationenable/disable` also call
+  `SetLights()` when `LightsPosNo > 0` (`Train.cpp:2440`, `2463`).
+* A vehicle with switched off physics keeps its last `TrainController.state` (fetched only for
+  active vehicles, like the original skips `Update()`).

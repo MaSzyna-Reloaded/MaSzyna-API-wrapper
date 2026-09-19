@@ -11,6 +11,8 @@ class VehicleState:
     var track_direction: TrackManager.Direction = TrackManager.Direction.DIRECTION_NORMAL
     var switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
     var controller_rid: RID = RID()
+    ## moved since the mover location was last updated
+    var moved: bool = true
 
 
 ## Original engine: primary physics update rate and the iteration limit per frame (drivermode.cpp:186-206)
@@ -60,10 +62,14 @@ func _physics_process(delta: float) -> void:
 
     var track_vehicles: Dictionary[RID, Array] = {}
     for controller: TrainController in controllers:
-        controller.update_location()
         var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
         var state: VehicleState = _vehicles.get(vehicle_rid)
+        # a vehicle that has not moved keeps its location - sampling the track is not needed
+        if not state or state.moved:
+            controller.update_location()
+            controller._emit_position_changed_if_needed()
         if state:
+            state.moved = false
             if not track_vehicles.has(state.track_rid):
                 track_vehicles[state.track_rid] = []
             track_vehicles[state.track_rid].append(vehicle_rid)
@@ -76,10 +82,16 @@ func _physics_process(delta: float) -> void:
         for controller: TrainController in controllers:
             controller.compute_forces(step)
         for controller: TrainController in controllers:
+            # DynObj.cpp:4059 - FastUpdate/Update skip a vehicle with switched off physics
+            if not controller.is_physics_active():
+                continue
             controller.compute_movement(step)
             var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
             if vehicle_rid.is_valid():
                 process_movement(vehicle_rid, step)
+    for controller: TrainController in controllers:
+        if controller.is_physics_active():
+            controller.update_state()
     if _diagnostics:
         _check_velocity_jumps(controllers, delta)
 
@@ -240,6 +252,7 @@ func vehicle_set_track(
         return
     state.track_rid = track_rid
     state.track_direction = track_direction
+    state.moved = true
     state.switch_track = TrackManager.switch_get_active_track(track_rid) if TrackManager.track_is_switch(track_rid) else TrackManager.SwitchTrack.TRACK_COMMON
     state.track_offset = clampf(track_offset, 0.0, TrackManager.track_get_length(track_rid, state.switch_track))
     var remaining_offset:float = track_offset - state.track_offset
@@ -263,7 +276,11 @@ func process_movement(vehicle_rid: RID, delta: float) -> void:
         return
     # TrainController.process_movement() is front-relative (mirrors mover->V);
     # this server's track-offset math is rear-relative - negate at the boundary.
-    vehicle_move(vehicle_rid, -controller.process_movement(delta))
+    var distance: float = -controller.process_movement(delta)
+    if is_zero_approx(distance) or not TrackManager.track_exists(state.track_rid):
+        return
+    # the position_changed signal follows once per physics step, with the location update
+    _move_vehicle_state(state, distance, true)
 
 
 func vehicle_move(vehicle_rid: RID, distance: float) -> void:
@@ -281,6 +298,7 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
 func _move_vehicle_state(state: VehicleState, distance: float, force_switch_state: bool) -> void:
     if is_zero_approx(distance):
         return
+    state.moved = true
 
     var current_track_rid: RID = state.track_rid
     var current_switch_track: TrackManager.SwitchTrack = state.switch_track

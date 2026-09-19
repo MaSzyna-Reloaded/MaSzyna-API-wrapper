@@ -566,6 +566,20 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Train.cpp:10130 "cabactivation_sw:" (ggCabActivationButton) - OnCommand_cabactivationenable/
+        # disable (Train.cpp:2430-2472), default key Ctrl+J (cabactivationtoggle); the switch shows
+        # IsCabMaster() (Train.cpp:8020), exposed as cabin_controleable.
+        "cabactivation_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "cab_activation",
+                "state_property": "cabin_controleable",
+                "action": "cab_activation_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Confirmed against TrainElectricEngine.cpp:160,172,322 - converter()/converter_enabled.
         "converter_sw": {
             "widget_class": CabinButton,

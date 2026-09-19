@@ -48,6 +48,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("unregister_command", "command", "callable"), &TrainController::unregister_command);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &TrainController::battery);
+        ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &TrainController::cab_activation);
+        ClassDB::bind_method(D_METHOD("cab_activation_auto"), &TrainController::cab_activation_auto);
         ClassDB::bind_method(D_METHOD("cab_change", "direction"), &TrainController::cab_change);
         ClassDB::bind_method(
                 D_METHOD("main_controller_increase", "step"), &TrainController::main_controller_increase, DEFVAL(1));
@@ -77,6 +79,7 @@ namespace godot {
                 &TrainController::update_neighbour);
         ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &TrainController::compute_forces);
         ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &TrainController::compute_movement);
+        ClassDB::bind_method(D_METHOD("is_physics_active"), &TrainController::is_physics_active);
         ClassDB::bind_method(
                 D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &TrainController::couple);
         ClassDB::bind_method(D_METHOD("uncouple", "end"), &TrainController::uncouple);
@@ -271,17 +274,16 @@ namespace godot {
         // compiled-zero defaults.
         mover->ComputeConstans();
 
-        /* FIXME: remove test data */
         // Original engine: the scenery's driver type picks the cab (DynObj.cpp:1812-1825).
         // FIXME: a vehicle without a driver stays in cab 0 there; here it still starts in cab 1.
         if (mover->CabOccupied == 0) {
             mover->CabOccupied = 1;
         }
-        mover->CabActive = mover->CabOccupied;
-        mover->CabMaster = true;
-        mover->AutomaticCabActivation = true;
-        mover->CabActivisationAuto();
-        mover->CabActivisation();
+        // only a driven vehicle gets its cab activated by the driver (Driver.cpp:2126); an unmanned
+        // one stays inactive, so ComputeTotalForce() can switch its physics off
+        if (cabin_number != 0) {
+            mover->CabActivisation();
+        }
 
         /* switch_physics() raczej trzeba zostawic */
         mover->switch_physics(true);
@@ -314,6 +316,8 @@ namespace godot {
                 TrainSystem::get_instance()->register_train(train_id, this);
                 register_command("battery", Callable(this, "battery"));
                 register_command("cab_change", Callable(this, "cab_change"));
+                register_command("cab_activation", Callable(this, "cab_activation"));
+                register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
                 register_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
                 register_command("second_controller_increase", Callable(this, "second_controller_increase"));
@@ -330,6 +334,8 @@ namespace godot {
             case NOTIFICATION_EXIT_TREE:
                 unregister_command("battery", Callable(this, "battery"));
                 unregister_command("cab_change", Callable(this, "cab_change"));
+                unregister_command("cab_activation", Callable(this, "cab_activation"));
+                unregister_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
                 unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
                 unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
                 unregister_command("second_controller_increase", Callable(this, "second_controller_increase"));
@@ -381,10 +387,15 @@ namespace godot {
     void TrainController::_process_mover(const double p_delta) {
         compute_forces(p_delta);
         compute_movement(p_delta);
+        _handle_mover_update();
     }
 
     // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
     // movement of one simulation frame and is reset after it (ResetdMoveLen, DynObj.cpp:3473)
+    bool TrainController::is_physics_active() const {
+        return mover != nullptr && mover->PhysicActivation;
+    }
+
     void TrainController::update_location() {
         if (mover == nullptr) {
             return;
@@ -440,7 +451,9 @@ namespace godot {
     }
 
     void TrainController::compute_movement(const double p_delta) {
-        if (mover == nullptr) {
+        // a standing vehicle switched off by ComputeTotalForce() is not moved at all
+        // (DynObj.cpp:4059 FastUpdate, DynObj.cpp:2940 Update)
+        if (mover == nullptr || !mover->PhysicActivation) {
             return;
         }
         TRotation rotation;
@@ -449,7 +462,7 @@ namespace godot {
                 rotation);
         _update_tachometer(p_delta);
 
-        _handle_mover_update();
+        // the state is fetched once per physics step by update_state(), not per iteration
         // the vehicle is moved by process_movement() distance (DynObj.cpp:2439)
         mover->dMoveLen += process_movement(p_delta);
     }
@@ -622,8 +635,7 @@ namespace godot {
     }
 
     double TrainController::process_movement(const double p_delta) {
-        const double velocity = state.get("velocity", 0.0);
-        return velocity * p_delta;
+        return mover != nullptr ? mover->V * p_delta : 0.0;
     }
 
     void TrainController::_emit_position_changed_if_needed() {
@@ -824,6 +836,21 @@ namespace godot {
 
     void TrainController::battery(const bool p_enabled) const {
         mover->BatterySwitch(p_enabled);
+    }
+
+    // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
+    void TrainController::cab_activation(const bool p_enabled) const {
+        if (p_enabled) {
+            mover->CabActivisation();
+            return;
+        }
+        mover->CabDeactivisation();
+    }
+
+    // Original engine: taking over a vehicle activates its cab if the FIZ allows automatic
+    // activation (Train.cpp:9086, 9147); otherwise the driver uses cab_activation
+    void TrainController::cab_activation_auto() const {
+        mover->CabActivisationAuto(true);
     }
 
     // Original engine: TTrain::CabChange() (Train.cpp:8516) - steps 1 -> 0 (machine room) -> -1.

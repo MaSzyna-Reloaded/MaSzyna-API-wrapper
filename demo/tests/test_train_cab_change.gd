@@ -17,9 +17,20 @@ func after_each():
     train.free()
 
 
-func test_starts_in_cab_one_when_no_cab_is_occupied():
+## An unmanned vehicle keeps its cab inactive (the original activates only a driven one,
+## Driver.cpp:2126) until the driver activates it (Train.cpp:2430).
+func test_unmanned_vehicle_starts_in_cab_one_with_inactive_cab():
     assert_eq(train.state["cabin_occupied"], 1)
+    assert_eq(train.state["cabin"], 0)
+
+    train.send_command("cab_activation", true)
+    train.update_state()
     assert_eq(train.state["cabin"], 1)
+    assert_true(train.state["cabin_controleable"])
+
+    train.send_command("cab_activation", false)
+    train.update_state()
+    assert_eq(train.state["cabin"], 0)
 
 
 func test_cab_change_backward_goes_through_machine_room():

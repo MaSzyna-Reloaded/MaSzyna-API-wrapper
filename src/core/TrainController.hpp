@@ -197,6 +197,8 @@ namespace godot {
             void cab_change(int p_direction) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
+            void second_controller_increase(int p_step = 1) const;
+            void second_controller_decrease(int p_step = 1) const;
             void direction_increase() const;
             void direction_decrease() const;
             void radio(bool p_enabled);

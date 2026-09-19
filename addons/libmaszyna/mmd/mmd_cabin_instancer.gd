@@ -14,6 +14,11 @@ class_name MmdCabinInstancer
 ## (MaszynaParser has no cursor/position accessor to reconstruct it from mid-stream) - source
 ## file is still tracked. Re-add line numbers if MaszynaParser ever grows a position getter.
 
+## How far an aimed indicator light is moved out of its lamp mesh (see _aim_spotlight_at_driver()).
+const INDICATOR_LIGHT_OFFSET:float = 0.05
+## Spacing and limit of the lights spread along a long ceiling lamp (see _light_points_along_submodel()).
+const LAMP_LIGHT_SPACING:float = 2.0
+const LAMP_LIGHT_MAX_COUNT:int = 6
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
 const _INCLUDE_END_KEYWORD := "end"
@@ -290,6 +295,7 @@ static func build_into(
     var submodel_index:Dictionary = {}
     _index_submodels(model, submodel_index)
 
+    var built_labels:Dictionary = {}
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if not MmdSemanticCatalog.has_label(descriptor.label):
             diagnostics.append(_diag("info", "MMD_BINDING_UNSUPPORTED", "MMD label '%s' is not in the supported catalog" % descriptor.label, definition.cab_number, descriptor.label, descriptor.submodel_name))
@@ -301,9 +307,20 @@ static func build_into(
             # has 3 "CzuwakOmni" lights for its one "i-security_aware:" label) - one widget per
             # matched submodel instance, not just the first, unlike every other instrument label
             # (which only ever has one real target mesh).
-            _build_indicator_lights(descriptor, entry, controller, submodel_index, generated_root, definition.cab_number, diagnostics)
+            _build_indicator_lights(
+                    descriptor, entry, controller, submodel_index, generated_root, definition.cab_number,
+                    definition.driver_pos, diagnostics)
             continue
         var widget:Node = _build_widget(descriptor, controller, definition.cab_number, diagnostics)
+        # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
+        # with one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237) -
+        # only its first widget takes the key, the others just follow the cabin state; every widget
+        # taking it toggled the control once per widget, cancelling itself out.
+        if built_labels.has(descriptor.label):
+            for field:String in ["action", "action_increase", "action_decrease"]:
+                if field in widget:
+                    widget.set(field, "")
+        built_labels[descriptor.label] = true
         generated_root.add_child(widget)
         # mesh_path must be resolved AFTER the widget has a place in the tree - the widget shares
         # no common ancestor with `model`'s submodels until it's actually parented under the same
@@ -841,7 +858,8 @@ static func _wire_mesh_path(
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
-        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, diagnostics:Array[Dictionary]) -> void:
+        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, driver_position:Vector3,
+        diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
     var off_matches:Array = submodel_index.get(base_name + "_off", [])
@@ -870,6 +888,8 @@ static func _build_indicator_lights(
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
         var off_node:Node3D = off_matches[i] if i < off_matches.size() else null
         _position_at_submodel_instance(widget, on_node if on_node else off_node)
+        if entry.get("aim_at_driver", false) and widget is SpotLight3D:
+            _aim_spotlight_at_driver(widget as SpotLight3D, generated_root, driver_position)
         if on_node:
             widget.set("on_target_path", widget.get_path_to(on_node))
         if off_node:
@@ -877,15 +897,63 @@ static func _build_indicator_lights(
         widget.set("controller_path", widget.get_path_to(controller))
 
         if entry.has("light_widget_class"):
-            var light:Light3D = entry["light_widget_class"].new()
-            light.name = "%s_%s_%d_light" % [descriptor.label, descriptor.submodel_name, i]
-            for field_name:String in entry["light_fixed_fields"]:
-                light.set(field_name, entry["light_fixed_fields"][field_name])
-            generated_root.add_child(light)
-            _position_at_submodel_instance(light, on_node if on_node else off_node)
-            if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
-                _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
-            light.set("controller_path", light.get_path_to(controller))
+            var lamp:Node3D = on_node if on_node else off_node
+            var light_points:Array[Vector3] = []
+            if entry.get("spread_light_along_submodel", false):
+                light_points = _light_points_along_submodel(lamp)
+            for j:int in maxi(light_points.size(), 1):
+                var light:Light3D = entry["light_widget_class"].new()
+                light.name = "%s_%s_%d_light%s" % [
+                        descriptor.label, descriptor.submodel_name, i, "_%d" % j if j else ""]
+                for field_name:String in entry["light_fixed_fields"]:
+                    light.set(field_name, entry["light_fixed_fields"][field_name])
+                generated_root.add_child(light)
+                _position_at_submodel_instance(light, lamp)
+                if light_points:
+                    light.global_position = light_points[j]
+                if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
+                    _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
+                light.set("controller_path", light.get_path_to(controller))
+
+
+## Quirk for ceiling lamps: one lamp submodel may hold a whole row of bulbs (EP07 machine room
+## corridor "lampy" runs along the cab), so one light at its center lights a fraction of it. Global
+## points spread along the lamp mesh's longest axis, one per LAMP_LIGHT_SPACING; empty when the
+## lamp has no usable bounds (the caller keeps the single centered light).
+static func _light_points_along_submodel(lamp:Node3D) -> Array[Vector3]:
+    var points:Array[Vector3] = []
+    if not lamp is VisualInstance3D:
+        return points
+    var bounds:AABB = (lamp as VisualInstance3D).get_aabb()
+    var start:Vector3 = lamp.to_global(bounds.position)
+    var axis:Vector3 = lamp.to_global(bounds.position + bounds.size * Vector3(
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_X else 0.0,
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_Y else 0.0,
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_Z else 0.0)) - start
+    var center:Vector3 = lamp.to_global(bounds.get_center())
+    if not _is_vector3_finite(axis) or not _is_vector3_finite(center):
+        return points
+    var count:int = clampi(ceili(axis.length() / LAMP_LIGHT_SPACING), 1, LAMP_LIGHT_MAX_COUNT)
+    for k:int in count:
+        points.append(center + axis * ((k + 0.5) / count - 0.5))
+    return points
+
+
+## Quirk for indicator lamps lighting the cab (alerter): the lamp submodel's own axes are arbitrary
+## in legacy cab art (SU46's alerter lamp points at the windscreen) and one submodel may hold several
+## bulbs, so its orientation can't be trusted. The light is aimed at the driver's eyes instead (MMD
+## driverNpos:, same cab model space as generated_root) and moved a few centimetres towards them, out
+## of the lamp's own shadow casting mesh.
+static func _aim_spotlight_at_driver(light:SpotLight3D, generated_root:Node3D, driver_position:Vector3) -> void:
+    var target:Vector3 = generated_root.to_global(driver_position)
+    var direction:Vector3 = target - light.global_position
+    if direction.length_squared() < 0.0001:
+        return
+    light.global_position += direction.normalized() * INDICATOR_LIGHT_OFFSET
+    var up:Vector3 = generated_root.global_basis.y.normalized()
+    if absf(direction.normalized().dot(up)) > 0.99:
+        up = generated_root.global_basis.z.normalized()
+    light.look_at(target, up)
 
 
 ## Legacy cabin models do not use a consistent local axis for ceiling-lamp meshes. Preserve the

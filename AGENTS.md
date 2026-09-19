@@ -34,6 +34,8 @@ General guidelines:
 Custom nodes and Godot Editor:
 
 * place editor related code in addons/libmaszyna/editor
+* assets of demo scenes (sounds, sfx banks, textures, materials, ...) belong in `demo/`, never in
+  `addons/libmaszyna` - the addon exposes a property/slot the demo scene fills
 * use libmaszyna.gd just for bootstrapping and proxying to editor plugins
 * make sure C++ singletons never inherit from RefCounted
 

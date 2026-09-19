@@ -29,11 +29,16 @@ var _view_offset:Vector3 = Vector3.ZERO
 var _bogie_look_offset:Vector3 = Vector3.ZERO
 var _look_target:Vector3 = Vector3.ZERO
 var _orbit:Vector2 = Vector2.ZERO
+# driver_mode::m_externalviewconfigs (drivermode.cpp:590-596) - per view offset and orbit of the
+# current vehicle, restored when the view is selected again; cleared when the vehicle changes
+var _view_configs:Dictionary = {}
 
 
 ## Starts the flight from p_from (the cab camera). The selected view is kept between activations,
 ## like m_externalviewmode of the original.
 func activate(p_vehicle:RailVehicle3D, p_from:Transform3D) -> void:
+    if not vehicle == p_vehicle:
+        _view_configs.clear()
     vehicle = p_vehicle
     global_transform = p_from
     _look_target = p_from.origin - p_from.basis.z * 10.0
@@ -63,6 +68,8 @@ func _process(delta:float) -> void:
         _dirty = false
         _process_dirty()
     _move_view_offset(delta)
+    if _view_vehicle:
+        _view_configs[view] = {"offset": _view_offset, "orbit": _orbit}
 
     var look_target:Vector3 = _view_vehicle.global_transform * _bogie_look_offset if view == View.BOGIE else _get_vehicle_center(vehicle)
     var view_position:Vector3 = _view_vehicle.global_transform * _view_offset if _view_vehicle else _view_offset
@@ -78,7 +85,8 @@ func _process(delta:float) -> void:
         look_at(_look_target, Vector3.UP)
 
 
-## Sets the view up once per selection, like the default view setup of ExternalView().
+## Sets the view up once per selection, like the default view setup of ExternalView(), or restores
+## the one remembered for this view.
 func _process_dirty() -> void:
     _orbit = Vector2.ZERO
     var controller:TrainController = vehicle.get_controller()
@@ -124,6 +132,12 @@ func _process_dirty() -> void:
             _bogie_look_offset = Vector3(0.0, 0.9, -0.35 * length * flip)
     # the MaSzyna (left, up, front) frame is yawed by 180 degrees in Godot
     _view_offset = Vector3(-offset.x, offset.y, -offset.z)
+
+    # restore view config (drivermode.cpp:942-946)
+    var config:Dictionary = _view_configs.get(view, {})
+    if config:
+        _view_offset = config["offset"]
+        _orbit = config["orbit"]
 
 
 ## TCamera::Update() (Camera.cpp:191-213) - in the external view the keys move the owner offset

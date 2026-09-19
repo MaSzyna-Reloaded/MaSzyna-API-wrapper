@@ -55,13 +55,15 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
         _bind_train_controller(win)
 
 
-func _on_scenery_selector_scenery_selected(filename: String) -> void:
+func _on_scenery_selector_scenery_selected(filename: String, train_id: String) -> void:
     _play_music()
     $TopBar.visible = false
     $ControlWindows.visible = false
     $LoadingScreen.show_loading(filename.get_basename())
     $MaszynaSceneryNode.filename = filename
     await $Player.clear_start_train()
+    # the consist chosen in the selector; an empty one lets the scenery pick its own driver
+    $Player.start_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
     var tween: Tween = create_tween()

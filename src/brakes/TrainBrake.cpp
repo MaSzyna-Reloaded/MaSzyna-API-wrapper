@@ -232,6 +232,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("local_brake_decrease"), &TrainBrake::local_brake_decrease);
         ClassDB::bind_method(D_METHOD("manual_brake_increase"), &TrainBrake::manual_brake_increase);
         ClassDB::bind_method(D_METHOD("manual_brake_decrease"), &TrainBrake::manual_brake_decrease);
+        ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &TrainBrake::auto_rewident);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &TrainBrake::alarm_chain);
     }
 
@@ -246,6 +247,7 @@ namespace godot {
         register_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
         register_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         register_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
+        register_command("auto_rewident", Callable(this, "auto_rewident"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -260,6 +262,7 @@ namespace godot {
         unregister_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
         unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
         unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
+        unregister_command("auto_rewident", Callable(this, "auto_rewident"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -361,6 +364,16 @@ namespace godot {
         }
     }
 
+    // Original engine: the per-vehicle part of TController::AutoRewident() (Driver.cpp:2193-2246) - brake
+    // delay setting chosen for the train, manual and spring brake released without any power condition
+    void TrainBrake::auto_rewident(const int p_brake_delay) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->BrakeDelaySwitch(p_brake_delay);
+        mover->DecManualBrakeLevel(ManualBrakePosNo);
+        mover->SpringBrake.Activate = false;
+    }
+
     void TrainBrake::manual_brake_decrease() {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
@@ -378,6 +391,9 @@ namespace godot {
         p_config["brake_handle_type"] = get_cntrl_brake_handle_type();
         p_config["brake_local_handle_type"] = get_cntrl_local_brake_handle_type();
         p_config["brake_valve_type"] = get_valve_type();
+        // available brake delay settings (bdelay_* flags) and main reservoir, used by AutoRewidentNode
+        p_config["brake_delays"] = p_mover->BrakeDelays;
+        p_config["brake_main_reservoir_volume"] = p_mover->VeselVolume;
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - cntrl_local_brake_handle_type is the real signal.

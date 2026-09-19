@@ -75,6 +75,8 @@ namespace godot {
                 D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &TrainController::couple);
         ClassDB::bind_method(D_METHOD("uncouple", "end"), &TrainController::uncouple);
         ClassDB::bind_method(D_METHOD("is_coupled", "end"), &TrainController::is_coupled);
+        ClassDB::bind_method(D_METHOD("get_coupled_controller", "end"), &TrainController::get_coupled_controller);
+        ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &TrainController::get_coupled_end);
         ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &TrainController::coupler_connect);
         ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &TrainController::coupler_disconnect);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
@@ -200,6 +202,14 @@ namespace godot {
 
     TMoverParameters *TrainController::get_mover() const {
         return mover;
+    }
+
+    // the end of the coupled vehicle facing this one (TCoupling::ConnectedNr), -1 when not coupled
+    int TrainController::get_coupled_end(const int p_end) const {
+        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
+            return -1;
+        }
+        return mover->Couplers[p_end].ConnectedNr;
     }
 
     TrainController *TrainController::get_coupled_controller(const int p_end) const {
@@ -650,6 +660,8 @@ namespace godot {
         // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
         // property (see update_mover() below), so this is a thin alias, not new derivation.
         p_config["max_speed"] = max_velocity;
+        p_config["power"] = p_mover->Power;
+        p_config["length"] = p_mover->Dim.L;
     }
 
     void TrainController::update_mover() {

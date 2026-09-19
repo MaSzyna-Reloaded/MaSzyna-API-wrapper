@@ -223,6 +223,7 @@ namespace godot {
             void coupler_disconnect(const Variant &p_where);
             TMoverParameters *get_mover() const;
             TrainController *get_coupled_controller(int p_end) const;
+            int get_coupled_end(int p_end) const;
             void set_cabin_number(int p_value);
             int get_cabin_number() const;
             static void _bind_methods();

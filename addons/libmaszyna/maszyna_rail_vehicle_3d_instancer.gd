@@ -141,6 +141,9 @@ static func _build_structure(
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
     if passengers_model:
         vehicle.add_child(passengers_model, false, Node.INTERNAL_MODE_BACK)
+    var auto_rewident := AutoRewidentNode.new()
+    auto_rewident.name = "AutoRewident"
+    vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
     # FizTrainControllerInstancer.build() hardcodes the generated controller's name to
     # "TrainController", so this relative path is deterministic even though the controller

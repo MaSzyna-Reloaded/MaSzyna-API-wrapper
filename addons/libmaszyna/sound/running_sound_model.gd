@@ -22,19 +22,35 @@ var _motor_momentum:float = 0.0
 var _motor_volume:float = 0.0
 var _rail_length:float = 0.0
 var _axle_distances:Dictionary[StringName, float] = {}
+## looping events started and not stopped yet - only these get a STOP
+var _playing:Dictionary[StringName, bool] = {}
+var _labels:Dictionary[String, bool] = {}
 
 
-## Returns event name -> {"action": Action, "parameters": Dictionary, "source": definition}.
-## `outer_noise_audible` is
-## false for the consist the listener drives from a cab (DynObj.cpp:4632-4640).
+## Returns event name -> {"action": Action, "parameters": Dictionary, "source": definition}, only
+## for events that play or have to stop. `outer_noise_audible` is false for the consist the
+## listener drives from a cab (DynObj.cpp:4632-4640).
 func update(
         controller:TrainController, state:Dictionary, delta:float,
         outer_noise_audible:bool) -> Dictionary:
+    if not _labels:
+        for entry:Dictionary in sources:
+            _labels[(entry["source"] as MmdSoundSourceDefinition).label] = true
+    var speed:float = float(state.get("speed", 0.0))
+    # a standing vehicle with still wheels and fan plays nothing - every formula below gives silence
+    if (speed <= 0.0 and not _playing and absf(float(state.get("wheel_rotation_speed_rps", 0.0))) <= 0.01
+            and float(state.get("resistor_fan_rotation", 0.0)) <= 0.1):
+        _motor_volume = 0.0
+        return {}
     var config:Dictionary = controller.config
+    # the track is only read by sounds of a moving vehicle, the curve radius only above 5 km/h
     var shape:Dictionary = {}
-    if _needs_track():
-        shape = RailVehiclePhysicsServer.controller_get_running_shape(
-                controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0)))
+    if speed > 0.0 and (_labels.has("wheel_clatter") or _labels.has("curve")
+            or _labels.has("outernoise") or _labels.has("runningnoise")):
+        shape = RailVehiclePhysicsServer.controller_get_track_position(controller.get_rid())
+    if speed > 5.0 and _labels.has("curve"):
+        shape.merge(RailVehiclePhysicsServer.controller_get_curve(
+                controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
     var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
     var quality_volume:float = lerpf(
             0.8, 1.2, clampf(TrackManager.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))
@@ -49,14 +65,14 @@ func update(
             continue
         if not levels.has(source.label):
             levels[source.label] = _level(source, state, config, delta, shape, quality_volume, outer_noise_audible)
-        results[event_name] = _result(source, levels[source.label])
+        var level:Array = levels[source.label]
+        if level:
+            _playing[event_name] = true
+            results[event_name] = _result(source, level)
+        elif _playing.has(event_name):
+            _playing.erase(event_name)
+            results[event_name] = {"action": Action.STOP, "parameters": {}, "source": source}
     return results
-
-
-func _needs_track() -> bool:
-    return sources.any(func(entry:Dictionary) -> bool:
-        return (entry["source"] as MmdSoundSourceDefinition).label in [
-                "wheel_clatter", "curve", "outernoise", "runningnoise"])
 
 
 ## [frequency, volume], or an empty array when the sound is stopped.
@@ -246,8 +262,6 @@ func _wheel_clatter(
 
 
 func _result(source:MmdSoundSourceDefinition, level:Array) -> Dictionary:
-    if not level:
-        return {"action": Action.STOP, "parameters": {}, "source": source}
     var frequency:float = level[0]
     var parameters:Dictionary = {&"gain": clampf(level[1], 0.0, 2.0)}
     if _is_combined(source):

@@ -448,15 +448,25 @@ func controller_get_transform(controller_rid: RID) -> Transform3D:
     return vehicle_get_transform(vehicle_rid)
 
 
-## Track under the vehicle and the running shape of its bogies (DynObj.cpp:2950-2970): the curve
-## radius from the yaw difference of the bogie pivots (0.0 on a straight or above 15 km), the
-## mean cant of both bogies in radians, and the vehicle centre along the track measured towards
-## the vehicle front ("along").
-func controller_get_running_shape(controller_rid: RID, bogie_pivot_spacing: float) -> Dictionary:
-    var vehicle_rid: RID = _controller_vehicles.get(controller_rid, RID())
-    var state: VehicleState = _vehicles.get(vehicle_rid)
+## Track under the vehicle and its centre along that track, measured towards the vehicle front.
+func controller_get_track_position(controller_rid: RID) -> Dictionary:
+    var state: VehicleState = _vehicles.get(_controller_vehicles.get(controller_rid, RID()))
     if not state or not TrackManager.track_exists(state.track_rid):
-        return {"track_rid": TrackManager.UNDEFINED_TRACK, "radius": 0.0, "cant": 0.0, "along": 0.0}
+        return {"track_rid": TrackManager.UNDEFINED_TRACK, "along": 0.0}
+    return {
+        "track_rid": state.track_rid,
+        # moving forward decreases the offset on a track run in its normal direction
+        "along": -state.track_offset if state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else state.track_offset,
+    }
+
+
+## Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw difference of
+## the bogie pivots (0.0 on a straight or above 15 km) and the mean cant of both bogies in radians.
+## Samples the track twice - call it only when the radius is needed.
+func controller_get_curve(controller_rid: RID, bogie_pivot_spacing: float) -> Dictionary:
+    var state: VehicleState = _vehicles.get(_controller_vehicles.get(controller_rid, RID()))
+    if not state or not TrackManager.track_exists(state.track_rid):
+        return {"radius": 0.0, "cant": 0.0}
     var front: VehicleState = _sample_state(state, 0.5 * bogie_pivot_spacing)
     var rear: VehicleState = _sample_state(state, -0.5 * bogie_pivot_spacing)
     var front_forward: Vector3 = -_get_vehicle_transform(front).basis.z
@@ -468,13 +478,7 @@ func controller_get_running_shape(controller_rid: RID, bogie_pivot_spacing: floa
         radius = -0.5 * bogie_pivot_spacing / sin(yaw_difference * 0.5)
     if absf(radius) > 15000.0:
         radius = 0.0
-    return {
-        "track_rid": state.track_rid,
-        "radius": radius,
-        "cant": deg_to_rad(0.5 * (_get_roll(front) + _get_roll(rear))),
-        # moving forward decreases the offset on a track run in its normal direction
-        "along": -state.track_offset if state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else state.track_offset,
-    }
+    return {"radius": radius, "cant": deg_to_rad(0.5 * (_get_roll(front) + _get_roll(rear)))}
 
 
 func _sample_state(state: VehicleState, distance: float) -> VehicleState:

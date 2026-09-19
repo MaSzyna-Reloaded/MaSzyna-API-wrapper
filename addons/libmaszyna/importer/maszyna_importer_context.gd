@@ -21,6 +21,8 @@ var trainset_name: String = ""
 var trainset_track: String = ""
 var trainset_offset: float = 0.0
 var trainset_velocity: float = 0.0
+## Consist node created by "trainset:" - vehicles of the open trainset become its children
+var trainset_node: TrainSet3D = null
 
 var _rotates = []
 var _origins = []
@@ -85,6 +87,7 @@ func push_state() -> void:
         "trainset_track": trainset_track,
         "trainset_offset": trainset_offset,
         "trainset_velocity": trainset_velocity,
+        "trainset_node": trainset_node,
     })
 
 
@@ -101,6 +104,7 @@ func pop_state() -> void:
     trainset_track = state["trainset_track"]
     trainset_offset = state["trainset_offset"]
     trainset_velocity = state["trainset_velocity"]
+    trainset_node = state["trainset_node"]
 
     while _rotates.size() > state["rotates_size"]:
         _rotates.pop_front()

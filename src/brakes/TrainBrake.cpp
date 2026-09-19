@@ -230,6 +230,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("local_brake_set", "level"), &TrainBrake::local_brake_set);
         ClassDB::bind_method(D_METHOD("local_brake_increase"), &TrainBrake::local_brake_increase);
         ClassDB::bind_method(D_METHOD("local_brake_decrease"), &TrainBrake::local_brake_decrease);
+        ClassDB::bind_method(D_METHOD("manual_brake_increase"), &TrainBrake::manual_brake_increase);
+        ClassDB::bind_method(D_METHOD("manual_brake_decrease"), &TrainBrake::manual_brake_decrease);
+        ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &TrainBrake::auto_rewident);
+        ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &TrainBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &TrainBrake::alarm_chain);
     }
 
@@ -242,6 +246,10 @@ namespace godot {
         register_command("local_brake_set", Callable(this, "local_brake_set"));
         register_command("local_brake_increase", Callable(this, "local_brake_increase"));
         register_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
+        register_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
+        register_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
+        register_command("auto_rewident", Callable(this, "auto_rewident"));
+        register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -254,6 +262,10 @@ namespace godot {
         unregister_command("local_brake_set", Callable(this, "local_brake_set"));
         unregister_command("local_brake_increase", Callable(this, "local_brake_increase"));
         unregister_command("local_brake_decrease", Callable(this, "local_brake_decrease"));
+        unregister_command("manual_brake_increase", Callable(this, "manual_brake_increase"));
+        unregister_command("manual_brake_decrease", Callable(this, "manual_brake_decrease"));
+        unregister_command("auto_rewident", Callable(this, "auto_rewident"));
+        unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
     }
 
@@ -345,6 +357,51 @@ namespace godot {
         mover->DecLocalBrakeLevel(1);
     }
 
+    // Original engine: TTrain::OnCommand_manualbrakeincrease/decrease (Train.cpp:1809-1837) - one notch,
+    // only on a vehicle with a manual brake
+    void TrainBrake::manual_brake_increase() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (mover->LocalBrake == TLocalBrake::ManualBrake || mover->MBrake) {
+            mover->IncManualBrakeLevel(1);
+        }
+    }
+
+    // Original engine: the per-vehicle part of TController::AutoRewident() (Driver.cpp:2193-2246) - brake
+    // delay setting chosen for the train, manual and spring brake released without any power condition
+    void TrainBrake::auto_rewident(const int p_brake_delay) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->BrakeDelaySwitch(p_brake_delay);
+        mover->DecManualBrakeLevel(ManualBrakePosNo);
+        mover->SpringBrake.Activate = false;
+    }
+
+    // Original engine: TTrain::OnCommand_trainbrakecharging (Train.cpp:1686) - held, the handle stays in the
+    // charging position -1; released, only self-returning EP handles go back to the running position
+    // (zero_charging_train_brake(), Train.cpp:960), an FV4a stays where it is
+    void TrainBrake::brake_level_charging(const bool p_active) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (p_active) {
+            mover->BrakeLevelSet(-1);
+            return;
+        }
+        if (mover->BrakeCtrlPos == -1 &&
+            (mover->BrakeHandle == TBrakeHandle::FVel6 || mover->BrakeHandle == TBrakeHandle::MHZ_EN57 ||
+             mover->BrakeHandle == TBrakeHandle::MHZ_K8P)) {
+            mover->BrakeLevelSet(0);
+        }
+    }
+
+    void TrainBrake::manual_brake_decrease() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        if (mover->LocalBrake == TLocalBrake::ManualBrake || mover->MBrake) {
+            mover->DecManualBrakeLevel(1);
+        }
+    }
+
     void TrainBrake::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         // Hardware/setup facts - change only when the vehicle's brake config is (re)applied, not
         // every tick, so they belong here rather than in _do_fetch_state_from_mover. Read from
@@ -354,6 +411,9 @@ namespace godot {
         p_config["brake_handle_type"] = get_cntrl_brake_handle_type();
         p_config["brake_local_handle_type"] = get_cntrl_local_brake_handle_type();
         p_config["brake_valve_type"] = get_valve_type();
+        // available brake delay settings (bdelay_* flags) and main reservoir, used by AutoRewidentNode
+        p_config["brake_delays"] = p_mover->BrakeDelays;
+        p_config["brake_main_reservoir_volume"] = p_mover->VeselVolume;
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - cntrl_local_brake_handle_type is the real signal.
@@ -402,6 +462,8 @@ namespace godot {
         // LocalBrakePosA ("nastawa hamulca pomocniczego") is already normalized 0..1 in the
         // mover, unlike the main brake's arbitrary Handle-position units above.
         p_state["brake_local_position_normalized"] = p_mover->LocalBrakePosA;
+        // ManualBrakePos notch 0..ManualBrakePosNo, fed to the "manualbrake:" gauge as is (Train.cpp:10255)
+        p_state["brake_manual_position"] = p_mover->ManualBrakePos;
 
         p_state["brake_unit_force"] = p_mover->UnitBrakeForce;
         const double brake_force_max_per_block =

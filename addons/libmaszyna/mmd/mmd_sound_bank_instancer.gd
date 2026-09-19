@@ -7,6 +7,16 @@ const _INTERNAL_BRAKE_LABELS:Array[String] = [
 ]
 const _VEHICLE_PLAYER_VOICE_COUNT:int = 16
 const _HORN_LABELS:Array[String] = ["horn1", "horn2", "horn3"]
+## Coupler sounds, external and read from internaldata: too (DynObj.cpp:6409-6520, sound_placement::external)
+const _COUPLER_LABELS:Array[String] = [
+    "couplerattach", "brakehoseattach", "mainhoseattach", "controlattach", "gangwayattach", "heatingattach",
+    "couplerdetach", "brakehosedetach", "mainhosedetach", "controldetach", "gangwaydetach", "heatingdetach",
+]
+## Used when the vehicle defines none (DynObj.cpp:6693-6700)
+const _COUPLER_DEFAULT_SOUNDS:Dictionary = {
+    "couplerattach": "couplerattach_default",
+    "couplerdetach": "couplerdetach_default",
+}
 const _HORN_RANGE_UNIT_DIVISOR:float = 24.0
 const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
 static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
@@ -30,13 +40,16 @@ static func build_into(
             continue
         if not definition.label in [
                 "buzzer", "buzzershp", "tachoclock", "brakesound", "slipperysound", "airsound", "airsound2",
-                "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2"]:
+                "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2"] \
+                and not definition.label in _COUPLER_LABELS:
             continue
         _apply_original_defaults(definition, true)
         if definition.placement == &"internal":
             cabin_definitions.append(definition)
         else:
             exterior_definitions.append(definition)
+
+    _add_coupler_default_sounds(exterior_definitions)
 
     var routed_exterior:Array[MmdSoundSourceDefinition] = []
     for definition:MmdSoundSourceDefinition in exterior_definitions:
@@ -67,8 +80,10 @@ static func _build_player(
             _apply_brake_source_defaults(definition)
             brake_sources[definition.label] = definition
             continue
+        # CHANGE triggers only start their event - a one-shot sample, never stopped
         var event:SfxEvent = MmdSoundEventBuilder.build(
-                definition, entry["event_name"], entry.get("sound_parameter", &""), false, true)
+                definition, entry["event_name"], entry.get("sound_parameter", &""), false, true,
+                not entry["trigger_mode"] == TrainSoundTrigger.TriggerMode.CHANGE)
         if definition.label in _HORN_LABELS:
             _apply_horn_spatial_config(event, definition)
         events.append(event)
@@ -113,7 +128,9 @@ static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_i
     if definition.placement_defined:
         return
     if from_internal_data:
-        definition.placement = &"external" if definition.label == "slipperysound" else &"internal"
+        definition.placement = (
+                &"external" if definition.label == "slipperysound" or definition.label in _COUPLER_LABELS
+                else &"internal")
     elif definition.label == "engine":
         definition.placement = &"engine"
     elif definition.label in _HORN_LABELS:
@@ -158,3 +175,15 @@ static func _merge_ignition_and_shutdown_into_engine(
             engine.sound_begin = definition.sound_main
         elif definition.label == "shutdown" and not engine.sound_end:
             engine.sound_end = definition.sound_main
+
+
+static func _add_coupler_default_sounds(definitions:Array[MmdSoundSourceDefinition]) -> void:
+    for label:String in _COUPLER_DEFAULT_SOUNDS:
+        if definitions.any(func(definition:MmdSoundSourceDefinition) -> bool: return definition.label == label):
+            continue
+        var definition := MmdSoundSourceDefinition.new()
+        definition.label = label
+        definition.sound_main = _COUPLER_DEFAULT_SOUNDS[label]
+        definition.placement = &"external"
+        definition.placement_defined = true
+        definitions.append(definition)

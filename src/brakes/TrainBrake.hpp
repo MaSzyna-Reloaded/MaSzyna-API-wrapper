@@ -330,6 +330,10 @@ namespace godot {
             void local_brake_set(double p_level);
             void local_brake_increase();
             void local_brake_decrease();
+            void manual_brake_increase();
+            void manual_brake_decrease();
+            void auto_rewident(int p_brake_delay);
+            void brake_level_charging(bool p_active);
             void alarm_chain(bool p_pulled);
     };
 } // namespace godot

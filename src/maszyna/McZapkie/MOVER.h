@@ -798,8 +798,11 @@ namespace Maszyna {
             }
     };
 
+    class TMoverParameters;
+
+    // original: TDynamicObject *vehicle (MOVER.h:771) - the wrapper has no DynObj, so the mover is stored directly
     struct neighbour_data {
-            // TDynamicObject *vehicle{nullptr}; // detected obstacle
+            TMoverParameters *vehicle{nullptr}; // detected obstacle
             int vehicle_end{-1}; // facing end of the obstacle
             float distance{
                     10000.f}; // distance to the obstacle // NOTE: legacy value. TBD, TODO: use standard -1 instead?
@@ -1945,8 +1948,8 @@ namespace Maszyna {
             double BrakeForceP(double press, double velocity);
             double BrakeForce(const TTrackParam &Track);
 
-            // double CouplerForce(int const End, double dt);
-            // void CollisionDetect(int const End, double const dt); //
+            double CouplerForce(int const End, double dt);
+            void CollisionDetect(int const End, double const dt);
 
             /*obrot kol uwzgledniajacy poslizg*/
             double ComputeRotatingWheel(double WForce, double dt, double n) const;

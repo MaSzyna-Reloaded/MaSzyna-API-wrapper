@@ -13,11 +13,25 @@ class VehicleState:
     var controller_rid: RID = RID()
 
 
+## Original engine: primary physics update rate and the iteration limit per frame (drivermode.cpp:186-206)
+const PHYSICS_STEP: float = 0.01
+const MAX_PHYSICS_ITERATIONS: int = 20
+## Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps)
+const DIAGNOSTICS_SETTING: StringName = &"maszyna/debug/physics_diagnostics"
+## A vehicle moved along the track by more or less than requested (m)
+const DIAGNOSTICS_MOVE_TOLERANCE: float = 0.001
+## Velocity change of a vehicle within one physics frame reported as a kick (m/s^2)
+const DIAGNOSTICS_MAX_ACCELERATION: float = 3.0
+## Distance the neighbour scan steps past a track endpoint to enter the connected track
+const _SCAN_ENDPOINT_EPSILON: float = 0.001
+
 var _controllers: Dictionary[RID, ControllerState] = {}
 var _controller_vehicles: Dictionary[RID, RID] = {}
 var _vehicles: Dictionary[RID, VehicleState] = {}
 var _next_controller_id: int = 0
 var _next_vehicle_id: int = 0
+var _diagnostics: bool = false
+var _diagnostics_velocity: Dictionary[TrainController, float] = {}
 
 
 func _enter_tree() -> void:
@@ -26,6 +40,140 @@ func _enter_tree() -> void:
 
 func _exit_tree() -> void:
     Engine.unregister_singleton("RailVehiclePhysicsServer")
+
+
+## Global step of every registered controller, the same phases as the original vehicle_table::update()
+## (DynObj.cpp:8181): locations and neighbours once per frame, then forces for all vehicles before
+## movement of all vehicles in each iteration, so coupled vehicles see each other's state consistently.
+## Runs on the fixed physics tick, split into iterations of at most PHYSICS_STEP.
+func _physics_process(delta: float) -> void:
+    if Engine.is_editor_hint():
+        return
+    var controllers: Array[TrainController] = []
+    for controller_rid: RID in _controllers:
+        var controller: TrainController = _get_controller(controller_rid)
+        if controller:
+            controllers.append(controller)
+    if not controllers:
+        return
+    _diagnostics = bool(ProjectSettings.get_setting(DIAGNOSTICS_SETTING, false))
+
+    var track_vehicles: Dictionary[RID, Array] = {}
+    for controller: TrainController in controllers:
+        controller.update_location()
+        var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
+        var state: VehicleState = _vehicles.get(vehicle_rid)
+        if state:
+            if not track_vehicles.has(state.track_rid):
+                track_vehicles[state.track_rid] = []
+            track_vehicles[state.track_rid].append(vehicle_rid)
+    for controller: TrainController in controllers:
+        _update_neighbours(controller, track_vehicles)
+
+    var iterations: int = clampi(ceili(delta / PHYSICS_STEP), 1, MAX_PHYSICS_ITERATIONS)
+    var step: float = delta / iterations
+    for iteration: int in iterations:
+        for controller: TrainController in controllers:
+            controller.compute_forces(step)
+        for controller: TrainController in controllers:
+            controller.compute_movement(step)
+            var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
+            if vehicle_rid.is_valid():
+                process_movement(vehicle_rid, step)
+    if _diagnostics:
+        _check_velocity_jumps(controllers, delta)
+
+
+## Diagnostics: a velocity jump within one frame is a kick - with a consistent track movement it
+## comes from the forces, typically a coupler reacting to an inconsistent vehicle position.
+func _check_velocity_jumps(controllers: Array[TrainController], delta: float) -> void:
+    for controller: TrainController in controllers:
+        var velocity: float = controller.get_state().get("velocity", 0.0)
+        var acceleration: float = (velocity - _diagnostics_velocity.get(controller, velocity)) / delta
+        _diagnostics_velocity[controller] = velocity
+        if absf(acceleration) > DIAGNOSTICS_MAX_ACCELERATION:
+            push_error("RailVehiclePhysicsServer: %s kicked, dV/dt=%.2f m/s^2 at V=%.2f m/s, Ft=%.0f N" % [
+                controller.train_id, acceleration, velocity, float(controller.get_state().get("Ft", 0.0))])
+
+
+## Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135) - a coupled end keeps its
+## coupled vehicle (resolved by the controller), a free end looks for the nearest vehicle on the route.
+func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[RID, Array]) -> void:
+    var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
+    var state: VehicleState = _vehicles.get(vehicle_rid)
+    var velocity: float = controller.get_state().get("velocity", 0.0)
+    # 10m ~= 140 km/h at 4 fps + safety margin (DynObj.cpp:7160)
+    var scan_range: float = maxf(10.0, absf(velocity)) + 40.0
+    for end: int in 2:
+        if controller.is_coupled(end) or not state or not TrackManager.track_exists(state.track_rid):
+            controller.update_neighbour(end, null, -1, 0.0)
+            continue
+        var found: Array = _find_vehicle(vehicle_rid, state, end, scan_range, track_vehicles)
+        if not found:
+            controller.update_neighbour(end, null, -1, 0.0)
+            continue
+        var other_state: VehicleState = _vehicles[found[0]]
+        controller.update_neighbour(end, _get_controller(other_state.controller_rid), found[1], found[2])
+
+
+## Original engine: TDynamicObject::find_vehicle() (DynObj.cpp:7183) - scans the route from the vehicle
+## center towards the given end (0 front, 1 rear). Returns [vehicle_rid, facing end of the found
+## vehicle, center to center distance along the route] or an empty array.
+func _find_vehicle(
+    vehicle_rid: RID,
+    state: VehicleState,
+    end: int,
+    scan_range: float,
+    track_vehicles: Dictionary[RID, Array]
+) -> Array:
+    # server distances are rear-relative, see process_movement()
+    var request_sign: float = -1.0 if end == 0 else 1.0
+    var cursor: VehicleState = VehicleState.new()
+    cursor.track_rid = state.track_rid
+    cursor.track_offset = state.track_offset
+    cursor.track_direction = state.track_direction
+    cursor.switch_track = state.switch_track
+    var scanned: float = 0.0
+    var min_along: float = 0.0
+
+    while scanned < scan_range:
+        # same conversion to the curve offset direction as in _move_vehicle_state()
+        var movement_sign: float = (
+            -1.0 if cursor.track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
+        ) * request_sign
+        var found_rid: RID = RID()
+        var found_along: float = INF
+        for other_rid: RID in track_vehicles.get(cursor.track_rid, []):
+            var other: VehicleState = _vehicles[other_rid]
+            if other_rid == vehicle_rid or not other.switch_track == cursor.switch_track:
+                continue
+            var along: float = (other.track_offset - cursor.track_offset) * movement_sign
+            if along > min_along and along < found_along:
+                found_rid = other_rid
+                found_along = along
+        if found_rid.is_valid():
+            var found_state: VehicleState = _vehicles[found_rid]
+            var found_front_sign: float = 1.0 if found_state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else -1.0
+            var found_end: int = 0 if is_equal_approx(found_front_sign, -movement_sign) else 1
+            return [found_rid, found_end, scanned + found_along]
+
+        var length: float = TrackManager.track_get_length(cursor.track_rid, cursor.switch_track)
+        var distance_to_endpoint: float = length - cursor.track_offset if movement_sign > 0.0 else cursor.track_offset
+        var previous_track_rid: RID = cursor.track_rid
+        _move_vehicle_state(cursor, request_sign * (distance_to_endpoint + _SCAN_ENDPOINT_EPSILON), false)
+        if cursor.track_rid == previous_track_rid:
+            return []
+        scanned += distance_to_endpoint + _SCAN_ENDPOINT_EPSILON
+        # a vehicle standing right at the entry point is still ahead
+        min_along = -_SCAN_ENDPOINT_EPSILON
+    return []
+
+
+func _get_controller(controller_rid: RID) -> TrainController:
+    var controller_state: ControllerState = _controllers.get(controller_rid)
+    if not controller_state or controller_state.object_id == 0:
+        return null
+    return instance_from_id(controller_state.object_id) as TrainController
 
 
 func controller_create(controller: Object = null) -> RID:
@@ -140,6 +288,10 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
     var current_track_direction: TrackManager.Direction = state.track_direction
     var remaining: float = absf(distance)
     var request_sign: float = -1.0 if distance < 0.0 else 1.0
+    var start_point: Vector3 = (
+        TrackManager.track_get_domain_curve(current_track_rid, current_switch_track).sample_baked(current_track_offset, false)
+        if _diagnostics and force_switch_state else Vector3.ZERO
+    )
     # Convert movement relative to the vehicle front into curve offset movement.
     # Positive sign moves toward the branch end, negative toward the branch start.
     var movement_sign: float = (
@@ -218,6 +370,19 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
     state.track_offset = current_track_offset
     state.track_direction = current_track_direction
     state.switch_track = current_switch_track
+    if _diagnostics and force_switch_state:
+        _check_movement(state, start_point, absf(distance) - remaining)
+
+
+## Diagnostics: the vehicle must move in the world by the distance it moved along the track (a step
+## is far shorter than any curve radius, so the chord equals the arc) - a mismatch shifts the mover
+## location and kicks the coupled vehicles.
+func _check_movement(state: VehicleState, start_point: Vector3, moved: float) -> void:
+    var end_point: Vector3 = TrackManager.track_get_domain_curve(state.track_rid, state.switch_track).sample_baked(state.track_offset, false)
+    var world_moved: float = start_point.distance_to(end_point)
+    if absf(world_moved - moved) > DIAGNOSTICS_MOVE_TOLERANCE:
+        push_error("RailVehiclePhysicsServer: moved %.4f m in the world instead of %.4f m on track %s (offset %.3f)" % [
+            world_moved, moved, TrackManager.track_get_name(state.track_rid), state.track_offset])
 
 
 func vehicle_get_transform(vehicle_rid: RID) -> Transform3D:
@@ -248,14 +413,17 @@ func _get_vehicle_transform(state: VehicleState) -> Transform3D:
 
     var length: float = curve.get_baked_length()
     var safe_offset: float = clampf(state.track_offset, 0.0, length)
-    var origin: Vector3 = curve.sample_baked(safe_offset, true)
+    # linear on purpose: the cubic interpolation has no neighbour point at the curve ends, so the position
+    # advanced there only about 60% of the offset - every vehicle lost centimetres at each track joint,
+    # which kicked the consist through its couplers
+    var origin: Vector3 = curve.sample_baked(safe_offset, false)
     var sample_distance: float = minf(0.1, length)
     var previous_offset: float = clampf(safe_offset - sample_distance, 0.0, length)
     var next_offset: float = clampf(safe_offset + sample_distance, 0.0, length)
     if is_equal_approx(previous_offset, next_offset):
         previous_offset = 0.0
         next_offset = length
-    var forward: Vector3 = curve.sample_baked(next_offset, true) - curve.sample_baked(previous_offset, true)
+    var forward: Vector3 = curve.sample_baked(next_offset, false) - curve.sample_baked(previous_offset, false)
     if forward.length_squared() <= 0.000001:
         forward = Vector3.FORWARD
     else:

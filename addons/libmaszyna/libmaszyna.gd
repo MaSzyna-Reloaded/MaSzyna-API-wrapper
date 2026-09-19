@@ -112,6 +112,7 @@ func _disable_plugin():
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
     add_custom_project_setting("maszyna/track_curve_bake_interval", 10.0, TYPE_FLOAT)
+    add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"

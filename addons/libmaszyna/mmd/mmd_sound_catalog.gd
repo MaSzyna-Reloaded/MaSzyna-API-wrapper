@@ -46,6 +46,68 @@ static func _ensure_built() -> void:
             "state_property": "battery_enabled",
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
+        # Coupler attach/detach one-shots per coupling type (DynObj.cpp:6409-6520, played at
+        # DynObj.cpp:4855-4905) - TrainController counts the mover's TCoupling::sounds requests.
+        "couplerattach": {
+            "event_name": &"coupler_attach",
+            "state_property": "coupler_sound/attach_coupler",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "brakehoseattach": {
+            "event_name": &"brakehose_attach",
+            "state_property": "coupler_sound/attach_brakehose",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "mainhoseattach": {
+            "event_name": &"mainhose_attach",
+            "state_property": "coupler_sound/attach_mainhose",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "controlattach": {
+            "event_name": &"control_attach",
+            "state_property": "coupler_sound/attach_control",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "gangwayattach": {
+            "event_name": &"gangway_attach",
+            "state_property": "coupler_sound/attach_gangway",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "heatingattach": {
+            "event_name": &"heating_attach",
+            "state_property": "coupler_sound/attach_heating",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "couplerdetach": {
+            "event_name": &"coupler_detach",
+            "state_property": "coupler_sound/detach_coupler",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "brakehosedetach": {
+            "event_name": &"brakehose_detach",
+            "state_property": "coupler_sound/detach_brakehose",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "mainhosedetach": {
+            "event_name": &"mainhose_detach",
+            "state_property": "coupler_sound/detach_mainhose",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "controldetach": {
+            "event_name": &"control_detach",
+            "state_property": "coupler_sound/detach_control",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "gangwaydetach": {
+            "event_name": &"gangway_detach",
+            "state_property": "coupler_sound/detach_gangway",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "heatingdetach": {
+            "event_name": &"heating_detach",
+            "state_property": "coupler_sound/detach_heating",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
         "compressor": {
             "event_name": &"compressor",
             "state_property": "compressor_enabled",

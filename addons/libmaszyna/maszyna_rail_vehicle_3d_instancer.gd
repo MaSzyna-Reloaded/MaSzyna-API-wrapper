@@ -18,6 +18,11 @@ class_name MaszynaRailVehicle3DInstancer
 ## powered-wheel diameter - no vehicle in the current game data needs that, and it would require
 ## threading the parsed TrainWheels config through to spawn time. Left unimplemented until an
 ## actual vehicle needs it.
+const COUPLER_SUBMODEL_NAMES:Array[String] = [
+    "coupler1", "coupler2",
+    "cpneumatic1", "cpneumatic1r", "cpneumatic2", "cpneumatic2r",
+    "pneumatic1", "pneumatic1r", "pneumatic2", "pneumatic2r",
+]
 const FRONT_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie1", "boogie01"]
 const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
 const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
@@ -136,6 +141,9 @@ static func _build_structure(
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
     if passengers_model:
         vehicle.add_child(passengers_model, false, Node.INTERNAL_MODE_BACK)
+    var auto_rewident := AutoRewidentNode.new()
+    auto_rewident.name = "AutoRewident"
+    vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
     # FizTrainControllerInstancer.build() hardcodes the generated controller's name to
     # "TrainController", so this relative path is deterministic even though the controller
@@ -247,6 +255,16 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
     var rear_arm_paths:Array[NodePath] = _find_pantograph_arm_paths(vehicle, submodel_index, 2)
     if rear_arm_paths:
         vehicle.pantograph_rear_arm_paths = rear_arm_paths
+
+    # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
+    var coupler_paths:Dictionary = {}
+    for coupler_name:String in COUPLER_SUBMODEL_NAMES:
+        for suffix:String in ["_on", "_off", "_xon"]:
+            var submodel:Node3D = _find_submodel(submodel_index, [coupler_name + suffix])
+            if submodel:
+                coupler_paths[coupler_name + suffix] = vehicle.get_path_to(submodel)
+    if coupler_paths:
+        vehicle.coupler_submodel_paths = coupler_paths
 
 
 ## Returns all 5 arm/slider paths for the given pantograph number (1=front,

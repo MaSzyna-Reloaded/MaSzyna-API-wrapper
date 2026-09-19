@@ -2,6 +2,8 @@ extends Node3D
 class_name MaszynaPlayer
 
 signal controlled_vehicle_changed
+## Switched between the cabin view (in a cab) and the exterior view (on foot, external cameras)
+signal cabin_view_changed(in_cabin:bool)
 
 @export var start_train_id:String = "":
     set(x):
@@ -19,6 +21,7 @@ var _camera:FreeCamera3D
 var _dirty: bool = true
 var _auto_start_pending:bool = true
 var _released_train_id:String = ""
+var _cabin_view:bool = false
 
 func _ready() -> void:
     pass
@@ -48,6 +51,7 @@ func _process(_delta:float) -> void:
 
         if _changed:
             controlled_vehicle_changed.emit()
+            _update_cabin_view()
 
     var camera:FreeCamera3D = get_camera()
     var cabin:Cabin3D = camera.get_parent() as Cabin3D
@@ -172,6 +176,15 @@ func _set_external_view(p_enabled:bool) -> void:
         external_camera.activate(controlled_vehicle, camera.global_transform)
     else:
         camera.make_current()
+    _update_cabin_view()
+
+func _update_cabin_view() -> void:
+    var in_cabin:bool = controlled_vehicle and not external_camera.current
+    if in_cabin == _cabin_view:
+        return
+    _cabin_view = in_cabin
+    get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", in_cabin)
+    cabin_view_changed.emit(in_cabin)
 
 func get_camera() -> FreeCamera3D:
     if not _camera:

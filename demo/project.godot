@@ -404,7 +404,8 @@ redmarker_rear_right_toggle={
 [maszyna]
 
 rendering/shadow_blur=0.4
-rendering/shadow_max_distance=300.0
+rendering/shadow_exterior_max_distance=300.0
+rendering/shadow_cabin_max_distance=150.0
 track_curve_bake_interval=0.5
 sound/brake_exterior_volume_factor=1.0
 sound/brake_exterior_unit_size_factor=8.0

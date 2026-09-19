@@ -3,6 +3,8 @@ extends Node
 class_name MaszynaEnvironmentNode
 
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
+## Group the player sets cabin_view on when switching between the cabin and the exterior view
+const GROUP: StringName = &"maszyna_environment"
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.5, "wind_strength": 0.2,
@@ -159,6 +161,14 @@ var _sky_environment: MaszynaSkyEnvironment
 var _dirty_time: bool = true
 var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
+var _dirty_lights: bool = false
+
+## Cabin view (the player in a cab) - the lights use the cabin shadow distance then
+var cabin_view: bool = false:
+    set(value):
+        if not value == cabin_view:
+            cabin_view = value
+            _dirty_lights = true
 
 
 func _ready() -> void:
@@ -169,6 +179,7 @@ func _ready() -> void:
 
 
 func _enter_tree() -> void:
+    add_to_group(GROUP)
     UserSettings.config_changed.connect(_on_user_settings_changed)
 
 
@@ -212,6 +223,10 @@ func _process_dirty() -> void:
     if _dirty_visuals:
         _dirty_visuals = false
         _apply_visual_configuration()
+
+    if _dirty_lights:
+        _dirty_lights = false
+        _sky_environment.apply_light_configuration()
 
     if _dirty_time:
         _dirty_time = false

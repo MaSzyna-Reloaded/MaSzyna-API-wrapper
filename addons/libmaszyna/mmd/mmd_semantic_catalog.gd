@@ -507,6 +507,17 @@ static func _ensure_built() -> void:
             "mesh_path_field": "target_mesh_path",
             "mmd_scale_multiplier": 0.1,
         },
+        # Train.cpp:10438-10443: pantograph tank pressure gauge, AssignDouble(&PantPress), scale 0.1.
+        "pantpress": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "current_collector/pantograph_tank_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
         # The original engine's own approach for "i-*:" indicator lights (Train.cpp's TButton) is
         # to show/hide a matching "<submodel>_on"/"<submodel>_off" mesh pair - not reproduced here.
         # Instead this reuses CabinSpotLight3D (already a generic, reusable addon widget - not
@@ -560,6 +571,32 @@ static func _ensure_built() -> void:
                 "command": "compressor",
                 "state_property": "compressor_enabled",
                 "action": "compressor_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Auxiliary pantograph compressor, runs while held (Train.cpp:10114 "pantcompressor_sw:" ->
+        # ggPantCompressorButton, OnCommand_pantographcompressoractivate, Shift+V).
+        "pantcompressor_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "pantograph_compressor",
+                "action": "pantograph_compressor_activate",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Three-way valve feeding the pantographs from the auxiliary compressor instead of the main
+        # tank (Train.cpp:10115 "pantcompressorvalve_sw:" -> ggPantCompressorValve,
+        # OnCommand_pantographcompressorvalvetoggle, Ctrl+V).
+        "pantcompressorvalve_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "pantograph_compressor_valve",
+                "state_property": "current_collector/pantograph_compressor_valve",
+                "action": "pantograph_compressor_valve_toggle",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",

@@ -28,10 +28,14 @@ General guidelines:
 * IMPORTANT: do only what operator want, do not assume anything by yourself!
 * IMPORTANT: do not expand requested scope, API, or stored state unless operator explicitly asks for it
 * if you are not sure, ask operator for decision
+* whatever is left out of a task (not ported, skipped, deferred) goes to `TODO.md`, not only to the
+  session report, so it isn't forgotten
 
 Custom nodes and Godot Editor:
 
 * place editor related code in addons/libmaszyna/editor
+* assets of demo scenes (sounds, sfx banks, textures, materials, ...) belong in `demo/`, never in
+  `addons/libmaszyna` - the addon exposes a property/slot the demo scene fills
 * use libmaszyna.gd just for bootstrapping and proxying to editor plugins
 * make sure C++ singletons never inherit from RefCounted
 

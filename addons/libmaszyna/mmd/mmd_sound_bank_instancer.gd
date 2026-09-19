@@ -17,6 +17,20 @@ const _COUPLER_DEFAULT_SOUNDS:Dictionary = {
     "couplerattach": "couplerattach_default",
     "couplerdetach": "couplerdetach_default",
 }
+## Placement and range of the running sounds when the MMD gives none (DynObj.h:390, 528-533,
+## DynObj.cpp:5711, 6125; Train.cpp:8571)
+const _RUNNING_PLACEMENTS:Dictionary = {
+    "tractionmotor": &"external",
+    "ventilator": &"engine",
+    "curve": &"external",
+    "outernoise": &"external",
+    "wheel_clatter": &"external",
+}
+const _RUNNING_RANGES:Dictionary = {
+    "curve": 200.0,
+    "outernoise": 200.0,
+    "runningnoise": -1.0,
+}
 const _HORN_RANGE_UNIT_DIVISOR:float = 24.0
 const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
 static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
@@ -32,6 +46,7 @@ static func build_into(
     var exterior_definitions:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse(abs_mmd_path, context)
     var internal_data:Array[MmdSoundSourceDefinition] = MmdSoundSourceParser.parse_internal_data(abs_mmd_path, context)
     var soundproofing:Array[PackedFloat32Array] = MmdSoundSourceParser.parse_vehicle_soundproofing(abs_mmd_path, context)
+    var locations:Dictionary = MmdSoundSourceParser.parse_locations(abs_mmd_path, context)
     _merge_ignition_and_shutdown_into_engine(exterior_definitions, internal_data)
 
     var cabin_definitions:Array[MmdSoundSourceDefinition] = []
@@ -40,7 +55,7 @@ static func build_into(
             continue
         if not definition.label in [
                 "buzzer", "buzzershp", "tachoclock", "brakesound", "slipperysound", "airsound", "airsound2",
-                "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2"] \
+                "airsound3", "airsound4", "airsound5", "localbrakesound", "localbrakesound2", "runningnoise"] \
                 and not definition.label in _COUPLER_LABELS:
             continue
         _apply_original_defaults(definition, true)
@@ -52,25 +67,32 @@ static func build_into(
     _add_coupler_default_sounds(exterior_definitions)
 
     var routed_exterior:Array[MmdSoundSourceDefinition] = []
+    var running_exterior:Array[MmdSoundSourceDefinition] = []
     for definition:MmdSoundSourceDefinition in exterior_definitions:
         _apply_original_defaults(definition, false)
         if definition.placement == &"internal":
             cabin_definitions.append(definition)
+        elif _is_running(definition):
+            running_exterior.append(definition)
         else:
             routed_exterior.append(definition)
 
-    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false)
-    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true)
+    _build_player(vehicle, "ExteriorSfxPlayer3D", routed_exterior, soundproofing, context, abs_mmd_path, false, locations)
+    _build_player(vehicle, "CabinSfxPlayer3D", cabin_definitions, soundproofing, context, abs_mmd_path, true, locations)
+    # own voice pool, so the looping running sounds never steal from (or lose to) the others
+    if running_exterior:
+        _build_player(vehicle, "RunningSfxPlayer3D", running_exterior, soundproofing, context, abs_mmd_path, false, locations)
     diagnostics.append_array(context.diagnostics)
 
 
 static func _build_player(
         vehicle:Node3D, player_name:String, definitions:Array[MmdSoundSourceDefinition],
         soundproofing:Array[PackedFloat32Array], context:MmdImportContext,
-        abs_mmd_path:String, cabin_only:bool) -> void:
+        abs_mmd_path:String, cabin_only:bool, locations:Dictionary) -> void:
     var events:Array[SfxEvent] = []
     var regular_definitions:Array[MmdSoundSourceDefinition] = []
     var brake_sources:Dictionary = {}
+    var running := RunningSoundModel.new()
     for definition:MmdSoundSourceDefinition in definitions:
         if not MmdSoundCatalog.has_label(definition.label):
             context.warn_unsupported_label(definition.label, abs_mmd_path, 0)
@@ -79,6 +101,9 @@ static func _build_player(
         if entry.get("controller", &"") == &"brake":
             _apply_brake_source_defaults(definition)
             brake_sources[definition.label] = definition
+            continue
+        if entry.get("controller", &"") == &"running":
+            _build_running_events(definition, entry["event_name"], locations, events, running)
             continue
         # CHANGE triggers only start their event - a one-shot sample, never stopped
         var event:SfxEvent = MmdSoundEventBuilder.build(
@@ -94,7 +119,10 @@ static func _build_player(
     var player := SfxPlayer3D.new()
     player.name = player_name
     player.bank = bank
-    player.max_tracks = _VEHICLE_PLAYER_VOICE_COUNT
+    # a running sound (or a clatter axle) crossfades at most two chunks at once
+    player.max_tracks = (
+            2 * running.sources.size() if running.sources and not (regular_definitions or brake_sources)
+            else _VEHICLE_PLAYER_VOICE_COUNT)
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
     player.max_distance = 100.0
@@ -118,6 +146,7 @@ static func _build_player(
         "cabin_only": cabin_only,
         "triggers": triggers,
         "brake_sources": brake_sources,
+        "running": running if running.sources else null,
         "soundproofing": soundproofing,
     })
 
@@ -125,6 +154,8 @@ static func _build_player(
 static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_internal_data:bool) -> void:
     if definition.label in _HORN_LABELS and not definition.soundproofing.size() == 6:
         definition.soundproofing = _HORN_SOUNDPROOFING
+    if _RUNNING_RANGES.has(definition.label) and not definition.range_defined:
+        definition.range = _RUNNING_RANGES[definition.label]
     if definition.placement_defined:
         return
     if from_internal_data:
@@ -135,9 +166,71 @@ static func _apply_original_defaults(definition:MmdSoundSourceDefinition, from_i
         definition.placement = &"engine"
     elif definition.label in _HORN_LABELS:
         definition.placement = &"external"
+    elif _RUNNING_PLACEMENTS.has(definition.label):
+        definition.placement = _RUNNING_PLACEMENTS[definition.label]
     elif MmdSoundCatalog.has_label(definition.label) \
             and MmdSoundCatalog.get_entry(definition.label).get("controller", &"") == &"brake":
         definition.placement = &"external"
+
+
+static func _is_running(definition:MmdSoundSourceDefinition) -> bool:
+    return MmdSoundCatalog.get_entry(definition.label).get("controller", &"") == &"running"
+
+
+## One event per sound location: traction motors and bogie noise are repeated at every
+## `tractionmotors:`/`bogies:` offset, keeping the x/y of the sound's own offset (DynObj.cpp:5722-5738,
+## 6137-6146); a wheel clatter definition is one axle already. MMD offsets are in the original
+## vehicle frame (+Z forward), turned by 180 degrees into the vehicle's -Z forward frame.
+static func _build_running_events(
+        definition:MmdSoundSourceDefinition, event_name:StringName, locations:Dictionary,
+        events:Array[SfxEvent], running:RunningSoundModel) -> void:
+    var offsets:Array[Vector3] = [definition.offset]
+    var location_key:String = {"tractionmotor": "tractionmotors", "outernoise": "bogies"}.get(definition.label, "")
+    if location_key and locations[location_key]:
+        offsets.clear()
+        for location:float in locations[location_key]:
+            offsets.append(Vector3(definition.offset.x, definition.offset.y, -location))
+    var first_index:int = 0
+    if definition.label == "wheel_clatter":
+        first_index = running.sources.filter(func(entry:Dictionary) -> bool:
+            return (entry["source"] as MmdSoundSourceDefinition).label == "wheel_clatter").size()
+    for index:int in range(offsets.size()):
+        var event_id:StringName = event_name
+        if offsets.size() > 1 or definition.label == "wheel_clatter":
+            event_id = StringName("%s_%d" % [event_name, first_index + index])
+        var position:Vector3 = Vector3(-offsets[index].x, offsets[index].y, -offsets[index].z)
+        if definition.label == "wheel_clatter" and definition.chunks:
+            running.sources.append({
+                "event": event_id, "source": definition,
+                "chunk_events": _build_clatter_chunk_events(definition, event_id, position, events),
+            })
+            continue
+        var event:SfxEvent = MmdSoundEventBuilder.build(
+                definition, event_id, &"point", true, true, not definition.label == "wheel_clatter")
+        event.spatial_config.position = position
+        events.append(event)
+        running.sources.append({"event": event_id, "source": definition})
+
+
+## A clatter click is a one-shot of the chunk picked by the speed - one single-sample event per
+## chunk, since an automation event never finishes while any of its chunks is left unplayed.
+static func _build_clatter_chunk_events(
+        definition:MmdSoundSourceDefinition, event_id:StringName, position:Vector3,
+        events:Array[SfxEvent]) -> Array[StringName]:
+    var chunk_events:Array[StringName] = []
+    for chunk:Dictionary in RunningSoundModel.sorted_chunks(definition):
+        var chunk_definition := MmdSoundSourceDefinition.new()
+        chunk_definition.label = definition.label
+        chunk_definition.sound_main = chunk["filename"]
+        chunk_definition.range = definition.range
+        chunk_definition.placement = definition.placement
+        chunk_definition.soundproofing = definition.soundproofing
+        var chunk_event_id:StringName = StringName("%s_%d" % [event_id, chunk_events.size()])
+        var event:SfxEvent = MmdSoundEventBuilder.build(chunk_definition, chunk_event_id, &"", true, true, false)
+        event.spatial_config.position = position
+        events.append(event)
+        chunk_events.append(chunk_event_id)
+    return chunk_events
 
 
 static func _apply_horn_spatial_config(event:SfxEvent, definition:MmdSoundSourceDefinition) -> void:

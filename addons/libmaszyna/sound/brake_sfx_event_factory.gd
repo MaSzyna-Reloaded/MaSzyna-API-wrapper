@@ -54,6 +54,15 @@ const EVENT_PARAMETERS := {
         &"brake_control_pressure": "brake_control_pressure",
     },
 }
+## Start/stop condition of an event, from the original's play()/stop() calls: the state key and the
+## value it has to exceed to start the event and fall below to stop it. An event not listed plays
+## while any of its parameters is non-zero.
+const EVENT_GATES := {
+    &"brake_shoe": ["speed", 0.05, 0.05], # DynObj.cpp:4413 (rsBrake), 4438 (rsPisk)
+    &"emergency_brake_hiss": ["brake_emergency_valve_flow", 0.025, 0.015], # DynObj.cpp:4333-4347
+    &"wheel_slip_squeal": ["slipping_wheels", 0.5, 0.5], # DynObj.cpp:4388
+    &"brake_releaser": ["brake_releaser_active", 0.5, 0.5], # DynObj.cpp:4375
+}
 const CONTINUOUS_RELEASE_SECONDS:float = 0.6
 
 

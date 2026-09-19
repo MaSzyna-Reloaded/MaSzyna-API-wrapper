@@ -1001,12 +1001,12 @@ namespace godot {
                 bool(state.get("current_collector/pantograph_second_active", false)) && pantograph_rear_converged;
         const int active_count = int(front_active) + int(rear_active);
         const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
-        electric_engine->call(
-                "set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST,
+        const double front_voltage =
                 front_active ? _pantograph_wire_voltage(
                                        2, pantograph_front_offset, axes["forward"], axes["up"], axes["left"],
                                        assumed_voltage, current)
-                             : 0.0);
+                             : 0.0;
+        electric_engine->call("set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
         electric_engine->call(
                 "set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_SECOND,
                 rear_active ? _pantograph_wire_voltage(
@@ -1063,11 +1063,15 @@ namespace godot {
         if (pressure > pressure_threshold && power_available) {
             speed_factor = MAX(0.0, 0.015 * pressure * p_delta);
         }
-        const Dictionary axes = _pantograph_frame_axes();
-        Node3D *lower_arm = Object::cast_to<Node3D>(p_arm_nodes[0]);
-        const Dictionary wire = _find_pantograph_wire(
-                p_index, lower_arm->get_global_position(), axes["up"], axes["forward"], axes["left"]);
-        const double pant_diff = double(wire["height"]) - double(p_geometry["pant_wys"]);
+        double pant_diff = Math_INF;
+        if (p_is_active) {
+            // a lowered pantograph comes down regardless of the wire (DynObj.cpp:3775), no search needed
+            const Dictionary axes = _pantograph_frame_axes();
+            Node3D *lower_arm = Object::cast_to<Node3D>(p_arm_nodes[0]);
+            const Dictionary wire = _find_pantograph_wire(
+                    p_index, lower_arm->get_global_position(), axes["up"], axes["forward"], axes["left"]);
+            pant_diff = double(wire["height"]) - double(p_geometry["pant_wys"]);
+        }
         double angle = p_geometry["angle_l"];
         if (speed_factor > 0.0 && p_is_active) {
             if (pant_diff > 0.001) {
@@ -1101,18 +1105,27 @@ namespace godot {
     Dictionary RailVehicle3D::_find_pantograph_wire(
             int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
             const Vector3 &p_left) {
+        Object *traction_power_server = _singleton("TractionPowerServer");
         Dictionary cache = pantograph_wire_cache[p_index];
-        const Vector2 horizontal(p_contact_point.x, p_contact_point.z);
-        const Vector2 last_search = cache.get("position", Vector2(Math_INF, Math_INF));
-        if (bool(cache.get("searched", false)) && horizontal.distance_to(last_search) < PANTOGRAPH_CACHE_DISTANCE) {
-            return cache["result"];
+        // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),
+        // a new search only once the pantograph left that span - a cached height made the wire height change
+        // in steps while driving, dropping the contact (and the voltage) whenever it stepped up
+        const RID wire_rid = cache.get("rid", RID());
+        if (wire_rid.is_valid()) {
+            const double height = traction_power_server->call(
+                    "wire_get_height_above", wire_rid, p_contact_point, p_up, p_forward, p_left,
+                    pantograph_collector_width);
+            if (Math::is_finite(height)) {
+                Dictionary result;
+                result["rid"] = wire_rid;
+                result["height"] = height;
+                return result;
+            }
         }
-        const Dictionary result = _singleton("TractionPowerServer")
-                                          ->call("wire_find_above_with_height", p_contact_point, p_up, p_forward,
-                                                 p_left, pantograph_collector_width);
-        cache["result"] = result;
-        cache["position"] = horizontal;
-        cache["searched"] = true;
+        // without a wire, search the region every frame like update_traction() (DynObj.cpp:8292)
+        const Dictionary result = traction_power_server->call(
+                "wire_find_above_with_height", p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
+        cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;
     }

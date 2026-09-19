@@ -112,6 +112,9 @@ func _disable_plugin():
 func _enter_tree():
     add_custom_project_setting("maszyna/import_model_scale_factor", 1.0, TYPE_FLOAT)
     add_custom_project_setting("maszyna/track_curve_bake_interval", 10.0, TYPE_FLOAT)
+    # Quirk: the original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
+    # against self-shadowing acne; Godot's default culls the same faces as the color pass
+    add_custom_project_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true, TYPE_BOOL)
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,
@@ -163,9 +166,23 @@ func _enter_tree():
         PROPERTY_HINT_RANGE, "0.0,10.0,0.001,or_greater"
     )
     add_custom_project_setting(
-        MaszynaSkyEnvironment.SHADOW_MAX_DISTANCE_SETTING, 100.0, TYPE_FLOAT,
+        MaszynaSkyEnvironment.SHADOW_EXTERIOR_MAX_DISTANCE_SETTING, 100.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,10000.0,1.0,suffix:m"
     )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_CABIN_MAX_DISTANCE_SETTING, 150.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10000.0,1.0,suffix:m"
+    )
+    add_custom_project_setting(MaszynaSkyEnvironment.SHADOW_BLEND_SPLITS_SETTING, true, TYPE_BOOL)
+    for i: int in 3:
+        add_custom_project_setting(
+            MaszynaSkyEnvironment.SHADOW_EXTERIOR_SPLIT_SETTINGS[i], MaszynaSkyEnvironment.SHADOW_EXTERIOR_SPLITS[i],
+            TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,1.0,0.001"
+        )
+        add_custom_project_setting(
+            MaszynaSkyEnvironment.SHADOW_CABIN_SPLIT_SETTINGS[i], MaszynaSkyEnvironment.SHADOW_CABIN_SPLITS[i],
+            TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,1.0,0.001"
+        )
     add_custom_project_setting(
         MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING, 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,16.0,0.001,or_greater"

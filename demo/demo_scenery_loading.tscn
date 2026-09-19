@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
 [ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="6_weather_sfx"]
+[ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 
@@ -24,10 +25,11 @@ tonemap_agx_contrast = 1.1
 
 [node name="Player" parent="." unique_id=88536137 instance=ExtResource("2_player")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
+sfx_bank = ExtResource("player_sfx_bank")
 
 [node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
 script = ExtResource("3_scenery")
-filename = "stary_jawor_eszelon.scn"
+filename = "td.scn"
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 

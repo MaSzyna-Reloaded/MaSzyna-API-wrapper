@@ -28,6 +28,8 @@ var type: TrackManager.TrackType = TrackManager.TrackType.TRACK_UNKNOWN
 @export var environment:TrackEnvironment = TrackEnvironment.FLAT
 @export_flags("Destroyed:128") var damage_flag:int = 0
 @export var quality_flag:int
+## Rail length between joints for the wheel clatter, -1 for none
+@export var sound_distance:float = -1.0
 @export var friction:float = 0.0
 @export var parameters:Dictionary = {}
 @export var width: float = 1.5:

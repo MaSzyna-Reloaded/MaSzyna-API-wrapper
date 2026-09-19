@@ -206,6 +206,7 @@ func _create_submodel_instance(target_node: E3DModelInstance, submodel: E3DSubMo
                 "maszyna/vehicle_lights_volumetric_fog_energy", 4.0
             )
             obj.shadow_enabled = true
+            obj.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
             obj.distance_fade_enabled = true
             obj.distance_fade_begin = 150.0
             obj.distance_fade_shadow = 100.0

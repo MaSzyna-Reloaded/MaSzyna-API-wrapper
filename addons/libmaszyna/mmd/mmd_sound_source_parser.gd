@@ -52,6 +52,12 @@ const _BARE_SINGLE_LABELS:Dictionary = {
     "brakeacc": true,
     "springbrake": true,
     "springbrakeoff": true,
+    # running sounds (DynObj.cpp:5710, 5801, 5916, 6123; Train.cpp:8571)
+    "tractionmotor": true,
+    "ventilator": true,
+    "curve": true,
+    "outernoise": true,
+    "runningnoise": true,
 }
 
 ## label -> bare form is 3 values (begin, main, end) + an optional trailing range - confirmed real
@@ -82,6 +88,11 @@ const _BARE_PARAMETERS:Dictionary = {
     "localbrakesound": [&"amplitude_factor", &"amplitude_offset"],
     "localbrakesound2": [&"amplitude_factor", &"amplitude_offset"],
     "releaser": [&"range"],
+    "tractionmotor": [&"range", &"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
+    "ventilator": [&"range", &"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
+    "curve": [&"range"],
+    "outernoise": [&"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
+    "runningnoise": [&"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
 }
 
 
@@ -125,7 +136,33 @@ static func parse_internal_data(abs_mmd_path:String, context:MmdImportContext) -
         "ignition": true, "shutdown": true, "buzzer": true, "buzzershp": true, "tachoclock": true,
         "brakesound": true, "slipperysound": true, "localbrakesound": true, "localbrakesound2": true,
         "airsound": true, "airsound2": true, "airsound3": true, "airsound4": true, "airsound5": true,
+        "runningnoise": true,
     })
+
+
+## Offsets along the vehicle of `tractionmotors:` and `bogies:` from the `locations:` section
+## (DynObj.cpp:6289-6326), as MMD values - negative means ahead of the centre.
+static func parse_locations(abs_mmd_path:String, context:MmdImportContext) -> Dictionary:
+    var locations:Dictionary = {"tractionmotors": PackedFloat32Array(), "bogies": PackedFloat32Array()}
+    var tokens:Array[String] = MmdCabinInstancer._tokenize_file(abs_mmd_path, context)
+    var start_index:int = MmdCabinInstancer._find_label_index(tokens, "locations:")
+    if start_index == -1:
+        return locations
+    var end_index:int = MmdCabinInstancer._find_label_index(tokens, "endlocations", start_index + 1)
+    if end_index == -1:
+        end_index = tokens.size()
+    var i:int = start_index + 1
+    while i < end_index:
+        var key:String = tokens[i].to_lower().trim_suffix(":")
+        i += 1
+        if not locations.has(key):
+            continue
+        var offsets:PackedFloat32Array = locations[key]
+        while i < end_index and not tokens[i].to_lower() == "end":
+            offsets.append(float(tokens[i]))
+            i += 1
+        locations[key] = offsets
+    return locations
 
 
 static func parse_vehicle_soundproofing(abs_mmd_path:String, context:MmdImportContext) -> Array[PackedFloat32Array]:
@@ -162,6 +199,12 @@ static func _parse_labels_in_range(
         i += 1
         if not label.ends_with(":"):
             continue # stray value token from a desync earlier - stay aligned, same as MmdCabinInstancer
+        if label == "wheel_clatter:":
+            var axles:Array[MmdSoundSourceDefinition] = []
+            i += _parse_wheel_clatter(tokens, i, axles, context, abs_mmd_path)
+            if not only_labels or only_labels.has("wheel_clatter"):
+                definitions.append_array(axles)
+            continue
         var definition := MmdSoundSourceDefinition.new()
         definition.label = label.trim_suffix(":")
         definition.source_file = abs_mmd_path
@@ -169,6 +212,37 @@ static func _parse_labels_in_range(
         if not only_labels or only_labels.has(definition.label):
             definitions.append(definition)
     return definitions
+
+
+## `wheel_clatter: <range> <axle offset> <sound> ... end` (DynObj.cpp:5643-5666): one definition
+## per axle, its sound a single sample or a block, placed at the axle - offset.z is the MMD offset
+## negated, the original vehicle frame (+Z forward, negative MMD offsets are ahead of the centre).
+static func _parse_wheel_clatter(
+        tokens:Array[String], i:int, axles:Array[MmdSoundSourceDefinition],
+        context:MmdImportContext, source_file:String) -> int:
+    var start:int = i
+    var clatter_range:float = float(tokens[i]) if i < tokens.size() else 50.0
+    i += 1
+    while i < tokens.size() and not tokens[i].to_lower() == "end":
+        var definition := MmdSoundSourceDefinition.new()
+        definition.label = "wheel_clatter"
+        definition.source_file = source_file
+        var axle_offset:float = -float(tokens[i])
+        definition.range = clatter_range
+        definition.range_defined = true
+        i += 1
+        if i < tokens.size() and tokens[i] == "{":
+            i += 1
+            while i < tokens.size() and not tokens[i] == "}":
+                i += _parse_block_field(tokens, i, definition, context, source_file)
+            i += 1 # consume "}"
+        else:
+            var result:Dictionary = _read_random_set(tokens, i, context, source_file, "wheel_clatter_%d" % axles.size())
+            definition.sound_main = result["value"]
+            i += int(result["consumed"])
+        definition.offset = Vector3(0.0, 0.0, axle_offset)
+        axles.append(definition)
+    return mini(i + 1, tokens.size()) - start # consume "end"
 
 
 static func _parse_one(

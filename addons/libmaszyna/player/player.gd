@@ -15,6 +15,7 @@ var last_controlled_train_id:String = ""
 var controlled_vehicle:RailVehicle3D
 var _camera:FreeCamera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
+@onready var external_camera:ExternalCamera3D = $ExternalCamera3D
 var _dirty: bool = true
 var _auto_start_pending:bool = true
 var _released_train_id:String = ""
@@ -26,6 +27,9 @@ func _process(_delta:float) -> void:
     if _dirty:
         _dirty = false
         var _changed:bool = false
+
+        if external_camera.current:
+            _set_external_view(false)
 
         if controlled_vehicle:
             controlled_vehicle.leave_cabin(self)
@@ -55,7 +59,7 @@ func _process(_delta:float) -> void:
         camera.rotation.z = 0.0
 
 func _input(event):
-    if event.is_action_pressed("change_vehicle") or event.is_action_pressed("cabin_mode_toggle"):
+    if event.is_action_pressed("change_vehicle") or event.is_action_pressed("cabin_mode_toggle", false, true):
         var detector:ShapeCast3D = get_camera().get_node("RailVehicleDetector")
         if not controlled_vehicle and detector.is_colliding():
             var coll:Area3D = detector.get_collider(0)
@@ -78,8 +82,17 @@ func _input(event):
     if not controlled_vehicle:
         _walk_mode_input(event)
 
-    if event.is_action_pressed("cabin_mode_toggle"):
-        if not controlled_vehicle:
+    # drivermode.cpp:803-804 - Shift+F4 cycles the external views, F4 returns from them to the cab
+    if controlled_vehicle and event.is_action_pressed("external_view_cycle", false, true):
+        if external_camera.current:
+            external_camera.next_view()
+        else:
+            _set_external_view(true)
+
+    if event.is_action_pressed("cabin_mode_toggle", false, true):
+        if external_camera.current:
+            _set_external_view(false)
+        elif not controlled_vehicle:
             if last_controlled_train_id:
                 start_train_id = last_controlled_train_id
         else:
@@ -150,6 +163,15 @@ func _find_start_vehicle() -> RailVehicle3D:
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
     var controller:TrainController = vehicle.get_controller()
     return controller.train_id if controller else ""
+
+## The cab camera is frozen while the external camera is current, so the arrow keys do not move it.
+func _set_external_view(p_enabled:bool) -> void:
+    var camera:FreeCamera3D = get_camera()
+    camera.process_mode = Node.PROCESS_MODE_DISABLED if p_enabled else Node.PROCESS_MODE_INHERIT
+    if p_enabled:
+        external_camera.activate(controlled_vehicle, camera.global_transform)
+    else:
+        camera.make_current()
 
 func get_camera() -> FreeCamera3D:
     if not _camera:

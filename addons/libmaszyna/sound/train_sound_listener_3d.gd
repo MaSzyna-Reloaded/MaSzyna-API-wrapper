@@ -26,6 +26,8 @@ func _exit_tree() -> void:
 
 
 func _process(_delta:float) -> void:
+    # follows the cab/free camera or the external view camera, whichever is current
+    _camera = get_viewport().get_camera_3d()
     global_transform = _camera.global_transform
     _refresh_context()
 

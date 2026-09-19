@@ -16,6 +16,7 @@ const LONG_LENGTH:float = 16.0
 var importer:RefCounted
 var _previous_game_dir:String
 var _vehicles:Array[DynamicRailVehicle3D] = []
+var _trainsets:Array[TrainSet3D] = []
 
 
 func before_each() -> void:
@@ -32,6 +33,9 @@ func after_each() -> void:
     for vehicle:DynamicRailVehicle3D in _vehicles:
         vehicle.free()
     _vehicles.clear()
+    for trainset:TrainSet3D in _trainsets:
+        trainset.free()
+    _trainsets.clear()
     UserSettings.save_maszyna_game_dir(_previous_game_dir)
 
 
@@ -43,10 +47,10 @@ func _write_fiz(path:String, length:float) -> void:
 
 func _trainset_context(offset:float) -> MaszynaImporterContext:
     var context := MaszynaImporterContext.new()
-    context.trainset_open = true
-    context.trainset_track = "start"
-    context.trainset_offset = offset
-    context.trainset_velocity = 0.0
+    var parser := MaszynaParser.new()
+    parser.initialize(("consist start %s 0" % offset).to_utf8_buffer(), [])
+    var trainset_importer:RefCounted = load("res://addons/libmaszyna/importer/maszyna_trainset_importer.gd").new()
+    _trainsets.append_array(trainset_importer.import(parser, context))
     return context
 
 

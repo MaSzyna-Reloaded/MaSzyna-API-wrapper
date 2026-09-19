@@ -84,6 +84,7 @@ func test_buff_coupl():
     var coupler: TrainBuffCoupl = controller.get_node("TrainBuffCoupl")
     assert_not_null(coupler)
     assert_eq(coupler.coupler_type, TrainBuffCoupl.COUPLER_TYPE_SCREW)
-    assert_eq(coupler.coupler_stiffness_k, 2500.0) # kC=2.5 kN/m -> N/m
-    assert_eq(coupler.coupler_max_tension_tolerance, 1000000.0) # FmaxC=1000 kN -> N
+    assert_eq(coupler.coupler_stiffness_k, 2.5) # kC in kN/m, converted to N/m by TrainBuffCoupl
+    assert_eq(coupler.coupler_max_tension_tolerance, 1000.0) # FmaxC in kN
+    assert_eq(coupler.buffer_location, TrainBuffCoupl.BUFFER_LOCATION_BOTH)
     assert_eq(coupler.allowed_flag, 63)

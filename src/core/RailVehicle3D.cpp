@@ -83,6 +83,7 @@ namespace godot {
         BIND_RAIL_PROPERTY(pantograph_collector_width, Variant::FLOAT);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_front_arm_paths);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_rear_arm_paths);
+        BIND_RAIL_PROPERTY(coupler_submodel_paths, Variant::DICTIONARY);
         BIND_RAIL_PROPERTY(start_track_name, Variant::STRING);
         BIND_RAIL_PROPERTY(start_track_offset, Variant::FLOAT);
         ClassDB::bind_method(D_METHOD("set_start_direction", "value"), &RailVehicle3D::set_start_direction);
@@ -358,8 +359,8 @@ namespace godot {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
                 const double velocity =
                         controller != nullptr ? double(controller->get_state().get("velocity", 0.0)) : 0.0;
+                // the vehicle is moved on its track by RailVehiclePhysicsServer's global step
                 if (!Math::is_zero_approx(velocity)) {
-                    _singleton("RailVehiclePhysicsServer")->call("process_movement", rid, p_delta);
                     _update_track_transform();
                 }
                 if (electric_engine != nullptr) {
@@ -380,6 +381,9 @@ namespace godot {
             }
             if (controller != nullptr) {
                 _sync_lights_from_controller();
+                if (is_visible) {
+                    _update_couplers();
+                }
             }
         }
     }
@@ -745,6 +749,15 @@ namespace godot {
             }
         }
 
+        coupler_submodel_nodes.clear();
+        coupler_visibility_state = -1;
+        const Array coupler_names = coupler_submodel_paths.keys();
+        for (int index = 0; index < coupler_names.size(); ++index) {
+            if (Node3D *node = node_at<Node3D>(this, coupler_submodel_paths[coupler_names[index]]); node != nullptr) {
+                coupler_submodel_nodes[coupler_names[index]] = node;
+            }
+        }
+
         pantograph_front_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_front_arm_paths);
         pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths);
         pantograph_front_geometry = _cache_pantograph_geometry(pantograph_front_arm_nodes);
@@ -755,6 +768,111 @@ namespace godot {
         for (const TypedArray<Node3D> &arm_nodes: arm_arrays) {
             for (int index = 0; index < arm_nodes.size(); ++index) {
                 _capture_rest_basis(Object::cast_to<Node3D>(arm_nodes[index]));
+            }
+        }
+    }
+
+    // Original engine: AirCoupler::GetStatus() (AirCoupler.cpp:30) - 2 with a slanted (_xon), 1 with a
+    // straight (_on) connected submodel
+    int RailVehicle3D::_air_coupler_status(const String &p_name) const {
+        if (coupler_submodel_nodes.has(p_name + String("_xon"))) {
+            return 2;
+        }
+        return coupler_submodel_nodes.has(p_name + String("_on")) ? 1 : 0;
+    }
+
+    // Original engine: TDynamicObject::GetPneumatic() (DynObj.cpp:395) - which hoses the model has at
+    // that end: 1 left, 2 right (the "r" variant), 3 both
+    int RailVehicle3D::get_pneumatic_layout(const int p_end, const bool p_brake_hose) const {
+        const String name = String(p_brake_hose ? "cpneumatic" : "pneumatic") + itos(p_end + 1);
+        const int left = _air_coupler_status(name);
+        const int right = _air_coupler_status(name + String("r"));
+        if (left > 0 && right > 0) {
+            return 3;
+        }
+        return left > 0 ? 1 : (right > 0 ? 2 : 0);
+    }
+
+    // Original engine: TDynamicObject::SetPneumatic() (DynObj.cpp:430) - picks the hose submodel
+    // matching the layout of the vehicle coupled at that end: 1 straight, 2 slanted, 3 slanted "r",
+    // 4 straight "r"
+    int RailVehicle3D::_pneumatic_variant(const int p_end, const bool p_brake_hose) const {
+        const int own = get_pneumatic_layout(p_end, p_brake_hose);
+        int other = 0;
+        if (TrainController *other_controller = controller->get_coupled_controller(p_end);
+            other_controller != nullptr) {
+            Node *node = other_controller->get_parent();
+            while (node != nullptr && Object::cast_to<RailVehicle3D>(node) == nullptr) {
+                node = node->get_parent();
+            }
+            if (const RailVehicle3D *other_vehicle = Object::cast_to<RailVehicle3D>(node); other_vehicle != nullptr) {
+                other = other_vehicle->get_pneumatic_layout(
+                        controller->get_mover()->Couplers[p_end].ConnectedNr, p_brake_hose);
+            }
+        }
+        if (own == other) {
+            switch (own) {
+                case 1:
+                    return 2;
+                case 2:
+                    return 3;
+                case 3:
+                    return controller->get_mover()->Couplers[p_end].Render ? 1 : 4;
+                default:
+                    return 0;
+            }
+        }
+        if (own == 3) {
+            return other == 1 ? 4 : 1;
+        }
+        return own == 2 ? 4 : (own == 1 ? 1 : 0);
+    }
+
+    // Original engine: AirCoupler::Update() (AirCoupler.cpp:83)
+    void RailVehicle3D::_show_air_coupler(const String &p_name, const bool p_on, const bool p_xon) {
+        const bool states[] = {p_on, !(p_on || p_xon), p_xon};
+        const char *suffixes[] = {"_on", "_off", "_xon"};
+        for (int index = 0; index < 3; ++index) {
+            if (Node3D *node = Object::cast_to<Node3D>(coupler_submodel_nodes.get(p_name + String(suffixes[index]), Variant()));
+                node != nullptr) {
+                node->set_visible(states[index]);
+            }
+        }
+    }
+
+    // Original engine: coupler and hose submodel visibility (DynObj.cpp:758-925, bnewAirCouplers branch)
+    void RailVehicle3D::_update_couplers() {
+        if (coupler_submodel_nodes.is_empty() || controller->get_mover() == nullptr) {
+            return;
+        }
+        const TMoverParameters *mover = controller->get_mover();
+        int variants[2][3];
+        int64_t state = 0;
+        for (int end = 0; end < 2; ++end) {
+            const TCoupling &coupler = mover->Couplers[end];
+            const bool coupled = (coupler.CouplingFlag & coupling::coupler) != 0;
+            // _on for the coupling owner (Render), _xon (or _off without it) for the other vehicle
+            variants[end][0] = !coupled ? 0 : (coupler.Render ? 1 : 2);
+            variants[end][1] = (coupler.CouplingFlag & coupling::brakehose) != 0 ? _pneumatic_variant(end, true) : 0;
+            variants[end][2] = (coupler.CouplingFlag & coupling::mainhose) != 0 ? _pneumatic_variant(end, false) : 0;
+            for (const int variant: variants[end]) {
+                state = state * 5 + variant;
+            }
+        }
+        if (state == coupler_visibility_state) {
+            return;
+        }
+        coupler_visibility_state = state;
+        for (int end = 0; end < 2; ++end) {
+            const String number = itos(end + 1);
+            _show_air_coupler("coupler" + number, variants[end][0] == 1,
+                              variants[end][0] == 2 && coupler_submodel_nodes.has("coupler" + number + "_xon"));
+            const char *hoses[] = {"cpneumatic", "pneumatic"};
+            for (int hose = 0; hose < 2; ++hose) {
+                const String name = String(hoses[hose]) + number;
+                const int variant = variants[end][hose + 1];
+                _show_air_coupler(name, variant == 1, variant == 2);
+                _show_air_coupler(name + String("r"), variant == 4, variant == 3);
             }
         }
     }
@@ -1048,6 +1166,17 @@ namespace godot {
     DEFINE_ARRAY_PROPERTY(pantograph_rear_arm_paths)
 
 #undef DEFINE_ARRAY_PROPERTY
+
+    void RailVehicle3D::set_coupler_submodel_paths(const Dictionary &p_value) {
+        if (coupler_submodel_paths != p_value) {
+            coupler_submodel_paths = p_value;
+            animation_bindings_dirty = true;
+        }
+    }
+
+    Dictionary RailVehicle3D::get_coupler_submodel_paths() const {
+        return coupler_submodel_paths;
+    }
 #undef DEFINE_PATH_PROPERTY
 
     void RailVehicle3D::set_lights(const TypedDictionary<String, bool> &p_value) {

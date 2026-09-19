@@ -15,7 +15,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 6
+const CACHE_FORMAT_VERSION:int = 8
 const CACHE_DIRECTORY:String = "scenery_compiled"
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
@@ -125,7 +125,7 @@ static func _build_triangle_nodes(triangles:Array) -> Array:
             var chunk_x: int = chunk["chunk_x"]
             var chunk_z: int = chunk["chunk_z"]
             var chunk_origin: Vector3 = chunk["origin"]
-            var node = MeshInstance3D.new()
+            var node := SceneryTrianglesChunk.new()
             var mesh = ArrayMesh.new()
             var arrays: Array = []
             arrays.resize(Mesh.ARRAY_MAX)
@@ -136,9 +136,7 @@ static func _build_triangle_nodes(triangles:Array) -> Array:
             node.mesh = mesh
             node.name = "%s_%s_%s" % [texture, chunk_x, chunk_z]
             node.position = chunk_origin
-            var material = MaterialManager.get_material("", texture)
-            if material:
-                node.material_override = material
+            node.material_name = texture
             if range_max > 0:
                 node.visibility_range_begin = range_min
                 node.visibility_range_end = range_max
@@ -185,6 +183,9 @@ static func _pack_objects(objects:Array) -> PackedScene:
         if object is Node:
             scene_root.add_child(object)
             object.owner = scene_root
+            if object is TrainSet3D:
+                for vehicle:Node in object.get_children():
+                    vehicle.owner = scene_root
 
     var packed_scene := PackedScene.new()
     var result:Error = packed_scene.pack(scene_root)

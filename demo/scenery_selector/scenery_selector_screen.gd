@@ -20,14 +20,30 @@ const VEHICLE_HOVER_COLOR: Color = Color(1.0, 1.0, 1.0)
 const VEHICLE_TILE_PADDING: float = 1.35
 
 const VEHICLE_SELECTED_COLOR: Color = Color(0.35, 1.0, 0.45)
+## Look of a scenery on the list, by how lit it is - selector_theme.tres
+const ITEM_VARIATIONS: Array[StringName] = [&"ListItem", &"ListItemHovered", &"ListItemSelected"]
+const ITEM_STATE_IDLE: int = 0
+const ITEM_STATE_HOVERED: int = 1
+const ITEM_STATE_SELECTED: int = 2
+## Room kept for the note on the right of a list row
+const NOTE_WIDTH: float = 180.0
 
 var _files: PackedStringArray = []
+## Title of each scenery and its item on the list, in the order of _files
+var _titles: PackedStringArray = []
+var _items: Array[PanelContainer] = []
+var _selected_index: int = -1
 var _info: MaszynaSceneryInfo = null
+## Items of the consist list, in the order of _info.trainsets
+var _consist_items: Array[PanelContainer] = []
+var _selected_consist_index: int = -1
 ## Vehicles of the shown consist and their tiles, in the order they run
 var _vehicles: Array[MaszynaSceneryInfo.Vehicle] = []
 var _vehicle_tiles: Array[Control] = []
 ## Vehicle whose viewer is open
 var _shown_index: int = -1
+## Fade of the scenery list under the viewer, killed when the other fade starts
+var _list_fade_tween: Tween = null
 
 
 
@@ -36,18 +52,131 @@ func _ready() -> void:
     files.sort()
     for file: String in files:
         # "$" files are not scenarios to start (e.g. $stary_jawor_eszelon.scn)
-        if file.get_extension().to_lower() == "scn" and not file.begins_with("$"):
-            _files.append(file)
-            %List.add_item(file.get_basename())
+        if not file.get_extension().to_lower() == "scn" or file.begins_with("$"):
+            continue
+        _files.append(file)
+        _titles.append(MaszynaSceneryInfo.read_display_name(file))
+    for index: int in _files.size():
+        var item: PanelContainer = _create_list_item(
+            index,
+            _titles[index],
+            _files[index].get_basename().to_upper(),
+            _select_scenery.bind(index),
+            _on_list_item_hovered,
+        )
+        _items.append(item)
+        %List.add_child(item)
     _show_details(-1)
     %BuildLabel.text = "Pre-Alpha Demo Release %s" % ProjectSettings.get_setting("application/config/version")
+
+
+## One row of a list: its name and, on the right, a smaller grey note
+func _create_list_item(
+    index: int, text: String, note: String, on_clicked: Callable, on_hovered: Callable
+) -> PanelContainer:
+    var item := PanelContainer.new()
+    item.theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_IDLE]
+    item.mouse_filter = Control.MOUSE_FILTER_STOP
+    item.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+    item.gui_input.connect(_on_list_item_gui_input.bind(on_clicked))
+    item.mouse_entered.connect(on_hovered.bind(index, true))
+    item.mouse_exited.connect(on_hovered.bind(index, false))
+
+    var row := HBoxContainer.new()
+    row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    row.add_theme_constant_override("separation", 16)
+    item.add_child(row)
+
+    var label := Label.new()
+    label.text = text
+    label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    # a long name must not push the note out of the panel
+    label.clip_text = true
+    label.custom_minimum_size = Vector2(120.0, 0.0)
+    label.add_theme_font_size_override("font_size", 16)
+    row.add_child(label)
+
+    var note_label := Label.new()
+    note_label.text = note
+    note_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+    note_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+    note_label.custom_minimum_size = Vector2(NOTE_WIDTH, 0.0)
+    note_label.clip_text = true
+    note_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    note_label.add_theme_font_size_override("font_size", 12)
+    note_label.add_theme_color_override("font_color", Color(0.72, 0.76, 0.82, 0.65))
+    row.add_child(note_label)
+    return item
+
+
+func _on_list_item_gui_input(event: InputEvent, on_clicked: Callable) -> void:
+    if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+        on_clicked.call()
+
+
+func _on_list_item_hovered(index: int, hovered: bool) -> void:
+    if index == _selected_index:
+        return
+    _items[index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_HOVERED if hovered else ITEM_STATE_IDLE]
+
+
+func _on_consist_item_hovered(index: int, hovered: bool) -> void:
+    if index == _selected_consist_index:
+        return
+    _consist_items[index].theme_type_variation = ITEM_VARIATIONS[
+        ITEM_STATE_HOVERED if hovered else ITEM_STATE_IDLE
+    ]
+
+
+func _select_consist(index: int) -> void:
+    if _selected_consist_index >= 0:
+        _consist_items[_selected_consist_index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_IDLE]
+    _selected_consist_index = index
+    _consist_items[index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_SELECTED]
+    _show_consist(index)
+
+
+func _select_scenery(index: int) -> void:
+    if _selected_index >= 0:
+        _items[_selected_index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_IDLE]
+    _selected_index = index
+    _items[index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_SELECTED]
+    _show_details(index)
+
+
+## Sceneries whose title or file name contain the searched text
+func _filter_list(text: String) -> void:
+    var needle: String = text.strip_edges().to_lower()
+    for index: int in _items.size():
+        _items[index].visible = (
+            not needle
+            or _titles[index].to_lower().contains(needle)
+            or _files[index].to_lower().contains(needle)
+        )
+
+
+func _on_search_text_changed(text: String) -> void:
+    %ClearSearch.visible = not text.is_empty()
+    %SearchDebounce.start()
+
+
+func _on_search_debounce_timeout() -> void:
+    _filter_list(%Search.text)
+
+
+func _on_clear_search_pressed() -> void:
+    %Search.text = ""
+    %ClearSearch.visible = false
+    _filter_list("")
+    %Search.grab_focus()
 
 
 func open() -> void:
     (%Background.material as ShaderMaterial).set_shader_parameter("dissolve", 0.0)
     %Content.visible = true
     visible = true
-    %List.grab_focus()
+    %Search.grab_focus()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -60,64 +189,72 @@ func _unhandled_input(event: InputEvent) -> void:
     quit_requested.emit()
 
 
-func _on_list_item_selected(index: int) -> void:
-    _show_details(index)
-
-
 func _on_load_button_pressed() -> void:
-    var selected: PackedInt32Array = %List.get_selected_items()
     %Content.visible = false
-    scenery_selected.emit(_files[selected[0]], _get_selected_train_id(), _get_skin_overrides())
+    scenery_selected.emit(_files[_selected_index], _get_selected_train_id(), _get_skin_overrides())
     var tween: Tween = create_tween()
     tween.tween_property(%Background.material, "shader_parameter/dissolve", 1.0, DISSOLVE_TIME)
     tween.tween_callback(hide)
 
 
-func _on_consists_item_selected(index: int) -> void:
-    _show_consist(index)
-
-
 ## The player starts in the headdriver vehicle of the selected consist
 func _get_selected_train_id() -> String:
-    var selected: PackedInt32Array = %Consists.get_selected_items()
-    if not _info or not selected:
+    if not _info or _selected_consist_index < 0:
         return ""
-    return _info.trainsets[selected[0]].get_driver_train_id()
+    return _info.trainsets[_selected_consist_index].get_driver_train_id()
 
 
 func _show_details(index: int) -> void:
     %LoadButton.disabled = index < 0
     %Image.texture = null
     %Image.visible = false
-    %Consists.clear()
+    for item: PanelContainer in _consist_items:
+        item.queue_free()
+    _consist_items.clear()
+    _selected_consist_index = -1
     _info = null
     if index < 0:
         %Title.text = ""
+        %FileName.text = ""
         %Description.text = ""
         %ConsistsHeader.visible = false
-        %Consists.visible = false
+        %ConsistsScroll.visible = false
         _show_consist(-1)
         return
     _info = MaszynaSceneryInfo.read(_files[index])
-    %Title.text = _info.title if _info.title else _files[index].get_basename()
+    %Title.text = _titles[index]
+    %FileName.text = _files[index].get_basename().to_upper()
     %Description.text = _info.description
     if _info.image_path:
         var image: Image = Image.load_from_file(_info.image_path)
         if image:
             %Image.texture = ImageTexture.create_from_image(image)
             %Image.visible = true
-    for trainset: MaszynaSceneryInfo.Trainset in _info.trainsets:
-        %Consists.add_item(_format_consist(trainset))
+    for consist_index: int in _info.trainsets.size():
+        var trainset: MaszynaSceneryInfo.Trainset = _info.trainsets[consist_index]
+        var item: PanelContainer = _create_list_item(
+            consist_index,
+            _get_consist_name(trainset),
+            _format_consist_note(trainset),
+            _select_consist.bind(consist_index),
+            _on_consist_item_hovered,
+        )
+        _consist_items.append(item)
+        %Consists.add_child(item)
     var has_consists: bool = _info.trainsets.size() > 0
     %ConsistsHeader.visible = has_consists
-    %Consists.visible = has_consists
+    %ConsistsScroll.visible = has_consists
     if has_consists:
-        %Consists.select(0)
-    _show_consist(0 if has_consists else -1)
+        _select_consist(0)
+    else:
+        _show_consist(-1)
 
 
 ## The vehicles of the consist as their skin textures, and its mission description
 func _show_consist(index: int) -> void:
+    # the viewer shows a vehicle of the consist that is going away
+    if %VehicleViewer.visible:
+        %VehicleViewer.close()
     for child: Node in %Vehicles.get_children():
         child.queue_free()
     _vehicles.clear()
@@ -240,9 +377,11 @@ func _show_vehicle(index: int) -> void:
     _set_vehicle_glow(_shown_index, Color.TRANSPARENT)
     _shown_index = index
     _set_vehicle_glow(index, VEHICLE_SELECTED_COLOR)
-    var tween: Tween = create_tween()
-    tween.tween_property(%ListPanel, "modulate:a", 0.0, VehicleViewer.FADE_TIME)
-    tween.tween_callback(%ListPanel.hide)
+    if _list_fade_tween:
+        _list_fade_tween.kill()
+    _list_fade_tween = create_tween()
+    _list_fade_tween.tween_property(%ListPanel, "modulate:a", 0.0, VehicleViewer.FADE_TIME)
+    _list_fade_tween.tween_callback(%ListPanel.hide)
     %VehicleViewer.show_vehicle(_vehicles[index])
 
 
@@ -252,13 +391,17 @@ func _on_vehicle_viewer_closed() -> void:
     _shown_index = -1
     %ListPanel.modulate.a = 0.0
     %ListPanel.visible = true
-    var tween: Tween = create_tween()
-    tween.tween_property(%ListPanel, "modulate:a", 1.0, VehicleViewer.FADE_TIME)
+    if _list_fade_tween:
+        _list_fade_tween.kill()
+    _list_fade_tween = create_tween()
+    _list_fade_tween.tween_property(%ListPanel, "modulate:a", 1.0, VehicleViewer.FADE_TIME)
 
 
-static func _format_consist(trainset: MaszynaSceneryInfo.Trainset) -> String:
-    var driver_train_id: String = trainset.get_driver_train_id()
-    var consist_name: String = (
-        trainset.name if trainset.name and not trainset.name.to_lower() == "none" else driver_train_id
-    )
-    return "%s - %d pojazdów, start: %s" % [consist_name, trainset.vehicles.size(), driver_train_id]
+## A consist is named by the vehicle the player starts in - the "trainset" line carries the
+## starting track, not a name; the vehicles are named in "node <x> <y> <name> dynamic"
+static func _get_consist_name(trainset: MaszynaSceneryInfo.Trainset) -> String:
+    return trainset.get_driver_train_id()
+
+
+static func _format_consist_note(trainset: MaszynaSceneryInfo.Trainset) -> String:
+    return "%d POJAZDÓW" % trainset.vehicles.size()

@@ -30,6 +30,8 @@ var _skin: String = ""
 var _skins: Array[String] = []
 var _skin_buttons: Array[TextureButton] = []
 var _skin_index: int = -1
+## Fading in or out; killed when the other fade starts, so they never fight over modulate
+var _fade_tween: Tween = null
 
 
 
@@ -49,8 +51,10 @@ func show_vehicle(vehicle: MaszynaSceneryInfo.Vehicle) -> void:
     _build_skin_grid()
     modulate.a = 0.0
     visible = true
-    var tween: Tween = create_tween()
-    tween.tween_property(self, "modulate:a", 1.0, FADE_TIME)
+    if _fade_tween:
+        _fade_tween.kill()
+    _fade_tween = create_tween()
+    _fade_tween.tween_property(self, "modulate:a", 1.0, FADE_TIME)
 
 
 ## Keeps the turntable where it is - picking a skin only swaps the model
@@ -222,9 +226,12 @@ func _on_apply_button_pressed() -> void:
 ## Fades the viewer out; the scenery list fades in under it at the same time
 func close() -> void:
     closed.emit()
-    var tween: Tween = create_tween()
-    tween.tween_property(self, "modulate:a", 0.0, FADE_TIME)
-    await tween.finished
+    if _fade_tween:
+        _fade_tween.kill()
+    _fade_tween = create_tween()
+    _fade_tween.tween_property(self, "modulate:a", 0.0, FADE_TIME)
+    # a fade in started meanwhile kills this tween, and the viewer stays open
+    await _fade_tween.finished
     visible = false
     if _model:
         _model.queue_free()

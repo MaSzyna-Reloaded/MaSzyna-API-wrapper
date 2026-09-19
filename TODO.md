@@ -59,6 +59,12 @@
   (whole `.scm` piece - key = path + hash of all params, reusable across sceneries). Results must be
   cached in local space (importers currently bake context origin/rotate into the data); invalidate
   by the dependency list like the compiled scenery cache.
+* Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
+  render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
+  `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by
+  `maszyna_node_model_importer.gd`.
+* Scenery models have no nodes, so they can't be picked/selected in the editor and don't follow
+  the `MaszynaIncludeNode` transform/visibility (world-space, like tracks and traction).
 
 ## Tests
 

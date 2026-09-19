@@ -51,9 +51,15 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
                 context.power_sources.append(power_source)
 
         "model":
-            obj = model_importer.import(p, context)
-            #if obj and context.rotate:
-            #    obj.rotation += Vector3(context.rotate)
+            var model:MaszynaModelData = model_importer.import(p, context)
+            if model:
+                # same context transform as for Node3D objects below
+                model.position = model.position.rotated(Vector3.UP, context.rotate.y) + context.origin
+                model.rotation += Vector3(context.rotate)
+                if range_max > 0:
+                    model.range_min = range_min
+                    model.range_max = range_max
+                context.models.append(model)
 
         "track":
             var track = track_importer.import(p, context)

@@ -31,10 +31,10 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
 
 var _loading:bool = false
 
-## Tracks and traction are built directly against TrackManager/TrackRenderingServer/
-## TractionRenderingServer/TractionPowerServer RIDs, not as scene nodes (see
+## Tracks, traction and models are built directly against TrackManager/TrackRenderingServer/
+## TractionRenderingServer/TractionPowerServer/E3DRenderingServer RIDs, not as scene nodes (see
 ## scenery_instancer.gd's instantiate()
-## doc comment for why) - so unlike triangle/model children, they aren't cleaned up just by
+## doc comment for why) - so unlike triangle children, they aren't cleaned up just by
 ## removing children from the tree. scenery_instancer.gd appends the RIDs it creates here;
 ## _free_owned_rids() releases them all, called before every reload and on exiting the tree.
 var _track_rids:Array[RID] = []
@@ -42,6 +42,7 @@ var _track_render_rids:Array[RID] = []
 var _traction_rids:Array[RID] = []
 var _wire_power_rids:Array[RID] = []
 var _power_source_rids:Array[RID] = []
+var _e3d_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -68,11 +69,14 @@ func _free_owned_rids() -> void:
     for rid:RID in _power_source_rids:
         if rid.is_valid():
             TractionPowerServer.power_source_free(rid)
+    for rid:RID in _e3d_rids:
+        E3DRenderingServer.instance_free(rid)
     _track_rids.clear()
     _track_render_rids.clear()
     _traction_rids.clear()
     _wire_power_rids.clear()
     _power_source_rids.clear()
+    _e3d_rids.clear()
 
 func _clear_content() -> void:
     _free_owned_rids()

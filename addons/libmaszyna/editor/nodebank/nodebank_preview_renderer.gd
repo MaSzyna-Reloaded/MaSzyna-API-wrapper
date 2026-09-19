@@ -46,8 +46,6 @@ func _render_preview(item_data: NodebankGridItem) -> Texture2D:
     viewport.add_child(root)
     viewport.add_child(instance)
 
-    E3DNodesInstancer.instantiate(instance, instance.model, false)
-
     var aabb: AABB = E3DModelTool.get_aabb(instance.model)
 
     if aabb.size.length_squared() <= 0.0:

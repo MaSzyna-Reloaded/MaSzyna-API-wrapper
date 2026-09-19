@@ -15,7 +15,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 9
+const CACHE_FORMAT_VERSION:int = 11
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Top-level .scn parsing: chunk size, time spent between progress reports, share of the progress
 const PARSE_CHUNK_BYTES:int = 512
@@ -36,9 +36,10 @@ static func clear_cache() -> void:
 
 ## Parses root.filename and (re-)populates root with everything the scenery declares.
 ##
-## Tracks and traction are built directly against TrackManager/TrackRenderingServer/
-## TractionRenderingServer's RID-based API (_build_track()/_build_traction() below) instead of
-## instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D nodes - a real scenery can have
+## Tracks, traction and models are built directly against TrackManager/TrackRenderingServer/
+## TractionRenderingServer/E3DRenderingServer's RID-based API (_build_track()/_build_traction()/
+## _build_model() below) instead of instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D/
+## E3DModelInstance nodes - a real scenery can have
 ## thousands of these, and a Node per segment (each with its own @tool script and per-frame
 ## _process()) is overhead that only actually earns its keep for a handful of hand-authored
 ## pieces edited directly in a scene like demo_3d.tscn. root keeps the resulting RIDs
@@ -62,6 +63,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             compiled.tracks,
             compiled.traction,
             compiled.power_sources,
+            compiled.models,
         )
         await _report_progress(root, 0.6, "Instancing objects")
         _attach_objects(root, _instantiate_cached_nodes(compiled.nodes))
@@ -75,7 +77,9 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var objects:Array = await _parse_file_with_progress(root, parameters, context)
 
     await _report_progress(root, PARSE_PROGRESS, "Building tracks and traction")
-    _instantiate_server_data(root, world_3d, context.tracks, context.traction, context.power_sources)
+    _instantiate_server_data(
+        root, world_3d, context.tracks, context.traction, context.power_sources, context.models
+    )
     objects.append_array(_build_triangle_nodes(context.triangles))
 
     if root.use_cache and context.cacheable:
@@ -110,6 +114,7 @@ static func _instantiate_server_data(
     tracks:Array[MaszynaTrackData],
     traction:Array[MaszynaTractionData],
     power_sources:Array[MaszynaPowerSourceData],
+    models:Array[MaszynaModelData],
 ) -> void:
     for track_data:MaszynaTrackData in tracks:
         var built:Dictionary = _build_track(track_data, world_3d)
@@ -127,6 +132,11 @@ static func _instantiate_server_data(
 
     if root._track_rids.size() > 0:
         TrackManager.topology_rebuild()
+
+    for model_data:MaszynaModelData in models:
+        var e3d_rid:RID = _build_model(model_data, world_3d)
+        if e3d_rid.is_valid():
+            root._e3d_rids.append(e3d_rid)
 
 
 static func _build_triangle_nodes(triangles:Array) -> Array:
@@ -203,6 +213,7 @@ static func _compile_scenery(
     compiled.tracks = context.tracks
     compiled.traction = context.traction
     compiled.power_sources = context.power_sources
+    compiled.models = context.models
     return compiled
 
 
@@ -481,6 +492,23 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
     TractionRenderingServer.set_traction_scenario(traction_rid, world_3d.scenario)
     TractionRenderingServer.set_traction_material(traction_rid, _get_traction_material(traction_data).get_rid())
     return traction_rid
+
+
+## Mirrors E3DModelInstance's own _create_instance() (addons/libmaszyna/e3d/e3d_model_instance.gd)
+## with the OPTIMIZED instancer, minus the Node.
+static func _build_model(model_data:MaszynaModelData, world_3d:World3D) -> RID:
+    var model:E3DModel = E3DModelManager.load_model(model_data.data_path, model_data.model_filename)
+    if not model:
+        return RID()
+    var e3d_rid:RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_OPTIMIZED)
+    E3DRenderingServer.instance_set_options(e3d_rid, model_data.data_path, model_data.skins, [], false, [])
+    E3DRenderingServer.instance_set_scenario(e3d_rid, world_3d.scenario)
+    E3DRenderingServer.instance_set_transform(
+        e3d_rid, Transform3D(Basis.from_euler(model_data.rotation), model_data.position)
+    )
+    E3DRenderingServer.instance_set_visibility_range(e3d_rid, model_data.range_min, model_data.range_max)
+    E3DRenderingServer.instance_build(e3d_rid)
+    return e3d_rid
 
 
 ## Mirrors _build_traction() - a tractionpowersource node has no visual representation, so this

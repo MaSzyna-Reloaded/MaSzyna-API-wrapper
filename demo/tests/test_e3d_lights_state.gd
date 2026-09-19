@@ -2,13 +2,10 @@ extends MaszynaGutTest
 
 const MATERIALS_GAME_DIR = "res://tests/materials"
 
-var instancer: E3DInstancer
 var _previous_game_dir: String = ""
 
 
 func before_each() -> void:
-    instancer = load("res://addons/libmaszyna/e3d/e3d_nodes_instancer.gd").new()
-    add_child_autoqfree(instancer)
     _previous_game_dir = UserSettings.get_maszyna_game_dir()
     UserSettings.save_maszyna_game_dir(MATERIALS_GAME_DIR)
 
@@ -18,11 +15,11 @@ func after_each() -> void:
 
 
 func test_model_instance_synchronizes_lights_state_with_model() -> void:
-    var instance: E3DModelInstance = load("res://addons/libmaszyna/e3d/e3d_model_instance.gd").new()
-    var model: E3DModel = _create_model_with_lights(["front", "rear"])
+    var instance: E3DModelInstance = E3DModelInstance.new()
+    instance.instancer = E3DModelInstance.Instancer.OPTIMIZED
+    instance.model = _create_model_with_lights(["front", "rear"])
     add_child_autoqfree(instance)
 
-    instance._model = model
     instance.lights_state = {
         "front": true,
         "stale": true,
@@ -34,13 +31,12 @@ func test_model_instance_synchronizes_lights_state_with_model() -> void:
 
 
 func test_nodes_instancer_maps_light_on_prefix_family() -> void:
-    var target_node: E3DModelInstance = load("res://addons/libmaszyna/e3d/e3d_model_instance.gd").new()
+    var target_node: E3DModelInstance = E3DModelInstance.new()
     var model: E3DModel = E3DModel.new()
     var light_on: E3DSubModel = _create_transform_submodel("light_on00", false)
     var light_off: E3DSubModel = _create_transform_submodel("light_off00", true)
     var spotlight: E3DSubModel = _create_spotlight_submodel("spotlight", false)
     var light_definition: E3DModelLightDefinition = E3DModelLightDefinition.new()
-    add_child_autoqfree(target_node)
 
     light_on.submodels = [spotlight]
     model.submodels = [light_on, light_off]
@@ -48,10 +44,9 @@ func test_nodes_instancer_maps_light_on_prefix_family() -> void:
     light_definition.off_submodel_path = NodePath("light_off00")
     model.register_light("00", light_definition)
 
-    target_node._model = model
+    target_node.model = model
     target_node.lights_state = {"00": false}
-
-    instancer.instantiate(target_node, model, false)
+    add_child_autoqfree(target_node)
 
     var light_on_node: Node3D = target_node.get_node(NodePath("light_on00"))
     var light_off_node: Node3D = target_node.get_node(NodePath("light_off00"))
@@ -62,33 +57,28 @@ func test_nodes_instancer_maps_light_on_prefix_family() -> void:
     assert_false(spotlight_node.visible, "Spotlight should start hidden when light is disabled")
 
     target_node.lights_state = {"00": true}
-    instancer.sync_lights(target_node)
 
     assert_true(light_on_node.visible, "On node should become visible when light is enabled")
     assert_false(light_off_node.visible, "Off node should become hidden when light is enabled")
     assert_true(spotlight_node.visible, "Spotlight should become visible when light is enabled")
 
 
-## Regression: e3d_instancer.gd's _get_material_override() never populated
-## MaterialOptions.diffuse_color from the real parsed submodel (left as a TODO, silently leaving
+## Regression: the E3D submodel material override (now MaterialManager.get_submodel_material())
+## never populated MaterialOptions.diffuse_color from the real parsed submodel (left as a TODO, silently leaving
 ## every textured/named-material submodel's albedo at the shader's default white) - unlike
 ## test_material_manager_variants.gd's MaterialFactory-level coverage, which only ever built
 ## MaterialOptions by hand and so never exercised this real instancing call path, this test goes
-## through the actual E3DInstancer entry point a real model load uses. Confirmed real: EP07's
+## through the actual material resolver entry point a real model load uses. Confirmed real: EP07's
 ## "wylszybki_on"/"_off" main-breaker indicator lamp submodels, diffuse (0, 0.749, 0) over a
 ## textured material, rendered white in-game despite the model file's own diffuse being green.
 func test_get_material_override_uses_real_submodel_diffuse_color() -> void:
-    var target_node: E3DModelInstance = load("res://addons/libmaszyna/e3d/e3d_model_instance.gd").new()
-    add_child_autoqfree(target_node)
-    target_node.data_path = "test"
-
     var submodel: E3DSubModel = E3DSubModel.new()
     submodel.resource_name = "wylszybki_on"
     submodel.submodel_type = E3DSubModel.SUBMODEL_GL_TRIANGLES
     submodel.material_name = "nontransparent_manager"
     submodel.diffuse_color = Color(0.0, 0.749, 0.0, 1.0)
 
-    var material: ShaderMaterial = instancer._get_material_override(target_node, submodel) as ShaderMaterial
+    var material: ShaderMaterial = MaterialManager.get_submodel_material(submodel, "test", [], false) as ShaderMaterial
 
     assert_not_null(material, "a submodel with material_name should get a material override")
     if material:

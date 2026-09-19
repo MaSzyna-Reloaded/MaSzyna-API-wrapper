@@ -4,6 +4,7 @@ extends Node
 static var UNKNOWN_MATERIAL = preload("res://addons/libmaszyna/materials/unknown.material")
 static var UNKNOWN_TEXTURE = preload("res://addons/libmaszyna/materials/missing_texture.png")
 const DDSTextureLoader = preload("res://addons/libmaszyna/materials/dds_texture_loader.gd")
+const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/e3d/colored.material")
 
 var _materials_cache = ResourceCache.create("materials")
 var _managed_materials: Dictionary = {}
@@ -33,6 +34,10 @@ class MaterialOptions:
         if not x == weather:
             weather = x
             _refresh_managed_materials()
+
+
+func _ready() -> void:
+    E3DRenderingServer.set_material_resolver(get_submodel_material)
 
 
 func clear_cache() -> void:
@@ -78,6 +83,47 @@ func get_material(
     if is_newly_created:
         _materials_cache.set(cache_hash, output)
     return output
+
+## Material override of an E3D submodel - the material resolver of [E3DRenderingServer].
+## The first segment of [param data_path] is dropped from the material search path
+## (see maszyna_rail_vehicle_3d_instancer.gd's _build_structure()).
+func get_submodel_material(
+    submodel: E3DSubModel,
+    data_path: String,
+    skins: PackedStringArray,
+    force_alpha: bool,
+) -> Material:
+    var unprefixed_model_path: String = "/".join(data_path.split("/").slice(1))
+    var options: MaterialOptions = MaterialOptions.new()
+
+    # TODO: handle more material options here (selfillum, etc)
+    options.force_transparent = force_alpha
+    options.diffuse_color = submodel.diffuse_color
+    options.selfillum_color = (
+        submodel.self_illumination
+        if submodel.self_illumination and not submodel.self_illumination == Color.BLACK
+        else Color.WHITE
+    )
+    options.selfillum_energy = options.selfillum_color.a  # legacy renderer
+    options.selfillum_enabled = options.selfillum_energy > 0.0 and submodel.lights_on_threshold >= 1.0  # legacy renderer logic
+
+    if submodel.dynamic_material:
+        if skins.size() < submodel.dynamic_material_index + 1:
+            push_warning(
+                "Model %s has no skins set, but submodel requires material #%s"
+                % [data_path, submodel.dynamic_material_index]
+            )
+            return null
+        return get_material(unprefixed_model_path, skins[submodel.dynamic_material_index], options)
+
+    if submodel.material_colored:
+        return COLORED_MATERIAL
+
+    if submodel.material_name:
+        return get_material(unprefixed_model_path, submodel.material_name, options)
+
+    return null
+
 
 func get_texture(texture_path:String) -> Texture:
     return load_texture("", texture_path)

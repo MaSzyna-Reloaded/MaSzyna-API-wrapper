@@ -8,6 +8,7 @@ var origin := Vector3.ZERO
 var tracks:Array[MaszynaTrackData] = []
 var traction:Array[MaszynaTractionData] = []
 var power_sources:Array[MaszynaPowerSourceData] = []
+var models:Array[MaszynaModelData] = []
 var terrains: Array = []
 var triangles: Array = []
 var dependencies:Dictionary = {}

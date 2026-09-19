@@ -676,7 +676,32 @@ namespace godot {
         return internal_state;
     }
 
+    // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
+    // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there
+    void TrainController::_consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state) {
+        static const int kinds[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
+                                    sound::attachcontrol, sound::attachgangway,   sound::attachheating};
+        static const char *names[] = {"coupler", "brakehose", "mainhose", "control", "gangway", "heating"};
+        for (TCoupling &coupler: p_mover->Couplers) {
+            if (coupler.sounds == sound::none) {
+                continue;
+            }
+            const int offset = (coupler.sounds & sound::detach) != 0 ? 6 : 0;
+            for (int index = 0; index < 6; ++index) {
+                if ((coupler.sounds & kinds[index]) != 0) {
+                    ++coupler_sound_counts[offset + index];
+                }
+            }
+            coupler.sounds = sound::none;
+        }
+        for (int index = 0; index < 12; ++index) {
+            p_state[String(index < 6 ? "coupler_sound/attach_" : "coupler_sound/detach_") + names[index % 6]] =
+                    coupler_sound_counts[index];
+        }
+    }
+
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        _consume_coupler_sounds(p_mover, p_state);
         internal_state["mass_total"] = p_mover->TotalMass;
         internal_state["velocity"] = p_mover->V;
         internal_state["speed"] = p_mover->Vel;

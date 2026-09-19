@@ -55,6 +55,9 @@ namespace godot {
             Object *_get_rail_vehicle_physics_server() const;
             void _emit_position_changed_if_needed();
             int _resolve_coupler_end(const Variant &p_where) const;
+            // attach/detach sound requests of the couplers, one counter per coupling type and direction
+            int coupler_sound_counts[12] = {};
+            void _consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state);
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface

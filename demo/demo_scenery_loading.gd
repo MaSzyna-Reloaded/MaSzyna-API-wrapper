@@ -17,6 +17,8 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
     if event.is_action_pressed("hud_toggle"):
         $TopBar/HBoxContainer/ToggleAllControls.button_pressed = not $TopBar/HBoxContainer/ToggleAllControls.button_pressed
+    if event.is_action_pressed("toggle_weather_controls"):
+        $ControlWindows/WeatherAndTime.visible = not $ControlWindows/WeatherAndTime.visible
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:

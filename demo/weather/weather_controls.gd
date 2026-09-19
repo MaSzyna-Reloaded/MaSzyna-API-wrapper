@@ -1,6 +1,6 @@
-extends CanvasLayer
+extends VBoxContainer
 
-## Weather and time bar driving MaszynaEnvironmentNode, toggled with toggle_weather_controls (F9)
+## Weather and time controls driving MaszynaEnvironmentNode, content of the "Weather and Time" HUD window
 ## (ported from forest-test-scene ui/WeatherControlsCanvas.gd).
 
 const WIND_DIRECTION_OPTIONS: Array[Dictionary] = [
@@ -19,33 +19,31 @@ const WIND_DIRECTION_OPTIONS: Array[Dictionary] = [
 var _environment_node: MaszynaEnvironmentNode
 var _time_slider_dragging: bool = false
 
-@onready var _weather_panel: PanelContainer = $WeatherControlsRoot/WeatherPanel
-@onready var _wind_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row/WindValueLabel
-@onready var _rain_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row/RainValueLabel
-@onready var _cloud_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row/CloudValueLabel
-@onready var _fog_density_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row/FogDensityValueLabel
-@onready var _fog_range_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row/FogRangeValueLabel
-@onready var _time_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row/TimeValueLabel
-@onready var _day_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row/DayValueLabel
-@onready var _month_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row/MonthValueLabel
-@onready var _year_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row/YearValueLabel
-@onready var _day_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row/DaySlider
-@onready var _month_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row/MonthSlider
-@onready var _year_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row/YearSlider
-@onready var _time_scale_value_label: Label = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row/TimeScaleValueLabel
-@onready var _wind_strength_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row/WindSlider
-@onready var _wind_direction_button: OptionButton = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindDirectionGroup/WindDirectionButton
-@onready var _rain_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row/RainSlider
-@onready var _cloud_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row/CloudSlider
-@onready var _fog_density_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row/FogDensitySlider
-@onready var _fog_range_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row/FogRangeSlider
-@onready var _time_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row/TimeSlider
-@onready var _time_scale_slider: HSlider = $WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row/TimeScaleSlider
+@onready var _wind_value_label: Label = $WeatherRow/WindGroup/Row/WindValueLabel
+@onready var _rain_value_label: Label = $WeatherRow/RainGroup/Row/RainValueLabel
+@onready var _cloud_value_label: Label = $WeatherRow/CloudGroup/Row/CloudValueLabel
+@onready var _fog_density_value_label: Label = $WeatherRow/FogDensityGroup/Row/FogDensityValueLabel
+@onready var _fog_range_value_label: Label = $WeatherRow/FogRangeGroup/Row/FogRangeValueLabel
+@onready var _time_value_label: Label = $TimeRow/TimeGroup/Row/TimeValueLabel
+@onready var _day_value_label: Label = $TimeRow/DayGroup/Row/DayValueLabel
+@onready var _month_value_label: Label = $TimeRow/MonthGroup/Row/MonthValueLabel
+@onready var _year_value_label: Label = $TimeRow/YearGroup/Row/YearValueLabel
+@onready var _day_slider: HSlider = $TimeRow/DayGroup/Row/DaySlider
+@onready var _month_slider: HSlider = $TimeRow/MonthGroup/Row/MonthSlider
+@onready var _year_slider: HSlider = $TimeRow/YearGroup/Row/YearSlider
+@onready var _time_scale_value_label: Label = $TimeRow/TimeScaleGroup/Row/TimeScaleValueLabel
+@onready var _wind_strength_slider: HSlider = $WeatherRow/WindGroup/Row/WindSlider
+@onready var _wind_direction_button: OptionButton = $WeatherRow/WindDirectionGroup/WindDirectionButton
+@onready var _rain_slider: HSlider = $WeatherRow/RainGroup/Row/RainSlider
+@onready var _cloud_slider: HSlider = $WeatherRow/CloudGroup/Row/CloudSlider
+@onready var _fog_density_slider: HSlider = $WeatherRow/FogDensityGroup/Row/FogDensitySlider
+@onready var _fog_range_slider: HSlider = $WeatherRow/FogRangeGroup/Row/FogRangeSlider
+@onready var _time_slider: HSlider = $TimeRow/TimeGroup/Row/TimeSlider
+@onready var _time_scale_slider: HSlider = $TimeRow/TimeScaleGroup/Row/TimeScaleSlider
 
 
 func _ready() -> void:
     _environment_node = get_node(environment_node_path) as MaszynaEnvironmentNode
-    _weather_panel.add_theme_stylebox_override("panel", _make_panel_style())
     for option: Dictionary in WIND_DIRECTION_OPTIONS:
         _wind_direction_button.add_item(option["label"])
 
@@ -64,14 +62,9 @@ func _ready() -> void:
     _year_slider.value_changed.connect(_on_year_changed)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-    if event.is_action_pressed("toggle_weather_controls"):
-        visible = not visible
-
-
-# Mirrors the environment node, so presets and changes made elsewhere show up in the bar.
+# Mirrors the environment node, so presets and changes made elsewhere show up in the controls.
 func _process(_delta: float) -> void:
-    if not visible:
+    if not is_visible_in_tree():
         return
 
     if not _time_slider_dragging:
@@ -189,15 +182,3 @@ func _format_time_label(value: float) -> String:
         minutes = 0
     return "%02d:%02d" % [hours, minutes]
 
-
-func _make_panel_style() -> StyleBoxFlat:
-    var panel_style: StyleBoxFlat = StyleBoxFlat.new()
-    panel_style.bg_color = Color(0.05, 0.055, 0.06, 0.74)
-    panel_style.set_corner_radius_all(14)
-    panel_style.set_border_width_all(1)
-    panel_style.border_color = Color(0.7, 0.74, 0.68, 0.18)
-    panel_style.content_margin_left = 12.0
-    panel_style.content_margin_top = 8.0
-    panel_style.content_margin_right = 12.0
-    panel_style.content_margin_bottom = 8.0
-    return panel_style

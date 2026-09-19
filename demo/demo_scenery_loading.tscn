@@ -46,9 +46,6 @@ script = ExtResource("3_scenery")
 
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
-[node name="WeatherControls" parent="." unique_id=1919120931 instance=ExtResource("5_weather_controls")]
-environment_node_path = NodePath("../MaszynaEnvironmentNode")
-
 [node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
 weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
@@ -206,6 +203,21 @@ metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
 [node name="MiniMapControl" parent="ControlWindows/MiniMap" unique_id=234941782 instance=ExtResource("11_minimap")]
 layout_mode = 2
+
+[node name="WeatherAndTime" type="Container" parent="ControlWindows" unique_id=1426730518]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+offset_left = 24.0
+offset_top = 45.0
+offset_right = 1250.0
+offset_bottom = 225.0
+script = ExtResource("9_window")
+title = "Weather and Time"
+
+[node name="WeatherControls" parent="ControlWindows/WeatherAndTime" unique_id=1919120931 instance=ExtResource("5_weather_controls")]
+layout_mode = 2
+environment_node_path = NodePath("../../../MaszynaEnvironmentNode")
 
 [node name="Scenery" type="Container" parent="ControlWindows" unique_id=2011306675]
 top_level = true

@@ -26,6 +26,7 @@
 [ext_resource type="Script" uid="uid://duaegoh4xg84s" path="res://addons/libmaszyna/tracks/track_switch_3d.gd" id="25_track_switch"]
 [ext_resource type="Material" uid="uid://bokq2xuaxcfw8" path="res://materials/impuls_head_display.tres" id="28_tdoik"]
 [ext_resource type="Script" uid="uid://djd17om24oh3s" path="res://addons/libmaszyna/dynamic_rail_vehicle_3d.gd" id="29_dcvyd"]
+[ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
 
 [sub_resource type="Resource" id="TrackCurve_common"]
 script = ExtResource("22_track_curve")
@@ -274,6 +275,7 @@ tonemap_agx_contrast = 1.0
 
 [node name="Player" parent="." unique_id=423486079 instance=ExtResource("13_nxmm0")]
 transform = Transform3D(-0.543175, 0, 0.83962, 0, 1, 0, -0.83962, 0, -0.543175, -18.508982, 1.959, 168.0919)
+sfx_bank = ExtResource("player_sfx_bank")
 
 [node name="Ground" type="CSGBox3D" parent="." unique_id=1495808372]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.6069689, -0.48168612, 0.5602422)

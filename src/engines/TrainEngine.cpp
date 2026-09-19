@@ -163,6 +163,7 @@ namespace godot {
         p_state["compressor_enabled"] = p_mover->CompressorFlag;
         p_state["compressor_allowed"] = p_mover->CompressorAllow;
         p_state["engine_power"] = p_mover->EnginePower;
+        p_state["dynamic_brake_active"] = p_mover->DynamicBrakeFlag;
         p_state["engine_rpm_count"] = p_mover->enrot;
         p_state["engine_rpm_ratio"] = p_mover->EngineRPMRatio();
         p_state["engine_current"] = p_mover->Im;
@@ -198,6 +199,7 @@ namespace godot {
     void TrainEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
         p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
+        p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
     }
 
     bool TrainEngine::main_switch(const bool p_enabled) {

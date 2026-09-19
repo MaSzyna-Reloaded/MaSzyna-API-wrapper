@@ -38,7 +38,7 @@ static func build(
     var has_chunks:bool = not not definition.chunks
 
     if has_chunks:
-        var built:Dictionary = _build_automation(definition, sound_parameter)
+        var built:Dictionary = _build_automation(definition, sound_parameter, loop)
         event.automations = [built["automation"]]
         event.tracks = built["tracks"]
 
@@ -155,7 +155,8 @@ static func _build_begin_main_end_clips(definition:MmdSoundSourceDefinition) -> 
 ## multiplies clip.pitch_curve * automation.pitch_curve, and blends simultaneously-active clips'
 ## fade curve outputs) reproduces the same overlap/pitch-bend behavior instead of hard-cutting
 ## between chunks.
-static func _build_automation(definition:MmdSoundSourceDefinition, sound_parameter:StringName) -> Dictionary:
+static func _build_automation(
+        definition:MmdSoundSourceDefinition, sound_parameter:StringName, loop:bool = true) -> Dictionary:
     var chunks:Array[Dictionary] = definition.chunks.duplicate()
     chunks.sort_custom(func(a:Dictionary, b:Dictionary) -> bool: return int(a["threshold"]) < int(b["threshold"]))
 
@@ -190,7 +191,7 @@ static func _build_automation(definition:MmdSoundSourceDefinition, sound_paramet
         var fadein:float = fadeins[idx]
 
         var clip := SfxClip.new()
-        clip.stream = _build_stream(chunks[idx]["filename"], true)
+        clip.stream = _build_stream(chunks[idx]["filename"], loop)
         clip.offset = fadein
         # top chunk: 0 means "active up to automation.max_domain" (_automation_clip_contains_value)
         # - stays audible at any RPM above its own threshold instead of cutting out past Chunkrange.

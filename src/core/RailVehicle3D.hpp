@@ -19,7 +19,6 @@ namespace godot {
             GDCLASS(RailVehicle3D, Node3D)
 
         private:
-            static constexpr double PANTOGRAPH_CACHE_DISTANCE = 5.0;
 
             NodePath model_instance_path;
             TypedDictionary<String, bool> lights;

@@ -43,6 +43,8 @@ class PowerSourceState:
     var slow_fuse:bool = false
     var fuse_timer:float = 0.0
     var fuse_counter:int = 0
+    # whether any load asked for current since the last tick (see tick())
+    var loaded:bool = false
 
     func fuse() -> bool:
         return fast_fuse or slow_fuse
@@ -69,6 +71,13 @@ class PowerSourceState:
             elif fuse_timer > slow_fuse_timeout:
                 slow_fuse = false
                 fuse_counter = 0
+        # Quirk: the original updates sources and asks them for current within one simulation step;
+        # here the loads ask from render frames and the sources tick on physics steps, so a hitching
+        # frame runs steps without any load asking - keep the previous load then instead of dropping it
+        # to "nothing", which made the next current_get() return 0 V and trip NoVoltRelay.
+        if not loaded and not fast_fuse and not slow_fuse:
+            return
+        loaded = false
         total_previous_admittance = total_admittance
         if is_zero_approx(total_previous_admittance):
             total_previous_admittance = 1e-10
@@ -83,10 +92,13 @@ class PowerSourceState:
             return 0.0
         if not is_zero_approx(res):
             total_admittance += 1.0 / res
+        loaded = true
         var nominal:float = nominal_voltage * 1.083 if total_previous_admittance < 0.0 else nominal_voltage
+        # exact comparison like the original's TotalPreviousAdmitance != 0.0 - the 1e-10 floor set by
+        # tick() is within is_zero_approx()'s tolerance and made every such query return no current
         total_current = (
             nominal / (internal_resistance + 1.0 / total_previous_admittance)
-            if not is_zero_approx(total_previous_admittance)
+            if not total_previous_admittance == 0.0
             else 0.0
         )
         output_voltage = nominal - internal_resistance * total_current
@@ -388,6 +400,18 @@ func wires_find_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector
 func wire_find_above_with_height(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
     return _find_wire_above(position, up, forward, left, width)
 
+
+## Height of an already found wire above `position`, recomputed every frame like the original does for the
+## pantograph's current wire (DynObj.cpp:8255-8284) - INF once the pantograph left the span or the wire is
+## outside the collector width, which calls for a new search.
+func wire_get_height_above(
+    wire_rid:RID, position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float
+) -> float:
+    var wire:WireState = _wires.get(wire_rid)
+    if not wire:
+        return INF
+    return _wire_height_above(wire, position, up, forward, left, width)
+
 func _find_wire_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float) -> Dictionary:
     var query_center:Vector2 = Vector2(position.x, position.z)
     var query_aabb:Rect2 = Rect2(query_center - Vector2.ONE * _QUERY_MARGIN, Vector2.ONE * _QUERY_MARGIN * 2.0)
@@ -397,33 +421,42 @@ func _find_wire_above(position:Vector3, up:Vector3, forward:Vector3, left:Vector
         var wire:WireState = _wires.get(wire_rid)
         if not wire:
             continue
-        var parametric:Vector3 = wire.p2 - wire.p1
-        var front_dot:float = parametric.dot(forward)
-        if is_zero_approx(front_dot):
-            continue
-        var t:float = -(wire.p1.dot(forward) - position.dot(forward)) / front_dot
-        # Absolute-distance tolerance at each segment's own endpoints, not a fixed fraction of
-        # its length - a fraction (the previous 0.001 here) shrinks to a couple centimeters of
-        # real overlap for a typical ~20m span, tighter than the gap hand-authored scenery
-        # regularly leaves between adjacent traction pieces (confirmed live: a GUT test caught
-        # EP07-424 crossing td.scn get a real, reproducible single-to-few-frame
-        # pantograph_first_voltage=0.0 at one fixed point on the track, which Mover's own
-        # NoVoltRelay logic then correctly read as a genuine loss of contact and tripped Mains -
-        # not a Mover bug, a real gap in wire coverage at that exact seam). _ENDPOINT_EPSILON is
-        # this same file's own established "close enough to be one continuous wire" distance,
-        # already used for the electrical connectivity graph in _connect_wires() below.
-        var t_tolerance:float = _ENDPOINT_EPSILON / absf(front_dot)
-        if t < -t_tolerance or t > 1.0 + t_tolerance:
-            continue
-        var contact_point:Vector3 = wire.p1 + parametric * t
-        var to_contact:Vector3 = contact_point - position
-        var vertical:float = to_contact.dot(up)
-        if vertical < 0.0:
-            continue
-        var horizontal:float = absf(to_contact.dot(left)) - width
-        if horizontal > 0.0:
-            continue
+        var vertical:float = _wire_height_above(wire, position, up, forward, left, width)
         if vertical < best_height:
             best_height = vertical
             best_rid = wire_rid
     return {"rid": best_rid, "height": best_height}
+
+
+## Height of `wire` above `position` along the pantograph's plane, INF when the plane misses the span, the
+## wire is below or outside the collector width (scene::basic_cell::update_traction()'s geometry test).
+func _wire_height_above(
+    wire:WireState, position:Vector3, up:Vector3, forward:Vector3, left:Vector3, width:float
+) -> float:
+    var parametric:Vector3 = wire.p2 - wire.p1
+    var front_dot:float = parametric.dot(forward)
+    if is_zero_approx(front_dot):
+        return INF
+    var t:float = -(wire.p1.dot(forward) - position.dot(forward)) / front_dot
+    # Absolute-distance tolerance at each segment's own endpoints, not a fixed fraction of
+    # its length - a fraction (the previous 0.001 here) shrinks to a couple centimeters of
+    # real overlap for a typical ~20m span, tighter than the gap hand-authored scenery
+    # regularly leaves between adjacent traction pieces (confirmed live: a GUT test caught
+    # EP07-424 crossing td.scn get a real, reproducible single-to-few-frame
+    # pantograph_first_voltage=0.0 at one fixed point on the track, which Mover's own
+    # NoVoltRelay logic then correctly read as a genuine loss of contact and tripped Mains -
+    # not a Mover bug, a real gap in wire coverage at that exact seam). _ENDPOINT_EPSILON is
+    # this same file's own established "close enough to be one continuous wire" distance,
+    # already used for the electrical connectivity graph in _connect_wires() below.
+    var t_tolerance:float = _ENDPOINT_EPSILON / absf(front_dot)
+    if t < -t_tolerance or t > 1.0 + t_tolerance:
+        return INF
+    var contact_point:Vector3 = wire.p1 + parametric * t
+    var to_contact:Vector3 = contact_point - position
+    var vertical:float = to_contact.dot(up)
+    if vertical < 0.0:
+        return INF
+    var horizontal:float = absf(to_contact.dot(left)) - width
+    if horizontal > 0.0:
+        return INF
+    return vertical

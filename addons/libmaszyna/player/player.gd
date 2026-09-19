@@ -2,6 +2,8 @@ extends Node3D
 class_name MaszynaPlayer
 
 signal controlled_vehicle_changed
+## Switched between the cabin view (in a cab) and the exterior view (on foot, external cameras)
+signal cabin_view_changed(in_cabin:bool)
 
 @export var start_train_id:String = "":
     set(x):
@@ -11,21 +13,41 @@ signal controlled_vehicle_changed
                 _auto_start_pending = false
             _dirty = true
 
+## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
+@export var sfx_bank:SfxBank
+
 var last_controlled_train_id:String = ""
 var controlled_vehicle:RailVehicle3D
 var _camera:FreeCamera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
+@onready var external_camera:ExternalCamera3D = $ExternalCamera3D
+## Player's head torch - follows the camera (the player's head) in the cab and on foot
+@onready var headlamp:SpotLight3D = $Camera3D/Headlamp
+## Screen-space near-field glow inside the headlamp cone (headlamp_glow.gdshader)
+@onready var headlamp_glow:MeshInstance3D = $Camera3D/HeadlampGlow
+## Non-positional: the player's own sounds are at the listener, where a 3D player gains nothing
+@onready var sfx_player:SfxPlayer = $PlayerSfx
 var _dirty: bool = true
 var _auto_start_pending:bool = true
 var _released_train_id:String = ""
+var _cabin_view:bool = false
 
 func _ready() -> void:
-    pass
+    sfx_player.bank = sfx_bank
+    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    # the glow follows the spot: both are children of the camera, so their transform is view space
+    var glow_material:ShaderMaterial = (headlamp_glow.mesh as QuadMesh).material as ShaderMaterial
+    glow_material.set_shader_parameter(&"light_position", headlamp.position)
+    glow_material.set_shader_parameter(&"light_direction", -headlamp.transform.basis.z)
+    glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
 
 func _process(_delta:float) -> void:
     if _dirty:
         _dirty = false
         var _changed:bool = false
+
+        if external_camera.current:
+            _set_external_view(false)
 
         if controlled_vehicle:
             controlled_vehicle.leave_cabin(self)
@@ -44,6 +66,7 @@ func _process(_delta:float) -> void:
 
         if _changed:
             controlled_vehicle_changed.emit()
+            _update_cabin_view()
 
     var camera:FreeCamera3D = get_camera()
     var cabin:Cabin3D = camera.get_parent() as Cabin3D
@@ -55,7 +78,13 @@ func _process(_delta:float) -> void:
         camera.rotation.z = 0.0
 
 func _input(event):
-    if event.is_action_pressed("change_vehicle") or event.is_action_pressed("cabin_mode_toggle"):
+    if event.is_action_pressed("flashlight_toggle", false, true):
+        var enabled:bool = headlamp.visible
+        headlamp.visible = not enabled
+        headlamp_glow.visible = not enabled
+        # "toggle" automation: 0 - switching on click, 1 - switching off click
+        sfx_player.play_automation(&"flashlight", &"toggle", float(enabled))
+    if event.is_action_pressed("change_vehicle") or event.is_action_pressed("cabin_mode_toggle", false, true):
         var detector:ShapeCast3D = get_camera().get_node("RailVehicleDetector")
         if not controlled_vehicle and detector.is_colliding():
             var coll:Area3D = detector.get_collider(0)
@@ -78,8 +107,17 @@ func _input(event):
     if not controlled_vehicle:
         _walk_mode_input(event)
 
-    if event.is_action_pressed("cabin_mode_toggle"):
-        if not controlled_vehicle:
+    # drivermode.cpp:803-804 - Shift+F4 cycles the external views, F4 returns from them to the cab
+    if controlled_vehicle and event.is_action_pressed("external_view_cycle", false, true):
+        if external_camera.current:
+            external_camera.next_view()
+        else:
+            _set_external_view(true)
+
+    if event.is_action_pressed("cabin_mode_toggle", false, true):
+        if external_camera.current:
+            _set_external_view(false)
+        elif not controlled_vehicle:
             if last_controlled_train_id:
                 start_train_id = last_controlled_train_id
         else:
@@ -150,6 +188,24 @@ func _find_start_vehicle() -> RailVehicle3D:
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
     var controller:TrainController = vehicle.get_controller()
     return controller.train_id if controller else ""
+
+## The cab camera is frozen while the external camera is current, so the arrow keys do not move it.
+func _set_external_view(p_enabled:bool) -> void:
+    var camera:FreeCamera3D = get_camera()
+    camera.process_mode = Node.PROCESS_MODE_DISABLED if p_enabled else Node.PROCESS_MODE_INHERIT
+    if p_enabled:
+        external_camera.activate(controlled_vehicle, camera.global_transform)
+    else:
+        camera.make_current()
+    _update_cabin_view()
+
+func _update_cabin_view() -> void:
+    var in_cabin:bool = controlled_vehicle and not external_camera.current
+    if in_cabin == _cabin_view:
+        return
+    _cabin_view = in_cabin
+    get_tree().set_group(MaszynaEnvironmentNode.GROUP, &"cabin_view", in_cabin)
+    cabin_view_changed.emit(in_cabin)
 
 func get_camera() -> FreeCamera3D:
     if not _camera:

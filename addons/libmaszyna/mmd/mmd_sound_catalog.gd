@@ -17,9 +17,10 @@ class_name MmdSoundCatalog
 ## MmdSoundBankInstancer routes them to BrakeSfxEventFactory instead of building a TrainSoundTrigger
 ## from `state_property`/`trigger_mode` the way Tier 1/2 entries do - see each label's own comment
 ## for its DynObj.cpp/Train.cpp source and BrakeSfxEventFactory for how gating/shaping is actually
-## built). Every other label surveyed in dynamic/pkp/ (curve/tractionmotor/turbo/wheel_clatter/door
-## family/announcements/...) is deliberately absent - each still needs its own wrapper-state
-## cross-reference before it can be added, same discipline as the cabin catalog.
+## built) + running sounds (`entry["controller"] == &"running"`, see RunningSoundModel). Every
+## other label surveyed in dynamic/pkp/ (turbo/door family/announcements/...) is deliberately
+## absent - each still needs its own wrapper-state cross-reference before it can be added, same
+## discipline as the cabin catalog.
 
 static var _catalog:Dictionary = {}
 static var _built:bool = false
@@ -230,6 +231,21 @@ static func _ensure_built() -> void:
         # spring_brake/active parameter.
         "springbrake": {"event_name": &"springbrake", "controller": &"brake"},
         "springbrakeoff": {"event_name": &"springbrake", "controller": &"brake"},
+        # Running sounds - gain/pitch computed each update by RunningSoundModel from the mover state
+        # and the track under the vehicle, the same formulas as the original. Positional labels get
+        # one event per location, suffixed with its index.
+        # Traction motors, one per `tractionmotors:` location (DynObj.cpp:5710, 7933-8010)
+        "tractionmotor": {"event_name": &"traction_motor", "controller": &"running"},
+        # Resistor ventilator (DynObj.cpp:5801, 8081-8092)
+        "ventilator": {"event_name": &"ventilator", "controller": &"running"},
+        # Curve squeal (DynObj.cpp:5916, 4735-4763)
+        "curve": {"event_name": &"curve", "controller": &"running"},
+        # Running noise, one per `bogies:` location (DynObj.cpp:6123, 4630-4720)
+        "outernoise": {"event_name": &"outer_noise", "controller": &"running"},
+        # Rail joint clatter, one-shot per axle (DynObj.cpp:5643, 3477-3545)
+        "wheel_clatter": {"event_name": &"wheel_clatter", "controller": &"running"},
+        # Cab running noise (Train.cpp:8272, update_sounds_runningnoise())
+        "runningnoise": {"event_name": &"running_noise", "controller": &"running"},
     }
 
 

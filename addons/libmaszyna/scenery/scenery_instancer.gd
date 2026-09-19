@@ -15,7 +15,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 8
+const CACHE_FORMAT_VERSION:int = 9
 const CACHE_DIRECTORY:String = "scenery_compiled"
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
@@ -338,6 +338,8 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
 
     TrackManager.track_update_curves(track_rid, track_data.curve, track_data.diverging_curve)
     TrackManager.track_update(track_rid, track_data.type, track_data.track_name, track_data.width)
+    TrackManager.track_update_properties(
+            track_rid, track_data.quality_flag, track_data.environment, track_data.sound_distance)
     if track_data.type == TrackManager.TrackType.TRACK_SWITCH:
         TrackManager.switch_set_active_track(track_rid, TrackManager.SwitchTrack.TRACK_COMMON)
 

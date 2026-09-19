@@ -466,3 +466,22 @@ In such cases a [custom conversion is required](https://github.com/MaSzyna-Reloa
 You will find bugs in Mover. But the goal is to achieve full compatibiliy, so you must allow them to live.
 If it was broken, then it must be still broken. Do not fix Mover (do not touch the original code). Do not implement
 workarounds. [Report issue here](https://github.com/eu07/maszyna/issues) instead.
+
+### Simulation steps vs. render frames
+
+The original engine updates everything within one simulation step: producers (e.g. `TTractionPowerSource::Update()`)
+and their consumers (e.g. pantographs calling `TTraction::VoltageGet()` from `TDynamicObject`) always run in the same
+step. In this wrapper they are split between Godot's two clocks - servers step on physics ticks (`_physics_process`),
+while vehicle nodes (`RailVehicle3D`) run on render frames (`_process`). The two are not in lockstep: a hitching frame
+(e.g. freeing the whole cabin when leaving it) runs several physics ticks in one frame, a fast one runs several frames
+between two ticks.
+
+Ported per-step state must therefore tolerate steps without any consumer. Real case: `TractionPowerServer`'s power
+source reset its accumulated load (admittance) every physics tick; a tick without any pantograph asking left it at
+"no load", the next `current_get()` returned 0 V, Mover's `NoVoltRelay` saw a loss of voltage and tripped the line
+breaker - randomly while driving and every time the player left the cabin. Fixed by keeping the previous load when
+nobody asked since the last tick.
+
+Related pitfall: port the original's exact comparisons literally (`x != 0.0` as `not x == 0.0`), not with
+`is_zero_approx()` - its tolerance (1e-5) swallowed the tiny non-zero value the port used as a "no load" floor and
+turned it into a real zero.

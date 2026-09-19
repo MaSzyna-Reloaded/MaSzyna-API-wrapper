@@ -29,6 +29,9 @@ class BankRuntime extends RefCounted:
     var cabin_only:bool = false
     var enabled:bool = true
     var brake_sources:Dictionary = {}
+    ## brake events this bank really has, set once they are built
+    var brake_events:Array[StringName] = []
+    var running:RunningSoundModel
     var soundproofing:Array[PackedFloat32Array] = []
     var triggers:Array[Dictionary] = []
     var trigger_states:Dictionary = {}
@@ -73,6 +76,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
+    runtime.running = registration.get("running") as RunningSoundModel
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
@@ -108,6 +112,7 @@ func _physics_process(delta:float) -> void:
     var states:Dictionary = {}
     var culling_distance:float = float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0))
     var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO
+    var listener_consist:Dictionary = _listener_consist()
     for runtime:BankRuntime in _banks.values():
         if not is_instance_valid(runtime.controller):
             _resolve_controller(runtime)
@@ -134,6 +139,7 @@ func _physics_process(delta:float) -> void:
                 0.0, FAR_UPDATE_INTERVAL, clampf(distance / culling_distance, 0.0, 1.0))
         if runtime.sound_update_elapsed < update_interval:
             continue
+        var elapsed:float = runtime.sound_update_elapsed
         runtime.sound_update_elapsed = fmod(runtime.sound_update_elapsed, maxf(update_interval, 0.001))
 
         _ensure_brake_events(runtime)
@@ -143,6 +149,7 @@ func _physics_process(delta:float) -> void:
         var state:Dictionary = states[controller_id]
         var batch:Dictionary = {}
         _update_brake_sounds(runtime, state, batch)
+        _update_running_sounds(runtime, state, elapsed, listener_consist, batch)
         runtime.trigger_elapsed += delta
         if runtime.trigger_elapsed >= TRIGGER_INTERVAL:
             runtime.trigger_elapsed = fmod(runtime.trigger_elapsed, TRIGGER_INTERVAL)
@@ -183,14 +190,15 @@ func _ensure_brake_events(runtime:BankRuntime) -> void:
     events.append_array(built)
     runtime.player.bank.events = events
     runtime.events_built = true
+    for event_name:StringName in BrakeSfxEventFactory.EVENT_PARAMETERS:
+        if runtime.player.bank.get_event(event_name):
+            runtime.brake_events.append(event_name)
     runtime.anchored_cabin_instance_id = 0
     _update_spatial_anchors(runtime)
 
 
 func _update_brake_sounds(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -> void:
-    for event_name:StringName in BrakeSfxEventFactory.EVENT_PARAMETERS:
-        if not runtime.player.bank.get_event(event_name):
-            continue
+    for event_name:StringName in runtime.brake_events:
         var event_parameters:Dictionary = {}
         var has_active_parameter:bool = false
         for parameter_name:StringName in BrakeSfxEventFactory.EVENT_PARAMETERS[event_name]:
@@ -198,13 +206,23 @@ func _update_brake_sounds(runtime:BankRuntime, state:Dictionary, batch:Dictionar
             var value:float = _parameter_value(state.get(state_key, 0.0))
             event_parameters[parameter_name] = value
             has_active_parameter = has_active_parameter or not is_zero_approx(value)
+        var playing:bool = runtime.player.is_playing(event_name)
+        var gate:Array = BrakeSfxEventFactory.EVENT_GATES.get(event_name, [])
+        if gate:
+            has_active_parameter = (
+                    _parameter_value(state.get(gate[0], 0.0)) > (float(gate[2]) if playing else float(gate[1])))
+            if playing and not has_active_parameter:
+                runtime.player.stop(event_name, false)
+                continue
+        # an idle, silent brake event needs no listener-dependent parameters at all
+        if not playing and not has_active_parameter:
+            continue
         event_parameters[&"soundproofing"] = _soundproofing(runtime, _primary_source(runtime, event_name))
         event_parameters[&"unit_size"] = _unit_size_factor(runtime)
         event_parameters[&"gain"] = _volume_factor(runtime)
-        if not runtime.player.is_playing(event_name) and has_active_parameter:
+        if not playing:
             runtime.player.play(event_name, event_parameters)
-        if runtime.player.is_playing(event_name):
-            batch[event_name] = event_parameters
+        batch[event_name] = event_parameters
 
 
 func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -> void:
@@ -247,6 +265,47 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             runtime.trigger_states[trigger_id] = false
         if should_play and parameters and runtime.player.is_playing(event_name):
             batch[event_name] = parameters
+
+
+func _update_running_sounds(
+        runtime:BankRuntime, state:Dictionary, elapsed:float, listener_consist:Dictionary,
+        batch:Dictionary) -> void:
+    if not runtime.running:
+        return
+    var results:Dictionary = runtime.running.update(
+            runtime.controller, state, elapsed, not listener_consist.has(runtime.controller.get_instance_id()))
+    for event_name:StringName in results:
+        var result:Dictionary = results[event_name]
+        var action:int = result["action"]
+        if action == RunningSoundModel.Action.STOP:
+            if runtime.player.is_playing(event_name):
+                runtime.player.stop(event_name, false)
+            continue
+        var parameters:Dictionary = result["parameters"]
+        parameters[&"soundproofing"] = _soundproofing(runtime, result["source"])
+        if action == RunningSoundModel.Action.ONE_SHOT:
+            runtime.player.play(event_name, parameters)
+            continue
+        if not runtime.player.is_playing(event_name):
+            runtime.player.play(event_name, parameters)
+        batch[event_name] = parameters
+
+
+## Controllers of the consist driven from the listener's cab - their outer noise is replaced by the
+## cab running noise (DynObj.cpp:4632-4640)
+func _listener_consist() -> Dictionary:
+    var consist:Dictionary = {}
+    if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
+        return consist
+    var pending:Array[TrainController] = [_listener.listener_vehicle.get_controller()]
+    while pending:
+        var controller:TrainController = pending.pop_back()
+        if not controller or consist.has(controller.get_instance_id()):
+            continue
+        consist[controller.get_instance_id()] = true
+        pending.append(controller.get_coupled_controller(0))
+        pending.append(controller.get_coupled_controller(1))
+    return consist
 
 
 func _engine_gain(

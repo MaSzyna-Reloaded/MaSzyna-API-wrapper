@@ -62,10 +62,22 @@ var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
         preload("./types/normalmap_specgloss.tres"),
         TextureMap.new("diffuse", "normalmap"),
     ),
+    # mat_default_specgloss.frag takes specular/gloss/metal from the specgloss texture; like
+    # normalmap_specgloss here it's approximated by the default material with specular enabled.
+    "default_specgloss": MaszynaShaderMeta.new(
+        _apply_default_material,
+        preload("./types/normalmap_specgloss.tres"),
+        TextureMap.new("diffuse", "normalmap"),
+    ),
     "parallax": MaszynaShaderMeta.new(
         _apply_parallax,
         preload("./types/parallax.tres"),
         TextureMap.new("diffuse", "normalmap"),
+    ),
+    "detail_parallax": MaszynaShaderMeta.new(
+        _apply_parallax,
+        preload("./types/parallax.tres"),
+        TextureMap.new("diffuse", "normalmap", "detailnormalmap"),
     ),
     "parallax_specgloss": MaszynaShaderMeta.new(
         _apply_parallax,

@@ -101,7 +101,7 @@ func test_applies_rendering_light_settings_on_ready() -> void:
         MaszynaSkyEnvironment.SHADOW_BLUR_SETTING: 0.5,
         MaszynaSkyEnvironment.SHADOW_BIAS_SETTING: 0.2,
         MaszynaSkyEnvironment.SHADOW_NORMAL_BIAS_SETTING: 1.5,
-        MaszynaSkyEnvironment.SHADOW_MAX_DISTANCE_SETTING: 250.0,
+        MaszynaSkyEnvironment.SHADOW_EXTERIOR_MAX_DISTANCE_SETTING: 250.0,
         MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING: 12.5,
     }
     var previous: Dictionary = {}

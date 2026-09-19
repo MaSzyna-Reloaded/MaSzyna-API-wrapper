@@ -123,10 +123,11 @@ func _update_variant(variant: MaszynaMaterial.MaszynaMaterialVariant, key: Strin
             var values: Array = value
             if values.size() == 4:
                 variant.set_parameter_vec4(parameter_name, _parse_vector4(values))
-            elif values.size() == 1:
-                variant.set_parameter(parameter_name, float(values[0]))
             else:
-                push_warning("Unsupported material parameter array for %s" % key)
+                # Quirk: besides a 4 component value, an array here is the same key repeated in one
+                # block (real data, e.g. pods_grass.mat) - the original keeps the first definition,
+                # a later one with the same priority is ignored (material.cpp:351-357).
+                variant.set_parameter(parameter_name, float(values[0]))
         else:
             variant.set_parameter(parameter_name, float(value))
 

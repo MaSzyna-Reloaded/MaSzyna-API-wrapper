@@ -22,6 +22,8 @@ namespace godot {
         protected:
             EngineType get_engine_type() override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
 
         public:
             MAKE_MEMBER_GS(double, nominal_voltage, 0.0);

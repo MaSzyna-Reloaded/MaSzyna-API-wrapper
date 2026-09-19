@@ -115,6 +115,7 @@ func _enter_tree():
     # Quirk: the original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
     # against self-shadowing acne; Godot's default culls the same faces as the color pass
     add_custom_project_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true, TYPE_BOOL)
+    add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"

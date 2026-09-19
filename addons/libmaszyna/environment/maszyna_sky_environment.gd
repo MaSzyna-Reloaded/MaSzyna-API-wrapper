@@ -5,8 +5,8 @@ class_name MaszynaSkyEnvironment
 
 const SHADOW_ENABLED_SETTING: StringName = &"maszyna/rendering/shadow_enabled"
 const SHADOW_MODE_SETTING: StringName = &"maszyna/rendering/shadow_mode"
-## The cabin view fills the screen with close surfaces - PSSM splits there cost much more than
-## a single orthogonal map, which is enough for the few metres the cabin needs
+## The cabin view fills the screen with close surfaces, where every PSSM split costs a full
+## screen of filtering - fewer splits than outside are enough for the few metres it needs
 const SHADOW_CABIN_MODE_SETTING: StringName = &"maszyna/rendering/shadow_cabin_mode"
 const SHADOW_BLUR_SETTING: StringName = &"maszyna/rendering/shadow_blur"
 const SHADOW_OPACITY_SETTING: StringName = &"maszyna/rendering/shadow_opacity"
@@ -80,7 +80,7 @@ func _apply_directional_light_settings(light: DirectionalLight3D) -> void:
     # the cabin view needs sharp near shadows only, the exterior view far ones
     var cabin_view: bool = (environment_node as MaszynaEnvironmentNode).cabin_view
     light.directional_shadow_mode = int(
-        ProjectSettings.get_setting(SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_ORTHOGONAL)
+        ProjectSettings.get_setting(SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
         if cabin_view
         else ProjectSettings.get_setting(SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
     ) as DirectionalLight3D.ShadowMode

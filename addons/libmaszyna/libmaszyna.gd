@@ -148,7 +148,7 @@ func _enter_tree():
         TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
     )
     add_custom_project_setting(
-        MaszynaSkyEnvironment.SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_ORTHOGONAL,
+        MaszynaSkyEnvironment.SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS,
         TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
     )
     add_custom_project_setting(

@@ -111,6 +111,10 @@ func _ready() -> void:
     _dirty = true
 
 
+func get_controller() -> TrainController:
+    return _vehicle.get_controller() if _vehicle else null
+
+
 func _process(_delta:float) -> void:
     if _dirty:
         _dirty = false

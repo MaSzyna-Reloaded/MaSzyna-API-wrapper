@@ -65,6 +65,20 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &TrainController::process_movement);
+        ClassDB::bind_method(D_METHOD("update_location"), &TrainController::update_location);
+        ClassDB::bind_method(
+                D_METHOD("update_neighbour", "end", "other", "other_end", "track_distance"),
+                &TrainController::update_neighbour);
+        ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &TrainController::compute_forces);
+        ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &TrainController::compute_movement);
+        ClassDB::bind_method(
+                D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &TrainController::couple);
+        ClassDB::bind_method(D_METHOD("uncouple", "end"), &TrainController::uncouple);
+        ClassDB::bind_method(D_METHOD("is_coupled", "end"), &TrainController::is_coupled);
+        ClassDB::bind_method(D_METHOD("get_coupled_controller", "end"), &TrainController::get_coupled_controller);
+        ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &TrainController::get_coupled_end);
+        ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &TrainController::coupler_connect);
+        ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &TrainController::coupler_disconnect);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &TrainController::get_world_position);
         ClassDB::bind_method(D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
@@ -184,8 +198,26 @@ namespace godot {
         BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
     }
 
+    std::unordered_map<const TMoverParameters *, TrainController *> TrainController::controllers_by_mover;
+
     TMoverParameters *TrainController::get_mover() const {
         return mover;
+    }
+
+    // the end of the coupled vehicle facing this one (TCoupling::ConnectedNr), -1 when not coupled
+    int TrainController::get_coupled_end(const int p_end) const {
+        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
+            return -1;
+        }
+        return mover->Couplers[p_end].ConnectedNr;
+    }
+
+    TrainController *TrainController::get_coupled_controller(const int p_end) const {
+        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
+            return nullptr;
+        }
+        const auto it = controllers_by_mover.find(mover->Couplers[p_end].Connected);
+        return it == controllers_by_mover.end() ? nullptr : it->second;
     }
 
     void TrainController::initialize_mover_state() {
@@ -203,6 +235,7 @@ namespace godot {
         const auto mover_type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
         mover = std::make_unique<TMoverParameters>(initial_vel, mover_type_name, name, this->cabin_number).release();
+        controllers_by_mover[mover] = this;
 
         dirty = true;
         dirty_prop = true;
@@ -263,6 +296,9 @@ namespace godot {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
+        if (p_what == NOTIFICATION_PREDELETE && mover != nullptr) {
+            controllers_by_mover.erase(mover);
+        }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
                 if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
@@ -280,6 +316,8 @@ namespace godot {
                 register_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+                register_command("coupler_connect", Callable(this, "coupler_connect"));
+                register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
                 break;
             case NOTIFICATION_EXIT_TREE:
                 unregister_command("battery", Callable(this, "battery"));
@@ -292,6 +330,8 @@ namespace godot {
                 unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
                 unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+                unregister_command("coupler_connect", Callable(this, "coupler_connect"));
+                unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
                 TrainSystem::get_instance()->unregister_train(train_id);
                 if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
                     rail_vehicle_physics_server != nullptr && rid.is_valid()) {
@@ -329,16 +369,164 @@ namespace godot {
     }
 
     void TrainController::_process_mover(const double p_delta) {
-        TLocation mock_location;
-        TRotation mock_rotation;
+        compute_forces(p_delta);
+        compute_movement(p_delta);
+    }
+
+    // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
+    // movement of one simulation frame and is reset after it (ResetdMoveLen, DynObj.cpp:3473)
+    void TrainController::update_location() {
+        if (mover == nullptr) {
+            return;
+        }
+        const Vector3 position = get_world_position();
+        mover->Loc = {-position.x, position.z, position.y};
+        mover->dMoveLen = 0.0;
+    }
+
+    // Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135); the track scan itself
+    // (find_vehicle) is done by RailVehiclePhysicsServer, which passes the center to center track distance
+    void TrainController::update_neighbour(
+            const int p_end, TrainController *p_other, const int p_other_end, const double p_track_distance) {
+        if (mover == nullptr) {
+            return;
+        }
+        neighbour_data &neighbour = mover->Neighbours[p_end];
+        const TCoupling &coupler = mover->Couplers[p_end];
+
+        if (coupler.Connected != nullptr) {
+            // physical connection with another vehicle locks down collision source on this end
+            neighbour.vehicle = coupler.Connected;
+            neighbour.vehicle_end = coupler.ConnectedNr;
+            neighbour.distance = static_cast<float>(
+                    TMoverParameters::CouplerDist(mover, coupler.Connected) - coupler.adapter_length -
+                    coupler.Connected->Couplers[coupler.ConnectedNr].adapter_length);
+            return;
+        }
+
+        neighbour = neighbour_data();
+        if (p_other == nullptr || p_other->mover == nullptr) {
+            return;
+        }
+        TMoverParameters *other_mover = p_other->mover;
+        const TCoupling &other_coupler = other_mover->Couplers[p_other_end];
+        neighbour.vehicle = other_mover;
+        neighbour.vehicle_end = p_other_end;
+        neighbour.distance = static_cast<float>(p_track_distance - 0.5 * (mover->Dim.L + other_mover->Dim.L));
+        if (neighbour.distance < (other_mover->CategoryFlag == 2 ? 50 : 100)) {
+            // at short distances (re)calculate range between couplers directly
+            neighbour.distance = static_cast<float>(
+                    TMoverParameters::CouplerDist(mover, other_mover) - coupler.adapter_length -
+                    other_coupler.adapter_length);
+        }
+    }
+
+    void TrainController::compute_forces(const double p_delta) {
+        _update_mover_config_if_dirty();
+        if (mover == nullptr) {
+            return;
+        }
         mover->ComputeTotalForce(p_delta);
-        // mover->compute_movement_(delta);
+    }
+
+    void TrainController::compute_movement(const double p_delta) {
+        if (mover == nullptr) {
+            return;
+        }
+        TRotation rotation;
         mover->ComputeMovement(
-                p_delta, p_delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mock_location,
-                mock_rotation);
+                p_delta, p_delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc,
+                rotation);
         _update_tachometer(p_delta);
 
         _handle_mover_update();
+        // the vehicle is moved by process_movement() distance (DynObj.cpp:2439)
+        mover->dMoveLen += process_movement(p_delta);
+    }
+
+    // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
+    void TrainController::couple(
+            TrainController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
+        if (mover == nullptr || p_other == nullptr || p_other->mover == nullptr) {
+            UtilityFunctions::push_error("Cannot couple vehicles without initialized movers.");
+            return;
+        }
+        int coupling_type = p_coupling_type;
+        // a coupler allowing only permanent coupling keeps it permanent (simulationstateserializer.cpp:990)
+        if (coupling_type != coupling::faux && (mover->Couplers[p_end].AllowedFlag & coupling::permanent) != 0) {
+            coupling_type |= coupling::permanent;
+        }
+        mover->Attach(p_end, p_other_end, p_other->mover, coupling_type, true, false);
+    }
+
+    void TrainController::uncouple(const int p_end) {
+        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
+            return;
+        }
+        mover->Dettach(p_end);
+    }
+
+    bool TrainController::is_coupled(const int p_end) const {
+        return mover != nullptr && mover->Couplers[p_end].Connected != nullptr;
+    }
+
+    // p_where is a coupler end (0 front, 1 rear) or a world position - then the vehicle end nearest to
+    // it is used, like the walk mode commands of the original (ABuScanNearestObject, Train.cpp:6213)
+    int TrainController::_resolve_coupler_end(const Variant &p_where) const {
+        if (p_where.get_type() != Variant::VECTOR3) {
+            return CLAMP(static_cast<int>(p_where), 0, 1);
+        }
+        const Transform3D transform = get_world_transform();
+        // vehicles face -Z; the front coupler (end 0) is half the length ahead of the center
+        const Vector3 front = transform.origin - transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
+        const Vector3 rear = transform.origin + transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
+        const Vector3 position = p_where;
+        return position.distance_squared_to(front) <= position.distance_squared_to(rear) ? 0 : 1;
+    }
+
+    // Original engine: TDynamicObject::couple() (DynObj.cpp:1509) - one more coupling type per call,
+    // with the vehicle detected at that end
+    void TrainController::coupler_connect(const Variant &p_where) {
+        if (mover == nullptr) {
+            return;
+        }
+        const int side = _resolve_coupler_end(p_where);
+        const neighbour_data &neighbour = mover->Neighbours[side];
+        if (neighbour.vehicle == nullptr) {
+            return;
+        }
+        const TCoupling &coupler = mover->Couplers[side];
+        const TCoupling &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
+        const int allowed = coupler.AllowedFlag & other_coupler.AllowedFlag;
+
+        if (coupler.CouplingFlag == coupling::faux && (allowed & coupling::coupler) == coupling::coupler &&
+            mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupling::coupler)) {
+            return;
+        }
+        for (const int flag: {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway,
+                              coupling::heating}) {
+            if ((coupler.CouplingFlag & flag) == flag || (allowed & flag) != flag) {
+                continue;
+            }
+            if (flag == coupling::control && coupler.control_type != other_coupler.control_type) {
+                continue;
+            }
+            if (mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupler.CouplingFlag | flag)) {
+                return;
+            }
+        }
+    }
+
+    // Original engine: TDynamicObject::uncouple() (DynObj.cpp:1614)
+    void TrainController::coupler_disconnect(const Variant &p_where) {
+        if (mover == nullptr) {
+            return;
+        }
+        const int side = _resolve_coupler_end(p_where);
+        if (mover->DettachStatus(side) >= 0 || (mover->Couplers[side].CouplingFlag & coupling::permanent) != 0) {
+            return;
+        }
+        mover->Dettach(side);
     }
 
     // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
@@ -412,7 +600,10 @@ namespace godot {
             return;
         }
 
-        _update_mover_config_if_dirty();
+        // controllers registered in RailVehiclePhysicsServer are stepped by its global tick
+        if (rid.is_valid()) {
+            return;
+        }
         _process_mover(p_delta);
     }
 
@@ -469,6 +660,8 @@ namespace godot {
         // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
         // property (see update_mover() below), so this is a thin alias, not new derivation.
         p_config["max_speed"] = max_velocity;
+        p_config["power"] = p_mover->Power;
+        p_config["length"] = p_mover->Dim.L;
     }
 
     void TrainController::update_mover() {
@@ -495,7 +688,32 @@ namespace godot {
         return internal_state;
     }
 
+    // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
+    // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there
+    void TrainController::_consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state) {
+        static const int kinds[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
+                                    sound::attachcontrol, sound::attachgangway,   sound::attachheating};
+        static const char *names[] = {"coupler", "brakehose", "mainhose", "control", "gangway", "heating"};
+        for (TCoupling &coupler: p_mover->Couplers) {
+            if (coupler.sounds == sound::none) {
+                continue;
+            }
+            const int offset = (coupler.sounds & sound::detach) != 0 ? 6 : 0;
+            for (int index = 0; index < 6; ++index) {
+                if ((coupler.sounds & kinds[index]) != 0) {
+                    ++coupler_sound_counts[offset + index];
+                }
+            }
+            coupler.sounds = sound::none;
+        }
+        for (int index = 0; index < 12; ++index) {
+            p_state[String(index < 6 ? "coupler_sound/attach_" : "coupler_sound/detach_") + names[index % 6]] =
+                    coupler_sound_counts[index];
+        }
+    }
+
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        _consume_coupler_sounds(p_mover, p_state);
         internal_state["mass_total"] = p_mover->TotalMass;
         internal_state["velocity"] = p_mover->V;
         internal_state["speed"] = p_mover->Vel;
@@ -532,6 +750,11 @@ namespace godot {
         internal_state["train_damage"] = p_mover->DamageFlag;
         internal_state["controller_second_position"] = p_mover->ScndCtrlPos;
         internal_state["controller_main_position"] = p_mover->MainCtrlPos;
+        // joint master controller position - negative range is the local brake (Train.cpp:7699-7714)
+        internal_state["controller_joint_position"] =
+                p_mover->LocalBrakePosA > 0.0
+                        ? static_cast<int>(std::round(-p_mover->LocalBrakePosA * LocalBrakePosNo))
+                        : (p_mover->CoupledCtrl ? p_mover->MainCtrlPos + p_mover->ScndCtrlPos : p_mover->MainCtrlPos);
         // Diagnostic: the delayed/rate-limited shadow of MainCtrlPos that RList[] resistor
         // lookups actually key off (Mover.cpp's internal auto-relay/resistor-stepping state
         // machine) - a wrong RList[] mapping or array-bounds issue lets this race far ahead of

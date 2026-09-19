@@ -30,7 +30,7 @@ const _CROSSFADE_LOG_FACTOR:float = -0.57
 static func build(
         definition:MmdSoundSourceDefinition, event_name:StringName,
         sound_parameter:StringName = &"", parameterized:bool = false,
-        soundproofed:bool = false) -> SfxEvent:
+        soundproofed:bool = false, loop:bool = true) -> SfxEvent:
     var event := SfxEvent.new()
     event.name = event_name
 
@@ -46,7 +46,7 @@ static func build(
         event.clips = _build_begin_main_end_clips(definition)
     elif not has_chunks and definition.sound_main:
         var clip := SfxClip.new()
-        clip.stream = _build_stream(definition.sound_main, true)
+        clip.stream = _build_stream(definition.sound_main, loop)
         event.clips = [clip]
 
     if parameterized:

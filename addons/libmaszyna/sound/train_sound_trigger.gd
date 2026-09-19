@@ -1,7 +1,8 @@
 extends Node
 class_name TrainSoundTrigger
 
-enum TriggerMode { TOGGLE, CONTINUOUS }
+## CHANGE plays the event once whenever the state value changes (an event counter, e.g. coupler sounds)
+enum TriggerMode { TOGGLE, CONTINUOUS, CHANGE }
 
 @export var state_property:String = ""
 @export var trigger_mode:TriggerMode = TriggerMode.TOGGLE

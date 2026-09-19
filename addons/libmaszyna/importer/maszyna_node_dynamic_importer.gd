@@ -2,6 +2,8 @@
 extends RefCounted
 
 const MAX_FIZ_INCLUDE_DEPTH:int = 4
+## coupling::permanent (MOVER.h)
+const COUPLING_PERMANENT:int = 128
 
 ## Ports deserialize_dynamic()'s placement math (simulationstateserializer.cpp) onto
 ## DynamicRailVehicle3D. Field order: datafolder, skinfile, mmdfile, [pathname - only when not
@@ -29,7 +31,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     var path_name:String = context.trainset_track if context.trainset_open else p.next_token()
     var offset:float = float(p.next_token())
     var driver_type:String = p.next_token()
-    var _coupling_data:String = p.next_token() if context.trainset_open else "3"
+    var coupling_data:String = p.next_token() if context.trainset_open else "3"
     var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
     var load_count:int = int(p.next_token())
     var _load_type:String = p.next_token() if load_count != 0 else ""
@@ -56,6 +58,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
 
     if context.trainset_open:
         context.trainset_offset -= length
+        context.trainset_node.couplings.append(_parse_coupling(coupling_data, offset, reversed))
 
     var next_token:String = p.next_token()
     if not next_token == "enddynamic":
@@ -63,6 +66,18 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
         p.get_tokens_until("enddynamic")
 
     return vehicle
+
+
+## Coupling type with the next vehicle of the trainset (simulationstateserializer.cpp:921-934):
+## the number before an optional "." parameter list, negative means a permanent coupling, and a
+## vehicle placed further than 0.5 m from the previous one isn't coupled at all.
+func _parse_coupling(coupling_data:String, offset:float, reversed:bool) -> int:
+    var coupling:int = int(coupling_data.get_slice(".", 0))
+    if coupling < 0:
+        coupling = -coupling | COUPLING_PERMANENT
+    if not reversed and absf(offset) > 0.5:
+        coupling = 0
+    return coupling
 
 
 ## Same convention as maszyna_node_model_importer.gd's data_path handling: the .scn token gives

@@ -34,6 +34,7 @@ namespace godot {
                 "Mechanical,Brake pipe,Multiple control,High voltage,Passage,Air 8 bar,Heating,Fixed coupling lock,24V "
                 "electric cable,110V electric cable,3+400V electric cable");
         BIND_PROPERTY(TrainBuffCoupl, Variant::STRING, control_type);
+        BIND_PROPERTY_W_HINT(TrainBuffCoupl, Variant::INT, buffer_location, PROPERTY_HINT_ENUM, "Front,Back,Both");
         ClassDB::bind_method(D_METHOD("couple"), &TrainBuffCoupl::couple);
         ClassDB::bind_method(D_METHOD("decouple"), &TrainBuffCoupl::decouple);
 
@@ -58,15 +59,20 @@ namespace godot {
         BIND_ENUM_CONSTANT(POWER_24V)
         BIND_ENUM_CONSTANT(POWER_110V)
         BIND_ENUM_CONSTANT(POWER_3X400_V)
+
+        BIND_ENUM_CONSTANT(BUFFER_LOCATION_FRONT)
+        BIND_ENUM_CONSTANT(BUFFER_LOCATION_BACK)
+        BIND_ENUM_CONSTANT(BUFFER_LOCATION_BOTH)
     }
 
     void TrainBuffCoupl::_do_update_internal_mover(TMoverParameters *p_mover) {
         ASSERT_MOVER(p_mover)
+        // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
-        if (buffer_location == BufferLocation::BUFFER_LOCATION_FRONT) {
-            coupler = &p_mover->Couplers[0];
-        } else {
+        if (buffer_location == BufferLocation::BUFFER_LOCATION_BACK) {
             coupler = &p_mover->Couplers[1];
+        } else {
+            coupler = &p_mover->Couplers[0];
         }
         const double mass = train_controller_node->get_mass();
         const double max_velocity = train_controller_node->get_max_velocity();
@@ -125,7 +131,22 @@ namespace godot {
         }
 
         if (buffer_location == BufferLocation::BUFFER_LOCATION_BOTH) {
-            p_mover->Couplers[0] = p_mover->Couplers[1];
+            // single entry for both couplers (Mover.cpp:10370); copy only the configuration, never the
+            // runtime connection state (Connected, CouplingFlag, ...) of an already coupled vehicle
+            TCoupling &rear = p_mover->Couplers[1];
+            rear.CouplerType = coupler->CouplerType;
+            rear.SpringKC = coupler->SpringKC;
+            rear.DmaxC = coupler->DmaxC;
+            rear.FmaxC = coupler->FmaxC;
+            rear.SpringKB = coupler->SpringKB;
+            rear.DmaxB = coupler->DmaxB;
+            rear.FmaxB = coupler->FmaxB;
+            rear.beta = coupler->beta;
+            rear.AutomaticCouplingFlag = coupler->AutomaticCouplingFlag;
+            rear.AllowedFlag = coupler->AllowedFlag;
+            rear.PowerCoupling = coupler->PowerCoupling;
+            rear.PowerFlag = coupler->PowerFlag;
+            rear.control_type = coupler->control_type;
         }
     }
 

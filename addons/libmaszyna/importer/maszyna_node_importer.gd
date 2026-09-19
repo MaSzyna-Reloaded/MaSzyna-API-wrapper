@@ -93,4 +93,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     #    obj.node_name = node_name
     #    obj.range_min = range_min
     #    obj.range_max = range_max
+    if obj is DynamicRailVehicle3D and context.trainset_node:
+        context.trainset_node.add_child(obj)
+        return []
     return [obj]

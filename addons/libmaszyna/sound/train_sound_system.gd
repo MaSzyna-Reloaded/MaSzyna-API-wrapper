@@ -3,6 +3,7 @@ extends Node
 const TRIGGER_INTERVAL:float = 0.05
 const TRIGGER_MODE_TOGGLE:int = 0
 const TRIGGER_MODE_CONTINUOUS:int = 1
+const TRIGGER_MODE_CHANGE:int = 2
 const EXTERIOR_CONTEXT:int = 5
 const VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_volume_factor"
 const EXTERIOR_VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_volume_factor"
@@ -232,6 +233,12 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             var placement:StringName = StringName(trigger.get("sound_placement", &"general"))
             if not placement == &"general":
                 parameters[&"soundproofing"] = _placement_soundproofing(runtime, placement)
+        if trigger_mode == TRIGGER_MODE_CHANGE:
+            var previous_value:Variant = runtime.trigger_states.get(trigger_id)
+            runtime.trigger_states[trigger_id] = value
+            if previous_value is float and not is_equal_approx(previous_value, value):
+                runtime.player.play(event_name, parameters)
+            continue
         if should_play and not activated:
             runtime.player.play(event_name, parameters)
             runtime.trigger_states[trigger_id] = true

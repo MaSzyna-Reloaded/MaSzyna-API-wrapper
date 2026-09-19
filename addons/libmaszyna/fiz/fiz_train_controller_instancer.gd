@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 2
+const FIZ_PARSER_FORMAT_VERSION := 3
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing

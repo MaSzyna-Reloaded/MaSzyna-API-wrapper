@@ -17,6 +17,7 @@ var _camera:FreeCamera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
 var _dirty: bool = true
 var _auto_start_pending:bool = true
+var _released_train_id:String = ""
 
 func _ready() -> void:
     pass
@@ -74,6 +75,9 @@ func _input(event):
     if controlled_vehicle and event.is_action_pressed("cabin_next"):
         TrainSystem.send_command(last_controlled_train_id, "cab_change", -1)
 
+    if not controlled_vehicle:
+        _walk_mode_input(event)
+
     if event.is_action_pressed("cabin_mode_toggle"):
         if not controlled_vehicle:
             if last_controlled_train_id:
@@ -81,6 +85,48 @@ func _input(event):
         else:
             start_train_id = ""
             _auto_start_pending = false
+
+## Walk mode: the brake releaser, the manual brake and coupling act on the vehicle nearest to the
+## player - TTrain::OnCommand_independentbrakebailoff (Train.cpp:1580-1595),
+## OnCommand_manualbrakeincrease/decrease (Train.cpp:1809-1837) via find_nearest_consist_vehicle(),
+## OnCommand_nearestcarcouplingincrease/disconnect (Train.cpp:6207-6249) at its nearest coupler.
+func _walk_mode_input(event:InputEvent) -> void:
+    if event.is_action_pressed("brake_release", false, true):
+        _released_train_id = _find_nearest_train_id()
+        if _released_train_id:
+            TrainSystem.send_command(_released_train_id, "brake_releaser", true)
+    elif event.is_action_released("brake_release", true) and _released_train_id:
+        TrainSystem.send_command(_released_train_id, "brake_releaser", false)
+        _released_train_id = ""
+    elif event.is_action_pressed("manual_brake_increase", true, true):
+        _send_to_nearest_train("manual_brake_increase")
+    elif event.is_action_pressed("manual_brake_decrease", true, true):
+        _send_to_nearest_train("manual_brake_decrease")
+    elif event.is_action_pressed("coupler_connect", false, true):
+        _send_to_nearest_train("coupler_connect", get_camera().global_position)
+    elif event.is_action_pressed("coupler_disconnect", false, true):
+        _send_to_nearest_train("coupler_disconnect", get_camera().global_position)
+
+
+func _send_to_nearest_train(command:String, p1:Variant = null) -> void:
+    var train_id:String = _find_nearest_train_id()
+    if train_id:
+        TrainSystem.send_command(train_id, command, p1)
+
+
+## TTrain::find_nearest_consist_vehicle() (Train.cpp:1023) scans up to 1500 m for the vehicle
+## nearest to the camera.
+func _find_nearest_train_id() -> String:
+    var position:Vector3 = get_camera().global_position
+    var nearest_train_id:String = ""
+    var nearest_distance:float = 1500.0
+    for train_id:String in TrainSystem.get_registered_trains():
+        var distance:float = position.distance_to(TrainSystem.get_train_world_position(train_id))
+        if distance < nearest_distance:
+            nearest_distance = distance
+            nearest_train_id = train_id
+    return nearest_train_id
+
 
 func _find_start_vehicle() -> RailVehicle3D:
     var vehicles:Array[Node] = get_tree().get_root().find_children("", "RailVehicle3D", true, false)

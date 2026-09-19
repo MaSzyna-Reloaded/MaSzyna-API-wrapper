@@ -34,6 +34,8 @@ namespace godot {
             double pantograph_collector_width = 0.5;
             TypedArray<NodePath> pantograph_front_arm_paths;
             TypedArray<NodePath> pantograph_rear_arm_paths;
+            // coupler/hose submodels by lowercased name, e.g. "cpneumatic1r_on" (DynObj.cpp:2170-2181)
+            Dictionary coupler_submodel_paths;
             String start_track_name;
             double start_track_offset = 0.0;
             int start_direction = 0;
@@ -112,6 +114,12 @@ namespace godot {
             TypedArray<Node3D> _resolve_pantograph_arm_nodes(const TypedArray<NodePath> &p_paths) const;
             Dictionary _cache_pantograph_geometry(const TypedArray<Node3D> &p_nodes) const;
             void _cache_animation_bindings();
+            Dictionary coupler_submodel_nodes;
+            int64_t coupler_visibility_state = -1;
+            int _air_coupler_status(const String &p_name) const;
+            int _pneumatic_variant(int p_end, bool p_brake_hose) const;
+            void _show_air_coupler(const String &p_name, bool p_on, bool p_xon);
+            void _update_couplers();
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_track_transform();
@@ -173,6 +181,9 @@ namespace godot {
             TypedArray<NodePath> get_pantograph_front_arm_paths() const;
             void set_pantograph_rear_arm_paths(const TypedArray<NodePath> &p_value);
             TypedArray<NodePath> get_pantograph_rear_arm_paths() const;
+            void set_coupler_submodel_paths(const Dictionary &p_value);
+            Dictionary get_coupler_submodel_paths() const;
+            int get_pneumatic_layout(int p_end, bool p_brake_hose) const;
             void set_start_track_name(const String &p_value);
             String get_start_track_name() const;
             void set_start_track_offset(double p_value);

@@ -6,9 +6,9 @@ class_name FizTrainBuffCouplParser
 ## encountered). LoadFIZ_BuffCoupl: Mover.cpp:10619.
 ##
 ## Setters are only called when the corresponding FIZ key is present - TrainBuffCoupl's own
-## compiled-in property defaults already match the FIZ format's "key absent" behavior, except
-## the coupler/buffer stiffness+tolerance fields, whose x1000 unit conversion depends on the
-## resolved coupler type and are therefore always (re)applied once that type is known.
+## compiled-in property defaults already match the FIZ format's "key absent" behavior.
+## kC/FmaxC/kB/FmaxB stay in the FIZ units (kN, kN/m): TrainBuffCoupl applies the x1000
+## conversion itself, depending on the coupler type (Mover.cpp:10350).
 
 const _COUPLER_TYPE_MAP := {
     "automatic": TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC,
@@ -24,32 +24,25 @@ const ALLOWED_FIXED_COUPLING_LOCK := 128
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := TrainBuffCoupl.new()
+    node.buffer_location = _buffer_location_for(prefix)
 
     var coupler_type: int = _COUPLER_TYPE_MAP.get(FizLineUtil.get_string(kv, "CType").to_lower(), TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC)
     if kv.has("CType"):
         node.coupler_type = coupler_type
 
-    # kC/FmaxC/kB/FmaxB are given in kN / kN*m^-1 and converted to base SI (x1000) for "real"
-    # coupler types only; Bare/Articulated use hardcoded physical constants in the original
-    # code that weren't pinned down precisely enough to replicate here (FIZ-provided values,
-    # if any, are applied unconverted).
-    var is_real_coupler: bool = coupler_type in [
-        TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC, TrainBuffCoupl.COUPLER_TYPE_SCREW, TrainBuffCoupl.COUPLER_TYPE_CHAIN]
-    var unit_mult: float = 1000.0 if is_real_coupler else 1.0
-
     if kv.has("kC"):
-        node.coupler_stiffness_k = FizLineUtil.get_float(kv, "kC") * unit_mult
+        node.coupler_stiffness_k = FizLineUtil.get_float(kv, "kC")
     if kv.has("DmaxC"):
         node.coupler_max_compression_tolerance = FizLineUtil.get_float(kv, "DmaxC")
     if kv.has("FmaxC"):
-        node.coupler_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxC") * unit_mult
+        node.coupler_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxC")
 
     if kv.has("kB"):
-        node.buffer_stiffness_k = FizLineUtil.get_float(kv, "kB") * unit_mult
+        node.buffer_stiffness_k = FizLineUtil.get_float(kv, "kB")
     if kv.has("DmaxB"):
         node.buffer_max_compression_tolerance = FizLineUtil.get_float(kv, "DmaxB")
     if kv.has("FmaxB"):
-        node.buffer_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxB") * unit_mult
+        node.buffer_max_tension_tolerance = FizLineUtil.get_float(kv, "FmaxB")
 
     if kv.has("beta"):
         node.damping_beta = FizLineUtil.get_float(kv, "beta")
@@ -76,3 +69,12 @@ func _part_name_for(prefix: String, context: FizImportContext) -> String:
         "BuffCoupl1.": return "TrainBuffCouplFront"
         "BuffCoupl2.": return "TrainBuffCouplBack"
         _: return "TrainBuffCoupl"
+
+
+## LoadFIZ_BuffCoupl (Mover.cpp:9613-9629): BuffCoupl. describes both couplers, BuffCoupl1. the
+## front one and BuffCoupl2. the rear one.
+func _buffer_location_for(prefix: String) -> TrainBuffCoupl.BufferLocation:
+    match prefix:
+        "BuffCoupl1.": return TrainBuffCoupl.BUFFER_LOCATION_FRONT
+        "BuffCoupl2.": return TrainBuffCoupl.BUFFER_LOCATION_BACK
+        _: return TrainBuffCoupl.BUFFER_LOCATION_BOTH

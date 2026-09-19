@@ -14,4 +14,6 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> Array:
     context.trainset_track = tokens[1]
     context.trainset_offset = float(tokens[2])
     context.trainset_velocity = float(tokens[3])
-    return []
+    context.trainset_node = TrainSet3D.new()
+    context.trainset_node.name = context.trainset_name
+    return [context.trainset_node]

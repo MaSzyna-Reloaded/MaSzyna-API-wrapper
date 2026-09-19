@@ -5,6 +5,7 @@
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
+#include <unordered_map>
 
 
 namespace godot {
@@ -53,6 +54,10 @@ namespace godot {
             void _handle_mover_update();
             Object *_get_rail_vehicle_physics_server() const;
             void _emit_position_changed_if_needed();
+            int _resolve_coupler_end(const Variant &p_where) const;
+            // attach/detach sound requests of the couplers, one counter per coupling type and direction
+            int coupler_sound_counts[12] = {};
+            void _consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state);
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -207,7 +212,18 @@ namespace godot {
             void update_state();
             void update_mover();
             double process_movement(double p_delta);
+            void update_location();
+            void update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance);
+            void compute_forces(double p_delta);
+            void compute_movement(double p_delta);
+            void couple(TrainController *p_other, int p_end, int p_other_end, int p_coupling_type);
+            void uncouple(int p_end);
+            bool is_coupled(int p_end) const;
+            void coupler_connect(const Variant &p_where);
+            void coupler_disconnect(const Variant &p_where);
             TMoverParameters *get_mover() const;
+            TrainController *get_coupled_controller(int p_end) const;
+            int get_coupled_end(int p_end) const;
             void set_cabin_number(int p_value);
             int get_cabin_number() const;
             static void _bind_methods();
@@ -257,6 +273,8 @@ namespace godot {
             Dictionary get_state();
 
         private:
+            // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
+            static std::unordered_map<const TMoverParameters *, TrainController *> controllers_by_mover;
             RID rid;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };

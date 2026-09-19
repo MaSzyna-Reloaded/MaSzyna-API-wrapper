@@ -50,25 +50,18 @@ static func _ensure_built() -> void:
             "config_max_property": "main_controller_position_max",
             "mesh_path_field": "mesh_path",
         },
-        # jointctrl (combined main controller + local/dynamic brake handle, e.g. SM42's own
-        # nastawnik) - confirmed via input/drivermouseinput.cpp + vehicle/Train.cpp
-        # (OnCommand_mastercontrollerincrease): the ORIGINAL engine's mainctrl:-style
-        # increase/decrease commands already special-case joint-controller vehicles, releasing
-        # the independent brake first when its negative/brake range is active. Our wrapper's
-        # main_controller_increase/decrease (TrainController.cpp:482-490) is the plain
-        # mover->IncMainCtrl()/DecMainCtrl() version without that special-casing, so this gives
-        # real, working throttle control for the power range only - the brake-fusion (negative)
-        # range is NOT reproduced (would need a new C++ command mirroring
-        # OnCommand_jointcontrollerset's full logic, separate future work) and is intentionally
-        # left unbound here rather than silently mismapped.
+        # jointctrl (combined main controller + local brake handle, e.g. SM42's nastawnik): the
+        # negative range is the local brake (Train.cpp:7699-7714, shown by controller_joint_position).
+        # Increase/decrease are handled by LegacyCabinJointController, not forwarded directly.
         "jointctrl": {
             "widget_class": CabinSwitch,
             "fixed_fields": {
-                "switch_min_position": 0,
+                # -LocalBrakePosNo (hamulce.h:45)
+                "switch_min_position": -10,
                 "switch_max_position": 10,
                 "command_increase": "main_controller_increase",
                 "command_decrease": "main_controller_decrease",
-                "state_property": "controller_main_position",
+                "state_property": "controller_joint_position",
                 "action_increase": "main_controller_increase",
                 "action_decrease": "main_controller_decrease",
                 # OnCommand_mastercontroller* act on key repeat too (Train.cpp:1096)
@@ -132,6 +125,24 @@ static func _ensure_built() -> void:
             # The original feeds the gauge LocalBrakePosA * LocalBrakePosNo (Train.cpp:7850,
             # LocalBrakePosNo = 10 in hamulce.h:39), so MMD scale is calibrated for 0..10.
             "mmd_scale_multiplier": 10.0,
+        },
+        # "manualbrake:" gauge shows ManualBrakePos (Train.cpp:10255); mouse drives
+        # manualbrakeincrease/decrease (drivermouseinput.cpp:547), keys Ctrl+Num1/Ctrl+Num7
+        # (driverkeyboardinput.cpp:64-65), acting on key repeat too (Train.cpp:1811).
+        "manualbrake": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "switch_max_position": 20,
+                "command_increase": "manual_brake_increase",
+                "command_decrease": "manual_brake_decrease",
+                "state_property": "brake_manual_position",
+                "action_increase": "manual_brake_increase",
+                "action_decrease": "manual_brake_decrease",
+                "repeat_on_hold": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
         },
         "security_reset_bt": {
             "widget_class": CabinButton,

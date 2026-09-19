@@ -791,6 +791,12 @@ static func _apply_animation_shape(
                         "Label '%s' has a non-zero MMD offset (%s) which the reused cabin widgets cannot represent - ignored" % [descriptor.label, descriptor.offset],
                         cab_number, descriptor.label, descriptor.submodel_name))
 
+    # TGauge::Update() (Gauge.cpp:366): value += dt * (target - value) / friction - the same smoothing
+    # as the widgets' lerp(delta * animation_speed)
+    if descriptor.friction > 0.0 and "animation_speed" in widget \
+            and not entry.get("fixed_fields", {}).has("animation_speed"):
+        widget.set("animation_speed", 1.0 / descriptor.friction)
+
 
 ## `widget` must already be inside the tree (a child of the same generated_root as `model`'s
 ## submodels) before this is called - the mesh-path property is a NodePath FROM the widget TO

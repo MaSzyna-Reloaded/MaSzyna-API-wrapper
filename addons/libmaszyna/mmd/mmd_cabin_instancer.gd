@@ -16,6 +16,9 @@ class_name MmdCabinInstancer
 
 ## How far an aimed indicator light is moved out of its lamp mesh (see _aim_spotlight_at_driver()).
 const INDICATOR_LIGHT_OFFSET:float = 0.05
+## Spacing and limit of the lights spread along a long ceiling lamp (see _light_points_along_submodel()).
+const LAMP_LIGHT_SPACING:float = 2.0
+const LAMP_LIGHT_MAX_COUNT:int = 6
 const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
 const _INCLUDE_END_KEYWORD := "end"
@@ -894,15 +897,46 @@ static func _build_indicator_lights(
         widget.set("controller_path", widget.get_path_to(controller))
 
         if entry.has("light_widget_class"):
-            var light:Light3D = entry["light_widget_class"].new()
-            light.name = "%s_%s_%d_light" % [descriptor.label, descriptor.submodel_name, i]
-            for field_name:String in entry["light_fixed_fields"]:
-                light.set(field_name, entry["light_fixed_fields"][field_name])
-            generated_root.add_child(light)
-            _position_at_submodel_instance(light, on_node if on_node else off_node)
-            if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
-                _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
-            light.set("controller_path", light.get_path_to(controller))
+            var lamp:Node3D = on_node if on_node else off_node
+            var light_points:Array[Vector3] = (
+                    _light_points_along_submodel(lamp) if entry.get("spread_light_along_submodel", false)
+                    else [] as Array[Vector3])
+            for j:int in maxi(light_points.size(), 1):
+                var light:Light3D = entry["light_widget_class"].new()
+                light.name = "%s_%s_%d_light%s" % [
+                        descriptor.label, descriptor.submodel_name, i, "_%d" % j if j else ""]
+                for field_name:String in entry["light_fixed_fields"]:
+                    light.set(field_name, entry["light_fixed_fields"][field_name])
+                generated_root.add_child(light)
+                _position_at_submodel_instance(light, lamp)
+                if light_points:
+                    light.global_position = light_points[j]
+                if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
+                    _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
+                light.set("controller_path", light.get_path_to(controller))
+
+
+## Quirk for ceiling lamps: one lamp submodel may hold a whole row of bulbs (EP07 machine room
+## corridor "lampy" runs along the cab), so one light at its center lights a fraction of it. Global
+## points spread along the lamp mesh's longest axis, one per LAMP_LIGHT_SPACING; empty when the
+## lamp has no usable bounds (the caller keeps the single centered light).
+static func _light_points_along_submodel(lamp:Node3D) -> Array[Vector3]:
+    var points:Array[Vector3] = []
+    if not lamp is VisualInstance3D:
+        return points
+    var bounds:AABB = (lamp as VisualInstance3D).get_aabb()
+    var start:Vector3 = lamp.to_global(bounds.position)
+    var axis:Vector3 = lamp.to_global(bounds.position + bounds.size * Vector3(
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_X else 0.0,
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_Y else 0.0,
+            1.0 if bounds.get_longest_axis_index() == Vector3.AXIS_Z else 0.0)) - start
+    var center:Vector3 = lamp.to_global(bounds.get_center())
+    if not _is_vector3_finite(axis) or not _is_vector3_finite(center):
+        return points
+    var count:int = clampi(ceili(axis.length() / LAMP_LIGHT_SPACING), 1, LAMP_LIGHT_MAX_COUNT)
+    for k:int in count:
+        points.append(center + axis * ((k + 0.5) / count - 0.5))
+    return points
 
 
 ## Quirk for indicator lamps lighting the cab (alerter): the lamp submodel's own axes are arbitrary

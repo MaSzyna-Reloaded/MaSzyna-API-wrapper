@@ -49,6 +49,7 @@ script = ExtResource("3_scenery")
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
 [node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
+weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
 [node name="Music" type="AudioStreamPlayer" parent="."]
 stream = ExtResource("13_music")

@@ -76,6 +76,12 @@ class TrackSegment:
     var domain_curve2: Curve3D
     ## Logical track width.
     var width: float = 1.6
+    ## Track quality (iQualityFlag), scales running noise and wheel clatter volume.
+    var quality_flag: int = 0
+    ## Environment from [enum Track3D.TrackEnvironment].
+    var environment: int = 0
+    ## Rail length between joints for the wheel clatter (fSoundDistance), -1 for none.
+    var sound_distance: float = -1.0
     ## Total length of all stored curves.
     var length: float = 0.0
     ## Length of [member curve1].
@@ -487,6 +493,15 @@ func track_update(
         _spatial_index.remove(track.track_rid)
     tracks_changed.emit()
 
+## Updates the track properties read by the running sounds (Track.cpp:449).
+func track_update_properties(track_rid: RID, quality_flag: int, environment: int, sound_distance: float) -> void:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if not track:
+        return
+    track.quality_flag = quality_flag
+    track.environment = environment
+    track.sound_distance = sound_distance
+
 ## Returns whether the given RID is registered.
 func track_exists(track_rid: RID) -> bool:
     return _tracks.has(track_rid)
@@ -501,6 +516,27 @@ func track_get_width(track_rid: RID) -> float:
     if track:
         return track.width
     return 0.0
+
+## Returns quality flag of a track.
+func track_get_quality_flag(track_rid: RID) -> int:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.quality_flag
+    return 0
+
+## Returns environment of a track.
+func track_get_environment(track_rid: RID) -> int:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.environment
+    return 0
+
+## Returns rail length between joints of a track, -1 for none.
+func track_get_sound_distance(track_rid: RID) -> float:
+    var track: TrackSegment = _tracks.get(track_rid)
+    if track:
+        return track.sound_distance
+    return -1.0
 
 ## Returns endpoint positions of a track.
 func track_get_endpoints(track_rid: RID) -> Array[Vector3]:

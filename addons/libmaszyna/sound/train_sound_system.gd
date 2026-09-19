@@ -29,6 +29,7 @@ class BankRuntime extends RefCounted:
     var cabin_only:bool = false
     var enabled:bool = true
     var brake_sources:Dictionary = {}
+    var running:RunningSoundModel
     var soundproofing:Array[PackedFloat32Array] = []
     var triggers:Array[Dictionary] = []
     var trigger_states:Dictionary = {}
@@ -73,6 +74,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
+    runtime.running = registration.get("running") as RunningSoundModel
     runtime.soundproofing = registration.get("soundproofing", [])
     for descriptor:Dictionary in registration.get("triggers", []):
         _add_trigger(runtime, descriptor)
@@ -108,6 +110,7 @@ func _physics_process(delta:float) -> void:
     var states:Dictionary = {}
     var culling_distance:float = float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0))
     var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO
+    var listener_consist:Dictionary = _listener_consist()
     for runtime:BankRuntime in _banks.values():
         if not is_instance_valid(runtime.controller):
             _resolve_controller(runtime)
@@ -134,6 +137,7 @@ func _physics_process(delta:float) -> void:
                 0.0, FAR_UPDATE_INTERVAL, clampf(distance / culling_distance, 0.0, 1.0))
         if runtime.sound_update_elapsed < update_interval:
             continue
+        var elapsed:float = runtime.sound_update_elapsed
         runtime.sound_update_elapsed = fmod(runtime.sound_update_elapsed, maxf(update_interval, 0.001))
 
         _ensure_brake_events(runtime)
@@ -143,6 +147,7 @@ func _physics_process(delta:float) -> void:
         var state:Dictionary = states[controller_id]
         var batch:Dictionary = {}
         _update_brake_sounds(runtime, state, batch)
+        _update_running_sounds(runtime, state, elapsed, listener_consist, batch)
         runtime.trigger_elapsed += delta
         if runtime.trigger_elapsed >= TRIGGER_INTERVAL:
             runtime.trigger_elapsed = fmod(runtime.trigger_elapsed, TRIGGER_INTERVAL)
@@ -247,6 +252,47 @@ func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -
             runtime.trigger_states[trigger_id] = false
         if should_play and parameters and runtime.player.is_playing(event_name):
             batch[event_name] = parameters
+
+
+func _update_running_sounds(
+        runtime:BankRuntime, state:Dictionary, elapsed:float, listener_consist:Dictionary,
+        batch:Dictionary) -> void:
+    if not runtime.running:
+        return
+    var results:Dictionary = runtime.running.update(
+            runtime.controller, state, elapsed, not listener_consist.has(runtime.controller.get_instance_id()))
+    for event_name:StringName in results:
+        var result:Dictionary = results[event_name]
+        var action:int = result["action"]
+        if action == RunningSoundModel.Action.STOP:
+            if runtime.player.is_playing(event_name):
+                runtime.player.stop(event_name, false)
+            continue
+        var parameters:Dictionary = result["parameters"]
+        parameters[&"soundproofing"] = _soundproofing(runtime, result["source"])
+        if action == RunningSoundModel.Action.ONE_SHOT:
+            runtime.player.play(event_name, parameters)
+            continue
+        if not runtime.player.is_playing(event_name):
+            runtime.player.play(event_name, parameters)
+        batch[event_name] = parameters
+
+
+## Controllers of the consist driven from the listener's cab - their outer noise is replaced by the
+## cab running noise (DynObj.cpp:4632-4640)
+func _listener_consist() -> Dictionary:
+    var consist:Dictionary = {}
+    if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
+        return consist
+    var pending:Array[TrainController] = [_listener.listener_vehicle.get_controller()]
+    while pending:
+        var controller:TrainController = pending.pop_back()
+        if not controller or consist.has(controller.get_instance_id()):
+            continue
+        consist[controller.get_instance_id()] = true
+        pending.append(controller.get_coupled_controller(0))
+        pending.append(controller.get_coupled_controller(1))
+    return consist
 
 
 func _engine_gain(

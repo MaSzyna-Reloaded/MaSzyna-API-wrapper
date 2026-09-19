@@ -396,13 +396,7 @@ func vehicle_get_transform_at_distance(vehicle_rid: RID, distance: float) -> Tra
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state or not TrackManager.track_exists(state.track_rid):
         return Transform3D.IDENTITY
-    var sampled_state: VehicleState = VehicleState.new()
-    sampled_state.track_rid = state.track_rid
-    sampled_state.track_offset = state.track_offset
-    sampled_state.track_direction = state.track_direction
-    sampled_state.switch_track = state.switch_track
-    _move_vehicle_state(sampled_state, distance, false)
-    return _get_vehicle_transform(sampled_state)
+    return _get_vehicle_transform(_sample_state(state, distance))
 
 
 func _get_vehicle_transform(state: VehicleState) -> Transform3D:
@@ -452,6 +446,53 @@ func controller_get_transform(controller_rid: RID) -> Transform3D:
     if not vehicle_rid.is_valid():
         return Transform3D.IDENTITY
     return vehicle_get_transform(vehicle_rid)
+
+
+## Track under the vehicle and the running shape of its bogies (DynObj.cpp:2950-2970): the curve
+## radius from the yaw difference of the bogie pivots (0.0 on a straight or above 15 km), the
+## mean cant of both bogies in radians, and the vehicle centre along the track measured towards
+## the vehicle front ("along").
+func controller_get_running_shape(controller_rid: RID, bogie_pivot_spacing: float) -> Dictionary:
+    var vehicle_rid: RID = _controller_vehicles.get(controller_rid, RID())
+    var state: VehicleState = _vehicles.get(vehicle_rid)
+    if not state or not TrackManager.track_exists(state.track_rid):
+        return {"track_rid": TrackManager.UNDEFINED_TRACK, "radius": 0.0, "cant": 0.0, "along": 0.0}
+    var front: VehicleState = _sample_state(state, 0.5 * bogie_pivot_spacing)
+    var rear: VehicleState = _sample_state(state, -0.5 * bogie_pivot_spacing)
+    var front_forward: Vector3 = -_get_vehicle_transform(front).basis.z
+    var rear_forward: Vector3 = -_get_vehicle_transform(rear).basis.z
+    var yaw_difference: float = atan2(front_forward.x, front_forward.z) - atan2(rear_forward.x, rear_forward.z)
+    yaw_difference = wrapf(yaw_difference, -PI, PI)
+    var radius: float = 0.0
+    if not is_zero_approx(sin(yaw_difference * 0.5)):
+        radius = -0.5 * bogie_pivot_spacing / sin(yaw_difference * 0.5)
+    if absf(radius) > 15000.0:
+        radius = 0.0
+    return {
+        "track_rid": state.track_rid,
+        "radius": radius,
+        "cant": deg_to_rad(0.5 * (_get_roll(front) + _get_roll(rear))),
+        # moving forward decreases the offset on a track run in its normal direction
+        "along": -state.track_offset if state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else state.track_offset,
+    }
+
+
+func _sample_state(state: VehicleState, distance: float) -> VehicleState:
+    var sampled_state: VehicleState = VehicleState.new()
+    sampled_state.track_rid = state.track_rid
+    sampled_state.track_offset = state.track_offset
+    sampled_state.track_direction = state.track_direction
+    sampled_state.switch_track = state.switch_track
+    _move_vehicle_state(sampled_state, distance, false)
+    return sampled_state
+
+
+func _get_roll(state: VehicleState) -> float:
+    var curve_data: MaszynaTrackCurve = TrackManager.track_get_curve(state.track_rid, state.switch_track)
+    var length: float = TrackManager.track_get_length(state.track_rid, state.switch_track)
+    if not curve_data or length <= 0.0:
+        return 0.0
+    return lerpf(curve_data.roll1, curve_data.roll2, clampf(state.track_offset / length, 0.0, 1.0))
 
 
 func _get_motion_connection(

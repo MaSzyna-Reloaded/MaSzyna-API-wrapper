@@ -73,4 +73,15 @@ namespace godot {
         }
     }
 
+    void TrainElectricSeriesEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+        TrainElectricEngine::_do_fetch_state_from_mover(p_mover, p_state);
+        // ventilator sound driver (DynObj.cpp:8081)
+        p_state["resistor_fan_rotation"] = p_mover->RventRot;
+    }
+
+    void TrainElectricSeriesEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+        TrainElectricEngine::_do_fetch_config_from_mover(p_mover, p_config);
+        p_config["resistor_fan_max_rpm"] = p_mover->RVentnmax;
+    }
+
 } // namespace godot

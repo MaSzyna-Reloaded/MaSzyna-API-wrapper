@@ -24,7 +24,7 @@ func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
     data.length = float(p.next_token())
     data.width = float(p.next_token())
     data.friction = float(p.next_token())
-    var _sound_distance = float(p.next_token())
+    data.sound_distance = float(p.next_token())
     data.quality_flag = int(p.next_token())
     data.damage_flag = int(p.next_token())
     data.environment = _parse_environment(p.next_token())

@@ -16,11 +16,12 @@
 [ext_resource type="Script" uid="uid://cd0fdelf7u8gv" path="res://hud/top_bar.gd" id="8_top_bar"]
 [ext_resource type="PackedScene" uid="uid://e8tfpu8xl6ps" path="res://hud/mover_gauges.tscn" id="9_ss847"]
 [ext_resource type="Script" uid="uid://bwbpde8e6vyk" path="res://hud/window.gd" id="9_window"]
-[ext_resource type="PackedScene" path="res://hud/scenery_selector.tscn" id="10_scenery_selector"]
+[ext_resource type="PackedScene" path="res://scenery_selector/scenery_selector_screen.tscn" id="10_scenery_selector"]
 [ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="11_loading_screen"]
 [ext_resource type="PackedScene" uid="uid://b1d2e3f4g5h6j" path="res://addons/libmaszyna/minimap/mini_map.tscn" id="11_minimap"]
 [ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
+[ext_resource type="AudioStream" uid="uid://cn3nnquf55ipe" path="res://sounds/music/musinova-minimal-techno-ambient-loop-edit-483369.mp3" id="13_music"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
 script = ExtResource("7_demo")
@@ -48,6 +49,10 @@ script = ExtResource("3_scenery")
 [node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
 
 [node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
+
+[node name="Music" type="AudioStreamPlayer" parent="."]
+stream = ExtResource("13_music")
+autoplay = true
 weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
 [node name="TopBar" type="Container" parent="." unique_id=702463713]
@@ -237,30 +242,15 @@ title = "Help"
 [node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]
 layout_mode = 2
 
-[node name="Scenery" type="Container" parent="ControlWindows" unique_id=2011306675]
-top_level = true
-custom_minimum_size = Vector2(100, 50)
-clip_contents = true
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -190.0
-offset_top = -224.0
-offset_right = 190.0
-offset_bottom = 224.0
-script = ExtResource("9_window")
-title = "Scenery"
-
-[node name="ScenerySelector" parent="ControlWindows/Scenery" unique_id=1043606942 instance=ExtResource("10_scenery_selector")]
-layout_mode = 2
-
 [node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
 scene_path = ""
 
+[node name="ScenerySelectorScreen" parent="." instance=ExtResource("10_scenery_selector")]
+visible = false
+
 [connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
 [connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]
-[connection signal="scenery_selected" from="ControlWindows/Scenery/ScenerySelector" to="." method="_on_scenery_selector_scenery_selected"]
+[connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]

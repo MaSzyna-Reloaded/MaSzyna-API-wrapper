@@ -1,7 +1,11 @@
 extends Node3D
 
+## Seconds of the music fade out after a scenery has loaded
+const MUSIC_FADE_OUT_TIME: float = 1.0
+
 ## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
 var _windows: Array[HUDWindow] = []
+var _music_tween: Tween
 
 
 func _ready() -> void:
@@ -11,7 +15,9 @@ func _ready() -> void:
         win.visible = false
         menu.add_item(win.title)
         _windows.append(win)
-    $ControlWindows/Scenery.visible = not $MaszynaSceneryNode.filename
+    menu.add_item("Exit to menu")
+    if not $MaszynaSceneryNode.filename:
+        $ScenerySelectorScreen.open()
 
 
 func _input(event: InputEvent) -> void:
@@ -22,6 +28,10 @@ func _input(event: InputEvent) -> void:
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:
+    if index == _windows.size():
+        # "Exit to menu", after the windows
+        _exit_to_menu()
+        return
     var win: HUDWindow = _windows[index]
     win.visible = not win.visible
     _bind_train_controller(win)
@@ -34,7 +44,7 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
 
 
 func _on_scenery_selector_scenery_selected(filename: String) -> void:
-    $ControlWindows/Scenery.visible = false
+    _play_music()
     $TopBar.visible = false
     $ControlWindows.visible = false
     $LoadingScreen.show_loading(filename.get_basename())
@@ -44,6 +54,32 @@ func _on_scenery_selector_scenery_selected(filename: String) -> void:
     $LoadingScreen.visible = false
     $TopBar.visible = true
     $ControlWindows.visible = true
+
+
+## Unloads the scenery and shows the scenario selector
+func _exit_to_menu() -> void:
+    _play_music()
+    $TopBar.visible = false
+    $ControlWindows.visible = false
+    $ScenerySelectorScreen.open()
+    await $Player.clear_start_train()
+    $MaszynaSceneryNode.filename = ""
+    await $MaszynaSceneryNode.load()
+
+
+## Music plays while no scenery is loaded (autoplay) and while a scenery loads
+func _play_music() -> void:
+    if _music_tween:
+        _music_tween.kill()
+    $Music.volume_linear = 1.0
+    if not $Music.playing:
+        $Music.play()
+
+
+func _on_scenery_loaded(_first_train_id: String) -> void:
+    _music_tween = create_tween()
+    _music_tween.tween_property($Music, "volume_linear", 0.0, MUSIC_FADE_OUT_TIME)
+    _music_tween.tween_callback($Music.stop)
 
 
 func _bind_train_controller(win: Node) -> void:

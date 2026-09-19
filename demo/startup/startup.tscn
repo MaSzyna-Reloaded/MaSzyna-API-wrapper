@@ -1,0 +1,65 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://startup/startup.gd" id="1_startup"]
+[ext_resource type="Shader" path="res://startup/startup_track.gdshader" id="2_track"]
+[ext_resource type="Texture2D" path="res://startup/eu07_sketch.svg" id="3_eu07"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_track"]
+shader = ExtResource("2_track")
+shader_parameter/layer = 0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_poles"]
+shader = ExtResource("2_track")
+shader_parameter/layer = 1
+
+[node name="Startup" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_startup")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.078, 0.15, 1)
+
+[node name="Spinner" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -260.0
+offset_top = -120.0
+offset_right = 260.0
+offset_bottom = 120.0
+
+[node name="Track" type="ColorRect" parent="Spinner"]
+material = SubResource("ShaderMaterial_track")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="EU07" type="TextureRect" parent="Spinner"]
+layout_mode = 0
+offset_left = 60.0
+offset_top = 58.0
+offset_right = 460.0
+offset_bottom = 218.0
+texture = ExtResource("3_eu07")
+
+[node name="Poles" type="ColorRect" parent="Spinner"]
+material = SubResource("ShaderMaterial_poles")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0

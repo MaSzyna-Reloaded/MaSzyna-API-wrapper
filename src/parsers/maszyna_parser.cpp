@@ -30,6 +30,7 @@ namespace godot {
 
     MaszynaParser::MaszynaParser() {
         default_stop_chars = Array::make(" ", "\t", "\n", "\r", ";");
+        _make_stop_table(default_stop_chars, default_stop_table);
         meta.push_back(Dictionary());
     }
 
@@ -40,22 +41,52 @@ namespace godot {
         return default_stop_chars;
     }
 
+    /// Single ASCII stop characters; others never matched a single byte in the tokenizer anyway
+    void MaszynaParser::_make_stop_table(const Array &p_stops, bool (&r_table)[128]) {
+        for (bool &entry: r_table) {
+            entry = false;
+        }
+        for (int i = 0; i < p_stops.size(); i++) {
+            const String stop = p_stops[i];
+            if (stop.length() == 1 && stop[0] < 128) {
+                r_table[stop[0]] = true;
+            }
+        }
+    }
+
+    /// Bytes are appended as signed chars, like the previous per-character `String += char`
+    /// (keeps non-ASCII tokens unchanged); pure ASCII tokens are converted at once.
+    String MaszynaParser::_to_token(const std::string &p_raw) {
+        for (const char c: p_raw) {
+            if (static_cast<uint8_t>(c) >= 128) {
+                String token;
+                for (const char raw_c: p_raw) {
+                    token += static_cast<char32_t>(raw_c);
+                }
+                return token;
+            }
+        }
+        return {p_raw.c_str()};
+    }
+
     void MaszynaParser::set_parameters(const Dictionary &p_parameters) {
         parameters = p_parameters;
     }
 
     void MaszynaParser::initialize(const PackedByteArray &p_buffer, const Array &p_default_stop_chars) {
         this->buffer = p_buffer;
+        data = buffer.ptr();
         length = static_cast<int>(p_buffer.size());
         cursor = 0;
         if (!p_default_stop_chars.is_empty()) {
             default_stop_chars = p_default_stop_chars;
+            _make_stop_table(default_stop_chars, default_stop_table);
         }
     }
 
     int MaszynaParser::get8() {
         if (cursor < length) {
-            return buffer[cursor++];
+            return data[cursor++];
         }
         return -1;
     }
@@ -96,92 +127,112 @@ namespace godot {
         return Vector3(p_tokens[0], p_tokens[1], p_tokens[2]);
     }
 
-    Array MaszynaParser::get_tokens(const int p_num, const Array &p_stops) {
-        const Array stop_chars = get_stops(p_stops);
-        Array tokens;
+    /// Reads one token (empty at a comment or repeated stop characters), parameters substituted
+    String MaszynaParser::_read_token(const bool (&p_stop_table)[128]) {
+        std::string raw;
         bool maybe_comment = false;
         bool maybe_endcomment = false;
 
-        while (tokens.size() < p_num && !eof_reached()) {
-            String token = "";
+        while (!eof_reached()) {
+            int c_int = get8();
+            if (c_int == -1) {
+                break;
+            }
+            char c = static_cast<char>(c_int);
+            bool skip = false;
 
-            while (!eof_reached()) {
-                int c_int = get8();
-                if (c_int == -1) {
-                    break;
-                }
-                char c = static_cast<char>(c_int);
-                bool skip = false;
-
-                if (c == '/') {
-                    if (maybe_comment) {
-                        maybe_comment = false;
-                        // Line comment detected
-                        while (!eof_reached()) {
-                            int next_c = get8();
-                            if (next_c == -1 || next_c == '\n' || next_c == '\r') {
-                                break;
-                            }
-                        }
-                        skip = true;
-                    } else {
-                        maybe_comment = true;
-                        continue;
-                    }
-                } else if (c == '*') {
-                    if (maybe_comment) {
-                        maybe_comment = false;
-                        maybe_endcomment = false;
-                        // Block comment detected
-                        while (!eof_reached()) {
-                            int next_c = get8();
-                            if (next_c == -1) {
-                                break;
-                            }
-                            char bc = static_cast<char>(next_c);
-                            if (bc == '*') {
-                                maybe_endcomment = true;
-                            } else if (bc == '/' && maybe_endcomment) {
-                                break;
-                            } else {
-                                maybe_endcomment = false;
-                            }
-                        }
-                        break;
-                    }
-                }
-
-                if (!skip && maybe_comment) {
+            if (c == '/') {
+                if (maybe_comment) {
                     maybe_comment = false;
-                    token += '/';
+                    // Line comment detected
+                    while (!eof_reached()) {
+                        int next_c = get8();
+                        if (next_c == -1 || next_c == '\n' || next_c == '\r') {
+                            break;
+                        }
+                    }
+                    skip = true;
+                } else {
+                    maybe_comment = true;
+                    continue;
                 }
-
-                if (skip || stop_chars.has(String::chr(c))) {
+            } else if (c == '*') {
+                if (maybe_comment) {
+                    maybe_comment = false;
+                    maybe_endcomment = false;
+                    // Block comment detected
+                    while (!eof_reached()) {
+                        int next_c = get8();
+                        if (next_c == -1) {
+                            break;
+                        }
+                        char bc = static_cast<char>(next_c);
+                        if (bc == '*') {
+                            maybe_endcomment = true;
+                        } else if (bc == '/' && maybe_endcomment) {
+                            break;
+                        } else {
+                            maybe_endcomment = false;
+                        }
+                    }
                     break;
                 }
-
-                token += c;
             }
 
-            token = token.strip_edges();
+            if (!skip && maybe_comment) {
+                maybe_comment = false;
+                raw += '/';
+            }
 
-            if (!token.is_empty()) {
-                Array keys = parameters.keys();
-                for (const auto &key: keys) {
-                    String param = key;
-                    String value = parameters[param];
-                    token = token.replace("(" + param + ")", value);
-                }
+            if (skip || (static_cast<uint8_t>(c) < 128 && p_stop_table[static_cast<uint8_t>(c)])) {
+                break;
+            }
+
+            raw += c;
+        }
+
+        String token = _to_token(raw).strip_edges();
+        // a parameter reference is always "(name)"
+        if (!parameters.is_empty() && token.contains("(")) {
+            Array keys = parameters.keys();
+            for (const auto &key: keys) {
+                String param = key;
+                String value = parameters[param];
+                token = token.replace("(" + param + ")", value);
+            }
+        }
+        return token;
+    }
+
+    Array MaszynaParser::get_tokens(const int p_num, const Array &p_stops) {
+        bool stop_table[128];
+        if (!p_stops.is_empty()) {
+            _make_stop_table(p_stops, stop_table);
+        }
+        const bool (&table)[128] = p_stops.is_empty() ? default_stop_table : stop_table;
+
+        Array tokens;
+        while (tokens.size() < p_num && !eof_reached()) {
+            if (String token = _read_token(table); !token.is_empty()) {
                 tokens.append(token);
             }
         }
-
         return tokens;
     }
 
     String MaszynaParser::next_token(const Array &p_stops) {
-        Array tokens = get_tokens(1, p_stops);
-        return tokens.size() > 0 ? tokens[0] : "";
+        bool stop_table[128];
+        if (!p_stops.is_empty()) {
+            _make_stop_table(p_stops, stop_table);
+        }
+        const bool (&table)[128] = p_stops.is_empty() ? default_stop_table : stop_table;
+
+        while (!eof_reached()) {
+            if (String token = _read_token(table); !token.is_empty()) {
+                return token;
+            }
+        }
+        return "";
     }
 
     Vector3 MaszynaParser::next_vector3(const Array &p_stops) {

@@ -11,3 +11,4 @@ class_name MaszynaCompiledScenery
 @export var tracks:Array[MaszynaTrackData] = []
 @export var traction:Array[MaszynaTractionData] = []
 @export var power_sources:Array[MaszynaPowerSourceData] = []
+@export var models:Array[MaszynaModelData] = []

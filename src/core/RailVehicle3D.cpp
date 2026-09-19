@@ -159,6 +159,10 @@ namespace godot {
         }
         cabin = new_cabin;
         cabin_player = p_player;
+        // taking over the vehicle activates its cab when the FIZ allows it (Train.cpp:9147)
+        if (controller != nullptr) {
+            controller->cab_activation_auto();
+        }
 
         if (!controller_path.is_empty()) {
             TrainController *resolved_controller = _resolve_controller(controller_path);

@@ -1,5 +1,8 @@
 extends Node3D
 
+## Menu order snapshot - HUDWindow.move_to_front() reorders ControlWindows children.
+var _windows: Array[HUDWindow] = []
+
 func _ready():
     var menu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child in $ControlWindows.get_children():
@@ -7,6 +10,7 @@ func _ready():
         if win:
             win.visible = false
             menu.add_item(win.title)
+            _windows.append(win)
     TrackManager.topology_rebuild()
 
 
@@ -16,7 +20,7 @@ func _input(event):
 
 
 func _on_popup_menu_index_pressed(index: int) -> void:
-    var win = $ControlWindows.get_child(index) as HUDWindow
+    var win: HUDWindow = _windows[index]
     if win:
         win.visible = not win.visible
         for child in win.get_children():

@@ -4,10 +4,10 @@ class_name E3DModelInstance
 
 ## Displays a MaSzyna E3D model in 3D space.
 ##
-## [E3DModelInstance] loads an [E3DModel] and instantiates it using one of the
-## supported instancers. [code]NODES[/code] and [code]EDITABLE_NODES[/code]
-## build a regular node hierarchy. [code]OPTIMIZED[/code] renders through
-## [code]RenderingServer[/code] and does not create child mesh nodes.
+## [E3DModelInstance] is a node client of [E3DRenderingServer]: it loads an [E3DModel] and keeps
+## one server instance built with the selected instancer. [code]NODES[/code] and
+## [code]EDITABLE_NODES[/code] build a regular node hierarchy under this node.
+## [code]OPTIMIZED[/code] renders through [code]RenderingServer[/code] and does not create child nodes.
 ## If [member model] is set, it will be used to instnatiate. Otherwise the
 ## [member data_path] and [member model_filename] will be used to load with [E3DModelManager].
 
@@ -16,7 +16,7 @@ class_name E3DModelInstance
 signal e3d_loading
 signal e3d_loaded
 
-## Selected instancing backend
+## Selected instancing backend (same values as [enum E3DRenderingServer.Instancer])
 enum Instancer {
      OPTIMIZED,  ## Renders using [code]RenderingServer[/code] without creating child mesh nodes.
      NODES,  ## Creates a regular hierarchy of generated 3D nodes.
@@ -26,14 +26,13 @@ enum Instancer {
 var _model: E3DModel
 var _dirty: bool = false
 var _e3d_loaded: bool = false
-var _current_instancer: E3DInstancer
-var _current_editable: bool = false
+var _rid: RID = RID()
 
 @export var lights_state: Dictionary[String, bool] = {}:
     set(x):
         lights_state = _merge_lights_state(x)
-        if is_inside_tree() and _e3d_loaded and _current_instancer:
-            _current_instancer.sync_lights(self)
+        if _rid.is_valid():
+            E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
 
 
 var default_aabb_size: Vector3 = Vector3(1, 1, 1)
@@ -122,14 +121,13 @@ func _process_dirty(_delta: float) -> void:
     reload()
 
 
-## Reloads the configured E3D model and recreates the current instance using the selected instancer.
+## Reloads the configured E3D model and recreates the server instance using the selected instancer.
 func reload() -> void:
     if is_inside_tree() and (model or model_filename):
         _dirty = false
         _e3d_loaded = false
         e3d_loading.emit()
-        if _current_instancer:
-            _current_instancer.clear(self)
+        _free_instance()
 
         if model:
             _model = model
@@ -138,16 +136,9 @@ func reload() -> void:
         if _model:
             lights_state = _merge_lights_state(lights_state)
             submodels_aabb = E3DModelTool.get_aabb(_model)
-            _current_editable = editable_in_editor or instancer == Instancer.EDITABLE_NODES
-
-            _current_instancer = _resolve_instancer()
-
-            if _current_instancer:
-                _current_instancer.instantiate(self, _model, _current_editable)
-                _e3d_loaded = true
-                e3d_loaded.emit()
-            else:
-                push_error("Selected instancer is not supported!")
+            _create_instance()
+            _e3d_loaded = true
+            e3d_loaded.emit()
 
 
 func _ready() -> void:
@@ -155,16 +146,50 @@ func _ready() -> void:
 
 
 func _enter_tree() -> void:
-    if _model and _current_instancer:
-        _current_instancer.instantiate(self, _model, _current_editable)
+    if _model:
+        _create_instance()
+
 
 func _exit_tree() -> void:
-    if _current_instancer:
-        _current_instancer.clear(self)
+    _free_instance()
+
+
+func _notification(what: int) -> void:
+    match what:
+        NOTIFICATION_TRANSFORM_CHANGED:
+            if _rid.is_valid():
+                E3DRenderingServer.instance_set_transform(_rid, global_transform)
+        NOTIFICATION_VISIBILITY_CHANGED:
+            if _rid.is_valid():
+                E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
 
 
 func is_e3d_loaded() -> bool:
     return _e3d_loaded
+
+
+func _create_instance() -> void:
+    var server_instancer: int = (
+        Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
+    )
+    _rid = E3DRenderingServer.instance_create(_model, server_instancer)
+    E3DRenderingServer.instance_set_options(
+        _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths
+    )
+    E3DRenderingServer.instance_attach_node(_rid, self)
+    E3DRenderingServer.instance_set_scenario(_rid, get_world_3d().scenario)
+    E3DRenderingServer.instance_set_transform(_rid, global_transform)
+    E3DRenderingServer.instance_set_visible(_rid, is_visible_in_tree())
+    E3DRenderingServer.instance_set_layer_mask(_rid, layers)
+    E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
+    E3DRenderingServer.instance_build(_rid)
+    set_notify_transform(instancer == Instancer.OPTIMIZED)
+
+
+func _free_instance() -> void:
+    if _rid.is_valid():
+        E3DRenderingServer.instance_free(_rid)
+        _rid = RID()
 
 
 func _merge_lights_state(new_state: Dictionary[String, bool]) -> Dictionary[String, bool]:
@@ -179,11 +204,3 @@ func _merge_lights_state(new_state: Dictionary[String, bool]) -> Dictionary[Stri
                 state.erase(light_name)
     state.sort()
     return state
-
-
-func _resolve_instancer():
-    match instancer:
-        Instancer.NODES, Instancer.EDITABLE_NODES:
-            return E3DNodesInstancer
-        _:
-            push_error("Unsupported instancer " + instancer)

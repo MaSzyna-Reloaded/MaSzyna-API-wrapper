@@ -2,7 +2,7 @@
 extends RefCounted
 
 
-func import(p:MaszynaParser, context: MaszynaImporterContext) -> E3DModelInstance:
+func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelData:
     var loc_x = p.next_token()
     var loc_y = p.next_token()
     var loc_z = p.next_token()
@@ -10,17 +10,16 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> E3DModelInstanc
     var filename:String = p.next_token().to_lower()
     var data_path:String = filename.get_base_dir()
 
-    var obj := E3DModelInstance.new()
+    var obj := MaszynaModelData.new()
     obj.model_filename = filename.get_file().get_basename()
     var data_path_array = data_path.split("/")
     if not data_path_array or not data_path_array[0] == "dynamic":
         data_path_array.insert(0, "models")
         
     obj.data_path = "/".join(data_path_array)
-    obj.instancer = E3DModelInstance.Instancer.NODES
 
     obj.position = Vector3(float(loc_x), float(loc_y), float(loc_z))
-    obj.rotate_object_local(Vector3.UP, deg_to_rad(float(rot_y)))
+    obj.rotation = Vector3(0.0, deg_to_rad(float(rot_y)), 0.0)
     var skins = p.next_token()
     if not skins.to_lower() == "none":
         obj.skins = skins.split("|")

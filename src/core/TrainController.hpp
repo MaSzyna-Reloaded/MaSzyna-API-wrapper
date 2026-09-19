@@ -194,6 +194,8 @@ namespace godot {
                     const StringName &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant()) const;
             void battery(bool p_enabled) const;
+            void cab_activation(bool p_enabled) const;
+            void cab_activation_auto() const;
             void cab_change(int p_direction) const;
             void main_controller_increase(int p_step = 1) const;
             void main_controller_decrease(int p_step = 1) const;
@@ -218,6 +220,7 @@ namespace godot {
             void update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance);
             void compute_forces(double p_delta);
             void compute_movement(double p_delta);
+            bool is_physics_active() const;
             void couple(TrainController *p_other, int p_end, int p_other_end, int p_coupling_type);
             void uncouple(int p_end);
             bool is_coupled(int p_end) const;

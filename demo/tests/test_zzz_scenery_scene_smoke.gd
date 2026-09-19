@@ -17,12 +17,13 @@ func test_demo_scenery_loading_scene_instantiates() -> void:
     assert_not_null(packed, "scene should load")
     var instance:Node3D = packed.instantiate()
     assert_not_null(instance, "scene should instantiate")
-    add_child(instance)
-    await wait_idle_frames(3)
-
-    # MaszynaIncludeNode.autoload fires from _ready() (both in-editor and at runtime) - no need
-    # to call load() again here, and doing so would just race the automatic load.
     var scenery:MaszynaSceneryNode = instance.get_node("MaszynaSceneryNode")
+    # the demo scene has no filename (it opens the scenery selector) - autoload picks td.scn up
+    # from _ready(), no need to call load() here
+    scenery.filename = "td.scn"
+    add_child(instance)
+    await wait_for_signal(scenery.loaded, 120)
+
     assert_gt(scenery._track_rids.size(), 0, "scenery load should have created at least one track RID")
 
     var track_manager:Node = get_tree().root.get_node("TrackManager")

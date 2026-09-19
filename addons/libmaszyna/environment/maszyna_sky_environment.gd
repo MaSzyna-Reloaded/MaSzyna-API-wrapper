@@ -5,6 +5,9 @@ class_name MaszynaSkyEnvironment
 
 const SHADOW_ENABLED_SETTING: StringName = &"maszyna/rendering/shadow_enabled"
 const SHADOW_MODE_SETTING: StringName = &"maszyna/rendering/shadow_mode"
+## The cabin view fills the screen with close surfaces, where every PSSM split costs a full
+## screen of filtering - fewer splits than outside are enough for the few metres it needs
+const SHADOW_CABIN_MODE_SETTING: StringName = &"maszyna/rendering/shadow_cabin_mode"
 const SHADOW_BLUR_SETTING: StringName = &"maszyna/rendering/shadow_blur"
 const SHADOW_OPACITY_SETTING: StringName = &"maszyna/rendering/shadow_opacity"
 const SHADOW_BIAS_SETTING: StringName = &"maszyna/rendering/shadow_bias"
@@ -70,15 +73,17 @@ func process(_delta: float) -> void:
 
 func _apply_directional_light_settings(light: DirectionalLight3D) -> void:
     light.shadow_enabled = bool(ProjectSettings.get_setting(SHADOW_ENABLED_SETTING, true))
-    light.directional_shadow_mode = int(ProjectSettings.get_setting(
-        SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
-    )) as DirectionalLight3D.ShadowMode
     light.shadow_blur = float(ProjectSettings.get_setting(SHADOW_BLUR_SETTING, 1.0))
     light.shadow_opacity = float(ProjectSettings.get_setting(SHADOW_OPACITY_SETTING, 1.0))
     light.shadow_bias = float(ProjectSettings.get_setting(SHADOW_BIAS_SETTING, 0.1))
     light.shadow_normal_bias = float(ProjectSettings.get_setting(SHADOW_NORMAL_BIAS_SETTING, 2.0))
     # the cabin view needs sharp near shadows only, the exterior view far ones
     var cabin_view: bool = (environment_node as MaszynaEnvironmentNode).cabin_view
+    light.directional_shadow_mode = int(
+        ProjectSettings.get_setting(SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
+    ) as DirectionalLight3D.ShadowMode
     light.directional_shadow_max_distance = (
         float(ProjectSettings.get_setting(SHADOW_CABIN_MAX_DISTANCE_SETTING, 150.0))
         if cabin_view

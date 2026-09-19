@@ -71,6 +71,12 @@ Always use `static_cast<type>`, don't use C-style cast
 For dev logging, use and only Godot's built-in methods.  
 For in-game logging, use `GameLog` but be aware that it'll only post log messages to the Dev console or anything else connected to it's `log_updated` signal. It won't print logs to the Godot's console
 
+### Tests
+Tests use only the public interface of the tested classes - no calls to private methods
+(`_name()`) and no reads/writes of private members (`_name`). If a test needs private access,
+treat it as a sign that the class API should be redesigned (e.g. expose a public query, split
+the logic into a separate class) instead of reaching into internals.
+
 ## C++ notes
 
 ### Singletons C++

@@ -624,7 +624,7 @@ static func _index_submodel_paths(submodels:Array, index:Dictionary, path_prefix
 ## the submodel) can only be computed once the widget itself has a place in the tree, which
 ## happens later, in _wire_mesh_path().
 ##
-## E3DNodesInstancer adds every submodel node as an INTERNAL child (INTERNAL_MODE_BACK, since
+## The NODES instancer adds every submodel node as an INTERNAL child (INTERNAL_MODE_BACK, since
 ## `editable` is false at runtime) - get_children() without `true` silently returns none of them,
 ## making every lookup fail.
 ##

@@ -2,73 +2,66 @@
 
 [ext_resource type="Script" path="res://weather/weather_controls.gd" id="1_weather"]
 
-[node name="WeatherControls" type="CanvasLayer"]
-layer = 97
-visible = false
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider_fill"]
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.14713949, 0.46044487, 0.34612492, 0.8901961)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider_fill_highlight"]
+content_margin_top = 4.0
+content_margin_bottom = 4.0
+bg_color = Color(0.2, 0.56, 0.43, 0.95)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="Theme" id="Theme_weather"]
+HSlider/styles/grabber_area = SubResource("StyleBoxFlat_slider_fill")
+HSlider/styles/grabber_area_highlight = SubResource("StyleBoxFlat_slider_fill_highlight")
+
+[node name="WeatherControls" type="VBoxContainer"]
+mouse_filter = 2
+theme = SubResource("Theme_weather")
+theme_override_constants/separation = 6
 script = ExtResource("1_weather")
 
-[node name="WeatherControlsRoot" type="Control" parent="."]
-layout_mode = 3
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="WeatherPanel" type="PanelContainer" parent="WeatherControlsRoot"]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = 14.0
-offset_top = 14.0
-offset_right = -14.0
-grow_horizontal = 2
-
-[node name="Row" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel"]
-layout_mode = 2
-mouse_filter = 2
-theme_override_constants/separation = 6
-
-[node name="WeatherRow" type="HFlowContainer" parent="WeatherControlsRoot/WeatherPanel/Row"]
+[node name="WeatherRow" type="HFlowContainer" parent="."]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/h_separation = 14
 theme_override_constants/v_separation = 6
-alignment = 1
+alignment = 0
 
-[node name="TimeRow" type="HFlowContainer" parent="WeatherControlsRoot/WeatherPanel/Row"]
+[node name="TimeRow" type="HFlowContainer" parent="."]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/h_separation = 14
 theme_override_constants/v_separation = 6
-alignment = 1
+alignment = 0
 
-[node name="TitleLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.93, 0.94, 0.9, 0.92)
-theme_override_font_sizes/font_size = 15
-text = "Weather"
-vertical_alignment = 1
-
-[node name="WindGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="WindGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup"]
+[node name="Header" type="Label" parent="WeatherRow/WindGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Wind"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/WindGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="WindSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row"]
+[node name="WindSlider" type="HSlider" parent="WeatherRow/WindGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
@@ -76,7 +69,7 @@ size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 
-[node name="WindValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindGroup/Row"]
+[node name="WindValueLabel" type="Label" parent="WeatherRow/WindGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -84,41 +77,41 @@ theme_override_font_sizes/font_size = 13
 text = "0%"
 horizontal_alignment = 2
 
-[node name="WindDirectionGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="WindDirectionGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindDirectionGroup"]
+[node name="Header" type="Label" parent="WeatherRow/WindDirectionGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Dir"
 
-[node name="WindDirectionButton" type="OptionButton" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/WindDirectionGroup"]
+[node name="WindDirectionButton" type="OptionButton" parent="WeatherRow/WindDirectionGroup"]
 focus_mode = 0
 custom_minimum_size = Vector2(86, 28)
 layout_mode = 2
 focus_mode = 0
 
-[node name="RainGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="RainGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup"]
+[node name="Header" type="Label" parent="WeatherRow/RainGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Rain"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/RainGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="RainSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row"]
+[node name="RainSlider" type="HSlider" parent="WeatherRow/RainGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
@@ -126,7 +119,7 @@ size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 
-[node name="RainValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/RainGroup/Row"]
+[node name="RainValueLabel" type="Label" parent="WeatherRow/RainGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -134,24 +127,24 @@ theme_override_font_sizes/font_size = 13
 text = "0%"
 horizontal_alignment = 2
 
-[node name="CloudGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="CloudGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup"]
+[node name="Header" type="Label" parent="WeatherRow/CloudGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Clouds"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/CloudGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="CloudSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row"]
+[node name="CloudSlider" type="HSlider" parent="WeatherRow/CloudGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
@@ -159,7 +152,7 @@ size_flags_horizontal = 3
 max_value = 1.0
 step = 0.01
 
-[node name="CloudValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/CloudGroup/Row"]
+[node name="CloudValueLabel" type="Label" parent="WeatherRow/CloudGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -167,24 +160,24 @@ theme_override_font_sizes/font_size = 13
 text = "0%"
 horizontal_alignment = 2
 
-[node name="FogDensityGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="FogDensityGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup"]
+[node name="Header" type="Label" parent="WeatherRow/FogDensityGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Fog"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/FogDensityGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="FogDensitySlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row"]
+[node name="FogDensitySlider" type="HSlider" parent="WeatherRow/FogDensityGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
@@ -194,7 +187,7 @@ max_value = 4.0
 step = 0.01
 value = 1.0
 
-[node name="FogDensityValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogDensityGroup/Row"]
+[node name="FogDensityValueLabel" type="Label" parent="WeatherRow/FogDensityGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -202,24 +195,24 @@ theme_override_font_sizes/font_size = 13
 text = "x1.00"
 horizontal_alignment = 2
 
-[node name="FogRangeGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow"]
+[node name="FogRangeGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup"]
+[node name="Header" type="Label" parent="WeatherRow/FogRangeGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Fog Distance"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/FogRangeGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="FogRangeSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row"]
+[node name="FogRangeSlider" type="HSlider" parent="WeatherRow/FogRangeGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
@@ -229,7 +222,7 @@ max_value = 4.0
 step = 0.01
 value = 1.0
 
-[node name="FogRangeValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/WeatherRow/FogRangeGroup/Row"]
+[node name="FogRangeValueLabel" type="Label" parent="WeatherRow/FogRangeGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -237,24 +230,46 @@ theme_override_font_sizes/font_size = 13
 text = "x1.00"
 horizontal_alignment = 2
 
-[node name="TimeGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow"]
+[node name="SystemTimeGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup"]
+[node name="Header" type="Label" parent="TimeRow/SystemTimeGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
-text = "Time"
+text = "Clock"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup"]
+[node name="Row" type="HBoxContainer" parent="TimeRow/SystemTimeGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="TimeSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row"]
+[node name="SystemTimeCheckBox" type="CheckBox" parent="TimeRow/SystemTimeGroup/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Use system time"
+
+[node name="TimeGroup" type="VBoxContainer" parent="TimeRow"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="Label" parent="TimeRow/TimeGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "Time"
+
+[node name="Row" type="HBoxContainer" parent="TimeRow/TimeGroup"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="TimeSlider" type="HSlider" parent="TimeRow/TimeGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(210, 24)
 layout_mode = 2
@@ -262,7 +277,7 @@ size_flags_horizontal = 3
 max_value = 23.99
 step = 0.01
 
-[node name="TimeValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeGroup/Row"]
+[node name="TimeValueLabel" type="Label" parent="TimeRow/TimeGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -270,24 +285,24 @@ theme_override_font_sizes/font_size = 13
 text = "12:00"
 horizontal_alignment = 2
 
-[node name="DayGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow"]
+[node name="DayGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup"]
+[node name="Header" type="Label" parent="TimeRow/DayGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Day"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup"]
+[node name="Row" type="HBoxContainer" parent="TimeRow/DayGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="DaySlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row"]
+[node name="DaySlider" type="HSlider" parent="TimeRow/DayGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(110, 24)
 layout_mode = 2
@@ -296,7 +311,7 @@ min_value = 1.0
 max_value = 31.0
 value = 1.0
 
-[node name="DayValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/DayGroup/Row"]
+[node name="DayValueLabel" type="Label" parent="TimeRow/DayGroup/Row"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -304,24 +319,24 @@ theme_override_font_sizes/font_size = 13
 text = "1"
 horizontal_alignment = 2
 
-[node name="MonthGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow"]
+[node name="MonthGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup"]
+[node name="Header" type="Label" parent="TimeRow/MonthGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Month"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup"]
+[node name="Row" type="HBoxContainer" parent="TimeRow/MonthGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="MonthSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row"]
+[node name="MonthSlider" type="HSlider" parent="TimeRow/MonthGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(90, 24)
 layout_mode = 2
@@ -330,7 +345,7 @@ min_value = 1.0
 max_value = 12.0
 value = 1.0
 
-[node name="MonthValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/MonthGroup/Row"]
+[node name="MonthValueLabel" type="Label" parent="TimeRow/MonthGroup/Row"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -338,24 +353,24 @@ theme_override_font_sizes/font_size = 13
 text = "1"
 horizontal_alignment = 2
 
-[node name="YearGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow"]
+[node name="YearGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup"]
+[node name="Header" type="Label" parent="TimeRow/YearGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Year"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup"]
+[node name="Row" type="HBoxContainer" parent="TimeRow/YearGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="YearSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row"]
+[node name="YearSlider" type="HSlider" parent="TimeRow/YearGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(120, 24)
 layout_mode = 2
@@ -364,7 +379,7 @@ min_value = 1900.0
 max_value = 2100.0
 value = 1900.0
 
-[node name="YearValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/YearGroup/Row"]
+[node name="YearValueLabel" type="Label" parent="TimeRow/YearGroup/Row"]
 custom_minimum_size = Vector2(40, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
@@ -372,24 +387,24 @@ theme_override_font_sizes/font_size = 13
 text = "2026"
 horizontal_alignment = 2
 
-[node name="TimeScaleGroup" type="VBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow"]
+[node name="TimeScaleGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup"]
+[node name="Header" type="Label" parent="TimeRow/TimeScaleGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Time Speed"
 
-[node name="Row" type="HBoxContainer" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup"]
+[node name="Row" type="HBoxContainer" parent="TimeRow/TimeScaleGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="TimeScaleSlider" type="HSlider" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row"]
+[node name="TimeScaleSlider" type="HSlider" parent="TimeRow/TimeScaleGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(140, 24)
 layout_mode = 2
@@ -398,7 +413,7 @@ max_value = 1000.0
 value = 1.0
 exp_edit = true
 
-[node name="TimeScaleValueLabel" type="Label" parent="WeatherControlsRoot/WeatherPanel/Row/TimeRow/TimeScaleGroup/Row"]
+[node name="TimeScaleValueLabel" type="Label" parent="TimeRow/TimeScaleGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)

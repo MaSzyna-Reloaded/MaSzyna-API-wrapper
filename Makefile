@@ -47,6 +47,15 @@ compile-release:
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
 
+# Optimized, but still the template_debug library the editor loads - the one to profile on.
+# compile-debug builds the vendored Mover at -O0, which makes the physics several times slower
+# than it is in a shipped build and sends any frame-time investigation after the wrong subsystem.
+# Overwrites the same .so as compile-debug; run that to go back.
+compile-profiling:
+	cmake -B build-profiling -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+	cmake --build build-profiling --parallel $(CMAKE_BUILD_JOBS)
+
+
 compile-all: compile-debug compile-release
 
 

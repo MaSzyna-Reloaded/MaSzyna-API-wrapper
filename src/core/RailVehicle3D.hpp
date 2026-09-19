@@ -19,7 +19,6 @@ namespace godot {
             GDCLASS(RailVehicle3D, Node3D)
 
         private:
-
             NodePath model_instance_path;
             TypedDictionary<String, bool> lights;
             NodePath controller_path;
@@ -62,6 +61,16 @@ namespace godot {
             Area3D *detection_area = nullptr;
             VisibleOnScreenNotifier3D *visibility_notifier = nullptr;
             bool is_visible = true;
+            /// Fallback for maszyna/rendering/vehicle_detail_distance
+            static constexpr float DEFAULT_VEHICLE_DETAIL_DISTANCE_M = 1000.0;
+            /// maszyna/rendering/vehicle_detail_distance is the distance the node hierarchy is
+            /// dropped at; it is taken back this much closer, so a vehicle sitting on the boundary
+            /// is not rebuilt over and over. Proportional, because a fixed margin is either nothing
+            /// at a long detail distance or larger than the distance itself at a short one.
+            static constexpr float VEHICLE_DETAIL_HYSTERESIS = 0.25;
+            static constexpr float VEHICLE_DETAIL_HYSTERESIS_MIN_M = 25.0;
+            /// The model currently uses the node hierarchy (bogies, wheels, pantograph arms)
+            bool model_detailed = true;
             bool force_detail_refresh = true;
             Transform3D last_center_transform;
             Node3D *low_poly_cabin = nullptr;
@@ -122,15 +131,28 @@ namespace godot {
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_track_transform();
-            Dictionary _pantograph_frame_axes() const;
-            void _update_pantograph_power();
+            void _update_model_detail();
+            /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
+            /// to be a Dictionary of three Vector3s, allocated and boxed again for every call, with
+            /// get_global_transform() asked three times over.
+            struct PantographFrame {
+                    Transform3D transform;
+                    Vector3 forward;
+                    Vector3 up;
+                    Vector3 left;
+            };
+
+            PantographFrame _pantograph_frame() const;
+            /// The controller state is fetched once per frame and handed down - every one of these
+            /// used to ask for it again, and a scenery runs hundreds of powered vehicles
+            void _update_pantograph_power(const Dictionary &p_state);
             double _pantograph_wire_voltage(
-                    int p_index, const Vector3 &p_offset, const Vector3 &p_forward, const Vector3 &p_up,
-                    const Vector3 &p_left, double p_assumed_voltage, double p_current);
-            void _update_pantograph_raise_state(double p_delta);
+                    int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, double p_assumed_voltage,
+                    double p_current);
+            void _update_pantograph_raise_state(double p_delta, const Dictionary &p_state);
             bool _update_pantograph_arm(
                     int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, bool p_is_active,
-                    double p_delta);
+                    double p_delta, const Dictionary &p_state);
             Dictionary _find_pantograph_wire(
                     int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
                     const Vector3 &p_left);

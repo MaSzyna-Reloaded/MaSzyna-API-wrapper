@@ -26,8 +26,10 @@ namespace godot {
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
+            /// state is rebuilt from the mover when it is asked for, not on every physics step:
+            /// a scenery runs hundreds of vehicles and almost none of them is ever read
+            bool state_dirty = true;
             Dictionary config;
-            Dictionary internal_state;
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
             // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's
@@ -185,6 +187,8 @@ namespace godot {
             static const char *cabin_occupied_changed;
             static const char *config_changed;
             static const char *position_changed_signal;
+            /// The consist this vehicle belongs to gained or lost a vehicle
+            static const char *consist_changed_signal;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
@@ -214,12 +218,16 @@ namespace godot {
             void register_command(const String &p_command, const Callable &p_callable);
             void unregister_command(const String &p_command, const Callable &p_callable);
             void update_state();
+            /// Straight from the mover, for the per-frame readers that only want this one number
+            /// and would otherwise force the whole state dictionary to be rebuilt
+            double get_velocity() const;
             void update_mover();
             double process_movement(double p_delta);
             void update_location();
             void update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance);
             void compute_forces(double p_delta);
             void compute_movement(double p_delta);
+            void compute_fast_movement(double p_delta);
             bool is_physics_active() const;
             void couple(TrainController *p_other, int p_end, int p_other_end, int p_coupling_type);
             void uncouple(int p_end);

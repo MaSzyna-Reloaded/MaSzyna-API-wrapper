@@ -65,3 +65,4 @@ godot-cpp/CMakeFiles/godot-cpp.dir/gen/src/classes
 build-*/
 /.codex
 /.antigravitycli
+/build-profiling/

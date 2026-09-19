@@ -84,7 +84,7 @@ enum ControllerMode { OnOff, On, Off }
 ## original's key-repeat-driven controllers (e.g. OnCommand_mastercontrollerincrease).
 @export var repeat_on_hold:bool = false
 
-var _mesh:MeshInstance3D
+var _mesh:Node3D
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
 var _target_mesh_rotation:Vector3 = Vector3.ZERO

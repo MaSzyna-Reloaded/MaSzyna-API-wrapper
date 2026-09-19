@@ -430,6 +430,13 @@ sound/brake_cabin_unit_size_factor=1.0
 sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
 debug/physics_diagnostics=false
+rendering/scenery_draw_distance=1000.0
+rendering/vehicle_detail_distance=350.0
+
+[physics]
+
+common/physics_ticks_per_second=30
+common/max_physics_steps_per_frame=2
 
 [rendering]
 

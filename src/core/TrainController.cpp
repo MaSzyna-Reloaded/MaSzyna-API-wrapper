@@ -20,6 +20,7 @@ namespace godot {
     const char *TrainController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *TrainController::config_changed = "config_changed";
     const char *TrainController::position_changed_signal = "position_changed";
+    const char *TrainController::consist_changed_signal = "consist_changed";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
@@ -71,6 +72,7 @@ namespace godot {
                 D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
+        ClassDB::bind_method(D_METHOD("get_velocity"), &TrainController::get_velocity);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &TrainController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &TrainController::update_location);
@@ -79,6 +81,7 @@ namespace godot {
                 &TrainController::update_neighbour);
         ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &TrainController::compute_forces);
         ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &TrainController::compute_movement);
+        ClassDB::bind_method(D_METHOD("compute_fast_movement", "delta"), &TrainController::compute_fast_movement);
         ClassDB::bind_method(D_METHOD("is_physics_active"), &TrainController::is_physics_active);
         ClassDB::bind_method(
                 D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &TrainController::couple);
@@ -90,8 +93,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &TrainController::coupler_disconnect);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &TrainController::get_world_position);
-        ClassDB::bind_method(D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
-                             &TrainController::change_track);
+        ClassDB::bind_method(
+                D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
+                &TrainController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &TrainController::get_rid);
         ClassDB::bind_method(
                 D_METHOD("_emit_position_changed_if_needed"), &TrainController::_emit_position_changed_if_needed);
@@ -161,6 +165,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(consist_changed_signal));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -467,6 +472,21 @@ namespace godot {
         mover->dMoveLen += process_movement(p_delta);
     }
 
+    /// The cheap movement of the intermediate physics iterations: the original runs UpdateForce +
+    /// FastUpdate for every sub-iteration and the full Update() only once per frame
+    /// (DynObj.cpp:8195-8210), where FastUpdate calls Mover::FastComputeMovement()
+    /// (DynObj.cpp:4086) instead of the full ComputeMovement().
+    void TrainController::compute_fast_movement(const double p_delta) {
+        // a standing vehicle switched off by ComputeTotalForce() is not moved at all
+        // (DynObj.cpp:4059)
+        if (mover == nullptr || !mover->PhysicActivation) {
+            return;
+        }
+        TRotation rotation;
+        mover->FastComputeMovement(p_delta, mover->RunningShape, mover->RunningTrack, mover->Loc, rotation);
+        mover->dMoveLen += process_movement(p_delta);
+    }
+
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
     void TrainController::couple(
             TrainController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
@@ -480,6 +500,9 @@ namespace godot {
             coupling_type |= coupling::permanent;
         }
         mover->Attach(p_end, p_other_end, p_other->mover, coupling_type, true, false);
+        // the original re-inspects the consist on a coupling change (CheckVehicles(), Driver.cpp:2622)
+        emit_signal(consist_changed_signal);
+        p_other->emit_signal(consist_changed_signal);
     }
 
     void TrainController::uncouple(const int p_end) {
@@ -487,6 +510,7 @@ namespace godot {
             return;
         }
         mover->Dettach(p_end);
+        emit_signal(consist_changed_signal);
     }
 
     bool TrainController::is_coupled(const int p_end) const {
@@ -526,8 +550,8 @@ namespace godot {
             mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupling::coupler)) {
             return;
         }
-        for (const int flag: {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway,
-                              coupling::heating}) {
+        for (const int flag:
+             {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway, coupling::heating}) {
             if ((coupler.CouplingFlag & flag) == flag || (allowed & flag) != flag) {
                 continue;
             }
@@ -562,10 +586,11 @@ namespace godot {
         const double previous_second = std::floor(tacho_time);
         tacho_time += p_delta;
         if (std::floor(tacho_time) != previous_second) {
-            tacho_velocity_jump = tacho_velocity > 1.0 ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                                          UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                                 0.5
-                                                       : 0.0;
+            tacho_velocity_jump = tacho_velocity > 1.0
+                                          ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
+                                                              UtilityFunctions::randf_range(0.0, 3.0)) *
+                                                                     0.5
+                                          : 0.0;
         }
 
         // ticking starts ~1 s after moving off and fades out slowly after stopping
@@ -585,22 +610,29 @@ namespace godot {
         _handle_mover_update();
     }
 
+    /// Only marks the state for a rebuild - whoever reads it gets it fresh (see get_state()). The
+    /// signals below have to be decided every step though, so they read the mover directly rather
+    /// than through a dictionary that may not be built at all.
     void TrainController::_handle_mover_update() {
-        state.merge(get_mover_state(), true);
+        state_dirty = true;
+        TMoverParameters *mover_ptr = get_mover();
+        if (mover_ptr == nullptr) {
+            return;
+        }
 
-        const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
+        const bool new_is_powered = mover_ptr->Power24vIsAvailable || mover_ptr->Power110vIsAvailable;
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(power_changed_signal, prev_is_powered);
         }
 
-        if (const bool new_radio_enabled = state.get("radio_enabled", false) && new_is_powered;
+        if (const bool new_radio_enabled = mover_ptr->Radio && new_is_powered;
             prev_radio_enabled != new_radio_enabled) {
             prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(radio_toggled, new_radio_enabled);
         }
 
-        if (const int new_radio_channel = state.get("radio_channel", 0); prev_radio_channel != new_radio_channel) {
+        if (const int new_radio_channel = radio_channel; prev_radio_channel != new_radio_channel) {
             prev_radio_channel = new_radio_channel; // FIXME: I don't like this
             emit_signal(radio_channel_changed, new_radio_channel);
         }
@@ -611,7 +643,7 @@ namespace godot {
             emit_signal(roof_light_changed, new_roof_light_enabled);
         }
 
-        if (const int new_cabin_occupied = state.get("cabin_occupied", 0); prev_cabin_occupied != new_cabin_occupied) {
+        if (const int new_cabin_occupied = mover_ptr->CabOccupied; prev_cabin_occupied != new_cabin_occupied) {
             prev_cabin_occupied = new_cabin_occupied;
             emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
@@ -707,7 +739,7 @@ namespace godot {
         } else {
             UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
         }
-        return internal_state;
+        return state;
     }
 
     // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
@@ -736,44 +768,43 @@ namespace godot {
 
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         _consume_coupler_sounds(p_mover, p_state);
-        internal_state["mass_total"] = p_mover->TotalMass;
-        internal_state["velocity"] = p_mover->V;
-        internal_state["speed"] = p_mover->Vel;
-        internal_state["tachometer_speed"] = tacho_velocity;
-        internal_state["tachometer_speed_jump"] = tacho_velocity_jump;
+        p_state["mass_total"] = p_mover->TotalMass;
+        p_state["velocity"] = p_mover->V;
+        p_state["speed"] = p_mover->Vel;
+        p_state["tachometer_speed"] = tacho_velocity;
+        p_state["tachometer_speed_jump"] = tacho_velocity_jump;
         // tachoclock chunk parameter; 0 keeps the sound stopped (Train.cpp:8323-8335)
-        internal_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
-        internal_state["total_distance"] = p_mover->DistCounter;
-        internal_state["direction"] = p_mover->DirActive;
-        internal_state["cabin"] = p_mover->CabActive;
-        internal_state["cabin_controleable"] = p_mover->IsCabMaster();
-        internal_state["cabin_occupied"] = p_mover->CabOccupied;
+        p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
+        p_state["total_distance"] = p_mover->DistCounter;
+        p_state["direction"] = p_mover->DirActive;
+        p_state["cabin"] = p_mover->CabActive;
+        p_state["cabin_controleable"] = p_mover->IsCabMaster();
+        p_state["cabin_occupied"] = p_mover->CabOccupied;
 
         /* FIXME: move to TrainPower section? */
-        internal_state["battery_enabled"] = p_mover->Battery;
-        internal_state["battery_voltage"] = p_mover->BatteryVoltage;
+        p_state["battery_enabled"] = p_mover->Battery;
+        p_state["battery_voltage"] = p_mover->BatteryVoltage;
 
         /* FIXME: move to TrainRadio section? */
-        internal_state["radio_enabled"] = p_mover->Radio;
-        internal_state["radio_powered"] =
-                p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
-        internal_state["radio_channel"] = radio_channel;
+        p_state["radio_enabled"] = p_mover->Radio;
+        p_state["radio_powered"] = p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
+        p_state["radio_channel"] = radio_channel;
 
         /* FIXME: move to TrainPower section */
-        internal_state["power24_voltage"] = p_mover->Power24vVoltage;
-        internal_state["power24_available"] = p_mover->Power24vIsAvailable;
-        internal_state["power110_available"] = p_mover->Power110vIsAvailable;
-        internal_state["current0"] = p_mover->ShowCurrent(0);
-        internal_state["current1"] = p_mover->ShowCurrent(1);
-        internal_state["current2"] = p_mover->ShowCurrent(2);
-        internal_state["relay_novolt"] = p_mover->NoVoltRelay;
-        internal_state["relay_overvoltage"] = p_mover->OvervoltageRelay;
-        internal_state["relay_ground"] = p_mover->GroundRelay;
-        internal_state["train_damage"] = p_mover->DamageFlag;
-        internal_state["controller_second_position"] = p_mover->ScndCtrlPos;
-        internal_state["controller_main_position"] = p_mover->MainCtrlPos;
+        p_state["power24_voltage"] = p_mover->Power24vVoltage;
+        p_state["power24_available"] = p_mover->Power24vIsAvailable;
+        p_state["power110_available"] = p_mover->Power110vIsAvailable;
+        p_state["current0"] = p_mover->ShowCurrent(0);
+        p_state["current1"] = p_mover->ShowCurrent(1);
+        p_state["current2"] = p_mover->ShowCurrent(2);
+        p_state["relay_novolt"] = p_mover->NoVoltRelay;
+        p_state["relay_overvoltage"] = p_mover->OvervoltageRelay;
+        p_state["relay_ground"] = p_mover->GroundRelay;
+        p_state["train_damage"] = p_mover->DamageFlag;
+        p_state["controller_second_position"] = p_mover->ScndCtrlPos;
+        p_state["controller_main_position"] = p_mover->MainCtrlPos;
         // joint master controller position - negative range is the local brake (Train.cpp:7699-7714)
-        internal_state["controller_joint_position"] =
+        p_state["controller_joint_position"] =
                 p_mover->LocalBrakePosA > 0.0
                         ? static_cast<int>(std::round(-p_mover->LocalBrakePosA * LocalBrakePosNo))
                         : (p_mover->CoupledCtrl ? p_mover->MainCtrlPos + p_mover->ScndCtrlPos : p_mover->MainCtrlPos);
@@ -781,8 +812,8 @@ namespace godot {
         // lookups actually key off (Mover.cpp's internal auto-relay/resistor-stepping state
         // machine) - a wrong RList[] mapping or array-bounds issue lets this race far ahead of
         // MainCtrlPos, landing on unpopulated (zero-resistance) table slots.
-        internal_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
-        internal_state["circuit_rlist_size"] = p_mover->RlistSize;
+        p_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
+        p_state["circuit_rlist_size"] = p_mover->RlistSize;
     }
 
     Dictionary TrainController::get_config() const {
@@ -794,8 +825,20 @@ namespace godot {
         emit_signal(config_changed);
     }
 
+    /// Rebuilt from the mover on the first read after a physics step; the train parts merge their
+    /// own keys into it as they process, so those stay where they are
     Dictionary TrainController::get_state() {
+        if (state_dirty) {
+            state_dirty = false;
+            if (TMoverParameters *mover_ptr = get_mover(); mover_ptr != nullptr) {
+                _do_fetch_state_from_mover(mover_ptr, state);
+            }
+        }
         return state;
+    }
+
+    double TrainController::get_velocity() const {
+        return mover != nullptr ? mover->V : 0.0;
     }
 
     void

@@ -53,6 +53,21 @@ namespace godot {
             static const char *train_position_changed_signal;
             static const char *train_unregistered_signal;
 
+        public:
+            /// One physics sub-iteration for a whole set of controllers, looped in C++.
+            ///
+            /// Driven from RailVehiclePhysicsServer, which used to make four calls across the
+            /// binding per controller per iteration - with hundreds of vehicles and several
+            /// iterations per frame that is thousands of crossings, each marshalling Variants,
+            /// for arithmetic the original does in a plain loop (vehicle_table::update(),
+            /// DynObj.cpp:8195-8210). The track logic stays in GDScript: this returns how far
+            /// each controller wants to move and the caller walks it along its track.
+            ///
+            /// [param full_movement] picks ComputeMovement() over FastComputeMovement(), which the
+            /// original uses for every sub-iteration but the last (DynObj.cpp:4086).
+            PackedFloat64Array
+            step_movers(const TypedArray<TrainController> &p_controllers, double p_step, bool p_full_movement);
+
         protected:
             static void _bind_methods();
             void _on_train_position_changed(const Vector3 &p_position, const String &p_train_id);

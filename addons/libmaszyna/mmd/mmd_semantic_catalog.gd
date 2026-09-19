@@ -856,6 +856,7 @@ static func _ensure_built() -> void:
                 "spot_attenuation": 1.44,
                 "spot_angle": 63.62,
                 "spot_angle_attenuation": 1.27456,
+                "shadow_enabled": true,
             },
         },
         "i-instrumentlight": {

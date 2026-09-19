@@ -148,6 +148,10 @@ func _enter_tree():
         TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
     )
     add_custom_project_setting(
+        MaszynaSkyEnvironment.SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_ORTHOGONAL,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Orthogonal,PSSM 2 Splits,PSSM 4 Splits"
+    )
+    add_custom_project_setting(
         MaszynaSkyEnvironment.SHADOW_BLUR_SETTING, 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,10.0,0.01,or_greater"
     )

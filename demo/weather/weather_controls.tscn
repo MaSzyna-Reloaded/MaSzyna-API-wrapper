@@ -230,6 +230,28 @@ theme_override_font_sizes/font_size = 13
 text = "x1.00"
 horizontal_alignment = 2
 
+[node name="SystemTimeGroup" type="VBoxContainer" parent="TimeRow"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 2
+
+[node name="Header" type="Label" parent="TimeRow/SystemTimeGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
+theme_override_font_sizes/font_size = 12
+text = "Clock"
+
+[node name="Row" type="HBoxContainer" parent="TimeRow/SystemTimeGroup"]
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="SystemTimeCheckBox" type="CheckBox" parent="TimeRow/SystemTimeGroup/Row"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 13
+text = "Use system time"
+
 [node name="TimeGroup" type="VBoxContainer" parent="TimeRow"]
 layout_mode = 2
 mouse_filter = 2

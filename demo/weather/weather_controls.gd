@@ -40,6 +40,7 @@ var _time_slider_dragging: bool = false
 @onready var _fog_range_slider: HSlider = $WeatherRow/FogRangeGroup/Row/FogRangeSlider
 @onready var _time_slider: HSlider = $TimeRow/TimeGroup/Row/TimeSlider
 @onready var _time_scale_slider: HSlider = $TimeRow/TimeScaleGroup/Row/TimeScaleSlider
+@onready var _system_time_check_box: CheckBox = $TimeRow/SystemTimeGroup/Row/SystemTimeCheckBox
 
 
 func _ready() -> void:
@@ -60,6 +61,7 @@ func _ready() -> void:
     _day_slider.value_changed.connect(_on_day_changed)
     _month_slider.value_changed.connect(_on_month_changed)
     _year_slider.value_changed.connect(_on_year_changed)
+    _system_time_check_box.toggled.connect(_on_system_time_toggled)
 
 
 # Mirrors the environment node, so presets and changes made elsewhere show up in the controls.
@@ -67,6 +69,13 @@ func _process(_delta: float) -> void:
     if not is_visible_in_tree():
         return
 
+    # the system clock drives the time and the date, the sliders only show them
+    var editable: bool = not _environment_node.use_system_time
+    _system_time_check_box.set_pressed_no_signal(_environment_node.use_system_time)
+    _time_slider.editable = editable
+    _day_slider.editable = editable
+    _month_slider.editable = editable
+    _year_slider.editable = editable
     if not _time_slider_dragging:
         _time_slider.set_value_no_signal(_environment_node.current_time)
         _time_value_label.text = _format_time_label(_environment_node.current_time)
@@ -145,6 +154,10 @@ func _on_time_drag_started() -> void:
 
 func _on_time_drag_ended(_value_changed: bool) -> void:
     _time_slider_dragging = false
+
+
+func _on_system_time_toggled(pressed: bool) -> void:
+    _environment_node.use_system_time = pressed
 
 
 func _on_time_scale_changed(value: float) -> void:

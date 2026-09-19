@@ -32,9 +32,10 @@ script = ExtResource("1_env")
 current_time = 16.222
 day = 19
 month = 9
-cloudiness = 0.0
+cloudiness = 0.35
 wind_strength = 0.2
-fog_density = 0.5
+fog_density = 0.1
+fog_range = 0.5
 tonemap_mode = 3
 tonemap_agx_contrast = 1.1
 

@@ -898,9 +898,9 @@ static func _build_indicator_lights(
 
         if entry.has("light_widget_class"):
             var lamp:Node3D = on_node if on_node else off_node
-            var light_points:Array[Vector3] = (
-                    _light_points_along_submodel(lamp) if entry.get("spread_light_along_submodel", false)
-                    else [] as Array[Vector3])
+            var light_points:Array[Vector3] = []
+            if entry.get("spread_light_along_submodel", false):
+                light_points = _light_points_along_submodel(lamp)
             for j:int in maxi(light_points.size(), 1):
                 var light:Light3D = entry["light_widget_class"].new()
                 light.name = "%s_%s_%d_light%s" % [

@@ -69,6 +69,10 @@
   `maszyna_node_model_importer.gd`.
 * Scenery models have no nodes, so they can't be picked/selected in the editor and don't follow
   the `MaszynaIncludeNode` transform/visibility (world-space, like tracks and traction).
+* An `include` with no filename shows up while parsing the real data dir
+  (`maszyna_include_importer.gd` now reports it with the parser offset and skips it, instead of
+  trying to open the scenery directory). The source is unknown - no asset declares a
+  parameterised include path, so it is either a truncated file or a tokenizer misread.
 
 ## Tests
 

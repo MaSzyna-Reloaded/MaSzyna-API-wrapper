@@ -10,8 +10,9 @@
 
 namespace godot {
     /// FIFO of tasks (Callables) run by max(processor count - 2, 1) worker threads.
-    /// A task may submit further tasks and wait() for them: the waiting thread runs queued tasks
-    /// meanwhile, so nested waiting never deadlocks the workers. Used to parse scenery includes.
+    /// A task may submit further tasks and wait() for them: the waiting thread runs the task it
+    /// waits for, so nested waiting never deadlocks the workers and never nests deeper than the
+    /// tasks themselves. Used to parse scenery includes.
     class SceneryLoadingTaskQueue : public RefCounted {
             GDCLASS(SceneryLoadingTaskQueue, RefCounted)
 
@@ -33,6 +34,9 @@ namespace godot {
 
             void _start_workers();
             bool _run_next();
+            bool _run_task(int p_task_id);
+            Callable _take_callable(int p_task_id);
+            void _run(int p_task_id, Callable &p_callable);
             void _worker_loop();
 
         protected:

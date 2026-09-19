@@ -4,7 +4,13 @@ extends RefCounted
 func import(p: MaszynaParser, context: MaszynaImporterContext):
     var tokens = p.get_tokens_until("end")
     tokens.pop_back()
-    var filename = resolve_filename(tokens.pop_front())
+    var include_token:Variant = tokens.pop_front()
+    if not include_token:
+        # a truncated or malformed "include" - nothing to resolve
+        context.cacheable = false
+        push_error("Include without a filename at offset %d" % p.get_position())
+        return []
+    var filename:String = resolve_filename(include_token)
     var final_path = UserSettings.get_maszyna_game_dir().path_join("scenery").path_join(filename)
     var file = FileAccess.open(final_path, FileAccess.READ)
     var parameters = {}
@@ -35,15 +41,17 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
 
 
 ## Include path relative to scenery/, as it exists on disk. Original assets assume Windows'
-## case-insensitive filesystem (e.g. .scm files referencing "EST-bramka770.inc" when the file on
-## disk is "est-bramka770.inc") - falls back to a case-insensitive lookup; returns filename
-## unchanged when nothing matches. Also used by SceneryInstancer's include prescan.
+## path separators ("mieszkalne\blokWL.inc") and its case-insensitive filesystem (e.g. .scm files
+## referencing "EST-bramka770.inc" when the file on disk is "est-bramka770.inc") - separators are
+## normalized and a case-insensitive lookup is the fallback; returns the normalized filename when
+## nothing matches. Also used by SceneryInstancer's include prescan.
 func resolve_filename(filename: String) -> String:
+    var relative_path: String = filename.replace("\\", "/")
     var scenery_dir: String = UserSettings.get_maszyna_game_dir().path_join("scenery")
-    if FileAccess.file_exists(scenery_dir.path_join(filename)):
-        return filename
-    var resolved_path: String = _find_case_insensitive(scenery_dir, filename)
-    return resolved_path if resolved_path else filename
+    if FileAccess.file_exists(scenery_dir.path_join(relative_path)):
+        return relative_path
+    var resolved_path: String = _find_case_insensitive(scenery_dir, relative_path)
+    return resolved_path if resolved_path else relative_path
 
 
 ## Original MaSzyna assets assume a case-insensitive filesystem. Walks p_relative_path segment by

@@ -60,7 +60,7 @@ namespace godot {
         return task != nullptr && task->done;
     }
 
-    /// Returns the task result and forgets the task; runs other queued tasks until it is done.
+    /// Returns the task result and forgets the task; runs the awaited task here if it is queued.
     Variant SceneryLoadingTaskQueue::wait(const int p_task_id) {
         while (true) {
             {
@@ -73,7 +73,10 @@ namespace godot {
                     return result;
                 }
             }
-            if (!_run_next()) {
+            // Only the awaited task, never an arbitrary queued one: an unrelated task waits for
+            // its own tasks on this stack, so a scenery's thousands of includes would nest until
+            // the worker thread's stack runs out.
+            if (!_run_task(p_task_id)) {
                 // the task runs on another thread
                 OS::get_singleton()->delay_usec(100);
             }
@@ -100,22 +103,47 @@ namespace godot {
             }
             task_id = pending.front()->get();
             pending.pop_front();
-            Task &task = tasks[task_id];
-            callable = task.callable;
-            task.callable = Callable();
+            callable = _take_callable(task_id);
         }
 
-        const Variant result = callable.call();
+        _run(task_id, callable);
+        return true;
+    }
+
+    /// Runs one queued task, false when it is not queued any more (it runs on another thread).
+    bool SceneryLoadingTaskQueue::_run_task(const int p_task_id) {
+        Callable callable;
+        {
+            MutexLock lock(**mutex);
+            if (!pending.erase(p_task_id)) {
+                return false;
+            }
+            callable = _take_callable(p_task_id);
+        }
+
+        _run(p_task_id, callable);
+        return true;
+    }
+
+    /// Takes the task's callable out of the queue - caller holds the mutex.
+    Callable SceneryLoadingTaskQueue::_take_callable(const int p_task_id) {
+        Task &task = tasks[p_task_id];
+        const Callable callable = task.callable;
+        task.callable = Callable();
+        return callable;
+    }
+
+    void SceneryLoadingTaskQueue::_run(const int p_task_id, Callable &p_callable) {
+        const Variant result = p_callable.call();
         // Drop the task's references (it may hold this queue) before it is reported as done, so the
         // last reference to the queue is never released on a worker thread (joining itself)
-        callable = Callable();
+        p_callable = Callable();
 
         MutexLock lock(**mutex);
-        Task &task = tasks[task_id];
+        Task &task = tasks[p_task_id];
         task.result = result;
         task.done = true;
         completed++;
-        return true;
     }
 
     void SceneryLoadingTaskQueue::_worker_loop() {

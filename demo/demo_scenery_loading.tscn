@@ -82,7 +82,10 @@ layout_mode = 2
 toggle_mode = true
 text = "Toggle controls"
 
-[node name="ControlWindows" type="Node" parent="." unique_id=1707221364]
+[node name="ControlWindows" type="Control" parent="." unique_id=1707221364]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
 
 [node name="General" type="Container" parent="ControlWindows" unique_id=381149408]
 top_level = true

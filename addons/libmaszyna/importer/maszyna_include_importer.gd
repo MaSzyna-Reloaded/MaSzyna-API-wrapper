@@ -11,17 +11,11 @@ func import(p: MaszynaParser, context: MaszynaImporterContext):
     for i in range(tokens.size()):
         parameters["p%s" % (i+1)] = tokens[i]
     if file:
+        if context.queue:
+            # parsed by a queue worker, the result is merged at the end of the current file
+            return [context.submit_include(SceneryInstancer.parse_file_task, filename, parameters)]
         context.push_state()
         context.include_depth += 1
-        if context.defer_includes:
-            # SceneryInstancer continues in the included file and pops the state when it ends
-            context.pending_include_parser = SceneryInstancer.open_parser(filename, parameters, context)
-            if context.pending_include_parser:
-                context.pending_include_filename = filename
-                p.interrupt()
-            else:
-                context.pop_state()
-            return []
         var objects = SceneryInstancer.parse_file(filename, parameters, context)
         context.pop_state()
         return objects

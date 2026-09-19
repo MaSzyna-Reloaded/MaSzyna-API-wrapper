@@ -1,6 +1,18 @@
 extends RefCounted
 class_name MaszynaImporterContext
 
+## An include submitted to [member queue]: its task and where its result belongs in this file
+class PendingInclude:
+    var task_id:int = -1
+    ## Sizes of the result lists when the include was reached
+    var sizes:Dictionary[String, int] = {}
+    ## Task-local consist for vehicles of a trainset open across the include - its vehicles
+    ## are moved into parent_trainset on merge (no node shared between threads)
+    var trainset_proxy:TrainSet3D = null
+    var parent_trainset:TrainSet3D = null
+
+const RESULT_LISTS:Array[String] = ["tracks", "traction", "power_sources", "models", "terrains", "triangles"]
+
 var _states: Array[Dictionary] = []
 var include_depth: int = 0
 var rotate := Vector3.ZERO
@@ -13,11 +25,11 @@ var terrains: Array = []
 var triangles: Array = []
 var dependencies:Dictionary = {}
 var cacheable:bool = true
-## Set by SceneryInstancer's chunked parsing: "include" only opens the file into
-## pending_include_parser (interrupting the current parser) instead of parsing it recursively.
-var defer_includes:bool = false
-var pending_include_parser:MaszynaParser = null
-var pending_include_filename:String = ""
+## Objects parsed from the file (set by SceneryInstancer.parse_file_task())
+var objects:Array = []
+## When set, "include" is parsed as a task of this queue instead of in place
+## (see submit_include()/merge_pending_includes())
+var queue:SceneryLoadingTaskQueue = null
 
 ## Set by "trainset:"/"endtrainset:" (maszyna_trainset_importer.gd/maszyna_endtrainset_importer.gd)
 ## and consumed by maszyna_node_dynamic_importer.gd - mirrors scene::scratch_data::trainset_data
@@ -79,6 +91,106 @@ func push_origin(new_origin: Vector3):
 func pop_origin():
     if _origins.size() > 0:
         origin = _origins.pop_front()
+
+
+## State inherited by an included file (see from_state())
+func get_state() -> Dictionary:
+    return {
+        "include_depth": include_depth,
+        "rotate": rotate,
+        "origin": origin,
+        "trainset_open": trainset_open,
+        "trainset_name": trainset_name,
+        "trainset_track": trainset_track,
+        "trainset_offset": trainset_offset,
+        "trainset_velocity": trainset_velocity,
+        "trainset_node": trainset_node,
+        "active_files": _active_files.duplicate(),
+    }
+
+
+static func from_state(state:Dictionary) -> MaszynaImporterContext:
+    var context := MaszynaImporterContext.new()
+    context.include_depth = state["include_depth"]
+    context.rotate = state["rotate"]
+    context.origin = state["origin"]
+    context.trainset_open = state["trainset_open"]
+    context.trainset_name = state["trainset_name"]
+    context.trainset_track = state["trainset_track"]
+    context.trainset_offset = state["trainset_offset"]
+    context.trainset_velocity = state["trainset_velocity"]
+    context.trainset_node = state["trainset_node"]
+    context._active_files = state["active_files"]
+    return context
+
+
+## Submits task(filename, parameters, state, queue) -> MaszynaImporterContext parsing an included
+## file; returns the placeholder that stands in the parsed objects until merge_pending_includes()
+func submit_include(task:Callable, filename:String, parameters:Dictionary) -> PendingInclude:
+    var pending := PendingInclude.new()
+    for list_name:String in RESULT_LISTS:
+        pending.sizes[list_name] = (get(list_name) as Array).size()
+    var state:Dictionary = get_state()
+    state["include_depth"] = include_depth + 1
+    if trainset_node:
+        pending.parent_trainset = trainset_node
+        pending.trainset_proxy = TrainSet3D.new()
+        state["trainset_node"] = pending.trainset_proxy
+    # one bind() - chained binds prepend the later arguments
+    pending.task_id = queue.submit(task.bind(filename, parameters, state, queue))
+    return pending
+
+
+## Waits for the submitted includes and puts their results where the includes were in the file
+func merge_pending_includes() -> void:
+    var pendings:Array[PendingInclude] = []
+    var children:Array[MaszynaImporterContext] = []
+    var own_objects:Array = []
+    var object_sizes:Array[int] = []
+    for object:Variant in objects:
+        if object is PendingInclude:
+            pendings.append(object)
+            object_sizes.append(own_objects.size())
+        else:
+            own_objects.append(object)
+    if not pendings:
+        return
+
+    for pending:PendingInclude in pendings:
+        var child:MaszynaImporterContext = queue.wait(pending.task_id) as MaszynaImporterContext
+        children.append(child)
+        if not child:
+            cacheable = false
+            continue
+        dependencies.merge(child.dependencies)
+        cacheable = cacheable and child.cacheable
+        if pending.trainset_proxy:
+            for vehicle:Node in pending.trainset_proxy.get_children():
+                pending.trainset_proxy.remove_child(vehicle)
+                pending.parent_trainset.add_child(vehicle)
+            pending.trainset_proxy.free()
+
+    objects = _merge_list(own_objects, object_sizes, children, "objects")
+    for list_name:String in RESULT_LISTS:
+        var sizes:Array[int] = []
+        for pending:PendingInclude in pendings:
+            sizes.append(pending.sizes[list_name])
+        (get(list_name) as Array).assign(_merge_list(get(list_name), sizes, children, list_name))
+
+
+## own split at sizes, with the children's list_name inserted in between
+static func _merge_list(
+    own:Array, sizes:Array[int], children:Array[MaszynaImporterContext], list_name:String
+) -> Array:
+    var merged:Array = []
+    var start:int = 0
+    for i:int in sizes.size():
+        merged.append_array(own.slice(start, sizes[i]))
+        if children[i]:
+            merged.append_array(children[i].get(list_name))
+        start = sizes[i]
+    merged.append_array(own.slice(start))
+    return merged
 
 
 func push_state() -> void:

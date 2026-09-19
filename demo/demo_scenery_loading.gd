@@ -35,11 +35,15 @@ func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
 
 func _on_scenery_selector_scenery_selected(filename: String) -> void:
     $ControlWindows/Scenery.visible = false
+    $TopBar.visible = false
+    $ControlWindows.visible = false
     $LoadingScreen.show_loading(filename.get_basename())
     $MaszynaSceneryNode.filename = filename
     await $Player.clear_start_train()
     await $MaszynaSceneryNode.load()
     $LoadingScreen.visible = false
+    $TopBar.visible = true
+    $ControlWindows.visible = true
 
 
 func _bind_train_controller(win: Node) -> void:

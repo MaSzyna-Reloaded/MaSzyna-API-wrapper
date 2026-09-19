@@ -17,12 +17,13 @@ static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyn
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
 const CACHE_FORMAT_VERSION:int = 11
 const CACHE_DIRECTORY:String = "scenery_compiled"
-## Top-level .scn parsing: chunk size, time spent between progress reports, share of the progress
-const PARSE_CHUNK_BYTES:int = 512
-const PARSE_FRAME_BUDGET_MSEC:int = 100
-const PARSE_PROGRESS:float = 0.4
+## Share of the loading progress taken by .scn parsing (the rest goes fairly fast)
+const PARSE_PROGRESS:float = 0.5
+## Time spent building/attaching objects between progress reports
+const PROGRESS_FRAME_BUDGET_MSEC:int = 100
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
+static var _last_report_msec:int = 0
 static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
 
 
@@ -57,28 +58,29 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 
     if compiled:
         await _report_progress(root, 0.3, "Building tracks and traction")
-        _instantiate_server_data(
+        await _instantiate_server_data(
             root,
             world_3d,
             compiled.tracks,
             compiled.traction,
             compiled.power_sources,
             compiled.models,
+            0.3,
+            0.6,
         )
         await _report_progress(root, 0.6, "Instancing objects")
-        _attach_objects(root, _instantiate_cached_nodes(compiled.nodes))
+        await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.6, 0.9)
         await _wait_for_vehicles(root)
         return
 
     await _report_progress(root, 0.0, "Scanning includes")
-    var context := MaszynaImporterContext.new()
-    context.rotate = root.context_rotate
-    context.origin = root.context_origin
-    var objects:Array = await _parse_file_with_progress(root, parameters, context)
+    var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
+    var objects:Array = context.objects
 
     await _report_progress(root, PARSE_PROGRESS, "Building tracks and traction")
-    _instantiate_server_data(
-        root, world_3d, context.tracks, context.traction, context.power_sources, context.models
+    await _instantiate_server_data(
+        root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
+        PARSE_PROGRESS, 0.6
     )
     objects.append_array(_build_triangle_nodes(context.triangles))
 
@@ -88,8 +90,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         if compiled:
             _cache.set(cache_path, compiled)
 
-    await _report_progress(root, 0.8, "Instancing objects")
-    _attach_objects(root, objects)
+    await _report_progress(root, 0.6, "Instancing objects")
+    await _attach_objects(root, objects, 0.6, 0.9)
     await _wait_for_vehicles(root)
 
 
@@ -97,6 +99,14 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 static func _report_progress(root:MaszynaIncludeNode, progress:float, message:String) -> void:
     root.load_progress.emit(progress, message)
     await root.get_tree().process_frame
+    _last_report_msec = Time.get_ticks_msec()
+
+
+## _report_progress() for loops over many objects - reports only after PROGRESS_FRAME_BUDGET_MSEC
+static func _report_progress_throttled(root:MaszynaIncludeNode, progress:float, message:String) -> void:
+    if Time.get_ticks_msec() - _last_report_msec < PROGRESS_FRAME_BUDGET_MSEC:
+        return
+    await _report_progress(root, progress, message)
 
 
 ## DynamicRailVehicle3D builds its vehicle in its own _process, after being attached.
@@ -115,18 +125,27 @@ static func _instantiate_server_data(
     traction:Array[MaszynaTractionData],
     power_sources:Array[MaszynaPowerSourceData],
     models:Array[MaszynaModelData],
+    progress_from:float,
+    progress_to:float,
 ) -> void:
+    var total:float = float(maxi(tracks.size() + power_sources.size() + traction.size() + models.size(), 1))
+    var built_count:int = 0
     for track_data:MaszynaTrackData in tracks:
         var built:Dictionary = _build_track(track_data, world_3d)
         root._track_rids.append(built["track_rid"])
         root._track_render_rids.append(built["track_render_rid"])
+        built_count += 1
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Building tracks")
 
     for power_source_data:MaszynaPowerSourceData in power_sources:
         root._power_source_rids.append(_build_power_source(power_source_data))
+        built_count += 1
     for traction_data:MaszynaTractionData in traction:
         var traction_rid:RID = _build_traction(traction_data, world_3d)
         root._traction_rids.append(traction_rid)
         root._wire_power_rids.append(_build_wire_power(traction_data))
+        built_count += 1
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Building traction")
     if root._wire_power_rids.size() > 0:
         TractionPowerServer.network_build()
 
@@ -137,6 +156,10 @@ static func _instantiate_server_data(
         var e3d_rid:RID = _build_model(model_data, world_3d)
         if e3d_rid.is_valid():
             root._e3d_rids.append(e3d_rid)
+        built_count += 1
+        await _report_progress_throttled(
+            root, lerpf(progress_from, progress_to, built_count / total), "Building %s" % model_data.model_filename
+        )
 
 
 static func _build_triangle_nodes(triangles:Array) -> Array:
@@ -183,13 +206,19 @@ static func _build_triangle_nodes(triangles:Array) -> Array:
     return objects
 
 
-static func _attach_objects(root:MaszynaIncludeNode, objects:Array) -> void:
-    for obj:Variant in objects:
-        if not obj:
+## Adds objects to root, reporting the object being attached (see _report_progress_throttled())
+## with progress going from progress_from to progress_to.
+static func _attach_objects(
+    root:MaszynaIncludeNode, objects:Array, progress_from:float, progress_to:float
+) -> void:
+    for i:int in objects.size():
+        var node:Node = objects[i] as Node
+        if not node:
             continue
 
-        if obj is Node:
-            root.add_child(obj)
+        root.add_child(node)
+        var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
+        await _report_progress_throttled(root, progress, "Instancing %s" % node.name)
     if Engine.is_editor_hint():
         root.SceneryEditor.update_owners(root)
 
@@ -333,42 +362,36 @@ func parse_file(filename: String, parameters: Dictionary, context: MaszynaImport
     return objects
 
 
-## Parses root's scenery in chunks, reporting progress about every PARSE_FRAME_BUDGET_MSEC.
-## Includes are not parsed recursively inside a handler (no frame could be yielded there) - the
-## include importer opens them (context.defer_includes) and parsing continues in them here.
-## Progress = opened includes / includes counted by _count_includes().
-func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary, context:MaszynaImporterContext) -> Array:
+## Parses a file in its own context restored from state (MaszynaImporterContext.get_state()) -
+## a SceneryLoadingTaskQueue task. Includes become further tasks of the queue, merged at the end.
+func parse_file_task(
+    filename:String, parameters:Dictionary, state:Dictionary, queue:SceneryLoadingTaskQueue
+) -> MaszynaImporterContext:
+    var context:MaszynaImporterContext = MaszynaImporterContext.from_state(state)
+    context.queue = queue
+    context.objects = parse_file(filename, parameters, context)
+    context.merge_pending_includes()
+    context.queue = null
+    return context
+
+
+## Parses root's scenery on SceneryLoadingTaskQueue workers (every include is a task), reporting
+## progress every frame: finished tasks / includes counted by _count_includes().
+func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -> MaszynaImporterContext:
     var include_count:int = _count_includes(root.filename, {})
-    var parser:MaszynaParser = open_parser(root.filename, parameters, context)
-    if not parser:
-        return []
-    var parsers:Array[MaszynaParser] = [parser]
-    var filenames:Array[String] = [root.filename]
-    var opened_includes:int = 0
-    var objects:Array = []
-    var frame_start:int = Time.get_ticks_msec()
-    context.defer_includes = true
-    while parsers:
-        parser = parsers.back()
-        if parser.eof_reached():
-            _close_parser(parser, filenames.back(), context)
-            parsers.pop_back()
-            filenames.pop_back()
-            if parsers:
-                context.pop_state()
-            continue
-        objects.append_array(parser.parse_chunk(PARSE_CHUNK_BYTES))
-        if context.pending_include_parser:
-            parsers.append(context.pending_include_parser)
-            filenames.append(context.pending_include_filename)
-            context.pending_include_parser = null
-            opened_includes += 1
-        if Time.get_ticks_msec() - frame_start >= PARSE_FRAME_BUDGET_MSEC:
-            var parsed:float = minf(float(opened_includes) / float(maxi(include_count, 1)), 1.0)
-            await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % filenames.back())
-            frame_start = Time.get_ticks_msec()
-    context.defer_includes = false
-    return objects
+    var root_context := MaszynaImporterContext.new()
+    root_context.rotate = root.context_rotate
+    root_context.origin = root.context_origin
+    var queue := SceneryLoadingTaskQueue.new()
+    var task_id:int = queue.submit(parse_file_task.bind(root.filename, parameters, root_context.get_state(), queue))
+    while not queue.is_done(task_id):
+        var parsed:float = minf(float(queue.get_completed_count()) / float(maxi(include_count, 1)), 1.0)
+        await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % root.filename)
+    var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
+    if not context:
+        push_error("Cannot parse scenery: " + root.filename)
+        return MaszynaImporterContext.new()
+    return context
 
 
 ## Grep-like prescan: every "include" in filename and, recursively, in the included files (each

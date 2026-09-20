@@ -67,28 +67,33 @@ namespace godot {
                     RID stream_rid;
                     RID user_rid;
                     float range_end = 0.0;
-                    bool streamed = false; // handed to the main thread as a build
+                    bool built = false;
+                    uint64_t wanted_revision = 0; // 0 means out of range
+                    uint64_t queued_revision = 0;
             };
 
             struct Chunk {
                     Vector<Entry> entries; // sorted by range_end, descending
-                    int streamed_count = 0;
+                    int built_count = 0;
                     bool dirty = false; // entries registered or unregistered since the last sort
             };
 
             struct PendingBuild {
+                    Callable preload;
                     Callable build;
                     RID stream_rid;
                     RID user_rid;
                     Variant preloaded;
                     Vector2i chunk;
                     float distance = 0.0;
+                    uint64_t revision = 0;
             };
 
             struct PendingClear {
                     Callable clear;
                     RID stream_rid;
                     RID user_rid;
+                    uint64_t revision = 0;
             };
 
             /// Longest visible range first, so the pieces a chunk wants at a given distance are
@@ -113,6 +118,8 @@ namespace godot {
             bool exiting = false;
             bool planning = false;
             bool freed_pending = false; // a piece was freed, the queues may hold dead work
+            bool content_dirty = false;
+            bool force_plan = false;
 
             Vector<Owner> owners;
             HashMap<Vector2i, Chunk> chunks;
@@ -123,6 +130,9 @@ namespace godot {
             ObjectID camera_id;
             Vector3 last_camera_position;
             uint64_t last_plan_msec = 0;
+            uint64_t target_revision = 0;
+            uint64_t scanned_revision = 0;
+            int pending_build_count = 0;
             Vector<PendingBuild> planned_builds; // published by the worker
             Vector<PendingClear> planned_clears;
             /// Taken over by the main thread; builds are ordered farthest first and taken from the
@@ -138,8 +148,14 @@ namespace godot {
             static Vector2i _get_chunk_key(const Vector3 &p_origin);
             static float _get_chunk_distance(const Vector2i &p_key, const Vector3 &p_position);
             void _sort_chunk(Chunk &p_chunk) const;
-            void _plan();
+            Entry *_get_entry(const RID &p_stream_rid);
+            bool _plan(uint64_t p_revision, const Vector3 &p_camera_position);
             void _drop_freed_work();
+            void _drop_stale_work();
+            bool _is_area_ready_locked(int p_chunk_radius) const;
+            int _get_pending_builds_locked() const;
+            int _get_pending_nearby_locked(int p_chunk_radius) const;
+            void _request_plan(const Vector3 &p_position);
             void _worker_loop();
             void _process_streaming();
             void _apply_plan();
@@ -160,6 +176,7 @@ namespace godot {
             /// Where the streaming camera is, for anything else that has to know what is near
             Vector3 get_camera_position() const;
             bool has_camera() const;
+            bool is_area_ready(int p_chunk_radius = 1) const;
             int get_streamed_count() const;
             Dictionary get_statistics() const;
     };

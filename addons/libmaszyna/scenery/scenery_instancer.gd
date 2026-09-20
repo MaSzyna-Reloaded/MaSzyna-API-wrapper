@@ -16,7 +16,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 15
+const CACHE_FORMAT_VERSION:int = 16
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -584,7 +584,7 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
         track_data.tex_slope,
         track_data.material1,
         track_data.material2,
-        "", # trackbed_material - the .scn format never declares one, falls back to material2
+        track_data.parameters.get("trackbed", ""), # optional switch attribute, Track.cpp:2378
         track_data.railprofile,
         true, # rail_visible
         true, # ballast_visible

@@ -303,3 +303,82 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   `LegacyCabinUnmodelledControls` registers every catalog control with a key that the cab does
   not model, unless one of its keys is already taken by a modelled control.
 
+## 2026-09-20 - Scenery streaming started from the menu camera
+
+* **Symptom:** after scenery loading reached 100%, the loading screen stayed up for up to 30 s;
+  without that wait, terrain around the occupied vehicle was still missing.
+* **What proved it:** the player registered its camera in `_ready()` at the demo scene position
+  `(30, 3, 615)`, while the camera moved to the selected vehicle only after the scenery and cabin
+  had been built. The worker preloaded a whole pass in `HashMap` order and published it only at the
+  end, so the main-thread priority queue could not prioritise or cancel that old preload.
+* **Cause:** camera priority existed only for published builds. A planning pass had no camera
+  revision, conflated queued work with built content, and `passes > 0 && pending_builds == 0` could
+  also report completion while the current plan was still preloading.
+* **Fix:** loading pauses streaming until the final cab/on-foot camera is known. Plans and queued
+  work carry a camera revision and preload is published nearest-first.
+* **Follow-up measurement:** waiting for the camera chunk plus its eight neighbours still left over
+  1000 nearby builds and delayed the cabin by about 15 s. The required scenery at the camera
+  appeared much earlier when the loading screen was disabled.
+* **Final startup boundary:** startup waits only for the chunk containing the camera. Its eight
+  neighbours and the rest of the draw distance continue streaming after the cabin is shown.
+* **Rule:** readiness must describe built content for a specific camera revision; an empty handoff
+  queue is not proof that worker-side planning or preload has finished.
+
+### Global transform requested while an E3D node leaves the tree
+
+* **Symptom:** loading printed repeated `!is_inside_tree()` errors from
+  `Node3D::get_global_transform()` even after the streaming camera itself was guarded.
+* **Cause:** `E3DModelInstance` subscribed to transform notifications for its optimized backend and
+  forwarded `global_transform` whenever its RID was valid. Removing or reparenting the node can
+  deliver that notification while the RID still exists but the node is already outside the tree.
+* **Fix:** transform notifications update the rendering server only while the node is in the tree;
+  tree re-entry creates the instance with the current transform as before.
+* **Rule:** a valid rendering RID does not imply that its owning `Node3D` currently has a global
+  transform; notification handlers must check the node lifecycle separately.
+
+## 2026-09-20 - Skydome clouds behind alpha-blended cabin windows
+
+* **Symptom:** enabling any visible cloud cover in a cabin with alpha-blended windows could push a
+  60 FPS frame past its V-Sync budget and drop it to 30 FPS.
+* **Cause:** light_angular_distance high cost for PSSM and even for medium filter.
+* **Fix:** filter switched to the fastests
+* **Follow up:** Give possiblity to disable light_angular_distance in Skybox
+
+## 2026-09-20 - double slips impassable and painted with the missing-texture checker
+
+* **Symptom:** a train reaching a crossing switch (rozjazd krzyzowy) stops dead and never moves
+  again, and the crossing renders a fan of wide flat quads carrying `missing_texture.png` (a
+  magenta/black checker, which reads as orange under warm light). Ordinary switches are fine.
+* **Proof:** a double slip is not a `track cross` node - `cross` is a road intersection in the
+  original (`Track.cpp:419`, `iCategoryFlag = 2`). It is four `track switch` nodes named
+  `..._a/_b/_c/_d` (`TTrack::DoubleSlip()`, `Track.cpp:2593`) plus four short `normal` connectors.
+  Measuring the distance between the two branch ends of every switch in the data set
+  (4 819 switches under `scenery/`) gives a strictly bimodal result: **1 494 of them (31%) are
+  0.19-0.21 m apart** - all the `_a/_b/_c/_d` quarters - while ordinary switches sit at 1.5-2.0 m.
+  `TrackManager._ENDPOINT_EPSILON` was 0.25 m, so every double slip fell inside it.
+* **Cause:** at 0.25 m `_get_or_create_node()` merged a switch's own two branch ends into one
+  topology node and `_merge_endpoint_nodes()` then chain-merged transitively (it merges by node
+  identity and never re-checks the distance), collapsing all eight endpoints of a double slip into
+  a single node. `RailVehiclePhysicsServer._get_motion_connection()` sees many different usable
+  targets there, calls the node ambiguous and returns `null`; `_move_vehicle_state()` simply
+  `break`s, so the track offset freezes with no error printed. The same collapsed node made
+  `rebuild_track_stitches()` build a trackbed stitch to every one of the seven wrong partners -
+  the fan of quads. The original's own tolerance is 2 cm per axis (`Equal()`, `Track.cpp:2121`).
+* **Second cause (the checker):** the `.scn` sentinel `none` was stored as a material name, so
+  `MaterialManager` returned a material whose texture fell back to the placeholder. The original
+  keeps a null handle for it (`Track.cpp:491`) and draws no trackbed; the short connectors inside
+  a switch group rely on that, because the trackbed material is borrowed from a neighbour
+  (`copy_adjacent_trackbed_material()`, `Track.cpp:3326`), a port the wrapper did not have.
+* **Fix:** tolerance down to the original's 2 cm, compared per axis like `Equal()`, with the
+  endpoint hash given its own cell size; `none` mapped to an empty material name; and
+  `copy_adjacent_trackbed_material()` ported, resolved after the topology is built.
+* **Cost of the tighter tolerance:** measured over 26 960 track endpoints in `tarniowo`,
+  `drawinowo` and `baltyk` - 26 683 are joined to within 2 cm, exactly **2** had their nearest
+  partner in the 2-25 cm band, and 275 are genuine line ends. Scenery authors do place endpoints
+  exactly; the loose tolerance bought nothing and cost every double slip.
+* **Rule:** a geometric tolerance ported from the original must carry the original's value. A
+  rounder, "safer" number does not forgive sloppy data - it silently merges geometry that the
+  scenery deliberately placed 20 cm apart, and the failure surfaces far away from the constant.
+* **Rule:** a movement step that cannot resolve the next track must say so. `break` on a null
+  connection turned a topology bug into "the train just stops", which cost a screenshot and a
+  full trace to locate.

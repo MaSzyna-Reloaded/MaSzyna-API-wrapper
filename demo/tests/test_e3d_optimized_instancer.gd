@@ -17,6 +17,8 @@ func test_optimized_instance_survives_tree_reentry_and_light_changes() -> void:
     add_child_autoqfree(instance)
 
     remove_child(instance)
+    # A parent removal can deliver a transform notification while the node has no global transform.
+    instance.position = Vector3(5, 0, 0)
     add_child(instance)
     instance.lights_state = {"00": true}
     instance.position = Vector3(10, 0, 0)

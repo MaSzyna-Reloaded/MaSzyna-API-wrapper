@@ -114,7 +114,7 @@ func unregister_trigger(player:SfxPlayer3D, trigger_id:int) -> void:
     runtime.trigger_states.erase(trigger_id)
 
 
-func _physics_process(delta:float) -> void:
+func _process(delta:float) -> void:
     var states:Dictionary = {}
     var culling_distance:float = float(ProjectSettings.get_setting(CULLING_DISTANCE_SETTING, 1000.0))
     var listener_position:Vector3 = _listener.global_position if _listener else Vector3.ZERO

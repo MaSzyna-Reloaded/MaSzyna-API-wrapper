@@ -46,6 +46,9 @@ class TrackState:
     var material1: Material
     var material2: Material
     var material_trackbed: Material
+    ## Trackbed material after the neighbour walk, cached until the topology changes.
+    var resolved_trackbed_material: Material
+    var resolved_trackbed_material_valid: bool = false
     var rail_visible: bool = true
     var ballast_visible: bool = true
 
@@ -264,9 +267,12 @@ func set_track_render_options(
     state.material1_name = material1
     state.material2_name = material2
     state.material_trackbed_name = material_trackbed
-    state.material1 = MaterialManager.get_material("", material1)
-    state.material2 = MaterialManager.get_material("", material2)
-    state.material_trackbed = MaterialManager.get_material("", material_trackbed)
+    # An unnamed slot has no material at all - MaterialManager would hand back the
+    # missing-texture placeholder instead (Track.cpp:485-491 keeps a null handle here).
+    state.material1 = MaterialManager.get_material("", material1) if material1 else null
+    state.material2 = MaterialManager.get_material("", material2) if material2 else null
+    state.material_trackbed = MaterialManager.get_material("", material_trackbed) if material_trackbed else null
+    state.resolved_trackbed_material_valid = false
     state.railprofile = railprofile
     state.rail_visible = rail_visible
     state.ballast_visible = ballast_visible
@@ -648,26 +654,28 @@ func rebuild_track(track_render_rid: RID) -> void:
     if state.trackbed_mesh:
         RenderingServer.instance_set_base(state.trackbed_mesh_instance, state.trackbed_mesh.get_rid())
 
-    if state.primary_rail_mesh:
+    # The second path of a switch carries its own rail texture; everything else, and a switch
+    # that declares none, uses the track's own one.
+    var secondary_material: Material = state.material2 if curve2_data and state.material2 else state.material1
+
+    if state.primary_rail_mesh and state.material1:
         RenderingServer.mesh_surface_set_material(
             state.primary_rail_mesh.get_rid(), 0, state.material1.get_rid(),
         )
 
-    if state.secondary_rail_mesh:
-        var secondary_material: Material = state.material2 if curve2_data else state.material1
+    if state.secondary_rail_mesh and secondary_material:
         RenderingServer.mesh_surface_set_material(
             state.secondary_rail_mesh.get_rid(), 0, secondary_material.get_rid(),
         )
 
-    if state.primary_blade_mesh:
+    if state.primary_blade_mesh and state.material1:
         RenderingServer.mesh_surface_set_material(
             state.primary_blade_mesh.get_rid(), 0, state.material1.get_rid(),
         )
 
-    if state.secondary_blade_mesh:
-        var secondary_blade_material: Material = state.material2 if curve2_data else state.material1
+    if state.secondary_blade_mesh and secondary_material:
         RenderingServer.mesh_surface_set_material(
-            state.secondary_blade_mesh.get_rid(), 0, secondary_blade_material.get_rid(),
+            state.secondary_blade_mesh.get_rid(), 0, secondary_material.get_rid(),
         )
 
     if state.trackbed_mesh and trackbed_material:
@@ -789,6 +797,8 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
 
 
 func _on_topology_rebuilt() -> void:
+    for state: TrackState in _tracks.values():
+        state.resolved_trackbed_material_valid = false
     for track_render_rid: RID in _tracks.keys():
         rebuild_track_stitches(track_render_rid)
 
@@ -1007,25 +1017,64 @@ func _get_roll_fix_height(roll_degrees: float) -> float:
     return abs(sin(deg_to_rad(roll_degrees)) * 0.75)
 
 
-func _resolve_trackbed_material(state: TrackState, track: TrackData) -> Material:
-    if _is_switch_track(track):
-        if state.material_trackbed_name:
-            return state.material_trackbed
-        var primary_neighbors: TrackManager.BranchNeighbors = TrackManager.switch_track_get_neighbors(
-            state.track_rid,
-            TrackManager.SwitchTrack.TRACK_COMMON
-        )
-        var primary_previous_state: TrackState = _get_track_state_by_track_rid(primary_neighbors.previous_track_rid)
-        if primary_previous_state and primary_previous_state.material2_name:
-            return primary_previous_state.material2
-        var primary_next_state: TrackState = _get_track_state_by_track_rid(primary_neighbors.next_track_rid)
-        if primary_next_state and primary_next_state.material2_name:
-            return primary_next_state.material2
+func _resolve_trackbed_material(state: TrackState, _track: TrackData) -> Material:
+    if not state.resolved_trackbed_material_valid:
+        state.resolved_trackbed_material = _copy_adjacent_trackbed_material(state)
+        state.resolved_trackbed_material_valid = true
+    return state.resolved_trackbed_material
+
+
+## Port of TTrack::copy_adjacent_trackbed_material() (Track.cpp:3326). A switch carries no
+## trackbed texture of its own - its second slot holds the diverging path's rail texture - and
+## the short connectors inside a switch group commonly declare "none", so the material is
+## borrowed from a neighbour. [param visited] generalises the original's single-level Exclude
+## argument, which cannot stop a longer loop of track from recursing forever.
+func _copy_adjacent_trackbed_material(state: TrackState, visited: Dictionary[RID, bool] = {}) -> Material:
+    if not state or visited.has(state.track_rid):
         return null
+    visited[state.track_rid] = true
 
     if state.material_trackbed_name:
         return state.material_trackbed
-    return state.material2
+    var is_switch: bool = TrackManager.track_is_switch(state.track_rid)
+    if not is_switch and state.material2:
+        return state.material2
+
+    for neighbor_track_rid: RID in _get_trackbed_material_sources(state.track_rid, is_switch):
+        var material: Material = _copy_adjacent_trackbed_material(
+            _get_track_state_by_track_rid(neighbor_track_rid),
+            visited
+        )
+        if material:
+            return material
+    return null
+
+
+## Neighbours a track may borrow its trackbed material from: the main path's two for a switch
+## (Track.cpp:3359), and for a regular track only while it sits next to a switch
+## (Track.cpp:3348) - plain track keeps whatever the scenery gave it.
+func _get_trackbed_material_sources(track_rid: RID, is_switch: bool) -> Array[RID]:
+    var sources: Array[RID] = []
+    if is_switch:
+        var neighbors: TrackManager.BranchNeighbors = TrackManager.switch_track_get_neighbors(
+            track_rid,
+            TrackManager.SwitchTrack.TRACK_COMMON
+        )
+        sources.append(neighbors.previous_track_rid)
+        sources.append(neighbors.next_track_rid)
+        return sources
+
+    var has_adjacent_switch: bool = false
+    for endpoint_index: TrackManager.EndpointIndex in [
+        TrackManager.EndpointIndex.CURVE1_P1,
+        TrackManager.EndpointIndex.CURVE1_P2,
+    ]:
+        for connection: TrackManager.EndpointRef in TrackManager.track_get_endpoint_connections(track_rid, endpoint_index):
+            sources.append(connection.track_rid)
+            has_adjacent_switch = has_adjacent_switch or TrackManager.track_is_switch(connection.track_rid)
+    if not has_adjacent_switch:
+        sources.clear()
+    return sources
 
 
 func _get_track_state_by_track_rid(track_rid: RID) -> TrackState:

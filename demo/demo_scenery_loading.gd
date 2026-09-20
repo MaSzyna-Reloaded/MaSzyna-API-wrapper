@@ -30,6 +30,9 @@ func _on_scenery_selector_scenery_selected(
 ) -> void:
     _play_music()
     $GameHud.visible = false
+    # The camera moves to the selected vehicle only after loading; planning before that point
+    # streams the empty menu position and puts irrelevant work ahead of the starting area.
+    SceneryStreamingServer.set_camera(null)
     # the title from the .scn header ("//$n"), not the file name
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
     $LoadingScreen.show_loading(info.title if info.title else filename.get_basename())
@@ -40,6 +43,7 @@ func _on_scenery_selector_scenery_selected(
     $Player.start_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
+    SceneryStreamingServer.set_camera($Player.get_camera())
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
@@ -60,19 +64,14 @@ func _wait_for_cabin() -> void:
         await get_tree().process_frame
 
 
-## A scenery is registered with SceneryStreamingServer, not built, so the world around the player
-## is filled in afterwards. In game that means watching it pop in at a few fps, so it happens here
-## instead - after _wait_for_cabin(), when the player is already in its vehicle and the streaming
-## fills in the place the game actually starts at.
+## Wait only for the chunk containing the camera. Neighbouring chunks and the rest of the draw
+## distance keep streaming after the game appears.
 func _wait_for_streaming() -> void:
     var deadline: float = Time.get_ticks_msec() + STREAMING_WAIT_TIME * 1000.0
-    var statistics: Dictionary = SceneryStreamingServer.get_statistics()
-    while statistics["has_camera"] and Time.get_ticks_msec() < deadline:
-        # passes == 0 means the first plan has not run yet, so an empty queue proves nothing
-        if statistics["passes"] > 0 and statistics["pending_builds"] == 0:
-            return
+    while SceneryStreamingServer.has_camera() and Time.get_ticks_msec() < deadline:
+        if SceneryStreamingServer.is_area_ready(0):
+            break
         await get_tree().process_frame
-        statistics = SceneryStreamingServer.get_statistics()
 
 
 ## Escape in the scenario selector: fade the screen to black and the music out, then quit
@@ -98,6 +97,7 @@ func _exit_to_menu() -> void:
     _play_music()
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     $GameHud.visible = false
+    SceneryStreamingServer.set_camera(null)
     await $Player.clear_start_train()
     $MaszynaSceneryNode.filename = ""
     await $MaszynaSceneryNode.load()

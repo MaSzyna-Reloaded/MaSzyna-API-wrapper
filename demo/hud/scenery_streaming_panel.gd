@@ -13,8 +13,8 @@ var _elapsed:float = 0.0
 func _ready() -> void:
     for caption:String in [
         "Camera", "Camera chunk", "Draw distance", "Chunks", "Chunks in range",
-        "Registered", "Streamed in", "Pending builds", "Pending clears", "Builds/s", "Budget",
-        "Last pass", "Owners",
+        "Registered", "Streamed in", "Pending builds", "Pending nearby", "Nearby ready",
+        "Pending clears", "Planning", "Builds/s", "Budget", "Last pass", "Owners",
     ]:
         _rows[caption] = _add_row(caption)
     _refresh()
@@ -49,7 +49,10 @@ func _refresh() -> void:
         else str(streamed)
     )
     _rows["Pending builds"].text = str(statistics["pending_builds"])
+    _rows["Pending nearby"].text = str(statistics["pending_nearby"])
+    _rows["Nearby ready"].text = str(statistics["nearby_ready"])
     _rows["Pending clears"].text = str(statistics["pending_clears"])
+    _rows["Planning"].text = str(statistics["planning"])
     _rows["Builds/s"].text = str(statistics["build_rate"])
     _rows["Budget"].text = "%d ms/frame" % statistics["budget_msec"]
     _rows["Last pass"].text = "%d ms" % statistics["plan_msec"]

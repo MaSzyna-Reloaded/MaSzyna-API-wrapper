@@ -118,6 +118,12 @@
   (`addons/libmaszyna/editor/scenery_streaming/`); switching to another viewport does not follow.
 * Switch state changes are not visualised (broken for several commits, unrelated to streaming) and
   the trackbed of switches renders incorrectly.
+* `maszyna_node_track_importer.gd` still drops every track type but `switch`/`normal`, so `road`
+  (~16 700 nodes per data set), `river` (~900), `cross` (72), `turn` and `table` never appear in a
+  scenery. The node is now discarded cleanly through `endtrack` instead of desyncing the parser,
+  but nothing is built. `road`/`river` need a flat surface path with no rail profile
+  (`Track.cpp:1554` onwards); `cross` is a road intersection with four endpoints and no common
+  point, which `TrackManager` has an enum value for but no topology or geometry support.
 * Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
   render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
   `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by

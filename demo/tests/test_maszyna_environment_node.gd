@@ -85,8 +85,7 @@ func test_weather_preset_sets_weather_controls() -> void:
     assert_almost_eq(environment_node.fog_density, 0.3, 0.000001)
     assert_almost_eq(environment_node.wind_strength, 0.6, 0.000001)
     assert_almost_eq(weather.precipitation_intensity, 0.8, 0.000001)
-    # the rain variant of the materials is blocked on purpose (maszyna_environment_node.gd)
-    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_CLOUDY)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
 
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_SNOW
     environment_node._process(0.0)

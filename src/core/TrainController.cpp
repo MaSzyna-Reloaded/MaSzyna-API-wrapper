@@ -610,7 +610,9 @@ namespace godot {
     }
 
     void TrainController::_handle_mover_update() {
-        state.merge(get_mover_state(), true);
+        // fetched straight into state: it used to be filled into a second dictionary and merged
+        // back here, writing every one of those keys twice for every vehicle of every frame
+        get_mover_state();
 
         const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
         if (prev_is_powered != new_is_powered) {
@@ -731,7 +733,7 @@ namespace godot {
         } else {
             UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
         }
-        return internal_state;
+        return state;
     }
 
     // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
@@ -760,44 +762,43 @@ namespace godot {
 
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         _consume_coupler_sounds(p_mover, p_state);
-        internal_state["mass_total"] = p_mover->TotalMass;
-        internal_state["velocity"] = p_mover->V;
-        internal_state["speed"] = p_mover->Vel;
-        internal_state["tachometer_speed"] = tacho_velocity;
-        internal_state["tachometer_speed_jump"] = tacho_velocity_jump;
+        p_state["mass_total"] = p_mover->TotalMass;
+        p_state["velocity"] = p_mover->V;
+        p_state["speed"] = p_mover->Vel;
+        p_state["tachometer_speed"] = tacho_velocity;
+        p_state["tachometer_speed_jump"] = tacho_velocity_jump;
         // tachoclock chunk parameter; 0 keeps the sound stopped (Train.cpp:8323-8335)
-        internal_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
-        internal_state["total_distance"] = p_mover->DistCounter;
-        internal_state["direction"] = p_mover->DirActive;
-        internal_state["cabin"] = p_mover->CabActive;
-        internal_state["cabin_controleable"] = p_mover->IsCabMaster();
-        internal_state["cabin_occupied"] = p_mover->CabOccupied;
+        p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
+        p_state["total_distance"] = p_mover->DistCounter;
+        p_state["direction"] = p_mover->DirActive;
+        p_state["cabin"] = p_mover->CabActive;
+        p_state["cabin_controleable"] = p_mover->IsCabMaster();
+        p_state["cabin_occupied"] = p_mover->CabOccupied;
 
         /* FIXME: move to TrainPower section? */
-        internal_state["battery_enabled"] = p_mover->Battery;
-        internal_state["battery_voltage"] = p_mover->BatteryVoltage;
+        p_state["battery_enabled"] = p_mover->Battery;
+        p_state["battery_voltage"] = p_mover->BatteryVoltage;
 
         /* FIXME: move to TrainRadio section? */
-        internal_state["radio_enabled"] = p_mover->Radio;
-        internal_state["radio_powered"] =
-                p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
-        internal_state["radio_channel"] = radio_channel;
+        p_state["radio_enabled"] = p_mover->Radio;
+        p_state["radio_powered"] = p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
+        p_state["radio_channel"] = radio_channel;
 
         /* FIXME: move to TrainPower section */
-        internal_state["power24_voltage"] = p_mover->Power24vVoltage;
-        internal_state["power24_available"] = p_mover->Power24vIsAvailable;
-        internal_state["power110_available"] = p_mover->Power110vIsAvailable;
-        internal_state["current0"] = p_mover->ShowCurrent(0);
-        internal_state["current1"] = p_mover->ShowCurrent(1);
-        internal_state["current2"] = p_mover->ShowCurrent(2);
-        internal_state["relay_novolt"] = p_mover->NoVoltRelay;
-        internal_state["relay_overvoltage"] = p_mover->OvervoltageRelay;
-        internal_state["relay_ground"] = p_mover->GroundRelay;
-        internal_state["train_damage"] = p_mover->DamageFlag;
-        internal_state["controller_second_position"] = p_mover->ScndCtrlPos;
-        internal_state["controller_main_position"] = p_mover->MainCtrlPos;
+        p_state["power24_voltage"] = p_mover->Power24vVoltage;
+        p_state["power24_available"] = p_mover->Power24vIsAvailable;
+        p_state["power110_available"] = p_mover->Power110vIsAvailable;
+        p_state["current0"] = p_mover->ShowCurrent(0);
+        p_state["current1"] = p_mover->ShowCurrent(1);
+        p_state["current2"] = p_mover->ShowCurrent(2);
+        p_state["relay_novolt"] = p_mover->NoVoltRelay;
+        p_state["relay_overvoltage"] = p_mover->OvervoltageRelay;
+        p_state["relay_ground"] = p_mover->GroundRelay;
+        p_state["train_damage"] = p_mover->DamageFlag;
+        p_state["controller_second_position"] = p_mover->ScndCtrlPos;
+        p_state["controller_main_position"] = p_mover->MainCtrlPos;
         // joint master controller position - negative range is the local brake (Train.cpp:7699-7714)
-        internal_state["controller_joint_position"] =
+        p_state["controller_joint_position"] =
                 p_mover->LocalBrakePosA > 0.0
                         ? static_cast<int>(std::round(-p_mover->LocalBrakePosA * LocalBrakePosNo))
                         : (p_mover->CoupledCtrl ? p_mover->MainCtrlPos + p_mover->ScndCtrlPos : p_mover->MainCtrlPos);
@@ -805,8 +806,8 @@ namespace godot {
         // lookups actually key off (Mover.cpp's internal auto-relay/resistor-stepping state
         // machine) - a wrong RList[] mapping or array-bounds issue lets this race far ahead of
         // MainCtrlPos, landing on unpopulated (zero-resistance) table slots.
-        internal_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
-        internal_state["circuit_rlist_size"] = p_mover->RlistSize;
+        p_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
+        p_state["circuit_rlist_size"] = p_mover->RlistSize;
     }
 
     Dictionary TrainController::get_config() const {

@@ -27,7 +27,6 @@ namespace godot {
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
             Dictionary config;
-            Dictionary internal_state;
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
             // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's

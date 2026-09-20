@@ -1,3 +1,4 @@
+#include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
 
 #include "../engines/TrainElectricEngine.hpp"
@@ -7,6 +8,7 @@
 #include <godot_cpp/classes/collision_shape3d.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/visible_on_screen_notifier3d.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -354,33 +356,37 @@ namespace godot {
         }
 
         update_time += p_delta;
-        if (update_time > 0.25 && needs_head_display_update) {
+        if (update_time > 0.25) {
             update_time = 0.0;
-            _update_head_display();
+            if (needs_head_display_update) {
+                _update_head_display();
+            }
+            _update_model_detail();
         }
 
         if (!Engine::get_singleton()->is_editor_hint()) {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
-                const double velocity =
-                        controller != nullptr ? double(controller->get_state().get("velocity", 0.0)) : 0.0;
+                const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
+                const double velocity = double(state.get("velocity", 0.0));
                 // the vehicle is moved on its track by RailVehiclePhysicsServer's global step
                 if (!Math::is_zero_approx(velocity)) {
                     _update_track_transform();
                 }
                 if (electric_engine != nullptr) {
-                    _update_pantograph_raise_state(p_delta);
-                    _update_pantograph_power();
+                    _update_pantograph_raise_state(p_delta, state);
+                    _update_pantograph_power(state);
                 }
             } else if (controller != nullptr && start_track_name.is_empty()) {
-                const double velocity = controller->get_state().get("velocity", 0.0);
+                const Dictionary state = controller->get_state();
+                const double velocity = double(state.get("velocity", 0.0));
                 const real_t distance = static_cast<real_t>(p_delta * velocity);
                 set_position(get_position() + (Vector3(0.0, 0.0, -1.0) * distance));
                 if (is_visible && !Math::is_zero_approx(velocity)) {
                     _update_wheel_animation_state();
                 }
                 if (electric_engine != nullptr) {
-                    _update_pantograph_raise_state(p_delta);
-                    _update_pantograph_power();
+                    _update_pantograph_raise_state(p_delta, state);
+                    _update_pantograph_power(state);
                 }
             }
             if (controller != nullptr) {
@@ -837,7 +843,8 @@ namespace godot {
         const bool states[] = {p_on, !(p_on || p_xon), p_xon};
         const char *suffixes[] = {"_on", "_off", "_xon"};
         for (int index = 0; index < 3; ++index) {
-            if (Node3D *node = Object::cast_to<Node3D>(coupler_submodel_nodes.get(p_name + String(suffixes[index]), Variant()));
+            if (Node3D *node = Object::cast_to<Node3D>(
+                        coupler_submodel_nodes.get(p_name + String(suffixes[index]), Variant()));
                 node != nullptr) {
                 node->set_visible(states[index]);
             }
@@ -869,8 +876,9 @@ namespace godot {
         coupler_visibility_state = state;
         for (int end = 0; end < 2; ++end) {
             const String number = itos(end + 1);
-            _show_air_coupler("coupler" + number, variants[end][0] == 1,
-                              variants[end][0] == 2 && coupler_submodel_nodes.has("coupler" + number + "_xon"));
+            _show_air_coupler(
+                    "coupler" + number, variants[end][0] == 1,
+                    variants[end][0] == 2 && coupler_submodel_nodes.has("coupler" + number + "_xon"));
             const char *hoses[] = {"cpneumatic", "pneumatic"};
             for (int hose = 0; hose < 2; ++hose) {
                 const String name = String(hoses[hose]) + number;
@@ -904,6 +912,36 @@ namespace godot {
         _apply_wheel_rotation(front_rolling_wheel_nodes, double(state.get("wheel_angle_front_deg", 0.0)));
         _apply_wheel_rotation(powered_wheel_nodes, double(state.get("wheel_angle_powered_deg", 0.0)));
         _apply_wheel_rotation(rear_rolling_wheel_nodes, double(state.get("wheel_angle_rear_deg", 0.0)));
+    }
+
+    /// A vehicle far from the camera is rendered from RenderingServer instances instead of a node
+    /// hierarchy: nothing animates at that distance, and the hierarchy is what costs - hundreds of
+    /// Node3Ds per vehicle to walk, notify and propagate a transform through, times the hundreds of
+    /// vehicles a scenery runs. Its simulation is untouched, it lives in RailVehiclePhysicsServer.
+    ///
+    /// The vehicle keeps its transform applied either way, so it stays where it belongs; only the
+    /// model's instancer changes. Note the OPTIMIZED backend does not render SUBMODEL_FREE_SPOTLIGHT
+    /// (see TODO.md), so a distant vehicle loses its lights.
+    void RailVehicle3D::_update_model_detail() {
+        const SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        if (streaming == nullptr || !streaming->has_camera() || model_node == nullptr) {
+            return;
+        }
+        const float detail_distance = ProjectSettings::get_singleton()->get_setting(
+                "maszyna/rendering/vehicle_detail_distance", DEFAULT_VEHICLE_DETAIL_DISTANCE_M);
+        const double distance = get_global_position().distance_to(streaming->get_camera_position());
+        const float hysteresis = MAX(VEHICLE_DETAIL_HYSTERESIS_MIN_M, detail_distance * VEHICLE_DETAIL_HYSTERESIS);
+        const bool detailed = model_detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;
+        if (detailed == model_detailed) {
+            return;
+        }
+        model_detailed = detailed;
+        // E3DModelInstance applies a changed instancer only in the editor, so ask it to rebuild
+        model_node->set("instancer", detailed ? 1 : 0); // Instancer.NODES : Instancer.OPTIMIZED
+        model_node->call("reload");
+        // the bogie and wheel nodes are gone with the hierarchy, and new ones come back with it
+        animation_bindings_dirty = true;
+        force_detail_refresh = true;
     }
 
     void RailVehicle3D::_update_track_transform() {
@@ -982,20 +1020,21 @@ namespace godot {
         _update_wheel_animation_state();
     }
 
-    Dictionary RailVehicle3D::_pantograph_frame_axes() const {
-        Dictionary axes;
-        axes["forward"] = -get_global_transform().basis.get_column(2);
-        axes["up"] = get_global_transform().basis.get_column(1);
-        axes["left"] = -get_global_transform().basis.get_column(0);
-        return axes;
+    RailVehicle3D::PantographFrame RailVehicle3D::_pantograph_frame() const {
+        PantographFrame frame;
+        frame.transform = get_global_transform();
+        frame.forward = -frame.transform.basis.get_column(2);
+        frame.up = frame.transform.basis.get_column(1);
+        frame.left = -frame.transform.basis.get_column(0);
+        return frame;
     }
 
-    void RailVehicle3D::_update_pantograph_power() {
+    void RailVehicle3D::_update_pantograph_power(const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || electric_engine == nullptr || controller == nullptr) {
             return;
         }
-        const Dictionary axes = _pantograph_frame_axes();
-        const Dictionary state = controller->get_state();
+        const PantographFrame frame = _pantograph_frame();
+        const Dictionary &state = p_state;
         const double assumed_voltage =
                 MAX(Math::abs(double(state.get("current_collector/pantograph_first_voltage", 0.0))),
                     Math::abs(double(state.get("current_collector/pantograph_second_voltage", 0.0))));
@@ -1006,24 +1045,21 @@ namespace godot {
         const int active_count = int(front_active) + int(rear_active);
         const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
         const double front_voltage =
-                front_active ? _pantograph_wire_voltage(
-                                       2, pantograph_front_offset, axes["forward"], axes["up"], axes["left"],
-                                       assumed_voltage, current)
+                front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
         electric_engine->call("set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
         electric_engine->call(
                 "set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_SECOND,
-                rear_active ? _pantograph_wire_voltage(
-                                      3, pantograph_rear_offset, axes["forward"], axes["up"], axes["left"],
-                                      assumed_voltage, current)
+                rear_active ? _pantograph_wire_voltage(3, pantograph_rear_offset, frame, assumed_voltage, current)
                             : 0.0);
     }
 
     double RailVehicle3D::_pantograph_wire_voltage(
-            int p_index, const Vector3 &p_offset, const Vector3 &p_forward, const Vector3 &p_up, const Vector3 &p_left,
-            double p_assumed_voltage, double p_current) {
-        const Vector3 contact_point = get_global_transform().xform(p_offset);
-        const Dictionary wire = _find_pantograph_wire(p_index, contact_point, p_up, p_forward, p_left);
+            const int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, const double p_assumed_voltage,
+            const double p_current) {
+        const Vector3 contact_point = p_frame.transform.xform(p_offset);
+        const Dictionary wire =
+                _find_pantograph_wire(p_index, contact_point, p_frame.up, p_frame.forward, p_frame.left);
         const RID wire_rid = wire["rid"];
         if (!wire_rid.is_valid()) {
             return 0.0;
@@ -1031,32 +1067,32 @@ namespace godot {
         return _singleton("TractionPowerServer")->call("wire_get_voltage", wire_rid, p_assumed_voltage, p_current);
     }
 
-    void RailVehicle3D::_update_pantograph_raise_state(double p_delta) {
+    void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
         }
-        const Dictionary state = controller->get_state();
+        const Dictionary &state = p_state;
         pantograph_front_converged = _update_pantograph_arm(
                 0, pantograph_front_geometry, pantograph_front_arm_nodes,
-                state.get("current_collector/pantograph_first_active", false), p_delta);
+                state.get("current_collector/pantograph_first_active", false), p_delta, state);
         if (is_visible && !pantograph_front_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_front_arm_nodes, pantograph_front_geometry);
         }
         pantograph_rear_converged = _update_pantograph_arm(
                 1, pantograph_rear_geometry, pantograph_rear_arm_nodes,
-                state.get("current_collector/pantograph_second_active", false), p_delta);
+                state.get("current_collector/pantograph_second_active", false), p_delta, state);
         if (is_visible && !pantograph_rear_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_rear_arm_nodes, pantograph_rear_geometry);
         }
     }
 
     bool RailVehicle3D::_update_pantograph_arm(
-            int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, bool p_is_active,
-            double p_delta) {
+            const int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, const bool p_is_active,
+            const double p_delta, const Dictionary &p_state) {
         if (p_geometry.is_empty()) {
             return true;
         }
-        const Dictionary state = controller->get_state();
+        const Dictionary &state = p_state;
         const double pressure = state.get("current_collector/pantograph_tank_pressure", 0.0);
         const bool power_available =
                 bool(state.get("power24_available", false)) || bool(state.get("power110_available", false));
@@ -1070,10 +1106,10 @@ namespace godot {
         double pant_diff = Math_INF;
         if (p_is_active) {
             // a lowered pantograph comes down regardless of the wire (DynObj.cpp:3775), no search needed
-            const Dictionary axes = _pantograph_frame_axes();
+            const PantographFrame frame = _pantograph_frame();
             Node3D *lower_arm = Object::cast_to<Node3D>(p_arm_nodes[0]);
             const Dictionary wire = _find_pantograph_wire(
-                    p_index, lower_arm->get_global_position(), axes["up"], axes["forward"], axes["left"]);
+                    p_index, lower_arm->get_global_position(), frame.up, frame.forward, frame.left);
             pant_diff = double(wire["height"]) - double(p_geometry["pant_wys"]);
         }
         double angle = p_geometry["angle_l"];

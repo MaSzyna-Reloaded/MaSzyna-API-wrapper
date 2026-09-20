@@ -16,6 +16,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
         ClassDB::bind_method(D_METHOD("set_camera", "camera"), &SceneryStreamingServer::set_camera);
         ClassDB::bind_method(D_METHOD("get_draw_distance"), &SceneryStreamingServer::get_draw_distance);
+        ClassDB::bind_method(D_METHOD("get_camera_position"), &SceneryStreamingServer::get_camera_position);
         ClassDB::bind_method(D_METHOD("get_streamed_count"), &SceneryStreamingServer::get_streamed_count);
         ClassDB::bind_method(D_METHOD("get_statistics"), &SceneryStreamingServer::get_statistics);
     }
@@ -166,6 +167,15 @@ namespace godot {
 
     float SceneryStreamingServer::get_draw_distance() const {
         return draw_distance;
+    }
+
+    Vector3 SceneryStreamingServer::get_camera_position() const {
+        const Camera3D *camera = Object::cast_to<Camera3D>(ObjectDB::get_instance(camera_id));
+        return camera != nullptr ? camera->get_global_position() : last_camera_position;
+    }
+
+    bool SceneryStreamingServer::has_camera() const {
+        return camera_id.is_valid();
     }
 
     /// Pieces currently built - what the streaming actually keeps alive

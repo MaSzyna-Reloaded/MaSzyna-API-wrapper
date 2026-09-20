@@ -430,6 +430,7 @@ sound/brake_cabin_unit_size_factor=1.0
 sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
 debug/physics_diagnostics=false
+rendering/vehicle_detail_distance=350.0
 
 [rendering]
 

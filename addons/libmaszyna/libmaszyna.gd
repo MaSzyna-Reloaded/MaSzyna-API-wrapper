@@ -123,6 +123,14 @@ func _enter_tree():
         "maszyna/rendering/scenery_draw_distance", 3000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "100.0,20000.0,10.0,suffix:m"
     )
+    # The distance a vehicle stops rendering from a node hierarchy at and switches to
+    # RenderingServer instances; it switches back 25% closer. 350 m is where E3DNodesBackend has
+    # already faded its spotlights out completely (distance_fade_begin 150 + length 200), so the
+    # OPTIMIZED backend not rendering SUBMODEL_FREE_SPOTLIGHT costs nothing visible.
+    add_custom_project_setting(
+        "maszyna/rendering/vehicle_detail_distance", 350.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "50.0,10000.0,10.0,suffix:m"
+    )
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,

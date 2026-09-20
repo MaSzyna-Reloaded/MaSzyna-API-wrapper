@@ -108,6 +108,9 @@ static func _build_structure(
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
         low_poly_model.rotation.y = PI
+        # nothing animates or looks up the interior by submodel name, so it needs no node tree -
+        # one RenderingServer instance per submodel instead of hundreds of Node3Ds per vehicle
+        low_poly_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var passengers_model:E3DModelInstance = null
     var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
@@ -118,6 +121,7 @@ static func _build_structure(
         passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
         passengers_model.rotation.y = PI
+        passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var fiz_controller := FIZTrainController.new()
     fiz_controller.name = "FIZTrainController"

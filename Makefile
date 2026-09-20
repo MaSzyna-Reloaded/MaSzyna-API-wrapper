@@ -88,6 +88,19 @@ cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_F
 	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
+compile-windows-debug:
+	cmake -B build-win64-debug \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DGODOTCPP_TARGET="template_debug" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
+
+
 compile-windows-release:
 	cmake -B build-win64-release \
           -DCMAKE_BUILD_TYPE=Release \

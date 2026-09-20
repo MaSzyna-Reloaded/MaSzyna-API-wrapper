@@ -633,6 +633,23 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # wipers_sw: the wiper switch, one position per row of the FIZ WiperList:
+        # (Train.cpp:11985 ggWiperSw, drivermouseinput.cpp:1110 wiperswitchincrease/decrease,
+        # Train.cpp:2638-2661). The original has no default key for it. The switch and the
+        # wipers live in TrainWipers - the vendored Mover has neither.
+        "wipers_sw": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "command_increase": "wipers_switch_increase",
+                "command_decrease": "wipers_switch_decrease",
+                "state_property": "wipers_switch_position",
+                "action_increase": "wipers_switch_increase",
+                "action_decrease": "wipers_switch_decrease",
+            },
+            "config_max_property": "wipers_switch_position_max",
+            "mesh_path_field": "mesh_path",
+        },
         # radiochannel_sw: real vehicles carry different physical radio hardware - some (e.g.
         # "Koliber" units) only have separate next/prev channel buttons
         # (radiochannelnext_sw:/radiochannelprev_sw: below), others (e.g. "Radmor" units) have an

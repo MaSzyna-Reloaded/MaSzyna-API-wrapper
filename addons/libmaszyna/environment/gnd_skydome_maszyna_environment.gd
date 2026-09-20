@@ -12,19 +12,29 @@ const WIND_SPEED_MAX: float = 3.0
 const WIND_STRENGTH_MIN: float = 0.4
 const WIND_STRENGTH_MAX: float = 5.0
 const STORM_RAIN_START: float = 0.4
-# Rain thickens the current fog up to RAIN_FOG_BOOST times (from RAIN_FOG_START precipitation).
+# Precipitation the rain starts to bring its own fog from (RAIN_FOG_DISTANCE_SETTING,
+# RAIN_FOG_DENSITY_SETTING), in full at 1.0
 const RAIN_FOG_START: float = 0.6
-const RAIN_FOG_BOOST: float = 2.0
 # Skydome's day/night densities are tuned for exponential fog and barely show in depth fog, so the
-# visible fog comes from Skydome's fog_density boost (0.15 in forest-test-scene).
-const FOG_INTENSITY: float = 0.15
-# Skydome's own day/night fog values scaled by MaszynaEnvironmentNode.fog_density / fog_range.
-const FOG_DENSITY_PROPERTIES: Array[StringName] = [
-    &"day_fog_density", &"night_fog_density", &"day_vol_fog_density", &"night_vol_fog_density",
-]
-const FOG_RANGE_PROPERTIES: Array[StringName] = [
-    &"day_fog_distance_begin", &"day_fog_distance", &"night_fog_distance_begin",
-    &"night_fog_distance", &"day_vol_fog_length", &"night_vol_fog_length",
+# visible fog comes from Skydome's fog_density boost, which is the fog opacity at the fog distance.
+# Skydome keeps blending its own day/night values, clouds and rain on top; they are tuned for this
+# opacity (0.15 in forest-test-scene) and this day distance, and follow the node proportionally.
+const FOG_REFERENCE_DENSITY: float = 0.15
+const FOG_REFERENCE_DISTANCE_PROPERTY: StringName = &"day_fog_distance"
+const FOG_DENSITY_PROPERTIES: Array[StringName] = [&"day_fog_density", &"night_fog_density"]
+# Volumetric fog is an extinction per metre over a volume of Skydome's own length in front of the
+# camera, not an opacity at a distance: it has to thin out as the fog distance grows, or it fills
+# that volume up while the depth fog recedes. The volume length stays Skydome's.
+const FOG_VOLUMETRIC_DENSITY_PROPERTIES: Array[StringName] = [&"day_vol_fog_density", &"night_vol_fog_density"]
+const FOG_RANGE_PROPERTIES: Array[StringName] = [&"day_fog_distance_begin", &"night_fog_distance_begin"]
+# How much of the depth fog reaches the sky follows the fog distance (FOG_SKY_HEIGHT_SETTING);
+# Skydome's own pull of it towards 1.0 with a growing fog is switched off.
+const FOG_SKY_AFFECT_PROPERTIES: Array[StringName] = [&"day_fog_sky_affect", &"night_fog_sky_affect"]
+# The volumetric fog is a volume right in front of the camera, so it stands in front of the sky as
+# much as in front of anything else: left out of the sky, fog lit by the headlights ends along the
+# silhouette of whatever stands against it.
+const FOG_VOLUMETRIC_SKY_AFFECT_PROPERTIES: Array[StringName] = [
+    &"day_vol_fog_sky_affect", &"night_vol_fog_sky_affect",
 ]
 const RAINBOW_INTENSITY_MAX: float = 0.12
 const RAINBOW_RAIN_START: float = 0.2
@@ -96,11 +106,11 @@ func apply_visual_configuration() -> void:
     weather.cloud_overcast_intensity = precipitation
     weather.storm_intensity = clampf(inverse_lerp(STORM_RAIN_START, 1.0, precipitation), 0.0, 1.0)
     var rain_fog: float = clampf(inverse_lerp(RAIN_FOG_START, 1.0, precipitation), 0.0, 1.0)
-    weather.storm_fog_intensity = clampf(
-        FOG_INTENSITY * environment_node.fog_density * lerpf(1.0, RAIN_FOG_BOOST, rain_fog),
-        0.0,
-        1.0
-    )
+    var fog_density: float = lerpf(environment_node.fog_density, maxf(environment_node.fog_density, float(
+        ProjectSettings.get_setting(RAIN_FOG_DENSITY_SETTING, RAIN_FOG_DENSITY_DEFAULT))), rain_fog)
+    var fog_distance: float = lerpf(environment_node.fog_distance, minf(environment_node.fog_distance, float(
+        ProjectSettings.get_setting(RAIN_FOG_DISTANCE_SETTING, RAIN_FOG_DISTANCE_DEFAULT))), rain_fog)
+    weather.storm_fog_intensity = clampf(fog_density, 0.0, 1.0)
     weather.global_wind_direction = Vector2.from_angle(environment_node.wind_direction)
     weather.global_wind_speed = lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, environment_node.wind_strength)
     weather.global_wind_strength = lerpf(
@@ -116,10 +126,39 @@ func apply_visual_configuration() -> void:
     )
 
     # Skydome keeps its day/night fog blend; the node only scales it.
+    var density_scale: float = fog_density / FOG_REFERENCE_DENSITY
     for property: StringName in FOG_DENSITY_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * environment_node.fog_density)
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * density_scale)
+    var range_scale: float = (
+        fog_distance / float(SkydomeSettings.get_value(FOG_REFERENCE_DISTANCE_PROPERTY)))
     for property: StringName in FOG_RANGE_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * environment_node.fog_range)
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * range_scale)
+    var fog_curve: float = maxf(FOG_CURVE_MIN, float(ProjectSettings.get_setting(
+        FOG_CURVE_SETTING, FOG_CURVE_DEFAULT)))
+    var sky_affect: float = clampf(pow(float(ProjectSettings.get_setting(
+        FOG_SKY_HEIGHT_SETTING, FOG_SKY_HEIGHT_DEFAULT)) / fog_distance, fog_curve), 0.0, 1.0)
+    sky_affect = lerpf(sky_affect, 1.0, rain_fog)
+    for property: StringName in FOG_SKY_AFFECT_PROPERTIES:
+        skydome.set(property, sky_affect)
+    skydome.fog_sky_affect_intensity = 0.0
+    for property: StringName in FOG_VOLUMETRIC_SKY_AFFECT_PROPERTIES:
+        skydome.set(property, 1.0)
+    # closer than the reference distance the volumetric fog thickens in proportion; further away
+    # it dies out faster (FOG_VOLUMETRIC_FAR_FALLOFF_SETTING). Skydome scales its own boost of that
+    # fog by the plain proportion, so the boost gets the rest of the falloff.
+    var distance_ratio: float = 1.0 / range_scale
+    var volumetric_scale: float = distance_ratio
+    if distance_ratio < 1.0:
+        volumetric_scale = pow(distance_ratio, float(ProjectSettings.get_setting(
+            FOG_VOLUMETRIC_FAR_FALLOFF_SETTING, FOG_VOLUMETRIC_FAR_FALLOFF_DEFAULT)))
+    for property: StringName in FOG_VOLUMETRIC_DENSITY_PROPERTIES:
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * density_scale * volumetric_scale)
+    skydome.vol_fog_density_boost = (
+        float(SkydomeSettings.get_value(&"vol_fog_density_boost")) * volumetric_scale / distance_ratio)
+    skydome.day_fog_distance = fog_distance * float(ProjectSettings.get_setting(
+        FOG_DAY_DISTANCE_FACTOR_SETTING, FOG_DAY_DISTANCE_FACTOR_DEFAULT))
+    skydome.night_fog_distance = fog_distance * float(ProjectSettings.get_setting(
+        FOG_NIGHT_DISTANCE_FACTOR_SETTING, FOG_NIGHT_DISTANCE_FACTOR_DEFAULT))
 
 
 ## Skydome later overrides shadow opacity from cloud coverage.

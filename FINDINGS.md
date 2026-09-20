@@ -92,3 +92,167 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   value. `shadow_cabin_mode=1` was written by hand in `873b3eb`, `shadow_mode` was not.
 * **Fix:** the value is set only when missing; the hint and the initial value are registered
   always. Side effect: the editor now drops lines equal to the default on the next save.
+
+## 2026-09-20 - scenery environment, fog and Skydome
+
+### Huge terrain triangles missing under the camera
+
+* **Symptom:** a terrain triangle kilometres long is missing until the camera gets close to one
+  particular spot; trees standing on it are there.
+* **Cause:** `SceneryTrianglesBuilder` stored each triangle whole in the 1 km cell of its centroid,
+  and `SceneryStreamingServer` streams a chunk in by the distance to that cell
+  (`SceneryStreamingServer.cpp:53-56`), capped at `scenery_draw_distance`. Standing on the far part
+  of the triangle is standing outside the range of its cell.
+* **Fix:** triangles are clipped along the cell grid (Sutherland-Hodgman in XZ, normals and UVs
+  interpolated). A cut is always computed from the lower end of the edge, so two triangles sharing
+  an edge get the very same vertex and no crack opens.
+* **Rule:** whatever is streamed or culled by a cell must not reach outside of it.
+
+### A winter afternoon turning the fog into orange milk
+
+* **Symptom:** same fog settings, fine at 12:15 and an opaque orange wall at 15:13 (20 January,
+  50 N). Earlier: the whole winter day tinted orange.
+* **Cause:** Skydome blends its day and night values and its sunset colours by the sine of the sun
+  elevation with hard-coded windows - full day only above 17.5 degrees, sunset colours up to 23.6.
+  A winter sun at mid latitudes peaks at 16-19 degrees, so an afternoon took a quarter of the
+  night fog (`night_vol_fog_density` is 24 times the day value) and most of the sunset tint. The
+  sky shader carries a copy of both formulas. It only showed once a scenery could set a January
+  date (`config movelight`).
+* **Fix:** `day_full_elevation` (6 degrees) and `sunset_fade_start/end_elevation` (4 and 10) in
+  Skydome, passed to the shader as uniforms and registered as `gnd_skydome/*` settings.
+* **Rule:** thresholds on the sun altitude have to be checked against a winter day, not only a
+  summer one.
+
+### Two fog layers that did not agree
+
+* The original's fog has no density: it is `1 - exp(-(z / range)^2)` with
+  `range = fFogEnd / max(1, Overcast * 2)` (`apply_fog.glsl:16`, `opengl33renderer.cpp:4685`) -
+  63% at the range, not a linear ramp complete at `fFogEnd`. A depth fog complete at 1.5 of the
+  range with a curve of 1.5 follows it closest.
+* Godot's volumetric fog is an extinction per metre over a volume in front of the camera, not an
+  opacity at a distance. Scaling its **length** with the fog distance made a far fog fill the view
+  with milk; Skydome shortening that length while raising the density made the fog peak at a boost
+  of about 0.6 and thin out above it - pulsing against the depth fog. The density has to follow
+  the distance inversely, the length stays, and past the peak the density makes up for the
+  shortening.
+* The volumetric fog stands in front of the sky as much as in front of anything else
+  (`volumetric_fog_sky_affect` 1.0) - left out of the sky, fog lit by headlights ends along the
+  silhouettes. The depth fog reaching the sky is a different matter: a fog of kilometres is a thin
+  layer and must leave the stars alone (`maszyna/rendering/fog_sky_height`); rain fills the air
+  all the way up and reaches the sky in full.
+* `Environment.fog_aerial_perspective` at 1.0 took the fog colour from a sky radiance as dark as
+  the scene at dusk - fully fogged objects stayed dark silhouettes. Off by default.
+* The easing-curve editor (`PROPERTY_HINT_EXP_EASING`) reads as "output over input"; on a setting
+  that is an exponent over the distance it invites values like 0.01, a wall of fog at the camera.
+  The value is floored in code.
+
+### A weather change freezing the game
+
+* **Cause:** `MaterialManager._refresh_managed_material()` wrote every managed material back to the
+  disk cache - a resource with its textures embedded, 0.7-3 MB each - on the main thread, for
+  materials that mostly have no season or weather variant at all (169 of 805 `.mat` files declare
+  a rain one). The cache key knows neither the season nor the weather, and a loaded material gets
+  its variant applied anyway.
+* **Fix:** no write on a refresh; materials without variants are skipped.
+
+### A new `class_name` unknown to the running game
+
+* Global class names come from `.godot/global_script_class_cache.cfg`, which only the editor's
+  file scan updates. Running the game without the editor after adding a script with a `class_name`
+  fails with "Identifier not declared" in every script that uses it. `godot-double --headless
+  --import` rescans without the GUI.
+
+### Duplicated HUD in the demo scenes
+
+* `TopBar`, `ControlWindows` and the menu code were pasted into both `demo_3d` and
+  `demo_scenery_loading`; three windows added later reached only one of them. They are one scene
+  now (`demo/hud/game_hud.tscn`); a scene adds a menu entry of its own as a `Button` under
+  `MenuActions`.
+
+## 2026-09-20 - material shaders missing from the wrapper
+
+### "Shader is not supported: Default_1 / reflmap"
+
+* **Symptom:** warnings from `MaterialFactory`, the materials fell back to the default one.
+* **What proved it:** a count of every `shader:` in the `.mat` files of the game dir against
+  `~/src/maszyna/shaders/mat_*.frag` - 26 shaders in the original, 12 mapped here. Missing and in
+  use: `reflmap` (69), `detail_parallax_specgloss` (24), `reflmap_specgloss` (17), `default_1` (6),
+  `rain_windscreen` (4), `default_detail` (3), `colored` (1).
+* Shader names are case insensitive in the data (`shader: Default_1`): the original opens
+  `mat_<name>.frag` on a Windows file system (`opengl33renderer.cpp:2018`). Lowercased in the
+  parser.
+* **Rule:** survey the data before trusting a list of "supported" values, and check the age of
+  `~/src/maszyna` against the game dir (`shaders/`): `mat_rain_windscreen.frag` and the whole wiper
+  code were missing from a checkout of 2024-08.
+
+### `texture2:` is not always the normal map
+
+* A numbered `textureN:` binds slot N-1 of the *shader* (`material.cpp:76-81`), and the slot
+  order differs: `reflmap` = diffuse, reflmap; `default_detail` = diffuse, detailnormalmap;
+  `water` = normalmap, dudvmap, diffuse; `detail_parallax_specgloss` has specgloss before
+  detailnormalmap. The wrapper aliased `tex2` to `normalmap` for every shader.
+* A material **without** `shader:` gets `default_0/1/2` by the number of bound textures
+  (`material.cpp:117-134`) and `mat_default_2.frag` is `mat_reflmap.frag`: its second texture -
+  also when written as `texture_normalmap:` (`texture_bindings`, `material.cpp:60-65`) - is a
+  reflection map read through its alpha. About 2500 of the 8633 shaderless materials bind one
+  (`rain: { texture2: asphalt_wet }`); the wrapper bump-mapped them with it. Some of the data puts
+  a real normal map there (`glass_black_normal`) - the original reads it as a reflmap too.
+* **Fix:** `TextureMap.slots` per shader in `MaterialFactory`, resolved by `_texture_path()`.
+* **Rule:** `MaterialManager.CACHE_VERSION` bumped - the disk cache cannot see factory changes.
+
+### `parallax_specgloss` never received its specgloss texture
+
+* `_apply_parallax()` did not set `specgloss_texture` at all (187 materials); the unbound sampler
+  read as white. Found while adding `detail_parallax_specgloss`.
+
+### Raindrops on the windscreen black as soot
+
+* **Symptom:** the droplets of `rain_windscreen` showed as black rings from inside the cab.
+* **What proved it:** the atlas (`textures/fx/raindrops-atlas.dds`) is a white rim over a black
+  interior, and the original does not light it - `dropTex.rgb * dynBright`, with `dynBright` from
+  the luminance of the ambient light only (`mat_rain_windscreen.frag`). The port had put the
+  droplets into `ALBEDO`, "lit by the scene": inside of a dark cab a white rim lit by nothing is
+  black.
+* **Fix:** droplets go to `EMISSION`; a Godot fragment shader cannot read the ambient light, so
+  the blurred screen luminance behind the glass stands in for it.
+* **Rule:** "the engine's lighting will do that" is not a port of an unlit term - check what the
+  original multiplies by before moving a colour into `ALBEDO`.
+
+### Wipers: data traps
+
+* Of the four vehicles with a `rain_windscreen` glass only `e186_v2` (and the Vectron cab) also
+  has wipers; `ep09_v1` has the glass but no `WiperList:`/`wipers_sw:`, `ep09_v2` has the wipers
+  but a plain glass. Test the wiping on `e186_v2`.
+* `e186_v2/eu47.fiz` ends its `WiperList:` with `endL` instead of `endwl`. The original never
+  closes the list then either, it is `Size=` that bounds the switch (`Train.cpp:2643`). The FIZ
+  parser honours `Size=` now.
+* The shader clock (`TIME`) cannot be read from a script - it is scaled and rolls over - so a
+  moment in time cannot be handed to a shader as the original does (`wiper_timer_out`). Pass the
+  time elapsed instead.
+
+### Wiped edge running away from the wiper blade
+
+* **Symptom:** the arms moved right, but the clean band trailed the blade on the way out and ran
+  ahead of it on the way back.
+* **What proved it:** a probe script that loads the E186 body and cab, puts the blade at 11 phases
+  of the sweep, projects it onto the glass and reads `szyby_wipermask` there. The blade stays 3 cm
+  off the glass all the way (geometry and rotation sign are right); the mask under it reads 0.22,
+  0.41, 0.53, 0.62, 0.71, 0.78, 0.85, 0.90, 0.96, 1.0 - an sRGB curve. Decoded it is 0.04, 0.14,
+  0.24, 0.35, 0.46, 0.56, 0.69, 0.79, 0.90, 1.0: the fraction of the arm angle.
+* **Cause:** the original declares the mask `sRGB_A`, the port sampled it without `source_color`.
+* The arms move eased (`smoothInterpolate`) while the original hands the shader the plain
+  position - its own edge is up to a tenth of the sweep off. The wrapper feeds the eased one.
+* **Rule:** port the `#texture (name, index, FORMAT)` format of every sampler, also for data
+  textures; and measure the data under the moving part before tuning the motion.
+
+
+### A whole layer of droplets popping in after a wipe
+
+* **Symptom:** the wiped glass stayed clean, then every droplet of the area appeared at once.
+* **Cause (read from the shader, not measured):** `GetMixFactor()` of the original picks the
+  wiper of a cell only while its factor is below 1. The moment the rain has fully returned
+  (1 s in the heaviest rain) `side` falls back to 0, and `side` is a part of the cell's random
+  seed - so every droplet of the area is dealt anew in one frame. The large droplets of the
+  wrapper's own second layer make it obvious.
+* **Fix:** the first wiper the cell belongs to is kept even at factor 1; returning droplets and
+  rivulets fade in instead of switching on.

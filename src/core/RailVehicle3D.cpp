@@ -86,6 +86,7 @@ namespace godot {
         BIND_RAIL_PROPERTY(pantograph_collector_width, Variant::FLOAT);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_front_arm_paths);
         BIND_RAIL_NODE_PATH_ARRAY(pantograph_rear_arm_paths);
+        BIND_RAIL_NODE_PATH_ARRAY(wiper_arm_paths);
         BIND_RAIL_PROPERTY(coupler_submodel_paths, Variant::DICTIONARY);
         BIND_RAIL_PROPERTY(start_track_name, Variant::STRING);
         BIND_RAIL_PROPERTY(start_track_offset, Variant::FLOAT);
@@ -396,6 +397,7 @@ namespace godot {
                 _sync_lights_from_controller();
                 if (is_visible) {
                     _update_couplers();
+                    _update_wipers();
                 }
             }
         }
@@ -786,6 +788,15 @@ namespace godot {
             }
         }
 
+        wiper_arm_nodes.clear();
+        wiper_applied_positions.clear();
+        for (int index = 0; index < wiper_arm_paths.size(); ++index) {
+            const NodePath path = wiper_arm_paths[index];
+            Node3D *node = path.is_empty() ? nullptr : node_at<Node3D>(this, path);
+            _capture_rest_basis(node);
+            wiper_arm_nodes.append(node);
+        }
+
         pantograph_front_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_front_arm_paths);
         pantograph_rear_arm_nodes = _resolve_pantograph_arm_nodes(pantograph_rear_arm_paths);
         pantograph_front_geometry = _cache_pantograph_geometry(pantograph_front_arm_nodes);
@@ -903,6 +914,37 @@ namespace godot {
                 const int variant = variants[end][hose + 1];
                 _show_air_coupler(name, variant == 1, variant == 2);
                 _show_air_coupler(name + String("r"), variant == 4, variant == 3);
+            }
+        }
+    }
+
+    // TDynamicObject::UpdateWiper() (DynObj.cpp:716-731): both arms swing by the wiper angle, the
+    // blade swings back by it to stay upright; every other wiper is mirrored.
+    void RailVehicle3D::_update_wipers() {
+        if (wiper_arm_nodes.is_empty()) {
+            return;
+        }
+        const PackedFloat64Array positions = controller->get_state().get("wiper_positions", PackedFloat64Array());
+        if (positions == wiper_applied_positions) {
+            return;
+        }
+        wiper_applied_positions = positions;
+        const double wiper_angle = Math::deg_to_rad(double(controller->get_config().get("wipers_angle", 0.0)));
+        for (int wiper = 0; wiper < positions.size() && (wiper + 1) * 3 <= wiper_arm_nodes.size(); ++wiper) {
+            // the state tells the way out (0..1) from the way back (1..2)
+            double sweep = positions[wiper] > 1.0 ? positions[wiper] - 1.0 : positions[wiper];
+            // smoothInterpolate() (utilities.h:324)
+            sweep = sweep * sweep * (3.0 - 2.0 * sweep);
+            const double angle = (wiper % 2 == 1 ? -wiper_angle : wiper_angle) * sweep;
+            for (int element = 0; element < 3; ++element) {
+                Node3D *node = Object::cast_to<Node3D>(wiper_arm_nodes[wiper * 3 + element]);
+                if (node == nullptr) {
+                    continue;
+                }
+                Transform3D transform = node->get_transform();
+                transform.basis = Basis(node_rest_bases[node]) *
+                                  Basis(Vector3(0.0, 1.0, 0.0), static_cast<real_t>(element == 2 ? -angle : angle));
+                node->set_transform(transform);
             }
         }
     }
@@ -1240,6 +1282,7 @@ namespace godot {
     DEFINE_ARRAY_PROPERTY(rear_rolling_wheel_paths)
     DEFINE_ARRAY_PROPERTY(pantograph_front_arm_paths)
     DEFINE_ARRAY_PROPERTY(pantograph_rear_arm_paths)
+    DEFINE_ARRAY_PROPERTY(wiper_arm_paths)
 
 #undef DEFINE_ARRAY_PROPERTY
 

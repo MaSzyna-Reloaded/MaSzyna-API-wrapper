@@ -28,12 +28,11 @@ static var WEATHER_MAP: Dictionary[MaszynaEnvironment.Weather, String] = {
 }
 
 class MaszynaMaterialVariant extends RefCounted:
+    # Numbered textures ("tex1", "tex2", ...) have no alias: which slot of the shader they bind is
+    # resolved by MaterialFactory.
     const TEXTURE_ALIASES = {
-        "tex1": ["diffuse"],
-        "tex2": ["normals", "normalmap"],
-        "normals": ["normalmap", "tex2"],
-        "diffuse": ["tex1"],
-        "normalmap": ["normals", "tex2"],
+        "normals": ["normalmap"],
+        "normalmap": ["normals"],
     }
 
     var _textures: Dictionary[String, String] = {}

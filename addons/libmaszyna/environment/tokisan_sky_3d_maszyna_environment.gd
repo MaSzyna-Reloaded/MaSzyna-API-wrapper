@@ -10,10 +10,8 @@ const SUN_DISK_INTENSITY: float = 30.0
 const MOON_COLOR: Color = Color.WHITE
 const STARMAP_COLOR: Color = Color(0.709804, 0.709804, 0.709804, 0.854902)
 const STAR_FIELD_COLOR: Color = Color.WHITE
-# Fog baseline scaled by MaszynaEnvironmentNode.fog_density / fog_range.
-const FOG_DENSITY: float = 0.2
-const FOG_RANGE_START: float = 200.0
-const FOG_RANGE_END: float = 1000.0
+# Where the fog begins, as a share of MaszynaEnvironmentNode.fog_distance.
+const FOG_BEGIN_FACTOR: float = 0.2
 const MINIMUM_VOLUMETRIC_FOG_LENGTH: float = 64.0
 const MAXIMUM_FOG_OPACITY: float = 0.999
 const VOLUMETRIC_FOG_OPACITY_SCALE: float = 0.1
@@ -104,12 +102,12 @@ func apply_visual_configuration() -> void:
 
 
 func _apply_fog_configuration() -> void:
-    var fog_density: float = clampf(FOG_DENSITY * environment_node.fog_density, 0.0, 1.0)
-    var fog_end: float = FOG_RANGE_END * environment_node.fog_range
+    var fog_density: float = clampf(environment_node.fog_density, 0.0, 1.0)
+    var fog_end: float = environment_node.fog_distance
     var volumetric_fog_length: float = maxf(fog_end, MINIMUM_VOLUMETRIC_FOG_LENGTH)
 
     environment.fog_density = fog_density
-    environment.fog_depth_begin = FOG_RANGE_START * environment_node.fog_range
+    environment.fog_depth_begin = FOG_BEGIN_FACTOR * fog_end
     environment.fog_depth_end = fog_end
     environment.fog_sky_affect = fog_density
     environment.volumetric_fog_density = _fog_opacity_to_exponential_density(

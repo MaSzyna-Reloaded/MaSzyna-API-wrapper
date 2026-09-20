@@ -3,30 +3,53 @@
 #include "macros.hpp"
 #include "resources/wipers/WiperListItem.hpp"
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/packed_float64_array.hpp>
+#include <vector>
 
 namespace godot {
     class TrainController;
 
-    /* Wraps the FIZ WiperList: section.
+    /* Wraps the FIZ WiperList: section and simulates the wipers.
      *
-     * NOTE: this fork of the Mover simulation has no field anywhere for wiper state or
-     * configuration - "wiper" does not appear a single time in MOVER.h, Mover.cpp, or any
-     * GDScript addon. There is nothing in TMoverParameters to write these values into, so
-     * _do_update_internal_mover() only stores the configuration on this node; it has no effect
-     * on the simulated vehicle. This class exists so the section has a documented home, ready
-     * to be wired up if/when wiper simulation is ever implemented. */
+     * The vendored Mover has no wiper switch or wiper state at all (they were added to the original
+     * later: MOVER.h wiperSwitchPos, DynObj.h dWiperPos), so both live in this node. The movement is
+     * a port of TDynamicObject::update() (DynObj.cpp:4048-4115), the switch of
+     * TTrain::OnCommand_wiperswitchincrease/decrease (Train.cpp:2638-2661). */
     class TrainWipers : public TrainPart {
             GDCLASS(TrainWipers, TrainPart);
 
         private:
+            struct Wiper {
+                    double position = 0.0;  // dWiperPos: 0 parked, 1 fully out
+                    bool returning = false; // wiperDirection
+                    double out_timer = 0.0;
+                    double park_timer = 0.0;
+                    int working_switch_position = 0;
+            };
+
             static void _bind_methods();
+            std::vector<Wiper> wipers;
+            int switch_position = 0;
+            bool switch_initialized = false;
+            void _set_switch_position(int p_position);
 
         protected:
+            void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
+            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            void _register_commands() override;
+            void _unregister_commands() override;
 
         public:
+            void switch_increase();
+            void switch_decrease();
+
             MAKE_MEMBER_GS(double, angle, 0.0);
             MAKE_MEMBER_GS(int, default_position, 0);
+            // Number of wipers of the vehicle model (the original counts its animated submodels,
+            // DynObj.cpp:5842), set by the vehicle factory. 0: the highest wiper the list switches on.
+            MAKE_MEMBER_GS(int, wiper_count, 0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<WiperListItem>, positions)
     };
 } // namespace godot

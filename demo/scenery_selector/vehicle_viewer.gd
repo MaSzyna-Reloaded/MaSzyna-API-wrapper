@@ -88,7 +88,7 @@ func _frame_model() -> void:
     %Camera.look_at(Vector3.ZERO)
 
 
-## Every .mat next to the vehicle is one of its skins, with a side view in textures/mini
+## Skins of the vehicle (VehicleSkins), each with a side view
 func _build_skin_grid() -> void:
     for child: Node in %Skins.get_children():
         child.queue_free()
@@ -96,28 +96,14 @@ func _build_skin_grid() -> void:
     _skin_buttons.clear()
     _skin_index = -1
 
-    var vehicle_dir: String = UserSettings.get_maszyna_game_dir().path_join(_data_path)
-    var files: PackedStringArray = DirAccess.get_files_at(vehicle_dir)
-    files.sort()
-    var added: Dictionary[String, bool] = {}
-    # the consist can give the vehicle a skin with no .mat of its own - it is still a skin, and
-    # it goes first, so it is the one selected
+    # the consist can give the vehicle a skin that is not listed - it is still a skin, and it goes
+    # first, so it is the one selected
     if _skin:
         _skins.append(_skin)
-        added[_skin.to_lower()] = true
-    for file: String in files:
-        if not file.get_extension().to_lower() == "mat":
-            continue
-        var skin: String = file.get_basename()
-        # multi-slot skins are "<name>,<slot>.mat", only the first slot is a skin of its own
-        if skin.contains(",") and not skin.ends_with(",1"):
-            continue
-        skin = skin.trim_suffix(",1")
-        # a skin with slots also has a plain .mat of the same name
-        if added.has(skin.to_lower()):
-            continue
-        added[skin.to_lower()] = true
-        _skins.append(skin)
+    var vehicle_dir: String = UserSettings.get_maszyna_game_dir().path_join(_data_path)
+    for skin: String in VehicleSkins.list_skins(vehicle_dir, _vehicle.file_name):
+        if not skin == _skin.to_lower():
+            _skins.append(skin)
 
     for index: int in _skins.size():
         var entry: Control = _create_skin_entry(index)

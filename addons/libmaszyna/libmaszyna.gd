@@ -207,6 +207,47 @@ func _enter_tree():
         MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING, 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,16.0,0.001,or_greater"
     )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_CURVE_SETTING, MaszynaSkyEnvironment.FOG_CURVE_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_EXP_EASING, "positive_only"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_SKY_HEIGHT_SETTING, MaszynaSkyEnvironment.FOG_SKY_HEIGHT_DEFAULT,
+        TYPE_FLOAT, PROPERTY_HINT_RANGE, "10.0,5000.0,10.0,or_greater,suffix:m"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_SETTING,
+        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.RAIN_FOG_DISTANCE_SETTING, MaszynaSkyEnvironment.RAIN_FOG_DISTANCE_DEFAULT,
+        TYPE_FLOAT, PROPERTY_HINT_RANGE, "10.0,5000.0,10.0,or_greater,suffix:m"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.RAIN_FOG_DENSITY_SETTING, MaszynaSkyEnvironment.RAIN_FOG_DENSITY_DEFAULT,
+        TYPE_FLOAT, PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_VOLUMETRIC_FAR_FALLOFF_SETTING,
+        MaszynaSkyEnvironment.FOG_VOLUMETRIC_FAR_FALLOFF_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "1.0,4.0,0.05"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_SETTING,
+        MaszynaSkyEnvironment.FOG_SCENERY_DISTANCE_FACTOR_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,4.0,0.01,or_greater"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_DAY_DISTANCE_FACTOR_SETTING,
+        MaszynaSkyEnvironment.FOG_DAY_DISTANCE_FACTOR_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.01,4.0,0.0001,or_greater"
+    )
+    add_custom_project_setting(
+        MaszynaSkyEnvironment.FOG_NIGHT_DISTANCE_FACTOR_SETTING,
+        MaszynaSkyEnvironment.FOG_NIGHT_DISTANCE_FACTOR_DEFAULT, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.01,4.0,0.0001,or_greater"
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

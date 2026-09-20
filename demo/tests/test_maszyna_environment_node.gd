@@ -82,7 +82,7 @@ func test_weather_preset_sets_weather_controls() -> void:
 
     assert_almost_eq(environment_node.precipitation, 0.8, 0.000001)
     assert_almost_eq(environment_node.cloudiness, 0.9, 0.000001)
-    assert_almost_eq(environment_node.fog_density, 2.0, 0.000001)
+    assert_almost_eq(environment_node.fog_density, 0.3, 0.000001)
     assert_almost_eq(environment_node.wind_strength, 0.6, 0.000001)
     assert_almost_eq(weather.precipitation_intensity, 0.8, 0.000001)
     assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
@@ -137,7 +137,7 @@ func test_maps_rain_intensity_to_storm_overcast_and_rainbow() -> void:
     assert_almost_eq(skydome_environment.weather.precipitation_intensity, 0.8, 0.000001)
     assert_almost_eq(skydome_environment.weather.cloud_overcast_intensity, 0.8, 0.000001)
     assert_almost_eq(skydome_environment.weather.storm_intensity, 2.0 / 3.0, 0.000001)
-    assert_almost_eq(skydome_environment.weather.storm_fog_intensity, 0.225, 0.000001)
+    assert_almost_eq(skydome_environment.weather.storm_fog_intensity, 0.375, 0.000001)
     assert_almost_eq(skydome_environment.skydome.rainbow_intensity, 0.12, 0.000001)
 
 
@@ -169,16 +169,19 @@ func test_maps_fog_controls_to_skydome_and_weather() -> void:
     var skydome: Skydome = _get_skydome_environment(environment_node).skydome
     var weather: WeatherNode = _get_skydome_environment(environment_node).weather
 
-    environment_node.fog_density = 2.0
-    environment_node.fog_range = 0.5
+    environment_node.fog_density = 0.3
+    environment_node.fog_distance = 235.0
     environment_node._process(0.0)
 
     assert_true(environment_node._environment.fog_enabled)
     assert_almost_eq(skydome.day_fog_density, 0.01, 0.000001)
     assert_almost_eq(skydome.night_fog_density, 0.04, 0.000001)
     assert_almost_eq(skydome.day_fog_distance, 235.0, 0.000001)
-    assert_almost_eq(skydome.night_vol_fog_density, 0.242, 0.000001)
-    assert_almost_eq(skydome.night_fog_distance, 100.0, 0.000001)
+    # twice the reference opacity at half the reference distance: four times the tuned extinction
+    assert_almost_eq(
+        skydome.night_vol_fog_density, float(SkydomeSettings.get_value(&"night_vol_fog_density")) * 4.0, 0.000001)
+    assert_almost_eq(
+        skydome.night_fog_distance, 235.0 * MaszynaSkyEnvironment.FOG_NIGHT_DISTANCE_FACTOR_DEFAULT, 0.000001)
     assert_eq(
         environment_node._environment.volumetric_fog_enabled,
         bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))

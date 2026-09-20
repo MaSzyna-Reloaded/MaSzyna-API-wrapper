@@ -183,51 +183,52 @@ custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
 size_flags_horizontal = 3
 min_value = 0.0
-max_value = 4.0
+max_value = 1.0
 step = 0.01
-value = 1.0
+value = 0.15
 
 [node name="FogDensityValueLabel" type="Label" parent="WeatherRow/FogDensityGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
 theme_override_font_sizes/font_size = 13
-text = "x1.00"
+text = "15%"
 horizontal_alignment = 2
 
-[node name="FogRangeGroup" type="VBoxContainer" parent="WeatherRow"]
+[node name="FogDistanceGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 2
 
-[node name="Header" type="Label" parent="WeatherRow/FogRangeGroup"]
+[node name="Header" type="Label" parent="WeatherRow/FogDistanceGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Fog Distance"
 
-[node name="Row" type="HBoxContainer" parent="WeatherRow/FogRangeGroup"]
+[node name="Row" type="HBoxContainer" parent="WeatherRow/FogDistanceGroup"]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 8
 alignment = 1
 
-[node name="FogRangeSlider" type="HSlider" parent="WeatherRow/FogRangeGroup/Row"]
+[node name="FogDistanceSlider" type="HSlider" parent="WeatherRow/FogDistanceGroup/Row"]
 focus_mode = 0
 custom_minimum_size = Vector2(170, 24)
 layout_mode = 2
 size_flags_horizontal = 3
-min_value = 0.1
-max_value = 4.0
-step = 0.01
-value = 1.0
+min_value = 10.0
+max_value = 5000.0
+step = 10.0
+allow_greater = true
+value = 470.0
 
-[node name="FogRangeValueLabel" type="Label" parent="WeatherRow/FogRangeGroup/Row"]
+[node name="FogDistanceValueLabel" type="Label" parent="WeatherRow/FogDistanceGroup/Row"]
 custom_minimum_size = Vector2(56, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
 theme_override_font_sizes/font_size = 13
-text = "x1.00"
+text = "470 m"
 horizontal_alignment = 2
 
 [node name="SystemTimeGroup" type="VBoxContainer" parent="TimeRow"]

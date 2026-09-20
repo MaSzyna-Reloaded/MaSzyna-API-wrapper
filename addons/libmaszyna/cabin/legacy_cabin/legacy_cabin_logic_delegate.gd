@@ -16,6 +16,7 @@ var cab:int = 1
 var _behaviours:Array = []
 var _battery:LegacyCabinBattery
 var _manual_brake:LegacyCabinManualBrake
+var _wipers:LegacyCabinWipers
 var _brake_charging:LegacyCabinBrakeCharging
 
 
@@ -35,13 +36,17 @@ func _ready() -> void:
     if not _has_control(LegacyCabinManualBrake.CONTROL):
         _manual_brake = LegacyCabinManualBrake.new()
         _behaviours.append(_manual_brake)
+    if not _has_control(LegacyCabinWipers.CONTROL):
+        _wipers = LegacyCabinWipers.new()
+        _behaviours.append(_wipers)
     _brake_charging = LegacyCabinBrakeCharging.new()
     _behaviours.append(_brake_charging)
     for behaviour:RefCounted in _behaviours:
         behaviour.register(controller.train_id, cab)
 
 
-# keyboard bindings of controls the MMD doesn't have (see LegacyCabinBattery, LegacyCabinManualBrake)
+# keyboard bindings of controls the MMD doesn't have (see LegacyCabinBattery, LegacyCabinManualBrake,
+# LegacyCabinWipers)
 func _unhandled_input(event:InputEvent) -> void:
     # Train.cpp:6285 OnCommand_occupiedcarcouplingdisconnect - uncouples at the occupied cab's end
     # (cab_to_end(), Train.h:216), with or without a couplingdisconnect_sw: gauge
@@ -60,6 +65,11 @@ func _unhandled_input(event:InputEvent) -> void:
             CabinSystem.act(controller.train_id, cab, LegacyCabinManualBrake.CONTROL, &"increase")
         elif event.is_action_pressed(LegacyCabinManualBrake.ACTION_DECREASE, true, true):
             CabinSystem.act(controller.train_id, cab, LegacyCabinManualBrake.CONTROL, &"decrease")
+    if _wipers:
+        if event.is_action_pressed(LegacyCabinWipers.ACTION_INCREASE, false, true):
+            CabinSystem.act(controller.train_id, cab, LegacyCabinWipers.CONTROL, &"increase")
+        elif event.is_action_pressed(LegacyCabinWipers.ACTION_DECREASE, false, true):
+            CabinSystem.act(controller.train_id, cab, LegacyCabinWipers.CONTROL, &"decrease")
 
 
 func _has_control(control_id:StringName) -> bool:
@@ -75,4 +85,5 @@ func _exit_tree() -> void:
     _behaviours.clear()
     _battery = null
     _manual_brake = null
+    _wipers = null
     _brake_charging = null

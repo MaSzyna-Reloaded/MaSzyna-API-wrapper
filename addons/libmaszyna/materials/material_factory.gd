@@ -1,96 +1,161 @@
 @tool
 extends Node
 
+## Texture slots of a shader, in the order of the "#texture (name, index)" declarations of its
+## original mat_*.frag: a numbered "textureN:" key of a .mat binds slot N-1 (material.cpp:76-81),
+## so which texture it is depends on the shader. A texture outside of the slots is not read.
 class TextureMap:
-    var albedo: String
-    var normalmap: String
-    var detail_normalmap: String
-    var dudvmap: String
-    var specgloss: String
+    var albedo: String = "diffuse"
+    var normalmap: String = "normalmap"
+    var detail_normalmap: String = "detailnormalmap"
+    var dudvmap: String = "dudvmap"
+    var specgloss: String = "specgloss"
+    var reflmap: String = "reflmap"
+    var raindropsatlas: String = "raindropsatlas"
+    var wipermask: String = "wipermask"
+    var slots: Array[String]
 
-    func _init(albedo: String, normalmap: String, detail_normalmap: String = ""):
-        self.albedo = albedo
-        self.normalmap = normalmap
-        self.detail_normalmap = detail_normalmap
-        self.dudvmap = "dudvmap"
-        self.specgloss = "specgloss"
+    func _init(slots: Array[String]):
+        self.slots = slots
 
 class MaszynaShaderMeta:
     var base_material: Material
     var factory: Callable
     var texture_map: TextureMap
 
-    func _init(factory: Callable, base_material: Material, texture_map: TextureMap = null) -> void:
+    func _init(factory: Callable, base_material: Material, texture_map: TextureMap) -> void:
         self.base_material = base_material
         self.factory = factory
-        if texture_map:
-            self.texture_map = texture_map
-        else:
-            self.texture_map = TextureMap.new("diffuse", "normalmap")
+        self.texture_map = texture_map
+
+# Named texture keys of a material without "shader:" (texture_bindings, material.cpp:60-65)
+const LEGACY_TEXTURE_BINDINGS: Dictionary[int, String] = {
+    0: "diffuse",
+    1: "normalmap",
+}
 
 var DEFAULT_SHADER:MaszynaShaderMeta = MaszynaShaderMeta.new(
     _apply_default_material,
     preload("res://addons/libmaszyna/materials/types/default.tres"),
-    TextureMap.new("diffuse", "normalmap"),
+    TextureMap.new(["diffuse", "normalmap"]),
+)
+
+# mat_colored.frag - untextured, the color comes from "param_color:" or the submodel
+var COLORED_SHADER:MaszynaShaderMeta = MaszynaShaderMeta.new(
+    _apply_colored,
+    preload("res://addons/libmaszyna/materials/types/default.tres"),
+    TextureMap.new([]),
+)
+
+# mat_reflmap.frag - the alpha of the reflmap texture scales the reflection
+var REFLMAP_SHADER:MaszynaShaderMeta = MaszynaShaderMeta.new(
+    _apply_reflmap,
+    preload("./types/reflmap.tres"),
+    TextureMap.new(["diffuse", "reflmap"]),
 )
 
 var MATERIAL_SHADER_FACTORIES: Dictionary[String, MaszynaShaderMeta] = {
-    # mat_default.frag - the plain textured material, same as no "shader:" at all.
+    # mat_default.frag - the plain textured material
     "default": DEFAULT_SHADER,
+    # mat_default_0/1/2.frag only include mat_colored, mat_default and mat_reflmap
+    "default_0": COLORED_SHADER,
+    "default_1": DEFAULT_SHADER,
+    "default_2": REFLMAP_SHADER,
+    "colored": COLORED_SHADER,
+    "reflmap": REFLMAP_SHADER,
+    "reflmap_specgloss": MaszynaShaderMeta.new(
+        _apply_reflmap,
+        preload("./types/reflmap_specgloss.tres"),
+        TextureMap.new(["diffuse", "reflmap", "specgloss"]),
+    ),
+    # mat_default_detail.frag: the detail normal map alone, there is no base normal map
+    "default_detail": MaszynaShaderMeta.new(
+        _apply_detail_normalmap,
+        preload("./types/detail_normalmap.tres"),
+        TextureMap.new(["diffuse", "detailnormalmap"]),
+    ),
     "detail_normalmap": MaszynaShaderMeta.new(
         _apply_detail_normalmap,
         preload("./types/detail_normalmap.tres"),
-        TextureMap.new("diffuse", "normalmap", "detailnormalmap"),
+        TextureMap.new(["diffuse", "normalmap", "detailnormalmap"]),
     ),
     "shadowlessnormalmap": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/shadowlessnormalmap.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap"]),
     ),
     "sunlessnormalmap": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/sunlessnormalmap.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap"]),
     ),
     "normalmap": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/normalmap.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap"]),
     ),
     "normalmap_specgloss": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/normalmap_specgloss.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap", "specgloss"]),
     ),
-    # mat_default_specgloss.frag takes specular/gloss/metal from the specgloss texture; like
-    # normalmap_specgloss here it's approximated by the default material with specular enabled.
+    # The *_specgloss shaders below take specular/gloss/metal from the specgloss texture in the
+    # original; like normalmap_specgloss here they are approximated by their plain counterpart
+    # (default_specgloss: by the default material with specular enabled).
     "default_specgloss": MaszynaShaderMeta.new(
         _apply_default_material,
         preload("./types/normalmap_specgloss.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "specgloss"]),
+    ),
+    "detail_normalmap_specgloss": MaszynaShaderMeta.new(
+        _apply_detail_normalmap,
+        preload("./types/detail_normalmap.tres"),
+        TextureMap.new(["diffuse", "normalmap", "detailnormalmap", "specgloss"]),
+    ),
+    "shadowlessnormalmap_specgloss": MaszynaShaderMeta.new(
+        _apply_default_material,
+        preload("./types/shadowlessnormalmap.tres"),
+        TextureMap.new(["diffuse", "normalmap", "specgloss"]),
+    ),
+    "sunlessnormalmap_specgloss": MaszynaShaderMeta.new(
+        _apply_default_material,
+        preload("./types/sunlessnormalmap.tres"),
+        TextureMap.new(["diffuse", "normalmap", "specgloss"]),
     ),
     "parallax": MaszynaShaderMeta.new(
         _apply_parallax,
         preload("./types/parallax.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap"]),
     ),
     "detail_parallax": MaszynaShaderMeta.new(
         _apply_parallax,
         preload("./types/parallax.tres"),
-        TextureMap.new("diffuse", "normalmap", "detailnormalmap"),
+        TextureMap.new(["diffuse", "normalmap", "detailnormalmap"]),
     ),
     "parallax_specgloss": MaszynaShaderMeta.new(
         _apply_parallax,
         preload("./types/parallax_specgloss.tres"),
-        TextureMap.new("diffuse", "normalmap"),
+        TextureMap.new(["diffuse", "normalmap", "specgloss"]),
+    ),
+    "detail_parallax_specgloss": MaszynaShaderMeta.new(
+        _apply_parallax,
+        preload("./types/parallax_specgloss.tres"),
+        TextureMap.new(["diffuse", "normalmap", "specgloss", "detailnormalmap"]),
     ),
     "water": MaszynaShaderMeta.new(
         _apply_water,
         preload("./types/water.tres"),
+        TextureMap.new(["normalmap", "dudvmap", "diffuse"]),
     ),
     "water_specgloss": MaszynaShaderMeta.new(
         _apply_water,
         preload("./types/water_specgloss.tres"),
+        TextureMap.new(["normalmap", "dudvmap", "diffuse", "specgloss"]),
+    ),
+    "rain_windscreen": MaszynaShaderMeta.new(
+        _apply_rain_windscreen,
+        preload("./types/rain_windscreen.tres"),
+        TextureMap.new(["diffuse", "raindropsatlas", "wipermask"]),
     ),
 }
 
@@ -105,7 +170,7 @@ func create(
     options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> Material:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)
-    var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant.shader)
+    var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant)
     var material: Material = shader_meta.base_material.duplicate(true)
     _apply(
         material,
@@ -128,7 +193,7 @@ func apply(
     options: MaterialManager.MaterialOptions = MaterialManager.MaterialOptions.new(),
 ) -> void:
     var variant: MaszynaMaterial.MaszynaMaterialVariant = mmat.get_variant(season, weather)
-    var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant.shader)
+    var shader_meta:MaszynaShaderMeta = _get_shader_meta(variant)
     _apply(
         material,
         mmat,
@@ -140,12 +205,36 @@ func apply(
     )
 
 
-func _get_shader_meta(shader_name: String) -> MaszynaShaderMeta:
-    if not shader_name:
-        return DEFAULT_SHADER
-    if not shader_name in MATERIAL_SHADER_FACTORIES:
-        push_warning("Shader is not supported: " + shader_name)
-    return MATERIAL_SHADER_FACTORIES.get(shader_name, DEFAULT_SHADER)
+func _get_shader_meta(variant: MaszynaMaterial.MaszynaMaterialVariant) -> MaszynaShaderMeta:
+    if not variant.shader:
+        # No "shader:" - picked by the bound textures (material.cpp:117-134); the second texture of
+        # such a material is a reflection map, not a normal map.
+        if not _texture_path(variant, REFLMAP_SHADER.texture_map, "diffuse"):
+            return COLORED_SHADER
+        if not _texture_path(variant, REFLMAP_SHADER.texture_map, "reflmap"):
+            return DEFAULT_SHADER
+        return REFLMAP_SHADER
+    if not variant.shader in MATERIAL_SHADER_FACTORIES:
+        push_warning("Shader is not supported: " + variant.shader)
+    return MATERIAL_SHADER_FACTORIES.get(variant.shader, DEFAULT_SHADER)
+
+
+## Path of the texture bound to a slot of the shader: by its name ("texture_<slot>:"), else by its
+## number ("texture<index + 1>:"), as in opengl_material::finalize() (material.cpp:67-108).
+func _texture_path(
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    texture_map: TextureMap,
+    slot: String,
+) -> String:
+    var index: int = texture_map.slots.find(slot)
+    if index < 0:
+        return ""
+    var path: String = variant.get_texture_path(slot)
+    if not path:
+        path = variant.get_texture_path("tex%d" % (index + 1))
+    if not path and not variant.shader:
+        path = variant.get_texture_path(LEGACY_TEXTURE_BINDINGS.get(index, ""))
+    return path
 
 
 func _apply(
@@ -209,8 +298,8 @@ func _apply_default_material(
     model_path: String,
     options: MaterialManager.MaterialOptions,
 ) -> void:
-    var diffuse_texture: String = variant.get_texture_path(texture_map.albedo)
-    var normalmap_texture: String = variant.get_texture_path(texture_map.normalmap)
+    var diffuse_texture: String = _texture_path(variant, texture_map, texture_map.albedo)
+    var normalmap_texture: String = _texture_path(variant, texture_map, texture_map.normalmap)
 
     # albedo defaults to this submodel's own parsed E3D diffuse color (e.g. a lamp lens'
     # green/yellow tint over a neutral texture) - a .mat variant's own "diffuse:" override, when
@@ -250,6 +339,38 @@ func _apply_default_material(
     material.set_shader_parameter("emission_color", options.selfillum_color if options.selfillum_color else Color(1.0, 1.0, 1.0, 1.0))
     material.set_shader_parameter("emission_energy", options.selfillum_energy)
 
+## mat_colored.frag: no texture, the color is "param_color:" (the submodel's own diffuse without it)
+func _apply_colored(
+    mmat: MaszynaMaterial,
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    material: ShaderMaterial,
+    texture_map: TextureMap,
+    model_path: String,
+    options: MaterialManager.MaterialOptions,
+) -> void:
+    _apply_default_material(mmat, variant, material, texture_map, model_path, options)
+    if variant.has_parameter_vec4("color"):
+        var color: Vector4 = variant.get_parameter_vec4("color")
+        material.set_shader_parameter("albedo", Color(color.x, color.y, color.z, color.w))
+
+
+## mat_reflmap.frag:47 - reflectivity = param_reflection * reflmap.a, param_reflection defaults to
+## one (the 1.0 "metallic" of reflmap.tres); the alpha channel is picked by the material type.
+func _apply_reflmap(
+    mmat: MaszynaMaterial,
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    material: ShaderMaterial,
+    texture_map: TextureMap,
+    model_path: String,
+    options: MaterialManager.MaterialOptions,
+) -> void:
+    _apply_default_material(mmat, variant, material, texture_map, model_path, options)
+    var reflmap_texture: String = _texture_path(variant, texture_map, texture_map.reflmap)
+    if reflmap_texture:
+        material.set_shader_parameter(
+            "texture_metallic", MaterialManager.load_texture(model_path, reflmap_texture, true))
+
+
 ## mat_detail_normalmap.frag: the default material plus a tiled detail normal map
 ## (texture_detailnormalmap, param_detail_scale, param_detail_height_scale - both default to 1.0).
 func _apply_detail_normalmap(
@@ -261,7 +382,7 @@ func _apply_detail_normalmap(
     options: MaterialManager.MaterialOptions,
 ) -> void:
     _apply_default_material(mmat, variant, material, texture_map, model_path, options)
-    var detail_normalmap_texture: String = variant.get_texture_path(texture_map.detail_normalmap)
+    var detail_normalmap_texture: String = _texture_path(variant, texture_map, texture_map.detail_normalmap)
     if detail_normalmap_texture:
         material.set_shader_parameter(
             "texture_detail_normal", MaterialManager.load_texture(model_path, detail_normalmap_texture, true))
@@ -277,9 +398,9 @@ func _apply_parallax(
     model_path: String,
     options: MaterialManager.MaterialOptions,
 ) -> void:
-    var diffuse_texture_path: String = variant.get_texture_path(texture_map.albedo)
-    var normalmap_texture_path: String = variant.get_texture_path(texture_map.normalmap)
-    var detail_normalmap_texture_path: String = variant.get_texture_path(texture_map.detail_normalmap)
+    var diffuse_texture_path: String = _texture_path(variant, texture_map, texture_map.albedo)
+    var normalmap_texture_path: String = _texture_path(variant, texture_map, texture_map.normalmap)
+    var detail_normalmap_texture_path: String = _texture_path(variant, texture_map, texture_map.detail_normalmap)
 
     var albedo_texture:Texture = MaterialManager.UNKNOWN_TEXTURE
     if diffuse_texture_path:
@@ -332,6 +453,11 @@ func _apply_parallax(
     material.set_shader_parameter("use_alpha_scissor", use_alpha_scissor)
     material.set_shader_parameter("alpha_scissor_threshold", alpha_scissor_threshold)
 
+    var specgloss_texture_path: String = _texture_path(variant, texture_map, texture_map.specgloss)
+    if specgloss_texture_path:
+        material.set_shader_parameter(
+            "specgloss_texture", MaterialManager.load_texture(model_path, specgloss_texture_path, true))
+
 func _apply_water(
     mmat: MaszynaMaterial,
     variant: MaszynaMaterial.MaszynaMaterialVariant,
@@ -340,10 +466,10 @@ func _apply_water(
     model_path: String,
     options: MaterialManager.MaterialOptions,
 ) -> void:
-    var diffuse_texture_path: String = variant.get_texture_path(texture_map.albedo)
-    var normalmap_texture_path: String = variant.get_texture_path(texture_map.normalmap)
-    var dudvmap_texture_path: String = variant.get_texture_path(texture_map.dudvmap)
-    var specgloss_texture_path: String = variant.get_texture_path(texture_map.specgloss)
+    var diffuse_texture_path: String = _texture_path(variant, texture_map, texture_map.albedo)
+    var normalmap_texture_path: String = _texture_path(variant, texture_map, texture_map.normalmap)
+    var dudvmap_texture_path: String = _texture_path(variant, texture_map, texture_map.dudvmap)
+    var specgloss_texture_path: String = _texture_path(variant, texture_map, texture_map.specgloss)
 
     var diffuse_texture: Texture = MaterialManager.UNKNOWN_TEXTURE
     if diffuse_texture_path:
@@ -382,6 +508,32 @@ func _apply_water(
         if specgloss_texture_path:
             specgloss_texture = MaterialManager.load_texture(model_path, specgloss_texture_path, true)
         material.set_shader_parameter("specgloss_texture", specgloss_texture)
+
+
+## mat_rain_windscreen.frag: cab glass with raindrops wiped by the wipermask. Rain and wiper state
+## come in as global shader uniforms.
+func _apply_rain_windscreen(
+    mmat: MaszynaMaterial,
+    variant: MaszynaMaterial.MaszynaMaterialVariant,
+    material: ShaderMaterial,
+    texture_map: TextureMap,
+    model_path: String,
+    options: MaterialManager.MaterialOptions,
+) -> void:
+    var textures: Dictionary[String, String] = {
+        "diffuse_texture": texture_map.albedo,
+        "raindrops_atlas": texture_map.raindropsatlas,
+        "wiper_mask": texture_map.wipermask,
+    }
+    for parameter: String in textures:
+        var texture_path: String = _texture_path(variant, texture_map, textures[parameter])
+        if texture_path:
+            material.set_shader_parameter(parameter, MaterialManager.load_texture(model_path, texture_path))
+    material.set_shader_parameter("raindrop_grid_size", variant.get_parameter("raindrop_grid_size", 1.0))
+    if variant.has_parameter("specular"):
+        material.set_shader_parameter("specular", variant.get_parameter("specular"))
+    if variant.has_parameter("glossiness"):
+        material.set_shader_parameter("roughness", _roughness_from_glossiness(variant.get_parameter("glossiness")))
 
 
 func _roughness_from_glossiness(glossiness: float) -> float:

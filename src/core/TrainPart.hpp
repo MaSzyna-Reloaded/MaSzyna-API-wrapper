@@ -29,9 +29,9 @@ namespace godot {
             bool dirty = false;
             TrainController *train_controller_node;
 
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
-             * i powinna byc wywolywana przez TrainPart::initialize_mover() */
+            /* If there is a need to separate the mover initialization stages from its update,
+             * this method should be implemented similarly to _do_update_internal_mover(),
+             * and should be called by TrainPart::initialize_mover() */
             // virtual void _do_initialize_internal_mover(TMoverParameters *mover) = 0;
 
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
@@ -58,8 +58,12 @@ namespace godot {
             TMoverParameters *get_mover();
 
         public:
-            void _process(double p_delta) override;
-            virtual void _process_mover(double p_delta);
+            // Physics-tick-only lifecycle, driven exclusively by TrainPhysicsServer::step_physics()
+            // (never by Node's own _process()/_physics_process()): flush dirty state/enabled-change
+            // bookkeeping, then compute, then sync Godot-visible state.
+            void _flush_dirty_state();
+            virtual void _process_mover_thread_safe(double p_delta);
+            virtual void _post_process_mover_sync();
 
             void register_command(const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_command, const Callable &p_callback);
@@ -76,9 +80,9 @@ namespace godot {
             void set_enabled(bool p_value);
             bool get_enabled();
 
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
-             * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
+            /* If there is a need to separate the mover initialization stages from its update,
+             * this method should be implemented similarly to update_mover(),
+             * and should be called from TrainController::initialize_mover() */
             // void initialize_mover(TrainController *train_controller_node);
 
             /* High level method for updating the state of the Mover */

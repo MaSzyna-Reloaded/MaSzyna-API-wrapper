@@ -2,6 +2,7 @@
 #include "../maszyna/McZapkie/MOVER.h"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/variant/rid.hpp>
 
 
 namespace godot {
@@ -15,7 +16,9 @@ namespace godot {
     class TrainController : public Node {
             GDCLASS(TrainController, Node)
         private:
-            TMoverParameters *mover{};
+            // TMoverParameters is owned by TrainPhysicsServer (see create_mover()/free_mover()); this
+            // controller only ever holds a handle to it, resolved through the server on every access.
+            RID mover_rid;
             double initial_velocity = 0.0;
             int cabin_number = 0;
             void initialize_mover();
@@ -31,7 +34,6 @@ namespace godot {
             int prev_radio_channel = radio_channel;
 
             void _collect_train_parts(const Node *p_node, Vector<TrainPart *> &p_train_parts) {};
-            void _update_mover_config_if_dirty();
             void _handle_mover_update();
 
         protected:
@@ -40,14 +42,21 @@ namespace godot {
              * because the mover initialization and state sharing routines can be changed in the future. */
 
             Dictionary get_mover_state();
-            // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
+            // TrainController can be extended by derived classes and methods can be overridden
             void _do_update_internal_mover(TMoverParameters *p_mover) const;
             void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state);
-            void _process_mover(double p_delta);
 
 
         public:
+            // Physics-tick-only lifecycle, driven exclusively by TrainPhysicsServer::step_physics()
+            // (never by Node's own _process()/_physics_process(), so nothing here can run at a
+            // different cadence than the simulation itself): flush any dirty config, then compute,
+            // then sync Godot-visible state.
+            void _update_mover_config_if_dirty();
+            void _process_mover_thread_safe(double p_delta);
+            void _post_process_mover_sync();
+
             enum TrainPowerSource {
                 POWER_SOURCE_NOT_DEFINED,
                 POWER_SOURCE_INTERNAL,
@@ -114,7 +123,6 @@ namespace godot {
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
-            void _process(double p_delta) override;
             void _notification(int p_what);
             void send_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(),

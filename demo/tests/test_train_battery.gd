@@ -22,13 +22,14 @@ func test_successful_battery_enabling():
 
 func test_not_enabling_battery_when_battery_voltage_is_zero():
     # This is a quite fun case: we're changing train's properties at runtime.
-    # To make sure the original Mover is updating, you must wait two IDLE frames or more.
+    # To make sure the original Mover is updating, you must wait two PHYSICS frames or more
+    # (config is only flushed into the Mover once per physics tick, in TrainPhysicsServer).
     # Alternatively you can call train.update_mover(), but this is an experimental method.
     #
     # This is not how tests should be written, but it shows how to handle similar cases.
 
     train.battery_voltage = 0.0
-    await wait_idle_frames(2)
+    await wait_physics_frames(2)
 
     train.send_command("battery", true)
     assert_false(train.state["battery_enabled"], "Battery should be disabled")

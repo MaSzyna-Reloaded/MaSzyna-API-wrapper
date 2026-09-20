@@ -10,6 +10,11 @@ namespace godot {
         private:
             static void _bind_methods();
             Dictionary internal_state;
+            // Captured by _process_mover_thread_safe() (real physics-tick delta from
+            // TrainPhysicsServer::step_physics()) and consumed by _post_process_mover_sync(), which
+            // runs afterwards in the same tick to forward it to the GDScript _process_train_part()
+            // virtual.
+            double last_delta = 0.0;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
@@ -19,7 +24,8 @@ namespace godot {
 
         public:
             TrainController *get_train_controller_node();
-            void _process_mover(double p_delta) override;
+            void _process_mover_thread_safe(double p_delta) override;
+            void _post_process_mover_sync() override;
             virtual void _process_train_part(double p_delta);
             virtual Dictionary _get_train_part_state();
             Dictionary get_train_state();

@@ -19,12 +19,18 @@ namespace godot {
     Dictionary GenericTrainPart::_get_train_part_state() {
         return internal_state;
     };
-    void GenericTrainPart::_process_mover(const double p_delta) {
-        call("_process_train_part", p_delta);
-        // FIXME: this should not be called each frame, but only when state changes
-        internal_state = call("_get_train_part_state");
-        train_controller_node->get_state().merge(internal_state, true);
+    void GenericTrainPart::_process_mover_thread_safe(const double p_delta) {
+        last_delta = p_delta;
     };
+
+    void GenericTrainPart::_post_process_mover_sync() {
+        call("_process_train_part", last_delta);
+        internal_state = call("_get_train_part_state");
+        if (train_controller_node != nullptr) {
+            train_controller_node->get_state().merge(internal_state, true);
+        }
+    };
+
 
     TrainController *GenericTrainPart::get_train_controller_node() {
         return train_controller_node;

@@ -12,6 +12,8 @@ class_name LegacyCabinMainSwitch
 
 const ON_BUTTON:StringName = &"main_on_bt"
 const OFF_BUTTON:StringName = &"main_off_bt"
+## one impulse switch doing both (main_sw:, dynamic/pkp/e186_v2)
+const TOGGLE_SWITCH:StringName = &"main_sw"
 
 ## m_linebreakerstate: 0 = open, 1 = closed, 2 = ready to close
 const OPEN:int = 0
@@ -23,7 +25,7 @@ var _cab:int
 
 
 func control_ids() -> Array[StringName]:
-    return [ON_BUTTON, OFF_BUTTON]
+    return [ON_BUTTON, OFF_BUTTON, TOGGLE_SWITCH]
 
 
 func register(train_id:String, cab:int) -> void:
@@ -31,22 +33,20 @@ func register(train_id:String, cab:int) -> void:
     _cab = cab
     CabinSystem.register_control(train_id, cab, ON_BUTTON, _on_button)
     CabinSystem.register_control(train_id, cab, OFF_BUTTON, _off_button)
+    CabinSystem.register_control(train_id, cab, TOGGLE_SWITCH, _toggle_switch)
     CabinSystem.register_process(train_id, cab, _process)
 
 
 func unregister() -> void:
     CabinSystem.unregister_control(_train_id, _cab, ON_BUTTON, _on_button)
     CabinSystem.unregister_control(_train_id, _cab, OFF_BUTTON, _off_button)
+    CabinSystem.unregister_control(_train_id, _cab, TOGGLE_SWITCH, _toggle_switch)
     CabinSystem.unregister_process(_train_id, _cab, _process)
-
-
-static func _pressed(action:StringName, value:Variant) -> bool:
-    return action == &"hold" or (action == &"toggle" and bool(value))
 
 
 # Train.cpp:3021-3070 - closing happens on release, and only once the breaker is ready.
 func _on_button(state:CabinState, action:StringName, value:Variant) -> Variant:
-    var pressed:bool = _pressed(action, value)
+    var pressed:bool = state.is_pressed(ON_BUTTON, action, value)
     state.set_value(ON_BUTTON, pressed)
     if pressed:
         return null
@@ -61,7 +61,7 @@ func _on_button(state:CabinState, action:StringName, value:Variant) -> Variant:
 
 # Train.cpp:2976-2998 - opening happens on press.
 func _off_button(state:CabinState, action:StringName, value:Variant) -> Variant:
-    var pressed:bool = _pressed(action, value)
+    var pressed:bool = state.is_pressed(OFF_BUTTON, action, value)
     state.set_value(OFF_BUTTON, pressed)
     if not pressed:
         return null
@@ -72,6 +72,17 @@ func _off_button(state:CabinState, action:StringName, value:Variant) -> Variant:
     if result:
         state.data["linebreaker_state"] = OPEN
     return result
+
+
+# Train.cpp:3714-3754 OnCommand_linebreakertoggle - pressed it closes an open breaker (held like
+# main_on_bt) or opens a closed one; released it finishes whichever of the two it started.
+func _toggle_switch(state:CabinState, action:StringName, value:Variant) -> Variant:
+    var pressed:bool = state.is_pressed(TOGGLE_SWITCH, action, value)
+    state.set_value(TOGGLE_SWITCH, pressed)
+    var closing:bool = (state.data.get("linebreaker_state", OPEN) == OPEN) == pressed
+    if closing:
+        return _on_button(state, &"hold" if pressed else &"release", null)
+    return _off_button(state, &"hold" if pressed else &"release", null)
 
 
 # Train.cpp:6779-6827

@@ -32,6 +32,14 @@ func set_value(control_id:StringName, value:Variant) -> void:
     CabinSystem.control_changed.emit(train_id, cab, control_id, value)
 
 
+## Whether a push control ends up pressed by the manipulation: held, or toggled to the given value -
+## a toggle without one (e.g. from the console) flips its current position.
+func is_pressed(control_id:StringName, action:StringName, value:Variant) -> bool:
+    if action == &"toggle":
+        return not get_value(control_id, false) if value == null else bool(value)
+    return action == &"hold"
+
+
 # FIXME(#57): reads the per-frame copied TrainController.state; see the refresh workaround in
 # TrainSystem::send_command for why a read right after a command could be stale.
 func vehicle_state() -> Dictionary:

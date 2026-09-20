@@ -92,3 +92,79 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   value. `shadow_cabin_mode=1` was written by hand in `873b3eb`, `shadow_mode` was not.
 * **Fix:** the value is set only when missing; the hint and the initial value are registered
   always. Side effect: the editor now drops lines equal to the default on the next save.
+
+## 2026-09-20 - scenery environment, fog and Skydome
+
+### Huge terrain triangles missing under the camera
+
+* **Symptom:** a terrain triangle kilometres long is missing until the camera gets close to one
+  particular spot; trees standing on it are there.
+* **Cause:** `SceneryTrianglesBuilder` stored each triangle whole in the 1 km cell of its centroid,
+  and `SceneryStreamingServer` streams a chunk in by the distance to that cell
+  (`SceneryStreamingServer.cpp:53-56`), capped at `scenery_draw_distance`. Standing on the far part
+  of the triangle is standing outside the range of its cell.
+* **Fix:** triangles are clipped along the cell grid (Sutherland-Hodgman in XZ, normals and UVs
+  interpolated). A cut is always computed from the lower end of the edge, so two triangles sharing
+  an edge get the very same vertex and no crack opens.
+* **Rule:** whatever is streamed or culled by a cell must not reach outside of it.
+
+### A winter afternoon turning the fog into orange milk
+
+* **Symptom:** same fog settings, fine at 12:15 and an opaque orange wall at 15:13 (20 January,
+  50 N). Earlier: the whole winter day tinted orange.
+* **Cause:** Skydome blends its day and night values and its sunset colours by the sine of the sun
+  elevation with hard-coded windows - full day only above 17.5 degrees, sunset colours up to 23.6.
+  A winter sun at mid latitudes peaks at 16-19 degrees, so an afternoon took a quarter of the
+  night fog (`night_vol_fog_density` is 24 times the day value) and most of the sunset tint. The
+  sky shader carries a copy of both formulas. It only showed once a scenery could set a January
+  date (`config movelight`).
+* **Fix:** `day_full_elevation` (6 degrees) and `sunset_fade_start/end_elevation` (4 and 10) in
+  Skydome, passed to the shader as uniforms and registered as `gnd_skydome/*` settings.
+* **Rule:** thresholds on the sun altitude have to be checked against a winter day, not only a
+  summer one.
+
+### Two fog layers that did not agree
+
+* The original's fog has no density: it is `1 - exp(-(z / range)^2)` with
+  `range = fFogEnd / max(1, Overcast * 2)` (`apply_fog.glsl:16`, `opengl33renderer.cpp:4685`) -
+  63% at the range, not a linear ramp complete at `fFogEnd`. A depth fog complete at 1.5 of the
+  range with a curve of 1.5 follows it closest.
+* Godot's volumetric fog is an extinction per metre over a volume in front of the camera, not an
+  opacity at a distance. Scaling its **length** with the fog distance made a far fog fill the view
+  with milk; Skydome shortening that length while raising the density made the fog peak at a boost
+  of about 0.6 and thin out above it - pulsing against the depth fog. The density has to follow
+  the distance inversely, the length stays, and past the peak the density makes up for the
+  shortening.
+* The volumetric fog stands in front of the sky as much as in front of anything else
+  (`volumetric_fog_sky_affect` 1.0) - left out of the sky, fog lit by headlights ends along the
+  silhouettes. The depth fog reaching the sky is a different matter: a fog of kilometres is a thin
+  layer and must leave the stars alone (`maszyna/rendering/fog_sky_height`); rain fills the air
+  all the way up and reaches the sky in full.
+* `Environment.fog_aerial_perspective` at 1.0 took the fog colour from a sky radiance as dark as
+  the scene at dusk - fully fogged objects stayed dark silhouettes. Off by default.
+* The easing-curve editor (`PROPERTY_HINT_EXP_EASING`) reads as "output over input"; on a setting
+  that is an exponent over the distance it invites values like 0.01, a wall of fog at the camera.
+  The value is floored in code.
+
+### A weather change freezing the game
+
+* **Cause:** `MaterialManager._refresh_managed_material()` wrote every managed material back to the
+  disk cache - a resource with its textures embedded, 0.7-3 MB each - on the main thread, for
+  materials that mostly have no season or weather variant at all (169 of 805 `.mat` files declare
+  a rain one). The cache key knows neither the season nor the weather, and a loaded material gets
+  its variant applied anyway.
+* **Fix:** no write on a refresh; materials without variants are skipped.
+
+### A new `class_name` unknown to the running game
+
+* Global class names come from `.godot/global_script_class_cache.cfg`, which only the editor's
+  file scan updates. Running the game without the editor after adding a script with a `class_name`
+  fails with "Identifier not declared" in every script that uses it. `godot-double --headless
+  --import` rescans without the GUI.
+
+### Duplicated HUD in the demo scenes
+
+* `TopBar`, `ControlWindows` and the menu code were pasted into both `demo_3d` and
+  `demo_scenery_loading`; three windows added later reached only one of them. They are one scene
+  now (`demo/hud/game_hud.tscn`); a scene adds a menu entry of its own as a `Button` under
+  `MenuActions`.

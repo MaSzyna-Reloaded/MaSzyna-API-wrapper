@@ -70,6 +70,13 @@
 
 ## Scenery loading
 
+* Air temperature (`config scenario.weather.temperature` -> `MaszynaEnvironmentNode.temperature`)
+  is consumed by nothing. The Mover uses it only in the diesel engine heat model
+  (`dizel_heat.Te`, original `Mover.cpp:8109`), and the vendored Mover has it as
+  `#define Global_AirTemperature 15.f`, assigned on every step - it cannot be fed from outside
+  without touching `src/maszyna/`. Adhesion does not depend on it (`Adhesive(RunningTrack.friction)`).
+* Other scenery `config` entries are dropped (`scenario.time.override/offset/current` shift the
+  timetables, `Globals.cpp:356-385`).
 * Include cache / instancing - e.g. `skp/skp_trawa.scm` includes `grass.inc` 24078 times, each
   one parsed again and baked into world-space triangle chunks. Idea: the include importer
   classifies each included file in the context (`path => mode, placement params`): `instanced`

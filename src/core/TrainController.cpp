@@ -72,6 +72,7 @@ namespace godot {
                 D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
+        ClassDB::bind_method(D_METHOD("get_velocity"), &TrainController::get_velocity);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &TrainController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &TrainController::update_location);
@@ -609,24 +610,29 @@ namespace godot {
         _handle_mover_update();
     }
 
+    /// Only marks the state for a rebuild - whoever reads it gets it fresh (see get_state()). The
+    /// signals below have to be decided every step though, so they read the mover directly rather
+    /// than through a dictionary that may not be built at all.
     void TrainController::_handle_mover_update() {
-        // fetched straight into state: it used to be filled into a second dictionary and merged
-        // back here, writing every one of those keys twice for every vehicle of every frame
-        get_mover_state();
+        state_dirty = true;
+        TMoverParameters *mover_ptr = get_mover();
+        if (mover_ptr == nullptr) {
+            return;
+        }
 
-        const bool new_is_powered = (state.get("power24_available", false) || state.get("power110_available", false));
+        const bool new_is_powered = mover_ptr->Power24vIsAvailable || mover_ptr->Power110vIsAvailable;
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(power_changed_signal, prev_is_powered);
         }
 
-        if (const bool new_radio_enabled = state.get("radio_enabled", false) && new_is_powered;
+        if (const bool new_radio_enabled = mover_ptr->Radio && new_is_powered;
             prev_radio_enabled != new_radio_enabled) {
             prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(radio_toggled, new_radio_enabled);
         }
 
-        if (const int new_radio_channel = state.get("radio_channel", 0); prev_radio_channel != new_radio_channel) {
+        if (const int new_radio_channel = radio_channel; prev_radio_channel != new_radio_channel) {
             prev_radio_channel = new_radio_channel; // FIXME: I don't like this
             emit_signal(radio_channel_changed, new_radio_channel);
         }
@@ -637,7 +643,7 @@ namespace godot {
             emit_signal(roof_light_changed, new_roof_light_enabled);
         }
 
-        if (const int new_cabin_occupied = state.get("cabin_occupied", 0); prev_cabin_occupied != new_cabin_occupied) {
+        if (const int new_cabin_occupied = mover_ptr->CabOccupied; prev_cabin_occupied != new_cabin_occupied) {
             prev_cabin_occupied = new_cabin_occupied;
             emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
@@ -819,8 +825,20 @@ namespace godot {
         emit_signal(config_changed);
     }
 
+    /// Rebuilt from the mover on the first read after a physics step; the train parts merge their
+    /// own keys into it as they process, so those stay where they are
     Dictionary TrainController::get_state() {
+        if (state_dirty) {
+            state_dirty = false;
+            if (TMoverParameters *mover_ptr = get_mover(); mover_ptr != nullptr) {
+                _do_fetch_state_from_mover(mover_ptr, state);
+            }
+        }
         return state;
+    }
+
+    double TrainController::get_velocity() const {
+        return mover != nullptr ? mover->V : 0.0;
     }
 
     void

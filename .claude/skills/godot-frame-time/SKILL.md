@@ -12,6 +12,19 @@ culprit. It usually isn't the one you'd guess. Measure, form **one** hypothesis
 per measurement, and check it before forming the next. Three wrong hypotheses in
 a row cost a real operator three game restarts and a lot of patience.
 
+## Profile an optimized build
+
+Before reading a single number, check what the project is running. `make compile-debug` builds
+the extension - including the vendored `Mover.cpp` physics - at `-O0`, and that is the library the
+editor loads. Physics code there ran several times slower than in a shipped build; on one scenery
+simply rebuilding with optimizations took it from 31 to 44 fps, more than every code change of a
+long session put together, and until then the profile pointed at the simulation as if the code
+were at fault.
+
+`make compile-profiling` builds the same `template_debug` library with `RelWithDebInfo`, so the
+editor still loads it. Go back with `make compile-debug`. Comparing against the original engine is
+only meaningful this way - that one is a release build.
+
 ## Read the instruments correctly
 
 This is where most of the time gets lost, so start here.

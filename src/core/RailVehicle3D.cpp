@@ -366,25 +366,27 @@ namespace godot {
 
         if (!Engine::get_singleton()->is_editor_hint()) {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
-                const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
-                const double velocity = double(state.get("velocity", 0.0));
+                // only the velocity is wanted here, and asking for the whole state would rebuild
+                // it from the mover for every vehicle of every frame (see get_state())
+                const double velocity = controller != nullptr ? controller->get_velocity() : 0.0;
                 // the vehicle is moved on its track by RailVehiclePhysicsServer's global step
                 if (!Math::is_zero_approx(velocity)) {
                     _update_track_transform();
                 }
                 if (electric_engine != nullptr) {
+                    const Dictionary state = controller->get_state();
                     _update_pantograph_raise_state(p_delta, state);
                     _update_pantograph_power(state);
                 }
             } else if (controller != nullptr && start_track_name.is_empty()) {
-                const Dictionary state = controller->get_state();
-                const double velocity = double(state.get("velocity", 0.0));
+                const double velocity = controller->get_velocity();
                 const real_t distance = static_cast<real_t>(p_delta * velocity);
                 set_position(get_position() + (Vector3(0.0, 0.0, -1.0) * distance));
                 if (is_visible && !Math::is_zero_approx(velocity)) {
                     _update_wheel_animation_state();
                 }
                 if (electric_engine != nullptr) {
+                    const Dictionary state = controller->get_state();
                     _update_pantograph_raise_state(p_delta, state);
                     _update_pantograph_power(state);
                 }

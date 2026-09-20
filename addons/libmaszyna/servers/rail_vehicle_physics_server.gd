@@ -94,22 +94,19 @@ func _process(delta: float) -> void:
     var iterations: int = clampi(ceili(delta / PHYSICS_STEP), 1, MAX_PHYSICS_ITERATIONS)
     var step: float = delta / iterations
     for iteration: int in iterations:
-        # the original runs the cheap FastUpdate in every sub-iteration but the last, and the full
-        # movement only once (vehicle_table::update(), DynObj.cpp:8195-8210)
-        var is_last: bool = iteration == iterations - 1
-        for controller: TrainController in controllers:
-            controller.compute_forces(step)
-        for controller: TrainController in controllers:
-            # DynObj.cpp:4059 - FastUpdate/Update skip a vehicle with switched off physics
-            if not controller.is_physics_active():
+        # Forces of all, then movement of all, the original's phase order (DynObj.cpp:8199-8205),
+        # and the cheap FastUpdate in every sub-iteration but the last (DynObj.cpp:4086). The whole
+        # per-controller loop runs inside TrainSystem.step_movers(): done from here it was four
+        # calls across the binding per controller per iteration, thousands of Variant marshallings
+        # per frame for arithmetic the original does in a plain C++ loop.
+        var distances: PackedFloat64Array = TrainSystem.step_movers(
+                controllers, step, iteration == iterations - 1)
+        for index: int in controllers.size():
+            if is_zero_approx(distances[index]):
                 continue
-            if is_last:
-                controller.compute_movement(step)
-            else:
-                controller.compute_fast_movement(step)
-            var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
+            var vehicle_rid: RID = _controller_vehicles.get(controllers[index].get_rid(), RID())
             if vehicle_rid.is_valid():
-                process_movement(vehicle_rid, step, controller)
+                _apply_movement(vehicle_rid, distances[index])
     for controller: TrainController in controllers:
         if controller.is_physics_active():
             controller.update_state()
@@ -324,6 +321,17 @@ func process_movement(vehicle_rid: RID, delta: float, controller: TrainControlle
     if is_zero_approx(distance):
         return
     # the position_changed signal follows once per physics step, with the location update
+    _move_vehicle_state(state, distance, true)
+
+
+## Walks a vehicle the distance its mover asked for, the part of process_movement() the step loop
+## needs once it has the distances from TrainSystem.step_movers()
+func _apply_movement(vehicle_rid: RID, distance: float) -> void:
+    var state: VehicleState = _vehicles.get(vehicle_rid)
+    if not state:
+        return
+    if not state.track_rid == TrackManager.UNDEFINED_TRACK and not TrackManager.track_exists(state.track_rid):
+        return
     _move_vehicle_state(state, distance, true)
 
 

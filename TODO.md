@@ -126,6 +126,10 @@
 
 ## Physics performance
 
+* Those measurements were taken on a `make compile-debug` build, where the vendored `Mover.cpp` is
+  compiled at `-O0`. Rebuilding the same code with optimizations (`make compile-profiling`) took
+  `baltyk_skm1` from 31 to 44 fps - more than every code change of that session put together. Any
+  comparison against the original, which is a release build, has to be made this way.
 * Measured on `baltyk_skm1.scn` (376 vehicles), against the original running the same scenario on
   the same machine: the original spends **1.8 ms of CPU per frame** on everything - AI drivers,
   physics of every consist, events - while our frame is ~36 ms. The physics code is the same

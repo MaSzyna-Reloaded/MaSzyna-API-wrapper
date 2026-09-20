@@ -26,6 +26,9 @@ namespace godot {
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only TrainController's properties
             Dictionary state;
+            /// state is rebuilt from the mover when it is asked for, not on every physics step:
+            /// a scenery runs hundreds of vehicles and almost none of them is ever read
+            bool state_dirty = true;
             Dictionary config;
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
@@ -215,6 +218,9 @@ namespace godot {
             void register_command(const String &p_command, const Callable &p_callable);
             void unregister_command(const String &p_command, const Callable &p_callable);
             void update_state();
+            /// Straight from the mover, for the per-frame readers that only want this one number
+            /// and would otherwise force the whole state dictionary to be rebuilt
+            double get_velocity() const;
             void update_mover();
             double process_movement(double p_delta);
             void update_location();

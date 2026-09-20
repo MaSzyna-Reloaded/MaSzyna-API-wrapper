@@ -3,15 +3,15 @@ extends RefCounted
 class_name FizTrainWipersParser
 
 ## WiperList: section parser -> TrainWipers. Registered directly in
-## FizTrainControllerInstancer's section table. This vendored Mover has no wiper field at all
-## (see TrainWipers.hpp's class doc) - no reader function exists to confirm the row column
-## order, so the mapping below is inferred from field names plus the real example rows' own
-## comments: `0 1.0 0.0 0.5 // zadna wycieraczka nie pracuje` (no wiper working) and
-## `3 1.0 5.0 0.5 // obie wycieraczki ... z interwalem 5s` (both wipers, 5s interval) - the
-## third column matching "interval 5s" exactly is what fixes column 2 as `period`.
-## mode -> wiper_mask, col2 -> transit_time, col3 (interval) -> period, col4 -> return_delay.
+## FizTrainControllerInstancer's section table. Rows as TMoverParameters::readWiperList()
+## (Mover.cpp:9429) reads them: byteSum -> wiper_mask, WiperSpeed -> transit_time,
+## interval -> period, outBackDelay -> return_delay.
+##
+## Size= bounds the list (WiperListSize, Train.cpp:2643): real data ends it with a foreign marker
+## ("endL" instead of "endwl", e186_v2/eu47.fiz), so rows of whatever follows could get in.
 
 var _rows: Array[WiperListItem] = []
+var _size: int = 0
 
 
 func create_node() -> TrainWipers:
@@ -28,11 +28,12 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     if kv.has("Default"):
         node.default_position = FizLineUtil.get_int(kv, "Default")
     _rows = []
+    _size = FizLineUtil.get_int(kv, "Size") if kv.has("Size") else 0
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
     var tokens: Array = p.get_tokens(4)
-    if tokens.size() < 4:
+    if tokens.size() < 4 or (_size > 0 and _rows.size() >= _size):
         return
     var item := WiperListItem.new()
     item.wiper_mask = int(tokens[0])

@@ -223,6 +223,17 @@ static func parse_lowpoly_interior_model(abs_mmd_path:String) -> String:
     return _resolve_model_relpath(tokens[index + 1])
 
 
+## Reads `animwiperprefix:` from the MMD (DynObj.cpp:5833) - the name the wiper submodels of the
+## vehicle model start with, "" without wipers.
+static func parse_wiper_prefix(abs_mmd_path:String) -> String:
+    var context := MmdImportContext.new()
+    var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
+    var index:int = _find_label_index(tokens, "animwiperprefix:")
+    if index == -1 or index + 1 >= tokens.size():
+        return ""
+    return tokens[index + 1]
+
+
 ## Reads `jointcabs:` from the MMD (DynObj.cpp:6626) - all virtual cabs share one location and
 ## model, so the whole low-poly cab is hidden from inside any of them.
 static func parse_joint_cabs(abs_mmd_path:String) -> bool:

@@ -217,3 +217,31 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   the blurred screen luminance behind the glass stands in for it.
 * **Rule:** "the engine's lighting will do that" is not a port of an unlit term - check what the
   original multiplies by before moving a colour into `ALBEDO`.
+
+### Wipers: data traps
+
+* Of the four vehicles with a `rain_windscreen` glass only `e186_v2` (and the Vectron cab) also
+  has wipers; `ep09_v1` has the glass but no `WiperList:`/`wipers_sw:`, `ep09_v2` has the wipers
+  but a plain glass. Test the wiping on `e186_v2`.
+* `e186_v2/eu47.fiz` ends its `WiperList:` with `endL` instead of `endwl`. The original never
+  closes the list then either, it is `Size=` that bounds the switch (`Train.cpp:2643`). The FIZ
+  parser honours `Size=` now.
+* The shader clock (`TIME`) cannot be read from a script - it is scaled and rolls over - so a
+  moment in time cannot be handed to a shader as the original does (`wiper_timer_out`). Pass the
+  time elapsed instead.
+
+### Wiped edge running away from the wiper blade
+
+* **Symptom:** the arms moved right, but the clean band trailed the blade on the way out and ran
+  ahead of it on the way back.
+* **What proved it:** a probe script that loads the E186 body and cab, puts the blade at 11 phases
+  of the sweep, projects it onto the glass and reads `szyby_wipermask` there. The blade stays 3 cm
+  off the glass all the way (geometry and rotation sign are right); the mask under it reads 0.22,
+  0.41, 0.53, 0.62, 0.71, 0.78, 0.85, 0.90, 0.96, 1.0 - an sRGB curve. Decoded it is 0.04, 0.14,
+  0.24, 0.35, 0.46, 0.56, 0.69, 0.79, 0.90, 1.0: the fraction of the arm angle.
+* **Cause:** the original declares the mask `sRGB_A`, the port sampled it without `source_color`.
+* The arms move eased (`smoothInterpolate`) while the original hands the shader the plain
+  position - its own edge is up to a tenth of the sweep off. The wrapper feeds the eased one.
+* **Rule:** port the `#texture (name, index, FORMAT)` format of every sampler, also for data
+  textures; and measure the data under the moving part before tuning the motion.
+

@@ -191,13 +191,10 @@
 * Material shaders of the original left unmapped: `clouds`, `stars`, `invalid` (engine internals,
   `textures/sky/stratus.mat`, `stars.mat`, `invalid.mat`) and `normalmap_phys`
   (`textures/pkp/wskazniki/w29.mat`; the shader file does not exist in the game dir either).
-* Wiper simulation: nothing drives the `maszyna_wiper_pos`, `maszyna_wiper_timer_out` and
-  `maszyna_wiper_timer_return` shader globals of `rain_windscreen.gdshader` - `TrainWipers` only
-  stores the FIZ `WiperList:` and the vendored Mover has no `wiperSwitchPos`. The glass shows
-  droplets everywhere; the wiping itself is ported in the shader. To port: the wiper movement
-  (`DynObj.cpp:4048-4115`, `dWiperPos`/`wiperDirection`), the switch (`Train.cpp:2643`), the blade
-  animation (`DynObj.cpp:726-730`) and the feed of the globals for the occupied cab
-  (`opengl33renderer.cpp:755-789`). The droplets also ignore vehicle speed and wind (a TODO in the
+* Wiper sounds (`wiperfrompark:`, `wipertopark:` of the MMD, `DynObj.cpp:4082-4099`) are not
+  played. The direction the wiper arms swing (`RailVehicle3D::_update_wipers()`, rotation about Y
+  as `TDynamicObject::UpdateWiper()`) was not checked against the original in game.
+* The droplets of `rain_windscreen.gdshader` ignore vehicle speed and wind (a TODO in the
   original shader as well).
 * `*_specgloss` material shaders other than `parallax_specgloss`/`water_specgloss` do not sample
   the specgloss texture (`normalmap_`, `default_`, `reflmap_`, `detail_normalmap_`,

@@ -7,8 +7,10 @@ render_mode blend_mix, cull_back, diffuse_burley, specular_schlick_ggx;
 uniform sampler2D diffuse_texture : source_color, filter_linear_mipmap, repeat_enable;
 // 2x2 atlas of droplet sprites
 uniform sampler2D raindrops_atlas : source_color, filter_linear_mipmap, repeat_enable;
-// one wiper per channel: the phase of its sweep at which the blade passes the texel, 0 outside of its area
-uniform sampler2D wiper_mask : hint_default_black, filter_linear, repeat_enable;
+// one wiper per channel: the phase of its sweep at which the blade passes the texel, 0 outside of its area.
+// sRGB like in the original ("#texture(wipermask, 2, sRGB_A)"): only decoded it is linear in the
+// angle of the arm - read raw, the wiped edge runs far away from the blade.
+uniform sampler2D wiper_mask : source_color, hint_default_black, filter_linear, repeat_enable;
 
 // stands in for the "ambient" of the original, see fragment()
 uniform sampler2D screen_texture : hint_screen_texture, filter_linear_mipmap, repeat_disable;
@@ -27,14 +29,14 @@ uniform float specular_intensity = 1.0;
 // water blurs the whole glass. All of it grows with the rain and is cleared by the wipers.
 uniform float refraction_strength = 0.04;
 uniform float heavy_rain_start : hint_range(0.0, 1.0) = 0.4;
-uniform float large_drop_scale = 4.0;
+uniform float large_drop_scale = 2.0;
 uniform float film_strength : hint_range(0.0, 1.0) = 0.9;
 uniform float film_blur = 6.0;
 uniform float film_distortion = 0.03;
 // rivulets: columns of the droplet grid one of them takes, the share of a column its width takes,
 // its length and speed in UV of the glass
 uniform float rivulet_spacing = 6.0;
-uniform float rivulet_width : hint_range(0.0, 0.5) = 0.22;
+uniform float rivulet_width : hint_range(0.0, 0.5) = 0.11;
 uniform float rivulet_length = 0.35;
 uniform float rivulet_speed = 0.25;
 uniform float wobble_strength = 0.002;
@@ -46,9 +48,10 @@ global uniform float maszyna_rain_intensity;
 global uniform float maszyna_wiper_regen_time;
 // per wiper: 0..1 sweeping out, 1..2 returning
 global uniform vec4 maszyna_wiper_pos;
-// per wiper: TIME of its last pass out and back
-global uniform vec4 maszyna_wiper_timer_out;
-global uniform vec4 maszyna_wiper_timer_return;
+// per wiper: seconds since it last left the parked position and the far end (the original passes
+// the two as points in time, "time - wiper_timer_*")
+global uniform vec4 maszyna_wiper_since_out;
+global uniform vec4 maszyna_wiper_since_return;
 
 // Evolving Sub-Grid Turbulence for Smoke Animation, H. Schechter and R. Bridson (random.glsl)
 uint hash(uint s) {
@@ -107,7 +110,7 @@ float get_mix_factor(vec2 co, out float side) {
 
     // "regeneration", raindrops gradually returning after wiper pass
     vec4 regen_phase = clamp(
-            (vec4(TIME) - mix(maszyna_wiper_timer_out, maszyna_wiper_timer_return, side_v) - vec4(0.2))
+            (mix(maszyna_wiper_since_out, maszyna_wiper_since_return, side_v) - vec4(0.2))
                     / vec4(maszyna_wiper_regen_time),
             vec4(0.0), vec4(1.0));
 

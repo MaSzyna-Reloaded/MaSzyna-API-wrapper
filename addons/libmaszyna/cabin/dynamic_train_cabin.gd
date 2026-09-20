@@ -137,6 +137,10 @@ func _rebuild_generated() -> void:
     if not definition.instruments.any(
             func(instrument:MmdInstrumentDescriptor) -> bool: return instrument.label == "i-cablight"):
         _build_cab_light(definition)
+    var windscreen_wipers := CabinWindscreenWipers.new()
+    windscreen_wipers.name = "WindscreenWipers"
+    windscreen_wipers.controller = _controller
+    _generated.add_child(windscreen_wipers)
     # cabin logic of the original engine (CabinSystem callbacks) - added last, after every control
     var logic := LegacyCabinLogicDelegate.new()
     logic.name = "LegacyCabinLogic"

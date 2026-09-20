@@ -44,6 +44,8 @@ const MAX_WHEEL_AXLES:int = 20
 const RAIN_VOLUME_NAME:StringName = &"RainExclusion"
 const RAIN_EXCLUSION_PRECIPITATION_DELTA:float = -1.0
 
+## lower arm 1, upper arm 1 and the slider
+const PANTOGRAPH_REQUIRED_ARMS:Array[int] = [0, 2, 4]
 const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
     "ramiedolne1_pant0", "ramiedolne2_pant0", "ramiegorne1_pant0", "ramiegorne2_pant0", "slizg_pant0",
 ]
@@ -284,19 +286,20 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
         vehicle.coupler_submodel_paths = coupler_paths
 
 
-## Returns all 5 arm/slider paths for the given pantograph number (1=front,
-## 2=rear), or [] if any single one is missing - RailVehicle3D only enables
-## the raise simulation for an end with all 5 configured, so a partial match
-## is treated the same as none (matches _resolve_animation_paths()'s
-## "front and rear bogie must be set together" precedent above, per-end here).
+## Returns the 5 arm/slider paths for the given pantograph number (1=front, 2=rear), or [] when
+## the lower arm 1, the upper arm 1 or the slider is missing - RailVehicle3D takes the geometry of
+## the pantograph from these three. The second arm of each pair is optional, an empty path without
+## it: a single-arm pantograph has none (dynamic/pkp/e186_v2 has no "ramiegorne2"), and the
+## original does not animate a missing element either (DynObj.cpp:5414).
 static func _find_pantograph_arm_paths(
         vehicle:RailVehicle3D, submodel_index:Dictionary, pantograph_number:int) -> Array[NodePath]:
     var paths:Array[NodePath] = []
-    for prefix:String in PANTOGRAPH_ARM_SUBMODEL_PREFIXES:
-        var node:Node3D = _find_submodel(submodel_index, ["%s%d" % [prefix, pantograph_number]])
-        if not node:
+    for index:int in PANTOGRAPH_ARM_SUBMODEL_PREFIXES.size():
+        var node:Node3D = _find_submodel(
+                submodel_index, ["%s%d" % [PANTOGRAPH_ARM_SUBMODEL_PREFIXES[index], pantograph_number]])
+        if not node and index in PANTOGRAPH_REQUIRED_ARMS:
             return []
-        paths.append(vehicle.get_path_to(node))
+        paths.append(vehicle.get_path_to(node) if node else NodePath())
     return paths
 
 

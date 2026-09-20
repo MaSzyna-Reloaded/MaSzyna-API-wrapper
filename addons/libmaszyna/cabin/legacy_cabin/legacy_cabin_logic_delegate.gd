@@ -15,8 +15,10 @@ var cab:int = 1
 
 var _behaviours:Array = []
 var _battery:LegacyCabinBattery
+var _cab_activation:LegacyCabinCabActivation
 var _manual_brake:LegacyCabinManualBrake
 var _wipers:LegacyCabinWipers
+var _unmodelled_controls:LegacyCabinUnmodelledControls
 var _brake_charging:LegacyCabinBrakeCharging
 
 
@@ -25,6 +27,9 @@ func _ready() -> void:
     var main_switch := LegacyCabinMainSwitch.new()
     var claimed:Array[StringName] = main_switch.control_ids()
     _behaviours = [main_switch]
+    var reverser := LegacyCabinReverser.new()
+    claimed.append_array(reverser.control_ids())
+    _behaviours.append(reverser)
     if _has_control(LegacyCabinJointController.CONTROL):
         var joint_controller := LegacyCabinJointController.new()
         claimed.append_array(joint_controller.control_ids())
@@ -33,6 +38,9 @@ func _ready() -> void:
     if not _has_control(LegacyCabinBattery.CONTROL):
         _battery = LegacyCabinBattery.new()
         _behaviours.append(_battery)
+    if not _has_control(LegacyCabinCabActivation.CONTROL):
+        _cab_activation = LegacyCabinCabActivation.new()
+        _behaviours.append(_cab_activation)
     if not _has_control(LegacyCabinManualBrake.CONTROL):
         _manual_brake = LegacyCabinManualBrake.new()
         _behaviours.append(_manual_brake)
@@ -43,33 +51,25 @@ func _ready() -> void:
     _behaviours.append(_brake_charging)
     for behaviour:RefCounted in _behaviours:
         behaviour.register(controller.train_id, cab)
+    # last: whatever is registered by now is taken care of
+    _unmodelled_controls = LegacyCabinUnmodelledControls.new(get_parent())
+    _unmodelled_controls.register(controller.train_id, cab)
+    _behaviours.append(_unmodelled_controls)
 
 
-# keyboard bindings of controls the MMD doesn't have (see LegacyCabinBattery, LegacyCabinManualBrake,
-# LegacyCabinWipers)
+# Keys of controls outside of MmdSemanticCatalog; those of the catalog controls a cab does not
+# model are taken by LegacyCabinUnmodelledControls.
 func _unhandled_input(event:InputEvent) -> void:
+    _unmodelled_controls.input(event)
     # Train.cpp:6285 OnCommand_occupiedcarcouplingdisconnect - uncouples at the occupied cab's end
     # (cab_to_end(), Train.h:216), with or without a couplingdisconnect_sw: gauge
     if event.is_action_pressed(&"coupler_disconnect_occupied", false, true) and not cab == 0:
         CabinSystem.get_cabin_state(controller.train_id, cab).send_vehicle_command(
                 "coupler_disconnect", 1 if cab < 0 else 0)
-    if _battery and event.is_action_pressed(LegacyCabinBattery.ACTION, false, true):
-        CabinSystem.act(controller.train_id, cab, LegacyCabinBattery.CONTROL, &"toggle")
     if event.is_action_pressed(LegacyCabinBrakeCharging.ACTION, false, true):
         CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
     elif event.is_action_released(LegacyCabinBrakeCharging.ACTION, true):
         CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
-    if _manual_brake:
-        # acts on key repeat too (Train.cpp:1811)
-        if event.is_action_pressed(LegacyCabinManualBrake.ACTION_INCREASE, true, true):
-            CabinSystem.act(controller.train_id, cab, LegacyCabinManualBrake.CONTROL, &"increase")
-        elif event.is_action_pressed(LegacyCabinManualBrake.ACTION_DECREASE, true, true):
-            CabinSystem.act(controller.train_id, cab, LegacyCabinManualBrake.CONTROL, &"decrease")
-    if _wipers:
-        if event.is_action_pressed(LegacyCabinWipers.ACTION_INCREASE, false, true):
-            CabinSystem.act(controller.train_id, cab, LegacyCabinWipers.CONTROL, &"increase")
-        elif event.is_action_pressed(LegacyCabinWipers.ACTION_DECREASE, false, true):
-            CabinSystem.act(controller.train_id, cab, LegacyCabinWipers.CONTROL, &"decrease")
 
 
 func _has_control(control_id:StringName) -> bool:
@@ -84,6 +84,8 @@ func _exit_tree() -> void:
         behaviour.unregister()
     _behaviours.clear()
     _battery = null
+    _cab_activation = null
     _manual_brake = null
     _wipers = null
+    _unmodelled_controls = null
     _brake_charging = null

@@ -64,6 +64,7 @@ namespace godot {
         BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_blocking_pressure, "main_pipe")
         BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_unblocking_pressure, "main_pipe")
         BIND_PROPERTY(TrainBrake, Variant::FLOAT, main_pipe_minimum_unblocking_handle_position, "main_pipe")
+        BIND_PROPERTY(TrainBrake, Variant::BOOL, main_pipe_emergency_cuts_off_handle, "main_pipe")
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 TrainBrake, Variant::ARRAY, brake_pressure_table, PROPERTY_HINT_TYPE_STRING, "BrakePressureTableItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
@@ -596,7 +597,7 @@ namespace godot {
         p_mover->LockPipeOn = main_pipe_blocking_pressure;
         p_mover->LockPipeOff = main_pipe_unblocking_pressure;
         p_mover->HandleUnlock = main_pipe_minimum_unblocking_handle_position;
-        p_mover->EmergencyCutsOffHandle = false; //@TODO: Figure out wtf is this
+        p_mover->EmergencyCutsOffHandle = main_pipe_emergency_cuts_off_handle;
 
         p_mover->CompressorSpeed = compressor_speed;
         p_mover->CompressorPower = compressor_power;

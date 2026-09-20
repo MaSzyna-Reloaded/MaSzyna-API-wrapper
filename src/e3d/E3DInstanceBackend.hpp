@@ -27,6 +27,8 @@ namespace godot {
             Ref<E3DModel> model; // keeps submodels and meshes alive
             int instancer = 0;
             bool built = false;
+            RID stream_rid;        // valid when registered with SceneryStreamingServer
+            String model_filename; // set by instance_register(), loaded when it comes in range
 
             String data_path;
             PackedStringArray skins;

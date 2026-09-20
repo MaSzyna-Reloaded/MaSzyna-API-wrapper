@@ -49,6 +49,7 @@ var _traction_rids:Array[RID] = []
 var _wire_power_rids:Array[RID] = []
 var _power_source_rids:Array[RID] = []
 var _e3d_rids:Array[RID] = []
+var _triangle_chunk_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -69,6 +70,7 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_wire_power_rids, TractionPowerServer.wire_free],
         [_power_source_rids, TractionPowerServer.power_source_free],
         [_e3d_rids, E3DRenderingServer.instance_free],
+        [_triangle_chunk_rids, SceneryChunkRenderingServer.free_chunk],
     ]
     var frame_start:int = Time.get_ticks_msec()
     for group:Array in groups:
@@ -83,7 +85,14 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         rids.clear()
 
 
+## Nothing in here is worth simulating while it is being torn down, and a real scenery is
+## hundreds of vehicles with their cabins and sounds, all running their own _process for the
+## seconds the freeing takes. RailVehiclePhysicsServer steps those vehicles from its own registry,
+## outside this subtree, so disabling the subtree alone leaves the heaviest part running until the
+## last vehicle is freed - it is stopped here too and restored once the content is gone.
 func _clear_content(budget_msec:int = 0) -> void:
+    process_mode = Node.PROCESS_MODE_DISABLED
+    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_DISABLED
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
@@ -91,6 +100,8 @@ func _clear_content(budget_msec:int = 0) -> void:
         if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
             await get_tree().process_frame
             frame_start = Time.get_ticks_msec()
+    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_INHERIT
+    process_mode = Node.PROCESS_MODE_INHERIT
 
 
 func load() -> void:

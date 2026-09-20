@@ -1,9 +1,17 @@
+#include "../scenery/SceneryStreamingServer.hpp"
 #include "E3DRenderingServer.hpp"
+#include <godot_cpp/core/mutex_lock.hpp>
+#include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void E3DRenderingServer::_bind_methods() {
         ClassDB::bind_method(D_METHOD("instance_create", "model", "instancer"), &E3DRenderingServer::instance_create);
+        ClassDB::bind_method(
+                D_METHOD(
+                        "instance_register", "data_path", "model_filename", "skins", "transform", "range_begin",
+                        "range_end", "scenario"),
+                &E3DRenderingServer::instance_register);
         ClassDB::bind_method(D_METHOD("instance_free", "instance"), &E3DRenderingServer::instance_free);
         ClassDB::bind_method(D_METHOD("instance_build", "instance"), &E3DRenderingServer::instance_build);
         ClassDB::bind_method(
@@ -30,10 +38,15 @@ namespace godot {
                 &E3DRenderingServer::instance_set_lights_state);
         ClassDB::bind_method(
                 D_METHOD("set_material_resolver", "material_resolver"), &E3DRenderingServer::set_material_resolver);
+        ClassDB::bind_method(D_METHOD("set_model_loader", "model_loader"), &E3DRenderingServer::set_model_loader);
 
         BIND_ENUM_CONSTANT(INSTANCER_OPTIMIZED);
         BIND_ENUM_CONSTANT(INSTANCER_NODES);
         BIND_ENUM_CONSTANT(INSTANCER_EDITABLE_NODES);
+    }
+
+    E3DRenderingServer::E3DRenderingServer() {
+        models_mutex.instantiate();
     }
 
     E3DRenderingServer::~E3DRenderingServer() {
@@ -85,6 +98,11 @@ namespace godot {
     void E3DRenderingServer::instance_free(const RID &p_instance) {
         const HashMap<RID, E3DInstanceData>::Iterator item = instances.find(p_instance);
         ERR_FAIL_COND(item == instances.end());
+        if (item->value.stream_rid.is_valid()) {
+            SceneryStreamingServer::get_instance()->stream_free(item->value.stream_rid);
+            MutexLock lock(**models_mutex);
+            stream_models.erase(p_instance);
+        }
         if (item->value.built) {
             _get_backend(item->value).clear(item->value);
         }
@@ -178,5 +196,107 @@ namespace godot {
     /// force_alpha: bool) -> Material`, used by instance_build()
     void E3DRenderingServer::set_material_resolver(const Callable &p_material_resolver) {
         material_resolver.set_callable(p_material_resolver);
+    }
+
+    /// Registers a scenery model placement for streaming: nothing is loaded or built until the
+    /// streaming camera comes within its visibility range of the chunk it falls into. A range of
+    /// 0 (a scenery node that declares none) means the global draw distance - see
+    /// SceneryStreamingServer.
+    RID E3DRenderingServer::instance_register(
+            const String &p_data_path, const String &p_model_filename, const PackedStringArray &p_skins,
+            const Transform3D &p_transform, const float p_range_begin, const float p_range_end, const RID &p_scenario) {
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        ERR_FAIL_NULL_V(streaming, RID());
+        if (stream_owner < 0) {
+            stream_owner = streaming->owner_create(
+                    callable_mp(this, &E3DRenderingServer::_stream_preload),
+                    callable_mp(this, &E3DRenderingServer::_stream_build),
+                    callable_mp(this, &E3DRenderingServer::_stream_clear));
+        }
+
+        const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+        E3DInstanceData &instance = instances[rid];
+        instance.instancer = INSTANCER_OPTIMIZED;
+        instance.model_filename = p_model_filename;
+        instance.data_path = p_data_path;
+        instance.skins = p_skins;
+        instance.transform = p_transform;
+        instance.visibility_range_begin = p_range_begin;
+        instance.visibility_range_end = p_range_end;
+        instance.scenario = p_scenario;
+        {
+            MutexLock lock(**models_mutex);
+            StreamModel stream_model;
+            stream_model.data_path = p_data_path;
+            stream_model.model_filename = p_model_filename;
+            stream_models[rid] = stream_model;
+        }
+        instance.stream_rid = streaming->stream_register(stream_owner, rid, p_transform.origin, p_range_end);
+        return rid;
+    }
+
+    /// `model_loader(data_path: String, filename: String) -> E3DModel`, called on the streaming
+    /// worker thread for registered instances entering the camera's range
+    void E3DRenderingServer::set_model_loader(const Callable &p_model_loader) {
+        MutexLock lock(**models_mutex);
+        model_loader = p_model_loader;
+    }
+
+    /// Memoized: a scenery places the same few hundred models thousands of times. Two threads
+    /// loading the same model at once only duplicate work the loader itself caches.
+    Ref<E3DModel> E3DRenderingServer::_load_model(const String &p_data_path, const String &p_model_filename) {
+        const String key = p_data_path.path_join(p_model_filename);
+        Callable loader;
+        {
+            MutexLock lock(**models_mutex);
+            const Ref<E3DModel> *cached = models.getptr(key);
+            if (cached != nullptr) {
+                return *cached;
+            }
+            loader = model_loader;
+        }
+        const Ref<E3DModel> model =
+                loader.is_valid() ? Ref<E3DModel>(loader.call(p_data_path, p_model_filename)) : Ref<E3DModel>();
+        MutexLock lock(**models_mutex);
+        models[key] = model;
+        return model;
+    }
+
+    /// Streaming worker thread - the instances map belongs to the main thread, so the model path
+    /// is read from the copy made by instance_register()
+    Variant E3DRenderingServer::_stream_preload(const RID &p_instance) {
+        StreamModel stream_model;
+        {
+            MutexLock lock(**models_mutex);
+            const StreamModel *found = stream_models.getptr(p_instance);
+            if (found == nullptr) {
+                return Variant();
+            }
+            stream_model = *found;
+        }
+        return _load_model(stream_model.data_path, stream_model.model_filename);
+    }
+
+    void E3DRenderingServer::_stream_build(const RID &p_instance, const Variant &p_preloaded) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        if (instance == nullptr) {
+            return;
+        }
+        const Ref<E3DModel> model = p_preloaded;
+        if (model.is_null()) {
+            return; // the loader already reported why
+        }
+        instance->model = model;
+        instance_build(p_instance);
+    }
+
+    void E3DRenderingServer::_stream_clear(const RID &p_instance) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        if (instance == nullptr || !instance->built) {
+            return;
+        }
+        _get_backend(*instance).clear(*instance);
+        instance->built = false;
+        instance->model.unref();
     }
 } // namespace godot

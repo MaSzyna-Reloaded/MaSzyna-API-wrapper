@@ -41,7 +41,8 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # conversion applied to every vehicle model and the cab. v12: LowPolyInterior carries no
     # instancer in the template (RailVehicle3D switches it with the distance). v13: the skins
     # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
-    return ("structure-v13:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # v14: bumped on request together with the E186 cab work, the structure itself is unchanged.
+    return ("structure-v14:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

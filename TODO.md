@@ -205,3 +205,15 @@
   tuned by eye in a test scene (`heavy_rain_start`, `film_*`, `rivulet_*`, `refraction_strength`
   of the material type); "down" follows the gravity of the original droplets (smaller v) and was
   not checked on a real cab glass.
+* E186 (`dynamic/pkp/e186_v2`) cab labels still outside of `MmdSemanticCatalog`:
+  `pantselected_sw:` with the `PantsPreset` selection (`OnCommand_pantographtoggleselected`,
+  `pantographselectnext/previous`, `Train.cpp:3405-3549`), `pantfrontoff_sw:`, `pantrearoff_sw:`,
+  `lights_sw:` (`lightspresetactivatenext/previous`; the `light_position` state is `LightsPosNo`,
+  the count, not the position), `dimheadlights_sw:`, `radiostop_sw:`, `radiovolumenext/prev_sw:`,
+  `universalbrake1_bt:`, `doorpermitpreset_sw:`, `distancecounter_sw:`, `universal0-8:`, the gauges
+  `brakepressb:`, `limpipepress:`, `clock:`, the lamps `i-mainpipelock:`, `i-tempomat:`,
+  `i-malfunction:` and the `pyscreen:` displays. The model has four pantographs
+  (`CollectorsNo=4`, `PhysicalLayout=3`), the wrapper animates the first two.
+* `LegacyCabinBattery`, `LegacyCabinCabActivation`, `LegacyCabinManualBrake` and
+  `LegacyCabinWipers` only register what `LegacyCabinUnmodelledControls` would register from the
+  catalog anyway (their keys already go through it) - they can be folded into it.

@@ -721,14 +721,13 @@ namespace godot {
         if (p_nodes.size() != 5) {
             return {};
         }
-        for (int index = 0; index < p_nodes.size(); ++index) {
-            if (Object::cast_to<Node3D>(p_nodes[index]) == nullptr) {
-                return {};
-            }
-        }
+        // the second arm of each pair is optional - a single-arm pantograph has none
         Node3D *lower = Object::cast_to<Node3D>(p_nodes[0]);
         Node3D *upper = Object::cast_to<Node3D>(p_nodes[2]);
         Node3D *slider = Object::cast_to<Node3D>(p_nodes[4]);
+        if (lower == nullptr || upper == nullptr || slider == nullptr) {
+            return {};
+        }
         const Vector3 lower_to_upper =
                 lower->get_global_basis().inverse().xform(upper->get_global_position() - lower->get_global_position());
         const double len_l1 = Vector2(lower_to_upper.y, lower_to_upper.z).length();

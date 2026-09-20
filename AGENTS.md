@@ -56,6 +56,10 @@ Checks:
 
 * compile c++ plugin and check result
 * run Godot in headless mode outside sandbox, look for parse errors
+* TESTS: never write a test that reads the game directory (a scenery from `scenery/`, a vehicle
+  from `dynamic/`, a texture from `textures/`). CI has no game directory, so such a test is dead
+  there. Everything a test needs is a fixture in `demo/tests/fixtures/` or `demo/tests/materials/`.
+  The same goes for a throwaway diagnostic script: it does not belong in `demo/tests/`.
 * TESTS: never run the whole test suite. Before a commit run only the test scripts you wrote or
   modified, one script at a time: `-gdir=res://tests/ -gselect=<script name>` (`-gtest=` does
   not filter here and runs everything)

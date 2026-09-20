@@ -269,6 +269,19 @@ namespace godot {
             MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, 0.0);
             MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
             MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);
+
+        private:
+            // FIZ EmergencyCutsOffHandle: an open emergency valve cuts the brake handle off the main
+            // pipe (Mover.cpp lock_new), so an emergency braking does not drain the main tank
+            bool main_pipe_emergency_cuts_off_handle = false;
+
+        public:
+            bool get_main_pipe_emergency_cuts_off_handle() const {
+                return main_pipe_emergency_cuts_off_handle;
+            }
+            void set_main_pipe_emergency_cuts_off_handle(const bool p_value) {
+                main_pipe_emergency_cuts_off_handle = p_value;
+            }
             MAKE_MEMBER_GS(bool, releaser_enabled_only_at_no_power_pos, false)
             MAKE_MEMBER_GS(double, compressor_emergency_valve_area, 0.0);
             MAKE_MEMBER_GS(int, universal_brake_button_1, 0);

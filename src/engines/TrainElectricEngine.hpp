@@ -82,6 +82,7 @@ namespace godot {
             void converter(bool p_enabled);
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
+            void pantographs_drop_all(bool p_enabled);
             void pantograph_compressor(bool p_enabled);
             void pantograph_compressor_valve(bool p_to_compressor);
             void pantograph(PantographSelector p_selector, bool p_enabled);

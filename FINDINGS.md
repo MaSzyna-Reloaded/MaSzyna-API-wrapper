@@ -256,3 +256,50 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   wrapper's own second layer make it obvious.
 * **Fix:** the first wiper the cell belongs to is kept even at factor 1; returning droplets and
   rivulets fade in instead of switching on.
+
+## 2026-09-20 - E186 (dynamic/pkp/e186_v2) not starting up
+
+### Ctrl+J did nothing
+
+* The MMD of E186 has no `cabactivation_sw:`. Keyboard actions are polled by the cab widgets, so a
+  cab without the gauge had nobody to take `cab_activation_toggle`. The original runs
+  `OnCommand_cabactivationtoggle` regardless of the gauge (`Train.cpp:3077`).
+* **Fix:** `LegacyCabinCabActivation`, added by `LegacyCabinLogicDelegate` when the cab has no such
+  control - the pattern of `LegacyCabinBattery`.
+* **Rule:** every `OnCommand_*` of the original works without its gauge; a control mapped only in
+  `MmdSemanticCatalog` is dead in every cab that does not model it.
+
+### Main tank empty within a minute and a half
+
+* **Symptom:** pantograph tank at 0.02 bar, pantographs could not be raised.
+* **What proved it:** a headless probe loading `p160dc.fiz` and printing the tanks every 5 s -
+  4.4 -> 3.0 bar in 30 s, against 0.03 bar for EP07. `brake_emergency_valve_flow` was 0.34: the
+  unacknowledged cab signalling brakes, the emergency valve vents the pipe and the handle keeps
+  refilling it from the main tank, which the pantograph tank is connected to (`bPantKurek3`).
+* **Cause:** `TrainBrake.cpp` had `EmergencyCutsOffHandle = false; //@TODO`, the FIZ says
+  `EmergencyCutsOffHandle=Yes` (`Mover.cpp:10508`, `lock_new` at `Mover.cpp:4534`).
+* **Fix:** `TrainBrake.main_pipe_emergency_cuts_off_handle`, read by the FIZ brake parser. After
+  it the same probe loses 0.006 bar in 5 s during the emergency braking.
+* **Trap:** the first re-measurement showed no change - the parsed FIZ is cached on disk.
+  `FIZ_PARSER_FORMAT_VERSION` has to be bumped with every change of a FIZ parser (it was not for
+  the `WiperList:` `Size=` change either).
+
+### Pantographs raised but standing still
+
+* The state had both pantographs active with 3400 V, the model did not move. E186 has single-arm
+  pantographs with no `ramiegorne2` submodel; the vehicle factory and `RailVehicle3D` demanded all
+  five elements. The original skips a missing element (`DynObj.cpp:5414`); the geometry only needs
+  the lower arm 1, the upper arm 1 and the slider.
+
+### M, D and R dead in the E186 cab
+
+* Keys are polled by the cab widgets. E186 models `main_sw:` instead of `main_on_bt:`/
+  `main_off_bt:`, three `dir*_bt:` buttons instead of `dirkey:`, and has a separate `shp_reset_bt:`
+  (`SeparateAcknowledge`, the vigilance button does not reset the cab signalling there) - none of
+  them was in the catalog, so nothing took M, D, R, and the emergency braking of the unreset SHP
+  could not be cleared at all.
+* **Fix:** the labels are mapped (`LegacyCabinMainSwitch` takes `main_sw:`, `LegacyCabinReverser`
+  the buttons, new commands `security_cabsignal_acknowledge`, `pantographs_drop_all`), and
+  `LegacyCabinUnmodelledControls` registers every catalog control with a key that the cab does
+  not model, unless one of its keys is already taken by a modelled control.
+

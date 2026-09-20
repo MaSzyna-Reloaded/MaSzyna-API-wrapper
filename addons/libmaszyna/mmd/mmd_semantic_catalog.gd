@@ -359,6 +359,84 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # main_sw: one line breaker switch instead of the main_on_bt/main_off_bt pair
+        # (drivermouseinput.cpp:774 -> linebreakertoggle, Train.cpp:3714). Its behaviour is
+        # LegacyCabinMainSwitch; no key of its own, M / Shift+M reach main_on_bt/main_off_bt.
+        "main_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Reverser push buttons (drivermouseinput.cpp:521-529 -> reverserforward/neutral/backward,
+        # Train.cpp OnCommand_reverser*). Behaviour: LegacyCabinReverser; the D / R keys reach dirkey.
+        "dirforward_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "dirneutral_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "dirbackward_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # shp_reset_bt: cab signalling reset of a vehicle with a separate acknowledge button
+        # (drivermouseinput.cpp:603 -> cabsignalacknowledge, Train.cpp:2876, Shift+Space).
+        "shp_reset_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "security_cabsignal_acknowledge",
+                "controller_mode": CabinButton.ControllerMode.On,
+                "action": "security_cabsignal_acknowledge",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Spring brake buttons (drivermouseinput.cpp:612-617 -> springbrakeenable/disable).
+        "springbrakeon_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "set_spring_brake_active",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "springbrakeoff_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "set_spring_brake_active",
+                "controller_mode": CabinButton.ControllerMode.Off,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # pantalloff_sw: drops every pantograph (drivermouseinput.cpp:834 -> pantographlowerall,
+        # Train.cpp:3336, Ctrl+P).
+        "pantalloff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "pantographs_drop_all",
+                "state_property": "current_collector/pantographs_dropped",
+                "action": "pantographs_drop_all_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "fuelpump_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -887,6 +965,20 @@ static func _ensure_built() -> void:
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
+        "i-battery": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "battery_enabled" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        "i-springbrakeactive": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "spring_brake/active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
         "i-mainbreaker": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/mainbreaker_active" },
@@ -1232,6 +1324,11 @@ static func _ensure_built() -> void:
             "position_at_submodel": true,
         },
     }
+
+
+static func get_labels() -> Array:
+    _ensure_built()
+    return _catalog.keys()
 
 
 static func has_label(label:String) -> bool:

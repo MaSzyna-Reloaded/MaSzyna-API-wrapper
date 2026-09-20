@@ -92,6 +92,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("converter_fuse_reset"), &TrainElectricEngine::converter_fuse_reset);
         ClassDB::bind_method(D_METHOD("pantographs_valve", "enabled"), &TrainElectricEngine::pantographs_valve);
         ClassDB::bind_method(
+                D_METHOD("pantographs_drop_all", "enabled"), &TrainElectricEngine::pantographs_drop_all);
+        ClassDB::bind_method(
                 D_METHOD("pantograph_compressor", "enabled"), &TrainElectricEngine::pantograph_compressor);
         ClassDB::bind_method(
                 D_METHOD("pantograph_compressor_valve", "to_compressor"),
@@ -155,6 +157,7 @@ namespace godot {
         // machine; any raise/lower animation should tween in response to this flag changing,
         // not read a position value from the mover.
         p_state["current_collector/valve_active"] = p_mover->PantsValve.is_active;
+        p_state["current_collector/pantographs_dropped"] = p_mover->PantAllDown;
         p_state["current_collector/pantograph_first_active"] = p_mover->Pantographs[0].is_active;
         p_state["current_collector/pantograph_first_voltage"] = p_mover->Pantographs[0].voltage;
         p_state["current_collector/pantograph_second_active"] = p_mover->Pantographs[1].is_active;
@@ -312,6 +315,13 @@ namespace godot {
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
+    // Train.cpp:3336 OnCommand_pantographlowerall
+    void TrainElectricEngine::pantographs_drop_all(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->DropAllPantographs(p_enabled);
+    }
+
     void TrainElectricEngine::pantograph_compressor(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
@@ -380,6 +390,7 @@ namespace godot {
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
         register_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
         register_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         register_command("pantograph", Callable(this, "pantograph"));
@@ -391,6 +402,7 @@ namespace godot {
         unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        unregister_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
         unregister_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
         unregister_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         unregister_command("pantograph", Callable(this, "pantograph"));

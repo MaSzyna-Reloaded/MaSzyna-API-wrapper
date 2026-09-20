@@ -21,6 +21,8 @@ namespace godot {
         BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, shp_magnet_distance);
         BIND_PROPERTY(TrainSecuritySystem, Variant::FLOAT, ca_max_hold_time);
         ClassDB::bind_method(D_METHOD("security_acknowledge", "enabled"), &TrainSecuritySystem::security_acknowledge);
+        ClassDB::bind_method(
+                D_METHOD("security_cabsignal_acknowledge"), &TrainSecuritySystem::security_cabsignal_acknowledge);
         ADD_SIGNAL(MethodInfo("blinking_changed", PropertyInfo(Variant::BOOL, "state")));
         ADD_SIGNAL(MethodInfo("beeping_changed", PropertyInfo(Variant::BOOL, "state")));
 
@@ -84,10 +86,22 @@ namespace godot {
 
     void TrainSecuritySystem::_register_commands() {
         register_command("security_acknowledge", Callable(this, "security_acknowledge"));
+        register_command("security_cabsignal_acknowledge", Callable(this, "security_cabsignal_acknowledge"));
     }
 
     void TrainSecuritySystem::_unregister_commands() {
         unregister_command("security_acknowledge", Callable(this, "security_acknowledge"));
+        unregister_command("security_cabsignal_acknowledge", Callable(this, "security_cabsignal_acknowledge"));
+    }
+
+    // Train.cpp:2876 OnCommand_cabsignalacknowledge - the cab signalling of a vehicle with a separate
+    // acknowledge button (FIZ SeparateAcknowledge) is not reset by the vigilance button
+    void TrainSecuritySystem::security_cabsignal_acknowledge() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        if (mover->SecuritySystem.has_separate_acknowledge()) {
+            mover->SecuritySystem.cabsignal_reset();
+        }
     }
 
     void TrainSecuritySystem::security_acknowledge(const bool p_enabled) {

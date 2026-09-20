@@ -120,6 +120,8 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         node.main_pipe_unblocking_pressure = FizLineUtil.get_float(kv, "LPOff")
     if kv.has("HandlePipeUnlockPos"):
         node.main_pipe_minimum_unblocking_handle_position = FizLineUtil.get_int(kv, "HandlePipeUnlockPos")
+    if kv.has("EmergencyCutsOffHandle"):
+        node.main_pipe_emergency_cuts_off_handle = FizLineUtil.get_bool(kv, "EmergencyCutsOffHandle")
 
     var high_pressure: float = FizLineUtil.get_float(kv, "HiPP", 5.0)
     if kv.has("HiPP"):

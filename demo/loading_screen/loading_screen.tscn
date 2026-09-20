@@ -8,6 +8,10 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_6lv5a"]
 bg_color = Color(0, 0, 0, 0)
 
+[sub_resource type="SystemFont" id="SystemFont_title"]
+font_names = PackedStringArray("Impact", "Anton", "Haettenschweiler", "Oswald", "Sans-Serif")
+font_weight = 700
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_i6sv4"]
 bg_color = Color(0, 0, 0, 0.266667)
 border_width_left = 2
@@ -229,10 +233,6 @@ _data = {
 &"fade_in": SubResource("Animation_6yp64")
 }
 
-[sub_resource type="SystemFont" id="SystemFont_title"]
-font_names = PackedStringArray("Impact", "Anton", "Haettenschweiler", "Oswald", "Sans-Serif")
-font_weight = 700
-
 [node name="LoadingScreen" type="PanelContainer" unique_id=974424848]
 anchors_preset = 15
 anchor_right = 1.0
@@ -268,7 +268,7 @@ layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 2.0
 
-[node name="Title" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer"]
+[node name="Title" type="Label" parent="VBoxContainer/MarginContainer/VBoxContainer" unique_id=170239930]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/outline_size = 6

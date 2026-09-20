@@ -33,7 +33,10 @@ namespace godot {
             exiting = true;
             pending.clear();
         }
-        semaphore->post(static_cast<int32_t>(workers.size()));
+        // a queue that never got a task has no workers to wake, and post(0) is an error
+        if (!workers.is_empty()) {
+            semaphore->post(static_cast<int32_t>(workers.size()));
+        }
         for (const Ref<Thread> &worker: workers) {
             worker->wait_to_finish();
         }

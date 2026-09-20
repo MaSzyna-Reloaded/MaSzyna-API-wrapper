@@ -108,9 +108,6 @@ static func _build_structure(
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
         low_poly_model.rotation.y = PI
-        # nothing animates or looks up the interior by submodel name, so it needs no node tree -
-        # one RenderingServer instance per submodel instead of hundreds of Node3Ds per vehicle
-        low_poly_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var passengers_model:E3DModelInstance = null
     var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
@@ -121,6 +118,11 @@ static func _build_structure(
         passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
         passengers_model.rotation.y = PI
+        # nobody looks into the passengers by node name or collects their materials, so they need
+        # no node tree - one RenderingServer instance per submodel instead of a Node3D each.
+        # The low-poly interior cannot do the same: RailVehicle3D finds its cab0/cab1/cab2 nodes to
+        # hide the occupied cab (_update_low_poly_cabs_visibility) and collects its MeshInstance3D
+        # materials to dim them with the cab lights (_on_low_poly_cabin_e3d_loaded).
         passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var fiz_controller := FIZTrainController.new()

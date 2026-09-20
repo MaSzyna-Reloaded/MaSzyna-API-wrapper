@@ -127,6 +127,14 @@ ENDIF ()
 
 TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
 
+# A MinGW-built DLL otherwise needs libstdc++-6.dll, libgcc_s_seh-1.dll and libwinpthread-1.dll
+# sitting next to the game, and Godot only ships the executable and this library - the extension
+# would simply fail to load on a clean Windows. Godot's own MinGW builds do the same
+# (use_static_cpp).
+IF (MINGW)
+    TARGET_LINK_OPTIONS(${LIBNAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+ENDIF ()
+
 SET_TARGET_PROPERTIES(${LIBNAME}
         PROPERTIES
         CXX_VISIBILITY_PRESET hidden

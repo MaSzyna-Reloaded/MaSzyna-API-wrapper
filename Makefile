@@ -1,10 +1,10 @@
 .PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix
 .DEFAULT_GOAL = compile-debug
 
-GITREV:=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
-DATE:=$(shell date +"%Y%m%d")
-LINUX_ZIP:=bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
-WINDOWS_ZIP:=bin/windows/reloaded-$(GITREV)-$(DATE)-windows.zip
+# The build stamps itself (cmake/write_build_number.cmake) and the app shows that number, so the
+# archive name stays the same from build to build and does not carry a branch or a date
+LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
+WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
 CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
@@ -14,7 +14,7 @@ LIBMASZYNA_DEBUG:=""
 # can load it - a single precision binary dies with a glibc heap assertion while the module
 # initialises. Override when your double precision build is named differently:
 #   make release-linux GODOT=godot-double
-GODOT?=godot
+GODOT?=godot-double
 CMAKE_GODOTCPP_API_VERSION=4.7
 
 #Helper for CLion so it would see generated bindings

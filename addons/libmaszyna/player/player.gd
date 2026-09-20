@@ -40,6 +40,12 @@ func _ready() -> void:
     glow_material.set_shader_parameter(&"light_position", headlamp.position)
     glow_material.set_shader_parameter(&"light_direction", -headlamp.transform.basis.z)
     glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
+    # scenery content is registered, not built - it is streamed around this camera
+    SceneryStreamingServer.set_camera(get_camera())
+
+
+func _exit_tree() -> void:
+    SceneryStreamingServer.set_camera(null)
 
 func _process(_delta:float) -> void:
     if _dirty:
@@ -205,6 +211,7 @@ func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
 func _set_external_view(p_enabled:bool) -> void:
     var camera:FreeCamera3D = get_camera()
     camera.process_mode = Node.PROCESS_MODE_DISABLED if p_enabled else Node.PROCESS_MODE_INHERIT
+    SceneryStreamingServer.set_camera(external_camera if p_enabled else camera)
     if p_enabled:
         external_camera.activate(controlled_vehicle, camera.global_transform)
     else:

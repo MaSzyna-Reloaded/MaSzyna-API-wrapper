@@ -8,6 +8,8 @@ const LOADING_FADE_OUT_TIME: float = 1.0
 const CABIN_SETTLE_FRAMES: int = 5
 ## Frames waited for the player to get its vehicle
 const VEHICLE_WAIT_FRAMES: int = 120
+## Seconds the loading screen waits for the streaming to fill in around the player before giving up
+const STREAMING_WAIT_TIME: float = 30.0
 ## Seconds of each fade of "Exit to menu": game -> spinner -> scenario selector
 const EXIT_FADE_TIME: float = 0.5
 ## Seconds the spinner stays after the scenery has been unloaded
@@ -71,6 +73,7 @@ func _on_scenery_selector_scenery_selected(
     $Player.start_train_id = train_id
     await $MaszynaSceneryNode.load()
     await _wait_for_cabin()
+    await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
     await tween.finished
@@ -89,6 +92,21 @@ func _wait_for_cabin() -> void:
         waited += 1
     for frame: int in CABIN_SETTLE_FRAMES:
         await get_tree().process_frame
+
+
+## A scenery is registered with SceneryStreamingServer, not built, so the world around the player
+## is filled in afterwards. In game that means watching it pop in at a few fps, so it happens here
+## instead - after _wait_for_cabin(), when the player is already in its vehicle and the streaming
+## fills in the place the game actually starts at.
+func _wait_for_streaming() -> void:
+    var deadline: float = Time.get_ticks_msec() + STREAMING_WAIT_TIME * 1000.0
+    var statistics: Dictionary = SceneryStreamingServer.get_statistics()
+    while statistics["has_camera"] and Time.get_ticks_msec() < deadline:
+        # passes == 0 means the first plan has not run yet, so an empty queue proves nothing
+        if statistics["passes"] > 0 and statistics["pending_builds"] == 0:
+            return
+        await get_tree().process_frame
+        statistics = SceneryStreamingServer.get_statistics()
 
 
 ## Escape in the scenario selector: fade the screen to black and the music out, then quit

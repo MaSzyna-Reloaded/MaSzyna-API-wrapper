@@ -22,6 +22,8 @@
 [ext_resource type="AudioStream" uid="uid://cn3nnquf55ipe" path="res://sounds/music/musinova-minimal-techno-ambient-loop-edit-483369.mp3" id="13_music"]
 [ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
 [ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
+[ext_resource type="PackedScene" uid="uid://cs3n2ry5tr34m" path="res://hud/scenery_streaming_panel.tscn" id="21_streaming"]
+[ext_resource type="PackedScene" uid="uid://cf4m3t1m3p4n1" path="res://hud/frame_time_panel.tscn" id="22_frametime"]
 [ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
 
 [node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
@@ -221,6 +223,23 @@ metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 [node name="MiniMapControl" parent="ControlWindows/MiniMap" unique_id=234941782 instance=ExtResource("11_minimap")]
 layout_mode = 2
 
+[node name="SceneryStreaming" type="Container" parent="ControlWindows" unique_id=609847832]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 700.0
+offset_top = 100.0
+offset_right = 1010.0
+offset_bottom = 400.0
+script = ExtResource("9_window")
+title = "Scenery Streaming"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming" unique_id=1011989969 instance=ExtResource("21_streaming")]
+clip_contents = true
+layout_mode = 2
+
 [node name="WeatherAndTime" type="Container" parent="ControlWindows" unique_id=1426730518]
 top_level = true
 custom_minimum_size = Vector2(100, 50)
@@ -229,7 +248,7 @@ layout_mode = 0
 offset_left = 24.0
 offset_top = 45.0
 offset_right = 1250.0
-offset_bottom = 238.0
+offset_bottom = 240.0
 script = ExtResource("9_window")
 title = "Weather and Time"
 

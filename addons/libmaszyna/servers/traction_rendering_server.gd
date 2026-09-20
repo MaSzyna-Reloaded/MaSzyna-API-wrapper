@@ -14,6 +14,19 @@ class TractionState:
     var secondary_mesh_instance: RID = RID()
     var primary_mesh: Mesh
     var secondary_mesh: Mesh
+    ## Valid when the span is streamed (SceneryStreamingServer); hand-placed nodes are not
+    var stream_rid: RID = RID()
+    var streamed: bool = false
+    ## Geometry of the span, kept so the meshes can be built when it comes into range
+    var contact_p1: Vector3 = Vector3.ZERO
+    var contact_p2: Vector3 = Vector3.ZERO
+    var support_p1: Vector3 = Vector3.ZERO
+    var support_p2: Vector3 = Vector3.ZERO
+    var wire_thickness: float = 0.0
+    var wires: int = 0
+    var wire_offset: float = 0.0
+    var min_height: float = 0.0
+    var segment_length: float = 0.0
 
 
 class SegmentData:
@@ -32,6 +45,7 @@ const EPSILON: float = 0.0001
 
 var _tractions: Dictionary[RID, TractionState] = {}
 var _next_traction_id: int = 0
+var _stream_owner: int = -1
 
 
 func create_traction() -> RID:
@@ -51,6 +65,8 @@ func free_traction(traction_rid: RID) -> void:
     if not state:
         return
 
+    if state.stream_rid.is_valid():
+        SceneryStreamingServer.stream_free(state.stream_rid)
     if state.primary_mesh_instance.is_valid():
         RenderingServer.free_rid(state.primary_mesh_instance)
     if state.secondary_mesh_instance.is_valid():
@@ -113,17 +129,67 @@ func set_traction_geometry(
     if not state:
         return
 
+    state.contact_p1 = contact_p1
+    state.contact_p2 = contact_p2
+    state.support_p1 = support_p1
+    state.support_p2 = support_p2
+    state.wire_thickness = wire_thickness
+    state.wires = wires
+    state.wire_offset = wire_offset
+    state.min_height = min_height
+    state.segment_length = segment_length
+    if state.stream_rid.is_valid() and not state.streamed:
+        return # out of range: built by _stream_build() when the camera comes into range
+    _build_traction_meshes(state)
+
+
+## Registers the span for streaming instead of building its wires: a scenery has thousands of
+## spans and each one is two RenderingServer instances with no visibility range of their own.
+## The meshes are built when the camera comes within the streaming draw distance of the chunk
+## holding the span (SceneryStreamingServer) and dropped when it leaves.
+func stream_traction(traction_rid: RID) -> void:
+    var state: TractionState = _tractions.get(traction_rid)
+    if not state:
+        return
+    if _stream_owner < 0:
+        _stream_owner = SceneryStreamingServer.owner_create(Callable(), _stream_build, _stream_clear)
+    state.stream_rid = SceneryStreamingServer.stream_register(
+        _stream_owner, traction_rid, state.contact_p1, 0.0
+    )
+    _stream_clear(traction_rid)
+
+
+func _stream_build(traction_rid: RID, _preloaded: Variant) -> void:
+    var state: TractionState = _tractions.get(traction_rid)
+    if not state:
+        return
+    state.streamed = true
+    _build_traction_meshes(state)
+
+
+func _stream_clear(traction_rid: RID) -> void:
+    var state: TractionState = _tractions.get(traction_rid)
+    if not state:
+        return
+    state.streamed = false
+    state.primary_mesh = null
+    state.secondary_mesh = null
+    RenderingServer.instance_set_base(state.primary_mesh_instance, RID())
+    RenderingServer.instance_set_base(state.secondary_mesh_instance, RID())
+
+
+func _build_traction_meshes(state: TractionState) -> void:
     _update_traction_meshes(
         state,
-        contact_p1,
-        contact_p2,
-        support_p1,
-        support_p2,
-        wire_thickness,
-        wires,
-        wire_offset,
-        min_height,
-        segment_length
+        state.contact_p1,
+        state.contact_p2,
+        state.support_p1,
+        state.support_p2,
+        state.wire_thickness,
+        state.wires,
+        state.wire_offset,
+        state.min_height,
+        state.segment_length
     )
     RenderingServer.instance_set_base(state.primary_mesh_instance, state.primary_mesh.get_rid() if state.primary_mesh else RID())
     RenderingServer.instance_set_base(state.secondary_mesh_instance, state.secondary_mesh.get_rid() if state.secondary_mesh else RID())

@@ -304,10 +304,16 @@ func _apply_weather_preset() -> void:
 
 
 func _apply_visual_configuration() -> void:
-    # Deliberately blocked: precipitation alone does not switch the materials to their "rain"
-    # variant (it used to, with any precipitation above 0). The wet textures of the original assets
-    # are poor and the swap looks bad the moment it starts to rain. Only the weather preset decides.
-    MaterialManager.weather = weather
+    # Any precipitation switches the materials to their "rain" variant. It was blocked for a while
+    # as bad looking: the wet texture ("rain: { texture2: ... }") is a reflection map and was bound
+    # as a normal map back then (FINDINGS.md, "texture2: is not always the normal map").
+    MaterialManager.weather = (
+        MaszynaEnvironment.Weather.WEATHER_RAIN if precipitation > 0.0 else weather
+    )
+    # rain_params of the "rain_windscreen" materials (opengl33renderer.cpp:752-754): the share of
+    # active droplets and the time they take to return after a wiper pass
+    RenderingServer.global_shader_parameter_set("maszyna_rain_intensity", precipitation)
+    RenderingServer.global_shader_parameter_set("maszyna_wiper_regen_time", lerpf(15.0, 1.0, precipitation))
     if not _environment or not _sky_environment:
         return
 

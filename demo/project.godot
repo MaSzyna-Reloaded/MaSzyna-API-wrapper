@@ -103,20 +103,20 @@ night_vol_fog_density=0.02
 [gnd_weather]
 
 precipitation_wind_strength=10.0
-wind_influence=0.52
+wind_influence=0.5
 follow_height=0.855
-rain_mesh_density=0.1
-near_layer_speed_multiplier=0.93
+rain_mesh_density=2.0
+near_layer_speed_multiplier=2.0
 near_rain_blur=0.7
 near_rain_glow=1.0
 mid_rain_blur=0.38
 near_rain_color=Color(1, 1, 1, 0.1254902)
 mid_rain_color=Color(0.49803922, 0.49803922, 0.49803922, 0.24313726)
-visual_intensity=1.0
+visual_intensity=5.0
 rain_roughness=0.5
 rain_specular_fade_start=0.1
 rain_specular_fade_end=3.0
-rain_probe_max_count=128
+rain_probe_max_count=64
 rain_probe_distance=4.0
 
 [input]
@@ -448,6 +448,26 @@ anti_aliasing/quality/use_taa=true
 
 [shader_globals]
 
+maszyna_rain_intensity={
+"type": "float",
+"value": 0.0
+}
+maszyna_wiper_regen_time={
+"type": "float",
+"value": 10.0
+}
+maszyna_wiper_pos={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+maszyna_wiper_timer_out={
+"type": "vec4",
+"value": Vector4(-1000, -1000, -1000, -1000)
+}
+maszyna_wiper_timer_return={
+"type": "vec4",
+"value": Vector4(-1000, -1000, -1000, -1000)
+}
 sky_texture={
 "type": "sampler2D",
 "value": ""

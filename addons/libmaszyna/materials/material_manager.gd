@@ -8,7 +8,7 @@ const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/e3d/colored.
 
 ## The cache key cannot see changes to MaterialFactory's own code - bump this whenever that code
 ## changes what a built material holds. v2: normal_scale 1.0 like the original.
-const CACHE_VERSION: int = 2
+const CACHE_VERSION: int = 3
 
 var _materials_cache = ResourceCache.create("materials")
 var _managed_materials: Dictionary = {}

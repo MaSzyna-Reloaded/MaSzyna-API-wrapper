@@ -168,3 +168,52 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   `demo_scenery_loading`; three windows added later reached only one of them. They are one scene
   now (`demo/hud/game_hud.tscn`); a scene adds a menu entry of its own as a `Button` under
   `MenuActions`.
+
+## 2026-09-20 - material shaders missing from the wrapper
+
+### "Shader is not supported: Default_1 / reflmap"
+
+* **Symptom:** warnings from `MaterialFactory`, the materials fell back to the default one.
+* **What proved it:** a count of every `shader:` in the `.mat` files of the game dir against
+  `~/src/maszyna/shaders/mat_*.frag` - 26 shaders in the original, 12 mapped here. Missing and in
+  use: `reflmap` (69), `detail_parallax_specgloss` (24), `reflmap_specgloss` (17), `default_1` (6),
+  `rain_windscreen` (4), `default_detail` (3), `colored` (1).
+* Shader names are case insensitive in the data (`shader: Default_1`): the original opens
+  `mat_<name>.frag` on a Windows file system (`opengl33renderer.cpp:2018`). Lowercased in the
+  parser.
+* **Rule:** survey the data before trusting a list of "supported" values, and check the age of
+  `~/src/maszyna` against the game dir (`shaders/`): `mat_rain_windscreen.frag` and the whole wiper
+  code were missing from a checkout of 2024-08.
+
+### `texture2:` is not always the normal map
+
+* A numbered `textureN:` binds slot N-1 of the *shader* (`material.cpp:76-81`), and the slot
+  order differs: `reflmap` = diffuse, reflmap; `default_detail` = diffuse, detailnormalmap;
+  `water` = normalmap, dudvmap, diffuse; `detail_parallax_specgloss` has specgloss before
+  detailnormalmap. The wrapper aliased `tex2` to `normalmap` for every shader.
+* A material **without** `shader:` gets `default_0/1/2` by the number of bound textures
+  (`material.cpp:117-134`) and `mat_default_2.frag` is `mat_reflmap.frag`: its second texture -
+  also when written as `texture_normalmap:` (`texture_bindings`, `material.cpp:60-65`) - is a
+  reflection map read through its alpha. About 2500 of the 8633 shaderless materials bind one
+  (`rain: { texture2: asphalt_wet }`); the wrapper bump-mapped them with it. Some of the data puts
+  a real normal map there (`glass_black_normal`) - the original reads it as a reflmap too.
+* **Fix:** `TextureMap.slots` per shader in `MaterialFactory`, resolved by `_texture_path()`.
+* **Rule:** `MaterialManager.CACHE_VERSION` bumped - the disk cache cannot see factory changes.
+
+### `parallax_specgloss` never received its specgloss texture
+
+* `_apply_parallax()` did not set `specgloss_texture` at all (187 materials); the unbound sampler
+  read as white. Found while adding `detail_parallax_specgloss`.
+
+### Raindrops on the windscreen black as soot
+
+* **Symptom:** the droplets of `rain_windscreen` showed as black rings from inside the cab.
+* **What proved it:** the atlas (`textures/fx/raindrops-atlas.dds`) is a white rim over a black
+  interior, and the original does not light it - `dropTex.rgb * dynBright`, with `dynBright` from
+  the luminance of the ambient light only (`mat_rain_windscreen.frag`). The port had put the
+  droplets into `ALBEDO`, "lit by the scene": inside of a dark cab a white rim lit by nothing is
+  black.
+* **Fix:** droplets go to `EMISSION`; a Godot fragment shader cannot read the ambient light, so
+  the blurred screen luminance behind the glass stands in for it.
+* **Rule:** "the engine's lighting will do that" is not a port of an unlit term - check what the
+  original multiplies by before moving a colour into `ALBEDO`.

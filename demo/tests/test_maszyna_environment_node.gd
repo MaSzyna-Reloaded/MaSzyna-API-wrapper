@@ -266,8 +266,7 @@ func test_proxies_season_and_weather_to_material_manager() -> void:
     environment_node.precipitation = 0.5
     environment_node._process(0.0)
 
-    # precipitation no longer switches the materials to their rain variant - blocked on purpose
-    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_CLEAR)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
 
 
 func test_sets_season_from_manual_date_thresholds() -> void:

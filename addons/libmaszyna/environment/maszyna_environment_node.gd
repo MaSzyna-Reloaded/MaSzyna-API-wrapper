@@ -304,8 +304,12 @@ func _apply_weather_preset() -> void:
 
 
 func _apply_visual_configuration() -> void:
+    # Deliberately blocked: materials never switch to their "rain" variant, neither with the
+    # precipitation nor with the rain preset. The wet textures of the original assets are poor and
+    # the swap looks bad the moment it starts to rain; rain keeps the overcast variant instead.
     MaterialManager.weather = (
-        MaszynaEnvironment.Weather.WEATHER_RAIN if precipitation > 0.0 else weather
+        MaszynaEnvironment.Weather.WEATHER_CLOUDY
+        if weather == MaszynaEnvironment.Weather.WEATHER_RAIN else weather
     )
     if not _environment or not _sky_environment:
         return

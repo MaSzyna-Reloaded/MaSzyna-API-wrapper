@@ -85,7 +85,8 @@ func test_weather_preset_sets_weather_controls() -> void:
     assert_almost_eq(environment_node.fog_density, 0.3, 0.000001)
     assert_almost_eq(environment_node.wind_strength, 0.6, 0.000001)
     assert_almost_eq(weather.precipitation_intensity, 0.8, 0.000001)
-    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
+    # the rain variant of the materials is blocked on purpose (maszyna_environment_node.gd)
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_CLOUDY)
 
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_SNOW
     environment_node._process(0.0)
@@ -266,7 +267,8 @@ func test_proxies_season_and_weather_to_material_manager() -> void:
     environment_node.precipitation = 0.5
     environment_node._process(0.0)
 
-    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_RAIN)
+    # precipitation no longer switches the materials to their rain variant - blocked on purpose
+    assert_eq(MaterialManager.weather, MaszynaEnvironment.Weather.WEATHER_CLEAR)
 
 
 func test_sets_season_from_manual_date_thresholds() -> void:

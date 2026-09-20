@@ -64,9 +64,12 @@ void fragment() {
 	vec2 normal_xy = texture(texture_normal, base_uv).rg * 2.0 - 1.0;
 	float normal_z = sqrt(1.0 - clamp(dot(normal_xy, normal_xy), 0.0, 1.0));
 	vec2 detail_xy = (texture(texture_detail_normal, base_uv * detail_scale).rg * 2.0 - 1.0) * detail_height_scale;
-	vec3 combined_normal = normalize(vec3(normal_xy + detail_xy, normal_z));
+	// normal_scale is this wrapper's strength of the base normal map and has no counterpart in the
+	// original, so it must not reach the detail map: tiled over hundreds of metres (grass.mat:
+	// detail_scale 0.00125) and amplified, it tilts flat ground far enough to leave it unlit.
+	vec3 combined_normal = normalize(vec3(normal_xy * normal_scale + detail_xy, normal_z));
 	NORMAL_MAP = vec3(combined_normal.xy * 0.5 + 0.5, 1.0);
-	NORMAL_MAP_DEPTH = normal_scale;
+	NORMAL_MAP_DEPTH = 1.0;
 
     if(emission_enabled) {
         EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;

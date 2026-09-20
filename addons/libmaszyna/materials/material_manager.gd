@@ -6,6 +6,10 @@ static var UNKNOWN_TEXTURE = preload("res://addons/libmaszyna/materials/missing_
 const DDSTextureLoader = preload("res://addons/libmaszyna/materials/dds_texture_loader.gd")
 const COLORED_MATERIAL: Material = preload("res://addons/libmaszyna/e3d/colored.material")
 
+## The cache key cannot see changes to MaterialFactory's own code - bump this whenever that code
+## changes what a built material holds. v2: normal_scale 1.0 like the original.
+const CACHE_VERSION: int = 2
+
 var _materials_cache = ResourceCache.create("materials")
 var _managed_materials: Dictionary = {}
 var _dds_cache: Dictionary = {}
@@ -182,6 +186,7 @@ func _compute_cache_hash(
     options: MaterialOptions,
 ) -> String:
     var options_hash = ":".join([
+        CACHE_VERSION,
         options.force_transparent,
         options.diffuse_color.to_html(true),
         options.alpha_scissor_threshold,

@@ -4,6 +4,7 @@ extends Node
 static var sky_importer = preload("res://addons/libmaszyna/importer/maszyna_sky_importer.gd").new()
 static var atmo_importer = preload("res://addons/libmaszyna/importer/maszyna_atmo_importer.gd").new()
 static var time_importer = preload("res://addons/libmaszyna/importer/maszyna_time_importer.gd").new()
+static var config_importer = preload("res://addons/libmaszyna/importer/maszyna_config_importer.gd").new()
 static var node_importer = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd").new()
 static var event_importer = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd").new()
 static var origin_importer = preload("res://addons/libmaszyna/importer/maszyna_origin_importer.gd").new()
@@ -15,7 +16,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 13
+const CACHE_FORMAT_VERSION:int = 15
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -534,6 +535,7 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
     parser.register_handler("sky", _make_importer_callback(sky_importer, context))
     parser.register_handler("atmo", _make_importer_callback(atmo_importer, context))
     parser.register_handler("time", _make_importer_callback(time_importer, context))
+    parser.register_handler("config", _make_importer_callback(config_importer, context))
     parser.register_handler("node", _make_importer_callback(node_importer, context))
     parser.register_handler("event", _make_importer_callback(event_importer, context))
     parser.register_handler("origin", _make_importer_callback(origin_importer, context))
@@ -548,7 +550,7 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
 
 
 func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
-    for token in ["sky", "atmo", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit"]:
+    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit"]:
         parser.unregister_handler(token)
     context.end_file(_get_source_path(filename))
 

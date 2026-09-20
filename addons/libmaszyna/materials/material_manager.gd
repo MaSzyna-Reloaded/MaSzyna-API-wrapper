@@ -68,14 +68,15 @@ func get_material(
     var force_transparent = options.force_transparent  # TODO: ALPHA
     var output: ShaderMaterial = _materials_cache.get(cache_hash) as ShaderMaterial
     var is_newly_created:bool = not output
+    var mmat: MaszynaMaterial = load_material(model_path, material_path)
     if is_newly_created:
-        var mmat: MaszynaMaterial = load_material(model_path, material_path)
         output = MaterialFactory.create(mmat, model_path, season, weather, options)
     else:
-        var mmat: MaszynaMaterial = load_material(model_path, material_path)
         MaterialFactory.apply(output, mmat, model_path, season, weather, options)
     _managed_materials[cache_hash] = {
         "material_ref": weakref(output),
+        # most materials declare no season or weather variant and never change with them
+        "has_variants": mmat.variants.size() > 0,
         "model_path": model_path,
         "material_path": material_path,
         "options": options,
@@ -211,9 +212,13 @@ func _refresh_managed_material(cache_hash: String) -> void:
     if not material:
         _managed_materials.erase(cache_hash)
         return
+    if not managed_material.get("has_variants", true):
+        return
     var model_path: String = managed_material.get("model_path", "")
     var material_path: String = managed_material.get("material_path", "")
     var options:MaterialOptions = managed_material.get("options")
     var mmat: MaszynaMaterial = load_material(model_path, material_path)
+    # not written back to the disk cache: its key knows neither the season nor the weather, a
+    # loaded material gets its variant applied anyway (get_material()), and the write - a resource
+    # with its textures embedded, for every material at once - is what froze the game
     MaterialFactory.apply(material, mmat, model_path, season, weather, options)
-    _materials_cache.set(cache_hash, material)

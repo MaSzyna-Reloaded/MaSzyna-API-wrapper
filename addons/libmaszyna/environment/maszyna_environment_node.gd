@@ -7,16 +7,16 @@ const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
 const GROUP: StringName = &"maszyna_environment"
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
-        "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.5, "wind_strength": 0.2,
+        "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
     },
     MaszynaEnvironment.Weather.WEATHER_CLOUDY: {
-        "precipitation": 0.0, "cloudiness": 0.7, "fog_density": 1.0, "wind_strength": 0.4,
+        "precipitation": 0.0, "cloudiness": 0.7, "fog_density": 0.15, "wind_strength": 0.4,
     },
     MaszynaEnvironment.Weather.WEATHER_RAIN: {
-        "precipitation": 0.8, "cloudiness": 0.9, "fog_density": 2.0, "wind_strength": 0.6,
+        "precipitation": 0.8, "cloudiness": 0.9, "fog_density": 0.3, "wind_strength": 0.6,
     },
     MaszynaEnvironment.Weather.WEATHER_SNOW: {
-        "precipitation": 0.0, "cloudiness": 0.9, "fog_density": 2.0, "wind_strength": 0.5,
+        "precipitation": 0.0, "cloudiness": 0.9, "fog_density": 0.3, "wind_strength": 0.5,
     },
 }
 
@@ -104,22 +104,28 @@ var wind_direction: float = deg_to_rad(135.0):
         precipitation = value
         _dirty_visuals = true
 
+## Air temperature; nothing consumes it yet (see TODO.md)
+@export_range(-15.0, 45.0, 0.1, "suffix:°C") var temperature: float = 15.0
+
 @export_group("Fog")
 @export var fog_enabled: bool = true:
     set(value):
         fog_enabled = value
         _dirty_visuals = true
 
-## Multiplier of the sky backend's own day/night fog density.
-@export_range(0.0, 4.0, 0.01, "or_greater") var fog_density: float = 1.0:
+## How much of the view the fog covers at fog_distance: 0 - none, 1 - fully opaque. The sky backend
+## adds its own share on top (day/night base fog, rain), so this is the scenery's part of it.
+@export_range(0.0, 1.0, 0.001) var fog_density: float = 0.15:
     set(value):
         fog_density = value
         _dirty_visuals = true
 
-## Multiplier of the sky backend's own day/night fog distances.
-@export_range(0.1, 4.0, 0.01, "or_greater") var fog_range: float = 1.0:
+## Distance the fog reaches fog_density at, growing linearly up to it. The sky backend may tell
+## day from night
+## (maszyna/rendering/fog_day_distance_factor, fog_night_distance_factor).
+@export_range(10.0, 25000.0, 1.0, "suffix:m") var fog_distance: float = 470.0:
     set(value):
-        fog_range = value
+        fog_distance = value
         _dirty_visuals = true
 
 @export_category("Adjustments")
@@ -320,6 +326,13 @@ func _apply_visual_configuration() -> void:
     _environment.glow_enabled = true
     _environment.adjustment_enabled = adjustment_enabled
     _environment.fog_enabled = fog_active
+    # the sky backends leave these two alone
+    _environment.fog_aerial_perspective = float(ProjectSettings.get_setting(
+        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_SETTING,
+        MaszynaSkyEnvironment.FOG_AERIAL_PERSPECTIVE_DEFAULT))
+    _environment.fog_depth_curve = maxf(MaszynaSkyEnvironment.FOG_CURVE_MIN, float(
+        ProjectSettings.get_setting(
+            MaszynaSkyEnvironment.FOG_CURVE_SETTING, MaszynaSkyEnvironment.FOG_CURVE_DEFAULT)))
     _environment.volumetric_fog_enabled = (
         fog_active and bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
     )

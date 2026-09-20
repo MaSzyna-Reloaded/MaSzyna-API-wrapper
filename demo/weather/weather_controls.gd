@@ -23,7 +23,7 @@ var _time_slider_dragging: bool = false
 @onready var _rain_value_label: Label = $WeatherRow/RainGroup/Row/RainValueLabel
 @onready var _cloud_value_label: Label = $WeatherRow/CloudGroup/Row/CloudValueLabel
 @onready var _fog_density_value_label: Label = $WeatherRow/FogDensityGroup/Row/FogDensityValueLabel
-@onready var _fog_range_value_label: Label = $WeatherRow/FogRangeGroup/Row/FogRangeValueLabel
+@onready var _fog_distance_value_label: Label = $WeatherRow/FogDistanceGroup/Row/FogDistanceValueLabel
 @onready var _time_value_label: Label = $TimeRow/TimeGroup/Row/TimeValueLabel
 @onready var _day_value_label: Label = $TimeRow/DayGroup/Row/DayValueLabel
 @onready var _month_value_label: Label = $TimeRow/MonthGroup/Row/MonthValueLabel
@@ -37,7 +37,7 @@ var _time_slider_dragging: bool = false
 @onready var _rain_slider: HSlider = $WeatherRow/RainGroup/Row/RainSlider
 @onready var _cloud_slider: HSlider = $WeatherRow/CloudGroup/Row/CloudSlider
 @onready var _fog_density_slider: HSlider = $WeatherRow/FogDensityGroup/Row/FogDensitySlider
-@onready var _fog_range_slider: HSlider = $WeatherRow/FogRangeGroup/Row/FogRangeSlider
+@onready var _fog_distance_slider: HSlider = $WeatherRow/FogDistanceGroup/Row/FogDistanceSlider
 @onready var _time_slider: HSlider = $TimeRow/TimeGroup/Row/TimeSlider
 @onready var _time_scale_slider: HSlider = $TimeRow/TimeScaleGroup/Row/TimeScaleSlider
 @onready var _system_time_check_box: CheckBox = $TimeRow/SystemTimeGroup/Row/SystemTimeCheckBox
@@ -53,7 +53,7 @@ func _ready() -> void:
     _rain_slider.value_changed.connect(_on_rain_changed)
     _cloud_slider.value_changed.connect(_on_cloud_changed)
     _fog_density_slider.value_changed.connect(_on_fog_density_changed)
-    _fog_range_slider.value_changed.connect(_on_fog_range_changed)
+    _fog_distance_slider.value_changed.connect(_on_fog_distance_changed)
     _time_slider.value_changed.connect(_on_time_changed)
     _time_slider.drag_started.connect(_on_time_drag_started)
     _time_slider.drag_ended.connect(_on_time_drag_ended)
@@ -93,9 +93,9 @@ func _process(_delta: float) -> void:
     _cloud_slider.set_value_no_signal(_environment_node.cloudiness)
     _cloud_value_label.text = _format_percent(_environment_node.cloudiness)
     _fog_density_slider.set_value_no_signal(_environment_node.fog_density)
-    _fog_density_value_label.text = _format_multiplier(_environment_node.fog_density)
-    _fog_range_slider.set_value_no_signal(_environment_node.fog_range)
-    _fog_range_value_label.text = _format_multiplier(_environment_node.fog_range)
+    _fog_density_value_label.text = _format_percent(_environment_node.fog_density)
+    _fog_distance_slider.set_value_no_signal(_environment_node.fog_distance)
+    _fog_distance_value_label.text = _format_meters(_environment_node.fog_distance)
     _time_scale_slider.set_value_no_signal(_environment_node.simulation_speed)
     _time_scale_value_label.text = "%dx" % _environment_node.simulation_speed
 
@@ -121,13 +121,13 @@ func _on_cloud_changed(value: float) -> void:
 
 
 func _on_fog_density_changed(value: float) -> void:
-    _fog_density_value_label.text = _format_multiplier(value)
+    _fog_density_value_label.text = _format_percent(value)
     _environment_node.fog_density = value
 
 
-func _on_fog_range_changed(value: float) -> void:
-    _fog_range_value_label.text = _format_multiplier(value)
-    _environment_node.fog_range = value
+func _on_fog_distance_changed(value: float) -> void:
+    _fog_distance_value_label.text = _format_meters(value)
+    _environment_node.fog_distance = value
 
 
 func _on_time_changed(value: float) -> void:
@@ -182,8 +182,8 @@ func _format_percent(value: float) -> String:
     return "%d%%" % int(round(value * 100.0))
 
 
-func _format_multiplier(value: float) -> String:
-    return "x%.2f" % value
+func _format_meters(value: float) -> String:
+    return "%d m" % roundi(value)
 
 
 func _format_time_label(value: float) -> String:

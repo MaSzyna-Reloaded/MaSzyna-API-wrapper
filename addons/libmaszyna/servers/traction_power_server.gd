@@ -132,7 +132,7 @@ var _next_wire_id:int = 0
 var _spatial_index:SpatialIndex = SpatialIndex.new(_GRID_CELL_SIZE)
 
 
-func _physics_process(delta:float) -> void:
+func _process(delta:float) -> void:
     for source:PowerSourceState in _power_sources.values():
         source.tick(delta)
 

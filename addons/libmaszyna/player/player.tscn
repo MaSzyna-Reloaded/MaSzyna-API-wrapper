@@ -45,7 +45,7 @@ collide_with_areas = true
 collide_with_bodies = false
 
 [node name="Headlamp" type="SpotLight3D" parent="Camera3D" unique_id=121900474]
-transform = Transform3D(1, 0, 0, 0, 0.9659258262890684, 0.25881904510252074, 0, -0.25881904510252074, 0.9659258262890684, 0, 0.16167655850276397, -0.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16167655850276397, -0.05)
 visible = false
 light_color = Color(1, 0.965, 0.93, 1)
 light_energy = 0.4
@@ -53,9 +53,10 @@ light_volumetric_fog_energy = 0.0
 light_size = 0.5
 shadow_enabled = true
 shadow_blur = 0.2
-spot_attenuation = 0.4399999999999995
-spot_angle = 75.0
-spot_angle_attenuation = 0.3
+spot_range = 10.807
+spot_attenuation = 0.4499999999999993
+spot_angle = 25.75
+spot_angle_attenuation = 2.4000077
 
 [node name="HeadlampGlow" type="MeshInstance3D" parent="Camera3D" unique_id=806859192]
 visible = false

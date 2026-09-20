@@ -157,7 +157,7 @@ func _exit_tree() -> void:
 func _notification(what: int) -> void:
     match what:
         NOTIFICATION_TRANSFORM_CHANGED:
-            if _rid.is_valid():
+            if _rid.is_valid() and is_inside_tree():
                 E3DRenderingServer.instance_set_transform(_rid, global_transform)
         NOTIFICATION_VISIBILITY_CHANGED:
             if _rid.is_valid():

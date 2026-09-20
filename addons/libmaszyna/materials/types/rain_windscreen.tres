@@ -22,3 +22,7 @@ shader_parameter/rivulet_spacing = 6.0
 shader_parameter/rivulet_width = 0.11
 shader_parameter/rivulet_length = 0.35
 shader_parameter/rivulet_speed = 0.25
+shader_parameter/edge_rivulet_band = 0.12
+shader_parameter/edge_rivulet_fade = 6.0
+shader_parameter/blade_bead_width = 0.05
+shader_parameter/gathered_water_start = 0.6

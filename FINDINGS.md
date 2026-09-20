@@ -245,3 +245,14 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Rule:** port the `#texture (name, index, FORMAT)` format of every sampler, also for data
   textures; and measure the data under the moving part before tuning the motion.
 
+
+### A whole layer of droplets popping in after a wipe
+
+* **Symptom:** the wiped glass stayed clean, then every droplet of the area appeared at once.
+* **Cause (read from the shader, not measured):** `GetMixFactor()` of the original picks the
+  wiper of a cell only while its factor is below 1. The moment the rain has fully returned
+  (1 s in the heaviest rain) `side` falls back to 0, and `side` is a part of the cell's random
+  seed - so every droplet of the area is dealt anew in one frame. The large droplets of the
+  wrapper's own second layer make it obvious.
+* **Fix:** the first wiper the cell belongs to is kept even at factor 1; returning droplets and
+  rivulets fade in instead of switching on.

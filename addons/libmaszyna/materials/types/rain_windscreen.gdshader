@@ -39,6 +39,15 @@ uniform float rivulet_spacing = 6.0;
 uniform float rivulet_width : hint_range(0.0, 0.5) = 0.11;
 uniform float rivulet_length = 0.35;
 uniform float rivulet_speed = 0.25;
+// water the blade pushes to the ends of its sweep, where it slows down and turns: the share of
+// the sweep the two bands take and the seconds they keep running after the wipers stopped
+uniform float edge_rivulet_band : hint_range(0.0, 0.5) = 0.12;
+uniform float edge_rivulet_fade = 6.0;
+// the rain the blade starts to gather visible water from - the bead, the ridges at the ends of
+// the sweep and the rivulets draining them grow from here up to the heaviest rain
+uniform float gathered_water_start : hint_range(0.0, 1.0) = 0.6;
+// the bead of water the blade pushes ahead of itself, in the share of the sweep
+uniform float blade_bead_width : hint_range(0.0, 0.2) = 0.05;
 uniform float wobble_strength = 0.002;
 uniform float wobble_speed = 30.0;
 
@@ -77,7 +86,10 @@ float rand_f(inout uint seed) {
     return float(seed) * 2.3283064365386963e-10;
 }
 
-vec4 get_drop_tex(float choice, vec2 uv) {
+// Sampled with explicit gradients: the droplets are drawn inside of loops and branches, where
+// the implicit derivatives of texture() are undefined - the mip level (and with it the look of
+// the droplets) would depend on where on the screen and how far the glass is.
+vec4 get_drop_tex(float choice, vec2 uv, vec2 uv_dx, vec2 uv_dy) {
     vec2 offset;
     if (choice < 0.25) {
         offset = vec2(0.0, 0.0);
@@ -88,7 +100,8 @@ vec4 get_drop_tex(float choice, vec2 uv) {
     } else {
         offset = vec2(0.5, 0.5);
     }
-    return texture(raindrops_atlas, offset + uv * 0.5, drop_lod_bias);
+    float lod_scale = 0.5 * exp2(drop_lod_bias);
+    return textureGrad(raindrops_atlas, offset + uv * 0.5, uv_dx * lod_scale, uv_dy * lod_scale);
 }
 
 // How much of the rain is left at the given point after the wipers; side tells the two halves of
@@ -98,7 +111,8 @@ float get_mix_factor(vec2 co, out float side) {
     vec4 is_out = vec4(lessThanEqual(move_phase, vec4(1.0)));
     move_phase = mix(vec4(2.0) - move_phase, move_phase, is_out);
 
-    vec4 mask = texture(wiper_mask, co);
+    // asked for per cell centre and per fragment alike: no mip levels
+    vec4 mask = textureLod(wiper_mask, co, 0.0);
     vec4 area_mask = step(0.001, mask);
 
     vec4 mask_val = mix(1.0 - mask, mask, is_out);
@@ -121,11 +135,16 @@ float get_mix_factor(vec2 co, out float side) {
     side = 0.0;
     float out_factor = 1.0;
 
-    // Find out the wiper blade that influences given grid cell the most
+    // Find out the wiper blade that influences given grid cell the most. The original takes a
+    // wiper only while its factor is below 1: the moment the droplets of a cell have fully
+    // returned its side falls back to 0, the seed of the cell changes and every droplet of the
+    // wiped area is dealt anew at once. The first wiper the cell belongs to is taken here even then.
+    bool found = false;
     for (int i = 0; i < 4; ++i) {
-        if (factor_v[i] < out_factor) {
+        if (area_mask[i] > 0.0 && (!found || factor_v[i] < out_factor)) {
             out_factor = factor_v[i];
             side = side_v[i];
+            found = true;
         }
     }
 
@@ -134,7 +153,7 @@ float get_mix_factor(vec2 co, out float side) {
 
 // One layer of droplets (the loop of the original main()), accumulated into the out parameters.
 void add_droplets(
-        vec2 uv, float grid_size, float activation, float sun_factor,
+        vec2 uv, vec2 uv_dx, vec2 uv_dy, float grid_size, float activation, float sun_factor,
         inout vec3 drop_layer, inout float drop_mask_sum, inout vec2 lens_offset, inout float lens_sum) {
     const float cycle_duration = 4.0;
 
@@ -154,9 +173,12 @@ void add_droplets(
 
             uint seed = hash_cell(ivec2(neighbor_cell), uint(side));
 
-            if (mix_factor < rand_f(seed)) {
+            float returned = mix_factor - rand_f(seed);
+            if (returned < 0.0) {
                 continue;
             }
+            // the original switches a returning droplet on at once, here it grows back
+            float appear = smoothstep(0.0, 0.15, returned);
 
             // Show a percentage of droplets given by rain intensity
             if (rand_f(seed) > activation) {
@@ -201,7 +223,7 @@ void add_droplets(
             if (mask > 0.001) {
                 vec2 local_uv = (diff + square_size * 0.5) / square_size;
                 float choice = rand_f(seed);
-                vec4 drop_tex = get_drop_tex(choice, local_uv);
+                vec4 drop_tex = get_drop_tex(choice, local_uv, uv_dx / square_size, uv_dy / square_size);
                 float sharp_alpha = smoothstep(0.3, 0.9, drop_tex.a);
 
                 float color_luma = length(drop_tex.rgb);
@@ -216,6 +238,7 @@ void add_droplets(
 
                 vec3 drop_lit = drop_tex.rgb * sun_factor + vec3(specular_intensity * sparkle) * sharp_alpha;
 
+                mask *= appear;
                 drop_layer += drop_lit * sharp_alpha * active * black_alpha * mask;
                 drop_mask_sum += sharp_alpha * active * black_alpha * mask;
                 // the droplet as a lens: the view behind it is mirrored around its centre
@@ -241,14 +264,14 @@ float film_noise(vec2 p) {
 // Water running down the glass in wandering streams, each with a head and a fading trail. "Down"
 // is towards the smaller v, as for the droplets pulled by the gravity.
 void add_rivulets(
-        vec2 uv, float columns, float activation, float sun_factor,
+        vec2 uv, float columns, float width, float activation, float sun_factor,
         inout vec3 drop_layer, inout float drop_mask_sum, inout vec2 lens_offset, inout float lens_sum) {
     float column = floor(uv.x * columns);
-    float width = rivulet_width / columns;
     for (int ox = -1; ox <= 1; ox++) {
         float neighbor_column = column + float(ox);
         uint seed = hash_cell(ivec2(int(neighbor_column), 0), 11u);
-        if (rand_f(seed) > activation) {
+        float returned = activation - rand_f(seed);
+        if (returned < 0.0) {
             continue;
         }
         float speed = rivulet_speed * mix(0.5, 1.5, rand_f(seed));
@@ -263,7 +286,8 @@ void add_rivulets(
         float offset = (uv.x - center) / width;
         // wider at the head, thinning out along the trail
         float fade = 1.0 - behind / rivulet_length;
-        float body = smoothstep(1.0, 0.6, abs(offset) / mix(0.5, 1.0, fade)) * smoothstep(0.0, 0.1, fade);
+        float body = smoothstep(1.0, 0.6, abs(offset) / mix(0.5, 1.0, fade)) * smoothstep(0.0, 0.1, fade)
+                * smoothstep(0.0, 0.15, returned);
         float edge = body * smoothstep(0.3, 0.8, abs(offset));
 
         // a lit edge and a shaded one, like the rim of the droplets - the bent view alone does not
@@ -273,6 +297,69 @@ void add_rivulets(
         lens_offset -= vec2(offset, 0.0) * body;
         lens_sum += body;
     }
+}
+
+// How much water runs down at the given point of the ends of a wiper's sweep: the mask is the
+// phase of the sweep, so its lowest and highest values are the two ends.
+float get_sweep_end(vec2 uv) {
+    vec4 mask = textureLod(wiper_mask, uv, 0.0);
+    vec4 band = smoothstep(edge_rivulet_band, 0.0, mask) + smoothstep(1.0 - edge_rivulet_band, 1.0, mask);
+    // a wiper at work was at its far end a moment ago
+    vec4 working = vec4(1.0) - smoothstep(vec4(edge_rivulet_fade * 0.3), vec4(edge_rivulet_fade), maszyna_wiper_since_return);
+    vec4 ends = step(0.001, mask) * band * working;
+    return max(max(ends.r, ends.g), max(ends.b, ends.a));
+}
+
+// The water the blade gathers: a bead pushed just ahead of it in the phase of the sweep (see
+// get_mix_factor() for the phase), growing on its way and uneven along the blade; left behind
+// at the two ends of the sweep it piles up there as a ridge that drains away (the rivulets of
+// get_sweep_end() carry it down). bead_side is -1 at the inner side and 1 at the outer rim,
+// bead_direction the way across it on the screen.
+float get_blade_bead(vec2 uv, float grid_size, out float bead_side, out vec2 bead_direction) {
+    vec4 move_phase = maszyna_wiper_pos;
+    vec4 is_out = vec4(lessThanEqual(move_phase, vec4(1.0)));
+    move_phase = mix(vec4(2.0) - move_phase, move_phase, is_out);
+    vec4 mask = textureLod(wiper_mask, uv, 0.0);
+    // taken here, outside of any branch
+    vec4 mask_dx = dFdx(mask);
+    vec4 mask_dy = dFdy(mask);
+    vec4 area = step(0.001, mask);
+    vec4 mask_val = mix(1.0 - mask, mask, is_out);
+
+    float uneven = mix(0.6, 1.4, film_noise(uv * grid_size * 0.15 + vec2(0.0, TIME * 0.5)));
+    float gathered = smoothstep(gathered_water_start, 1.0, maszyna_rain_intensity);
+    float width = blade_bead_width * uneven * mix(0.3, 1.0, gathered);
+
+    // pushed by the moving blade
+    vec4 moving = area * step(0.001, move_phase) * step(move_phase, vec4(0.999));
+    vec4 across_moving = (mask_val - move_phase) / (width * mix(vec4(0.4), vec4(1.0), move_phase));
+    // piled up at the far end since the blade turned there, at the parked end while it rests
+    vec4 draining = exp(-maszyna_wiper_since_return / vec4(edge_rivulet_fade * 0.5));
+    vec4 across_far = (vec4(1.0) - mask) / (width * draining);
+    vec4 parked = is_out * step(maszyna_wiper_pos, vec4(0.025));
+    vec4 across_parked = mask / (width * draining);
+
+    float body = 0.0;
+    bead_side = 0.0;
+    bead_direction = vec2(0.0);
+    for (int i = 0; i < 4; ++i) {
+        // x: across the bead, y: its strength, z: which way the mask grows across it
+        vec3 beads[3] = {
+            vec3(across_moving[i], moving[i], is_out[i] * 2.0 - 1.0),
+            vec3(across_far[i], area[i] * draining[i], -1.0),
+            vec3(across_parked[i], area[i] * parked[i] * draining[i], 1.0)
+        };
+        for (int k = 0; k < 3; ++k) {
+            float candidate = beads[k].y * step(0.0, beads[k].x) * smoothstep(1.0, 0.5, beads[k].x);
+            if (candidate > body) {
+                body = candidate;
+                bead_side = beads[k].x * 2.0 - 1.0;
+                vec2 gradient = vec2(mask_dx[i], mask_dy[i]) * beads[k].z;
+                bead_direction = gradient / max(length(gradient), 0.00001);
+            }
+        }
+    }
+    return body * gathered;
 }
 
 void fragment() {
@@ -294,21 +381,46 @@ void fragment() {
     float drop_mask_sum = 0.0;
     vec2 lens_offset = vec2(0.0);
     float lens_sum = 0.0;
-    add_droplets(UV, grid_size, maszyna_rain_intensity, sun_factor, drop_layer, drop_mask_sum, lens_offset, lens_sum);
+    vec2 uv_dx = dFdx(UV);
+    vec2 uv_dy = dFdy(UV);
+    add_droplets(
+            UV, uv_dx, uv_dy, grid_size, maszyna_rain_intensity, sun_factor,
+            drop_layer, drop_mask_sum, lens_offset, lens_sum);
 
     float heavy_rain = smoothstep(heavy_rain_start, 1.0, maszyna_rain_intensity);
     if (heavy_rain > 0.0) {
         add_droplets(
-                UV, max(1.0, ceil(grid_size / large_drop_scale)), heavy_rain, sun_factor,
+                UV, uv_dx, uv_dy, max(1.0, ceil(grid_size / large_drop_scale)), heavy_rain, sun_factor,
                 drop_layer, drop_mask_sum, lens_offset, lens_sum);
     }
 
     // Rivulets and the film of water running down the glass, wiped like the droplets
     float wiped_side;
     float wiped = get_mix_factor(UV, wiped_side);
+    float rivulet_columns = max(1.0, ceil(grid_size / rivulet_spacing));
+    float rivulet_column_width = rivulet_width / rivulet_columns;
     add_rivulets(
-            UV, max(1.0, ceil(grid_size / rivulet_spacing)), heavy_rain * wiped, sun_factor,
+            UV, rivulet_columns, rivulet_column_width, heavy_rain * wiped, sun_factor,
             drop_layer, drop_mask_sum, lens_offset, lens_sum);
+
+    // three times as dense at the ends of the sweep and not wiped away: the water the blade has
+    // piled up there, draining
+    float sweep_end = get_sweep_end(UV) * smoothstep(gathered_water_start, 1.0, maszyna_rain_intensity);
+    if (sweep_end > 0.0) {
+        add_rivulets(
+                UV, rivulet_columns * 3.0, rivulet_column_width, clamp(sweep_end * 2.0, 0.0, 1.0), sun_factor,
+                drop_layer, drop_mask_sum, lens_offset, lens_sum);
+    }
+
+    float bead_side;
+    vec2 bead_direction;
+    float bead = get_blade_bead(UV, grid_size, bead_side, bead_direction);
+    // lit far rim, shaded at the blade - like the rivulets
+    float bead_rim = bead * smoothstep(0.2, 0.8, bead_side);
+    drop_layer += vec3(sun_factor) * bead_rim;
+    drop_mask_sum += bead_rim + bead * smoothstep(-0.2, -0.8, bead_side) * 0.6;
+    lens_offset -= bead_direction * bead_side * bead * 2.0;
+    lens_sum += bead;
 
     float film = heavy_rain * film_strength * wiped;
     vec2 film_uv = UV * grid_size;

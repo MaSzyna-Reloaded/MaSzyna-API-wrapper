@@ -145,10 +145,16 @@ func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[
     # the track does not change between the two ends, so it is asked about once
     var on_track: bool = state and TrackManager.track_exists(state.track_rid)
     for end: int in 2:
-        # a coupled end keeps the neighbour its coupler resolved, so this only ever clears the
-        # scanned one - and clearing what is already clear is a call across the binding that says
-        # nothing, hundreds of times per frame in a scenery where most ends are coupled
-        if controller.is_coupled(end) or not on_track:
+        # a coupled end is not cleared by this call: the original recomputes its coupler distance
+        # on every update (DynObj.cpp:7144-7154, called from vehicle_table::update(),
+        # DynObj.cpp:8193) and CouplerForce() starts from it on every step (Mover.cpp:4781) -
+        # skip it and the couplers stretch without any force building up
+        if controller.is_coupled(end):
+            if state:
+                state.neighbour_cleared[end] = false
+            controller.update_neighbour(end, null, -1, 0.0)
+            continue
+        if not on_track:
             _clear_neighbour(controller, state, end)
             continue
         var found: Array = _find_vehicle(vehicle_rid, state, end, scan_range, track_vehicles)

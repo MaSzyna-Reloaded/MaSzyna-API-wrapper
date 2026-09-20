@@ -21,6 +21,22 @@ uniform float roughness : hint_range(0.0, 1.0) = 0.2;
 // picked for it averages the rim away and its alpha falls below the 0.3 of sharp_alpha.
 uniform float drop_lod_bias = -2.0;
 uniform float specular_intensity = 1.0;
+
+// Beyond the original, where the heaviest rain still looks like a drizzle: droplets bend the view
+// behind them, a second layer of large droplets joins from heavy_rain_start, and a film of running
+// water blurs the whole glass. All of it grows with the rain and is cleared by the wipers.
+uniform float refraction_strength = 0.04;
+uniform float heavy_rain_start : hint_range(0.0, 1.0) = 0.4;
+uniform float large_drop_scale = 4.0;
+uniform float film_strength : hint_range(0.0, 1.0) = 0.9;
+uniform float film_blur = 6.0;
+uniform float film_distortion = 0.03;
+// rivulets: columns of the droplet grid one of them takes, the share of a column its width takes,
+// its length and speed in UV of the glass
+uniform float rivulet_spacing = 6.0;
+uniform float rivulet_width : hint_range(0.0, 0.5) = 0.22;
+uniform float rivulet_length = 0.35;
+uniform float rivulet_speed = 0.25;
 uniform float wobble_strength = 0.002;
 uniform float wobble_speed = 30.0;
 
@@ -113,29 +129,16 @@ float get_mix_factor(vec2 co, out float side) {
     return out_factor;
 }
 
-void fragment() {
-    vec4 tex_color = texture(diffuse_texture, UV);
-    if (tex_color.a < 0.01) {
-        discard;
-    }
-
-    float grid_size = ceil(raindrop_grid_size);
+// One layer of droplets (the loop of the original main()), accumulated into the out parameters.
+void add_droplets(
+        vec2 uv, float grid_size, float activation, float sun_factor,
+        inout vec3 drop_layer, inout float drop_mask_sum, inout vec2 lens_offset, inout float lens_sum) {
     const float cycle_duration = 4.0;
 
     float square_min = 0.5 / grid_size;
     float square_max = 1.2 / grid_size;
 
-    vec2 cell = floor(UV * grid_size);
-
-    // The droplets of the original are not lit: their colour (a white rim in the atlas) is scaled
-    // by the luminance of the ambient light only. A fragment shader has no ambient here, and lit
-    // through ALBEDO the rims go black inside of a dark cab - so the droplets are emitted, scaled
-    // by the blurred luminance of what is seen through the glass.
-    float amb_lum = clamp(dot(textureLod(screen_texture, SCREEN_UV, 6.0).rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
-    float sun_factor = pow(clamp(amb_lum * 6.0, 0.0, 1.0), 0.5);
-
-    vec3 drop_layer = vec3(0.0);
-    float drop_mask_sum = 0.0;
+    vec2 cell = floor(uv * grid_size);
 
     // Grid of 9 droplets in immediate neighbourhood
     for (int oy = -1; oy <= 1; oy++) {
@@ -153,7 +156,7 @@ void fragment() {
             }
 
             // Show a percentage of droplets given by rain intensity
-            if (rand_f(seed) > maszyna_rain_intensity) {
+            if (rand_f(seed) > activation) {
                 continue;
             }
 
@@ -187,7 +190,7 @@ void fragment() {
             float stretch_y = mix(1.0, 1.6, flatten_amount);
 
             // Droplet local position & mask
-            vec2 diff = (UV + slide_offset) - drop_center;
+            vec2 diff = (uv + slide_offset) - drop_center;
             diff.x *= 1.0 / flatten_x;
             diff.y *= 1.0 / stretch_y;
             float mask = smoothstep(square_size * 0.5, square_size * 0.45, max(abs(diff.x), abs(diff.y)));
@@ -204,7 +207,7 @@ void fragment() {
 
                 float sparkle = 0.0;
                 if (has_wobble) {
-                    sparkle = pow(abs(sin(UV.x * 8.0 + TIME * 2.0 + rand_f(seed) * 6.2831)), 40.0)
+                    sparkle = pow(abs(sin(uv.x * 8.0 + TIME * 2.0 + rand_f(seed) * 6.2831)), 40.0)
                             * mix(0.2, 1.0, sun_factor);
                 }
 
@@ -212,14 +215,123 @@ void fragment() {
 
                 drop_layer += drop_lit * sharp_alpha * active * black_alpha * mask;
                 drop_mask_sum += sharp_alpha * active * black_alpha * mask;
+                // the droplet as a lens: the view behind it is mirrored around its centre
+                lens_offset -= diff / square_size * sharp_alpha * active * mask;
+                lens_sum += sharp_alpha * active * mask;
             }
         }
     }
+}
+
+// Value noise of the water film
+float film_noise(vec2 p) {
+    ivec2 i = ivec2(floor(p));
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    uint s00 = hash_cell(i, 7u);
+    uint s10 = hash_cell(i + ivec2(1, 0), 7u);
+    uint s01 = hash_cell(i + ivec2(0, 1), 7u);
+    uint s11 = hash_cell(i + ivec2(1, 1), 7u);
+    return mix(mix(rand_f(s00), rand_f(s10), f.x), mix(rand_f(s01), rand_f(s11), f.x), f.y);
+}
+
+// Water running down the glass in wandering streams, each with a head and a fading trail. "Down"
+// is towards the smaller v, as for the droplets pulled by the gravity.
+void add_rivulets(
+        vec2 uv, float columns, float activation, float sun_factor,
+        inout vec3 drop_layer, inout float drop_mask_sum, inout vec2 lens_offset, inout float lens_sum) {
+    float column = floor(uv.x * columns);
+    float width = rivulet_width / columns;
+    for (int ox = -1; ox <= 1; ox++) {
+        float neighbor_column = column + float(ox);
+        uint seed = hash_cell(ivec2(int(neighbor_column), 0), 11u);
+        if (rand_f(seed) > activation) {
+            continue;
+        }
+        float speed = rivulet_speed * mix(0.5, 1.5, rand_f(seed));
+        float travel = 1.0 + rivulet_length;
+        float head = 1.0 - fract(TIME * speed / travel + rand_f(seed)) * travel;
+        float behind = uv.y - head;
+        if (behind < 0.0 || behind > rivulet_length) {
+            continue;
+        }
+        float wander = film_noise(vec2(neighbor_column * 17.0, uv.y * columns * 0.6)) - 0.5;
+        float center = (neighbor_column + 0.5 + wander * 0.9) / columns;
+        float offset = (uv.x - center) / width;
+        // wider at the head, thinning out along the trail
+        float fade = 1.0 - behind / rivulet_length;
+        float body = smoothstep(1.0, 0.6, abs(offset) / mix(0.5, 1.0, fade)) * smoothstep(0.0, 0.1, fade);
+        float edge = body * smoothstep(0.3, 0.8, abs(offset));
+
+        // a lit edge and a shaded one, like the rim of the droplets - the bent view alone does not
+        // show over a plain background
+        drop_layer += vec3(sun_factor) * edge * step(0.0, offset) * 0.7;
+        drop_mask_sum += edge * mix(0.45, 0.7, step(0.0, offset));
+        lens_offset -= vec2(offset, 0.0) * body;
+        lens_sum += body;
+    }
+}
+
+void fragment() {
+    vec4 tex_color = texture(diffuse_texture, UV);
+    if (tex_color.a < 0.01) {
+        discard;
+    }
+
+    float grid_size = ceil(raindrop_grid_size);
+
+    // The droplets of the original are not lit: their colour (a white rim in the atlas) is scaled
+    // by the luminance of the ambient light only. A fragment shader has no ambient here, and lit
+    // through ALBEDO the rims go black inside of a dark cab - so the droplets are emitted, scaled
+    // by the blurred luminance of what is seen through the glass.
+    float amb_lum = clamp(dot(textureLod(screen_texture, SCREEN_UV, 6.0).rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
+    float sun_factor = pow(clamp(amb_lum * 6.0, 0.0, 1.0), 0.5);
+
+    vec3 drop_layer = vec3(0.0);
+    float drop_mask_sum = 0.0;
+    vec2 lens_offset = vec2(0.0);
+    float lens_sum = 0.0;
+    add_droplets(UV, grid_size, maszyna_rain_intensity, sun_factor, drop_layer, drop_mask_sum, lens_offset, lens_sum);
+
+    float heavy_rain = smoothstep(heavy_rain_start, 1.0, maszyna_rain_intensity);
+    if (heavy_rain > 0.0) {
+        add_droplets(
+                UV, max(1.0, ceil(grid_size / large_drop_scale)), heavy_rain, sun_factor,
+                drop_layer, drop_mask_sum, lens_offset, lens_sum);
+    }
+
+    // Rivulets and the film of water running down the glass, wiped like the droplets
+    float wiped_side;
+    float wiped = get_mix_factor(UV, wiped_side);
+    add_rivulets(
+            UV, max(1.0, ceil(grid_size / rivulet_spacing)), heavy_rain * wiped, sun_factor,
+            drop_layer, drop_mask_sum, lens_offset, lens_sum);
+
+    float film = heavy_rain * film_strength * wiped;
+    vec2 film_uv = UV * grid_size;
+    float streaks = film_noise(vec2(film_uv.x * 0.35, film_uv.y * 0.03 + TIME * 0.6));
+    float ripples = film_noise(vec2(film_uv.x * 0.1, film_uv.y * 0.1 + TIME * 0.25));
+    vec2 film_offset = vec2(streaks - 0.5, (ripples - 0.5) * 0.5) * film_distortion * film;
+    vec3 film_color = textureLod(screen_texture, SCREEN_UV + film_offset, film * film_blur).rgb;
+
+    float lens_alpha = clamp(lens_sum, 0.0, 1.0);
+    vec3 lens_color = textureLod(screen_texture, SCREEN_UV + film_offset + lens_offset * refraction_strength, 1.0).rgb;
+
+    // film, lenses, then the droplets of the original ("drop_layer" blended by "drop_mask_sum") -
+    // composited premultiplied, front over back
+    float drop_alpha = clamp(drop_mask_sum, 0.0, 1.0);
+    vec3 water_color = film_color * film;
+    float water_alpha = film;
+    water_color = lens_color * lens_alpha + water_color * (1.0 - lens_alpha);
+    water_alpha = lens_alpha + water_alpha * (1.0 - lens_alpha);
+    water_color = drop_layer * drop_alpha + water_color * (1.0 - drop_alpha);
+    water_alpha = drop_alpha + water_alpha * (1.0 - drop_alpha);
 
     // Overlay windshield texture with alpha
-    ALBEDO = tex_color.rgb * tex_color.a;
-    EMISSION = drop_layer * (1.0 - tex_color.a);
-    ALPHA = mix(clamp(drop_mask_sum, 0.0, 1.0), 1.0, tex_color.a);
+    // glass over water over the view: blend_mix multiplies by ALPHA, so both are divided by it
+    ALPHA = mix(water_alpha, 1.0, tex_color.a);
+    ALBEDO = tex_color.rgb * tex_color.a / max(ALPHA, 0.001);
+    EMISSION = water_color * (1.0 - tex_color.a) / max(ALPHA, 0.001);
     SPECULAR = specular;
     ROUGHNESS = roughness;
     METALLIC = 0.0;

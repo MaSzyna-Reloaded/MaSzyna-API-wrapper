@@ -202,3 +202,9 @@
 * `*_specgloss` material shaders other than `parallax_specgloss`/`water_specgloss` do not sample
   the specgloss texture (`normalmap_`, `default_`, `reflmap_`, `detail_normalmap_`,
   `shadowlessnormalmap_`, `sunlessnormalmap_`): approximated by their plain counterpart.
+* `rain_windscreen.gdshader` reads the screen texture (droplet lenses, water film): transparent
+  things behind the glass - the rain particles first of all - are not in it and fade out where
+  the film covers the glass. The film, the large droplets and the rivulets are this wrapper's own,
+  tuned by eye in a test scene (`heavy_rain_start`, `film_*`, `rivulet_*`, `refraction_strength`
+  of the material type); "down" follows the gravity of the original droplets (smaller v) and was
+  not checked on a real cab glass.

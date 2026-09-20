@@ -20,6 +20,7 @@ namespace godot {
     const char *TrainController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *TrainController::config_changed = "config_changed";
     const char *TrainController::position_changed_signal = "position_changed";
+    const char *TrainController::consist_changed_signal = "consist_changed";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
@@ -163,6 +164,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(consist_changed_signal));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -497,6 +499,9 @@ namespace godot {
             coupling_type |= coupling::permanent;
         }
         mover->Attach(p_end, p_other_end, p_other->mover, coupling_type, true, false);
+        // the original re-inspects the consist on a coupling change (CheckVehicles(), Driver.cpp:2622)
+        emit_signal(consist_changed_signal);
+        p_other->emit_signal(consist_changed_signal);
     }
 
     void TrainController::uncouple(const int p_end) {
@@ -504,6 +509,7 @@ namespace godot {
             return;
         }
         mover->Dettach(p_end);
+        emit_signal(consist_changed_signal);
     }
 
     bool TrainController::is_coupled(const int p_end) const {

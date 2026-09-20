@@ -185,6 +185,8 @@ namespace godot {
             static const char *cabin_occupied_changed;
             static const char *config_changed;
             static const char *position_changed_signal;
+            /// The consist this vehicle belongs to gained or lost a vehicle
+            static const char *consist_changed_signal;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);

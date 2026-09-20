@@ -126,6 +126,22 @@
 
 ## Physics performance
 
+* Measured on `baltyk_skm1.scn` (376 vehicles), against the original running the same scenario on
+  the same machine: the original spends **1.8 ms of CPU per frame** on everything - AI drivers,
+  physics of every consist, events - while our frame is ~36 ms. The physics code is the same
+  vendored `Mover.cpp` on both sides, so the difference is not the simulation but how it is
+  reached: ~4 000 GDScript<->C++ crossings per frame in the step loop, and ~23 000 dictionary
+  operations per frame building the vehicle state (31 keys per vehicle, each a String built from a
+  literal, plus the same again for every TrainPart and once more in `TrainSystem`). This is the
+  concrete evidence for the architecture rework of #184 - `TrainController`/`TrainPart` carry their
+  state through `Dictionary` and node signals instead of being data a loop walks over. #57 (state
+  proxy) removes the copying but keeps a crossing per read, which is why #184 calls it the wrong
+  direction.
+* What the frame looked like after this session's fixes (editor profiler, Time: Self):
+  `Script Functions` 24.8 ms, of which `_process` self 15.2 ms is the Mover calls themselves;
+  everything else in GDScript is below 1.2 ms per entry. Scenery streaming, audio, Godot physics,
+  collision pairs, SDFGI and the renderer were each ruled out by measurement (renderer: 3.9 ms CPU
+  / 13.4 ms GPU).
 * `RailVehiclePhysicsServer` step in C++ - the per-vehicle GDScript loop (track sampling,
   neighbour scan, movement) is ~6.5 ms per physics tick for 149 vehicles on
   `zwierzyniec_ed72.scn`; the Mover math itself is cheap. Needs a C++ snapshot of the track data.

@@ -957,6 +957,11 @@ namespace godot {
         // E3DModelInstance applies a changed instancer only in the editor, so ask it to rebuild
         model_node->set("instancer", detailed ? 1 : 0); // Instancer.NODES : Instancer.OPTIMIZED
         model_node->call("reload");
+        // its e3d_loaded brings the cabN visibility and the dimmed materials back with the nodes
+        if (low_poly_cabin != nullptr) {
+            low_poly_cabin->set("instancer", detailed ? 1 : 0);
+            low_poly_cabin->call("reload");
+        }
         // the bogie and wheel nodes are gone with the hierarchy, and new ones come back with it
         animation_bindings_dirty = true;
         force_detail_refresh = true;

@@ -120,9 +120,11 @@ static func _build_structure(
         passengers_model.rotation.y = PI
         # nobody looks into the passengers by node name or collects their materials, so they need
         # no node tree - one RenderingServer instance per submodel instead of a Node3D each.
-        # The low-poly interior cannot do the same: RailVehicle3D finds its cab0/cab1/cab2 nodes to
-        # hide the occupied cab (_update_low_poly_cabs_visibility) and collects its MeshInstance3D
-        # materials to dim them with the cab lights (_on_low_poly_cabin_e3d_loaded).
+        # The low-poly interior starts as NODES instead: RailVehicle3D finds its cab0/cab1/cab2
+        # nodes to hide the occupied cab (_update_low_poly_cabs_visibility) and collects its
+        # MeshInstance3D materials to dim them with the cab lights
+        # (_on_low_poly_cabin_e3d_loaded); it goes OPTIMIZED only at a distance, together with
+        # the exterior (_update_model_detail).
         passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var fiz_controller := FIZTrainController.new()

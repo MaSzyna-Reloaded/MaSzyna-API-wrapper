@@ -48,6 +48,25 @@
   `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
   after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The
   building belongs in a separate `DynamicRailVehicle3DFactory`.
+* A distant vehicle's low-poly interior (`OPTIMIZED` instancer, `RailVehicle3D::_update_model_detail()`)
+  has no materials to dim, so it keeps the emission baked into the model regardless of
+  `roof_light_enabled`; it is dimmed again once the vehicle is back within
+  `maszyna/rendering/vehicle_detail_distance`.
+* The vehicle template cache tag (`structure-vN`, `dynamic_rail_vehicle_3d_manager.gd`) is bumped
+  by hand; a change to `MaszynaRailVehicle3DInstancer` without a bump keeps serving the old
+  structure, and the cache survives a checkout (it made a `git bisect` report "bad" everywhere).
+
+## Rendering
+
+* Normal maps are applied at `normal_scale` 1.0 like the original (`mat_normalmap.frag:46-48`);
+  the `-5.0` that `material_factory.gd` used to set made bumps five times stronger and reversed.
+  Not checked against the original yet: whether Godot's generated tangents match the original's
+  `f_tbn`, i.e. whether the bumps now face the right way on models and on terrain.
+* Overexposure in the demo scenery is not measured yet. Candidates, one at a time:
+  `tonemap_mode` of `MaszynaEnvironmentNode` in `demo_scenery_loading.tscn`,
+  `directional_shadow/soft_shadow_filter_quality` 3 -> 1 and the removed
+  `directional_shadow/size=8192` (`042b392`), `fog_enabled = false` and `cloudiness`
+  0.35 -> 0.21 (`ab75bbe`).
 
 ## Scenery loading
 

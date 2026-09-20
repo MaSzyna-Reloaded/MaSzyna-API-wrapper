@@ -233,8 +233,10 @@ func _apply_default_material(
             ))
 
     if normalmap_texture:
+        # normal_scale stays at the 1.0 of the material types: the original applies the normal map
+        # as it is (mat_normalmap.frag:46-48), and a factor here also amplifies the DXT
+        # quantisation bias of the lower mips into a fixed tilt of the whole distant surface
         material.set_shader_parameter("texture_normal", MaterialManager.load_texture(model_path, normalmap_texture, true))
-        material.set_shader_parameter("normal_scale", -5.0)
 
     if variant.has_parameter("specular"):
         material.set_shader_parameter("specular", variant.get_parameter("specular"))

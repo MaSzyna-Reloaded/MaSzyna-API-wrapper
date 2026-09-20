@@ -39,6 +39,9 @@ func _on_clear_cache_button_button_up():
         E3DModelManager.clear_cache()
         MaterialManager.clear_cache()
         SceneryInstancer.clear_cache()
+        DynamicRailVehicle3DManager.clear_cache()
+        FizTrainControllerInstancer.clear_cache()
+        VehicleProfileManager.clear_cache()
 
     call_func_with_message_window("Clering caches...", "Please wait.\nClearing caches in progress...", fn)
 

@@ -343,3 +343,42 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Cause:** light_angular_distance high cost for PSSM and even for medium filter.
 * **Fix:** filter switched to the fastests
 * **Follow up:** Give possiblity to disable light_angular_distance in Skybox
+
+## 2026-09-20 - double slips impassable and painted with the missing-texture checker
+
+* **Symptom:** a train reaching a crossing switch (rozjazd krzyzowy) stops dead and never moves
+  again, and the crossing renders a fan of wide flat quads carrying `missing_texture.png` (a
+  magenta/black checker, which reads as orange under warm light). Ordinary switches are fine.
+* **Proof:** a double slip is not a `track cross` node - `cross` is a road intersection in the
+  original (`Track.cpp:419`, `iCategoryFlag = 2`). It is four `track switch` nodes named
+  `..._a/_b/_c/_d` (`TTrack::DoubleSlip()`, `Track.cpp:2593`) plus four short `normal` connectors.
+  Measuring the distance between the two branch ends of every switch in the data set
+  (4 819 switches under `scenery/`) gives a strictly bimodal result: **1 494 of them (31%) are
+  0.19-0.21 m apart** - all the `_a/_b/_c/_d` quarters - while ordinary switches sit at 1.5-2.0 m.
+  `TrackManager._ENDPOINT_EPSILON` was 0.25 m, so every double slip fell inside it.
+* **Cause:** at 0.25 m `_get_or_create_node()` merged a switch's own two branch ends into one
+  topology node and `_merge_endpoint_nodes()` then chain-merged transitively (it merges by node
+  identity and never re-checks the distance), collapsing all eight endpoints of a double slip into
+  a single node. `RailVehiclePhysicsServer._get_motion_connection()` sees many different usable
+  targets there, calls the node ambiguous and returns `null`; `_move_vehicle_state()` simply
+  `break`s, so the track offset freezes with no error printed. The same collapsed node made
+  `rebuild_track_stitches()` build a trackbed stitch to every one of the seven wrong partners -
+  the fan of quads. The original's own tolerance is 2 cm per axis (`Equal()`, `Track.cpp:2121`).
+* **Second cause (the checker):** the `.scn` sentinel `none` was stored as a material name, so
+  `MaterialManager` returned a material whose texture fell back to the placeholder. The original
+  keeps a null handle for it (`Track.cpp:491`) and draws no trackbed; the short connectors inside
+  a switch group rely on that, because the trackbed material is borrowed from a neighbour
+  (`copy_adjacent_trackbed_material()`, `Track.cpp:3326`), a port the wrapper did not have.
+* **Fix:** tolerance down to the original's 2 cm, compared per axis like `Equal()`, with the
+  endpoint hash given its own cell size; `none` mapped to an empty material name; and
+  `copy_adjacent_trackbed_material()` ported, resolved after the topology is built.
+* **Cost of the tighter tolerance:** measured over 26 960 track endpoints in `tarniowo`,
+  `drawinowo` and `baltyk` - 26 683 are joined to within 2 cm, exactly **2** had their nearest
+  partner in the 2-25 cm band, and 275 are genuine line ends. Scenery authors do place endpoints
+  exactly; the loose tolerance bought nothing and cost every double slip.
+* **Rule:** a geometric tolerance ported from the original must carry the original's value. A
+  rounder, "safer" number does not forgive sloppy data - it silently merges geometry that the
+  scenery deliberately placed 20 cm apart, and the failure surfaces far away from the constant.
+* **Rule:** a movement step that cannot resolve the next track must say so. `break` on a null
+  connection turned a topology bug into "the train just stops", which cost a screenshot and a
+  full trace to locate.

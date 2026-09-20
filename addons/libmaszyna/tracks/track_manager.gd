@@ -42,7 +42,14 @@ const RAIL_HEIGHT: float = 0.180
 ## Invalid node index used by topology storage.
 const INVALID_NODE_ID: int = -1
 
-const _ENDPOINT_EPSILON: float = 0.25
+## Tolerance for "these two endpoints are the same physical point", per axis - the original
+## engine's own Equal() (Track.cpp:2121). It has to stay this tight: inside a double slip
+## (rozjazd krzyzowy) the two branch ends of one switch are only ~0.2 m apart, so a rounder
+## tolerance merges them into one topology node and the crossing becomes impassable.
+const _ENDPOINT_EPSILON: float = 0.02
+## Cell size of the endpoint hash used while pairing endpoints - unrelated to the tolerance
+## above, it only has to be at least as large as it so the 3x3 neighbourhood scan is complete.
+const _ENDPOINT_CELL_SIZE: float = 0.5
 const _GRID_CELL_SIZE: float = 500.0
 const _TRACK_TYPE_GROUPS: Dictionary = {
     TrackType.TRACK_NORMAL: TrackTypeGroup.GROUP_RAIL,
@@ -61,6 +68,15 @@ const UNDEFINED_TRACK = RID()
 class TrackSegment:
     const SWITCH_BLADE_SEGMENT_COUNT: int = 6
     const SWITCH_BLADE_RATIO: float = 0.65
+
+    ## Port of the original engine's Equal() (Track.cpp:2121) - a per-axis cube test, not a
+    ## sphere, used everywhere two track endpoints are checked for being the same point.
+    static func endpoints_equal(first: Vector3, second: Vector3) -> bool:
+        return (
+            absf(first.x - second.x) <= _ENDPOINT_EPSILON
+            and absf(first.y - second.y) <= _ENDPOINT_EPSILON
+            and absf(first.z - second.z) <= _ENDPOINT_EPSILON
+        )
 
     ## Unique RID of the track.
     var track_rid: RID = UNDEFINED_TRACK
@@ -228,20 +244,20 @@ class TrackSegment:
     func _get_curve_common_endpoint_index() -> int:
         if not curve1 or not curve2:
             return SwitchCommonPoint.POINT_NONE
-        if curve1.p1.distance_to(curve2.p1) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve1.p1, curve2.p1):
             return SwitchCommonPoint.POINT_P1
-        if curve1.p1.distance_to(curve2.p2) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve1.p1, curve2.p2):
             return SwitchCommonPoint.POINT_P1
-        if curve1.p2.distance_to(curve2.p1) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve1.p2, curve2.p1):
             return SwitchCommonPoint.POINT_P2
-        if curve1.p2.distance_to(curve2.p2) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve1.p2, curve2.p2):
             return SwitchCommonPoint.POINT_P2
         return SwitchCommonPoint.POINT_NONE
 
     func _get_switch_curve_direction_from_common(curve: MaszynaTrackCurve, common_position: Vector3) -> Vector3:
-        if curve.p1.distance_to(common_position) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve.p1, common_position):
             return curve.p2 - curve.p1
-        if curve.p2.distance_to(common_position) <= _ENDPOINT_EPSILON:
+        if endpoints_equal(curve.p2, common_position):
             return curve.p1 - curve.p2
         return Vector3.ZERO
 
@@ -275,7 +291,7 @@ class TrackSegment:
         endpoint1: EndpointIndex,
         endpoint2: EndpointIndex
     ) -> void:
-        if point1.distance_to(point2) > _ENDPOINT_EPSILON:
+        if not endpoints_equal(point1, point2):
             return
         if not switch_common_endpoints.has(endpoint1):
             switch_common_endpoints.append(endpoint1)
@@ -440,7 +456,7 @@ func track_update_curves(track_rid: RID, curve1: MaszynaTrackCurve, curve2: Masz
         if endpoint_index >= next_endpoints.size():
             changed_connected_endpoint = true
             break
-        if previous_endpoints[endpoint_index].distance_to(next_endpoints[endpoint_index]) > _ENDPOINT_EPSILON:
+        if not TrackSegment.endpoints_equal(previous_endpoints[endpoint_index], next_endpoints[endpoint_index]):
             changed_connected_endpoint = true
             break
 
@@ -845,7 +861,7 @@ func _get_or_create_node(world_position: Vector3, track_rid: RID, endpoint_index
         var existing_node: TrackNode = _get_node(existing_node_id)
         if not existing_node:
             continue
-        if existing_node.world_position.distance_to(world_position) <= _ENDPOINT_EPSILON:
+        if TrackSegment.endpoints_equal(existing_node.world_position, world_position):
             node_id = existing_node.id
             break
     if node_id == INVALID_NODE_ID:
@@ -923,7 +939,7 @@ func _connect_all_tracks() -> void:
     var endpoint_cells:Dictionary = {}
     for index:int in range(all_endpoints.size()):
         var position:Vector3 = all_endpoints[index]["position"]
-        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_EPSILON), floori(position.z / _ENDPOINT_EPSILON))
+        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_CELL_SIZE), floori(position.z / _ENDPOINT_CELL_SIZE))
         if not endpoint_cells.has(cell):
             endpoint_cells[cell] = []
         endpoint_cells[cell].append(index)
@@ -931,7 +947,7 @@ func _connect_all_tracks() -> void:
     for i:int in range(all_endpoints.size()):
         var ep1:Dictionary = all_endpoints[i]
         var position:Vector3 = ep1["position"]
-        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_EPSILON), floori(position.z / _ENDPOINT_EPSILON))
+        var cell:Vector2i = Vector2i(floori(position.x / _ENDPOINT_CELL_SIZE), floori(position.z / _ENDPOINT_CELL_SIZE))
         var candidates:Array[int] = []
         for dx:int in range(-1, 2):
             for dz:int in range(-1, 2):
@@ -953,7 +969,7 @@ func _connect_all_tracks() -> void:
             if first_track_group == TrackTypeGroup.GROUP_NONE or not first_track_group == second_track_group:
                 continue
 
-            if ep1.position.distance_to(ep2.position) <= _ENDPOINT_EPSILON:
+            if TrackSegment.endpoints_equal(ep1.position, ep2.position):
                 _merge_endpoint_nodes(ep1.track_rid, ep1.endpoint_index, ep2.track_rid, ep2.endpoint_index)
                 # Update node_id for subsequent checks
                 var new_node_id: int = _tracks[ep1.track_rid].node_ids[ep1.endpoint_index]

@@ -16,6 +16,9 @@ const TrackData = preload("res://addons/libmaszyna/importer/maszyna_track_data.g
 func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
     var type_token = p.next_token()
     if type_token not in ["switch", "normal"]:
+        # road/river/cross/turn/table are not built yet - discard the whole node, otherwise the
+        # shared parser cursor stays inside it and keeps eating tokens until the next keyword.
+        p.get_tokens_until("endtrack")
         return null
 
     var data := TrackData.new()
@@ -30,9 +33,9 @@ func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
     data.environment = _parse_environment(p.next_token())
     data.visible = p.as_bool(p.next_token())
     if data.visible:
-        data.material1 = p.next_token().to_lower()
+        data.material1 = _parse_material(p.next_token())
         data.tex_length = float(p.next_token())
-        data.material2 = p.next_token().to_lower()
+        data.material2 = _parse_material(p.next_token())
         data.tex_height = float(p.next_token())
         data.tex_width = float(p.next_token())
         data.tex_slope = float(p.next_token())
@@ -74,6 +77,15 @@ func get_curve_from_tokens(points) -> MaszynaTrackCurve:
     c.radius = float(points[14])
 
     return c
+
+
+## "none" is the format's sentinel for "no texture here", not a material name - the original
+## engine stores a null handle for it and then draws nothing (Track.cpp:485-491). Kept as an
+## empty name so the trackbed is skipped instead of being painted with the missing-texture
+## placeholder.
+func _parse_material(token:String) -> String:
+    var name:String = token.to_lower()
+    return "" if name == "none" else name
 
 
 func _parse_environment(token:String) -> int:

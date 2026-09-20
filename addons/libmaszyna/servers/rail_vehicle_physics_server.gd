@@ -38,6 +38,9 @@ var _diagnostics_velocity: Dictionary[TrainController, float] = {}
 
 func _enter_tree() -> void:
     Engine.register_singleton("RailVehiclePhysicsServer", self)
+    # the step and RailVehicle3D's visual transform now both run on the frame, so the step has to
+    # come first - otherwise the vehicles render the position of the previous frame
+    process_priority = -100
 
 
 func _exit_tree() -> void:
@@ -47,8 +50,14 @@ func _exit_tree() -> void:
 ## Global step of every registered controller, the same phases as the original vehicle_table::update()
 ## (DynObj.cpp:8181): locations and neighbours once per frame, then forces for all vehicles before
 ## movement of all vehicles in each iteration, so coupled vehicles see each other's state consistently.
-## Runs on the fixed physics tick, split into iterations of at most PHYSICS_STEP.
-func _physics_process(delta: float) -> void:
+##
+## Runs on the rendered frame, not on Godot's fixed physics tick, exactly like the original: the
+## engine calls vehicle_table::update(Deltatime, Iterationcount) once per frame and lets the
+## iteration count absorb a long frame. On the fixed tick the same step ran several times per frame
+## to catch up (multiplying the whole simulation by up to max_physics_steps_per_frame), and the
+## vehicle transform - which RailVehicle3D updates per rendered frame - repeated a stale position
+## whenever the frame rate and the tick rate disagreed, which is what made the vehicles judder.
+func _process(delta: float) -> void:
     if Engine.is_editor_hint():
         return
     var controllers: Array[TrainController] = []
@@ -73,19 +82,26 @@ func _physics_process(delta: float) -> void:
             if not track_vehicles.has(state.track_rid):
                 track_vehicles[state.track_rid] = []
             track_vehicles[state.track_rid].append(vehicle_rid)
+    # once per update(), like the original (DynObj.cpp:8186-8193)
     for controller: TrainController in controllers:
         _update_neighbours(controller, track_vehicles)
 
     var iterations: int = clampi(ceili(delta / PHYSICS_STEP), 1, MAX_PHYSICS_ITERATIONS)
     var step: float = delta / iterations
     for iteration: int in iterations:
+        # the original runs the cheap FastUpdate in every sub-iteration but the last, and the full
+        # movement only once (vehicle_table::update(), DynObj.cpp:8195-8210)
+        var is_last: bool = iteration == iterations - 1
         for controller: TrainController in controllers:
             controller.compute_forces(step)
         for controller: TrainController in controllers:
             # DynObj.cpp:4059 - FastUpdate/Update skip a vehicle with switched off physics
             if not controller.is_physics_active():
                 continue
-            controller.compute_movement(step)
+            if is_last:
+                controller.compute_movement(step)
+            else:
+                controller.compute_fast_movement(step)
             var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
             if vehicle_rid.is_valid():
                 process_movement(vehicle_rid, step)
@@ -116,8 +132,10 @@ func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[
     var velocity: float = controller.get_state().get("velocity", 0.0)
     # 10m ~= 140 km/h at 4 fps + safety margin (DynObj.cpp:7160)
     var scan_range: float = maxf(10.0, absf(velocity)) + 40.0
+    # the track does not change between the two ends, so it is asked about once
+    var on_track: bool = state and TrackManager.track_exists(state.track_rid)
     for end: int in 2:
-        if controller.is_coupled(end) or not state or not TrackManager.track_exists(state.track_rid):
+        if controller.is_coupled(end) or not on_track:
             controller.update_neighbour(end, null, -1, 0.0)
             continue
         var found: Array = _find_vehicle(vehicle_rid, state, end, scan_range, track_vehicles)
@@ -302,7 +320,10 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
 
     var current_track_rid: RID = state.track_rid
     var current_switch_track: TrackManager.SwitchTrack = state.switch_track
-    var current_track_offset: float = clampf(state.track_offset, 0.0, TrackManager.track_get_length(current_track_rid, current_switch_track))
+    # Length of the occupied branch, kept across the loop: every query here crosses the autoload
+    # boundary and this one used to be made twice for the same track on every step.
+    var current_length: float = TrackManager.track_get_length(current_track_rid, current_switch_track)
+    var current_track_offset: float = clampf(state.track_offset, 0.0, current_length)
     var current_track_direction: TrackManager.Direction = state.track_direction
     var remaining: float = absf(distance)
     var request_sign: float = -1.0 if distance < 0.0 else 1.0
@@ -317,9 +338,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
     ) * request_sign
 
     while remaining > 0.0001:
-        if not TrackManager.track_exists(current_track_rid):
-            break
-        var current_length: float = TrackManager.track_get_length(current_track_rid, current_switch_track)
+        # track_get_length() returns 0 for a track that is gone, so this covers track_exists() too
         if current_length <= 0.0:
             break
 
@@ -377,7 +396,8 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
             movement_sign = -1.0 if connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2 else 1.0
         # Entering at branch start means offset grows; entering at branch end
         # means offset decreases from the branch length.
-        current_track_offset = 0.0 if movement_sign > 0.0 else TrackManager.track_get_length(current_track_rid, current_switch_track)
+        current_length = TrackManager.track_get_length(current_track_rid, current_switch_track)
+        current_track_offset = 0.0 if movement_sign > 0.0 else current_length
         current_track_direction = (
             TrackManager.Direction.DIRECTION_NORMAL
             if movement_sign * request_sign < 0.0

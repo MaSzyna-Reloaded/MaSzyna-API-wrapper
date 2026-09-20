@@ -79,6 +79,7 @@ namespace godot {
                 &TrainController::update_neighbour);
         ClassDB::bind_method(D_METHOD("compute_forces", "delta"), &TrainController::compute_forces);
         ClassDB::bind_method(D_METHOD("compute_movement", "delta"), &TrainController::compute_movement);
+        ClassDB::bind_method(D_METHOD("compute_fast_movement", "delta"), &TrainController::compute_fast_movement);
         ClassDB::bind_method(D_METHOD("is_physics_active"), &TrainController::is_physics_active);
         ClassDB::bind_method(
                 D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &TrainController::couple);
@@ -90,8 +91,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("coupler_disconnect", "where"), &TrainController::coupler_disconnect);
         ClassDB::bind_method(D_METHOD("get_world_transform"), &TrainController::get_world_transform);
         ClassDB::bind_method(D_METHOD("get_world_position"), &TrainController::get_world_position);
-        ClassDB::bind_method(D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
-                             &TrainController::change_track);
+        ClassDB::bind_method(
+                D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
+                &TrainController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &TrainController::get_rid);
         ClassDB::bind_method(
                 D_METHOD("_emit_position_changed_if_needed"), &TrainController::_emit_position_changed_if_needed);
@@ -467,6 +469,21 @@ namespace godot {
         mover->dMoveLen += process_movement(p_delta);
     }
 
+    /// The cheap movement of the intermediate physics iterations: the original runs UpdateForce +
+    /// FastUpdate for every sub-iteration and the full Update() only once per frame
+    /// (DynObj.cpp:8195-8210), where FastUpdate calls Mover::FastComputeMovement()
+    /// (DynObj.cpp:4086) instead of the full ComputeMovement().
+    void TrainController::compute_fast_movement(const double p_delta) {
+        // a standing vehicle switched off by ComputeTotalForce() is not moved at all
+        // (DynObj.cpp:4059)
+        if (mover == nullptr || !mover->PhysicActivation) {
+            return;
+        }
+        TRotation rotation;
+        mover->FastComputeMovement(p_delta, mover->RunningShape, mover->RunningTrack, mover->Loc, rotation);
+        mover->dMoveLen += process_movement(p_delta);
+    }
+
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
     void TrainController::couple(
             TrainController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
@@ -526,8 +543,8 @@ namespace godot {
             mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupling::coupler)) {
             return;
         }
-        for (const int flag: {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway,
-                              coupling::heating}) {
+        for (const int flag:
+             {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway, coupling::heating}) {
             if ((coupler.CouplingFlag & flag) == flag || (allowed & flag) != flag) {
                 continue;
             }
@@ -562,10 +579,11 @@ namespace godot {
         const double previous_second = std::floor(tacho_time);
         tacho_time += p_delta;
         if (std::floor(tacho_time) != previous_second) {
-            tacho_velocity_jump = tacho_velocity > 1.0 ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                                          UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                                 0.5
-                                                       : 0.0;
+            tacho_velocity_jump = tacho_velocity > 1.0
+                                          ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
+                                                              UtilityFunctions::randf_range(0.0, 3.0)) *
+                                                                     0.5
+                                          : 0.0;
         }
 
         // ticking starts ~1 s after moving off and fades out slowly after stopping

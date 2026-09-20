@@ -220,6 +220,7 @@ namespace godot {
             void update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance);
             void compute_forces(double p_delta);
             void compute_movement(double p_delta);
+            void compute_fast_movement(double p_delta);
             bool is_physics_active() const;
             void couple(TrainController *p_other, int p_end, int p_other_end, int p_coupling_type);
             void uncouple(int p_end);

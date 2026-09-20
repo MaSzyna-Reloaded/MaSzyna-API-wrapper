@@ -13,6 +13,11 @@ class VehicleState:
     var controller_rid: RID = RID()
     ## moved since the mover location was last updated
     var moved: bool = true
+    ## per end: the neighbour was already reported as none, so reporting it again says nothing
+    var neighbour_cleared: Array[bool] = [false, false]
+    ## whether track_rid is a switch - part of describing the occupied track, and a track never
+    ## turns into one, so it is asked when the vehicle changes track rather than on every step
+    var track_is_switch: bool = false
 
 
 ## Original engine: primary physics update rate and the iteration limit per frame (drivermode.cpp:186-206)
@@ -104,7 +109,7 @@ func _process(delta: float) -> void:
                 controller.compute_fast_movement(step)
             var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
             if vehicle_rid.is_valid():
-                process_movement(vehicle_rid, step)
+                process_movement(vehicle_rid, step, controller)
     for controller: TrainController in controllers:
         if controller.is_physics_active():
             controller.update_state()
@@ -126,6 +131,14 @@ func _check_velocity_jumps(controllers: Array[TrainController], delta: float) ->
 
 ## Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135) - a coupled end keeps its
 ## coupled vehicle (resolved by the controller), a free end looks for the nearest vehicle on the route.
+func _clear_neighbour(controller: TrainController, state: VehicleState, end: int) -> void:
+    if state and state.neighbour_cleared[end]:
+        return
+    if state:
+        state.neighbour_cleared[end] = true
+    controller.update_neighbour(end, null, -1, 0.0)
+
+
 func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[RID, Array]) -> void:
     var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
     var state: VehicleState = _vehicles.get(vehicle_rid)
@@ -135,13 +148,17 @@ func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[
     # the track does not change between the two ends, so it is asked about once
     var on_track: bool = state and TrackManager.track_exists(state.track_rid)
     for end: int in 2:
+        # a coupled end keeps the neighbour its coupler resolved, so this only ever clears the
+        # scanned one - and clearing what is already clear is a call across the binding that says
+        # nothing, hundreds of times per frame in a scenery where most ends are coupled
         if controller.is_coupled(end) or not on_track:
-            controller.update_neighbour(end, null, -1, 0.0)
+            _clear_neighbour(controller, state, end)
             continue
         var found: Array = _find_vehicle(vehicle_rid, state, end, scan_range, track_vehicles)
         if not found:
-            controller.update_neighbour(end, null, -1, 0.0)
+            _clear_neighbour(controller, state, end)
             continue
+        state.neighbour_cleared[end] = false
         var other_state: VehicleState = _vehicles[found[0]]
         controller.update_neighbour(end, _get_controller(other_state.controller_rid), found[1], found[2])
 
@@ -160,6 +177,7 @@ func _find_vehicle(
     var request_sign: float = -1.0 if end == 0 else 1.0
     var cursor: VehicleState = VehicleState.new()
     cursor.track_rid = state.track_rid
+    cursor.track_is_switch = state.track_is_switch
     cursor.track_offset = state.track_offset
     cursor.track_direction = state.track_direction
     cursor.switch_track = state.switch_track
@@ -271,31 +289,39 @@ func vehicle_set_track(
     state.track_rid = track_rid
     state.track_direction = track_direction
     state.moved = true
-    state.switch_track = TrackManager.switch_get_active_track(track_rid) if TrackManager.track_is_switch(track_rid) else TrackManager.SwitchTrack.TRACK_COMMON
+    state.track_is_switch = TrackManager.track_is_switch(track_rid)
+    state.switch_track = TrackManager.switch_get_active_track(track_rid) if state.track_is_switch else TrackManager.SwitchTrack.TRACK_COMMON
     state.track_offset = clampf(track_offset, 0.0, TrackManager.track_get_length(track_rid, state.switch_track))
     var remaining_offset:float = track_offset - state.track_offset
     var direction_sign:float = -1.0 if track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
     _move_vehicle_state(state, remaining_offset * direction_sign, false)
 
 
-func process_movement(vehicle_rid: RID, delta: float) -> void:
+## [param controller] is what the step loop already holds - resolving it back from the vehicle RID
+## costs two dictionary lookups and an instance_from_id() on every vehicle of every iteration, and
+## an EZT/DMU is never deactivated by the physics (Mover.cpp:4489), so a scenery full of EMUs pays
+## it hundreds of times per frame while standing still.
+func process_movement(vehicle_rid: RID, delta: float, controller: TrainController = null) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:
         return
     if not state.track_rid == TrackManager.UNDEFINED_TRACK and not TrackManager.track_exists(state.track_rid):
         return
-    if not state.controller_rid.is_valid():
-        return
-    var controller_state: ControllerState = _controllers.get(state.controller_rid)
-    if not controller_state or controller_state.object_id == 0:
-        return
-    var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
     if not controller:
-        return
+        if not state.controller_rid.is_valid():
+            return
+        var controller_state: ControllerState = _controllers.get(state.controller_rid)
+        if not controller_state or controller_state.object_id == 0:
+            return
+        controller = instance_from_id(controller_state.object_id) as TrainController
+        if not controller:
+            return
     # TrainController.process_movement() is front-relative (mirrors mover->V);
     # this server's track-offset math is rear-relative - negate at the boundary.
     var distance: float = -controller.process_movement(delta)
-    if is_zero_approx(distance) or not TrackManager.track_exists(state.track_rid):
+    # the track was checked above and Mover physics cannot remove one; a track that disappears
+    # anyway is caught by _move_vehicle_state(), whose track_get_length() returns 0 for it
+    if is_zero_approx(distance):
         return
     # the position_changed signal follows once per physics step, with the location update
     _move_vehicle_state(state, distance, true)
@@ -322,6 +348,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
     var current_switch_track: TrackManager.SwitchTrack = state.switch_track
     # Length of the occupied branch, kept across the loop: every query here crosses the autoload
     # boundary and this one used to be made twice for the same track on every step.
+    var current_is_switch: bool = state.track_is_switch
     var current_length: float = TrackManager.track_get_length(current_track_rid, current_switch_track)
     var current_track_offset: float = clampf(state.track_offset, 0.0, current_length)
     var current_track_direction: TrackManager.Direction = state.track_direction
@@ -345,7 +372,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
         # Find the endpoint this movement heads toward on the occupied branch.
         var distance_to_endpoint: float = current_length - current_track_offset if movement_sign > 0.0 else current_track_offset
         var endpoint_index: int
-        if TrackManager.track_is_switch(current_track_rid):
+        if current_is_switch:
             endpoint_index = TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track) \
                 if movement_sign > 0.0 else TrackManager.switch_get_branch_start_endpoint(current_track_rid, current_switch_track)
             # If the vehicle is reversing through a switch blade on a non-active
@@ -385,9 +412,10 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
             break
 
         current_track_rid = connection.track_rid
+        current_is_switch = TrackManager.track_is_switch(current_track_rid)
         # The connection endpoint is where we enter the next track. For switches,
         # that endpoint also tells which branch the vehicle now occupies.
-        if TrackManager.track_is_switch(current_track_rid):
+        if current_is_switch:
             current_switch_track = TrackManager.switch_get_endpoint_branch(current_track_rid, connection.endpoint_index)
             var entered_at_end: bool = connection.endpoint_index == TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track)
             movement_sign = -1.0 if entered_at_end else 1.0
@@ -405,6 +433,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
         )
 
     state.track_rid = current_track_rid
+    state.track_is_switch = current_is_switch
     state.track_offset = current_track_offset
     state.track_direction = current_track_direction
     state.switch_track = current_switch_track
@@ -522,6 +551,7 @@ func controller_get_curve(controller_rid: RID, bogie_pivot_spacing: float) -> Di
 func _sample_state(state: VehicleState, distance: float) -> VehicleState:
     var sampled_state: VehicleState = VehicleState.new()
     sampled_state.track_rid = state.track_rid
+    sampled_state.track_is_switch = state.track_is_switch
     sampled_state.track_offset = state.track_offset
     sampled_state.track_direction = state.track_direction
     sampled_state.switch_track = state.switch_track

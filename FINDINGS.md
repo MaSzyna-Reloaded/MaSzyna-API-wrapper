@@ -303,3 +303,35 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   `LegacyCabinUnmodelledControls` registers every catalog control with a key that the cab does
   not model, unless one of its keys is already taken by a modelled control.
 
+## 2026-09-20 - Scenery streaming started from the menu camera
+
+* **Symptom:** after scenery loading reached 100%, the loading screen stayed up for up to 30 s;
+  without that wait, terrain around the occupied vehicle was still missing.
+* **What proved it:** the player registered its camera in `_ready()` at the demo scene position
+  `(30, 3, 615)`, while the camera moved to the selected vehicle only after the scenery and cabin
+  had been built. The worker preloaded a whole pass in `HashMap` order and published it only at the
+  end, so the main-thread priority queue could not prioritise or cancel that old preload.
+* **Cause:** camera priority existed only for published builds. A planning pass had no camera
+  revision, conflated queued work with built content, and `passes > 0 && pending_builds == 0` could
+  also report completion while the current plan was still preloading.
+* **Fix:** loading pauses streaming until the final cab/on-foot camera is known. Plans and queued
+  work carry a camera revision and preload is published nearest-first.
+* **Follow-up measurement:** waiting for the camera chunk plus its eight neighbours still left over
+  1000 nearby builds and delayed the cabin by about 15 s. The required scenery at the camera
+  appeared much earlier when the loading screen was disabled.
+* **Final startup boundary:** startup waits only for the chunk containing the camera. Its eight
+  neighbours and the rest of the draw distance continue streaming after the cabin is shown.
+* **Rule:** readiness must describe built content for a specific camera revision; an empty handoff
+  queue is not proof that worker-side planning or preload has finished.
+
+### Global transform requested while an E3D node leaves the tree
+
+* **Symptom:** loading printed repeated `!is_inside_tree()` errors from
+  `Node3D::get_global_transform()` even after the streaming camera itself was guarded.
+* **Cause:** `E3DModelInstance` subscribed to transform notifications for its optimized backend and
+  forwarded `global_transform` whenever its RID was valid. Removing or reparenting the node can
+  deliver that notification while the RID still exists but the node is already outside the tree.
+* **Fix:** transform notifications update the rendering server only while the node is in the tree;
+  tree re-entry creates the instance with the current transform as before.
+* **Rule:** a valid rendering RID does not imply that its owning `Node3D` currently has a global
+  transform; notification handlers must check the node lifecycle separately.

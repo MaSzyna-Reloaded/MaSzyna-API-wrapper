@@ -43,7 +43,7 @@ func test_variant_inherits_default_shader_when_season_has_no_shader() -> void:
     )
 
     assert_eq(variant.shader, "normalmap")
-    assert_eq(variant.get_texture_path("diffuse"), "spring_diffuse")
+    assert_eq(variant.get_texture_path("tex1"), "spring_diffuse")
 
 
 func test_weather_shader_overrides_season_shader() -> void:
@@ -63,7 +63,7 @@ func test_weather_variant_merges_after_season_variant() -> void:
         MaszynaEnvironment.Weather.WEATHER_CLOUDY
     )
 
-    assert_eq(variant.get_texture_path("diffuse"), "cloudy_diffuse")
+    assert_eq(variant.get_texture_path("tex1"), "cloudy_diffuse")
 
 
 func test_get_material_updates_existing_material_in_place_when_season_changes() -> void:
@@ -225,3 +225,82 @@ func test_detail_normalmap_shader_applies_detail_parameters() -> void:
     assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
     assert_almost_eq(float(material.get_shader_parameter("detail_height_scale")), 0.45, 0.00001)
     assert_not_null(material.get_shader_parameter("texture_detail_normal"))
+
+
+## The original resolves "mat_<name>.frag" on a case insensitive file system (dynamic/road/clio/kolo.mat)
+func test_shader_name_is_case_insensitive() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", "mixed_case_shader_manager")
+    var material: ShaderMaterial = MaterialManager.get_material("", "mixed_case_shader_manager") as ShaderMaterial
+
+    assert_eq(mmat.default.shader, "default_1")
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/default.gdshader")
+    assert_eq(material.get_shader_parameter("metallic_texture_channel"), Vector4(1.0, 0.0, 0.0, 0.0))
+
+
+## mat_reflmap.frag - "texture2:" is the reflection map there, its alpha scales param_reflection (one by default)
+func test_reflmap_shader_binds_second_texture_as_reflection_map() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "reflmap_manager") as ShaderMaterial
+
+    assert_not_null(material.get_shader_parameter("texture_metallic"))
+    assert_eq(material.get_shader_parameter("metallic_texture_channel"), Vector4(0.0, 0.0, 0.0, 1.0))
+    assert_almost_eq(float(material.get_shader_parameter("metallic")), 1.0, 0.00001)
+    assert_null(material.get_shader_parameter("texture_normal"))
+
+
+func test_reflmap_shader_applies_reflection_parameter() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "reflmap_reflection_manager") as ShaderMaterial
+
+    assert_not_null(material.get_shader_parameter("texture_metallic"))
+    assert_almost_eq(float(material.get_shader_parameter("metallic")), 0.25, 0.00001)
+
+
+## material.cpp:117-134 - without "shader:" the bound textures pick default_0/1/2 (colored, default, reflmap)
+func test_shaderless_material_with_second_texture_uses_reflmap() -> void:
+    var mmat: MaszynaMaterial = MaterialManager.load_material("", "shaderless_two_textures_manager")
+    var clear_material: ShaderMaterial = MaterialFactory.create(
+        mmat, "", MaszynaEnvironment.Season.SEASON_SUMMER, MaszynaEnvironment.Weather.WEATHER_CLEAR
+    ) as ShaderMaterial
+    var rain_material: ShaderMaterial = MaterialFactory.create(
+        mmat, "", MaszynaEnvironment.Season.SEASON_SUMMER, MaszynaEnvironment.Weather.WEATHER_RAIN
+    ) as ShaderMaterial
+
+    assert_null(clear_material.get_shader_parameter("texture_metallic"))
+    assert_not_null(rain_material.get_shader_parameter("texture_metallic"))
+    assert_eq(rain_material.get_shader_parameter("metallic_texture_channel"), Vector4(0.0, 0.0, 0.0, 1.0))
+    assert_null(rain_material.get_shader_parameter("texture_normal"))
+
+
+## mat_colored.frag
+func test_colored_shader_uses_color_parameter() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "colored_manager") as ShaderMaterial
+
+    assert_eq(material.get_shader_parameter("albedo"), Color(0.1, 0.2, 0.3, 1.0))
+    assert_null(material.get_shader_parameter("texture_albedo"))
+
+
+## mat_default_detail.frag - the detail normal map is its second texture, there is no base normal map
+func test_default_detail_shader_binds_second_texture_as_detail_normal_map() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "default_detail_manager") as ShaderMaterial
+
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/detail_normalmap.gdshader")
+    assert_not_null(material.get_shader_parameter("texture_detail_normal"))
+    assert_null(material.get_shader_parameter("texture_normal"))
+    assert_almost_eq(float(material.get_shader_parameter("detail_scale")), 0.00125, 0.00001)
+
+
+func test_detail_parallax_specgloss_shader_binds_detail_and_specgloss_textures() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "detail_parallax_specgloss_manager") as ShaderMaterial
+
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/parallax_specgloss.gdshader")
+    assert_true(material.get_shader_parameter("use_detail_normal"))
+    assert_not_null(material.get_shader_parameter("specgloss_texture"))
+
+
+func test_rain_windscreen_shader_binds_textures_and_grid_size() -> void:
+    var material: ShaderMaterial = MaterialManager.get_material("", "rain_windscreen_manager") as ShaderMaterial
+
+    assert_eq(material.shader.resource_path, "res://addons/libmaszyna/materials/types/rain_windscreen.gdshader")
+    assert_not_null(material.get_shader_parameter("diffuse_texture"))
+    assert_not_null(material.get_shader_parameter("raindrops_atlas"))
+    assert_not_null(material.get_shader_parameter("wiper_mask"))
+    assert_almost_eq(float(material.get_shader_parameter("raindrop_grid_size")), 150.0, 0.00001)

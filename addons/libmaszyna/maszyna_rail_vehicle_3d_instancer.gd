@@ -26,6 +26,9 @@ const COUPLER_SUBMODEL_NAMES:Array[String] = [
 const FRONT_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie1", "boogie01"]
 const REAR_BOGIE_SUBMODEL_NAMES:Array[String] = ["bogie2", "boogie02"]
 const WHEEL_SUBMODEL_PREFIX:String = "wheel0"
+const WIPER_ELEMENT_SUFFIXES:Array[String] = ["_p1", "_p2", "_p3"]
+## std::vector<bool>(8, false) wiperDirection of the original (DynObj.h:328)
+const MAX_WIPERS:int = 8
 const MAX_WHEEL_AXLES:int = 20
 
 ## Fixed original-engine submodel naming convention for pantograph arms
@@ -167,8 +170,8 @@ static func _build_structure(
 
 static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_display_material:Material) -> void:
     var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    _bind_animation_paths(vehicle, model)
     var abs_mmd_path:String = UserSettings.get_maszyna_game_dir().path_join(model.data_path).path_join(file_name + ".mmd")
+    _bind_animation_paths(vehicle, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path))
     var sound_diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FIZTrainController", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
@@ -230,14 +233,14 @@ static func _build_cabin_scene(normalized_data_path:String, file_name:String, sk
 ## Resolves vehicle's bogie/wheel animation paths against model's submodel tree. model may not
 ## be e3d_loaded yet (E3DModelInstance builds its submodel tree in _process(), not synchronously
 ## in add_child()) - in that case resolution is deferred to model's own e3d_loaded signal.
-static func _bind_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance) -> void:
+static func _bind_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String) -> void:
     if model.is_e3d_loaded():
-        _resolve_animation_paths(vehicle, model)
+        _resolve_animation_paths(vehicle, model, wiper_prefix)
     else:
-        model.e3d_loaded.connect(_resolve_animation_paths.bind(vehicle, model), CONNECT_ONE_SHOT)
+        model.e3d_loaded.connect(_resolve_animation_paths.bind(vehicle, model, wiper_prefix), CONNECT_ONE_SHOT)
 
 
-static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance) -> void:
+static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstance, wiper_prefix:String) -> void:
     var submodel_index:Dictionary = {}
     _index_submodels(model, submodel_index)
 
@@ -264,6 +267,12 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
     if rear_arm_paths:
         vehicle.pantograph_rear_arm_paths = rear_arm_paths
 
+    if wiper_prefix:
+        vehicle.wiper_arm_paths = _find_wiper_arm_paths(vehicle, submodel_index, wiper_prefix)
+        var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
+        fiz_controller.controller_changed.connect(_apply_wiper_count.bind(vehicle))
+        _apply_wiper_count(fiz_controller.get_controller(), vehicle)
+
     # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
     var coupler_paths:Dictionary = {}
     for coupler_name:String in COUPLER_SUBMODEL_NAMES:
@@ -288,6 +297,35 @@ static func _find_pantograph_arm_paths(
         if not node:
             return []
         paths.append(vehicle.get_path_to(node))
+    return paths
+
+
+## TrainWipers has to know how many wipers the model has: from cab 2 they are numbered from the
+## other end (DynObj.cpp:4062).
+static func _apply_wiper_count(controller:TrainController, vehicle:RailVehicle3D) -> void:
+    if not controller:
+        return
+    var wipers:TrainWipers = controller.get_node_or_null("TrainWipers") as TrainWipers
+    if wipers:
+        wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
+        wipers.update_mover()
+
+
+## Arm 1, arm 2 and blade of every wiper - "<prefix><number>_p1/_p2/_p3", numbered from 1
+## (DynObj.cpp:5838-5870); an empty path for an element the model does not have. The original
+## takes the number of wipers from the MMD "animations:" counts, here they are collected until a
+## wiper with no element at all.
+static func _find_wiper_arm_paths(
+        vehicle:RailVehicle3D, submodel_index:Dictionary, wiper_prefix:String) -> Array[NodePath]:
+    var paths:Array[NodePath] = []
+    for wiper:int in range(1, MAX_WIPERS + 1):
+        var wiper_paths:Array[NodePath] = []
+        for element:String in WIPER_ELEMENT_SUFFIXES:
+            var node:Node3D = _find_submodel(submodel_index, ["%s%d%s" % [wiper_prefix.to_lower(), wiper, element]])
+            wiper_paths.append(vehicle.get_path_to(node) if node else NodePath())
+        if not wiper_paths.any(func(path:NodePath) -> bool: return not path.is_empty()):
+            break
+        paths.append_array(wiper_paths)
     return paths
 
 

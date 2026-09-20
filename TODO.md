@@ -70,6 +70,13 @@
 
 ## Scenery loading
 
+* Air temperature (`config scenario.weather.temperature` -> `MaszynaEnvironmentNode.temperature`)
+  is consumed by nothing. The Mover uses it only in the diesel engine heat model
+  (`dizel_heat.Te`, original `Mover.cpp:8109`), and the vendored Mover has it as
+  `#define Global_AirTemperature 15.f`, assigned on every step - it cannot be fed from outside
+  without touching `src/maszyna/`. Adhesion does not depend on it (`Adhesive(RunningTrack.friction)`).
+* Other scenery `config` entries are dropped (`scenario.time.override/offset/current` shift the
+  timetables, `Globals.cpp:356-385`).
 * Include cache / instancing - e.g. `skp/skp_trawa.scm` includes `grass.inc` 24078 times, each
   one parsed again and baked into world-space triangle chunks. Idea: the include importer
   classifies each included file in the context (`path => mode, placement params`): `instanced`
@@ -181,3 +188,20 @@
   `SetLights()` when `LightsPosNo > 0` (`Train.cpp:2440`, `2463`).
 * A vehicle with switched off physics keeps its last `TrainController.state` (fetched only for
   active vehicles, like the original skips `Update()`).
+* Material shaders of the original left unmapped: `clouds`, `stars`, `invalid` (engine internals,
+  `textures/sky/stratus.mat`, `stars.mat`, `invalid.mat`) and `normalmap_phys`
+  (`textures/pkp/wskazniki/w29.mat`; the shader file does not exist in the game dir either).
+* Wiper sounds (`wiperfrompark:`, `wipertopark:` of the MMD, `DynObj.cpp:4082-4099`) are not
+  played. The direction the wiper arms swing (`RailVehicle3D::_update_wipers()`, rotation about Y
+  as `TDynamicObject::UpdateWiper()`) was not checked against the original in game.
+* The droplets of `rain_windscreen.gdshader` ignore vehicle speed and wind (a TODO in the
+  original shader as well).
+* `*_specgloss` material shaders other than `parallax_specgloss`/`water_specgloss` do not sample
+  the specgloss texture (`normalmap_`, `default_`, `reflmap_`, `detail_normalmap_`,
+  `shadowlessnormalmap_`, `sunlessnormalmap_`): approximated by their plain counterpart.
+* `rain_windscreen.gdshader` reads the screen texture (droplet lenses, water film): transparent
+  things behind the glass - the rain particles first of all - are not in it and fade out where
+  the film covers the glass. The film, the large droplets and the rivulets are this wrapper's own,
+  tuned by eye in a test scene (`heavy_rain_start`, `film_*`, `rivulet_*`, `refraction_strength`
+  of the material type); "down" follows the gravity of the original droplets (smaller v) and was
+  not checked on a real cab glass.

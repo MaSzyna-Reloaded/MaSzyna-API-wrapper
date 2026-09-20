@@ -56,6 +56,10 @@ Checks:
 
 * compile c++ plugin and check result
 * run Godot in headless mode outside sandbox, look for parse errors
+* TESTS: never run the whole test suite. Before a commit run only the test scripts you wrote or
+  modified, one script at a time: `-gdir=res://tests/ -gselect=<script name>` (`-gtest=` does
+  not filter here and runs everything)
+* do not run tests or headless Godot after every edit - only before a commit, or when operator asks
 
 Commit style:
 

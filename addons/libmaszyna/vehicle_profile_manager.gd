@@ -11,7 +11,7 @@ extends Node
 
 const PROFILE_SIZE:Vector2i = Vector2i(360, 80)
 ## Bump to re-render the cached profiles after changing how they are rendered
-const PROFILE_VERSION:int = 5
+const PROFILE_VERSION:int = 6
 ## Kept around the trimmed vehicle, so a glow drawn around it has somewhere to go
 const PROFILE_MARGIN:int = 8
 const CACHE_DIRECTORY:String = "vehicle_profiles"

@@ -82,9 +82,7 @@ shader_zenith_color=Color(0.11514282, 0.20309141, 0.3828125, 1)
 shader_horizon_height=0.178
 day_ambient_energy=0.325
 day_ambient_sky_contribution=0.69
-day_vol_fog_density=0.005
 shader_night_sky_energy=0.165
-night_vol_fog_density=0.121
 clouds_color_shadow=Color(0.8515625, 0.8515625, 0.8515625, 1)
 clouds_shadow_angular_distance_clear=1.0
 sunshafts_intensity=0.45
@@ -99,24 +97,26 @@ sun_atmosphere_strength=0.07
 moon_glow_strength=0.01
 moon_glow_size=0.2
 shader_atmosphere_sunset_boost=0.47
+vol_fog_density_boost=0.006
+night_vol_fog_density=0.02
 
 [gnd_weather]
 
 precipitation_wind_strength=10.0
-wind_influence=0.52
+wind_influence=0.5
 follow_height=0.855
-rain_mesh_density=0.1
-near_layer_speed_multiplier=0.93
+rain_mesh_density=2.0
+near_layer_speed_multiplier=2.0
 near_rain_blur=0.7
 near_rain_glow=1.0
 mid_rain_blur=0.38
 near_rain_color=Color(1, 1, 1, 0.1254902)
 mid_rain_color=Color(0.49803922, 0.49803922, 0.49803922, 0.24313726)
-visual_intensity=1.0
-rain_roughness=0.2
+visual_intensity=5.0
+rain_roughness=0.5
 rain_specular_fade_start=0.1
 rain_specular_fade_end=3.0
-rain_probe_max_count=128
+rain_probe_max_count=64
 rain_probe_distance=4.0
 
 [input]
@@ -356,6 +356,16 @@ pantograph_compressor_valve_toggle={
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":true,"meta_pressed":false,"pressed":false,"keycode":86,"physical_keycode":0,"key_label":0,"unicode":118,"location":0,"echo":false,"script":null)
 ]
 }
+wipers_switch_increase={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":87,"physical_keycode":0,"key_label":0,"unicode":119,"location":0,"echo":false,"script":null)
+]
+}
+wipers_switch_decrease={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":true,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":87,"physical_keycode":0,"key_label":0,"unicode":87,"location":0,"echo":false,"script":null)
+]
+}
 radio_channel_increase={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"resource_local_to_scene":false,"resource_name":"","device":-1,"window_id":0,"alt_pressed":false,"shift_pressed":false,"ctrl_pressed":false,"meta_pressed":false,"pressed":false,"keycode":0,"physical_keycode":61,"key_label":0,"unicode":0,"location":0,"echo":false,"script":null)
@@ -421,17 +431,14 @@ redmarker_rear_right_toggle={
 
 rendering/shadow_blur=0.4
 rendering/shadow_exterior_max_distance=300.0
-rendering/shadow_cabin_max_distance=150.0
-rendering/shadow_cabin_mode=1
+rendering/shadow_cabin_mode=2
 track_curve_bake_interval=0.5
-sound/brake_exterior_volume_factor=1.0
-sound/brake_exterior_unit_size_factor=1.0
 sound/brake_cabin_unit_size_factor=1.0
 sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
-debug/physics_diagnostics=false
 rendering/scenery_draw_distance=1000.0
-rendering/vehicle_detail_distance=350.0
+rendering/lights_shadow_reverse_cull_face=false
+rendering/fog_curve=2.0
 
 [physics]
 
@@ -442,7 +449,8 @@ common/max_physics_steps_per_frame=2
 
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
-lights_and_shadows/directional_shadow/soft_shadow_filter_quality=1
+lights_and_shadows/directional_shadow/size=8192
+lights_and_shadows/directional_shadow/soft_shadow_filter_quality=3
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96
 environment/defaults/default_clear_color=Color(0.05, 0.078, 0.15, 1)
@@ -450,6 +458,26 @@ anti_aliasing/quality/use_taa=true
 
 [shader_globals]
 
+maszyna_rain_intensity={
+"type": "float",
+"value": 0.0
+}
+maszyna_wiper_regen_time={
+"type": "float",
+"value": 10.0
+}
+maszyna_wiper_pos={
+"type": "vec4",
+"value": Vector4(0, 0, 0, 0)
+}
+maszyna_wiper_since_out={
+"type": "vec4",
+"value": Vector4(1000, 1000, 1000, 1000)
+}
+maszyna_wiper_since_return={
+"type": "vec4",
+"value": Vector4(1000, 1000, 1000, 1000)
+}
 sky_texture={
 "type": "sampler2D",
 "value": ""

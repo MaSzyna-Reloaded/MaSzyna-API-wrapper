@@ -116,7 +116,9 @@ func _update_variant(variant: MaszynaMaterial.MaszynaMaterialVariant, key: Strin
         else:
             variant.set_texture_path(texture_name, cleaned_value)
     elif key == "shader":
-        variant.shader = str(value)
+        # the original resolves "mat_<name>.frag" on a case insensitive file system
+        # (opengl33renderer.cpp:2018) and the data relies on it ("shader: Default_1")
+        variant.shader = str(value).to_lower()
     elif key.begins_with("param_"):
         var parameter_name := key.substr(6)
         if typeof(value) == TYPE_ARRAY:

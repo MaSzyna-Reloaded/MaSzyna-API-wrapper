@@ -32,6 +32,8 @@ namespace godot {
             double pantograph_collector_width = 0.5;
             TypedArray<NodePath> pantograph_front_arm_paths;
             TypedArray<NodePath> pantograph_rear_arm_paths;
+            // three per wiper (arm 1, arm 2, blade), an empty path for a missing one
+            TypedArray<NodePath> wiper_arm_paths;
             // coupler/hose submodels by lowercased name, e.g. "cpneumatic1r_on" (DynObj.cpp:2170-2181)
             Dictionary coupler_submodel_paths;
             String start_track_name;
@@ -90,6 +92,8 @@ namespace godot {
             bool bogie_configuration_warned = false;
             TypedArray<Node3D> pantograph_front_arm_nodes;
             TypedArray<Node3D> pantograph_rear_arm_nodes;
+            TypedArray<Node3D> wiper_arm_nodes;
+            PackedFloat64Array wiper_applied_positions;
             Dictionary pantograph_front_geometry;
             Dictionary pantograph_rear_geometry;
             bool pantograph_front_converged = true;
@@ -128,6 +132,7 @@ namespace godot {
             int _pneumatic_variant(int p_end, bool p_brake_hose) const;
             void _show_air_coupler(const String &p_name, bool p_on, bool p_xon);
             void _update_couplers();
+            void _update_wipers();
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
             void _update_track_transform();
@@ -202,6 +207,8 @@ namespace godot {
             TypedArray<NodePath> get_pantograph_front_arm_paths() const;
             void set_pantograph_rear_arm_paths(const TypedArray<NodePath> &p_value);
             TypedArray<NodePath> get_pantograph_rear_arm_paths() const;
+            void set_wiper_arm_paths(const TypedArray<NodePath> &p_value);
+            TypedArray<NodePath> get_wiper_arm_paths() const;
             void set_coupler_submodel_paths(const Dictionary &p_value);
             Dictionary get_coupler_submodel_paths() const;
             int get_pneumatic_layout(int p_end, bool p_brake_hose) const;

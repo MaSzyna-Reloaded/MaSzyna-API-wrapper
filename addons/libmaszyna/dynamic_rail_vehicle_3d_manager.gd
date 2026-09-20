@@ -39,8 +39,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # The hash cannot see changes to MaszynaRailVehicle3DInstancer's own code - bump this tag
     # whenever that code changes the cached structure. v6: MaSzyna->Godot vehicle-frame
     # conversion applied to every vehicle model and the cab. v12: LowPolyInterior carries no
-    # instancer in the template (RailVehicle3D switches it with the distance).
-    return ("structure-v12:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # instancer in the template (RailVehicle3D switches it with the distance). v13: the skins
+    # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
+    return ("structure-v13:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

@@ -29,6 +29,7 @@ func _enable_plugin():
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
     add_autoload_singleton("TrackManager", "res://addons/libmaszyna/tracks/track_manager.gd")
     add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
+    add_autoload_singleton("SceneryChunkRenderingServer", "res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -107,6 +108,7 @@ func _disable_plugin():
     remove_autoload_singleton("MaterialFactory")
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
+    remove_autoload_singleton("SceneryChunkRenderingServer")
     remove_autoload_singleton("Console")
 
 func _enter_tree():
@@ -115,6 +117,12 @@ func _enter_tree():
     # Quirk: the original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
     # against self-shadowing acne; Godot's default culls the same faces as the color pass
     add_custom_project_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true, TYPE_BOOL)
+    # E3DRenderingServer streams registered scenery models in and out around the camera; this caps
+    # every node's own range and stands in for the nodes that declare none (read at startup)
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_draw_distance", 3000.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "100.0,20000.0,10.0,suffix:m"
+    )
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,

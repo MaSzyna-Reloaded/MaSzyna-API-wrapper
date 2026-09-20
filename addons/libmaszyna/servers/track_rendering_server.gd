@@ -11,6 +11,9 @@ const _MAX_MESH_SEGMENT_LENGTH: float = 10.0
 
 class TrackState:
     var track_rid: RID = RID()
+    ## Valid when the track is streamed (SceneryStreamingServer); hand-placed Track3D nodes are not
+    var stream_rid: RID = RID()
+    var streamed: bool = false
     var primary_rail_mesh_instance: RID = RID()
     var primary_rail_mesh: Mesh
     var secondary_rail_mesh_instance: RID = RID()
@@ -93,6 +96,7 @@ var DEFAULT_RAIL_PROFILE:RailProfile = RailProfile.new(
 var _tracks: Dictionary[RID, TrackState] = {}
 var _track_render_rids_by_track: Dictionary[RID, RID] = {}
 var _next_track_render_id: int = 0
+var _stream_owner: int = -1
 var _rail_profile_cache: Dictionary = {}
 var _rail_profile_regex: RegEx = RegEx.new()
 const _SWITCH_TRACKBED_Z_FIGHT_OFFSET: float = 0.025
@@ -132,6 +136,8 @@ func free_track(track_render_rid: RID) -> void:
     if not state:
         return
 
+    if state.stream_rid.is_valid():
+        SceneryStreamingServer.stream_free(state.stream_rid)
     _reset_track_instances(state)
 
     if state.primary_rail_mesh_instance.is_valid():
@@ -288,16 +294,42 @@ func _get_track_data(track_rid: RID) -> TrackData:
     return track
 
 
-func rebuild_track(track_render_rid: RID) -> void:
+## Registers the track for streaming instead of building it: a scenery has thousands of tracks and
+## each one is six RenderingServer instances with no visibility range of their own, drawn from
+## anywhere on the map. The meshes are built when the camera comes within the streaming draw
+## distance of the chunk holding the track (SceneryStreamingServer) and dropped when it leaves.
+func stream_track(track_render_rid: RID) -> void:
     var state: TrackState = _tracks.get(track_render_rid)
     if not state:
         return
-    if not TrackManager:
-        return
+    if _stream_owner < 0:
+        _stream_owner = SceneryStreamingServer.owner_create(Callable(), _stream_build, _stream_clear)
     var track: TrackData = _get_track_data(state.track_rid)
     if not track.is_valid():
         return
+    state.stream_rid = SceneryStreamingServer.stream_register(
+        _stream_owner, track_render_rid, track.curve1.p1, 0.0
+    )
 
+
+func _stream_build(track_render_rid: RID, _preloaded: Variant) -> void:
+    var state: TrackState = _tracks.get(track_render_rid)
+    if not state:
+        return
+    state.streamed = true
+    rebuild_track(track_render_rid)
+    _rebuild_track_and_neighbor_stitches(track_render_rid)
+
+
+func _stream_clear(track_render_rid: RID) -> void:
+    var state: TrackState = _tracks.get(track_render_rid)
+    if not state:
+        return
+    state.streamed = false
+    _clear_track_meshes(state)
+
+
+func _clear_track_meshes(state: TrackState) -> void:
     _reset_track_instances(state)
     state.primary_rail_mesh = null
     state.secondary_rail_mesh = null
@@ -311,6 +343,21 @@ func rebuild_track(track_render_rid: RID) -> void:
     state.secondary_blade_angle_factor = 0.0
     state.trackbed_mesh = null
     state.trackbed_stitch_mesh = null
+
+
+func rebuild_track(track_render_rid: RID) -> void:
+    var state: TrackState = _tracks.get(track_render_rid)
+    if not state:
+        return
+    if state.stream_rid.is_valid() and not state.streamed:
+        return # out of range: built by _stream_build() when the camera comes back
+    if not TrackManager:
+        return
+    var track: TrackData = _get_track_data(state.track_rid)
+    if not track.is_valid():
+        return
+
+    _clear_track_meshes(state)
 
     var curve1_data: MaszynaTrackCurve = track.curve1
     var curve2_data: MaszynaTrackCurve = track.curve2
@@ -657,6 +704,8 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
     var state: TrackState = _tracks.get(track_render_rid)
     if not state:
         return
+    if state.stream_rid.is_valid() and not state.streamed:
+        return # out of range, like rebuild_track()
 
     _reset_track_stitch_instance(state)
     state.trackbed_stitch_mesh = null

@@ -15,7 +15,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 12
+const CACHE_FORMAT_VERSION:int = 13
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -44,15 +44,21 @@ static func clear_cache() -> void:
 
 ## Parses root.filename and (re-)populates root with everything the scenery declares.
 ##
-## Tracks, traction and models are built directly against TrackManager/TrackRenderingServer/
-## TractionRenderingServer/E3DRenderingServer's RID-based API (_build_track()/_build_traction()/
-## _build_model() below) instead of instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D/
-## E3DModelInstance nodes - a real scenery can have
-## thousands of these, and a Node per segment (each with its own @tool script and per-frame
-## _process()) is overhead that only actually earns its keep for a handful of hand-authored
-## pieces edited directly in a scene like demo_3d.tscn. root keeps the resulting RIDs
-## (_track_rids/_track_render_rids/_traction_rids/_wire_power_rids/_power_source_rids) so they
-## can be freed on the next reload or when root itself leaves the tree - see maszyna_include.gd.
+## Tracks, traction, models and merged terrain meshes are built directly against TrackManager/
+## TrackRenderingServer/TractionRenderingServer/E3DRenderingServer/SceneryChunkRenderingServer's
+## RID-based API (_build_track()/_build_traction()/_build_model()/_build_triangle_chunks() below)
+## instead of instantiating TrackNormal3D/TrackSwitch3D/MaszynaTraction3D/E3DModelInstance nodes -
+## a real scenery can have thousands of these, and a Node per segment (each with its own @tool
+## script and per-frame _process()) is overhead that only actually earns its keep for a handful of
+## hand-authored pieces edited directly in a scene like demo_3d.tscn. root keeps the resulting RIDs
+## (_track_rids/_track_render_rids/_traction_rids/_wire_power_rids/_power_source_rids/_e3d_rids/
+## _triangle_chunk_rids) so they can be freed on the next reload or when root itself leaves the
+## tree - see maszyna_include.gd.
+##
+## What the rendering servers get here is a registration, not geometry: SceneryStreamingServer
+## builds each piece only while the camera is within its visibility range of the 1 km chunk
+## holding it. baltyk_skm1.scn alone places 8 487 models, 90 228 "triangles" nodes (41% of them
+## with no range at all), 2 340 tracks and 1 163 traction spans.
 func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var source_path:String = _get_source_path(root.filename)
     var parameters_hash:String = _get_parameters_hash(parameters)
@@ -63,7 +69,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         compiled = await _load_cached_with_progress(root, cache_path, source_path, parameters_hash)
 
     if compiled:
-        await _report_progress(root, 0.3, "Building tracks and traction")
+        await _report_progress(root, 0.3, "Registering tracks and traction")
         await _instantiate_server_data(
             root,
             world_3d,
@@ -74,8 +80,10 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             0.3,
             0.6,
         )
-        await _report_progress(root, 0.6, "Instancing objects")
-        await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.6, 0.9)
+        await _report_progress(root, 0.6, "Registering terrain")
+        _build_triangle_chunks(root, compiled.triangle_chunks, world_3d)
+        await _report_progress(root, 0.7, "Instancing objects")
+        await _attach_objects(root, _instantiate_cached_nodes(compiled.nodes), 0.7, 0.9)
         await _wait_for_vehicles(root)
         return
 
@@ -83,22 +91,25 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     var context:MaszynaImporterContext = await _parse_file_with_progress(root, parameters)
     var objects:Array = context.objects
 
-    await _report_progress(root, PARSE_PROGRESS, "Building tracks and traction")
+    await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
     await _instantiate_server_data(
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
         PARSE_PROGRESS, 0.6
     )
     await _report_progress(root, 0.6, "Building triangles")
-    objects.append_array(_build_triangle_nodes(context.triangles))
+    var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
 
     if root.use_cache and context.cacheable:
         await _report_progress(root, 0.6, "Saving cache")
         compiled = _compile_scenery(source_path, parameters_hash, context, objects)
         if compiled:
+            compiled.triangle_chunks = triangle_chunks
             _cache.set(cache_path, compiled)
 
-    await _report_progress(root, 0.6, "Instancing objects")
-    await _attach_objects(root, objects, 0.6, 0.9)
+    await _report_progress(root, 0.65, "Registering terrain")
+    _build_triangle_chunks(root, triangle_chunks, world_3d)
+    await _report_progress(root, 0.7, "Instancing objects")
+    await _attach_objects(root, objects, 0.7, 0.9)
     await _wait_for_vehicles(root)
 
 
@@ -142,7 +153,7 @@ static func _instantiate_server_data(
         root._track_rids.append(built["track_rid"])
         root._track_render_rids.append(built["track_render_rid"])
         built_count += 1
-        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Building tracks")
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering tracks")
 
     for power_source_data:MaszynaPowerSourceData in power_sources:
         root._power_source_rids.append(_build_power_source(power_source_data))
@@ -152,28 +163,35 @@ static func _instantiate_server_data(
         root._traction_rids.append(traction_rid)
         root._wire_power_rids.append(_build_wire_power(traction_data))
         built_count += 1
-        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Building traction")
+        await _report_progress_throttled(root, lerpf(progress_from, progress_to, built_count / total), "Registering traction")
     if root._wire_power_rids.size() > 0:
         TractionPowerServer.network_build()
 
     if root._track_rids.size() > 0:
         TrackManager.topology_rebuild()
 
-    # E3D models by path - a scenery places the same few hundred models thousands of times
-    var loaded_models:Dictionary[String, E3DModel] = {}
     for model_data:MaszynaModelData in models:
-        var e3d_rid:RID = _build_model(model_data, world_3d, loaded_models)
+        var e3d_rid:RID = _build_model(model_data, world_3d)
         if e3d_rid.is_valid():
             root._e3d_rids.append(e3d_rid)
         built_count += 1
         await _report_progress_throttled(
-            root, lerpf(progress_from, progress_to, built_count / total), "Building %s" % model_data.model_filename
+            root, lerpf(progress_from, progress_to, built_count / total), "Registering %s" % model_data.model_filename
         )
 
 
-static func _build_triangle_nodes(triangles:Array) -> Array:
-    var objects:Array = []
-    # create meshinstances for triangles grouped by material and by their per-node
+## Registers the merged meshes with SceneryChunkRenderingServer; they are rendered only while the
+## camera is within range of their chunk (see the server's doc comment for why)
+static func _build_triangle_chunks(
+    root:MaszynaIncludeNode, chunks:Array[MaszynaTrianglesChunkData], world_3d:World3D
+) -> void:
+    for chunk:MaszynaTrianglesChunkData in chunks:
+        root._triangle_chunk_rids.append(SceneryChunkRenderingServer.create_chunk(chunk, world_3d.scenario))
+
+
+static func _build_triangle_chunk_data(triangles:Array) -> Array[MaszynaTrianglesChunkData]:
+    var chunk_data:Array[MaszynaTrianglesChunkData] = []
+    # merge triangles grouped by material and by their per-node
     # range_min/range_max (e.g. grass.inc's "node 300 0 ... triangles" is only meant to be
     # visible within 300m - see maszyna_node_importer.gd's own range_min/range_max handling for
     # regular model nodes). Triangles are bucketed by range before chunking so a distance-limited
@@ -190,29 +208,23 @@ static func _build_triangle_nodes(triangles:Array) -> Array:
     for range_key: Vector2 in triangles_by_range.keys():
         var range_min: float = range_key.x
         var range_max: float = range_key.y
-        var triangle_chunks: Array = SceneryTrianglesBuilder.build_chunks(triangles_by_range[range_key], TRIANGLE_CHUNK_SIZE_M)
-        for chunk in triangle_chunks:
-            var texture: String = chunk["texture"]
-            var chunk_x: int = chunk["chunk_x"]
-            var chunk_z: int = chunk["chunk_z"]
-            var chunk_origin: Vector3 = chunk["origin"]
-            var node := SceneryTrianglesChunk.new()
-            var mesh = ArrayMesh.new()
+        var built_chunks: Array = SceneryTrianglesBuilder.build_chunks(triangles_by_range[range_key], TRIANGLE_CHUNK_SIZE_M)
+        for chunk in built_chunks:
+            var mesh := ArrayMesh.new()
             var arrays: Array = []
             arrays.resize(Mesh.ARRAY_MAX)
             arrays[Mesh.ARRAY_VERTEX] = chunk["vertices"]
             arrays[Mesh.ARRAY_NORMAL] = chunk["normals"]
             arrays[Mesh.ARRAY_TEX_UV] = chunk["uvs"]
             mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
-            node.mesh = mesh
-            node.name = "%s_%s_%s" % [texture, chunk_x, chunk_z]
-            node.position = chunk_origin
-            node.material_name = texture
-            if range_max > 0:
-                node.visibility_range_begin = range_min
-                node.visibility_range_end = range_max
-            objects.append(node)
-    return objects
+            var data := MaszynaTrianglesChunkData.new()
+            data.mesh = mesh
+            data.position = chunk["origin"]
+            data.material_name = chunk["texture"]
+            data.range_min = range_min
+            data.range_max = range_max if range_max > 0 else 0.0
+            chunk_data.append(data)
+    return chunk_data
 
 
 ## Adds objects to root, reporting the object being attached (see _report_progress_throttled())
@@ -548,7 +560,8 @@ static func _make_importer_callback(importer, context) -> Callable:
 
 ## Mirrors TrackNormal3D/TrackSwitch3D's own _create_track()/_update_track_data()/
 ## _update_track_rendering() (addons/libmaszyna/tracks/track_normal_3d.gd,
-## track_switch_3d.gd), minus the Node - see instantiate()'s doc comment for why.
+## track_switch_3d.gd), minus the Node - see instantiate()'s doc comment for why. The rendering
+## meshes are not built here: stream_track() leaves that to SceneryStreamingServer.
 static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dictionary:
     var track_rid:RID = TrackManager.track_create()
     var track_render_rid:RID = TrackRenderingServer.create_track(track_rid)
@@ -574,8 +587,8 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
         true, # rail_visible
         true, # ballast_visible
     )
-    TrackRenderingServer.rebuild_track(track_render_rid)
     TrackRenderingServer.set_track_visible(track_render_rid, track_data.visible)
+    TrackRenderingServer.stream_track(track_render_rid)
 
     return {"track_rid": track_rid, "track_render_rid": track_render_rid}
 
@@ -602,29 +615,24 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
     TractionRenderingServer.set_traction_visible(traction_rid, traction_data.visible)
     TractionRenderingServer.set_traction_scenario(traction_rid, world_3d.scenario)
     TractionRenderingServer.set_traction_material(traction_rid, _get_traction_material(traction_data).get_rid())
+    TractionRenderingServer.stream_traction(traction_rid)
     return traction_rid
 
 
-## Mirrors E3DModelInstance's own _create_instance() (addons/libmaszyna/e3d/e3d_model_instance.gd)
-## with the OPTIMIZED instancer, minus the Node.
-static func _build_model(
-    model_data:MaszynaModelData, world_3d:World3D, loaded_models:Dictionary[String, E3DModel]
-) -> RID:
-    var model_path:String = model_data.data_path.path_join(model_data.model_filename)
-    if not loaded_models.has(model_path):
-        loaded_models[model_path] = E3DModelManager.load_model(model_data.data_path, model_data.model_filename)
-    var model:E3DModel = loaded_models[model_path]
-    if not model:
-        return RID()
-    var e3d_rid:RID = E3DRenderingServer.instance_create(model, E3DRenderingServer.INSTANCER_OPTIMIZED)
-    E3DRenderingServer.instance_set_options(e3d_rid, model_data.data_path, model_data.skins, [], false, [])
-    E3DRenderingServer.instance_set_scenario(e3d_rid, world_3d.scenario)
-    E3DRenderingServer.instance_set_transform(
-        e3d_rid, Transform3D(Basis.from_euler(model_data.rotation), model_data.position)
+## Registers the placement with E3DRenderingServer instead of instancing it (a real scenery places
+## hundreds of thousands of submodels - instancing them all at load costs both the loading time and
+## the frame rate). The server loads the model and builds the instance once the streaming camera
+## comes within the node's range of the chunk it falls into, and clears it when the camera leaves.
+static func _build_model(model_data:MaszynaModelData, world_3d:World3D) -> RID:
+    return E3DRenderingServer.instance_register(
+        model_data.data_path,
+        model_data.model_filename,
+        model_data.skins,
+        Transform3D(Basis.from_euler(model_data.rotation), model_data.position),
+        model_data.range_min,
+        model_data.range_max,
+        world_3d.scenario,
     )
-    E3DRenderingServer.instance_set_visibility_range(e3d_rid, model_data.range_min, model_data.range_max)
-    E3DRenderingServer.instance_build(e3d_rid)
-    return e3d_rid
 
 
 ## Mirrors _build_traction() - a tractionpowersource node has no visual representation, so this

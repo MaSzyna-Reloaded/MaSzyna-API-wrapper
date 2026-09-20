@@ -44,6 +44,7 @@
 #include "resources/wipers/WiperListItem.hpp"
 #include "scenery/MaszynaTrianglesImporter.hpp"
 #include "scenery/SceneryLoadingTaskQueue.hpp"
+#include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
 #include "speed_control/TrainSpeedControl.hpp"
 #include "switches/TrainSwitches.hpp"
@@ -66,6 +67,7 @@ GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
+SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -88,6 +90,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
+        GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(TrainPart);
@@ -135,13 +138,15 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
+        scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
 
-        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton); // 1
-        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);       // 2
-        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);           // 3
-        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);   // 4
-        Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton); // 5
+        Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
+        Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
+        Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                                // 3
+        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                        // 4
+        Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
+        Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -168,7 +173,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (Engine::get_singleton()->has_singleton("E3DRenderingServer")) {
-        Engine::get_singleton()->unregister_singleton("E3DRenderingServer"); // 5
+        Engine::get_singleton()->unregister_singleton("E3DRenderingServer"); // 6
+    }
+
+    if (Engine::get_singleton()->has_singleton("SceneryStreamingServer")) {
+        Engine::get_singleton()->unregister_singleton("SceneryStreamingServer"); // 5
     }
 
     if (Engine::get_singleton()->has_singleton("TrainSystem")) {
@@ -187,9 +196,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
     }
 
-    if (e3d_rendering_server_singleton != nullptr) { // 5
+    if (e3d_rendering_server_singleton != nullptr) { // 6
         memdelete(e3d_rendering_server_singleton);
         e3d_rendering_server_singleton = nullptr;
+    }
+
+    if (scenery_streaming_server_singleton != nullptr) { // 5
+        memdelete(scenery_streaming_server_singleton);
+        scenery_streaming_server_singleton = nullptr;
     }
 
     if (train_system_singleton != nullptr) { // 4

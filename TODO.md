@@ -63,6 +63,35 @@
   in-place `SceneryInstancer.parse_file()` (no queue) parses every include again.
 * Parse progress counts includes inside subscenes loaded from cache (`_count_includes()`), which
   are never run as tasks - the parse bar jumps at the end when subscenes come from cache.
+* Scenery streaming (`SceneryStreamingServer`) keeps the six `TrackRenderingServer` instances and
+  the two `TractionRenderingServer` instances of every piece allocated and only drops their
+  meshes; only the meshes are rebuilt when a piece comes back into range. Freeing the instances
+  too would save the per-frame cost of ~16k empty instances in a scenery like `baltyk`.
+* Scenery streaming places a track in the chunk of its first curve point, so a track longer than
+  a chunk streams in by its start, not by its nearest point.
+* Scenery streaming has no `preload` for tracks and traction: their meshes are still built on the
+  main thread within the per-frame budget. Building them on the worker thread (like the E3D models
+  are loaded) would shorten the fill-in after a load.
+* The loading screen does not wait for the first streaming pass, so the world still fills in after
+  a load (seconds, at the catch-up budget). Waiting for `get_statistics()["pending_builds"]` to
+  reach 0 before the loading screen fades would move that behind the spinner.
+* Filling a scenery in is bounded by the main thread: only E3DRenderingServer has a `preload`, so
+  track, traction and chunk meshes are all built inside the per-frame budget. With ~5 000 pieces
+  in range at a 3 000 m draw distance that is thousands of builds after every load.
+* Streaming is per piece, which is the wrong granularity: a 1 km chunk should be baked into one
+  unit (MultiMesh per mesh+material for models, merged meshes for triangles, ready track meshes),
+  cached on disk and loaded by the worker - build would then be a handful of `RenderingServer`
+  instances instead of thousands, and the cache would make dropping a chunk's geometry from RAM
+  possible. Switch blades (`primary_blade_mesh_instance`/`secondary_blade_mesh_instance`) move, so
+  they stay outside the baked geometry or need their own access to it.
+* Nothing gives geometry back: `SceneryChunkRenderingServer.ChunkState.mesh` holds every merged
+  terrain mesh for the whole session and `E3DRenderingServer`'s model cache never evicts, so
+  clearing a piece frees its `RenderingServer` instance but not its mesh. Needs the per-chunk disk
+  cache above to be fixable.
+* Scenery loaded in the editor is streamed around the camera of 3D viewport 0 only
+  (`addons/libmaszyna/editor/scenery_streaming/`); switching to another viewport does not follow.
+* Switch state changes are not visualised (broken for several commits, unrelated to streaming) and
+  the trackbed of switches renders incorrectly.
 * Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
   render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
   `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by

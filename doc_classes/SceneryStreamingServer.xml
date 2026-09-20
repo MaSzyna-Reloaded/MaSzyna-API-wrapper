@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="SceneryStreamingServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+		Builds scenery content only where the camera is.
+	</brief_description>
+	<description>
+		A real scenery places hundreds of thousands of pieces - models, merged terrain meshes, tracks, traction spans - and building them all while loading costs both the loading time and the frame rate, because most of them are nowhere near the camera.
+		A rendering server registers itself as an owner with [method owner_create] and then registers each of its pieces with [method stream_register], saying where it is and how far it is meant to be visible. The piece is built once the camera set with [method set_camera] comes within that range of the 1[code] [/code]km chunk holding it, and cleared again when the camera leaves. Pieces that declare no range of their own are streamed up to [method get_draw_distance] ([code]maszyna/rendering/scenery_draw_distance[/code]).
+		Planning runs on a worker thread, together with whatever an owner wants prepared off the main thread (the [code]preload[/code] callable - loading a model, building a mesh). Building and clearing run on the main thread within a per-frame time budget, because they touch [RenderingServer] and GDScript.
+		Owners: [E3DRenderingServer] (scenery models), [code]SceneryChunkRenderingServer[/code] (merged terrain meshes), [code]TrackRenderingServer[/code] and [code]TractionRenderingServer[/code].
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_draw_distance" qualifiers="const">
+			<return type="float" />
+			<description>
+				Range used for pieces registered with a [code]range_end[/code] of [code]0[/code], read from [code]maszyna/rendering/scenery_draw_distance[/code] at startup.
+			</description>
+		</method>
+		<method name="get_statistics" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				What the streaming is doing right now, shown by the "Scenery Streaming" debug window ([code]res://hud/scenery_streaming_panel.gd[/code]): [code]owners[/code], [code]registered[/code], [code]streamed[/code], [code]chunks[/code], [code]active_chunks[/code], [code]pending_builds[/code], [code]pending_clears[/code], [code]build_rate[/code] (builds applied in the last second), [code]budget_msec[/code] (the per-frame budget in use), [code]plan_msec[/code] (duration of the last planning pass), [code]draw_distance[/code], [code]chunk_size[/code], [code]camera_position[/code], [code]camera_chunk[/code] and [code]has_camera[/code].
+			</description>
+		</method>
+		<method name="get_streamed_count" qualifiers="const">
+			<return type="int" />
+			<description>
+				Pieces currently streamed in - what the streaming actually keeps built.
+			</description>
+		</method>
+		<method name="owner_create">
+			<return type="int" />
+			<param index="0" name="preload" type="Callable" />
+			<param index="1" name="build" type="Callable" />
+			<param index="2" name="clear" type="Callable" />
+			<description>
+				Registers a rendering server with the streaming and returns its owner id, to be passed to [method stream_register].
+				[param preload] is called as [code]preload(rid: RID) -&gt; Variant[/code] on the worker thread and its result is handed to [param build]; pass an empty [Callable] when there is nothing to prepare off the main thread. [param build] is called as [code]build(rid: RID, preloaded: Variant)[/code] and [param clear] as [code]clear(rid: RID)[/code], both on the main thread, within the per-frame budget.
+			</description>
+		</method>
+		<method name="set_camera">
+			<return type="void" />
+			<param index="0" name="camera" type="Camera3D" />
+			<description>
+				Camera the streaming follows; without one nothing is ever built. Passing [code]null[/code] stops the streaming, leaving whatever is built in place. In game this is the player's camera, in the editor the camera of the 3D view.
+			</description>
+		</method>
+		<method name="stream_free">
+			<return type="void" />
+			<param index="0" name="stream_rid" type="RID" />
+			<description>
+				Unregisters a piece. The owner's [code]clear[/code] callable is not called - whoever frees the piece frees its content too.
+			</description>
+		</method>
+		<method name="stream_register">
+			<return type="RID" />
+			<param index="0" name="owner" type="int" />
+			<param index="1" name="rid" type="RID" />
+			<param index="2" name="position" type="Vector3" />
+			<param index="3" name="range_end" type="float" />
+			<description>
+				Registers one piece of an owner, placed at [param position] and visible up to [param range_end] ([code]0[/code] - up to [method get_draw_distance]). [param rid] is the owner's own handle for the piece and is what the owner's callables receive. Returns the handle for [method stream_free].
+			</description>
+		</method>
+	</methods>
+</class>

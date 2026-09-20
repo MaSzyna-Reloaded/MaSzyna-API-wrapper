@@ -189,10 +189,20 @@ static func resolve_skins(data_path:String, skin:String) -> Array:
     var base_dir:String = UserSettings.get_maszyna_game_dir().path_join(data_path)
     var skins:Array = []
     var n:int = 1
-    while n <= 4 and FileAccess.file_exists(base_dir.path_join("%s,%d.mat" % [skin, n])):
+    while n <= 4 and _skin_slot_exists(base_dir, "%s,%d" % [skin, n]):
         skins.append("%s,%d" % [skin, n])
         n += 1
     return skins if skins else [skin]
+
+
+## A slot of a skin is a material or a plain texture (TextureTest(), DynObj.cpp:60 - the wrapper
+## reads .mat and .dds of the extensions tried there). Real data: the skins of dynamic/pkp/e186_v2
+## are "<skin>,1.dds" and "<skin>,2.dds" with no .mat, next to a 1x1 "<skin>.dds" placeholder.
+static func _skin_slot_exists(base_dir:String, slot:String) -> bool:
+    for extension:String in [".mat", ".dds"]:
+        if FileAccess.file_exists(base_dir.path_join(slot.to_lower() + extension)):
+            return true
+    return false
 
 
 ## Reads just the exterior body model filename from the MMD's own top-level `models:` section

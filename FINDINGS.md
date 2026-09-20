@@ -335,3 +335,11 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   tree re-entry creates the instance with the current transform as before.
 * **Rule:** a valid rendering RID does not imply that its owning `Node3D` currently has a global
   transform; notification handlers must check the node lifecycle separately.
+
+## 2026-09-20 - Skydome clouds behind alpha-blended cabin windows
+
+* **Symptom:** enabling any visible cloud cover in a cabin with alpha-blended windows could push a
+  60 FPS frame past its V-Sync budget and drop it to 30 FPS.
+* **Cause:** light_angular_distance high cost for PSSM and even for medium filter.
+* **Fix:** filter switched to the fastests
+* **Follow up:** Give possiblity to disable light_angular_distance in Skybox

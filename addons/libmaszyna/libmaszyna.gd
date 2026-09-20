@@ -214,9 +214,6 @@ func _exit_tree():
     print_verbose("Libmaszyna.gd _exit_tree finished!")
 
 func add_custom_project_setting(name: String, default_value, type: int, hint: int = PROPERTY_HINT_NONE, hint_string: String = "") -> void:
-    if ProjectSettings.has_setting(name):
-        return
-
     var setting_info: Dictionary = {
         "name": name,
         "type": type,
@@ -224,6 +221,9 @@ func add_custom_project_setting(name: String, default_value, type: int, hint: in
         "hint_string": hint_string
     }
 
-    ProjectSettings.set_setting(name, default_value)
+    # project.godot keeps only the value - the hint and the initial value are gone with every
+    # editor restart, so a setting saved there still needs them registered again
+    if not ProjectSettings.has_setting(name):
+        ProjectSettings.set_setting(name, default_value)
     ProjectSettings.add_property_info(setting_info)
     ProjectSettings.set_initial_value(name, default_value)

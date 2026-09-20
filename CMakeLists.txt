@@ -160,6 +160,21 @@ ENDIF ()
 
 TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
 
+# Every build stamps demo/build_number.txt with the time it was made, so the number shown in the
+# app identifies the library that is actually loaded rather than whatever the checkout says.
+ADD_CUSTOM_TARGET(build_number ALL
+        COMMAND ${CMAKE_COMMAND} -DOUT=${PROJECT_SOURCE_DIR}/${GODOT_PROJECT_DIR}/build_number.txt
+        -P ${PROJECT_SOURCE_DIR}/cmake/write_build_number.cmake)
+ADD_DEPENDENCIES(${LIBNAME} build_number)
+
+# A MinGW-built DLL otherwise needs libstdc++-6.dll, libgcc_s_seh-1.dll and libwinpthread-1.dll
+# sitting next to the game, and Godot only ships the executable and this library - the extension
+# would simply fail to load on a clean Windows. Godot's own MinGW builds do the same
+# (use_static_cpp).
+IF (MINGW)
+    TARGET_LINK_OPTIONS(${LIBNAME} PRIVATE -static-libgcc -static-libstdc++ -static)
+ENDIF ()
+
 SET_TARGET_PROPERTIES(${LIBNAME}
         PROPERTIES
         CXX_VISIBILITY_PRESET hidden

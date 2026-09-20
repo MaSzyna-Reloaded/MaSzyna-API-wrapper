@@ -2,6 +2,7 @@
 #include "RailVehicle3D.hpp"
 
 #include "../engines/TrainElectricEngine.hpp"
+#include "GameLog.hpp"
 
 #include <godot_cpp/classes/area3d.hpp>
 #include <godot_cpp/classes/box_shape3d.hpp>
@@ -560,10 +561,25 @@ namespace godot {
         const int occupied_cab_index = cab_number < 0 ? 2 : cab_number;
         const bool hifi_cab = cabin != nullptr && bool(cabin->get("has_cab_model"));
         for (int cab_index = 0; cab_index < 3; ++cab_index) {
-            Node3D *cab_node =
-                    Object::cast_to<Node3D>(low_poly_cabin->find_child("cab" + itos(cab_index), true, false));
+            const String cab_name = "cab" + itos(cab_index);
+            Node3D *cab_node = Object::cast_to<Node3D>(low_poly_cabin->find_child(cab_name, true, false));
             if (cab_node != nullptr) {
                 cab_node->set_visible(!hifi_cab || (!joint_cabs && cab_index != occupied_cab_index));
+                continue;
+            }
+            // Not finding these is why the low-poly interior ends up drawn over the modelled
+            // cabin, and it used to happen without a word in the log
+            if (cab_index == occupied_cab_index && hifi_cab) {
+                const String message =
+                        vformat("RailVehicle3D '%s': no '%s' node under '%s' to hide, the low-poly interior will cover "
+                                "the cabin. Children: %d, loaded: %s",
+                                get_name(), cab_name, low_poly_cabin->get_name(), low_poly_cabin->get_child_count(),
+                                bool(low_poly_cabin->call("is_e3d_loaded")));
+                UtilityFunctions::push_warning(message);
+                GameLog *game_log = GameLog::get_instance();
+                if (game_log != nullptr) {
+                    game_log->error(message);
+                }
             }
         }
     }
@@ -941,6 +957,11 @@ namespace godot {
         // E3DModelInstance applies a changed instancer only in the editor, so ask it to rebuild
         model_node->set("instancer", detailed ? 1 : 0); // Instancer.NODES : Instancer.OPTIMIZED
         model_node->call("reload");
+        // its e3d_loaded brings the cabN visibility and the dimmed materials back with the nodes
+        if (low_poly_cabin != nullptr) {
+            low_poly_cabin->set("instancer", detailed ? 1 : 0);
+            low_poly_cabin->call("reload");
+        }
         // the bogie and wheel nodes are gone with the hierarchy, and new ones come back with it
         animation_bindings_dirty = true;
         force_detail_refresh = true;

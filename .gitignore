@@ -66,3 +66,4 @@ build-*/
 /.codex
 /.antigravitycli
 /build-profiling/
+/demo/build_number.txt

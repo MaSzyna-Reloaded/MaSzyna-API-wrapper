@@ -67,7 +67,16 @@ func _ready() -> void:
         _items.append(item)
         %List.add_child(item)
     _show_details(-1)
-    %BuildLabel.text = "Pre-Alpha Demo Release %s" % ProjectSettings.get_setting("application/config/version")
+    %BuildLabel.text = "Pre-Alpha Demo Release %s (build %s)" % [
+        ProjectSettings.get_setting("application/config/version"), _build_number()
+    ]
+
+
+## Stamped by the build itself (cmake/write_build_number.cmake), so it names the library that is
+## actually loaded. A checkout that was never built has no stamp.
+func _build_number() -> String:
+    var stamp:String = FileAccess.get_file_as_string("res://build_number.txt").strip_edges()
+    return stamp if stamp else "unbuilt"
 
 
 ## One row of a list: its name and, on the right, a smaller grey note

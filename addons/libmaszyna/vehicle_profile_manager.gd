@@ -1,3 +1,4 @@
+@tool
 extends Node
 
 ## Side views ("profiles") of vehicles and their skins, rendered from the vehicle models. The

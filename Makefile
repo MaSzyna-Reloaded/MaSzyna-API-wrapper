@@ -1,13 +1,20 @@
 .PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix
 .DEFAULT_GOAL = compile-debug
 
-GITREV=$(shell git rev-parse --abbrev-ref HEAD | sed -e 's/[^A-Za-z0-9]//g')
-DATE=$(shell date +"%Y%m%d")
+# The build stamps itself (cmake/write_build_number.cmake) and the app shows that number, so the
+# archive name stays the same from build to build and does not carry a branch or a date
+LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
+WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
 CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
 CLANG_TIDY_BINDINGS_FILE=$(CLANG_TIDY_BUILD_DIR)/godot-cpp/gen/include/godot_cpp/classes/node.hpp
 LIBMASZYNA_DEBUG:=""
+# The extension is built against double precision godot-cpp, so only a Godot built the same way
+# can load it - a single precision binary dies with a glibc heap assertion while the module
+# initialises. Override when your double precision build is named differently:
+#   make release-linux GODOT=godot-double
+GODOT?=godot-double
 CMAKE_GODOTCPP_API_VERSION=4.7
 CMAKE_GODOTCPP_PRECISION=double
 # godot-cpp bundles the single-precision API only; the double one is dumped from the local Godot
@@ -23,7 +30,7 @@ generate-bindings: $(CMAKE_GODOTCPP_API_FILE)
 
 
 docs:
-	cd demo && godot --doctool .. --gdextension-docs
+	cd demo && $(GODOT) --doctool .. --gdextension-docs
 
 
 cleanup:
@@ -65,33 +72,17 @@ compile-profiling:
 compile-all: compile-debug compile-release
 
 
-cross-compile-release: $(CMAKE_GODOTCPP_API_FILE)
-	cmake -B build-linux64 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DGODOTCPP_TARGET="template_release" \
-           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
-	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
-	cmake -B build-win64 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DGODOTCPP_TARGET="template_release" \
-          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
-          -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE) \
-          -DGODOTCPP_PLATFORM=windows \
-          -DCMAKE_SYSTEM_NAME=Windows \
-          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
-          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
-          -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
+cross-compile-release: compile-release compile-windows-release
 
 
-cross-compile-debug: $(CMAKE_GODOTCPP_API_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
-	cmake -B build-linux64 \
+cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
+	cmake -B build-linux64-debug \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DLIBMASZYNA_DEBUG=ON \
-          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
-	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
-	cmake -B build-win64 \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+	cmake --build build-linux64-debug --parallel $(CMAKE_BUILD_JOBS)
+	cmake -B build-win64-debug \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
@@ -101,31 +92,47 @@ cross-compile-debug: $(CMAKE_GODOTCPP_API_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FI
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
           -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
+	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-release-linux: $(CMAKE_GODOTCPP_API_FILE)
-	cmake -B build-linux64 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DGODOTCPP_TARGET="template_release" \
-          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE)
-	cmake --build build-linux64 --parallel $(CMAKE_BUILD_JOBS)
-	cd demo && godot --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip && mv ../bin/linux/reloaded.zip ../bin/linux/reloaded-$(GITREV)-$(DATE)-linux.zip
-
-
-release-windows: $(CMAKE_GODOTCPP_API_FILE)
-	cmake -B build-win64 \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DGODOTCPP_TARGET="template_release" \
-           -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
-           -DGODOTCPP_PRECISION=$(CMAKE_GODOTCPP_PRECISION) -DGODOTCPP_CUSTOM_API_FILE=$(CMAKE_GODOTCPP_API_FILE) \
+compile-windows-debug:
+	cmake -B build-win64-debug \
+          -DCMAKE_BUILD_TYPE=Debug \
+          -DGODOTCPP_TARGET="template_debug" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
           -DGODOTCPP_PLATFORM=windows \
           -DCMAKE_SYSTEM_NAME=Windows \
           -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
           -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
           -DCMAKE_SIZEOF_VOID_P=8
-	cmake --build build-win64 --parallel $(CMAKE_BUILD_JOBS)
-	cd demo && godot --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip && mv ../bin/windows/reloaded.zip ../bin/windows/reloaded-$(GITREV)-$(DATE)-windows.zip
+	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
+
+
+compile-windows-release:
+	cmake -B build-win64-release \
+          -DCMAKE_BUILD_TYPE=Release \
+          -DGODOTCPP_TARGET="template_release" \
+          -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) \
+          -DGODOTCPP_PLATFORM=windows \
+          -DCMAKE_SYSTEM_NAME=Windows \
+          -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc \
+          -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ \
+          -DCMAKE_SIZEOF_VOID_P=8
+	cmake --build build-win64-release --parallel $(CMAKE_BUILD_JOBS)
+
+
+release-linux: compile-release
+	mkdir -p bin/linux
+	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
+	mv bin/linux/reloaded.zip $(LINUX_ZIP)
+	@echo "Exported: $(LINUX_ZIP)"
+
+
+release-windows: compile-windows-release
+	mkdir -p bin/windows
+	cd demo && $(GODOT) --headless --export-release "windows_x86_64" ../bin/windows/reloaded.zip
+	mv bin/windows/reloaded.zip $(WINDOWS_ZIP)
+	@echo "Exported: $(WINDOWS_ZIP)"
 
 
 release: release-linux release-windows

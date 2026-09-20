@@ -30,6 +30,9 @@ General guidelines:
 * if you are not sure, ask operator for decision
 * whatever is left out of a task (not ported, skipped, deferred) goes to `TODO.md`, not only to the
   session report, so it isn't forgotten
+* every significant finding (a root cause that took a measurement to find, a trap in the data or in
+  the engine, a wrong assumption that cost time) goes to `FINDINGS.md` - symptom, what proved the
+  cause, the fix and the rule it leaves behind - not only to the session report
 
 Custom nodes and Godot Editor:
 

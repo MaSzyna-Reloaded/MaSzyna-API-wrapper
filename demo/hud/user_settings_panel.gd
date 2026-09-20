@@ -18,6 +18,10 @@ func _on_gamedir_changed():
     _auto_user_settings_visibility()
     E3DModelManager.clear_cache()
     MaterialManager.clear_cache()
+    SceneryInstancer.clear_cache()
+    DynamicRailVehicle3DManager.clear_cache()
+    FizTrainControllerInstancer.clear_cache()
+    VehicleProfileManager.clear_cache()
     _reload_all_models()
 
 

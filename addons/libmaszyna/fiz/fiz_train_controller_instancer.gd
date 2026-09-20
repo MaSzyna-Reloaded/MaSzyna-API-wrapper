@@ -168,6 +168,9 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
 ## to stamp out an independent copy of a template tree (see build() below).
 static var _cache = ResourceCache.create("fiz")
 
+static func clear_cache() -> void:
+    _cache.clear()
+
 static func _make_cache_path(fiz_path: String) -> String:
     var relative_path: String = fiz_path.trim_prefix(UserSettings.get_maszyna_game_dir().path_join(""))
     return relative_path + ".res"

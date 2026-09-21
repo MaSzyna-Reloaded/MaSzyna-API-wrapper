@@ -30,6 +30,8 @@ namespace godot {
             static const char *cache_cleared_signal;
             static Ref<ResourceCache> create(const String &p_cache_dir);
 
+            ~ResourceCache();
+
             bool has(const String &p_path, const String &p_hash = "") const;
             Ref<Resource> get(const String &p_path, const String &p_hash = "") const;
             void set(const String &p_path, const Ref<Resource> &p_resource, const String &p_hash = "") const;

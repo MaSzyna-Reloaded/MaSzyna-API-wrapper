@@ -564,3 +564,25 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Trap:** a project setting being read does not mean its value is being applied. Here the
   setting said `false`, the code read `false`, and the light was still culling in reverse -
   because nobody had ever written that `false` into the light.
+
+## 2026-09-21 - "the release runs old GDScript" - the release was never unpacked into the game dir
+
+* **Symptom:** after `make release-linux` and unpacking, `./reloaded` in the game directory ran the
+  track code from before the last fix, and clearing the caches changed nothing.
+* **What proved it:** file identity, not reasoning about the export. The `.so` inside the zip is
+  byte-identical to `demo/bin/libmaszyna/linux/libmaszyna.64.so`, the embedded pck carries the
+  `build_number.txt` of that same compile - so the export is fresh. But
+  `/mnt/ArchiwumX/Games/MaSzyna/reloaded` had mtime 23:11 and md5 `5aa4a837...`, while the freshly
+  built one was `4fa78d7a...`, and the repo root held untracked `reloaded`, `libmaszyna.64.so`
+  and both zips.
+* **Cause:** `upgrade-linux.sh` / `upgrade-windows.sh` started with
+  `cd <repo> && make ... && cp bin/linux/<zip> ./ && unzip -o <zip>`. After the `cd`, `./` is the
+  repo, so every upgrade unpacked the new build **into the repo** and the game directory kept
+  running whatever had been unpacked there last.
+* **Fix:** the scripts build with `make -C "$REPO" release-linux` (no `cd`) and unpack with
+  `unzip -o "$REPO/bin/linux/<zip>" -d "$GAME"`, where `$GAME` is the directory holding the script.
+* **Rule:** when a build "has no effect", first prove that the binary being run is the binary that
+  was built - mtime and md5 of the file on disk, against the artifact in `bin/`. Cache, export and
+  packing are the second question, not the first.
+* **Rule:** a shell one-liner that both `cd`s and uses a relative destination has two working
+  directories in it. Name the destination absolutely.

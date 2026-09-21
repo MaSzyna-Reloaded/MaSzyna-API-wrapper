@@ -1,10 +1,13 @@
 #include "ResourceCache.hpp"
 
+#include "MaszynaRuntime.hpp"
+
 #include <godot_cpp/classes/dir_access.hpp>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/file_access.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
 #include <godot_cpp/classes/resource_saver.hpp>
+#include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -29,6 +32,22 @@ namespace godot {
 
     void ResourceCache::_initialize(const String &p_cache_dir) {
         cache_dir = p_cache_dir;
+
+        // Every cache follows the one "throw the caches away" request, so a new cache is covered
+        // by "Clear cache" and by a build change without its owner having to remember it.
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        if (runtime != nullptr) {
+            runtime->connect(MaszynaRuntime::cache_clear_requested_signal, callable_mp(this, &ResourceCache::clear));
+        }
+    }
+
+    ResourceCache::~ResourceCache() {
+        // The signal does not hold a reference to this RefCounted, so the connection has to go
+        // with the instance.
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        if (runtime != nullptr) {
+            runtime->disconnect(MaszynaRuntime::cache_clear_requested_signal, callable_mp(this, &ResourceCache::clear));
+        }
     }
 
     Ref<ResourceCache> ResourceCache::create(const String &p_cache_dir) {

@@ -80,10 +80,9 @@ func _ready() -> void:
     ]
 
 
-## Stamped by the build itself (cmake/write_build_number.cmake), so it names the library that is
-## actually loaded. A checkout that was never built has no stamp.
+## The stamp of the build that is actually loaded; a checkout that was never built has none.
 func _build_number() -> String:
-    var stamp:String = FileAccess.get_file_as_string("res://build_number.txt").strip_edges()
+    var stamp:String = MaszynaRuntime.get_build_number()
     return stamp if stamp else "unbuilt"
 
 

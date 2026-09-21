@@ -17,8 +17,8 @@ const STORM_RAIN_START: float = 0.4
 const RAIN_FOG_START: float = 0.6
 # Skydome's day/night densities are tuned for exponential fog and barely show in depth fog, so the
 # visible fog comes from Skydome's fog_density boost, which is the fog opacity at the fog distance.
-# Skydome keeps blending its own day/night values, clouds and rain on top; they are tuned for this
-# opacity (0.15 in forest-test-scene) and this day distance, and follow the node proportionally.
+# The volumetric fog and the clouds and rain Skydome blends on top are tuned for this opacity
+# (0.15 in forest-test-scene) and this day distance, and follow the node proportionally.
 const FOG_REFERENCE_DENSITY: float = 0.15
 const FOG_REFERENCE_DISTANCE_PROPERTY: StringName = &"day_fog_distance"
 const FOG_DENSITY_PROPERTIES: Array[StringName] = [&"day_fog_density", &"night_fog_density"]
@@ -110,7 +110,6 @@ func apply_visual_configuration() -> void:
         ProjectSettings.get_setting(RAIN_FOG_DENSITY_SETTING, RAIN_FOG_DENSITY_DEFAULT))), rain_fog)
     var fog_distance: float = lerpf(environment_node.fog_distance, minf(environment_node.fog_distance, float(
         ProjectSettings.get_setting(RAIN_FOG_DISTANCE_SETTING, RAIN_FOG_DISTANCE_DEFAULT))), rain_fog)
-    weather.storm_fog_intensity = clampf(fog_density, 0.0, 1.0)
     weather.global_wind_direction = Vector2.from_angle(environment_node.wind_direction)
     weather.global_wind_speed = lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, environment_node.wind_strength)
     weather.global_wind_strength = lerpf(
@@ -125,10 +124,18 @@ func apply_visual_configuration() -> void:
         * (1.0 - smoothstep(RAINBOW_CLOUD_FADE_START, RAINBOW_CLOUD_FADE_END, environment_node.cloudiness))
     )
 
-    # Skydome keeps its day/night fog blend; the node only scales it.
+    # Skydome adds its storm fog boost on top of its own day/night fog density (Skydome.gd:1265)
+    # and that sum is the opacity the depth fog reaches at fog_distance. Godot does not clamp it:
+    # above 1.0 a fully fogged object comes out as opacity * fog colour - (opacity - 1) * its own
+    # colour - brighter than the fogged sky and still carrying its own silhouette. So the day/night
+    # density stays Skydome's own haze and the boost carries only the rest of the wanted opacity.
     var density_scale: float = fog_density / FOG_REFERENCE_DENSITY
+    var base_density: float = 0.0
     for property: StringName in FOG_DENSITY_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * density_scale)
+        var density: float = float(SkydomeSettings.get_value(property))
+        skydome.set(property, density)
+        base_density = maxf(base_density, density)
+    weather.storm_fog_intensity = clampf(fog_density - base_density, 0.0, 1.0)
     var range_scale: float = (
         fog_distance / float(SkydomeSettings.get_value(FOG_REFERENCE_DISTANCE_PROPERTY)))
     for property: StringName in FOG_RANGE_PROPERTIES:
@@ -137,7 +144,10 @@ func apply_visual_configuration() -> void:
         FOG_CURVE_SETTING, FOG_CURVE_DEFAULT)))
     var sky_affect: float = clampf(pow(float(ProjectSettings.get_setting(
         FOG_SKY_HEIGHT_SETTING, FOG_SKY_HEIGHT_DEFAULT)) / fog_distance, fog_curve), 0.0, 1.0)
-    sky_affect = lerpf(sky_affect, 1.0, rain_fog)
+    # The sky takes fog_sky_affect of the fog colour whatever the density is, while geometry at
+    # fog_distance takes the density itself - a sky fogged harder than the terrain in front of it
+    # cuts every distant silhouette back out of the fog, so the height share carries the opacity.
+    sky_affect = lerpf(sky_affect, 1.0, rain_fog) * clampf(fog_density, 0.0, 1.0)
     for property: StringName in FOG_SKY_AFFECT_PROPERTIES:
         skydome.set(property, sky_affect)
     skydome.fog_sky_affect_intensity = 0.0

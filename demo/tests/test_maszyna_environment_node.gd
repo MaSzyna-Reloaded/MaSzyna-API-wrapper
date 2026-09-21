@@ -137,7 +137,7 @@ func test_maps_rain_intensity_to_storm_overcast_and_rainbow() -> void:
     assert_almost_eq(skydome_environment.weather.precipitation_intensity, 0.8, 0.000001)
     assert_almost_eq(skydome_environment.weather.cloud_overcast_intensity, 0.8, 0.000001)
     assert_almost_eq(skydome_environment.weather.storm_intensity, 2.0 / 3.0, 0.000001)
-    assert_almost_eq(skydome_environment.weather.storm_fog_intensity, 0.375, 0.000001)
+    assert_almost_eq(skydome_environment.weather.storm_fog_intensity, 0.355, 0.000001)
     assert_almost_eq(skydome_environment.skydome.rainbow_intensity, 0.12, 0.000001)
 
 
@@ -174,8 +174,10 @@ func test_maps_fog_controls_to_skydome_and_weather() -> void:
     environment_node._process(0.0)
 
     assert_true(environment_node._environment.fog_enabled)
-    assert_almost_eq(skydome.day_fog_density, 0.01, 0.000001)
-    assert_almost_eq(skydome.night_fog_density, 0.04, 0.000001)
+    # the day/night density is Skydome's own haze, the boost carries the rest of the opacity, and
+    # their sum is what the depth fog reaches at fog_distance - over 1.0 it stops being an opacity
+    assert_almost_eq(skydome.day_fog_density, 0.005, 0.000001)
+    assert_almost_eq(skydome.night_fog_density, 0.02, 0.000001)
     assert_almost_eq(skydome.day_fog_distance, 235.0, 0.000001)
     # twice the reference opacity at half the reference distance: four times the tuned extinction
     assert_almost_eq(
@@ -186,7 +188,10 @@ func test_maps_fog_controls_to_skydome_and_weather() -> void:
         environment_node._environment.volumetric_fog_enabled,
         bool(UserSettings.get_setting("render", "volumetric_fog_enabled", true))
     )
-    assert_almost_eq(weather.storm_fog_intensity, 0.3, 0.000001)
+    assert_almost_eq(weather.storm_fog_intensity, 0.28, 0.000001)
+    # the sky is fogged as hard as geometry at fog_distance is, or distant silhouettes stay visible
+    assert_almost_eq(skydome.day_fog_sky_affect, 0.3, 0.000001)
+    assert_almost_eq(skydome.night_fog_sky_affect, 0.3, 0.000001)
     assert_eq(skydome.fog_mode, Skydome.FogModeOverride.DEPTH)
     assert_eq(environment_node._environment.fog_mode, Environment.FOG_MODE_DEPTH)
 

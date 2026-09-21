@@ -431,3 +431,35 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   evaluated by ear while an 80x boost sits below it.
 * **Rule:** a gain that was derived as a normalisation divisor must never also be applied as a
   gain. If a value appears both in a curve's denominator and in a `volume_db`, that is the bug.
+
+## 2026-09-21 - distant buildings cut out of the fogged sky, whatever the fog distance
+
+* **Symptom:** at fog 100%, rain 100% and a fog distance of 330 m the skyline still shows: every
+  distant building, tree and hill is a flat silhouette against the sky instead of dissolving into
+  the fog.
+* **What proved it:** reading the screenshot's pixels. The sky is *exactly* `(149, 113, 95)` over
+  its whole area - it takes the fog colour in full - while every distant object saturates at
+  `(170, 133, 113)`, brighter than the fog itself and identical from one object to the next. A
+  fogged object can only come out brighter than the fog when its fog amount is above 1.
+* **Cause:** the node's `fog_density` was applied twice. `apply_visual_configuration()` scaled
+  Skydome's own `day/night_fog_density` by `fog_density / FOG_REFERENCE_DENSITY` *and* handed the
+  same `fog_density` to `weather.storm_fog_intensity`; Skydome adds the two
+  (`Skydome.gd:1265`, clamped at 1.5) into `Environment.fog_density`. At the slider's 100% that is
+  1.03-1.13, and Godot's depth fog does not clamp `fog_amount = pow(fog_z, curve) * fog_density` -
+  a fully fogged pixel becomes `1.1 * fog colour - 0.1 * its own colour`, so it is brighter than
+  the sky and still carries its own silhouette.
+* **Second half of it:** the sky's fog share is `fog_sky_affect` alone, while geometry at
+  `fog_distance` takes `fog_density`. The wrapper computed `fog_sky_affect` from
+  `fog_sky_height / fog_distance` and lerped it to 1.0 with the rain, never looking at the
+  density - so a light fog under a downpour put a fully fogged sky behind barely fogged terrain,
+  the same seam the other way round.
+* **Fix:** the day/night density stays Skydome's own haze (0.005/0.02) and the storm boost carries
+  only the rest (`fog_density - base_density`), so the sum is the wanted opacity and never passes
+  1.0; `sky_affect` is multiplied by that opacity.
+* **Rule:** an opacity that is summed from two sources has to be summed where it is *set*, not
+  where it is used - and a value the engine does not clamp (`fog_density` over 1.0) turns a
+  blend into an extrapolation, which is why the artefact looked like a lighting bug and not like
+  too much fog.
+* **Rule:** the sky and the geometry in front of it are fogged by two different shaders with two
+  different parameters (`fog_sky_affect` vs `fog_density`). They only agree when the sky's share
+  carries the depth fog's opacity; every horizon seam starts here.

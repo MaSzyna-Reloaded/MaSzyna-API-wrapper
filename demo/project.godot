@@ -444,8 +444,6 @@ rendering/shadow_blur=0.4
 rendering/shadow_exterior_max_distance=300.0
 rendering/shadow_cabin_mode=2
 track_curve_bake_interval=0.5
-sound/brake_cabin_unit_size_factor=1.0
-sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
 rendering/scenery_draw_distance=1000.0
 rendering/lights_shadow_reverse_cull_face=false
@@ -460,7 +458,6 @@ common/max_physics_steps_per_frame=2
 
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
-lights_and_shadows/directional_shadow/size=8192
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96

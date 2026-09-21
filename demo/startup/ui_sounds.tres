@@ -1,0 +1,162 @@
+[gd_resource type="Resource" script_class="SfxBank" format=3 uid="uid://bg4cnurfltuxp"]
+
+[ext_resource type="Script" uid="uid://bgxtc44e5rb0l" path="res://addons/gnd_sfx/sfx_event.gd" id="1_0cwnu"]
+[ext_resource type="Script" uid="uid://bbamgfxaoiofj" path="res://addons/gnd_sfx/sfx_bank.gd" id="2_6jor3"]
+[ext_resource type="Script" uid="uid://bf434i6ru4ch" path="res://addons/gnd_sfx/sfx_automation.gd" id="2_y5u82"]
+[ext_resource type="Script" uid="uid://boicinkvs7i0h" path="res://addons/gnd_sfx/sfx_clip.gd" id="3_7ro3s"]
+[ext_resource type="AudioStream" uid="uid://c3d4fepdsw4ct" path="res://startup/accept.ogg" id="4_j33e7"]
+[ext_resource type="Script" uid="uid://dcy83smx1expw" path="res://addons/gnd_sfx/sfx_track.gd" id="5_lbdpe"]
+[ext_resource type="Script" uid="uid://dd8my4sifw81e" path="res://addons/gnd_sfx/sfx_parameter_modulation.gd" id="6_44agu"]
+[ext_resource type="AudioStream" uid="uid://bpyl706nhyc5j" path="res://startup/click1.ogg" id="7_hfnyv"]
+[ext_resource type="AudioStream" uid="uid://dl0ycpe8n7vtb" path="res://startup/subtle_click.ogg" id="8_7ro3s"]
+
+[sub_resource type="Resource" id="Resource_oh0eu"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("4_j33e7")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_vevx3"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+volume_db = -6.0
+
+[sub_resource type="Resource" id="Resource_03dbj"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_oh0eu")])
+master_track = SubResource("Resource_vevx3")
+name = &"apply_skin"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_7ro3s"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("7_hfnyv")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_kr74s"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_y5u82"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_7ro3s")])
+master_track = SubResource("Resource_kr74s")
+name = &"list_item_click"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_37mny"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("7_hfnyv")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_j33e7"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_oaw4f"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_37mny")])
+master_track = SubResource("Resource_j33e7")
+name = &"back"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_8w68i"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("8_7ro3s")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_lbdpe"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_1iwg4"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_8w68i")])
+master_track = SubResource("Resource_lbdpe")
+name = &"list_item_hover"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_vclkc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("7_hfnyv")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_vclkt"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_vclke"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_vclkc")])
+master_track = SubResource("Resource_vclkt")
+name = &"vehicle_click"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_sclkc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("7_hfnyv")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_sclkt"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_sclke"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_sclkc")])
+master_track = SubResource("Resource_sclkt")
+name = &"skin_click"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_vhovc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("8_7ro3s")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_vhovt"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_vhove"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_vhovc")])
+master_track = SubResource("Resource_vhovt")
+name = &"vehicle_hover"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_shovc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("8_7ro3s")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_shovt"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+
+[sub_resource type="Resource" id="Resource_shove"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_shovc")])
+master_track = SubResource("Resource_shovt")
+name = &"skin_hover"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[sub_resource type="Resource" id="Resource_ldscc"]
+script = ExtResource("3_7ro3s")
+stream = ExtResource("4_j33e7")
+metadata/_custom_type_script = "uid://boicinkvs7i0h"
+
+[sub_resource type="Resource" id="Resource_ldsct"]
+script = ExtResource("5_lbdpe")
+track_name = &"Master"
+volume_db = -6.0
+
+[sub_resource type="Resource" id="Resource_ldsce"]
+script = ExtResource("1_0cwnu")
+clips = Array[ExtResource("3_7ro3s")]([SubResource("Resource_ldscc")])
+master_track = SubResource("Resource_ldsct")
+name = &"load_scenery"
+metadata/_custom_type_script = "uid://bgxtc44e5rb0l"
+
+[resource]
+script = ExtResource("2_6jor3")
+events = Array[ExtResource("1_0cwnu")]([SubResource("Resource_03dbj"), SubResource("Resource_y5u82"), SubResource("Resource_oaw4f"), SubResource("Resource_1iwg4"), SubResource("Resource_vclke"), SubResource("Resource_sclke"), SubResource("Resource_vhove"), SubResource("Resource_shove"), SubResource("Resource_ldsce")])
+metadata/_custom_type_script = "uid://bbamgfxaoiofj"

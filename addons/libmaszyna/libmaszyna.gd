@@ -137,22 +137,6 @@ func _enter_tree():
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"
     )
     add_custom_project_setting(
-        "maszyna/sound/brake_volume_factor", 2.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_exterior_volume_factor", 1.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_cabin_unit_size_factor", 2.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_exterior_unit_size_factor", 1.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
         "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,5000.0,10.0,or_greater"
     )

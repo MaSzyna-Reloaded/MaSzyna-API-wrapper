@@ -10,6 +10,10 @@ signal quit_requested
 
 const DISSOLVE_TIME: float = 1.0
 
+## UI feedback of the startup screens. Events are named after what happened, not after the
+## sample - what each one sounds like is the bank's decision, not this screen's.
+const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
+
 ## Height of a vehicle side view in the consist preview - twice the 30 px the images have
 const VEHICLE_PREVIEW_HEIGHT: float = 60.0
 const VehicleViewer = preload("res://scenery_selector/vehicle_viewer.gd")
@@ -32,6 +36,7 @@ var _files: PackedStringArray = []
 ## Title of each scenery and its item on the list, in the order of _files
 var _titles: PackedStringArray = []
 var _items: Array[PanelContainer] = []
+var _ui_sounds: SfxPlayer
 var _selected_index: int = -1
 var _info: MaszynaSceneryInfo = null
 ## Items of the consist list, in the order of _info.trainsets
@@ -48,6 +53,9 @@ var _list_fade_tween: Tween = null
 
 
 func _ready() -> void:
+    _ui_sounds = SfxPlayer.new()
+    _ui_sounds.bank = UI_SOUNDS
+    add_child(_ui_sounds)
     var files: PackedStringArray = DirAccess.get_files_at(UserSettings.get_maszyna_game_dir().path_join("scenery"))
     files.sort()
     for file: String in files:
@@ -61,7 +69,7 @@ func _ready() -> void:
             index,
             _titles[index],
             _files[index].get_basename().to_upper(),
-            _select_scenery.bind(index),
+            _on_list_item_pressed.bind(index),
             _on_list_item_hovered,
         )
         _items.append(item)
@@ -124,15 +132,29 @@ func _on_list_item_gui_input(event: InputEvent, on_clicked: Callable) -> void:
         on_clicked.call()
 
 
+func _on_list_item_pressed(index: int) -> void:
+    _ui_sounds.play(&"list_item_click")
+    _select_scenery(index)
+
+
 func _on_list_item_hovered(index: int, hovered: bool) -> void:
     if index == _selected_index:
         return
+    if hovered:
+        _ui_sounds.play(&"list_item_hover")
     _items[index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_HOVERED if hovered else ITEM_STATE_IDLE]
+
+
+func _on_consist_item_pressed(index: int) -> void:
+    _ui_sounds.play(&"list_item_click")
+    _select_consist(index)
 
 
 func _on_consist_item_hovered(index: int, hovered: bool) -> void:
     if index == _selected_consist_index:
         return
+    if hovered:
+        _ui_sounds.play(&"list_item_hover")
     _consist_items[index].theme_type_variation = ITEM_VARIATIONS[
         ITEM_STATE_HOVERED if hovered else ITEM_STATE_IDLE
     ]
@@ -199,6 +221,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _on_load_button_pressed() -> void:
+    _ui_sounds.play(&"load_scenery")
     %Content.visible = false
     scenery_selected.emit(_files[_selected_index], _get_selected_train_id(), _get_skin_overrides())
     var tween: Tween = create_tween()
@@ -245,7 +268,7 @@ func _show_details(index: int) -> void:
             consist_index,
             _get_consist_name(trainset),
             _format_consist_note(trainset),
-            _select_consist.bind(consist_index),
+            _on_consist_item_pressed.bind(consist_index),
             _on_consist_item_hovered,
         )
         _consist_items.append(item)
@@ -311,7 +334,7 @@ func _create_vehicle_preview(index: int) -> Control:
     preview.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     preview.tooltip_text = "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
     preview.name = "Preview"
-    preview.pressed.connect(_show_vehicle.bind(index))
+    preview.pressed.connect(_on_vehicle_preview_pressed.bind(index))
     preview.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     preview.mouse_entered.connect(_on_vehicle_preview_hovered.bind(index, true))
     preview.mouse_exited.connect(_on_vehicle_preview_hovered.bind(index, false))
@@ -349,9 +372,16 @@ func _load_vehicle_profile(preview: TextureButton, vehicle: MaszynaSceneryInfo.V
     (background.material as ShaderMaterial).set_shader_parameter("rect_size", tile_size)
 
 
+func _on_vehicle_preview_pressed(index: int) -> void:
+    _ui_sounds.play(&"vehicle_click")
+    _show_vehicle(index)
+
+
 func _on_vehicle_preview_hovered(index: int, hovered: bool) -> void:
     if index == _shown_index:
         return
+    if hovered:
+        _ui_sounds.play(&"vehicle_hover")
     _set_vehicle_glow(index, VEHICLE_HOVER_COLOR if hovered else Color.TRANSPARENT)
 
 
@@ -367,6 +397,7 @@ func _set_vehicle_glow(index: int, color: Color) -> void:
 
 ## A skin accepted in the viewer: the consist shows it and the scenery is loaded with it
 func _on_vehicle_viewer_skin_applied(skin: String) -> void:
+    _ui_sounds.play(&"apply_skin")
     if _shown_index < 0:
         return
     _vehicles[_shown_index].skin = skin
@@ -395,7 +426,9 @@ func _show_vehicle(index: int) -> void:
 
 
 ## Emitted when the viewer starts fading out
-func _on_vehicle_viewer_closed() -> void:
+func _on_vehicle_viewer_closed(by_back_button: bool) -> void:
+    if by_back_button:
+        _ui_sounds.play(&"back_button")
     _set_vehicle_glow(_shown_index, Color.TRANSPARENT)
     _shown_index = -1
     %ListPanel.modulate.a = 0.0

@@ -188,6 +188,10 @@ func _update_skin_selection() -> void:
 ## The skin list as one section of the selector's keyboard navigation: the viewer owns the skins,
 ## the screen only says which section Tab is on and which way the arrows went.
 ##
+func get_skin_count() -> int:
+    return _skin_buttons.size()
+
+
 ## Up/Down on the skins: the change a click would have made, under the keyboard's own sound. The
 ## end of the row changes nothing - reselecting a skin would rebuild the model for the same skin.
 func move_skin_selection(step: int) -> void:

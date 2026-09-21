@@ -111,9 +111,9 @@ func _input(event: InputEvent) -> void:
     elif event.is_action_pressed("ui_page_up", true):
         _move_selection(-SelectorList.PAGE_STEP)
     elif event.is_action_pressed("ui_end"):
-        _move_selection(SelectorList.LIST_END_STEP)
+        _move_selection(_section_size())
     elif event.is_action_pressed("ui_home"):
-        _move_selection(-SelectorList.LIST_END_STEP)
+        _move_selection(-_section_size())
     # ui_text_submit and not ui_accept: that one is Space as well, and Space belongs to the search
     elif event.is_action_pressed("ui_text_submit"):
         _activate_selection()
@@ -158,6 +158,17 @@ func _set_section(section: int) -> void:
 ## Up/Down: the item change a click would have made, under the keyboard's own sound. An end of the
 ## list changes nothing, and moves nothing - reselecting a scenery re-reads its .scn and reselecting
 ## a consist rebuilds its vehicles.
+## Tiles of the focused section - a Home or an End is a step of that many, which the clamp below
+## cuts to the first or the last tile
+func _section_size() -> int:
+    match _section:
+        Section.VEHICLES:
+            return _vehicle_tiles.size()
+        Section.SKINS:
+            return %VehicleViewer.get_skin_count()
+    return 0
+
+
 func _move_selection(step: int) -> void:
     match _section:
         Section.VEHICLES:

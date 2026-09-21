@@ -22,10 +22,9 @@ signal focus_requested
 const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
 
 ## Look of a row, by how lit it is - selector_theme.tres
-const ITEM_VARIATIONS: Array[StringName] = [&"ListItem", &"ListItemHovered", &"ListItemSelected"]
-const ITEM_STATE_IDLE: int = 0
-const ITEM_STATE_HOVERED: int = 1
-const ITEM_STATE_SELECTED: int = 2
+const ITEM_IDLE: StringName = &"ListItem"
+const ITEM_HOVERED: StringName = &"ListItemHovered"
+const ITEM_SELECTED: StringName = &"ListItemSelected"
 
 ## Blinking triangle at the left edge of the selected row - the blink lives in the shader
 const SELECTION_MARKER_SHADER: Shader = preload("res://scenery_selector/selection_marker.gdshader")
@@ -35,15 +34,9 @@ const NOTE_WIDTH: float = 180.0
 
 ## Rows PgUp and PgDown move over - about what a list shows at once
 const PAGE_STEP: int = 10
-## Home and End: a step no list here is long enough to survive
-const LIST_END_STEP: int = 1000000
 
-## Lists without a search field keep the whole row for their content
-@export var searchable: bool = false:
-    set(value):
-        searchable = value
-        _dirty = true
-        set_process(true)
+## Lists without a search field keep the whole row for their content. Read once, in _ready().
+@export var searchable: bool = false
 
 var _titles: PackedStringArray = []
 var _notes: PackedStringArray = []
@@ -66,8 +59,8 @@ func _ready() -> void:
 ## the focused list, so it comes and goes with the ring.
 func _process_dirty() -> void:
     super()
-    %SearchPanel.visible = searchable
-    _update_marker()
+    if _selected >= 0:
+        _markers[_selected].visible = focused
 
 
 ## Activating the list hands the keyboard to its own search field; a list without one drops the
@@ -75,23 +68,15 @@ func _process_dirty() -> void:
 ##
 ## Two traps: release_focus() clears the whole viewport's focus, so only a field that actually holds
 ## it may give it up - otherwise the list being deactivated takes away what the activated one just
-## grabbed. And a click on a row is still being processed by the viewport when this runs, which then
-## drops the key focus because a row cannot take it, so the grab has to happen after that.
+## grabbed. And the grab is deferred because a click on a row is still being processed by the
+## viewport when this runs, which drops the key focus afterwards - a row cannot take it.
 func set_section_focused(is_focused: bool) -> void:
     focused = is_focused
-    if is_focused:
-        _grab_search_focus()
-        # again after the frame: when a click on a row is what activated the list, the viewport is
-        # still processing that click and drops the key focus after this returns
-        _grab_search_focus.call_deferred()
+    if is_focused and searchable:
+        %Search.grab_focus()
+        %Search.grab_click_focus()
     elif %Search.has_focus():
         %Search.release_focus()
-
-
-func _grab_search_focus() -> void:
-    # the section may have moved on since this was queued
-    if focused and searchable:
-        %Search.grab_focus()
 
 
 ## Rows of the list, given as what they show: a title and the smaller grey note beside it. The first
@@ -126,17 +111,17 @@ func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
     if event.is_action_pressed("ui_down", true):
-        _move(1)
+        _go_to(_next_visible_row(_selected, 1))
     elif event.is_action_pressed("ui_up", true):
-        _move(-1)
+        _go_to(_next_visible_row(_selected, -1))
     elif event.is_action_pressed("ui_page_down", true):
-        _move(PAGE_STEP)
+        _go_to(_next_visible_row(_selected, PAGE_STEP))
     elif event.is_action_pressed("ui_page_up", true):
-        _move(-PAGE_STEP)
+        _go_to(_next_visible_row(_selected, -PAGE_STEP))
     elif event.is_action_pressed("ui_end"):
-        _move(LIST_END_STEP)
+        _go_to(_next_visible_row(_rows.size(), -1))
     elif event.is_action_pressed("ui_home"):
-        _move(-LIST_END_STEP)
+        _go_to(_next_visible_row(-1, 1))
     # ui_text_submit and not ui_accept: that one is Space as well, and Space belongs to the search
     elif event.is_action_pressed("ui_text_submit"):
         if _selected >= 0:
@@ -146,16 +131,17 @@ func _input(event: InputEvent) -> void:
     elif event.is_action_pressed("ui_left"):
         navigate_out.emit(-1)
     else:
+        if searchable and not %Search.has_focus(true):
+            %Search.grab_click_focus()
         return
     get_viewport().set_input_as_handled()
 
 
-## Up/Down/PgUp/PgDn/Home/End: the row change a click would have made, under the keyboard's own
-## sound. An end of the list changes nothing and moves nothing - a reselected row would have the
-## screen rebuild everything it hangs off.
-func _move(step: int) -> void:
-    var index: int = _next_visible_row(_selected, step)
-    if index < 0:
+## The row a key asked for, under the keyboard's own sound. -1 is the search having left no row that
+## way, and standing still costs nothing - a reselected row would have the screen rebuild everything
+## that hangs off it.
+func _go_to(index: int) -> void:
+    if index < 0 or index == _selected:
         return
     _ui_sounds.play(&"keystroke")
     _select(index)
@@ -182,24 +168,19 @@ func _next_visible_row(from: int, step: int) -> int:
 
 func _select(index: int) -> void:
     if _selected >= 0:
-        _rows[_selected].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_IDLE]
+        _rows[_selected].theme_type_variation = ITEM_IDLE
         _markers[_selected].visible = false
     _selected = index
     if index >= 0:
-        _rows[index].theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_SELECTED]
-    _update_marker()
+        _rows[index].theme_type_variation = ITEM_SELECTED
+        _markers[index].visible = focused
     item_selected.emit(index)
-
-
-func _update_marker() -> void:
-    if _selected >= 0:
-        _markers[_selected].visible = focused
 
 
 ## One row: its name and, on the right, a smaller grey note
 func _create_row(index: int) -> PanelContainer:
     var row := PanelContainer.new()
-    row.theme_type_variation = ITEM_VARIATIONS[ITEM_STATE_IDLE]
+    row.theme_type_variation = ITEM_IDLE
     row.mouse_filter = Control.MOUSE_FILTER_STOP
     row.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
     row.gui_input.connect(_on_row_gui_input.bind(index))
@@ -266,9 +247,7 @@ func _on_row_hovered(index: int, hovered: bool) -> void:
         return
     if hovered:
         _ui_sounds.play(&"list_item_hover")
-    _rows[index].theme_type_variation = ITEM_VARIATIONS[
-        ITEM_STATE_HOVERED if hovered else ITEM_STATE_IDLE
-    ]
+    _rows[index].theme_type_variation = ITEM_HOVERED if hovered else ITEM_IDLE
 
 
 func _on_search_text_changed(text: String) -> void:
@@ -292,6 +271,7 @@ func _on_clear_search_pressed() -> void:
     %ClearSearch.visible = false
     %SearchDebounce.start()
     %Search.grab_focus()
+    %Search.grab_click_focus()
 
 
 ## Rows whose title or note contain the searched text

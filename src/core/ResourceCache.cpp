@@ -37,16 +37,9 @@ namespace godot {
         // by "Clear cache" and by a build change without its owner having to remember it.
         MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
         if (runtime != nullptr) {
+            // No explicit disconnect: callable_mp reports this instance as the callable's object,
+            // so the engine drops the connection when the instance dies.
             runtime->connect(MaszynaRuntime::cache_clear_requested_signal, callable_mp(this, &ResourceCache::clear));
-        }
-    }
-
-    ResourceCache::~ResourceCache() {
-        // The signal does not hold a reference to this RefCounted, so the connection has to go
-        // with the instance.
-        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
-        if (runtime != nullptr) {
-            runtime->disconnect(MaszynaRuntime::cache_clear_requested_signal, callable_mp(this, &ResourceCache::clear));
         }
     }
 

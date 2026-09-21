@@ -110,6 +110,10 @@ const FOG_SCENERY_DISTANCE_FACTOR_DEFAULT: float = 1.5
 const FOG_DAY_DISTANCE_FACTOR_DEFAULT: float = 1.0
 const FOG_NIGHT_DISTANCE_FACTOR_DEFAULT: float = 0.4255
 
+## Wind speed the strength of the environment node maps onto, m/s
+const WIND_SPEED_MIN: float = 0.15
+const WIND_SPEED_MAX: float = 3.0
+
 var environment_node: Node
 
 
@@ -154,6 +158,21 @@ func _init(node: Node) -> void:
 ## light off.
 func get_light_level() -> float:
     return 1.0
+
+
+## Unit vector the wind blows along. Horizontal for now - the environment node carries a compass
+## bearing - but a vector so that a backend with a vertical component needs no new API. The
+## original keeps one wind for the whole simulation (simulationenvironment.cpp:255-268) and the
+## smoke emitters drift with it.
+func get_wind_direction() -> Vector3:
+    var bearing:float = deg_to_rad((environment_node as MaszynaEnvironmentNode).wind_direction)
+    return Vector3(cos(bearing), 0.0, sin(bearing))
+
+
+## Wind speed in metres per second. A backend without weather of its own maps the environment
+## node's own 0-1 wind_strength onto WIND_SPEED_MIN..WIND_SPEED_MAX.
+func get_wind_strength() -> float:
+    return lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, (environment_node as MaszynaEnvironmentNode).wind_strength)
 
 
 func process(_delta: float) -> void:

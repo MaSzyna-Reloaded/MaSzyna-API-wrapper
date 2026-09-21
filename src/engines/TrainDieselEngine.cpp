@@ -95,6 +95,10 @@ namespace godot {
         p_state["diesel_power"] = p_mover->dizel_Power;
         p_state["diesel_torque"] = p_mover->dizel_Torque;
         p_state["diesel_fill"] = p_mover->dizel_fill;
+        // Top revolutions of the engine, rev/min - dizel_nmax * 60 here, the top notch of the
+        // generator characteristic on a diesel-electric (Mover.cpp:1099). The smoke emitter
+        // measures how far below them the engine still is (particles.cpp:196).
+        p_state["diesel_max_rpm"] = p_mover->EngineMaxRPM();
     }
 
     void TrainDieselEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

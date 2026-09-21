@@ -15,6 +15,7 @@
 #include "doors/TrainDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
+#include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
@@ -88,6 +89,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);
         GDREGISTER_CLASS(E3DModelLightDefinition);
+        GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(MaszynaParser);

@@ -42,6 +42,7 @@ TractionPowerServer="*res://addons/libmaszyna/servers/traction_power_server.gd"
 TrackManager="*res://addons/libmaszyna/tracks/track_manager.gd"
 RailVehiclePhysicsServer="*res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd"
 SceneryChunkRenderingServer="*res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd"
+SmokeSourceLibrary="*res://addons/libmaszyna/smoke/smoke_source_library.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://wsbd7kr83ncg"
@@ -452,7 +453,6 @@ rendering/scenery_light_energy=2.0
 rendering/scenery_light_volumetric_fog_energy=16.0
 rendering/fog_night_distance_factor=6.0
 rendering/scenery_lamp_light_attenuation=0.10000000000000002
-rendering/scenery_light_mode=2
 
 [physics]
 

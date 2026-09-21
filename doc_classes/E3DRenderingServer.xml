@@ -10,6 +10,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_smoke_statistics" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				Number of particle emitters the server owns ([code]total[/code]) and how many of them are currently built ([code]built[/code]). A scenery emitter is built only while it is streamed in.
+			</description>
+		</method>
 		<method name="instance_attach_node">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -90,6 +96,15 @@
 				Scenario of an [constant INSTANCER_OPTIMIZED] instance. Rebuilds an already built instance.
 			</description>
 		</method>
+		<method name="instance_set_smoke_state">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="intensity" type="float" />
+			<param index="2" name="opacity" type="float" />
+			<description>
+				Spawn rate multiplier and opacity of every particle emitter of the instance, as the engine state drives them. Both default to [code]1.0[/code], which is the emitter template's own rate - what a scenery chimney keeps.
+			</description>
+		</method>
 		<method name="instance_set_transform">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -127,6 +142,35 @@
 			<param index="0" name="model_loader" type="Callable" />
 			<description>
 				Called as [code]model_loader(data_path: String, filename: String) -&gt; E3DModel[/code] on the streaming worker thread, for instances registered with [method instance_register] that enter the camera's range. The result is memoized per path. Set by [code]E3DModelManager[/code].
+			</description>
+		</method>
+		<method name="set_smoke_source_resolver">
+			<return type="void" />
+			<param index="0" name="smoke_source_resolver" type="Callable" />
+			<description>
+				Called as [code]smoke_source_resolver(template_name: String) -&gt; Dictionary[/code] with the keys [code]process_material[/code], [code]mesh[/code], [code]amount[/code], [code]lifetime[/code] and [code]aabb[/code], when an emitter is built. An empty dictionary leaves the emitter unbuilt. Set by [code]SmokeSourceLibrary[/code], which reads the templates from the game's [code]data/[/code] directory.
+			</description>
+		</method>
+		<method name="set_wind">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<param index="1" name="direction" type="Vector3" />
+			<description>
+				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
+			</description>
+		</method>
+		<method name="set_wind_direction">
+			<return type="void" />
+			<param index="0" name="direction" type="Vector3" />
+			<description>
+				Direction the wind blows along, without touching its strength. Normalized by the server; horizontal today, but a vertical component needs no API change.
+			</description>
+		</method>
+		<method name="set_wind_strength">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<description>
+				Wind speed in metres per second, without touching its direction.
 			</description>
 		</method>
 	</methods>

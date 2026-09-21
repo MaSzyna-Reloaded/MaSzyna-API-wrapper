@@ -1,7 +1,13 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "E3DRenderingServer.hpp"
+#include <godot_cpp/classes/gpu_particles3d.hpp>
+#include <godot_cpp/classes/gradient.hpp>
+#include <godot_cpp/classes/gradient_texture1_d.hpp>
+#include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
+#include <godot_cpp/classes/scene_tree.hpp>
+#include <godot_cpp/classes/time.hpp>
 #include <godot_cpp/core/mutex_lock.hpp>
 #include <godot_cpp/variant/callable_method_pointer.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -57,11 +63,21 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light_enable", "light"), &E3DRenderingServer::light_enable);
         ClassDB::bind_method(D_METHOD("light_disable", "light"), &E3DRenderingServer::light_disable);
         ClassDB::bind_method(D_METHOD("get_light_statistics"), &E3DRenderingServer::get_light_statistics);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_smoke_state", "instance", "intensity", "opacity"),
+                &E3DRenderingServer::instance_set_smoke_state);
+        ClassDB::bind_method(D_METHOD("get_smoke_statistics"), &E3DRenderingServer::get_smoke_statistics);
         ClassDB::bind_method(D_METHOD("set_current_time", "hours"), &E3DRenderingServer::set_current_time);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &E3DRenderingServer::set_light_level);
+        ClassDB::bind_method(D_METHOD("set_wind", "strength", "direction"), &E3DRenderingServer::set_wind);
+        ClassDB::bind_method(D_METHOD("set_wind_strength", "strength"), &E3DRenderingServer::set_wind_strength);
+        ClassDB::bind_method(D_METHOD("set_wind_direction", "direction"), &E3DRenderingServer::set_wind_direction);
         ClassDB::bind_method(
                 D_METHOD("set_material_resolver", "material_resolver"), &E3DRenderingServer::set_material_resolver);
         ClassDB::bind_method(D_METHOD("set_model_loader", "model_loader"), &E3DRenderingServer::set_model_loader);
+        ClassDB::bind_method(
+                D_METHOD("set_smoke_source_resolver", "smoke_source_resolver"),
+                &E3DRenderingServer::set_smoke_source_resolver);
 
         BIND_ENUM_CONSTANT(INSTANCER_OPTIMIZED);
         BIND_ENUM_CONSTANT(INSTANCER_NODES);
@@ -84,8 +100,15 @@ namespace godot {
             _light_clear(light.key);
         }
         lights.clear();
+        for (KeyValue<RID, SmokeObject> &smoke: smoke_objects) {
+            _smoke_clear(smoke.key);
+        }
+        smoke_objects.clear();
+        smoke_order.clear();
+        _set_smoke_processing(false);
         for (KeyValue<RID, E3DInstanceData> &item: instances) {
             item.value.light_objects.clear();
+            item.value.smoke_objects.clear();
             if (item.value.instancer == INSTANCER_OPTIMIZED) {
                 optimized_backend.clear(item.value);
             }
@@ -138,6 +161,7 @@ namespace godot {
             stream_models.erase(p_instance);
         }
         _clear_instance_lights(item->value);
+        _clear_instance_smoke_sources(item->value);
         if (item->value.built) {
             _get_backend(item->value).clear(item->value);
         }
@@ -152,6 +176,7 @@ namespace godot {
         E3DInstanceBackend &backend = _get_backend(*instance);
         if (instance->built) {
             _clear_instance_lights(*instance);
+            _clear_instance_smoke_sources(*instance);
             backend.clear(*instance);
             instance->built = false;
         }
@@ -163,6 +188,7 @@ namespace godot {
         instance->built = true;
         backend.build(*instance, material_resolver);
         _build_instance_lights(p_instance, *instance);
+        _build_instance_smoke_sources(p_instance, *instance);
     }
 
     void E3DRenderingServer::instance_set_options(
@@ -201,6 +227,7 @@ namespace godot {
         ERR_FAIL_NULL(instance);
         instance->transform = p_transform;
         _update_if_built(*instance);
+        _update_instance_smoke(*instance);
     }
 
     void E3DRenderingServer::instance_set_visible(const RID &p_instance, const bool p_visible) {
@@ -208,6 +235,7 @@ namespace godot {
         ERR_FAIL_NULL(instance);
         instance->visible = p_visible;
         _update_if_built(*instance);
+        _update_instance_smoke(*instance);
     }
 
     void E3DRenderingServer::instance_set_layer_mask(const RID &p_instance, const uint32_t p_mask) {
@@ -313,6 +341,13 @@ namespace godot {
         model_loader = p_model_loader;
     }
 
+    /// `smoke_source_resolver(template_name: String) -> Dictionary` with the keys
+    /// process_material/mesh/amount/lifetime/aabb, used by _smoke_build(). The template files live
+    /// under the game's data/ directory, which is GDScript's business, not this server's.
+    void E3DRenderingServer::set_smoke_source_resolver(const Callable &p_smoke_source_resolver) {
+        smoke_source_resolver = p_smoke_source_resolver;
+    }
+
     /// Memoized: a scenery places the same few hundred models thousands of times. Two threads
     /// loading the same model at once only duplicate work the loader itself caches.
     Ref<E3DModel> E3DRenderingServer::_load_model(const String &p_data_path, const String &p_model_filename) {
@@ -367,6 +402,7 @@ namespace godot {
             return;
         }
         _clear_instance_lights(*instance);
+        _clear_instance_smoke_sources(*instance);
         _get_backend(*instance).clear(*instance);
         instance->built = false;
         instance->model.unref();
@@ -563,6 +599,298 @@ namespace godot {
         p_instance_data.light_objects.clear();
     }
 
+    /// Creates the emitters of a freshly built instance out of what E3DSmokeSourceFactory found
+    /// in the model. Unlike the lights this runs for every instancer: a distant vehicle has no
+    /// node tree left, and the OPTIMIZED backend renders no emitter of its own.
+    void E3DRenderingServer::_build_instance_smoke_sources(const RID &p_instance, E3DInstanceData &p_instance_data) {
+        const ProjectSettings *settings = ProjectSettings::get_singleton();
+        if (!settings->get_setting(SMOKE_ENABLED_SETTING, DEFAULT_SMOKE_ENABLED)) {
+            return;
+        }
+
+        const Vector<E3DSmokeSourcePlacement> placements = E3DSmokeSourceFactory::discover(p_instance_data.model);
+        if (placements.is_empty()) {
+            return;
+        }
+
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        const float distance = settings->get_setting(SMOKE_DISTANCE_SETTING, DEFAULT_SMOKE_DISTANCE);
+
+        for (const E3DSmokeSourcePlacement &placement: placements) {
+            const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
+            SmokeObject &smoke = smoke_objects[rid];
+            smoke_order.push_back(rid);
+            smoke.owner = p_instance;
+            smoke.template_name = placement.template_name;
+            smoke.offset = placement.offset;
+            p_instance_data.smoke_objects.push_back(rid);
+
+            // A scenery emitter streams with a range of its own, the way a scenery light does.
+            // Anything built directly (a vehicle, an editor model) gets its particles right away -
+            // it is not part of the streamed scenery and is usually moving.
+            if (p_instance_data.stream_rid.is_valid() && streaming != nullptr) {
+                if (smoke_stream_owner < 0) {
+                    smoke_stream_owner = streaming->owner_create(
+                            Callable(), callable_mp(this, &E3DRenderingServer::_smoke_stream_build),
+                            callable_mp(this, &E3DRenderingServer::_smoke_clear));
+                }
+                const Vector3 position = p_instance_data.transform.xform(placement.offset);
+                smoke.stream_rid = streaming->stream_register(smoke_stream_owner, rid, position, distance);
+            } else {
+                _smoke_build(rid);
+            }
+        }
+        _set_smoke_processing(true);
+    }
+
+    /// Where the emitter spawns: the model root's own basis (the original launches the particles
+    /// along the owner's up vector, particles.cpp:63/300) over the submodel's offset
+    Transform3D
+    E3DRenderingServer::_smoke_transform(const E3DInstanceData &p_instance_data, const SmokeObject &p_smoke) {
+        return p_instance_data.transform * Transform3D(Basis(), p_smoke.offset);
+    }
+
+    /// Where the emitter spawns. The transform goes on the RenderingServer instance, not straight
+    /// to particles_set_emission_transform(): the scene cull pushes an instance's transform into
+    /// the emission transform on every update of its own, so anything set directly is overwritten
+    /// with the instance's - which is how a GPUParticles3D node is driven too. The custom AABB
+    /// stays in the emitter's local space and is transformed along with it.
+    void E3DRenderingServer::_apply_smoke_placement(const E3DInstanceData &p_instance_data, SmokeObject &p_smoke) {
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        p_smoke.transform = _smoke_transform(p_instance_data, p_smoke);
+        p_smoke.visible = p_instance_data.visible;
+        rs->instance_set_transform(p_smoke.particles_instance, p_smoke.transform);
+    }
+
+    /// dizel_fill scales the initial opacity of a particle in the original, in the spawn routine
+    /// (particles.cpp:330), so it reaches only the particles born after the change. It rides the
+    /// initial colour ramp here for the same reason: the process material's own colour is applied
+    /// to every live particle on every frame, and driving it from the engine state made the whole
+    /// plume blink off the moment the Mover floored dizel_fill at 0.05 (Mover.cpp:5508).
+    void E3DRenderingServer::_apply_smoke_opacity(const SmokeObject &p_smoke) {
+        if (p_smoke.process_material.is_null()) {
+            return;
+        }
+        const Ref<GradientTexture1D> ramp = p_smoke.process_material->get_color_initial_ramp();
+        if (ramp.is_null() || ramp->get_gradient().is_null()) {
+            return;
+        }
+        const Ref<Gradient> gradient = ramp->get_gradient();
+        gradient->set_color(0, Color(1.0, 1.0, 1.0, p_smoke.opacity_min * p_smoke.opacity));
+        gradient->set_color(1, Color(1.0, 1.0, 1.0, p_smoke.opacity_max * p_smoke.opacity));
+    }
+
+    void E3DRenderingServer::_apply_smoke_wind(const SmokeObject &p_smoke) const {
+        if (p_smoke.process_material.is_null()) {
+            return;
+        }
+        p_smoke.process_material->set_gravity(wind * SMOKE_WIND_ACCELERATION);
+    }
+
+    /// Creates the RenderingServer particles of an emitter
+    void E3DRenderingServer::_smoke_build(const RID &p_smoke) {
+        SmokeObject *smoke = smoke_objects.getptr(p_smoke);
+        if (smoke == nullptr || smoke->particles.is_valid()) {
+            return;
+        }
+        const E3DInstanceData *instance = instances.getptr(smoke->owner);
+        if (instance == nullptr || !smoke_source_resolver.is_valid()) {
+            return;
+        }
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+
+        const Dictionary source = smoke_source_resolver.call(smoke->template_name);
+        Ref<ParticleProcessMaterial> process_material = source.get("process_material", Variant());
+        const Ref<Mesh> mesh = source.get("mesh", Variant());
+        if (process_material.is_null() || mesh.is_null()) {
+            return; // the library already reported why
+        }
+        smoke->opacity_min = source.get("opacity_min", 1.0);
+        smoke->opacity_max = source.get("opacity_max", 1.0);
+        // A driven emitter writes its opacity into the colour ramp, so it may share neither the
+        // template's material nor the ramp under it with every other model using that template
+        if (!instance->stream_rid.is_valid()) {
+            process_material = process_material->duplicate(true);
+        }
+        smoke->process_material = process_material;
+        _apply_smoke_opacity(*smoke);
+        _apply_smoke_wind(*smoke);
+
+        smoke->amount = source.get("amount", 1);
+        smoke->spawn_rate = source.get("spawn_rate", 0.0);
+        const float lifetime = source.get("lifetime", 1.0);
+        smoke->local_aabb = source.get("aabb", AABB());
+
+        smoke->particles = rs->particles_create();
+        rs->particles_set_mode(smoke->particles, RenderingServer::PARTICLES_MODE_3D);
+        // world space: the plume is left behind, it does not follow the vehicle
+        rs->particles_set_use_local_coordinates(smoke->particles, false);
+        rs->particles_set_amount(smoke->particles, smoke->amount);
+        rs->particles_set_lifetime(smoke->particles, lifetime);
+        rs->particles_set_process_material(smoke->particles, process_material->get_rid());
+        rs->particles_set_draw_passes(smoke->particles, 1);
+        rs->particles_set_draw_pass_mesh(smoke->particles, 0, mesh->get_rid());
+        rs->particles_set_draw_order(smoke->particles, RenderingServer::PARTICLES_DRAW_ORDER_VIEW_DEPTH);
+        rs->particles_set_custom_aabb(smoke->particles, smoke->local_aabb);
+        // process_smoke() spawns by hand; the automatic emitter would ignore the engine state
+        rs->particles_set_emitting(smoke->particles, false);
+
+        smoke->particles_instance = rs->instance_create();
+        rs->instance_set_base(smoke->particles_instance, smoke->particles);
+        rs->instance_set_scenario(smoke->particles_instance, instance->scenario);
+        rs->instance_set_visible(smoke->particles_instance, instance->visible);
+        _apply_smoke_placement(*instance, *smoke);
+        smoke->last_spawn_usec = Time::get_singleton()->get_ticks_usec();
+        smoke->streamed_in = true;
+    }
+
+    /// The build callback of the smoke stream; separate from _smoke_build() only because
+    /// SceneryStreamingServer passes the preloaded value along
+    void E3DRenderingServer::_smoke_stream_build(const RID &p_smoke, const Variant &p_preloaded) {
+        _smoke_build(p_smoke);
+    }
+
+    void E3DRenderingServer::_smoke_clear(const RID &p_smoke) {
+        SmokeObject *smoke = smoke_objects.getptr(p_smoke);
+        if (smoke == nullptr) {
+            return;
+        }
+        smoke->streamed_in = false;
+        smoke->process_material.unref();
+        RenderingServer *rs = RenderingServer::get_singleton();
+        if (rs == nullptr) {
+            return;
+        }
+        if (smoke->particles_instance.is_valid()) {
+            rs->free_rid(smoke->particles_instance);
+            smoke->particles_instance = RID();
+        }
+        if (smoke->particles.is_valid()) {
+            rs->free_rid(smoke->particles);
+            smoke->particles = RID();
+        }
+    }
+
+    void E3DRenderingServer::_clear_instance_smoke_sources(E3DInstanceData &p_instance_data) {
+        SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+        for (const RID &smoke_rid: p_instance_data.smoke_objects) {
+            SmokeObject *smoke = smoke_objects.getptr(smoke_rid);
+            if (smoke == nullptr) {
+                continue;
+            }
+            if (smoke->stream_rid.is_valid() && streaming != nullptr) {
+                streaming->stream_free(smoke->stream_rid);
+            }
+            _smoke_clear(smoke_rid);
+            smoke_objects.erase(smoke_rid);
+            smoke_order.erase(smoke_rid);
+        }
+        p_instance_data.smoke_objects.clear();
+        if (smoke_objects.is_empty()) {
+            _set_smoke_processing(false);
+        }
+    }
+
+    /// Follows the instance: a moving vehicle spawns from where it is now, an invisible one
+    /// stops spawning
+    void E3DRenderingServer::_update_instance_smoke(const E3DInstanceData &p_instance_data) {
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        for (const RID &smoke_rid: p_instance_data.smoke_objects) {
+            SmokeObject *smoke = smoke_objects.getptr(smoke_rid);
+            if (smoke == nullptr || !smoke->particles.is_valid()) {
+                continue;
+            }
+            _apply_smoke_placement(p_instance_data, *smoke);
+            rs->instance_set_visible(smoke->particles_instance, p_instance_data.visible);
+        }
+    }
+
+    void
+    E3DRenderingServer::instance_set_smoke_state(const RID &p_instance, const float p_intensity, const float p_opacity) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        for (const RID &smoke_rid: instance->smoke_objects) {
+            SmokeObject *smoke = smoke_objects.getptr(smoke_rid);
+            if (smoke == nullptr) {
+                continue;
+            }
+            smoke->intensity = p_intensity;
+            smoke->opacity = p_opacity;
+            _apply_smoke_opacity(*smoke);
+        }
+    }
+
+    /// Spawns the particles every emitter owes this frame. The emitters emit by hand rather than
+    /// through particles_set_emitting(): the rate follows the engine state, and the only knob
+    /// Godot offers for that - amount_ratio - deactivates live particles instead of slowing the
+    /// spawning, which cut a whole plume off in one frame. This is the original's own model
+    /// (m_spawncount, particles.cpp:157-212).
+    void E3DRenderingServer::_process_smoke() {
+        const int size = smoke_order.size();
+        if (size == 0) {
+            return;
+        }
+        const uint64_t now = Time::get_singleton()->get_ticks_usec();
+        const int visited = MIN(size, MAX_SMOKE_SOURCES_PER_FRAME);
+        for (int i = 0; i < visited; i++) {
+            if (smoke_cursor >= size) {
+                smoke_cursor = 0;
+            }
+            if (SmokeObject *smoke = smoke_objects.getptr(smoke_order[smoke_cursor]); smoke != nullptr) {
+                _process_smoke_source(*smoke, now);
+            }
+            smoke_cursor++;
+        }
+    }
+
+    /// The tick runs only while the world holds an emitter
+    void E3DRenderingServer::_set_smoke_processing(const bool p_processing) {
+        if (smoke_processing == p_processing) {
+            return;
+        }
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        if (tree == nullptr) {
+            return;
+        }
+        smoke_processing = p_processing;
+        if (p_processing) {
+            tree->connect("process_frame", callable_mp(this, &E3DRenderingServer::_process_smoke));
+            return;
+        }
+        tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_smoke));
+    }
+
+    /// One emitter's share of a frame. Fractional particles are carried over, so a rate below one
+    /// per second still spawns - the original accumulates the same way (particles.cpp:162).
+    void E3DRenderingServer::_process_smoke_source(SmokeObject &p_smoke, const uint64_t p_now) {
+        if (!p_smoke.visible || !p_smoke.particles.is_valid()) {
+            return;
+        }
+        const double delta = static_cast<double>(p_now - p_smoke.last_spawn_usec) / 1000000.0;
+        p_smoke.last_spawn_usec = p_now;
+        p_smoke.spawn_backlog += p_smoke.spawn_rate * p_smoke.intensity * delta;
+        const int count = MIN(static_cast<int>(p_smoke.spawn_backlog), p_smoke.amount);
+        if (count < 1) {
+            return;
+        }
+        p_smoke.spawn_backlog -= static_cast<float>(count);
+
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        // Only the spawn point is dictated; velocity, size, roll and colour stay with the process
+        // material, which randomizes them the way the template asks for
+        for (int i = 0; i < count; i++) {
+            rs->particles_emit(
+                    p_smoke.particles, p_smoke.transform, Vector3(), Color(), Color(),
+                    GPUParticles3D::EMIT_FLAG_POSITION);
+        }
+    }
+
     /// Addressable handle for the model's own light_onNN/light_offNN submodel pair. The submodels
     /// themselves are switched by the backend from lights_state, so this only gives a caller
     /// something to enable and disable uniformly with the real lights.
@@ -742,6 +1070,50 @@ namespace godot {
         statistics["spot"] = spot;
         statistics["omni"] = omni;
         statistics["synthesized"] = synthesized;
+        return statistics;
+    }
+
+    /// The whole simulation shares one wind (simulationenvironment.cpp:255), so it reaches every
+    /// emitter - including the template materials the streamed scenery emitters share. Strength
+    /// (m/s) and direction are separate so that the direction can grow a vertical component
+    /// without the signature changing.
+    void E3DRenderingServer::set_wind(const float p_strength, const Vector3 &p_direction) {
+        wind_strength = p_strength;
+        wind_direction = p_direction;
+        _update_wind();
+    }
+
+    void E3DRenderingServer::set_wind_strength(const float p_strength) {
+        wind_strength = p_strength;
+        _update_wind();
+    }
+
+    void E3DRenderingServer::set_wind_direction(const Vector3 &p_direction) {
+        wind_direction = p_direction;
+        _update_wind();
+    }
+
+    void E3DRenderingServer::_update_wind() {
+        const Vector3 new_wind = wind_direction.normalized() * wind_strength;
+        if (wind.is_equal_approx(new_wind)) {
+            return;
+        }
+        wind = new_wind;
+        for (const KeyValue<RID, SmokeObject> &item: smoke_objects) {
+            _apply_smoke_wind(item.value);
+        }
+    }
+
+    Dictionary E3DRenderingServer::get_smoke_statistics() const {
+        int built = 0;
+        for (const KeyValue<RID, SmokeObject> &item: smoke_objects) {
+            if (item.value.streamed_in) {
+                built++;
+            }
+        }
+        Dictionary statistics;
+        statistics["total"] = static_cast<int>(smoke_objects.size());
+        statistics["built"] = built;
         return statistics;
     }
 } // namespace godot

@@ -3,8 +3,10 @@
 #include "E3DLightFactory.hpp"
 #include "E3DNodesBackend.hpp"
 #include "E3DOptimizedBackend.hpp"
+#include "E3DSmokeSourceFactory.hpp"
 #include <godot_cpp/classes/mutex.hpp>
 #include <godot_cpp/classes/node3d.hpp>
+#include <godot_cpp/classes/particle_process_material.hpp>
 #include <godot_cpp/classes/object.hpp>
 
 namespace godot {
@@ -76,6 +78,26 @@ namespace godot {
                     "maszyna/rendering/scenery_light_volumetric_fog_energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY = 4.0;
 
+            /// The original's gfx.smoke (Globals.cpp:1314). With it off no emitter is created at all.
+            static constexpr const char *SMOKE_ENABLED_SETTING = "maszyna/rendering/smoke_enabled";
+            static constexpr bool DEFAULT_SMOKE_ENABLED = true;
+            /// A scenery emitter streams in at this distance. The original stops spawning beyond
+            /// 2 * BaseDrawRange * fDistanceFactor (particles.cpp:452); a chimney has to be visible
+            /// from further away than a street lamp, so this is not the scenery light distance.
+            static constexpr const char *SMOKE_DISTANCE_SETTING = "maszyna/rendering/smoke_distance";
+            static constexpr float DEFAULT_SMOKE_DISTANCE = 1500.0;
+            /// The original displaces a particle by 0.1 * age * wind every step
+            /// (particles.cpp:383), which integrates to 0.05 * wind * t^2 - exactly what a
+            /// constant acceleration of 0.1 * wind gives, so the drift rides the process
+            /// material's gravity.
+            static constexpr float SMOKE_WIND_ACCELERATION = 0.1;
+            /// Emitters visited per frame. Below this every emitter is visited every frame, which
+            /// is what spreads its particles out evenly; above it the tick carries on where it
+            /// left off, so an emitter waits a few frames and then spawns the whole backlog its
+            /// own clock owes it. The count of particles is unchanged either way - only how
+            /// evenly they are spread.
+            static constexpr int MAX_SMOKE_SOURCES_PER_FRAME = 64;
+
         private:
             /// An addressable light of an instance. An emission light only switches the model's
             /// own light_onNN/light_offNN submodels (the backends do that from lights_state), a
@@ -99,8 +121,45 @@ namespace godot {
                     bool streamed_in = false;
             };
 
+            /// A particle emitter of an instance. Unlike a light it exists for every instancer:
+            /// a vehicle past maszyna/rendering/vehicle_detail_distance has no node tree left to
+            /// hang one on, and its plume is the thing still visible at that range.
+            struct SmokeObject {
+                    RID owner; // the E3D instance this emitter belongs to
+                    String template_name;
+                    Vector3 offset; // relative to the model root
+                    RID particles;
+                    RID particles_instance;
+                    Ref<ParticleProcessMaterial> process_material;
+                    /// Opacity range the template declares, which the driven opacity scales
+                    float opacity_min = 1.0;
+                    float opacity_max = 1.0;
+                    /// Reach of the plume around the emitter, in its own space; the particles are
+                    /// left behind rather than carried, so the box follows the emitter and not the
+                    /// plume - a fast vehicle's trail is culled with its emitter (see TODO.md)
+                    AABB local_aabb;
+                    float spawn_rate = 0.0;   // particles per second the template declares
+                    float spawn_backlog = 0.0; // fractional particles carried to the next tick
+                    uint64_t last_spawn_usec = 0; // its own clock, so a skipped frame costs nothing
+                    int amount = 0;            // pool size, the cap on one tick's spawns
+                    float intensity = 1.0;     // spawn rate multiplier
+                    /// Mirrored from the owner instance whenever it moves or is shown/hidden, so
+                    /// the per-frame tick is arithmetic on this struct alone and never looks an
+                    /// instance up
+                    Transform3D transform;
+                    bool visible = true;
+                    float opacity = 1.0;   // multiplies the template's own opacity
+                    RID stream_rid;        // SceneryStreamingServer registration, scenery emitters only
+                    bool streamed_in = false;
+            };
+
             HashMap<RID, E3DInstanceData> instances;
             HashMap<RID, LightObject> lights;
+            HashMap<RID, SmokeObject> smoke_objects;
+            /// The same emitters in a flat list, so the per-frame tick walks a contiguous vector
+            /// round-robin instead of a hash map
+            Vector<RID> smoke_order;
+            int smoke_cursor = 0;
             E3DOptimizedBackend optimized_backend;
             E3DNodesBackend nodes_backend{false};
             E3DNodesBackend editable_nodes_backend{true};
@@ -117,9 +176,18 @@ namespace godot {
             /// ...and the real lights of scenery instances under this one, with a range of their
             /// own: a street lamp is visible from half a kilometre and lights fifteen metres
             int light_stream_owner = -1;
+            /// ...and the particle emitters under this one, with a range of their own again
+            int smoke_stream_owner = -1;
+            // Pushed by MaszynaEnvironmentNode, kept apart so either can be set on its own;
+            // wind is the composed vector the emitters actually drift with, in m/s
+            float wind_strength = 0.0;
+            Vector3 wind_direction = Vector3(1.0, 0.0, 0.0);
+            Vector3 wind;
+            bool smoke_processing = false;
             double current_time = 12.0; // hours, 0..24
             double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
+            Callable smoke_source_resolver;
             HashMap<String, Ref<E3DModel>> models;
             HashMap<RID, StreamModel> stream_models;
             Ref<Mutex> models_mutex;
@@ -143,6 +211,23 @@ namespace godot {
             static void _apply_declared_color(
                     const E3DInstanceData &p_instance_data, const String &p_light_name, E3DLightParams &p_params);
             void _clear_instance_lights(E3DInstanceData &p_instance_data);
+
+            void _build_instance_smoke_sources(const RID &p_instance, E3DInstanceData &p_instance_data);
+            void _smoke_build(const RID &p_smoke);
+            void _smoke_stream_build(const RID &p_smoke, const Variant &p_preloaded);
+            void _smoke_clear(const RID &p_smoke);
+            void _clear_instance_smoke_sources(E3DInstanceData &p_instance_data);
+            void _update_instance_smoke(const E3DInstanceData &p_instance_data);
+            static Transform3D _smoke_transform(const E3DInstanceData &p_instance_data, const SmokeObject &p_smoke);
+            static void _apply_smoke_placement(const E3DInstanceData &p_instance_data, SmokeObject &p_smoke);
+            static void _apply_smoke_opacity(const SmokeObject &p_smoke);
+            void _apply_smoke_wind(const SmokeObject &p_smoke) const;
+            void _update_wind();
+            /// Connected to SceneTree's process_frame while any emitter exists, the way
+            /// SceneryStreamingServer drives its own streaming - no script runs per frame
+            void _process_smoke();
+            void _process_smoke_source(SmokeObject &p_smoke, uint64_t p_now);
+            void _set_smoke_processing(bool p_processing);
             /// Resolves lights_state out of the declared modes, the manual overrides and the time
             /// of day, then applies it to the backend and to the instance's light objects
             void _resolve_lights(E3DInstanceData &p_instance);
@@ -188,12 +273,24 @@ namespace godot {
             /// total/lit/spot/omni/synthesized, for the scenery streaming debug panel
             Dictionary get_light_statistics() const;
 
-            /// Pushed by MaszynaEnvironmentNode; both drive the automatic modes
+            /// Spawn rate multiplier and opacity of every emitter of the instance, as the engine
+            /// state drives them (particles.cpp:172-211, :330). Both default to 1.0, which is the
+            /// template's own rate - what a scenery chimney keeps.
+            void instance_set_smoke_state(const RID &p_instance, float p_intensity, float p_opacity);
+            /// total/built, for the scenery streaming debug panel
+            Dictionary get_smoke_statistics() const;
+
+            /// Pushed by MaszynaEnvironmentNode; the first two drive the automatic light modes,
+            /// the wind drifts the particles of every emitter
             void set_current_time(double p_hours);
             void set_light_level(double p_level);
+            void set_wind(float p_strength, const Vector3 &p_direction);
+            void set_wind_strength(float p_strength);
+            void set_wind_direction(const Vector3 &p_direction);
 
             void set_material_resolver(const Callable &p_material_resolver);
             void set_model_loader(const Callable &p_model_loader);
+            void set_smoke_source_resolver(const Callable &p_smoke_source_resolver);
     };
 } // namespace godot
 

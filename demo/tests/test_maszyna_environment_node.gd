@@ -64,7 +64,7 @@ func test_maps_cloudiness_and_wind_to_weather() -> void:
     )
 
     environment_node.cloudiness = 0.8
-    environment_node.wind_direction = PI / 2.0
+    environment_node.wind_direction = 90.0
     environment_node._process(0.0)
 
     assert_almost_eq(skydome_environment.weather.cloud_density, 0.8, 0.000001)

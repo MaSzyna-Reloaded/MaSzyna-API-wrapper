@@ -30,6 +30,7 @@ func _enable_plugin():
     add_autoload_singleton("TrackManager", "res://addons/libmaszyna/tracks/track_manager.gd")
     add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
     add_autoload_singleton("SceneryChunkRenderingServer", "res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd")
+    add_autoload_singleton("SmokeSourceLibrary", "res://addons/libmaszyna/smoke/smoke_source_library.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -108,6 +109,7 @@ func _disable_plugin():
     remove_autoload_singleton("MaterialFactory")
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
+    remove_autoload_singleton("SmokeSourceLibrary")
     remove_autoload_singleton("SceneryChunkRenderingServer")
     remove_autoload_singleton("Console")
 
@@ -224,6 +226,22 @@ func _enter_tree():
     add_custom_project_setting(
         "maszyna/rendering/vehicle_detail_distance", 350.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "50.0,10000.0,10.0,suffix:m"
+    )
+    # The original's gfx.smoke (Globals.cpp:1314): with it off no model builds a particle emitter
+    # at all, whether it is a locomotive's exhaust or a factory chimney.
+    add_custom_project_setting("maszyna/rendering/smoke_enabled", true, TYPE_BOOL)
+    # How far from the camera a scenery emitter is kept alive. The original stops spawning beyond
+    # twice the draw range (particles.cpp:452); a chimney has to be seen from further away than a
+    # street lamp, so this is not scenery_light_distance.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_distance", 1500.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "100.0,10000.0,10.0,suffix:m"
+    )
+    # Particle budget of a single emitter. The original derives it from the spawn rate and the fade
+    # step and caps it at 500 per source at the lowest smoke fidelity (particles.cpp:122-133).
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_max_particles", 500, TYPE_INT,
+        PROPERTY_HINT_RANGE, "16,4000,1"
     )
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(

@@ -88,11 +88,27 @@ theme_override_colors/font_color = Color(0.72, 0.76, 0.72, 0.9)
 theme_override_font_sizes/font_size = 12
 text = "Dir"
 
-[node name="WindDirectionButton" type="OptionButton" parent="WeatherRow/WindDirectionGroup"]
-focus_mode = 0
-custom_minimum_size = Vector2(86, 28)
+[node name="Row" type="HBoxContainer" parent="WeatherRow/WindDirectionGroup"]
 layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="WindDirectionSlider" type="HSlider" parent="WeatherRow/WindDirectionGroup/Row"]
 focus_mode = 0
+custom_minimum_size = Vector2(170, 24)
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 360.0
+step = 0.1
+
+[node name="WindDirectionValueLabel" type="Label" parent="WeatherRow/WindDirectionGroup/Row"]
+custom_minimum_size = Vector2(56, 0)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.89, 0.85, 0.88)
+theme_override_font_sizes/font_size = 13
+text = "0\u00b0"
+horizontal_alignment = 2
 
 [node name="RainGroup" type="VBoxContainer" parent="WeatherRow"]
 layout_mode = 2

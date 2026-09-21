@@ -58,6 +58,42 @@
 
 ## Rendering
 
+### Smoke emitters
+
+* The vertical decay of a particle is not ported (`particles.cpp:365-380`): the original slows a
+  particle's rise by the air temperature and, for a vehicle, by the overcast and the vehicle's own
+  speed, so a plume flattens out instead of rising forever. `Global.AirTemperature` is a `#define`
+  in the vendored Mover and cannot be fed from outside (see the air temperature entry under
+  "Scenery loading"). The wind drift itself is ported - `E3DRenderingServer::set_wind()` turns it
+  into the emitter's particle gravity, `0.1 * wind` being what the original's
+  `0.1 * age * wind` per step integrates to.
+* `MaszynaEnvironmentNode.wind_direction` is a compass bearing in degrees, so the wind is always
+  horizontal. `MaszynaSkyEnvironment.get_wind_direction()` already returns a `Vector3` and
+  `E3DRenderingServer::set_wind()` takes strength and direction separately, so a vertical
+  component needs no API change - only a property that can express one.
+* The culling box of an emitter follows the emitter, not the plume
+  (`E3DRenderingServer::_apply_smoke_placement()`), because a `RenderingServer` particle system is
+  culled as a whole. A fast vehicle leaves its trail far outside that box, so the whole plume
+  disappears when the emitter itself goes off screen. The original culls per source too
+  (`opengl33particles.cpp:38`), but against the box its own particles span
+  (`smoke_source::update()` grows it, `particles.cpp:284-291`).
+* `min_inclination` of a template is dropped: `ParticleProcessMaterial` has one `spread` around
+  the emission direction and no inner cone. Only `smokesource_st45` declares a non-zero one (10
+  degrees) out of the twelve templates.
+* A particle's lifetime is per emitter in Godot and per particle in the original, where it is the
+  particle's own random initial opacity divided by the fade step (`particles.cpp:132`). The
+  wrapper takes the longest of them and fades every particle linearly over it, so a particle that
+  started faint stays faintly visible longer than it should.
+* Smoke is lit by Godot's own sun instead of the flat daylight modulation the original applies
+  (`opengl33particles.cpp:60-66`), and `E3DRenderingServer`'s `light_level` is not used for it.
+* The "cold engine smokes grey" rule of the original never ran - `particles.cpp:176` compares
+  where it meant to assign - and is not ported. It needs `dizel_heat.Ts`, which no `TrainPart`
+  exposes yet.
+* Emitters of a vehicle are not switched off when the vehicle is culled, only when its
+  `E3DModelInstance` is hidden; the original stops spawning beyond
+  `2 * BaseDrawRange * fDistanceFactor` for every source (`particles.cpp:452`), while the wrapper
+  streams only the scenery ones by `maszyna/rendering/smoke_distance`.
+
 * Normal maps are applied at `normal_scale` 1.0 like the original (`mat_normalmap.frag:46-48`);
   the `-5.0` that `material_factory.gd` used to set made bumps five times stronger and reversed.
   Not checked against the original yet: whether Godot's generated tangents match the original's

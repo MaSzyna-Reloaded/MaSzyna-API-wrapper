@@ -168,6 +168,13 @@ func is_e3d_loaded() -> bool:
     return _e3d_loaded
 
 
+## Spawn rate multiplier and opacity of the model's particle emitters, as the engine state drives
+## them (see [method E3DRenderingServer.instance_set_smoke_state])
+func set_smoke_state(intensity:float, opacity:float) -> void:
+    if _rid.is_valid():
+        E3DRenderingServer.instance_set_smoke_state(_rid, intensity, opacity)
+
+
 func _create_instance() -> void:
     var server_instancer: int = (
         Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
@@ -183,7 +190,10 @@ func _create_instance() -> void:
     E3DRenderingServer.instance_set_layer_mask(_rid, layers)
     E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
     E3DRenderingServer.instance_build(_rid)
-    set_notify_transform(instancer == Instancer.OPTIMIZED)
+    # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
+    # but a particle emitter of the model is owned by the server either way and spawns where the
+    # server last saw the instance
+    set_notify_transform(true)
 
 
 func _free_instance() -> void:

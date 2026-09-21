@@ -62,6 +62,8 @@ namespace godot {
             Dictionary lights_override;
             /// Real lights owned by this instance (E3DRenderingServer light RIDs)
             Vector<RID> light_objects;
+            /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
+            Vector<RID> smoke_objects;
 
             // OPTIMIZED backend
             HashMap<String, LightSubmodels> light_submodels;

@@ -7,8 +7,6 @@ const SUN_LIGHT_NAME: StringName = &"SunLight"
 const WEATHER_NAME: StringName = &"Weather"
 const WIND_TURBULENCE_SETTING: StringName = &"maszyna/weather/wind_turbulence"
 # Weather response to rain and wind strength, as in forest-test-scene ui/WeatherControlsCanvas.gd.
-const WIND_SPEED_MIN: float = 0.15
-const WIND_SPEED_MAX: float = 3.0
 const WIND_STRENGTH_MIN: float = 0.4
 const WIND_STRENGTH_MAX: float = 5.0
 const STORM_RAIN_START: float = 0.4
@@ -134,7 +132,7 @@ func apply_visual_configuration() -> void:
         ProjectSettings.get_setting(RAIN_FOG_DENSITY_SETTING, RAIN_FOG_DENSITY_DEFAULT))), rain_fog)
     var fog_distance: float = lerpf(environment_node.fog_distance, minf(environment_node.fog_distance, float(
         ProjectSettings.get_setting(RAIN_FOG_DISTANCE_SETTING, RAIN_FOG_DISTANCE_DEFAULT))), rain_fog)
-    weather.global_wind_direction = Vector2.from_angle(environment_node.wind_direction)
+    weather.global_wind_direction = Vector2.from_angle(deg_to_rad(environment_node.wind_direction))
     weather.global_wind_speed = lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, environment_node.wind_strength)
     weather.global_wind_strength = lerpf(
         WIND_STRENGTH_MIN, WIND_STRENGTH_MAX, environment_node.wind_strength
@@ -246,6 +244,21 @@ func get_date() -> Vector3i:
 
 func get_current_time() -> float:
     return _current_time
+
+
+## What gnd-weather is actually blowing, rather than what the environment node asked for: the
+## WeatherNode is also driven directly by apply_wind_controls() and by its own presets.
+func get_wind_direction() -> Vector3:
+    if not weather:
+        return super()
+    var direction: Vector2 = weather.global_wind_direction.normalized()
+    return Vector3(direction.x, 0.0, direction.y)
+
+
+func get_wind_strength() -> float:
+    if not weather:
+        return super()
+    return weather.global_wind_speed
 
 
 ## Derived from the sun altitude Skydome is already driving - the DirectionalLight3D shines along

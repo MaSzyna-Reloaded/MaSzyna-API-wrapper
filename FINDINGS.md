@@ -3,6 +3,60 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-21 - smoke emitters spawned at the origin of the world
+
+* **Symptom:** a locomotive whose model carries a `smokesource_*` submodel (sm42, st44, su45) did
+  not smoke at all, while `E3DRenderingServer::get_smoke_statistics()` reported the emitter as
+  built and the template as parsed (`amount` 175, `lifetime` 3.5 s).
+* **Cause:** `_smoke_build()` placed the emitter with `particles_set_emission_transform()` and
+  left the `RenderingServer` instance's own transform at identity. Godot's scene cull pushes an
+  instance's transform into the emission transform whenever it updates the instance, so the value
+  set directly was overwritten with identity and every plume spawned at the world origin.
+* **Fix:** the emitter transform goes on the instance (`instance_set_transform()`), which is how a
+  `GPUParticles3D` node is driven too, and `particles_set_custom_aabb()` stays in the emitter's
+  local space, where the cull transforms it along with the instance.
+* **Rule:** a `RenderingServer` particle system is placed through its instance, not through
+  `particles_set_emission_transform()`. Configure a server-side effect the way the equivalent node
+  configures it - anything the scene cull derives from the instance will be recomputed.
+
+### The whole plume cut off in one frame on a notch change
+
+* **Symptom:** dropping the sm42's main controller by one notch made every particle of the plume
+  disappear at once, with no fade, and the smoke came back seconds later. The original never cuts
+  smoke off - it stops spawning and lets what is in the air disperse.
+* **Cause:** the engine-driven rate was pushed through `particles_set_amount_ratio()`. That is not
+  a spawn rate: Godot's particle process deactivates every particle whose index is at or above
+  `amount * amount_ratio`, so lowering the ratio kills live particles, and a ratio of 0 - which is
+  what the formula gives the moment `Im` or `EnginePower` dips on a notch change - kills all of
+  them in the same frame.
+* **Fix:** the emitters no longer emit automatically. `particles_set_emitting()` is false and
+  `E3DRenderingServer::process_smoke()`, ticked by `SmokeSourceLibrary`, accumulates
+  `spawn_rate * intensity * delta` per emitter and calls `particles_emit()` that many times -
+  the original's own `m_spawncount` model (`particles.cpp:157-212`). Live particles are never
+  touched, so the plume thins and fades on its own.
+* **Also not a spawn rate:** an earlier attempt drove `ParticleProcessMaterial.color`'s alpha from
+  `dizel_fill`. That multiplies every live particle on every frame, so the whole plume blinked
+  whenever the Mover floored `dizel_fill` at 0.05. The original scales the opacity in the spawn
+  routine (`particles.cpp:330`), so it reaches only new particles - here it rides
+  `color_initial_ramp`, which is sampled once at spawn.
+* **Rule:** anything that should affect only the particles born from now on must go through a
+  spawn-time channel (manual emission, `color_initial_ramp`), never through a process-material
+  uniform or `amount_ratio`, both of which reach back into the particles already in the air.
+
+### A state key published by one engine part only
+
+* **Symptom:** while chasing the above, a plain `EngineType=DieselEngine` vehicle could never have
+  smoked either: its rate came out 0 whatever the throttle.
+* **Cause:** `diesel_max_rpm` was added to `TrainDieselElectricEngine`, so on a plain diesel
+  `state.get("diesel_max_rpm", 0.0)` fell back to 0, the revolutions deficit went negative and the
+  clamp turned it into no smoke.
+* **Fix:** the key lives in `TrainDieselEngine` and reads `TMoverParameters::EngineMaxRPM()`,
+  which already returns `dizel_nmax * 60` for a diesel and `DElist[MainCtrlPosNo].RPM` for a
+  diesel-electric (`Mover.cpp:1099`) - one key for both.
+* **Rule:** put a state key on the part that owns the concept, not on the subclass the first
+  consumer happened to use, and check whether the Mover already has an accessor that covers every
+  subclass.
+
 ## 2026-09-20 - regressions after the frame-time optimisation night
 
 37 commits in about 18 hours (`8bd5c9a`..`ed5ee09`), most of them optimisations judged by frame

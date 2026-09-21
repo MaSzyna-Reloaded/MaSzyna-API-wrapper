@@ -3,6 +3,30 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - a vehicle of the previous scenery left in the strip when the search found nothing
+
+* **Symptom:** a search with no results cleared the scenery list, the details and the trainsets,
+  but the vehicle strip kept showing the vehicles of the scenery selected before it.
+* **What proved it:** running the selector as a scene (`godot --headless res://probe.tscn`, a node
+  that instances the screen, types into its search field and prints the state) and reading the log:
+  `Invalid type in function 'set_tiles' in base 'PanelContainer (TileGrid)'. The array of argument
+  1 (Array) does not have the same element type as the expected typed array argument.`
+* **Cause:** the "nothing to show" path called `%TrainsetGrid.set_tiles([])`. A bare `[]` is
+  refused by a parameter typed `Array[TileGrid.Tile]` when that type lives in another script, and
+  the refusal is a runtime error - the call never runs, so the tiles are never freed and the grid
+  never hides. An isolated probe of the same conversion *passed*, because there the element class
+  was declared in the calling script; that is what made it look impossible on paper.
+* **Fix:** `_show_trainset()` builds `var tiles: Array[TileGrid.Tile] = []` and has one exit that
+  hands it over, empty or not. The neighbouring `set_rows([], [])` became
+  `set_rows(PackedStringArray(), PackedStringArray())`.
+* **Rule:** never hand a bare `[]` or `{}` to a typed collection parameter - declare the typed
+  variable and pass that. A refused argument is silent in game: the state simply stays as it was,
+  and the only trace is a line in a log nobody is reading.
+* **Rule:** probe a screen by **running it as a scene**, not with `--script`. A `SceneTree` script
+  starts without autoloads, so every script that names one (`VehicleProfileManager` here) fails to
+  compile, and the nodes come up stripped of their scripts - which reads exactly like a broken
+  scene and sends the search in the wrong direction.
+
 ## 2026-09-21 - smoke emitters spawned at the origin of the world
 
 * **Symptom:** a locomotive whose model carries a `smokesource_*` submodel (sm42, st44, su45) did

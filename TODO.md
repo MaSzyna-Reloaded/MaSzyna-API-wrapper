@@ -308,3 +308,8 @@
 * `LegacyCabinBattery`, `LegacyCabinCabActivation`, `LegacyCabinManualBrake` and
   `LegacyCabinWipers` only register what `LegacyCabinUnmodelledControls` would register from the
   catalog anyway (their keys already go through it) - they can be folded into it.
+* The placeholder of a tile whose side view is still rendering guesses its width from the
+  silhouette's own shape (`TileGrid.PLACEHOLDER_STRETCH`), because nothing the selector reads
+  knows how long a vehicle is: `MaszynaSceneryInfo.Vehicle` carries only the train id, the data
+  path, the skin and the file name, and the FIZ `Dim=` is parsed nowhere. With the length the tile
+  could come up at its final width and stop jumping when the profile arrives.

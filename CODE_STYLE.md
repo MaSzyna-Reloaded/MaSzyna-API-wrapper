@@ -35,7 +35,25 @@ func _process(delta):
 5. In `if` conditions, do not use `!=`; use `not ... == ...`
 6. Send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API. Access a
    `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
-7. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
+7. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
+   signal goes into the scene's `[connection]` list - not into `_ready()`. The wiring then sits
+   where the node does, the editor keeps it correct when the node is renamed or moved, and it
+   exists before any script runs. `connect()` in code is for nodes the script instantiates itself
+   (a row built in a loop, a player added by hand).
+8. **A long node path in code is an antipattern.** `get_node("A/B/C/D")`, `$A/B/C` and worst of
+   all a `../..` that climbs out of the node's own scene: the node is then pinned to a layout it
+   does not own, and moving one container breaks it. Inside its own scene a node is reached by its
+   unique name (`%Name`); anything outside comes in through the scene root's own signals and
+   methods.
+
+   A scene `[connection]` is a different matter and is *not* an offender: it stores a path from
+   the scene root, and the `../../..` the editor's node dock shows is only how the editor draws
+   where the receiver sits relative to the emitter. Nothing to clean there.
+
+   What is worth cleaning is the tree itself: a container that wraps a single child earns nothing
+   and lengthens every path through it, and a name has to say what the node is - `VehiclesScroll`,
+   not `ScrollContainer`; `SceneryPanel`, not `ListPanel` when four lists share the screen.
+9. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
    order of preference:
    1. **C++** - a singleton connects itself to `SceneTree`'s `process_frame` and does the work
       natively (`SceneryStreamingServer::_process_streaming()`,
@@ -49,6 +67,131 @@ func _process(delta):
    A bare `_process` that runs every frame to do a handful of calls is the thing to avoid: the
    interpreter costs more than the calls. Whichever of the three it ends up being, it is still
    bound by "Per-frame work" below.
+
+### A case that every receiver branches on is not a parameter
+
+**First ask what the receiver does with the value.** When every listener opens by branching on it,
+the branch *is* the signal - emit one per case and let each listener connect to the one it cares
+about. That removes the parameter, the branch in every receiver, and the dead half of each handler:
+
+```gdscript
+# not this - one signal carrying a side, and an "if" at the top of every listener
+signal navigate_out(edge: Edge)
+
+# this - the screen connects only what means something to it
+signal navigate_left
+signal navigate_right
+```
+
+**What does travel is an enum, never a number.** A mode that is passed on, stored or compared
+carries its own type; a number standing for a case is semantic rubbish - the call site cannot be
+read, nothing checks the value, and the reader has to open the emitter to learn what it meant:
+
+```gdscript
+# not this
+func set_detail(level: int) -> void:   # 0? 2? the caller reads like arithmetic
+
+# this
+enum Detail { LOW, HIGH, OPTIMIZED }
+func set_detail(level: Detail) -> void:
+```
+
+An `int` parameter is for something counted or offset - a row step, a size, an index. A direction,
+a side, a mode or a state is never one. The same goes for a `bool` that names nothing at the call
+site (`build(true)`): make it an enum or split the function.
+
+Names themselves come from the vocabulary of the data and of the original engine: a `.scn` declares
+`trainset`, so the code says `trainset` - not `consist`, not any other synonym the wrapper invents.
+
+### A component names no path outside itself
+
+What a reusable component preloads decides whether it can be moved or reused at all:
+
+```gdscript
+# not this - the component knows where it lives and who uses it
+const MARKER: Shader = preload("res://ui/selection_marker.gdshader")
+const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
+
+# this - its own asset relative to itself, the user's asset as a slot the user fills
+const MARKER: Shader = preload("selection_marker.gdshader")
+@export var sounds: SfxBank = null
+```
+
+A relative `preload` survives the component being renamed, moved or lifted into another project; an
+absolute `res://` does not. And whatever belongs to the user rather than to the component - a sound
+bank, a theme, a texture, a scene to spawn - is an `@export` its scene fills in, the same rule the
+addon follows towards `demo/`.
+
+### Exclusive state has one manager, and every state has an owner
+
+**Exclusive state** is state only one thing may hold at a time: the focused section of a screen,
+the open modal, the selected row, the active camera. It needs one manager, and the manager is the
+only code that hands it out:
+
+```gdscript
+# not this - the section lights itself up, and nobody dims the one that had the focus
+[connection signal="navigate_down" from="…/Vehicles" to="…/Actions" method="grab_section_focus"]
+
+# this - the section asks, the screen decides and dims the rest
+[connection signal="navigate_down" from="…/Vehicles" to="." method="focus_actions"]
+```
+
+A component that takes exclusive state for itself is not obviously wrong at the call site, and the
+failure shows up as two of them holding it at once - two lit sections, two open windows.
+
+**Every piece of state has an owner**, and it changes through a named operation of that owner
+rather than by an assignment made from somewhere else:
+
+```gdscript
+# not this, somewhere in the middle of another method
+_previous_section = Section.TRAINSETS
+
+# this
+reset_focus_history()
+```
+
+The name is the reason the state changed, written down once where the field lives. This holds
+inside a single script as well as across objects: one writer per field, and the writing has a name.
+
+### Do not multiply entities (DRY, KISS)
+
+Applies to GDScript and C++ alike.
+
+* **A private function with one call site is not a helper.** Its body belongs at that call site.
+  Splitting it out hides the order of what happens and buys nothing back.
+* **Never do the same thing twice to be safe.** An immediate call plus a deferred one, a direct
+  call plus the same work through a signal, a condition checked in the caller and again inside the
+  callee - each pair means the author did not know which one was correct. Work that out and keep
+  one.
+* **A wrapper that only forwards is noise.** So is a variable that is read once, a parameter that
+  is always passed the same value, and state that is derivable from state already kept.
+
+Doubling up does not make a doubtful fix more likely to work; it makes the next reader carry the
+doubt as well, and it hides which of the two paths the behaviour actually comes from.
+
+### Never create an `ensure_*` API
+
+Applies to GDScript and C++ alike. Not `_ensure_built()`, not `_ensure_viewport()`, not
+`_ensure_sections()`, and not the same idea under a friendlier name.
+
+A function like that re-checks and re-derives, on every call, state the code already knew at the one
+moment it changed. Its cost is whatever it happens to walk, its call site says nothing about what it
+changes, and the moment the state is actually set is nowhere to be found. **State is initialised
+where it is created and set where it changes - once, explicitly.**
+
+The engine's own are no pattern to copy. `ScrollContainer.ensure_control_visible()` is the example
+that got this written down; where it exists, compute the value and set the property:
+
+```gdscript
+# not this
+scroll.ensure_control_visible(item)
+
+# this
+scroll.scroll_vertical = int(item.position.y + item.size.y - scroll.size.y)
+```
+
+It has a failure mode on top of the cost: it reads state that a change made in the same frame has
+just invalidated - a `visible` toggle, a queued re-sort - and then silently does nothing.
 
 ### Per-frame work
 

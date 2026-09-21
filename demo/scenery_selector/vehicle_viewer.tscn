@@ -1,6 +1,9 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenery_selector/vehicle_viewer.gd" id="1_viewer"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="2_grid"]
+[ext_resource type="Resource" path="res://startup/ui_sounds.tres" id="3_sounds"]
+[ext_resource type="Texture2D" path="res://startup/eu07_parked_sketch.svg" id="4_sketch"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 16.0
@@ -126,17 +129,16 @@ theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.65)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
-[node name="SkinsScroll" type="ScrollContainer" parent="VBoxContainer"]
+[node name="SkinsGrid" parent="VBoxContainer" instance=ExtResource("2_grid")]
+placeholder_silhouette = ExtResource("4_sketch")
+sounds = ExtResource("3_sounds")
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
-horizontal_scroll_mode = 3
-
-[node name="Skins" type="HFlowContainer" parent="VBoxContainer/SkinsScroll"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_horizontal = 3
-theme_override_constants/h_separation = 10
-theme_override_constants/v_separation = 10
+layout = 1
+tile_padding = 1.8
+click_event = &"skin_click"
+hover_event = &"skin_hover"
 
 [node name="SkinPreviewViewport" type="SubViewport" parent="."]
 unique_name_in_owner = true
@@ -181,4 +183,7 @@ flat = true
 text = "←"
 
 [connection signal="pressed" from="Overlay/BackButton" to="." method="_on_back_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/ModelArea/ApplyButton" to="." method="_on_apply_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/ModelArea/ApplyButton" to="." method="apply_selected_skin"]
+[connection signal="item_selected" from="VBoxContainer/SkinsGrid" to="." method="_on_skins_grid_item_selected"]
+[connection signal="activated" from="VBoxContainer/SkinsGrid" to="." method="apply_selected_skin"]
+[connection signal="cancelled" from="VBoxContainer/SkinsGrid" to="." method="close"]

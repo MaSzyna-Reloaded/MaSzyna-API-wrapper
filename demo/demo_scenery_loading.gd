@@ -2,6 +2,10 @@ extends Node3D
 
 ## Seconds of the music fade out after a scenery has loaded
 const MUSIC_FADE_OUT_TIME: float = 1.0
+## Music in the menu, and the little it gains while a scenery loads - 3 dB, not the jump to full
+## scale the loading used to make
+const MUSIC_MENU_VOLUME_DB: float = -6.0
+const MUSIC_LOADING_VOLUME_DB: float = -3.0
 ## Seconds of the loading screen fade out into the game
 const LOADING_FADE_OUT_TIME: float = 1.0
 ## Frames given to the cabin to instantiate before the loading screen fades out
@@ -33,7 +37,7 @@ func _ready() -> void:
 func _on_scenery_selector_scenery_selected(
     filename: String, train_id: String, skin_overrides: Dictionary
 ) -> void:
-    _play_music()
+    _play_music(MUSIC_LOADING_VOLUME_DB)
     $GameHud.visible = false
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
@@ -99,7 +103,7 @@ func _on_exit_to_menu_pressed() -> void:
 
 
 func _exit_to_menu() -> void:
-    _play_music()
+    _play_music(MUSIC_MENU_VOLUME_DB)
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
     $GameHud.visible = false
     SceneryStreamingServer.set_camera(null)
@@ -111,11 +115,12 @@ func _exit_to_menu() -> void:
     await $SpinnerOverlay.fade_out(EXIT_FADE_TIME)
 
 
-## Music plays while no scenery is loaded (autoplay) and while a scenery loads
-func _play_music() -> void:
+## Music plays while no scenery is loaded (autoplay) and while a scenery loads, at the level the
+## caller asks for
+func _play_music(volume_db: float) -> void:
     if _music_tween:
         _music_tween.kill()
-    $Music.volume_linear = 1.0
+    $Music.volume_db = volume_db
     if not $Music.playing:
         $Music.play()
 

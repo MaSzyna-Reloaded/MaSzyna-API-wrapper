@@ -22,6 +22,10 @@ Code generation:
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never create an `ensure_*` API** - no
+  `_ensure_built()`, `_ensure_viewport()`, `_ensure_sections()`, nor the same idea under a friendlier
+  name. State is initialised where it is created and set where it changes, once and explicitly; it is
+  not re-checked and re-derived on every call by a function that "ensures" it - see `CODE_STYLE.md`
 * GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
   `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
   numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a

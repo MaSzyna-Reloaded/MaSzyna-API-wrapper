@@ -50,6 +50,30 @@ func _process(delta):
    interpreter costs more than the calls. Whichever of the three it ends up being, it is still
    bound by "Per-frame work" below.
 
+### Never create an `ensure_*` API
+
+Applies to GDScript and C++ alike. Not `_ensure_built()`, not `_ensure_viewport()`, not
+`_ensure_sections()`, and not the same idea under a friendlier name.
+
+A function like that re-checks and re-derives, on every call, state the code already knew at the one
+moment it changed. Its cost is whatever it happens to walk, its call site says nothing about what it
+changes, and the moment the state is actually set is nowhere to be found. **State is initialised
+where it is created and set where it changes - once, explicitly.**
+
+The engine's own are no pattern to copy. `ScrollContainer.ensure_control_visible()` is the example
+that got this written down; where it exists, compute the value and set the property:
+
+```gdscript
+# not this
+scroll.ensure_control_visible(item)
+
+# this
+scroll.scroll_vertical = int(item.position.y + item.size.y - scroll.size.y)
+```
+
+It has a failure mode on top of the cost: it reads state that a change made in the same frame has
+just invalidated - a `visible` toggle, a queued re-sort - and then silently does nothing.
+
 ### Per-frame work
 
 Applies to C++ and GDScript alike - a loop in a native `_process` scales with the collection just

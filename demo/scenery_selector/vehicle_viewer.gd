@@ -1,12 +1,11 @@
 extends Control
 
-## Vehicle of a consist: its exterior model rotating in a SubViewport, its name and the skins
+## Vehicle of a trainset: its exterior model rotating in a SubViewport, its name and the skins
 ## found next to it (the .mat files of the vehicle). Shown in place of the scenery list.
 
-## Emitted whichever way the viewer goes away. by_back_button tells the back button apart from
-## accepting a skin and from the screen closing the viewer on its own - they are the same
-## transition but not the same gesture, and only one of them is a "back".
-signal closed(by_back_button: bool)
+## Emitted whichever way the viewer goes away. No "was it the back button" in it: the back button
+## is a gesture of this scene and plays its own sound here.
+signal closed
 ## The skin picked in the viewer was accepted
 signal skin_applied(skin: String)
 
@@ -17,25 +16,14 @@ const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
 const FADE_TIME: float = 0.5
 ## Distance of the camera from the model, in model lengths
 const CAMERA_DISTANCE: float = 1.15
-## Tile of a skin: the vehicle is as tall as this, as wide as it is long
-const SKIN_PREVIEW_SIZE: Vector2 = Vector2(300.0, 60.0)
-## The tile is taller than the vehicle, so the halo under it has somewhere to show
-const SKIN_TILE_PADDING: float = 1.8
-
-## Glow around a skin silhouette: white under the pointer, yellow on the skin in use
-const SKIN_GLOW_SHADER: Shader = preload("res://scenery_selector/skin_glow.gdshader")
-const SKIN_HOVER_COLOR: Color = Color(1.0, 1.0, 1.0)
-const SKIN_SELECTED_COLOR: Color = Color(0.35, 1.0, 0.45)
 
 var _vehicle: MaszynaSceneryInfo.Vehicle = null
 var _data_path: String = ""
 var _model: E3DModelInstance = null
-## Skin of the model, the one the consist gives the vehicle until another is picked
+## Skin of the model, the one the trainset gives the vehicle until another is picked
 var _skin: String = ""
-## Skins of the vehicle and their tiles, in the order they are shown
+## Skins of the vehicle, in the order the grid shows them
 var _skins: Array[String] = []
-var _skin_buttons: Array[TextureButton] = []
-var _skin_index: int = -1
 ## Fading in or out; killed when the other fade starts, so they never fight over modulate
 var _fade_tween: Tween = null
 var _ui_sounds: SfxPlayer
@@ -61,7 +49,9 @@ func show_vehicle(vehicle: MaszynaSceneryInfo.Vehicle) -> void:
     %ModelRoot.rotation = Vector3.ZERO
     _build_model(vehicle.skin)
     _build_skin_grid()
-    modulate.a = 0.0
+    # a viewer that is still fading out carries on from the alpha it reached, and does not blink
+    if not visible:
+        modulate.a = 0.0
     visible = true
     if _fade_tween:
         _fade_tween.kill()
@@ -88,7 +78,6 @@ func _build_model(skin: String) -> void:
     _model.skins = MmdCabinInstancer.resolve_skins(_data_path, skin)
     %ModelRoot.add_child(_model)
     _frame_model()
-    _update_skin_selection()
 
 
 ## Puts the model in the middle of the turntable and pulls the camera back to fit it
@@ -100,143 +89,67 @@ func _frame_model() -> void:
     %Camera.look_at(Vector3.ZERO)
 
 
-## Skins of the vehicle (VehicleSkins), each with a side view
+## Skins of the vehicle (VehicleSkins), each as a tile of the grid
 func _build_skin_grid() -> void:
-    for child: Node in %Skins.get_children():
-        child.queue_free()
     _skins.clear()
-    _skin_buttons.clear()
-    _skin_index = -1
-
-    # the consist can give the vehicle a skin that is not listed - it is still a skin, and it goes
-    # first, so it is the one selected
+    # the trainset can give the vehicle a skin that is not listed - it is still a skin, and it goes
+    # first, so it is the one the grid selects
     if _skin:
         _skins.append(_skin)
     var vehicle_dir: String = UserSettings.get_maszyna_game_dir().path_join(_data_path)
     for skin: String in VehicleSkins.list_skins(vehicle_dir, _vehicle.file_name):
         if not skin == _skin.to_lower():
             _skins.append(skin)
-
-    for index: int in _skins.size():
-        var entry: Control = _create_skin_entry(index)
-        %Skins.add_child(entry)
-    _skin_index = 0 if _skin else -1
-    _update_skin_selection()
+    var tiles: Array[TileGrid.Tile] = []
+    for skin: String in _skins:
+        tiles.append(TileGrid.Tile.new(_data_path, _vehicle.file_name, skin, skin, skin))
+    %SkinsGrid.set_tiles(tiles)
 
 
-## Side view of the skin over its name, both clickable
-func _create_skin_entry(index: int) -> Control:
-    var skin: String = _skins[index]
-    var entry := VBoxContainer.new()
-    entry.tooltip_text = skin
-
-    var tile := Control.new()
-    tile.name = "Tile"
-    tile.custom_minimum_size = Vector2(SKIN_PREVIEW_SIZE.x, SKIN_PREVIEW_SIZE.y * SKIN_TILE_PADDING)
-    entry.add_child(tile)
-
-    # the background of the tile, lit up under the vehicle
-    var background := ColorRect.new()
-    background.name = "Background"
-    background.set_anchors_preset(Control.PRESET_FULL_RECT)
-    background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    background.material = ShaderMaterial.new()
-    (background.material as ShaderMaterial).shader = SKIN_GLOW_SHADER
-    tile.add_child(background)
-
-    var button := TextureButton.new()
-    button.ignore_texture_size = true
-    button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-    button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-    button.set_anchors_preset(Control.PRESET_FULL_RECT)
-    button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    button.pressed.connect(_on_skin_pressed.bind(index))
-    button.mouse_entered.connect(_on_skin_hovered.bind(index, true))
-    button.mouse_exited.connect(_on_skin_hovered.bind(index, false))
-    tile.add_child(button)
-    _skin_buttons.append(button)
-    # after the tile is built: the profile may arrive right away, from the cache
-    _load_skin_profile(button, skin)
-
-    var label := Label.new()
-    label.text = skin
-    label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-    label.add_theme_font_size_override("font_size", 13)
-    label.clip_text = true
-    entry.add_child(label)
-    return entry
-
-
-func _select_skin(index: int) -> void:
-    _skin_index = index
+## The grid moved onto another skin, so the model wears it from now on. Nothing to do when it is
+## the skin the model was built with - that is the grid selecting its first tile after a rebuild.
+func _on_skins_grid_item_selected() -> void:
+    var index: int = %SkinsGrid.get_selected()
+    if index < 0 or _skins[index] == _skin:
+        return
     _build_model(_skins[index])
-    _update_skin_selection()
 
 
-## The skin in use keeps a green background, the rest none until the pointer is over them
-func _update_skin_selection() -> void:
-    for index: int in _skin_buttons.size():
-        _set_skin_glow(index, SKIN_SELECTED_COLOR if index == _skin_index else Color.TRANSPARENT)
-
-
-func _on_skin_pressed(index: int) -> void:
-    _ui_sounds.play(&"skin_click")
-    _select_skin(index)
-
-
-func _on_skin_hovered(index: int, hovered: bool) -> void:
-    if index == _skin_index:
-        return
-    if hovered:
-        _ui_sounds.play(&"skin_hover")
-    _set_skin_glow(index, SKIN_HOVER_COLOR if hovered else Color.TRANSPARENT)
-
-
-func _set_skin_glow(index: int, color: Color) -> void:
-    if index < 0 or index >= _skin_buttons.size():
-        return
-    var background: ColorRect = _skin_buttons[index].get_parent().get_node("Background") as ColorRect
-    var material: ShaderMaterial = background.material as ShaderMaterial
-    material.set_shader_parameter("glow_color", color)
-    material.set_shader_parameter("glow_strength", 0.0 if color == Color.TRANSPARENT else 1.0)
-
-
-## Side view of the skin from VehicleProfileManager
-func _load_skin_profile(button: TextureButton, skin: String) -> void:
-    var profile: Texture2D = await VehicleProfileManager.get_profile(_data_path, _vehicle.file_name, skin)
-    if not is_instance_valid(button) or not profile:
-        return
-    button.texture_normal = profile
-    var tile: Control = button.get_parent() as Control
-    var tile_size: Vector2 = Vector2(
-        SKIN_PREVIEW_SIZE.y * float(profile.get_width()) / float(profile.get_height()),
-        SKIN_PREVIEW_SIZE.y * SKIN_TILE_PADDING
-    )
-    tile.custom_minimum_size = tile_size
-    # the shader rounds the corners in pixels, so it needs to know how big the tile is
-    var background: ColorRect = tile.get_node("Background") as ColorRect
-    (background.material as ShaderMaterial).set_shader_parameter("rect_size", tile_size)
+## The skins are a section of the screen's focus cycle, and the screen drives it through this node
+func get_skins_section() -> FocusSection:
+    return %SkinsGrid
 
 
 func _on_back_button_pressed() -> void:
-    close(true)
-
-
-func _on_apply_button_pressed() -> void:
-    if _skin_index >= 0:
-        skin_applied.emit(_skins[_skin_index])
+    _ui_sounds.play(&"back_button")
     close()
 
 
-## Fades the viewer out; the scenery list fades in under it at the same time
-func close(by_back_button: bool = false) -> void:
-    closed.emit(by_back_button)
+## Accepts the skin the grid has selected and leaves - the button and Enter on a tile are both
+## wired straight to this, in the scene.
+func apply_selected_skin() -> void:
+    var index: int = %SkinsGrid.get_selected()
+    if index >= 0:
+        skin_applied.emit(_skins[index])
+    close()
+
+
+## Fades the viewer out; the scenery list fades in under it at the same time. A viewer that is
+## already gone closes no second time - a repeated "closed" restarted the list's fade from zero.
+func close() -> void:
+    if not visible:
+        return
+    closed.emit()
     if _fade_tween:
         _fade_tween.kill()
     _fade_tween = create_tween()
     _fade_tween.tween_property(self, "modulate:a", 0.0, FADE_TIME)
-    # a fade in started meanwhile kills this tween, and the viewer stays open
-    await _fade_tween.finished
+    # a callback and not "await finished": killing a tween never finishes it, so a fade in started
+    # meanwhile would leave the await hanging and the model alive
+    _fade_tween.tween_callback(_close_finished)
+
+
+func _close_finished() -> void:
     visible = false
     if _model:
         _model.queue_free()

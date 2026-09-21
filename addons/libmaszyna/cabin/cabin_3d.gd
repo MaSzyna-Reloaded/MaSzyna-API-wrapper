@@ -124,10 +124,10 @@ func get_camera_shake_offset() -> Vector3:
 
 func get_camera_shake_roll() -> float:
     return atan(_shake_velocity.x * shake_angle_scale.x)
-            
+
 func _ready() -> void:
     _cabin_ready = true
-    cabin_ready.emit()                
+    cabin_ready.emit()
 
 func is_cabin_ready() -> bool:
     return _cabin_ready

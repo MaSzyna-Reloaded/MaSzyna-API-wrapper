@@ -1,0 +1,91 @@
+[gd_scene format=3 uid="uid://5f6cnr8et0l6"]
+
+[ext_resource type="Script" uid="uid://c2eq4kukleoh5" path="res://ui/selector_list.gd" id="1_list"]
+[ext_resource type="Texture2D" uid="uid://dgvryp8oiphb8" path="res://ui/search_icon.svg" id="2_search_icon"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_search"]
+content_margin_left = 12.0
+content_margin_top = 8.0
+content_margin_right = 12.0
+content_margin_bottom = 8.0
+bg_color = Color(0.35, 0.55, 0.9, 0.07)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.45, 0.65, 1, 0.18)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_search_field"]
+
+[node name="SelectorList" type="PanelContainer" unique_id=772301724]
+theme_type_variation = &"FocusSection"
+script = ExtResource("1_list")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=936201672]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SearchPanel" type="PanelContainer" parent="VBoxContainer" unique_id=1014979914]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_search")
+
+[node name="Row" type="HBoxContainer" parent="VBoxContainer/SearchPanel" unique_id=951279148]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Icon" type="TextureRect" parent="VBoxContainer/SearchPanel/Row" unique_id=235874580]
+modulate = Color(0.7, 0.82, 1, 0.75)
+custom_minimum_size = Vector2(22, 22)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("2_search_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Search" type="LineEdit" parent="VBoxContainer/SearchPanel/Row" unique_id=1571354713]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.92, 0.95, 1, 1)
+theme_override_colors/font_placeholder_color = Color(0.7, 0.8, 1, 0.4)
+theme_override_font_sizes/font_size = 18
+theme_override_styles/normal = SubResource("StyleBoxEmpty_search_field")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_search_field")
+placeholder_text = "Szukaj scenariusza"
+caret_blink = true
+
+[node name="ClearSearch" type="Button" parent="VBoxContainer/SearchPanel/Row" unique_id=1020544428]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.82, 1, 0.75)
+theme_override_font_sizes/font_size = 16
+text = "✕"
+flat = true
+
+[node name="Scroll" type="ScrollContainer" parent="VBoxContainer" unique_id=1370595674]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 3
+
+[node name="List" type="VBoxContainer" parent="VBoxContainer/Scroll" unique_id=1821992777]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="SearchDebounce" type="Timer" parent="." unique_id=712946716]
+unique_name_in_owner = true
+wait_time = 0.1
+one_shot = true
+
+[connection signal="text_changed" from="VBoxContainer/SearchPanel/Row/Search" to="." method="_on_search_text_changed"]
+[connection signal="pressed" from="VBoxContainer/SearchPanel/Row/ClearSearch" to="." method="_on_clear_search_pressed"]
+[connection signal="timeout" from="SearchDebounce" to="." method="_on_search_debounce_timeout"]

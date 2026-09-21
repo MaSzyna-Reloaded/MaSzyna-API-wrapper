@@ -199,6 +199,26 @@ func get_current_time() -> float:
     return _current_time
 
 
+## Derived from the sun altitude Skydome is already driving - the DirectionalLight3D shines along
+## its own -Z, so +Z points at the sun and its Y component is the sine of the altitude. Skydome's
+## own day/night blend would do as well, but it is private to the vendored addon.
+func get_light_level() -> float:
+    if not sun_light:
+        return 1.0
+    var sun_altitude: float = rad_to_deg(asin(clampf(sun_light.global_transform.basis.z.y, -1.0, 1.0)))
+    var night_altitude: float = ProjectSettings.get_setting(
+        MaszynaSkyEnvironment.LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING,
+        MaszynaSkyEnvironment.LIGHT_LEVEL_NIGHT_ALTITUDE,
+    )
+    var day_altitude: float = ProjectSettings.get_setting(
+        MaszynaSkyEnvironment.LIGHT_LEVEL_DAY_ALTITUDE_SETTING,
+        MaszynaSkyEnvironment.LIGHT_LEVEL_DAY_ALTITUDE,
+    )
+    var daylight: float = smoothstep(night_altitude, day_altitude, sun_altitude)
+    var overcast: float = clampf(environment_node.cloudiness, 0.0, 1.0)
+    return daylight * (1.0 - (overcast * MaszynaSkyEnvironment.LIGHT_LEVEL_OVERCAST_FACTOR))
+
+
 func process(delta: float) -> void:
     if Engine.is_editor_hint():
         return

@@ -28,6 +28,18 @@ const SHADOW_CABIN_SPLIT_SETTINGS: Array[StringName] = [
 ## Godot's DirectionalLight3D defaults for the exterior, the cabin keeps most of the map up close
 const SHADOW_EXTERIOR_SPLITS: Array[float] = [0.1, 0.2, 0.5]
 const SHADOW_CABIN_SPLITS: Array[float] = [0.01, 0.02, 0.2]
+## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
+## original lights a scenery light set to "on when dark" below a light level of 0.325
+## (AnimModel.cpp:598), which on this ramp falls at about 1.4 degrees below the horizon. Both ends
+## have to stay clear of a winter noon - at 50 N the sun peaks at 16-19 degrees in January, so a
+## day threshold anywhere near that would light the whole town at midday (see FINDINGS.md).
+const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_night_altitude"
+const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_day_altitude"
+const LIGHT_LEVEL_NIGHT_ALTITUDE: float = -6.0
+const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
+## Overcast dims the key light in the original by this much at full cover
+## (simulationenvironment.cpp:163)
+const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
 const VOLUMETRIC_FOG_ENERGY_SETTING: StringName = &"maszyna/rendering/volumetric_fog_energy"
 ## MaszynaEnvironmentNode.fog_distance is scaled by these for the day and for the night fog of a
 ## sky backend that tells them apart; the night default keeps Skydome's own 200 m to 470 m ratio
@@ -117,6 +129,15 @@ func _init(node: Node) -> void:
 
 
 @abstract func get_current_time() -> float
+
+
+## How bright the scene is, the equivalent of the original's Global.fLuminance
+## (simulationenvironment.cpp:184). It is what decides whether a scenery light that is set to come
+## on automatically is on: the original compares it against DefaultDarkThresholdLevel of 0.325
+## (AnimModel.cpp:598). A backend that cannot tell day from night returns 1.0 and leaves every such
+## light off.
+func get_light_level() -> float:
+    return 1.0
 
 
 func process(_delta: float) -> void:

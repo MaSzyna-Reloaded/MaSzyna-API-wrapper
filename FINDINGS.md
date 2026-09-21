@@ -463,3 +463,56 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Rule:** the sky and the geometry in front of it are fogged by two different shaders with two
   different parameters (`fog_sky_affect` vs `fog_density`). They only agree when the sky's share
   carries the depth fog's opacity; every horizon seam starts here.
+
+## 2026-09-21 - the whole scenery unlit, day and night, since the OPTIMIZED instancer
+
+* **Symptom:** no street lamp and no lit window anywhere in a scenery is ever lit, at any hour.
+  `stary_jawor_noc.scn` starts at 21:12 and the town is pitch black.
+* **What proved it:** the data declares the lights plainly - of the 975 files with a model-node
+  `lights` block, the modes used across the whole data set are `ls_Dark` 3180 times, `ls_Off`
+  1797, `ls_On` 733, `ls_Home` 607 and `ls_Blink` 15. `stary_jawor_noc` alone places 1001
+  light-bearing models, 1430 light groups and 452 declared `FREE_SPOTLIGHT` submodels. None of it
+  reached the renderer.
+* **Cause, in three independent places:**
+  * `e3d_parser.cpp` hides every `light_on*` submodel, so only `lights_state` can show it;
+  * `lights_state` lived on the **node** (`e3d_model_instance.gd`), and since `2125898` scenery
+    models are RIDs with no node at all - nothing could set it. It worked in `demo_3d` only
+    because that scene places `E3DModelInstance` nodes;
+  * `maszyna_node_model_importer.gd` parsed `lights`/`lightcolors` and threw them away
+    (`obj.lights` commented out since `923b293`), and `MaszynaModelData` had no field for them.
+* **Fix:** the light state moved into `E3DRenderingServer` - declared modes per instance,
+  resolved against a time of day and a light level pushed by `MaszynaEnvironmentNode`, with the
+  node left as a proxy. Real lights (spot/omni) are RIDs owned by the server and streamed through
+  `SceneryStreamingServer` with a range of their own, far shorter than the model's.
+* **Rule:** state that an instancer is meant to honour belongs to the server, not to the node that
+  happens to create the instance. The moment a second instancer appeared without nodes, every
+  feature parked on the node silently stopped existing - and silently, because a light that is
+  merely never switched on looks exactly like a light that was never implemented.
+* **Rule:** identifying what a model contains is not the instancer's job either. Both backends
+  were walking the tree to pair `light_onNN` with `light_offNN`; that walk is now
+  `E3DLightFactory::discover()` and the backends only render what it lists.
+
+### Godot's spot cone stops at 90 degrees, the data's does not
+
+* `Light3D::PARAM_SPOT_ANGLE` is capped just under 90. Of the 871 `FREE_SPOTLIGHT` submodels in
+  the data set exactly 6 are wider - `elektryczne/lampa_parkowa01` at 117 degrees (38 of them in
+  `stary_jawor_noc`), `nastawnie/nastawnia_laziska_huta_lh1` at 150, and four more nastawnie.
+  Those become omni lights; a spot would have silently rendered a wrong cone.
+* **Rule:** before mapping an engine parameter one to one, check the range of the values the data
+  actually holds. Six outliers in 871 are invisible in a spot check and obvious in a histogram.
+
+### A street lamp that lights nothing
+
+* Nine models named `latarnia*` carry a light but **no** `FREE_SPOTLIGHT` submodel at all - in the
+  original they never lit the scene either, `TP_FREESPOTLIGHT` only draws a glare billboard
+  (`opengl33renderer.cpp:4646`). They do model where the light goes: a halo billboard at the lamp
+  head carrying the only non-identity matrix in the model, and a quad on the ground spanning the
+  lit patch. Both are found by their material (`elektryczne/poswiata`, `elektryczne/light1|2`),
+  never by name - `latarnial_str` calls its halos `pos11/pos22/pos33` while the other eight call
+  them `plane02/plane04/plane06`, and the pool is `placek` in eight of them and `plane01` in the
+  ninth.
+* The halo also carries the lamp's colour, so nothing has to be invented: mercury blue
+  `(0.61, 0.59, 1.0)` for `betdziur`, sodium orange `(1.0, 0.66, 0.18)` for `lbc`/`str`, warm
+  white `(0.90, 0.84, 0.64)` for `drew`/`hs`.
+* **Rule:** a model that declares no light may still say exactly where its light falls. Read the
+  geometry the author drew for the glow before adding a tuning constant.

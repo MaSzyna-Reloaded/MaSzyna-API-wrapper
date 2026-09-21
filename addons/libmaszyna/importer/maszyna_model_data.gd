@@ -13,3 +13,9 @@ class_name MaszynaModelData
 @export var range_min:float = 0.0
 ## Visible up to this distance, 0 - no limit
 @export var range_max:float = 0.0
+## The node's `lights` list, one mode per light in Light_On00..07 order (E3DRenderingServer.LightMode
+## plus an optional fraction carrying the light's own darkness threshold)
+@export var lights:PackedFloat32Array = []
+## The node's `lightcolors` list, in the same order; a negative colour is the data's "-1", which
+## leaves the colour the model carries alone
+@export var light_colors:PackedColorArray = []

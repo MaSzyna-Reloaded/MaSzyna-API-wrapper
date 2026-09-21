@@ -1,3 +1,4 @@
+#include "E3DLightFactory.hpp"
 #include "E3DNodesBackend.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/mesh_instance3d.hpp>
@@ -12,22 +13,14 @@ namespace godot {
         Node3D *target = Object::cast_to<Node3D>(ObjectDB::get_instance(p_instance.node_id));
         ERR_FAIL_NULL_MSG(target, "NODES instancer requires a node attached with instance_attach_node()");
 
+        // which submodels belong to which light was found by E3DLightFactory, not here
         HashMap<E3DSubModel *, LightRole> light_roles;
-        const TypedDictionary<String, E3DModelLightDefinition> lights = p_instance.model->get_lights();
-        const Array light_names = lights.keys();
-        for (int i = 0; i < light_names.size(); i++) {
-            const String light_name = light_names[i];
-            const Ref<E3DModelLightDefinition> light_info = lights[light_name];
-            if (light_info.is_null()) {
-                continue;
+        for (const E3DModelLight &light: p_instance.model_lights.lights) {
+            if (light.on != nullptr && !light_roles.has(light.on)) {
+                light_roles[light.on] = {light.name, true};
             }
-            const Ref<E3DSubModel> on = p_instance.model->get_node_or_null(light_info->get_on_submodel_path());
-            const Ref<E3DSubModel> off = p_instance.model->get_node_or_null(light_info->get_off_submodel_path());
-            if (on.is_valid() && !light_roles.has(on.ptr())) {
-                light_roles[on.ptr()] = {light_name, true};
-            }
-            if (off.is_valid() && !light_roles.has(off.ptr())) {
-                light_roles[off.ptr()] = {light_name, false};
+            if (light.off != nullptr && !light_roles.has(light.off)) {
+                light_roles[light.off] = {light.name, false};
             }
         }
 
@@ -197,46 +190,11 @@ namespace godot {
 
     void E3DNodesBackend::_configure_spotlight(
             SpotLight3D *p_spotlight, const String &p_light_name, E3DSubModel *p_submodel) {
-        const bool is_end_light = p_light_name.begins_with("endsignal") || p_light_name.begins_with("endtab");
-
-        float energy = DEFAULT_LIGHT_ENERGY;
-        if (p_light_name.begins_with("headlamp")) {
-            energy = DEFAULT_HEAD_LIGHT_ENERGY;
-        } else if (p_light_name.begins_with("highbeam")) {
-            energy = DEFAULT_HIGHBEAM_LIGHT_ENERGY;
-        } else if (is_end_light) {
-            energy = DEFAULT_END_LIGHT_ENERGY;
-        } else if (p_submodel->get_light_energy() > 0.0) {
-            energy = p_submodel->get_light_energy();
-        }
-
-        float range = DEFAULT_LIGHT_SPOT_RANGE;
-        if (is_end_light) {
-            range = FORCED_END_LIGHT_SPOT_RANGE;
-        } else if (p_submodel->get_light_range() > 0.0) {
-            range = p_submodel->get_light_range();
-        }
-
-        float attenuation = 1.0;
-        switch (p_submodel->get_far_attenuation_decay()) {
-            case 0:
-                attenuation = 0.0;
-                break;
-            case 2:
-                attenuation = 2.0;
-                break;
-            default:
-                break;
-        }
-
-        const float inner_angle = Math::rad_to_deg(Math::acos(CLAMP(p_submodel->get_cos_hotspot_angle(), -1.0f, 1.0f)));
-        const float outer_angle = MAX(p_submodel->get_light_angle(), 0.001f);
-        const float penumbra_ratio = CLAMP((outer_angle - inner_angle) / outer_angle, 0.0f, 1.0f);
-
-        p_spotlight->set_param(Light3D::PARAM_ENERGY, energy);
-        p_spotlight->set_param(Light3D::PARAM_RANGE, range);
-        p_spotlight->set_param(Light3D::PARAM_ATTENUATION, attenuation);
-        p_spotlight->set_param(Light3D::PARAM_SPOT_ATTENUATION, Math::lerp(2.0f, 0.0f, penumbra_ratio));
+        const E3DLightParams params = E3DLightFactory::from_submodel(p_submodel, p_light_name);
+        p_spotlight->set_param(Light3D::PARAM_ENERGY, params.energy);
+        p_spotlight->set_param(Light3D::PARAM_RANGE, params.range);
+        p_spotlight->set_param(Light3D::PARAM_ATTENUATION, params.attenuation);
+        p_spotlight->set_param(Light3D::PARAM_SPOT_ATTENUATION, params.spot_attenuation);
     }
 
     void E3DNodesBackend::_set_node_visible(const ObjectID &p_node_id, const bool p_visible) {

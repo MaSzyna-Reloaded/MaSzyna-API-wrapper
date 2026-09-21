@@ -123,10 +123,34 @@ func _enter_tree():
         "maszyna/rendering/scenery_draw_distance", 3000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "100.0,20000.0,10.0,suffix:m"
     )
+    # A scenery light is streamed with a range of its own, far shorter than the model's: a street
+    # lamp is visible from half a kilometre and lights fifteen metres. The densest 150 m of
+    # stary_jawor holds 128 of them, which is why they cast no shadows by default.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_distance", 150.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "10.0,1000.0,5.0,suffix:m"
+    )
+    add_custom_project_setting("maszyna/rendering/scenery_lights_shadows", false, TYPE_BOOL)
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_energy", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.05"
+    )
+    # Sun altitude between which the light level ramps from night to full day; a scenery light set
+    # to come on automatically lights below a level of 0.325 (AnimModel.cpp:598), which lands about
+    # 1.4 degrees below the horizon on this ramp. A winter noon sun peaks at 16-19 degrees at 50 N,
+    # so the day end must stay well below that (FINDINGS.md).
+    add_custom_project_setting(
+        "maszyna/rendering/light_level_night_altitude", -6.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-18.0,0.0,0.5,suffix:°"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/light_level_day_altitude", 6.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,15.0,0.5,suffix:°"
+    )
     # The distance a vehicle stops rendering from a node hierarchy at and switches to
     # RenderingServer instances; it switches back 25% closer. 350 m is where E3DNodesBackend has
-    # already faded its spotlights out completely (distance_fade_begin 150 + length 200), so the
-    # OPTIMIZED backend not rendering SUBMODEL_FREE_SPOTLIGHT costs nothing visible.
+    # already faded its spotlights out completely (distance_fade_begin 150 + length 200), and the
+    # OPTIMIZED backend's own lights are streamed by scenery_light_distance instead.
     add_custom_project_setting(
         "maszyna/rendering/vehicle_detail_distance", 350.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "50.0,10000.0,10.0,suffix:m"

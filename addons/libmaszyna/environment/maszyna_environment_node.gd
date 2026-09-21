@@ -5,6 +5,9 @@ class_name MaszynaEnvironmentNode
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
 ## Group the player sets cabin_view on when switching between the cabin and the exterior view
 const GROUP: StringName = &"maszyna_environment"
+## How often the time of day and the light level are pushed to E3DRenderingServer, which decides
+## from them which scenery lights are lit (see _push_scenery_light_state())
+const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
@@ -168,6 +171,7 @@ var _dirty_time: bool = true
 var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
 var _dirty_lights: bool = false
+var _light_state_elapsed: float = 0.0
 
 ## Cabin view (the player in a cab) - the lights use the cabin shadow distance then
 var cabin_view: bool = false:
@@ -197,6 +201,7 @@ func _process(delta: float) -> void:
     _process_dirty()
     _sky_environment.process(delta)
     _sync_time()
+    _push_scenery_light_state(delta)
     # Running time is only mirrored here; it must not be re-applied as a configuration change.
     _dirty_time = false
 
@@ -355,6 +360,19 @@ func _apply_time_configuration() -> void:
 
     _sky_environment.apply_time_configuration()
     _sync_time()
+
+
+## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
+## day and the light level. Neither changes fast enough to be worth pushing every frame - a whole
+## scenery is re-resolved on each push - so they go at a fixed interval, and at once when the time
+## was jumped rather than merely running.
+func _push_scenery_light_state(delta: float) -> void:
+    _light_state_elapsed += delta
+    if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not _dirty_time:
+        return
+    _light_state_elapsed = 0.0
+    E3DRenderingServer.set_current_time(current_time)
+    E3DRenderingServer.set_light_level(_sky_environment.get_light_level())
 
 
 func _sync_time() -> void:

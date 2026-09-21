@@ -33,30 +33,31 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelDat
 
         match nt:
             "lights":
-
-                var _lights = []
-                var _lightcolors = []
-                var _lt = _lights
-                var _notransition = false
+                # `lights <mode> ... [lightcolors <hex> ...] [notransition]`, one value per light
+                # in Light_On00..07 order (TAnimModel::Load(), AnimModel.cpp:335-361). A mode is
+                # ls_Off/ls_On/ls_Blink/ls_Dark/ls_Home plus an optional fraction; a colour is an
+                # RGB hex literal, with -1 meaning "leave the model's own colour alone".
+                var modes:PackedFloat32Array = []
+                var colors:PackedColorArray = []
+                var reading_colors:bool = false
 
                 while true:
-                    var x = p.next_token()
+                    var x:String = p.next_token()
                     match x.to_lower():
                         "lightcolors":
-                            _lt = _lightcolors
+                            reading_colors = true
                         "notransition":
-                            _notransition = true
+                            pass
                         "endmodel":
                             _endmodel = true
                             break
                         _:
-                            _lt.append(x)
-                if obj:
-                    #push_warning("Node model lights aren't supported yet")
-                    pass
-                    # obj.lights = _lights
-                    # obj.light_colors = _lightcolors
-                    # obj.light_transition = not _notransition
+                            if reading_colors:
+                                colors.append(_parse_light_color(x))
+                            else:
+                                modes.append(float(x))
+                obj.lights = modes
+                obj.light_colors = colors
             "angles":
                 var _rot = p.get_tokens(3)
                 if obj:
@@ -72,3 +73,12 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> MaszynaModelDat
                 pass
 
     return obj
+
+
+## A `lightcolors` entry is an RGB hex literal; -1 keeps the colour the model carries
+## (AnimModel.cpp:356). That "no override" is passed on as a negative colour.
+func _parse_light_color(token:String) -> Color:
+    if token == "-1":
+        return Color(-1.0, -1.0, -1.0)
+    var value:int = token.hex_to_int()
+    return Color8((value >> 16) & 0xff, (value >> 8) & 0xff, value & 0xff)

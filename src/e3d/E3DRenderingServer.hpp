@@ -1,5 +1,6 @@
 #pragma once
 #include "E3DInstanceBackend.hpp"
+#include "E3DLightFactory.hpp"
 #include "E3DNodesBackend.hpp"
 #include "E3DOptimizedBackend.hpp"
 #include <godot_cpp/classes/mutex.hpp>
@@ -24,8 +25,54 @@ namespace godot {
                 INSTANCER_EDITABLE_NODES,
             };
 
+            /// Light state of a scenery model node (TLightState, AnimModel.h:27-33)
+            enum LightMode {
+                LIGHT_MODE_OFF = 0,
+                LIGHT_MODE_ON = 1,
+                LIGHT_MODE_BLINK = 2,
+                LIGHT_MODE_DARK = 3, // lit automatically once it gets dark
+                LIGHT_MODE_HOME = 4, // like dark, but off late at night
+            };
+
+            /// Threshold of the light level below which a LIGHT_MODE_DARK light comes on, when the
+            /// declared mode carries no fraction of its own (DefaultDarkThresholdLevel,
+            /// AnimModel.h:24)
+            static constexpr double DEFAULT_DARK_THRESHOLD = 0.325;
+            /// LIGHT_MODE_HOME lights are forced off between these hours (AnimModel.cpp:601-607)
+            static constexpr double HOME_LIGHTS_OFF_FROM_HOUR = 1.0;
+            static constexpr double HOME_LIGHTS_OFF_TO_HOUR = 5.0;
+
+            static constexpr const char *SCENERY_LIGHT_DISTANCE_SETTING = "maszyna/rendering/scenery_light_distance";
+            static constexpr float DEFAULT_SCENERY_LIGHT_DISTANCE = 150.0;
+            static constexpr const char *SCENERY_LIGHT_SHADOWS_SETTING = "maszyna/rendering/scenery_lights_shadows";
+            static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/rendering/scenery_light_energy";
+            static constexpr float DEFAULT_SCENERY_LIGHT_ENERGY = 1.0;
+
         private:
+            /// An addressable light of an instance. An emission light only switches the model's
+            /// own light_onNN/light_offNN submodels (the backends do that from lights_state), a
+            /// spot or omni light additionally owns a RenderingServer light.
+            enum LightKind {
+                LIGHT_KIND_EMISSION,
+                LIGHT_KIND_SPOT,
+                LIGHT_KIND_OMNI,
+            };
+
+            struct LightObject {
+                    RID owner; // the E3D instance this light belongs to
+                    LightKind kind = LIGHT_KIND_EMISSION;
+                    String light_name; // the E3DModel.lights entry it follows
+                    bool enabled = false;
+                    bool synthesized = false; // added by the street lamp quirk
+                    E3DLightParams params;
+                    RID light;          // RenderingServer light
+                    RID light_instance; // its RenderingServer instance
+                    RID stream_rid;     // SceneryStreamingServer registration, scenery lights only
+                    bool streamed_in = false;
+            };
+
             HashMap<RID, E3DInstanceData> instances;
+            HashMap<RID, LightObject> lights;
             E3DOptimizedBackend optimized_backend;
             E3DNodesBackend nodes_backend{false};
             E3DNodesBackend editable_nodes_backend{true};
@@ -39,6 +86,11 @@ namespace godot {
 
             /// Registered instances are built through SceneryStreamingServer under this owner
             int stream_owner = -1;
+            /// ...and the real lights of scenery instances under this one, with a range of their
+            /// own: a street lamp is visible from half a kilometre and lights fifteen metres
+            int light_stream_owner = -1;
+            double current_time = 12.0; // hours, 0..24
+            double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
             HashMap<String, Ref<E3DModel>> models;
             HashMap<RID, StreamModel> stream_models;
@@ -51,6 +103,24 @@ namespace godot {
             Variant _stream_preload(const RID &p_instance);
             void _stream_build(const RID &p_instance, const Variant &p_preloaded);
             void _stream_clear(const RID &p_instance);
+
+            RID _light_create(
+                    const RID &p_instance, const String &p_light_name, LightKind p_kind,
+                    const E3DLightParams &p_params, bool p_synthesized = false);
+            void _light_build(const RID &p_light);
+            void _light_stream_build(const RID &p_light, const Variant &p_preloaded);
+            void _light_clear(const RID &p_light);
+            void _light_apply_enabled(LightObject &p_light);
+            void _build_instance_lights(const RID &p_instance, E3DInstanceData &p_instance_data);
+            static void _apply_declared_color(
+                    const E3DInstanceData &p_instance_data, const String &p_light_name, E3DLightParams &p_params);
+            void _clear_instance_lights(E3DInstanceData &p_instance_data);
+            /// Resolves lights_state out of the declared modes, the manual overrides and the time
+            /// of day, then applies it to the backend and to the instance's light objects
+            void _resolve_lights(E3DInstanceData &p_instance);
+            void _resolve_all_lights();
+            bool _is_light_mode_on(float p_mode) const;
+            static String _light_name_for_index(int p_index);
 
         protected:
             static void _bind_methods();
@@ -76,6 +146,23 @@ namespace godot {
             void instance_set_layer_mask(const RID &p_instance, uint32_t p_mask);
             void instance_set_visibility_range(const RID &p_instance, float p_begin, float p_end);
             void instance_set_lights_state(const RID &p_instance, const Dictionary &p_lights_state);
+            /// The scenery node's `lights` list, by light index (light 0 is "00", AnimModel.cpp:303)
+            void instance_set_lights_modes(const RID &p_instance, const PackedFloat32Array &p_modes);
+            /// The scenery node's `lightcolors` list, in the same order
+            void instance_set_lights_colors(const RID &p_instance, const PackedColorArray &p_colors);
+
+            RID emission_light_create(const RID &p_instance, const String &p_light_name);
+            RID spot_light_create(const RID &p_instance, const String &p_light_name, const NodePath &p_submodel_path);
+            RID omni_light_create(const RID &p_instance, const String &p_light_name, const NodePath &p_submodel_path);
+            void light_free(const RID &p_light);
+            void light_enable(const RID &p_light);
+            void light_disable(const RID &p_light);
+            /// total/lit/spot/omni/synthesized, for the scenery streaming debug panel
+            Dictionary get_light_statistics() const;
+
+            /// Pushed by MaszynaEnvironmentNode; both drive the automatic modes
+            void set_current_time(double p_hours);
+            void set_light_level(double p_level);
 
             void set_material_resolver(const Callable &p_material_resolver);
             void set_model_loader(const Callable &p_model_loader);
@@ -83,3 +170,4 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(E3DRenderingServer::Instancer)
+VARIANT_ENUM_CAST(E3DRenderingServer::LightMode)

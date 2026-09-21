@@ -124,10 +124,25 @@
   but nothing is built. `road`/`river` need a flat surface path with no rail profile
   (`Track.cpp:1554` onwards); `cross` is a road intersection with four endpoints and no common
   point, which `TrackManager` has an enum value for but no topology or geometry support.
-* Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
-  render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
-  `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by
-  `maszyna_node_model_importer.gd`.
+* The range of a synthesized street lamp light (`E3DLightFactory::make_street_lamp()`) is derived
+  from the lit patch the model carries, which is where the light should still be *visible*, not
+  where it should die. Measured against the street lamps that do declare a spotlight -
+  `linia053/lamp-y`, `lamp-5`, `lamp-i` all use 80 m and `elektryczne/lampa_parkowa01` uses 40 m,
+  at mounting heights of 4.9-9 m - so a range of a bit over ten metres makes the pool dim
+  everywhere. The cone angle, which the patch does determine, is right. Pick the range from those
+  declared values and look at a `latarnial_lbc` next to a `linia053/lamp-5` in `stary_jawor_noc`.
+* `elektryczne/latarnial_betdziur` registers a second light named `zarowka` (the E3D parser pairs
+  `zarowka_on`/`zarowka_off` by the `_on`/`_off` suffix rule, `e3d_parser.cpp:592`). A scenery
+  node's `lights` list only ever reaches light `00`, so nothing declares a mode for it and the
+  bulb inside the lamp housing stays on its "off" submodel. The original binds lights by the
+  `Light_On00..07` name alone (`AnimModel.cpp:303`) and has no such second light - check whether
+  the suffix rule should apply to scenery models at all.
+* `ls_Blink` (`E3DRenderingServer::LIGHT_MODE_BLINK`) follows `ls_Dark` instead of blinking, and
+  the smooth on/off transition of `m_lightopacities` (`AnimModel.cpp:500-548`) is not ported -
+  both need a per-frame timer, while the time of day is pushed once a second. `lights 2` is used
+  15 times in the whole data set and `notransition` never, so neither is worth a timer yet.
+* `Overcast` is folded into the light level by `MaszynaSkyEnvironment.get_light_level()` rather
+  than subtracted at the threshold as the original does (`AnimModel.cpp:598`).
 * Scenery models have no nodes, so they can't be picked/selected in the editor and don't follow
   the `MaszynaIncludeNode` transform/visibility (world-space, like tracks and traction).
 * An `include` with no filename shows up while parsing the real data dir

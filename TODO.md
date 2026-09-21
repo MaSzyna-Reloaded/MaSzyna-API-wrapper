@@ -131,11 +131,16 @@
   of placements, and in `elektryczne/latarnial_betdziur` the bulb and the lamp housing use the
   same `elektryczne/oprawa` material - so it needs a flag in the resolver key, as `force_alpha`
   already has, not a tint on the shared material.
-* `light_set_shadow_caster_mask()` keeps a lamp from shadowing its own light
-  (`E3DRenderingServer::SCENERY_LIGHT_OWNER_LAYER`); it is unverified in game whether Godot's
-  clustered renderer honours that mask for spot and omni lights the way it does for directional.
-  If it does not, the fallbacks are `instance_geometry_set_cast_shadows_setting(..., OFF)` on the
-  light-owning model (which also loses its shadow from the sun) or no shadows in economy mode.
+* A lamp still shadows its own light: in economy mode the single light in the middle throws the
+  arms and the pole across the pool as long dark spokes, and
+  `light_set_shadow_caster_mask(~SCENERY_LIGHT_OWNER_LAYER)` does **not** remove them - checked in
+  game on 2026-09-21. Either Godot's clustered renderer ignores that mask for spot and omni lights
+  (it honours it for directional), or the layer bit is not reaching the instances; measure which
+  before changing anything, with a scratchpad project that puts one box on a second layer under a
+  SpotLight3D and reads the rendered pixels. Fallbacks if the mask is a dead end:
+  `instance_geometry_set_cast_shadows_setting(..., OFF)` on the light-owning model (which also
+  loses its shadow from the sun) or no shadows in economy mode, where the spokes are an artefact
+  of the merge - with one light per arm the neighbours filled each other's shadows in.
 * An economy-mode merged light takes `energy` as the maximum of the lights it replaces, not their
   sum, so a five-armed lamp is as bright as one arm; `maszyna/rendering/scenery_light_energy`
   carries the difference.

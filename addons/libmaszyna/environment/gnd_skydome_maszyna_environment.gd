@@ -178,14 +178,17 @@ func apply_visual_configuration() -> void:
     # fog reaches out to where the lamps hang without looking any thicker (see the constant).
     var length_scale: float = maxf(0.1, float(ProjectSettings.get_setting(
         FOG_VOLUMETRIC_LENGTH_SCALE_SETTING, FOG_VOLUMETRIC_LENGTH_SCALE_DEFAULT)))
-    var length_shrink: float = maxf(
-        1.0 - SKYDOME_VOL_FOG_LENGTH_SHRINK * storm_fog_intensity, SKYDOME_VOL_FOG_LENGTH_SHRINK_MIN)
-    # What the length property ends up multiplied by, shrink included. The optical depth is the
-    # density times the length, so the density has to be divided by this whole factor and not by
-    # length_scale alone, or undoing the shrink thickens the fog by the shrink again.
-    var volume_scale: float = length_scale / length_shrink
-    for property: StringName in FOG_VOLUMETRIC_LENGTH_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * volume_scale)
+    # What the length property ends up multiplied by, Skydome's own shrink included. The optical
+    # depth is the density times the length, so the density has to be divided by this whole factor
+    # and not by length_scale alone, or undoing the shrink thickens the fog by the shrink again.
+    # A scale of exactly 1.0 leaves the volume, and with it the shrink, entirely to Skydome.
+    var volume_scale: float = 1.0
+    if not is_equal_approx(length_scale, 1.0):
+        var length_shrink: float = maxf(
+            1.0 - SKYDOME_VOL_FOG_LENGTH_SHRINK * storm_fog_intensity, SKYDOME_VOL_FOG_LENGTH_SHRINK_MIN)
+        volume_scale = length_scale / length_shrink
+        for property: StringName in FOG_VOLUMETRIC_LENGTH_PROPERTIES:
+            skydome.set(property, float(SkydomeSettings.get_value(property)) * volume_scale)
     for property: StringName in FOG_VOLUMETRIC_DENSITY_PROPERTIES:
         skydome.set(
             property, float(SkydomeSettings.get_value(property)) * density_scale * volumetric_scale / volume_scale

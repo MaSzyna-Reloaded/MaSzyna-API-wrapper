@@ -180,17 +180,21 @@ func apply_visual_configuration() -> void:
         FOG_VOLUMETRIC_LENGTH_SCALE_SETTING, FOG_VOLUMETRIC_LENGTH_SCALE_DEFAULT)))
     var length_shrink: float = maxf(
         1.0 - SKYDOME_VOL_FOG_LENGTH_SHRINK * storm_fog_intensity, SKYDOME_VOL_FOG_LENGTH_SHRINK_MIN)
+    # What the length property ends up multiplied by, shrink included. The optical depth is the
+    # density times the length, so the density has to be divided by this whole factor and not by
+    # length_scale alone, or undoing the shrink thickens the fog by the shrink again.
+    var volume_scale: float = length_scale / length_shrink
     for property: StringName in FOG_VOLUMETRIC_LENGTH_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * length_scale / length_shrink)
+        skydome.set(property, float(SkydomeSettings.get_value(property)) * volume_scale)
     for property: StringName in FOG_VOLUMETRIC_DENSITY_PROPERTIES:
         skydome.set(
-            property, float(SkydomeSettings.get_value(property)) * density_scale * volumetric_scale / length_scale
+            property, float(SkydomeSettings.get_value(property)) * density_scale * volumetric_scale / volume_scale
         )
     # Skydome adds this as a second extinction per metre on top of the day/night density
     # (Skydome.gd:1305), so the stretched volume has to thin it by the same factor as that one.
     skydome.vol_fog_density_boost = (
         float(SkydomeSettings.get_value(&"vol_fog_density_boost"))
-        * volumetric_scale / distance_ratio / length_scale)
+        * volumetric_scale / distance_ratio / volume_scale)
     skydome.day_fog_distance = fog_distance * float(ProjectSettings.get_setting(
         FOG_DAY_DISTANCE_FACTOR_SETTING, FOG_DAY_DISTANCE_FACTOR_DEFAULT))
     skydome.night_fog_distance = fog_distance * float(ProjectSettings.get_setting(

@@ -9,6 +9,8 @@ extends Control
 signal closed(by_back_button: bool)
 ## The skin picked in the viewer was accepted
 signal skin_applied(skin: String)
+## A skin was clicked - the screen's keyboard focus follows the pointer into the viewer
+signal skin_clicked
 
 const ROTATION_SPEED: float = 0.35
 
@@ -120,8 +122,12 @@ func _build_skin_grid() -> void:
     for index: int in _skins.size():
         var entry: Control = _create_skin_entry(index)
         %Skins.add_child(entry)
-    _skin_index = 0 if _skin else -1
-    _update_skin_selection()
+    _skin_index = 0 if _skins else -1
+    # no skin is left deselected either: with none coming from the consist the first one is put on
+    if _skin_index == 0 and not _skin:
+        _select_skin(0)
+    else:
+        _update_skin_selection()
 
 
 ## Side view of the skin over its name, both clickable
@@ -179,8 +185,36 @@ func _update_skin_selection() -> void:
         _set_skin_glow(index, SKIN_SELECTED_COLOR if index == _skin_index else Color.TRANSPARENT)
 
 
+## The skin list as one section of the selector's keyboard navigation: the viewer owns the skins,
+## the screen only says which section Tab is on and which way the arrows went.
+##
+## Up/Down on the skins: the change a click would have made, under the keyboard's own sound. The
+## end of the row changes nothing - reselecting a skin would rebuild the model for the same skin.
+func move_skin_selection(step: int) -> void:
+    if not _skin_buttons:
+        return
+    var index: int = clampi(_skin_index + step, 0, _skin_buttons.size() - 1)
+    if index == _skin_index:
+        return
+    _ui_sounds.play(&"keystroke")
+    _select_skin(index)
+    # the flow container lays out the entry, not the button inside its tile
+    FocusSection.scroll_to_item(%SkinsScroll, _skin_buttons[index].get_parent().get_parent())
+
+
+## Enter on the skins: the gesture the mouse would have made, sound included
+func activate_skin_selection() -> void:
+    if _skin_index >= 0:
+        _on_skin_pressed(_skin_index)
+
+
+func set_section_focused(focused: bool) -> void:
+    %SkinsFocus.focused = focused
+
+
 func _on_skin_pressed(index: int) -> void:
     _ui_sounds.play(&"skin_click")
+    skin_clicked.emit()
     _select_skin(index)
 
 

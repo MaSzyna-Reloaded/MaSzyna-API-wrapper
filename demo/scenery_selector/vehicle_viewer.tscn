@@ -1,6 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://scenery_selector/vehicle_viewer.gd" id="1_viewer"]
+[ext_resource type="Script" path="res://scenery_selector/focus_section.gd" id="2_focus"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
 content_margin_left = 16.0
@@ -126,12 +127,19 @@ theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.65)
 theme_override_font_sizes/font_size = 14
 horizontal_alignment = 1
 
-[node name="SkinsScroll" type="ScrollContainer" parent="VBoxContainer"]
+[node name="SkinsFocus" type="PanelContainer" parent="VBoxContainer"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_type_variation = &"FocusSection"
+script = ExtResource("2_focus")
+
+[node name="SkinsScroll" type="ScrollContainer" parent="VBoxContainer/SkinsFocus"]
+unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 240)
 layout_mode = 2
 horizontal_scroll_mode = 3
 
-[node name="Skins" type="HFlowContainer" parent="VBoxContainer/SkinsScroll"]
+[node name="Skins" type="HFlowContainer" parent="VBoxContainer/SkinsFocus/SkinsScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

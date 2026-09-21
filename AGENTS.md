@@ -22,6 +22,16 @@ Code generation:
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
+* GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
+  `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
+  numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a
+  handful of calls - see `CODE_STYLE.md`
+* putting work in `_process` is a last resort, in C++ exactly as much as in GDScript - prefer
+  event-driven code.
+  What does land there must be minimal and optimal: no loops, no allocations, no lookups
+  (`get_node`, singletons, `ProjectSettings`, searches over collections), and no processing at all
+  while there is nothing to do. An unavoidable per-frame loop must be bounded by a budget or by the
+  nearest N. See `CODE_STYLE.md`
 
 General guidelines:
 
@@ -51,6 +61,16 @@ Build:
 
 * if C++ code changes, use cmake to build c++ extension (check Makefile and compile-debug target)
 * if GDSCRIPT code changes, check errors with godot (out of sandbox)
+
+Sound:
+
+* this project has a sound system (the vendored `gnd-sfx` addon) - use it, never a bare
+  `AudioStreamPlayer`. `CODE_STYLE.md` has the bank-building convention: one `SfxBank` per
+  screen/subsystem, events named after the gesture and not after the sample, simple one-shots
+  without automations, gain kept in the bank
+* before changing any sound constant, dump the built bank first - every event with its clips'
+  `track.volume_db`, `unit_size` and `max_distance` - and look for the value that stands out.
+  Never test a hypothesis by changing a number and asking the operator to relaunch and listen
 
 Checks:
 

@@ -10,13 +10,6 @@ namespace godot {
         private:
             bool editable = false; // generated nodes stay editable in the editor (not internal)
 
-            static constexpr float DEFAULT_LIGHT_ENERGY = 0.8;
-            static constexpr float DEFAULT_HIGHBEAM_LIGHT_ENERGY = 2.0;
-            static constexpr float DEFAULT_HEAD_LIGHT_ENERGY = 1.0;
-            static constexpr float DEFAULT_END_LIGHT_ENERGY = 1.0;
-            static constexpr float DEFAULT_LIGHT_SPOT_RANGE = 40.0;
-            static constexpr float FORCED_END_LIGHT_SPOT_RANGE = 3.0;
-
             struct LightRole {
                     String light_name;
                     bool on = false;

@@ -3,18 +3,12 @@
 
 namespace godot {
     void E3DOptimizedBackend::build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) {
-        const TypedDictionary<String, E3DModelLightDefinition> lights = p_instance.model->get_lights();
-        const Array light_names = lights.keys();
-        for (int i = 0; i < light_names.size(); i++) {
-            const String light_name = light_names[i];
-            const Ref<E3DModelLightDefinition> light_info = lights[light_name];
-            if (light_info.is_null()) {
-                continue;
-            }
+        // which submodels belong to which light was found by E3DLightFactory, not here
+        for (const E3DModelLight &light: p_instance.model_lights.lights) {
             E3DInstanceData::LightSubmodels light_submodels;
-            light_submodels.on = p_instance.model->get_node_or_null(light_info->get_on_submodel_path()).ptr();
-            light_submodels.off = p_instance.model->get_node_or_null(light_info->get_off_submodel_path()).ptr();
-            p_instance.light_submodels[light_name] = light_submodels;
+            light_submodels.on = light.on;
+            light_submodels.off = light.off;
+            p_instance.light_submodels[light.name] = light_submodels;
         }
 
         _add_submodels(
@@ -84,15 +78,16 @@ namespace godot {
             const bool force_alpha =
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
 
-            // TODO: SUBMODEL_FREE_SPOTLIGHT is not rendered here (see TODO.md)
+            // SUBMODEL_FREE_SPOTLIGHT draws nothing; E3DRenderingServer owns the light RIDs and
+            // streams them with a range of their own, far shorter than the model's
             if (submodel->get_submodel_type() == E3DSubModel::SUBMODEL_GL_TRIANGLES &&
                 submodel->get_mesh().is_valid()) {
                 _add_submodel(p_instance, submodel.ptr(), local_transform, chain, force_alpha, p_material_resolver);
             }
 
             _add_submodels(
-                    p_instance, submodel->get_submodels(), local_transform, chain, p_force_alpha_submodels, force_alpha,
-                    p_material_resolver);
+                    p_instance, submodel->get_submodels(), local_transform, chain, p_force_alpha_submodels,
+                    force_alpha, p_material_resolver);
         }
     }
 

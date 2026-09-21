@@ -31,6 +31,33 @@ const _RUNNING_RANGES:Dictionary = {
     "outernoise": 200.0,
     "runningnoise": -1.0,
 }
+## Cab instruments, as unit_size/max_distance rather than a range: the generic mapping
+## (MmdSoundEventBuilder._build_spatial_config, range/16 and range*7.5) ties the two together in
+## a ratio meant for sources out in the world, so no single range fits. A Hasler has to be
+## plainly audible standing anywhere in the cab - that is unit_size of roughly the cab's own
+## size - while not carrying across the station the way the old 375 m cutoff did. Deriving the
+## 20 m cutoff from a range instead would force unit_size down to 0.17 and leave the ticking
+## audible only with one's head against the gauge. Same escape hatch the horns already use
+## (_apply_horn_spatial_config). The alerter/SHP buzzers are not here: they are meant to fill
+## the cab, not to come from a point on the desk - buzzer is here only to widen its unit_size
+## past what range 50 gives (3.125), keeping that range's own 375 m cutoff untouched.
+##
+## unit_size is where the falloff starts, not how loud the sound is: inside it the gain is
+## clamped to 1.0 and does not change at all. A Hasler at unit_size 3 is therefore dead flat
+## across the whole cab. Leaning into the gauge only reads as leaning in when unit_size is
+## smaller than that movement, so the level is set by volume_db instead and the falloff is left
+## steep - inverse-square, so the last metre or two is where most of it happens. unit_size 1.0
+## puts the flat zone at the gauge itself and the driver's seat on the slope, a bit over 10 dB
+## below it.
+const _CABIN_SPATIAL:Dictionary = {
+    "tachoclock": {
+        "unit_size": 1.0,
+        "max_distance": 20.0,
+        "attenuation": AudioStreamPlayer3D.ATTENUATION_INVERSE_SQUARE_DISTANCE,
+        "volume_db": 12.0,
+    },
+    "buzzer": {"unit_size": 6.0, "max_distance": 375.0},
+}
 const _HORN_RANGE_UNIT_DIVISOR:float = 24.0
 const _HORN_MAX_DISTANCE_FACTOR:float = 2.0
 static var _HORN_SOUNDPROOFING:PackedFloat32Array = PackedFloat32Array([0.65, 1.0, 0.65, 1.0, 1.0, 1.0])
@@ -111,6 +138,8 @@ static func _build_player(
                 not entry["trigger_mode"] == TrainSoundTrigger.TriggerMode.CHANGE)
         if definition.label in _HORN_LABELS:
             _apply_horn_spatial_config(event, definition)
+        elif _CABIN_SPATIAL.has(definition.label) and not definition.range_defined:
+            _apply_cabin_spatial_config(event, definition.label)
         events.append(event)
         regular_definitions.append(definition)
 
@@ -126,6 +155,10 @@ static func _build_player(
     player.attenuation_model = AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE
     player.unit_size = 20.0
     player.max_distance = 100.0
+    # Cab and outside each go to their own bus, so either space can be shaped (filter, level)
+    # without touching the calibration of the individual events. The running-sound player is
+    # built with cabin_only false and lands on Exterior with the rest of the outside.
+    player.bus = &"Cabin" if cabin_only else &"Exterior"
     vehicle.add_child(player, false, Node.INTERNAL_MODE_BACK)
 
     var triggers:Array[Dictionary] = []
@@ -239,6 +272,21 @@ static func _apply_horn_spatial_config(event:SfxEvent, definition:MmdSoundSource
     event.spatial_config.unit_size = maxf(definition.range / _HORN_RANGE_UNIT_DIVISOR, 0.01)
     event.spatial_config.max_distance = minf(
             definition.range * _HORN_MAX_DISTANCE_FACTOR, 2750.0)
+
+
+static func _apply_cabin_spatial_config(event:SfxEvent, label:String) -> void:
+    var spatial:Dictionary = _CABIN_SPATIAL[label]
+    event.spatial_config.unit_size = float(spatial["unit_size"])
+    event.spatial_config.max_distance = float(spatial["max_distance"])
+    event.spatial_config.attenuation_model = int(spatial.get(
+            "attenuation", AudioStreamPlayer3D.ATTENUATION_INVERSE_DISTANCE))
+    var volume_db:float = float(spatial.get("volume_db", 0.0))
+    if is_zero_approx(volume_db):
+        return
+    for automation:SfxAutomation in event.automations:
+        for clip:SfxClip in automation.clips:
+            if clip.track:
+                clip.track.volume_db += volume_db
 
 
 static func _apply_brake_source_defaults(definition:MmdSoundSourceDefinition) -> void:

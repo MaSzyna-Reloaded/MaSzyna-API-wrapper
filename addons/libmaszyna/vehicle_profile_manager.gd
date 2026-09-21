@@ -29,6 +29,14 @@ var _rendering:bool = false
 var _queue:SceneryLoadingTaskQueue = SceneryLoadingTaskQueue.new()
 
 
+func _ready() -> void:
+    MaszynaRuntime.cache_clear_requested.connect(clear_cache)
+
+
+func _exit_tree() -> void:
+    MaszynaRuntime.cache_clear_requested.disconnect(clear_cache)
+
+
 func clear_cache() -> void:
     _cache.clear()
     _profiles.clear()

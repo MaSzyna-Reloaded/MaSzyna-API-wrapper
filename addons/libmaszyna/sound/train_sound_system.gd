@@ -5,11 +5,27 @@ const TRIGGER_MODE_TOGGLE:int = 0
 const TRIGGER_MODE_CONTINUOUS:int = 1
 const TRIGGER_MODE_CHANGE:int = 2
 const EXTERIOR_CONTEXT:int = 5
-const VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_volume_factor"
-const EXTERIOR_VOLUME_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_volume_factor"
-const CABIN_UNIT_SIZE_FACTOR_SETTING:StringName = &"maszyna/sound/brake_cabin_unit_size_factor"
-const EXTERIOR_UNIT_SIZE_FACTOR_SETTING:StringName = &"maszyna/sound/brake_exterior_unit_size_factor"
+const VOLUME_FACTOR:float = 2.0
+const EXTERIOR_VOLUME_FACTOR:float = 1.0
+const CABIN_UNIT_SIZE_FACTOR:float = 2.0
+const EXTERIOR_UNIT_SIZE_FACTOR:float = 1.0
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
+## The cab wall, as heard from inside: everything on the Exterior bus goes through one low-pass
+## whose corner follows the listener's context. A barrier is a property of the barrier, not of
+## each source, so it belongs on the bus - the per-source share of it is soundproofing, which
+## already attenuates an external source by sqrt(0.2) for a closed cab.
+const EXTERIOR_BUS:StringName = &"Exterior"
+## Corner frequency and trim per listener context: outside, closed cab, cab with an open window.
+const WALL_OPEN_HZ:float = 20500.0
+const WALL_CABIN_HZ:float = 1600.0
+const WALL_WINDOW_HZ:float = 4000.0
+const WALL_OPEN_DB:float = 0.0
+const WALL_CABIN_DB:float = -4.0
+const WALL_WINDOW_DB:float = -2.0
+## Moving between the two is a transition, not a jump - a step in either clicks audibly.
+const WALL_FADE_SECONDS:float = 0.15
+## Cabin3D.get_sound_listener_context() returns this while the cab window is open.
+const OPEN_WINDOW_CONTEXT:int = 3
 ## Update cadence for a bank right at the culling distance edge - banks closer to the listener
 ## interpolate down to 0.0 (every physics frame), matching prior behavior for nearby vehicles.
 const FAR_UPDATE_INTERVAL:float = 0.5
@@ -48,6 +64,7 @@ var _banks:Dictionary = {}
 var _banks_by_vehicle:Dictionary[RailVehicle3D, BankRuntime] = {}
 var _listener:TrainSoundListener3D
 var _next_trigger_id:int = 1
+var _wall_tween:Tween
 
 
 func set_listener(listener:TrainSoundListener3D) -> void:
@@ -326,8 +343,50 @@ func _engine_gain(
 
 
 func _refresh_context() -> void:
+    _refresh_exterior_wall()
     for runtime:BankRuntime in _banks.values():
         _refresh_bank_context(runtime)
+
+
+## Follows the listener into and out of the cab: outside is open, a closed cab is muffled, an
+## open window is most of the way back to open.
+func _refresh_exterior_wall() -> void:
+    var filter:AudioEffectLowPassFilter = _exterior_wall_filter()
+    if not filter:
+        return
+    var cutoff_hz:float = WALL_OPEN_HZ
+    var volume_db:float = WALL_OPEN_DB
+    if _listener and _listener.listener_cabin:
+        var open_window:bool = _listener.listener_context == OPEN_WINDOW_CONTEXT
+        cutoff_hz = WALL_WINDOW_HZ if open_window else WALL_CABIN_HZ
+        volume_db = WALL_WINDOW_DB if open_window else WALL_CABIN_DB
+    if _wall_tween:
+        _wall_tween.kill()
+    _wall_tween = create_tween().set_parallel()
+    _wall_tween.tween_property(filter, "cutoff_hz", cutoff_hz, WALL_FADE_SECONDS)
+    _wall_tween.tween_method(
+        _set_exterior_bus_volume,
+        AudioServer.get_bus_volume_db(AudioServer.get_bus_index(EXTERIOR_BUS)),
+        volume_db,
+        WALL_FADE_SECONDS
+    )
+
+
+func _set_exterior_bus_volume(volume_db:float) -> void:
+    AudioServer.set_bus_volume_db(AudioServer.get_bus_index(EXTERIOR_BUS), volume_db)
+
+
+## The wall is the first effect of the Exterior bus, but it is looked up by type rather than by
+## index so reordering the chain in the bus layout cannot silently retune something else.
+func _exterior_wall_filter() -> AudioEffectLowPassFilter:
+    var bus_index:int = AudioServer.get_bus_index(EXTERIOR_BUS)
+    if bus_index < 0:
+        return null
+    for effect_index:int in range(AudioServer.get_bus_effect_count(bus_index)):
+        var effect:AudioEffect = AudioServer.get_bus_effect(bus_index, effect_index)
+        if effect is AudioEffectLowPassFilter:
+            return effect
+    return null
 
 
 func _refresh_bank_context(runtime:BankRuntime) -> void:
@@ -409,14 +468,14 @@ func _placement_index(placement:StringName) -> int:
 
 func _unit_size_factor(runtime:BankRuntime) -> float:
     if _inside_vehicle(runtime.vehicle):
-        return float(ProjectSettings.get_setting(CABIN_UNIT_SIZE_FACTOR_SETTING, 2.0))
-    return float(ProjectSettings.get_setting(EXTERIOR_UNIT_SIZE_FACTOR_SETTING, 1.0))
+        return CABIN_UNIT_SIZE_FACTOR
+    return EXTERIOR_UNIT_SIZE_FACTOR
 
 
 func _volume_factor(runtime:BankRuntime) -> float:
-    var factor:float = float(ProjectSettings.get_setting(VOLUME_FACTOR_SETTING, 2.0))
+    var factor:float = VOLUME_FACTOR
     if not _inside_vehicle(runtime.vehicle):
-        factor *= float(ProjectSettings.get_setting(EXTERIOR_VOLUME_FACTOR_SETTING, 1.0))
+        factor *= EXTERIOR_VOLUME_FACTOR
     return factor
 
 

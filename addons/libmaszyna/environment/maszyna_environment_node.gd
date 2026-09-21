@@ -5,6 +5,9 @@ class_name MaszynaEnvironmentNode
 const GENERATED_WORLD_NAME: StringName = &"_WorldEnvironment"
 ## Group the player sets cabin_view on when switching between the cabin and the exterior view
 const GROUP: StringName = &"maszyna_environment"
+## How often the time of day, the light level and the wind are pushed to E3DRenderingServer, which
+## decides from the first two which scenery lights are lit (see _push_environment_state())
+const LIGHT_STATE_UPDATE_INTERVAL: float = 1.0
 const WEATHER_PRESETS: Dictionary = {
     MaszynaEnvironment.Weather.WEATHER_CLEAR: {
         "precipitation": 0.0, "cloudiness": 0.1, "fog_density": 0.075, "wind_strength": 0.2,
@@ -88,10 +91,11 @@ const WEATHER_PRESETS: Dictionary = {
         cloudiness = value
         _dirty_visuals = true
 
-@export_custom(PROPERTY_HINT_RANGE, "-180,180,0.1,radians_as_degrees")
-var wind_direction: float = deg_to_rad(135.0):
+## Compass bearing the wind blows towards, in degrees. A plain angle rather than a vector: the
+## weather backends and the particle emitters only ever need a horizontal direction.
+@export_range(0.0, 360.0, 0.1, "suffix:°") var wind_direction: float = 135.0:
     set(value):
-        wind_direction = value
+        wind_direction = wrapf(value, 0.0, 360.0)
         _dirty_visuals = true
 
 @export_range(0.0, 1.0, 0.01) var wind_strength: float = 0.3:
@@ -168,6 +172,7 @@ var _dirty_time: bool = true
 var _dirty_visuals: bool = true
 var _dirty_weather_preset: bool = false
 var _dirty_lights: bool = false
+var _light_state_elapsed: float = 0.0
 
 ## Cabin view (the player in a cab) - the lights use the cabin shadow distance then
 var cabin_view: bool = false:
@@ -197,6 +202,7 @@ func _process(delta: float) -> void:
     _process_dirty()
     _sky_environment.process(delta)
     _sync_time()
+    _push_environment_state(delta)
     # Running time is only mirrored here; it must not be re-applied as a configuration change.
     _dirty_time = false
 
@@ -355,6 +361,23 @@ func _apply_time_configuration() -> void:
 
     _sky_environment.apply_time_configuration()
     _sync_time()
+
+
+## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
+## day and the light level, and the particle emitters drift with the wind. None of the three
+## changes fast enough to be worth pushing every frame - a whole scenery is re-resolved on each
+## push - so they go at a fixed interval, and at once when the time was jumped rather than merely
+## running.
+func _push_environment_state(delta: float) -> void:
+    _light_state_elapsed += delta
+    if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not _dirty_time:
+        return
+    _light_state_elapsed = 0.0
+    E3DRenderingServer.set_current_time(current_time)
+    E3DRenderingServer.set_light_level(_sky_environment.get_light_level())
+    E3DRenderingServer.set_wind(
+        _sky_environment.get_wind_strength(), _sky_environment.get_wind_direction()
+    )
 
 
 func _sync_time() -> void:

@@ -777,6 +777,9 @@ namespace godot {
         p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
         p_state["total_distance"] = p_mover->DistCounter;
         p_state["direction"] = p_mover->DirActive;
+        // reverser as the traction side sees it; the smoke emitter tells an idling engine from a
+        // pulling one by it (particles.cpp:193)
+        p_state["direction_absolute"] = p_mover->DirAbsolute;
         p_state["cabin"] = p_mover->CabActive;
         p_state["cabin_controleable"] = p_mover->IsCabMaster();
         p_state["cabin_occupied"] = p_mover->CabOccupied;

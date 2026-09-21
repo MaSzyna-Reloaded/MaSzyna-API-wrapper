@@ -64,6 +64,14 @@ const EVENT_GATES := {
     &"brake_releaser": ["brake_releaser_active", 0.5, 0.5], # DynObj.cpp:4375
 }
 const CONTINUOUS_RELEASE_SECONDS:float = 0.6
+## Per-label mixing trim, applied on top of the calibrated track gain. The MMD's own amplitudes
+## put every label on one level; this is the one place where a label is deliberately lifted or
+## dropped against the others. airsound is the feed valve, the loudest thing in the cab while the
+## main brake releases; emergencybrake is a full pipe dump and has to cut through everything.
+const LABEL_GAIN:Dictionary = {
+    "airsound": 2.0,
+    "emergencybrake": 2.0,
+}
 
 
 static func build_events(sources:Dictionary, config:Dictionary) -> Array[SfxEvent]:
@@ -110,6 +118,7 @@ static func build_events(sources:Dictionary, config:Dictionary) -> Array[SfxEven
     # (SfxPlaybackRuntime.play(), matched by event_name not object identity), instead of leaking it.
     for event in events:
         event.polyphony_enabled = false
+        _apply_label_gain(event)
 
     return events
 
@@ -183,7 +192,7 @@ static func _brake_friction_automation(
     clip.fade_in_curve = curve
     var track := SfxTrack.new()
     track.track_name = StringName(definition.label)
-    track.volume_db = linear_to_db(maximum_gain)
+    track.volume_db = linear_to_db(_track_gain(maximum_gain))
     _apply_continuous_release(track)
     clip.track = track
     automation.clips = [clip]
@@ -541,7 +550,7 @@ static func _signed_flow_automation(
     clip.fade_in_curve = curve
     var track := SfxTrack.new()
     track.track_name = StringName(definition.label)
-    track.volume_db = linear_to_db(maximum_gain)
+    track.volume_db = linear_to_db(_track_gain(maximum_gain))
     _apply_continuous_release(track)
     clip.track = track
     automation.clips = [clip]
@@ -640,6 +649,27 @@ static func _track_for(definition:MmdSoundSourceDefinition, continuous:bool = fa
     return track
 
 
+## maximum_gain is the peak of the raw gain expression and is what normalises an automation's
+## curve into 0..1; as a track volume it may only attenuate, never amplify. The original feeds
+## that expression to sound_source::gain(), a 0..1 gain (Train.cpp:9927, 9942), and never plays a
+## sample above its recorded level. Unclamped, su45's airsound2 lands at +38 dB
+## (amplitude_factor 0.05 * input_scale 800000 * gain_signal_max 0.001 * output_scale 2.0 =
+## 79.98) - an ~80x boost that buries every gain above it in the chain.
+## LABEL_GAIN applied to every track of a built event, keyed by the MMD label the track carries.
+static func _apply_label_gain(event:SfxEvent) -> void:
+    for automation:SfxAutomation in event.automations:
+        for clip:SfxClip in automation.clips:
+            if not clip.track:
+                continue
+            var trim:float = float(LABEL_GAIN.get(String(clip.track.track_name), 1.0))
+            if not is_equal_approx(trim, 1.0):
+                clip.track.volume_db += linear_to_db(trim)
+
+
+static func _track_gain(maximum_gain:float) -> float:
+    return minf(maximum_gain, 1.0)
+
+
 static func _apply_continuous_release(track:SfxTrack) -> void:
     track.adsr_enabled = true
     track.release = CONTINUOUS_RELEASE_SECONDS
@@ -648,8 +678,8 @@ static func _apply_continuous_release(track:SfxTrack) -> void:
 ## soundproofing/unit_size/gain are generic, event-wide attenuation/trim factors - not physics-
 ## formula shaping - so they stay identity-curve SfxParameterModulations exactly as
 ## MmdSoundEventBuilder._build_modulation already builds for every other parameterized event.
-## "gain" here is only ever fed the operator's own maszyna/sound/brake_*_volume_factor
-## ProjectSettings trim (TrainSoundSystem._volume_factor()) - a deliberate coarse,
+## "gain" here is only ever fed TrainSoundSystem's own VOLUME_FACTOR/EXTERIOR_VOLUME_FACTOR
+## constants (TrainSoundSystem._volume_factor()) - a deliberate coarse,
 ## listener-position-only knob on top of correctly-calibrated per-event data, not a substitute for
 ## it. A per-track "pitch" modulation is deliberately NOT included - per-track pitch shaping lives
 ## in each automation's own pitch_curve instead, since a pitch modulation would apply event-globally

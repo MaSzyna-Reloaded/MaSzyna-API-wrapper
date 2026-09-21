@@ -20,6 +20,11 @@ const QUIT_FADE_TIME: float = 0.5
 var _music_tween: Tween
 
 
+## Before _ready(): the children must not read a cache left by another build
+func _enter_tree() -> void:
+    MaszynaRuntime.check_build_version()
+
+
 func _ready() -> void:
     if not $MaszynaSceneryNode.filename:
         $ScenerySelectorScreen.open()

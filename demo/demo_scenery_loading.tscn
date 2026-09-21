@@ -43,6 +43,7 @@ weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
 
 [node name="Music" type="AudioStreamPlayer" parent="." unique_id=168087480]
 stream = ExtResource("13_music")
+volume_db = -6.0
 autoplay = true
 
 [node name="GameHud" parent="." instance=ExtResource("game_hud_scene")]

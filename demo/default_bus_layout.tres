@@ -4,6 +4,67 @@
 resource_name = "LowPassFilter"
 cutoff_hz = 20500.0
 
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_j3pel"]
+resource_name = "Reverb"
+predelay_msec = 3.0
+predelay_feedback = 0.0
+room_size = 0.01
+damping = 1.0
+spread = 0.25
+wet = 0.04
+
+[sub_resource type="AudioEffectEQ" id="AudioEffectEQ_j3pel"]
+resource_name = "EQ"
+band_db/32_hz = 0.3
+band_db/100_hz = 3.9
+band_db/320_hz = 4.5
+band_db/3200_hz = 4.2
+band_db/10000_hz = 1.8
+
+[sub_resource type="AudioEffectCompressor" id="AudioEffectCompressor_j3pel"]
+resource_name = "Compressor"
+threshold = -5.0
+ratio = 1.7
+gain = 2.4
+
+[sub_resource type="AudioEffectLowPassFilter" id="AudioEffectLowPassFilter_wall"]
+resource_name = "Wall"
+cutoff_hz = 20500.0
+
+[sub_resource type="AudioEffectEQ6" id="AudioEffectEQ6_ext"]
+resource_name = "AirAbsorption"
+band_db/3200_hz = -1.5
+band_db/10000_hz = -4.0
+
+[sub_resource type="AudioEffectDelay" id="AudioEffectDelay_ext"]
+resource_name = "SlapBack"
+tap1_delay_ms = 60.0
+tap1_level_db = -18.0
+tap1_pan = 0.3
+tap2_active = false
+
+[sub_resource type="AudioEffectReverb" id="AudioEffectReverb_ext"]
+resource_name = "OpenAir"
+predelay_msec = 90.0
+predelay_feedback = 0.2
+room_size = 0.85
+damping = 0.8
+hipass = 0.8
+wet = 0.025
+
+[sub_resource type="AudioEffectStereoEnhance" id="AudioEffectStereoEnhance_j3pel"]
+resource_name = "StereoEnhance"
+pan_pullout = 1.3
+time_pullout_ms = 12.0
+
+[sub_resource type="AudioEffectAmplify" id="AudioEffectAmplify_j3pel"]
+resource_name = "Amplify"
+
+[sub_resource type="AudioEffectHardLimiter" id="AudioEffectHardLimiter_ext"]
+resource_name = "HardLimiter"
+ceiling_db = -1.0
+release = 0.15
+
 [resource]
 bus/1/name = &"Rain"
 bus/1/solo = false
@@ -13,3 +74,35 @@ bus/1/volume_db = 0.0
 bus/1/send = &"Master"
 bus/1/effect/0/effect = SubResource("AudioEffectLowPassFilter_rain")
 bus/1/effect/0/enabled = true
+bus/2/name = &"Cabin"
+bus/2/solo = false
+bus/2/mute = false
+bus/2/bypass_fx = false
+bus/2/volume_db = 0.0
+bus/2/send = &"Master"
+bus/2/effect/0/effect = SubResource("AudioEffectReverb_j3pel")
+bus/2/effect/0/enabled = true
+bus/2/effect/1/effect = SubResource("AudioEffectEQ_j3pel")
+bus/2/effect/1/enabled = true
+bus/2/effect/2/effect = SubResource("AudioEffectCompressor_j3pel")
+bus/2/effect/2/enabled = true
+bus/3/name = &"Exterior"
+bus/3/solo = false
+bus/3/mute = false
+bus/3/bypass_fx = false
+bus/3/volume_db = 0.0
+bus/3/send = &"Master"
+bus/3/effect/0/effect = SubResource("AudioEffectLowPassFilter_wall")
+bus/3/effect/0/enabled = true
+bus/3/effect/1/effect = SubResource("AudioEffectEQ6_ext")
+bus/3/effect/1/enabled = true
+bus/3/effect/2/effect = SubResource("AudioEffectDelay_ext")
+bus/3/effect/2/enabled = true
+bus/3/effect/3/effect = SubResource("AudioEffectReverb_ext")
+bus/3/effect/3/enabled = true
+bus/3/effect/4/effect = SubResource("AudioEffectStereoEnhance_j3pel")
+bus/3/effect/4/enabled = true
+bus/3/effect/5/effect = SubResource("AudioEffectAmplify_j3pel")
+bus/3/effect/5/enabled = true
+bus/3/effect/6/effect = SubResource("AudioEffectHardLimiter_ext")
+bus/3/effect/6/enabled = true

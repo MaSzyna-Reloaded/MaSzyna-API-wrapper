@@ -42,7 +42,7 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # instancer in the template (RailVehicle3D switches it with the distance). v13: the skins
     # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
     # v14: bumped on request together with the E186 cab work, the structure itself is unchanged.
-    return ("structure-v14:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    return ("structure-v15:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

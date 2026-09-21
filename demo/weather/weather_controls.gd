@@ -3,17 +3,6 @@ extends VBoxContainer
 ## Weather and time controls driving MaszynaEnvironmentNode, content of the "Weather and Time" HUD window
 ## (ported from forest-test-scene ui/WeatherControlsCanvas.gd).
 
-const WIND_DIRECTION_OPTIONS: Array[Dictionary] = [
-    {"label": "N", "value": Vector2(0.0, -1.0)},
-    {"label": "NE", "value": Vector2(0.70710677, -0.70710677)},
-    {"label": "E", "value": Vector2(1.0, 0.0)},
-    {"label": "SE", "value": Vector2(0.70710677, 0.70710677)},
-    {"label": "S", "value": Vector2(0.0, 1.0)},
-    {"label": "SW", "value": Vector2(-0.70710677, 0.70710677)},
-    {"label": "W", "value": Vector2(-1.0, 0.0)},
-    {"label": "NW", "value": Vector2(-0.70710677, -0.70710677)},
-]
-
 @export var environment_node_path: NodePath
 
 var _environment_node: MaszynaEnvironmentNode
@@ -33,7 +22,8 @@ var _time_slider_dragging: bool = false
 @onready var _year_slider: HSlider = $TimeRow/YearGroup/Row/YearSlider
 @onready var _time_scale_value_label: Label = $TimeRow/TimeScaleGroup/Row/TimeScaleValueLabel
 @onready var _wind_strength_slider: HSlider = $WeatherRow/WindGroup/Row/WindSlider
-@onready var _wind_direction_button: OptionButton = $WeatherRow/WindDirectionGroup/WindDirectionButton
+@onready var _wind_direction_slider: HSlider = $WeatherRow/WindDirectionGroup/Row/WindDirectionSlider
+@onready var _wind_direction_value_label: Label = $WeatherRow/WindDirectionGroup/Row/WindDirectionValueLabel
 @onready var _rain_slider: HSlider = $WeatherRow/RainGroup/Row/RainSlider
 @onready var _cloud_slider: HSlider = $WeatherRow/CloudGroup/Row/CloudSlider
 @onready var _fog_density_slider: HSlider = $WeatherRow/FogDensityGroup/Row/FogDensitySlider
@@ -45,11 +35,8 @@ var _time_slider_dragging: bool = false
 
 func _ready() -> void:
     _environment_node = get_node(environment_node_path) as MaszynaEnvironmentNode
-    for option: Dictionary in WIND_DIRECTION_OPTIONS:
-        _wind_direction_button.add_item(option["label"])
-
     _wind_strength_slider.value_changed.connect(_on_wind_strength_changed)
-    _wind_direction_button.item_selected.connect(_on_wind_direction_selected)
+    _wind_direction_slider.value_changed.connect(_on_wind_direction_changed)
     _rain_slider.value_changed.connect(_on_rain_changed)
     _cloud_slider.value_changed.connect(_on_cloud_changed)
     _fog_density_slider.value_changed.connect(_on_fog_density_changed)
@@ -87,7 +74,8 @@ func _process(_delta: float) -> void:
     _year_value_label.text = str(_environment_node.year)
     _wind_strength_slider.set_value_no_signal(_environment_node.wind_strength)
     _wind_value_label.text = _format_percent(_environment_node.wind_strength)
-    _wind_direction_button.select(_find_closest_direction_index(_environment_node.wind_direction))
+    _wind_direction_slider.set_value_no_signal(_environment_node.wind_direction)
+    _wind_direction_value_label.text = _format_degrees(_environment_node.wind_direction)
     _rain_slider.set_value_no_signal(_environment_node.precipitation)
     _rain_value_label.text = _format_percent(_environment_node.precipitation)
     _cloud_slider.set_value_no_signal(_environment_node.cloudiness)
@@ -105,9 +93,9 @@ func _on_wind_strength_changed(value: float) -> void:
     _environment_node.wind_strength = value
 
 
-func _on_wind_direction_selected(index: int) -> void:
-    var direction: Vector2 = WIND_DIRECTION_OPTIONS[index]["value"]
-    _environment_node.wind_direction = direction.angle()
+func _on_wind_direction_changed(value: float) -> void:
+    _wind_direction_value_label.text = _format_degrees(value)
+    _environment_node.wind_direction = value
 
 
 func _on_rain_changed(value: float) -> void:
@@ -165,21 +153,12 @@ func _on_time_scale_changed(value: float) -> void:
     _environment_node.simulation_speed = value
 
 
-func _find_closest_direction_index(wind_direction: float) -> int:
-    var direction: Vector2 = Vector2.from_angle(wind_direction)
-    var best_index: int = 0
-    var best_dot: float = -INF
-    for index: int in range(WIND_DIRECTION_OPTIONS.size()):
-        var candidate: Vector2 = WIND_DIRECTION_OPTIONS[index]["value"]
-        var score: float = direction.dot(candidate)
-        if score > best_dot:
-            best_dot = score
-            best_index = index
-    return best_index
-
-
 func _format_percent(value: float) -> String:
     return "%d%%" % int(round(value * 100.0))
+
+
+func _format_degrees(value: float) -> String:
+    return "%d°" % roundi(value)
 
 
 func _format_meters(value: float) -> String:

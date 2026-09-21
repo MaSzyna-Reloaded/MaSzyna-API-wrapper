@@ -22,15 +22,14 @@ func test_controls_drive_environment_node() -> void:
     controls._rain_slider.value = 0.5
     controls._cloud_slider.value = 0.7
     controls._wind_strength_slider.value = 0.9
-    controls._wind_direction_button.select(2)
-    controls._wind_direction_button.item_selected.emit(2)
+    controls._wind_direction_slider.value = 200.0
     controls._time_scale_slider.value = 60.0
     controls._time_slider.value = 18.5
 
     assert_almost_eq(environment_node.precipitation, 0.5, 0.000001)
     assert_almost_eq(environment_node.cloudiness, 0.7, 0.000001)
     assert_almost_eq(environment_node.wind_strength, 0.9, 0.000001)
-    assert_almost_eq(environment_node.wind_direction, 0.0, 0.000001)
+    assert_almost_eq(environment_node.wind_direction, 200.0, 0.000001)
     assert_almost_eq(environment_node.simulation_speed, 60.0, 0.000001)
     assert_almost_eq(environment_node.current_time, 18.5, 0.000001)
 

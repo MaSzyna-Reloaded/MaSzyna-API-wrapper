@@ -45,7 +45,7 @@ collide_with_areas = true
 collide_with_bodies = false
 
 [node name="Headlamp" type="SpotLight3D" parent="Camera3D" unique_id=121900474]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.16167655850276397, -0.05)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.31600000000617, -0.28100000000267755, -0.05)
 visible = false
 light_color = Color(1, 0.965, 0.93, 1)
 light_energy = 0.4

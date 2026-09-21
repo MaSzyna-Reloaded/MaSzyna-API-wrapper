@@ -42,6 +42,11 @@ class MaterialOptions:
 
 func _ready() -> void:
     E3DRenderingServer.set_material_resolver(get_submodel_material)
+    MaszynaRuntime.cache_clear_requested.connect(clear_cache)
+
+
+func _exit_tree() -> void:
+    MaszynaRuntime.cache_clear_requested.disconnect(clear_cache)
 
 
 func clear_cache() -> void:

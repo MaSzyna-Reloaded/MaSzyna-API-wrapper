@@ -15,11 +15,25 @@ Code generation:
 * GDSCRIPT: do not use `!=` in `if` conditions, use `not ... == ...` instead
 * GDSCRIPT: do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
 * GDSCRIPT: do not add helper wrappers for simple signal connect/disconnect logic; connect signals directly in place
+* GDSCRIPT: a signal of a node that stands in a `.tscn`/`.scn` is connected **in that scene**, in
+  its `[connection]` list, never in a script. `connect()` in code is only for nodes the script
+  creates itself at runtime
+* a long node path in code is an antipattern: `get_node("A/B/C/D")`, `$A/B/C`, and above all a
+  `../..` that climbs out of the node's own scene. Reach a node of the same scene by its unique
+  name (`%Name`); what is outside the scene comes in through the scene root's own signals and
+  methods, never by walking up to it
+* a scene tree that is deep only because of layout is an antipattern too - a container that wraps
+  a single child earns nothing. Node names say what the node is: `VehiclesScroll`, not
+  `ScrollContainer`; `SceneryPanel`, not `ListPanel` when four lists share the screen
 * GDSCRIPT: do not wrap method callbacks in `Callable(...)` when direct signal method connection is sufficient
 * GDSCRIPT: do not add singleton existence guards like `Engine.has_singleton(...)` around normal project singleton usage unless operator explicitly asks for that behavior
 * GDSCRIPT: do not replace normal singleton/global access with `/root/...` lookups as a workaround
 * GDSCRIPT: do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
+* DRY and KISS, concretely: do not multiply entities. A private function called from exactly one
+  place is not a helper - put its body there. Do not perform the same action twice to be safe (an
+  immediate call and a deferred one, a guard in the caller repeated inside the callee, a wrapper
+  that only forwards): work out which one is correct and keep that one alone
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
 * PROHIBITED, in GDSCRIPT and in C++ alike: **never create an `ensure_*` API** - no

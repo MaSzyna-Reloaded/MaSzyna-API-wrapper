@@ -35,7 +35,25 @@ func _process(delta):
 5. In `if` conditions, do not use `!=`; use `not ... == ...`
 6. Send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API. Access a
    `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
-7. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
+7. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
+   signal goes into the scene's `[connection]` list - not into `_ready()`. The wiring then sits
+   where the node does, the editor keeps it correct when the node is renamed or moved, and it
+   exists before any script runs. `connect()` in code is for nodes the script instantiates itself
+   (a row built in a loop, a player added by hand).
+8. **A long node path in code is an antipattern.** `get_node("A/B/C/D")`, `$A/B/C` and worst of
+   all a `../..` that climbs out of the node's own scene: the node is then pinned to a layout it
+   does not own, and moving one container breaks it. Inside its own scene a node is reached by its
+   unique name (`%Name`); anything outside comes in through the scene root's own signals and
+   methods.
+
+   A scene `[connection]` is a different matter and is *not* an offender: it stores a path from
+   the scene root, and the `../../..` the editor's node dock shows is only how the editor draws
+   where the receiver sits relative to the emitter. Nothing to clean there.
+
+   What is worth cleaning is the tree itself: a container that wraps a single child earns nothing
+   and lengthens every path through it, and a name has to say what the node is - `VehiclesScroll`,
+   not `ScrollContainer`; `SceneryPanel`, not `ListPanel` when four lists share the screen.
+9. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
    order of preference:
    1. **C++** - a singleton connects itself to `SceneTree`'s `process_frame` and does the work
       natively (`SceneryStreamingServer::_process_streaming()`,
@@ -49,6 +67,22 @@ func _process(delta):
    A bare `_process` that runs every frame to do a handful of calls is the thing to avoid: the
    interpreter costs more than the calls. Whichever of the three it ends up being, it is still
    bound by "Per-frame work" below.
+
+### Do not multiply entities (DRY, KISS)
+
+Applies to GDScript and C++ alike.
+
+* **A private function with one call site is not a helper.** Its body belongs at that call site.
+  Splitting it out hides the order of what happens and buys nothing back.
+* **Never do the same thing twice to be safe.** An immediate call plus a deferred one, a direct
+  call plus the same work through a signal, a condition checked in the caller and again inside the
+  callee - each pair means the author did not know which one was correct. Work that out and keep
+  one.
+* **A wrapper that only forwards is noise.** So is a variable that is read once, a parameter that
+  is always passed the same value, and state that is derivable from state already kept.
+
+Doubling up does not make a doubtful fix more likely to work; it makes the next reader carry the
+doubt as well, and it hides which of the two paths the behaviour actually comes from.
 
 ### Never create an `ensure_*` API
 

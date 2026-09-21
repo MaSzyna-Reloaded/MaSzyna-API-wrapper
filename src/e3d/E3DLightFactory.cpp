@@ -150,8 +150,9 @@ namespace godot {
                 float size = 0.0;
                 bool omni = false;
                 for (const E3DModelLightPlacement &placement: group) {
-                    const float spread = Math::rad_to_deg(axis.angle_to(light_axis(placement.params.transform)));
-                    const float reach = origin.distance_to(placement.params.transform.origin);
+                    const float spread = static_cast<float>(
+                            Math::rad_to_deg(axis.angle_to(light_axis(placement.params.transform))));
+                    const float reach = static_cast<float>(origin.distance_to(placement.params.transform.origin));
                     angle = MAX(angle, spread + placement.params.spot_angle);
                     range = MAX(range, placement.params.range + reach);
                     energy = MAX(energy, placement.params.energy);
@@ -334,7 +335,9 @@ namespace godot {
             params.range = DEFAULT_LIGHT_SPOT_RANGE;
             // from the raised origin, so the cone still covers the patch the model draws
             params.spot_angle =
-                    MIN(Math::rad_to_deg(Math::atan2(anchors.pool_extent * cone_scale, origin.y)), MAX_SPOT_ANGLE);
+                    MIN(Math::rad_to_deg(Math::atan2(
+                                anchors.pool_extent * cone_scale, static_cast<float>(origin.y))),
+                        MAX_SPOT_ANGLE);
             params.spot_attenuation = 1.0;
             params.attenuation = attenuation;
             params.size = settings->get_setting(LIGHT_SIZE_SETTING, DEFAULT_LIGHT_SIZE);

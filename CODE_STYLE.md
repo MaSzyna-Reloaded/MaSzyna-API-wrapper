@@ -35,7 +35,45 @@ func _process(delta):
 5. In `if` conditions, do not use `!=`; use `not ... == ...`
 6. Send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API. Access a
    `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
-### Classes
+7. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
+   order of preference:
+   1. **C++** - a singleton connects itself to `SceneTree`'s `process_frame` and does the work
+      natively (`SceneryStreamingServer::_process_streaming()`,
+      `E3DRenderingServer::_process_smoke()`). No script runs per frame at all.
+   2. **A `Timer`** - the engine fires the callback, so nothing is interpreted between ticks. Use
+      it whenever the work is periodic and the node carrying it is a single one (an autoload, a
+      system, a screen). Not when it would be one `Timer` per instance of something there are many
+      of - that trades interpretation for nodes.
+   3. **`_process` with a delta accumulator** - only when the work genuinely has to look at every
+      frame and cannot move to C++.
+   A bare `_process` that runs every frame to do a handful of calls is the thing to avoid: the
+   interpreter costs more than the calls. Whichever of the three it ends up being, it is still
+   bound by "Per-frame work" below.
+
+### Per-frame work
+
+Applies to C++ and GDScript alike - a loop in a native `_process` scales with the collection just
+as badly, it only takes more objects to show.
+
+**Running per frame is a last resort.** Before writing one, ask whether the work can be
+event-driven instead: a signal, a setter, a `_dirty` flag consumed on the next change rather than
+polled. If it truly has to run every frame:
+
+* **No loops.** A per-frame loop makes the frame cost scale with the number of things iterated.
+  Keep the path flat: mirror what the loop would have looked up onto the object that needs it, at
+  the moment it changes, and let the frame do arithmetic on that alone (as
+  `E3DRenderingServer::SmokeObject` carries its own transform and visibility instead of looking
+  its instance up).
+* No allocations, no `get_node()`, no string work, no `find`/`has` over a collection, no singleton
+  or `ProjectSettings` lookups - resolve all of it once and cache it.
+* Nothing at all while the work is idle: turn the processing off (`set_process(false)`, or
+  disconnect from `process_frame`) when there is nothing to do, and back on when there is.
+* If a per-frame loop is genuinely unavoidable, **bound it** - a fixed budget per frame, or the
+  nearest N, the way `SceneryStreamingServer` spends a few milliseconds per frame and leaves the
+  rest for the next one, or `E3DRenderingServer::_process_smoke()` visits at most
+  `MAX_SMOKE_SOURCES_PER_FRAME` emitters and carries on round-robin.
+
+## Classes
 1. Explicit privacy declarations
 ```hpp
 //Example of explicit privacy modifiers and indentation inside them

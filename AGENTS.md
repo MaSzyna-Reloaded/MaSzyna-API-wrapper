@@ -22,6 +22,16 @@ Code generation:
 * keep guards minimal; do not generate guard bloat or defensive condition chains when one necessary condition is enough
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
+* GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
+  `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
+  numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a
+  handful of calls - see `CODE_STYLE.md`
+* putting work in `_process` is a last resort, in C++ exactly as much as in GDScript - prefer
+  event-driven code.
+  What does land there must be minimal and optimal: no loops, no allocations, no lookups
+  (`get_node`, singletons, `ProjectSettings`, searches over collections), and no processing at all
+  while there is nothing to do. An unavoidable per-frame loop must be bounded by a budget or by the
+  nearest N. See `CODE_STYLE.md`
 
 General guidelines:
 

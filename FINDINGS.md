@@ -586,3 +586,42 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   packing are the second question, not the first.
 * **Rule:** a shell one-liner that both `cd`s and uses a relative destination has two working
   directories in it. Name the destination absolutely.
+
+## 2026-09-21 - no fog in the exported release, perfect fog in the editor
+
+* **Symptom:** the same scenery at the same time of day: in `godot-double demo/` the fog is a clean
+  gradient, in the exported release there is none at all at a fog distance of 80 m and a total
+  white-out at 4160 m. "As if Skydome were not there - moving the clouds slider only makes milk."
+* **Ruled out first, in this order:** the release binary was fresh (`reloaded` and
+  `libmaszyna.64.so` in the game directory carried the timestamp of the zip in `bin/linux`); the
+  export preset excludes only `addons/gut`, `examples` and `tests`; and the symlinked addons
+  (`gnd_skydome`, `gnd_weather`, `gnd_sfx`, `libmaszyna` are symlinks into `vendor/`) **are**
+  exported with their content - the pck holds `Skydome.gdc`, `WeatherNode.gdc` and the shaders.
+  Godot follows the symlinks.
+* **Two dead instruments on the way:** `grep -c` on the exported binary counts *lines*, and a
+  binary has almost none, so every count it gave was meaningless; and `FileAccess.file_exists()`
+  on a `.gd` inside a pck is always false, because GDScript is stored there as `.gdc` beside a
+  `.gd.remap`. Inspect a pck by loading it with `ProjectSettings.load_resource_pack()` in a
+  throwaway project and walking it with `DirAccess`.
+* **Cause:** `Script.get_property_default_value()` returns **null for every property** of a
+  GDScript compiled into an exported pck. `SkydomeSettings.get_value()` uses exactly that as its
+  fallback, and in a release the `gnd_skydome/*` project settings do not exist at all - only the
+  addon's own EditorPlugin ever registers them. So every look value the wrapper read came back
+  null and `float(null)` is 0.0: fog densities, fog distance begins and volumetric lengths all
+  became zero, while the editor, where the settings do exist, looked right.
+* **Isolated with a control:** `maszyna_model_data.gd` - `extends Resource` with two plain
+  `@export` vars and no dependencies - returns null for its defaults from the pck as well, so it
+  is the compiled script, not Skydome's dependencies.
+* **Fix:** `GndSkydomeMaszynaEnvironment._skydome_value()` reads the project setting and falls back
+  to the live value on the Skydome node, which carries the real defaults as its member
+  initialisers. Cached on the first read, because five of the six call sites write the same
+  property back scaled and would otherwise compound it. The vendored addon is untouched.
+* **Rule:** a default that only exists in a script's source does not survive the export. Anything
+  read through `get_property_default_value()` is null in a release; fall back to a live object's
+  own value instead.
+* **Rule:** a project setting registered by an EditorPlugin does not exist in an exported build
+  unless it was written into `project.godot`. `add_custom_project_setting()` deliberately keeps
+  values equal to the default out of that file, so those are exactly the ones that vanish.
+* **Rule:** test the invariant, not the intermediate. `test_maszyna_environment_node.gd` asserted
+  `night_vol_fog_density` on its own and stayed green through a change that multiplied the optical
+  depth by 4.6; it now asserts density times length, which is what the fog actually looks like.

@@ -60,6 +60,9 @@ var skydome: Skydome
 var sun_light: DirectionalLight3D
 var weather: WeatherNode
 
+## Pristine Skydome look values, cached on the first read (see _skydome_value()).
+var _skydome_values: Dictionary[StringName, float] = {}
+
 var _year: int = 2026
 var _month: int = 1
 var _day: int = 1
@@ -104,6 +107,19 @@ func bind_nodes(world_environment: WorldEnvironment) -> void:
     weather = world_environment.get_node_or_null(NodePath(WEATHER_NAME)) as WeatherNode
 
 
+## Skydome's look value for [param property], cached.
+##
+## Caching is not an optimisation: almost every caller below writes the same property back scaled,
+## so a second pass would scale an already scaled value. The first read happens before the first
+## write, so what is cached is the pristine value. The fallback for a setting that does not exist -
+## which is every exported build, where no EditorPlugin has registered it - is the node's own
+## property, handled by SkydomeSettings.get_value().
+func _skydome_value(property: StringName) -> float:
+    if not _skydome_values.has(property):
+        _skydome_values[property] = float(SkydomeSettings.get_value(property, skydome.get(property)))
+    return _skydome_values[property]
+
+
 func apply_visual_configuration() -> void:
     if not skydome:
         return
@@ -140,15 +156,15 @@ func apply_visual_configuration() -> void:
     var density_scale: float = fog_density / FOG_REFERENCE_DENSITY
     var base_density: float = 0.0
     for property: StringName in FOG_DENSITY_PROPERTIES:
-        var density: float = float(SkydomeSettings.get_value(property))
+        var density: float = _skydome_value(property)
         skydome.set(property, density)
         base_density = maxf(base_density, density)
     var storm_fog_intensity: float = clampf(fog_density - base_density, 0.0, 1.0)
     weather.storm_fog_intensity = storm_fog_intensity
     var range_scale: float = (
-        fog_distance / float(SkydomeSettings.get_value(FOG_REFERENCE_DISTANCE_PROPERTY)))
+        fog_distance / _skydome_value(FOG_REFERENCE_DISTANCE_PROPERTY))
     for property: StringName in FOG_RANGE_PROPERTIES:
-        skydome.set(property, float(SkydomeSettings.get_value(property)) * range_scale)
+        skydome.set(property, _skydome_value(property) * range_scale)
     var fog_curve: float = maxf(FOG_CURVE_MIN, float(ProjectSettings.get_setting(
         FOG_CURVE_SETTING, FOG_CURVE_DEFAULT)))
     var sky_affect: float = clampf(pow(float(ProjectSettings.get_setting(
@@ -188,15 +204,15 @@ func apply_visual_configuration() -> void:
             1.0 - SKYDOME_VOL_FOG_LENGTH_SHRINK * storm_fog_intensity, SKYDOME_VOL_FOG_LENGTH_SHRINK_MIN)
         volume_scale = length_scale / length_shrink
         for property: StringName in FOG_VOLUMETRIC_LENGTH_PROPERTIES:
-            skydome.set(property, float(SkydomeSettings.get_value(property)) * volume_scale)
+            skydome.set(property, _skydome_value(property) * volume_scale)
     for property: StringName in FOG_VOLUMETRIC_DENSITY_PROPERTIES:
         skydome.set(
-            property, float(SkydomeSettings.get_value(property)) * density_scale * volumetric_scale / volume_scale
+            property, _skydome_value(property) * density_scale * volumetric_scale / volume_scale
         )
     # Skydome adds this as a second extinction per metre on top of the day/night density
     # (Skydome.gd:1305), so the stretched volume has to thin it by the same factor as that one.
     skydome.vol_fog_density_boost = (
-        float(SkydomeSettings.get_value(&"vol_fog_density_boost"))
+        _skydome_value(&"vol_fog_density_boost")
         * volumetric_scale / distance_ratio / volume_scale)
     skydome.day_fog_distance = fog_distance * float(ProjectSettings.get_setting(
         FOG_DAY_DISTANCE_FACTOR_SETTING, FOG_DAY_DISTANCE_FACTOR_DEFAULT))

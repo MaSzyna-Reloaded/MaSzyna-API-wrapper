@@ -10,3 +10,6 @@
 [submodule "addons/libmaszyna"]
 	path = addons/libmaszyna
 	url = https://github.com/MaSzyna-Reloaded/libmaszyna.git
+[submodule "demo"]
+	path = demo
+	url = https://github.com/MaSzyna-Reloaded/maszyna-reloaded.git

@@ -31,6 +31,7 @@ run/disable_stderr.release=true
 [audio]
 
 buses/default_bus_layout="uid://cnafyk2xbhsdb"
+general/3d_panning_strength=0.55
 
 [autoload]
 

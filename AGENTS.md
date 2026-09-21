@@ -52,6 +52,16 @@ Build:
 * if C++ code changes, use cmake to build c++ extension (check Makefile and compile-debug target)
 * if GDSCRIPT code changes, check errors with godot (out of sandbox)
 
+Sound:
+
+* this project has a sound system (the vendored `gnd-sfx` addon) - use it, never a bare
+  `AudioStreamPlayer`. `CODE_STYLE.md` has the bank-building convention: one `SfxBank` per
+  screen/subsystem, events named after the gesture and not after the sample, simple one-shots
+  without automations, gain kept in the bank
+* before changing any sound constant, dump the built bank first - every event with its clips'
+  `track.volume_db`, `unit_size` and `max_distance` - and look for the value that stands out.
+  Never test a hypothesis by changing a number and asking the operator to relaunch and listen
+
 Checks:
 
 * compile c++ plugin and check result

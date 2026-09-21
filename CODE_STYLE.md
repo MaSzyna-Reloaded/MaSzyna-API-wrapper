@@ -71,6 +71,33 @@ Always use `static_cast<type>`, don't use C-style cast
 For dev logging, use and only Godot's built-in methods.  
 For in-game logging, use `GameLog` but be aware that it'll only post log messages to the Dev console or anything else connected to it's `log_updated` signal. It won't print logs to the Godot's console
 
+### Sound
+This project has a sound system - the vendored `gnd-sfx` addon (`SfxBank` / `SfxEvent` /
+`SfxPlayer`, `SfxPlayer3D` for positional sound). Use it. A bare `AudioStreamPlayer` with a
+`preload`ed stream is not the way to add a sound, not even a single UI click.
+
+How a bank is built:
+
+1. One `SfxBank` resource per screen or subsystem, saved next to the assets it uses
+   (e.g. `demo/startup/ui_sounds.tres`).
+2. **Events are named after what happened, not after the sample or the widget**:
+   `load_scenery`, `back_button`, `list_item_click`, `list_item_hover`, `apply_skin`. Code says
+   `_ui_sounds.play(&"list_item_click")` and never learns which file that is - swapping the
+   sample, or pointing several events at one sample, is then the bank's business alone and
+   touches no code.
+3. A plain one-shot needs no automation: an `SfxEvent` with `name` and one `SfxClip` in its own
+   `clips` is enough. Automations are for sound driven by a continuous parameter.
+4. `SfxPlayer` for non-positional sound (UI, music), `SfxPlayer3D` for anything in the world.
+5. One bank may be shared by several scenes; each scene owns its own player and plays its own
+   gestures, rather than reaching into another scene's player.
+6. Gain belongs in the bank - in the event's own track `volume_db` or its curves. Do not add a
+   global multiplier or a Project Setting on top of correctly calibrated per-event data, and
+   never apply a value that a curve already normalised against (see `FINDINGS.md`, 2026-09-21).
+
+Before changing any sound constant, dump the built bank first - every event, every clip's
+`track.volume_db`, `unit_size` and `max_distance` - and look for the value that stands out. An
+anomaly is visible in one listing; guessing at multipliers is not.
+
 ### Tests
 Tests use only the public interface of the tested classes - no calls to private methods
 (`_name()`) and no reads/writes of private members (`_name`). If a test needs private access,

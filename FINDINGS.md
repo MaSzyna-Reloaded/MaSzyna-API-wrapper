@@ -382,3 +382,52 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Rule:** a movement step that cannot resolve the next track must say so. `break` on a null
   connection turned a topology bug into "the train just stops", which cost a screenshot and a
   full trace to locate.
+
+## 2026-09-21 - the main brake hiss has no interior/exterior distinction to key off
+
+* **Symptom:** asked to make the brake hiss quieter in the cab and louder outside, the obvious
+  lever - a `soundproofing` -> GAIN curve per event - turned out to do nothing for the main hiss.
+* **Proof:** `pipe_hiss` is built from the `airsound`..`airsound5` labels, and across the whole
+  datapack (`dynamic/`) exactly **one** of 1 344 `airsound*` declarations sets `placement:`. The
+  rest fall back to `MmdSoundSourceDefinition`'s default `general`, and
+  `TrainSoundSystem._soundproofing()` short-circuits `general` to a constant 1.0 regardless of
+  where the listener sits. So the whole interior/exterior attenuation model simply does not
+  apply to the loudest brake sound there is.
+* **Fix:** the pneumatic events (`pipe_hiss`, `local_brake_hiss`, `emergency_brake_hiss`) got
+  their own `listener_inside` -> GAIN modulation, baked once by `BrakeSfxEventFactory`; the
+  runtime feeds a plain 0/1 from the `_inside_vehicle()` it already computes.
+* **Rule:** before reaching for a signal to modulate a sound with, check what the MMD data
+  actually declares for that label. A parameter that is a constant for 1 343 of 1 344 sources is
+  not a signal, and the placement/soundproofing model only covers labels whose author bothered
+  to place them.
+
+## 2026-09-21 - a +38 dB SfxTrack under the cab hiss, and five rounds of guessing instead of one dump
+
+* **Symptom:** the pneumatic hiss when releasing the main brake is deafening in the cab on every
+  FV4a vehicle (EU07, EP07, SU45). Changing gains - `brake_volume_factor`, a per-event
+  `listener_inside` curve, the releaser's track volume - changed nothing audible, repeatedly.
+* **What found it:** looking at the built bank in the editor's Remote tree. `pipe_hiss`, the
+  automation on `brake_main_valve_flow` (`airsound2`), has an `SfxTrack` with
+  **`volume_db = 38`**. Every other track in the bank sits at or below 0 dB. The outlier is
+  visible at a glance; nothing else had to be understood first.
+* **Cause:** `_signed_flow_automation()` (`brake_sfx_event_factory.gd:512`) computes
+  `maximum_gain = output_scale * (offset + factor * gain_signal_max)` purely as the *divisor*
+  that normalises `fade_in_curve`'s points into 0..1, and then also applies the same number as
+  `track.volume_db = linear_to_db(maximum_gain)` (`:565`). What the curve just normalised away is
+  multiplied straight back in. For su45's `airsound2` (`amplitude_factor` 0.05,
+  `amplitude_offset` -0.01, FV4a `input_scale` 800000, `output_scale` 2.0,
+  `gain_signal_max` 0.001): `factor` = 40 000, `maximum_gain` = 79.98, `linear_to_db` = **38.06
+  dB** - matching the observed value to a tenth. That is a ~80x boost sitting under everything,
+  which is why no multiplier further up the chain made any audible difference.
+* **Fix:** not applied yet - `track.volume_db` should carry the MMD amplitude
+  (`linear_to_db(max(amplitude_factor, 0.001))`, like `_track_for()` does) and `maximum_gain`
+  should stay a curve divisor only. Same function also feeds `airsound`, `localbrakesound`,
+  `localbrakesound2`, so all of them need re-checking after the change.
+* **Rule:** when a sound is wrong, **dump the whole built bank before touching a single
+  constant**: a headless tmp script that loads the scene, walks the `SfxPlayer3D` nodes, and
+  prints every event's name plus each clip's `track.volume_db`. An anomaly like +38 dB among
+  0 dB tracks is obvious in one listing. Five rounds of "change a multiplier, ask the operator to
+  relaunch and listen" produced nothing, because a constant further up the chain cannot be
+  evaluated by ear while an 80x boost sits below it.
+* **Rule:** a gain that was derived as a normalisation divisor must never also be applied as a
+  gain. If a value appears both in a curve's denominator and in a `volume_db`, that is the bug.

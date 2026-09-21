@@ -135,6 +135,16 @@
   trying to open the scenery directory). The source is unknown - no asset declares a
   parameterised include path, so it is either a truncated file or a tokenizer misread.
 
+* `brake_release_hiss` (the `unbrake` label) is the one pneumatic brake event the brake factory
+  does not build - it still goes through `TrainSoundSystem._update_triggers()` with an
+  `MmdSoundEventBuilder` event, which is fed neither `gain` nor the `listener_inside` correction
+  the other hiss events now carry. It is therefore louder in the cab, relative to them.
+* The brake volume/unit-size factors are no longer Project Settings at all - they are
+  `TrainSoundSystem`'s own `VOLUME_FACTOR`/`EXTERIOR_VOLUME_FACTOR`/`CABIN_UNIT_SIZE_FACTOR`/
+  `EXTERIOR_UNIT_SIZE_FACTOR` constants, carrying what used to be the registered defaults
+  (2.0/1.0/2.0/1.0). The demo had been running with a `project.godot` override of 1.0 for the
+  first and third, so those two constants have not been verified by ear at 2.0.
+
 ## Tests
 
 * Remove simulator game data from tests - CI has no game dir. Tests loading real sceneries or

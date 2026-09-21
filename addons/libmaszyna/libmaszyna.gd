@@ -123,17 +123,87 @@ func _enter_tree():
         "maszyna/rendering/scenery_draw_distance", 3000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "100.0,20000.0,10.0,suffix:m"
     )
-    # A scenery light is streamed with a range of its own, far shorter than the model's: a street
-    # lamp is visible from half a kilometre and lights fifteen metres. The densest 150 m of
-    # stary_jawor holds 128 of them, which is why they cast no shadows by default.
+    # A scenery light is streamed with a range of its own, shorter than the model's - a street lamp
+    # is visible from half a kilometre and lights forty metres. This is how far the camera may be
+    # from the light itself, not how far the light reaches. The densest 300 m of stary_jawor holds
+    # 152 of them, so their shadow maps are dropped 80 m out while the light itself keeps reaching.
     add_custom_project_setting(
-        "maszyna/rendering/scenery_light_distance", 150.0, TYPE_FLOAT,
+        "maszyna/rendering/scenery_light_distance", 400.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "10.0,1000.0,5.0,suffix:m"
     )
-    add_custom_project_setting("maszyna/rendering/scenery_lights_shadows", false, TYPE_BOOL)
+    add_custom_project_setting("maszyna/rendering/scenery_lights_shadows", true, TYPE_BOOL)
+    # How much a scenery model's real lights are worth. "Lights off" renders only the model's own
+    # lit submodels; "Economy" collapses the lights of one model light into a single one between
+    # them, raised by the offset and widened to cover every cone it replaces (a five-armed lamp is
+    # otherwise five lights with five shadow maps); "High quality" keeps every declared light.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_mode", 1,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Lights off,Economy,High quality"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_economy_height_offset", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-2.0,5.0,0.1,suffix:m"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_economy_cone_scale", 1.2, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.5,3.0,0.05"
+    )
+    # Radius of the light source (Light3D.light_size). A lamp head is not a point: a size softens
+    # the apex of the shaft in the fog and gives the shadows a penumbra that grows with distance.
+    # In economy mode a merged light uses the radius of the ring of heads it replaces instead.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_size", 0.25, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,3.0,0.05,suffix:m"
+    )
     add_custom_project_setting(
         "maszyna/rendering/scenery_light_energy", 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.0,10.0,0.05"
+    )
+    # How much of the lamp's own colour is mixed into a white light. Used raw, a sodium lamp's
+    # (1.0, 0.66, 0.18) throws away most of the luminance and the pool comes out nearly black.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_tint", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.05"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_volumetric_fog_energy", 4.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,16.0,0.1"
+    )
+    # Lifts the synthesized street lamp light above the halo billboard that marks the lamp head.
+    # Nothing in the data asks for it - a plain tuning offset.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_height_offset", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-2.0,5.0,0.1,suffix:m"
+    )
+    # Widens the lamp cone past the lit patch the model draws (1.0 covers exactly the patch), and
+    # the falloff exponent below 1.0 keeps the pool bright out to its edge. Both are tuning only -
+    # a light the model declares keeps the falloff its own iFarAttenDecay asks for.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_cone_scale", 1.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.5,4.0,0.05"
+    )
+    # Same parameter Godot calls SpotLight3D.spot_attenuation / OmniLight3D.omni_attenuation: the
+    # exponent of the falloff with distance, drawn by the editor as the curve of brightness over
+    # the light's range. Below 1.0 the pool holds its brightness and drops only near the range,
+    # above 1.0 it dies right at the lamp. Not the cone edge - that is spot_angle_attenuation.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_attenuation", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_EXP_EASING, "attenuation"
+    )
+    # Skydome's volumetric fog volume is 8 m deep by day and 3 m at night, and it is measured from
+    # the camera - a light shaft is only visible while its lamp is inside it. This stretches the
+    # volume while the density is divided by the same factor, which leaves the optical depth, and
+    # so the look of the fog, alone. At 24 that is 72 m by night and 192 m by day.
+    add_custom_project_setting(
+        "maszyna/rendering/fog_volumetric_length_scale", 24.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "1.0,64.0,0.5"
+    )
+    # Floor under fog_volumetric_far_falloff. A scenery asking for a fog of kilometres drives that
+    # falloff to 0.01-0.04 and leaves no haze by the camera at all, so a street lamp has nothing to
+    # scatter in and casts no visible shaft. Night air is never that clean.
+    add_custom_project_setting(
+        "maszyna/rendering/fog_volumetric_minimum", 0.25, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
     )
     # Sun altitude between which the light level ramps from night to full day; a scenery light set
     # to come on automatically lights below a level of 0.325 (AnimModel.cpp:598), which lands about

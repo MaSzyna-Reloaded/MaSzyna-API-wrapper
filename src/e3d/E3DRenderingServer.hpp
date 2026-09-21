@@ -43,10 +43,38 @@ namespace godot {
             static constexpr double HOME_LIGHTS_OFF_TO_HOUR = 5.0;
 
             static constexpr const char *SCENERY_LIGHT_DISTANCE_SETTING = "maszyna/rendering/scenery_light_distance";
-            static constexpr float DEFAULT_SCENERY_LIGHT_DISTANCE = 150.0;
+            static constexpr float DEFAULT_SCENERY_LIGHT_DISTANCE = 400.0;
             static constexpr const char *SCENERY_LIGHT_SHADOWS_SETTING = "maszyna/rendering/scenery_lights_shadows";
+            static constexpr bool DEFAULT_SCENERY_LIGHT_SHADOWS = true;
+            /// The original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
+            static constexpr const char *LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING =
+                    "maszyna/rendering/lights_shadow_reverse_cull_face";
+            /// Shadows are dropped well before the light itself is, the way E3DNodesBackend fades
+            /// a vehicle spotlight out
+            static constexpr float SCENERY_LIGHT_SHADOW_FADE_DISTANCE = 80.0;
+            /// A lamp must not shadow its own light. With one light per arm each arm was lit by its
+            /// neighbours; economy mode leaves a single light in the middle, below which the arms
+            /// and the pole throw long dark spokes right across the pool. The geometry of a model
+            /// that carries a light goes on this layer as well as its own, and every scenery light
+            /// leaves the layer out of its shadow caster mask - so the lamp still renders, is still
+            /// lit, and still casts a shadow from the sun, just not into its own light.
+            static constexpr uint32_t SCENERY_LIGHT_OWNER_LAYER = 1u << 19;
+            /// A light created through RenderingServer starts with the server's own parameters,
+            /// not with the ones SpotLight3D/OmniLight3D set in their constructors - without these
+            /// the ground self-shadows into stripes. Same values a node would use.
+            static constexpr float SPOT_LIGHT_SHADOW_BIAS = 0.03;
+            static constexpr float OMNI_LIGHT_SHADOW_BIAS = 0.1;
+            static constexpr float LIGHT_SHADOW_NORMAL_BIAS = 1.0;
             static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/rendering/scenery_light_energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_ENERGY = 1.0;
+            /// How much of the lamp's own colour is mixed into a white light. A sodium lamp's
+            /// (1.0, 0.66, 0.18) used raw throws away most of the light's luminance and the pool
+            /// comes out nearly black, so the colour tints white light instead of replacing it.
+            static constexpr const char *SCENERY_LIGHT_TINT_SETTING = "maszyna/rendering/scenery_light_tint";
+            static constexpr float DEFAULT_SCENERY_LIGHT_TINT = 0.5;
+            static constexpr const char *SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY_SETTING =
+                    "maszyna/rendering/scenery_light_volumetric_fog_energy";
+            static constexpr float DEFAULT_SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY = 4.0;
 
         private:
             /// An addressable light of an instance. An emission light only switches the model's

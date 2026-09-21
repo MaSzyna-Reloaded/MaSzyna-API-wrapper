@@ -429,19 +429,44 @@ namespace godot {
 
         const ProjectSettings *settings = ProjectSettings::get_singleton();
         const float energy_scale = settings->get_setting(SCENERY_LIGHT_ENERGY_SETTING, DEFAULT_SCENERY_LIGHT_ENERGY);
-        const bool shadows = settings->get_setting(SCENERY_LIGHT_SHADOWS_SETTING, false);
+        const bool shadows = settings->get_setting(SCENERY_LIGHT_SHADOWS_SETTING, DEFAULT_SCENERY_LIGHT_SHADOWS);
+        const float tint = settings->get_setting(SCENERY_LIGHT_TINT_SETTING, DEFAULT_SCENERY_LIGHT_TINT);
+        const float fog_energy = settings->get_setting(
+                SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY_SETTING, DEFAULT_SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY);
 
         light->light = light->kind == LIGHT_KIND_OMNI ? rs->omni_light_create() : rs->spot_light_create();
-        rs->light_set_color(light->light, light->params.color);
+        rs->light_set_color(light->light, Color(1.0, 1.0, 1.0).lerp(light->params.color, tint));
         rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_ENERGY, light->params.energy * energy_scale);
         rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_RANGE, light->params.range);
         rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_ATTENUATION, light->params.attenuation);
+        rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_SIZE, light->params.size);
         if (light->kind == LIGHT_KIND_SPOT) {
             rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_SPOT_ANGLE, light->params.spot_angle);
             rs->light_set_param(
                     light->light, RenderingServer::LIGHT_PARAM_SPOT_ATTENUATION, light->params.spot_attenuation);
         }
+        rs->light_set_param(light->light, RenderingServer::LIGHT_PARAM_VOLUMETRIC_FOG_ENERGY, fog_energy);
         rs->light_set_shadow(light->light, shadows);
+        if (shadows) {
+            rs->light_set_shadow_caster_mask(light->light, ~SCENERY_LIGHT_OWNER_LAYER);
+            rs->light_set_param(
+                    light->light, RenderingServer::LIGHT_PARAM_SHADOW_BIAS,
+                    light->kind == LIGHT_KIND_OMNI ? OMNI_LIGHT_SHADOW_BIAS : SPOT_LIGHT_SHADOW_BIAS);
+            rs->light_set_param(
+                    light->light, RenderingServer::LIGHT_PARAM_SHADOW_NORMAL_BIAS, LIGHT_SHADOW_NORMAL_BIAS);
+            // Must be set explicitly, like the biases above: a RenderingServer light does not get
+            // it from Light3D's constructor and starts with it on, which stripes the ground with
+            // shadow acne. The setting carries the project's own quirk (the original renders
+            // shadow maps with front faces culled, opengl33renderer.cpp:1634).
+            rs->light_set_reverse_cull_face_mode(
+                    light->light, settings->get_setting(LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING, true));
+            // The light keeps reaching as far as it is streamed; only its shadow map stops early,
+            // because a scenery puts 152 of these within 300 m
+            const float distance =
+                    settings->get_setting(SCENERY_LIGHT_DISTANCE_SETTING, DEFAULT_SCENERY_LIGHT_DISTANCE);
+            rs->light_set_distance_fade(
+                    light->light, true, distance, SCENERY_LIGHT_SHADOW_FADE_DISTANCE, distance * 0.25f);
+        }
 
         light->light_instance = rs->instance_create();
         rs->instance_set_base(light->light_instance, light->light);
@@ -503,6 +528,12 @@ namespace godot {
             _light_create(
                     p_instance, placement.light_name, params.omni ? LIGHT_KIND_OMNI : LIGHT_KIND_SPOT, params,
                     placement.synthesized);
+        }
+        // the model now owns a light, so keep its own geometry out of every scenery shadow map
+        if (!p_instance_data.light_objects.is_empty() &&
+            (p_instance_data.layer_mask & SCENERY_LIGHT_OWNER_LAYER) == 0) {
+            p_instance_data.layer_mask |= SCENERY_LIGHT_OWNER_LAYER;
+            _update_if_built(p_instance_data);
         }
     }
 

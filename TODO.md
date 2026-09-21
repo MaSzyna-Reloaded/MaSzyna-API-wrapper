@@ -124,13 +124,26 @@
   but nothing is built. `road`/`river` need a flat surface path with no rail profile
   (`Track.cpp:1554` onwards); `cross` is a road intersection with four endpoints and no common
   point, which `TrackManager` has an enum value for but no topology or geometry support.
-* The range of a synthesized street lamp light (`E3DLightFactory::make_street_lamp()`) is derived
-  from the lit patch the model carries, which is where the light should still be *visible*, not
-  where it should die. Measured against the street lamps that do declare a spotlight -
-  `linia053/lamp-y`, `lamp-5`, `lamp-i` all use 80 m and `elektryczne/lampa_parkowa01` uses 40 m,
-  at mounting heights of 4.9-9 m - so a range of a bit over ten metres makes the pool dim
-  everywhere. The cone angle, which the patch does determine, is right. Pick the range from those
-  declared values and look at a `latarnial_lbc` next to a `linia053/lamp-5` in `stary_jawor_noc`.
+* The lit submodel of a lamp keeps the colour its texture carries (sodium orange) while the light
+  it casts is tinted towards white by `maszyna/rendering/scenery_light_tint`, so the glowing head
+  and its pool do not match. Tinting the emission too means a material variant for `light_on*`
+  submodels: `E3DMaterialResolver` memoises one material per name and shares it across thousands
+  of placements, and in `elektryczne/latarnial_betdziur` the bulb and the lamp housing use the
+  same `elektryczne/oprawa` material - so it needs a flag in the resolver key, as `force_alpha`
+  already has, not a tint on the shared material.
+* `light_set_shadow_caster_mask()` keeps a lamp from shadowing its own light
+  (`E3DRenderingServer::SCENERY_LIGHT_OWNER_LAYER`); it is unverified in game whether Godot's
+  clustered renderer honours that mask for spot and omni lights the way it does for directional.
+  If it does not, the fallbacks are `instance_geometry_set_cast_shadows_setting(..., OFF)` on the
+  light-owning model (which also loses its shadow from the sun) or no shadows in economy mode.
+* An economy-mode merged light takes `energy` as the maximum of the lights it replaces, not their
+  sum, so a five-armed lamp is as bright as one arm; `maszyna/rendering/scenery_light_energy`
+  carries the difference.
+* Scenery light brightness is calibrated by eye so far, through
+  `maszyna/rendering/scenery_light_energy`, `scenery_light_tint` and
+  `scenery_light_volumetric_fog_energy`. The tint exists because a lamp colour used raw
+  (`(1.0, 0.66, 0.18)` for sodium) throws away most of the light's luminance; there is no
+  counterpart for it in the original, which never lit the scene with these lamps at all.
 * `elektryczne/latarnial_betdziur` registers a second light named `zarowka` (the E3D parser pairs
   `zarowka_on`/`zarowka_off` by the `_on`/`_off` suffix rule, `e3d_parser.cpp:592`). A scenery
   node's `lights` list only ever reaches light `00`, so nothing declares a mode for it and the

@@ -40,6 +40,15 @@ const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
 ## Overcast dims the key light in the original by this much at full cover
 ## (simulationenvironment.cpp:163)
 const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
+## Skydome's volumetric fog volume is 8 m deep by day and 3 m by night. The volume is measured from
+## the camera, so a light shaft can only be seen while its lamp is inside it - at 3 m, never. This
+## stretches the volume; the density is divided by the same factor, which leaves the optical depth
+## (extinction per metre times length) - and so the look of the fog - unchanged. At 24 that is 72 m
+## by night and 192 m by day. Raising it further spreads the same froxel depth slices over more
+## metres, which softens the fog near the camera, and shafts still stop where the light's shadow
+## does (E3DRenderingServer.SCENERY_LIGHT_SHADOW_FADE_DISTANCE) - the two have to be raised together.
+const FOG_VOLUMETRIC_LENGTH_SCALE_SETTING: StringName = &"maszyna/rendering/fog_volumetric_length_scale"
+const FOG_VOLUMETRIC_LENGTH_SCALE_DEFAULT: float = 24.0
 const VOLUMETRIC_FOG_ENERGY_SETTING: StringName = &"maszyna/rendering/volumetric_fog_energy"
 ## MaszynaEnvironmentNode.fog_distance is scaled by these for the day and for the night fog of a
 ## sky backend that tells them apart; the night default keeps Skydome's own 200 m to 470 m ratio
@@ -88,6 +97,13 @@ const RAIN_FOG_DENSITY_DEFAULT: float = 0.6
 ## kilometres leaves the view in front of the camera as crisp as no fog at all.
 const FOG_VOLUMETRIC_FAR_FALLOFF_SETTING: StringName = &"maszyna/rendering/fog_volumetric_far_falloff"
 const FOG_VOLUMETRIC_FAR_FALLOFF_DEFAULT: float = 2.0
+## Floor under that falloff, as a share of the volumetric density at the reference distance. A
+## scenery that declares a fog of kilometres (stary_jawor_noc asks for 2-4 km, which becomes a
+## fog_distance of 2250-4500 m) drives the falloff to 0.01-0.04 and leaves the air by the camera
+## with no haze at all - and a street lamp with nothing to scatter in casts no visible shaft. Real
+## night air is never that clean, so the haze thins towards this share instead of towards nothing.
+const FOG_VOLUMETRIC_MINIMUM_SETTING: StringName = &"maszyna/rendering/fog_volumetric_minimum"
+const FOG_VOLUMETRIC_MINIMUM_DEFAULT: float = 0.25
 ## fog_distance of a scenery that declares its fog, as a multiple of the original's fog range
 const FOG_SCENERY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_scenery_distance_factor"
 const FOG_SCENERY_DISTANCE_FACTOR_DEFAULT: float = 1.5

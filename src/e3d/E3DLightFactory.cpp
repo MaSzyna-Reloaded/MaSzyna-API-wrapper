@@ -1,4 +1,5 @@
 #include "E3DLightFactory.hpp"
+#include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -10,10 +11,13 @@ namespace godot {
         constexpr const char *POOL_MATERIAL_2 = "light2";
 
         struct StreetLampAnchors {
-                Transform3D head;
+                Vector<Vector3> heads; // one per lamp arm, in model space
+                /// Half-width of the lit patch across the lamp, which is what sets the cone. It is
+                /// 7.50 m in every one of the nine models, single- and double-armed alike, while
+                /// the patch's other axis is stretched to cover both arms (7.55 m with one arm,
+                /// 9.00-11.00 m with two) - so only the across axis describes a single head.
                 float pool_extent = 0.0;
                 Color color = Color(1.0, 1.0, 1.0);
-                bool has_head = false;
                 bool has_pool = false;
         };
 
@@ -31,16 +35,17 @@ namespace godot {
                     continue;
                 }
                 const Transform3D transform = p_parent_transform * submodel->get_transform();
-                if (!p_anchors.has_head && has_material(submodel.ptr(), HALO_MATERIAL)) {
-                    p_anchors.head = transform;
+                if (has_material(submodel.ptr(), HALO_MATERIAL)) {
+                    // several halo billboards sit at each head; one light per distinct position
+                    if (!p_anchors.heads.has(transform.origin)) {
+                        p_anchors.heads.push_back(transform.origin);
+                    }
                     p_anchors.color = submodel->get_diffuse_color();
-                    p_anchors.has_head = true;
                 }
                 if (!p_anchors.has_pool &&
                     (has_material(submodel.ptr(), POOL_MATERIAL_1) || has_material(submodel.ptr(), POOL_MATERIAL_2)) &&
                     submodel->get_mesh().is_valid()) {
-                    const Vector3 size = submodel->get_mesh()->get_aabb().size;
-                    p_anchors.pool_extent = MAX(size.x, size.z) * 0.5f;
+                    p_anchors.pool_extent = submodel->get_mesh()->get_aabb().size.x * 0.5f;
                     p_anchors.has_pool = p_anchors.pool_extent > 0.0f;
                 }
                 collect_street_lamp_anchors(submodel->get_submodels(), transform, p_anchors);
@@ -90,6 +95,84 @@ namespace godot {
         }
     } // namespace
 
+    namespace {
+        Vector3 light_axis(const Transform3D &p_transform) {
+            return -p_transform.basis.get_column(Vector3::AXIS_Z).normalized();
+        }
+
+        /// Collapses every group of lights that belong to one E3DModelLight into a single one.
+        /// A five-armed lamp is otherwise five RenderingServer lights with five shadow maps.
+        void merge_placements(Vector<E3DModelLightPlacement> &p_placements) {
+            const ProjectSettings *settings = ProjectSettings::get_singleton();
+            const float height_offset = settings->get_setting(
+                    E3DLightFactory::ECONOMY_HEIGHT_OFFSET_SETTING, E3DLightFactory::DEFAULT_ECONOMY_HEIGHT_OFFSET);
+            const float cone_scale = MAX(
+                    0.01f,
+                    static_cast<float>(settings->get_setting(
+                            E3DLightFactory::ECONOMY_CONE_SCALE_SETTING,
+                            E3DLightFactory::DEFAULT_ECONOMY_CONE_SCALE)));
+
+            Vector<E3DModelLightPlacement> merged;
+            HashMap<String, int> group_of; // light name -> index in merged
+            Vector<Vector<E3DModelLightPlacement>> groups;
+            for (const E3DModelLightPlacement &placement: p_placements) {
+                if (!group_of.has(placement.light_name)) {
+                    group_of[placement.light_name] = groups.size();
+                    groups.push_back(Vector<E3DModelLightPlacement>());
+                }
+                groups.write[group_of[placement.light_name]].push_back(placement);
+            }
+
+            for (const Vector<E3DModelLightPlacement> &group: groups) {
+                if (group.size() == 1) {
+                    merged.push_back(group[0]);
+                    continue;
+                }
+                Vector3 origin;
+                Vector3 axis;
+                for (const E3DModelLightPlacement &placement: group) {
+                    origin += placement.params.transform.origin;
+                    axis += light_axis(placement.params.transform);
+                }
+                origin /= static_cast<real_t>(group.size());
+                origin.y += height_offset;
+                axis = axis.normalized();
+                if (axis.is_zero_approx()) {
+                    axis = Vector3(0, -1, 0);
+                }
+
+                E3DModelLightPlacement result = group[0];
+                // wide enough to cover every cone it replaces: the angle to each original axis
+                // plus that cone's own half angle
+                float angle = 0.0;
+                float range = 0.0;
+                float energy = 0.0;
+                float size = 0.0;
+                bool omni = false;
+                for (const E3DModelLightPlacement &placement: group) {
+                    const float spread = Math::rad_to_deg(axis.angle_to(light_axis(placement.params.transform)));
+                    const float reach = origin.distance_to(placement.params.transform.origin);
+                    angle = MAX(angle, spread + placement.params.spot_angle);
+                    range = MAX(range, placement.params.range + reach);
+                    energy = MAX(energy, placement.params.energy);
+                    // the one light stands in for a ring of heads, so it is as wide as that ring
+                    size = MAX(size, MAX(reach, placement.params.size));
+                    omni = omni || placement.params.omni;
+                }
+                angle *= cone_scale;
+                const Vector3 up = Math::abs(axis.y) > 0.99 ? Vector3(0, 0, -1) : Vector3(0, 1, 0);
+                result.params.transform = Transform3D(Basis::looking_at(axis, up), origin);
+                result.params.spot_angle = MIN(angle, E3DLightFactory::MAX_SPOT_ANGLE);
+                result.params.omni = omni || angle > E3DLightFactory::MAX_SPOT_ANGLE;
+                result.params.range = range;
+                result.params.energy = energy;
+                result.params.size = size;
+                merged.push_back(result);
+            }
+            p_placements = merged;
+        }
+    } // namespace
+
     E3DModelLights E3DLightFactory::discover(const Ref<E3DModel> &p_model, const String &p_model_filename) {
         E3DModelLights model_lights;
         if (p_model.is_null()) {
@@ -120,7 +203,16 @@ namespace godot {
         collect_placements(
                 p_model->get_submodels(), Transform3D(), light_owners, String(), model_lights.placements,
                 on_transforms);
+        const int light_mode = ProjectSettings::get_singleton()->get_setting(LIGHT_MODE_SETTING, DEFAULT_LIGHT_MODE);
+        if (light_mode == SCENERY_LIGHTS_OFF) {
+            model_lights.placements.clear(); // the lit submodels stay, only the real lights go
+            return model_lights;
+        }
+        const bool economy = light_mode == SCENERY_LIGHTS_ECONOMY;
         if (!model_lights.placements.is_empty() || !is_street_lamp(p_model_filename)) {
+            if (economy) {
+                merge_placements(model_lights.placements);
+            }
             return model_lights;
         }
 
@@ -128,15 +220,20 @@ namespace godot {
             if (light.on == nullptr) {
                 continue;
             }
-            E3DModelLightPlacement placement;
-            placement.light_name = light.name;
-            placement.synthesized = true;
             const HashMap<E3DSubModel *, Transform3D>::ConstIterator on_transform = on_transforms.find(light.on);
-            if (make_street_lamp(
-                        light.on, on_transform == on_transforms.end() ? Transform3D() : on_transform->value,
-                        placement.params)) {
+            Vector<E3DLightParams> lamps;
+            make_street_lamps(
+                    light.on, on_transform == on_transforms.end() ? Transform3D() : on_transform->value, lamps);
+            for (const E3DLightParams &params: lamps) {
+                E3DModelLightPlacement placement;
+                placement.light_name = light.name;
+                placement.synthesized = true;
+                placement.params = params;
                 model_lights.placements.push_back(placement);
             }
+        }
+        if (economy) {
+            merge_placements(model_lights.placements);
         }
         return model_lights;
     }
@@ -183,6 +280,7 @@ namespace godot {
         params.omni = outer_angle > MAX_SPOT_ANGLE;
         params.spot_angle = MIN(outer_angle, MAX_SPOT_ANGLE);
         params.spot_attenuation = Math::lerp(2.0f, 0.0f, penumbra_ratio);
+        params.size = ProjectSettings::get_singleton()->get_setting(LIGHT_SIZE_SETTING, DEFAULT_LIGHT_SIZE);
         params.transform = p_submodel->get_transform();
         params.color = p_submodel->get_diffuse_color();
         params.color.a = 1.0;
@@ -193,34 +291,54 @@ namespace godot {
         return p_model_filename.get_file().to_lower().begins_with(STREET_LAMP_PREFIX);
     }
 
-    bool E3DLightFactory::make_street_lamp(
-            E3DSubModel *p_on_submodel, const Transform3D &p_on_transform, E3DLightParams &p_params) {
+    void E3DLightFactory::make_street_lamps(
+            E3DSubModel *p_on_submodel, const Transform3D &p_on_transform, Vector<E3DLightParams> &p_lamps) {
         if (p_on_submodel == nullptr) {
-            return false;
+            return;
         }
 
         StreetLampAnchors anchors;
         collect_street_lamp_anchors(p_on_submodel->get_submodels(), p_on_transform, anchors);
-        if (!anchors.has_head || !anchors.has_pool) {
-            return false;
+        if (anchors.heads.is_empty() || !anchors.has_pool) {
+            return;
         }
 
-        const float height = anchors.head.origin.y;
-        if (height <= 0.0f) {
-            return false; // a head at or below the ground gives no cone to compute
-        }
+        const ProjectSettings *settings = ProjectSettings::get_singleton();
+        const float height_offset =
+                settings->get_setting(LAMP_LIGHT_HEIGHT_OFFSET_SETTING, DEFAULT_LAMP_LIGHT_HEIGHT_OFFSET);
+        const float cone_scale = settings->get_setting(LAMP_LIGHT_CONE_SCALE_SETTING, DEFAULT_LAMP_LIGHT_CONE_SCALE);
+        // floored: the easing-curve editor reads as "output over input" and invites values near
+        // zero, which here would be a light that does not fall off at all (see FINDINGS.md)
+        const float attenuation = MAX(
+                0.0f, static_cast<float>(
+                              settings->get_setting(LAMP_LIGHT_ATTENUATION_SETTING, DEFAULT_LAMP_LIGHT_ATTENUATION)));
 
-        p_params.omni = false;
-        // pointing straight down: Godot's spot shines along -Z
-        p_params.transform = Transform3D(Basis(Vector3(1, 0, 0), Math_PI * -0.5), anchors.head.origin);
-        p_params.color = anchors.color;
-        p_params.color.a = 1.0;
-        p_params.energy = DEFAULT_LIGHT_ENERGY;
-        p_params.range = Math::sqrt((height * height) + (anchors.pool_extent * anchors.pool_extent));
-        p_params.spot_angle =
-                MIN(Math::rad_to_deg(Math::atan2(anchors.pool_extent, height)), MAX_SPOT_ANGLE);
-        p_params.spot_attenuation = 1.0;
-        p_params.attenuation = 1.0;
-        return true;
+        for (const Vector3 &head: anchors.heads) {
+            if (head.y <= 0.0f) {
+                continue; // a head at or below the ground gives no cone to compute
+            }
+            const Vector3 origin = head + Vector3(0.0, height_offset, 0.0);
+            E3DLightParams params;
+            params.omni = false;
+            // pointing straight down: Godot's spot shines along -Z
+            params.transform = Transform3D(Basis(Vector3(1, 0, 0), Math_PI * -0.5), origin);
+            params.color = anchors.color;
+            params.color.a = 1.0;
+            params.energy = DEFAULT_LIGHT_ENERGY;
+            // The patch says how wide the cone is, but not where the light ends - it marks where
+            // the light is still meant to be *visible*. The street lamps in this data set that do
+            // declare a spotlight put that at 40 m (elektryczne/lampa_parkowa01, mounted at 4.9 m)
+            // or 80 m (linia053/lamp-y, lamp-5, lamp-i), so the wrapper's own default for a
+            // spotlight with no declared range fits; the patch edge itself would leave the whole
+            // pool in the dimmest part of the falloff.
+            params.range = DEFAULT_LIGHT_SPOT_RANGE;
+            // from the raised origin, so the cone still covers the patch the model draws
+            params.spot_angle =
+                    MIN(Math::rad_to_deg(Math::atan2(anchors.pool_extent * cone_scale, origin.y)), MAX_SPOT_ANGLE);
+            params.spot_attenuation = 1.0;
+            params.attenuation = attenuation;
+            params.size = settings->get_setting(LIGHT_SIZE_SETTING, DEFAULT_LIGHT_SIZE);
+            p_lamps.push_back(params);
+        }
     }
 } // namespace godot

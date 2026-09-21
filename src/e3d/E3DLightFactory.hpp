@@ -19,6 +19,11 @@ namespace godot {
             float spot_angle = 0.0;
             float spot_attenuation = 1.0;
             float attenuation = 1.0;
+            /// Radius of the source (Light3D.light_size). A lamp head is not a point: giving it a
+            /// size softens the apex of the shaft in the fog and gives its shadows a penumbra that
+            /// grows with distance. In economy mode it is the radius of the ring of heads the one
+            /// light replaces, so the source is as wide as the arms it stands in for.
+            float size = 0.0;
     };
 
     /// One of the model's lights: the submodel pair it shows and hides
@@ -54,6 +59,27 @@ namespace godot {
             /// that light the scene without declaring a spotlight at all.
             static E3DModelLights discover(const Ref<E3DModel> &p_model, const String &p_model_filename);
 
+            /// How much a scenery model's real lights are worth: OFF renders only the model's own
+            /// lit submodels, ECONOMY collapses the lights of one E3DModelLight into a single one
+            /// between them (a five-armed lamp is otherwise five lights with five shadow maps),
+            /// HIGH_QUALITY keeps every one the model declares.
+            enum SceneryLightMode {
+                SCENERY_LIGHTS_OFF = 0,
+                SCENERY_LIGHTS_ECONOMY = 1,
+                SCENERY_LIGHTS_HIGH_QUALITY = 2,
+            };
+            static constexpr const char *LIGHT_MODE_SETTING = "maszyna/rendering/scenery_light_mode";
+            static constexpr int DEFAULT_LIGHT_MODE = SCENERY_LIGHTS_ECONOMY;
+            static constexpr const char *ECONOMY_HEIGHT_OFFSET_SETTING =
+                    "maszyna/rendering/scenery_light_economy_height_offset";
+            static constexpr float DEFAULT_ECONOMY_HEIGHT_OFFSET = 1.0;
+            static constexpr const char *ECONOMY_CONE_SCALE_SETTING =
+                    "maszyna/rendering/scenery_light_economy_cone_scale";
+            static constexpr float DEFAULT_ECONOMY_CONE_SCALE = 1.2;
+            /// Source radius of a light the model declares on its own, which carries no size
+            static constexpr const char *LIGHT_SIZE_SETTING = "maszyna/rendering/scenery_light_size";
+            static constexpr float DEFAULT_LIGHT_SIZE = 0.25;
+
 
             /// Godot rejects a spot cone of 90 degrees or more (Light3D::PARAM_SPOT_ANGLE).
             /// Of the 871 FREE_SPOTLIGHT submodels in the data set 6 are wider, among them
@@ -65,6 +91,21 @@ namespace godot {
             static constexpr float DEFAULT_HEAD_LIGHT_ENERGY = 1.0;
             static constexpr float DEFAULT_END_LIGHT_ENERGY = 1.0;
             static constexpr float DEFAULT_LIGHT_SPOT_RANGE = 40.0;
+            /// The synthesized street lamp light sits this far above the halo billboard that marks
+            /// the lamp head. Nothing in the data asks for it - it is a plain tuning offset.
+            static constexpr const char *LAMP_LIGHT_HEIGHT_OFFSET_SETTING =
+                    "maszyna/rendering/scenery_lamp_light_height_offset";
+            static constexpr float DEFAULT_LAMP_LIGHT_HEIGHT_OFFSET = 0.5;
+            /// Widens the cone past the patch the model draws. 1.0 covers exactly the patch.
+            static constexpr const char *LAMP_LIGHT_CONE_SCALE_SETTING =
+                    "maszyna/rendering/scenery_lamp_light_cone_scale";
+            static constexpr float DEFAULT_LAMP_LIGHT_CONE_SCALE = 1.5;
+            /// Falloff exponent of a synthesized lamp light; below 1.0 keeps the pool bright out to
+            /// its edge instead of fading through most of it. Lights the model declares keep the
+            /// falloff their own iFarAttenDecay asks for.
+            static constexpr const char *LAMP_LIGHT_ATTENUATION_SETTING =
+                    "maszyna/rendering/scenery_lamp_light_attenuation";
+            static constexpr float DEFAULT_LAMP_LIGHT_ATTENUATION = 0.5;
             static constexpr float FORCED_END_LIGHT_SPOT_RANGE = 3.0;
 
             /// Parameters of a SUBMODEL_FREE_SPOTLIGHT, as the model declares them. The light name
@@ -79,9 +120,12 @@ namespace godot {
             /// ground patch quad spans the area the lamp is meant to light. Both are found by
             /// their material, not by name - latarnial_str calls its halos pos11/pos22/pos33 while
             /// the rest call them plane02/plane04/plane06.
-            /// Returns false when either anchor is missing, rather than inventing a light.
-            static bool make_street_lamp(
-                    E3DSubModel *p_on_submodel, const Transform3D &p_on_transform, E3DLightParams &p_params);
+            /// One light per lamp head: the "latarniay_*" models are two-armed and carry a halo at
+            /// each end (z of -0.76 and +0.76 on latarniay_str). Appends nothing when either
+            /// anchor is missing, rather than inventing a light.
+            static void make_street_lamps(
+                    E3DSubModel *p_on_submodel, const Transform3D &p_on_transform,
+                    Vector<E3DLightParams> &p_lamps);
 
             /// True for the models the street lamp quirk applies to
             static bool is_street_lamp(const String &p_model_filename);

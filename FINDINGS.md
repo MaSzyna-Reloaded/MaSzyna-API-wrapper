@@ -516,3 +516,51 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
   white `(0.90, 0.84, 0.64)` for `drew`/`hs`.
 * **Rule:** a model that declares no light may still say exactly where its light falls. Read the
   geometry the author drew for the glow before adding a tuning constant.
+
+### The lit patch says how wide the cone is, not where the light ends
+
+* **Symptom:** the synthesized street lamps were there but barely visible - a huge, dim pool with
+  no lamp at its centre, and you had to walk right up to one to see anything.
+* **Three separate causes, all found by measuring the nine `latarnia*` models rather than by
+  looking at the screen again:**
+  * **Two heads, one light.** The four `latarniay_*` models are two-armed and carry a halo at each
+    end (z of -0.76 and +0.76 on `latarniay_str`, -0.99/+0.99 on `latarniay_betdziur`). The quirk
+    took the first halo it found, so half of every double lamp was unlit and the one light it did
+    make sat off to one side. 26 of the 124 quirk lamps in `stary_jawor_noc` are of this kind.
+  * **The cone was measured along the wrong axis.** The lit patch is 15.0 m across in **every one
+    of the nine models**, single- and double-armed alike, while its other axis is stretched to
+    cover the arms - 15.1 m with one, 18.0-22.0 m with two. Taking `max(x, z)` therefore widened
+    the cone of exactly the double lamps that already had the wrong number of lights. Only the
+    across axis describes a single head.
+  * **The range was the patch edge.** The patch marks where the light is still meant to be
+    *visible*, so using it as `LIGHT_PARAM_RANGE` - where the light dies - left the whole pool in
+    the dimmest part of the falloff. The street lamps in this data set that do declare a
+    spotlight put the range at 40 m (`elektryczne/lampa_parkowa01`, mounted at 4.9 m) or 80 m
+    (`linia053/lamp-y`, `lamp-5`, `lamp-i`).
+* **Rule:** when geometry stands in for a light, separate what it actually measures from what it
+  merely suggests. The patch's width is data; its edge is not a falloff radius.
+* **Rule:** a constant that is identical across every model in a family (15.0 m here) is the one
+  the author meant; a value that varies with the model's shape is describing something else.
+
+### A RenderingServer light is not a Light3D - it inherits none of the node's defaults
+
+* **Symptom:** switching shadows on for the scenery lights striped the whole station square with
+  regular bands radiating from the lamp - shadow acne, not a cone.
+* **What proved it:** the project already sets `maszyna/rendering/lights_shadow_reverse_cull_face`
+  to `false` in `demo/project.godot`, so the obvious suspect was ruled out on paper - and removing
+  the `light_set_reverse_cull_face_mode()` call changed nothing, while putting it back (passing
+  that same `false`) fixed it. Setting it *explicitly* was the fix, which means the light had
+  started with it on.
+* **Cause:** `SpotLight3D`/`OmniLight3D` set their parameters in their own constructors.
+  `RenderingServer::spot_light_create()` hands back a light carrying the server's defaults
+  instead, and those are not the same - reverse cull face is on, and the shadow biases differ
+  from the 0.03 (spot) / 0.1 (omni) and normal bias 1.0 a node would use.
+* **Fix:** every shadow parameter the scenery lights rely on is now set explicitly right after the
+  light is created, next to the colour, range and energy.
+* **Rule:** when a feature is ported from a node to a RenderingServer RID, assume **nothing**
+  carries over. Read the node's constructor and set each parameter it sets; a default that
+  happens to match is luck, and the ones that do not match surface as a rendering artefact far
+  from the code that caused it.
+* **Trap:** a project setting being read does not mean its value is being applied. Here the
+  setting said `false`, the code read `false`, and the light was still culling in reverse -
+  because nobody had ever written that `false` into the light.

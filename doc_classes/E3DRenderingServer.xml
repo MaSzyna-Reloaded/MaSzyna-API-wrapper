@@ -10,6 +10,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_smoke_statistics" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+				Number of particle emitters the server owns ([code]total[/code]) and how many of them are currently built ([code]built[/code]). A scenery emitter is built only while it is streamed in.
+			</description>
+		</method>
 		<method name="instance_attach_node">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -29,8 +35,10 @@
 			<return type="RID" />
 			<param index="0" name="model" type="E3DModel" />
 			<param index="1" name="instancer" type="int" enum="E3DRenderingServer.Instancer" />
+			<param index="2" name="instance_kind" type="int" enum="E3DRenderingServer.InstanceKind" />
 			<description>
-				Creates an empty instance of the [param model]. It is rendered after [method instance_build].
+				Creates an empty instance; set it up with the [code]instance_set_*[/code] methods and [method instance_attach_node], then call [method instance_build].
+				[param instance_kind] says what the placement is, in the words a [code].scn[/code] uses for it. It is given here rather than through a setter because it cannot be changed once the instance is built: the smoke density it selects is baked into every particle emitter of the model - its process material, its particle budget and its spawn rate. A client that has to change it frees the instance and creates it again.
 			</description>
 		</method>
 		<method name="instance_free">
@@ -90,6 +98,15 @@
 				Scenario of an [constant INSTANCER_OPTIMIZED] instance. Rebuilds an already built instance.
 			</description>
 		</method>
+		<method name="instance_set_smoke_intensity">
+			<return type="void" />
+			<param index="0" name="instance" type="RID" />
+			<param index="1" name="intensity" type="float" />
+			<description>
+				Spawn rate multiplier of every particle emitter of the instance, as the engine state drives it. [code]1.0[/code] is the emitter template's own rate - what a scenery chimney keeps.
+				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
+			</description>
+		</method>
 		<method name="instance_set_transform">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
@@ -129,8 +146,43 @@
 				Called as [code]model_loader(data_path: String, filename: String) -&gt; E3DModel[/code] on the streaming worker thread, for instances registered with [method instance_register] that enter the camera's range. The result is memoized per path. Set by [code]E3DModelManager[/code].
 			</description>
 		</method>
+		<method name="set_smoke_source_resolver">
+			<return type="void" />
+			<param index="0" name="smoke_source_resolver" type="Callable" />
+			<description>
+				Called as [code]smoke_source_resolver(template_name: String, owner: InstanceKind) -&gt; Dictionary[/code] with the keys [code]process_material[/code], [code]mesh[/code], [code]amount[/code], [code]lifetime[/code] and [code]aabb[/code], when an emitter is built. An empty dictionary leaves the emitter unbuilt. Set by [code]SmokeSourceLibrary[/code], which reads the templates from the game's [code]data/[/code] directory.
+			</description>
+		</method>
+		<method name="set_wind">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<param index="1" name="direction" type="Vector3" />
+			<description>
+				The wind every particle emitter drifts with: [param strength] in metres per second along the unit [param direction]. Separate so that the direction can grow a vertical component without the signature changing. Pushed by [code]MaszynaEnvironmentNode[/code] together with the time of day and the light level.
+			</description>
+		</method>
+		<method name="set_wind_direction">
+			<return type="void" />
+			<param index="0" name="direction" type="Vector3" />
+			<description>
+				Direction the wind blows along, without touching its strength. Normalized by the server; horizontal today, but a vertical component needs no API change.
+			</description>
+		</method>
+		<method name="set_wind_strength">
+			<return type="void" />
+			<param index="0" name="strength" type="float" />
+			<description>
+				Wind speed in metres per second, without touching its direction.
+			</description>
+		</method>
 	</methods>
 	<constants>
+		<constant name="INSTANCE_KIND_STATIC" value="0" enum="InstanceKind">
+			A static [code]node ... model[/code] of a scenery - a chimney, a cooling tower, a road vehicle standing as a prop. This is what a placement registered with [method instance_register] always is. Its smoke follows [code]maszyna/rendering/smoke_density_static[/code].
+		</constant>
+		<constant name="INSTANCE_KIND_DYNAMIC" value="1" enum="InstanceKind">
+			Part of a [code]dynamic[/code], which is a vehicle. Its smoke follows [code]maszyna/rendering/smoke_density_dynamic[/code].
+		</constant>
 		<constant name="INSTANCER_OPTIMIZED" value="0" enum="Instancer">
 			Renders submodels as [RenderingServer] instances, without nodes.
 		</constant>

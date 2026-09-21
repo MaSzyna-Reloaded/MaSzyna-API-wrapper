@@ -30,6 +30,7 @@ func _enable_plugin():
     add_autoload_singleton("TrackManager", "res://addons/libmaszyna/tracks/track_manager.gd")
     add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
     add_autoload_singleton("SceneryChunkRenderingServer", "res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd")
+    add_autoload_singleton("SmokeSourceLibrary", "res://addons/libmaszyna/smoke/smoke_source_library.gd")
 
     add_custom_type(
         "MaszynaEnvironmentNode",
@@ -108,6 +109,7 @@ func _disable_plugin():
     remove_autoload_singleton("MaterialFactory")
     remove_autoload_singleton("MaterialManager")
     remove_autoload_singleton("MaterialParser")
+    remove_autoload_singleton("SmokeSourceLibrary")
     remove_autoload_singleton("SceneryChunkRenderingServer")
     remove_autoload_singleton("Console")
 
@@ -123,34 +125,159 @@ func _enter_tree():
         "maszyna/rendering/scenery_draw_distance", 3000.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "100.0,20000.0,10.0,suffix:m"
     )
+    # A scenery light is streamed with a range of its own, shorter than the model's - a street lamp
+    # is visible from half a kilometre and lights forty metres. This is how far the camera may be
+    # from the light itself, not how far the light reaches. The densest 300 m of stary_jawor holds
+    # 152 of them, so their shadow maps are dropped 80 m out while the light itself keeps reaching.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_distance", 400.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "10.0,1000.0,5.0,suffix:m"
+    )
+    add_custom_project_setting("maszyna/rendering/scenery_lights_shadows", true, TYPE_BOOL)
+    # How much a scenery model's real lights are worth. "Lights off" renders only the model's own
+    # lit submodels; "Economy" collapses the lights of one model light into a single one between
+    # them, raised by the offset and widened to cover every cone it replaces (a five-armed lamp is
+    # otherwise five lights with five shadow maps); "High quality" keeps every declared light.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_mode", 1,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Lights off,Economy,High quality"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_economy_height_offset", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-2.0,5.0,0.1,suffix:m"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_economy_cone_scale", 1.2, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.5,3.0,0.05"
+    )
+    # Radius of the light source (Light3D.light_size). A lamp head is not a point: a size softens
+    # the apex of the shaft in the fog and gives the shadows a penumbra that grows with distance.
+    # In economy mode a merged light uses the radius of the ring of heads it replaces instead.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_size", 0.25, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,3.0,0.05,suffix:m"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_energy", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,10.0,0.05"
+    )
+    # How much of the lamp's own colour is mixed into a white light. Used raw, a sodium lamp's
+    # (1.0, 0.66, 0.18) throws away most of the luminance and the pool comes out nearly black.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_tint", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.05"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_light_volumetric_fog_energy", 4.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,16.0,0.1"
+    )
+    # Lifts the synthesized street lamp light above the halo billboard that marks the lamp head.
+    # Nothing in the data asks for it - a plain tuning offset.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_height_offset", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-2.0,5.0,0.1,suffix:m"
+    )
+    # Widens the lamp cone past the lit patch the model draws (1.0 covers exactly the patch), and
+    # the falloff exponent below 1.0 keeps the pool bright out to its edge. Both are tuning only -
+    # a light the model declares keeps the falloff its own iFarAttenDecay asks for.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_cone_scale", 1.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.5,4.0,0.05"
+    )
+    # Same parameter Godot calls SpotLight3D.spot_attenuation / OmniLight3D.omni_attenuation: the
+    # exponent of the falloff with distance, drawn by the editor as the curve of brightness over
+    # the light's range. Below 1.0 the pool holds its brightness and drops only near the range,
+    # above 1.0 it dies right at the lamp. Not the cone edge - that is spot_angle_attenuation.
+    add_custom_project_setting(
+        "maszyna/rendering/scenery_lamp_light_attenuation", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_EXP_EASING, "attenuation"
+    )
+    # Skydome's volumetric fog volume is 8 m deep by day and 3 m at night, and it is measured from
+    # the camera - a light shaft is only visible while its lamp is inside it. This stretches the
+    # volume while the density is divided by the same factor, which leaves the optical depth, and
+    # so the look of the fog, alone. At 24 that is 72 m by night and 192 m by day.
+    add_custom_project_setting(
+        "maszyna/rendering/fog_volumetric_length_scale", 24.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "1.0,64.0,0.5"
+    )
+    # Floor under fog_volumetric_far_falloff. A scenery asking for a fog of kilometres drives that
+    # falloff to 0.01-0.04 and leaves no haze by the camera at all, so a street lamp has nothing to
+    # scatter in and casts no visible shaft. Night air is never that clean.
+    add_custom_project_setting(
+        "maszyna/rendering/fog_volumetric_minimum", 0.25, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,1.0,0.01"
+    )
+    # Sun altitude between which the light level ramps from night to full day; a scenery light set
+    # to come on automatically lights below a level of 0.325 (AnimModel.cpp:598), which lands about
+    # 1.4 degrees below the horizon on this ramp. A winter noon sun peaks at 16-19 degrees at 50 N,
+    # so the day end must stay well below that (FINDINGS.md).
+    add_custom_project_setting(
+        "maszyna/rendering/light_level_night_altitude", -6.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "-18.0,0.0,0.5,suffix:°"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/light_level_day_altitude", 6.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.0,15.0,0.5,suffix:°"
+    )
     # The distance a vehicle stops rendering from a node hierarchy at and switches to
     # RenderingServer instances; it switches back 25% closer. 350 m is where E3DNodesBackend has
-    # already faded its spotlights out completely (distance_fade_begin 150 + length 200), so the
-    # OPTIMIZED backend not rendering SUBMODEL_FREE_SPOTLIGHT costs nothing visible.
+    # already faded its spotlights out completely (distance_fade_begin 150 + length 200), and the
+    # OPTIMIZED backend's own lights are streamed by scenery_light_distance instead.
     add_custom_project_setting(
         "maszyna/rendering/vehicle_detail_distance", 350.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "50.0,10000.0,10.0,suffix:m"
+    )
+    # The original's gfx.smoke (Globals.cpp:1314): with it off no model builds a particle emitter
+    # at all, whether it is a locomotive's exhaust or a factory chimney.
+    add_custom_project_setting("maszyna/rendering/smoke_enabled", true, TYPE_BOOL)
+    # How far from the camera a scenery emitter is kept alive. The original stops spawning beyond
+    # twice the draw range (particles.cpp:452); a chimney has to be seen from further away than a
+    # street lamp, so this is not scenery_light_distance.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_distance", 1500.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "100.0,10000.0,10.0,suffix:m"
+    )
+    # Every knob below comes in a pair, one for a vehicle and one for a static piece of the
+    # scenery - the .scn already draws that line: a "dynamic" is a vehicle, a "node model" is
+    # static. A road vehicle placed as a "node model" - which is how all 349 of them stand in the
+    # data - is a prop and takes the static numbers.
+    #
+    # How many particles an emitter spawns per second, over what its template asks for. Each one is
+    # made correspondingly fainter, so a denser plume comes out smoother rather than darker - the
+    # original's gfx.smoke.fidelity works the same way (particles.cpp:73, :128, :165).
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_density_dynamic", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.25,8.0,0.25"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_density_static", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.25,8.0,0.25"
+    )
+    # How long a particle lives, over what its template asks for. A chimney template fades at 0.01
+    # per second, which is a minute of particle in the air - far more than a scenery prop needs,
+    # and it is also what decides how many of them are in flight at once.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_lifetime_dynamic", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,4.0,0.05"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_lifetime_static", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,4.0,0.05"
+    )
+    # Particle budget of a single emitter, which the original caps at 500 per source at its lowest
+    # smoke fidelity (particles.cpp:128). It has to leave room for the density above.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_max_particles_dynamic", 2000, TYPE_INT,
+        PROPERTY_HINT_RANGE, "16,8000,1"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_max_particles_static", 500, TYPE_INT,
+        PROPERTY_HINT_RANGE, "16,8000,1"
     )
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_volume_factor", 2.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_exterior_volume_factor", 1.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.0,4.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_cabin_unit_size_factor", 2.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
-    )
-    add_custom_project_setting(
-        "maszyna/sound/brake_exterior_unit_size_factor", 1.0, TYPE_FLOAT,
-        PROPERTY_HINT_RANGE, "0.1,8.0,0.05,or_greater"
     )
     add_custom_project_setting(
         "maszyna/sound/culling_distance", 1000.0, TYPE_FLOAT,

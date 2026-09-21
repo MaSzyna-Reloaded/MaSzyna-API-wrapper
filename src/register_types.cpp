@@ -10,10 +10,12 @@
 #include "core/TrainController.hpp"
 #include "core/TrainPart.hpp"
 #include "core/TrainSystem.hpp"
+#include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
 #include "doors/TrainDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
+#include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
 #include "engines/TrainDieselElectricEngine.hpp"
@@ -66,6 +68,7 @@ TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
+MaszynaRuntime *maszyna_runtime_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
@@ -80,11 +83,13 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
+        GDREGISTER_CLASS(MaszynaRuntime);
         GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
         GDREGISTER_CLASS(E3DParser);
         GDREGISTER_CLASS(E3DModelLightDefinition);
+        GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(MaszynaParser);
@@ -135,6 +140,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(ThrottlePositionItem)
 
         user_settings_singleton = memnew(UserSettings);
+        maszyna_runtime_singleton = memnew(MaszynaRuntime);
         train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
@@ -147,6 +153,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                        // 4
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
+        Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -172,6 +179,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_resource_format_loader.unref();
     }
 
+    if (Engine::get_singleton()->has_singleton("MaszynaRuntime")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaRuntime"); // 7
+    }
+
     if (Engine::get_singleton()->has_singleton("E3DRenderingServer")) {
         Engine::get_singleton()->unregister_singleton("E3DRenderingServer"); // 6
     }
@@ -194,6 +205,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (Engine::get_singleton()->has_singleton("UserSettings")) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
+    }
+
+    if (maszyna_runtime_singleton != nullptr) { // 7
+        memdelete(maszyna_runtime_singleton);
+        maszyna_runtime_singleton = nullptr;
     }
 
     if (e3d_rendering_server_singleton != nullptr) { // 6

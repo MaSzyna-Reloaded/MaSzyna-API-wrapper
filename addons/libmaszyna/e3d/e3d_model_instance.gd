@@ -44,6 +44,15 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             model = x
             _dirty = true
 
+## What this placement is - a static scenery model or a dynamic one, in the words a [code].scn[/code]
+## uses. Handed to the server when the instance is created, because the smoke density it selects is
+## baked into every emitter of the model; changing it reloads the instance, like the model itself.
+@export var instance_kind: E3DRenderingServer.InstanceKind = E3DRenderingServer.INSTANCE_KIND_STATIC:
+    set(x):
+        if not x == instance_kind:
+            instance_kind = x
+            _dirty = true
+
 ## Base MaSzyna data path used to resolve model files and materials.
 @export var data_path:String = "":
     set(x):
@@ -168,11 +177,18 @@ func is_e3d_loaded() -> bool:
     return _e3d_loaded
 
 
+## Spawn rate multiplier of the model's particle emitters, as the engine state drives it
+## (see [method E3DRenderingServer.instance_set_smoke_intensity])
+func set_smoke_intensity(intensity:float) -> void:
+    if _rid.is_valid():
+        E3DRenderingServer.instance_set_smoke_intensity(_rid, intensity)
+
+
 func _create_instance() -> void:
     var server_instancer: int = (
         Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
     )
-    _rid = E3DRenderingServer.instance_create(_model, server_instancer)
+    _rid = E3DRenderingServer.instance_create(_model, server_instancer, instance_kind)
     E3DRenderingServer.instance_set_options(
         _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths
     )
@@ -183,7 +199,10 @@ func _create_instance() -> void:
     E3DRenderingServer.instance_set_layer_mask(_rid, layers)
     E3DRenderingServer.instance_set_lights_state(_rid, lights_state)
     E3DRenderingServer.instance_build(_rid)
-    set_notify_transform(instancer == Instancer.OPTIMIZED)
+    # OPTIMIZED renders through the server and needs the transform; NODES follows its own nodes,
+    # but a particle emitter of the model is owned by the server either way and spawns where the
+    # server last saw the instance
+    set_notify_transform(true)
 
 
 func _free_instance() -> void:

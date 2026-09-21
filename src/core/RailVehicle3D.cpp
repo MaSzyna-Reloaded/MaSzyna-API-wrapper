@@ -364,6 +364,7 @@ namespace godot {
                 _update_head_display();
             }
             _update_model_detail();
+            _update_smoke();
         }
 
         if (!Engine::get_singleton()->is_editor_hint()) {
@@ -1006,6 +1007,54 @@ namespace godot {
         // the bogie and wheel nodes are gone with the hierarchy, and new ones come back with it
         animation_bindings_dirty = true;
         force_detail_refresh = true;
+    }
+
+    /// Drives the particle emitters the model carries. The rate follows the original
+    /// (smoke_source::update(), particles.cpp:172-211) and the opacity its dizel_fill
+    /// (particles.cpp:330), but only for a diesel: the original runs these branches for every
+    /// engine type and reads the diesel-electric characteristic even on an electric. A vehicle
+    /// without a diesel engine keeps the template's own rate, like a scenery chimney.
+    /// Called from the 0.25 s block of _process_impl() - a plume changes slowly.
+    void RailVehicle3D::_update_smoke() {
+        if (model_node == nullptr || controller == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
+            return;
+        }
+        const Dictionary state = controller->get_state();
+        const int engine_type = state.get("engine_type", TrainEngine::NONE);
+        if (engine_type != TrainEngine::DIESEL && engine_type != TrainEngine::DIESEL_ELECTRIC) {
+            return;
+        }
+
+        const double revolutions = state.get("engine_rpm_count", 0.0); // rev/s, as the Mover keeps enrot
+        const double max_rpm = state.get("diesel_max_rpm", 0.0);       // rev/min, the top notch of the characteristic
+        const double power = state.get("engine_power", 0.0);           // kW
+        const double current = state.get("engine_current", 0.0);
+        const double direction = state.get("direction_absolute", 0.0);
+
+        double intensity;
+        if (bool(state.get("diesel_spinup", false))) {
+            intensity = revolutions / 4.0 * 0.01;
+        } else {
+            // The original compares rev/min against rev/s (particles.cpp:196), which leaves the
+            // deficit nearly constant and makes the rate track the engine power. Kept as it is:
+            // reading both in rev/min would stop a diesel from smoking at full revs, which is
+            // where it smokes most.
+            const double revolutions_deficit = (max_rpm - revolutions) / 60.0;
+            const double load = power * 0.005;
+            if (Math::is_zero_approx(direction) || Math::is_zero_approx(current)) {
+                intensity = revolutions_deficit * 0.02 * load;
+            } else {
+                intensity = revolutions_deficit * (Math::sqrt(Math::abs(current)) * 0.01) * 0.02 * load;
+            }
+        }
+
+        // dizel_fill scales the opacity of a newly born particle in the original
+        // (particles.cpp:330). Godot has no channel for that which does not also reach the
+        // particles already in the air, so it scales how many are born instead - the plume thins
+        // out rather than stepping down as a whole (see FINDINGS.md). The original also lets the
+        // revolutions deficit go negative and subtract from the particle budget; this clamps.
+        const double fill = CLAMP(double(state.get("diesel_fill", 0.0)), 0.0, 1.0);
+        model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
     void RailVehicle3D::_update_track_transform() {

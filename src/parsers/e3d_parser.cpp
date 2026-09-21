@@ -17,6 +17,7 @@ namespace godot {
     static constexpr const char *LIGHT_OFF_SUFFIX = "_off";
     static constexpr const char *LIGHT_ON_PREFIX = "light_on";
     static constexpr const char *LIGHT_OFF_PREFIX = "light_off";
+    static constexpr const char *SMOKE_SOURCE_PREFIX = "smokesource_";
 
     void E3DParser::_bind_methods() {
         ClassDB::bind_method(D_METHOD("parse", "file"), &E3DParser::parse);
@@ -539,6 +540,7 @@ namespace godot {
         }
 
         _register_lights(model, submodels, parent_indices);
+        _register_smoke_sources(model, submodels, parent_indices);
 
         return model;
     }
@@ -647,6 +649,33 @@ namespace godot {
             }
 
             p_model->register_light(light_name, entry);
+        }
+    }
+
+    /// Particle emitters: a transform submodel whose name starts with "smokesource_", the whole
+    /// name being the parameter file the original reads from data/ (TSubModel::is_emitter(),
+    /// Model3d.cpp:1417, TSubModel::find_smoke_sources(), Model3d.cpp:962). Matching is
+    /// case-insensitive like is_emitter(); the original's own discovery compares the raw name and
+    /// so misses a capitalised one.
+    void E3DParser::_register_smoke_sources(
+            const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
+            const std::vector<int> &p_parent_indices) const {
+
+        for (size_t i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> &sm = p_submodels[i];
+            if (sm->get_submodel_type() != E3DSubModel::SUBMODEL_TRANSFORM) {
+                continue;
+            }
+            const String sm_name = sm->get_name();
+            if (!sm_name.to_lower().begins_with(SMOKE_SOURCE_PREFIX)) {
+                continue;
+            }
+
+            Ref<E3DModelSmokeSourceDefinition> entry;
+            entry.instantiate();
+            entry->set_template_name(sm_name.to_lower());
+            entry->set_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i)));
+            p_model->register_smoke_source(entry);
         }
     }
 } // namespace godot

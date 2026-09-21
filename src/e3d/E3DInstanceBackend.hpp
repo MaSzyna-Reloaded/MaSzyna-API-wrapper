@@ -1,4 +1,5 @@
 #pragma once
+#include "E3DLightFactory.hpp"
 #include "E3DMaterialResolver.hpp"
 #include "E3DModel.hpp"
 #include <godot_cpp/classes/material.hpp>
@@ -17,6 +18,14 @@ namespace godot {
                     E3DSubModel *off = nullptr;
             };
 
+            /// A scenery node's `lights`/`lightcolors` entry for one light
+            /// (TAnimModel::Load(), AnimModel.cpp:335-361)
+            struct LightDeclaration {
+                    float mode = 0.0; // ls_Off/ls_On/ls_Blink/ls_Dark/ls_Home plus its fraction
+                    Color color;
+                    bool has_color = false;
+            };
+
             struct LightNodes {
                     ObjectID on;
                     ObjectID off;
@@ -25,6 +34,8 @@ namespace godot {
             };
 
             Ref<E3DModel> model; // keeps submodels and meshes alive
+            /// The model's lights, found by E3DLightFactory before the backend builds
+            E3DModelLights model_lights;
             int instancer = 0;
             bool built = false;
             RID stream_rid;        // valid when registered with SceneryStreamingServer
@@ -42,7 +53,20 @@ namespace godot {
             uint32_t layer_mask = 1;
             float visibility_range_begin = 0.0;
             float visibility_range_end = 0.0;
+            /// Light name -> enabled, resolved by E3DRenderingServer out of light_declarations,
+            /// lights_override and the time of day; this is what the backends read
             Dictionary lights_state;
+            /// What the scenery node declared, kept across a stream clear/build cycle
+            HashMap<String, LightDeclaration> light_declarations;
+            /// Set through instance_set_lights_state(); wins over the declared mode
+            Dictionary lights_override;
+            /// Real lights owned by this instance (E3DRenderingServer light RIDs)
+            Vector<RID> light_objects;
+            /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
+            Vector<RID> smoke_objects;
+            /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
+            /// which is what a placement registered for streaming always is
+            int instance_kind = 0;
 
             // OPTIMIZED backend
             HashMap<String, LightSubmodels> light_submodels;

@@ -3,6 +3,69 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-21 - smoke emitters spawned at the origin of the world
+
+* **Symptom:** a locomotive whose model carries a `smokesource_*` submodel (sm42, st44, su45) did
+  not smoke at all, while `E3DRenderingServer::get_smoke_statistics()` reported the emitter as
+  built and the template as parsed (`amount` 175, `lifetime` 3.5 s).
+* **Cause:** `_smoke_build()` placed the emitter with `particles_set_emission_transform()` and
+  left the `RenderingServer` instance's own transform at identity. Godot's scene cull pushes an
+  instance's transform into the emission transform whenever it updates the instance, so the value
+  set directly was overwritten with identity and every plume spawned at the world origin.
+* **Fix:** the emitter transform goes on the instance (`instance_set_transform()`), which is how a
+  `GPUParticles3D` node is driven too, and `particles_set_custom_aabb()` stays in the emitter's
+  local space, where the cull transforms it along with the instance.
+* **Rule:** a `RenderingServer` particle system is placed through its instance, not through
+  `particles_set_emission_transform()`. Configure a server-side effect the way the equivalent node
+  configures it - anything the scene cull derives from the instance will be recomputed.
+
+### The whole plume cut off in one frame on a notch change
+
+* **Symptom:** dropping the sm42's main controller by one notch made every particle of the plume
+  disappear at once, with no fade, and the smoke came back seconds later. The original never cuts
+  smoke off - it stops spawning and lets what is in the air disperse.
+* **Cause:** the engine-driven rate was pushed through `particles_set_amount_ratio()`. That is not
+  a spawn rate: Godot's particle process deactivates every particle whose index is at or above
+  `amount * amount_ratio`, so lowering the ratio kills live particles, and a ratio of 0 - which is
+  what the formula gives the moment `Im` or `EnginePower` dips on a notch change - kills all of
+  them in the same frame.
+* **Fix:** the emitters no longer emit automatically. `particles_set_emitting()` is false and
+  `E3DRenderingServer::process_smoke()`, ticked by `SmokeSourceLibrary`, accumulates
+  `spawn_rate * intensity * delta` per emitter and calls `particles_emit()` that many times -
+  the original's own `m_spawncount` model (`particles.cpp:157-212`). Live particles are never
+  touched, so the plume thins and fades on its own.
+* **The same bug twice more, in the opacity:** `dizel_fill` was first pushed into
+  `ParticleProcessMaterial.color`'s alpha. That multiplies every live particle on every frame, so
+  the whole plume stepped down together whenever the Mover floored `dizel_fill` at 0.05
+  (`Mover.cpp:5508`). Moving it to `color_initial_ramp` changed nothing: that gradient is read
+  every frame too, at a coordinate that is random per particle but fixed for its life, so editing
+  the gradient reaches every particle already in the air just the same.
+* **Fix:** nothing modulates opacity at runtime at all. The template's own random initial opacity
+  is written into `color_initial_ramp` once, when the emitter is built, and never touched again;
+  `dizel_fill` is folded into the spawn rate instead (`RailVehicle3D::_update_smoke()`), so a
+  notch down means fewer new particles and the plume thins out. That is a deliberate divergence -
+  the original scales a particle's opacity at birth (`particles.cpp:330`) and Godot has no
+  equivalent channel that does not also reach backwards.
+* **Rule:** a `ParticleProcessMaterial` uniform is *not* a spawn-time channel, whatever its name
+  suggests - `color`, `color_initial_ramp` and `amount_ratio` all reach the particles already in
+  the air. The only things that affect just the particles born from now on are the emission
+  itself (how many, and what `particles_emit()` is handed) and constants fixed before the first
+  one is born. When a change should not touch what is already flying, it goes into the rate.
+
+### A state key published by one engine part only
+
+* **Symptom:** while chasing the above, a plain `EngineType=DieselEngine` vehicle could never have
+  smoked either: its rate came out 0 whatever the throttle.
+* **Cause:** `diesel_max_rpm` was added to `TrainDieselElectricEngine`, so on a plain diesel
+  `state.get("diesel_max_rpm", 0.0)` fell back to 0, the revolutions deficit went negative and the
+  clamp turned it into no smoke.
+* **Fix:** the key lives in `TrainDieselEngine` and reads `TMoverParameters::EngineMaxRPM()`,
+  which already returns `dizel_nmax * 60` for a diesel and `DElist[MainCtrlPosNo].RPM` for a
+  diesel-electric (`Mover.cpp:1099`) - one key for both.
+* **Rule:** put a state key on the part that owns the concept, not on the subclass the first
+  consumer happened to use, and check whether the Mover already has an accessor that covers every
+  subclass.
+
 ## 2026-09-20 - regressions after the frame-time optimisation night
 
 37 commits in about 18 hours (`8bd5c9a`..`ed5ee09`), most of them optimisations judged by frame
@@ -382,3 +445,246 @@ time only. Nobody looked at the cabin, the lighting or the consist afterwards.
 * **Rule:** a movement step that cannot resolve the next track must say so. `break` on a null
   connection turned a topology bug into "the train just stops", which cost a screenshot and a
   full trace to locate.
+
+## 2026-09-21 - the main brake hiss has no interior/exterior distinction to key off
+
+* **Symptom:** asked to make the brake hiss quieter in the cab and louder outside, the obvious
+  lever - a `soundproofing` -> GAIN curve per event - turned out to do nothing for the main hiss.
+* **Proof:** `pipe_hiss` is built from the `airsound`..`airsound5` labels, and across the whole
+  datapack (`dynamic/`) exactly **one** of 1 344 `airsound*` declarations sets `placement:`. The
+  rest fall back to `MmdSoundSourceDefinition`'s default `general`, and
+  `TrainSoundSystem._soundproofing()` short-circuits `general` to a constant 1.0 regardless of
+  where the listener sits. So the whole interior/exterior attenuation model simply does not
+  apply to the loudest brake sound there is.
+* **Fix:** the pneumatic events (`pipe_hiss`, `local_brake_hiss`, `emergency_brake_hiss`) got
+  their own `listener_inside` -> GAIN modulation, baked once by `BrakeSfxEventFactory`; the
+  runtime feeds a plain 0/1 from the `_inside_vehicle()` it already computes.
+* **Rule:** before reaching for a signal to modulate a sound with, check what the MMD data
+  actually declares for that label. A parameter that is a constant for 1 343 of 1 344 sources is
+  not a signal, and the placement/soundproofing model only covers labels whose author bothered
+  to place them.
+
+## 2026-09-21 - a +38 dB SfxTrack under the cab hiss, and five rounds of guessing instead of one dump
+
+* **Symptom:** the pneumatic hiss when releasing the main brake is deafening in the cab on every
+  FV4a vehicle (EU07, EP07, SU45). Changing gains - `brake_volume_factor`, a per-event
+  `listener_inside` curve, the releaser's track volume - changed nothing audible, repeatedly.
+* **What found it:** looking at the built bank in the editor's Remote tree. `pipe_hiss`, the
+  automation on `brake_main_valve_flow` (`airsound2`), has an `SfxTrack` with
+  **`volume_db = 38`**. Every other track in the bank sits at or below 0 dB. The outlier is
+  visible at a glance; nothing else had to be understood first.
+* **Cause:** `_signed_flow_automation()` (`brake_sfx_event_factory.gd:512`) computes
+  `maximum_gain = output_scale * (offset + factor * gain_signal_max)` purely as the *divisor*
+  that normalises `fade_in_curve`'s points into 0..1, and then also applies the same number as
+  `track.volume_db = linear_to_db(maximum_gain)` (`:565`). What the curve just normalised away is
+  multiplied straight back in. For su45's `airsound2` (`amplitude_factor` 0.05,
+  `amplitude_offset` -0.01, FV4a `input_scale` 800000, `output_scale` 2.0,
+  `gain_signal_max` 0.001): `factor` = 40 000, `maximum_gain` = 79.98, `linear_to_db` = **38.06
+  dB** - matching the observed value to a tenth. That is a ~80x boost sitting under everything,
+  which is why no multiplier further up the chain made any audible difference.
+* **Fix:** not applied yet - `track.volume_db` should carry the MMD amplitude
+  (`linear_to_db(max(amplitude_factor, 0.001))`, like `_track_for()` does) and `maximum_gain`
+  should stay a curve divisor only. Same function also feeds `airsound`, `localbrakesound`,
+  `localbrakesound2`, so all of them need re-checking after the change.
+* **Rule:** when a sound is wrong, **dump the whole built bank before touching a single
+  constant**: a headless tmp script that loads the scene, walks the `SfxPlayer3D` nodes, and
+  prints every event's name plus each clip's `track.volume_db`. An anomaly like +38 dB among
+  0 dB tracks is obvious in one listing. Five rounds of "change a multiplier, ask the operator to
+  relaunch and listen" produced nothing, because a constant further up the chain cannot be
+  evaluated by ear while an 80x boost sits below it.
+* **Rule:** a gain that was derived as a normalisation divisor must never also be applied as a
+  gain. If a value appears both in a curve's denominator and in a `volume_db`, that is the bug.
+
+## 2026-09-21 - distant buildings cut out of the fogged sky, whatever the fog distance
+
+* **Symptom:** at fog 100%, rain 100% and a fog distance of 330 m the skyline still shows: every
+  distant building, tree and hill is a flat silhouette against the sky instead of dissolving into
+  the fog.
+* **What proved it:** reading the screenshot's pixels. The sky is *exactly* `(149, 113, 95)` over
+  its whole area - it takes the fog colour in full - while every distant object saturates at
+  `(170, 133, 113)`, brighter than the fog itself and identical from one object to the next. A
+  fogged object can only come out brighter than the fog when its fog amount is above 1.
+* **Cause:** the node's `fog_density` was applied twice. `apply_visual_configuration()` scaled
+  Skydome's own `day/night_fog_density` by `fog_density / FOG_REFERENCE_DENSITY` *and* handed the
+  same `fog_density` to `weather.storm_fog_intensity`; Skydome adds the two
+  (`Skydome.gd:1265`, clamped at 1.5) into `Environment.fog_density`. At the slider's 100% that is
+  1.03-1.13, and Godot's depth fog does not clamp `fog_amount = pow(fog_z, curve) * fog_density` -
+  a fully fogged pixel becomes `1.1 * fog colour - 0.1 * its own colour`, so it is brighter than
+  the sky and still carries its own silhouette.
+* **Second half of it:** the sky's fog share is `fog_sky_affect` alone, while geometry at
+  `fog_distance` takes `fog_density`. The wrapper computed `fog_sky_affect` from
+  `fog_sky_height / fog_distance` and lerped it to 1.0 with the rain, never looking at the
+  density - so a light fog under a downpour put a fully fogged sky behind barely fogged terrain,
+  the same seam the other way round.
+* **Fix:** the day/night density stays Skydome's own haze (0.005/0.02) and the storm boost carries
+  only the rest (`fog_density - base_density`), so the sum is the wanted opacity and never passes
+  1.0; `sky_affect` is multiplied by that opacity.
+* **Rule:** an opacity that is summed from two sources has to be summed where it is *set*, not
+  where it is used - and a value the engine does not clamp (`fog_density` over 1.0) turns a
+  blend into an extrapolation, which is why the artefact looked like a lighting bug and not like
+  too much fog.
+* **Rule:** the sky and the geometry in front of it are fogged by two different shaders with two
+  different parameters (`fog_sky_affect` vs `fog_density`). They only agree when the sky's share
+  carries the depth fog's opacity; every horizon seam starts here.
+
+## 2026-09-21 - the whole scenery unlit, day and night, since the OPTIMIZED instancer
+
+* **Symptom:** no street lamp and no lit window anywhere in a scenery is ever lit, at any hour.
+  `stary_jawor_noc.scn` starts at 21:12 and the town is pitch black.
+* **What proved it:** the data declares the lights plainly - of the 975 files with a model-node
+  `lights` block, the modes used across the whole data set are `ls_Dark` 3180 times, `ls_Off`
+  1797, `ls_On` 733, `ls_Home` 607 and `ls_Blink` 15. `stary_jawor_noc` alone places 1001
+  light-bearing models, 1430 light groups and 452 declared `FREE_SPOTLIGHT` submodels. None of it
+  reached the renderer.
+* **Cause, in three independent places:**
+  * `e3d_parser.cpp` hides every `light_on*` submodel, so only `lights_state` can show it;
+  * `lights_state` lived on the **node** (`e3d_model_instance.gd`), and since `2125898` scenery
+    models are RIDs with no node at all - nothing could set it. It worked in `demo_3d` only
+    because that scene places `E3DModelInstance` nodes;
+  * `maszyna_node_model_importer.gd` parsed `lights`/`lightcolors` and threw them away
+    (`obj.lights` commented out since `923b293`), and `MaszynaModelData` had no field for them.
+* **Fix:** the light state moved into `E3DRenderingServer` - declared modes per instance,
+  resolved against a time of day and a light level pushed by `MaszynaEnvironmentNode`, with the
+  node left as a proxy. Real lights (spot/omni) are RIDs owned by the server and streamed through
+  `SceneryStreamingServer` with a range of their own, far shorter than the model's.
+* **Rule:** state that an instancer is meant to honour belongs to the server, not to the node that
+  happens to create the instance. The moment a second instancer appeared without nodes, every
+  feature parked on the node silently stopped existing - and silently, because a light that is
+  merely never switched on looks exactly like a light that was never implemented.
+* **Rule:** identifying what a model contains is not the instancer's job either. Both backends
+  were walking the tree to pair `light_onNN` with `light_offNN`; that walk is now
+  `E3DLightFactory::discover()` and the backends only render what it lists.
+
+### Godot's spot cone stops at 90 degrees, the data's does not
+
+* `Light3D::PARAM_SPOT_ANGLE` is capped just under 90. Of the 871 `FREE_SPOTLIGHT` submodels in
+  the data set exactly 6 are wider - `elektryczne/lampa_parkowa01` at 117 degrees (38 of them in
+  `stary_jawor_noc`), `nastawnie/nastawnia_laziska_huta_lh1` at 150, and four more nastawnie.
+  Those become omni lights; a spot would have silently rendered a wrong cone.
+* **Rule:** before mapping an engine parameter one to one, check the range of the values the data
+  actually holds. Six outliers in 871 are invisible in a spot check and obvious in a histogram.
+
+### A street lamp that lights nothing
+
+* Nine models named `latarnia*` carry a light but **no** `FREE_SPOTLIGHT` submodel at all - in the
+  original they never lit the scene either, `TP_FREESPOTLIGHT` only draws a glare billboard
+  (`opengl33renderer.cpp:4646`). They do model where the light goes: a halo billboard at the lamp
+  head carrying the only non-identity matrix in the model, and a quad on the ground spanning the
+  lit patch. Both are found by their material (`elektryczne/poswiata`, `elektryczne/light1|2`),
+  never by name - `latarnial_str` calls its halos `pos11/pos22/pos33` while the other eight call
+  them `plane02/plane04/plane06`, and the pool is `placek` in eight of them and `plane01` in the
+  ninth.
+* The halo also carries the lamp's colour, so nothing has to be invented: mercury blue
+  `(0.61, 0.59, 1.0)` for `betdziur`, sodium orange `(1.0, 0.66, 0.18)` for `lbc`/`str`, warm
+  white `(0.90, 0.84, 0.64)` for `drew`/`hs`.
+* **Rule:** a model that declares no light may still say exactly where its light falls. Read the
+  geometry the author drew for the glow before adding a tuning constant.
+
+### The lit patch says how wide the cone is, not where the light ends
+
+* **Symptom:** the synthesized street lamps were there but barely visible - a huge, dim pool with
+  no lamp at its centre, and you had to walk right up to one to see anything.
+* **Three separate causes, all found by measuring the nine `latarnia*` models rather than by
+  looking at the screen again:**
+  * **Two heads, one light.** The four `latarniay_*` models are two-armed and carry a halo at each
+    end (z of -0.76 and +0.76 on `latarniay_str`, -0.99/+0.99 on `latarniay_betdziur`). The quirk
+    took the first halo it found, so half of every double lamp was unlit and the one light it did
+    make sat off to one side. 26 of the 124 quirk lamps in `stary_jawor_noc` are of this kind.
+  * **The cone was measured along the wrong axis.** The lit patch is 15.0 m across in **every one
+    of the nine models**, single- and double-armed alike, while its other axis is stretched to
+    cover the arms - 15.1 m with one, 18.0-22.0 m with two. Taking `max(x, z)` therefore widened
+    the cone of exactly the double lamps that already had the wrong number of lights. Only the
+    across axis describes a single head.
+  * **The range was the patch edge.** The patch marks where the light is still meant to be
+    *visible*, so using it as `LIGHT_PARAM_RANGE` - where the light dies - left the whole pool in
+    the dimmest part of the falloff. The street lamps in this data set that do declare a
+    spotlight put the range at 40 m (`elektryczne/lampa_parkowa01`, mounted at 4.9 m) or 80 m
+    (`linia053/lamp-y`, `lamp-5`, `lamp-i`).
+* **Rule:** when geometry stands in for a light, separate what it actually measures from what it
+  merely suggests. The patch's width is data; its edge is not a falloff radius.
+* **Rule:** a constant that is identical across every model in a family (15.0 m here) is the one
+  the author meant; a value that varies with the model's shape is describing something else.
+
+### A RenderingServer light is not a Light3D - it inherits none of the node's defaults
+
+* **Symptom:** switching shadows on for the scenery lights striped the whole station square with
+  regular bands radiating from the lamp - shadow acne, not a cone.
+* **What proved it:** the project already sets `maszyna/rendering/lights_shadow_reverse_cull_face`
+  to `false` in `demo/project.godot`, so the obvious suspect was ruled out on paper - and removing
+  the `light_set_reverse_cull_face_mode()` call changed nothing, while putting it back (passing
+  that same `false`) fixed it. Setting it *explicitly* was the fix, which means the light had
+  started with it on.
+* **Cause:** `SpotLight3D`/`OmniLight3D` set their parameters in their own constructors.
+  `RenderingServer::spot_light_create()` hands back a light carrying the server's defaults
+  instead, and those are not the same - reverse cull face is on, and the shadow biases differ
+  from the 0.03 (spot) / 0.1 (omni) and normal bias 1.0 a node would use.
+* **Fix:** every shadow parameter the scenery lights rely on is now set explicitly right after the
+  light is created, next to the colour, range and energy.
+* **Rule:** when a feature is ported from a node to a RenderingServer RID, assume **nothing**
+  carries over. Read the node's constructor and set each parameter it sets; a default that
+  happens to match is luck, and the ones that do not match surface as a rendering artefact far
+  from the code that caused it.
+* **Trap:** a project setting being read does not mean its value is being applied. Here the
+  setting said `false`, the code read `false`, and the light was still culling in reverse -
+  because nobody had ever written that `false` into the light.
+
+## 2026-09-21 - "the release runs old GDScript" - the release was never unpacked into the game dir
+
+* **Symptom:** after `make release-linux` and unpacking, `./reloaded` in the game directory ran the
+  track code from before the last fix, and clearing the caches changed nothing.
+* **What proved it:** file identity, not reasoning about the export. The `.so` inside the zip is
+  byte-identical to `demo/bin/libmaszyna/linux/libmaszyna.64.so`, the embedded pck carries the
+  `build_number.txt` of that same compile - so the export is fresh. But
+  `/mnt/ArchiwumX/Games/MaSzyna/reloaded` had mtime 23:11 and md5 `5aa4a837...`, while the freshly
+  built one was `4fa78d7a...`, and the repo root held untracked `reloaded`, `libmaszyna.64.so`
+  and both zips.
+* **Cause:** `upgrade-linux.sh` / `upgrade-windows.sh` started with
+  `cd <repo> && make ... && cp bin/linux/<zip> ./ && unzip -o <zip>`. After the `cd`, `./` is the
+  repo, so every upgrade unpacked the new build **into the repo** and the game directory kept
+  running whatever had been unpacked there last.
+* **Fix:** the scripts build with `make -C "$REPO" release-linux` (no `cd`) and unpack with
+  `unzip -o "$REPO/bin/linux/<zip>" -d "$GAME"`, where `$GAME` is the directory holding the script.
+* **Rule:** when a build "has no effect", first prove that the binary being run is the binary that
+  was built - mtime and md5 of the file on disk, against the artifact in `bin/`. Cache, export and
+  packing are the second question, not the first.
+* **Rule:** a shell one-liner that both `cd`s and uses a relative destination has two working
+  directories in it. Name the destination absolutely.
+
+## 2026-09-21 - no fog in the exported release, perfect fog in the editor
+
+* **Symptom:** the same scenery at the same time of day: in `godot-double demo/` the fog is a clean
+  gradient, in the exported release there is none at all at a fog distance of 80 m and a total
+  white-out at 4160 m. "As if Skydome were not there - moving the clouds slider only makes milk."
+* **Ruled out first, in this order:** the release binary was fresh (`reloaded` and
+  `libmaszyna.64.so` in the game directory carried the timestamp of the zip in `bin/linux`); the
+  export preset excludes only `addons/gut`, `examples` and `tests`; and the symlinked addons
+  (`gnd_skydome`, `gnd_weather`, `gnd_sfx`, `libmaszyna` are symlinks into `vendor/`) **are**
+  exported with their content - the pck holds `Skydome.gdc`, `WeatherNode.gdc` and the shaders.
+  Godot follows the symlinks.
+* **Two dead instruments on the way:** `grep -c` on the exported binary counts *lines*, and a
+  binary has almost none, so every count it gave was meaningless; and `FileAccess.file_exists()`
+  on a `.gd` inside a pck is always false, because GDScript is stored there as `.gdc` beside a
+  `.gd.remap`. Inspect a pck by loading it with `ProjectSettings.load_resource_pack()` in a
+  throwaway project and walking it with `DirAccess`.
+* **Cause:** `Script.get_property_default_value()` returns **null for every property** of a
+  GDScript compiled into an exported pck. `SkydomeSettings.get_value()` uses exactly that as its
+  fallback, and in a release the `gnd_skydome/*` project settings do not exist at all - only the
+  addon's own EditorPlugin ever registers them. So every look value the wrapper read came back
+  null and `float(null)` is 0.0: fog densities, fog distance begins and volumetric lengths all
+  became zero, while the editor, where the settings do exist, looked right.
+* **Isolated with a control:** `maszyna_model_data.gd` - `extends Resource` with two plain
+  `@export` vars and no dependencies - returns null for its defaults from the pck as well, so it
+  is the compiled script, not Skydome's dependencies.
+* **Fix:** `GndSkydomeMaszynaEnvironment._skydome_value()` reads the project setting and falls back
+  to the live value on the Skydome node, which carries the real defaults as its member
+  initialisers. Cached on the first read, because five of the six call sites write the same
+  property back scaled and would otherwise compound it. The vendored addon is untouched.
+* **Rule:** a default that only exists in a script's source does not survive the export. Anything
+  read through `get_property_default_value()` is null in a release; fall back to a live object's
+  own value instead.
+* **Rule:** a project setting registered by an EditorPlugin does not exist in an exported build
+  unless it was written into `project.godot`. `add_custom_project_setting()` deliberately keeps
+  values equal to the default out of that file, so those are exactly the ones that vanish.
+* **Rule:** test the invariant, not the intermediate. `test_maszyna_environment_node.gd` asserted
+  `night_vol_fog_density` on its own and stayed green through a change that multiplied the optical
+  depth by 4.6; it now asserts density times length, which is what the fog actually looks like.

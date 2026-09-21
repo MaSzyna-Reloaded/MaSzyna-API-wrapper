@@ -31,6 +31,7 @@ run/disable_stderr.release=true
 [audio]
 
 buses/default_bus_layout="uid://cnafyk2xbhsdb"
+general/3d_panning_strength=0.55
 
 [autoload]
 
@@ -41,6 +42,7 @@ TractionPowerServer="*res://addons/libmaszyna/servers/traction_power_server.gd"
 TrackManager="*res://addons/libmaszyna/tracks/track_manager.gd"
 RailVehiclePhysicsServer="*res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd"
 SceneryChunkRenderingServer="*res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd"
+SmokeSourceLibrary="*res://addons/libmaszyna/smoke/smoke_source_library.gd"
 NodebankLibraryBuilder="*uid://dv25nc25tcanw"
 Console="*uid://d046w0soh2iou"
 MaterialManager="*uid://wsbd7kr83ncg"
@@ -444,12 +446,17 @@ rendering/shadow_blur=0.4
 rendering/shadow_exterior_max_distance=300.0
 rendering/shadow_cabin_mode=2
 track_curve_bake_interval=0.5
-sound/brake_cabin_unit_size_factor=1.0
-sound/brake_volume_factor=1.0
 rendering/volumetric_fog_energy=4.0
 rendering/scenery_draw_distance=1000.0
-rendering/lights_shadow_reverse_cull_face=false
 rendering/fog_curve=2.0
+rendering/scenery_light_energy=2.0
+rendering/scenery_light_volumetric_fog_energy=16.0
+rendering/fog_night_distance_factor=6.0
+rendering/scenery_lamp_light_attenuation=0.10000000000000002
+rendering/smoke_generator_mode=1
+rendering/smoke_density_dynamic=3.0
+rendering/smoke_density_static=0.5
+rendering/smoke_atlas="res://vfx/smoke_atlas.png"
 
 [physics]
 
@@ -460,7 +467,6 @@ common/max_physics_steps_per_frame=2
 
 rendering_device/driver.windows="d3d12"
 textures/vram_compression/import_etc2_astc=true
-lights_and_shadows/directional_shadow/size=8192
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 environment/volumetric_fog/volume_size=96
 environment/volumetric_fog/volume_depth=96

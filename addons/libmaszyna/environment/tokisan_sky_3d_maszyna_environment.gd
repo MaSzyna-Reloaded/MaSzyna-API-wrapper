@@ -83,7 +83,8 @@ func apply_visual_configuration() -> void:
     sky_dome.cumulus_visible = clouds_visible
     sky_dome.cirrus_coverage = environment_node.cloudiness
     sky_dome.cumulus_coverage = clampf(environment_node.cloudiness * 1.1, 0.0, 1.0)
-    sky_dome.wind_direction = environment_node.wind_direction
+    # Sky3D keeps its own wind_direction in radians (SkyDome.gd:852)
+    sky_dome.wind_direction = deg_to_rad(environment_node.wind_direction)
 
     # Tokisan's screen-space fog bypasses Godot's Environment fog.
     sky_dome.fog_visible = false

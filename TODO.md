@@ -58,6 +58,48 @@
 
 ## Rendering
 
+### Smoke emitters
+
+* The vertical decay of a particle is not ported (`particles.cpp:365-380`): the original slows a
+  particle's rise by the air temperature and, for a vehicle, by the overcast and the vehicle's own
+  speed, so a plume flattens out instead of rising forever. `Global.AirTemperature` is a `#define`
+  in the vendored Mover and cannot be fed from outside (see the air temperature entry under
+  "Scenery loading"). The wind drift itself is ported - `E3DRenderingServer::set_wind()` turns it
+  into the emitter's particle gravity, `0.1 * wind` being what the original's
+  `0.1 * age * wind` per step integrates to.
+* `MaszynaEnvironmentNode.wind_direction` is a compass bearing in degrees, so the wind is always
+  horizontal. `MaszynaSkyEnvironment.get_wind_direction()` already returns a `Vector3` and
+  `E3DRenderingServer::set_wind()` takes strength and direction separately, so a vertical
+  component needs no API change - only a property that can express one.
+* The culling box of an emitter follows the emitter, not the plume
+  (`E3DRenderingServer::_apply_smoke_placement()`), because a `RenderingServer` particle system is
+  culled as a whole. A fast vehicle leaves its trail far outside that box, so the whole plume
+  disappears when the emitter itself goes off screen. The original culls per source too
+  (`opengl33particles.cpp:38`), but against the box its own particles span
+  (`smoke_source::update()` grows it, `particles.cpp:284-291`).
+* `min_inclination` of a template is dropped: `ParticleProcessMaterial` has one `spread` around
+  the emission direction and no inner cone. Only `smokesource_st45` declares a non-zero one (10
+  degrees) out of the twelve templates.
+* A particle's lifetime is per emitter in Godot and per particle in the original, where it is the
+  particle's own random initial opacity divided by the fade step (`particles.cpp:132`). The
+  wrapper takes the longest of them and fades every particle linearly over it, so a particle that
+  started faint stays faintly visible longer than it should.
+* The "Modern" generator mode's flipbook (`demo/vfx/smoke_atlas.png`) is generated procedurally by
+  `scripts/make_smoke_atlas.py` - a fBm puff that expands, erodes and thins over sixteen frames.
+  It is a stand-in for real authored or simulated smoke; replacing it needs no code, only the
+  `maszyna/rendering/smoke_atlas` and `smoke_atlas_frames` settings. The flipbook is also the same
+  sixteen frames for every particle, so a dense plume repeats visibly - the usual fix is several
+  variants picked per particle, which needs a second atlas axis or a random `anim_offset`.
+* Smoke is lit by Godot's own sun instead of the flat daylight modulation the original applies
+  (`opengl33particles.cpp:60-66`), and `E3DRenderingServer`'s `light_level` is not used for it.
+* The "cold engine smokes grey" rule of the original never ran - `particles.cpp:176` compares
+  where it meant to assign - and is not ported. It needs `dizel_heat.Ts`, which no `TrainPart`
+  exposes yet.
+* Emitters of a vehicle are not switched off when the vehicle is culled, only when its
+  `E3DModelInstance` is hidden; the original stops spawning beyond
+  `2 * BaseDrawRange * fDistanceFactor` for every source (`particles.cpp:452`), while the wrapper
+  streams only the scenery ones by `maszyna/rendering/smoke_distance`.
+
 * Normal maps are applied at `normal_scale` 1.0 like the original (`mat_normalmap.frag:46-48`);
   the `-5.0` that `material_factory.gd` used to set made bumps five times stronger and reversed.
   Not checked against the original yet: whether Godot's generated tangents match the original's
@@ -124,16 +166,59 @@
   but nothing is built. `road`/`river` need a flat surface path with no rail profile
   (`Track.cpp:1554` onwards); `cross` is a road intersection with four endpoints and no common
   point, which `TrackManager` has an enum value for but no topology or geometry support.
-* Scenery models are `E3DRenderingServer` RIDs with the `OPTIMIZED` instancer, which does not
-  render `SUBMODEL_FREE_SPOTLIGHT` submodels (no light RIDs) - the NODES instancer creates
-  `SpotLight3D`s for them. Scenery node `lights`/`lightcolors` are still ignored by
-  `maszyna_node_model_importer.gd`.
+* The lit submodel of a lamp keeps the colour its texture carries (sodium orange) while the light
+  it casts is tinted towards white by `maszyna/rendering/scenery_light_tint`, so the glowing head
+  and its pool do not match. Tinting the emission too means a material variant for `light_on*`
+  submodels: `E3DMaterialResolver` memoises one material per name and shares it across thousands
+  of placements, and in `elektryczne/latarnial_betdziur` the bulb and the lamp housing use the
+  same `elektryczne/oprawa` material - so it needs a flag in the resolver key, as `force_alpha`
+  already has, not a tint on the shared material.
+* A lamp still shadows its own light: in economy mode the single light in the middle throws the
+  arms and the pole across the pool as long dark spokes, and
+  `light_set_shadow_caster_mask(~SCENERY_LIGHT_OWNER_LAYER)` does **not** remove them - checked in
+  game on 2026-09-21. Either Godot's clustered renderer ignores that mask for spot and omni lights
+  (it honours it for directional), or the layer bit is not reaching the instances; measure which
+  before changing anything, with a scratchpad project that puts one box on a second layer under a
+  SpotLight3D and reads the rendered pixels. Fallbacks if the mask is a dead end:
+  `instance_geometry_set_cast_shadows_setting(..., OFF)` on the light-owning model (which also
+  loses its shadow from the sun) or no shadows in economy mode, where the spokes are an artefact
+  of the merge - with one light per arm the neighbours filled each other's shadows in.
+* An economy-mode merged light takes `energy` as the maximum of the lights it replaces, not their
+  sum, so a five-armed lamp is as bright as one arm; `maszyna/rendering/scenery_light_energy`
+  carries the difference.
+* Scenery light brightness is calibrated by eye so far, through
+  `maszyna/rendering/scenery_light_energy`, `scenery_light_tint` and
+  `scenery_light_volumetric_fog_energy`. The tint exists because a lamp colour used raw
+  (`(1.0, 0.66, 0.18)` for sodium) throws away most of the light's luminance; there is no
+  counterpart for it in the original, which never lit the scene with these lamps at all.
+* `elektryczne/latarnial_betdziur` registers a second light named `zarowka` (the E3D parser pairs
+  `zarowka_on`/`zarowka_off` by the `_on`/`_off` suffix rule, `e3d_parser.cpp:592`). A scenery
+  node's `lights` list only ever reaches light `00`, so nothing declares a mode for it and the
+  bulb inside the lamp housing stays on its "off" submodel. The original binds lights by the
+  `Light_On00..07` name alone (`AnimModel.cpp:303`) and has no such second light - check whether
+  the suffix rule should apply to scenery models at all.
+* `ls_Blink` (`E3DRenderingServer::LIGHT_MODE_BLINK`) follows `ls_Dark` instead of blinking, and
+  the smooth on/off transition of `m_lightopacities` (`AnimModel.cpp:500-548`) is not ported -
+  both need a per-frame timer, while the time of day is pushed once a second. `lights 2` is used
+  15 times in the whole data set and `notransition` never, so neither is worth a timer yet.
+* `Overcast` is folded into the light level by `MaszynaSkyEnvironment.get_light_level()` rather
+  than subtracted at the threshold as the original does (`AnimModel.cpp:598`).
 * Scenery models have no nodes, so they can't be picked/selected in the editor and don't follow
   the `MaszynaIncludeNode` transform/visibility (world-space, like tracks and traction).
 * An `include` with no filename shows up while parsing the real data dir
   (`maszyna_include_importer.gd` now reports it with the parser offset and skips it, instead of
   trying to open the scenery directory). The source is unknown - no asset declares a
   parameterised include path, so it is either a truncated file or a tokenizer misread.
+
+* `brake_release_hiss` (the `unbrake` label) is the one pneumatic brake event the brake factory
+  does not build - it still goes through `TrainSoundSystem._update_triggers()` with an
+  `MmdSoundEventBuilder` event, which is fed neither `gain` nor the `listener_inside` correction
+  the other hiss events now carry. It is therefore louder in the cab, relative to them.
+* The brake volume/unit-size factors are no longer Project Settings at all - they are
+  `TrainSoundSystem`'s own `VOLUME_FACTOR`/`EXTERIOR_VOLUME_FACTOR`/`CABIN_UNIT_SIZE_FACTOR`/
+  `EXTERIOR_UNIT_SIZE_FACTOR` constants, carrying what used to be the registered defaults
+  (2.0/1.0/2.0/1.0). The demo had been running with a `project.godot` override of 1.0 for the
+  first and third, so those two constants have not been verified by ear at 2.0.
 
 ## Tests
 

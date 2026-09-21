@@ -15,6 +15,7 @@ func _ready() -> void:
         "Camera", "Camera chunk", "Draw distance", "Chunks", "Chunks in range",
         "Registered", "Streamed in", "Pending builds", "Pending nearby", "Nearby ready",
         "Pending clears", "Planning", "Builds/s", "Budget", "Last pass", "Owners",
+        "Scenery lights",
     ]:
         _rows[caption] = _add_row(caption)
     _refresh()
@@ -57,6 +58,14 @@ func _refresh() -> void:
     _rows["Budget"].text = "%d ms/frame" % statistics["budget_msec"]
     _rows["Last pass"].text = "%d ms" % statistics["plan_msec"]
     _rows["Owners"].text = str(statistics["owners"])
+
+    # Real (spot/omni) lights of the streamed scenery models; "synth" are the ones the street lamp
+    # quirk derived for models that light the scene without declaring a spotlight submodel
+    var lights:Dictionary = E3DRenderingServer.get_light_statistics()
+    _rows["Scenery lights"].text = "%d lit / %d (%d spot, %d omni, %d synth)" % [
+        lights["lit"], lights["spot"] + lights["omni"], lights["spot"], lights["omni"],
+        lights["synthesized"],
+    ]
 
 
 func _add_row(caption:String) -> Label:

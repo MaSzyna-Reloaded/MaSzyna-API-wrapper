@@ -137,6 +137,7 @@ namespace godot {
             void _update_wheel_animation_state();
             void _update_track_transform();
             void _update_model_detail();
+            void _update_smoke();
             /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
             /// to be a Dictionary of three Vector3s, allocated and boxed again for every call, with
             /// get_global_transform() asked three times over.

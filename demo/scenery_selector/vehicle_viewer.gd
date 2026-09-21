@@ -3,11 +3,17 @@ extends Control
 ## Vehicle of a consist: its exterior model rotating in a SubViewport, its name and the skins
 ## found next to it (the .mat files of the vehicle). Shown in place of the scenery list.
 
-signal closed
+## Emitted whichever way the viewer goes away. by_back_button tells the back button apart from
+## accepting a skin and from the screen closing the viewer on its own - they are the same
+## transition but not the same gesture, and only one of them is a "back".
+signal closed(by_back_button: bool)
 ## The skin picked in the viewer was accepted
 signal skin_applied(skin: String)
 
 const ROTATION_SPEED: float = 0.35
+
+## Same bank the scenery selector uses - the viewer is its own scene and plays its own gestures.
+const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
 const FADE_TIME: float = 0.5
 ## Distance of the camera from the model, in model lengths
 const CAMERA_DISTANCE: float = 1.15
@@ -32,7 +38,13 @@ var _skin_buttons: Array[TextureButton] = []
 var _skin_index: int = -1
 ## Fading in or out; killed when the other fade starts, so they never fight over modulate
 var _fade_tween: Tween = null
+var _ui_sounds: SfxPlayer
 
+
+func _ready() -> void:
+    _ui_sounds = SfxPlayer.new()
+    _ui_sounds.bank = UI_SOUNDS
+    add_child(_ui_sounds)
 
 
 func _process(delta: float) -> void:
@@ -138,7 +150,7 @@ func _create_skin_entry(index: int) -> Control:
     button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
     button.set_anchors_preset(Control.PRESET_FULL_RECT)
     button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    button.pressed.connect(_select_skin.bind(index))
+    button.pressed.connect(_on_skin_pressed.bind(index))
     button.mouse_entered.connect(_on_skin_hovered.bind(index, true))
     button.mouse_exited.connect(_on_skin_hovered.bind(index, false))
     tile.add_child(button)
@@ -167,9 +179,16 @@ func _update_skin_selection() -> void:
         _set_skin_glow(index, SKIN_SELECTED_COLOR if index == _skin_index else Color.TRANSPARENT)
 
 
+func _on_skin_pressed(index: int) -> void:
+    _ui_sounds.play(&"skin_click")
+    _select_skin(index)
+
+
 func _on_skin_hovered(index: int, hovered: bool) -> void:
     if index == _skin_index:
         return
+    if hovered:
+        _ui_sounds.play(&"skin_hover")
     _set_skin_glow(index, SKIN_HOVER_COLOR if hovered else Color.TRANSPARENT)
 
 
@@ -200,7 +219,7 @@ func _load_skin_profile(button: TextureButton, skin: String) -> void:
 
 
 func _on_back_button_pressed() -> void:
-    close()
+    close(true)
 
 
 func _on_apply_button_pressed() -> void:
@@ -210,8 +229,8 @@ func _on_apply_button_pressed() -> void:
 
 
 ## Fades the viewer out; the scenery list fades in under it at the same time
-func close() -> void:
-    closed.emit()
+func close(by_back_button: bool = false) -> void:
+    closed.emit(by_back_button)
     if _fade_tween:
         _fade_tween.kill()
     _fade_tween = create_tween()

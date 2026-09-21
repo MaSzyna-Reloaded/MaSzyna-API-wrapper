@@ -16,7 +16,7 @@ static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 16
+const CACHE_FORMAT_VERSION:int = 17
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -626,7 +626,7 @@ static func _build_traction(traction_data:MaszynaTractionData, world_3d:World3D)
 ## the frame rate). The server loads the model and builds the instance once the streaming camera
 ## comes within the node's range of the chunk it falls into, and clears it when the camera leaves.
 static func _build_model(model_data:MaszynaModelData, world_3d:World3D) -> RID:
-    return E3DRenderingServer.instance_register(
+    var model_rid:RID = E3DRenderingServer.instance_register(
         model_data.data_path,
         model_data.model_filename,
         model_data.skins,
@@ -635,6 +635,12 @@ static func _build_model(model_data:MaszynaModelData, world_3d:World3D) -> RID:
         model_data.range_max,
         world_3d.scenario,
     )
+    # the declared modes outlive the streaming, so they are set once here and not on every build
+    if model_data.lights:
+        E3DRenderingServer.instance_set_lights_modes(model_rid, model_data.lights)
+    if model_data.light_colors:
+        E3DRenderingServer.instance_set_lights_colors(model_rid, model_data.light_colors)
+    return model_rid
 
 
 ## Mirrors _build_traction() - a tractionpowersource node has no visual representation, so this

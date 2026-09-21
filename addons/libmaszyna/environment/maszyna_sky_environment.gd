@@ -28,6 +28,27 @@ const SHADOW_CABIN_SPLIT_SETTINGS: Array[StringName] = [
 ## Godot's DirectionalLight3D defaults for the exterior, the cabin keeps most of the map up close
 const SHADOW_EXTERIOR_SPLITS: Array[float] = [0.1, 0.2, 0.5]
 const SHADOW_CABIN_SPLITS: Array[float] = [0.01, 0.02, 0.2]
+## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
+## original lights a scenery light set to "on when dark" below a light level of 0.325
+## (AnimModel.cpp:598), which on this ramp falls at about 1.4 degrees below the horizon. Both ends
+## have to stay clear of a winter noon - at 50 N the sun peaks at 16-19 degrees in January, so a
+## day threshold anywhere near that would light the whole town at midday (see FINDINGS.md).
+const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_night_altitude"
+const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_day_altitude"
+const LIGHT_LEVEL_NIGHT_ALTITUDE: float = -6.0
+const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
+## Overcast dims the key light in the original by this much at full cover
+## (simulationenvironment.cpp:163)
+const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
+## Skydome's volumetric fog volume is 8 m deep by day and 3 m by night. The volume is measured from
+## the camera, so a light shaft can only be seen while its lamp is inside it - at 3 m, never. This
+## stretches the volume; the density is divided by the same factor, which leaves the optical depth
+## (extinction per metre times length) - and so the look of the fog - unchanged. At 24 that is 72 m
+## by night and 192 m by day. Raising it further spreads the same froxel depth slices over more
+## metres, which softens the fog near the camera, and shafts still stop where the light's shadow
+## does (E3DRenderingServer.SCENERY_LIGHT_SHADOW_FADE_DISTANCE) - the two have to be raised together.
+const FOG_VOLUMETRIC_LENGTH_SCALE_SETTING: StringName = &"maszyna/rendering/fog_volumetric_length_scale"
+const FOG_VOLUMETRIC_LENGTH_SCALE_DEFAULT: float = 24.0
 const VOLUMETRIC_FOG_ENERGY_SETTING: StringName = &"maszyna/rendering/volumetric_fog_energy"
 ## MaszynaEnvironmentNode.fog_distance is scaled by these for the day and for the night fog of a
 ## sky backend that tells them apart; the night default keeps Skydome's own 200 m to 470 m ratio
@@ -76,11 +97,22 @@ const RAIN_FOG_DENSITY_DEFAULT: float = 0.6
 ## kilometres leaves the view in front of the camera as crisp as no fog at all.
 const FOG_VOLUMETRIC_FAR_FALLOFF_SETTING: StringName = &"maszyna/rendering/fog_volumetric_far_falloff"
 const FOG_VOLUMETRIC_FAR_FALLOFF_DEFAULT: float = 2.0
+## Floor under that falloff, as a share of the volumetric density at the reference distance. A
+## scenery that declares a fog of kilometres (stary_jawor_noc asks for 2-4 km, which becomes a
+## fog_distance of 2250-4500 m) drives the falloff to 0.01-0.04 and leaves the air by the camera
+## with no haze at all - and a street lamp with nothing to scatter in casts no visible shaft. Real
+## night air is never that clean, so the haze thins towards this share instead of towards nothing.
+const FOG_VOLUMETRIC_MINIMUM_SETTING: StringName = &"maszyna/rendering/fog_volumetric_minimum"
+const FOG_VOLUMETRIC_MINIMUM_DEFAULT: float = 0.25
 ## fog_distance of a scenery that declares its fog, as a multiple of the original's fog range
 const FOG_SCENERY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_scenery_distance_factor"
 const FOG_SCENERY_DISTANCE_FACTOR_DEFAULT: float = 1.5
 const FOG_DAY_DISTANCE_FACTOR_DEFAULT: float = 1.0
 const FOG_NIGHT_DISTANCE_FACTOR_DEFAULT: float = 0.4255
+
+## Wind speed the strength of the environment node maps onto, m/s
+const WIND_SPEED_MIN: float = 0.15
+const WIND_SPEED_MAX: float = 3.0
 
 var environment_node: Node
 
@@ -117,6 +149,30 @@ func _init(node: Node) -> void:
 
 
 @abstract func get_current_time() -> float
+
+
+## How bright the scene is, the equivalent of the original's Global.fLuminance
+## (simulationenvironment.cpp:184). It is what decides whether a scenery light that is set to come
+## on automatically is on: the original compares it against DefaultDarkThresholdLevel of 0.325
+## (AnimModel.cpp:598). A backend that cannot tell day from night returns 1.0 and leaves every such
+## light off.
+func get_light_level() -> float:
+    return 1.0
+
+
+## Unit vector the wind blows along. Horizontal for now - the environment node carries a compass
+## bearing - but a vector so that a backend with a vertical component needs no new API. The
+## original keeps one wind for the whole simulation (simulationenvironment.cpp:255-268) and the
+## smoke emitters drift with it.
+func get_wind_direction() -> Vector3:
+    var bearing:float = deg_to_rad((environment_node as MaszynaEnvironmentNode).wind_direction)
+    return Vector3(cos(bearing), 0.0, sin(bearing))
+
+
+## Wind speed in metres per second. A backend without weather of its own maps the environment
+## node's own 0-1 wind_strength onto WIND_SPEED_MIN..WIND_SPEED_MAX.
+func get_wind_strength() -> float:
+    return lerpf(WIND_SPEED_MIN, WIND_SPEED_MAX, (environment_node as MaszynaEnvironmentNode).wind_strength)
 
 
 func process(_delta: float) -> void:

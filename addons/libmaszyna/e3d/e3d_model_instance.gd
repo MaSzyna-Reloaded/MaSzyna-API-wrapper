@@ -168,11 +168,11 @@ func is_e3d_loaded() -> bool:
     return _e3d_loaded
 
 
-## Spawn rate multiplier and opacity of the model's particle emitters, as the engine state drives
-## them (see [method E3DRenderingServer.instance_set_smoke_state])
-func set_smoke_state(intensity:float, opacity:float) -> void:
+## Spawn rate multiplier of the model's particle emitters, as the engine state drives it
+## (see [method E3DRenderingServer.instance_set_smoke_intensity])
+func set_smoke_intensity(intensity:float) -> void:
     if _rid.is_valid():
-        E3DRenderingServer.instance_set_smoke_state(_rid, intensity, opacity)
+        E3DRenderingServer.instance_set_smoke_intensity(_rid, intensity)
 
 
 func _create_instance() -> void:

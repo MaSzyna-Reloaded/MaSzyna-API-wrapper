@@ -241,8 +241,27 @@ func _enter_tree():
     # step and caps it at 500 per source at the lowest smoke fidelity (particles.cpp:122-133).
     add_custom_project_setting(
         "maszyna/rendering/smoke_max_particles", 500, TYPE_INT,
-        PROPERTY_HINT_RANGE, "16,4000,1"
+        PROPERTY_HINT_RANGE, "16,8000,1"
     )
+    # How many particles an emitter spawns per second, over what its template asks for. Each one is
+    # made correspondingly fainter, so a denser plume comes out smoother rather than darker - the
+    # original's gfx.smoke.fidelity works the same way (particles.cpp:73, :128, :165). The particle
+    # budget above has to leave room for it.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_density", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.25,8.0,0.25"
+    )
+    # Which sprite a smoke particle is drawn with. "Original" is the single round blob the original
+    # binds for every emitter (opengl33renderer.cpp:105); "Modern" walks a flipbook over the
+    # particle's lifetime, so a puff wells up, breaks into wisps and dissolves on its own.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_generator_mode", 0,
+        TYPE_INT, PROPERTY_HINT_ENUM, "Original,Modern"
+    )
+    # The flipbook "Modern" uses. Empty here on purpose: the addon only exposes the slot, the
+    # project that ships the asset fills it in (the demo points it at res://vfx/smoke_atlas.png).
+    add_custom_project_setting("maszyna/rendering/smoke_atlas", "", TYPE_STRING, PROPERTY_HINT_FILE, "*.png")
+    add_custom_project_setting("maszyna/rendering/smoke_atlas_frames", Vector2i(4, 4), TYPE_VECTOR2I)
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,

@@ -34,14 +34,23 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   `spawn_rate * intensity * delta` per emitter and calls `particles_emit()` that many times -
   the original's own `m_spawncount` model (`particles.cpp:157-212`). Live particles are never
   touched, so the plume thins and fades on its own.
-* **Also not a spawn rate:** an earlier attempt drove `ParticleProcessMaterial.color`'s alpha from
-  `dizel_fill`. That multiplies every live particle on every frame, so the whole plume blinked
-  whenever the Mover floored `dizel_fill` at 0.05. The original scales the opacity in the spawn
-  routine (`particles.cpp:330`), so it reaches only new particles - here it rides
-  `color_initial_ramp`, which is sampled once at spawn.
-* **Rule:** anything that should affect only the particles born from now on must go through a
-  spawn-time channel (manual emission, `color_initial_ramp`), never through a process-material
-  uniform or `amount_ratio`, both of which reach back into the particles already in the air.
+* **The same bug twice more, in the opacity:** `dizel_fill` was first pushed into
+  `ParticleProcessMaterial.color`'s alpha. That multiplies every live particle on every frame, so
+  the whole plume stepped down together whenever the Mover floored `dizel_fill` at 0.05
+  (`Mover.cpp:5508`). Moving it to `color_initial_ramp` changed nothing: that gradient is read
+  every frame too, at a coordinate that is random per particle but fixed for its life, so editing
+  the gradient reaches every particle already in the air just the same.
+* **Fix:** nothing modulates opacity at runtime at all. The template's own random initial opacity
+  is written into `color_initial_ramp` once, when the emitter is built, and never touched again;
+  `dizel_fill` is folded into the spawn rate instead (`RailVehicle3D::_update_smoke()`), so a
+  notch down means fewer new particles and the plume thins out. That is a deliberate divergence -
+  the original scales a particle's opacity at birth (`particles.cpp:330`) and Godot has no
+  equivalent channel that does not also reach backwards.
+* **Rule:** a `ParticleProcessMaterial` uniform is *not* a spawn-time channel, whatever its name
+  suggests - `color`, `color_initial_ramp` and `amount_ratio` all reach the particles already in
+  the air. The only things that affect just the particles born from now on are the emission
+  itself (how many, and what `particles_emit()` is handed) and constants fixed before the first
+  one is born. When a change should not touch what is already flying, it goes into the rate.
 
 ### A state key published by one engine part only
 

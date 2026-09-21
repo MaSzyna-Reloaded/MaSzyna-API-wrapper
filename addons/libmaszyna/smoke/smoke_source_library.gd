@@ -13,8 +13,25 @@ extends Node
 ## The original's gfx.smoke.fidelity caps a source at 500 * fidelity particles (particles.cpp:128)
 const MAX_PARTICLES_SETTING:String = "maszyna/rendering/smoke_max_particles"
 const DEFAULT_MAX_PARTICLES:int = 500
+## Multiplies how many particles an emitter spawns per second, over what its template asks for.
+## Each one is made correspondingly fainter, so a denser plume is smoother rather than darker -
+## the original's gfx.smoke.fidelity does the same (particles.cpp:73, :128, :165).
+const DENSITY_SETTING:String = "maszyna/rendering/smoke_density"
+const DEFAULT_DENSITY:float = 1.0
 ## The one smoke texture the original uses for every emitter (opengl33renderer.cpp:105)
 const SMOKE_TEXTURE:String = "fx/smoke"
+
+## Which sprite a particle is drawn with. ORIGINAL is the single round blob the original binds for
+## every emitter; MODERN walks a flipbook over the particle's lifetime, so a puff wells up, breaks
+## into wisps and dissolves on its own.
+enum GeneratorMode {ORIGINAL, MODERN}
+
+const GENERATOR_MODE_SETTING:String = "maszyna/rendering/smoke_generator_mode"
+## Path of the flipbook MODERN uses. Empty in the addon - the slot is filled by the project that
+## ships the asset (the demo sets it to res://vfx/smoke_atlas.png).
+const ATLAS_SETTING:String = "maszyna/rendering/smoke_atlas"
+## Columns and rows of that flipbook
+const ATLAS_FRAMES_SETTING:String = "maszyna/rendering/smoke_atlas_frames"
 
 ## cParser stop characters of the template grammar (particles.cpp:24); the braces are tokens of
 ## their own and must not be listed here
@@ -140,9 +157,10 @@ static func _parse_block(
 
 
 func _build_render_data(source:MaszynaSmokeSource, template_name:String) -> Dictionary:
+    var density:float = maxf(ProjectSettings.get_setting(DENSITY_SETTING, DEFAULT_DENSITY), 0.0)
     var lifetime:float = source.get_particle_lifetime()
     var amount:int = source.get_particle_amount(
-        ProjectSettings.get_setting(MAX_PARTICLES_SETTING, DEFAULT_MAX_PARTICLES))
+        ProjectSettings.get_setting(MAX_PARTICLES_SETTING, DEFAULT_MAX_PARTICLES), density)
     if not lifetime or not amount:
         # the original divides the spawn rate by the fade step and lands on infinity here
         push_warning("[SmokeSourceLibrary] Template emits nothing: %s" % template_name)
@@ -152,20 +170,19 @@ func _build_render_data(source:MaszynaSmokeSource, template_name:String) -> Dict
     var reach:float = source.velocity_max * lifetime + terminal_size
 
     return {
-        "process_material": _build_process_material(source, lifetime),
+        "process_material": _build_process_material(source, lifetime, density),
         "mesh": _build_mesh(),
         "amount": amount,
         "lifetime": lifetime,
-        "spawn_rate": source.spawn_rate,
-        "opacity_min": source.opacity_min,
-        "opacity_max": source.opacity_max,
+        "spawn_rate": source.spawn_rate * density,
         "aabb": AABB(
             Vector3(-reach, -terminal_size, -reach),
             Vector3(reach * 2.0, reach + terminal_size * 2.0, reach * 2.0)),
     }
 
 
-func _build_process_material(source:MaszynaSmokeSource, lifetime:float) -> ParticleProcessMaterial:
+func _build_process_material(
+        source:MaszynaSmokeSource, lifetime:float, density:float) -> ParticleProcessMaterial:
     var material:ParticleProcessMaterial = ParticleProcessMaterial.new()
     # the original launches every particle along the owner's up axis, within the inclination cone
     # (particles.cpp:58-76)
@@ -179,8 +196,11 @@ func _build_process_material(source:MaszynaSmokeSource, lifetime:float) -> Parti
     material.scale_max = source.size_max
     material.scale_curve = _build_curve(1.0, source.get_terminal_size() / maxf(source.get_mean_size(), 0.001))
     material.color = source.color
-    material.color_initial_ramp = _build_opacity_ramp(source)
+    material.color_initial_ramp = _build_opacity_ramp(source, density)
     material.alpha_curve = _build_curve(1.0, 0.0)
+    # the flipbook is walked exactly once over the particle's lifetime
+    material.anim_speed_min = 1.0
+    material.anim_speed_max = 1.0
     # Neither engine applies gravity. E3DRenderingServer overwrites this with the wind drift
     # (set_wind()); the vertical decay of particles.cpp:365-380 is still not ported (see TODO.md).
     material.gravity = Vector3.ZERO
@@ -198,7 +218,16 @@ func _build_mesh() -> QuadMesh:
     material.cull_mode = BaseMaterial3D.CULL_DISABLED
     # the original draws the particles with depth writes off (openglrenderer.cpp:3315)
     material.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
-    material.albedo_texture = MaterialManager.load_texture("", SMOKE_TEXTURE)
+    var atlas:Texture2D = get_atlas()
+    if atlas:
+        var frames:Vector2i = ProjectSettings.get_setting(ATLAS_FRAMES_SETTING, Vector2i(4, 4))
+        material.albedo_texture = atlas
+        material.particles_anim_h_frames = maxi(frames.x, 1)
+        material.particles_anim_v_frames = maxi(frames.y, 1)
+        # one pass over the flipbook per particle, not a loop
+        material.particles_anim_loop = false
+    else:
+        material.albedo_texture = MaterialManager.load_texture("", SMOKE_TEXTURE)
 
     var mesh:QuadMesh = QuadMesh.new()
     mesh.size = Vector2.ONE
@@ -206,12 +235,28 @@ func _build_mesh() -> QuadMesh:
     return mesh
 
 
+## The flipbook of the MODERN generator mode, or null when the mode is ORIGINAL or the project
+## filled in no atlas - in which case a particle is drawn with the original's single sprite.
+func get_atlas() -> Texture2D:
+    if not ProjectSettings.get_setting(GENERATOR_MODE_SETTING, GeneratorMode.ORIGINAL) == GeneratorMode.MODERN:
+        return null
+    var path:String = ProjectSettings.get_setting(ATLAS_SETTING, "")
+    if not path:
+        push_warning("[SmokeSourceLibrary] Modern smoke needs %s; falling back to the original sprite"
+            % ATLAS_SETTING)
+        return null
+    return load(path) as Texture2D
+
+
 ## Random initial opacity per particle, the original's LocalRandom(opacity[min], opacity[max])
 ## (particles.cpp:73)
-func _build_opacity_ramp(source:MaszynaSmokeSource) -> GradientTexture1D:
+## Each particle is divided by the density, so twice as many of them add up to the same plume
+## instead of twice the soot (particles.cpp:73)
+func _build_opacity_ramp(source:MaszynaSmokeSource, density:float) -> GradientTexture1D:
+    var scale:float = 1.0 / maxf(density, 0.001)
     var gradient:Gradient = Gradient.new()
-    gradient.set_color(0, Color(1.0, 1.0, 1.0, source.opacity_min))
-    gradient.set_color(1, Color(1.0, 1.0, 1.0, source.opacity_max))
+    gradient.set_color(0, Color(1.0, 1.0, 1.0, source.opacity_min * scale))
+    gradient.set_color(1, Color(1.0, 1.0, 1.0, source.opacity_max * scale))
     var texture:GradientTexture1D = GradientTexture1D.new()
     texture.gradient = gradient
     return texture

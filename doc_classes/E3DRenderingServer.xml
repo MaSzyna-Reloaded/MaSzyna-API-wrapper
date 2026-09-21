@@ -96,13 +96,13 @@
 				Scenario of an [constant INSTANCER_OPTIMIZED] instance. Rebuilds an already built instance.
 			</description>
 		</method>
-		<method name="instance_set_smoke_state">
+		<method name="instance_set_smoke_intensity">
 			<return type="void" />
 			<param index="0" name="instance" type="RID" />
 			<param index="1" name="intensity" type="float" />
-			<param index="2" name="opacity" type="float" />
 			<description>
-				Spawn rate multiplier and opacity of every particle emitter of the instance, as the engine state drives them. Both default to [code]1.0[/code], which is the emitter template's own rate - what a scenery chimney keeps.
+				Spawn rate multiplier of every particle emitter of the instance, as the engine state drives it. [code]1.0[/code] is the emitter template's own rate - what a scenery chimney keeps.
+				Only the rate: nothing here may reach a particle that is already in the air. Both the process material's colour and its initial colour ramp are read on every frame, so driving either of them from the engine state steps the whole plume down together instead of letting it thin out.
 			</description>
 		</method>
 		<method name="instance_set_transform">

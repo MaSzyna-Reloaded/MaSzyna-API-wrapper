@@ -131,9 +131,6 @@ namespace godot {
                     RID particles;
                     RID particles_instance;
                     Ref<ParticleProcessMaterial> process_material;
-                    /// Opacity range the template declares, which the driven opacity scales
-                    float opacity_min = 1.0;
-                    float opacity_max = 1.0;
                     /// Reach of the plume around the emitter, in its own space; the particles are
                     /// left behind rather than carried, so the box follows the emitter and not the
                     /// plume - a fast vehicle's trail is culled with its emitter (see TODO.md)
@@ -148,7 +145,6 @@ namespace godot {
                     /// instance up
                     Transform3D transform;
                     bool visible = true;
-                    float opacity = 1.0;   // multiplies the template's own opacity
                     RID stream_rid;        // SceneryStreamingServer registration, scenery emitters only
                     bool streamed_in = false;
             };
@@ -220,7 +216,6 @@ namespace godot {
             void _update_instance_smoke(const E3DInstanceData &p_instance_data);
             static Transform3D _smoke_transform(const E3DInstanceData &p_instance_data, const SmokeObject &p_smoke);
             static void _apply_smoke_placement(const E3DInstanceData &p_instance_data, SmokeObject &p_smoke);
-            static void _apply_smoke_opacity(const SmokeObject &p_smoke);
             void _apply_smoke_wind(const SmokeObject &p_smoke) const;
             void _update_wind();
             /// Connected to SceneTree's process_frame while any emitter exists, the way
@@ -273,10 +268,17 @@ namespace godot {
             /// total/lit/spot/omni/synthesized, for the scenery streaming debug panel
             Dictionary get_light_statistics() const;
 
-            /// Spawn rate multiplier and opacity of every emitter of the instance, as the engine
-            /// state drives them (particles.cpp:172-211, :330). Both default to 1.0, which is the
-            /// template's own rate - what a scenery chimney keeps.
-            void instance_set_smoke_state(const RID &p_instance, float p_intensity, float p_opacity);
+            /// Spawn rate multiplier of every emitter of the instance, as the engine state drives
+            /// it. 1.0 is the template's own rate - what a scenery chimney keeps.
+            ///
+            /// Only the rate. Nothing here may reach a particle that is already in the air: both
+            /// the process material's colour and its initial colour ramp are read every frame, so
+            /// driving either of them from the engine state made the whole plume step down
+            /// together instead of thinning out (see FINDINGS.md). The original scales the
+            /// opacity of a particle by dizel_fill in its spawn routine (particles.cpp:330);
+            /// Godot's only spawn-time channel is the emission itself, so dizel_fill is folded
+            /// into the rate by the caller.
+            void instance_set_smoke_intensity(const RID &p_instance, float p_intensity);
             /// total/built, for the scenery streaming debug panel
             Dictionary get_smoke_statistics() const;
 

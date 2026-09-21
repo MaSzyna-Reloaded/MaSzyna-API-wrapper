@@ -1048,10 +1048,13 @@ namespace godot {
             }
         }
 
-        // the original lets the deficit go negative and subtracts from the particle budget
-        model_node->call(
-                "set_smoke_state", CLAMP(intensity, 0.0, 1.0),
-                CLAMP(double(state.get("diesel_fill", 0.0)), 0.0, 1.0));
+        // dizel_fill scales the opacity of a newly born particle in the original
+        // (particles.cpp:330). Godot has no channel for that which does not also reach the
+        // particles already in the air, so it scales how many are born instead - the plume thins
+        // out rather than stepping down as a whole (see FINDINGS.md). The original also lets the
+        // revolutions deficit go negative and subtract from the particle budget; this clamps.
+        const double fill = CLAMP(double(state.get("diesel_fill", 0.0)), 0.0, 1.0);
+        model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
     void RailVehicle3D::_update_track_transform() {

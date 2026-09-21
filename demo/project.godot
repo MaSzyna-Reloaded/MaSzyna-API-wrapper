@@ -453,6 +453,10 @@ rendering/scenery_light_energy=2.0
 rendering/scenery_light_volumetric_fog_energy=16.0
 rendering/fog_night_distance_factor=6.0
 rendering/scenery_lamp_light_attenuation=0.10000000000000002
+rendering/smoke_generator_mode=1
+rendering/smoke_density=3.0
+rendering/smoke_max_particles=2000
+rendering/smoke_atlas="res://vfx/smoke_atlas.png"
 
 [physics]
 

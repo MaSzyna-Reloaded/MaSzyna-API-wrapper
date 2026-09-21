@@ -84,6 +84,12 @@
   particle's own random initial opacity divided by the fade step (`particles.cpp:132`). The
   wrapper takes the longest of them and fades every particle linearly over it, so a particle that
   started faint stays faintly visible longer than it should.
+* The "Modern" generator mode's flipbook (`demo/vfx/smoke_atlas.png`) is generated procedurally by
+  `scripts/make_smoke_atlas.py` - a fBm puff that expands, erodes and thins over sixteen frames.
+  It is a stand-in for real authored or simulated smoke; replacing it needs no code, only the
+  `maszyna/rendering/smoke_atlas` and `smoke_atlas_frames` settings. The flipbook is also the same
+  sixteen frames for every particle, so a dense plume repeats visibly - the usual fix is several
+  variants picked per particle, which needs a second atlas axis or a random `anim_offset`.
 * Smoke is lit by Godot's own sun instead of the flat daylight modulation the original applies
   (`opengl33particles.cpp:60-66`), and `E3DRenderingServer`'s `light_level` is not used for it.
 * The "cold engine smokes grey" rule of the original never ran - `particles.cpp:176` compares

@@ -43,9 +43,10 @@ func get_particle_lifetime() -> float:
 
 
 ## How many particles the emitter may hold at once - the spawn rate over one lifetime, capped the
-## way the original caps it (particles.cpp:128)
-func get_particle_amount(max_particles:int) -> int:
-    return clampi(ceili(spawn_rate * get_particle_lifetime()), 0, max_particles)
+## way the original caps it (particles.cpp:128). [param density] multiplies the rate, so the pool
+## has to grow with it or the emitter runs out of slots and stops spawning.
+func get_particle_amount(max_particles:int, density:float = 1.0) -> int:
+    return clampi(ceili(spawn_rate * density * get_particle_lifetime()), 0, max_particles)
 
 
 ## Terminal billboard size of a particle that lives a full lifetime

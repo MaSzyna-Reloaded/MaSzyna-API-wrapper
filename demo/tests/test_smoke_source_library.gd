@@ -5,6 +5,20 @@ extends MaszynaGutTest
 ## directory is not read.
 
 const FIXTURE:String = "res://tests/fixtures/test_smokesource.txt"
+const ATLAS:String = "res://vfx/smoke_atlas.png"
+
+var _previous_mode:int = 0
+var _previous_atlas:String = ""
+
+
+func before_each() -> void:
+    _previous_mode = ProjectSettings.get_setting(SmokeSourceLibrary.GENERATOR_MODE_SETTING, 0)
+    _previous_atlas = ProjectSettings.get_setting(SmokeSourceLibrary.ATLAS_SETTING, "")
+
+
+func after_each() -> void:
+    ProjectSettings.set_setting(SmokeSourceLibrary.GENERATOR_MODE_SETTING, _previous_mode)
+    ProjectSettings.set_setting(SmokeSourceLibrary.ATLAS_SETTING, _previous_atlas)
 
 
 func _parse() -> MaszynaSmokeSource:
@@ -42,3 +56,24 @@ func test_terminal_size_follows_the_linear_growth() -> void:
     # mean initial size 0.4, growing by 0.8 per second over 4 seconds, under the 40.0 limit
     assert_almost_eq(source.get_terminal_size(), 3.6, 0.001, "size grows linearly over the lifetime")
 
+
+
+func test_modern_mode_draws_the_particles_with_the_flipbook() -> void:
+    ProjectSettings.set_setting(
+        SmokeSourceLibrary.GENERATOR_MODE_SETTING, SmokeSourceLibrary.GeneratorMode.MODERN)
+    ProjectSettings.set_setting(SmokeSourceLibrary.ATLAS_SETTING, ATLAS)
+
+    var atlas:Texture2D = SmokeSourceLibrary.get_atlas()
+
+    assert_not_null(atlas, "Modern mode draws the particles with the project's own atlas")
+    var frames:Vector2i = ProjectSettings.get_setting(SmokeSourceLibrary.ATLAS_FRAMES_SETTING, Vector2i.ONE)
+    assert_eq(atlas.get_width() % frames.x, 0, "The atlas splits into whole columns")
+    assert_eq(atlas.get_height() % frames.y, 0, "The atlas splits into whole rows")
+
+
+func test_original_mode_keeps_the_single_sprite() -> void:
+    ProjectSettings.set_setting(
+        SmokeSourceLibrary.GENERATOR_MODE_SETTING, SmokeSourceLibrary.GeneratorMode.ORIGINAL)
+    ProjectSettings.set_setting(SmokeSourceLibrary.ATLAS_SETTING, ATLAS)
+
+    assert_null(SmokeSourceLibrary.get_atlas(), "Original mode uses no flipbook at all")

@@ -1,8 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "E3DRenderingServer.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
-#include <godot_cpp/classes/gradient.hpp>
-#include <godot_cpp/classes/gradient_texture1_d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
@@ -64,8 +62,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light_disable", "light"), &E3DRenderingServer::light_disable);
         ClassDB::bind_method(D_METHOD("get_light_statistics"), &E3DRenderingServer::get_light_statistics);
         ClassDB::bind_method(
-                D_METHOD("instance_set_smoke_state", "instance", "intensity", "opacity"),
-                &E3DRenderingServer::instance_set_smoke_state);
+                D_METHOD("instance_set_smoke_intensity", "instance", "intensity"),
+                &E3DRenderingServer::instance_set_smoke_intensity);
         ClassDB::bind_method(D_METHOD("get_smoke_statistics"), &E3DRenderingServer::get_smoke_statistics);
         ClassDB::bind_method(D_METHOD("set_current_time", "hours"), &E3DRenderingServer::set_current_time);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &E3DRenderingServer::set_light_level);
@@ -663,24 +661,6 @@ namespace godot {
         rs->instance_set_transform(p_smoke.particles_instance, p_smoke.transform);
     }
 
-    /// dizel_fill scales the initial opacity of a particle in the original, in the spawn routine
-    /// (particles.cpp:330), so it reaches only the particles born after the change. It rides the
-    /// initial colour ramp here for the same reason: the process material's own colour is applied
-    /// to every live particle on every frame, and driving it from the engine state made the whole
-    /// plume blink off the moment the Mover floored dizel_fill at 0.05 (Mover.cpp:5508).
-    void E3DRenderingServer::_apply_smoke_opacity(const SmokeObject &p_smoke) {
-        if (p_smoke.process_material.is_null()) {
-            return;
-        }
-        const Ref<GradientTexture1D> ramp = p_smoke.process_material->get_color_initial_ramp();
-        if (ramp.is_null() || ramp->get_gradient().is_null()) {
-            return;
-        }
-        const Ref<Gradient> gradient = ramp->get_gradient();
-        gradient->set_color(0, Color(1.0, 1.0, 1.0, p_smoke.opacity_min * p_smoke.opacity));
-        gradient->set_color(1, Color(1.0, 1.0, 1.0, p_smoke.opacity_max * p_smoke.opacity));
-    }
-
     void E3DRenderingServer::_apply_smoke_wind(const SmokeObject &p_smoke) const {
         if (p_smoke.process_material.is_null()) {
             return;
@@ -707,15 +687,9 @@ namespace godot {
         if (process_material.is_null() || mesh.is_null()) {
             return; // the library already reported why
         }
-        smoke->opacity_min = source.get("opacity_min", 1.0);
-        smoke->opacity_max = source.get("opacity_max", 1.0);
-        // A driven emitter writes its opacity into the colour ramp, so it may share neither the
-        // template's material nor the ramp under it with every other model using that template
-        if (!instance->stream_rid.is_valid()) {
-            process_material = process_material->duplicate(true);
-        }
+        // Shared with every other emitter of the same template on purpose: nothing per instance
+        // writes into it. The only thing that does is the wind, which is the whole world's.
         smoke->process_material = process_material;
-        _apply_smoke_opacity(*smoke);
         _apply_smoke_wind(*smoke);
 
         smoke->amount = source.get("amount", 1);
@@ -808,20 +782,13 @@ namespace godot {
         }
     }
 
-    void
-    E3DRenderingServer::instance_set_smoke_state(const RID &p_instance, const float p_intensity, const float p_opacity) {
+    void E3DRenderingServer::instance_set_smoke_intensity(const RID &p_instance, const float p_intensity) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
-        RenderingServer *rs = RenderingServer::get_singleton();
-        ERR_FAIL_NULL(rs);
         for (const RID &smoke_rid: instance->smoke_objects) {
-            SmokeObject *smoke = smoke_objects.getptr(smoke_rid);
-            if (smoke == nullptr) {
-                continue;
+            if (SmokeObject *smoke = smoke_objects.getptr(smoke_rid); smoke != nullptr) {
+                smoke->intensity = p_intensity;
             }
-            smoke->intensity = p_intensity;
-            smoke->opacity = p_opacity;
-            _apply_smoke_opacity(*smoke);
         }
     }
 

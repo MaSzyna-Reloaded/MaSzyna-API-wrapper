@@ -7,3 +7,9 @@
 [submodule "vendor/gnd-sfx"]
     path = vendor/gnd-sfx
     url = https://github.com/GamesNotDeveloped/godot-sfx.git
+[submodule "addons/libmaszyna"]
+	path = addons/libmaszyna
+	url = https://github.com/MaSzyna-Reloaded/libmaszyna.git
+[submodule "demo"]
+	path = demo
+	url = https://github.com/MaSzyna-Reloaded/maszyna-reloaded.git

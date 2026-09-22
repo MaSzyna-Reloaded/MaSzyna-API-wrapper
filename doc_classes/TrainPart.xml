@@ -24,7 +24,7 @@
 				Emits the "config_changed" signal
 			</description>
 		</method>
-		<method name="get_mover_state">
+		<method name="get_state">
 			<return type="Dictionary" />
 			<description>
 				Returns dictionary ov properties with values from iternal mover
@@ -98,7 +98,7 @@
 				This is a shortcut for [method TrainSystem.unregister_command].
 			</description>
 		</method>
-		<method name="update_mover">
+		<method name="apply_config">
 			<return type="void" />
 			<description>
 				Performs update on an iternal mover of [TrainController]

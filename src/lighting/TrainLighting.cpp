@@ -60,7 +60,11 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         p_state["light_position"] = p_mover->LightsPosNo;
         p_state["light_power"] = p_mover->LightPower;
-        p_state["power_source"] = train_controller_node->tpower_source_map.at(p_mover->LightPowerSource.SourceType);
+        // named for what it is: the LIGHT power source. It used to be published as
+        // "power_source", the same key TrainElectricEngine publishes its EnginePowerSource
+        // under, so on an electric loco with lighting whichever part merged last won.
+        p_state["light_power_source"] =
+                train_controller_node->tpower_source_map.at(p_mover->LightPowerSource.SourceType);
 
         // Confirmed against vehicle/Train.cpp:9199-9208 - the i-upperlight/i-leftlight/etc.
         // indicator lamps read the mover's own already-resolved per-end light bitmask

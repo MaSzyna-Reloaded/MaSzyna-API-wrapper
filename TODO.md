@@ -1,5 +1,74 @@
 # TODO
 
+## Architecture rework (#184) - remaining stages
+
+Seven stages, planned together; stage 1 (the three prohibitions in `AGENTS.md`/`CODE_STYLE.md`,
+the four read side effects, the coupler counters leaving the vehicle, the `get_mover_state()` /
+`update_mover()` / `step_movers()` rename, the `power_source` collision) is done. Each stage is one
+PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
+
+* **Stage 0 - the baseline bench.** `demo/tests/test_vehicle_state_bench.gd`: N synthetic vehicles
+  on a **fixture** track (`demo/tests/fixtures/`, never the game dir), `Time.get_ticks_usec()`
+  around the server tick, the state build, and a `TrainSoundSystem`-shaped read of 30 keys per
+  vehicle. Asserts correctness only and prints the timings - a time assertion in CI is a flake.
+  Measure with `make compile-profiling`; `compile-debug` builds the vendored `Mover.cpp` at `-O0`.
+  The fixture must put the vehicles on a real track: one without a track has a NaN transform and
+  is never culled, so the bench would measure the wrong path (`FINDINGS.md`, 2026-09-22). Still
+  outstanding - stage 1 was done first, so its win is not yet measured.
+* **Stage 2 - `TrackManager` to C++.** `track_manager.gd` (1023 lines), `spatial_index.gd` (55),
+  keeping `maszyna_track_curve.gd` a GDScript `Resource`. Same method, constant and signal names,
+  so `Track3D`/`TrackNormal3D` and ~40 call sites are untouched. `_ENDPOINT_EPSILON` stays 0.02 m
+  compared per axis (`FINDINGS.md`, 2026-09-20). The switch animation loses `create_tween()` and
+  integrates on `process_frame`, connected only while a switch moves. The real cost of this stage
+  is not the port: GDExtension flattens enums (`TrackManager.TrackType.TRACK_NORMAL` becomes
+  `TrackManager.TRACK_TYPE_NORMAL`, ~330 sites) and inner classes (`EndpointRef` ~35 uses,
+  `BranchNeighbors`, `TrackSegment`) have no equivalent and become registered classes. Rename the
+  physics server's own inner `VehicleState` (track placement) to `VehicleTrackPlacement` first, so
+  two different things do not share a name during stage 3.
+* **Stage 3 - three servers, interfaces, and ownership of the Mover.** `BaseVehiclePhysicsServer`
+  (abstract contract, its own RIDs) + `MaszynaMoverPhysicsServer` (the only place that knows
+  `TMoverParameters`, factories `MoverVehicleController`/`MoverVehicle*`) + `RailVehicleServer`
+  (today's `RailVehiclePhysicsServer`: track placement, movement, switches, neighbour scan,
+  transforms), whose `vehicle_create(RID physics_vehicle)` binds the two RIDs - the shape
+  `TrackRenderingServer.create_track(track_rid)` already has. Built in the target shape directly,
+  not as a 1:1 port. `TrainController` -> `VehicleController`, `TrainPart` -> `VehicleComponent`,
+  `GenericTrainPart` -> `GenericVehicleComponent`, proxy nodes gaining the `Node` suffix; the
+  rename is its own commit at the head of the stage, and it bumps `structure-vN` in the same one
+  because vehicle templates are cached as `PackedScene`. `TrainSystem::step_vehicles()` is deleted
+  (the caller is C++ now). The tick hangs off `process_frame` with idle shutdown, and the server
+  **pushes** the transform onto the vehicle's `Node3D` at the end of it - `process_frame` fires
+  after every node's `_process`, so pulling it would bring back the judder that
+  `process_priority = -100` used to prevent.
+* **Stage 4 - property registry, `VehicleState`, fast getters.** State becomes pulled, not pushed:
+  a component declares its properties once and nothing is computed until someone asks. Five levels
+  of access, all keyed by the vehicle RID on `RailVehicleServer`, which forwards to the backend:
+  typed hot getters, a name resolved once to an id, the `VehicleState` proxy (`RefCounted`, holds
+  the RID, `_get`/`_get_property_list`, `_set` refused), a batched `read_floats()` for the many-
+  values readers, and `vehicle_get_state_snapshot()` as the compatibility shim that keeps ~35
+  tests unmodified. A duplicate property name is `ERR_FAIL` at module init, naming both owners.
+  Change detection moves to `watched` descriptors compared in the tick. Then the ~230 properties
+  of the 19 components are ported, smallest first.
+* **Stage 5 - components, phases, proxy nodes.** An `UpdatePhase` enum orders both the `configure`
+  and the `tick` pass; the phase list must be checked against the Mover's own internal order and
+  against the three ordering bugs on record (#57 line breaker, `Mred`, `roof_light_enabled`) before
+  it is frozen. `Mred` gets one writer here. Native components enter through
+  `vehicle_component_create(vehicle, class)`, scripted ones through
+  `generic_component_create(vehicle, Callable, phase)` - two names, so the interface says which is
+  which. `TrainPart::_process` and the `FIXME(#57, #184)` in `TrainSystem::send_command` go away.
+  `test_vehicle_doors.gd` has to exist first: `TrainDoors` is one of the three components that
+  really tick and has no test at all.
+* **Stage 6 - `train_id` and removing the shims.** `train_id` moves to `RailVehicle3D` as its only
+  writer (two vehicles with an empty one collide today - `dynamic_rail_vehicle_3d.gd:45-49`);
+  `TrainSystem` keeps `train_id -> RID`. The vehicle record is still created by the controller
+  node, because ~40 tests instantiate one without a `RailVehicle3D` and two creation paths would
+  be the same work done twice. Then the snapshot/`Dictionary` shims are deleted.
+
+Traps that apply to every stage: bump the cache tag in the same commit as the code whose output is
+cached (`FIZ_PARSER_FORMAT_VERSION`, `MaterialManager.CACHE_VERSION`, `E3DModel.FORMAT_VERSION`,
+`structure-vN`); run `godot-double --headless --import` before believing an "Identifier not
+declared" after adding a class; never pass a bare `[]`/`{}` to a typed collection parameter; add a
+`doc_classes/<Class>.xml` for every registered C++ class.
+
 ## Cabins
 
 * `VirtualCabin` for cabs without a hi-fi model (MMD `cabNmodel: none` or missing, e.g. su46
@@ -240,6 +309,11 @@
   shows, and fabricated vehicles (`RailVehicle3D`, a cabin with only the controls under test,
   `TrainController` with a trimmed `.fiz`/`.mmd`, no e3d) - copied and cut from what the data-dir
   scenery parses into.
+* `test_sm42_startup_sequence.gd::test_successful_moving_on` fails - "Speed should be > 0" at
+  line 69, the vehicle never starts moving after the startup sequence. Confirmed pre-existing on
+  a clean tree (stash the work, rebuild, run: it fails the same way), so it is not a regression of
+  the #184 work - but it is a red test nobody is looking at, and it is the only test covering that
+  the startup sequence ends in motion.
 * Tests switch the game dir with `UserSettings.save_maszyna_game_dir()`, which writes the user's
   `settings.cfg` (a failed/killed test leaves it pointing at a `user://gut/...` fixture dir):
   `test_dynamic_rail_vehicle_manager.gd`, `test_e3d_lights_state.gd`,

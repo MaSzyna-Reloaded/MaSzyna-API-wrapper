@@ -117,7 +117,7 @@ func test_wipers_stay_parked_without_battery():
 ## are the first two, the wipers of the other end stay parked (DynObj.cpp:4056-4063)
 func test_wiper_count_of_the_model_limits_the_sweep_to_the_active_end():
     wipers.wiper_count = 4
-    wipers.update_mover()
+    wipers.apply_config()
     train.send_command("battery", true)
     train.send_command("cab_activation", true)
     train.send_command("wipers_switch_increase")

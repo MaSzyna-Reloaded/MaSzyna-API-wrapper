@@ -77,15 +77,17 @@ namespace godot {
             bool get_enabled();
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do update_mover(),
+             * to ta metoda powinna byc zaimplementowana analogicznie do apply_config(),
              * i powinna byc wywolywana z poziomu TrainController::initialize_mover() */
             // void initialize_mover(TrainController *train_controller_node);
 
-            /* High level method for updating the state of the Mover */
-            void update_mover();
+            /* Applies this part's authored configuration to the vehicle and publishes back
+             * whatever config the vehicle derives from it. The simulation backend is an
+             * implementation detail: the interface knows state and config, nothing else. */
+            void apply_config();
 
-            /* High level method for getting the state of the Mover */
-            Dictionary get_mover_state();
+            /* This part's contribution to the vehicle state */
+            Dictionary get_state();
             void emit_config_changed_signal();
             void mark_dirty();
     };

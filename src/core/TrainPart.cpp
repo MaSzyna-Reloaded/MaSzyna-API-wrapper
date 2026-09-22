@@ -11,8 +11,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("mark_dirty"), &TrainPart::mark_dirty);
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &TrainPart::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &TrainPart::unregister_command);
-        ClassDB::bind_method(D_METHOD("update_mover"), &TrainPart::update_mover);
-        ClassDB::bind_method(D_METHOD("get_mover_state"), &TrainPart::get_mover_state);
+        ClassDB::bind_method(D_METHOD("apply_config"), &TrainPart::apply_config);
+        ClassDB::bind_method(D_METHOD("get_state"), &TrainPart::get_state);
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &TrainPart::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
@@ -62,7 +62,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     const Error con = train_controller_node->connect(
-                            TrainController::mover_config_changed_signal, Callable(this, "update_mover"));
+                            TrainController::mover_config_changed_signal, Callable(this, "apply_config"));
                     if (con != OK) {
                         log_warning(
                                 "TrainPart::notification(NOTIFICATION_ENTER_TREE) failed with error code " +
@@ -81,7 +81,7 @@ namespace godot {
                 }
                 if (train_controller_node != nullptr) {
                     train_controller_node->disconnect(
-                            TrainController::mover_config_changed_signal, Callable(this, "update_mover"));
+                            TrainController::mover_config_changed_signal, Callable(this, "apply_config"));
                 }
                 train_controller_node = nullptr;
             } break;
@@ -133,7 +133,7 @@ namespace godot {
 
         if (dirty) {
             // emit_config_changed_signal();
-            update_mover();
+            apply_config();
             dirty = false;
         }
 
@@ -162,7 +162,7 @@ namespace godot {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_process_mover(mover, p_delta);
-                train_controller_node->get_state().merge(get_mover_state(), true);
+                train_controller_node->get_state().merge(get_state(), true);
             }
         }
     }
@@ -171,7 +171,7 @@ namespace godot {
     void TrainPart::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {};
     void TrainPart::_do_update_internal_mover(TMoverParameters *p_mover) {};
 
-    void TrainPart::update_mover() {
+    void TrainPart::apply_config() {
         if (train_controller_node != nullptr) {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
@@ -180,14 +180,14 @@ namespace godot {
                 _do_fetch_config_from_mover(mover, new_config);
                 train_controller_node->update_config(new_config);
             } else {
-                UtilityFunctions::push_warning("TrainPart::update_mover() failed: internal mover not initialized");
+                UtilityFunctions::push_warning("TrainPart::apply_config() failed: internal mover not initialized");
             }
         } else {
-            UtilityFunctions::push_warning("TrainPart::update_mover() failed: missing train controller node");
+            UtilityFunctions::push_warning("TrainPart::apply_config() failed: missing train controller node");
         }
     }
 
-    Dictionary TrainPart::get_mover_state() {
+    Dictionary TrainPart::get_state() {
         if (!get_enabled()) {
             return state;
         }
@@ -196,10 +196,10 @@ namespace godot {
             if (mover != nullptr) {
                 _do_fetch_state_from_mover(mover, state);
             } else {
-                UtilityFunctions::push_warning("TrainPart::get_mover_state() failed: internal mover not initialized");
+                UtilityFunctions::push_warning("TrainPart::get_state() failed: internal mover not initialized");
             }
         } else {
-            UtilityFunctions::push_warning("TrainPart::get_mover_state() failed: missing train controller node");
+            UtilityFunctions::push_warning("TrainPart::get_state() failed: missing train controller node");
         }
         return state;
     }

@@ -13,6 +13,7 @@
 
 namespace godot {
     class Area3D;
+    class TrainElectricEngine;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
@@ -57,7 +58,7 @@ namespace godot {
             Node *cabin_player = nullptr;
             int cabin_show_frames = 0;
             TrainController *controller = nullptr;
-            Node *electric_engine = nullptr;
+            TrainElectricEngine *electric_engine = nullptr;
             Node *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
@@ -179,6 +180,9 @@ namespace godot {
             void leave_cabin(Node *p_player);
             void process_manually(const Variant &p_delta);
             TrainController *get_controller() const;
+            /// This vehicle's handle in RailVehiclePhysicsServer - the key anything
+            /// keeping per-vehicle state of its own is meant to use.
+            RID get_rid() const;
             void move_on_track(double p_distance);
             void _on_model_node_e3d_loaded();
 

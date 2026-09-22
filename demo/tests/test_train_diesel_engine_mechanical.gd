@@ -30,7 +30,7 @@ func _make_throttle(position: int, fuel_dose: float, behavior: int) -> ThrottleP
     return item
 
 func test_defaults():
-    engine.update_mover()
+    engine.apply_config()
     assert_eq(engine.mechanical_min_rpm, 0.0)
     assert_eq(engine.mechanical_max_rpm, 0.0)
     assert_eq(engine.mechanical_inertia, 1.0)

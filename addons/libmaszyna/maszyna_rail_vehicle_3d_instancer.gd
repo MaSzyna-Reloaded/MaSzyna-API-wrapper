@@ -316,7 +316,7 @@ static func _apply_wiper_count(controller:TrainController, vehicle:RailVehicle3D
     var wipers:TrainWipers = controller.get_node_or_null("TrainWipers") as TrainWipers
     if wipers:
         wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
-        wipers.update_mover()
+        wipers.apply_config()
 
 
 ## Arm 1, arm 2 and blade of every wiper - "<prefix><number>_p1/_p2/_p3", numbered from 1

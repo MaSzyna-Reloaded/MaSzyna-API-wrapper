@@ -44,6 +44,8 @@ var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
 class BankRuntime extends RefCounted:
     var player:SfxPlayer3D
     var vehicle:RailVehicle3D
+    ## The vehicle's handle in RailVehiclePhysicsServer - the key of its entry in _coupler_events
+    var vehicle_rid:RID = RID()
     var controller:TrainController
     var cabin_only:bool = false
     var enabled:bool = true
@@ -78,6 +80,9 @@ class Trigger extends RefCounted:
     var threshold_max:float = 1.0
     var placement:StringName = &"general"
     var source:MmdSoundSourceDefinition
+    ## Index into the vehicle's coupler-event counters, or -1 for a trigger reading vehicle state.
+    ## Resolved once, in _add_trigger - the per-tick path never looks at the name.
+    var coupler_event_index:int = -1
     ## Playing since the last time this trigger said so (TOGGLE/CONTINUOUS)
     var activated:bool = false
     ## The value this trigger last saw, for TRIGGER_MODE_CHANGE; INF until the first tick
@@ -96,11 +101,37 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
+## The coupling elements the physics side reports, in the order of TrainController.CouplingElement,
+## attach first and detach second - the layout of a vehicle's entry in _coupler_events.
+const COUPLER_EVENT_INDICES:Dictionary[String, int] = {
+    "coupler_sound/attach_coupler": 0,
+    "coupler_sound/attach_brakehose": 1,
+    "coupler_sound/attach_mainhose": 2,
+    "coupler_sound/attach_control": 3,
+    "coupler_sound/attach_gangway": 4,
+    "coupler_sound/attach_heating": 5,
+    "coupler_sound/detach_coupler": 6,
+    "coupler_sound/detach_brakehose": 7,
+    "coupler_sound/detach_mainhose": 8,
+    "coupler_sound/detach_control": 9,
+    "coupler_sound/detach_gangway": 10,
+    "coupler_sound/detach_heating": 11,
+}
+const COUPLER_DETACH_OFFSET:int = 6
+const COUPLER_EVENT_COUNT:int = 12
+
 var _banks:Dictionary = {}
 ## The bank of a vehicle, so looking one up does not mean scanning every bank in the scenery
 var _banks_by_vehicle:Dictionary[RailVehicle3D, BankRuntime] = {}
 ## The banks within the culling distance - the only ones a frame visits
 var _active:Array[BankRuntime] = []
+## Coupling one-shots are events, not vehicle state: the physics side reports each attach and
+## each detach once, and the running counts the CHANGE triggers compare against live here, one
+## entry per vehicle RID, shared by that vehicle's banks.
+var _coupler_events:Dictionary[RID, PackedInt32Array] = {}
+## The controller each counted vehicle is connected to, so the connection is made once per
+## vehicle rather than once per bank, and is remade when the vehicle's controller is replaced.
+var _coupler_sources:Dictionary[RID, TrainController] = {}
 ## Controllers of the listener's own consist, refreshed with the sweep and on a context change
 var _listener_consist_ids:Dictionary = {}
 var _culling_distance:float = 1000.0
@@ -277,6 +308,7 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
         trigger.id = _next_trigger_id
         _next_trigger_id += 1
     trigger.state_property = String(descriptor.get("state_property", ""))
+    trigger.coupler_event_index = COUPLER_EVENT_INDICES.get(trigger.state_property, -1)
     trigger.trigger_mode = int(descriptor.get("trigger_mode", TRIGGER_MODE_TOGGLE))
     trigger.event_name = StringName(descriptor.get("sound_event", &""))
     trigger.parameter_name = StringName(descriptor.get("sound_parameter", &""))
@@ -288,9 +320,38 @@ func _add_trigger(runtime:BankRuntime, descriptor:Dictionary) -> int:
     return trigger.id
 
 
+## Resolves the bank's controller and, for the first bank of a vehicle, starts counting that
+## vehicle's coupling events. The counts belong here rather than in the vehicle state: a coupling
+## is an event the physics side reports once, and what a CHANGE trigger needs is a number that
+## only ever goes up.
 func _resolve_controller(runtime:BankRuntime) -> void:
-    if runtime.vehicle:
-        runtime.controller = runtime.vehicle.get_controller()
+    if not runtime.vehicle:
+        return
+    runtime.controller = runtime.vehicle.get_controller()
+    if not runtime.controller:
+        return
+    runtime.vehicle_rid = runtime.vehicle.get_rid()
+    var counted:TrainController = _coupler_sources.get(runtime.vehicle_rid)
+    if counted == runtime.controller:
+        return
+    if is_instance_valid(counted):
+        counted.coupler_attached.disconnect(_on_coupler_attached.bind(runtime.vehicle_rid))
+        counted.coupler_detached.disconnect(_on_coupler_detached.bind(runtime.vehicle_rid))
+    if not _coupler_events.has(runtime.vehicle_rid):
+        var counts:PackedInt32Array = PackedInt32Array()
+        counts.resize(COUPLER_EVENT_COUNT)
+        _coupler_events[runtime.vehicle_rid] = counts
+    _coupler_sources[runtime.vehicle_rid] = runtime.controller
+    runtime.controller.coupler_attached.connect(_on_coupler_attached.bind(runtime.vehicle_rid))
+    runtime.controller.coupler_detached.connect(_on_coupler_detached.bind(runtime.vehicle_rid))
+
+
+func _on_coupler_attached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+    _coupler_events[vehicle_rid][element] += 1
+
+
+func _on_coupler_detached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+    _coupler_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 
 ## Builds the bank's brake events from its MMD sources and resolves the static tables of
@@ -352,8 +413,13 @@ func _update_brake_sounds(runtime:BankRuntime, state:Dictionary, batch:Dictionar
 
 
 func _update_triggers(runtime:BankRuntime, state:Dictionary, batch:Dictionary) -> void:
+    var coupler_events:PackedInt32Array = _coupler_events.get(runtime.vehicle_rid, PackedInt32Array())
     for trigger:Trigger in runtime.triggers:
-        var value:float = _parameter_value(state.get(trigger.state_property, 0.0))
+        var value:float = 0.0
+        if trigger.coupler_event_index < 0:
+            value = _parameter_value(state.get(trigger.state_property, 0.0))
+        elif coupler_events:
+            value = float(coupler_events[trigger.coupler_event_index])
         if trigger.trigger_mode == TRIGGER_MODE_CHANGE:
             var previous_value:float = trigger.last_value
             trigger.last_value = value
@@ -652,7 +718,22 @@ func _unregister_bank(bank_id:int) -> void:
         return
     if removed.vehicle:
         _banks_by_vehicle.erase(removed.vehicle)
+    _banks.erase(bank_id)
+    if removed.vehicle_rid.is_valid() and not _has_bank_of_vehicle(removed.vehicle_rid):
+        var counted:TrainController = _coupler_sources.get(removed.vehicle_rid)
+        if is_instance_valid(counted):
+            counted.coupler_attached.disconnect(_on_coupler_attached.bind(removed.vehicle_rid))
+            counted.coupler_detached.disconnect(_on_coupler_detached.bind(removed.vehicle_rid))
+        _coupler_sources.erase(removed.vehicle_rid)
+        _coupler_events.erase(removed.vehicle_rid)
     if removed.active:
         removed.active = false
         _active.erase(removed)
-    _banks.erase(bank_id)
+
+
+## A vehicle's coupling-event counting is shared by its banks, so it outlives any one of them.
+func _has_bank_of_vehicle(vehicle_rid:RID) -> bool:
+    for runtime:BankRuntime in _banks.values():
+        if runtime.vehicle_rid == vehicle_rid:
+            return true
+    return false

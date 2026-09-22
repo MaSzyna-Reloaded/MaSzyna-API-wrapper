@@ -8,7 +8,7 @@ namespace godot {
 
     void TrainSystem::_bind_methods() {
         ClassDB::bind_method(
-                D_METHOD("step_movers", "controllers", "step", "full_movement"), &TrainSystem::step_movers);
+                D_METHOD("step_vehicles", "controllers", "step", "full_movement"), &TrainSystem::step_vehicles);
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
         ClassDB::bind_method(D_METHOD("is_train_registered", "train_id"), &TrainSystem::is_train_registered);
@@ -266,7 +266,7 @@ namespace godot {
                 // FIXME(#57, #184): workaround for state being copied per TrainPart in _process -
                 // a stale read made the cabin line breaker logic see a just-closed breaker as open.
                 if (TrainPart *part = Object::cast_to<TrainPart>(c.get_object()); part != nullptr) {
-                    train->get_state().merge(part->get_mover_state(), true);
+                    train->get_state().merge(part->get_state(), true);
                 }
 #if DEBUG_MODE
                 int arg_required = 0;
@@ -316,7 +316,7 @@ namespace godot {
         emit_signal(train_position_changed_signal, p_train_id, p_position);
     }
 
-    PackedFloat64Array TrainSystem::step_movers(
+    PackedFloat64Array TrainSystem::step_vehicles(
             const TypedArray<TrainController> &p_controllers, const double p_step, const bool p_full_movement) {
         const int count = p_controllers.size();
         PackedFloat64Array distances;

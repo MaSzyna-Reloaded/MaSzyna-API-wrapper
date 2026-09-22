@@ -66,7 +66,7 @@ namespace godot {
             /// [param full_movement] picks ComputeMovement() over FastComputeMovement(), which the
             /// original uses for every sub-iteration but the last (DynObj.cpp:4086).
             PackedFloat64Array
-            step_movers(const TypedArray<TrainController> &p_controllers, double p_step, bool p_full_movement);
+            step_vehicles(const TypedArray<TrainController> &p_controllers, double p_step, bool p_full_movement);
 
         protected:
             static void _bind_methods();

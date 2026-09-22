@@ -3,6 +3,46 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - reading the vehicle state was changing it, in four places
+
+* **Context:** the first stage of the #184 architecture work. The state `Dictionary` is filled by
+  `TrainController::_do_fetch_state_from_mover()` and by every `TrainPart`'s own fetch, and those
+  fetches had quietly become the place where work happened.
+* **What was found, by reading every fetch rather than by a failure:**
+  * `TrainController::_consume_coupler_sounds()` **cleared `TCoupling::sounds` on the Mover**
+    while filling the dictionary. The coupling events therefore belonged to whoever read the
+    state first, and a second reader in the same frame got nothing.
+  * `TrainBrake`'s fetch advanced a low-pass filter with `get_process_delta_time()` and stored
+    the result. The published `brake_loco_pressure_fall_rate`/`rise_rate` depended on **how often
+    the state was read**, which nothing at any call site says.
+  * `TrainEngine` emitted `engine_start`/`engine_stop`, and `TrainSecuritySystem`
+    `blinking_changed`/`beeping_changed`, from inside the fetch - comparing against "the previous
+    value" pulled back out of the dictionary the fetch was filling. The signals fired on a read,
+    not on a change.
+* **Why it stayed invisible:** `get_state()` is guarded by `state_dirty`, so in practice there was
+  exactly one fetch per tick and every one of these looked correct. The guard is what hid them;
+  remove it, add a second reader, or skip a frame, and all four change behaviour.
+* **Fix:** each moved to the tick that owns it - `_do_process_mover()` for the brake filter and
+  for both change detections (against the part's own `previous_*` member), and
+  `_handle_mover_update()` for draining the coupler flags. The fetches only read now.
+* **Second finding, from the same pass:** the twelve coupler counters were **sound bookkeeping
+  living in the vehicle**. They existed solely so a `TriggerMode.CHANGE` sound trigger could see a
+  number go up. The vehicle now reports each event once (`coupler_attached` / `coupler_detached`,
+  carrying a `CouplingElement`) and `TrainSoundSystem` keeps the counts itself, keyed by vehicle
+  RID.
+* **Third, found by grepping for the collision rather than by a bug report:** `power_source` was
+  written by both `TrainElectricEngine` (the engine's supply) and `TrainLighting` (the lighting's
+  supply). Merge order is scene-tree child order, i.e. FIZ section order, so on an electric
+  locomotive with lighting whichever merged last won. Lighting now publishes
+  `light_power_source`.
+* **Rule:** a getter never changes state - see `CODE_STYLE.md`. A value that depends on how often
+  it is read is a bug that stays invisible until a second reader appears.
+* **Rule:** state that only one layer needs lives in that layer. If the layer were replaced
+  wholesale, would the field go with it? Then it does not belong to the layer below.
+* **Trap worth knowing:** `test_sm42_startup_sequence.gd::test_successful_moving_on` is red, and
+  was red before any of this. Anything touching the physics path has to establish that baseline
+  first (stash, rebuild, run) instead of assuming the red came from the change - see `TODO.md`.
+
 ## 2026-09-22 - the sound system's per-frame cost was not where the loop was
 
 * **Context:** after the playback tick moved to a worker thread, `TrainSoundSystem._process` was

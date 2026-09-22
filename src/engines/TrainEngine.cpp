@@ -149,8 +149,19 @@ namespace godot {
         }
     }
 
+    // Original engine: the main switch closing and opening is what "the engine started/stopped"
+    // means here (Mains, Mover.cpp). Detected once per tick against this part's own member - it
+    // used to be compared against the state dictionary while that dictionary was being filled,
+    // so the signal fired on a read rather than on a change.
+    void TrainEngine::_do_process_mover(TMoverParameters *p_mover, double p_delta) {
+        if (previous_main_switch == p_mover->Mains) {
+            return;
+        }
+        previous_main_switch = p_mover->Mains;
+        emit_signal(previous_main_switch ? "engine_start" : "engine_stop");
+    }
+
     void TrainEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        const bool previous_main_switch = (p_state.get("main_switch_enabled", false));
         p_state["main_switch_enabled"] = p_mover->Mains;
         // cab layer's line breaker hold timer only runs while this holds (Train.cpp:6795)
         p_state["main_switch_closable"] = p_mover->MainSwitchCheck();
@@ -188,12 +199,6 @@ namespace godot {
         // motor power connectors open regardless of Mains/controller state
         // (connectorsoff/Mm==0.0 checks read StLinSwitchOff directly, Mover.cpp).
         p_state["motor_connectors_open"] = p_mover->StLinSwitchOff;
-
-        if (!previous_main_switch && (static_cast<bool>(p_state["main_switch_enabled"]))) {
-            emit_signal("engine_start");
-        } else if (previous_main_switch && !(static_cast<bool>(p_state["main_switch_enabled"]))) {
-            emit_signal("engine_stop");
-        }
     }
 
     void TrainEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

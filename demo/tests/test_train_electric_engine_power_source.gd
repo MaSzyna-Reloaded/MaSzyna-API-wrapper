@@ -5,7 +5,7 @@ extends MaszynaGutTest
 ## of which are only initialized by _do_update_internal_mover() when power_source is the
 ## matching variant (Accumulator / PowerCable respectively). For any other power_source -
 ## notably CurrentCollector, used by every real pantograph-powered electric locomotive - those
-## fields held uninitialized memory, and get_mover_state() crashed the whole process with an
+## fields held uninitialized memory, and get_state() crashed the whole process with an
 ## uncaught std::out_of_range from std::map::at() on the very first _process() tick.
 
 var train: TrainController
@@ -27,9 +27,9 @@ func test_current_collector_power_source_does_not_crash_on_process():
     train.add_child(engine)
     await wait_idle_frames(3)
 
-    assert_true(engine.get_mover_state().has("power_source"))
+    assert_true(engine.get_state().has("power_source"))
     assert_false(
-            engine.get_mover_state().has("accumulator/recharge_source"),
+            engine.get_state().has("accumulator/recharge_source"),
             "recharge_source wasn't configured for this power source and shouldn't be reported")
 
 
@@ -39,7 +39,7 @@ func test_default_power_source_does_not_crash_on_process():
     train.add_child(engine)
     await wait_idle_frames(3)
 
-    assert_true(engine.get_mover_state().has("power_source"))
+    assert_true(engine.get_state().has("power_source"))
 
 
 func test_accumulator_power_source_still_reports_recharge_source():
@@ -49,4 +49,4 @@ func test_accumulator_power_source_still_reports_recharge_source():
     train.add_child(engine)
     await wait_idle_frames(3)
 
-    assert_eq(engine.get_mover_state().get("accumulator/recharge_source"), TrainController.POWER_SOURCE_GENERATOR)
+    assert_eq(engine.get_state().get("accumulator/recharge_source"), TrainController.POWER_SOURCE_GENERATOR)

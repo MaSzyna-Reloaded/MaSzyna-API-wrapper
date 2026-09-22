@@ -122,7 +122,7 @@
 			<description>
 			</description>
 		</method>
-		<method name="update_mover" experimental="true">
+		<method name="apply_config" experimental="true">
 			<return type="void" />
 			<description>
 				Updates iternal mover based on the config stored in node properties (should not be called directly)

@@ -23,7 +23,7 @@ func _make_row(rpm: float, gen_power: float) -> WWListItem:
     return item
 
 func test_defaults():
-    engine.update_mover()
+    engine.apply_config()
     assert_false(engine.generator_voltage_flat)
     assert_eq(engine.hyperbolic_speed, 1.0)
     assert_eq(engine.additional_speed, 1.0)

@@ -48,7 +48,9 @@ static func _ensure_built() -> void:
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
         # Coupler attach/detach one-shots per coupling type (DynObj.cpp:6409-6520, played at
-        # DynObj.cpp:4855-4905) - TrainController counts the mover's TCoupling::sounds requests.
+        # DynObj.cpp:4855-4905). The vehicle reports each attach and each detach once
+        # (TrainController.coupler_attached / coupler_detached); the running counts these names
+        # address live in TrainSoundSystem, which is what owns sound state.
         "couplerattach": {
             "event_name": &"coupler_attach",
             "state_property": "coupler_sound/attach_coupler",

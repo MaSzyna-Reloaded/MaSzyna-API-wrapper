@@ -432,6 +432,20 @@ namespace godot {
         p_config["brakes_controller_position_emergency"] = p_mover->Handle->GetPos(bh_EB);
     }
 
+    // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered rate of
+    // LocBrakePress change, factor 0.1/frame) - see local_brake_pressure_previous' own doc comment
+    // in TrainBrake.hpp for why the sound layer needs this instead of the raw dpLocalValve field.
+    // Published by _do_fetch_state_from_mover() as two already-non-negative magnitudes, matching
+    // how brake_sfx_event_factory.gd's local-brake-hiss automation consumes them (one track per
+    // sign, same shape as the original's separate rsSBHiss/rsSBHissU sounds).
+    void TrainBrake::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {
+        if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {
+            const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / p_delta);
+            local_brake_pressure_change_rate = local_brake_pressure_change_rate * 0.9 + raw_rate * 0.1;
+        }
+        local_brake_pressure_previous = p_mover->LocBrakePress;
+    }
+
     void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
         const double brake_controller_pos = p_mover->fBrakeCtrlPos;
         const double brake_controller_min = p_mover->Handle->GetPos(bh_MIN);
@@ -475,20 +489,8 @@ namespace godot {
         const double main_valve_flow = p_mover->dpMainValve;
         p_state["brake_main_valve_flow"] = std::isfinite(main_valve_flow) ? main_valve_flow : 0.0;
         p_state["brake_local_valve_flow"] = p_mover->dpLocalValve;
-        // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered
-        // rate of LocBrakePress change, factor 0.1/frame) - see this member's own doc comment in
-        // TrainBrake.hpp for why the sound layer needs this instead of the raw dpLocalValve
-        // field above. Published as two already-non-negative magnitudes, matching how
-        // brake_sfx_event_factory.gd's local-brake-hiss automation consumes them (one track per
-        // sign, same shape as the original's separate rsSBHiss/rsSBHissU sounds).
-        {
-            const double dt = get_process_delta_time();
-            if (local_brake_pressure_previous >= 0.0 && dt > 0.0) {
-                const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / dt);
-                local_brake_pressure_change_rate = local_brake_pressure_change_rate * 0.9 + raw_rate * 0.1;
-            }
-            local_brake_pressure_previous = p_mover->LocBrakePress;
-        }
+        // Filtered in _do_process_mover(), once per tick - a getter never changes state, and a
+        // value advanced while the state is read depends on how often it is read.
         p_state["brake_loco_pressure_fall_rate"] = std::max(0.0, -local_brake_pressure_change_rate);
         p_state["brake_loco_pressure_rise_rate"] = std::max(0.0, local_brake_pressure_change_rate);
         p_state["brake_control_pressure"] = p_mover->LocHandle ? p_mover->LocHandle->GetCP() : 0.0;

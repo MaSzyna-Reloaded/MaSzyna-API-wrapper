@@ -1,6 +1,18 @@
 Planning and architectue:
 
-* apply separation of concerns
+* REQUIRED: **separation of concerns, enforced, not aspired to.** A layer owns one kind of thing
+  and knows nothing of the layers above it. A simulation backend does not hold sound bookkeeping;
+  a physics server does not know what a gauge shows; a rendering server does not decide game
+  rules; a UI node does not reach into a vehicle's internals. When a piece of state is only ever
+  needed by one layer, it lives **in that layer** - the counters a sound system compares against
+  belong to the sound system, not to the vehicle that reports the event. The test is a question:
+  if this layer were replaced wholesale, would the field go with it? Then it belongs there.
+  Mixing them is not a shortcut that costs style points; it is what makes a layer impossible to
+  replace or test on its own.
+* REQUIRED: the backend a layer happens to be implemented on **never appears in its public
+  interface** - not in a method name, not in a parameter, not in a returned type. The vehicle has
+  state and config and the operations that change them; that its physics happens to be the
+  vendored Mover is an implementation detail with no business being named outside it.
 
 Code generation:
 
@@ -65,6 +77,37 @@ Code generation:
   `_ensure_built()`, `_ensure_viewport()`, `_ensure_sections()`, nor the same idea under a friendlier
   name. State is initialised where it is created and set where it changes, once and explicitly; it is
   not re-checked and re-derived on every call by a function that "ensures" it - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **no magic numbers.** A literal that is not
+  self-evident from the expression it sits in gets a named constant - a threshold, a limit, an
+  index base, a conversion factor, a count, a delay, a bitmask. `+ 6` is a magic number;
+  `COUPLER_DETACH_OFFSET + element` is the same code that says why. The name is the place the
+  next reader learns what the value means, and the single place it changes. A value ported from
+  the original engine carries the original's value **and** a reference to where it came from
+  (`Track.cpp:35`), never a rounder number that looks safer - see `FINDINGS.md`. The exceptions
+  are the ones that need no name: 0, 1, -1 and 2 used as themselves, and array indices that are
+  literally the position being addressed - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **a getter never changes state.** A `get_*`, a
+  property getter, a `_get()` and anything else a reader calls must be free of side effects - it
+  does not tick a filter with `get_process_delta_time()`, does not consume a flag on the Mover,
+  does not emit a signal, does not write to another object, does not lazily build what it returns.
+  Whatever the value needs happens where the state changes, in a named operation of its owner; the
+  getter only returns it. A value that depends on **how often** it is read is a bug that stays
+  invisible until a second reader appears - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never reach a known class through
+  `Object::call("method_name")`.** Include the header and call the method - the compiler then
+  checks the name, the arity and the argument types, and a rename becomes a build error instead of
+  a runtime no-op returning `null`. A singleton is reached the same way: a server exposes a typed
+  `static X *get_instance()` and typed methods, never a name looked up on an `Object`, and never
+  `get_tree()->get_root()->get_node_or_null(name)` standing in for one. A string call is allowed
+  only where the class genuinely cannot be known at build time (a GDScript node that a C++ node
+  merely hosts), and the call site says so in a comment - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **a public API takes and returns RIDs, Variants and
+  `Callable`s - never raw pointers.** This holds for servers above all: a handle is a `RID`, an
+  object is an `ObjectID`, a callback is a `Callable`. Godot's own servers are the reference -
+  `PhysicsServer3D::body_attach_object_instance_id(RID, ObjectID)`, never a `Node *`. A pointer
+  that crosses a public boundary makes the caller responsible for a lifetime it does not own, and
+  the resulting dangle surfaces far from the code that caused it. Pointers stay inside one class -
+  see `CODE_STYLE.md`
 * GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
   `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
   numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a

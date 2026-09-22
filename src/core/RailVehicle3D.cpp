@@ -116,6 +116,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("enter_cabin", "player"), &RailVehicle3D::enter_cabin);
         ClassDB::bind_method(D_METHOD("leave_cabin", "player"), &RailVehicle3D::leave_cabin);
         ClassDB::bind_method(D_METHOD("get_controller"), &RailVehicle3D::get_controller);
+        ClassDB::bind_method(D_METHOD("get_rid"), &RailVehicle3D::get_rid);
         ClassDB::bind_method(D_METHOD("move_on_track", "distance"), &RailVehicle3D::move_on_track);
         ClassDB::bind_method(D_METHOD("_process", "delta"), &RailVehicle3D::process_manually);
         ClassDB::bind_method(D_METHOD("_process_dirty"), &RailVehicle3D::_process_dirty);
@@ -265,6 +266,10 @@ namespace godot {
         return nullptr;
     }
 
+    RID RailVehicle3D::get_rid() const {
+        return rid;
+    }
+
     TrainController *RailVehicle3D::get_controller() const {
         return controller_path.is_empty() ? nullptr : _resolve_controller(controller_path);
     }
@@ -285,7 +290,7 @@ namespace godot {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
             TypedArray<Node> electric_engines = controller->find_children("*", "TrainElectricEngine", true, false);
             if (!electric_engines.is_empty()) {
-                electric_engine = Object::cast_to<Node>(electric_engines[0]);
+                electric_engine = Object::cast_to<TrainElectricEngine>(electric_engines[0]);
             }
         }
         if (rid.is_valid()) {
@@ -1160,9 +1165,9 @@ namespace godot {
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
-        electric_engine->call("set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
-        electric_engine->call(
-                "set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_SECOND,
+        electric_engine->set_pantograph_wire_voltage(TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
+        electric_engine->set_pantograph_wire_voltage(
+                TrainElectricEngine::PANTOGRAPH_SECOND,
                 rear_active ? _pantograph_wire_voltage(3, pantograph_rear_offset, frame, assumed_voltage, current)
                             : 0.0);
     }

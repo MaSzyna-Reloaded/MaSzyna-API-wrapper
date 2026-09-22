@@ -96,10 +96,10 @@ func _process(delta: float) -> void:
     for iteration: int in iterations:
         # Forces of all, then movement of all, the original's phase order (DynObj.cpp:8199-8205),
         # and the cheap FastUpdate in every sub-iteration but the last (DynObj.cpp:4086). The whole
-        # per-controller loop runs inside TrainSystem.step_movers(): done from here it was four
+        # per-controller loop runs inside TrainSystem.step_vehicles(): done from here it was four
         # calls across the binding per controller per iteration, thousands of Variant marshallings
         # per frame for arithmetic the original does in a plain C++ loop.
-        var distances: PackedFloat64Array = TrainSystem.step_movers(
+        var distances: PackedFloat64Array = TrainSystem.step_vehicles(
                 controllers, step, iteration == iterations - 1)
         for index: int in controllers.size():
             if is_zero_approx(distances[index]):
@@ -118,7 +118,7 @@ func _process(delta: float) -> void:
 ## comes from the forces, typically a coupler reacting to an inconsistent vehicle position.
 func _check_velocity_jumps(controllers: Array[TrainController], delta: float) -> void:
     for controller: TrainController in controllers:
-        var velocity: float = controller.get_state().get("velocity", 0.0)
+        var velocity: float = controller.get_velocity()
         var acceleration: float = (velocity - _diagnostics_velocity.get(controller, velocity)) / delta
         _diagnostics_velocity[controller] = velocity
         if absf(acceleration) > DIAGNOSTICS_MAX_ACCELERATION:
@@ -139,7 +139,9 @@ func _clear_neighbour(controller: TrainController, state: VehicleState, end: int
 func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[RID, Array]) -> void:
     var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
     var state: VehicleState = _vehicles.get(vehicle_rid)
-    var velocity: float = controller.get_state().get("velocity", 0.0)
+    # straight from the mover: asking for the whole state here rebuilt it for every
+    # controller of every frame, and this is usually the frame's first read
+    var velocity: float = controller.get_velocity()
     # 10m ~= 140 km/h at 4 fps + safety margin (DynObj.cpp:7160)
     var scan_range: float = maxf(10.0, absf(velocity)) + 40.0
     # the track does not change between the two ends, so it is asked about once
@@ -331,7 +333,7 @@ func process_movement(vehicle_rid: RID, delta: float, controller: TrainControlle
 
 
 ## Walks a vehicle the distance its mover asked for, the part of process_movement() the step loop
-## needs once it has the distances from TrainSystem.step_movers()
+## needs once it has the distances from TrainSystem.step_vehicles()
 func _apply_movement(vehicle_rid: RID, distance: float) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:

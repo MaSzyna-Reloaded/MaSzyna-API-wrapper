@@ -12,7 +12,14 @@ namespace godot {
             friend class TSecuritySystem;
 
         protected:
+            /// Change detection for blinking_changed/beeping_changed, compared in
+            /// _do_process_mover(). Both start false, as the not-yet-filled state dictionary
+            /// they used to be compared against did.
+            bool previous_blinking = false;
+            bool previous_beeping = false;
+
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
             void _register_commands() override;
             void _unregister_commands() override;

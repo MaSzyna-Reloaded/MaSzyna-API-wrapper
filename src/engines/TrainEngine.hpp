@@ -114,8 +114,15 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_fast_series_circuit, false);
 
         protected:
+            /// Change detection for engine_start/engine_stop, compared in _do_process_mover().
+            /// Starts false so a vehicle coming up with the main switch already closed reports
+            /// engine_start on its first tick, as it did when this was compared against the
+            /// not-yet-filled state dictionary.
+            bool previous_main_switch = false;
+
             virtual EngineType get_engine_type() = 0;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;

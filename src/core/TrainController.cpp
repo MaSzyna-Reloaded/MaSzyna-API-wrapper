@@ -21,6 +21,8 @@ namespace godot {
     const char *TrainController::config_changed = "config_changed";
     const char *TrainController::position_changed_signal = "position_changed";
     const char *TrainController::consist_changed_signal = "consist_changed";
+    const char *TrainController::coupler_attached_signal = "coupler_attached";
+    const char *TrainController::coupler_detached_signal = "coupler_detached";
 
     void TrainController::_bind_methods() {
         ClassDB::bind_method(D_METHOD("get_state"), &TrainController::get_state);
@@ -70,7 +72,7 @@ namespace godot {
                 D_METHOD("radio_channel_increase", "step"), &TrainController::radio_channel_increase, DEFVAL(1));
         ClassDB::bind_method(
                 D_METHOD("radio_channel_decrease", "step"), &TrainController::radio_channel_decrease, DEFVAL(1));
-        ClassDB::bind_method(D_METHOD("update_mover"), &TrainController::update_mover);
+        ClassDB::bind_method(D_METHOD("apply_config"), &TrainController::apply_config);
         ClassDB::bind_method(D_METHOD("update_state"), &TrainController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &TrainController::get_velocity);
         ClassDB::bind_method(D_METHOD("update_config"), &TrainController::update_config);
@@ -166,6 +168,18 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(consist_changed_signal));
+        const String coupling_element_hint = enum_hint({{"Coupler", COUPLING_ELEMENT_COUPLER},
+                           {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},
+                           {"MainHose", COUPLING_ELEMENT_MAINHOSE},
+                           {"Control", COUPLING_ELEMENT_CONTROL},
+                           {"Gangway", COUPLING_ELEMENT_GANGWAY},
+                           {"Heating", COUPLING_ELEMENT_HEATING}});
+        ADD_SIGNAL(MethodInfo(
+                coupler_attached_signal,
+                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
+        ADD_SIGNAL(MethodInfo(
+                coupler_detached_signal,
+                PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
         ADD_SIGNAL(MethodInfo(
                 command_received, PropertyInfo(Variant::STRING, "command"), PropertyInfo(Variant::NIL, "p1"),
                 PropertyInfo(Variant::NIL, "p2")));
@@ -186,6 +200,12 @@ namespace godot {
         BIND_ENUM_CONSTANT(POWER_TYPE_ELECTRIC);
         BIND_ENUM_CONSTANT(POWER_TYPE_STEAM);
 
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_COUPLER);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_BRAKEHOSE);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_MAINHOSE);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_CONTROL);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_GANGWAY);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_HEATING);
         BIND_ENUM_CONSTANT(CATEGORY_TRAIN);
         BIND_ENUM_CONSTANT(CATEGORY_ROAD);
         BIND_ENUM_CONSTANT(CATEGORY_SHIP);
@@ -384,7 +404,7 @@ namespace godot {
         }
 
         if (dirty_prop) {
-            update_mover();
+            apply_config();
             dirty_prop = false;
         }
     }
@@ -619,6 +639,7 @@ namespace godot {
         if (mover_ptr == nullptr) {
             return;
         }
+        _consume_coupler_sounds(mover_ptr);
 
         const bool new_is_powered = mover_ptr->Power24vIsAvailable || mover_ptr->Power110vIsAvailable;
         if (prev_is_powered != new_is_powered) {
@@ -712,13 +733,13 @@ namespace godot {
 
     void TrainController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
         // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
-        // property (see update_mover() below), so this is a thin alias, not new derivation.
+        // property (see apply_config() below), so this is a thin alias, not new derivation.
         p_config["max_speed"] = max_velocity;
         p_config["power"] = p_mover->Power;
         p_config["length"] = p_mover->Dim.L;
     }
 
-    void TrainController::update_mover() {
+    void TrainController::apply_config() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_update_internal_mover(mover);
             Dictionary new_config;
@@ -729,45 +750,34 @@ namespace godot {
             mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
             initialize_mover_state();
         } else {
-            UtilityFunctions::push_warning("TrainController::update_mover() failed: internal mover not initialized");
+            UtilityFunctions::push_warning("TrainController::apply_config() failed: internal mover not initialized");
         }
-    }
-
-    Dictionary TrainController::get_mover_state() {
-        if (TMoverParameters *mover = get_mover(); mover != nullptr) {
-            _do_fetch_state_from_mover(mover, state);
-        } else {
-            UtilityFunctions::push_warning("TrainController::get_mover_state() failed: internal mover not initialized");
-        }
-        return state;
     }
 
     // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
-    // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there
-    void TrainController::_consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state) {
-        static const int kinds[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
+    // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there.
+    //
+    // Consuming is a tick job, not a read job: this clears the mover's flags, so doing it while
+    // filling the state dictionary made the events belong to whoever happened to read first.
+    void TrainController::_consume_coupler_sounds(TMoverParameters *p_mover) {
+        static const int flags[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
                                     sound::attachcontrol, sound::attachgangway,   sound::attachheating};
-        static const char *names[] = {"coupler", "brakehose", "mainhose", "control", "gangway", "heating"};
         for (TCoupling &coupler: p_mover->Couplers) {
             if (coupler.sounds == sound::none) {
                 continue;
             }
-            const int offset = (coupler.sounds & sound::detach) != 0 ? 6 : 0;
+            const bool detaching = (coupler.sounds & sound::detach) != 0;
             for (int index = 0; index < 6; ++index) {
-                if ((coupler.sounds & kinds[index]) != 0) {
-                    ++coupler_sound_counts[offset + index];
+                if ((coupler.sounds & flags[index]) != 0) {
+                    emit_signal(detaching ? coupler_detached_signal : coupler_attached_signal,
+                                static_cast<CouplingElement>(index));
                 }
             }
             coupler.sounds = sound::none;
         }
-        for (int index = 0; index < 12; ++index) {
-            p_state[String(index < 6 ? "coupler_sound/attach_" : "coupler_sound/detach_") + names[index % 6]] =
-                    coupler_sound_counts[index];
-        }
     }
 
     void TrainController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        _consume_coupler_sounds(p_mover, p_state);
         p_state["mass_total"] = p_mover->TotalMass;
         p_state["velocity"] = p_mover->V;
         p_state["speed"] = p_mover->Vel;

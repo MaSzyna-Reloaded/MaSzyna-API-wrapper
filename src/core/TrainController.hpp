@@ -57,16 +57,13 @@ namespace godot {
             Object *_get_rail_vehicle_physics_server() const;
             void _emit_position_changed_if_needed();
             int _resolve_coupler_end(const Variant &p_where) const;
-            // attach/detach sound requests of the couplers, one counter per coupling type and direction
-            int coupler_sound_counts[12] = {};
-            void _consume_coupler_sounds(TMoverParameters *p_mover, Dictionary &p_state);
+            void _consume_coupler_sounds(TMoverParameters *p_mover);
 
         protected:
             /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
              * for creating Train nodes. Pointer to `mover` and reference to `state` should stay "as is",
              * because the mover initialization and state sharing routines can be changed in the future. */
 
-            Dictionary get_mover_state();
             // TrainController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *p_mover) const;
             void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
@@ -96,6 +93,17 @@ namespace godot {
                     {START_MODE_CONVERTER, Maszyna::start_t::converter},
                     {START_MODE_BATTERY, Maszyna::start_t::battery},
                     {START_MODE_DIRECTION, Maszyna::start_t::direction},
+            };
+
+            /* The element a coupler attached or detached, as the original names them
+             * (coupling::coupler, coupling::brakehose, ..., Mover.cpp:590) */
+            enum CouplingElement {
+                COUPLING_ELEMENT_COUPLER,
+                COUPLING_ELEMENT_BRAKEHOSE,
+                COUPLING_ELEMENT_MAINHOSE,
+                COUPLING_ELEMENT_CONTROL,
+                COUPLING_ELEMENT_GANGWAY,
+                COUPLING_ELEMENT_HEATING,
             };
 
             /* Category= (train / road / ship / airplane) */
@@ -189,6 +197,10 @@ namespace godot {
             static const char *position_changed_signal;
             /// The consist this vehicle belongs to gained or lost a vehicle
             static const char *consist_changed_signal;
+            /// One coupling element attached / detached, once per event. Two signals rather than
+            /// one carrying a direction: every listener would have opened by branching on it.
+            static const char *coupler_attached_signal;
+            static const char *coupler_detached_signal;
 
             Dictionary get_config() const;
             void update_config(const Dictionary &p_config);
@@ -221,7 +233,7 @@ namespace godot {
             /// Straight from the mover, for the per-frame readers that only want this one number
             /// and would otherwise force the whole state dictionary to be rebuilt
             double get_velocity() const;
-            void update_mover();
+            void apply_config();
             double process_movement(double p_delta);
             void update_location();
             void update_neighbour(int p_end, TrainController *p_other, int p_other_end, double p_track_distance);
@@ -296,5 +308,6 @@ namespace godot {
 VARIANT_ENUM_CAST(TrainController::TrainPowerSource);
 VARIANT_ENUM_CAST(TrainController::TrainPowerType);
 VARIANT_ENUM_CAST(TrainController::Category);
+VARIANT_ENUM_CAST(TrainController::CouplingElement);
 VARIANT_ENUM_CAST(TrainController::TrainType);
 VARIANT_ENUM_CAST(TrainController::StartMode);

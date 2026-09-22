@@ -39,14 +39,14 @@ func test_raised_pantograph_with_wire_voltage_reaches_mover_state():
     await wait_idle_frames(2)
 
     assert_true(
-            engine.get_mover_state().get("current_collector/pantograph_first_active", false),
+            engine.get_state().get("current_collector/pantograph_first_active", false),
             "pantograph should report raised once battery is on and it's been raised")
 
     engine.set_pantograph_wire_voltage(TrainElectricEngine.PANTOGRAPH_FIRST, 3600.0)
     await wait_idle_frames(2)
 
     assert_almost_eq(
-            float(engine.get_mover_state().get("current_collector/pantograph_first_voltage", 0.0)),
+            float(engine.get_state().get("current_collector/pantograph_first_voltage", 0.0)),
             3600.0, 1.0,
             "raised pantograph should read back the wire voltage fed in this frame")
 
@@ -65,7 +65,7 @@ func test_repeated_wire_voltage_updates_keep_reaching_the_mover():
         await wait_idle_frames(1)
 
     assert_almost_eq(
-            float(engine.get_mover_state().get("current_collector/pantograph_first_voltage", 0.0)),
+            float(engine.get_state().get("current_collector/pantograph_first_voltage", 0.0)),
             3400.0, 1.0,
             "the mover should reflect the latest wire voltage, not just the first one ever set")
 
@@ -78,4 +78,4 @@ func test_lowered_pantograph_does_not_report_active():
     engine.set_pantograph_wire_voltage(TrainElectricEngine.PANTOGRAPH_FIRST, 3600.0)
     await wait_idle_frames(2)
 
-    assert_false(engine.get_mover_state().get("current_collector/pantograph_first_active", false))
+    assert_false(engine.get_state().get("current_collector/pantograph_first_active", false))

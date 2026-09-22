@@ -31,9 +31,21 @@ namespace godot {
         BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_WHISTLE);
     }
 
+    // Detected once per tick against this part's own members - these used to be compared against
+    // the state dictionary while that dictionary was being filled, so the signals fired on a read
+    // rather than on a change.
+    void TrainSecuritySystem::_do_process_mover(TMoverParameters *p_mover, double p_delta) {
+        if (const bool blinking = p_mover->SecuritySystem.is_blinking(); previous_blinking != blinking) {
+            previous_blinking = blinking;
+            emit_signal("blinking_changed", blinking);
+        }
+        if (const bool beeping = p_mover->SecuritySystem.is_beeping(); previous_beeping != beeping) {
+            previous_beeping = beeping;
+            emit_signal("beeping_changed", beeping);
+        }
+    }
+
     void TrainSecuritySystem::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        const bool prev_beeping = p_state["beeping"];
-        const bool prev_blinking = p_state["blinking"];
         p_state["beeping"] = p_mover->SecuritySystem.is_beeping();
         p_state["blinking"] = p_mover->SecuritySystem.is_blinking();
         p_state["radiostop_available"] = p_mover->SecuritySystem.radiostop_available();
@@ -43,14 +55,6 @@ namespace godot {
         p_state["braking"] = p_mover->SecuritySystem.is_braking();
         p_state["engine_blocked"] = p_mover->SecuritySystem.is_engine_blocked();
         p_state["separate_acknowledge"] = p_mover->SecuritySystem.has_separate_acknowledge();
-
-        if (prev_blinking != static_cast<bool>(p_state["blinking"])) {
-            emit_signal("blinking_changed", p_state["blinking"]);
-        }
-
-        if (prev_beeping != static_cast<bool>(p_state["beeping"])) {
-            emit_signal("beeping_changed", p_state["beeping"]);
-        }
     }
 
     void TrainSecuritySystem::_do_update_internal_mover(TMoverParameters *p_mover) {

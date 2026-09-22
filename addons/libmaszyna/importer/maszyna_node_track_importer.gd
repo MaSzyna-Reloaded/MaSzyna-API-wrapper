@@ -22,7 +22,7 @@ func import(p:MaszynaParser, _context: MaszynaImporterContext) -> TrackData:
         return null
 
     var data := TrackData.new()
-    data.type = TrackManager.TrackType.TRACK_SWITCH if type_token == "switch" else TrackManager.TrackType.TRACK_NORMAL
+    data.type = TrackManager.TRACK_SWITCH if type_token == "switch" else TrackManager.TRACK_NORMAL
 
     data.length = float(p.next_token())
     data.width = float(p.next_token())

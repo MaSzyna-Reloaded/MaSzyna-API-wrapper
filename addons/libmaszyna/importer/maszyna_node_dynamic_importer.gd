@@ -50,7 +50,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
     vehicle.start_track_offset = start_offset - 0.5 * length
     vehicle.start_direction = (
-        TrackManager.Direction.DIRECTION_REVERSED if reversed else TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_REVERSED if reversed else TrackManager.DIRECTION_NORMAL
     )
     vehicle.initial_velocity = velocity
     # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.

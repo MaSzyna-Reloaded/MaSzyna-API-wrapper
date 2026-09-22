@@ -15,6 +15,14 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="sand">
+			<return type="void" />
+			<param index="0" name="active" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="converter_impulse" type="bool" setter="set_converter_impulse" getter="get_converter_impulse" default="false">
 			[code]Switches:Converter[/code]

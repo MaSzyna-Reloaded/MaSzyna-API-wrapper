@@ -3,6 +3,37 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - what porting an autoload to C++ actually costs, and the crash it hides
+
+* **Context:** `TrackManager` (1023 lines) and `SpatialIndex` (55) moved from GDScript autoloads to
+  C++ engine singletons, stage 2 of the #184 rework. The port itself was the small part.
+* **The bulk of the work is not the port, it is what GDExtension cannot carry over:**
+  * **Enums flatten.** `TrackManager.TrackType.TRACK_NORMAL` is valid for a GDScript class and not
+    for a native one - it becomes `TrackManager.TRACK_NORMAL`. **370 call sites** across
+    `addons/` and `demo/`.
+  * **Inner classes have no equivalent.** `TrackManager.EndpointRef` and `BranchNeighbors` became
+    `TrackEndpointRef` / `TrackBranchNeighbors`, and a registered class takes **no constructor
+    arguments** - every `X.new(a, b)` becomes `X.new()` plus property assignments.
+  * **A native class cannot expose a float or RID constant.** `RAIL_HEIGHT`, `SWITCH_MAX_OFFSET`
+    and `SWITCH_OFFSET_DELAY` became read-only properties (`TrackManager.rail_height`), and
+    `UNDEFINED_TRACK` became plain `RID()` at the call sites.
+  * **Typed collections change shape.** `Array[Vector3]` became `PackedVector3Array` and
+    `Array[EndpointIndex]` became `PackedInt32Array`, so every annotation *and* every
+    `assert_eq(packed, [literal])` had to follow - GUT refuses to compare the two.
+* **The crash, and why it is the point:** `test_rail_vehicle_track_movement` aborted with a core
+  dump the moment the autoload was gone. `RailVehicle3D::_apply_start_track()` reached the manager
+  with `get_tree()->get_root()->get_node_or_null("TrackManager")` and then called
+  `->call("track_get_rid_by_name", ...)` on the result. With the autoload node gone that result is
+  **nullptr**, and the untyped call dereferences it. Had it been a typed
+  `TrackManager::get_instance()->track_get_rid_by_name(...)`, the compiler would have had the
+  class and the null check would have been the ordinary one.
+* **Rule:** the two prohibitions added in the previous entry are not style - reaching a singleton
+  by node path and calling it by string name is exactly what turns "this autoload moved" into a
+  segfault in an unrelated test.
+* **Trap:** the first headless run after rebuilding the extension re-imports the project and can
+  take minutes; the same test then runs in about 3 s. Run `--import` on its own before timing or
+  before concluding that anything hangs.
+
 ## 2026-09-22 - reading the vehicle state was changing it, in four places
 
 * **Context:** the first stage of the #184 architecture work. The state `Dictionary` is filled by

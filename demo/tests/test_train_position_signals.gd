@@ -79,7 +79,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     var track_rid: RID = TrackManager.track_create()
     _created_tracks.append(track_rid)
     TrackManager.track_update_curves(track_rid, _curve(Vector3(0.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)), null)
-    TrackManager.track_update(track_rid, TrackManager.TrackType.TRACK_NORMAL, "start", 1.435)
+    TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "start", 1.435)
     TrackManager.topology_rebuild()
 
     var controller: TrainController = TrainController.new()
@@ -91,7 +91,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = offset
-    vehicle.set("start_direction", TrackManager.Direction.DIRECTION_REVERSED)
+    vehicle.set("start_direction", TrackManager.DIRECTION_REVERSED)
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(controller)
     _created_vehicles.append(vehicle)

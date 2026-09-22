@@ -9,6 +9,14 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="heating">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="heating_generator_engine" type="int" setter="set_heating_generator_engine" getter="get_heating_generator_engine" enum="TrainEngine.EngineType" default="8">
 			[code]Clima:HGeneratorEngine[/code]

@@ -12,6 +12,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="apply_config" experimental="true">
+			<return type="void" />
+			<description>
+				Updates iternal mover based on the config stored in node properties (should not be called directly)
+			</description>
+		</method>
 		<method name="battery" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -28,11 +34,69 @@
 				Broadcasts command to all trains (including self)
 			</description>
 		</method>
+		<method name="cab_activation" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="cab_activation_auto" qualifiers="const">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="cab_change" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="direction" type="int" />
 			<description>
 				Moves the crew to the next cab in [param direction] ([code]1[/code] forward, [code]-1[/code] backward), like the original [code]TTrain::CabChange()[/code]: cab 1, machine room (cab 0), cab 2.
+			</description>
+		</method>
+		<method name="change_track">
+			<return type="void" />
+			<param index="0" name="track_name" type="String" />
+			<param index="1" name="track_offset" type="float" />
+			<param index="2" name="track_direction" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="compute_fast_movement">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="compute_forces">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="compute_movement">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="couple">
+			<return type="void" />
+			<param index="0" name="other" type="TrainController" />
+			<param index="1" name="end" type="int" />
+			<param index="2" name="other_end" type="int" />
+			<param index="3" name="coupling_type" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="coupler_connect">
+			<return type="void" />
+			<param index="0" name="where" type="Variant" />
+			<description>
+			</description>
+		</method>
+		<method name="coupler_disconnect">
+			<return type="void" />
+			<param index="0" name="where" type="Variant" />
+			<description>
 			</description>
 		</method>
 		<method name="direction_decrease" qualifiers="const">
@@ -47,6 +111,49 @@
 				Decrease direction by one step
 			</description>
 		</method>
+		<method name="get_coupled_controller" qualifiers="const">
+			<return type="TrainController" />
+			<param index="0" name="end" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_coupled_end" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="end" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="get_velocity" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_world_position" qualifiers="const">
+			<return type="Vector3" />
+			<description>
+			</description>
+		</method>
+		<method name="get_world_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<description>
+			</description>
+		</method>
+		<method name="is_coupled" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="is_physics_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="main_controller_decrease" qualifiers="const">
 			<return type="void" />
 			<param index="0" name="step" type="int" default="1" />
@@ -59,6 +166,12 @@
 			<param index="0" name="step" type="int" default="1" />
 			<description>
 				Increase main controller position
+			</description>
+		</method>
+		<method name="process_movement">
+			<return type="float" />
+			<param index="0" name="delta" type="float" />
+			<description>
 			</description>
 		</method>
 		<method name="radio">
@@ -97,6 +210,18 @@
 				This is a shortcut for [method TrainSystem.register_command].
 			</description>
 		</method>
+		<method name="second_controller_decrease" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="step" type="int" default="1" />
+			<description>
+			</description>
+		</method>
+		<method name="second_controller_increase" qualifiers="const">
+			<return type="void" />
+			<param index="0" name="step" type="int" default="1" />
+			<description>
+			</description>
+		</method>
 		<method name="send_command" qualifiers="const">
 			<return type="Variant" />
 			<param index="0" name="command" type="StringName" />
@@ -105,6 +230,12 @@
 			<description>
 				Sends command to train controlled by this node.
 				This is a shortcut for [method TrainSystem.send_command] and returns its result.
+			</description>
+		</method>
+		<method name="uncouple">
+			<return type="void" />
+			<param index="0" name="end" type="int" />
+			<description>
 			</description>
 		</method>
 		<method name="unregister_command">
@@ -122,10 +253,18 @@
 			<description>
 			</description>
 		</method>
-		<method name="apply_config" experimental="true">
+		<method name="update_location">
 			<return type="void" />
 			<description>
-				Updates iternal mover based on the config stored in node properties (should not be called directly)
+			</description>
+		</method>
+		<method name="update_neighbour">
+			<return type="void" />
+			<param index="0" name="end" type="int" />
+			<param index="1" name="other" type="TrainController" />
+			<param index="2" name="other_end" type="int" />
+			<param index="3" name="track_distance" type="float" />
+			<description>
 			</description>
 		</method>
 		<method name="update_state" experimental="true">
@@ -255,6 +394,20 @@
 				Train configuration changed
 			</description>
 		</signal>
+		<signal name="consist_changed">
+			<description>
+			</description>
+		</signal>
+		<signal name="coupler_attached">
+			<param index="0" name="element" type="int" />
+			<description>
+			</description>
+		</signal>
+		<signal name="coupler_detached">
+			<param index="0" name="element" type="int" />
+			<description>
+			</description>
+		</signal>
 		<signal name="mover_config_changed">
 			<description>
 				Train internal configuration changed
@@ -263,6 +416,11 @@
 		<signal name="mover_initialized">
 			<description>
 				Train internal subsystem initialized
+			</description>
+		</signal>
+		<signal name="position_changed">
+			<param index="0" name="position" type="Vector3" />
+			<description>
 			</description>
 		</signal>
 		<signal name="power_changed">
@@ -331,6 +489,18 @@
 		</constant>
 		<constant name="POWER_TYPE_STEAM" value="4" enum="TrainPowerType">
 			Represents steam power.
+		</constant>
+		<constant name="COUPLING_ELEMENT_COUPLER" value="0" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_BRAKEHOSE" value="1" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_MAINHOSE" value="2" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_CONTROL" value="3" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_GANGWAY" value="4" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_HEATING" value="5" enum="CouplingElement">
 		</constant>
 		<constant name="CATEGORY_TRAIN" value="1" enum="Category">
 		</constant>

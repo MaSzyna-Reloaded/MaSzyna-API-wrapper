@@ -23,6 +23,11 @@
 				Operate converter
 			</description>
 		</method>
+		<method name="converter_fuse_reset">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="pantograph">
 			<return type="void" />
 			<param index="0" name="selector" type="int" enum="TrainElectricEngine.PantographSelector" />
@@ -30,9 +35,34 @@
 			<description>
 			</description>
 		</method>
+		<method name="pantograph_compressor">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="pantograph_compressor_valve">
+			<return type="void" />
+			<param index="0" name="to_compressor" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="pantographs_drop_all">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="pantographs_valve">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="set_pantograph_wire_voltage">
+			<return type="void" />
+			<param index="0" name="selector" type="int" enum="TrainElectricEngine.PantographSelector" />
+			<param index="1" name="voltage" type="float" />
 			<description>
 			</description>
 		</method>

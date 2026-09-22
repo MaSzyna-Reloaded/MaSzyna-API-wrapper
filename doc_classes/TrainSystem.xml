@@ -51,10 +51,22 @@
 				Returns a list of supported config properties by train
 			</description>
 		</method>
+		<method name="get_train">
+			<return type="TrainController" />
+			<param index="0" name="train_id" type="String" />
+			<description>
+			</description>
+		</method>
 		<method name="get_train_count" qualifiers="const">
 			<return type="int" />
 			<description>
 				Returns number of registered trains
+			</description>
+		</method>
+		<method name="get_train_ids_in_rect">
+			<return type="Array" />
+			<param index="0" name="rect" type="Rect2" />
+			<description>
 			</description>
 		</method>
 		<method name="get_train_state">
@@ -64,11 +76,23 @@
 				Returns the current state of the train
 			</description>
 		</method>
+		<method name="get_train_world_position" qualifiers="const">
+			<return type="Vector3" />
+			<param index="0" name="train_id" type="String" />
+			<description>
+			</description>
+		</method>
 		<method name="is_command_supported">
 			<return type="bool" />
 			<param index="0" name="command" type="String" />
 			<description>
 				Checks whether command is supported
+			</description>
+		</method>
+		<method name="is_train_registered" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="train_id" type="String" />
+			<description>
 			</description>
 		</method>
 		<method name="log">
@@ -106,6 +130,14 @@
 			<param index="3" name="p2" type="Variant" default="null" />
 			<description>
 				Sends a command to a specified train and returns the command handler's result (e.g. whether it was accepted). Returns [code]null[/code] when the train or command is unknown, or when the handler returns nothing.
+			</description>
+		</method>
+		<method name="step_vehicles">
+			<return type="PackedFloat64Array" />
+			<param index="0" name="controllers" type="TrainController[]" />
+			<param index="1" name="step" type="float" />
+			<param index="2" name="full_movement" type="bool" />
+			<description>
 			</description>
 		</method>
 		<method name="unregister_command">

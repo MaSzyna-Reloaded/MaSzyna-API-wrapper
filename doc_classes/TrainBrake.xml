@@ -12,6 +12,24 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="alarm_chain">
+			<return type="void" />
+			<param index="0" name="pulled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="auto_rewident">
+			<return type="void" />
+			<param index="0" name="brake_delay" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="brake_level_charging">
+			<return type="void" />
+			<param index="0" name="active" type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="brake_level_decrease">
 			<return type="void" />
 			<description>
@@ -55,6 +73,32 @@
 			<description>
 				Operates the brake releaser (overrides to quickly release brake cylinder pressure).
 				Pass true to engage the releaser, false to disengage. Typically used momentarily.
+			</description>
+		</method>
+		<method name="local_brake_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="local_brake_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="local_brake_set">
+			<return type="void" />
+			<param index="0" name="level" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="manual_brake_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="manual_brake_increase">
+			<return type="void" />
+			<description>
 			</description>
 		</method>
 	</methods>
@@ -210,6 +254,8 @@
 		</member>
 		<member name="main_pipe_blocking_pressure" type="float" setter="set_main_pipe_blocking_pressure" getter="get_main_pipe_blocking_pressure" default="0.0">
 			Main line blocking pressure
+		</member>
+		<member name="main_pipe_emergency_cuts_off_handle" type="bool" setter="set_main_pipe_emergency_cuts_off_handle" getter="get_main_pipe_emergency_cuts_off_handle" default="false">
 		</member>
 		<member name="main_pipe_minimum_unblocking_handle_position" type="int" setter="set_main_pipe_minimum_unblocking_handle_position" getter="get_main_pipe_minimum_unblocking_handle_position" default="-3">
 			Minimum brake handle position in order to unblock the main pipe

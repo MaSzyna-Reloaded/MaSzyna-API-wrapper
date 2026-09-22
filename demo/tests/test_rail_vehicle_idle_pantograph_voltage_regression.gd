@@ -58,7 +58,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL,
+        TrackManager.TRACK_NORMAL,
         "start",
     )
     TrackManager.topology_rebuild()
@@ -90,7 +90,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
-    vehicle.start_direction = TrackManager.Direction.DIRECTION_NORMAL
+    vehicle.start_direction = TrackManager.DIRECTION_NORMAL
     vehicle.pantograph_collector_width = 0.5
     add_child(vehicle)
     vehicle.controller_path = vehicle.get_path_to(controller)
@@ -164,7 +164,7 @@ func _dump(controller:TrainController) -> String:
 func _register_track(
     curve1:MaszynaTrackCurve,
     curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TrackType.TRACK_NORMAL,
+    type:int = TrackManager.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
     var track_rid:RID = TrackManager.track_create()

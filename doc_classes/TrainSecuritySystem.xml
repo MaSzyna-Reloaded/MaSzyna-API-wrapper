@@ -17,6 +17,11 @@
 				Leaving this option on for a longer period of time will first trigger the alarm and then the emergency brakes will be activated after a while.
 			</description>
 		</method>
+		<method name="security_cabsignal_acknowledge">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="aware_delay" type="float" setter="set_aware_delay" getter="get_aware_delay" default="0.0">

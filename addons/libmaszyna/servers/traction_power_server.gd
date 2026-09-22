@@ -129,7 +129,7 @@ var _next_power_source_id:int = 0
 
 var _wires:Dictionary[RID, WireState] = {}
 var _next_wire_id:int = 0
-var _spatial_index:SpatialIndex = SpatialIndex.new(_GRID_CELL_SIZE)
+var _spatial_index:SpatialIndex = _make_spatial_index()
 
 
 func _process(delta:float) -> void:
@@ -460,3 +460,11 @@ func _wire_height_above(
     if horizontal > 0.0:
         return INF
     return vertical
+
+
+## SpatialIndex is a C++ class now, and a C++ class takes no constructor arguments - the cell
+## size is a property set right after it is made.
+func _make_spatial_index() -> SpatialIndex:
+    var index: SpatialIndex = SpatialIndex.new()
+    index.cell_size = _GRID_CELL_SIZE
+    return index

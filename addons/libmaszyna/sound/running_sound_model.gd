@@ -51,7 +51,7 @@ func update(
     if speed > 5.0 and _labels.has("curve"):
         shape.merge(RailVehiclePhysicsServer.controller_get_curve(
                 controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     var quality_volume:float = lerpf(
             0.8, 1.2, clampf(TrackManager.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))
 
@@ -152,7 +152,7 @@ func _curve(
     var lateral_acceleration:float = absf(
             velocity * velocity / radius - GRAVITY * absf(float(shape.get("cant", 0.0))) / track_width)
     var volume:float = lateral_acceleration * lerpf(0.5, 1.0, clampf(speed / 40.0, 0.0, 1.0))
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     if TrackManager.track_is_switch(track_rid) and radius < 1500.0:
         volume *= 100.0
     if volume <= 0.05:
@@ -215,7 +215,7 @@ func _wheel_clatter(
         results:Dictionary) -> void:
     var source:MmdSoundSourceDefinition = entry["source"]
     var event_name:StringName = entry["event"]
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     var sound_distance:float = TrackManager.track_get_sound_distance(track_rid)
     if is_equal_approx(sound_distance, -1.0):
         return

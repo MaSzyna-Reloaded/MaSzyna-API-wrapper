@@ -6,10 +6,10 @@ class ControllerState:
 
 
 class VehicleState:
-    var track_rid: RID = TrackManager.UNDEFINED_TRACK
+    var track_rid: RID = RID()
     var track_offset: float = 0.0
-    var track_direction: TrackManager.Direction = TrackManager.Direction.DIRECTION_NORMAL
-    var switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
+    var track_direction: TrackManager.Direction = TrackManager.DIRECTION_NORMAL
+    var switch_track: TrackManager.SwitchTrack = TrackManager.TRACK_COMMON
     var controller_rid: RID = RID()
     ## moved since the mover location was last updated
     var moved: bool = true
@@ -192,7 +192,7 @@ func _find_vehicle(
     while scanned < scan_range:
         # same conversion to the curve offset direction as in _move_vehicle_state()
         var movement_sign: float = (
-            -1.0 if cursor.track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
+            -1.0 if cursor.track_direction == TrackManager.DIRECTION_NORMAL else 1.0
         ) * request_sign
         var found_rid: RID = RID()
         var found_along: float = INF
@@ -206,7 +206,7 @@ func _find_vehicle(
                 found_along = along
         if found_rid.is_valid():
             var found_state: VehicleState = _vehicles[found_rid]
-            var found_front_sign: float = 1.0 if found_state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else -1.0
+            var found_front_sign: float = 1.0 if found_state.track_direction == TrackManager.DIRECTION_NORMAL else -1.0
             var found_end: int = 0 if is_equal_approx(found_front_sign, -movement_sign) else 1
             return [found_rid, found_end, scanned + found_along]
 
@@ -295,10 +295,10 @@ func vehicle_set_track(
     state.track_direction = track_direction
     state.moved = true
     state.track_is_switch = TrackManager.track_is_switch(track_rid)
-    state.switch_track = TrackManager.switch_get_active_track(track_rid) if state.track_is_switch else TrackManager.SwitchTrack.TRACK_COMMON
+    state.switch_track = TrackManager.switch_get_active_track(track_rid) if state.track_is_switch else TrackManager.TRACK_COMMON
     state.track_offset = clampf(track_offset, 0.0, TrackManager.track_get_length(track_rid, state.switch_track))
     var remaining_offset:float = track_offset - state.track_offset
-    var direction_sign:float = -1.0 if track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
+    var direction_sign:float = -1.0 if track_direction == TrackManager.DIRECTION_NORMAL else 1.0
     _move_vehicle_state(state, remaining_offset * direction_sign, false)
 
 
@@ -310,7 +310,7 @@ func process_movement(vehicle_rid: RID, delta: float, controller: TrainControlle
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:
         return
-    if not state.track_rid == TrackManager.UNDEFINED_TRACK and not TrackManager.track_exists(state.track_rid):
+    if not state.track_rid == RID() and not TrackManager.track_exists(state.track_rid):
         return
     if not controller:
         if not state.controller_rid.is_valid():
@@ -338,7 +338,7 @@ func _apply_movement(vehicle_rid: RID, distance: float) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:
         return
-    if not state.track_rid == TrackManager.UNDEFINED_TRACK and not TrackManager.track_exists(state.track_rid):
+    if not state.track_rid == RID() and not TrackManager.track_exists(state.track_rid):
         return
     _move_vehicle_state(state, distance, true)
 
@@ -377,7 +377,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
     # Convert movement relative to the vehicle front into curve offset movement.
     # Positive sign moves toward the branch end, negative toward the branch start.
     var movement_sign: float = (
-        -1.0 if current_track_direction == TrackManager.Direction.DIRECTION_NORMAL else 1.0
+        -1.0 if current_track_direction == TrackManager.DIRECTION_NORMAL else 1.0
     ) * request_sign
 
     while remaining > 0.0001:
@@ -405,7 +405,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
                 ):
                     TrackManager.switch_set_active_track(current_track_rid, current_switch_track)
         else:
-            endpoint_index = TrackManager.EndpointIndex.CURVE1_P2 if movement_sign > 0.0 else TrackManager.EndpointIndex.CURVE1_P1
+            endpoint_index = TrackManager.CURVE1_P2 if movement_sign > 0.0 else TrackManager.CURVE1_P1
 
         # Hot path: normal simulation steps stay within the current branch and
         # return before asking topology for the next track.
@@ -419,7 +419,7 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
 
         # Large init/debug jumps cross endpoints by following the single
         # unambiguous connection. Ambiguous nodes stop at the endpoint.
-        var connection: TrackManager.EndpointRef = _get_motion_connection(
+        var connection: TrackEndpointRef = _get_motion_connection(
             current_track_rid,
             endpoint_index,
             force_switch_state,
@@ -436,16 +436,16 @@ func _move_vehicle_state(state: VehicleState, distance: float, force_switch_stat
             var entered_at_end: bool = connection.endpoint_index == TrackManager.switch_get_branch_end_endpoint(current_track_rid, current_switch_track)
             movement_sign = -1.0 if entered_at_end else 1.0
         else:
-            current_switch_track = TrackManager.SwitchTrack.TRACK_COMMON
-            movement_sign = -1.0 if connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2 else 1.0
+            current_switch_track = TrackManager.TRACK_COMMON
+            movement_sign = -1.0 if connection.endpoint_index == TrackManager.CURVE1_P2 else 1.0
         # Entering at branch start means offset grows; entering at branch end
         # means offset decreases from the branch length.
         current_length = TrackManager.track_get_length(current_track_rid, current_switch_track)
         current_track_offset = 0.0 if movement_sign > 0.0 else current_length
         current_track_direction = (
-            TrackManager.Direction.DIRECTION_NORMAL
+            TrackManager.DIRECTION_NORMAL
             if movement_sign * request_sign < 0.0
-            else TrackManager.Direction.DIRECTION_REVERSED
+            else TrackManager.DIRECTION_REVERSED
         )
 
     state.track_rid = current_track_rid
@@ -518,9 +518,9 @@ func _get_vehicle_transform(state: VehicleState) -> Transform3D:
         Basis(x_axis, y_axis, z_axis).orthonormalized().rotated(forward, deg_to_rad(roll)).orthonormalized(),
         origin
     )
-    if state.track_direction == TrackManager.Direction.DIRECTION_REVERSED:
+    if state.track_direction == TrackManager.DIRECTION_REVERSED:
         track_transform.basis = track_transform.basis.rotated(track_transform.basis.y.normalized(), PI).orthonormalized()
-    track_transform.origin.y += TrackManager.RAIL_HEIGHT
+    track_transform.origin.y += TrackManager.rail_height
     return track_transform
 
 
@@ -535,11 +535,11 @@ func controller_get_transform(controller_rid: RID) -> Transform3D:
 func controller_get_track_position(controller_rid: RID) -> Dictionary:
     var state: VehicleState = _vehicles.get(_controller_vehicles.get(controller_rid, RID()))
     if not state or not TrackManager.track_exists(state.track_rid):
-        return {"track_rid": TrackManager.UNDEFINED_TRACK, "along": 0.0}
+        return {"track_rid": RID(), "along": 0.0}
     return {
         "track_rid": state.track_rid,
         # moving forward decreases the offset on a track run in its normal direction
-        "along": -state.track_offset if state.track_direction == TrackManager.Direction.DIRECTION_NORMAL else state.track_offset,
+        "along": -state.track_offset if state.track_direction == TrackManager.DIRECTION_NORMAL else state.track_offset,
     }
 
 
@@ -587,24 +587,24 @@ func _get_motion_connection(
     track_rid: RID,
     endpoint_index: int,
     force_switch_state: bool = true,
-) -> TrackManager.EndpointRef:
+) -> TrackEndpointRef:
     if not TrackManager.track_exists(track_rid):
         return null
-    var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(track_rid, endpoint_index)
-    var unique_connection: TrackManager.EndpointRef = null
-    var unique_forced_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
+    var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(track_rid, endpoint_index)
+    var unique_connection: TrackEndpointRef = null
+    var unique_forced_switch_track: TrackManager.SwitchTrack = TrackManager.TRACK_COMMON
     var has_unique_forced_switch_track: bool = false
 
-    for raw_connection: TrackManager.EndpointRef in connections:
-        var candidate_connection: TrackManager.EndpointRef = TrackManager.EndpointRef.new(
-            raw_connection.track_rid,
-            raw_connection.endpoint_index
-        )
-        var candidate_forced_switch_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON
+    for raw_connection: TrackEndpointRef in connections:
+        # a C++ class takes no constructor arguments
+        var candidate_connection: TrackEndpointRef = TrackEndpointRef.new()
+        candidate_connection.track_rid = raw_connection.track_rid
+        candidate_connection.endpoint_index = raw_connection.endpoint_index
+        var candidate_forced_switch_track: TrackManager.SwitchTrack = TrackManager.TRACK_COMMON
         var has_candidate_forced_switch_track: bool = false
 
         if TrackManager.track_is_switch(raw_connection.track_rid):
-            var common_endpoints: Array[TrackManager.EndpointIndex] = TrackManager.switch_get_common_endpoints(raw_connection.track_rid)
+            var common_endpoints: PackedInt32Array = TrackManager.switch_get_common_endpoints(raw_connection.track_rid)
             if common_endpoints.has(raw_connection.endpoint_index):
                 # Entering from the common point follows whichever branch is active;
                 # remap the shared endpoint to the active branch endpoint that
@@ -630,8 +630,8 @@ func _get_motion_connection(
             is_motion_accessible = candidate_connection.endpoint_index == TrackManager.switch_get_branch_start_endpoint(candidate_connection.track_rid, active_track) \
                 or candidate_connection.endpoint_index == TrackManager.switch_get_branch_end_endpoint(candidate_connection.track_rid, active_track)
         else:
-            is_motion_accessible = candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P1 \
-                or candidate_connection.endpoint_index == TrackManager.EndpointIndex.CURVE1_P2
+            is_motion_accessible = candidate_connection.endpoint_index == TrackManager.CURVE1_P1 \
+                or candidate_connection.endpoint_index == TrackManager.CURVE1_P2
         if not is_motion_accessible and not has_candidate_forced_switch_track:
             continue
 

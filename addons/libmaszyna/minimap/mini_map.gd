@@ -97,11 +97,11 @@ func _sync_switch_handles() -> void:
                 _switch_handles[rid] = sh
             var sh: Control = _switch_handles[rid]
             var common_idx: int = TrackManager.track_get_common_endpoint_index(rid)
-            var endpoints: Array[Vector3] = TrackManager.track_get_endpoints(rid)
-            if not common_idx == TrackManager.SwitchCommonPoint.POINT_NONE and common_idx < endpoints.size():
+            var endpoints: PackedVector3Array = TrackManager.track_get_endpoints(rid)
+            if not common_idx == TrackManager.POINT_NONE and common_idx < endpoints.size():
                 sh.position = _world_to_view_centered(endpoints[common_idx], cam.pos, cam.rot) - sh.size * 0.5
                 sh.visible = true
-                sh.modulate = Color.WHITE if TrackManager.switch_get_active_track(rid) == TrackManager.SwitchTrack.TRACK_COMMON else Color.GRAY
+                sh.modulate = Color.WHITE if TrackManager.switch_get_active_track(rid) == TrackManager.TRACK_COMMON else Color.GRAY
             else:
                 sh.visible = false
         elif _switch_handles.has(rid):
@@ -137,8 +137,8 @@ func _draw() -> void:
 
     for rid in _cached_tracks:
         var is_switch: bool = TrackManager.track_is_switch(rid)
-        var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.SwitchTrack.TRACK_COMMON)
-        var curve2: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+        var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.TRACK_COMMON)
+        var curve2: MaszynaTrackCurve = TrackManager.track_get_curve(rid, TrackManager.TRACK_DIVERGING)
         var switch_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(rid)
         var track_name: String = TrackManager.track_get_name(rid)
 
@@ -167,9 +167,9 @@ func _draw_track_curves(
     cam_rot: float
 ) -> void:
     if curve1:
-        _draw_curve(curve1, switch_active_color if is_switch and switch_track == TrackManager.SwitchTrack.TRACK_COMMON else track_color, cam_pos, cam_rot)
+        _draw_curve(curve1, switch_active_color if is_switch and switch_track == TrackManager.TRACK_COMMON else track_color, cam_pos, cam_rot)
     if curve2:
-        _draw_curve(curve2, switch_active_color if is_switch and switch_track == TrackManager.SwitchTrack.TRACK_DIVERGING else track_color, cam_pos, cam_rot)
+        _draw_curve(curve2, switch_active_color if is_switch and switch_track == TrackManager.TRACK_DIVERGING else track_color, cam_pos, cam_rot)
 
 func _draw_track_label(track_name: String, curve1: MaszynaTrackCurve, cam_pos: Vector2, cam_rot: float) -> void:
     if not track_name or not curve1: return

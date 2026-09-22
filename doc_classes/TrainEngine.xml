@@ -9,11 +9,22 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="fuse_reset">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="main_switch">
 			<return type="bool" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
 				Operate main switch immediately (vehicle level, no cab hold logic). Returns whether the main switch state was changed.
+			</description>
+		</method>
+		<method name="motor_connectors_open">
+			<return type="void" />
+			<param index="0" name="open" type="bool" />
+			<description>
 			</description>
 		</method>
 	</methods>

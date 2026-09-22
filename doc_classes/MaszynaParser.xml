@@ -53,16 +53,16 @@
 				Reads and returns the next line from the input stream.
 			</description>
 		</method>
-		<method name="get_position" qualifiers="const">
-			<return type="int" />
-			<description>
-				Returns the current read position in the buffer, in bytes.
-			</description>
-		</method>
 		<method name="get_parsed_metadata">
 			<return type="Dictionary" />
 			<description>
 				Returns the currently parsed metadata.
+			</description>
+		</method>
+		<method name="get_position" qualifiers="const">
+			<return type="int" />
+			<description>
+				Returns the current read position in the buffer, in bytes.
 			</description>
 		</method>
 		<method name="get_tokens">

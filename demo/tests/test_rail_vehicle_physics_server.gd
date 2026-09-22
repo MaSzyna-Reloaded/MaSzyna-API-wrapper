@@ -29,7 +29,7 @@ func test_vehicle_set_track_initializes_normal_track_state() -> void:
     var track_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var vehicle_rid: RID = _create_vehicle()
 
@@ -37,12 +37,12 @@ func test_vehicle_set_track_initializes_normal_track_state() -> void:
         vehicle_rid,
         track_rid,
         15.0,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(10.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(10.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -51,34 +51,34 @@ func test_vehicle_set_track_follows_connected_tracks_for_initial_offsets() -> vo
         _register_track(_curve(Vector3(index * 10, 0, 0), Vector3((index + 1) * 10, 0, 0)))
     TrackManager.topology_rebuild()
     var vehicle_rid:RID = _create_vehicle()
-    for direction:TrackManager.Direction in [TrackManager.Direction.DIRECTION_NORMAL, TrackManager.Direction.DIRECTION_REVERSED]:
+    for direction:TrackManager.Direction in [TrackManager.DIRECTION_NORMAL, TrackManager.DIRECTION_REVERSED]:
         RailVehiclePhysicsServer.vehicle_set_track(vehicle_rid, created_tracks[2], -15.0, direction)
         _assert_vector_eq(RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-            Vector3(5.0, TrackManager.RAIL_HEIGHT, 0.0))
+            Vector3(5.0, TrackManager.rail_height, 0.0))
         RailVehiclePhysicsServer.vehicle_set_track(vehicle_rid, created_tracks[0], 25.0, direction)
         _assert_vector_eq(RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-            Vector3(25.0, TrackManager.RAIL_HEIGHT, 0.0))
+            Vector3(25.0, TrackManager.rail_height, 0.0))
 
 
 func test_vehicle_set_track_initializes_switch_state_from_active_branch() -> void:
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_DIVERGING)
     var vehicle_rid: RID = _create_vehicle()
 
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
         switch_rid,
         3.0,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(2.1213, TrackManager.RAIL_HEIGHT, 2.1213),
+        Vector3(2.1213, TrackManager.rail_height, 2.1213),
         "switch initialization should sample the active diverging branch"
     )
 
@@ -87,25 +87,25 @@ func test_vehicle_get_transform_applies_common_and_diverging_orientation() -> vo
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
     var vehicle_rid: RID = _create_vehicle()
 
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
         switch_rid,
         4.0,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
     var common_forward: Vector3 = -RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
 
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_DIVERGING)
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
         switch_rid,
         4.0,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
     var diverging_forward: Vector3 = -RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
 
@@ -117,12 +117,12 @@ func test_vehicle_move_crosses_connected_tracks() -> void:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var second_rid: RID = _register_track(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -131,13 +131,13 @@ func test_vehicle_move_crosses_connected_tracks() -> void:
         vehicle_rid,
         created_tracks[0],
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 5.0)
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(13.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(13.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -145,12 +145,12 @@ func test_vehicle_transform_at_distance_crosses_tracks_without_moving_vehicle() 
     var first_rid:RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     _register_track(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid:RID = _create_vehicle()
@@ -158,7 +158,7 @@ func test_vehicle_transform_at_distance_crosses_tracks_without_moving_vehicle() 
         vehicle_rid,
         first_rid,
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
 
     var sampled_transform:Transform3D = (
@@ -167,12 +167,12 @@ func test_vehicle_transform_at_distance_crosses_tracks_without_moving_vehicle() 
 
     _assert_vector_eq(
         sampled_transform.origin,
-        Vector3(13.0, TrackManager.RAIL_HEIGHT, 0.0),
+        Vector3(13.0, TrackManager.rail_height, 0.0),
         "sample should continue on the connected track",
     )
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(8.0, TrackManager.RAIL_HEIGHT, 0.0),
+        Vector3(8.0, TrackManager.rail_height, 0.0),
         "sample should not move the vehicle",
     )
 
@@ -181,28 +181,28 @@ func test_vehicle_transform_at_distance_does_not_change_switch_state() -> void:
     var start_rid:RID = _register_track(
         _curve(Vector3(20.0, 0.0, 20.0), Vector3(10.0, 0.0, 10.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var switch_rid:RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
     TrackManager.topology_rebuild()
     var vehicle_rid:RID = _create_vehicle()
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
         start_rid,
         12.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
 
     RailVehiclePhysicsServer.vehicle_get_transform_at_distance(vehicle_rid, 5.0)
 
     assert_eq(
         TrackManager.switch_get_active_track(switch_rid),
-        TrackManager.SwitchTrack.TRACK_COMMON,
+        TrackManager.TRACK_COMMON,
         "sampling through a diverging branch should not move the switch",
     )
 
@@ -211,17 +211,17 @@ func test_vehicle_move_stops_at_ambiguous_shared_node() -> void:
     var source_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     _register_track(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     _register_track(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 10.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -230,13 +230,13 @@ func test_vehicle_move_stops_at_ambiguous_shared_node() -> void:
         vehicle_rid,
         source_rid,
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 5.0)
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(10.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(10.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -244,12 +244,12 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     _register_track(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -259,7 +259,7 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
         vehicle_rid,
         created_tracks[0],
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
 
@@ -267,7 +267,7 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(3.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(3.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -275,7 +275,7 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -285,7 +285,7 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
         vehicle_rid,
         created_tracks[0],
         4.0,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
     var forward: Vector3 = -RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
     RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
@@ -294,7 +294,7 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
 
     var moved_by: Vector3 = (
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin
-        - Vector3(4.0, TrackManager.RAIL_HEIGHT, 0.0)
+        - Vector3(4.0, TrackManager.rail_height, 0.0)
     )
     assert_true(
         moved_by.normalized().distance_to(forward) < 0.01,
@@ -306,7 +306,7 @@ func test_process_movement_without_bound_controller_is_noop() -> void:
     var track_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -315,13 +315,13 @@ func test_process_movement_without_bound_controller_is_noop() -> void:
         vehicle_rid,
         track_rid,
         3.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.process_movement(vehicle_rid, 1.0)
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(3.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(3.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -329,7 +329,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
     var track_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -339,7 +339,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
         vehicle_rid,
         track_rid,
         3.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
 
@@ -351,7 +351,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(3.0, TrackManager.RAIL_HEIGHT, 0.0)
+        Vector3(3.0, TrackManager.rail_height, 0.0)
     )
 
 
@@ -359,7 +359,7 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
     var track_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
@@ -369,7 +369,7 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
         vehicle_rid,
         track_rid,
         3.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
 
@@ -389,14 +389,14 @@ func test_vehicle_reverse_on_switch_keeps_occupied_branch_after_switch_change() 
     _register_track(
         _curve(Vector3(-10.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_DIVERGING)
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
 
@@ -404,16 +404,16 @@ func test_vehicle_reverse_on_switch_keeps_occupied_branch_after_switch_change() 
         vehicle_rid,
         created_tracks[0],
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 5.0)
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
 
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, -1.0)
 
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
-        Vector3(1.4142, TrackManager.RAIL_HEIGHT, 1.4142),
+        Vector3(1.4142, TrackManager.rail_height, 1.4142),
         "reverse movement should keep sampling the occupied diverging branch"
     )
 
@@ -422,14 +422,14 @@ func test_vehicle_move_forces_switch_diverging_when_entering_from_diverging_bran
     var start_rid: RID = _register_track(
         _curve(Vector3(20.0, 0.0, 20.0), Vector3(10.0, 0.0, 10.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
     TrackManager.topology_rebuild()
     var distance_on_switch: float = 2.8579
     var vehicle_rid: RID = _create_vehicle()
@@ -438,16 +438,16 @@ func test_vehicle_move_forces_switch_diverging_when_entering_from_diverging_bran
         vehicle_rid,
         start_rid,
         12.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 5.0)
 
-    assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.SwitchTrack.TRACK_DIVERGING)
+    assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.TRACK_DIVERGING)
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
         _track_position(
             switch_rid,
-            TrackManager.track_get_length(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING) - distance_on_switch
+            TrackManager.track_get_length(switch_rid, TrackManager.TRACK_DIVERGING) - distance_on_switch
         ),
         "diverging branch entry should force diverging switch route"
     )
@@ -457,19 +457,19 @@ func test_vehicle_move_large_offset_forces_switch_when_entering_from_diverging_b
     var start_rid: RID = _register_track(
         _curve(Vector3(20.0, 0.0, 20.0), Vector3(10.0, 0.0, 10.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
     var next_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(-10.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
 
@@ -477,14 +477,14 @@ func test_vehicle_move_large_offset_forces_switch_when_entering_from_diverging_b
         vehicle_rid,
         start_rid,
         12.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 25.0)
 
     var expected_next_offset: float = 25.0 \
         - (TrackManager.track_get_length(start_rid) - 12.0) \
-        - TrackManager.track_get_length(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
-    assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.SwitchTrack.TRACK_DIVERGING)
+        - TrackManager.track_get_length(switch_rid, TrackManager.TRACK_DIVERGING)
+    assert_eq(TrackManager.switch_get_active_track(switch_rid), TrackManager.TRACK_DIVERGING)
     _assert_vector_eq(
         RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin,
         _track_position(next_rid, expected_next_offset),
@@ -496,14 +496,14 @@ func test_vehicle_move_from_common_point_uses_active_switch_branch() -> void:
     var start_rid: RID = _register_track(
         _curve(Vector3(-10.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL
+        TrackManager.TRACK_NORMAL
     )
     var switch_rid: RID = _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 10.0)),
-        TrackManager.TrackType.TRACK_SWITCH
+        TrackManager.TRACK_SWITCH
     )
-    TrackManager.switch_set_active_track(switch_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_DIVERGING)
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
 
@@ -511,7 +511,7 @@ func test_vehicle_move_from_common_point_uses_active_switch_branch() -> void:
         vehicle_rid,
         start_rid,
         8.0,
-        TrackManager.Direction.DIRECTION_REVERSED
+        TrackManager.DIRECTION_REVERSED
     )
     RailVehiclePhysicsServer.vehicle_move(vehicle_rid, 15.0)
 
@@ -543,7 +543,7 @@ func _create_controller(velocity: float = 0.0) -> TrainController:
 func _register_track(
     curve1: MaszynaTrackCurve,
     curve2: MaszynaTrackCurve = null,
-    type: int = TrackManager.TrackType.TRACK_NORMAL
+    type: int = TrackManager.TRACK_NORMAL
 ) -> RID:
     var track_rid: RID = TrackManager.track_create()
     created_tracks.append(track_rid)
@@ -572,7 +572,7 @@ func _track_position(track_rid: RID, offset: float) -> Vector3:
         vehicle_rid,
         track_rid,
         offset,
-        TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_NORMAL
     )
     var transform: Transform3D = RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid)
     RailVehiclePhysicsServer.vehicle_free(vehicle_rid)

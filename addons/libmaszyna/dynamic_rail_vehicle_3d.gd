@@ -84,7 +84,7 @@ class_name DynamicRailVehicle3D
             start_track_offset = x
             _track_dirty = true
 
-@export_enum("NORMAL", "REVERSED") var start_direction:int = TrackManager.Direction.DIRECTION_NORMAL:
+@export_enum("NORMAL", "REVERSED") var start_direction:int = TrackManager.DIRECTION_NORMAL:
     set(x):
         if not x == start_direction:
             start_direction = x

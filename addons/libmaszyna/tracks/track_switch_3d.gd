@@ -6,7 +6,7 @@ signal switching_started(from_track: int, to_track: int)
 signal switching_finished(active_track: int)
 
 func _init() -> void:
-    type = TrackManager.TrackType.TRACK_SWITCH
+    type = TrackManager.TRACK_SWITCH
 
 @export var diverging_curve:MaszynaTrackCurve:
     set(x):
@@ -19,7 +19,7 @@ func _init() -> void:
             diverging_curve.changed.connect(_mark_dirty)
         _dirty = true
 
-@export var active_track: TrackManager.SwitchTrack = TrackManager.SwitchTrack.TRACK_COMMON:
+@export var active_track: TrackManager.SwitchTrack = TrackManager.TRACK_COMMON:
     set(value):
         if active_track == value:
             return
@@ -32,9 +32,9 @@ func toggle_switch() -> void:
     if not _track_rid.is_valid():
         return
     var next_track:TrackManager.SwitchTrack = (
-        TrackManager.SwitchTrack.TRACK_COMMON
-        if active_track == TrackManager.SwitchTrack.TRACK_DIVERGING
-        else TrackManager.SwitchTrack.TRACK_DIVERGING
+        TrackManager.TRACK_COMMON
+        if active_track == TrackManager.TRACK_DIVERGING
+        else TrackManager.TRACK_DIVERGING
     )
     TrackManager.switch_set_active_track(_track_rid, next_track)
 

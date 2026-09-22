@@ -13,6 +13,18 @@
 	</description>
 	<tutorials>
 	</tutorials>
+	<methods>
+		<method name="switch_decrease">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="switch_increase">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
+	</methods>
 	<members>
 		<member name="angle" type="float" setter="set_angle" getter="get_angle" default="0.0">
 			[code]WiperList:Angle[/code]
@@ -25,6 +37,8 @@
 		<member name="positions" type="WiperListItem[]" setter="set_positions" getter="get_positions" default="[]">
 			[code]WiperList[/code]
 			The wiper switch's position table.
+		</member>
+		<member name="wiper_count" type="int" setter="set_wiper_count" getter="get_wiper_count" default="0">
 		</member>
 	</members>
 </class>

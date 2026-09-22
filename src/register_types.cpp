@@ -55,6 +55,9 @@
 #include "systems/TrainSecuritySystem.hpp"
 #include "wheels/TrainWheels.hpp"
 #include "wipers/TrainWipers.hpp"
+#include "tracks/SpatialIndex.hpp"
+#include "tracks/TrackEndpointRef.hpp"
+#include "tracks/TrackManager.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -70,6 +73,7 @@ E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
 MaszynaRuntime *maszyna_runtime_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
+TrackManager *track_manager_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -92,6 +96,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
+        GDREGISTER_CLASS(SpatialIndex);
+        GDREGISTER_CLASS(TrackEndpointRef);
+        GDREGISTER_CLASS(TrackBranchNeighbors);
+        GDREGISTER_CLASS(TrackManager);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
@@ -146,6 +154,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_parser_singleton = memnew(E3DParser);
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
+        track_manager_singleton = memnew(TrackManager);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -154,6 +163,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
+        Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);                      // 8
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -177,6 +187,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("TrackManager")) {
+        Engine::get_singleton()->unregister_singleton("TrackManager"); // 8
     }
 
     if (Engine::get_singleton()->has_singleton("MaszynaRuntime")) {
@@ -205,6 +219,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (Engine::get_singleton()->has_singleton("UserSettings")) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
+    }
+
+    if (track_manager_singleton != nullptr) { // 8
+        memdelete(track_manager_singleton);
+        track_manager_singleton = nullptr;
     }
 
     if (maszyna_runtime_singleton != nullptr) { // 7

@@ -57,7 +57,7 @@ func after_each() -> void:
 
 
 func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.Direction.DIRECTION_NORMAL)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_NORMAL)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -83,7 +83,7 @@ func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> 
 ## already parked reversed relative to the track, so a further flip would put it back to
 ## looking "normal", which is just as wrong for a REVERSED vehicle).
 func test_reversed_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.Direction.DIRECTION_REVERSED)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_REVERSED)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -106,7 +106,7 @@ func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL,
+        TrackManager.TRACK_NORMAL,
         "start",
     )
     TrackManager.topology_rebuild()
@@ -147,7 +147,7 @@ func _create_controller() -> TrainController:
 func _register_track(
     curve1:MaszynaTrackCurve,
     curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TrackType.TRACK_NORMAL,
+    type:int = TrackManager.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
     var track_rid:RID = TrackManager.track_create()

@@ -69,7 +69,7 @@ func before_all() -> void:
         curve.p2 = Vector3((index + 1) * TRACK_LENGTH, 0.0, 0.0)
         var track_rid: RID = TrackManager.track_create()
         TrackManager.track_update_curves(track_rid, curve, null)
-        TrackManager.track_update(track_rid, TrackManager.TrackType.TRACK_NORMAL, "", TRACK_GAUGE)
+        TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "", TRACK_GAUGE)
         _tracks.append(track_rid)
     TrackManager.topology_rebuild()
 
@@ -101,7 +101,7 @@ func before_all() -> void:
         var track_rid: RID = _tracks[int(offset / TRACK_LENGTH)]
         RailVehiclePhysicsServer.vehicle_set_track(
             vehicle_rid, track_rid, fmod(offset, TRACK_LENGTH),
-            TrackManager.Direction.DIRECTION_NORMAL)
+            TrackManager.DIRECTION_NORMAL)
 
     await wait_idle_frames(2)
     print("[bench] built %d vehicles in %.1f ms" % [

@@ -2,6 +2,7 @@
 #include "RailVehicle3D.hpp"
 
 #include "../engines/TrainElectricEngine.hpp"
+#include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
 
 #include <godot_cpp/classes/area3d.hpp>
@@ -305,7 +306,8 @@ namespace godot {
     }
 
     void RailVehicle3D::_enter_tree() {
-        _singleton("TrackManager")->connect("tracks_changed", Callable(this, "_on_track_manager_tracks_changed"));
+        TrackManager::get_instance()->connect(
+                TrackManager::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
         rid = _singleton("RailVehiclePhysicsServer")->call("vehicle_create");
         pending_start_track_retry = !start_track_name.is_empty();
         dirty = true;
@@ -322,7 +324,8 @@ namespace godot {
     }
 
     void RailVehicle3D::_exit_tree() {
-        _singleton("TrackManager")->disconnect("tracks_changed", Callable(this, "_on_track_manager_tracks_changed"));
+        TrackManager::get_instance()->disconnect(
+                TrackManager::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
             model_node = nullptr;
@@ -680,8 +683,7 @@ namespace godot {
         if (start_track_name.is_empty()) {
             return;
         }
-        Object *track_manager = _singleton("TrackManager");
-        const RID track_rid = track_manager->call("track_get_rid_by_name", start_track_name);
+        const RID track_rid = TrackManager::get_instance()->track_get_rid_by_name(start_track_name);
         if (!track_rid.is_valid()) {
             return;
         }

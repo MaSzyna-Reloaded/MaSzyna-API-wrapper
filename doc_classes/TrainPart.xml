@@ -9,6 +9,12 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="apply_config">
+			<return type="void" />
+			<description>
+				Performs update on an iternal mover of [TrainController]
+			</description>
+		</method>
 		<method name="broadcast_command">
 			<return type="void" />
 			<param index="0" name="command" type="String" />
@@ -96,12 +102,6 @@
 			<description>
 				Removes command of a train controlled by this node from the registry.
 				This is a shortcut for [method TrainSystem.unregister_command].
-			</description>
-		</method>
-		<method name="apply_config">
-			<return type="void" />
-			<description>
-				Performs update on an iternal mover of [TrainController]
 			</description>
 		</method>
 	</methods>

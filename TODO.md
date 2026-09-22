@@ -2,29 +2,12 @@
 
 ## Architecture rework (#184) - remaining stages
 
-Seven stages, planned together; stage 1 (the three prohibitions in `AGENTS.md`/`CODE_STYLE.md`,
-the four read side effects, the coupler counters leaving the vehicle, the `get_mover_state()` /
-`update_mover()` / `step_movers()` rename, the `power_source` collision) is done. Each stage is one
-PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
+Seven stages, planned together. Done so far: stage 1 (the prohibitions in
+`AGENTS.md`/`CODE_STYLE.md`, the four read side effects, the coupler counters leaving the vehicle,
+the `get_mover_state()` / `update_mover()` / `step_movers()` rename, the `power_source` collision),
+stage 0 (the baseline bench) and stage 2 (`TrackManager` and `SpatialIndex` in C++). Each stage is
+one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
 
-* **Stage 0 - the baseline bench.** `demo/tests/test_vehicle_state_bench.gd`: N synthetic vehicles
-  on a **fixture** track (`demo/tests/fixtures/`, never the game dir), `Time.get_ticks_usec()`
-  around the server tick, the state build, and a `TrainSoundSystem`-shaped read of 30 keys per
-  vehicle. Asserts correctness only and prints the timings - a time assertion in CI is a flake.
-  Measure with `make compile-profiling`; `compile-debug` builds the vendored `Mover.cpp` at `-O0`.
-  The fixture must put the vehicles on a real track: one without a track has a NaN transform and
-  is never culled, so the bench would measure the wrong path (`FINDINGS.md`, 2026-09-22). Still
-  outstanding - stage 1 was done first, so its win is not yet measured.
-* **Stage 2 - `TrackManager` to C++.** `track_manager.gd` (1023 lines), `spatial_index.gd` (55),
-  keeping `maszyna_track_curve.gd` a GDScript `Resource`. Same method, constant and signal names,
-  so `Track3D`/`TrackNormal3D` and ~40 call sites are untouched. `_ENDPOINT_EPSILON` stays 0.02 m
-  compared per axis (`FINDINGS.md`, 2026-09-20). The switch animation loses `create_tween()` and
-  integrates on `process_frame`, connected only while a switch moves. The real cost of this stage
-  is not the port: GDExtension flattens enums (`TrackManager.TrackType.TRACK_NORMAL` becomes
-  `TrackManager.TRACK_TYPE_NORMAL`, ~330 sites) and inner classes (`EndpointRef` ~35 uses,
-  `BranchNeighbors`, `TrackSegment`) have no equivalent and become registered classes. Rename the
-  physics server's own inner `VehicleState` (track placement) to `VehicleTrackPlacement` first, so
-  two different things do not share a name during stage 3.
 * **Stage 3 - three servers, interfaces, and ownership of the Mover.** `BaseVehiclePhysicsServer`
   (abstract contract, its own RIDs) + `MaszynaMoverPhysicsServer` (the only place that knows
   `TMoverParameters`, factories `MoverVehicleController`/`MoverVehicle*`) + `RailVehicleServer`

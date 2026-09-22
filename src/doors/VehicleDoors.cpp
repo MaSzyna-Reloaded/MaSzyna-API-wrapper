@@ -102,34 +102,85 @@ namespace godot {
         unregister_command("doors_remote_control", Callable(this, "door_remote_control"));
     }
 
-    void VehicleDoors::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        const auto left_door = p_mover->Doors.instances[side::left];
-        const auto right_door = p_mover->Doors.instances[side::right];
+    void VehicleDoors::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("doors_locked", Variant::BOOL);
+        declare_state_property("doors_lock_enabled", Variant::BOOL);
+        declare_state_property("doors_step_enabled", Variant::BOOL);
+        declare_state_property("doors_open_control", Variant::INT);
+        declare_state_property("doors_left_open", Variant::BOOL);
+        declare_state_property("doors_left_open_permit", Variant::BOOL);
+        declare_state_property("doors_left_local_open", Variant::BOOL);
+        declare_state_property("doors_left_remote_open", Variant::BOOL);
+        declare_state_property("doors_left_position", Variant::FLOAT);
+        declare_state_property("doors_left_position_normalized", Variant::FLOAT);
+        declare_state_property("doors_left_operating", Variant::BOOL);
+        declare_state_property("doors_left_step_position", Variant::FLOAT);
+        declare_state_property("doors_left_step_operating", Variant::BOOL);
+        declare_state_property("doors_right_open", Variant::BOOL);
+        declare_state_property("doors_right_open_permit", Variant::BOOL);
+        declare_state_property("doors_right_local_open", Variant::BOOL);
+        declare_state_property("doors_right_remote_open", Variant::BOOL);
+        declare_state_property("doors_right_position", Variant::FLOAT);
+        declare_state_property("doors_right_position_normalized", Variant::FLOAT);
+        declare_state_property("doors_right_operating", Variant::BOOL);
+        declare_state_property("doors_right_step_position", Variant::FLOAT);
+        declare_state_property("doors_right_step_operating", Variant::BOOL);
+    }
 
-        p_state["doors_locked"] = p_mover->Doors.is_locked;
-        p_state["doors_lock_enabled"] = p_mover->Doors.lock_enabled;
-        p_state["doors_step_enabled"] = p_mover->Doors.step_enabled;
-        p_state["doors_open_control"] = p_mover->Doors.open_control;
-
-        p_state["doors_left_open"] = left_door.is_open;
-        p_state["doors_left_open_permit"] = left_door.open_permit;
-        p_state["doors_left_local_open"] = left_door.local_open;
-        p_state["doors_left_remote_open"] = left_door.remote_open;
-        p_state["doors_left_position"] = left_door.position;
-        p_state["doors_left_position_normalized"] = left_door.position / max_shift;
-        p_state["doors_left_operating"] = left_door.is_closing || left_door.is_opening;
-        p_state["doors_left_step_position"] = left_door.step_position;
-        p_state["doors_left_step_operating"] = left_door.step_folding || left_door.step_unfolding;
-
-        p_state["doors_right_open"] = right_door.is_open;
-        p_state["doors_right_open_permit"] = right_door.open_permit;
-        p_state["doors_right_local_open"] = right_door.local_open;
-        p_state["doors_right_remote_open"] = right_door.remote_open;
-        p_state["doors_right_position"] = right_door.position;
-        p_state["doors_right_position_normalized"] = right_door.position / max_shift;
-        p_state["doors_right_operating"] = right_door.is_opening || right_door.is_closing;
-        p_state["doors_right_step_position"] = right_door.step_position;
-        p_state["doors_right_step_operating"] = right_door.step_folding || right_door.step_unfolding;
+    Variant VehicleDoors::_get_state_property(const int p_local_index) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_LOCKED:
+                return mover->Doors.is_locked;
+            case STATE_LOCK_ENABLED:
+                return mover->Doors.lock_enabled;
+            case STATE_STEP_ENABLED:
+                return mover->Doors.step_enabled;
+            case STATE_OPEN_CONTROL:
+                return mover->Doors.open_control;
+            case STATE_LEFT_OPEN:
+                return mover->Doors.instances[side::left].is_open;
+            case STATE_LEFT_OPEN_PERMIT:
+                return mover->Doors.instances[side::left].open_permit;
+            case STATE_LEFT_LOCAL_OPEN:
+                return mover->Doors.instances[side::left].local_open;
+            case STATE_LEFT_REMOTE_OPEN:
+                return mover->Doors.instances[side::left].remote_open;
+            case STATE_LEFT_POSITION:
+                return mover->Doors.instances[side::left].position;
+            case STATE_LEFT_POSITION_NORMALIZED:
+                return mover->Doors.instances[side::left].position / max_shift;
+            case STATE_LEFT_OPERATING:
+                return mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing;
+            case STATE_LEFT_STEP_POSITION:
+                return mover->Doors.instances[side::left].step_position;
+            case STATE_LEFT_STEP_OPERATING:
+                return mover->Doors.instances[side::left].step_folding || mover->Doors.instances[side::left].step_unfolding;
+            case STATE_RIGHT_OPEN:
+                return mover->Doors.instances[side::right].is_open;
+            case STATE_RIGHT_OPEN_PERMIT:
+                return mover->Doors.instances[side::right].open_permit;
+            case STATE_RIGHT_LOCAL_OPEN:
+                return mover->Doors.instances[side::right].local_open;
+            case STATE_RIGHT_REMOTE_OPEN:
+                return mover->Doors.instances[side::right].remote_open;
+            case STATE_RIGHT_POSITION:
+                return mover->Doors.instances[side::right].position;
+            case STATE_RIGHT_POSITION_NORMALIZED:
+                return mover->Doors.instances[side::right].position / max_shift;
+            case STATE_RIGHT_OPERATING:
+                return mover->Doors.instances[side::right].is_opening || mover->Doors.instances[side::right].is_closing;
+            case STATE_RIGHT_STEP_POSITION:
+                return mover->Doors.instances[side::right].step_position;
+            case STATE_RIGHT_STEP_OPERATING:
+                return mover->Doors.instances[side::right].step_folding || mover->Doors.instances[side::right].step_unfolding;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleDoors::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {

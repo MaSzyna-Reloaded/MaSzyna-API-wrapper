@@ -11,7 +11,38 @@ namespace godot {
     class VehicleLighting : public VehicleComponent {
             GDCLASS(VehicleLighting, VehicleComponent);
 
+            enum StateProperty {
+                STATE_LIGHT_POSITION,
+                STATE_LIGHT_POWER,
+                STATE_LIGHT_POWER_SOURCE,
+                STATE_FRONT_HEADLIGHT_UPPER,
+                STATE_FRONT_HEADLIGHT_LEFT,
+                STATE_FRONT_HEADLIGHT_RIGHT,
+                STATE_FRONT_REDMARKER_LEFT,
+                STATE_FRONT_REDMARKER_RIGHT,
+                STATE_REAR_HEADLIGHT_UPPER,
+                STATE_REAR_HEADLIGHT_LEFT,
+                STATE_REAR_HEADLIGHT_RIGHT,
+                STATE_REAR_REDMARKER_LEFT,
+                STATE_REAR_REDMARKER_RIGHT,
+                STATE_ACTIVE_HEADLIGHT_UPPER,
+                STATE_ACTIVE_HEADLIGHT_LEFT,
+                STATE_ACTIVE_HEADLIGHT_RIGHT,
+                STATE_ACTIVE_REDMARKER_LEFT,
+                STATE_ACTIVE_REDMARKER_RIGHT,
+                STATE_OPPOSITE_HEADLIGHT_UPPER,
+                STATE_OPPOSITE_HEADLIGHT_LEFT,
+                STATE_OPPOSITE_HEADLIGHT_RIGHT,
+                STATE_OPPOSITE_REDMARKER_LEFT,
+                STATE_OPPOSITE_REDMARKER_RIGHT,
+                STATE_ROOF_LIGHT_ENABLED,
+                STATE_DEVICES_LIGHT_ENABLED,
+                STATE_ROOF_LIGHT_LEVEL,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
             enum LightType {
                 LIGHT_TYPE_HEADLIGHT_UPPER,
@@ -45,9 +76,27 @@ namespace godot {
                     {LIGHT_TYPE_REDMARKER_RIGHT, Maszyna::light::redmarker_right},
             };
 
+        private:
+            int state_base_index = 0;
+            /* Confirmed against vehicle/Train.cpp:9199-9208 - the i-upperlight/i-leftlight lamps
+             * read the mover's own already-resolved per-end bitmask (iLights), not the selector
+             * position or the LightListItem table. */
+            bool _light_enabled(const TMoverParameters *p_mover, LightEnd p_end, LightType p_type) const;
+            /* Confirmed against vehicle/Train.h:220-227 (TTrain::cab_to_end()) and
+             * Train.cpp:5267-5316: the upperlight_sw/leftlight_sw switches (no "rear" prefix)
+             * toggle whichever physical end the ACTIVE cab faces, so "active"/"opposite" are
+             * cab-relative - unlike the fixed physical front/rear the indicator lamps read.
+             * CabActive (-1/0/1) mirrors iCabn's own front/rear meaning. */
+            static LightEnd _active_end(const TMoverParameters *p_mover);
+            static LightEnd _opposite_end(const TMoverParameters *p_mover);
+            /* Cab interior lamp and instrument backlighting have no counterpart on the mover -
+             * they are gated only by 24V/110V availability, as the original gates
+             * "cablightlevel"/"lightpower" (vehicle/Train.cpp). */
+            static bool _is_powered(const TMoverParameters *p_mover);
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;

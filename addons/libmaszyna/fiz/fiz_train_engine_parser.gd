@@ -60,5 +60,5 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
 
 func _create_stub_node(engine_type: int) -> VehicleEngine:
     match engine_type:
-        VehicleEngine.DIESEL: return VehicleDieselEngine.new()
+        VehicleEngine.DIESEL: return MoverVehicleDieselEngine.new()
         _: return null

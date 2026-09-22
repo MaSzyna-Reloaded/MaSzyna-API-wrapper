@@ -5,7 +5,6 @@
 
 namespace godot {
     void GenericVehicleComponent::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("get_controller"), &GenericVehicleComponent::get_controller);
         ClassDB::bind_method(D_METHOD("get_vehicle_state"), &GenericVehicleComponent::get_vehicle_state);
         BIND_VIRTUAL_METHOD(GenericVehicleComponent, _process_component, 2);
         BIND_VIRTUAL_METHOD(GenericVehicleComponent, _get_component_state, 1);
@@ -39,10 +38,6 @@ namespace godot {
      * component, which stage C replaces - see TODO.md. */
     void GenericVehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {
         p_state.merge(internal_state, true);
-    }
-
-    VehicleController *GenericVehicleComponent::get_controller() {
-        return train_controller_node;
     }
 
     Dictionary GenericVehicleComponent::get_vehicle_state() {

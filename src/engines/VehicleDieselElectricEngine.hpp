@@ -1,5 +1,4 @@
 #pragma once
-#include "MoverElectricTraction.hpp"
 #include "VehicleDieselEngine.hpp"
 #include "macros.hpp"
 #include "resources/engines/WWListItem.hpp"
@@ -7,24 +6,15 @@
 namespace godot {
     class VehicleDieselElectricEngine : public VehicleDieselEngine {
             GDCLASS(VehicleDieselElectricEngine, VehicleDieselEngine)
-
-
-        private:
-            /* Polish diesel-electrics are a diesel engine driving electric traction motors, so
-             * this takes the same traction delegate a catenary-fed locomotive uses. */
-            MoverElectricTraction traction;
-
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
-            double get_motor_current() const;
-            double get_circuit_imax() const;
-            bool get_dynamic_brake_active() const;
-            bool get_fuse_active() const;
-            bool get_motor_connectors_open() const;
-            void fuse_reset();
-            void set_motor_connectors_open(bool p_open);
-            void _register_commands() override;
-            void _unregister_commands() override;
+            virtual double get_motor_current() const = 0;
+            virtual double get_circuit_imax() const = 0;
+            virtual bool get_dynamic_brake_active() const = 0;
+            virtual bool get_fuse_active() const = 0;
+            virtual bool get_motor_connectors_open() const = 0;
+            virtual void fuse_reset() = 0;
+            virtual void set_motor_connectors_open(bool p_open) = 0;
         private:
             static void _bind_methods();
             TypedArray<WWListItem> wwlist;

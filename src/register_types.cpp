@@ -24,10 +24,14 @@
 #include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
+#include "engines/MoverVehicleDieselElectricEngine.hpp"
 #include "engines/VehicleDieselElectricEngine.hpp"
+#include "engines/MoverVehicleDieselEngine.hpp"
 #include "engines/VehicleDieselEngine.hpp"
 #include "engines/VehicleElectricEngine.hpp"
+#include "engines/MoverVehicleElectricInductionEngine.hpp"
 #include "engines/VehicleElectricInductionEngine.hpp"
+#include "engines/MoverVehicleElectricSeriesEngine.hpp"
 #include "engines/VehicleElectricSeriesEngine.hpp"
 #include "engines/VehicleEngine.hpp"
 #include "heating/MoverVehicleHeating.hpp"
@@ -139,11 +143,15 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleDoors);
         GDREGISTER_CLASS(MoverVehicleDoors);
         GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
-        GDREGISTER_CLASS(VehicleDieselEngine);
-        GDREGISTER_CLASS(VehicleDieselElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDieselEngine);
+        GDREGISTER_CLASS(MoverVehicleDieselEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDieselElectricEngine);
+        GDREGISTER_CLASS(MoverVehicleDieselElectricEngine);
         GDREGISTER_ABSTRACT_CLASS(VehicleElectricEngine);
-        GDREGISTER_CLASS(VehicleElectricSeriesEngine);
-        GDREGISTER_CLASS(VehicleElectricInductionEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricSeriesEngine);
+        GDREGISTER_CLASS(MoverVehicleElectricSeriesEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
+        GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
         GDREGISTER_CLASS(VehicleController);
         GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_ABSTRACT_CLASS(VehicleHeating);

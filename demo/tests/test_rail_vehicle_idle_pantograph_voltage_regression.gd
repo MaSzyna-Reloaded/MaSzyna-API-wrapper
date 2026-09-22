@@ -79,7 +79,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     controller.battery_voltage = 110.0
     add_child(controller)
 
-    engine = VehicleElectricSeriesEngine.new()
+    engine = MoverVehicleElectricSeriesEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 1
     engine.power_current_collector_max_voltage = 3600.0

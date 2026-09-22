@@ -8,7 +8,7 @@ func before_each():
     train.train_id = "TestTrain"
     add_child(train)
 
-    engine = VehicleElectricInductionEngine.new()
+    engine = MoverVehicleElectricInductionEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_child(engine)
     await wait_idle_frames(2)

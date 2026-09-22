@@ -12,6 +12,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleComponent::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
+        ClassDB::bind_method(D_METHOD("get_controller"), &VehicleComponent::get_controller);
         ClassDB::bind_method(D_METHOD("get_state"), &VehicleComponent::get_state);
         ClassDB::bind_method(D_METHOD("get_config"), &VehicleComponent::get_config);
         ClassDB::bind_method(
@@ -40,6 +41,10 @@ namespace godot {
 
     void VehicleComponent::_register_commands() {};
     void VehicleComponent::_unregister_commands() {};
+
+    VehicleController *VehicleComponent::get_controller() const {
+        return train_controller_node;
+    }
 
     TMoverParameters *VehicleComponent::get_mover() const {
         if (train_controller_node != nullptr) {

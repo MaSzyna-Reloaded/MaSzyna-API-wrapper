@@ -1,6 +1,4 @@
 #pragma once
-#include "MoverEngineBackend.hpp"
-#include "MoverElectricTraction.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleElectricEngine.hpp"
 #include "macros.hpp"
@@ -12,27 +10,7 @@ namespace godot {
 
     class VehicleElectricInductionEngine : public VehicleElectricEngine {
             GDCLASS(VehicleElectricInductionEngine, VehicleElectricEngine)
-
-
-        private:
-            MoverEngineBackend engine_backend;
-
         public:
-            VehicleElectricInductionEngine() { backend = &engine_backend; }
-
-        private:
-            MoverElectricTraction traction;
-
-        public:
-            double get_motor_current() const override;
-            double get_circuit_imax() const override;
-            bool get_dynamic_brake_active() const override;
-            bool get_fuse_active() const override;
-            bool get_motor_connectors_open() const override;
-            void fuse_reset() override;
-            void set_motor_connectors_open(bool p_open) override;
-            void _register_commands() override;
-            void _unregister_commands() override;
         public:
             static void _bind_methods();
 

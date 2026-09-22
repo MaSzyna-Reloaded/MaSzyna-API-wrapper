@@ -14,7 +14,7 @@ namespace godot {
         protected:
             /* The simulation answering this engine's live values, installed by the implementation
              * that owns it. The interface never names one. */
-            const VehicleEngineBackend *backend = nullptr;
+            const VehicleEngineBackend *engine_backend = nullptr;
 
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;

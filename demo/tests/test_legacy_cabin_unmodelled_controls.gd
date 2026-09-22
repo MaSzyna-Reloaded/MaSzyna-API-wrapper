@@ -13,7 +13,7 @@ func before_each():
     train.train_id = "TestUnmodelledControls"
     train.battery_voltage = 110.0
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
-    var engine: VehicleElectricSeriesEngine = VehicleElectricSeriesEngine.new()
+    var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
     engine.cntrl_main_controller_position_count = 4
     train.add_child(engine)
     add_child(train)

@@ -17,7 +17,6 @@ namespace godot {
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
 
         public:
-            VehicleController *get_controller();
             void _process_mover(double p_delta) override;
             void _fill_state_dictionary(Dictionary &p_state) const override;
             virtual void _process_component(double p_delta);

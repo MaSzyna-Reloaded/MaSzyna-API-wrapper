@@ -33,7 +33,7 @@ var _active_table: String = ""
 
 
 func create_node() -> VehicleElectricInductionEngine:
-    return VehicleElectricInductionEngine.new()
+    return MoverVehicleElectricInductionEngine.new()
 
 
 ## The EIM-specific subset of Engine:'s key/value set (common fields already applied by

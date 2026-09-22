@@ -7,46 +7,6 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
-    double VehicleElectricSeriesEngine::get_motor_current() const {
-        return traction.get_motor_current(get_mover());
-    }
-
-    double VehicleElectricSeriesEngine::get_circuit_imax() const {
-        return traction.get_circuit_imax(get_mover());
-    }
-
-    bool VehicleElectricSeriesEngine::get_dynamic_brake_active() const {
-        return traction.get_dynamic_brake_active(get_mover());
-    }
-
-    bool VehicleElectricSeriesEngine::get_fuse_active() const {
-        return traction.get_fuse_active(get_mover());
-    }
-
-    bool VehicleElectricSeriesEngine::get_motor_connectors_open() const {
-        return traction.get_motor_connectors_open(get_mover());
-    }
-
-    void VehicleElectricSeriesEngine::fuse_reset() {
-        traction.reset_fuse(get_mover());
-    }
-
-    void VehicleElectricSeriesEngine::set_motor_connectors_open(const bool p_open) {
-        traction.open_motor_connectors(get_mover(), p_open);
-    }
-
-    void VehicleElectricSeriesEngine::_register_commands() {
-        VehicleElectricEngine::_register_commands();
-        register_command("fuse_reset", Callable(this, "fuse_reset"));
-        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
-    }
-
-    void VehicleElectricSeriesEngine::_unregister_commands() {
-        VehicleElectricEngine::_unregister_commands();
-        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
-        unregister_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
-    }
-
     void VehicleElectricSeriesEngine::_bind_methods() {
         BIND_PROPERTY(VehicleElectricSeriesEngine, Variant::FLOAT, nominal_voltage);
         BIND_PROPERTY(VehicleElectricSeriesEngine, Variant::FLOAT, winding_resistance);
@@ -73,9 +33,6 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_resistor_fan_rotation");
-
-        ClassDB::bind_method(D_METHOD("fuse_reset"), &VehicleElectricSeriesEngine::fuse_reset);
-        ClassDB::bind_method(D_METHOD("set_motor_connectors_open", "open"), &VehicleElectricSeriesEngine::set_motor_connectors_open);
     }
 
     VehicleEngine::EngineType VehicleElectricSeriesEngine::get_engine_type() const {

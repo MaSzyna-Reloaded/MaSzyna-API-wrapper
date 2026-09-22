@@ -1,4 +1,5 @@
 #include "VehicleDieselEngine.hpp"
+#include "MoverDieselEngineBackend.hpp"
 #include "macros.hpp"
 
 #include <algorithm>
@@ -7,6 +8,58 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    double VehicleDieselEngine::get_rpm() const {
+        return diesel_backend != nullptr ? diesel_backend->get_rpm(get_mover()) : 0.0;
+    }
+    bool VehicleDieselEngine::get_oil_pump_active() const {
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_active(get_mover()) : false;
+    }
+    bool VehicleDieselEngine::get_oil_pump_disabled() const {
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_disabled(get_mover()) : false;
+    }
+    double VehicleDieselEngine::get_oil_pump_pressure() const {
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_pressure(get_mover()) : 0.0;
+    }
+    bool VehicleDieselEngine::get_fuel_pump_active() const {
+        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_active(get_mover()) : false;
+    }
+    bool VehicleDieselEngine::get_fuel_pump_disabled() const {
+        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_disabled(get_mover()) : false;
+    }
+    bool VehicleDieselEngine::get_startup() const {
+        return diesel_backend != nullptr ? diesel_backend->get_startup(get_mover()) : false;
+    }
+    bool VehicleDieselEngine::get_ignition() const {
+        return diesel_backend != nullptr ? diesel_backend->get_ignition(get_mover()) : false;
+    }
+    bool VehicleDieselEngine::get_spinup() const {
+        return diesel_backend != nullptr ? diesel_backend->get_spinup(get_mover()) : false;
+    }
+    double VehicleDieselEngine::get_output_power() const {
+        return diesel_backend != nullptr ? diesel_backend->get_output_power(get_mover()) : 0.0;
+    }
+    double VehicleDieselEngine::get_torque() const {
+        return diesel_backend != nullptr ? diesel_backend->get_torque(get_mover()) : 0.0;
+    }
+    double VehicleDieselEngine::get_fill() const {
+        return diesel_backend != nullptr ? diesel_backend->get_fill(get_mover()) : 0.0;
+    }
+    double VehicleDieselEngine::get_max_rpm() const {
+        return diesel_backend != nullptr ? diesel_backend->get_max_rpm(get_mover()) : 0.0;
+    }
+    void VehicleDieselEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
+        VehicleEngine::_do_update_internal_mover(p_mover);
+        if (diesel_backend != nullptr) {
+            diesel_backend->update_mover(this, p_mover);
+        }
+    }
+    void VehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {
+        VehicleEngine::_fill_config_dictionary(p_config);
+        if (diesel_backend != nullptr) {
+            diesel_backend->fill_config(this, get_mover(), p_config);
+        }
+    }
+
     void VehicleDieselEngine::_bind_methods() {
         BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, oil_pump_pressure_minimum, "oil_pump");
         BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, oil_pump_pressure_maximum, "oil_pump");
@@ -145,71 +198,6 @@ namespace godot {
     }
 
 
-    double VehicleDieselEngine::get_rpm() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->EngineRPMRatio() * mover->EngineMaxRPM() : 0.0;
-    }
-
-    bool VehicleDieselEngine::get_oil_pump_active() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->OilPump.is_active : false;
-    }
-
-    bool VehicleDieselEngine::get_oil_pump_disabled() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->OilPump.is_disabled : false;
-    }
-
-    double VehicleDieselEngine::get_oil_pump_pressure() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->OilPump.pressure : 0.0;
-    }
-
-    bool VehicleDieselEngine::get_fuel_pump_active() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->FuelPump.is_active : false;
-    }
-
-    bool VehicleDieselEngine::get_fuel_pump_disabled() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->FuelPump.is_disabled : false;
-    }
-
-    bool VehicleDieselEngine::get_startup() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_startup : false;
-    }
-
-    bool VehicleDieselEngine::get_ignition() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_ignition : false;
-    }
-
-    bool VehicleDieselEngine::get_spinup() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_spinup : false;
-    }
-
-    double VehicleDieselEngine::get_output_power() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_Power : 0.0;
-    }
-
-    double VehicleDieselEngine::get_torque() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_Torque : 0.0;
-    }
-
-    double VehicleDieselEngine::get_fill() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->dizel_fill : 0.0;
-    }
-
-    double VehicleDieselEngine::get_max_rpm() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->EngineMaxRPM() : 0.0;
-    }
-
     void VehicleDieselEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
@@ -229,122 +217,6 @@ namespace godot {
         p_state["diesel_torque"] = get_torque();
         p_state["diesel_fill"] = get_fill();
         p_state["diesel_max_rpm"] = get_max_rpm();
-    }
-
-    void VehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {
-        VehicleEngine::_fill_config_dictionary(p_config);
-        TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
-            return;
-        }
-        p_config["engine_shake_enabled"] = true;
-    }
-
-    void VehicleDieselEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
-        VehicleEngine::_do_update_internal_mover(p_mover);
-
-        // FIXME: test data
-        p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
-        // end test data
-
-        p_mover->OilPump.pressure_minimum = oil_pump_pressure_minimum;
-        p_mover->OilPump.pressure_maximum = oil_pump_pressure_maximum;
-        p_mover->FuelPump.start_type = start_mode_map.at(fuel_pump_start_mode);
-        p_mover->OilPump.start_type = start_mode_map.at(oil_pump_start_mode);
-        p_mover->WaterPump.start_type = start_mode_map.at(water_pump_start_mode);
-
-        p_mover->dizel_nmin = mechanical_min_rpm;
-        p_mover->dizel_nmax = mechanical_max_rpm;
-        p_mover->dizel_nmax_cutoff = mechanical_fuel_cutoff_rpm;
-        p_mover->dizel_AIM = mechanical_inertia;
-        p_mover->engageupspeed = mechanical_clutch_engage_speed;
-        p_mover->engagedownspeed = mechanical_clutch_disengage_speed;
-
-        p_mover->hydro_TC = torque_converter_present;
-        p_mover->hydro_TC_TMMax = torque_converter_max_torque_ratio;
-        p_mover->hydro_TC_CouplingPoint = torque_converter_coupling_point;
-        p_mover->hydro_TC_LockupTorque = torque_converter_lockup_torque;
-        p_mover->hydro_TC_LockupRate = torque_converter_lockup_rate;
-        p_mover->hydro_TC_UnlockRate = torque_converter_unlock_rate;
-        p_mover->hydro_TC_FillRateInc = torque_converter_fill_rate_increase;
-        p_mover->hydro_TC_FillRateDec = torque_converter_fill_rate_decrease;
-        p_mover->hydro_TC_TorqueInIn = torque_converter_torque_in_in;
-        p_mover->hydro_TC_TorqueInOut = torque_converter_torque_in_out;
-        p_mover->hydro_TC_TorqueOutOut = torque_converter_torque_out_out;
-        p_mover->hydro_TC_LockupSpeed = torque_converter_lockup_speed;
-        p_mover->hydro_TC_UnlockSpeed = torque_converter_unlock_speed;
-
-        p_mover->hydro_TC_Table.clear();
-        for (int i = 0; i < torque_converter_table.size(); i++) {
-            const Ref<CurvePointItem> &row = torque_converter_table[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: torque_converter_table property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->hydro_TC_Table.emplace(row->get_x(), row->get_y());
-        }
-
-        p_mover->dizel_vel2nmax_Table.clear();
-        for (int i = 0; i < vel2nmax_table.size(); i++) {
-            const Ref<CurvePointItem> &row = vel2nmax_table[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: vel2nmax_table property is null at index " + String::num(i));
-                continue;
-            }
-            // matches readV2NMAXList (Mover.cpp:8476-8489): x unconverted, y (rpm) -> rev/s
-            p_mover->dizel_vel2nmax_Table.emplace(row->get_x(), row->get_y() / 60.0);
-        }
-
-        p_mover->hydro_R = retarder_present;
-        p_mover->hydro_R_Placement = retarder_placement;
-        p_mover->hydro_R_TorqueInIn = retarder_torque_in_in;
-        p_mover->hydro_R_MaxTorque = retarder_max_torque;
-        p_mover->hydro_R_MaxPower = retarder_max_power;
-        p_mover->hydro_R_FillRateInc = retarder_fill_rate_increase;
-        p_mover->hydro_R_FillRateDec = retarder_fill_rate_decrease;
-        p_mover->hydro_R_MinVel = retarder_min_velocity;
-
-        /* DList: tabela przepustnicy */
-        p_mover->dizel_Mmax = throttle_table_max_torque;
-        p_mover->dizel_nMmax = throttle_table_max_torque_rpm;
-        p_mover->dizel_Mnmax = throttle_table_max_rpm_torque;
-        p_mover->dizel_nominalfill = throttle_table_nominal_fuel_dose;
-        p_mover->dizel_Mstand = throttle_table_resistance_torque;
-        p_mover->dizel_NominalFuelConsumptionRate = throttle_table_nominal_fuel_consumption_rate;
-
-        constexpr int MAX_THROTTLE_TABLE = Maszyna::ResArraySize + 1;
-        const int throttle_table_size = static_cast<int>(throttle_table_positions.size());
-        if (throttle_table_size > MAX_THROTTLE_TABLE) {
-            UtilityFunctions::push_warning(
-                    "[VehicleDieselEngine]: throttle_table_positions has " + String::num_int64(throttle_table_size) +
-                    " entries, exceeding the mover's limit of " + String::num_int64(MAX_THROTTLE_TABLE) +
-                    "; truncating.");
-        }
-        for (int i = 0; i < std::min(MAX_THROTTLE_TABLE, throttle_table_size); i++) {
-            const Ref<ThrottlePositionItem> &row = throttle_table_positions[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: throttle_table_positions property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->RList[i].Relay = row->get_throttle_position();
-            p_mover->RList[i].R = row->get_fuel_dose();
-            p_mover->RList[i].Mn = row->get_clutch_behavior();
-        }
-
-        /* DMList: charakterystyka momentu obrotowego silnika spalinowego */
-        p_mover->dizel_Momentum_Table.clear();
-        for (int i = 0; i < torque_table.size(); i++) {
-            const Ref<CurvePointItem> &row = torque_table[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: torque_table property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->dizel_Momentum_Table.emplace(row->get_x() / 60.0, row->get_y());
-        }
     }
 
     void VehicleDieselEngine::oil_pump(const bool p_enabled) {

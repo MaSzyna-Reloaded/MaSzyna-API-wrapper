@@ -80,7 +80,7 @@ func before_all() -> void:
         FizTrainControllerInstancer.build_into(controller, FIXTURE_FIZ)
 
         # the two biggest publishers the fixture has no section for, added as a scene would
-        var engine: VehicleElectricSeriesEngine = VehicleElectricSeriesEngine.new()
+        var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
         engine.name = "Engine"
         engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_child(engine)

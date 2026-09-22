@@ -8,7 +8,7 @@ func before_each():
     train.train_id = "TestTrain"
     add_child(train)
 
-    engine = VehicleElectricSeriesEngine.new()
+    engine = MoverVehicleElectricSeriesEngine.new()
     # NOTE: engine_power_source must be set explicitly here - a freshly created engine without
     # a configured power source hits a pre-existing bug in VehicleElectricEngine's state fetch
     # (RAccumulator.RechargeSource is read uninitialized), unrelated to relay_list itself.

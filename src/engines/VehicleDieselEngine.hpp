@@ -1,6 +1,5 @@
 #pragma once
-#include "MoverEngineBackend.hpp"
-#include "../maszyna/McZapkie/MOVER.h"
+#include "VehicleDieselEngineBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 #include "resources/engines/CurvePointItem.hpp"
@@ -11,13 +10,10 @@ namespace godot {
 
     class VehicleDieselEngine : public VehicleEngine {
             GDCLASS(VehicleDieselEngine, VehicleEngine)
-            
 
-        private:
-            MoverEngineBackend engine_backend;
-
-        public:
-            VehicleDieselEngine() { backend = &engine_backend; }
+        protected:
+            /* The simulation answering these values, installed by the implementation that owns it */
+            const VehicleDieselEngineBackend *diesel_backend = nullptr;
 
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;

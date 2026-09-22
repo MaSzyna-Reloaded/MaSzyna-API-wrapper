@@ -89,6 +89,9 @@ namespace godot {
              * is one flat Dictionary for the whole vehicle. A key the vehicle's variant does not
              * have is simply not written, so has() keeps meaning what it meant. */
             virtual void _fill_state_dictionary(Dictionary &p_state) const;
+            /* The vehicle this component belongs to */
+            VehicleController *get_controller() const;
+
             Dictionary get_state();
 
             /* This component's share of the vehicle's configuration dump. Unlike the state, the

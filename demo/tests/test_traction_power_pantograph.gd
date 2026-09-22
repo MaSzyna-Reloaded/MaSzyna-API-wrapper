@@ -14,7 +14,7 @@ func before_each():
     train = VehicleController.new()
     train.train_id = "TestPantographTrain"
     train.battery_voltage = 110.0
-    engine = VehicleElectricSeriesEngine.new()
+    engine = MoverVehicleElectricSeriesEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 3 # both pantographs physically present
     engine.power_current_collector_max_voltage = 3600.0

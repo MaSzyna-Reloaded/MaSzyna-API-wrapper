@@ -137,7 +137,7 @@ compressor_speed = 0.057
 compressor_power = 3
 rig_effectiveness = 0.85
 
-[node name="StonkaDieselEngine" type="VehicleDieselElectricEngine" parent="." unique_id=845067085]
+[node name="StonkaDieselEngine" type="MoverVehicleDieselElectricEngine" parent="." unique_id=845067085]
 oil_pump_pressure_minimum = 0.15
 maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])

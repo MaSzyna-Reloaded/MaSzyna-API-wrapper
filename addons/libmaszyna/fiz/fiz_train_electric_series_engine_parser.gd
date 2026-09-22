@@ -22,7 +22,7 @@ var _active_table: String = ""
 
 
 func create_node() -> VehicleElectricSeriesEngine:
-    return VehicleElectricSeriesEngine.new()
+    return MoverVehicleElectricSeriesEngine.new()
 
 
 ## The series-motor-specific subset of Engine:'s key/value set (common fields already applied

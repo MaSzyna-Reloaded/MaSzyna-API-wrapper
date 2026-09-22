@@ -1,4 +1,5 @@
 #pragma once
+#include "VehicleElectricEngineBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 
@@ -9,6 +10,11 @@ namespace godot {
             GDCLASS(VehicleElectricEngine, VehicleEngine)
 
             
+
+        protected:
+            /* The simulation answering these values, installed by the implementation that owns it */
+            const VehicleElectricEngineBackend *electric_backend = nullptr;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 

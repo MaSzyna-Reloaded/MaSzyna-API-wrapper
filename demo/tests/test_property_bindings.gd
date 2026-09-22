@@ -73,7 +73,7 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
     brake.brake_force_max = 85.0
     assert_eq(brake.brake_force_max, 85.0)
 
-    var electric_engine: VehicleElectricEngine = VehicleElectricSeriesEngine.new()
+    var electric_engine: VehicleElectricEngine = MoverVehicleElectricSeriesEngine.new()
     electric_engine.power_cable_source = VehicleController.POWER_TYPE_STEAM
     assert_eq(electric_engine.power_cable_source, VehicleController.POWER_TYPE_STEAM)
 

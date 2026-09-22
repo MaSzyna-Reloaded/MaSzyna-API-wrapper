@@ -20,7 +20,7 @@ func before_each():
     cabin = Node3D.new()
     add_child(cabin)
     var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.controller = train
+    logic.train_id = train.train_id
     logic.cab = 1
     cabin.add_child(logic)
     await wait_idle_frames(2)

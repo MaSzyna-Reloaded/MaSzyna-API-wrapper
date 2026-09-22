@@ -12,6 +12,8 @@ signal control_changed(train_id:String, cab:int, control_id:StringName, value:Va
 ## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
 ## here so a cabin element can react without ever holding the vehicle itself.
 signal vehicle_command_received(train_id:String, command:String, p1:Variant, p2:Variant)
+## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
+signal vehicle_cabin_occupied_changed(train_id:String, cabin_occupied:int)
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
@@ -46,8 +48,11 @@ func _on_train_unregistered(train_id:String) -> void:
 ## the cabin is taken out of it.
 func register_vehicle(train_id:String, vehicle_rid:RID) -> void:
     var previous:VehicleController = TrainSystem.get_train(train_id) if _vehicles.has(train_id) else null
-    if previous and previous.command_received.is_connected(_on_vehicle_command_received):
-        previous.command_received.disconnect(_on_vehicle_command_received)
+    if previous:
+        for signal_name:StringName in [&"command_received", &"cabin_occupied_changed"]:
+            for connection:Dictionary in previous.get_signal_connection_list(signal_name):
+                if connection["callable"].get_object() == self:
+                    previous.disconnect(signal_name, connection["callable"])
     if not vehicle_rid.is_valid():
         _vehicles.erase(train_id)
         return
@@ -55,10 +60,15 @@ func register_vehicle(train_id:String, vehicle_rid:RID) -> void:
     var vehicle:VehicleController = TrainSystem.get_train(train_id)
     if vehicle:
         vehicle.command_received.connect(_on_vehicle_command_received.bind(train_id))
+        vehicle.cabin_occupied_changed.connect(_on_vehicle_cabin_occupied_changed.bind(train_id))
 
 
 func _on_vehicle_command_received(command:String, p1:Variant, p2:Variant, train_id:String) -> void:
     vehicle_command_received.emit(train_id, command, p1, p2)
+
+
+func _on_vehicle_cabin_occupied_changed(cabin_occupied:int, train_id:String) -> void:
+    vehicle_cabin_occupied_changed.emit(train_id, cabin_occupied)
 
 
 func vehicle_rid(train_id:String) -> RID:

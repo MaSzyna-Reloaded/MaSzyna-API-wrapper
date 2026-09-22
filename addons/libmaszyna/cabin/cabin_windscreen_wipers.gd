@@ -11,15 +11,16 @@ const WIPERS:int = 4
 const NEVER:float = 1000.0
 
 ## Set by the factory before the node enters the tree.
-var controller:VehicleController
+## Which vehicle these wipers belong to; the state comes through CabinSystem.
+var train_id:String = ""
 
 var _since_out:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)
 var _since_return:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)
 
 
 func _process(delta:float) -> void:
-    var positions:PackedFloat64Array = controller.state.get("wiper_positions", PackedFloat64Array())
-    var cab:int = controller.state.get("cabin", 0)
+    var positions:PackedFloat64Array = CabinSystem.vehicle_state(train_id).get("wiper_positions", PackedFloat64Array())
+    var cab:int = CabinSystem.vehicle_state(train_id).get("cabin", 0)
     var wiper_pos:Vector4 = Vector4.ZERO
     for i:int in WIPERS:
         if cab == 0 or i >= positions.size():

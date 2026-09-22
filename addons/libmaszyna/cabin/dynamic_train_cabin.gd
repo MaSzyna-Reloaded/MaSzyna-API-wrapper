@@ -32,7 +32,6 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
 
-var _controller:VehicleController
 var _generated:Node3D
 var _diagnostics:Array[Dictionary] = []
 var _random_choices:Dictionary = {}
@@ -50,21 +49,15 @@ func _ready() -> void:
 
 
 func set_train_controller(controller:VehicleController) -> void:
-    if _controller == controller:
-        return
-    if _controller:
-        _controller.cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    _controller = controller
     super.set_train_controller(controller)
-    if _controller:
-        _controller.cabin_occupied_changed.connect(_on_cabin_occupied_changed)
+    if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
+        CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
     _rebuild_generated()
 
 
 func _exit_tree() -> void:
-    if _controller:
-        _controller.cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    _controller = null
+    if CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
+        CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     _shake_controller = null
 
 
@@ -77,13 +70,15 @@ func reload() -> void:
 
 
 ## Rebuilds when the crew moves to another cab (cab0 = machine room, cab1, cab2).
-func _on_cabin_occupied_changed(_cabin_occupied:int) -> void:
+func _on_cabin_occupied_changed(train_id:String, _cabin_occupied:int) -> void:
+    if not train_id == _train_id:
+        return
     if not _select_cab_number() == _last_cab_number:
         _rebuild_generated()
 
 
 func _select_cab_number() -> int:
-    if not _controller:
+    if not _train_id:
         return 1
     # Train.cpp:8684 (InitializeCab) - CabOccupied -1 loads cab2definition:, 0 cab0, 1 cab1.
     var cabin_occupied:int = CabinSystem.vehicle_state(_train_id).get("cabin_occupied", 0)
@@ -97,7 +92,7 @@ func _rebuild_generated() -> void:
         _generated = null
 
     _diagnostics.clear()
-    if not mmd_filename or not _controller:
+    if not mmd_filename or not _train_id:
         return
 
     _last_cab_number = _select_cab_number()
@@ -129,7 +124,7 @@ func _rebuild_generated() -> void:
     add_child(_generated, false, INTERNAL_MODE_BACK)
 
     var build_diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer.build_into(_generated, definition, _controller, data_path, skin, build_diagnostics)
+    MmdCabinInstancer.build_into(_generated, definition, _train_id, data_path, skin, build_diagnostics)
     _diagnostics.append_array(build_diagnostics)
 
     _build_driver_aid_commands()
@@ -139,12 +134,12 @@ func _rebuild_generated() -> void:
         _build_cab_light(definition)
     var windscreen_wipers := CabinWindscreenWipers.new()
     windscreen_wipers.name = "WindscreenWipers"
-    windscreen_wipers.controller = _controller
+    windscreen_wipers.train_id = _train_id
     _generated.add_child(windscreen_wipers)
     # cabin logic of the original engine (CabinSystem callbacks) - added last, after every control
     var logic := LegacyCabinLogicDelegate.new()
     logic.name = "LegacyCabinLogic"
-    logic.controller = _controller
+    logic.train_id = _train_id
     logic.cab = cab_number
     _generated.add_child(logic)
     camera_configuration_changed.emit()

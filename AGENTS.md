@@ -170,6 +170,16 @@ Checks:
   modified, one script at a time: `-gdir=res://tests/ -gselect=<script name>` (`-gtest=` does
   not filter here and runs everything)
 * do not run tests or headless Godot after every edit - only before a commit, or when operator asks
+* TESTS: **redirect a headless run to a file and read the file** - do not pipe it through
+  `grep | head`. `head` closes the pipe, the run dies of SIGPIPE part-way, and the result reads as
+  a hang or a timeout when the test actually passed. The same output in a file says "Passing Tests
+  2" plainly.
+* TESTS: a GDScript that fails to **parse** is not reported as a failing test - GUT prints
+  "Ignoring script ... because it does not extend GutTest", finds no match for `-gselect`, and
+  then runs the whole directory until the timeout. So a syntax error looks exactly like a hanging
+  test. Parse-check first, cheaply:
+  `godot-double --headless --path demo --check-only -s res://tests/<file>.gd`. `--import` does not
+  catch it: a type error only surfaces once the script's dependencies resolve.
 
 Before every commit:
 

@@ -13,6 +13,9 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            double get_resistor_fan_rotation() const;
+
             /* RVent= (Automatic / Yes / No): resistor cooling fan drive mode */
             enum FanType {
                 FAN_TYPE_NONE,

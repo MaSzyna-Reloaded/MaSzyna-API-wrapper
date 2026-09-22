@@ -29,6 +29,17 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_beeping() const;
+            bool get_blinking() const;
+            bool get_radiostop_available() const;
+            bool get_vigilance_blinking() const;
+            bool get_cabsignal_blinking() const;
+            bool get_cabsignal_beeping() const;
+            bool get_braking() const;
+            bool get_engine_blocked() const;
+            bool get_separate_acknowledge() const;
+
             enum EmergencySignal {
                 EMERGENCY_SIGNAL_SIREN_LOW_TONE,
                 EMERGENCY_SIGNAL_SIREN_HIGH_TONE,

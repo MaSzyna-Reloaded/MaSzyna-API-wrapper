@@ -27,6 +27,12 @@ namespace godot {
         BIND_ENUM_CONSTANT(FAN_TYPE_NONE);
         BIND_ENUM_CONSTANT(FAN_TYPE_YES);
         BIND_ENUM_CONSTANT(FAN_TYPE_AUTOMATIC);
+
+        ClassDB::bind_method(D_METHOD("get_resistor_fan_rotation"), &VehicleElectricSeriesEngine::get_resistor_fan_rotation);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_resistor_fan_rotation");
     }
 
     VehicleEngine::EngineType VehicleElectricSeriesEngine::get_engine_type() const {
@@ -74,13 +80,18 @@ namespace godot {
     }
 
 
+    double VehicleElectricSeriesEngine::get_resistor_fan_rotation() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->RventRot : 0.0;
+    }
+
     void VehicleElectricSeriesEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleElectricEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["resistor_fan_rotation"] = mover->RventRot;
+        p_state["resistor_fan_rotation"] = get_resistor_fan_rotation();
     }
 
     void VehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {

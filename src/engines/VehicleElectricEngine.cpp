@@ -105,8 +105,321 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
         BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
+
+        ClassDB::bind_method(D_METHOD("get_converter_enabled"), &VehicleElectricEngine::get_converter_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "converter_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_enabled");
+        ClassDB::bind_method(D_METHOD("get_converted_allowed"), &VehicleElectricEngine::get_converted_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "converted_allowed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converted_allowed");
+        ClassDB::bind_method(D_METHOD("get_converter_time_to_start"), &VehicleElectricEngine::get_converter_time_to_start);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "converter_time_to_start", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_time_to_start");
+        ClassDB::bind_method(D_METHOD("get_collector_max_voltage"), &VehicleElectricEngine::get_collector_max_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_max_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_max_voltage");
+        ClassDB::bind_method(D_METHOD("get_collector_max_current"), &VehicleElectricEngine::get_collector_max_current);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_max_current", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_max_current");
+        ClassDB::bind_method(D_METHOD("get_collector_max_lifting"), &VehicleElectricEngine::get_collector_max_lifting);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_max_lifting", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_max_lifting");
+        ClassDB::bind_method(D_METHOD("get_collector_min_lifting"), &VehicleElectricEngine::get_collector_min_lifting);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_min_lifting", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_min_lifting");
+        ClassDB::bind_method(D_METHOD("get_collector_sliding_width"), &VehicleElectricEngine::get_collector_sliding_width);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_sliding_width", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_sliding_width");
+        ClassDB::bind_method(D_METHOD("get_collector_min_main_switch_voltage"), &VehicleElectricEngine::get_collector_min_main_switch_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_min_main_switch_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_min_main_switch_voltage");
+        ClassDB::bind_method(D_METHOD("get_collector_min_pantograph_tank_pressure"), &VehicleElectricEngine::get_collector_min_pantograph_tank_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_min_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_min_pantograph_tank_pressure");
+        ClassDB::bind_method(D_METHOD("get_collector_max_pantograph_tank_pressure"), &VehicleElectricEngine::get_collector_max_pantograph_tank_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_max_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_max_pantograph_tank_pressure");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_tank_pressure"), &VehicleElectricEngine::get_collector_pantograph_tank_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_pantograph_tank_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_tank_pressure");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_pressure_switch_armed"), &VehicleElectricEngine::get_collector_pantograph_pressure_switch_armed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_pressure_switch_armed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_pressure_switch_armed");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_compressor_valve"), &VehicleElectricEngine::get_collector_pantograph_compressor_valve);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_compressor_valve", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_compressor_valve");
+        ClassDB::bind_method(D_METHOD("get_collector_overvoltage_relay"), &VehicleElectricEngine::get_collector_overvoltage_relay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_overvoltage_relay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_overvoltage_relay");
+        ClassDB::bind_method(D_METHOD("get_collector_required_main_switch_voltage"), &VehicleElectricEngine::get_collector_required_main_switch_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_required_main_switch_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_required_main_switch_voltage");
+        ClassDB::bind_method(D_METHOD("get_collector_valve_active"), &VehicleElectricEngine::get_collector_valve_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_valve_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_valve_active");
+        ClassDB::bind_method(D_METHOD("get_collector_pantographs_dropped"), &VehicleElectricEngine::get_collector_pantographs_dropped);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantographs_dropped", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantographs_dropped");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_first_active"), &VehicleElectricEngine::get_collector_pantograph_first_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_first_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_first_active");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_first_voltage"), &VehicleElectricEngine::get_collector_pantograph_first_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_pantograph_first_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_first_voltage");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_second_active"), &VehicleElectricEngine::get_collector_pantograph_second_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_second_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_second_active");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_second_voltage"), &VehicleElectricEngine::get_collector_pantograph_second_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_pantograph_second_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_second_voltage");
+        ClassDB::bind_method(D_METHOD("has_accumulator"), &VehicleElectricEngine::has_accumulator);
+        ClassDB::bind_method(D_METHOD("has_power_cable"), &VehicleElectricEngine::has_power_cable);
+        ClassDB::bind_method(D_METHOD("get_collector_voltage"), &VehicleElectricEngine::get_collector_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "collector_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_voltage");
+        ClassDB::bind_method(D_METHOD("get_contactors_active"), &VehicleElectricEngine::get_contactors_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "contactors_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_contactors_active");
+        ClassDB::bind_method(D_METHOD("get_diff_relay_active"), &VehicleElectricEngine::get_diff_relay_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "diff_relay_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_diff_relay_active");
+        ClassDB::bind_method(D_METHOD("get_resistors_active"), &VehicleElectricEngine::get_resistors_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "resistors_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_resistors_active");
+        ClassDB::bind_method(D_METHOD("get_vent_overload_active"), &VehicleElectricEngine::get_vent_overload_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "vent_overload_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_vent_overload_active");
+        ClassDB::bind_method(D_METHOD("get_highcurrent_active"), &VehicleElectricEngine::get_highcurrent_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "highcurrent_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_highcurrent_active");
+        ClassDB::bind_method(D_METHOD("get_mainbreaker_active"), &VehicleElectricEngine::get_mainbreaker_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "mainbreaker_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_mainbreaker_active");
+        ClassDB::bind_method(D_METHOD("get_transducer_input_voltage"), &VehicleElectricEngine::get_transducer_input_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "transducer_input_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_transducer_input_voltage");
     }
 
+
+    bool VehicleElectricEngine::get_converter_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ConverterFlag : false;
+    }
+
+    bool VehicleElectricEngine::get_converted_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ConverterAllow : false;
+    }
+
+    double VehicleElectricEngine::get_converter_time_to_start() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ConverterStartDelayTimer : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_max_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.MaxVoltage : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_max_current() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.MaxCurrent : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_max_lifting() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.MaxH : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_min_lifting() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.MinH : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_sliding_width() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.CSW : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_min_main_switch_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.MinV : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_min_pantograph_tank_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.MinPress : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_max_pantograph_tank_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.MaxPress : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_pantograph_tank_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantPress : 0.0;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantograph_pressure_switch_armed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantPressSwitchActive : false;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? !mover->bPantKurek3 : false;
+    }
+
+    bool VehicleElectricEngine::get_collector_overvoltage_relay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.OVP : false;
+    }
+
+    double VehicleElectricEngine::get_collector_required_main_switch_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.CollectorParameters.InsetV : 0.0;
+    }
+
+    bool VehicleElectricEngine::get_collector_valve_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantsValve.is_active : false;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantographs_dropped() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantAllDown : false;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantograph_first_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Pantographs[0].is_active : false;
+    }
+
+    double VehicleElectricEngine::get_collector_pantograph_first_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Pantographs[0].voltage : 0.0;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantograph_second_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Pantographs[1].is_active : false;
+    }
+
+    double VehicleElectricEngine::get_collector_pantograph_second_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Pantographs[1].voltage : 0.0;
+    }
+
+    double VehicleElectricEngine::get_collector_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PantographVoltage : 0.0;
+    }
+
+    bool VehicleElectricEngine::get_contactors_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? (mover->StLinFlag || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0) : false;
+    }
+
+    bool VehicleElectricEngine::get_diff_relay_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? (mover->GroundRelay || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0) : false;
+    }
+
+    bool VehicleElectricEngine::get_resistors_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->StLinFlag ? mover->ResistorsFlagCheck() : false : false;
+    }
+
+    bool VehicleElectricEngine::get_vent_overload_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? (mover->RventRot < 5.0) && mover->ResistorsFlagCheck() : false;
+    }
+
+    bool VehicleElectricEngine::get_highcurrent_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? !(mover->Imax < mover->ImaxHi) : false;
+    }
+
+    bool VehicleElectricEngine::get_mainbreaker_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Mains : false;
+    }
+
+    double VehicleElectricEngine::get_transducer_input_voltage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePowerSource.Transducer.InputVoltage : 0.0;
+    }
+
+    bool VehicleElectricEngine::has_accumulator() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::Accumulator;
+    }
+
+    bool VehicleElectricEngine::has_power_cable() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::PowerCable;
+    }
 
     void VehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleEngine::_fill_state_dictionary(p_state);
@@ -114,40 +427,46 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        p_state["converter_enabled"] = mover->ConverterFlag;
-        p_state["converted_allowed"] = mover->ConverterAllow;
-        p_state["converter_time_to_start"] = mover->ConverterStartDelayTimer;
-        p_state["power_source"] = train_controller_node->tpower_source_map.at(mover->EnginePowerSource.SourceType);
-        p_state["accumulator/recharge_source"] = mover->EnginePowerSource.SourceType == TPowerSource::Accumulator ? Variant(train_controller_node->tpower_source_map.at(mover->EnginePowerSource.RAccumulator.RechargeSource)) : Variant();
-        p_state["current_collector/max_voltage"] = mover->EnginePowerSource.MaxVoltage;
-        p_state["current_collector/max_current"] = mover->EnginePowerSource.MaxCurrent;
-        p_state["current_collector/max_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MaxH;
-        p_state["current_collector/min_collector_lifting"] = mover->EnginePowerSource.CollectorParameters.MinH;
-        p_state["current_collector/collector_sliding_width"] = mover->EnginePowerSource.CollectorParameters.CSW;
-        p_state["current_collector/min_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.MinV;
-        p_state["current_collector/min_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MinPress;
-        p_state["current_collector/max_pantograph_tank_pressure"] = mover->EnginePowerSource.CollectorParameters.MaxPress;
-        p_state["current_collector/pantograph_tank_pressure"] = mover->PantPress;
-        p_state["current_collector/pantograph_pressure_switch_armed"] = mover->PantPressSwitchActive;
-        p_state["current_collector/pantograph_compressor_valve"] = !mover->bPantKurek3;
-        p_state["current_collector/overvoltage_relay"] = mover->EnginePowerSource.CollectorParameters.OVP;
-        p_state["current_collector/required_main_switch_voltage"] = mover->EnginePowerSource.CollectorParameters.InsetV;
-        p_state["current_collector/valve_active"] = mover->PantsValve.is_active;
-        p_state["current_collector/pantographs_dropped"] = mover->PantAllDown;
-        p_state["current_collector/pantograph_first_active"] = mover->Pantographs[0].is_active;
-        p_state["current_collector/pantograph_first_voltage"] = mover->Pantographs[0].voltage;
-        p_state["current_collector/pantograph_second_active"] = mover->Pantographs[1].is_active;
-        p_state["current_collector/pantograph_second_voltage"] = mover->Pantographs[1].voltage;
-        p_state["current_collector/voltage"] = mover->PantographVoltage;
-        p_state["indicators/contactors_active"] = (mover->StLinFlag || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0);
-        p_state["indicators/diff_relay_active"] = (mover->GroundRelay || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0);
-        p_state["indicators/resistors_active"] = mover->StLinFlag ? mover->ResistorsFlagCheck() : false;
-        p_state["indicators/vent_overload_active"] = (mover->RventRot < 5.0) && mover->ResistorsFlagCheck();
-        p_state["indicators/highcurrent_active"] = !(mover->Imax < mover->ImaxHi);
-        p_state["indicators/mainbreaker_active"] = mover->Mains;
-        p_state["transducer/input_voltage"] = mover->EnginePowerSource.Transducer.InputVoltage;
-        p_state["power_cable/source"] = mover->EnginePowerSource.SourceType == TPowerSource::PowerCable ? Variant(train_controller_node->tpower_type_map.at(mover->EnginePowerSource.RPowerCable.PowerTrans)) : Variant();
-        p_state["power_cable/steam_pressure"] = mover->EnginePowerSource.SourceType == TPowerSource::PowerCable ? Variant(mover->EnginePowerSource.RPowerCable.SteamPressure) : Variant();
+        p_state["converter_enabled"] = get_converter_enabled();
+        p_state["converted_allowed"] = get_converted_allowed();
+        p_state["converter_time_to_start"] = get_converter_time_to_start();
+        p_state["power_source"] = get_power_source();
+        if (has_accumulator()) {
+            p_state["accumulator/recharge_source"] = get_power_accumulator_recharge_source();
+        }
+        p_state["current_collector/max_voltage"] = get_collector_max_voltage();
+        p_state["current_collector/max_current"] = get_collector_max_current();
+        p_state["current_collector/max_collector_lifting"] = get_collector_max_lifting();
+        p_state["current_collector/min_collector_lifting"] = get_collector_min_lifting();
+        p_state["current_collector/collector_sliding_width"] = get_collector_sliding_width();
+        p_state["current_collector/min_main_switch_voltage"] = get_collector_min_main_switch_voltage();
+        p_state["current_collector/min_pantograph_tank_pressure"] = get_collector_min_pantograph_tank_pressure();
+        p_state["current_collector/max_pantograph_tank_pressure"] = get_collector_max_pantograph_tank_pressure();
+        p_state["current_collector/pantograph_tank_pressure"] = get_collector_pantograph_tank_pressure();
+        p_state["current_collector/pantograph_pressure_switch_armed"] = get_collector_pantograph_pressure_switch_armed();
+        p_state["current_collector/pantograph_compressor_valve"] = get_collector_pantograph_compressor_valve();
+        p_state["current_collector/overvoltage_relay"] = get_collector_overvoltage_relay();
+        p_state["current_collector/required_main_switch_voltage"] = get_collector_required_main_switch_voltage();
+        p_state["current_collector/valve_active"] = get_collector_valve_active();
+        p_state["current_collector/pantographs_dropped"] = get_collector_pantographs_dropped();
+        p_state["current_collector/pantograph_first_active"] = get_collector_pantograph_first_active();
+        p_state["current_collector/pantograph_first_voltage"] = get_collector_pantograph_first_voltage();
+        p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
+        p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();
+        p_state["current_collector/voltage"] = get_collector_voltage();
+        p_state["indicators/contactors_active"] = get_contactors_active();
+        p_state["indicators/diff_relay_active"] = get_diff_relay_active();
+        p_state["indicators/resistors_active"] = get_resistors_active();
+        p_state["indicators/vent_overload_active"] = get_vent_overload_active();
+        p_state["indicators/highcurrent_active"] = get_highcurrent_active();
+        p_state["indicators/mainbreaker_active"] = get_mainbreaker_active();
+        p_state["transducer/input_voltage"] = get_transducer_input_voltage();
+        if (has_power_cable()) {
+            p_state["power_cable/source"] = get_power_cable_source();
+        }
+        if (has_power_cable()) {
+            p_state["power_cable/steam_pressure"] = get_power_cable_steam_pressure();
+        }
     }
 
     void VehicleElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {

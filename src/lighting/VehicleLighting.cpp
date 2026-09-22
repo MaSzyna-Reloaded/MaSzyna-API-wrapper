@@ -41,6 +41,132 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &VehicleLighting::roof_light);
         ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &VehicleLighting::devices_light);
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
+
+        ClassDB::bind_method(D_METHOD("get_position"), &VehicleLighting::get_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_position");
+        ClassDB::bind_method(D_METHOD("get_power"), &VehicleLighting::get_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power");
+        ClassDB::bind_method(D_METHOD("get_power_source"), &VehicleLighting::get_power_source);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "power_source", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power_source");
+        ClassDB::bind_method(D_METHOD("get_front_headlight_upper_enabled"), &VehicleLighting::get_front_headlight_upper_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "front_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_front_headlight_upper_enabled");
+        ClassDB::bind_method(D_METHOD("get_front_headlight_left_enabled"), &VehicleLighting::get_front_headlight_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "front_headlight_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_front_headlight_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_front_headlight_right_enabled"), &VehicleLighting::get_front_headlight_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "front_headlight_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_front_headlight_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_front_redmarker_left_enabled"), &VehicleLighting::get_front_redmarker_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "front_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_front_redmarker_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_front_redmarker_right_enabled"), &VehicleLighting::get_front_redmarker_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "front_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_front_redmarker_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_rear_headlight_upper_enabled"), &VehicleLighting::get_rear_headlight_upper_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "rear_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rear_headlight_upper_enabled");
+        ClassDB::bind_method(D_METHOD("get_rear_headlight_left_enabled"), &VehicleLighting::get_rear_headlight_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "rear_headlight_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rear_headlight_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_rear_headlight_right_enabled"), &VehicleLighting::get_rear_headlight_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "rear_headlight_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rear_headlight_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_rear_redmarker_left_enabled"), &VehicleLighting::get_rear_redmarker_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "rear_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rear_redmarker_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_rear_redmarker_right_enabled"), &VehicleLighting::get_rear_redmarker_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "rear_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rear_redmarker_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_active_headlight_upper_enabled"), &VehicleLighting::get_active_headlight_upper_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active_headlight_upper_enabled");
+        ClassDB::bind_method(D_METHOD("get_active_headlight_left_enabled"), &VehicleLighting::get_active_headlight_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active_headlight_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active_headlight_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_active_headlight_right_enabled"), &VehicleLighting::get_active_headlight_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active_headlight_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active_headlight_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_active_redmarker_left_enabled"), &VehicleLighting::get_active_redmarker_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active_redmarker_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_active_redmarker_right_enabled"), &VehicleLighting::get_active_redmarker_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active_redmarker_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_opposite_headlight_upper_enabled"), &VehicleLighting::get_opposite_headlight_upper_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "opposite_headlight_upper_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_opposite_headlight_upper_enabled");
+        ClassDB::bind_method(D_METHOD("get_opposite_headlight_left_enabled"), &VehicleLighting::get_opposite_headlight_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "opposite_headlight_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_opposite_headlight_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_opposite_headlight_right_enabled"), &VehicleLighting::get_opposite_headlight_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "opposite_headlight_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_opposite_headlight_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_opposite_redmarker_left_enabled"), &VehicleLighting::get_opposite_redmarker_left_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "opposite_redmarker_left_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_opposite_redmarker_left_enabled");
+        ClassDB::bind_method(D_METHOD("get_opposite_redmarker_right_enabled"), &VehicleLighting::get_opposite_redmarker_right_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "opposite_redmarker_right_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_opposite_redmarker_right_enabled");
+        ClassDB::bind_method(D_METHOD("get_devices_light_enabled"), &VehicleLighting::get_devices_light_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "devices_light_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_devices_light_enabled");
+        ClassDB::bind_method(D_METHOD("get_roof_light_level"), &VehicleLighting::get_roof_light_level);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "roof_light_level", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_roof_light_level");
     }
 
     void VehicleLighting::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -80,37 +206,162 @@ namespace godot {
         return mover != nullptr && roof_light_active && _is_powered(mover);
     }
 
+    int VehicleLighting::get_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LightsPosNo : 0;
+    }
+
+    double VehicleLighting::get_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LightPower : 0.0;
+    }
+
+    int VehicleLighting::get_power_source() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType) : 0;
+    }
+
+    bool VehicleLighting::get_front_headlight_upper_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER) : false;
+    }
+
+    bool VehicleLighting::get_front_headlight_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_front_headlight_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_front_redmarker_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_front_redmarker_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_rear_headlight_upper_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER) : false;
+    }
+
+    bool VehicleLighting::get_rear_headlight_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_rear_headlight_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_rear_redmarker_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_rear_redmarker_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_active_headlight_upper_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER) : false;
+    }
+
+    bool VehicleLighting::get_active_headlight_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_active_headlight_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_active_redmarker_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_active_redmarker_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_opposite_headlight_upper_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER) : false;
+    }
+
+    bool VehicleLighting::get_opposite_headlight_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_opposite_headlight_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_opposite_redmarker_left_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_LEFT) : false;
+    }
+
+    bool VehicleLighting::get_opposite_redmarker_right_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_RIGHT) : false;
+    }
+
+    bool VehicleLighting::get_devices_light_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? devices_light_active && _is_powered(mover) : false;
+    }
+
+    double VehicleLighting::get_roof_light_level() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0 : 0.0;
+    }
+
     void VehicleLighting::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["light_position"] = mover->LightsPosNo;
-        p_state["light_power"] = mover->LightPower;
-        p_state["light_power_source"] = train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType);
-        p_state["lights/front_headlight_upper_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER);
-        p_state["lights/front_headlight_left_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT);
-        p_state["lights/front_headlight_right_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT);
-        p_state["lights/front_redmarker_left_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT);
-        p_state["lights/front_redmarker_right_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT);
-        p_state["lights/rear_headlight_upper_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER);
-        p_state["lights/rear_headlight_left_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT);
-        p_state["lights/rear_headlight_right_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT);
-        p_state["lights/rear_redmarker_left_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT);
-        p_state["lights/rear_redmarker_right_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT);
-        p_state["lights/active_headlight_upper_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
-        p_state["lights/active_headlight_left_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
-        p_state["lights/active_headlight_right_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
-        p_state["lights/active_redmarker_left_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
-        p_state["lights/active_redmarker_right_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
-        p_state["lights/opposite_headlight_upper_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
-        p_state["lights/opposite_headlight_left_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
-        p_state["lights/opposite_headlight_right_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
-        p_state["lights/opposite_redmarker_left_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
-        p_state["lights/opposite_redmarker_right_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
+        p_state["light_position"] = get_position();
+        p_state["light_power"] = get_power();
+        p_state["light_power_source"] = get_power_source();
+        p_state["lights/front_headlight_upper_enabled"] = get_front_headlight_upper_enabled();
+        p_state["lights/front_headlight_left_enabled"] = get_front_headlight_left_enabled();
+        p_state["lights/front_headlight_right_enabled"] = get_front_headlight_right_enabled();
+        p_state["lights/front_redmarker_left_enabled"] = get_front_redmarker_left_enabled();
+        p_state["lights/front_redmarker_right_enabled"] = get_front_redmarker_right_enabled();
+        p_state["lights/rear_headlight_upper_enabled"] = get_rear_headlight_upper_enabled();
+        p_state["lights/rear_headlight_left_enabled"] = get_rear_headlight_left_enabled();
+        p_state["lights/rear_headlight_right_enabled"] = get_rear_headlight_right_enabled();
+        p_state["lights/rear_redmarker_left_enabled"] = get_rear_redmarker_left_enabled();
+        p_state["lights/rear_redmarker_right_enabled"] = get_rear_redmarker_right_enabled();
+        p_state["lights/active_headlight_upper_enabled"] = get_active_headlight_upper_enabled();
+        p_state["lights/active_headlight_left_enabled"] = get_active_headlight_left_enabled();
+        p_state["lights/active_headlight_right_enabled"] = get_active_headlight_right_enabled();
+        p_state["lights/active_redmarker_left_enabled"] = get_active_redmarker_left_enabled();
+        p_state["lights/active_redmarker_right_enabled"] = get_active_redmarker_right_enabled();
+        p_state["lights/opposite_headlight_upper_enabled"] = get_opposite_headlight_upper_enabled();
+        p_state["lights/opposite_headlight_left_enabled"] = get_opposite_headlight_left_enabled();
+        p_state["lights/opposite_headlight_right_enabled"] = get_opposite_headlight_right_enabled();
+        p_state["lights/opposite_redmarker_left_enabled"] = get_opposite_redmarker_left_enabled();
+        p_state["lights/opposite_redmarker_right_enabled"] = get_opposite_redmarker_right_enabled();
         p_state["roof_light_enabled"] = get_roof_light_enabled();
-        p_state["devices_light_enabled"] = devices_light_active && _is_powered(mover);
-        p_state["roof_light_level"] = roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0;
+        p_state["devices_light_enabled"] = get_devices_light_enabled();
+        p_state["roof_light_level"] = get_roof_light_level();
     }
 
     void VehicleLighting::_fill_config_dictionary(Dictionary &p_config) const {

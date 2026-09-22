@@ -12,6 +12,44 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Not every electric engine is fed the same way; these say whether the matching
+             * values mean anything at all, so the dump can leave their keys out and a caller's
+             * has() keeps meaning what it meant. */
+            bool has_accumulator() const;
+            bool has_power_cable() const;
+
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_converter_enabled() const;
+            bool get_converted_allowed() const;
+            double get_converter_time_to_start() const;
+            double get_collector_max_voltage() const;
+            double get_collector_max_current() const;
+            double get_collector_max_lifting() const;
+            double get_collector_min_lifting() const;
+            double get_collector_sliding_width() const;
+            double get_collector_min_main_switch_voltage() const;
+            double get_collector_min_pantograph_tank_pressure() const;
+            double get_collector_max_pantograph_tank_pressure() const;
+            double get_collector_pantograph_tank_pressure() const;
+            bool get_collector_pantograph_pressure_switch_armed() const;
+            bool get_collector_pantograph_compressor_valve() const;
+            bool get_collector_overvoltage_relay() const;
+            double get_collector_required_main_switch_voltage() const;
+            bool get_collector_valve_active() const;
+            bool get_collector_pantographs_dropped() const;
+            bool get_collector_pantograph_first_active() const;
+            double get_collector_pantograph_first_voltage() const;
+            bool get_collector_pantograph_second_active() const;
+            double get_collector_pantograph_second_voltage() const;
+            double get_collector_voltage() const;
+            bool get_contactors_active() const;
+            bool get_diff_relay_active() const;
+            bool get_resistors_active() const;
+            bool get_vent_overload_active() const;
+            bool get_highcurrent_active() const;
+            bool get_mainbreaker_active() const;
+            double get_transducer_input_voltage() const;
+
             /* Which pantograph an individual command applies to - the mover supports at most
              * two (Maszyna::end::front / ::rear); named FIRST/SECOND here rather than
              * FRONT/REAR since which end is physically "front" depends on the active cab. */

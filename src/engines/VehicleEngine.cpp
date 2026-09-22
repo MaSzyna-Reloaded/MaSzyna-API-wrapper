@@ -67,6 +67,142 @@ namespace godot {
         BIND_ENUM_CONSTANT(AUTO_RELAY_NO);
         BIND_ENUM_CONSTANT(AUTO_RELAY_YES);
         BIND_ENUM_CONSTANT(AUTO_RELAY_OPTIONAL);
+
+        ClassDB::bind_method(D_METHOD("get_main_switch_enabled"), &VehicleEngine::get_main_switch_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "main_switch_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_switch_enabled");
+        ClassDB::bind_method(D_METHOD("get_main_switch_closable"), &VehicleEngine::get_main_switch_closable);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "main_switch_closable", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_switch_closable");
+        ClassDB::bind_method(D_METHOD("get_type"), &VehicleEngine::get_type);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "type", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_type");
+        ClassDB::bind_method(D_METHOD("get_motor_torque"), &VehicleEngine::get_motor_torque);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "motor_torque", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_torque");
+        ClassDB::bind_method(D_METHOD("get_wheel_torque"), &VehicleEngine::get_wheel_torque);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "wheel_torque", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_wheel_torque");
+        ClassDB::bind_method(D_METHOD("get_wheel_force"), &VehicleEngine::get_wheel_force);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "wheel_force", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_wheel_force");
+        ClassDB::bind_method(D_METHOD("get_tractive_force"), &VehicleEngine::get_tractive_force);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_tractive_force");
+        ClassDB::bind_method(D_METHOD("get_motor_current"), &VehicleEngine::get_motor_current);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "motor_current", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_current");
+        ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleEngine::get_compressor_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_enabled");
+        ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &VehicleEngine::get_compressor_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_allowed");
+        ClassDB::bind_method(D_METHOD("get_power"), &VehicleEngine::get_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power");
+        ClassDB::bind_method(D_METHOD("get_dynamic_brake_active"), &VehicleEngine::get_dynamic_brake_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "dynamic_brake_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_dynamic_brake_active");
+        ClassDB::bind_method(D_METHOD("get_rpm_count"), &VehicleEngine::get_rpm_count);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rpm_count", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rpm_count");
+        ClassDB::bind_method(D_METHOD("get_rpm_ratio"), &VehicleEngine::get_rpm_ratio);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rpm_ratio", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rpm_ratio");
+        ClassDB::bind_method(D_METHOD("get_current"), &VehicleEngine::get_current);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "current", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_current");
+        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &VehicleEngine::get_circuit_imax);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "circuit_imax", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_circuit_imax");
+        ClassDB::bind_method(D_METHOD("get_circuit_nmax_rpm"), &VehicleEngine::get_circuit_nmax_rpm);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "circuit_nmax_rpm", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_circuit_nmax_rpm");
+        ClassDB::bind_method(D_METHOD("get_damage"), &VehicleEngine::get_damage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "damage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_damage");
+        ClassDB::bind_method(D_METHOD("get_main_switch_time"), &VehicleEngine::get_main_switch_time);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "main_switch_time", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_switch_time");
+        ClassDB::bind_method(D_METHOD("get_main_no_power_pos"), &VehicleEngine::get_main_no_power_pos);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_no_power_pos");
+        ClassDB::bind_method(D_METHOD("get_camshaft_available"), &VehicleEngine::get_camshaft_available);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "camshaft_available", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_camshaft_available");
+        ClassDB::bind_method(D_METHOD("get_converter_overload"), &VehicleEngine::get_converter_overload);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "converter_overload", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_overload");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_delay"), &VehicleEngine::get_line_breaker_delay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "line_breaker_delay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_delay");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_initial_delay"), &VehicleEngine::get_line_breaker_initial_delay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "line_breaker_initial_delay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_initial_delay");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_closes_at_no_power"), &VehicleEngine::get_line_breaker_closes_at_no_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "line_breaker_closes_at_no_power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_closes_at_no_power");
+        ClassDB::bind_method(D_METHOD("get_fuse_active"), &VehicleEngine::get_fuse_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "fuse_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fuse_active");
+        ClassDB::bind_method(D_METHOD("get_motor_connectors_open"), &VehicleEngine::get_motor_connectors_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "motor_connectors_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_connectors_open");
     }
 
     void VehicleEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -162,38 +298,173 @@ namespace godot {
     }
 
 
+    bool VehicleEngine::get_main_switch_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Mains : false;
+    }
+
+    bool VehicleEngine::get_main_switch_closable() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->MainSwitchCheck() : false;
+    }
+
+    int VehicleEngine::get_type() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? get_engine_type() : 0;
+    }
+
+    double VehicleEngine::get_motor_torque() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Mm : 0.0;
+    }
+
+    double VehicleEngine::get_wheel_torque() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Mw : 0.0;
+    }
+
+    double VehicleEngine::get_wheel_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Fw : 0.0;
+    }
+
+    double VehicleEngine::get_tractive_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Ft : 0.0;
+    }
+
+    double VehicleEngine::get_motor_current() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Im : 0.0;
+    }
+
+    bool VehicleEngine::get_compressor_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorFlag : false;
+    }
+
+    bool VehicleEngine::get_compressor_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CompressorAllow : false;
+    }
+
+    double VehicleEngine::get_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EnginePower : 0.0;
+    }
+
+    bool VehicleEngine::get_dynamic_brake_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DynamicBrakeFlag : false;
+    }
+
+    double VehicleEngine::get_rpm_count() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->enrot : 0.0;
+    }
+
+    double VehicleEngine::get_rpm_ratio() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EngineRPMRatio() : 0.0;
+    }
+
+    double VehicleEngine::get_current() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Im : 0.0;
+    }
+
+    double VehicleEngine::get_circuit_imax() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Imax : 0.0;
+    }
+
+    double VehicleEngine::get_circuit_nmax_rpm() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->nmax * 60.0 : 0.0;
+    }
+
+    int VehicleEngine::get_damage() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EngDmgFlag : 0;
+    }
+
+    double VehicleEngine::get_main_switch_time() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->MainsInitTimeCountdown : 0.0;
+    }
+
+    bool VehicleEngine::get_main_no_power_pos() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->IsMainCtrlNoPowerPos() : false;
+    }
+
+    bool VehicleEngine::get_camshaft_available() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->HasCamshaft : false;
+    }
+
+    bool VehicleEngine::get_converter_overload() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ConvOvldFlag : false;
+    }
+
+    double VehicleEngine::get_line_breaker_delay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CtrlDelay : 0.0;
+    }
+
+    double VehicleEngine::get_line_breaker_initial_delay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->InitialCtrlDelay : 0.0;
+    }
+
+    bool VehicleEngine::get_line_breaker_closes_at_no_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LineBreakerClosesOnlyAtNoPowerPos : false;
+    }
+
+    bool VehicleEngine::get_fuse_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->FuseFlag : false;
+    }
+
+    bool VehicleEngine::get_motor_connectors_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->StLinSwitchOff : false;
+    }
+
     void VehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["main_switch_enabled"] = mover->Mains;
-        p_state["main_switch_closable"] = mover->MainSwitchCheck();
-        p_state["engine_type"] = get_engine_type();
-        p_state["Mm"] = mover->Mm;
-        p_state["Mw"] = mover->Mw;
-        p_state["Fw"] = mover->Fw;
-        p_state["Ft"] = mover->Ft;
-        p_state["Im"] = mover->Im;
-        p_state["compressor_enabled"] = mover->CompressorFlag;
-        p_state["compressor_allowed"] = mover->CompressorAllow;
-        p_state["engine_power"] = mover->EnginePower;
-        p_state["dynamic_brake_active"] = mover->DynamicBrakeFlag;
-        p_state["engine_rpm_count"] = mover->enrot;
-        p_state["engine_rpm_ratio"] = mover->EngineRPMRatio();
-        p_state["engine_current"] = mover->Im;
-        p_state["circuit_imax"] = mover->Imax;
-        p_state["circuit_nmax_rpm"] = mover->nmax * 60.0;
-        p_state["engine_damage"] = mover->EngDmgFlag;
-        p_state["main_switch_time"] = mover->MainsInitTimeCountdown;
-        p_state["main_no_power_pos"] = mover->IsMainCtrlNoPowerPos();
-        p_state["camshaft_available"] = mover->HasCamshaft;
-        p_state["converter_overload"] = mover->ConvOvldFlag;
-        p_state["line_breaker_delay"] = mover->CtrlDelay;
-        p_state["line_breaker_initial_delay"] = mover->InitialCtrlDelay;
-        p_state["line_breaker_closes_at_no_power"] = mover->LineBreakerClosesOnlyAtNoPowerPos;
-        p_state["fuse_active"] = mover->FuseFlag;
-        p_state["motor_connectors_open"] = mover->StLinSwitchOff;
+        p_state["main_switch_enabled"] = get_main_switch_enabled();
+        p_state["main_switch_closable"] = get_main_switch_closable();
+        p_state["engine_type"] = get_type();
+        p_state["Mm"] = get_motor_torque();
+        p_state["Mw"] = get_wheel_torque();
+        p_state["Fw"] = get_wheel_force();
+        p_state["Ft"] = get_tractive_force();
+        p_state["Im"] = get_motor_current();
+        p_state["compressor_enabled"] = get_compressor_enabled();
+        p_state["compressor_allowed"] = get_compressor_allowed();
+        p_state["engine_power"] = get_power();
+        p_state["dynamic_brake_active"] = get_dynamic_brake_active();
+        p_state["engine_rpm_count"] = get_rpm_count();
+        p_state["engine_rpm_ratio"] = get_rpm_ratio();
+        p_state["engine_current"] = get_current();
+        p_state["circuit_imax"] = get_circuit_imax();
+        p_state["circuit_nmax_rpm"] = get_circuit_nmax_rpm();
+        p_state["engine_damage"] = get_damage();
+        p_state["main_switch_time"] = get_main_switch_time();
+        p_state["main_no_power_pos"] = get_main_no_power_pos();
+        p_state["camshaft_available"] = get_camshaft_available();
+        p_state["converter_overload"] = get_converter_overload();
+        p_state["line_breaker_delay"] = get_line_breaker_delay();
+        p_state["line_breaker_initial_delay"] = get_line_breaker_initial_delay();
+        p_state["line_breaker_closes_at_no_power"] = get_line_breaker_closes_at_no_power();
+        p_state["fuse_active"] = get_fuse_active();
+        p_state["motor_connectors_open"] = get_motor_connectors_open();
     }
 
     void VehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {

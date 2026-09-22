@@ -29,6 +29,52 @@ namespace godot {
         BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_SIREN_LOW_TONE);
         BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_SIREN_HIGH_TONE);
         BIND_ENUM_CONSTANT(EMERGENCY_SIGNAL_WHISTLE);
+
+        ClassDB::bind_method(D_METHOD("get_beeping"), &VehicleSecuritySystem::get_beeping);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "beeping", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_beeping");
+        ClassDB::bind_method(D_METHOD("get_blinking"), &VehicleSecuritySystem::get_blinking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "blinking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_blinking");
+        ClassDB::bind_method(D_METHOD("get_radiostop_available"), &VehicleSecuritySystem::get_radiostop_available);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "radiostop_available", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_radiostop_available");
+        ClassDB::bind_method(D_METHOD("get_vigilance_blinking"), &VehicleSecuritySystem::get_vigilance_blinking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "vigilance_blinking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_vigilance_blinking");
+        ClassDB::bind_method(D_METHOD("get_cabsignal_blinking"), &VehicleSecuritySystem::get_cabsignal_blinking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "cabsignal_blinking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cabsignal_blinking");
+        ClassDB::bind_method(D_METHOD("get_cabsignal_beeping"), &VehicleSecuritySystem::get_cabsignal_beeping);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "cabsignal_beeping", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cabsignal_beeping");
+        ClassDB::bind_method(D_METHOD("get_braking"), &VehicleSecuritySystem::get_braking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "braking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_braking");
+        ClassDB::bind_method(D_METHOD("get_engine_blocked"), &VehicleSecuritySystem::get_engine_blocked);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "engine_blocked", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_engine_blocked");
+        ClassDB::bind_method(D_METHOD("get_separate_acknowledge"), &VehicleSecuritySystem::get_separate_acknowledge);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "separate_acknowledge", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_separate_acknowledge");
     }
 
     // Detected once per tick against this part's own members - these used to be compared against
@@ -46,20 +92,65 @@ namespace godot {
     }
 
 
+    bool VehicleSecuritySystem::get_beeping() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_beeping() : false;
+    }
+
+    bool VehicleSecuritySystem::get_blinking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_blinking() : false;
+    }
+
+    bool VehicleSecuritySystem::get_radiostop_available() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.radiostop_available() : false;
+    }
+
+    bool VehicleSecuritySystem::get_vigilance_blinking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_vigilance_blinking() : false;
+    }
+
+    bool VehicleSecuritySystem::get_cabsignal_blinking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_cabsignal_blinking() : false;
+    }
+
+    bool VehicleSecuritySystem::get_cabsignal_beeping() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_cabsignal_beeping() : false;
+    }
+
+    bool VehicleSecuritySystem::get_braking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_braking() : false;
+    }
+
+    bool VehicleSecuritySystem::get_engine_blocked() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.is_engine_blocked() : false;
+    }
+
+    bool VehicleSecuritySystem::get_separate_acknowledge() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SecuritySystem.has_separate_acknowledge() : false;
+    }
+
     void VehicleSecuritySystem::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["beeping"] = mover->SecuritySystem.is_beeping();
-        p_state["blinking"] = mover->SecuritySystem.is_blinking();
-        p_state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
-        p_state["vigilance_blinking"] = mover->SecuritySystem.is_vigilance_blinking();
-        p_state["cabsignal_blinking"] = mover->SecuritySystem.is_cabsignal_blinking();
-        p_state["cabsignal_beeping"] = mover->SecuritySystem.is_cabsignal_beeping();
-        p_state["braking"] = mover->SecuritySystem.is_braking();
-        p_state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
-        p_state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
+        p_state["beeping"] = get_beeping();
+        p_state["blinking"] = get_blinking();
+        p_state["radiostop_available"] = get_radiostop_available();
+        p_state["vigilance_blinking"] = get_vigilance_blinking();
+        p_state["cabsignal_blinking"] = get_cabsignal_blinking();
+        p_state["cabsignal_beeping"] = get_cabsignal_beeping();
+        p_state["braking"] = get_braking();
+        p_state["engine_blocked"] = get_engine_blocked();
+        p_state["separate_acknowledge"] = get_separate_acknowledge();
     }
 
     void VehicleSecuritySystem::_do_update_internal_mover(TMoverParameters *p_mover) {

@@ -12,6 +12,13 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            double get_ed_braking_ep_delay() const;
+            double get_ep_max_brake_engagement_speed() const;
+            double get_ep_min_regenerative_braking() const;
+            double get_ep_force() const;
+            bool get_ep_fuse() const;
+
             static void _bind_methods();
             enum CouplerCheck {
                 NONE = 0,

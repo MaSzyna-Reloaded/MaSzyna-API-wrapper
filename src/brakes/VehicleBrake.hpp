@@ -19,6 +19,31 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_alarm_chain_pulled() const;
+            double get_air_pressure() const;
+            double get_loco_pressure() const;
+            double get_pipe_brake_pressure() const;
+            double get_pipe_pressure() const;
+            double get_feed_pipe_pressure() const;
+            double get_tank_volume() const;
+            double get_compressor_pressure() const;
+            double get_controller_position() const;
+            double get_controller_position_normalized() const;
+            double get_local_position_normalized() const;
+            int get_manual_position() const;
+            double get_unit_force() const;
+            double get_force_ratio() const;
+            double get_emergency_valve_flow() const;
+            double get_main_valve_flow() const;
+            double get_local_valve_flow() const;
+            double get_loco_pressure_fall_rate() const;
+            double get_loco_pressure_rise_rate() const;
+            double get_control_pressure() const;
+            double get_local_aeim_position() const;
+            double get_edb_cylinder_pressure() const;
+            bool get_releaser_active() const;
+
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.

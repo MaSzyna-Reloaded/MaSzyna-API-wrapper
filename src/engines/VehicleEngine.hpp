@@ -13,6 +13,35 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_main_switch_enabled() const;
+            bool get_main_switch_closable() const;
+            int get_type() const;
+            double get_motor_torque() const;
+            double get_wheel_torque() const;
+            double get_wheel_force() const;
+            double get_tractive_force() const;
+            double get_motor_current() const;
+            bool get_compressor_enabled() const;
+            bool get_compressor_allowed() const;
+            double get_power() const;
+            bool get_dynamic_brake_active() const;
+            double get_rpm_count() const;
+            double get_rpm_ratio() const;
+            double get_current() const;
+            double get_circuit_imax() const;
+            double get_circuit_nmax_rpm() const;
+            int get_damage() const;
+            double get_main_switch_time() const;
+            bool get_main_no_power_pos() const;
+            bool get_camshaft_available() const;
+            bool get_converter_overload() const;
+            double get_line_breaker_delay() const;
+            double get_line_breaker_initial_delay() const;
+            bool get_line_breaker_closes_at_no_power() const;
+            bool get_fuse_active() const;
+            bool get_motor_connectors_open() const;
+
             enum EngineType {
                 NONE,
                 DUMB,

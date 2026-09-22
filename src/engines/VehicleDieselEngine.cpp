@@ -72,6 +72,72 @@ namespace godot {
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_AFTER_GEARBOX);
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC);
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_TC_AND_ENGINE);
+
+        ClassDB::bind_method(D_METHOD("get_rpm"), &VehicleDieselEngine::get_rpm);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rpm", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rpm");
+        ClassDB::bind_method(D_METHOD("get_oil_pump_active"), &VehicleDieselEngine::get_oil_pump_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "oil_pump_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_oil_pump_active");
+        ClassDB::bind_method(D_METHOD("get_oil_pump_disabled"), &VehicleDieselEngine::get_oil_pump_disabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "oil_pump_disabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_oil_pump_disabled");
+        ClassDB::bind_method(D_METHOD("get_oil_pump_pressure"), &VehicleDieselEngine::get_oil_pump_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "oil_pump_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_oil_pump_pressure");
+        ClassDB::bind_method(D_METHOD("get_fuel_pump_active"), &VehicleDieselEngine::get_fuel_pump_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "fuel_pump_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fuel_pump_active");
+        ClassDB::bind_method(D_METHOD("get_fuel_pump_disabled"), &VehicleDieselEngine::get_fuel_pump_disabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "fuel_pump_disabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fuel_pump_disabled");
+        ClassDB::bind_method(D_METHOD("get_startup"), &VehicleDieselEngine::get_startup);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "startup", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_startup");
+        ClassDB::bind_method(D_METHOD("get_ignition"), &VehicleDieselEngine::get_ignition);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "ignition", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ignition");
+        ClassDB::bind_method(D_METHOD("get_spinup"), &VehicleDieselEngine::get_spinup);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "spinup", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_spinup");
+        ClassDB::bind_method(D_METHOD("get_output_power"), &VehicleDieselEngine::get_output_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "output_power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_output_power");
+        ClassDB::bind_method(D_METHOD("get_torque"), &VehicleDieselEngine::get_torque);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "torque", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_torque");
+        ClassDB::bind_method(D_METHOD("get_fill"), &VehicleDieselEngine::get_fill);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "fill", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fill");
+        ClassDB::bind_method(D_METHOD("get_max_rpm"), &VehicleDieselEngine::get_max_rpm);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "max_rpm", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_max_rpm");
     }
 
     VehicleEngine::EngineType VehicleDieselEngine::get_engine_type() const {
@@ -79,25 +145,90 @@ namespace godot {
     }
 
 
+    double VehicleDieselEngine::get_rpm() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EngineRPMRatio() * mover->EngineMaxRPM() : 0.0;
+    }
+
+    bool VehicleDieselEngine::get_oil_pump_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->OilPump.is_active : false;
+    }
+
+    bool VehicleDieselEngine::get_oil_pump_disabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->OilPump.is_disabled : false;
+    }
+
+    double VehicleDieselEngine::get_oil_pump_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->OilPump.pressure : 0.0;
+    }
+
+    bool VehicleDieselEngine::get_fuel_pump_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->FuelPump.is_active : false;
+    }
+
+    bool VehicleDieselEngine::get_fuel_pump_disabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->FuelPump.is_disabled : false;
+    }
+
+    bool VehicleDieselEngine::get_startup() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_startup : false;
+    }
+
+    bool VehicleDieselEngine::get_ignition() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_ignition : false;
+    }
+
+    bool VehicleDieselEngine::get_spinup() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_spinup : false;
+    }
+
+    double VehicleDieselEngine::get_output_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_Power : 0.0;
+    }
+
+    double VehicleDieselEngine::get_torque() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_Torque : 0.0;
+    }
+
+    double VehicleDieselEngine::get_fill() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dizel_fill : 0.0;
+    }
+
+    double VehicleDieselEngine::get_max_rpm() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EngineMaxRPM() : 0.0;
+    }
+
     void VehicleDieselEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
-        p_state["oil_pump_active"] = mover->OilPump.is_active;
-        p_state["oil_pump_disabled"] = mover->OilPump.is_disabled;
-        p_state["oil_pump_pressure"] = mover->OilPump.pressure;
-        p_state["fuel_pump_active"] = mover->FuelPump.is_active;
-        p_state["fuel_pump_disabled"] = mover->FuelPump.is_disabled;
-        p_state["diesel_startup"] = mover->dizel_startup;
-        p_state["diesel_ignition"] = mover->dizel_ignition;
-        p_state["diesel_spinup"] = mover->dizel_spinup;
-        p_state["diesel_power"] = mover->dizel_Power;
-        p_state["diesel_torque"] = mover->dizel_Torque;
-        p_state["diesel_fill"] = mover->dizel_fill;
-        p_state["diesel_max_rpm"] = mover->EngineMaxRPM();
+        p_state["engine_rpm"] = get_rpm();
+        p_state["oil_pump_active"] = get_oil_pump_active();
+        p_state["oil_pump_disabled"] = get_oil_pump_disabled();
+        p_state["oil_pump_pressure"] = get_oil_pump_pressure();
+        p_state["fuel_pump_active"] = get_fuel_pump_active();
+        p_state["fuel_pump_disabled"] = get_fuel_pump_disabled();
+        p_state["diesel_startup"] = get_startup();
+        p_state["diesel_ignition"] = get_ignition();
+        p_state["diesel_spinup"] = get_spinup();
+        p_state["diesel_power"] = get_output_power();
+        p_state["diesel_torque"] = get_torque();
+        p_state["diesel_fill"] = get_fill();
+        p_state["diesel_max_rpm"] = get_max_rpm();
     }
 
     void VehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {

@@ -27,7 +27,10 @@ namespace godot {
             bool enabled = true;
             bool enabled_changed = false;
             bool dirty = false;
-            VehicleController *train_controller_node;
+            /* The vehicle this component belongs to, set when it joins it. A raw pointer with no
+             * initialiser used to be safe only because nothing read this component before it
+             * joined; a property read does (see FINDINGS.md, 2026-09-22). */
+            VehicleController *train_controller_node = nullptr;
 
             /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
              * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),

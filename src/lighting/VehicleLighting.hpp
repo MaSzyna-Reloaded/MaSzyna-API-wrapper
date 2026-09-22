@@ -15,6 +15,33 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            int get_position() const;
+            double get_power() const;
+            int get_power_source() const;
+            bool get_front_headlight_upper_enabled() const;
+            bool get_front_headlight_left_enabled() const;
+            bool get_front_headlight_right_enabled() const;
+            bool get_front_redmarker_left_enabled() const;
+            bool get_front_redmarker_right_enabled() const;
+            bool get_rear_headlight_upper_enabled() const;
+            bool get_rear_headlight_left_enabled() const;
+            bool get_rear_headlight_right_enabled() const;
+            bool get_rear_redmarker_left_enabled() const;
+            bool get_rear_redmarker_right_enabled() const;
+            bool get_active_headlight_upper_enabled() const;
+            bool get_active_headlight_left_enabled() const;
+            bool get_active_headlight_right_enabled() const;
+            bool get_active_redmarker_left_enabled() const;
+            bool get_active_redmarker_right_enabled() const;
+            bool get_opposite_headlight_upper_enabled() const;
+            bool get_opposite_headlight_left_enabled() const;
+            bool get_opposite_headlight_right_enabled() const;
+            bool get_opposite_redmarker_left_enabled() const;
+            bool get_opposite_redmarker_right_enabled() const;
+            bool get_devices_light_enabled() const;
+            double get_roof_light_level() const;
+
             /* Compartment (roof) light, as the vehicle's own signal reports it: lit only while the
              * lighting circuit is fed. Read straight from the backend - nothing is stored. */
             bool get_roof_light_enabled() const;

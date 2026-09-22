@@ -236,6 +236,122 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &VehicleBrake::auto_rewident);
         ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &VehicleBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &VehicleBrake::alarm_chain);
+
+        ClassDB::bind_method(D_METHOD("get_alarm_chain_pulled"), &VehicleBrake::get_alarm_chain_pulled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "alarm_chain_pulled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_alarm_chain_pulled");
+        ClassDB::bind_method(D_METHOD("get_air_pressure"), &VehicleBrake::get_air_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "air_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_air_pressure");
+        ClassDB::bind_method(D_METHOD("get_loco_pressure"), &VehicleBrake::get_loco_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "loco_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_loco_pressure");
+        ClassDB::bind_method(D_METHOD("get_pipe_brake_pressure"), &VehicleBrake::get_pipe_brake_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "pipe_brake_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_pipe_brake_pressure");
+        ClassDB::bind_method(D_METHOD("get_pipe_pressure"), &VehicleBrake::get_pipe_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "pipe_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_pipe_pressure");
+        ClassDB::bind_method(D_METHOD("get_feed_pipe_pressure"), &VehicleBrake::get_feed_pipe_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "feed_pipe_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_feed_pipe_pressure");
+        ClassDB::bind_method(D_METHOD("get_tank_volume"), &VehicleBrake::get_tank_volume);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tank_volume", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_tank_volume");
+        ClassDB::bind_method(D_METHOD("get_compressor_pressure"), &VehicleBrake::get_compressor_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_compressor_pressure");
+        ClassDB::bind_method(D_METHOD("get_controller_position"), &VehicleBrake::get_controller_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "controller_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_position");
+        ClassDB::bind_method(D_METHOD("get_controller_position_normalized"), &VehicleBrake::get_controller_position_normalized);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "controller_position_normalized", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_position_normalized");
+        ClassDB::bind_method(D_METHOD("get_local_position_normalized"), &VehicleBrake::get_local_position_normalized);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "local_position_normalized", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_local_position_normalized");
+        ClassDB::bind_method(D_METHOD("get_manual_position"), &VehicleBrake::get_manual_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "manual_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_manual_position");
+        ClassDB::bind_method(D_METHOD("get_unit_force"), &VehicleBrake::get_unit_force);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "unit_force", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_unit_force");
+        ClassDB::bind_method(D_METHOD("get_force_ratio"), &VehicleBrake::get_force_ratio);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "force_ratio", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_force_ratio");
+        ClassDB::bind_method(D_METHOD("get_emergency_valve_flow"), &VehicleBrake::get_emergency_valve_flow);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "emergency_valve_flow", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_emergency_valve_flow");
+        ClassDB::bind_method(D_METHOD("get_main_valve_flow"), &VehicleBrake::get_main_valve_flow);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "main_valve_flow", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_valve_flow");
+        ClassDB::bind_method(D_METHOD("get_local_valve_flow"), &VehicleBrake::get_local_valve_flow);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "local_valve_flow", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_local_valve_flow");
+        ClassDB::bind_method(D_METHOD("get_loco_pressure_fall_rate"), &VehicleBrake::get_loco_pressure_fall_rate);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "loco_pressure_fall_rate", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_loco_pressure_fall_rate");
+        ClassDB::bind_method(D_METHOD("get_loco_pressure_rise_rate"), &VehicleBrake::get_loco_pressure_rise_rate);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "loco_pressure_rise_rate", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_loco_pressure_rise_rate");
+        ClassDB::bind_method(D_METHOD("get_control_pressure"), &VehicleBrake::get_control_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "control_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_control_pressure");
+        ClassDB::bind_method(D_METHOD("get_local_aeim_position"), &VehicleBrake::get_local_aeim_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "local_aeim_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_local_aeim_position");
+        ClassDB::bind_method(D_METHOD("get_edb_cylinder_pressure"), &VehicleBrake::get_edb_cylinder_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "edb_cylinder_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_edb_cylinder_pressure");
+        ClassDB::bind_method(D_METHOD("get_releaser_active"), &VehicleBrake::get_releaser_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "releaser_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_releaser_active");
     }
 
     void VehicleBrake::_register_commands() {
@@ -467,34 +583,149 @@ namespace godot {
     }
 
 
+    bool VehicleBrake::get_alarm_chain_pulled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->AlarmChainFlag : false;
+    }
+
+    double VehicleBrake::get_air_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->BrakePress : 0.0;
+    }
+
+    double VehicleBrake::get_loco_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LocBrakePress : 0.0;
+    }
+
+    double VehicleBrake::get_pipe_brake_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PipeBrakePress : 0.0;
+    }
+
+    double VehicleBrake::get_pipe_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->PipePress : 0.0;
+    }
+
+    double VehicleBrake::get_feed_pipe_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ScndPipePress : 0.0;
+    }
+
+    double VehicleBrake::get_tank_volume() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Volume : 0.0;
+    }
+
+    double VehicleBrake::get_compressor_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Compressor : 0.0;
+    }
+
+    double VehicleBrake::get_controller_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->fBrakeCtrlPos : 0.0;
+    }
+
+    double VehicleBrake::get_controller_position_normalized() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _controller_position_normalized(mover) : 0.0;
+    }
+
+    double VehicleBrake::get_local_position_normalized() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LocalBrakePosA : 0.0;
+    }
+
+    int VehicleBrake::get_manual_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ManualBrakePos : 0;
+    }
+
+    double VehicleBrake::get_unit_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->UnitBrakeForce : 0.0;
+    }
+
+    double VehicleBrake::get_force_ratio() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? _force_ratio(mover) : 0.0;
+    }
+
+    double VehicleBrake::get_emergency_valve_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EmergencyValveFlow : 0.0;
+    }
+
+    double VehicleBrake::get_main_valve_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? std::isfinite(mover->dpMainValve) ? mover->dpMainValve : 0.0 : 0.0;
+    }
+
+    double VehicleBrake::get_local_valve_flow() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->dpLocalValve : 0.0;
+    }
+
+    double VehicleBrake::get_loco_pressure_fall_rate() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? std::max(0.0, -local_brake_pressure_change_rate) : 0.0;
+    }
+
+    double VehicleBrake::get_loco_pressure_rise_rate() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? std::max(0.0, local_brake_pressure_change_rate) : 0.0;
+    }
+
+    double VehicleBrake::get_control_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LocHandle ? mover->LocHandle->GetCP() : 0.0 : 0.0;
+    }
+
+    double VehicleBrake::get_local_aeim_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LocalBrakePosAEIM : 0.0;
+    }
+
+    double VehicleBrake::get_edb_cylinder_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Hamulec ? mover->Hamulec->GetEDBCP() : 0.0 : 0.0;
+    }
+
+    bool VehicleBrake::get_releaser_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Hamulec && mover->Hamulec->Releaser() : false;
+    }
+
     void VehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["alarm_chain_pulled"] = mover->AlarmChainFlag;
-        p_state["brake_air_pressure"] = mover->BrakePress;
-        p_state["brake_loco_pressure"] = mover->LocBrakePress;
-        p_state["brake_pipe_pressure"] = mover->PipeBrakePress;
-        p_state["pipe_pressure"] = mover->PipePress;
-        p_state["feed_pipe_pressure"] = mover->ScndPipePress;
-        p_state["brake_tank_volume"] = mover->Volume;
-        p_state["compressor_pressure"] = mover->Compressor;
-        p_state["brake_controller_position"] = mover->fBrakeCtrlPos;
-        p_state["brake_controller_position_normalized"] = _controller_position_normalized(mover);
-        p_state["brake_local_position_normalized"] = mover->LocalBrakePosA;
-        p_state["brake_manual_position"] = mover->ManualBrakePos;
-        p_state["brake_unit_force"] = mover->UnitBrakeForce;
-        p_state["brake_force_ratio"] = _force_ratio(mover);
-        p_state["brake_emergency_valve_flow"] = mover->EmergencyValveFlow;
-        p_state["brake_main_valve_flow"] = std::isfinite(mover->dpMainValve) ? mover->dpMainValve : 0.0;
-        p_state["brake_local_valve_flow"] = mover->dpLocalValve;
-        p_state["brake_loco_pressure_fall_rate"] = std::max(0.0, -local_brake_pressure_change_rate);
-        p_state["brake_loco_pressure_rise_rate"] = std::max(0.0, local_brake_pressure_change_rate);
-        p_state["brake_control_pressure"] = mover->LocHandle ? mover->LocHandle->GetCP() : 0.0;
-        p_state["brake_local_aeim_position"] = mover->LocalBrakePosAEIM;
-        p_state["brake_edb_cylinder_pressure"] = mover->Hamulec ? mover->Hamulec->GetEDBCP() : 0.0;
-        p_state["brake_releaser_active"] = mover->Hamulec && mover->Hamulec->Releaser();
+        p_state["alarm_chain_pulled"] = get_alarm_chain_pulled();
+        p_state["brake_air_pressure"] = get_air_pressure();
+        p_state["brake_loco_pressure"] = get_loco_pressure();
+        p_state["brake_pipe_pressure"] = get_pipe_brake_pressure();
+        p_state["pipe_pressure"] = get_pipe_pressure();
+        p_state["feed_pipe_pressure"] = get_feed_pipe_pressure();
+        p_state["brake_tank_volume"] = get_tank_volume();
+        p_state["compressor_pressure"] = get_compressor_pressure();
+        p_state["brake_controller_position"] = get_controller_position();
+        p_state["brake_controller_position_normalized"] = get_controller_position_normalized();
+        p_state["brake_local_position_normalized"] = get_local_position_normalized();
+        p_state["brake_manual_position"] = get_manual_position();
+        p_state["brake_unit_force"] = get_unit_force();
+        p_state["brake_force_ratio"] = get_force_ratio();
+        p_state["brake_emergency_valve_flow"] = get_emergency_valve_flow();
+        p_state["brake_main_valve_flow"] = get_main_valve_flow();
+        p_state["brake_local_valve_flow"] = get_local_valve_flow();
+        p_state["brake_loco_pressure_fall_rate"] = get_loco_pressure_fall_rate();
+        p_state["brake_loco_pressure_rise_rate"] = get_loco_pressure_rise_rate();
+        p_state["brake_control_pressure"] = get_control_pressure();
+        p_state["brake_local_aeim_position"] = get_local_aeim_position();
+        p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
+        p_state["brake_releaser_active"] = get_releaser_active();
     }
 
     void VehicleBrake::_do_update_internal_mover(TMoverParameters *p_mover) {

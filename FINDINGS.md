@@ -22,6 +22,34 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 * **Rule:** a performance number is a measurement of the whole machine, not of the commit. Confirm
   the environment is the same - adapter, power profile, build flags - before the code is.
 
+## 2026-09-22 - an uninitialised pointer that only a property read could reach
+
+* **Symptom:** after the vehicle components gained typed state properties, building a vehicle from
+  a FIZ crashed with signal 11 inside `PackedScene.pack()`
+  (`fiz_train_controller_instancer.gd:218`). The backtrace was pure garbage symbols, and a bisect
+  over the converted classes gave inconsistent answers - reverting one class "fixed" it, restoring
+  another "broke" it again.
+* **What proved it:** `addr2line` on the three `libmaszyna` frames of the crash dump, which the
+  garbage tail of the backtrace had hidden:
+  `VehicleDoors::get_locked()` -> `VehicleController::get_mover()`, called through
+  `MethodBind::bind_call` - i.e. reached by a **property read**, not by the tick.
+* **Cause:** `VehicleComponent::train_controller_node` was declared `VehicleController *
+  train_controller_node;` with **no initialiser**. It is assigned in `NOTIFICATION_ENTER_TREE`, so
+  until a component joined a vehicle the field held whatever was on the stack. Nothing ever read a
+  component before it entered the tree, so the defect was unreachable - until the state became
+  typed properties and `PackedScene.pack()` started reading them off a freshly constructed,
+  never-parented component.
+* **Fix:** `= nullptr` on the declaration. The null checks around it were already there and
+  correct; they were simply never given a null.
+* **Rule:** exposing state as properties makes every getter reachable at times the class was never
+  written for - before `_ready()`, before `ENTER_TREE`, during `pack()`, from the inspector. Every
+  member those getters touch has to be valid from the constructor, not from the first notification.
+* **Rule:** a raw pointer member gets `= nullptr` at its declaration, always. "It is assigned
+  before anything reads it" is an assumption about callers, and adding a caller is what breaks it.
+* **Trap:** Godot's crash dump prints dozens of resolvable-looking frames from the main binary and
+  only a handful from the extension, and the extension's are the unresolved hex ones. Run
+  `addr2line -f -C -e <the .so> <offsets>` on those first instead of reading the tail.
+
 ## 2026-09-22 - a regex that deleted 588 lines, and the linker that caught it
 
 * **Symptom:** after a scripted removal of five methods from `RailVehicleServer`, the build

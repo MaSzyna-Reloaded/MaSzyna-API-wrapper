@@ -28,20 +28,71 @@ namespace godot {
         BIND_ENUM_CONSTANT(NONE)
         BIND_ENUM_CONSTANT(FRONT)
         BIND_ENUM_CONSTANT(BACK)
+
+        ClassDB::bind_method(D_METHOD("get_ed_braking_ep_delay"), &VehicleElectroPneumaticDynamicBrake::get_ed_braking_ep_delay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "ed_braking_ep_delay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ed_braking_ep_delay");
+        ClassDB::bind_method(D_METHOD("get_ep_max_brake_engagement_speed"), &VehicleElectroPneumaticDynamicBrake::get_ep_max_brake_engagement_speed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "ep_max_brake_engagement_speed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ep_max_brake_engagement_speed");
+        ClassDB::bind_method(D_METHOD("get_ep_min_regenerative_braking"), &VehicleElectroPneumaticDynamicBrake::get_ep_min_regenerative_braking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "ep_min_regenerative_braking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ep_min_regenerative_braking");
+        ClassDB::bind_method(D_METHOD("get_ep_force"), &VehicleElectroPneumaticDynamicBrake::get_ep_force);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "ep_force", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ep_force");
+        ClassDB::bind_method(D_METHOD("get_ep_fuse"), &VehicleElectroPneumaticDynamicBrake::get_ep_fuse);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "ep_fuse", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ep_fuse");
     }
 
+
+    double VehicleElectroPneumaticDynamicBrake::get_ed_braking_ep_delay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DCEMUED_EP_delay : 0.0;
+    }
+
+    double VehicleElectroPneumaticDynamicBrake::get_ep_max_brake_engagement_speed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DCEMUED_EP_max_Vel : 0.0;
+    }
+
+    double VehicleElectroPneumaticDynamicBrake::get_ep_min_regenerative_braking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DCEMUED_EP_min_Im : 0.0;
+    }
+
+    double VehicleElectroPneumaticDynamicBrake::get_ep_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EpForce : 0.0;
+    }
+
+    bool VehicleElectroPneumaticDynamicBrake::get_ep_fuse() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->EpFuse : false;
+    }
 
     void VehicleElectroPneumaticDynamicBrake::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["dcemued/coupler_check"] = mover->DCEMUED_CC;
-        p_state["dcemued/ed_braking_ep_delay"] = mover->DCEMUED_EP_delay;
-        p_state["dcemued/ep_max_brake_engagement_speed"] = mover->DCEMUED_EP_max_Vel;
-        p_state["dcemued/ep_min_regenerative_braking"] = mover->DCEMUED_EP_min_Im;
-        p_state["dcemued/ep_force"] = mover->EpForce;
-        p_state["dcemued/ep_fuse"] = mover->EpFuse;
+        p_state["dcemued/coupler_check"] = get_coupler_check();
+        p_state["dcemued/ed_braking_ep_delay"] = get_ed_braking_ep_delay();
+        p_state["dcemued/ep_max_brake_engagement_speed"] = get_ep_max_brake_engagement_speed();
+        p_state["dcemued/ep_min_regenerative_braking"] = get_ep_min_regenerative_braking();
+        p_state["dcemued/ep_force"] = get_ep_force();
+        p_state["dcemued/ep_fuse"] = get_ep_fuse();
     }
 
     void VehicleElectroPneumaticDynamicBrake::_register_commands() {

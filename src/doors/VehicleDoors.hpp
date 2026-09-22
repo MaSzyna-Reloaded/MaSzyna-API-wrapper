@@ -19,6 +19,30 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_locked() const;
+            bool get_lock_enabled() const;
+            bool get_step_enabled() const;
+            int get_open_control() const;
+            bool get_left_open() const;
+            bool get_left_open_permit() const;
+            bool get_left_local_open() const;
+            bool get_left_remote_open() const;
+            double get_left_position() const;
+            double get_left_position_normalized() const;
+            bool get_left_operating() const;
+            double get_left_step_position() const;
+            bool get_left_step_operating() const;
+            bool get_right_open() const;
+            bool get_right_open_permit() const;
+            bool get_right_local_open() const;
+            bool get_right_remote_open() const;
+            double get_right_position() const;
+            double get_right_position_normalized() const;
+            bool get_right_operating() const;
+            double get_right_step_position() const;
+            bool get_right_step_operating() const;
+
             enum PermitLight {
                 PERMIT_LIGHT_CONTINUOUS,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,

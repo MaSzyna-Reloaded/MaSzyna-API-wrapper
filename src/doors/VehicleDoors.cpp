@@ -76,6 +76,117 @@ namespace godot {
         BIND_ENUM_CONSTANT(TYPE_ROTATE)
         BIND_ENUM_CONSTANT(TYPE_FOLD)
         BIND_ENUM_CONSTANT(TYPE_PLUG)
+
+        ClassDB::bind_method(D_METHOD("get_locked"), &VehicleDoors::get_locked);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "locked", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_locked");
+        ClassDB::bind_method(D_METHOD("get_lock_enabled"), &VehicleDoors::get_lock_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "lock_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_lock_enabled");
+        ClassDB::bind_method(D_METHOD("get_step_enabled"), &VehicleDoors::get_step_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "step_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_step_enabled");
+        ClassDB::bind_method(D_METHOD("get_open_control"), &VehicleDoors::get_open_control);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "open_control", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_open_control");
+        ClassDB::bind_method(D_METHOD("get_left_open"), &VehicleDoors::get_left_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_open");
+        ClassDB::bind_method(D_METHOD("get_left_open_permit"), &VehicleDoors::get_left_open_permit);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_open_permit", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_open_permit");
+        ClassDB::bind_method(D_METHOD("get_left_local_open"), &VehicleDoors::get_left_local_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_local_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_local_open");
+        ClassDB::bind_method(D_METHOD("get_left_remote_open"), &VehicleDoors::get_left_remote_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_remote_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_remote_open");
+        ClassDB::bind_method(D_METHOD("get_left_position"), &VehicleDoors::get_left_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "left_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_position");
+        ClassDB::bind_method(D_METHOD("get_left_position_normalized"), &VehicleDoors::get_left_position_normalized);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "left_position_normalized", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_position_normalized");
+        ClassDB::bind_method(D_METHOD("get_left_operating"), &VehicleDoors::get_left_operating);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_operating", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_operating");
+        ClassDB::bind_method(D_METHOD("get_left_step_position"), &VehicleDoors::get_left_step_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "left_step_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_step_position");
+        ClassDB::bind_method(D_METHOD("get_left_step_operating"), &VehicleDoors::get_left_step_operating);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "left_step_operating", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_left_step_operating");
+        ClassDB::bind_method(D_METHOD("get_right_open"), &VehicleDoors::get_right_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_open");
+        ClassDB::bind_method(D_METHOD("get_right_open_permit"), &VehicleDoors::get_right_open_permit);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_open_permit", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_open_permit");
+        ClassDB::bind_method(D_METHOD("get_right_local_open"), &VehicleDoors::get_right_local_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_local_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_local_open");
+        ClassDB::bind_method(D_METHOD("get_right_remote_open"), &VehicleDoors::get_right_remote_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_remote_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_remote_open");
+        ClassDB::bind_method(D_METHOD("get_right_position"), &VehicleDoors::get_right_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "right_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_position");
+        ClassDB::bind_method(D_METHOD("get_right_position_normalized"), &VehicleDoors::get_right_position_normalized);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "right_position_normalized", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_position_normalized");
+        ClassDB::bind_method(D_METHOD("get_right_operating"), &VehicleDoors::get_right_operating);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_operating", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_operating");
+        ClassDB::bind_method(D_METHOD("get_right_step_position"), &VehicleDoors::get_right_step_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "right_step_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_step_position");
+        ClassDB::bind_method(D_METHOD("get_right_step_operating"), &VehicleDoors::get_right_step_operating);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "right_step_operating", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_right_step_operating");
     }
 
     void VehicleDoors::_register_commands() {
@@ -103,33 +214,143 @@ namespace godot {
     }
 
 
+    bool VehicleDoors::get_locked() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.is_locked : false;
+    }
+
+    bool VehicleDoors::get_lock_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.lock_enabled : false;
+    }
+
+    bool VehicleDoors::get_step_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.step_enabled : false;
+    }
+
+    int VehicleDoors::get_open_control() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.open_control : 0;
+    }
+
+    bool VehicleDoors::get_left_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].is_open : false;
+    }
+
+    bool VehicleDoors::get_left_open_permit() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].open_permit : false;
+    }
+
+    bool VehicleDoors::get_left_local_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].local_open : false;
+    }
+
+    bool VehicleDoors::get_left_remote_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].remote_open : false;
+    }
+
+    double VehicleDoors::get_left_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].position : 0.0;
+    }
+
+    double VehicleDoors::get_left_position_normalized() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].position / max_shift : 0.0;
+    }
+
+    bool VehicleDoors::get_left_operating() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing : false;
+    }
+
+    double VehicleDoors::get_left_step_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].step_position : 0.0;
+    }
+
+    bool VehicleDoors::get_left_step_operating() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::left].step_folding || mover->Doors.instances[side::left].step_unfolding : false;
+    }
+
+    bool VehicleDoors::get_right_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].is_open : false;
+    }
+
+    bool VehicleDoors::get_right_open_permit() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].open_permit : false;
+    }
+
+    bool VehicleDoors::get_right_local_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].local_open : false;
+    }
+
+    bool VehicleDoors::get_right_remote_open() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].remote_open : false;
+    }
+
+    double VehicleDoors::get_right_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].position : 0.0;
+    }
+
+    double VehicleDoors::get_right_position_normalized() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].position / max_shift : 0.0;
+    }
+
+    bool VehicleDoors::get_right_operating() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].is_opening || mover->Doors.instances[side::right].is_closing : false;
+    }
+
+    double VehicleDoors::get_right_step_position() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].step_position : 0.0;
+    }
+
+    bool VehicleDoors::get_right_step_operating() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.instances[side::right].step_folding || mover->Doors.instances[side::right].step_unfolding : false;
+    }
+
     void VehicleDoors::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["doors_locked"] = mover->Doors.is_locked;
-        p_state["doors_lock_enabled"] = mover->Doors.lock_enabled;
-        p_state["doors_step_enabled"] = mover->Doors.step_enabled;
-        p_state["doors_open_control"] = mover->Doors.open_control;
-        p_state["doors_left_open"] = mover->Doors.instances[side::left].is_open;
-        p_state["doors_left_open_permit"] = mover->Doors.instances[side::left].open_permit;
-        p_state["doors_left_local_open"] = mover->Doors.instances[side::left].local_open;
-        p_state["doors_left_remote_open"] = mover->Doors.instances[side::left].remote_open;
-        p_state["doors_left_position"] = mover->Doors.instances[side::left].position;
-        p_state["doors_left_position_normalized"] = mover->Doors.instances[side::left].position / max_shift;
-        p_state["doors_left_operating"] = mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing;
-        p_state["doors_left_step_position"] = mover->Doors.instances[side::left].step_position;
-        p_state["doors_left_step_operating"] = mover->Doors.instances[side::left].step_folding || mover->Doors.instances[side::left].step_unfolding;
-        p_state["doors_right_open"] = mover->Doors.instances[side::right].is_open;
-        p_state["doors_right_open_permit"] = mover->Doors.instances[side::right].open_permit;
-        p_state["doors_right_local_open"] = mover->Doors.instances[side::right].local_open;
-        p_state["doors_right_remote_open"] = mover->Doors.instances[side::right].remote_open;
-        p_state["doors_right_position"] = mover->Doors.instances[side::right].position;
-        p_state["doors_right_position_normalized"] = mover->Doors.instances[side::right].position / max_shift;
-        p_state["doors_right_operating"] = mover->Doors.instances[side::right].is_opening || mover->Doors.instances[side::right].is_closing;
-        p_state["doors_right_step_position"] = mover->Doors.instances[side::right].step_position;
-        p_state["doors_right_step_operating"] = mover->Doors.instances[side::right].step_folding || mover->Doors.instances[side::right].step_unfolding;
+        p_state["doors_locked"] = get_locked();
+        p_state["doors_lock_enabled"] = get_lock_enabled();
+        p_state["doors_step_enabled"] = get_step_enabled();
+        p_state["doors_open_control"] = get_open_control();
+        p_state["doors_left_open"] = get_left_open();
+        p_state["doors_left_open_permit"] = get_left_open_permit();
+        p_state["doors_left_local_open"] = get_left_local_open();
+        p_state["doors_left_remote_open"] = get_left_remote_open();
+        p_state["doors_left_position"] = get_left_position();
+        p_state["doors_left_position_normalized"] = get_left_position_normalized();
+        p_state["doors_left_operating"] = get_left_operating();
+        p_state["doors_left_step_position"] = get_left_step_position();
+        p_state["doors_left_step_operating"] = get_left_step_operating();
+        p_state["doors_right_open"] = get_right_open();
+        p_state["doors_right_open_permit"] = get_right_open_permit();
+        p_state["doors_right_local_open"] = get_right_local_open();
+        p_state["doors_right_remote_open"] = get_right_remote_open();
+        p_state["doors_right_position"] = get_right_position();
+        p_state["doors_right_position_normalized"] = get_right_position_normalized();
+        p_state["doors_right_operating"] = get_right_operating();
+        p_state["doors_right_step_position"] = get_right_step_position();
+        p_state["doors_right_step_operating"] = get_right_step_operating();
     }
 
     void VehicleDoors::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {

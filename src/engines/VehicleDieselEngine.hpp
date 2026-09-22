@@ -14,6 +14,21 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            double get_rpm() const;
+            bool get_oil_pump_active() const;
+            bool get_oil_pump_disabled() const;
+            double get_oil_pump_pressure() const;
+            bool get_fuel_pump_active() const;
+            bool get_fuel_pump_disabled() const;
+            bool get_startup() const;
+            bool get_ignition() const;
+            bool get_spinup() const;
+            double get_output_power() const;
+            double get_torque() const;
+            double get_fill() const;
+            double get_max_rpm() const;
+
             /* R_Place= : retarder location within the mechanical transmission */
             enum RetarderPlacement {
                 RETARDER_PLACEMENT_AFTER_GEARBOX,

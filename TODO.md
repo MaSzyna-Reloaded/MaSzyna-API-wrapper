@@ -80,6 +80,10 @@ lookup.
   writer (two vehicles with an empty one collide today - `dynamic_rail_vehicle_3d.gd:45-49`);
   `TrainSystem` keeps `train_id -> RID`; `vehicle_get_mover()` and the borrowed Mover pointer go.
 
+**Tests that read the game directory** fail whenever it is not mounted, which is exactly what
+`AGENTS.md` forbids them to depend on: `test_zzz_ep07_cabin_main_switch` loads
+`scenery/td.scn` through `user://gut/fiz_train_controller`. Needs a fixture scenery instead.
+
 **Coverage gap, to close before stage C:** nothing tests `GenericVehicleComponent` at all - not one
 of the 95 test scripts instantiates one, and its only proof is the two example scenes
 (`demo/examples/custom_train_part.tscn`, `custom_powered_train_part.tscn`). Its GDScript API was

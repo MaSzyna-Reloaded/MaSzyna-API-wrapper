@@ -72,7 +72,11 @@ namespace godot {
             // VehicleController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *p_mover) const;
             void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state);
+            /* The controller's own contribution to the vehicle state, declared the way a
+             * component declares its own. */
+            void _declare_state_properties();
+            Variant _get_own_state_property(int p_local_index) const;
+            int declare_state_property(const StringName &p_name, Variant::Type p_type);
             void _process_mover(double p_delta);
 
 
@@ -319,11 +323,14 @@ namespace godot {
         private:
             // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
             static std::unordered_map<const TMoverParameters *, VehicleController *> controllers_by_mover;
+            /* Who answers for one property of this vehicle. A null component means the
+             * controller itself. */
             struct StateOwner {
                     VehicleComponent *component = nullptr;
                     int local_index = 0;
             };
             HashMap<int, StateOwner> state_owners;
+            int own_state_property_count = 0;
             RID rid;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };

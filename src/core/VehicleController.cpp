@@ -392,6 +392,7 @@ namespace godot {
                 rid = RID();
                 break;
             case NOTIFICATION_READY:
+                _declare_state_properties();
                 initialize_mover();
                 update_state();
                 DEBUG("VehicleController::_ready() signals connected to train parts");
@@ -779,56 +780,125 @@ namespace godot {
         }
     }
 
-    void VehicleController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        p_state["mass_total"] = p_mover->TotalMass;
-        p_state["velocity"] = p_mover->V;
-        p_state["speed"] = p_mover->Vel;
-        p_state["tachometer_speed"] = tacho_velocity;
-        p_state["tachometer_speed_jump"] = tacho_velocity_jump;
-        // tachoclock chunk parameter; 0 keeps the sound stopped (Train.cpp:8323-8335)
-        p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
-        p_state["total_distance"] = p_mover->DistCounter;
-        p_state["direction"] = p_mover->DirActive;
-        // reverser as the traction side sees it; the smoke emitter tells an idling engine from a
-        // pulling one by it (particles.cpp:193)
-        p_state["direction_absolute"] = p_mover->DirAbsolute;
-        p_state["cabin"] = p_mover->CabActive;
-        p_state["cabin_controleable"] = p_mover->IsCabMaster();
-        p_state["cabin_occupied"] = p_mover->CabOccupied;
+    void VehicleController::_declare_state_properties() {
+        declare_state_property("mass_total", Variant::FLOAT);
+        declare_state_property("velocity", Variant::FLOAT);
+        declare_state_property("speed", Variant::FLOAT);
+        declare_state_property("tachometer_speed", Variant::FLOAT);
+        declare_state_property("tachometer_speed_jump", Variant::FLOAT);
+        declare_state_property("tachometer_clock_speed", Variant::FLOAT);
+        declare_state_property("total_distance", Variant::FLOAT);
+        declare_state_property("direction", Variant::INT);
+        declare_state_property("direction_absolute", Variant::INT);
+        declare_state_property("cabin", Variant::INT);
+        declare_state_property("cabin_controleable", Variant::BOOL);
+        declare_state_property("cabin_occupied", Variant::INT);
+        declare_state_property("battery_enabled", Variant::BOOL);
+        declare_state_property("battery_voltage", Variant::FLOAT);
+        declare_state_property("radio_enabled", Variant::BOOL);
+        declare_state_property("radio_powered", Variant::BOOL);
+        declare_state_property("radio_channel", Variant::INT);
+        declare_state_property("power24_voltage", Variant::FLOAT);
+        declare_state_property("power24_available", Variant::BOOL);
+        declare_state_property("power110_available", Variant::BOOL);
+        declare_state_property("current0", Variant::FLOAT);
+        declare_state_property("current1", Variant::FLOAT);
+        declare_state_property("current2", Variant::FLOAT);
+        declare_state_property("relay_novolt", Variant::BOOL);
+        declare_state_property("relay_overvoltage", Variant::BOOL);
+        declare_state_property("relay_ground", Variant::BOOL);
+        declare_state_property("train_damage", Variant::INT);
+        declare_state_property("controller_second_position", Variant::INT);
+        declare_state_property("controller_main_position", Variant::INT);
+        declare_state_property("controller_joint_position", Variant::INT);
+        declare_state_property("controller_main_actual_position", Variant::INT);
+        declare_state_property("circuit_rlist_size", Variant::INT);
+    }
 
-        /* FIXME: move to TrainPower section? */
-        p_state["battery_enabled"] = p_mover->Battery;
-        p_state["battery_voltage"] = p_mover->BatteryVoltage;
+    int VehicleController::declare_state_property(const StringName &p_name, const Variant::Type p_type) {
+        const int id = VehiclePropertyRegistry::declare(p_name, p_type, "VehicleController");
+        ERR_FAIL_COND_V(id < 0, -1);
+        const int local_index = own_state_property_count;
+        ++own_state_property_count;
+        register_state_property(id, nullptr, local_index);
+        return local_index;
+    }
 
-        /* FIXME: move to TrainRadio section? */
-        p_state["radio_enabled"] = p_mover->Radio;
-        p_state["radio_powered"] = p_mover->Radio && (p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable);
-        p_state["radio_channel"] = radio_channel;
-
-        /* FIXME: move to TrainPower section */
-        p_state["power24_voltage"] = p_mover->Power24vVoltage;
-        p_state["power24_available"] = p_mover->Power24vIsAvailable;
-        p_state["power110_available"] = p_mover->Power110vIsAvailable;
-        p_state["current0"] = p_mover->ShowCurrent(0);
-        p_state["current1"] = p_mover->ShowCurrent(1);
-        p_state["current2"] = p_mover->ShowCurrent(2);
-        p_state["relay_novolt"] = p_mover->NoVoltRelay;
-        p_state["relay_overvoltage"] = p_mover->OvervoltageRelay;
-        p_state["relay_ground"] = p_mover->GroundRelay;
-        p_state["train_damage"] = p_mover->DamageFlag;
-        p_state["controller_second_position"] = p_mover->ScndCtrlPos;
-        p_state["controller_main_position"] = p_mover->MainCtrlPos;
-        // joint master controller position - negative range is the local brake (Train.cpp:7699-7714)
-        p_state["controller_joint_position"] =
-                p_mover->LocalBrakePosA > 0.0
-                        ? static_cast<int>(std::round(-p_mover->LocalBrakePosA * LocalBrakePosNo))
-                        : (p_mover->CoupledCtrl ? p_mover->MainCtrlPos + p_mover->ScndCtrlPos : p_mover->MainCtrlPos);
-        // Diagnostic: the delayed/rate-limited shadow of MainCtrlPos that RList[] resistor
-        // lookups actually key off (Mover.cpp's internal auto-relay/resistor-stepping state
-        // machine) - a wrong RList[] mapping or array-bounds issue lets this race far ahead of
-        // MainCtrlPos, landing on unpopulated (zero-resistance) table slots.
-        p_state["controller_main_actual_position"] = p_mover->MainCtrlActualPos;
-        p_state["circuit_rlist_size"] = p_mover->RlistSize;
+    Variant VehicleController::_get_own_state_property(const int p_local_index) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index) {
+            case 0:  // mass_total
+                return mover->TotalMass;
+            case 1:  // velocity
+                return mover->V;
+            case 2:  // speed
+                return mover->Vel;
+            case 3:  // tachometer_speed
+                return tacho_velocity;
+            case 4:  // tachometer_speed_jump
+                return tacho_velocity_jump;
+            case 5:  // tachometer_clock_speed
+                return tacho_clock_active ? tacho_velocity : 0.0;
+            case 6:  // total_distance
+                return mover->DistCounter;
+            case 7:  // direction
+                return mover->DirActive;
+            case 8:  // direction_absolute
+                return mover->DirAbsolute;
+            case 9:  // cabin
+                return mover->CabActive;
+            case 10:  // cabin_controleable
+                return mover->IsCabMaster();
+            case 11:  // cabin_occupied
+                return mover->CabOccupied;
+            case 12:  // battery_enabled
+                return mover->Battery;
+            case 13:  // battery_voltage
+                return mover->BatteryVoltage;
+            case 14:  // radio_enabled
+                return mover->Radio;
+            case 15:  // radio_powered
+                return mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
+            case 16:  // radio_channel
+                return radio_channel;
+            case 17:  // power24_voltage
+                return mover->Power24vVoltage;
+            case 18:  // power24_available
+                return mover->Power24vIsAvailable;
+            case 19:  // power110_available
+                return mover->Power110vIsAvailable;
+            case 20:  // current0
+                return mover->ShowCurrent(0);
+            case 21:  // current1
+                return mover->ShowCurrent(1);
+            case 22:  // current2
+                return mover->ShowCurrent(2);
+            case 23:  // relay_novolt
+                return mover->NoVoltRelay;
+            case 24:  // relay_overvoltage
+                return mover->OvervoltageRelay;
+            case 25:  // relay_ground
+                return mover->GroundRelay;
+            case 26:  // train_damage
+                return mover->DamageFlag;
+            case 27:  // controller_second_position
+                return mover->ScndCtrlPos;
+            case 28:  // controller_main_position
+                return mover->MainCtrlPos;
+            case 29:  // controller_joint_position
+                return mover->LocalBrakePosA > 0.0
+                        ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo))
+                        : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos);
+            case 30:  // controller_main_actual_position
+                return mover->MainCtrlActualPos;
+            case 31:  // circuit_rlist_size
+                return mover->RlistSize;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleController::register_state_property(
@@ -857,8 +927,11 @@ namespace godot {
 
     Variant VehicleController::get_state_value(const int p_property_id) const {
         const StateOwner *owner = state_owners.getptr(p_property_id);
-        if (owner == nullptr || owner->component == nullptr) {
+        if (owner == nullptr) {
             return Variant();
+        }
+        if (owner->component == nullptr) {
+            return _get_own_state_property(owner->local_index);
         }
         return owner->component->_get_state_property(owner->local_index);
     }
@@ -880,14 +953,11 @@ namespace godot {
         emit_signal(config_changed);
     }
 
-    /// Rebuilt from the mover on the first read after a physics step; the train parts merge their
-    /// own keys into it as they process, so those stay where they are
+    /// Compatibility shim while the consumers still read a Dictionary. Nothing fabricates one on
+    /// the frame path any more once they ask the server by id - see TODO.md, stage 4f.
     Dictionary VehicleController::get_state() {
         if (state_dirty) {
             state_dirty = false;
-            if (TMoverParameters *mover_ptr = get_mover(); mover_ptr != nullptr) {
-                _do_fetch_state_from_mover(mover_ptr, state);
-            }
             // Compatibility while the components move off the Dictionary: whatever already
             // declares its properties is read here by name, so every existing consumer keeps
             // finding its key. This whole overlay goes when the consumers ask the server instead.

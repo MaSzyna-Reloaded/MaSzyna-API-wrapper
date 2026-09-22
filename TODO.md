@@ -80,6 +80,13 @@ lookup.
   writer (two vehicles with an empty one collide today - `dynamic_rail_vehicle_3d.gd:45-49`);
   `TrainSystem` keeps `train_id -> RID`; `vehicle_get_mover()` and the borrowed Mover pointer go.
 
+**A test must not clobber a global setting.** `test_fiz_train_controller` points
+`UserSettings.save_maszyna_game_dir()` at its own fixture in `before_all` and restores it in
+`after_all`. A crash mid-test (one happened on 2026-09-22) skips the restore, so the *game* then
+starts with its game directory set to `user://gut/fiz_train_controller` and finds no scenery. The
+fixture path should be passed to what is under test instead of being written into the user's
+settings; the same pattern is in `test_dynamic_rail_vehicle_manager` and three more.
+
 **Tests that read the game directory** fail whenever it is not mounted, which is exactly what
 `AGENTS.md` forbids them to depend on: `test_zzz_ep07_cabin_main_switch` loads
 `scenery/td.scn` through `user://gut/fiz_train_controller`. Needs a fixture scenery instead.

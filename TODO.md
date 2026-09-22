@@ -69,9 +69,24 @@ lookup.
   `dynamic_rail_vehicle_3d_manager.gd` packs model + FIZ controller + cabin + sound bank into a
   `PackedScene` today and instantiates copies of it. The cache holds a vehicle configuration, not
   a node tree. Bump `structure-vN` and `FIZ_PARSER_FORMAT_VERSION` in that same commit.
-* **G - consumer migration.** The sound system, the 13 cabin widgets, the HUD, `cabin_state.gd`
-  and the 8 call sites in `RailVehicle3D` take the component once and read typed properties.
-  Afterwards nothing may call `vehicle_dump_state()` per frame.
+* **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
+  about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
+  what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,
+  `vehicle_dump_state(rid)` for a whole-vehicle read). The write side already works this way -
+  controls report manipulations through `CabinSystem.act()` and handlers translate them into
+  vehicle commands - so this is the read side catching up.
+  * `@export_node_path("VehicleController")` disappears from all 14 files that carry it rather
+    than changing type. It is not an authored setting: `cabin_3d.gd::_propagate_train_controller`
+    writes it into every widget at run time, so each one keeps a copy of what the cabin root
+    already knows, and four of them re-resolve it to a node **every frame**
+    (`base_cabin_tool_3d.gd`, which is the base of every cabin tool, plus the two cabin lights and
+    `train_sound_3d.gd`). The six `demo/hud/` files never resolve it at all.
+  * `cabin_state.gd` stops keying on `train_id` and reading `TrainSystem.get_train_state()`.
+  * The sound system, the HUD and the 8 call sites in `RailVehicle3D` take the component once and
+    read typed properties.
+  * Afterwards nothing may call `vehicle_dump_state()` per frame - it is composed once per physics
+    step, which is enough for a cab reading it from dozens of widgets, but it is still a whole
+    Dictionary.
 * **H - update phases.** An `UpdatePhase` enum ordering both passes, checked against
   `TMoverParameters::ComputeMovement`/`Update` and against the three ordering bugs on record
   (#57 line breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` has to exist first:

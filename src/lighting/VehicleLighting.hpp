@@ -12,40 +12,38 @@ namespace godot {
             GDCLASS(VehicleLighting, VehicleComponent);
 
             
+        private:
+            static void _bind_methods();
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            int get_position() const;
-            double get_power() const;
-            int get_power_source() const;
-            bool get_front_headlight_upper_enabled() const;
-            bool get_front_headlight_left_enabled() const;
-            bool get_front_headlight_right_enabled() const;
-            bool get_front_redmarker_left_enabled() const;
-            bool get_front_redmarker_right_enabled() const;
-            bool get_rear_headlight_upper_enabled() const;
-            bool get_rear_headlight_left_enabled() const;
-            bool get_rear_headlight_right_enabled() const;
-            bool get_rear_redmarker_left_enabled() const;
-            bool get_rear_redmarker_right_enabled() const;
-            bool get_active_headlight_upper_enabled() const;
-            bool get_active_headlight_left_enabled() const;
-            bool get_active_headlight_right_enabled() const;
-            bool get_active_redmarker_left_enabled() const;
-            bool get_active_redmarker_right_enabled() const;
-            bool get_opposite_headlight_upper_enabled() const;
-            bool get_opposite_headlight_left_enabled() const;
-            bool get_opposite_headlight_right_enabled() const;
-            bool get_opposite_redmarker_left_enabled() const;
-            bool get_opposite_redmarker_right_enabled() const;
-            bool get_devices_light_enabled() const;
-            double get_roof_light_level() const;
-
+            virtual int get_position() const = 0;
+            virtual double get_power() const = 0;
+            virtual int get_power_source() const = 0;
+            virtual bool get_front_headlight_upper_enabled() const = 0;
+            virtual bool get_front_headlight_left_enabled() const = 0;
+            virtual bool get_front_headlight_right_enabled() const = 0;
+            virtual bool get_front_redmarker_left_enabled() const = 0;
+            virtual bool get_front_redmarker_right_enabled() const = 0;
+            virtual bool get_rear_headlight_upper_enabled() const = 0;
+            virtual bool get_rear_headlight_left_enabled() const = 0;
+            virtual bool get_rear_headlight_right_enabled() const = 0;
+            virtual bool get_rear_redmarker_left_enabled() const = 0;
+            virtual bool get_rear_redmarker_right_enabled() const = 0;
+            virtual bool get_active_headlight_upper_enabled() const = 0;
+            virtual bool get_active_headlight_left_enabled() const = 0;
+            virtual bool get_active_headlight_right_enabled() const = 0;
+            virtual bool get_active_redmarker_left_enabled() const = 0;
+            virtual bool get_active_redmarker_right_enabled() const = 0;
+            virtual bool get_opposite_headlight_upper_enabled() const = 0;
+            virtual bool get_opposite_headlight_left_enabled() const = 0;
+            virtual bool get_opposite_headlight_right_enabled() const = 0;
+            virtual bool get_opposite_redmarker_left_enabled() const = 0;
+            virtual bool get_opposite_redmarker_right_enabled() const = 0;
+            virtual bool get_devices_light_enabled() const = 0;
+            virtual double get_roof_light_level() const = 0;
             /* Compartment (roof) light, as the vehicle's own signal reports it: lit only while the
              * lighting circuit is fed. Read straight from the backend - nothing is stored. */
-            bool get_roof_light_enabled() const;
-
+            virtual bool get_roof_light_enabled() const = 0;
             enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
             enum LightType {
                 LIGHT_TYPE_HEADLIGHT_UPPER,
@@ -54,54 +52,9 @@ namespace godot {
                 LIGHT_TYPE_REDMARKER_LEFT,
                 LIGHT_TYPE_REDMARKER_RIGHT,
             };
-
-        private:
-            static void _bind_methods();
-            TypedArray<LightListItem> light_position_list;
-            bool roof_light_active = false;
-            bool devices_light_active = false;
-
-            // This wrapper's own types for vehicle end / light kind - internal logic works with
-            // these, never with Maszyna::end / Maszyna::light directly. The maps below are the
-            // only place that translates to/from the Maszyna:: side (mirrors e.g.
-            // VehicleDoors::Controls / door_controls_map, VehicleController::StartMode /
-            // start_mode_map).
-            const std::unordered_map<LightEnd, Maszyna::end> light_end_map = {
-                    {LIGHT_END_FRONT, Maszyna::end::front},
-                    {LIGHT_END_REAR, Maszyna::end::rear},
-            };
-
-            const std::unordered_map<LightType, int> light_type_mask_map = {
-                    {LIGHT_TYPE_HEADLIGHT_UPPER, Maszyna::light::headlight_upper},
-                    {LIGHT_TYPE_HEADLIGHT_LEFT, Maszyna::light::headlight_left},
-                    {LIGHT_TYPE_HEADLIGHT_RIGHT, Maszyna::light::headlight_right},
-                    {LIGHT_TYPE_REDMARKER_LEFT, Maszyna::light::redmarker_left},
-                    {LIGHT_TYPE_REDMARKER_RIGHT, Maszyna::light::redmarker_right},
-            };
-
-        private:
-            /* Confirmed against vehicle/Train.cpp:9199-9208 - the i-upperlight/i-leftlight lamps
-             * read the mover's own already-resolved per-end bitmask (iLights), not the selector
-             * position or the LightListItem table. */
-            bool _light_enabled(const TMoverParameters *p_mover, LightEnd p_end, LightType p_type) const;
-            /* Confirmed against vehicle/Train.h:220-227 (TTrain::cab_to_end()) and
-             * Train.cpp:5267-5316: the upperlight_sw/leftlight_sw switches (no "rear" prefix)
-             * toggle whichever physical end the ACTIVE cab faces, so "active"/"opposite" are
-             * cab-relative - unlike the fixed physical front/rear the indicator lamps read.
-             * CabActive (-1/0/1) mirrors iCabn's own front/rear meaning. */
-            static LightEnd _active_end(const TMoverParameters *p_mover);
-            static LightEnd _opposite_end(const TMoverParameters *p_mover);
-            /* Cab interior lamp and instrument backlighting have no counterpart on the mover -
-             * they are gated only by 24V/110V availability, as the original gates
-             * "cablightlevel"/"lightpower" (vehicle/Train.cpp). */
-            static bool _is_powered(const TMoverParameters *p_mover);
-
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;
-
         public:
             static const char *selector_position_changed_signal;
             MAKE_MEMBER_GS_DIRTY(int, lights_selector_position, 0);
@@ -126,35 +79,29 @@ namespace godot {
             MAKE_MEMBER_GS(double, head_light_high_beam_dimmed_multiplier, 2.5);
             MAKE_MEMBER_GS(double, head_light_high_beam_normal_multiplier, 2.8);
             MAKE_MEMBER_GS(int, instrument_type, 0);
-            TypedArray<LightListItem> get_lights_list() {
-                return light_position_list;
-            };
-
-            void set_lights_list(const TypedArray<LightListItem> &p_list) {
-                light_position_list.clear();
-                light_position_list.append_array(p_list);
-            };
-            void increase_light_selector_position();
-            void decrease_light_selector_position();
+            virtual TypedArray<LightListItem> get_lights_list() = 0;
+            virtual void set_lights_list(const TypedArray<LightListItem> &p_list) = 0;
+            virtual void increase_light_selector_position() = 0;
+            virtual void decrease_light_selector_position() = 0;
             // Direct per-light override, independent of the selector/"light programator"
             // (LightsPos + light_position_list) system above - sets/clears a single bit of
             // iLights directly, for debugging/testing individual bulbs regardless of what the
             // programator would normally compute. p_light matches the short name half of this
             // class's own state keys (state key = "lights/" + p_light + "_enabled"): e.g.
             // "front_headlight_left", "rear_redmarker_right".
-            void light(const String &p_light, bool p_enabled);
+            virtual void light(const String &p_light, bool p_enabled) = 0;
             // Cab-relative toggle for the actual MMD cabin switches (upperlight_sw:/leftlight_sw:
             // /rightlight_sw:/leftend_sw:/rightend_sw:/rearupperlight_sw:/rearleftlight_sw:/
             // rearrightlight_sw:/rearleftend_sw:/rearrightend_sw:) - resolves which physical end
             // to toggle from the currently active cab, unlike light() above (a fixed-end direct
             // override for debugging). p_light is the MMD label's own suffix, e.g. "upper",
             // "left", "leftend", "rearupper", "rearleftend".
-            void light_switch(const String &p_light, bool p_enabled);
+            virtual void light_switch(const String &p_light, bool p_enabled) = 0;
             // Cab interior lamp ("cablight_sw:") and instrument/dashboard backlighting
             // ("instrumentlight_sw:") - both plain manual toggles with no counterpart on the
             // wrapped mover itself, gated only by 24V/110V power availability (mirrors the
             // original engine's own "cablightlevel"/"lightpower" power gating, vehicle/Train.cpp).
-            void roof_light(bool p_enabled);
-            void devices_light(bool p_enabled);
+            virtual void roof_light(bool p_enabled) = 0;
+            virtual void devices_light(bool p_enabled) = 0;
     };
 } // namespace godot

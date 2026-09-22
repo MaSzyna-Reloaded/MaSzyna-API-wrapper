@@ -8,7 +8,7 @@ func before_each():
     train.train_id = "TestTrain"
     add_child(train)
 
-    brake = VehicleBrake.new()
+    brake = MoverVehicleBrake.new()
     train.add_child(brake)
     await wait_idle_frames(2)
 

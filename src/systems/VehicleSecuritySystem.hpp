@@ -9,46 +9,27 @@ namespace godot {
             GDCLASS(VehicleSecuritySystem, VehicleComponent)
         private:
             static void _bind_methods();
-            friend class TSecuritySystem;
-
-        private:
-
         protected:
-            /// Change detection for blinking_changed/beeping_changed, compared in
-            /// _do_process_mover(). Both start false, as the not-yet-filled state dictionary
-            /// they used to be compared against did.
-            bool previous_blinking = false;
-            bool previous_beeping = false;
-
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
-
-            
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_beeping() const;
-            bool get_blinking() const;
-            bool get_radiostop_available() const;
-            bool get_vigilance_blinking() const;
-            bool get_cabsignal_blinking() const;
-            bool get_cabsignal_beeping() const;
-            bool get_braking() const;
-            bool get_engine_blocked() const;
-            bool get_separate_acknowledge() const;
-
+            virtual bool get_beeping() const = 0;
+            virtual bool get_blinking() const = 0;
+            virtual bool get_radiostop_available() const = 0;
+            virtual bool get_vigilance_blinking() const = 0;
+            virtual bool get_cabsignal_blinking() const = 0;
+            virtual bool get_cabsignal_beeping() const = 0;
+            virtual bool get_braking() const = 0;
+            virtual bool get_engine_blocked() const = 0;
+            virtual bool get_separate_acknowledge() const = 0;
             enum EmergencySignal {
                 EMERGENCY_SIGNAL_SIREN_LOW_TONE,
                 EMERGENCY_SIGNAL_SIREN_HIGH_TONE,
                 EMERGENCY_SIGNAL_WHISTLE
             };
-
-            void security_acknowledge(bool p_enabled);
-            void security_cabsignal_acknowledge();
-
+            virtual void security_acknowledge(bool p_enabled) = 0;
+            virtual void security_cabsignal_acknowledge() = 0;
             MAKE_MEMBER_GS(bool, aware_system_active, false);
             MAKE_MEMBER_GS(bool, aware_system_cabsignal, false);
             MAKE_MEMBER_GS(bool, aware_system_separate_acknowledge, false);

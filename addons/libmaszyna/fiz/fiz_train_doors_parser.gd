@@ -27,7 +27,7 @@ const _TYPE_MAP := {
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := VehicleDoors.new()
+    var node := MoverVehicleDoors.new()
 
     var open_method: int = _CONTROLS_MAP.get(FizLineUtil.get_string(kv, "OpenCtrl").to_lower(), VehicleDoors.CONTROLS_PASSENGER)
     if kv.has("OpenCtrl"):

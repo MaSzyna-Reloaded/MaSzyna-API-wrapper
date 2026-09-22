@@ -23,7 +23,7 @@ const ALLOWED_FIXED_COUPLING_LOCK := 128
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := VehicleBuffCoupl.new()
+    var node := MoverVehicleBuffCoupl.new()
     node.buffer_location = _buffer_location_for(prefix)
 
     var coupler_type: int = _COUPLER_TYPE_MAP.get(FizLineUtil.get_string(kv, "CType").to_lower(), VehicleBuffCoupl.COUPLER_TYPE_AUTOMATIC)

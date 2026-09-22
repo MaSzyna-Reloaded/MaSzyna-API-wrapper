@@ -9,13 +9,9 @@ namespace godot {
 
         private:
             static void _bind_methods();
-
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;
-
         public:
             enum CouplerType {
                 COUPLER_TYPE_AUTOMATIC,
@@ -24,7 +20,6 @@ namespace godot {
                 COUPLER_TYPE_BARE,
                 COUPLER_TYPE_ARTICULATED
             };
-
             // Bit-flag enums for coupler features and power transfer
             enum AllowedFlagBits {
                 ALLOWED_MECHANICAL = 1,
@@ -40,11 +35,8 @@ namespace godot {
                 ALLOWED_ELEC_110V = 512,
                 ALLOWED_ELEC_3X400_V = 1024
             };
-
             enum PowerFlagBits { POWER_24V = 256, POWER_110V = 512, POWER_3X400_V = 1024 };
-
             enum BufferLocation { BUFFER_LOCATION_FRONT, BUFFER_LOCATION_BACK, BUFFER_LOCATION_BOTH };
-
             MAKE_MEMBER_GS(double, buffer_stiffness_k, 1.0);
             MAKE_MEMBER_GS(double, buffer_max_compression_tolerance, 0.1);
             MAKE_MEMBER_GS(double, buffer_max_tension_tolerance, 1000.0);
@@ -59,9 +51,8 @@ namespace godot {
             MAKE_MEMBER_GS(String, control_type, "");
             MAKE_MEMBER_GS_NR(CouplerType, coupler_type, CouplerType::COUPLER_TYPE_AUTOMATIC);
             MAKE_MEMBER_GS_NR(BufferLocation, buffer_location, BufferLocation::BUFFER_LOCATION_FRONT);
-
-            void couple();
-            void decouple();
+            virtual void couple() = 0;
+            virtual void decouple() = 0;
     };
 } // namespace godot
 

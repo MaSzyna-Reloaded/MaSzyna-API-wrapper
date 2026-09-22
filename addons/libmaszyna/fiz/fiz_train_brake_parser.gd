@@ -59,7 +59,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _compressor_rows = []
         return
 
-    var node := VehicleBrake.new()
+    var node := MoverVehicleBrake.new()
     _parse_brake(kv, node)
     context.add_part("VehicleBrake", node)
 

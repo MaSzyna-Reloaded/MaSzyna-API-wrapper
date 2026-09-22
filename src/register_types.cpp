@@ -1,7 +1,10 @@
+#include "brakes/MoverVehicleBrake.hpp"
 #include "brakes/VehicleBrake.hpp"
+#include "brakes/MoverVehicleElectroPneumaticDynamicBrake.hpp"
 #include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
 #include "brakes/MoverVehicleSpringBrake.hpp"
 #include "brakes/VehicleSpringBrake.hpp"
+#include "buffers/MoverVehicleBuffCoupl.hpp"
 #include "buffers/VehicleBuffCoupl.hpp"
 #include "controllers/MoverVehicleUniversalController.hpp"
 #include "controllers/VehicleUniversalController.hpp"
@@ -14,6 +17,7 @@
 #include "core/TrainSystem.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
+#include "doors/MoverVehicleDoors.hpp"
 #include "doors/VehicleDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
@@ -28,6 +32,7 @@
 #include "engines/VehicleEngine.hpp"
 #include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
+#include "lighting/MoverVehicleLighting.hpp"
 #include "lighting/VehicleLighting.hpp"
 #include "load/MoverVehicleLoad.hpp"
 #include "load/VehicleLoad.hpp"
@@ -60,6 +65,7 @@
 #include "systems/VehicleAIHints.hpp"
 #include "systems/MoverVehicleHorns.hpp"
 #include "systems/VehicleHorns.hpp"
+#include "systems/MoverVehicleSecuritySystem.hpp"
 #include "systems/VehicleSecuritySystem.hpp"
 #include "wheels/MoverVehicleWheels.hpp"
 #include "wheels/VehicleWheels.hpp"
@@ -126,10 +132,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
-        GDREGISTER_CLASS(VehicleBrake);
+        GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
+        GDREGISTER_CLASS(MoverVehicleBrake);
         GDREGISTER_ABSTRACT_CLASS(VehicleSpringBrake);
         GDREGISTER_CLASS(MoverVehicleSpringBrake);
-        GDREGISTER_CLASS(VehicleDoors);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDoors);
+        GDREGISTER_CLASS(MoverVehicleDoors);
         GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
         GDREGISTER_CLASS(VehicleDieselEngine);
         GDREGISTER_CLASS(VehicleDieselElectricEngine);
@@ -142,22 +150,26 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MoverVehicleHeating);
         GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
         GDREGISTER_CLASS(MoverVehicleWheels);
-        GDREGISTER_CLASS(VehicleSecuritySystem);
+        GDREGISTER_ABSTRACT_CLASS(VehicleSecuritySystem);
+        GDREGISTER_CLASS(MoverVehicleSecuritySystem);
         GDREGISTER_ABSTRACT_CLASS(VehicleHorns);
         GDREGISTER_CLASS(MoverVehicleHorns);
         GDREGISTER_ABSTRACT_CLASS(VehicleAIHints);
         GDREGISTER_CLASS(MoverVehicleAIHints);
         GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(VehicleLighting)
+        GDREGISTER_ABSTRACT_CLASS(VehicleLighting)
+        GDREGISTER_CLASS(MoverVehicleLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(VehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(MoverVehicleElectroPneumaticDynamicBrake)
         GDREGISTER_ABSTRACT_CLASS(VehicleLoad)
         GDREGISTER_CLASS(MoverVehicleLoad)
         GDREGISTER_CLASS(LoadListItem)
-        GDREGISTER_CLASS(VehicleBuffCoupl)
+        GDREGISTER_ABSTRACT_CLASS(VehicleBuffCoupl)
+        GDREGISTER_CLASS(MoverVehicleBuffCoupl)
         GDREGISTER_ABSTRACT_CLASS(VehicleSpeedControl)
         GDREGISTER_CLASS(MoverVehicleSpeedControl)
         GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)

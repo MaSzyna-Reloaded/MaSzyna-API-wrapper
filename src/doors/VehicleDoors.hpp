@@ -8,48 +8,40 @@ namespace godot {
             GDCLASS(VehicleDoors, VehicleComponent)
 
         private:
-
+            static void _bind_methods();
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
-
-            
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_locked() const;
-            bool get_lock_enabled() const;
-            bool get_step_enabled() const;
-            int get_open_control() const;
-            bool get_left_open() const;
-            bool get_left_open_permit() const;
-            bool get_left_local_open() const;
-            bool get_left_remote_open() const;
-            double get_left_position() const;
-            double get_left_position_normalized() const;
-            bool get_left_operating() const;
-            double get_left_step_position() const;
-            bool get_left_step_operating() const;
-            bool get_right_open() const;
-            bool get_right_open_permit() const;
-            bool get_right_local_open() const;
-            bool get_right_remote_open() const;
-            double get_right_position() const;
-            double get_right_position_normalized() const;
-            bool get_right_operating() const;
-            double get_right_step_position() const;
-            bool get_right_step_operating() const;
-
+            virtual bool get_locked() const = 0;
+            virtual bool get_lock_enabled() const = 0;
+            virtual bool get_step_enabled() const = 0;
+            virtual int get_open_control() const = 0;
+            virtual bool get_left_open() const = 0;
+            virtual bool get_left_open_permit() const = 0;
+            virtual bool get_left_local_open() const = 0;
+            virtual bool get_left_remote_open() const = 0;
+            virtual double get_left_position() const = 0;
+            virtual double get_left_position_normalized() const = 0;
+            virtual bool get_left_operating() const = 0;
+            virtual double get_left_step_position() const = 0;
+            virtual bool get_left_step_operating() const = 0;
+            virtual bool get_right_open() const = 0;
+            virtual bool get_right_open_permit() const = 0;
+            virtual bool get_right_local_open() const = 0;
+            virtual bool get_right_remote_open() const = 0;
+            virtual double get_right_position() const = 0;
+            virtual double get_right_position_normalized() const = 0;
+            virtual bool get_right_operating() const = 0;
+            virtual double get_right_step_position() const = 0;
+            virtual bool get_right_step_operating() const = 0;
             enum PermitLight {
                 PERMIT_LIGHT_CONTINUOUS,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP,
                 PERMIT_LIGHT_FLASHING_ON_PERMISSION,
                 PERMIT_LIGHT_FLASHING_ALWAYS
             };
-
             enum Side { SIDE_RIGHT, SIDE_LEFT };
             enum Voltage {
                 VOLTAGE_AUTO,
@@ -65,7 +57,6 @@ namespace godot {
                 TYPE_PLUG,
             };
             enum PlatformType { PLATFORM_TYPE_SHIFT, PLATFORM_TYPE_ROTATE };
-
             enum Controls {
                 CONTROLS_PASSENGER,
                 CONTROLS_AUTOMATIC,
@@ -73,48 +64,18 @@ namespace godot {
                 CONTROLS_CONDUCTOR,
                 CONTROLS_MIXED,
             };
-
-            static void _bind_methods();
-            void permit_step(bool p_state);
-            void permit_doors(Side p_side, bool p_state);
-            void permit_left_doors(bool p_state);
-            void permit_right_doors(bool p_state);
-            void operate_doors(Side p_side, bool p_state);
-            void operate_left_doors(bool p_state);
-            void operate_right_doors(bool p_state);
-            void door_lock(bool p_state);
-            void door_remote_control(bool p_state);
-            void next_permit_preset();
-            void previous_permit_preset();
-
+            virtual void permit_step(bool p_state) = 0;
+            virtual void permit_doors(Side p_side, bool p_state) = 0;
+            virtual void permit_left_doors(bool p_state) = 0;
+            virtual void permit_right_doors(bool p_state) = 0;
+            virtual void operate_doors(Side p_side, bool p_state) = 0;
+            virtual void operate_left_doors(bool p_state) = 0;
+            virtual void operate_right_doors(bool p_state) = 0;
+            virtual void door_lock(bool p_state) = 0;
+            virtual void door_remote_control(bool p_state) = 0;
+            virtual void next_permit_preset() = 0;
+            virtual void previous_permit_preset() = 0;
         private:
-            // Maszyna Mover has no consts for voltages
-            const std::map<Voltage, float> voltage_map = {
-                    {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_112, 112.0f}};
-
-            // Maszyna Mover has no consts for door types
-            const std::map<Type, int> door_type_map = {
-                    {TYPE_SHIFT, 1}, {TYPE_ROTATE, 2}, {TYPE_FOLD, 3}, {TYPE_PLUG, 4}};
-            //
-            // Maszyna Mover has no consts for door platform types
-            const std::map<PlatformType, int> door_platform_type_map = {
-                    {PLATFORM_TYPE_SHIFT, 1}, {PLATFORM_TYPE_ROTATE, 2}};
-
-            // Maszyna Mover has no consts for permit lights
-            const std::map<PermitLight, int> door_permit_light_map = {
-                    {PERMIT_LIGHT_CONTINUOUS, 0},
-                    {PERMIT_LIGHT_FLASHING_ON_PERMISSION_WITH_STEP, 1},
-                    {PERMIT_LIGHT_FLASHING_ON_PERMISSION, 2},
-                    {PERMIT_LIGHT_FLASHING_ALWAYS, 3}};
-
-            const std::unordered_map<Controls, Maszyna::control_t> door_controls_map = {
-                    {Controls::CONTROLS_PASSENGER, Maszyna::control_t::passenger},
-                    {Controls::CONTROLS_AUTOMATIC, Maszyna::control_t::autonomous},
-                    {Controls::CONTROLS_DRIVER, Maszyna::control_t::driver},
-                    {Controls::CONTROLS_CONDUCTOR, Maszyna::control_t::conductor},
-                    {Controls::CONTROLS_MIXED, Maszyna::control_t::mixed},
-            };
-
             MAKE_MEMBER_GS_NR(Type, type, Type::TYPE_ROTATE);
             MAKE_MEMBER_GS_NR(Controls, open_method, Controls::CONTROLS_PASSENGER);
             MAKE_MEMBER_GS_NR(Controls, close_method, Controls::CONTROLS_PASSENGER);

@@ -69,7 +69,7 @@ func test_bound_properties_use_canonical_names_and_accessors() -> void:
 
 
 func test_properties_are_available_through_direct_gdscript_access() -> void:
-    var brake: VehicleBrake = VehicleBrake.new()
+    var brake: VehicleBrake = MoverVehicleBrake.new()
     brake.brake_force_max = 85.0
     assert_eq(brake.brake_force_max, 85.0)
 

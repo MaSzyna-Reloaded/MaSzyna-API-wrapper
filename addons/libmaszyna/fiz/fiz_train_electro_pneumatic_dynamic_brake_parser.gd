@@ -14,7 +14,7 @@ class_name FizTrainElectroPneumaticDynamicBrakeParser
 
 
 func create_node() -> VehicleElectroPneumaticDynamicBrake:
-    return VehicleElectroPneumaticDynamicBrake.new()
+    return MoverVehicleElectroPneumaticDynamicBrake.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:

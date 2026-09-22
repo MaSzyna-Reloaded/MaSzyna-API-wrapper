@@ -24,7 +24,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
 func _get_node(context: FizImportContext) -> VehicleLighting:
     var node: VehicleLighting = context.get_part("VehicleLighting")
     if node == null:
-        node = VehicleLighting.new()
+        node = MoverVehicleLighting.new()
         context.add_part("VehicleLighting", node)
     return node
 

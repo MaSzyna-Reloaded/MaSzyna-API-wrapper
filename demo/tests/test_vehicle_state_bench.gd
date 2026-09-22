@@ -84,7 +84,7 @@ func before_all() -> void:
         engine.name = "Engine"
         engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_child(engine)
-        var lighting: VehicleLighting = VehicleLighting.new()
+        var lighting: VehicleLighting = MoverVehicleLighting.new()
         lighting.name = "Lighting"
         controller.add_child(lighting)
         var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()

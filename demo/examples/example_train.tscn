@@ -3,5 +3,5 @@
 [node name="ExampleTrain" type="VehicleController" unique_id=180205831]
 train_id = "exampletrain"
 
-[node name="Brake" type="VehicleBrake" parent="." unique_id=2067197281]
+[node name="Brake" type="MoverVehicleBrake" parent="." unique_id=2067197281]
 process_priority = 1

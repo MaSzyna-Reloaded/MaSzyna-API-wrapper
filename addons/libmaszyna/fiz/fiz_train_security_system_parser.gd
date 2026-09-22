@@ -16,7 +16,7 @@ class_name FizTrainSecuritySystemParser
 
 
 func create_node() -> VehicleSecuritySystem:
-    return VehicleSecuritySystem.new()
+    return MoverVehicleSecuritySystem.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

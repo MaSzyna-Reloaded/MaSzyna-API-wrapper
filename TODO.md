@@ -17,6 +17,22 @@ one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
   binding the vehicle RID to the physics RID), moving the step loop off `TrainSystem` and into the
   server, and `_update_tachometer` / `_update_mover_config_if_dirty`, which stay on the controller
   until the state registry and the `configure` phase exist.
+* **Stage 3, the `RailVehicleServer` port, and the one thing that makes it not mechanical.** The
+  placement half (create/free/attach/set_track/move/transform/transform_at_distance/track_position/
+  curve, plus `_move_placement` and `_motion_connection`) is written and parked in
+  `git stash` ("wip: RailVehicleServer port"). What stopped it is the frame ordering, and it needs
+  deciding before the rest is written: the GDScript autoload runs its step in `_process` with
+  `process_priority = -100`, i.e. **before** every vehicle's own `_process`, while a C++ singleton
+  can only hang the tick off `SceneTree.process_frame`, which fires **after** them. Moving it
+  naively puts every vehicle one frame behind its own physics - the judder that priority was there
+  to prevent. The fix is for the server to drive the vehicles at the end of its tick rather than
+  letting them pull, but that is not a one-line transform push:
+  `RailVehicle3D::_update_track_transform()` also samples both bogie pivots, re-derives the body
+  basis from them, rotates the bogie nodes and updates the wheel animation - the code three
+  `FINDINGS.md` entries are about (the 60%-short cubic sampling, the rear-relative sign that
+  flipped vehicles 180 degrees, the coupled-end neighbour refresh). It wants its own pass, with
+  `test_rail_vehicle_idle_orientation_regression.gd` and
+  `test_zzz_ep07_orientation_regression.gd` as the guard.
 * **Stage 3 (original scope, for reference).** `BaseVehiclePhysicsServer`
   (abstract contract, its own RIDs) + `MaszynaMoverPhysicsServer` (the only place that knows
   `TMoverParameters`, factories `MoverVehicleController`/`MoverVehicle*`) + `RailVehicleServer`

@@ -73,13 +73,13 @@ func _enter_tree():
     _setup_phase = true
 
 func _update_state():
-    if _controller:
+    if _train_id:
         if config_min_property:
-            value_min = _controller.config.get(config_min_property, value_min)
+            value_min = _vehicle_config().get(config_min_property, value_min)
         if config_max_property:
-            value_max = _controller.config.get(config_max_property, value_max)
+            value_max = _vehicle_config().get(config_max_property, value_max)
         if state_property:
-            value = _controller.state.get(state_property, value)
+            value = _vehicle_state().get(state_property, value)
         _value_normalized = value / (value_max - value_min)
         _target_mesh_position = mesh_position_offset + mesh_position * _value_normalized
         _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * _value_normalized
@@ -87,7 +87,7 @@ func _update_state():
 func _ready():
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    controller_changed.connect(_update_state)
+    vehicle_changed.connect(_update_state)
 
 func _on_console_toggle(console_visible):
     _handle_actions = not console_visible

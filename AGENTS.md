@@ -171,6 +171,16 @@ Checks:
   not filter here and runs everything)
 * do not run tests or headless Godot after every edit - only before a commit, or when operator asks
 
+Before every commit:
+
+* REQUIRED: **review the diff being committed against `CODE_STYLE.md` and the rules above,
+  before committing it** - `git diff --staged`, line by line, not the intention behind it and not
+  after the operator points at something. Look for: state written from outside its owner, a getter with a side effect, a magic number,
+  a `->call("name")` where the class is known, a raw pointer or an `ensure_*` in a public API, an
+  unguarded singleton dereference, a bare `[]`/`{}` handed to a typed collection, a private helper
+  with one call site, work added to `_process`, and a name that does not come from the data or the
+  original engine. Fix what the review finds in the same commit.
+
 Commit style:
 
 * Commit messages must be written in English.

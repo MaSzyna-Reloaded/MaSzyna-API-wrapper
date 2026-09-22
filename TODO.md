@@ -69,6 +69,11 @@ lookup.
   `dynamic_rail_vehicle_3d_manager.gd` packs model + FIZ controller + cabin + sound bank into a
   `PackedScene` today and instantiates copies of it. The cache holds a vehicle configuration, not
   a node tree. Bump `structure-vN` and `FIZ_PARSER_FORMAT_VERSION` in that same commit.
+* **The cabin root is still handed a `VehicleController`.** `RailVehicle3D` calls
+  `cabin->call("set_train_controller", controller)` and `Cabin3D` keeps a `controller_path` of its
+  own - the one place the controller still reaches the cabin, and a `->call("name")` across the
+  C++/GDScript boundary besides. It should hand over the vehicle's RID instead, which is all
+  CabinSystem needs. The elements themselves no longer see a controller at all.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,

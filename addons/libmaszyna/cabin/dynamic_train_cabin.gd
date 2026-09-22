@@ -86,7 +86,7 @@ func _select_cab_number() -> int:
     if not _controller:
         return 1
     # Train.cpp:8684 (InitializeCab) - CabOccupied -1 loads cab2definition:, 0 cab0, 1 cab1.
-    var cabin_occupied:int = _controller.state.get("cabin_occupied", 0)
+    var cabin_occupied:int = CabinSystem.vehicle_state(_train_id).get("cabin_occupied", 0)
     return 2 if cabin_occupied < 0 else cabin_occupied
 
 
@@ -171,7 +171,7 @@ func _build_driver_aid_commands() -> void:
     release_to_drive.command = "brake_level_set_position"
     release_to_drive.command_param = "drive"
     _generated.add_child(release_to_drive)
-    release_to_drive.controller_path = release_to_drive.get_path_to(_controller)
+    release_to_drive.set_vehicle(_train_id)
 
 
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term
@@ -190,7 +190,7 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.omni_range = maxf((definition.bounds_max - definition.bounds_min).length(), 1.0)
     light.state_property = "roof_light_level"
     _generated.add_child(light)
-    light.controller_path = light.get_path_to(_controller)
+    light.set_vehicle(_train_id)
 
     var cab_model:E3DModelInstance = _generated.get_node_or_null("CabModel") as E3DModelInstance
     if not cab_model:

@@ -51,7 +51,7 @@ var _t = 0.0
 var _setup_phase:bool = true
 
 func _ready():
-    controller_changed.connect(_do_setup)
+    vehicle_changed.connect(_do_setup)
 
 func _enter_tree():
     _setup_phase = true
@@ -96,9 +96,9 @@ func _process_tool(_delta):
         _mesh.transform.basis = new_basis
 
 func _on_state_update_timer_timeout():
-    if _controller and max_config_property:
-        max_value = _controller.config.get(max_state_property, 0.0)
-    elif _controller and max_state_property:
-        max_value = _controller.state.get(max_state_property, 0.0)
-    if _controller and state_property:
-        value = _controller.state.get(state_property, 0.0)
+    if _train_id and max_config_property:
+        max_value = _vehicle_config().get(max_state_property, 0.0)
+    elif _train_id and max_state_property:
+        max_value = _vehicle_state().get(max_state_property, 0.0)
+    if _train_id and state_property:
+        value = _vehicle_state().get(state_property, 0.0)

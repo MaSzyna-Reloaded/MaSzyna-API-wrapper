@@ -1,7 +1,16 @@
 extends Node3D
 class_name CabinIndicator3D
 
-var _controller:VehicleController
+## The vehicle this element sits in, as the cabin root hands it down.
+func set_vehicle(train_id:String) -> void:
+    if _train_id == train_id:
+        return
+    _train_id = train_id
+    _dirty = true
+
+
+## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
+var _train_id:String = ""
 var _on_target:Node3D
 var _off_target:Node3D
 var _dirty:bool = false
@@ -9,11 +18,6 @@ var _update_elapsed:float = 0.0
 
 @export var enabled:bool = false
 @export var state_property:String = ""
-@export_node_path("VehicleController") var controller_path:NodePath = "":
-    set(value):
-        controller_path = value
-        _controller = null
-        _dirty = true
 @export_node_path("Node3D") var on_target_path:NodePath = "":
     set(value):
         on_target_path = value
@@ -38,8 +42,6 @@ func _process(delta:float) -> void:
 
 
 func _process_dirty() -> void:
-    if not _controller and controller_path:
-        _controller = get_node(controller_path)
     if not _on_target and on_target_path:
         _on_target = get_node_or_null(on_target_path)
     if not _off_target and off_target_path:
@@ -48,8 +50,8 @@ func _process_dirty() -> void:
 
 
 func _update_state() -> void:
-    if _controller and state_property:
-        enabled = true if _controller.state.get(state_property, false) else false
+    if _train_id and state_property:
+        enabled = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
     if _on_target:
         _on_target.visible = enabled
     if _off_target:

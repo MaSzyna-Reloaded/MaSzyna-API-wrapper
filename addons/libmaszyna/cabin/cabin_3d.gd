@@ -10,6 +10,8 @@ var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
 var _shake_controller:VehicleController
+## Which vehicle this cabin sits in; every read of it goes through CabinSystem.
+var _train_id:String = ""
 var _engine_angle:float = PI * 0.5
 var _shake_velocity:Vector3 = Vector3.ZERO
 var _shake_offset:Vector3 = Vector3.ZERO
@@ -50,21 +52,21 @@ const SPRING_REST_LENGTH:float = 0.01
 func get_camera_transform():
     return global_transform.translated_local(driver_position)
 
-func _propagate_train_controller(node: Node, controller: VehicleController):
+## The cabin root is the one place that knows which vehicle this cabin sits in. It registers that
+## with CabinSystem - which from then on is the only thing talking to the vehicle servers - and
+## hands the vehicle's id down to its elements. They hold no path to a controller and never reach
+## for one.
+func _propagate_vehicle(node: Node, train_id: String) -> void:
     for child in node.get_children():
-        _propagate_train_controller(child, controller)
-        if "controller_path" in child:
-            if controller:
-                child.controller_path = child.get_path_to(controller)
-            else:
-                child.controller_path = NodePath("")
-            if child is BaseCabinTool3D:
-                child.set_train_controller(controller)
+        _propagate_vehicle(child, train_id)
+        if child.has_method("set_vehicle"):
+            child.set_vehicle(train_id)
 
 func set_train_controller(controller:VehicleController) -> void:
-    controller_path = controller.get_path() if controller else NodePath("")
     _shake_controller = controller
-    _propagate_train_controller(self, controller)
+    _train_id = controller.train_id if controller else ""
+    CabinSystem.register_vehicle(_train_id, controller.get_rid() if controller else RID())
+    _propagate_vehicle(self, _train_id)
 
 
 func get_sound_listener_context() -> int:
@@ -92,8 +94,8 @@ func _process_dirty() -> void:
 
 func _process_engine_shake(delta:float) -> void:
     var shake_vector:Vector3 = Vector3.ZERO
-    if _shake_controller and _shake_controller.config.get("engine_shake_enabled", false):
-        var engine_revolutions:float = absf(float(_shake_controller.state.get("engine_rpm_count", 0.0)))
+    if _shake_controller and CabinSystem.vehicle_config(_train_id).get("engine_shake_enabled", false):
+        var engine_revolutions:float = absf(float(CabinSystem.vehicle_state(_train_id).get("engine_rpm_count", 0.0)))
         if engine_revolutions > 0.0:
             _engine_angle = fmod(_engine_angle + engine_revolutions * delta, TAU)
             var fade_in:float = clampf(

@@ -49,6 +49,9 @@ Code generation:
   bug is invisible until two of them are lit at once
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
+* GDSCRIPT: never pass a bare `[]` or `{}` to a parameter typed `Array[T]` / `Dictionary[K, V]` -
+  declare the typed variable and pass it. Across scripts the bare literal is refused at runtime,
+  the call never happens, and the state silently stays as it was (see `FINDINGS.md`, 2026-09-22)
 * a case that every receiver branches on is not a parameter - it is two signals (or two methods).
   One signal plus an `if` at the top of every listener multiplies branches for nothing; emit
   `navigate_left` and `navigate_right`, not `navigate_out(side)`

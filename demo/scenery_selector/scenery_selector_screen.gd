@@ -246,7 +246,7 @@ func _show_details(index: int) -> void:
         %TrainsetsHeader.visible = false
         %TrainsetList.visible = false
         # an empty list reports no selection, which takes the vehicles down with it
-        %TrainsetList.set_rows([], [])
+        %TrainsetList.set_rows(PackedStringArray(), PackedStringArray())
         return
     _info = MaszynaSceneryInfo.read(_files[index])
     %Title.text = _titles[index]
@@ -276,22 +276,22 @@ func _show_trainset(index: int) -> void:
         %VehicleViewer.close()
     _shown_index = -1
     _vehicles.clear()
-    if not _info or index < 0:
-        %TrainsetGrid.set_tiles([])
-        return
-    var trainset: MaszynaSceneryInfo.Trainset = _info.trainsets[index]
-    %Description.text = (
-        "%s\n\n%s" % [trainset.description, _info.description]
-        if trainset.description
-        else _info.description
-    )
-    _vehicles.assign(trainset.vehicles)
+    # one exit, and the tiles are built typed: an untyped [] is refused by a typed parameter, and
+    # the refusal is a runtime error - the grid would keep the vehicles of the scenery before
     var tiles: Array[TileGrid.Tile] = []
-    for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
-        tiles.append(TileGrid.Tile.new(
-            vehicle.data_path, vehicle.file_name, vehicle.skin,
-            "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
-        ))
+    if _info and index >= 0:
+        var trainset: MaszynaSceneryInfo.Trainset = _info.trainsets[index]
+        %Description.text = (
+            "%s\n\n%s" % [trainset.description, _info.description]
+            if trainset.description
+            else _info.description
+        )
+        _vehicles.assign(trainset.vehicles)
+        for vehicle: MaszynaSceneryInfo.Vehicle in _vehicles:
+            tiles.append(TileGrid.Tile.new(
+                vehicle.data_path, vehicle.file_name, vehicle.skin,
+                "%s (%s)" % [vehicle.train_id, vehicle.data_path.get_file()]
+            ))
     %TrainsetGrid.set_tiles(tiles)
 
 

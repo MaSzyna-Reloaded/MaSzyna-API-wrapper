@@ -18,6 +18,11 @@ Code generation:
 * GDSCRIPT: a signal of a node that stands in a `.tscn`/`.scn` is connected **in that scene**, in
   its `[connection]` list, never in a script. `connect()` in code is only for nodes the script
   creates itself at runtime
+* a reusable component names no path outside itself. Its own files are preloaded relative to it
+  (`preload("selection_marker.gdshader")`), so it survives being renamed, moved or lifted into
+  another project; everything that belongs to whoever uses it (a sound bank, a theme, a texture, a
+  scene to spawn) is an `@export` slot the user fills. An absolute `res://` inside a component
+  nails it to one project layout and is the antipattern
 * a long node path in code is an antipattern: `get_node("A/B/C/D")`, `$A/B/C`, and above all a
   `../..` that climbs out of the node's own scene. Reach a node of the same scene by its unique
   name (`%Name`); what is outside the scene comes in through the scene root's own signals and
@@ -34,8 +39,25 @@ Code generation:
   place is not a helper - put its body there. Do not perform the same action twice to be safe (an
   immediate call and a deferred one, a guard in the caller repeated inside the callee, a wrapper
   that only forwards): work out which one is correct and keep that one alone
+* state has an owner, and it changes through a named operation of that owner - not by writing its
+  field from somewhere else. `_previous_section = Section.TRAINSETS` in some unrelated method says
+  nothing; `reset_focus_history()` says why it happens. This holds inside a single script too: one
+  writer per field, and the writing has a name
+* state that is exclusive - one focused section, one open window, one selected row - has exactly
+  one manager that grants it and takes it away. Whoever wants it **asks** (a signal), and the
+  manager decides; a component that takes it for itself leaves two of them holding it, and that
+  bug is invisible until two of them are lit at once
 * do not useset/get/has_meta for accessing/saving/loading node state
 * GDSCRIPT: do not use is_empty(), when "if not x / if x" is possible (i.e. empty strings, empty arrays)
+* a case that every receiver branches on is not a parameter - it is two signals (or two methods).
+  One signal plus an `if` at the top of every listener multiplies branches for nothing; emit
+  `navigate_left` and `navigate_right`, not `navigate_out(side)`
+* a choice that does travel carries an **enum**, never a bare number. `navigate_out(-1)` for left
+  is semantic rubbish: the caller cannot read it, nothing checks it, and the next reader has to
+  find the emitter to learn what -1 means. An `int` is for something counted or offset (a row
+  step, a size, an index), never for a direction, a side, a mode or a state
+* names come from the vocabulary of the data and of the original engine - a `.scn` declares
+  `trainset`, so the code says trainset, not a synonym invented in the wrapper
 * PROHIBITED, in GDSCRIPT and in C++ alike: **never create an `ensure_*` API** - no
   `_ensure_built()`, `_ensure_viewport()`, `_ensure_sections()`, nor the same idea under a friendlier
   name. State is initialised where it is created and set where it changes, once and explicitly; it is

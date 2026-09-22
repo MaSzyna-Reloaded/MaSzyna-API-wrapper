@@ -1,6 +1,7 @@
 #include "./TrainSystem.hpp"
 #include "VehicleController.hpp"
 #include "VehicleComponent.hpp"
+#include "../physics/VehiclePropertyRegistry.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -35,10 +36,30 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("train_part_disabled"));
     }
 
+    void VehicleComponent::_declare_state_properties() {}
+
+    void VehicleComponent::_do_fetch_state_from_mover(TMoverParameters *, Dictionary &) {}
+
+    Variant VehicleComponent::_get_state_property(int) const {
+        return Variant();
+    }
+
+    int VehicleComponent::declare_state_property(
+            const StringName &p_name, const Variant::Type p_type, const StringName &p_group) {
+        const int id = VehiclePropertyRegistry::declare(p_name, p_type, get_class(), p_group);
+        ERR_FAIL_COND_V(id < 0, -1);
+        const int local_index = state_property_ids.size();
+        state_property_ids.push_back(id);
+        if (train_controller_node != nullptr) {
+            train_controller_node->register_state_property(id, this, local_index);
+        }
+        return local_index;
+    }
+
     void VehicleComponent::_register_commands() {};
     void VehicleComponent::_unregister_commands() {};
 
-    TMoverParameters *VehicleComponent::get_mover() {
+    TMoverParameters *VehicleComponent::get_mover() const {
         if (train_controller_node != nullptr) {
             return train_controller_node->get_mover();
         }
@@ -69,6 +90,10 @@ namespace godot {
                                 String::num(con));
                     }
                 }
+                if (train_controller_node != nullptr) {
+                    state_property_ids.clear();
+                    _declare_state_properties();
+                }
                 if (enabled) {
                     _register_commands();
                     _commands_registered = true;
@@ -80,6 +105,7 @@ namespace godot {
                     _commands_registered = false;
                 }
                 if (train_controller_node != nullptr) {
+                    train_controller_node->unregister_state_properties(this);
                     train_controller_node->disconnect(
                             VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
                 }

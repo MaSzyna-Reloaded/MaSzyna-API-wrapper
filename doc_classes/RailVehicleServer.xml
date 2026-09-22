@@ -18,6 +18,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="state_property_get_id" qualifiers="const">
+			<return type="int" />
+			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
 		<method name="step">
 			<return type="void" />
 			<param index="0" name="delta" type="float" />
@@ -62,6 +68,37 @@
 			<description>
 			</description>
 		</method>
+		<method name="vehicle_get_speed" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_state" qualifiers="const">
+			<return type="VehicleState" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_state_property_ids" qualifiers="const">
+			<return type="PackedInt32Array" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_state_snapshot" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_state_value" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="property_id" type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="vehicle_get_track_position" qualifiers="const">
 			<return type="Dictionary" />
 			<param index="0" name="vehicle" type="RID" />
@@ -78,6 +115,12 @@
 			<return type="Transform3D" />
 			<param index="0" name="vehicle" type="RID" />
 			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_velocity" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
 			<description>
 			</description>
 		</method>

@@ -133,6 +133,11 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
 		<method name="get_velocity" qualifiers="const">
 			<return type="float" />
 			<description>

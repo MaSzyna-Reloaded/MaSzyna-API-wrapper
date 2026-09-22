@@ -5,6 +5,8 @@
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
+#include <godot_cpp/templates/hash_map.hpp>
+#include <godot_cpp/variant/packed_int32_array.hpp>
 #include <unordered_map>
 
 
@@ -236,6 +238,9 @@ namespace godot {
             /// Straight from the mover, for the per-frame readers that only want this one number
             /// and would otherwise force the whole state dictionary to be rebuilt
             double get_velocity() const;
+            /// Straight from the backend, like get_velocity() - the speed readers want this
+            /// one number, not the whole state
+            double get_speed() const;
             void apply_config();
             double process_movement(double p_delta);
             void update_location();
@@ -303,9 +308,22 @@ namespace godot {
             MAKE_MEMBER_GS(int, cntrl_inactive_cab_flag, 0);
             Dictionary get_state();
 
+            /* Which component answers for one declared property on this vehicle. Filled by the
+             * components as they join, so nothing has to search the subtree for them. */
+            void register_state_property(int p_property_id, VehicleComponent *p_component, int p_local_index);
+            void unregister_state_properties(VehicleComponent *p_component);
+            bool has_state_property(int p_property_id) const;
+            Variant get_state_value(int p_property_id) const;
+            PackedInt32Array get_state_property_ids() const;
+
         private:
             // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
             static std::unordered_map<const TMoverParameters *, VehicleController *> controllers_by_mover;
+            struct StateOwner {
+                    VehicleComponent *component = nullptr;
+                    int local_index = 0;
+            };
+            HashMap<int, StateOwner> state_owners;
             RID rid;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };

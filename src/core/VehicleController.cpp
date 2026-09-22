@@ -4,6 +4,7 @@
 #include "../engines/VehicleEngine.hpp"
 #include "../physics/MaszynaMoverPhysicsServer.hpp"
 #include "../physics/RailVehicleServer.hpp"
+#include "../physics/VehiclePropertyRegistry.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -77,6 +78,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleController::apply_config);
         ClassDB::bind_method(D_METHOD("update_state"), &VehicleController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &VehicleController::get_velocity);
+        ClassDB::bind_method(D_METHOD("get_speed"), &VehicleController::get_speed);
         ClassDB::bind_method(D_METHOD("update_config"), &VehicleController::update_config);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &VehicleController::update_location);
@@ -829,6 +831,46 @@ namespace godot {
         p_state["circuit_rlist_size"] = p_mover->RlistSize;
     }
 
+    void VehicleController::register_state_property(
+            const int p_property_id, VehicleComponent *p_component, const int p_local_index) {
+        StateOwner owner;
+        owner.component = p_component;
+        owner.local_index = p_local_index;
+        state_owners.insert(p_property_id, owner);
+    }
+
+    void VehicleController::unregister_state_properties(VehicleComponent *p_component) {
+        Vector<int> removed;
+        for (const KeyValue<int, StateOwner> &item: state_owners) {
+            if (item.value.component == p_component) {
+                removed.push_back(item.key);
+            }
+        }
+        for (const int property_id: removed) {
+            state_owners.erase(property_id);
+        }
+    }
+
+    bool VehicleController::has_state_property(const int p_property_id) const {
+        return state_owners.has(p_property_id);
+    }
+
+    Variant VehicleController::get_state_value(const int p_property_id) const {
+        const StateOwner *owner = state_owners.getptr(p_property_id);
+        if (owner == nullptr || owner->component == nullptr) {
+            return Variant();
+        }
+        return owner->component->_get_state_property(owner->local_index);
+    }
+
+    PackedInt32Array VehicleController::get_state_property_ids() const {
+        PackedInt32Array result;
+        for (const KeyValue<int, StateOwner> &item: state_owners) {
+            result.push_back(item.key);
+        }
+        return result;
+    }
+
     Dictionary VehicleController::get_config() const {
         return config;
     }
@@ -846,12 +888,23 @@ namespace godot {
             if (TMoverParameters *mover_ptr = get_mover(); mover_ptr != nullptr) {
                 _do_fetch_state_from_mover(mover_ptr, state);
             }
+            // Compatibility while the components move off the Dictionary: whatever already
+            // declares its properties is read here by name, so every existing consumer keeps
+            // finding its key. This whole overlay goes when the consumers ask the server instead.
+            for (const KeyValue<int, StateOwner> &item: state_owners) {
+                state[VehiclePropertyRegistry::get_descriptor(item.key).name] = get_state_value(item.key);
+            }
         }
         return state;
     }
 
     double VehicleController::get_velocity() const {
         return mover != nullptr ? mover->V : 0.0;
+    }
+
+    double VehicleController::get_speed() const {
+        const MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        return physics != nullptr ? physics->vehicle_get_speed(physics_rid) : 0.0;
     }
 
     void

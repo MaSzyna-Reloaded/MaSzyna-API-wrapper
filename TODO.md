@@ -19,7 +19,20 @@ one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
   Still carried by `VehicleController` and waiting for the stages below: the borrowed Mover
   pointer every component reaches for per frame, `_update_tachometer` (vehicle state, goes with the
   registry) and `_update_mover_config_if_dirty` (goes with the `configure` phase).
-* **Stage 4 - property registry, `VehicleState`, fast getters.** State becomes pulled, not pushed:
+* **Stage 4, the mechanism is in; the components are not.** `VehiclePropertyRegistry` interns a
+  name once and refuses a second owner for it; a component declares what it can be asked about
+  (`_declare_state_properties`) and answers by local index (`_get_state_property`); the controller
+  keeps id -> owning component so nothing searches the subtree; `RailVehicleServer` serves the
+  four levels (typed hot getters, id by name, the `VehicleState` proxy with `read_floats`, and the
+  snapshot); `VehicleState` holds the handle, implements `_get`/`_get_property_list` and refuses
+  `_set` naming the owner. `VehicleHeating` is converted as the proof and
+  `test_vehicle_state_properties.gd` covers the new ground.
+  **What is left:** the other 18 components, ~230 properties - `_do_fetch_state_from_mover` is a
+  no-op default now, so each one converts on its own. While they convert,
+  `VehicleController::get_state()` overlays the declared properties onto the old Dictionary so
+  every existing consumer keeps working; that overlay is deleted once the consumers ask the server.
+  Then the consumer migration (4f) and the `watched` change detection (4d), neither started.
+* **Stage 4 (original scope, for reference) - property registry, `VehicleState`, fast getters.** State becomes pulled, not pushed:
   a component declares its properties once and nothing is computed until someone asks. Five levels
   of access, all keyed by the vehicle RID on `RailVehicleServer`, which forwards to the backend:
   typed hot getters, a name resolved once to an id, the `VehicleState` proxy (`RefCounted`, holds

@@ -76,13 +76,16 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
     for group:Array in groups:
         var rids:Array[RID] = group[0]
         var free_rid:Callable = group[1]
-        for rid:RID in rids:
+        # Taken off the list before it is freed, not after the whole loop: the budgeted path
+        # awaits a frame in the middle, and leaving the tree during that await runs this again
+        # from _exit_tree over the very same RIDs - a double free.
+        while rids.size() > 0:
+            var rid:RID = rids.pop_back()
             if rid.is_valid():
                 free_rid.call(rid)
             if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
                 await get_tree().process_frame
                 frame_start = Time.get_ticks_msec()
-        rids.clear()
 
 
 ## Nothing in here is worth simulating while it is being torn down, and a real scenery is

@@ -87,9 +87,12 @@ starts with its game directory set to `user://gut/fiz_train_controller` and find
 fixture path should be passed to what is under test instead of being written into the user's
 settings; the same pattern is in `test_dynamic_rail_vehicle_manager` and three more.
 
-**`test_zzz_ep07_cabin_main_switch` is non-deterministic.** Three consecutive runs of the same
-build gave 5/5, a teardown core dump, and 4/1. A clean build of the commit before the engine work
-gave 2/3 with no crash. It is unusable as a gate until the teardown double-free below is fixed.
+**`test_zzz_ep07_cabin_main_switch` is non-deterministic and the cause is not found.** Runs of one
+build have given 5/5, 4/1 and a teardown core dump in `_free_owned_rids`. A clean build of the
+commit before the engine work gave 2/3 with no crash, so it is unstable on both sides. One real
+hazard on that path was fixed - the RID list was cleared only after the whole loop, so a budgeted
+teardown that awaited a frame and then left the tree freed the same RIDs twice - and the crash grew
+rarer but did not go away. Until the rest is found this test cannot gate anything.
 
 **A third test red before this work**, alongside the two already recorded:
 `test_zzz_ep07_main_switch_trip_diagnostic` fails four assertions - the vehicle does not accelerate

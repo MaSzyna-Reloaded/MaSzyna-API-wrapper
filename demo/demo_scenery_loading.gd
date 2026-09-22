@@ -30,9 +30,6 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
-    # the loop is set here and not in the importer: *.import is not in git, so a fresh clone and
-    # every export would come back with the mp3 importer's default of no looping
-    ($Music.stream as AudioStreamMP3).loop = true
     if not $MaszynaSceneryNode.filename:
         $ScenerySelectorScreen.open()
 

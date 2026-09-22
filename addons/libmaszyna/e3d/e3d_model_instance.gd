@@ -44,6 +44,15 @@ var default_aabb_size: Vector3 = Vector3(1, 1, 1)
             model = x
             _dirty = true
 
+## What this placement is - a static scenery model or a dynamic one, in the words a [code].scn[/code]
+## uses. Handed to the server when the instance is created, because the smoke density it selects is
+## baked into every emitter of the model; changing it reloads the instance, like the model itself.
+@export var instance_kind: E3DRenderingServer.InstanceKind = E3DRenderingServer.INSTANCE_KIND_STATIC:
+    set(x):
+        if not x == instance_kind:
+            instance_kind = x
+            _dirty = true
+
 ## Base MaSzyna data path used to resolve model files and materials.
 @export var data_path:String = "":
     set(x):
@@ -179,7 +188,7 @@ func _create_instance() -> void:
     var server_instancer: int = (
         Instancer.EDITABLE_NODES if editable_in_editor and instancer == Instancer.NODES else instancer
     )
-    _rid = E3DRenderingServer.instance_create(_model, server_instancer)
+    _rid = E3DRenderingServer.instance_create(_model, server_instancer, instance_kind)
     E3DRenderingServer.instance_set_options(
         _rid, data_path, PackedStringArray(skins), exclude_node_names, force_alpha, force_alpha_submodel_paths
     )

@@ -237,31 +237,43 @@ func _enter_tree():
         "maszyna/rendering/smoke_distance", 1500.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "100.0,10000.0,10.0,suffix:m"
     )
-    # Particle budget of a single emitter. The original derives it from the spawn rate and the fade
-    # step and caps it at 500 per source at the lowest smoke fidelity (particles.cpp:122-133).
-    add_custom_project_setting(
-        "maszyna/rendering/smoke_max_particles", 500, TYPE_INT,
-        PROPERTY_HINT_RANGE, "16,8000,1"
-    )
+    # Every knob below comes in a pair, one for a vehicle and one for a static piece of the
+    # scenery - the .scn already draws that line: a "dynamic" is a vehicle, a "node model" is
+    # static. A road vehicle placed as a "node model" - which is how all 349 of them stand in the
+    # data - is a prop and takes the static numbers.
+    #
     # How many particles an emitter spawns per second, over what its template asks for. Each one is
     # made correspondingly fainter, so a denser plume comes out smoother rather than darker - the
-    # original's gfx.smoke.fidelity works the same way (particles.cpp:73, :128, :165). The particle
-    # budget above has to leave room for it.
+    # original's gfx.smoke.fidelity works the same way (particles.cpp:73, :128, :165).
     add_custom_project_setting(
-        "maszyna/rendering/smoke_density", 1.0, TYPE_FLOAT,
+        "maszyna/rendering/smoke_density_dynamic", 1.0, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.25,8.0,0.25"
     )
-    # Which sprite a smoke particle is drawn with. "Original" is the single round blob the original
-    # binds for every emitter (opengl33renderer.cpp:105); "Modern" walks a flipbook over the
-    # particle's lifetime, so a puff wells up, breaks into wisps and dissolves on its own.
     add_custom_project_setting(
-        "maszyna/rendering/smoke_generator_mode", 0,
-        TYPE_INT, PROPERTY_HINT_ENUM, "Original,Modern"
+        "maszyna/rendering/smoke_density_static", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.25,8.0,0.25"
     )
-    # The flipbook "Modern" uses. Empty here on purpose: the addon only exposes the slot, the
-    # project that ships the asset fills it in (the demo points it at res://vfx/smoke_atlas.png).
-    add_custom_project_setting("maszyna/rendering/smoke_atlas", "", TYPE_STRING, PROPERTY_HINT_FILE, "*.png")
-    add_custom_project_setting("maszyna/rendering/smoke_atlas_frames", Vector2i(4, 4), TYPE_VECTOR2I)
+    # How long a particle lives, over what its template asks for. A chimney template fades at 0.01
+    # per second, which is a minute of particle in the air - far more than a scenery prop needs,
+    # and it is also what decides how many of them are in flight at once.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_lifetime_dynamic", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,4.0,0.05"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_lifetime_static", 0.5, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.1,4.0,0.05"
+    )
+    # Particle budget of a single emitter, which the original caps at 500 per source at its lowest
+    # smoke fidelity (particles.cpp:128). It has to leave room for the density above.
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_max_particles_dynamic", 2000, TYPE_INT,
+        PROPERTY_HINT_RANGE, "16,8000,1"
+    )
+    add_custom_project_setting(
+        "maszyna/rendering/smoke_max_particles_static", 500, TYPE_INT,
+        PROPERTY_HINT_RANGE, "16,8000,1"
+    )
     add_custom_project_setting("maszyna/debug/physics_diagnostics", false, TYPE_BOOL)
     add_custom_project_setting(
         "maszyna/dds_maxtexturesize", 1024, TYPE_INT,

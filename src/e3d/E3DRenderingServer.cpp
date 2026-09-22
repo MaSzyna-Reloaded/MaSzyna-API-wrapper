@@ -12,7 +12,9 @@
 
 namespace godot {
     void E3DRenderingServer::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("instance_create", "model", "instancer"), &E3DRenderingServer::instance_create);
+        ClassDB::bind_method(
+                D_METHOD("instance_create", "model", "instancer", "instance_kind"),
+                &E3DRenderingServer::instance_create);
         ClassDB::bind_method(
                 D_METHOD(
                         "instance_register", "data_path", "model_filename", "skins", "transform", "range_begin",
@@ -81,6 +83,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(INSTANCER_NODES);
         BIND_ENUM_CONSTANT(INSTANCER_EDITABLE_NODES);
 
+        BIND_ENUM_CONSTANT(INSTANCE_KIND_STATIC);
+        BIND_ENUM_CONSTANT(INSTANCE_KIND_DYNAMIC);
+
         BIND_ENUM_CONSTANT(LIGHT_MODE_OFF);
         BIND_ENUM_CONSTANT(LIGHT_MODE_ON);
         BIND_ENUM_CONSTANT(LIGHT_MODE_BLINK);
@@ -141,12 +146,19 @@ namespace godot {
 
     /// Creates an empty instance; set it up with instance_set_*() and instance_attach_node(),
     /// then call instance_build().
-    RID E3DRenderingServer::instance_create(const Ref<E3DModel> &p_model, const Instancer p_instancer) {
+    ///
+    /// The kind is given here rather than through a setter because it cannot be changed once the
+    /// instance is built: the smoke density it selects is baked into every emitter - its process
+    /// material, its particle budget and its spawn rate. A client that has to change it frees the
+    /// instance and creates it again, which is what E3DModelInstance's own _dirty does.
+    RID E3DRenderingServer::instance_create(
+            const Ref<E3DModel> &p_model, const Instancer p_instancer, const InstanceKind p_instance_kind) {
         ERR_FAIL_COND_V(p_model.is_null(), RID());
         const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
         E3DInstanceData &instance = instances[rid];
         instance.model = p_model;
         instance.instancer = p_instancer;
+        instance.instance_kind = p_instance_kind;
         return rid;
     }
 
@@ -339,7 +351,7 @@ namespace godot {
         model_loader = p_model_loader;
     }
 
-    /// `smoke_source_resolver(template_name: String) -> Dictionary` with the keys
+    /// `smoke_source_resolver(template_name: String, kind: InstanceKind) -> Dictionary` with the keys
     /// process_material/mesh/amount/lifetime/aabb, used by _smoke_build(). The template files live
     /// under the game's data/ directory, which is GDScript's business, not this server's.
     void E3DRenderingServer::set_smoke_source_resolver(const Callable &p_smoke_source_resolver) {
@@ -617,7 +629,9 @@ namespace godot {
         for (const E3DSmokeSourcePlacement &placement: placements) {
             const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
             SmokeObject &smoke = smoke_objects[rid];
-            smoke_order.push_back(rid);
+            if (p_instance_data.instance_kind == INSTANCE_KIND_DYNAMIC) {
+                smoke_order.push_back(rid);
+            }
             smoke.owner = p_instance;
             smoke.template_name = placement.template_name;
             smoke.offset = placement.offset;
@@ -638,7 +652,9 @@ namespace godot {
                 _smoke_build(rid);
             }
         }
-        _set_smoke_processing(true);
+        if (!smoke_order.is_empty()) {
+            _set_smoke_processing(true);
+        }
     }
 
     /// Where the emitter spawns: the model root's own basis (the original launches the particles
@@ -681,7 +697,7 @@ namespace godot {
         RenderingServer *rs = RenderingServer::get_singleton();
         ERR_FAIL_NULL(rs);
 
-        const Dictionary source = smoke_source_resolver.call(smoke->template_name);
+        const Dictionary source = smoke_source_resolver.call(smoke->template_name, instance->instance_kind);
         Ref<ParticleProcessMaterial> process_material = source.get("process_material", Variant());
         const Ref<Mesh> mesh = source.get("mesh", Variant());
         if (process_material.is_null() || mesh.is_null()) {
@@ -708,8 +724,18 @@ namespace godot {
         rs->particles_set_draw_pass_mesh(smoke->particles, 0, mesh->get_rid());
         rs->particles_set_draw_order(smoke->particles, RenderingServer::PARTICLES_DRAW_ORDER_VIEW_DEPTH);
         rs->particles_set_custom_aabb(smoke->particles, smoke->local_aabb);
-        // process_smoke() spawns by hand; the automatic emitter would ignore the engine state
-        rs->particles_set_emitting(smoke->particles, false);
+        if (instance->instance_kind == INSTANCE_KIND_DYNAMIC) {
+            // the rate follows the engine state, so process_smoke() spawns by hand and the
+            // automatic emitter has to stay out of it
+            rs->particles_set_emitting(smoke->particles, false);
+        } else {
+            // A static emitter spawns at one rate for ever - amount over lifetime is exactly the
+            // template's own - so the engine emits for it and it is not ticked at all. That also
+            // buys the pre-process: the plume is already in the air when a chimney streams in,
+            // instead of building up from nothing in front of the player.
+            rs->particles_set_pre_process_time(smoke->particles, source.get("preprocess", 0.0));
+            rs->particles_set_emitting(smoke->particles, instance->visible);
+        }
 
         smoke->particles_instance = rs->instance_create();
         rs->instance_set_base(smoke->particles_instance, smoke->particles);
@@ -762,7 +788,7 @@ namespace godot {
             smoke_order.erase(smoke_rid);
         }
         p_instance_data.smoke_objects.clear();
-        if (smoke_objects.is_empty()) {
+        if (smoke_order.is_empty()) {
             _set_smoke_processing(false);
         }
     }
@@ -778,6 +804,9 @@ namespace godot {
                 continue;
             }
             _apply_smoke_placement(p_instance_data, *smoke);
+            if (p_instance_data.instance_kind == INSTANCE_KIND_STATIC) {
+                rs->particles_set_emitting(smoke->particles, p_instance_data.visible);
+            }
             rs->instance_set_visible(smoke->particles_instance, p_instance_data.visible);
         }
     }

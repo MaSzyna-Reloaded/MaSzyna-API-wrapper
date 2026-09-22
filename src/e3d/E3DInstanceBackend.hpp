@@ -64,6 +64,9 @@ namespace godot {
             Vector<RID> light_objects;
             /// Particle emitters owned by this instance (E3DRenderingServer smoke RIDs)
             Vector<RID> smoke_objects;
+            /// E3DRenderingServer::InstanceKind - scenery unless the client says otherwise,
+            /// which is what a placement registered for streaming always is
+            int instance_kind = 0;
 
             // OPTIMIZED backend
             HashMap<String, LightSubmodels> light_submodels;

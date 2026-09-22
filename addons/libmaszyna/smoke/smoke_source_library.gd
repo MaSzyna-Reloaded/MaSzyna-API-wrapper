@@ -10,14 +10,32 @@ extends Node
 ## in memory and not cached on disk.
 
 
-## The original's gfx.smoke.fidelity caps a source at 500 * fidelity particles (particles.cpp:128)
-const MAX_PARTICLES_SETTING:String = "maszyna/rendering/smoke_max_particles"
-const DEFAULT_MAX_PARTICLES:int = 500
+## Every knob below comes in a pair, one per [enum E3DRenderingServer.InstanceKind]: a locomotive
+## exhaust and a factory chimney want different numbers out of the same template.
+##
 ## Multiplies how many particles an emitter spawns per second, over what its template asks for.
 ## Each one is made correspondingly fainter, so a denser plume is smoother rather than darker -
 ## the original's gfx.smoke.fidelity does the same (particles.cpp:73, :128, :165).
-const DENSITY_SETTING:String = "maszyna/rendering/smoke_density"
+const DENSITY_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_density_dynamic"
+const DENSITY_STATIC_SETTING:String = "maszyna/rendering/smoke_density_static"
 const DEFAULT_DENSITY:float = 1.0
+## Scales how long a particle lives, over what its template asks for. A chimney template fades at
+## 0.01 per second, which is a minute of particle in the air - far more than a scenery prop needs,
+## and it is also what decides how many of them are in flight at once.
+const LIFETIME_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_lifetime_dynamic"
+const LIFETIME_STATIC_SETTING:String = "maszyna/rendering/smoke_lifetime_static"
+const DEFAULT_LIFETIME_DYNAMIC:float = 1.0
+const DEFAULT_LIFETIME_STATIC:float = 0.5
+## Particle budget of a single emitter, which the original caps at 500 per source at its lowest
+## smoke fidelity (particles.cpp:128). It has to leave room for the density above.
+const MAX_PARTICLES_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_max_particles_dynamic"
+const MAX_PARTICLES_STATIC_SETTING:String = "maszyna/rendering/smoke_max_particles_static"
+const DEFAULT_MAX_PARTICLES_DYNAMIC:int = 2000
+const DEFAULT_MAX_PARTICLES_STATIC:int = 500
+## How much of a static emitter's plume is already in the air when it is built, so a chimney is
+## smoking the moment it streams in rather than starting empty. Bounded: the engine pre-processes
+## in steps of a frame, so the time asked for is a loop of that many dispatches.
+const PREPROCESS_SECONDS:float = 5.0
 ## The one smoke texture the original uses for every emitter (opengl33renderer.cpp:105)
 const SMOKE_TEXTURE:String = "fx/smoke"
 
@@ -61,7 +79,11 @@ const _OPACITY_CHANGE_FIELDS:Dictionary = {
 }
 
 var _sources:Dictionary[String, MaszynaSmokeSource] = {}
-var _render_data:Dictionary[String, Dictionary] = {}
+## One memo per instance kind: the same template comes out denser on a vehicle than on a chimney
+var _render_data:Dictionary[int, Dictionary] = {
+    E3DRenderingServer.INSTANCE_KIND_STATIC: {},
+    E3DRenderingServer.INSTANCE_KIND_DYNAMIC: {},
+}
 
 
 ## E3DRenderingServer builds the emitters of an instance through this
@@ -71,16 +93,46 @@ func _ready() -> void:
 
 ## Everything E3DRenderingServer needs for one emitter: process_material, mesh, amount, lifetime,
 ## spawn_rate and the local aabb of the plume. Empty for a template that cannot be used.
-func build_render_data(template_name:String) -> Dictionary:
-    if _render_data.has(template_name):
-        return _render_data[template_name]
+## [param kind] is an [enum E3DRenderingServer.InstanceKind] and selects the density.
+func build_render_data(template_name:String, kind:int) -> Dictionary:
+    var memo:Dictionary = _render_data[kind]
+    if memo.has(template_name):
+        return memo[template_name]
 
     var data:Dictionary = {}
     var source:MaszynaSmokeSource = get_source(template_name)
     if source:
-        data = _build_render_data(source, template_name)
-    _render_data[template_name] = data
+        data = _build_render_data(
+            source, template_name, get_density(kind), get_lifetime(source, kind), get_max_particles(kind))
+    memo[template_name] = data
     return data
+
+
+## How long a particle of an emitter of [param kind] lives, the template's own scaled by the
+## setting - a scenery prop does not need a minute of smoke hanging over it.
+func get_lifetime(source:MaszynaSmokeSource, kind:int) -> float:
+    var scale:float = (
+        ProjectSettings.get_setting(LIFETIME_DYNAMIC_SETTING, DEFAULT_LIFETIME_DYNAMIC)
+        if kind == E3DRenderingServer.INSTANCE_KIND_DYNAMIC
+        else ProjectSettings.get_setting(LIFETIME_STATIC_SETTING, DEFAULT_LIFETIME_STATIC)
+    )
+    return source.get_particle_lifetime() * maxf(scale, 0.0)
+
+
+## Particle budget of one emitter of [param kind]
+func get_max_particles(kind:int) -> int:
+    if kind == E3DRenderingServer.INSTANCE_KIND_DYNAMIC:
+        return ProjectSettings.get_setting(MAX_PARTICLES_DYNAMIC_SETTING, DEFAULT_MAX_PARTICLES_DYNAMIC)
+    return ProjectSettings.get_setting(MAX_PARTICLES_STATIC_SETTING, DEFAULT_MAX_PARTICLES_STATIC)
+
+
+## How much denser than its template an emitter of [param kind] spawns
+func get_density(kind:int) -> float:
+    var setting:String = (
+        DENSITY_DYNAMIC_SETTING if kind == E3DRenderingServer.INSTANCE_KIND_DYNAMIC
+        else DENSITY_STATIC_SETTING
+    )
+    return maxf(ProjectSettings.get_setting(setting, DEFAULT_DENSITY), 0.0)
 
 
 func get_source(template_name:String) -> MaszynaSmokeSource:
@@ -95,7 +147,8 @@ func get_source(template_name:String) -> MaszynaSmokeSource:
 
 func clear_cache() -> void:
     _sources.clear()
-    _render_data.clear()
+    for memo:Dictionary in _render_data.values():
+        memo.clear()
 
 
 ## Parses one template file. Returns null when it cannot be read.
@@ -156,21 +209,21 @@ static func _parse_block(
     return i + 1
 
 
-func _build_render_data(source:MaszynaSmokeSource, template_name:String) -> Dictionary:
-    var density:float = maxf(ProjectSettings.get_setting(DENSITY_SETTING, DEFAULT_DENSITY), 0.0)
-    var lifetime:float = source.get_particle_lifetime()
-    var amount:int = source.get_particle_amount(
-        ProjectSettings.get_setting(MAX_PARTICLES_SETTING, DEFAULT_MAX_PARTICLES), density)
+func _build_render_data(
+        source:MaszynaSmokeSource, template_name:String, density:float, lifetime:float,
+        max_particles:int) -> Dictionary:
+    var amount:int = source.get_particle_amount(max_particles, density, lifetime)
     if not lifetime or not amount:
         # the original divides the spawn rate by the fade step and lands on infinity here
         push_warning("[SmokeSourceLibrary] Template emits nothing: %s" % template_name)
         return {}
 
-    var terminal_size:float = source.get_terminal_size()
+    var terminal_size:float = source.get_terminal_size(lifetime)
     var reach:float = source.velocity_max * lifetime + terminal_size
 
     return {
         "process_material": _build_process_material(source, lifetime, density),
+        "preprocess": minf(lifetime, PREPROCESS_SECONDS),
         "mesh": _build_mesh(),
         "amount": amount,
         "lifetime": lifetime,
@@ -194,7 +247,8 @@ func _build_process_material(
     material.angle_max = 360.0
     material.scale_min = source.size_min
     material.scale_max = source.size_max
-    material.scale_curve = _build_curve(1.0, source.get_terminal_size() / maxf(source.get_mean_size(), 0.001))
+    material.scale_curve = _build_curve(
+        1.0, source.get_terminal_size(lifetime) / maxf(source.get_mean_size(), 0.001))
     material.color = source.color
     material.color_initial_ramp = _build_opacity_ramp(source, density)
     material.alpha_curve = _build_curve(1.0, 0.0)

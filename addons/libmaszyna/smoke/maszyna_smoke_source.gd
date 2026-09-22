@@ -42,16 +42,19 @@ func get_particle_lifetime() -> float:
     return opacity_max / absf(opacity_step)
 
 
-## How many particles the emitter may hold at once - the spawn rate over one lifetime, capped the
-## way the original caps it (particles.cpp:128). [param density] multiplies the rate, so the pool
-## has to grow with it or the emitter runs out of slots and stops spawning.
-func get_particle_amount(max_particles:int, density:float = 1.0) -> int:
-    return clampi(ceili(spawn_rate * density * get_particle_lifetime()), 0, max_particles)
+## How many particles the emitter may hold at once - the spawn rate over one [param lifetime],
+## capped the way the original caps it (particles.cpp:128). [param density] multiplies the rate, so
+## the pool has to grow with it or the emitter runs out of slots and stops spawning.
+##
+## The lifetime is passed in rather than taken from the template: a static emitter is given a
+## shorter one than the template asks for (see [code]SmokeSourceLibrary[/code]).
+func get_particle_amount(max_particles:int, density:float, lifetime:float) -> int:
+    return clampi(ceili(spawn_rate * density * lifetime), 0, max_particles)
 
 
-## Terminal billboard size of a particle that lives a full lifetime
-func get_terminal_size() -> float:
-    return clampf(get_mean_size() + size_step * get_particle_lifetime(), size_limit_min, size_limit_max)
+## Terminal billboard size of a particle that lives a full [param lifetime]
+func get_terminal_size(lifetime:float) -> float:
+    return clampf(get_mean_size() + size_step * lifetime, size_limit_min, size_limit_max)
 
 
 func get_mean_size() -> float:

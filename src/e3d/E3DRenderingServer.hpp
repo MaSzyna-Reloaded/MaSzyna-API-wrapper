@@ -27,6 +27,16 @@ namespace godot {
                 INSTANCER_EDITABLE_NODES,
             };
 
+            /// What a placement is: a static piece of the scenery (a "node ... model" of a .scn)
+            /// against a dynamic one (its "dynamic", which is a vehicle). The original keeps the same distinction
+            /// wherever it matters - a TAnimModel against a TDynamicObject, remembered by its
+            /// particle emitters as owner_type { none, vehicle, node } (particles.h:135).
+            /// Nothing about this is particular to smoke; smoke is only its first reader.
+            enum InstanceKind {
+                INSTANCE_KIND_STATIC,
+                INSTANCE_KIND_DYNAMIC,
+            };
+
             /// Light state of a scenery model node (TLightState, AnimModel.h:27-33)
             enum LightMode {
                 LIGHT_MODE_OFF = 0,
@@ -237,7 +247,7 @@ namespace godot {
             E3DRenderingServer();
             ~E3DRenderingServer() override;
 
-            RID instance_create(const Ref<E3DModel> &p_model, Instancer p_instancer);
+            RID instance_create(const Ref<E3DModel> &p_model, Instancer p_instancer, InstanceKind p_instance_kind);
             RID instance_register(
                     const String &p_data_path, const String &p_model_filename, const PackedStringArray &p_skins,
                     const Transform3D &p_transform, float p_range_begin, float p_range_end, const RID &p_scenario);
@@ -298,3 +308,4 @@ namespace godot {
 
 VARIANT_ENUM_CAST(E3DRenderingServer::Instancer)
 VARIANT_ENUM_CAST(E3DRenderingServer::LightMode)
+VARIANT_ENUM_CAST(E3DRenderingServer::InstanceKind)

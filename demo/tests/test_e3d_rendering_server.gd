@@ -23,7 +23,7 @@ func test_optimized_instance_creates_no_nodes() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)
 
-    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_OPTIMIZED)
+    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_OPTIMIZED, E3DRenderingServer.INSTANCE_KIND_STATIC)
     E3DRenderingServer.instance_attach_node(rid, parent)
     E3DRenderingServer.instance_set_scenario(rid, parent.get_world_3d().scenario)
     E3DRenderingServer.instance_set_transform(rid, Transform3D(Basis(), Vector3(10, 0, 0)))
@@ -39,7 +39,7 @@ func test_nodes_instance_builds_tree_and_follows_lights_state() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)
 
-    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES)
+    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
     E3DRenderingServer.instance_attach_node(rid, parent)
     E3DRenderingServer.instance_set_lights_state(rid, {"00": false})
     E3DRenderingServer.instance_build(rid)
@@ -62,7 +62,7 @@ func test_nodes_instance_rebuilds_on_options_change() -> void:
     var parent: Node3D = Node3D.new()
     add_child_autoqfree(parent)
 
-    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES)
+    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
     E3DRenderingServer.instance_attach_node(rid, parent)
     E3DRenderingServer.instance_build(rid)
     assert_not_null(parent.get_node_or_null(NodePath("light_on00/mesh")))
@@ -176,7 +176,7 @@ func test_instance_free_releases_its_lights() -> void:
 
 
 func _create_lit_instance(parent: Node3D) -> RID:
-    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES)
+    var rid: RID = E3DRenderingServer.instance_create(_create_model(), E3DRenderingServer.INSTANCER_NODES, E3DRenderingServer.INSTANCE_KIND_STATIC)
     E3DRenderingServer.instance_attach_node(rid, parent)
     E3DRenderingServer.instance_build(rid)
     return rid

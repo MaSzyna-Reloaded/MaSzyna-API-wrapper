@@ -90,6 +90,9 @@ static func _build_structure(
 
     var model := E3DModelInstance.new()
     model.name = "ExteriorModel"
+    # The .scn calls a vehicle a "dynamic" and a static prop a "node model"; the wrapper builds
+    # only the first kind here. Smoke density reads it (maszyna/rendering/smoke_density_*).
+    model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
     model.data_path = normalized_data_path
     model.model_filename = body_model_filename
     model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
@@ -109,6 +112,7 @@ static func _build_structure(
         lowpoly_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, lowpoly_filename)
         low_poly_model = E3DModelInstance.new()
         low_poly_model.name = "LowPolyInterior"
+        low_poly_model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
         low_poly_model.data_path = normalized_data_path
         low_poly_model.model_filename = lowpoly_filename
         low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
@@ -120,6 +124,7 @@ static func _build_structure(
         passengers_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, passengers_filename)
         passengers_model = E3DModelInstance.new()
         passengers_model.name = "Passengers"
+        passengers_model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
         passengers_model.data_path = normalized_data_path
         passengers_model.model_filename = passengers_filename
         passengers_model.rotation.y = PI

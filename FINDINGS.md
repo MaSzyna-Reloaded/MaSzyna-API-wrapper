@@ -22,6 +22,25 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 * **Rule:** a performance number is a measurement of the whole machine, not of the commit. Confirm
   the environment is the same - adapter, power profile, build flags - before the code is.
 
+## 2026-09-22 - a config property and a state key of the same name are not the same value
+
+* **Symptom:** `test_train_battery::test_successful_battery_voltage_drop_after_two_seconds` went
+  red - "There should be a battery voltage drop after 2 seconds" - while every other battery test
+  stayed green.
+* **Cause:** while giving the components typed state properties, `battery_voltage` was taken to be
+  one value published twice, so the state dump was pointed at the wrapper's existing
+  `battery_voltage` config getter. It is not one value: the authored property is the **nominal**
+  voltage (`_do_update_internal_mover` writes it to both `BatteryVoltage` and
+  `NominalBatteryVoltage`), and the backend then drains and recharges `BatteryVoltage` at run time
+  (`Mover.cpp:946`). Reading the config back reported a battery that never moves.
+* **Fix:** `get_live_battery_voltage()` for the state; the authored property keeps its name. Three
+  other reuses were checked the same way and do hold - the backend never writes
+  `EnginePowerSource.RPowerCable.SteamPressure`, `PowerTrans` or `RAccumulator.RechargeSource`.
+* **Rule:** before publishing a state value through an existing config getter, grep the backend for
+  an assignment to that field. A value the simulation writes is state; a value only the wrapper
+  writes is configuration, and only the second one may be read back from the wrapper's own
+  property.
+
 ## 2026-09-22 - an uninitialised pointer that only a property read could reach
 
 * **Symptom:** after the vehicle components gained typed state properties, building a vehicle from

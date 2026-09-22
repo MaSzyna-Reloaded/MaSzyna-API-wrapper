@@ -72,6 +72,39 @@ namespace godot {
             /* The vehicle's own share of the dump - what every vehicle has, whatever it is
              * made of. Its components add theirs. */
             void _fill_state_dictionary(Dictionary &p_state) const;
+
+            /* Live state, read straight from the backend - nothing is stored. */
+            /* The battery as it actually is, which drains and recharges. The authored
+             * `battery_voltage` property next to it is the nominal one the vehicle is built with
+             * and that the backend keeps as NominalBatteryVoltage (Mover.cpp:946) - the two are
+             * only equal on a full battery. */
+            double get_live_battery_voltage() const;
+            double get_tachometer_speed() const;
+            double get_tachometer_speed_jump() const;
+            double get_tachometer_clock_speed() const;
+            int get_direction_absolute() const;
+            int get_cabin() const;
+            bool get_cabin_controleable() const;
+            int get_cabin_occupied() const;
+            bool get_battery_enabled() const;
+            bool get_radio_enabled() const;
+            bool get_radio_powered() const;
+            int get_radio_channel() const;
+            double get_power24_voltage() const;
+            bool get_power24_available() const;
+            bool get_power110_available() const;
+            double get_current0() const;
+            double get_current1() const;
+            double get_current2() const;
+            bool get_relay_novolt() const;
+            bool get_relay_overvoltage() const;
+            bool get_relay_ground() const;
+            int get_train_damage() const;
+            int get_controller_second_position() const;
+            int get_controller_main_position() const;
+            int get_controller_joint_position() const;
+            int get_controller_main_actual_position() const;
+            int get_circuit_rlist_size() const;
             void _process_mover(double p_delta);
 
 

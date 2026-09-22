@@ -238,6 +238,142 @@ namespace godot {
         BIND_ENUM_CONSTANT(START_MODE_CONVERTER);
         BIND_ENUM_CONSTANT(START_MODE_BATTERY);
         BIND_ENUM_CONSTANT(START_MODE_DIRECTION);
+
+        ClassDB::bind_method(D_METHOD("get_tachometer_speed"), &VehicleController::get_tachometer_speed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tachometer_speed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_tachometer_speed");
+        ClassDB::bind_method(D_METHOD("get_tachometer_speed_jump"), &VehicleController::get_tachometer_speed_jump);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_tachometer_speed_jump");
+        ClassDB::bind_method(D_METHOD("get_tachometer_clock_speed"), &VehicleController::get_tachometer_clock_speed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_tachometer_clock_speed");
+        ClassDB::bind_method(D_METHOD("get_direction_absolute"), &VehicleController::get_direction_absolute);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "direction_absolute", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_direction_absolute");
+        ClassDB::bind_method(D_METHOD("get_cabin"), &VehicleController::get_cabin);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "cabin", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cabin");
+        ClassDB::bind_method(D_METHOD("get_cabin_controleable"), &VehicleController::get_cabin_controleable);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "cabin_controleable", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cabin_controleable");
+        ClassDB::bind_method(D_METHOD("get_cabin_occupied"), &VehicleController::get_cabin_occupied);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "cabin_occupied", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cabin_occupied");
+        ClassDB::bind_method(D_METHOD("get_live_battery_voltage"), &VehicleController::get_live_battery_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "live_battery_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_live_battery_voltage");
+        ClassDB::bind_method(D_METHOD("get_battery_enabled"), &VehicleController::get_battery_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_battery_enabled");
+        ClassDB::bind_method(D_METHOD("get_radio_enabled"), &VehicleController::get_radio_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "radio_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_radio_enabled");
+        ClassDB::bind_method(D_METHOD("get_radio_powered"), &VehicleController::get_radio_powered);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "radio_powered", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_radio_powered");
+        ClassDB::bind_method(D_METHOD("get_radio_channel"), &VehicleController::get_radio_channel);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "radio_channel", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_radio_channel");
+        ClassDB::bind_method(D_METHOD("get_power24_voltage"), &VehicleController::get_power24_voltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power24_voltage");
+        ClassDB::bind_method(D_METHOD("get_power24_available"), &VehicleController::get_power24_available);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "power24_available", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power24_available");
+        ClassDB::bind_method(D_METHOD("get_power110_available"), &VehicleController::get_power110_available);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "power110_available", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power110_available");
+        ClassDB::bind_method(D_METHOD("get_current0"), &VehicleController::get_current0);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "current0", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_current0");
+        ClassDB::bind_method(D_METHOD("get_current1"), &VehicleController::get_current1);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "current1", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_current1");
+        ClassDB::bind_method(D_METHOD("get_current2"), &VehicleController::get_current2);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "current2", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_current2");
+        ClassDB::bind_method(D_METHOD("get_relay_novolt"), &VehicleController::get_relay_novolt);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "relay_novolt", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_relay_novolt");
+        ClassDB::bind_method(D_METHOD("get_relay_overvoltage"), &VehicleController::get_relay_overvoltage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "relay_overvoltage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_relay_overvoltage");
+        ClassDB::bind_method(D_METHOD("get_relay_ground"), &VehicleController::get_relay_ground);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "relay_ground", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_relay_ground");
+        ClassDB::bind_method(D_METHOD("get_train_damage"), &VehicleController::get_train_damage);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "train_damage", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_train_damage");
+        ClassDB::bind_method(D_METHOD("get_controller_second_position"), &VehicleController::get_controller_second_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_second_position");
+        ClassDB::bind_method(D_METHOD("get_controller_main_position"), &VehicleController::get_controller_main_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_main_position");
+        ClassDB::bind_method(D_METHOD("get_controller_joint_position"), &VehicleController::get_controller_joint_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "controller_joint_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_joint_position");
+        ClassDB::bind_method(D_METHOD("get_controller_main_actual_position"), &VehicleController::get_controller_main_actual_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_controller_main_actual_position");
+        ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &VehicleController::get_circuit_rlist_size);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "circuit_rlist_size", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_circuit_rlist_size");
     }
 
     std::unordered_map<const TMoverParameters *, VehicleController *> VehicleController::controllers_by_mover;
@@ -785,6 +921,141 @@ namespace godot {
 
 
     /* The vehicle's own share of the dump - what every vehicle has, whatever it is made of. */
+    double VehicleController::get_tachometer_speed() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? tacho_velocity : 0.0;
+    }
+
+    double VehicleController::get_tachometer_speed_jump() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? tacho_velocity_jump : 0.0;
+    }
+
+    double VehicleController::get_tachometer_clock_speed() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? tacho_clock_active ? tacho_velocity : 0.0 : 0.0;
+    }
+
+    int VehicleController::get_direction_absolute() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DirAbsolute : 0;
+    }
+
+    int VehicleController::get_cabin() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CabActive : 0;
+    }
+
+    bool VehicleController::get_cabin_controleable() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->IsCabMaster() : false;
+    }
+
+    int VehicleController::get_cabin_occupied() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CabOccupied : 0;
+    }
+
+    double VehicleController::get_live_battery_voltage() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->BatteryVoltage : 0.0;
+    }
+
+    bool VehicleController::get_battery_enabled() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Battery : false;
+    }
+
+    bool VehicleController::get_radio_enabled() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Radio : false;
+    }
+
+    bool VehicleController::get_radio_powered() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable) : false;
+    }
+
+    int VehicleController::get_radio_channel() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? radio_channel : 0;
+    }
+
+    double VehicleController::get_power24_voltage() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Power24vVoltage : 0.0;
+    }
+
+    bool VehicleController::get_power24_available() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Power24vIsAvailable : false;
+    }
+
+    bool VehicleController::get_power110_available() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Power110vIsAvailable : false;
+    }
+
+    double VehicleController::get_current0() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ShowCurrent(0) : 0.0;
+    }
+
+    double VehicleController::get_current1() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ShowCurrent(1) : 0.0;
+    }
+
+    double VehicleController::get_current2() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ShowCurrent(2) : 0.0;
+    }
+
+    bool VehicleController::get_relay_novolt() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->NoVoltRelay : false;
+    }
+
+    bool VehicleController::get_relay_overvoltage() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->OvervoltageRelay : false;
+    }
+
+    bool VehicleController::get_relay_ground() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->GroundRelay : false;
+    }
+
+    int VehicleController::get_train_damage() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->DamageFlag : 0;
+    }
+
+    int VehicleController::get_controller_second_position() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ScndCtrlPos : 0;
+    }
+
+    int VehicleController::get_controller_main_position() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->MainCtrlPos : 0;
+    }
+
+    int VehicleController::get_controller_joint_position() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LocalBrakePosA > 0.0 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo)) : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos) : 0;
+    }
+
+    int VehicleController::get_controller_main_actual_position() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->MainCtrlActualPos : 0;
+    }
+
+    int VehicleController::get_circuit_rlist_size() const {
+        TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->RlistSize : 0;
+    }
+
     void VehicleController::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -793,35 +1064,35 @@ namespace godot {
         p_state["mass_total"] = get_mass_total();
         p_state["velocity"] = get_velocity();
         p_state["speed"] = get_speed();
-        p_state["tachometer_speed"] = tacho_velocity;
-        p_state["tachometer_speed_jump"] = tacho_velocity_jump;
-        p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
+        p_state["tachometer_speed"] = get_tachometer_speed();
+        p_state["tachometer_speed_jump"] = get_tachometer_speed_jump();
+        p_state["tachometer_clock_speed"] = get_tachometer_clock_speed();
         p_state["total_distance"] = get_total_distance();
         p_state["direction"] = get_direction();
-        p_state["direction_absolute"] = mover->DirAbsolute;
-        p_state["cabin"] = mover->CabActive;
-        p_state["cabin_controleable"] = mover->IsCabMaster();
-        p_state["cabin_occupied"] = mover->CabOccupied;
-        p_state["battery_enabled"] = mover->Battery;
-        p_state["battery_voltage"] = mover->BatteryVoltage;
-        p_state["radio_enabled"] = mover->Radio;
-        p_state["radio_powered"] = mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
-        p_state["radio_channel"] = radio_channel;
-        p_state["power24_voltage"] = mover->Power24vVoltage;
-        p_state["power24_available"] = mover->Power24vIsAvailable;
-        p_state["power110_available"] = mover->Power110vIsAvailable;
-        p_state["current0"] = mover->ShowCurrent(0);
-        p_state["current1"] = mover->ShowCurrent(1);
-        p_state["current2"] = mover->ShowCurrent(2);
-        p_state["relay_novolt"] = mover->NoVoltRelay;
-        p_state["relay_overvoltage"] = mover->OvervoltageRelay;
-        p_state["relay_ground"] = mover->GroundRelay;
-        p_state["train_damage"] = mover->DamageFlag;
-        p_state["controller_second_position"] = mover->ScndCtrlPos;
-        p_state["controller_main_position"] = mover->MainCtrlPos;
-        p_state["controller_joint_position"] = mover->LocalBrakePosA > 0.0 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo)) : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos);
-        p_state["controller_main_actual_position"] = mover->MainCtrlActualPos;
-        p_state["circuit_rlist_size"] = mover->RlistSize;
+        p_state["direction_absolute"] = get_direction_absolute();
+        p_state["cabin"] = get_cabin();
+        p_state["cabin_controleable"] = get_cabin_controleable();
+        p_state["cabin_occupied"] = get_cabin_occupied();
+        p_state["battery_enabled"] = get_battery_enabled();
+        p_state["battery_voltage"] = get_live_battery_voltage();
+        p_state["radio_enabled"] = get_radio_enabled();
+        p_state["radio_powered"] = get_radio_powered();
+        p_state["radio_channel"] = get_radio_channel();
+        p_state["power24_voltage"] = get_power24_voltage();
+        p_state["power24_available"] = get_power24_available();
+        p_state["power110_available"] = get_power110_available();
+        p_state["current0"] = get_current0();
+        p_state["current1"] = get_current1();
+        p_state["current2"] = get_current2();
+        p_state["relay_novolt"] = get_relay_novolt();
+        p_state["relay_overvoltage"] = get_relay_overvoltage();
+        p_state["relay_ground"] = get_relay_ground();
+        p_state["train_damage"] = get_train_damage();
+        p_state["controller_second_position"] = get_controller_second_position();
+        p_state["controller_main_position"] = get_controller_main_position();
+        p_state["controller_joint_position"] = get_controller_joint_position();
+        p_state["controller_main_actual_position"] = get_controller_main_actual_position();
+        p_state["circuit_rlist_size"] = get_circuit_rlist_size();
     }
 
     /* The whole vehicle's configuration: its own plus every component's, composed when asked.

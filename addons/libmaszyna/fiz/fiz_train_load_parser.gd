@@ -11,7 +11,7 @@ class_name FizTrainLoadParser
 
 
 func create_node() -> VehicleLoad:
-    return VehicleLoad.new()
+    return MoverVehicleLoad.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

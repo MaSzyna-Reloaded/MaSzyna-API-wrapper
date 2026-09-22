@@ -153,4 +153,4 @@ ca_max_hold_time = 1.0
 
 [node name="VehicleElectroPneumaticDynamicBrake" type="VehicleElectroPneumaticDynamicBrake" parent="." unique_id=298279043]
 
-[node name="VehicleSpringBrake" type="VehicleSpringBrake" parent="." unique_id=1624912560]
+[node name="VehicleSpringBrake" type="MoverVehicleSpringBrake" parent="." unique_id=1624912560]

@@ -20,7 +20,7 @@ var _dimmer_rows: Array[DimmerListItem] = []
 
 
 func create_node() -> VehicleSwitches:
-    return VehicleSwitches.new()
+    return MoverVehicleSwitches.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:

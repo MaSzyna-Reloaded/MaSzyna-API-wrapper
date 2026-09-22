@@ -20,19 +20,9 @@ namespace godot {
 
         private:
             static void _bind_methods();
-
-        private:
-
-        protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-
-            
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_sand_active() const;
-
+            virtual bool get_sand_active() const = 0;
             MAKE_MEMBER_GS(bool, pantograph_impulse, false);
             MAKE_MEMBER_GS(bool, converter_impulse, false);
             MAKE_MEMBER_GS(bool, motor_connectors_impulse, true);
@@ -45,8 +35,7 @@ namespace godot {
             MAKE_MEMBER_GS(bool, dimmer_list_cycle, false);
             MAKE_MEMBER_GS(int, dimmer_list_default_position, 0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<DimmerListItem>, dimmer_list_positions)
-
-            void sand(bool p_active);
+            virtual void sand(bool p_active) = 0;
             void _register_commands() override;
             void _unregister_commands() override;
     };

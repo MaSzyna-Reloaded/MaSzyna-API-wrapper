@@ -8,7 +8,7 @@ func before_each():
     train.train_id = "TestTrain"
     add_child(train)
 
-    ai_hints = VehicleAIHints.new()
+    ai_hints = MoverVehicleAIHints.new()
     train.add_child(ai_hints)
     await wait_idle_frames(2)
 

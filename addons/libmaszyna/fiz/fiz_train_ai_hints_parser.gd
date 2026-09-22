@@ -10,7 +10,7 @@ class_name FizTrainAIHintsParser
 
 
 func create_node() -> VehicleAIHints:
-    return VehicleAIHints.new()
+    return MoverVehicleAIHints.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

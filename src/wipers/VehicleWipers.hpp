@@ -19,40 +19,16 @@ namespace godot {
             GDCLASS(VehicleWipers, VehicleComponent);
 
         private:
-            struct Wiper {
-                    double position = 0.0;  // dWiperPos: 0 parked, 1 fully out
-                    bool returning = false; // wiperDirection
-                    double out_timer = 0.0;
-                    double park_timer = 0.0;
-                    int working_switch_position = 0;
-            };
-
             static void _bind_methods();
-            std::vector<Wiper> wipers;
-            int switch_position = 0;
-            bool switch_initialized = false;
-            void _set_switch_position(int p_position);
-
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
-
-            
-        private:
-
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            int get_switch_position() const;
-            PackedFloat64Array get_sweep_positions() const;
-
-            void switch_increase();
-            void switch_decrease();
-
+            virtual int get_switch_position() const = 0;
+            virtual PackedFloat64Array get_sweep_positions() const = 0;
+            virtual void switch_increase() = 0;
+            virtual void switch_decrease() = 0;
             MAKE_MEMBER_GS(double, angle, 0.0);
             MAKE_MEMBER_GS(int, default_position, 0);
             // Number of wipers of the vehicle model (the original counts its animated submodels,

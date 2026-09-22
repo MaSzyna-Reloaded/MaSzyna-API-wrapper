@@ -16,7 +16,7 @@ class_name FizTrainSpeedControlParser
 
 
 func create_node() -> VehicleSpeedControl:
-    return VehicleSpeedControl.new()
+    return MoverVehicleSpeedControl.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

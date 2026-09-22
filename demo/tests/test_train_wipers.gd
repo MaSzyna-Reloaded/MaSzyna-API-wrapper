@@ -11,7 +11,7 @@ func before_each():
     train = VehicleController.new()
     train.train_id = "TestTrainWipers"
     train.battery_voltage = 110.0
-    wipers = VehicleWipers.new()
+    wipers = MoverVehicleWipers.new()
     # WiperList: of ep09_v2/104e-mod-dod-zal.fiz - mask, sweep time, interval, delay at the far end
     wipers.positions = [
         _item(0, 1.0, 0.0, 0.5),
@@ -39,7 +39,7 @@ func _item(mask: int, transit_time: float, period: float, return_delay: float) -
 
 
 func test_defaults():
-    var defaults: VehicleWipers = VehicleWipers.new()
+    var defaults: VehicleWipers = MoverVehicleWipers.new()
 
     assert_eq(defaults.angle, 0.0)
     assert_eq(defaults.default_position, 0)

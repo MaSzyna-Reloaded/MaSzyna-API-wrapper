@@ -17,7 +17,7 @@ var _rows: Array[UniversalControllerListItem] = []
 
 
 func create_node() -> VehicleUniversalController:
-    return VehicleUniversalController.new()
+    return MoverVehicleUniversalController.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

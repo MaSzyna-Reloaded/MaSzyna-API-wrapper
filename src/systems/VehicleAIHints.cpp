@@ -15,14 +15,4 @@ namespace godot {
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_REAR);
         BIND_ENUM_CONSTANT(PANTOGRAPH_STATE_BOTH);
     }
-
-    void VehicleAIHints::_do_update_internal_mover(TMoverParameters *p_mover) {
-        ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
-
-        p_mover->AIHintPantstate = pantograph_state;
-        p_mover->AIHintPantUpIfIdle = raise_pantographs_when_idle;
-        p_mover->AIHintLocalBrakeAccFactor = local_brake_acceleration_factor;
-    }
-
 } // namespace godot

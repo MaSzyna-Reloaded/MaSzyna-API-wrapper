@@ -10,17 +10,7 @@ namespace godot {
 
         private:
             static void _bind_methods();
-
-        private:
-
-        protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
-
-            
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             MAKE_MEMBER_GS(bool, integrated_brake_pn, true);
             MAKE_MEMBER_GS(bool, integrated_brake, true);
             MAKE_MEMBER_GS_DIRTY(int, selector_position, 0);

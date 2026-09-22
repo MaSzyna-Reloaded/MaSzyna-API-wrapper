@@ -22,44 +22,35 @@ namespace godot {
     class VehicleHorns : public VehicleComponent {
             GDCLASS(VehicleHorns, VehicleComponent)
 
+        private:
+            static void _bind_methods();
         protected:
             void _register_commands() override;
             void _unregister_commands() override;
-
-            
-        private:
-
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            bool get_low_pressed() const;
-            bool get_high_pressed() const;
-            bool get_whistle_pressed() const;
+            virtual bool get_low_pressed() const = 0;
+            virtual bool get_high_pressed() const = 0;
+            virtual bool get_whistle_pressed() const = 0;
             /* Below this the vehicle counts as standing, and the alarm chain does not sound
              * the emergency signal (DynObj.cpp, the same 0.5 m/s the original compares against) */
             static constexpr double HORN_EMERGENCY_MIN_SPEED = 0.5;
-
             /* DynObj.cpp's per-frame horn combination: while moving with the alarm chain
              * pulled, the emergency signal overrides the manually commanded one. */
-            int get_combined_signal() const;
-            bool get_low_active() const;
-            bool get_high_active() const;
-            bool get_whistle_active() const;
-            int get_horn() const;
-
-            static void _bind_methods();
-
-            void set_horn_low(bool p_state);
-            void set_horn_high(bool p_state);
-            void set_whistle(bool p_state);
+            virtual int get_combined_signal() const = 0;
+            virtual bool get_low_active() const = 0;
+            virtual bool get_high_active() const = 0;
+            virtual bool get_whistle_active() const = 0;
+            virtual int get_horn() const = 0;
+            virtual void set_horn_low(bool p_state) = 0;
+            virtual void set_horn_high(bool p_state) = 0;
+            virtual void set_whistle(bool p_state) = 0;
             // Compatibility entry point for a single bidirectional cabin widget (one physical
             // lever animating -1/0/+1) driving both low and high horn from one signed value,
             // e.g. CabinSwitch's command_set - positive activates the low horn, negative the
             // high horn, zero releases both. Internally routes to the same WarningSignal bits
             // as set_horn_low()/set_horn_high().
-            void set_horn(double p_position);
-
+            virtual void set_horn(double p_position) = 0;
             MAKE_MEMBER_GS_NR(bool, low_horn_enabled, true);
             MAKE_MEMBER_GS_NR(bool, high_horn_enabled, true);
             MAKE_MEMBER_GS_NR(bool, whistle_enabled, true);

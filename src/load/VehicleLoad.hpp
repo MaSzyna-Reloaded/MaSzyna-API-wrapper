@@ -8,17 +8,11 @@ namespace godot {
             GDCLASS(VehicleLoad, VehicleComponent)
         private:
             static void _bind_methods();
-            TypedArray<LoadListItem> load_list;
-
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;
-
         public:
             enum LoadUnit { LOAD_UNIT_TONS, LOAD_UNIT_PIECES };
-
             MAKE_MEMBER_GS_NR(LoadUnit, load_unit, LoadUnit::LOAD_UNIT_TONS);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<String>, accepted_loads);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<float>, minimum_load_offsets)
@@ -26,15 +20,8 @@ namespace godot {
             MAKE_MEMBER_GS(double, overload_factor, 0.0f);
             MAKE_MEMBER_GS(float, load_speed, 0.0f);
             MAKE_MEMBER_GS(float, unload_speed, 0.0f);
-
-            void set_load_list(const TypedArray<LoadListItem> &p_load_list) {
-                load_list.clear();
-                load_list.append_array(p_load_list);
-            }
-
-            TypedArray<LoadListItem> get_load_list() {
-                return load_list;
-            }
+            virtual void set_load_list(const TypedArray<LoadListItem> &p_load_list) = 0;
+            virtual TypedArray<LoadListItem> get_load_list() = 0;
     };
 } // namespace godot
 

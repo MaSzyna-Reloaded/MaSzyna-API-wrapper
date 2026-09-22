@@ -9,7 +9,7 @@ class_name FizTrainSpringBrakeParser
 
 
 func create_node() -> VehicleSpringBrake:
-    return VehicleSpringBrake.new()
+    return MoverVehicleSpringBrake.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

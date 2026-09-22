@@ -1,7 +1,9 @@
 #include "brakes/VehicleBrake.hpp"
 #include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/MoverVehicleSpringBrake.hpp"
 #include "brakes/VehicleSpringBrake.hpp"
 #include "buffers/VehicleBuffCoupl.hpp"
+#include "controllers/MoverVehicleUniversalController.hpp"
 #include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
@@ -27,6 +29,7 @@
 #include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
 #include "lighting/VehicleLighting.hpp"
+#include "load/MoverVehicleLoad.hpp"
 #include "load/VehicleLoad.hpp"
 #include "loaders/E3DResourceFormatLoader.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
@@ -49,12 +52,18 @@
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
+#include "speed_control/MoverVehicleSpeedControl.hpp"
 #include "speed_control/VehicleSpeedControl.hpp"
+#include "switches/MoverVehicleSwitches.hpp"
 #include "switches/VehicleSwitches.hpp"
+#include "systems/MoverVehicleAIHints.hpp"
 #include "systems/VehicleAIHints.hpp"
+#include "systems/MoverVehicleHorns.hpp"
 #include "systems/VehicleHorns.hpp"
 #include "systems/VehicleSecuritySystem.hpp"
+#include "wheels/MoverVehicleWheels.hpp"
 #include "wheels/VehicleWheels.hpp"
+#include "wipers/MoverVehicleWipers.hpp"
 #include "wipers/VehicleWipers.hpp"
 #include "physics/BaseVehiclePhysicsServer.hpp"
 #include "physics/MaszynaMoverPhysicsServer.hpp"
@@ -118,7 +127,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
         GDREGISTER_CLASS(VehicleBrake);
-        GDREGISTER_CLASS(VehicleSpringBrake);
+        GDREGISTER_ABSTRACT_CLASS(VehicleSpringBrake);
+        GDREGISTER_CLASS(MoverVehicleSpringBrake);
         GDREGISTER_CLASS(VehicleDoors);
         GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
         GDREGISTER_CLASS(VehicleDieselEngine);
@@ -130,10 +140,13 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
         GDREGISTER_CLASS(MoverVehicleHeating);
-        GDREGISTER_CLASS(VehicleWheels);
+        GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
+        GDREGISTER_CLASS(MoverVehicleWheels);
         GDREGISTER_CLASS(VehicleSecuritySystem);
-        GDREGISTER_CLASS(VehicleHorns);
-        GDREGISTER_CLASS(VehicleAIHints);
+        GDREGISTER_ABSTRACT_CLASS(VehicleHorns);
+        GDREGISTER_CLASS(MoverVehicleHorns);
+        GDREGISTER_ABSTRACT_CLASS(VehicleAIHints);
+        GDREGISTER_CLASS(MoverVehicleAIHints);
         GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_CLASS(VehicleLighting)
         GDREGISTER_CLASS(GameLog);
@@ -141,15 +154,20 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
         GDREGISTER_CLASS(VehicleElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(VehicleLoad)
+        GDREGISTER_ABSTRACT_CLASS(VehicleLoad)
+        GDREGISTER_CLASS(MoverVehicleLoad)
         GDREGISTER_CLASS(LoadListItem)
         GDREGISTER_CLASS(VehicleBuffCoupl)
-        GDREGISTER_CLASS(VehicleSpeedControl)
-        GDREGISTER_CLASS(VehicleUniversalController)
+        GDREGISTER_ABSTRACT_CLASS(VehicleSpeedControl)
+        GDREGISTER_CLASS(MoverVehicleSpeedControl)
+        GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)
+        GDREGISTER_CLASS(MoverVehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
-        GDREGISTER_CLASS(VehicleWipers)
+        GDREGISTER_ABSTRACT_CLASS(VehicleWipers)
+        GDREGISTER_CLASS(MoverVehicleWipers)
         GDREGISTER_CLASS(WiperListItem)
-        GDREGISTER_CLASS(VehicleSwitches)
+        GDREGISTER_ABSTRACT_CLASS(VehicleSwitches)
+        GDREGISTER_CLASS(MoverVehicleSwitches)
         GDREGISTER_CLASS(DimmerListItem)
         GDREGISTER_CLASS(BrakePressureTableItem)
         GDREGISTER_CLASS(CompressorListItem)

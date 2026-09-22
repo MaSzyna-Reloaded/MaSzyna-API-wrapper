@@ -8,38 +8,21 @@ namespace godot {
             GDCLASS(VehicleWheels, VehicleComponent)
 
             
+        private:
+            static void _bind_methods();
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
-
             /* Live state, read straight from the backend - nothing is stored. */
-            double get_angle_front_deg() const;
-            double get_angle_powered_deg() const;
-            double get_angle_rear_deg() const;
-            double get_rotation_speed_rps() const;
-            double get_rotation_acceleration_rps2() const;
-            bool get_slipping() const;
-            double get_flat() const;
-
+            virtual double get_angle_front_deg() const = 0;
+            virtual double get_angle_powered_deg() const = 0;
+            virtual double get_angle_rear_deg() const = 0;
+            virtual double get_rotation_speed_rps() const = 0;
+            virtual double get_rotation_acceleration_rps2() const = 0;
+            virtual bool get_slipping() const = 0;
+            virtual double get_flat() const = 0;
             enum BearingType {
                 BEARING_TYPE_SLIDE = 0,
                 BEARING_TYPE_ROLL = 1,
             };
-
-        private:
-            double wheel_angle_front_deg = 0.0;
-            double wheel_angle_powered_deg = 0.0;
-            double wheel_angle_rear_deg = 0.0;
-
-        private:
-
-        protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-
-        public:
-            static void _bind_methods();
-
             MAKE_MEMBER_GS_DIRTY(double, powered_wheel_diameter, 0.0);
             MAKE_MEMBER_GS_DIRTY(double, front_rolling_wheel_diameter, 0.0);
             MAKE_MEMBER_GS_DIRTY(double, rear_rolling_wheel_diameter, 0.0);

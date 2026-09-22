@@ -15,7 +15,7 @@ var _size: int = 0
 
 
 func create_node() -> VehicleWipers:
-    return VehicleWipers.new()
+    return MoverVehicleWipers.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:

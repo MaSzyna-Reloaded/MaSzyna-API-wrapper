@@ -87,7 +87,7 @@ func before_all() -> void:
         var lighting: VehicleLighting = VehicleLighting.new()
         lighting.name = "Lighting"
         controller.add_child(lighting)
-        var spring_brake: VehicleSpringBrake = VehicleSpringBrake.new()
+        var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()
         spring_brake.name = "SpringBrake"
         controller.add_child(spring_brake)
 

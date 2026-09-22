@@ -155,7 +155,7 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     # unlike every other VehicleComponent above it's attached unconditionally here rather than only when
     # a matching section is found - every VehicleController gets one, same as a hand-authored scene
     # (e.g. sm_42v_1.tscn's own "Horns" node) would.
-    var horns := VehicleHorns.new()
+    var horns := MoverVehicleHorns.new()
     horns.name = "Horns"
     target.add_child(horns)
 

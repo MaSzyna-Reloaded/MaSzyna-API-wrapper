@@ -34,37 +34,6 @@ namespace godot {
                 "", "get_sand_active");
     }
 
-    void VehicleSwitches::_do_update_internal_mover(TMoverParameters *p_mover) {
-        ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
-
-        p_mover->PantSwitchType = pantograph_impulse ? "impulse" : "";
-        p_mover->ConvSwitchType = converter_impulse ? "impulse" : "";
-        p_mover->StLinSwitchType = motor_connectors_impulse ? "impulse" : "toggle";
-    }
-
-
-    bool VehicleSwitches::get_sand_active() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->SandDose : false;
-    }
-
-    void VehicleSwitches::_fill_state_dictionary(Dictionary &p_state) const {
-        // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
-            return;
-        }
-        p_state["sand_active"] = get_sand_active();
-    }
-
-    void VehicleSwitches::sand(const bool p_active) {
-        TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-        // Train.cpp:1917-1939 (OnCommand_sandboxactivate) -> SandboxManual(State),
-        // "sand_bt:"/ggSandButton (Train.cpp:10044) - momentary, active only while held.
-        mover->SandboxManual(p_active);
-    }
-
     void VehicleSwitches::_register_commands() {
         VehicleComponent::_register_commands();
         register_command("sand", Callable(this, "sand"));

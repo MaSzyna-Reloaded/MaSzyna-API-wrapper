@@ -12,7 +12,7 @@ class_name FizTrainWheelsParser
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := VehicleWheels.new()
+    var node := MoverVehicleWheels.new()
 
     var diameter: float = FizLineUtil.get_float(kv, "D")
     if kv.has("D"):

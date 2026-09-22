@@ -8,7 +8,16 @@ the `get_mover_state()` / `update_mover()` / `step_movers()` rename, the `power_
 stage 0 (the baseline bench) and stage 2 (`TrackManager` and `SpatialIndex` in C++). Each stage is
 one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
 
-* **Stage 3 - three servers, interfaces, and ownership of the Mover.** `BaseVehiclePhysicsServer`
+* **Stage 3, still open.** Done: the `Train*` -> `Vehicle*` rename, and
+  `BaseVehiclePhysicsServer` + `MaszynaMoverPhysicsServer`, which now own every
+  `TMoverParameters` (created and freed with the handle - they used to leak) and run the force and
+  movement integration. `VehicleController` keeps a borrowed pointer to the Mover because every
+  component still reaches for it per frame; that pointer goes when the components move onto the
+  server. Left to do: `RailVehicleServer` (the C++ port of `rail_vehicle_physics_server.gd`,
+  binding the vehicle RID to the physics RID), moving the step loop off `TrainSystem` and into the
+  server, and `_update_tachometer` / `_update_mover_config_if_dirty`, which stay on the controller
+  until the state registry and the `configure` phase exist.
+* **Stage 3 (original scope, for reference).** `BaseVehiclePhysicsServer`
   (abstract contract, its own RIDs) + `MaszynaMoverPhysicsServer` (the only place that knows
   `TMoverParameters`, factories `MoverVehicleController`/`MoverVehicle*`) + `RailVehicleServer`
   (today's `RailVehiclePhysicsServer`: track placement, movement, switches, neighbour scan,

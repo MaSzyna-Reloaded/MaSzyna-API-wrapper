@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="BaseVehiclePhysicsServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="vehicle_compute_forces">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_compute_movement">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="delta" type="float" />
+			<param index="2" name="kind" type="int" enum="BaseVehiclePhysicsServer.MovementKind" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_create">
+			<return type="RID" />
+			<param index="0" name="type_name" type="String" />
+			<param index="1" name="name" type="String" />
+			<param index="2" name="initial_velocity" type="float" />
+			<param index="3" name="cabin_number" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_exists" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_free">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_speed" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_velocity" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_is_active" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_location">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="position" type="Vector3" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<constants>
+		<constant name="MOVEMENT_FAST" value="0" enum="MovementKind">
+		</constant>
+		<constant name="MOVEMENT_FULL" value="1" enum="MovementKind">
+		</constant>
+		<constant name="VEHICLE_END_FRONT" value="0" enum="VehicleEnd">
+		</constant>
+		<constant name="VEHICLE_END_REAR" value="1" enum="VehicleEnd">
+		</constant>
+	</constants>
+</class>

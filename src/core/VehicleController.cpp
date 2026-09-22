@@ -2,6 +2,7 @@
 #include "../core/VehicleComponent.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/VehicleEngine.hpp"
+#include "../physics/MaszynaMoverPhysicsServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -268,7 +269,12 @@ namespace godot {
         const auto initial_vel = this->initial_velocity;
         const auto mover_type_name = std::string(type_name.utf8().ptr());
         const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
-        mover = std::make_unique<TMoverParameters>(initial_vel, mover_type_name, name, this->cabin_number).release();
+        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        ERR_FAIL_NULL(physics);
+        physics_rid = physics->vehicle_create(
+                type_name, String(name.c_str()), initial_vel, this->cabin_number);
+        mover = physics->vehicle_get_mover(physics_rid);
+        ERR_FAIL_NULL(mover);
         controllers_by_mover[mover] = this;
 
         dirty = true;
@@ -331,6 +337,13 @@ namespace godot {
         }
         if (p_what == NOTIFICATION_PREDELETE && mover != nullptr) {
             controllers_by_mover.erase(mover);
+            // the backend owns the Mover, so freeing the handle is what destroys it
+            if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+                physics != nullptr) {
+                physics->vehicle_free(physics_rid);
+            }
+            physics_rid = RID();
+            mover = nullptr;
         }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
@@ -418,16 +431,16 @@ namespace godot {
     // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
     // movement of one simulation frame and is reset after it (ResetdMoveLen, DynObj.cpp:3473)
     bool VehicleController::is_physics_active() const {
-        return mover != nullptr && mover->PhysicActivation;
+        const MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        return physics != nullptr && physics->vehicle_is_active(physics_rid);
     }
 
     void VehicleController::update_location() {
-        if (mover == nullptr) {
+        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        if (physics == nullptr) {
             return;
         }
-        const Vector3 position = get_world_position();
-        mover->Loc = {-position.x, position.z, position.y};
-        mover->dMoveLen = 0.0;
+        physics->vehicle_set_location(physics_rid, get_world_position());
     }
 
     // Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135); the track scan itself
@@ -468,28 +481,26 @@ namespace godot {
     }
 
     void VehicleController::compute_forces(const double p_delta) {
+        // the components' authored config is applied before the backend integrates anything;
+        // this becomes the server's own `configure` phase once the components move there
         _update_mover_config_if_dirty();
-        if (mover == nullptr) {
+        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        if (physics == nullptr) {
             return;
         }
-        mover->ComputeTotalForce(p_delta);
+        physics->vehicle_compute_forces(physics_rid, p_delta);
     }
 
     void VehicleController::compute_movement(const double p_delta) {
-        // a standing vehicle switched off by ComputeTotalForce() is not moved at all
-        // (DynObj.cpp:4059 FastUpdate, DynObj.cpp:2940 Update)
-        if (mover == nullptr || !mover->PhysicActivation) {
+        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+        if (physics == nullptr) {
             return;
         }
-        TRotation rotation;
-        mover->ComputeMovement(
-                p_delta, p_delta, mover->RunningShape, mover->RunningTrack, mover->RunningTraction, mover->Loc,
-                rotation);
+        physics->vehicle_compute_movement(
+                physics_rid, p_delta, MaszynaMoverPhysicsServer::MOVEMENT_FULL);
+        // the Hasler recorder is vehicle state, not integration - it stays here until the state
+        // registry takes it over
         _update_tachometer(p_delta);
-
-        // the state is fetched once per physics step by update_state(), not per iteration
-        // the vehicle is moved by process_movement() distance (DynObj.cpp:2439)
-        mover->dMoveLen += process_movement(p_delta);
     }
 
     /// The cheap movement of the intermediate physics iterations: the original runs UpdateForce +
@@ -497,14 +508,11 @@ namespace godot {
     /// (DynObj.cpp:8195-8210), where FastUpdate calls Mover::FastComputeMovement()
     /// (DynObj.cpp:4086) instead of the full ComputeMovement().
     void VehicleController::compute_fast_movement(const double p_delta) {
-        // a standing vehicle switched off by ComputeTotalForce() is not moved at all
-        // (DynObj.cpp:4059)
-        if (mover == nullptr || !mover->PhysicActivation) {
-            return;
+        if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
+            physics != nullptr) {
+            physics->vehicle_compute_movement(
+                    physics_rid, p_delta, MaszynaMoverPhysicsServer::MOVEMENT_FAST);
         }
-        TRotation rotation;
-        mover->FastComputeMovement(p_delta, mover->RunningShape, mover->RunningTrack, mover->Loc, rotation);
-        mover->dMoveLen += process_movement(p_delta);
     }
 
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)

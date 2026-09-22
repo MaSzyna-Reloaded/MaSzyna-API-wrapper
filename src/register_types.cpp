@@ -55,6 +55,8 @@
 #include "systems/VehicleSecuritySystem.hpp"
 #include "wheels/VehicleWheels.hpp"
 #include "wipers/VehicleWipers.hpp"
+#include "physics/BaseVehiclePhysicsServer.hpp"
+#include "physics/MaszynaMoverPhysicsServer.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackManager.hpp"
@@ -74,6 +76,7 @@ UserSettings *user_settings_singleton = nullptr;
 MaszynaRuntime *maszyna_runtime_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackManager *track_manager_singleton = nullptr;
+MaszynaMoverPhysicsServer *mover_physics_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -96,6 +99,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
+        GDREGISTER_ABSTRACT_CLASS(BaseVehiclePhysicsServer);
+        GDREGISTER_CLASS(MaszynaMoverPhysicsServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
         GDREGISTER_CLASS(TrackBranchNeighbors);
@@ -155,6 +160,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
         track_manager_singleton = memnew(TrackManager);
+        mover_physics_server_singleton = memnew(MaszynaMoverPhysicsServer);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -164,6 +170,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
         Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);                      // 8
+        Engine::get_singleton()->register_singleton(
+                "MaszynaMoverPhysicsServer", mover_physics_server_singleton); // 9
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -187,6 +195,10 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("MaszynaMoverPhysicsServer")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaMoverPhysicsServer"); // 9
     }
 
     if (Engine::get_singleton()->has_singleton("TrackManager")) {
@@ -219,6 +231,11 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (Engine::get_singleton()->has_singleton("UserSettings")) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
+    }
+
+    if (mover_physics_server_singleton != nullptr) { // 9
+        memdelete(mover_physics_server_singleton);
+        mover_physics_server_singleton = nullptr;
     }
 
     if (track_manager_singleton != nullptr) { // 8

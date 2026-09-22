@@ -19,7 +19,12 @@ namespace godot {
     class VehicleController : public Node {
             GDCLASS(VehicleController, Node)
         private:
+            /* Owned by MaszynaMoverPhysicsServer, which created it and will free it; this
+             * is a borrowed pointer, cached because every component reaches for it per
+             * frame. It is never deleted here. */
             TMoverParameters *mover{};
+            /* This vehicle's handle in the simulation backend. */
+            RID physics_rid;
             int cabin_number = 0;
             void initialize_mover();
             void initialize_mover_state();

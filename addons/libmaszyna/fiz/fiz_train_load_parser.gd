@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainLoadParser
 
-## Load: section parser -> VehicleLoad. Registered directly in FizTrainControllerInstancer's
+## Load: section parser -> VehicleLoad. Registered directly in FizVehicleBuilder's
 ## section table. Real syntax is a single scalar line (confirmed against ~25 real vehicle
 ## files, wagons/locomotives alike, all matching this shape exactly):
 ## `Load: MaxLoad=64 LoadQ=tonns LoadAccepted=Coal,Ore,Calcium LoadSpeed=1 UnLoadSpeed=0.1

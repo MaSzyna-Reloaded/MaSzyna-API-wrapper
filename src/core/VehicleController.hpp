@@ -269,6 +269,15 @@ namespace godot {
                     const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             void register_command(const String &p_command, const Callable &p_callable);
             void unregister_command(const String &p_command, const Callable &p_callable);
+            /* One tick of everything the vehicle is made of, after its physics has moved. The
+             * components have no _process of their own to be driven by a scene tree. */
+            /* Brings the vehicle up: its simulation, its state and the signals whose initial
+             * value listeners expect. Called by whatever owns the vehicle, once it is built -
+             * it used to wait for NOTIFICATION_READY, which a vehicle outside a tree never gets. */
+            void initialize();
+            /* The reverse: the vehicle leaves TrainSystem and gives its commands back. */
+            void shutdown();
+            void process_components(double p_delta);
             void update_state();
             /// Straight from the mover, for the per-frame readers that only want this one number
             /// and would otherwise force the whole state dictionary to be rebuilt
@@ -357,6 +366,11 @@ namespace godot {
             /* Every scripted component carrying this tag - modders add as many as they like */
             TypedArray<VehicleComponent> find_generic_components(const StringName &p_tag) const;
 
+            /* Takes a component into the vehicle and owns it from then on - it is ticked with
+             * the vehicle and freed with it. The shape Node::add_child() has, for the same
+             * reason: the thing being handed over has no life of its own outside its owner. */
+            void add_component(VehicleComponent *p_component);
+
             void register_component(VehicleComponent *p_component);
             void unregister_component(VehicleComponent *p_component);
 
@@ -364,6 +378,7 @@ namespace godot {
             // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
             static std::unordered_map<const TMoverParameters *, VehicleController *> controllers_by_mover;
             Vector<VehicleComponent *> components;
+            void free_components();
             /* The lighting component, kept because the vehicle raises roof_light_changed for it.
              * Resolved when the component joins, not searched for per frame. */
             VehicleLighting *lighting = nullptr;

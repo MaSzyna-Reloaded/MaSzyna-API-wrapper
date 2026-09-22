@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     heating = MoverVehicleHeating.new()
-    train.add_child(heating)
+    train.add_component(heating)
     await wait_idle_frames(2)
 
 func after_each():

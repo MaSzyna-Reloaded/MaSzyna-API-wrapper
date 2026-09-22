@@ -1,4 +1,4 @@
-extends GenericVehicleComponent
+extends GenericVehicleComponentNode
 
 var _total_time = 0.0
 
@@ -6,7 +6,7 @@ var state = {
     "custom_train_part_calls": 0,
 }
 
-func _enter_tree():
+func _ready():
     register_command("custom_command", self._handle_custom_command)
 
 func _handle_custom_command(p1, p2):

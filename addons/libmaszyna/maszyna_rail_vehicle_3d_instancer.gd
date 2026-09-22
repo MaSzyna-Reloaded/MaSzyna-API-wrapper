@@ -137,8 +137,8 @@ static func _build_structure(
         # the exterior (_update_model_detail).
         passengers_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
-    var fiz_controller := FIZTrainController.new()
-    fiz_controller.name = "FIZTrainController"
+    var fiz_controller := FizVehiclePhysicsNode.new()
+    fiz_controller.name = "FizVehiclePhysicsNode"
     fiz_controller.data_path = normalized_data_path
     fiz_controller.fiz_filename = file_name
     fiz_controller.train_id = train_id
@@ -163,9 +163,9 @@ static func _build_structure(
     auto_rewident.name = "AutoRewident"
     vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
-    # FizTrainControllerInstancer.build() hardcodes the generated controller's name to
+    # FizVehicleBuilder.build() hardcodes the generated controller's name to
     # "VehicleController", so this relative path is deterministic even though the controller
-    # itself doesn't exist yet (FIZTrainController defers its own build by one frame) - do not
+    # itself doesn't exist yet (FizVehiclePhysicsNode defers its own build by one frame) - do not
     # resolve it with get_path_to() here, RailVehicle3D's own _process_dirty() will do that once
     # the deferred build has actually run.
     vehicle.controller_path = NodePath("%s/VehicleController" % fiz_controller.name)
@@ -180,15 +180,15 @@ static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_d
     var abs_mmd_path:String = UserSettings.get_maszyna_game_dir().path_join(model.data_path).path_join(file_name + ".mmd")
     _bind_animation_paths(vehicle, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path))
     var sound_diagnostics:Array[Dictionary] = []
-    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FIZTrainController", {}, sound_diagnostics)
+    MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FizVehiclePhysicsNode", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:
         if diagnostic["severity"] != "info":
             push_warning("MaszynaRailVehicle3DInstancer: [%s] %s" % [diagnostic["code"], diagnostic["message"]])
 
     configure_head_display(vehicle, model, head_display_material)
 
-    # FIZ Dimensions are known only once FIZTrainController has built its deferred controller.
-    var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
+    # FIZ Dimensions are known only once FizVehiclePhysicsNode has built its deferred controller.
+    var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
     var rain_volume:RainVolume = vehicle.get_node(NodePath(RAIN_VOLUME_NAME)) as RainVolume
     fiz_controller.controller_changed.connect(_fit_rain_volume.bind(rain_volume))
 
@@ -220,7 +220,7 @@ static func configure_head_display(
 
 
 ## PackedScene.pack()-in-memory trick, already used in production by
-## FizTrainControllerInstancer.build_scene() - lets RailVehicle3D.enter_cabin()'s existing
+## FizVehicleBuilder.build_scene() - lets RailVehicle3D.enter_cabin()'s existing
 ## cabin_scene.instantiate() produce a correctly pre-configured DynamicTrainCabin every time,
 ## with no changes to rail_vehicle_3d.gd.
 static func _build_cabin_scene(normalized_data_path:String, file_name:String, skin:String) -> PackedScene:
@@ -276,7 +276,7 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
 
     if wiper_prefix:
         vehicle.wiper_arm_paths = _find_wiper_arm_paths(vehicle, submodel_index, wiper_prefix)
-        var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
+        var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
         fiz_controller.controller_changed.connect(_apply_wiper_count.bind(vehicle))
         _apply_wiper_count(fiz_controller.get_controller(), vehicle)
 
@@ -313,7 +313,7 @@ static func _find_pantograph_arm_paths(
 static func _apply_wiper_count(controller:VehicleController, vehicle:RailVehicle3D) -> void:
     if not controller:
         return
-    var wipers:VehicleWipers = controller.get_node_or_null("VehicleWipers") as VehicleWipers
+    var wipers:VehicleWipers = controller.get_component(VehicleComponentType.COMPONENT_WIPERS) as VehicleWipers
     if wipers:
         wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
         wipers.apply_config()

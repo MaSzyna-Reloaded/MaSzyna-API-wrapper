@@ -41,13 +41,28 @@ are deleted; all 21 components and the controller's own 32 keys answer through
 `VehicleLighting::get_roof_light_enabled()`, the first typed state property, instead of a registry
 lookup.
 
+**Stages B and C are done.** `_fill_state_dictionary`/`_fill_config_dictionary` with
+`vehicle_dump_state(rid)`/`vehicle_dump_config(rid)` (the dump is composed once per physics step
+and cached until the next one); the controller's common properties; and `VehicleComponent` is an
+`Object` owned by the vehicle, not a node - `attach(controller)`/`detach()`/`process(delta)`
+replace the notifications, `get_component(TYPE)` replaces walking the tree, and
+`GenericVehicleComponentNode` is the modder's authoring point.
+
+**The FIZ half of stage F is done.** A `.fiz` parses into a `VehicleModel` +
+`VehicleComponentModel`s (typed C++ `Resource`s, modelled on `E3DModel`/`E3DSubModel`) rather than
+into a packed node tree; `FizVehicleBuilder` is the factory with the `ResourceCache`, and
+`FizVehiclePhysicsNode` only names a data dir and a filename and asks the factory for the model,
+the way `MaterialManager` and `E3DModelManager` are asked. `VehicleModel::capture()` walks
+`get_property_list()` for `PROPERTY_USAGE_STORAGE`, so a component's authored configuration
+serialises without a line of per-component code.
+
 **Remaining stages** (the full plan, with per-stage verification, is in the session plan file):
 
-* **B - dumps and the vehicle's common properties.** `_fill_config_dictionary` beside the state
+* ~~**B - dumps and the vehicle's common properties.** `_fill_config_dictionary` beside the state
   one; `vehicle_dump_config(rid)`; `velocity`, `speed`, `mass_total`, `total_distance`,
   `direction` as typed properties of `VehicleController` with `vehicle_velocity_get(rid)`
-  forwarding to them; `Dictionary config` leaves the controller for the components that parse it.
-* **C - `VehicleComponent` stops being a `Node`.** An `Object` owned by the server: no
+  forwarding to them; `Dictionary config` leaves the controller for the components that parse it.~~
+* ~~**C - `VehicleComponent` stops being a `Node`.** An `Object` owned by the server: no
   `_notification`, no `_process`, the controller handed to it at creation instead of being found
   by walking `get_parent()`. `_do_process_mover` becomes `_process_state(delta)`. Every
   component's state becomes typed properties and the flat-dictionary prefixes are cut
@@ -57,23 +72,16 @@ lookup.
   `vehicle_component_get` returning the typed object the way
   `PhysicsServer3D::body_get_direct_state(RID)` does. The interface/implementation split
   (`Vehicle<Domain>` / `Mover<Interface>`) is its own commit at the start. `GenericVehicleComponent`
-  gets its dump for free from `get_property_list()` + `PROPERTY_USAGE_SCRIPT_VARIABLE`.
+  gets its dump for free from `get_property_list()` + `PROPERTY_USAGE_SCRIPT_VARIABLE`.~~
 * **D - `VehicleController` stops being a `Node`.** `initialize_mover()` moves into
   `vehicle_create()`, so the Mover no longer waits for `_ready()`; registration in `TrainSystem`
   stops hanging off `ENTER_TREE`.
 * **E - proxy nodes.** `VehicleControllerNode` plus one `<Interface>Node` per component, each
   thin: `@export`s for the editor, forward to the server object, no logic.
-* **F - the vehicle is built by the server, not by fabricating nodes.**
-  `fiz_train_controller_instancer.gd` calls `vehicle_component_create` instead of `add_child` +
-  `PackedScene.pack()`, and `DynamicRailVehicle3D` stops fabricating nodes -
+* **F - `DynamicRailVehicle3D` stops fabricating nodes** (the FIZ half is done, see above) -
   `dynamic_rail_vehicle_3d_manager.gd` packs model + FIZ controller + cabin + sound bank into a
   `PackedScene` today and instantiates copies of it. The cache holds a vehicle configuration, not
   a node tree. Bump `structure-vN` and `FIZ_PARSER_FORMAT_VERSION` in that same commit.
-* **The cabin root is still handed a `VehicleController`.** `RailVehicle3D` calls
-  `cabin->call("set_train_controller", controller)` and `Cabin3D` keeps a `controller_path` of its
-  own - the one place the controller still reaches the cabin, and a `->call("name")` across the
-  C++/GDScript boundary besides. It should hand over the vehicle's RID instead, which is all
-  CabinSystem needs. The elements themselves no longer see a controller at all.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,
@@ -478,3 +486,15 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   knows how long a vehicle is: `MaszynaSceneryInfo.Vehicle` carries only the train id, the data
   path, the skin and the file name, and the FIZ `Dim=` is parsed nowhere. With the length the tile
   could come up at its final width and stop jumping when the profile arrives.
+
+### Left behind by the VehiclePhysicsNode commit
+
+* **Who owns the vehicle RID** is not settled. `VehiclePhysicsNode` creates one and frees it, and
+  `RailVehicle3D` has its own; a vehicle carrying both has two, and only one of them is stepped.
+  It has to become one owner before stage I moves `train_id` to `RailVehicle3D`.
+* **`test_dynamic_rail_vehicle_manager` and `test_zzz_ep07_main_switch_trip_diagnostic`** are red,
+  together with `test_sm42_startup_sequence` (recorded below, pre-existing). The first two follow
+  the vehicle-building path that stage F is about to replace, so they are rewritten there rather
+  than patched now.
+* **The `.fiz` path has not been run in the game**, only in tests. Nothing has driven a vehicle
+  end to end since the components stopped being nodes.

@@ -106,18 +106,45 @@ func test_group_paths_do_not_change_public_property_names() -> void:
     fail_test("power_cable_source was not found")
 
 
-func test_migrated_scene_properties_are_loaded() -> void:
-    var scene: PackedScene = load("res://tests/sm42_controller.tscn")
-    var train: VehicleController = scene.instantiate()
-    var brake: VehicleBrake = train.get_node("Brake")
-    var engine: VehicleDieselEngine = train.get_node("StonkaDieselEngine")
-    var security_system: VehicleSecuritySystem = train.get_node("VehicleSecuritySystem")
+## Authored configuration has to survive into the built vehicle. It used to be authored as a
+## scene of component nodes; a component is not a node any more, so it is authored as a
+## VehicleModel - and this asserts the same thing through it.
+func test_authored_configuration_reaches_the_built_vehicle() -> void:
+    var brake_model := VehicleComponentModel.new()
+    brake_model.type = VehicleComponentType.COMPONENT_BRAKES
+    brake_model.implementation = &"MoverVehicleBrake"
+    brake_model.properties = {
+        "valve_type": 20,
+        "brake_force_max": 85.0,
+        "compressor_cab_a_min_pressure": 7.0,
+    }
+    var engine_model := VehicleComponentModel.new()
+    engine_model.type = VehicleComponentType.COMPONENT_ENGINE
+    engine_model.implementation = &"MoverVehicleDieselElectricEngine"
+    engine_model.properties = {"oil_pump_pressure_minimum": 0.15}
+    var security_model := VehicleComponentModel.new()
+    security_model.type = VehicleComponentType.COMPONENT_SECURITY
+    security_model.implementation = &"MoverVehicleSecuritySystem"
+    security_model.properties = {"aware_system_active": true, "emergency_brake_delay": 2.5}
 
+    var model := VehicleModel.new()
+    model.properties = {"train_id": "PropertyBindingsTest", "mass": 74000.0}
+    var components:Array[VehicleComponentModel] = [brake_model, engine_model, security_model]
+    model.components = components
+
+    var vehicle := VehiclePhysicsNode.new()
+    add_child_autofree(vehicle)
+    vehicle.set_model(model)
+
+    var train: VehicleController = vehicle.get_controller()
+    var brake: VehicleBrake = train.get_component(VehicleComponentType.COMPONENT_BRAKES)
+    var engine: VehicleDieselEngine = train.get_component(VehicleComponentType.COMPONENT_ENGINE)
+    var security_system: VehicleSecuritySystem = train.get_component(VehicleComponentType.COMPONENT_SECURITY)
+
+    assert_eq(train.mass, 74000.0, "the vehicle's own properties too")
     assert_eq(brake.valve_type, 20)
     assert_eq(brake.brake_force_max, 85.0)
     assert_eq(brake.compressor_cab_a_min_pressure, 7.0)
     assert_almost_eq(engine.oil_pump_pressure_minimum, 0.15, 0.000001)
     assert_true(security_system.aware_system_active)
     assert_eq(security_system.emergency_brake_delay, 2.5)
-
-    train.free()

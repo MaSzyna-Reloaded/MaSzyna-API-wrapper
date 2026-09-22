@@ -76,6 +76,8 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("radio_channel_decrease", "step"), &VehicleController::radio_channel_decrease, DEFVAL(1));
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleController::apply_config);
+        ClassDB::bind_method(D_METHOD("initialize"), &VehicleController::initialize);
+        ClassDB::bind_method(D_METHOD("process_components", "delta"), &VehicleController::process_components);
         ClassDB::bind_method(D_METHOD("update_state"), &VehicleController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &VehicleController::get_velocity);
         ClassDB::bind_method(D_METHOD("get_speed"), &VehicleController::get_speed);
@@ -83,6 +85,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
         ClassDB::bind_method(D_METHOD("emit_config_changed"), &VehicleController::emit_config_changed);
+        ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
         ClassDB::bind_method(
                 D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
@@ -485,6 +488,10 @@ namespace godot {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
+        if (p_what == NOTIFICATION_PREDELETE) {
+            shutdown();
+            free_components();
+        }
         if (p_what == NOTIFICATION_PREDELETE && mover != nullptr) {
             controllers_by_mover.erase(mover);
             // the backend owns the Mover, so freeing the handle is what destroys it
@@ -497,58 +504,11 @@ namespace godot {
         }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
-                // the vehicle handle is RailVehicle3D's to create; the server hands it here
-                if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-                    system->register_train(train_id, this);
-                }
-                register_command("battery", Callable(this, "battery"));
-                register_command("cab_change", Callable(this, "cab_change"));
-                register_command("cab_activation", Callable(this, "cab_activation"));
-                register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
-                register_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                register_command("second_controller_increase", Callable(this, "second_controller_increase"));
-                register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
-                register_command("direction_increase", Callable(this, "direction_increase"));
-                register_command("direction_decrease", Callable(this, "direction_decrease"));
-                register_command("radio", Callable(this, "radio"));
-                register_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                register_command("coupler_connect", Callable(this, "coupler_connect"));
-                register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
                 break;
             case NOTIFICATION_EXIT_TREE:
-                unregister_command("battery", Callable(this, "battery"));
-                unregister_command("cab_change", Callable(this, "cab_change"));
-                unregister_command("cab_activation", Callable(this, "cab_activation"));
-                unregister_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
-                unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
-                unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-                unregister_command("second_controller_increase", Callable(this, "second_controller_increase"));
-                unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
-                unregister_command("direction_increase", Callable(this, "direction_increase"));
-                unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-                unregister_command("radio", Callable(this, "radio"));
-                unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
-                unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-                unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
-                unregister_command("coupler_connect", Callable(this, "coupler_connect"));
-                unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
-                if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-                    system->unregister_train(train_id);
-                }
-                // the handle belongs to RailVehicle3D, which frees it with itself
-                rid = RID();
                 break;
             case NOTIFICATION_READY:
-                initialize_mover();
-                update_state();
-                DEBUG("VehicleController::_ready() signals connected to train parts");
-
-                emit_signal(power_changed_signal, prev_is_powered);
-                emit_signal(radio_channel_changed, prev_radio_channel);
-                emit_signal(roof_light_changed, prev_roof_light_enabled);
+                initialize();
                 break;
             default:;
         }
@@ -574,6 +534,43 @@ namespace godot {
         compute_forces(p_delta);
         compute_movement(p_delta);
         _handle_mover_update();
+        process_components(p_delta);
+    }
+
+    /* Registering the vehicle and its commands used to wait for NOTIFICATION_ENTER_TREE. A
+     * vehicle is not in a tree any more, so it happens where the vehicle comes into being. */
+    void VehicleController::initialize() {
+        // the vehicle handle is RailVehicle3D's to create; the server hands it here
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->register_train(train_id, this);
+        }
+        register_command("battery", Callable(this, "battery"));
+        register_command("cab_change", Callable(this, "cab_change"));
+        register_command("cab_activation", Callable(this, "cab_activation"));
+        register_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
+        register_command("main_controller_increase", Callable(this, "main_controller_increase"));
+        register_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
+        register_command("second_controller_increase", Callable(this, "second_controller_increase"));
+        register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
+        register_command("direction_increase", Callable(this, "direction_increase"));
+        register_command("direction_decrease", Callable(this, "direction_decrease"));
+        register_command("radio", Callable(this, "radio"));
+        register_command("radio_channel_set", Callable(this, "radio_channel_set"));
+        register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
+        register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        register_command("coupler_connect", Callable(this, "coupler_connect"));
+        register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
+        initialize_mover();
+        update_state();
+        emit_signal(power_changed_signal, prev_is_powered);
+        emit_signal(radio_channel_changed, prev_radio_channel);
+        emit_signal(roof_light_changed, prev_roof_light_enabled);
+    }
+
+    void VehicleController::process_components(const double p_delta) {
+        for (VehicleComponent *component: components) {
+            component->process(p_delta);
+        }
     }
 
     // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
@@ -1145,6 +1142,46 @@ namespace godot {
             }
         }
         return found;
+    }
+
+    void VehicleController::add_component(VehicleComponent *p_component) {
+        ERR_FAIL_NULL(p_component);
+        p_component->attach(this);
+    }
+
+    /* Every component goes with the vehicle; nothing outside it holds one. */
+    void VehicleController::shutdown() {
+        unregister_command("battery", Callable(this, "battery"));
+        unregister_command("cab_change", Callable(this, "cab_change"));
+        unregister_command("cab_activation", Callable(this, "cab_activation"));
+        unregister_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
+        unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
+        unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
+        unregister_command("second_controller_increase", Callable(this, "second_controller_increase"));
+        unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
+        unregister_command("direction_increase", Callable(this, "direction_increase"));
+        unregister_command("direction_decrease", Callable(this, "direction_decrease"));
+        unregister_command("radio", Callable(this, "radio"));
+        unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
+        unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
+        unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        unregister_command("coupler_connect", Callable(this, "coupler_connect"));
+        unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->unregister_train(train_id);
+        }
+        // the handle belongs to RailVehicle3D, which frees it with itself
+        rid = RID();
+    }
+
+    void VehicleController::free_components() {
+        const Vector<VehicleComponent *> owned = components;
+        components.clear();
+        lighting = nullptr;
+        for (VehicleComponent *component: owned) {
+            component->detach();
+            memdelete(component);
+        }
     }
 
     void VehicleController::register_component(VehicleComponent *p_component) {

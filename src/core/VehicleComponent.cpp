@@ -71,49 +71,34 @@ namespace godot {
         return nullptr;
     }
 
-    void VehicleComponent::_notification(const int p_what) {
-        if (Engine::get_singleton()->is_editor_hint()) {
+    void VehicleComponent::attach(VehicleController *p_controller) {
+        train_controller_node = p_controller;
+        if (train_controller_node == nullptr) {
             return;
         }
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE: {
-                Node *p = get_parent();
-                while (p != nullptr) {
-                    train_controller_node = Object::cast_to<VehicleController>(p);
-                    if (train_controller_node != nullptr) {
-                        break;
-                    }
-                    p = p->get_parent();
-                }
-                if (train_controller_node != nullptr) {
-                    train_controller_node->register_component(this);
-                    const Error con = train_controller_node->connect(
-                            VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
-                    if (con != OK) {
-                        log_warning(
-                                "VehicleComponent::notification(NOTIFICATION_ENTER_TREE) failed with error code " +
-                                String::num(con));
-                    }
-                }
-                if (enabled) {
-                    _register_commands();
-                    _commands_registered = true;
-                }
-            } break;
-            case NOTIFICATION_EXIT_TREE: {
-                if (get_enabled()) {
-                    _unregister_commands();
-                    _commands_registered = false;
-                }
-                if (train_controller_node != nullptr) {
-                    train_controller_node->unregister_component(this);
-                    train_controller_node->disconnect(
-                            VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
-                }
-                train_controller_node = nullptr;
-            } break;
-            default:;
+        train_controller_node->register_component(this);
+        const Error connected = train_controller_node->connect(
+                VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+        if (connected != OK) {
+            log_warning("VehicleComponent::attach() failed with error code " + String::num(connected));
         }
+        if (enabled) {
+            _register_commands();
+            _commands_registered = true;
+        }
+    }
+
+    void VehicleComponent::detach() {
+        if (_commands_registered) {
+            _unregister_commands();
+            _commands_registered = false;
+        }
+        if (train_controller_node != nullptr) {
+            train_controller_node->unregister_component(this);
+            train_controller_node->disconnect(
+                    VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+        }
+        train_controller_node = nullptr;
     }
 
     void VehicleComponent::log(const GameLog::LogLevel p_level, const String &p_line) {
@@ -140,12 +125,14 @@ namespace godot {
     }
 
     void VehicleComponent::register_command(const String &p_command, const Callable &p_callback) {
+        ERR_FAIL_NULL_MSG(train_controller_node, "A component registers commands once it has a vehicle.");
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->register_command(train_controller_node->get_train_id(), p_command, p_callback);
         }
     }
 
     void VehicleComponent::unregister_command(const String &p_command, const Callable &p_callback) {
+        ERR_FAIL_NULL(train_controller_node);
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->unregister_command(train_controller_node->get_train_id(), p_command, p_callback);
         }
@@ -159,11 +146,7 @@ namespace godot {
         dirty = true;
     }
 
-    void VehicleComponent::_process(const double p_delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
+    void VehicleComponent::process(const double p_delta) {
         if (dirty) {
             // emit_config_changed_signal();
             apply_config();
@@ -177,11 +160,11 @@ namespace godot {
         if (enabled_changed) {
             enabled_changed = false;
             if (enabled && !_commands_registered) {
-                log_debug("Registering commands for component " + get_name());
+                log_debug("Registering commands for component " + get_class());
                 _register_commands();
                 _commands_registered = true;
             } else if (!enabled && _commands_registered) {
-                log_debug("Unregistering commands for component " + get_name());
+                log_debug("Unregistering commands for component " + get_class());
                 _unregister_commands();
                 _commands_registered = false;
             }

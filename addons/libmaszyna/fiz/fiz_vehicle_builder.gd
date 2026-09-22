@@ -1,6 +1,6 @@
 @tool
 extends Node
-class_name FizTrainControllerInstancer
+class_name FizVehicleBuilder
 
 ## Top-level FIZ file orchestrator, mirroring scenery_instancer.gd's role for scenery files.
 ##
@@ -21,7 +21,20 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 6
+const FIZ_PARSER_FORMAT_VERSION := 7
+
+## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
+const _COMPONENT_TYPES:Array[int] = [
+    VehicleComponentType.COMPONENT_BRAKES, VehicleComponentType.COMPONENT_SPRING_BRAKE,
+    VehicleComponentType.COMPONENT_EP_ED_BRAKE, VehicleComponentType.COMPONENT_BUFFERS,
+    VehicleComponentType.COMPONENT_DOORS, VehicleComponentType.COMPONENT_ENGINE,
+    VehicleComponentType.COMPONENT_HEATING, VehicleComponentType.COMPONENT_LIGHTING,
+    VehicleComponentType.COMPONENT_LOAD, VehicleComponentType.COMPONENT_SPEED_CONTROL,
+    VehicleComponentType.COMPONENT_SWITCHES, VehicleComponentType.COMPONENT_AI_HINTS,
+    VehicleComponentType.COMPONENT_HORNS, VehicleComponentType.COMPONENT_SECURITY,
+    VehicleComponentType.COMPONENT_WHEELS, VehicleComponentType.COMPONENT_WIPERS,
+    VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER,
+]
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -33,14 +46,11 @@ const FIZ_PARSER_FORMAT_VERSION := 6
 ## null` means "recognized but not yet implemented / has no Godot class" - the section (and
 ## any table rows up to table_end, if set) is skipped with a single warning per vehicle.
 static var _sections: Array[Dictionary] = []
-static var _sections_built := false
 
 
-static func _ensure_sections() -> void:
-    if _sections_built:
-        return
-    _sections_built = true
-
+## The section table is fixed - it is the FIZ grammar, not per-vehicle data - so it is built once
+## when the class is loaded rather than re-checked on every parse.
+static func _static_init() -> void:
     var controller_parser := FizTrainControllerParser.new()
     var wheels_parser := FizTrainWheelsParser.new()
     var doors_parser := FizTrainDoorsParser.new()
@@ -128,12 +138,11 @@ static func _ensure_sections() -> void:
 ## (Param./Dimensions:/Cntrl. general subset/...) are applied directly to `target`, and its
 ## parsed VehicleComponent children are added under it. `target` must have no children of its own
 ## yet - the caller is responsible for clearing any previous FIZ-sourced children first (see
-## FIZTrainController._reload()). `fiz_path` must already be a fully resolved, openable path
+## FizVehiclePhysicsNode._reload()). `fiz_path` must already be a fully resolved, openable path
 ## (res://, user://, or absolute) - e.g. UserSettings.get_maszyna_game_dir().path_join(
 ## "pkp/eu04_v1/eu04-01.fiz"). `include` directives inside the file resolve relative to its
 ## own containing directory.
 static func build_into(target: VehicleController, fiz_path: String) -> void:
-    _ensure_sections()
     var context := FizImportContext.new()
     context.base_dir = fiz_path.get_base_dir()
     context.controller = target
@@ -145,9 +154,7 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
         table_state["parser"].end_table(context)
 
     for part_name: String in context.parts:
-        var node: Node = context.parts[part_name]
-        node.name = part_name
-        target.add_child(node)
+        target.add_component(context.parts[part_name])
 
     # VehicleHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
     # mover-level horn count config - see VehicleHorns.hpp's header comment: a vehicle's 0-3 horn
@@ -155,17 +162,15 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     # unlike every other VehicleComponent above it's attached unconditionally here rather than only when
     # a matching section is found - every VehicleController gets one, same as a hand-authored scene
     # (e.g. sm_42v_1.tscn's own "Horns" node) would.
-    var horns := MoverVehicleHorns.new()
-    horns.name = "Horns"
-    target.add_child(horns)
+    target.add_component(MoverVehicleHorns.new())
 
 ## Same on-disk cache used by E3DModelManager for parsed E3D models (addons/libmaszyna/e3d/
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
 ## edited .fiz (or an `include`d one - mtime isn't recursive, but editing a shared .fiz.inc
 ## while iterating is rare enough not to warrant walking every include) invalidates the entry.
-## Stored as a PackedScene, not the VehicleController Node directly - ResourceCache persists
-## godot::Resource instances, and PackedScene.instantiate() is the standard, engine-native way
-## to stamp out an independent copy of a template tree (see build() below).
+## Stored as a VehicleModel - the parse result, which is the expensive part and the only part
+## worth keeping. What is built from it is the instancer's business, exactly as an E3DModel feeds
+## its backends.
 static var _cache = ResourceCache.create("fiz")
 
 static func clear_cache() -> void:
@@ -177,52 +182,54 @@ static func _make_cache_path(fiz_path: String) -> String:
 
 static func _make_cache_hash(fiz_path: String) -> String:
     return ("%s:%s:%s" % [
-        FileAccess.get_modified_time(fiz_path), FIZ_PARSER_FORMAT_VERSION, fiz_path
+        FileAccess.get_modified_time(fiz_path),
+        "%d.%d" % [FIZ_PARSER_FORMAT_VERSION, VehicleModel.FORMAT_VERSION],
+        fiz_path
     ]).md5_text()
 
 ## Builds a new, unparented VehicleController + children from a FIZ file. A scenery routinely
 ## repeats the same wagon/locomotive .fiz across many consist entries, so this turns an
 ## O(vehicle count) FIZ text parse (section dispatch + per-line MaszynaParser allocations) into
 ## O(distinct files) - build_scene()'s cached PackedScene is instantiate()'d instead.
-static func build(fiz_path: String) -> VehicleController:
-    var scene: PackedScene = build_scene(fiz_path)
-    if not scene:
-        return null
-
-    var controller := scene.instantiate() as VehicleController
-    # Otherwise Godot auto-assigns an ugly, unstable "@VehicleController@<N>" name (the counter
-    # increments per instance created this session), which breaks any NodePath saved against it
-    # the moment the node is rebuilt (e.g. RailVehicle3D.controller_path across scene reloads).
-    controller.name = "VehicleController"
-    return controller
 
 
-## Builds (or reuses the cached) VehicleController + children from a FIZ file, packed as a
-## PackedScene - each independent runtime instance (mass, wear, velocity, ...) then comes from
-## instantiate()'ing this template, never by sharing the template's own live node.
-static func build_scene(fiz_path: String) -> PackedScene:
+## Builds (or reuses the cached) description of a vehicle from a FIZ file. Parsing a .fiz is the
+## expensive part and a scenery repeats the same file across many consist entries, so it is done
+## once per distinct file and every vehicle is built from the result.
+## The vehicle a .fiz describes, parsed once and cached on disk - the shape
+## E3DModelManager.load_model() has, and for the same reason: a scenery repeats the same file
+## across many consist entries, and parsing it is the expensive part.
+static func build_model(data_path: String, fiz_filename: String) -> VehicleModel:
+    return build_model_at(
+            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(fiz_filename + ".fiz"))
+
+
+static func build_model_at(fiz_path: String) -> VehicleModel:
     var cache_path: String = _make_cache_path(fiz_path)
     var cache_hash: String = _make_cache_hash(fiz_path)
-    var scene: PackedScene = _cache.get(cache_path, cache_hash) as PackedScene
-    if scene:
-        return scene
+    var model: VehicleModel = _cache.get(cache_path, cache_hash) as VehicleModel
+    if model:
+        return model
 
     var root := VehicleController.new()
-    root.name = "VehicleController"
     build_into(root, fiz_path)
-    # PackedScene.pack() only includes nodes whose `owner` is set - without this, the packed
-    # scene would contain just the root VehicleController and silently drop every VehicleComponent child.
-    for child: Node in root.get_children():
-        child.owner = root
-    scene = PackedScene.new()
-    var err: Error = scene.pack(root)
+    model = VehicleModel.new()
+    model.properties = VehicleModel.capture(root)
+    var components:Array[VehicleComponentModel] = []
+    for type:int in _COMPONENT_TYPES:
+        var component:VehicleComponent = root.get_component(type)
+        if not component:
+            continue
+        var entry := VehicleComponentModel.new()
+        entry.type = type
+        entry.implementation = component.get_class()
+        entry.properties = VehicleModel.capture(component)
+        components.append(entry)
+    model.components = components
     root.free()
-    if err != OK:
-        push_error("Could not pack FIZ scene for: " + fiz_path)
-        return null
 
-    _cache.set(cache_path, scene, cache_hash)
-    return scene
+    _cache.set(cache_path, model, cache_hash)
+    return model
 
 
 ## Reads one logical line off a MaszynaParser's byte stream, mirroring the original

@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     universal_controller = MoverVehicleUniversalController.new()
-    train.add_child(universal_controller)
+    train.add_component(universal_controller)
     await wait_idle_frames(2)
 
 func after_each():

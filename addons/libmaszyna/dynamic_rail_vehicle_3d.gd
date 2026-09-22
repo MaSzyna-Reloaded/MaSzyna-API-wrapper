@@ -6,7 +6,7 @@ class_name DynamicRailVehicle3D
 ## triple: exterior E3D model, FIZ physics controller, and an interactive MMD-driven cabin,
 ## placed on a named track at a given offset. Deliberately does NOT extend RailVehicle3D -
 ## it builds one internally and delegates all vehicle behavior (motion, enter_cabin/leave_cabin,
-## player-detection Area3D, light sync) to it unmodified, exactly like FIZTrainController wraps
+## player-detection Area3D, light sync) to it unmodified, exactly like FizVehiclePhysicsNode wraps
 ## a generated VehicleController instead of extending it.
 ##
 ## MaszynaPlayer needs no changes to detect the generated RailVehicle3D: its detection Area3D
@@ -42,9 +42,9 @@ class_name DynamicRailVehicle3D
             head_display_material = x
             _dirty = true
 
-## Forwarded to the generated FIZTrainController.train_id (TrainSystem registration/console
+## Forwarded to the generated FizVehiclePhysicsNode.train_id (TrainSystem registration/console
 ## lookups). Not derived from any data file - every DynamicRailVehicle3D otherwise builds its
-## FIZTrainController with train_id left at "", so two or more dynamic vehicles all collide on
+## FizVehiclePhysicsNode with train_id left at "", so two or more dynamic vehicles all collide on
 ## the same empty TrainSystem registry key. Must be set explicitly and kept unique per vehicle,
 ## same as on a hand-authored VehicleController.
 @export var train_id:String = "":
@@ -53,7 +53,7 @@ class_name DynamicRailVehicle3D
             train_id = x
             _dirty = true
 
-## Forwarded to the generated FIZTrainController.initial_velocity. 0.0 (default) means the
+## Forwarded to the generated FizVehiclePhysicsNode.initial_velocity. 0.0 (default) means the
 ## vehicle starts not-ready-to-depart (battery off, matching the original engine's scenery
 ## velocity token); a non-zero value marks it ready (battery on per battery_start_mode).
 @export var initial_velocity:float = 0.0:
@@ -62,7 +62,7 @@ class_name DynamicRailVehicle3D
             initial_velocity = x
             _dirty = true
 
-## Forwarded to the generated FIZTrainController.cabin_number: 1 = cab 1 (headdriver), -1 = cab 2
+## Forwarded to the generated FizVehiclePhysicsNode.cabin_number: 1 = cab 1 (headdriver), -1 = cab 2
 ## (reardriver), 0 = nobody (original engine's scenery driver type, DynObj.cpp:1812-1825).
 @export var cabin_number:int = 0:
     set(x):
@@ -91,11 +91,11 @@ class_name DynamicRailVehicle3D
             _track_dirty = true
 
 ## Toggle via the "Edit FIZ" 3D-viewport toolbar button (see
-## addons/libmaszyna/editor/fiz_toolbar/) when the wrapped vehicle's FIZTrainController needs to
+## addons/libmaszyna/editor/fiz_toolbar/) when the wrapped vehicle's FizVehiclePhysicsNode needs to
 ## be visible/selectable in the Scene dock for inspection - by default _vehicle is added as an
 ## INTERNAL child (see class doc above), and the Scene dock skips internal nodes and their whole
 ## subtree outright regardless of node ownership, so nothing under it can otherwise be reached.
-## Mirrors FIZTrainController.editable_in_editor exactly.
+## Mirrors FizVehiclePhysicsNode.editable_in_editor exactly.
 var editable_in_editor:bool = false:
     set(x):
         if not editable_in_editor == x:

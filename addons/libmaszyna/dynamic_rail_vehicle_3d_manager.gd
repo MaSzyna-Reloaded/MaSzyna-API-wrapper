@@ -11,8 +11,8 @@ extends Node
 ## of one type, ...), so this turns an O(vehicle count) MMD/FIZ parse into O(distinct
 ## data_path+file_name+skin combinations): build() below caches the structural result (exterior
 ## model + FIZ controller + cabin scene + sound bank) as a PackedScene and instantiate()s it -
-## the same "cache a Resource, not the live Node" approach FizTrainControllerInstancer.build()
-## already uses for the FIZTrainController layer.
+## the same "cache a Resource, not the live Node" approach FizVehicleBuilder.build()
+## already uses for the FizVehiclePhysicsNode layer.
 ##
 ## train_id/initial_velocity/head_display_material are deliberately NOT part of the cached
 ## template (built with neutral placeholder values instead) - they vary per vehicle instance
@@ -32,7 +32,7 @@ func _make_cache_path(normalized_data_path:String, file_name:String, skin:String
 
 func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # Only the .mmd's own mtime is checked - not every .e3d/.fiz file it transitively
-    # references - matching FizTrainControllerInstancer._make_cache_hash()'s same simplification
+    # references - matching FizVehicleBuilder._make_cache_hash()'s same simplification
     # for FIZ `include`s.
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
@@ -78,7 +78,7 @@ func load(
         _cache.set(cache_path, scene, cache_hash)
 
     var vehicle:RailVehicle3D = scene.instantiate() as RailVehicle3D
-    var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
+    var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
     if fiz_controller:
         fiz_controller.train_id = train_id
         fiz_controller.initial_velocity = initial_velocity

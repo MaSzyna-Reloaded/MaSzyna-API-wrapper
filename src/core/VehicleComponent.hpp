@@ -4,7 +4,7 @@
 #include "VehicleComponentType.hpp"
 #include "VehicleController.hpp"
 #include <functional>
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/vector.hpp>
 
 #define ASSERT_MOVER(mover_ptr)                                                                                        \
@@ -13,8 +13,12 @@
     }
 
 namespace godot {
-    class VehicleComponent : public Node {
-            GDCLASS(VehicleComponent, Node)
+    /* One thing a vehicle is made of.
+     *
+     * Not a Node: a component belongs to a vehicle, not to a scene, and the vehicle creates it,
+     * owns it and ticks it. What stands in the scene for the editor is a thin proxy. */
+    class VehicleComponent : public Object {
+            GDCLASS(VehicleComponent, Object)
         public:
             static void _bind_methods();
 
@@ -23,9 +27,6 @@ namespace godot {
             StringName component_tag;
 
         protected:
-            // This method cannot be marked as override because it's not virtual in the base class (Wrapped).
-            // It is, however, used by GDCLASS macro to register notification callback.
-            void _notification(int p_what); // NOLINT(bugprone-derived-method-shadowing-base-method)
             bool enabled = true;
             bool enabled_changed = false;
             bool dirty = false;
@@ -60,7 +61,12 @@ namespace godot {
              * implementation inherits the answer. */
             virtual VehicleComponentType::Type get_component_type() const;
 
-            void _process(double p_delta) override;
+            /* The vehicle takes the component in hand: from here on it owns it, ticks it and
+             * frees it. Both are for the vehicle to call, not for a caller outside it. */
+            void attach(VehicleController *p_controller);
+            void detach();
+            /* One tick of this component, driven by the vehicle that owns it. */
+            void process(double p_delta);
             virtual void _process_mover(double p_delta);
 
             void register_command(const String &p_command, const Callable &p_callback);

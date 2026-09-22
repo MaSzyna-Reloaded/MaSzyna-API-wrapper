@@ -77,19 +77,19 @@ func before_all() -> void:
         var controller: VehicleController = VehicleController.new()
         controller.name = "BenchController%d" % index
         controller.train_id = "bench_vehicle_%d" % index
-        FizTrainControllerInstancer.build_into(controller, FIXTURE_FIZ)
+        FizVehicleBuilder.build_into(controller, FIXTURE_FIZ)
 
         # the two biggest publishers the fixture has no section for, added as a scene would
         var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
         engine.name = "Engine"
         engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
-        controller.add_child(engine)
+        controller.add_component(engine)
         var lighting: VehicleLighting = MoverVehicleLighting.new()
         lighting.name = "Lighting"
-        controller.add_child(lighting)
+        controller.add_component(lighting)
         var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()
         spring_brake.name = "SpringBrake"
-        controller.add_child(spring_brake)
+        controller.add_component(spring_brake)
 
         add_child(controller)
         _controllers.append(controller)

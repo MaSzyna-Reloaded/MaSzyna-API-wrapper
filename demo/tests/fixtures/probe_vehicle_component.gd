@@ -1,5 +1,6 @@
-extends GenericVehicleComponent
-## Fixture for test_generic_vehicle_component.gd: the smallest component a modder can write.
+extends GenericVehicleComponentNode
+## Fixture for test_generic_vehicle_component.gd: the smallest component a modder can write -
+## a node under a VehiclePhysicsNode, which is how a scripted component is authored.
 ## It records what the C++ side called and publishes one key of state and one of config, so the
 ## test can assert that a scripted component reaches the vehicle's dumps like a native one.
 
@@ -8,7 +9,7 @@ var last_delta: float = 0.0
 var commands_received: int = 0
 
 
-func _enter_tree() -> void:
+func _ready() -> void:
     register_command("probe_command", self._on_probe_command)
 
 

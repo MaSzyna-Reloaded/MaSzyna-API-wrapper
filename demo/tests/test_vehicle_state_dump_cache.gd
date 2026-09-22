@@ -64,7 +64,7 @@ func test_a_freed_vehicle_dumps_nothing() -> void:
 func test_a_component_is_reached_by_its_kind() -> void:
     var heating: MoverVehicleHeating = MoverVehicleHeating.new()
     heating.name = "Heating"
-    _controller.add_child(heating)
+    _controller.add_component(heating)
     await wait_idle_frames(2)
 
     var found: VehicleComponent = RailVehicleServer.vehicle_component_get(

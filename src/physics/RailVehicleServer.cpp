@@ -723,6 +723,7 @@ namespace godot {
             if (controller->is_physics_active()) {
                 controller->update_state();
             }
+            controller->process_components(p_delta);
         }
         if (diagnostics) {
             _check_velocity_jumps(p_delta);

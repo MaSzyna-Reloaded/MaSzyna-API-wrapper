@@ -15,7 +15,7 @@ const COUPLING_PERMANENT:int = 128
 ## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements
 ## trainset.offset by the vehicle's own physical length (from its .fiz Dimensions: L=) for the
 ## NEXT vehicle in the consist - read directly and synchronously here (not via
-## FIZTrainController's own async pipeline, which only finishes loading after scene
+## FizVehiclePhysicsNode's own async pipeline, which only finishes loading after scene
 ## construction, too late to affect this vehicle's own placement).
 ##
 ## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle

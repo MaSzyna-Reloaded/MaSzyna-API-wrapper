@@ -85,7 +85,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
     engine.cntrl_main_controller_position_count = 6
-    controller.add_child(engine)
+    controller.add_component(engine)
 
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"

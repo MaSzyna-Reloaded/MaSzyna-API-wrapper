@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "VehiclePhysicsNode.hpp"
 
 #include "../engines/VehicleElectricEngine.hpp"
 #include "../physics/RailVehicleServer.hpp"
@@ -262,8 +263,9 @@ namespace godot {
         if (VehicleController *direct_controller = Object::cast_to<VehicleController>(node); direct_controller != nullptr) {
             return direct_controller;
         }
-        if (node != nullptr && node->has_method("get_controller")) {
-            return Object::cast_to<VehicleController>(node->call("get_controller"));
+        // a vehicle in the tree is a VehiclePhysicsNode; the controller is what it owns
+        if (VehiclePhysicsNode *physics = Object::cast_to<VehiclePhysicsNode>(node); physics != nullptr) {
+            return physics->get_controller();
         }
         return nullptr;
     }
@@ -274,6 +276,11 @@ namespace godot {
 
     VehicleController *RailVehicle3D::get_controller() const {
         return controller_path.is_empty() ? nullptr : _resolve_controller(controller_path);
+    }
+
+    /* The vehicle this node stands on was rebuilt - take whatever it owns now. */
+    void RailVehicle3D::_on_vehicle_changed() {
+        _on_controller_changed(fiz_controller != nullptr ? fiz_controller->get_controller() : nullptr);
     }
 
     void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
@@ -347,7 +354,9 @@ namespace godot {
             rid = RID();
         }
         if (fiz_controller != nullptr) {
-            fiz_controller->disconnect("controller_changed", Callable(this, "_on_controller_changed"));
+            fiz_controller->disconnect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             fiz_controller = nullptr;
         }
         if (controller != nullptr) {
@@ -449,25 +458,23 @@ namespace godot {
         }
 
         Node *controller_node = controller_path.is_empty() ? nullptr : get_node_or_null(controller_path);
-        Node *new_fiz_controller = nullptr;
-        if (controller_node != nullptr && Object::cast_to<VehicleController>(controller_node) == nullptr &&
-            controller_node->has_signal("controller_changed")) {
-            new_fiz_controller = controller_node;
-        }
+        VehiclePhysicsNode *new_fiz_controller = Object::cast_to<VehiclePhysicsNode>(controller_node);
         if (new_fiz_controller == nullptr && !controller_path.is_empty()) {
             const NodePath parent_path = NodePath(String(controller_path).get_base_dir());
             Node *parent_node = parent_path.is_empty() ? nullptr : get_node_or_null(parent_path);
-            if (parent_node != nullptr && parent_node->has_signal("controller_changed")) {
-                new_fiz_controller = parent_node;
-            }
+            new_fiz_controller = Object::cast_to<VehiclePhysicsNode>(parent_node);
         }
         if (fiz_controller != new_fiz_controller) {
             if (fiz_controller != nullptr) {
-                fiz_controller->disconnect("controller_changed", Callable(this, "_on_controller_changed"));
+                fiz_controller->disconnect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             }
             fiz_controller = new_fiz_controller;
             if (fiz_controller != nullptr) {
-                fiz_controller->connect("controller_changed", Callable(this, "_on_controller_changed"));
+                fiz_controller->connect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             }
         }
         _on_controller_changed(get_controller());

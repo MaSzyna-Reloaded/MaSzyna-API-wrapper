@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainDieselEngineParser
 
 ## VehicleDieselEngine's DList:/DMList:/HTCList:/V2NList: table sections. Registered directly in
-## FizTrainControllerInstancer's section table. These are independent of whether Engine:'s own
+## FizVehicleBuilder's section table. These are independent of whether Engine:'s own
 ## plain-DieselEngine field subset has a dedicated parser yet (still common-fields-only, same
 ## status ElectricInductionMotor was in before FizTrainDieselElectricEngineParser existed) -
 ## the node itself is created by FizTrainEngineParser's stub branch regardless.

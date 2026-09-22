@@ -35,7 +35,7 @@ var power_kv: Dictionary = {}
 var parts: Dictionary = {}
 
 ## Names of recognized FIZ sections with no registered parser yet (see the `_sections` table
-## in FizTrainControllerInstancer - `parser == null`); used to only log once per vehicle per
+## in FizVehicleBuilder - `parser == null`); used to only log once per vehicle per
 ## section instead of once per line. This does NOT mean the destination Godot class is
 ## missing - most of these (Engine:, Light:, Power:, ...) map to fully-bound VehicleComponent
 ## classes that already exist; it only means the FIZ-parsing side for that section isn't

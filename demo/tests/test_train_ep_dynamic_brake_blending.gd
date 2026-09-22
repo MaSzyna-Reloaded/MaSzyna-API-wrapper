@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     ep_brake = MoverVehicleElectroPneumaticDynamicBrake.new()
-    train.add_child(ep_brake)
+    train.add_component(ep_brake)
     await wait_idle_frames(2)
 
 func after_each():

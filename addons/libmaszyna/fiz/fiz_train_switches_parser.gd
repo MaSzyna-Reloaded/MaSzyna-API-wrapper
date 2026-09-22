@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainSwitchesParser
 
 ## Switches: and DimmerList: section parser -> VehicleSwitches. Registered directly in
-## FizTrainControllerInstancer's section table (both prefixes share this one instance).
+## FizVehicleBuilder's section table (both prefixes share this one instance).
 ##
 ## `Pantograph=`/`Converter=`/`MotorConnectors=` are string switch-type values, not Yes/No -
 ## confirmed against VehicleSwitches::_do_update_internal_mover: "Impulse" (case-insensitive)

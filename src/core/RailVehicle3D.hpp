@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/typed_dictionary.hpp>
 
 namespace godot {
+    class VehiclePhysicsNode;
     class Area3D;
     class VehicleElectricEngine;
     class VisibleOnScreenNotifier3D;
@@ -59,7 +60,7 @@ namespace godot {
             int cabin_show_frames = 0;
             VehicleController *controller = nullptr;
             VehicleElectricEngine *electric_engine = nullptr;
-            Node *fiz_controller = nullptr;
+            VehiclePhysicsNode *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
             VisibleOnScreenNotifier3D *visibility_notifier = nullptr;
@@ -107,6 +108,7 @@ namespace godot {
             void _show_cabin_after_frames();
             void _apply_cabin_camera_configuration();
             void _on_controller_changed(VehicleController *p_controller);
+            void _on_vehicle_changed();
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);

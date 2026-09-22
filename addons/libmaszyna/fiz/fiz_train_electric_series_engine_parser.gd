@@ -4,7 +4,7 @@ class_name FizTrainElectricSeriesEngineParser
 
 ## VehicleElectricSeriesEngine's own subset of Engine: (EngineType=ElectricSeriesMotor, called
 ## directly by FizTrainEngineParser once it creates the node), plus Circuit:, RList:+rows, and
-## MotorParamTable0:+rows (all registered directly in FizTrainControllerInstancer's section
+## MotorParamTable0:+rows (all registered directly in FizVehicleBuilder's section
 ## table, using the standard parse()/parse_row()/end_table() interface) - all configure the
 ## same node created by FizTrainEngineParser. Series-motor branch of LoadFIZ_Engine:
 ## Mover.cpp:11119, LoadFIZ_Circuit: Mover.cpp:11416, LoadFIZ_RList: Mover.cpp:11444,
@@ -45,7 +45,7 @@ func apply_engine_fields(kv: Dictionary, node: VehicleElectricSeriesEngine) -> v
 
 
 ## Standard section-parser interface, used for "Circuit:", "RList:" and "MotorParamTable0:"
-## (registered directly against this instance in FizTrainControllerInstancer's section table).
+## (registered directly against this instance in FizVehicleBuilder's section table).
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     if prefix == "Circuit:":
         _parse_circuit(FizLineUtil.read_key_values(p), context)

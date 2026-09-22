@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     engine = MoverVehicleDieselEngine.new()
-    train.add_child(engine)
+    train.add_component(engine)
     await wait_idle_frames(2)
 
 func after_each():

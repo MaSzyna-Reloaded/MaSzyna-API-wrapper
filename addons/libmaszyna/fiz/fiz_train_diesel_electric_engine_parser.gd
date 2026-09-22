@@ -4,7 +4,7 @@ class_name FizTrainDieselElectricEngineParser
 
 ## VehicleDieselElectricEngine's own subset of Engine: (EngineType=DieselElectric/DumbDE, called
 ## directly by FizTrainEngineParser once it creates the node), plus WWList:+rows and
-## MotorParamTable:+rows (both registered directly in FizTrainControllerInstancer's section
+## MotorParamTable:+rows (both registered directly in FizVehicleBuilder's section
 ## table, using the standard parse()/parse_row()/end_table() interface).
 ##
 ## WWList: rows map 1:1 onto VehicleDieselElectricEngine.wwlist (WWListItem), which
@@ -66,7 +66,7 @@ func apply_engine_fields(kv: Dictionary, node: VehicleDieselElectricEngine) -> v
 
 
 ## Standard section-parser interface, used for "WWList:" and "MotorParamTable:" (registered
-## directly against this instance in FizTrainControllerInstancer's section table).
+## directly against this instance in FizVehicleBuilder's section table).
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     FizLineUtil.read_key_values(p) # header line's own key=value pairs (e.g. WWList's "Size=") -
                                     # informational only, rows are self-terminating either way.

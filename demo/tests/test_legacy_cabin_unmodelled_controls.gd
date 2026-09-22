@@ -15,7 +15,7 @@ func before_each():
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
     var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
     engine.cntrl_main_controller_position_count = 4
-    train.add_child(engine)
+    train.add_component(engine)
     add_child(train)
     cabin = Node3D.new()
     add_child(cabin)

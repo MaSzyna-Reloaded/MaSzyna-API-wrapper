@@ -2,18 +2,24 @@ extends MaszynaGutTest
 
 const FIXTURE_PATH := "res://tests/fixtures/test_vehicle.fiz"
 
+var vehicle: VehiclePhysicsNode
 var controller: VehicleController
 
 
+## A .fiz is a VehicleModel now; a VehiclePhysicsNode is what builds a vehicle from one, and the
+## controller it owns is not a node - it lives and dies with the vehicle.
 func before_each():
-    controller = FizTrainControllerInstancer.build(FIXTURE_PATH)
-    add_child(controller)
+    vehicle = VehiclePhysicsNode.new()
+    add_child(vehicle)
+    vehicle.set_model(FizVehicleBuilder.build_model_at(FIXTURE_PATH))
+    controller = vehicle.get_controller()
     await wait_idle_frames(2)
 
 
 func after_each():
-    remove_child(controller)
-    controller.free()
+    controller = null
+    remove_child(vehicle)
+    vehicle.free()
 
 
 func test_param_and_dimensions():
@@ -36,7 +42,7 @@ func test_cntrl_general_subset():
 
 
 func test_wheels():
-    var wheels: VehicleWheels = controller.get_node("VehicleWheels")
+    var wheels: VehicleWheels = controller.get_component(VehicleComponentType.COMPONENT_WHEELS)
     assert_not_null(wheels)
     assert_eq(wheels.powered_wheel_diameter, 1.1)
     assert_eq(wheels.front_rolling_wheel_diameter, 1.1) # defaults to powered diameter
@@ -47,7 +53,7 @@ func test_wheels():
 
 
 func test_brake_and_bpt_table():
-    var brake: VehicleBrake = controller.get_node("VehicleBrake")
+    var brake: VehicleBrake = controller.get_component(VehicleComponentType.COMPONENT_BRAKES)
     assert_not_null(brake)
     assert_eq(brake.brake_force_max, 250.0)
     assert_eq(brake.max_cylinder_pressure, 3.8)
@@ -72,7 +78,7 @@ func test_brake_and_bpt_table():
 
 
 func test_doors():
-    var doors: VehicleDoors = controller.get_node("VehicleDoors")
+    var doors: VehicleDoors = controller.get_component(VehicleComponentType.COMPONENT_DOORS)
     assert_not_null(doors)
     assert_eq(doors.open_time, 3.0)
     assert_eq(doors.max_shift, 3.0) # DoorMaxShiftR
@@ -81,10 +87,11 @@ func test_doors():
 
 
 func test_buff_coupl():
-    var coupler: VehicleBuffCoupl = controller.get_node("VehicleBuffCoupl")
+    var coupler: VehicleBuffCoupl = controller.get_component(VehicleComponentType.COMPONENT_BUFFERS)
     assert_not_null(coupler)
     assert_eq(coupler.coupler_type, VehicleBuffCoupl.COUPLER_TYPE_SCREW)
     assert_eq(coupler.coupler_stiffness_k, 2.5) # kC in kN/m, converted to N/m by VehicleBuffCoupl
     assert_eq(coupler.coupler_max_tension_tolerance, 1000.0) # FmaxC in kN
     assert_eq(coupler.buffer_location, VehicleBuffCoupl.BUFFER_LOCATION_BOTH)
     assert_eq(coupler.allowed_flag, 63)
+

@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainElectroPneumaticDynamicBrakeParser
 
 ## Blending: and DCEMUED: section parser -> VehicleElectroPneumaticDynamicBrake. Registered
-## directly in FizTrainControllerInstancer's section table (both prefixes share this instance,
+## directly in FizVehicleBuilder's section table (both prefixes share this instance,
 ## since they configure the same node - a vehicle can have either or both).
 ##
 ## Blending: keys confirmed against a real vehicle line: `Blending: MED_Vmax=120 MED_Vmin=120

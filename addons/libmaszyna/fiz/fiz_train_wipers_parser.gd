@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainWipersParser
 
 ## WiperList: section parser -> VehicleWipers. Registered directly in
-## FizTrainControllerInstancer's section table. Rows as TMoverParameters::readWiperList()
+## FizVehicleBuilder's section table. Rows as TMoverParameters::readWiperList()
 ## (Mover.cpp:9429) reads them: byteSum -> wiper_mask, WiperSpeed -> transit_time,
 ## interval -> period, outBackDelay -> return_delay.
 ##

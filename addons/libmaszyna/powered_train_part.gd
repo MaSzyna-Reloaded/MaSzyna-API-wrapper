@@ -1,4 +1,4 @@
-extends GenericVehicleComponent
+extends GenericVehicleComponentNode
 class_name PoweredTrainPart
 
 ## Example of a customization based on a GenericVehicleComponent interface.
@@ -7,7 +7,7 @@ class_name PoweredTrainPart
 
 var locked = false
 
-func _enter_tree():
+func _ready():
     register_command("lock_power", self._on_lock_power)
 
 

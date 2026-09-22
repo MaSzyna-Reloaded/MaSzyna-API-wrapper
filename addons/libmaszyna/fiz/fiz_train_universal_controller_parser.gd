@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainUniversalControllerParser
 
 ## UCList: section parser -> VehicleUniversalController. Registered directly in
-## FizTrainControllerInstancer's section table.
+## FizVehicleBuilder's section table.
 ##
 ## Row format confirmed exactly against readUCList (Mover.cpp:8427-8442): 10 tokens per row -
 ## a leading index (discarded, matches every other List's convention) then 9 data columns in

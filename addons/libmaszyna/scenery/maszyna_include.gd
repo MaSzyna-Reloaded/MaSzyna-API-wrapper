@@ -26,7 +26,7 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
 @export var skin_overrides:Dictionary[String, String] = {}
 
 ## Off by default: loaded content gets no owner and stays unselectable in the editor (matches
-## E3DModelInstance/FIZTrainController's own default). Toggle via the "Edit SCN" editor toolbar
+## E3DModelInstance/FizVehiclePhysicsNode's own default). Toggle via the "Edit SCN" editor toolbar
 ## button (addons/libmaszyna/editor/scenery_toolbar/) to make it inspectable/selectable while
 ## authoring - see scenery_instancer.gd's attach loop for what this actually changes.
 @export var editable_in_editor:bool = false:

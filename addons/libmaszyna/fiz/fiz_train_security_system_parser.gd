@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainSecuritySystemParser
 
 ## Security: section parser -> VehicleSecuritySystem (czuwak/SHP/radiostop). Registered directly
-## in FizTrainControllerInstancer's section table.
+## in FizVehicleBuilder's section table.
 ##
 ## This repo's vendored Mover.cpp doesn't keep the original LoadFIZ_Security loader (no
 ## LoadFIZ_* functions survived vendoring at all - see the other fiz_train_*_parser.gd files'

@@ -10,11 +10,15 @@
 #include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
+#include "core/GenericVehicleComponentNode.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/VehicleController.hpp"
 #include "core/VehicleComponent.hpp"
+#include "core/VehicleComponentModel.hpp"
 #include "core/VehicleComponentType.hpp"
+#include "core/VehicleModel.hpp"
+#include "core/VehiclePhysicsNode.hpp"
 #include "core/TrainSystem.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
@@ -136,8 +140,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
+        GDREGISTER_CLASS(VehicleComponentModel);
+        GDREGISTER_CLASS(VehicleModel);
+        GDREGISTER_CLASS(VehiclePhysicsNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
+        GDREGISTER_CLASS(GenericVehicleComponentNode);
         GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
         GDREGISTER_CLASS(MoverVehicleBrake);
         GDREGISTER_ABSTRACT_CLASS(VehicleSpringBrake);

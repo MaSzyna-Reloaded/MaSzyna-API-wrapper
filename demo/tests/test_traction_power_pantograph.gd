@@ -19,7 +19,7 @@ func before_each():
     engine.power_current_collector_physical_layout = 3 # both pantographs physically present
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 2
-    train.add_child(engine)
+    train.add_component(engine)
     add_child(train)
     await wait_idle_frames(2)
 

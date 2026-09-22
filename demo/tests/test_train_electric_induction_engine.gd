@@ -10,7 +10,7 @@ func before_each():
 
     engine = MoverVehicleElectricInductionEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
-    train.add_child(engine)
+    train.add_component(engine)
     await wait_idle_frames(2)
 
 func after_each():

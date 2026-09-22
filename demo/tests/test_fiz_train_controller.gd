@@ -5,7 +5,7 @@ const FIXTURE_SOURCE_PATH := "res://tests/fixtures/test_vehicle.fiz"
 const FIXTURE_DATA_PATH := "fixtures"
 const FIXTURE_FILENAME := "test_vehicle"
 
-var node: FIZTrainController
+var node: FizVehiclePhysicsNode
 var _previous_game_dir: String = ""
 var _temp_fiz_dir: String
 var _temp_fiz_path: String
@@ -24,7 +24,7 @@ func before_each():
     src.close()
     dst.close()
 
-    node = FIZTrainController.new()
+    node = FizVehiclePhysicsNode.new()
     add_child(node)
     await wait_idle_frames(2)
 
@@ -50,15 +50,12 @@ func test_builds_child_controller_from_data_path_and_filename():
 
     var controller: VehicleController = node.get_controller()
     assert_not_null(controller)
-    # default (non-editable) children are added INTERNAL, so they don't show up in the plain
-    # (non-internal) child count or the Scene dock - see FIZTrainController.editable_in_editor.
-    assert_eq(node.get_child_count(), 0, "the built VehicleController should be internal by default")
-    assert_eq(node.get_child_count(true), 1, "the built VehicleController should still be reachable as an internal child")
+    assert_eq(node.get_child_count(), 0, "the vehicle is the node's own, not a child of it")
     assert_eq(controller.mass, 74000.0)
-    assert_not_null(controller.get_node_or_null("VehicleWheels"))
-    assert_not_null(controller.get_node_or_null("VehicleBrake"))
-    assert_not_null(controller.get_node_or_null("VehicleDoors"))
-    assert_not_null(controller.get_node_or_null("VehicleBuffCoupl"))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_WHEELS))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_BRAKES))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_DOORS))
+    assert_not_null(controller.get_component(VehicleComponentType.COMPONENT_BUFFERS))
 
 
 func test_native_mover_still_updates():
@@ -70,23 +67,17 @@ func test_native_mover_still_updates():
     assert_true(controller.state.has("brake_air_pressure"), "VehicleBrake's mover state should be live")
 
 
-func test_editable_in_editor_toggles_internal_mode():
+## Clearing the file leaves the node holding an empty vehicle rather than the previous one -
+## a VehiclePhysicsNode always has a vehicle, it just has nothing in it.
+func test_clearing_the_fiz_filename_empties_the_vehicle():
     _set_fixture_path()
     await wait_idle_frames(2)
-    assert_eq(node.get_child_count(), 0, "should be internal by default")
-
-    node.editable_in_editor = true
-    await wait_idle_frames(2)
-    assert_eq(node.get_child_count(), 1, "should no longer be internal once editable")
-    assert_not_null(node.get_controller(), "reload triggered by the toggle should preserve the controller")
-
-
-func test_reassigning_fiz_filename_clears_previous_controller():
-    _set_fixture_path()
-    await wait_idle_frames(2)
-    assert_not_null(node.get_controller())
+    assert_not_null(node.get_controller().get_component(VehicleComponentType.COMPONENT_BRAKES))
 
     node.fiz_filename = ""
     await wait_idle_frames(2)
-    assert_null(node.get_controller())
-    assert_eq(node.get_child_count(), 0)
+    assert_not_null(node.get_controller(), "the vehicle is still there")
+    assert_null(
+        node.get_controller().get_component(VehicleComponentType.COMPONENT_BRAKES),
+        "with nothing in it"
+    )

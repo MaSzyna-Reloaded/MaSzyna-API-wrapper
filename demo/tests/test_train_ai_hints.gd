@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     ai_hints = MoverVehicleAIHints.new()
-    train.add_child(ai_hints)
+    train.add_component(ai_hints)
     await wait_idle_frames(2)
 
 func after_each():

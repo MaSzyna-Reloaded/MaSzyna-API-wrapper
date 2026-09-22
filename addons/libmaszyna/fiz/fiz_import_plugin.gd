@@ -6,7 +6,7 @@ class_name FIZImportPlugin
 ## Import dock, a .import sidecar, and Reimport - unlike FIZResourceLoader (a bare
 ## ResourceFormatLoader), which only covers direct load()/FizTrainController.fiz_path access
 ## to .fiz files living outside the project, in the external MaSzyna data directory. Both
-## reuse the same FizTrainControllerInstancer builder. Registered via add_import_plugin() in
+## reuse the same FizVehicleBuilder builder. Registered via add_import_plugin() in
 ## libmaszyna.gd's _enter_tree()/_exit_tree().
 
 
@@ -27,7 +27,7 @@ func _get_save_extension() -> String:
 
 
 func _get_resource_type() -> String:
-    return "PackedScene"
+    return "Resource"
 
 
 func _get_preset_count() -> int:
@@ -57,7 +57,7 @@ func _get_priority() -> float:
 func _import(
         source_file: String, save_path: String, _options: Dictionary,
         _platform_variants: Array[String], _gen_files: Array[String]) -> Error:
-    var scene: PackedScene = FizTrainControllerInstancer.build_scene(source_file)
-    if scene == null:
+    var model: VehicleModel = FizVehicleBuilder.build_model_at(source_file)
+    if model == null:
         return ERR_CANT_CREATE
-    return ResourceSaver.save(scene, "%s.%s" % [save_path, _get_save_extension()])
+    return ResourceSaver.save(model, "%s.%s" % [save_path, _get_save_extension()])

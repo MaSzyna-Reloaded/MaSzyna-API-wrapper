@@ -18,7 +18,7 @@ func before_each():
         _item(3, 1.0, 5.0, 0.5),
         _item(3, 0.2, 0.0, 0.1),
     ]
-    train.add_child(wipers)
+    train.add_component(wipers)
     add_child(train)
     # a VehicleComponent publishes its state with its first processed frame
     await wait_idle_frames(2)

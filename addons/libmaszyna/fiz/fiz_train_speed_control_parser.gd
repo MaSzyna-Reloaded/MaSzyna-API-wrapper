@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizTrainSpeedControlParser
 
 ## SpeedControl: section parser -> VehicleSpeedControl. Registered directly in
-## FizTrainControllerInstancer's section table.
+## FizVehicleBuilder's section table.
 ##
 ## Key mapping confirmed against a real vehicle line (en57-class cohort):
 ## `SpeedControl: SpeedCtrl=Yes OverrideManual=No InitPwr=1.0 MaxPwrVel=-1 StartVel=-1

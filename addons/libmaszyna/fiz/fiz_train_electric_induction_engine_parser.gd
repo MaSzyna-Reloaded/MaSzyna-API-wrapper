@@ -4,7 +4,7 @@ class_name FizTrainElectricInductionEngineParser
 
 ## VehicleElectricInductionEngine's own subset of Engine: (EngineType=ElectricInductionMotor,
 ## called directly by FizTrainEngineParser once it creates the node), plus ffList:/ffBrakeList:
-## and PmaxList:+rows (registered directly in FizTrainControllerInstancer's section table).
+## and PmaxList:+rows (registered directly in FizVehicleBuilder's section table).
 ##
 ## Engine: key mapping confirmed two ways: (1) directly against a real vehicle line
 ## (`en57al_v1/al-zachpom_i_rb.fiz:45`): `Engine: EngineType=ElectricInductionMotor

@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainAIHintsParser
 
-## AI: section parser -> VehicleAIHints. Registered directly in FizTrainControllerInstancer's
+## AI: section parser -> VehicleAIHints. Registered directly in FizVehicleBuilder's
 ## section table.
 ##
 ## Keys confirmed against a real vehicle line: `AI: Pantstate=1 LocalBrakeAccFactor=0.98

@@ -9,7 +9,7 @@ func before_each():
     add_child(train)
 
     switches = MoverVehicleSwitches.new()
-    train.add_child(switches)
+    train.add_component(switches)
     await wait_idle_frames(2)
 
 func after_each():

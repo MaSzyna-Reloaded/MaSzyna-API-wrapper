@@ -1,13 +1,13 @@
 extends RefCounted
 class_name MmdCabinInstancer
 
-## MMD cabin file parser/builder, mirroring FizTrainControllerInstancer's role for FIZ files.
+## MMD cabin file parser/builder, mirroring FizVehicleBuilder's role for FIZ files.
 ## Scope is Etap A+B of dynamic_train_cabin_feasibility.md: cab1/cab2 model+camera resolution,
 ## plus "rot"/"mov" animation for the labels in MmdSemanticCatalog only ("wip"/"dgt"/"rotvar"/
 ## "movvar" math, audio, pyscreen, and any label outside the catalog are parsed just enough to
 ## keep the token stream aligned, then discarded with a diagnostic).
 ##
-## Unlike FizTrainControllerInstancer (one MaszynaParser per physical line, because FIZ's
+## Unlike FizVehicleBuilder (one MaszynaParser per physical line, because FIZ's
 ## grammar is line-oriented key=value), MMD's grammar is a plain token stream (label: value
 ## value value...), so this reads the whole file - with includes spliced in - into one flat
 ## token array first, then walks it by index. The trade-off: diagnostics below carry line=0

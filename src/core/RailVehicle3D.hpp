@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TrainController.hpp"
+#include "VehicleController.hpp"
 
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -12,11 +12,18 @@
 #include <godot_cpp/variant/typed_dictionary.hpp>
 
 namespace godot {
+    class Cabin3D;
+    class VehicleBuffCoupl;
+    class VehiclePhysicsNode;
     class Area3D;
+    class VehicleElectricEngine;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
             GDCLASS(RailVehicle3D, Node3D)
+
+        public:
+            static const char *controller_changed_signal;
 
         private:
             NodePath model_instance_path;
@@ -52,13 +59,13 @@ namespace godot {
             bool dirty = true;
             bool needs_head_display_update = false;
             Node *head_display_e3d = nullptr;
-            Node3D *cabin = nullptr;
+            Cabin3D *cabin = nullptr;
             Node3D *camera = nullptr;
             Node *cabin_player = nullptr;
             int cabin_show_frames = 0;
-            TrainController *controller = nullptr;
-            Node *electric_engine = nullptr;
-            Node *fiz_controller = nullptr;
+            VehicleController *controller = nullptr;
+            VehicleElectricEngine *electric_engine = nullptr;
+            VehiclePhysicsNode *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
             VisibleOnScreenNotifier3D *visibility_notifier = nullptr;
@@ -79,6 +86,8 @@ namespace godot {
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;
             RID rid;
+            /* Whether `rid` is this node's own handle or the vehicle's, adopted from the controller. */
+            bool rid_owned = false;
             bool pending_start_track_retry = false;
             double update_time = 0.0;
             bool animation_bindings_dirty = true;
@@ -100,12 +109,16 @@ namespace godot {
             bool pantograph_rear_converged = true;
             TypedArray<Dictionary> pantograph_wire_cache;
 
-            Object *_singleton(const StringName &p_name) const;
-            TrainController *_resolve_controller(const NodePath &p_node_path) const;
+            VehicleController *_resolve_controller(const NodePath &p_node_path) const;
             void _jump_into_cabin(Node3D *p_cabin, Node *p_player);
             void _show_cabin_after_frames();
             void _apply_cabin_camera_configuration();
-            void _on_controller_changed(TrainController *p_controller);
+            void _on_controller_changed(VehicleController *p_controller);
+            void _on_vehicle_changed();
+            void _bind_vehicle_node();
+            const VehicleBuffCoupl *_coupler() const;
+            void _on_vehicle_config_changed();
+            void _adopt_vehicle_parts();
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);
@@ -115,6 +128,7 @@ namespace godot {
             void _on_low_poly_cabin_e3d_loaded();
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
+
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();
             void _on_screen_entered();
@@ -135,7 +149,6 @@ namespace godot {
             void _update_wipers();
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
-            void _update_track_transform();
             void _update_model_detail();
             void _update_smoke();
             /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
@@ -178,8 +191,17 @@ namespace godot {
             void enter_cabin(Node *p_player);
             void leave_cabin(Node *p_player);
             void process_manually(const Variant &p_delta);
-            TrainController *get_controller() const;
+            VehicleController *get_controller() const;
+            /// This vehicle's handle in RailVehicleServer - the key anything
+            /// keeping per-vehicle state of its own is meant to use.
+            RID get_rid() const;
+            /* Applies the placement RailVehicleServer's step just produced - the bogie
+             * pivots, the body basis derived from them and the wheel animation. The server
+             * calls it at the end of its tick, so nothing here renders a frame behind its
+             * own physics. */
+            void apply_track_placement();
             void move_on_track(double p_distance);
+            void _on_model_node_e3d_loading();
             void _on_model_node_e3d_loaded();
 
             void set_model_instance_path(const NodePath &p_value);

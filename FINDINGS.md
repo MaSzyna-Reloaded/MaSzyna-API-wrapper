@@ -3,6 +3,416 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
+
+* **Symptom:** a key in the cab plays its sound at once, but the operation only happens when the
+  next key is pressed - so every command appears to lag one keypress behind.
+* **Cause:** `RailVehicleServer::vehicle_dump_state()` composes the vehicle's state once per
+  physics step and hands the same `Dictionary` to every reader of that step. Its own comment
+  stated the premise - "the values cannot change between them, because only a step changes them" -
+  and that premise is false: `TrainSystem::send_command()` runs the command synchronously, in the
+  middle of a step. A cab widget reports a manipulation and reads the state in the same call
+  (`CabinSwitch._on_command_received()` -> `_update_state()`), so it read the values from *before*
+  its own command and only caught up when the next command forced a rebuild.
+* **Fix:** the cache is keyed on the step **and** on a command counter the vehicle owns.
+  `VehicleController::command_executed()` is now the one named operation for "a command has run
+  against this vehicle" - it bumps the serial, updates the state and announces it, replacing the
+  `update_state()` + `emit_command_received_signal()` pair at the call site.
+* **Why not key it on `update_state()` alone:** the step calls that only for a vehicle whose
+  physics is active (`RailVehicleServer.cpp`), so a parked or unmanned vehicle would keep a dump
+  that nothing ever invalidates.
+* **Rule:** a cache keyed on a tick is only correct while the tick is the *only* thing that
+  changes what it holds. Write that premise down where the cache lives - and when something
+  synchronous can change the same state, the key needs a second half.
+* **Rule:** the lag a user reports as "one action late" is a read of a snapshot taken before the
+  write, not a slow write. Look for the cache between them before looking at the input path.
+
+
+
+## 2026-09-24 - the simulation stepped after everything that reads it
+
+* **Symptom:** vehicles judder, worst seen from the external view; a single locomotive does it
+  too, so it is not the couplers.
+* **Two wrong turns first, both mine.** The frame-dependent `sub_step` looked like the cause, so
+  the step was made fixed - which made it *worse*: with a fixed 10 ms step and no interpolation
+  the drawn position advances 1 step on some frames and 0 on others, and the 20-step backlog cap
+  turns a stalled frame into a lurch. Then the cabin shake looked like it, until the operator said
+  the worst of it is the exterior view, which that shake cannot reach. Reverted both.
+* **What settled it:** `git log -S` on the old GDScript server. `4ec5490` had already fixed this
+  once and its message says the opposite of the first hypothesis - the *fixed tick* was what made
+  vehicles judder, and stepping on the rendered frame with a variable delta is what the original
+  does (`vehicle_table::update(Deltatime, Iterationcount)`, DynObj.cpp:8181). The same commit
+  added `process_priority = -100`, "so the step has to come first - otherwise the vehicles render
+  the position of the previous frame".
+* **Cause:** the C++ port kept the variable delta and the iteration count, but drove the step from
+  `SceneTree`'s `process_frame`, which is emitted **after** every node has been processed. It
+  compensated by pushing the new placement onto `RailVehicle3D` at the end of the step - which
+  fixes the vehicle's own transform and nothing else. Every other reader that takes a vehicle
+  transform in its own `_process` (`ExternalCamera._process()` computes the camera from
+  `_view_vehicle.global_transform`) still ran before the step and drew against the previous
+  frame's position.
+* **Fix:** `RailVehicleStepper`, a node with `process_priority = -100` that calls
+  `RailVehicleServer::step_frame()`. The simulation is deterministically through its physics
+  before any node is processed, so drawing and state both see the new data in the same frame -
+  which is what the priority guaranteed before the port. `process_frame` is left to the servers
+  whose work nothing reads back in the same frame.
+* **Rule:** `process_frame` is not "the start of the frame", it is the end of one. Anything a node
+  reads in its `_process` has to be produced before the `_process` phase, and the only ordering
+  Godot gives inside it is `process_priority`.
+* **Rule:** when a fix is being reinvented, find the commit that made it the first time
+  (`git log -S` on the moved code) and read its message before proposing the opposite. Two of the
+  three things tried here had already been decided, with reasons, in `4ec5490`.
+* **What the fix left open, and how it was closed.** Taking the frame delta as it comes means a
+  stalled frame is integrated with `sub_step = delta / MAX_PHYSICS_ITERATIONS`, which past 0.2 s
+  is larger than `PHYSICS_STEP` - the one thing that constant exists to prevent. Dropping the
+  excess was the obvious answer and it is wrong here: the scenario's events and multiplayer are
+  driven by time, so a simulation running slower than the clock drifts out of both. `step_frame()`
+  therefore *owes* what it cannot integrate and the following frames pay it off, and only past
+  `maszyna/physics/catch_up_limit` does it take the debt in one step - a visible jump, logged,
+  because a jump beats a clock that lies. The debt is reset whenever stepping starts, since time
+  that passed while the simulation was stopped is not time it failed to integrate.
+* **Trap it exposed:** `test_process_movement_with_invalid_controller_reference_is_noop` passed
+  only because the step used to run after GUT's coroutine resumed. Its premise was never true -
+  `controller = null` drops a GDScript reference and leaves the object attached to the vehicle. It
+  now detaches the controller from the vehicle, which is what "invalid reference" means to the
+  server.
+
+## 2026-09-23 - a GDScript subclass silently replaced the native _ready()
+
+* **Symptom:** right after `Cabin3D` moved from GDScript to C++, the camera stopped entering the
+  cab at all - not "the interior is missing", but nothing happened. No error, no crash, every
+  cabin test green.
+* **Cause:** the C++ class implemented `_ready()` as the GDExtension virtual and emitted
+  `cabin_ready` from it, which `RailVehicle3D::enter_cabin()` waits on with a one-shot
+  connection. `DynamicTrainCabin` (GDScript) defines `_ready()` too - and a script that defines a
+  virtual **replaces** the native implementation rather than adding to it. The native `_ready()`
+  therefore never ran, the signal was never emitted, and the camera had nothing to wait for.
+  `super._ready()` is not a way out either: GDScript refuses it for a native virtual
+  ("Cannot call the parent class' virtual function").
+* **Fix:** `_notification()` with `NOTIFICATION_READY` / `NOTIFICATION_PROCESS`. A notification is
+  delivered to the whole chain - the native class and the script both get it - so a script
+  overriding `_ready()` no longer switches the base class off.
+* **Rule:** when a C++ class is moved under an existing GDScript subclass, its lifecycle goes in
+  `_notification()`, never in the `_ready()`/`_process()` virtuals. Those are overridable, and a
+  subclass that already defines one silently takes the base out of the picture.
+* **Rule:** the same move is safe for `_notification()` in both directions, which is why
+  `VehiclePhysicsNode` and `VehicleController` never showed this - they have no GDScript
+  subclass defining the same virtual. The trap needs a subclass to appear.
+* **The second half of it, found the same way:** with the lifecycle fixed the camera entered the
+  cab and the interior was still missing. `DynamicTrainCabin` also overrode `set_train_id()`, and
+  that is where it rebuilt the interior - but `RailVehicle3D` now calls that method **typed**,
+  which reaches `Cabin3D::set_train_id()` and never the script's. A script only shadows a native
+  method for callers going through `call()`; making the call typed is exactly what removes the
+  shadowing.
+* **Rule:** a C++ base does not offer a subclass "override this method" unless the method is a
+  registered virtual. It announces instead - `Cabin3D` emits `train_id_changed` and the subclass
+  reacts - which works the same whether the caller is C++ or GDScript.
+
+## 2026-09-23 - the loco that would not move had nobody in the cab
+
+* **Symptom:** `test_sm42_startup_sequence::test_successful_moving_on` - "Speed should be > 0" -
+  red since `87d5f8d`, through weeks of unrelated work. The startup itself was fine: the engine
+  reached its revolutions and the brakes released, both asserted two lines above the failure.
+* **Cause:** `TMoverParameters::ComputeTotalForce()` decides whether the vehicle is worth
+  simulating at all (`Mover.cpp:4485`): `vehicleisactive` is `CabActive != 0 || Vel > 0.0001 ||
+  |AccS| > 0.0001 || LastSwitchingTime < 5 || EZT || DMU`, and `switch_physics()` turns the
+  integration off when none of them holds. The test built its locomotive with the default
+  `cabin_number = 0`, so `VehicleController::initialize_mover()` never called `CabActivisation()`
+  - by the original's own rule, an unmanned vehicle stays inactive (`Driver.cpp:2126`). For the
+  first five seconds `LastSwitchingTime` kept the physics alive, which is why the early
+  assertions passed; the test then waits 5 s + 5 s + 1 s + 2 s, and by the time it looks at the
+  speed the Mover had long stopped integrating.
+* **Fix:** the test occupies the cab (`cabin_number = 1`), which is what a startup sequence is -
+  a driver operating the locomotive.
+* **Rule:** a vehicle that is not driven is not simulated, on purpose. Before treating "it does
+  not move" as a physics or a wiring bug, check `CabActive`/`PhysicActivation` - the backend
+  switches itself off and reports nothing.
+* **Rule:** a red test that survives many unrelated commits stops being evidence of the commit
+  that turned it red. This one was read as a regression of the physics-server port for weeks; it
+  was a test that had never set up a driven vehicle.
+
+## 2026-09-23 - a parked vehicle never had its bogies placed, and four guesses before one print
+
+* **Symptom:** both bogies of a vehicle standing on a curve carried the same tangent
+  (`test_rail_vehicle_track_movement::test_bogies_follow_track_tangents`). Nudging the vehicle by
+  1 mm fixed it, which made it read as a test artefact rather than a bug.
+* **Four wrong hypotheses first**, each argued from reading the code: the config key names, the
+  `bogie_rest_global_bases` cache, the order of `_cache_animation_bindings()` against
+  `_process_dirty()`, and the duplicated vehicle handle. Two of those were real bugs, fixed in
+  the same commit, and neither was this one.
+* **What found it:** a `UtilityFunctions::print` of every guard at the top of
+  `apply_track_placement()`, plus one inside the bogie loop. The first printed once with
+  `force_detail_refresh=1` and then a dozen times with `0`; the second never printed at all. So
+  the function returned at `!moved && !force_detail_refresh` on every call after the first, and
+  the first had found a pivot spacing of 0.
+* **Cause, and the lifecycle that explains it:** `VehiclePhysicsNode::_build()` creates the
+  controller, applies the model, attaches the components and then calls `initialize()`, whose
+  `initialize_mover()` pushes the wrapper's configuration into the backend before
+  `vehicle_changed` is emitted. A component added **after** that - a modder's
+  `GenericVehicleComponentNode`, or the wheels a test adds - configures nothing until the next
+  tick dirties the Mover. `MoverVehicleWheels` publishes `bogie_pivot_spacing` by reading
+  `mover->BDist`, so the one placement the vehicle got saw 0, and `moved` is false forever for a
+  vehicle that is standing still.
+* **Fix:** `RailVehicle3D` reacts to the controller's `mover_config_changed` signal, which is
+  emitted exactly when the configuration reaches the backend, instead of polling a retry flag.
+* **Rule:** a per-frame path gated on "something moved" never picks up a value that arrives late.
+  Anything derived from configuration is recomputed when the configuration lands - and there is a
+  signal for that; do not invent a retry flag beside it.
+* **Rule:** after two hypotheses read off the code have failed, stop reading and print. Four
+  reasoned guesses cost more than the one `print` that named the branch in a single run.
+
+## 2026-09-23 - every vehicle ran with a bogie pivot spacing of zero
+
+* **Symptom:** `test_rail_vehicle_track_movement::test_bogies_follow_track_tangents` - "bogies
+  should follow different tangents on a curved track". Both bogies sat on the same tangent, as if
+  the vehicle had no length at all.
+* **Cause:** `MoverVehicleWheels::_fill_config_dictionary()` published its keys as **the names of
+  the methods that produced them, parentheses and all** - `p_config["get_bogie_pivot_spacing()"]`,
+  `p_config["get_track_width()"]`, and nine more across that file and
+  `MoverVehicleUniversalController`. Every reader asks for the plain name, so
+  `RailVehicle3D.cpp:1106` (`get_config().get("bogie_pivot_spacing", 0.0)`) took the default **for
+  every vehicle in the game**, not only in the test: the front and rear bogie were sampled at the
+  same point on the track.
+* **What proved it:** reading the fill itself after the test failed. A `Dictionary.get(key,
+  default)` cannot report a missing key - it returns the default and the caller carries on, so
+  there is no error anywhere to grep for. The count is the whole diagnosis: 11 keys, 2 files.
+* **Fix:** the keys carry the value's name (`bogie_pivot_spacing`), as every other component's
+  fill already did.
+* **Rule:** a state or config key is data, not a method name. When a fill is written by
+  transcribing accessors - by hand or by a script - grep the result for `["get_` before trusting
+  it; the mistake is invisible at the producer and silent at every consumer.
+* **Rule:** `Dictionary.get(key, default)` hides a typo forever. Where a key is part of a
+  published contract, the test that matters asserts the **key is present**, not merely that the
+  value reads sensibly.
+
+## 2026-09-22 - a teardown abort that is RID allocator corruption, not a double free
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` aborts during scenery teardown, in maybe half of
+  the runs. Godot's own crash dump shows no extension frames at all, which sends the reader to the
+  tail of a backtrace full of unresolved `main+...` offsets.
+* **Two instruments that finally said something.** A `print` per group in
+  `MaszynaInclude._free_owned_rids()` named the group it dies in - group 5,
+  `E3DRenderingServer.instance_free`, 324 instances, and group 6 never runs. Then
+  `coredumpctl debug` on the core gave the real stack, which the dump had not:
+  `instance_free` -> `E3DOptimizedBackend::clear` -> a RenderingServer call taking a RID -> abort.
+  It is **SIGABRT, not SIGSEGV** - the process is not dereferencing null, something is calling
+  `abort()`.
+* **What the errors say:** `Initializing already initialized RID`, `Attempting to initialize the
+  wrong RID`, `Attempting to use an uninitialized RID`, `unimplemented base type encountered in
+  renderer scene cull`. That is the RenderingServer's **RID allocator** in an inconsistent state,
+  which a plain double free does not produce - it produces "Attempted to free invalid RID".
+* **The mechanism, and what correlates with it:** `E3DRenderingServer::_stream_preload()` runs on
+  `SceneryStreamingServer`'s **worker thread** and calls the `model_loader` Callable, which is
+  GDScript (`e3d_model_manager.gd::load_model`) doing a full `load()` of a resource. Resource
+  loading creates renderer resources; the main thread is freeing them at the same moment. Clearing
+  `user://cache/rail_vehicle` and `fiz` reproduces it on the first runs and it stops once the cache
+  is warm, because a cold cache means far more vehicles being built and therefore far more
+  streaming work in flight.
+* **Three real hazards found and fixed on the way, none of which was the cause** - worth keeping
+  anyway, and worth knowing they are not it:
+  * `_free_owned_rids()` cleared each RID list only after its whole loop while the budgeted path
+    awaits a frame in the middle, so leaving the tree during that await freed the same RIDs twice;
+  * 14 `X::get_instance()->` dereferences had no null check, among them `stream_free()` inside
+    `instance_free()` itself and the `EXIT_TREE` pair;
+  * `instance_free()` held a `HashMap` iterator across cleanup that re-enters the same server.
+* **Not yet fixed.** The remedy is a design decision: either the streaming preload stops creating
+  renderer resources (parse on the worker, build on the main thread), or the worker is drained
+  before a teardown frees anything. Recorded in `TODO.md`.
+* **Rule:** when a crash is an **abort** rather than a segfault, read the engine's error lines
+  before the stack - "already initialized RID" names a corrupted allocator and points at
+  concurrency, while "invalid RID" names a double free. They are different bugs and the stack
+  looks the same.
+* **Rule:** Godot's crash dump is not the stack. When the extension's frames are missing, take the
+  core (`coredumpctl debug`) - it resolves the extension's symbols that the in-process dumper does
+  not.
+* **Rule:** a `Callable` handed to a server that documents "runs on the worker thread" must be read
+  all the way down. `load_model` looks like parsing; it is `ResourceLoader.load()`.
+
+## 2026-09-22 - "the C++ port made it 4x slower" was a GPU that never woke up
+
+* **Symptom:** `td.scn` ran at about 30 fps where it had run at roughly 200, right after
+  `TrackManager`/`SpatialIndex` moved from GDScript autoloads to C++, and the obvious conclusion
+  was that the port was the cause.
+* **Cause:** the discrete GPU had not come back from powersave, so the simulator was running on the
+  integrated RX 780M. Nothing in the branch was responsible.
+* **What pointed at it:** the GPU frame time reported **over 40 ms**. A CPU-side regression in
+  GDScript-to-C++ ported logic cannot move the GPU's own frame time - that number alone ruled out
+  every code hypothesis, and it was visible from the first measurement.
+* **Cost:** two wrong diagnoses (first the minimap/TrackManager, then an `-O0` build overwriting
+  an `-O2` one - a real trap, but not this one) and a profiling pass that was planned and then
+  cancelled.
+* **Rule:** split the frame time into CPU and GPU **before** forming any hypothesis about a
+  performance regression. If the GPU time moved, the CPU-side change is not the suspect - check
+  which adapter is actually rendering (`--verbose` names it) before touching code.
+* **Rule:** a performance number is a measurement of the whole machine, not of the commit. Confirm
+  the environment is the same - adapter, power profile, build flags - before the code is.
+
+## 2026-09-22 - a config property and a state key of the same name are not the same value
+
+* **Symptom:** `test_train_battery::test_successful_battery_voltage_drop_after_two_seconds` went
+  red - "There should be a battery voltage drop after 2 seconds" - while every other battery test
+  stayed green.
+* **Cause:** while giving the components typed state properties, `battery_voltage` was taken to be
+  one value published twice, so the state dump was pointed at the wrapper's existing
+  `battery_voltage` config getter. It is not one value: the authored property is the **nominal**
+  voltage (`_do_update_internal_mover` writes it to both `BatteryVoltage` and
+  `NominalBatteryVoltage`), and the backend then drains and recharges `BatteryVoltage` at run time
+  (`Mover.cpp:946`). Reading the config back reported a battery that never moves.
+* **Fix:** `get_live_battery_voltage()` for the state; the authored property keeps its name. Three
+  other reuses were checked the same way and do hold - the backend never writes
+  `EnginePowerSource.RPowerCable.SteamPressure`, `PowerTrans` or `RAccumulator.RechargeSource`.
+* **Rule:** before publishing a state value through an existing config getter, grep the backend for
+  an assignment to that field. A value the simulation writes is state; a value only the wrapper
+  writes is configuration, and only the second one may be read back from the wrapper's own
+  property.
+
+## 2026-09-22 - an uninitialised pointer that only a property read could reach
+
+* **Symptom:** after the vehicle components gained typed state properties, building a vehicle from
+  a FIZ crashed with signal 11 inside `PackedScene.pack()`
+  (`fiz_train_controller_instancer.gd:218`). The backtrace was pure garbage symbols, and a bisect
+  over the converted classes gave inconsistent answers - reverting one class "fixed" it, restoring
+  another "broke" it again.
+* **What proved it:** `addr2line` on the three `libmaszyna` frames of the crash dump, which the
+  garbage tail of the backtrace had hidden:
+  `VehicleDoors::get_locked()` -> `VehicleController::get_mover()`, called through
+  `MethodBind::bind_call` - i.e. reached by a **property read**, not by the tick.
+* **Cause:** `VehicleComponent::train_controller_node` was declared `VehicleController *
+  train_controller_node;` with **no initialiser**. It is assigned in `NOTIFICATION_ENTER_TREE`, so
+  until a component joined a vehicle the field held whatever was on the stack. Nothing ever read a
+  component before it entered the tree, so the defect was unreachable - until the state became
+  typed properties and `PackedScene.pack()` started reading them off a freshly constructed,
+  never-parented component.
+* **Fix:** `= nullptr` on the declaration. The null checks around it were already there and
+  correct; they were simply never given a null.
+* **Rule:** exposing state as properties makes every getter reachable at times the class was never
+  written for - before `_ready()`, before `ENTER_TREE`, during `pack()`, from the inspector. Every
+  member those getters touch has to be valid from the constructor, not from the first notification.
+* **Rule:** a raw pointer member gets `= nullptr` at its declaration, always. "It is assigned
+  before anything reads it" is an assumption about callers, and adding a caller is what breaks it.
+* **Trap:** Godot's crash dump prints dozens of resolvable-looking frames from the main binary and
+  only a handful from the extension, and the extension's are the unresolved hex ones. Run
+  `addr2line -f -C -e <the .so> <offsets>` on those first instead of reading the tail.
+
+## 2026-09-22 - a regex that deleted 588 lines, and the linker that caught it
+
+* **Symptom:** after a scripted removal of five methods from `RailVehicleServer`, the build
+  succeeded and the editor refused the extension with
+  `undefined symbol: RailVehicleServer::vehicle_move(RID const&, double)`. Every GDScript naming a
+  wrapper class then failed to parse, which reads exactly like a broken `global_script_class_cache`
+  and sends the search in the wrong direction.
+* **Cause:** the deletion used
+  `re.search(r"\n(    /\*.*?\*/\n)?    [\w :<>*&]*?Class::name\(.*?\n    \}\n", s, re.S)`.
+  The *optional* comment group carries `.*?` under `re.S`, so the engine is free to start the match
+  at a newline hundreds of lines earlier, let that group span the whole distance to a comment that
+  happens to sit right above the target, and hand back a match containing everything in between.
+  `s.replace(match, "")` then deleted 588 of the file's 856 lines - every other method with it.
+* **What proved it:** not the compiler. The file still compiled, because a missing definition is
+  only an error at link time, and a GDExtension links lazily - the symbol went missing and nothing
+  said so until Godot loaded the library. `diff` of `grep -oP "Class::\K\w+"` between `HEAD` and
+  the working tree named the casualties in one line.
+* **Fix:** the removal walks lines, finds each definition by its own signature line and deletes to
+  the matching `    }` at that indentation. Re-checked the same way in the other file the same
+  script had touched, which turned out to be intact.
+* **Rule:** do not delete a code span with a regex whose optional prefix can match across lines.
+  When a script edits source, verify structurally afterwards - compare the list of defined symbols
+  against `HEAD`, or the line count - because a deletion that leaves valid syntax has no other
+  symptom until link or run time.
+* **Rule:** `undefined symbol` from a GDExtension means a *declared and bound* method has no
+  definition. Look for a deleted or renamed definition first; the class cache and the import are
+  the second question, not the first.
+
+## 2026-09-22 - an unguarded singleton dereference only crashes at teardown
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` died with signal 11 while the scenery was being
+  freed (`maszyna_include.gd:_free_owned_rids` -> `TrackManager.track_free`), having passed a few
+  commits earlier. Nothing in the state work it was bisected against touched teardown.
+* **Cause:** `RailVehicle3D` reached the new C++ servers as `TrackManager::get_instance()->...`
+  and `RailVehicleServer::get_instance()->...` with no null check. `track_free()` emits
+  `tracks_changed`, the vehicle's handler re-applies its start track, and by then the singletons
+  can already be unregistered - so the call dereferenced nullptr. `CODE_STYLE.md` says this
+  outright ("`Engine::get_singleton()->get_singleton(...)` does not guarantee a valid instance /
+  pointer. Always check that the singleton pointer is not `nullptr`"); the guard was simply
+  skipped while porting the call sites over from the untyped `->call()` form, which had returned
+  a null `Object *` and merely warned.
+* **Fix:** every `get_instance()` result in `RailVehicle3D` is taken into a local and checked.
+* **Rule:** replacing `Engine::get_singleton()->get_singleton(name)->call("x")` with a typed
+  `X::get_instance()->x()` removes the string, not the null. The typed form crashes where the
+  untyped one used to print a warning, so the guard becomes *more* necessary, not less.
+* **Rule:** a signal emitted from a free/teardown path runs handlers against a half-dismantled
+  world. Anything a handler reaches for there has to be checked, whatever it is.
+
+## 2026-09-22 - what porting an autoload to C++ actually costs, and the crash it hides
+
+* **Context:** `TrackManager` (1023 lines) and `SpatialIndex` (55) moved from GDScript autoloads to
+  C++ engine singletons, stage 2 of the #184 rework. The port itself was the small part.
+* **The bulk of the work is not the port, it is what GDExtension cannot carry over:**
+  * **Enums flatten.** `TrackManager.TrackType.TRACK_NORMAL` is valid for a GDScript class and not
+    for a native one - it becomes `TrackManager.TRACK_NORMAL`. **370 call sites** across
+    `addons/` and `demo/`.
+  * **Inner classes have no equivalent.** `TrackManager.EndpointRef` and `BranchNeighbors` became
+    `TrackEndpointRef` / `TrackBranchNeighbors`, and a registered class takes **no constructor
+    arguments** - every `X.new(a, b)` becomes `X.new()` plus property assignments.
+  * **A native class cannot expose a float or RID constant.** `RAIL_HEIGHT`, `SWITCH_MAX_OFFSET`
+    and `SWITCH_OFFSET_DELAY` became read-only properties (`TrackManager.rail_height`), and
+    `UNDEFINED_TRACK` became plain `RID()` at the call sites.
+  * **Typed collections change shape.** `Array[Vector3]` became `PackedVector3Array` and
+    `Array[EndpointIndex]` became `PackedInt32Array`, so every annotation *and* every
+    `assert_eq(packed, [literal])` had to follow - GUT refuses to compare the two.
+* **The crash, and why it is the point:** `test_rail_vehicle_track_movement` aborted with a core
+  dump the moment the autoload was gone. `RailVehicle3D::_apply_start_track()` reached the manager
+  with `get_tree()->get_root()->get_node_or_null("TrackManager")` and then called
+  `->call("track_get_rid_by_name", ...)` on the result. With the autoload node gone that result is
+  **nullptr**, and the untyped call dereferences it. Had it been a typed
+  `TrackManager::get_instance()->track_get_rid_by_name(...)`, the compiler would have had the
+  class and the null check would have been the ordinary one.
+* **Rule:** the two prohibitions added in the previous entry are not style - reaching a singleton
+  by node path and calling it by string name is exactly what turns "this autoload moved" into a
+  segfault in an unrelated test.
+* **Trap:** the first headless run after rebuilding the extension re-imports the project and can
+  take minutes; the same test then runs in about 3 s. Run `--import` on its own before timing or
+  before concluding that anything hangs.
+
+## 2026-09-22 - reading the vehicle state was changing it, in four places
+
+* **Context:** the first stage of the #184 architecture work. The state `Dictionary` is filled by
+  `TrainController::_do_fetch_state_from_mover()` and by every `TrainPart`'s own fetch, and those
+  fetches had quietly become the place where work happened.
+* **What was found, by reading every fetch rather than by a failure:**
+  * `TrainController::_consume_coupler_sounds()` **cleared `TCoupling::sounds` on the Mover**
+    while filling the dictionary. The coupling events therefore belonged to whoever read the
+    state first, and a second reader in the same frame got nothing.
+  * `TrainBrake`'s fetch advanced a low-pass filter with `get_process_delta_time()` and stored
+    the result. The published `brake_loco_pressure_fall_rate`/`rise_rate` depended on **how often
+    the state was read**, which nothing at any call site says.
+  * `TrainEngine` emitted `engine_start`/`engine_stop`, and `TrainSecuritySystem`
+    `blinking_changed`/`beeping_changed`, from inside the fetch - comparing against "the previous
+    value" pulled back out of the dictionary the fetch was filling. The signals fired on a read,
+    not on a change.
+* **Why it stayed invisible:** `get_state()` is guarded by `state_dirty`, so in practice there was
+  exactly one fetch per tick and every one of these looked correct. The guard is what hid them;
+  remove it, add a second reader, or skip a frame, and all four change behaviour.
+* **Fix:** each moved to the tick that owns it - `_do_process_mover()` for the brake filter and
+  for both change detections (against the part's own `previous_*` member), and
+  `_handle_mover_update()` for draining the coupler flags. The fetches only read now.
+* **Second finding, from the same pass:** the twelve coupler counters were **sound bookkeeping
+  living in the vehicle**. They existed solely so a `TriggerMode.CHANGE` sound trigger could see a
+  number go up. The vehicle now reports each event once (`coupler_attached` / `coupler_detached`,
+  carrying a `CouplingElement`) and `TrainSoundSystem` keeps the counts itself, keyed by vehicle
+  RID.
+* **Third, found by grepping for the collision rather than by a bug report:** `power_source` was
+  written by both `TrainElectricEngine` (the engine's supply) and `TrainLighting` (the lighting's
+  supply). Merge order is scene-tree child order, i.e. FIZ section order, so on an electric
+  locomotive with lighting whichever merged last won. Lighting now publishes
+  `light_power_source`.
+* **Rule:** a getter never changes state - see `CODE_STYLE.md`. A value that depends on how often
+  it is read is a bug that stays invisible until a second reader appears.
+* **Rule:** state that only one layer needs lives in that layer. If the layer were replaced
+  wholesale, would the field go with it? Then it does not belong to the layer below.
+* **Trap worth knowing:** `test_sm42_startup_sequence.gd::test_successful_moving_on` is red, and
+  was red before any of this. Anything touching the physics path has to establish that baseline
+  first (stash, rebuild, run) instead of assuming the red came from the change - see `TODO.md`.
+
 ## 2026-09-22 - the sound system's per-frame cost was not where the loop was
 
 * **Context:** after the playback tick moved to a worker thread, `TrainSoundSystem._process` was

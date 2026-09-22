@@ -2,7 +2,7 @@ extends RefCounted
 class_name CabinState
 
 ## State of one cabin of one train - (train_id, cab), where cab is 1 (cab 1), 0 (machine room) or
-## -1 (cab 2), matching TrainController.state["cabin_occupied"]. Owned by CabinSystem and handed to
+## -1 (cab 2), matching VehicleController.state["cabin_occupied"]. Owned by CabinSystem and handed to
 ## every registered cabin control handler, which may read and modify it.
 ##
 ## The train is reached only through the high-level API (TrainSystem commands and state), never
@@ -40,7 +40,7 @@ func is_pressed(control_id:StringName, action:StringName, value:Variant) -> bool
     return action == &"hold"
 
 
-# FIXME(#57): reads the per-frame copied TrainController.state; see the refresh workaround in
+# FIXME(#57): reads the per-frame copied VehicleController.state; see the refresh workaround in
 # TrainSystem::send_command for why a read right after a command could be stale.
 func vehicle_state() -> Dictionary:
     return TrainSystem.get_train_state(train_id)

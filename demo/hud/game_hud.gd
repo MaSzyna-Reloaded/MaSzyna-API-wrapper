@@ -60,6 +60,11 @@ func _bind_train_controller(win: Node) -> void:
     var player: MaszynaPlayer = get_node(player_path) as MaszynaPlayer
     if not player.controlled_vehicle:
         return
+    # the widgets point at the vehicle's node; the controller it owns is not a node and has no path
+    var vehicle: RailVehicle3D = player.controlled_vehicle
+    var physics_node: Node = vehicle.get_node_or_null(vehicle.controller_path) if vehicle.controller_path else null
+    if not physics_node:
+        return
     for child: Node in win.get_children():
         if "train_controller" in child:
-            child.train_controller = child.get_path_to(player.controlled_vehicle.get_controller())
+            child.train_controller = child.get_path_to(physics_node)

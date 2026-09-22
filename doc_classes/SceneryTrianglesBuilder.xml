@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="SceneryTrianglesBuilder" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="build_chunks" qualifiers="static">
+			<return type="Array" />
+			<param index="0" name="triangles" type="Array" />
+			<param index="1" name="chunk_size_m" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

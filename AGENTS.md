@@ -1,6 +1,18 @@
 Planning and architectue:
 
-* apply separation of concerns
+* REQUIRED: **separation of concerns, enforced, not aspired to.** A layer owns one kind of thing
+  and knows nothing of the layers above it. A simulation backend does not hold sound bookkeeping;
+  a physics server does not know what a gauge shows; a rendering server does not decide game
+  rules; a UI node does not reach into a vehicle's internals. When a piece of state is only ever
+  needed by one layer, it lives **in that layer** - the counters a sound system compares against
+  belong to the sound system, not to the vehicle that reports the event. The test is a question:
+  if this layer were replaced wholesale, would the field go with it? Then it belongs there.
+  Mixing them is not a shortcut that costs style points; it is what makes a layer impossible to
+  replace or test on its own.
+* REQUIRED: the backend a layer happens to be implemented on **never appears in its public
+  interface** - not in a method name, not in a parameter, not in a returned type. The vehicle has
+  state and config and the operations that change them; that its physics happens to be the
+  vendored Mover is an implementation detail with no business being named outside it.
 
 Code generation:
 
@@ -65,6 +77,50 @@ Code generation:
   `_ensure_built()`, `_ensure_viewport()`, `_ensure_sections()`, nor the same idea under a friendlier
   name. State is initialised where it is created and set where it changes, once and explicitly; it is
   not re-checked and re-derived on every call by a function that "ensures" it - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **no magic numbers.** A literal that is not
+  self-evident from the expression it sits in gets a named constant - a threshold, a limit, an
+  index base, a conversion factor, a count, a delay, a bitmask. `+ 6` is a magic number;
+  `COUPLER_DETACH_OFFSET + element` is the same code that says why. The name is the place the
+  next reader learns what the value means, and the single place it changes. A value ported from
+  the original engine carries the original's value **and** a reference to where it came from
+  (`Track.cpp:35`), never a rounder number that looks safer - see `FINDINGS.md`. The exceptions
+  are the ones that need no name: 0, 1, -1 and 2 used as themselves, and array indices that are
+  literally the position being addressed - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **a getter never changes state.** A `get_*`, a
+  property getter, a `_get()` and anything else a reader calls must be free of side effects - it
+  does not tick a filter with `get_process_delta_time()`, does not consume a flag on the Mover,
+  does not emit a signal, does not write to another object, does not lazily build what it returns.
+  Whatever the value needs happens where the state changes, in a named operation of its owner; the
+  getter only returns it. A value that depends on **how often** it is read is a bug that stays
+  invisible until a second reader appears - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never reach a known class through
+  `Object::call("method_name")`.** Include the header and call the method - the compiler then
+  checks the name, the arity and the argument types, and a rename becomes a build error instead of
+  a runtime no-op returning `null`. A singleton is reached the same way: a server exposes a typed
+  `static X *get_instance()` and typed methods, never a name looked up on an `Object`, and never
+  `get_tree()->get_root()->get_node_or_null(name)` standing in for one. A string call is allowed
+  only where the class genuinely cannot be known at build time (a GDScript node that a C++ node
+  merely hosts), and the call site says so in a comment - see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **a public API takes and returns RIDs, Variants and
+  `Callable`s - never raw pointers.** This holds for servers above all: a handle is a `RID`, an
+  object is an `ObjectID`, a callback is a `Callable`. Godot's own servers are the reference -
+  `PhysicsServer3D::body_attach_object_instance_id(RID, ObjectID)`, never a `Node *`. A pointer
+  that crosses a public boundary makes the caller responsible for a lifetime it does not own, and
+  the resulting dangle surfaces far from the code that caused it. Pointers stay inside one class -
+  see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never work around a missing or mistimed event.**
+  When a value is not there yet, the answer is never a retry, a re-request, a poll, a "try again
+  next frame" flag, a deferred call or a second attempt. Those hide a broken order of operations
+  and they keep working just well enough that nobody finds the real defect. Fix it where it is:
+  make the operation that produces the value complete before anything observes it, or give the
+  owner an event that says the value has landed and react to that. A flag whose name means
+  "do it again" is the smell; if one is being added, the ordering is wrong
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never wire anything up in a hot path.** A
+  `connect`, a `get_node`, a path resolution, a subscription - none of it belongs in `_process`,
+  `_physics_process` or a per-frame tick, not even behind a `_dirty` flag. Wiring happens once,
+  where the node comes into being: `_enter_tree()`, `_ready()`, or an explicit init called by the
+  owner. A subscription made from `_process` also cannot be waited for - a node that stops
+  processing until the thing it subscribes to exists would never subscribe at all
 * GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
   `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
   numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a
@@ -127,6 +183,26 @@ Checks:
   modified, one script at a time: `-gdir=res://tests/ -gselect=<script name>` (`-gtest=` does
   not filter here and runs everything)
 * do not run tests or headless Godot after every edit - only before a commit, or when operator asks
+* TESTS: **redirect a headless run to a file and read the file** - do not pipe it through
+  `grep | head`. `head` closes the pipe, the run dies of SIGPIPE part-way, and the result reads as
+  a hang or a timeout when the test actually passed. The same output in a file says "Passing Tests
+  2" plainly.
+* TESTS: a GDScript that fails to **parse** is not reported as a failing test - GUT prints
+  "Ignoring script ... because it does not extend GutTest", finds no match for `-gselect`, and
+  then runs the whole directory until the timeout. So a syntax error looks exactly like a hanging
+  test. Parse-check first, cheaply:
+  `godot-double --headless --path demo --check-only -s res://tests/<file>.gd`. `--import` does not
+  catch it: a type error only surfaces once the script's dependencies resolve.
+
+Before every commit:
+
+* REQUIRED: **review the diff being committed against `CODE_STYLE.md` and the rules above,
+  before committing it** - `git diff --staged`, line by line, not the intention behind it and not
+  after the operator points at something. Look for: state written from outside its owner, a getter with a side effect, a magic number,
+  a `->call("name")` where the class is known, a raw pointer or an `ensure_*` in a public API, an
+  unguarded singleton dereference, a bare `[]`/`{}` handed to a typed collection, a private helper
+  with one call site, work added to `_process`, and a name that does not come from the data or the
+  original engine. Fix what the review finds in the same commit.
 
 Commit style:
 

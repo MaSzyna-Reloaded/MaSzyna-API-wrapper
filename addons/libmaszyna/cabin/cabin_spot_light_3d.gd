@@ -1,7 +1,16 @@
 extends SpotLight3D
 class_name CabinSpotLight3D
 
-var _controller:TrainController
+## The vehicle this element sits in, as the cabin root hands it down.
+func set_train_id(train_id:String) -> void:
+    if _train_id == train_id:
+        return
+    _train_id = train_id
+    _dirty = true
+
+
+## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
+var _train_id:String = ""
 
 var _dirty:bool = false
 var _setup_phase: bool = true
@@ -9,11 +18,6 @@ var _t = 0.0
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
-@export_node_path("TrainController") var controller_path:NodePath = "":
-    set(x):
-        controller_path = x
-        _controller = null
-        _dirty = true
 
 @export var state_property = ""
 ## Most MMD indicator labels have no real per-vehicle lamp definition to derive
@@ -67,7 +71,7 @@ var _off_target:Node3D
 ## 0 (default) = steady on/off, matching prior behavior exactly. >0 = flash the light on/off at
 ## this interval while `enabled` stays true - mirrors CabinBlinker's own Timer-based algorithm
 ## (cabin_blinker.gd). Needed because the wrapper's "blinking"-family state properties
-## (TrainSecuritySystem::is_blinking() etc., Mover.cpp) are STATIC "is the alert condition active"
+## (VehicleSecuritySystem::is_blinking() etc., Mover.cpp) are STATIC "is the alert condition active"
 ## flags (`alert_timer > 0.0`), not a real-time oscillating value - the actual flashing pattern
 ## has always been a presentation-layer concern, never baked into the state itself.
 @export var blink_time:float = 0.0
@@ -92,8 +96,8 @@ func _on_blink_timeout():
     _update_state()
 
 func _update_state():
-    if _controller and state_property:
-        enabled = true if _controller.state.get(state_property, false) else false
+    if _train_id and state_property:
+        enabled = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
 
     var active_now:bool
     if blink_time <= 0.0:
@@ -125,13 +129,11 @@ func _update_state():
 func _process(delta):
     if _dirty:
         _dirty = false
-        if not _controller and controller_path:
-            _controller = get_node(controller_path)
         if not _on_target and on_target_path:
             _on_target = get_node_or_null(on_target_path)
         if not _off_target and off_target_path:
             _off_target = get_node_or_null(off_target_path)
-        if _controller:
+        if _train_id:
             _update_state()
             _setup_phase = true
 

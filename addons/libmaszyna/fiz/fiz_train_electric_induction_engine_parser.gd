@@ -2,9 +2,9 @@
 extends RefCounted
 class_name FizTrainElectricInductionEngineParser
 
-## TrainElectricInductionEngine's own subset of Engine: (EngineType=ElectricInductionMotor,
+## VehicleElectricInductionEngine's own subset of Engine: (EngineType=ElectricInductionMotor,
 ## called directly by FizTrainEngineParser once it creates the node), plus ffList:/ffBrakeList:
-## and PmaxList:+rows (registered directly in FizTrainControllerInstancer's section table).
+## and PmaxList:+rows (registered directly in FizVehicleBuilder's section table).
 ##
 ## Engine: key mapping confirmed two ways: (1) directly against a real vehicle line
 ## (`en57al_v1/al-zachpom_i_rb.fiz:45`): `Engine: EngineType=ElectricInductionMotor
@@ -16,12 +16,12 @@ class_name FizTrainElectricInductionEngineParser
 ## against the real file's key order confirms the semantic identity of each key (minor label
 ## spelling quirks: "scfu"/"cfu" and "eped"/"edep" are the same key, just written differently
 ## in the debug label vs the real FIZ key). `abed`/`edep` have no corresponding
-## TrainElectricInductionEngine property at all (not invented here - see AGENTS.md). `fcfuH`
+## VehicleElectricInductionEngine property at all (not invented here - see AGENTS.md). `fcfuH`
 ## (the braking-mode counterpart of `fcfu`, mirroring `Uzh` being `Uzmax`'s braking
 ## counterpart) maps to `inverter_uf_setpoint_braking` by the same naming pattern, though it
 ## doesn't appear in the one real example checked.
 ##
-## DElist-backed property (`wwlist`, reused from TrainDieselElectricEngine's row shape - see
+## DElist-backed property (`wwlist`, reused from VehicleDieselElectricEngine's row shape - see
 ## FizTrainDieselElectricEngineParser's docstring) is what unblocks `ffList:`/`ffBrakeList:` in
 ## Batch 6 - see this class's own note there, and fiz_train_controller_instancer.gd's comment
 ## on those two prefixes.
@@ -32,13 +32,13 @@ var _max_power_rows: Array[CurvePointItem] = []
 var _active_table: String = ""
 
 
-func create_node() -> TrainElectricInductionEngine:
-    return TrainElectricInductionEngine.new()
+func create_node() -> VehicleElectricInductionEngine:
+    return MoverVehicleElectricInductionEngine.new()
 
 
 ## The EIM-specific subset of Engine:'s key/value set (common fields already applied by
 ## FizTrainEngineCommon via FizTrainEngineParser).
-func apply_engine_fields(kv: Dictionary, node: TrainElectricInductionEngine) -> void:
+func apply_engine_fields(kv: Dictionary, node: VehicleElectricInductionEngine) -> void:
     if kv.has("dfic"):
         node.slip_current_ratio = FizLineUtil.get_float(kv, "dfic")
     if kv.has("dfmax"):
@@ -73,7 +73,7 @@ func apply_engine_fields(kv: Dictionary, node: TrainElectricInductionEngine) -> 
         node.max_braking_force = FizLineUtil.get_float(kv, "Fh")
     if kv.has("Ph"):
         node.max_braking_power = FizLineUtil.get_float(kv, "Ph")
-    # NOTE: matches TrainElectricInductionEngine::_do_update_internal_mover's existing
+    # NOTE: matches VehicleElectricInductionEngine::_do_update_internal_mover's existing
     # (already-wired) assignment exactly: eimc_p_Vh0 <- braking_decay_velocity, eimc_p_Vh1 <-
     # braking_decay_start_velocity - the property names read as though this should be swapped,
     # but the FIZ key must land in the eimc[] slot the C++ side already pushes it from.
@@ -88,7 +88,7 @@ func apply_engine_fields(kv: Dictionary, node: TrainElectricInductionEngine) -> 
 ## Standard section-parser interface, used for "ffList:"/"ffBrakeList:" (both share this
 ## instance's wwlist target, first-write-wins - see class doc and
 ## fiz_train_controller_instancer.gd's comment on these two prefixes) and "PmaxList:"
-## (TrainElectricInductionEngine.max_power_table, already fully wired C++-side).
+## (VehicleElectricInductionEngine.max_power_table, already fully wired C++-side).
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     FizLineUtil.read_key_values(p) # header line's own key=value pairs, if any - informational
     if prefix == "PmaxList:":
@@ -99,9 +99,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _wwlist_rows = []
 
 
-func _get_node(context: FizImportContext) -> TrainElectricInductionEngine:
-    var node: TrainPart = context.get_part("TrainEngine")
-    return node as TrainElectricInductionEngine
+func _get_node(context: FizImportContext) -> VehicleElectricInductionEngine:
+    var node: VehicleComponent = context.get_part("VehicleEngine")
+    return node as VehicleElectricInductionEngine
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:

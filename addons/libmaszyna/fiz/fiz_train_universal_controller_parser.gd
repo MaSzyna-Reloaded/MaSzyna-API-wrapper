@@ -2,8 +2,8 @@
 extends RefCounted
 class_name FizTrainUniversalControllerParser
 
-## UCList: section parser -> TrainUniversalController. Registered directly in
-## FizTrainControllerInstancer's section table.
+## UCList: section parser -> VehicleUniversalController. Registered directly in
+## FizVehicleBuilder's section table.
 ##
 ## Row format confirmed exactly against readUCList (Mover.cpp:8427-8442): 10 tokens per row -
 ## a leading index (discarded, matches every other List's convention) then 9 data columns in
@@ -16,14 +16,14 @@ class_name FizTrainUniversalControllerParser
 var _rows: Array[UniversalControllerListItem] = []
 
 
-func create_node() -> TrainUniversalController:
-    return TrainUniversalController.new()
+func create_node() -> VehicleUniversalController:
+    return MoverVehicleUniversalController.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("TrainUniversalController", node)
+    context.add_part("VehicleUniversalController", node)
 
     if kv.has("IntegratedBrakePN"):
         node.integrated_brake_pn = FizLineUtil.get_bool(kv, "IntegratedBrakePN")
@@ -50,10 +50,10 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
 
 
 func end_table(context: FizImportContext) -> void:
-    var node: TrainPart = context.get_part("TrainUniversalController")
+    var node: VehicleComponent = context.get_part("VehicleUniversalController")
     if node == null:
         _rows = []
         return
     if _rows:
-        (node as TrainUniversalController).positions = _rows
+        (node as VehicleUniversalController).positions = _rows
     _rows = []

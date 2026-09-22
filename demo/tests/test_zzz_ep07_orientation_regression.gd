@@ -7,7 +7,7 @@ extends MaszynaGutTest
 ##
 ## Root cause (confirmed with this test before the fix, still printed as a running dump for
 ## future debugging): RailVehicle3D::_update_track_transform()'s bogie-refined orientation
-## branch sampled "front" and "rear" track-offset distances swapped (RailVehiclePhysicsServer's
+## branch sampled "front" and "rear" track-offset distances swapped (RailVehicleServer's
 ## offset-distance sign convention is rear-relative, not what the naive +0.5/-0.5 sampling
 ## assumed), so body_forward pointed opposite the vehicle's real forward direction. That branch
 ## only runs once bogies are resolved *and* the vehicle has visibly moved - while parked the
@@ -46,7 +46,7 @@ func _forward(vehicle:RailVehicle3D) -> Vector3:
     return -vehicle.global_basis.z.normalized()
 
 
-func _dump_orientation(label:String, vehicle:RailVehicle3D, controller:TrainController) -> void:
+func _dump_orientation(label:String, vehicle:RailVehicle3D, controller:VehicleController) -> void:
     print(
         "[%s] forward=%s pos=%s start_direction=%s velocity=%s main_switch_enabled=%s" % [
             label,
@@ -69,7 +69,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     assert_not_null(rail_vehicle, "EP07-424 should exist somewhere under the loaded scenery")
     if not rail_vehicle:
         return
-    var controller:TrainController = rail_vehicle.get_controller()
+    var controller:VehicleController = rail_vehicle.get_controller()
     assert_not_null(controller, "EP07-424's RailVehicle3D should have a controller")
     if not controller:
         return
@@ -103,7 +103,7 @@ func test_ep07_orientation_stays_stable_while_parked_and_while_driving() -> void
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:

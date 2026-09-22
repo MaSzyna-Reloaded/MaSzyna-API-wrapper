@@ -161,7 +161,7 @@ func test_get_unique_endpoint_connection_returns_null_for_ambiguous_connections(
         _curve(Vector3(-10.0, 0.0, 0.0), Vector3(0.0, 0.0, 0.0)),
         null
     )
-    TrackManager.track_update(previous_rid, TrackManager.TrackType.TRACK_NORMAL, "", 1.435)
+    TrackManager.track_update(previous_rid, TrackManager.TRACK_NORMAL, "", 1.435)
 
     var source_rid: RID = TrackManager.track_create()
     created_track_rids.append(source_rid)
@@ -170,7 +170,7 @@ func test_get_unique_endpoint_connection_returns_null_for_ambiguous_connections(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
         null
     )
-    TrackManager.track_update(source_rid, TrackManager.TrackType.TRACK_NORMAL, "", 1.435)
+    TrackManager.track_update(source_rid, TrackManager.TRACK_NORMAL, "", 1.435)
 
     var first_neighbor_rid: RID = TrackManager.track_create()
     created_track_rids.append(first_neighbor_rid)
@@ -179,7 +179,7 @@ func test_get_unique_endpoint_connection_returns_null_for_ambiguous_connections(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)),
         null
     )
-    TrackManager.track_update(first_neighbor_rid, TrackManager.TrackType.TRACK_NORMAL, "", 1.435)
+    TrackManager.track_update(first_neighbor_rid, TrackManager.TRACK_NORMAL, "", 1.435)
 
     var second_neighbor_rid: RID = TrackManager.track_create()
     created_track_rids.append(second_neighbor_rid)
@@ -188,26 +188,26 @@ func test_get_unique_endpoint_connection_returns_null_for_ambiguous_connections(
         _curve(Vector3(10.0, 0.0, 0.0), Vector3(20.0, 0.0, 10.0)),
         null
     )
-    TrackManager.track_update(second_neighbor_rid, TrackManager.TrackType.TRACK_NORMAL, "", 1.435)
+    TrackManager.track_update(second_neighbor_rid, TrackManager.TRACK_NORMAL, "", 1.435)
 
     TrackManager.topology_rebuild()
 
     assert_eq(
         TrackRenderingServer._get_unique_endpoint_connection(
             source_rid,
-            TrackManager.EndpointIndex.CURVE1_P2
+            TrackManager.CURVE1_P2
         ),
         null
     )
 
-    var previous_connection: TrackManager.EndpointRef = TrackRenderingServer._get_unique_endpoint_connection(
+    var previous_connection: TrackEndpointRef = TrackRenderingServer._get_unique_endpoint_connection(
         previous_rid,
-        TrackManager.EndpointIndex.CURVE1_P2
+        TrackManager.CURVE1_P2
     )
 
     assert_not_null(previous_connection)
     assert_eq(previous_connection.track_rid, source_rid)
-    assert_eq(previous_connection.endpoint_index, TrackManager.EndpointIndex.CURVE1_P1)
+    assert_eq(previous_connection.endpoint_index, TrackManager.CURVE1_P1)
 
 
 func test_normal_track_does_not_build_secondary_rail_from_material2() -> void:
@@ -261,7 +261,7 @@ func test_track_render_lookup_is_removed_with_render_track() -> void:
 
 
 func test_switch_blade_layout_uses_curve1_left_and_curve2_right_for_right_switch() -> void:
-    var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(true, -0.05, 0.0, TrackManager.SWITCH_MAX_OFFSET)
+    var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(true, -0.05, 0.0, TrackManager.switch_max_offset)
 
     assert_true(layout["primary_blade_mirrored"], "right switch should place curve1 blade on the left rail")
     assert_false(layout["secondary_blade_mirrored"], "right switch should place curve2 blade on the right rail")
@@ -270,7 +270,7 @@ func test_switch_blade_layout_uses_curve1_left_and_curve2_right_for_right_switch
 
 
 func test_switch_blade_layout_uses_curve1_right_and_curve2_left_for_left_switch() -> void:
-    var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(false, -0.05, 0.0, TrackManager.SWITCH_MAX_OFFSET)
+    var layout: Dictionary = TrackRenderingServer._get_switch_blade_layout(false, -0.05, 0.0, TrackManager.switch_max_offset)
 
     assert_false(layout["primary_blade_mirrored"], "left switch should place curve1 blade on the right rail")
     assert_true(layout["secondary_blade_mirrored"], "left switch should place curve2 blade on the left rail")

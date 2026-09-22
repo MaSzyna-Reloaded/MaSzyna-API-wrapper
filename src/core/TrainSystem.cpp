@@ -1,14 +1,13 @@
-#include "../core/TrainController.hpp"
-#include "../core/TrainPart.hpp"
+#include "../core/VehicleComponent.hpp"
+#include "../core/VehicleController.hpp"
 #include "./TrainSystem.hpp"
 
 namespace godot {
     const char *TrainSystem::train_position_changed_signal = "train_position_changed";
+    const char *TrainSystem::train_registered_signal = "train_registered";
     const char *TrainSystem::train_unregistered_signal = "train_unregistered";
 
     void TrainSystem::_bind_methods() {
-        ClassDB::bind_method(
-                D_METHOD("step_movers", "controllers", "step", "full_movement"), &TrainSystem::step_movers);
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
         ClassDB::bind_method(D_METHOD("is_train_registered", "train_id"), &TrainSystem::is_train_registered);
@@ -42,6 +41,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 train_position_changed_signal, PropertyInfo(Variant::STRING, "train_id"),
                 PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(train_registered_signal, PropertyInfo(Variant::STRING, "train_id")));
         ADD_SIGNAL(MethodInfo(train_unregistered_signal, PropertyInfo(Variant::STRING, "train_id")));
     }
 
@@ -50,13 +50,13 @@ namespace godot {
     }
 
     bool TrainSystem::is_train_registered(const String &p_train_id) const {
-        const std::map<String, TrainController *>::const_iterator it = trains.find(p_train_id);
+        const std::map<String, VehicleController *>::const_iterator it = trains.find(p_train_id);
 
         return it != trains.end();
     }
 
-    TrainController *TrainSystem::get_train(const String &p_train_id) {
-        const std::map<String, TrainController *>::iterator it = trains.find(p_train_id);
+    VehicleController *TrainSystem::get_train(const String &p_train_id) {
+        const std::map<String, VehicleController *>::iterator it = trains.find(p_train_id);
 
         if (it == trains.end()) {
             return nullptr;
@@ -66,7 +66,7 @@ namespace godot {
     }
 
     Vector3 TrainSystem::get_train_world_position(const String &p_train_id) const {
-        const std::map<String, TrainController *>::const_iterator it = trains.find(p_train_id);
+        const std::map<String, VehicleController *>::const_iterator it = trains.find(p_train_id);
 
         if (it == trains.end()) {
             UtilityFunctions::push_error("Train is not registered: ", p_train_id);
@@ -77,7 +77,7 @@ namespace godot {
     }
 
     Dictionary TrainSystem::get_train_state(const String &p_train_id) {
-        TrainController *train = get_train(p_train_id);
+        VehicleController *train = get_train(p_train_id);
 
         if (train == nullptr) {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is not registered");
@@ -93,14 +93,14 @@ namespace godot {
     }
 
     Dictionary TrainSystem::get_all_config_properties(const String &p_train_id) {
-        const std::map<String, TrainController *>::iterator it = trains.find(p_train_id);
+        const std::map<String, VehicleController *>::iterator it = trains.find(p_train_id);
 
         if (it == trains.end()) {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is not registered in");
             UtilityFunctions::push_error("Train is not registered: ", p_train_id);
             return {};
         }
-        const TrainController *train = it->second;
+        const VehicleController *train = it->second;
         return train->get_config();
     }
 
@@ -110,18 +110,21 @@ namespace godot {
     }
 
     void TrainSystem::log(const String &p_train_id, const GameLog::LogLevel p_level, const String &p_line) {
-        GameLog::get_instance()->log(p_level, vformat(String("%s: %s"), p_train_id, p_line));
+        if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+            game_log->log(p_level, vformat(String("%s: %s"), p_train_id, p_line));
+        }
     }
 
-    void TrainSystem::register_train(const String &p_train_id, TrainController *p_train) {
+    void TrainSystem::register_train(const String &p_train_id, VehicleController *p_train) {
         if (is_train_registered(p_train_id)) {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is already registered");
         } else {
             trains[p_train_id] = p_train;
             p_train->connect(
-                    TrainController::position_changed_signal,
+                    VehicleController::position_changed_signal,
                     Callable(this, "_on_train_position_changed").bind(p_train_id));
             log(p_train_id, GameLog::DEBUG, "Registered train");
+            emit_signal(train_registered_signal, p_train_id);
         }
     }
 
@@ -194,9 +197,9 @@ namespace godot {
             commands.erase(i);
         }
 
-        TrainController *train = trains[p_train_id];
+        VehicleController *train = trains[p_train_id];
         train->disconnect(
-                TrainController::position_changed_signal,
+                VehicleController::position_changed_signal,
                 Callable(this, "_on_train_position_changed").bind(p_train_id));
 
         trains.erase(p_train_id);
@@ -233,13 +236,13 @@ namespace godot {
 
     Variant TrainSystem::send_command(
             const String &p_train_id, const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        const std::map<String, TrainController *>::iterator it = trains.find(p_train_id);
+        const std::map<String, VehicleController *>::iterator it = trains.find(p_train_id);
 
         if (it == trains.end()) {
             log(p_train_id, GameLog::LogLevel::ERROR, "Train is not registered");
             return Variant();
         }
-        TrainController *train = it->second;
+        VehicleController *train = it->second;
         // handler's return value (#43: whether the command was accepted); Variant() when not dispatched
         Variant result;
         if (is_command_supported(p_command)) {
@@ -261,13 +264,6 @@ namespace godot {
                     args.append(p_p2);
                 }
                 result = c.callv(args);
-                // refresh the handling part's state right away, so the command's effect is visible
-                // to whoever reads the train state next (not only after that part's own _process)
-                // FIXME(#57, #184): workaround for state being copied per TrainPart in _process -
-                // a stale read made the cabin line breaker logic see a just-closed breaker as open.
-                if (TrainPart *part = Object::cast_to<TrainPart>(c.get_object()); part != nullptr) {
-                    train->get_state().merge(part->get_mover_state(), true);
-                }
 #if DEBUG_MODE
                 int arg_required = 0;
                 if (p1.get_type() != Variant::NIL) {
@@ -296,14 +292,15 @@ namespace godot {
             ERR_PRINT("[" + p_train_id + "] Unknown command: " + p_command);
         }
 
-        train->update_state();
-        train->emit_command_received_signal(p_command, p_p1, p_p2);
+        train->command_executed(p_command, p_p1, p_p2);
         return result;
     }
 
     void TrainSystem::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (!is_command_supported(p_command)) {
-            GameLog::get_instance()->error("Unknown command: " + p_command);
+            if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+                game_log->error("Unknown command: " + p_command);
+            }
             ERR_PRINT("Unknown command: " + p_command);
             return;
         }
@@ -316,35 +313,4 @@ namespace godot {
         emit_signal(train_position_changed_signal, p_train_id, p_position);
     }
 
-    PackedFloat64Array TrainSystem::step_movers(
-            const TypedArray<TrainController> &p_controllers, const double p_step, const bool p_full_movement) {
-        const int count = p_controllers.size();
-        PackedFloat64Array distances;
-        distances.resize(count);
-        double *distance = distances.ptrw();
-
-        // the original computes the forces of every vehicle before moving any of them, so coupled
-        // vehicles see a consistent state (DynObj.cpp:8199-8205)
-        for (int i = 0; i < count; i++) {
-            TrainController *controller = Object::cast_to<TrainController>(p_controllers[i]);
-            if (controller != nullptr) {
-                controller->compute_forces(p_step);
-            }
-        }
-        for (int i = 0; i < count; i++) {
-            TrainController *controller = Object::cast_to<TrainController>(p_controllers[i]);
-            if (controller == nullptr || !controller->is_physics_active()) {
-                distance[i] = 0.0;
-                continue;
-            }
-            if (p_full_movement) {
-                controller->compute_movement(p_step);
-            } else {
-                controller->compute_fast_movement(p_step);
-            }
-            // rear-relative, like RailVehiclePhysicsServer.process_movement() expects
-            distance[i] = -controller->process_movement(p_step);
-        }
-        return distances;
-    }
 } // namespace godot

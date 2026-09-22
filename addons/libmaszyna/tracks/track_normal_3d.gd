@@ -3,7 +3,7 @@ extends Track3D
 class_name TrackNormal3D
 
 func _init() -> void:
-    type = TrackManager.TrackType.TRACK_NORMAL
+    type = TrackManager.TRACK_NORMAL
 
 @export var material1: String = "":
     set(value):

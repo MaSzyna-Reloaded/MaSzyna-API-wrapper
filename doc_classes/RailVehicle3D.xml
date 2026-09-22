@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RailVehicle3D" inherits="Node3D" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="enter_cabin">
+			<return type="void" />
+			<param index="0" name="player" type="Node" />
+			<description>
+			</description>
+		</method>
+		<method name="get_controller" qualifiers="const">
+			<return type="VehicleController" />
+			<description>
+			</description>
+		</method>
+		<method name="get_rid" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="leave_cabin">
+			<return type="void" />
+			<param index="0" name="player" type="Node" />
+			<description>
+			</description>
+		</method>
+		<method name="move_on_track">
+			<return type="void" />
+			<param index="0" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+	</methods>
+	<members>
+		<member name="cabin_rotate_180deg" type="bool" setter="set_cabin_rotate_180deg" getter="get_cabin_rotate_180deg" default="false">
+		</member>
+		<member name="cabin_scene" type="PackedScene" setter="set_cabin_scene" getter="get_cabin_scene">
+		</member>
+		<member name="controller_path" type="NodePath" setter="set_controller_path" getter="get_controller_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="coupler_submodel_paths" type="Dictionary" setter="set_coupler_submodel_paths" getter="get_coupler_submodel_paths" default="{}">
+		</member>
+		<member name="front_bogie_path" type="NodePath" setter="set_front_bogie_path" getter="get_front_bogie_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="front_rolling_wheel_paths" type="NodePath[]" setter="set_front_rolling_wheel_paths" getter="get_front_rolling_wheel_paths" default="[]">
+		</member>
+		<member name="head_display_e3d_path" type="NodePath" setter="set_head_display_e3d_path" getter="get_head_display_e3d_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="head_display_material" type="Material" setter="set_head_display_material" getter="get_head_display_material">
+		</member>
+		<member name="head_display_node_path" type="NodePath" setter="set_head_display_node_path" getter="get_head_display_node_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="joint_cabs" type="bool" setter="set_joint_cabs" getter="get_joint_cabs" default="false">
+		</member>
+		<member name="lights" type="Dictionary[String, bool]" setter="set_lights" getter="get_lights" default="{}">
+		</member>
+		<member name="low_poly_cabin_emission_energy" type="float" setter="set_low_poly_cabin_emission_energy" getter="get_low_poly_cabin_emission_energy" default="0.2">
+		</member>
+		<member name="low_poly_cabin_emission_fade_time" type="float" setter="set_low_poly_cabin_emission_fade_time" getter="get_low_poly_cabin_emission_fade_time" default="0.2">
+		</member>
+		<member name="low_poly_cabin_path" type="NodePath" setter="set_low_poly_cabin_path" getter="get_low_poly_cabin_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="model_instance_path" type="NodePath" setter="set_model_instance_path" getter="get_model_instance_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="pantograph_collector_width" type="float" setter="set_pantograph_collector_width" getter="get_pantograph_collector_width" default="0.5">
+		</member>
+		<member name="pantograph_front_arm_paths" type="NodePath[]" setter="set_pantograph_front_arm_paths" getter="get_pantograph_front_arm_paths" default="[]">
+		</member>
+		<member name="pantograph_front_offset" type="Vector3" setter="set_pantograph_front_offset" getter="get_pantograph_front_offset" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="pantograph_rear_arm_paths" type="NodePath[]" setter="set_pantograph_rear_arm_paths" getter="get_pantograph_rear_arm_paths" default="[]">
+		</member>
+		<member name="pantograph_rear_offset" type="Vector3" setter="set_pantograph_rear_offset" getter="get_pantograph_rear_offset" default="Vector3(0, 0, 0)">
+		</member>
+		<member name="powered_wheel_paths" type="NodePath[]" setter="set_powered_wheel_paths" getter="get_powered_wheel_paths" default="[]">
+		</member>
+		<member name="rear_bogie_path" type="NodePath" setter="set_rear_bogie_path" getter="get_rear_bogie_path" default="NodePath(&quot;&quot;)">
+		</member>
+		<member name="rear_rolling_wheel_paths" type="NodePath[]" setter="set_rear_rolling_wheel_paths" getter="get_rear_rolling_wheel_paths" default="[]">
+		</member>
+		<member name="start_direction" type="int" setter="set_start_direction" getter="get_start_direction" default="0">
+		</member>
+		<member name="start_track_name" type="String" setter="set_start_track_name" getter="get_start_track_name" default="&quot;&quot;">
+		</member>
+		<member name="start_track_offset" type="float" setter="set_start_track_offset" getter="get_start_track_offset" default="0.0">
+		</member>
+		<member name="wiper_arm_paths" type="NodePath[]" setter="set_wiper_arm_paths" getter="get_wiper_arm_paths" default="[]">
+		</member>
+	</members>
+</class>

@@ -31,7 +31,7 @@ var _labels:Dictionary[String, bool] = {}
 ## for events that play or have to stop. `outer_noise_audible` is false for the consist the
 ## listener drives from a cab (DynObj.cpp:4632-4640).
 func update(
-        controller:TrainController, state:Dictionary, delta:float,
+        controller:VehicleController, state:Dictionary, delta:float,
         outer_noise_audible:bool) -> Dictionary:
     if not _labels:
         for entry:Dictionary in sources:
@@ -47,11 +47,11 @@ func update(
     var shape:Dictionary = {}
     if speed > 0.0 and (_labels.has("wheel_clatter") or _labels.has("curve")
             or _labels.has("outernoise") or _labels.has("runningnoise")):
-        shape = RailVehiclePhysicsServer.controller_get_track_position(controller.get_rid())
+        shape = RailVehicleServer.vehicle_get_track_position(controller.get_rid())
     if speed > 5.0 and _labels.has("curve"):
-        shape.merge(RailVehiclePhysicsServer.controller_get_curve(
+        shape.merge(RailVehicleServer.vehicle_get_curve(
                 controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     var quality_volume:float = lerpf(
             0.8, 1.2, clampf(TrackManager.track_get_quality_flag(track_rid) / 20.0, 0.0, 1.0))
 
@@ -98,18 +98,18 @@ func _traction_motor(
         return []
     var max_rpm:float = float(state.get("circuit_nmax_rpm", 0.0))
     var engine_power:float = float(state.get("engine_power", 0.0))
-    var engine_type:int = int(state.get("engine_type", TrainEngine.NONE))
+    var engine_type:int = int(state.get("engine_type", VehicleEngine.NONE))
     # combined motor sound selects its chunks in motor rpm
     var normalizer:float = 60.0 * 0.01 if _is_combined(source) else 1.0
     var motor_revolutions:float = wheel_revolutions * float(config.get("transmission_ratio", 1.0))
     var frequency:float = source.frequency_offset + source.frequency_factor * motor_revolutions * normalizer
     var amplitude_factor:float = source.amplitude_factor / (max_rpm + power * 3.0)
     var volume:float = source.amplitude_offset + amplitude_factor * motor_revolutions * 60.0
-    if engine_type == TrainEngine.ELECTRIC_INDUCTION_MOTOR:
+    if engine_type == VehicleEngine.ELECTRIC_INDUCTION_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 2.0)
-    elif engine_type == TrainEngine.ELECTRIC_SERIES_MOTOR:
+    elif engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 60.0)
-    if engine_type == TrainEngine.ELECTRIC_SERIES_MOTOR:
+    if engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         if volume < 1.0 and engine_power < 100.0:
             var variation:float = (
                     randf_range(0.0, 100.0) * float(state.get("engine_rpm_count", 0.0))
@@ -152,7 +152,7 @@ func _curve(
     var lateral_acceleration:float = absf(
             velocity * velocity / radius - GRAVITY * absf(float(shape.get("cant", 0.0))) / track_width)
     var volume:float = lateral_acceleration * lerpf(0.5, 1.0, clampf(speed / 40.0, 0.0, 1.0))
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     if TrackManager.track_is_switch(track_rid) and radius < 1500.0:
         volume *= 100.0
     if volume <= 0.05:
@@ -215,7 +215,7 @@ func _wheel_clatter(
         results:Dictionary) -> void:
     var source:MmdSoundSourceDefinition = entry["source"]
     var event_name:StringName = entry["event"]
-    var track_rid:RID = shape.get("track_rid", TrackManager.UNDEFINED_TRACK)
+    var track_rid:RID = shape.get("track_rid", RID())
     var sound_distance:float = TrackManager.track_get_sound_distance(track_rid)
     if is_equal_approx(sound_distance, -1.0):
         return

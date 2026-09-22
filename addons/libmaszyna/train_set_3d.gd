@@ -22,13 +22,13 @@ func _process(_delta:float) -> void:
 
 func _process_coupling_dirty() -> void:
     var vehicles:Array[DynamicRailVehicle3D] = []
-    var controllers:Array[TrainController] = []
+    var controllers:Array[VehicleController] = []
     for child:Node in get_children():
         var vehicle:DynamicRailVehicle3D = child as DynamicRailVehicle3D
         if not vehicle:
             continue
-        var controller:TrainController = vehicle.get_controller()
-        if not controller or not controller.is_node_ready():
+        var controller:VehicleController = vehicle.get_controller()
+        if not controller or not controller.is_simulation_ready():
             return
         vehicles.append(vehicle)
         controllers.append(controller)
@@ -38,6 +38,6 @@ func _process_coupling_dirty() -> void:
         var coupling_type:int = couplings[index - 1] if index - 1 < couplings.size() else 0
         # AttachNext: this vehicle's end = iDirection, the next vehicle's end = its iDirection ^ 1,
         # where iDirection is 1 for a normal and 0 for a reversed vehicle (DynObj.cpp:1807)
-        var end:int = 0 if vehicles[index - 1].start_direction == TrackManager.Direction.DIRECTION_REVERSED else 1
-        var other_end:int = 1 if vehicles[index].start_direction == TrackManager.Direction.DIRECTION_REVERSED else 0
+        var end:int = 0 if vehicles[index - 1].start_direction == TrackManager.DIRECTION_REVERSED else 1
+        var other_end:int = 1 if vehicles[index].start_direction == TrackManager.DIRECTION_REVERSED else 0
         controllers[index - 1].couple(controllers[index], end, other_end, coupling_type)

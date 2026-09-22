@@ -6,7 +6,7 @@ class_name Track3D
 enum TrackEnvironment {FLAT, BRIDGE, TUNNEL, MOUNTAINS, CANYON, BANK}
 enum TrackDamageFlagBit {NONE=0, DESTROYED=128}
 
-var type: TrackManager.TrackType = TrackManager.TrackType.TRACK_UNKNOWN
+var type: TrackManager.TrackType = TrackManager.TRACK_UNKNOWN
 
 @export var track_name: String = "":
     set(x):

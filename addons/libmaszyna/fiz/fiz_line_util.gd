@@ -3,7 +3,7 @@ extends RefCounted
 class_name FizLineUtil
 
 ## Shared helpers built on top of a MaszynaParser instance already scoped to a single FIZ
-## line (see FizTrainControllerInstancer, which creates one such instance per line and hands
+## line (see FizVehicleBuilder, which creates one such instance per line and hands
 ## it to the matching section parser's parse()/parse_row(), exactly like the original
 ## LoadFIZ_* code constructing "a fresh cParser parser(line)" per line/row). Comment stripping
 ## (`//`, `/* */`) is MaszynaParser's own job during tokenization - nothing here reimplements

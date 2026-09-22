@@ -2,9 +2,9 @@
 extends RefCounted
 class_name FizTrainWheelsParser
 
-## Wheels: section -> TrainWheels. LoadFIZ_Wheels: Mover.cpp:10361.
+## Wheels: section -> VehicleWheels. LoadFIZ_Wheels: Mover.cpp:10361.
 ##
-## Setters are only called when the corresponding FIZ key is present - TrainWheels' own
+## Setters are only called when the corresponding FIZ key is present - VehicleWheels' own
 ## compiled-in property defaults already match the FIZ format's "key absent" behavior, except
 ## WheelDiameterL/Dt which fall back to the powered wheel diameter (a cross-field default, not
 ## the compiled per-property default of 0.0).
@@ -12,7 +12,7 @@ class_name FizTrainWheelsParser
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := TrainWheels.new()
+    var node := MoverVehicleWheels.new()
 
     var diameter: float = FizLineUtil.get_float(kv, "D")
     if kv.has("D"):
@@ -30,8 +30,8 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
         node.axle_arrangement = FizLineUtil.get_string(kv, "Axle")
     if kv.has("BearingType"):
         node.bearing_type = (
-                TrainWheels.BEARING_TYPE_ROLL if FizLineUtil.get_string(kv, "BearingType").to_lower() == "roll"
-                else TrainWheels.BEARING_TYPE_SLIDE)
+                VehicleWheels.BEARING_TYPE_ROLL if FizLineUtil.get_string(kv, "BearingType").to_lower() == "roll"
+                else VehicleWheels.BEARING_TYPE_SLIDE)
     if kv.has("Ad"):
         node.bogie_axle_spacing = FizLineUtil.get_float(kv, "Ad")
     if kv.has("Bd"):
@@ -39,4 +39,4 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     if kv.has("Rmin"):
         node.minimum_curve_radius = FizLineUtil.get_float(kv, "Rmin")
 
-    context.add_part("TrainWheels", node)
+    context.add_part("VehicleWheels", node)

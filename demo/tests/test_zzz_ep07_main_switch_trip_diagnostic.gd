@@ -8,7 +8,7 @@ extends MaszynaGutTest
 ##
 ## Root cause (confirmed via this test's own diagnostic dumps before the fix): FizTrainElectric
 ## SeriesEngineParser.apply_engine_fields() divided "nmax" by 60 in GDScript AND
-## TrainElectricSeriesEngine::_do_update_internal_mover divided by 60 again in C++ - nmax ended up
+## VehicleElectricSeriesEngine::_do_update_internal_mover divided by 60 again in C++ - nmax ended up
 ## 3600x too small. Mover's own motor-overspeed damage check (Mover.cpp:446, FuzzyLogic(abs(enrot),
 ## nmax*1.11, p_elengproblem)) then had a chance to fire at a tiny fraction of a km/h instead of
 ## near the real max speed, latching DamageFlag's dtrain_engine bit almost immediately once any
@@ -37,7 +37,7 @@ func after_each():
     scenery.free()
 
 
-func _find_train_controller(root:Node, vehicle_name:String) -> TrainController:
+func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController:
     var rail_vehicle:RailVehicle3D = _find_rail_vehicle(root, vehicle_name)
     if not rail_vehicle:
         return null
@@ -51,7 +51,7 @@ func _find_rail_vehicle(root:Node, vehicle_name:String) -> RailVehicle3D:
     return dynamic_vehicle.find_child("RailVehicle3D", false, false) as RailVehicle3D
 
 
-func _dump_diagnostic_state(controller:TrainController, label:String) -> void:
+func _dump_diagnostic_state(controller:VehicleController, label:String) -> void:
     var keys:Array[String] = [
         "main_switch_enabled", "relay_novolt", "relay_overvoltage", "relay_ground",
         "current_collector/voltage", "current_collector/pantograph_first_active",
@@ -73,7 +73,7 @@ func _dump_diagnostic_state(controller:TrainController, label:String) -> void:
 
 
 func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
-    var controller:TrainController = null
+    var controller:VehicleController = null
     for i in range(10):
         controller = _find_train_controller(scenery, "EP07-424")
         if controller:
@@ -90,7 +90,7 @@ func test_ep07_main_switch_stays_closed_while_advancing_controller() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (RailVehicle3D now runs a real pressure-gated mechanical
     # raise, DynObj.cpp-equivalent - see _update_pantograph_raise_state()), so poll for real wire
     # voltage instead of a fixed short wait, same as test_ep07_controller_actual_position_diagnostic
@@ -188,7 +188,7 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     assert_not_null(rail_vehicle, "EP07-424 should exist somewhere under the loaded scenery")
     if not rail_vehicle:
         return
-    var controller:TrainController = rail_vehicle.get_controller()
+    var controller:VehicleController = rail_vehicle.get_controller()
     assert_not_null(controller, "EP07-424's RailVehicle3D should have a controller")
     if not controller:
         return
@@ -200,7 +200,7 @@ func test_ep07_controller_actual_position_diagnostic() -> void:
     controller.send_command("security_acknowledge", false)
     controller.send_command("brake_level_set", 0.25)
     controller.send_command("brake_releaser", true)
-    controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     # Pantograph raise is not instant (valve/lift delay) - poll for real wire voltage instead of a
     # fixed short wait, same as test_zzz_ep07_pantograph_power_smoke.gd, so main_switch below isn't
     # sent before EnginePowerSourceVoltage() has anything to report (MainSwitchCheck's

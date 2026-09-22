@@ -13,7 +13,7 @@ class PlayerStub extends Node3D:
         return camera
 
 
-const REAL_GAME_DIR:String = "/home/marcin/Games/Maszyna"
+const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D
@@ -54,7 +54,7 @@ func test_cab_change_moves_camera_to_rear_cab_facing_backward() -> void:
         if vehicle.get_controller():
             break
         await wait_idle_frames(1)
-    var controller:TrainController = vehicle.get_controller()
+    var controller:VehicleController = vehicle.get_controller()
     assert_not_null(controller, "EP07's FIZ controller should be built")
     if not controller:
         return

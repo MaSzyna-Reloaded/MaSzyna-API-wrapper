@@ -40,7 +40,7 @@ func before_each() -> void:
         switches[name] = _register_track(
             _curve(SWITCH_POINTS[name], SWITCH_ENDS[name][0]),
             _curve(SWITCH_POINTS[name], SWITCH_ENDS[name][1]),
-            TrackManager.TrackType.TRACK_SWITCH
+            TrackManager.TRACK_SWITCH
         )
     for connector: Array in CONNECTORS:
         connectors.append(_register_track(
@@ -67,13 +67,13 @@ func test_fixture_branch_ends_are_closer_than_a_quarter_metre() -> void:
 
 
 func test_each_branch_end_has_exactly_one_connection() -> void:
-    var branch_end_endpoints: Array[TrackManager.EndpointIndex] = [
-        TrackManager.EndpointIndex.CURVE1_P2,
-        TrackManager.EndpointIndex.CURVE2_P2,
+    var branch_end_endpoints: PackedInt32Array = [
+        TrackManager.CURVE1_P2,
+        TrackManager.CURVE2_P2,
     ]
     for name: String in switches:
         for endpoint_index: TrackManager.EndpointIndex in branch_end_endpoints:
-            var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+            var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(
                 switches[name],
                 endpoint_index
             )
@@ -81,15 +81,15 @@ func test_each_branch_end_has_exactly_one_connection() -> void:
 
 
 func test_branch_ends_connect_to_the_expected_connector() -> void:
-    var branch_end_endpoints: Array[TrackManager.EndpointIndex] = [
-        TrackManager.EndpointIndex.CURVE1_P2,
-        TrackManager.EndpointIndex.CURVE2_P2,
+    var branch_end_endpoints: PackedInt32Array = [
+        TrackManager.CURVE1_P2,
+        TrackManager.CURVE2_P2,
     ]
     for connector_index: int in range(CONNECTORS.size()):
         var connector: Array = CONNECTORS[connector_index]
         var connector_rid: RID = connectors[connector_index]
         for side: int in [0, 2]:
-            var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+            var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(
                 switches[connector[side]],
                 branch_end_endpoints[connector[side + 1]]
             )
@@ -99,10 +99,10 @@ func test_branch_ends_connect_to_the_expected_connector() -> void:
 
 func test_only_the_switch_point_is_a_common_endpoint() -> void:
     for name: String in switches:
-        var common_endpoints: Array[TrackManager.EndpointIndex] = TrackManager.switch_get_common_endpoints(switches[name])
+        var common_endpoints: PackedInt32Array = TrackManager.switch_get_common_endpoints(switches[name])
         assert_eq(common_endpoints.size(), 2, "switch %s" % name)
-        assert_true(common_endpoints.has(TrackManager.EndpointIndex.CURVE1_P1), "switch %s" % name)
-        assert_true(common_endpoints.has(TrackManager.EndpointIndex.CURVE2_P1), "switch %s" % name)
+        assert_true(common_endpoints.has(TrackManager.CURVE1_P1), "switch %s" % name)
+        assert_true(common_endpoints.has(TrackManager.CURVE2_P1), "switch %s" % name)
 
 
 func test_both_branches_report_their_connector_as_a_neighbor() -> void:
@@ -111,7 +111,7 @@ func test_both_branches_report_their_connector_as_a_neighbor() -> void:
         var connector_rid: RID = connectors[connector_index]
         for side: int in [0, 2]:
             var branch: TrackManager.SwitchTrack = connector[side + 1] as TrackManager.SwitchTrack
-            var neighbors: TrackManager.BranchNeighbors = TrackManager.switch_track_get_neighbors(
+            var neighbors: TrackBranchNeighbors = TrackManager.switch_track_get_neighbors(
                 switches[connector[side]],
                 branch
             )
@@ -121,7 +121,7 @@ func test_both_branches_report_their_connector_as_a_neighbor() -> void:
 func _register_track(
     curve1: MaszynaTrackCurve,
     curve2: MaszynaTrackCurve = null,
-    type: int = TrackManager.TrackType.TRACK_NORMAL,
+    type: int = TrackManager.TRACK_NORMAL,
 ) -> RID:
     var track_rid: RID = TrackManager.track_create()
     created_tracks.append(track_rid)

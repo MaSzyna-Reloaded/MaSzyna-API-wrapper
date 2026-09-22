@@ -5,8 +5,8 @@
 	</brief_description>
 	<description>
 		Each [DimmerListItem] corresponds to one line of the [code]DimmerList:[/code] table. Its index within
-		[member TrainSwitches.dimmer_list_positions] corresponds to the switch position, starting from 0.
-		[b]Not wired to the mover[/b] - see [TrainSwitches].
+		[member VehicleSwitches.dimmer_list_positions] corresponds to the switch position, starting from 0.
+		[b]Not wired to the mover[/b] - see [VehicleSwitches].
 	</description>
 	<tutorials>
 	</tutorials>

@@ -8,7 +8,7 @@ extends MaszynaGutTest
 
 var scenery:MaszynaSceneryNode
 var player:MaszynaPlayer
-var controller:TrainController
+var controller:VehicleController
 var train_id:String
 
 
@@ -49,7 +49,7 @@ func _power_up() -> void:
     await wait_idle_frames(2)
     TrainSystem.send_command(train_id, "security_acknowledge", true)
     TrainSystem.send_command(train_id, "security_acknowledge", false)
-    TrainSystem.send_command(train_id, "pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    TrainSystem.send_command(train_id, "pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:

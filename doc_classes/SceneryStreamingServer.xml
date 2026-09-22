@@ -12,6 +12,11 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="get_camera_position" qualifiers="const">
+			<return type="Vector3" />
+			<description>
+			</description>
+		</method>
 		<method name="get_draw_distance" qualifiers="const">
 			<return type="float" />
 			<description>
@@ -24,13 +29,6 @@
 				What the streaming is doing right now, shown by the "Scenery Streaming" debug window ([code]res://hud/scenery_streaming_panel.gd[/code]): [code]owners[/code], [code]registered[/code], [code]streamed[/code], [code]chunks[/code], [code]active_chunks[/code], [code]pending_builds[/code], [code]pending_nearby[/code], [code]nearby_ready[/code], [code]pending_clears[/code], [code]planning[/code], [code]target_revision[/code], [code]scanned_revision[/code], [code]build_rate[/code] (builds applied in the last second), [code]budget_msec[/code] (the per-frame budget in use), [code]plan_msec[/code] (duration of the last completed planning pass), [code]draw_distance[/code], [code]chunk_size[/code], [code]camera_position[/code], [code]camera_chunk[/code] and [code]has_camera[/code].
 			</description>
 		</method>
-		<method name="is_area_ready" qualifiers="const">
-			<return type="bool" />
-			<param index="0" name="chunk_radius" type="int" default="1" />
-			<description>
-				Returns whether the current camera revision has been scanned and every wanted piece in the camera chunk plus [param chunk_radius] neighbouring chunks has been built. A radius of [code]1[/code] describes the 3×3 starting area used by the demo loading screen; work farther away may still be pending.
-			</description>
-		</method>
 		<method name="get_streamed_count" qualifiers="const">
 			<return type="int" />
 			<description>
@@ -41,6 +39,13 @@
 			<return type="bool" />
 			<description>
 				Returns whether the streaming currently follows a camera.
+			</description>
+		</method>
+		<method name="is_area_ready" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="chunk_radius" type="int" default="1" />
+			<description>
+				Returns whether the current camera revision has been scanned and every wanted piece in the camera chunk plus [param chunk_radius] neighbouring chunks has been built. A radius of [code]1[/code] describes the 3×3 starting area used by the demo loading screen; work farther away may still be pending.
 			</description>
 		</method>
 		<method name="owner_create">

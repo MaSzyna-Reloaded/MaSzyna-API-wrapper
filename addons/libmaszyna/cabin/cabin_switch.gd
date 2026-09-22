@@ -104,24 +104,26 @@ func _ready():
 
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    controller_changed.connect(_on_controller_changed)
-    controller_changing.connect(_on_controller_changing)
+    train_id_changed.connect(_on_train_id_changed)
+    train_id_changing.connect(_on_train_id_changing)
 
-func _on_controller_changing() -> void:
-    if _controller:
-        _controller.command_received.disconnect(_on_command_received)
+func _on_train_id_changing() -> void:
+    if CabinSystem.vehicle_command_received.is_connected(_on_command_received):
+        CabinSystem.vehicle_command_received.disconnect(_on_command_received)
 
-func _on_controller_changed() -> void:
-    _controller.command_received.connect(_on_command_received)
+func _on_train_id_changed() -> void:
+    CabinSystem.vehicle_command_received.connect(_on_command_received)
     _update_state()
 
 func _update_state() -> void:
-    if state_property and _controller:
-        switch_position = int(_controller.state.get(state_property, switch_position))
+    if state_property and _train_id:
+        switch_position = int(_vehicle_state().get(state_property, switch_position))
     _target_mesh_position = (switch_position - value_offset) * mesh_position
     _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
 
-func _on_command_received(p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
+func _on_command_received(train_id:String, p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
+    if not train_id == _train_id:
+        return
     if command_set and p_command == command_set:
         switch_position = int(p_p1) if p_p1 else 0
     elif (p_command == command_increase or p_command == command_decrease):

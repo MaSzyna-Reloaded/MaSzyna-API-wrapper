@@ -9,7 +9,7 @@ extends MaszynaGutTest
 ## (RailVehicle3D.cpp) samples "front_transform" at +bogie_pivot_spacing*0.5 and
 ## "rear_transform" at -bogie_pivot_spacing*0.5 along the track, unconditionally, regardless of
 ## the vehicle's own DIRECTION_NORMAL/DIRECTION_REVERSED placement. But
-## RailVehiclePhysicsServer._move_vehicle_state()'s distance sign convention is itself
+## RailVehicleServer._move_vehicle_state()'s distance sign convention is itself
 ## direction-dependent (a positive distance argument DECREASES the track offset for a NORMAL
 ## vehicle, and INCREASES it for a REVERSED one - see vehicle_set_track()'s own
 ## "direction_sign" and process_movement()'s "front-relative vs rear-relative" comment). For a
@@ -31,7 +31,7 @@ extends MaszynaGutTest
 
 var created_tracks:Array[RID] = []
 var created_vehicles:Array[RailVehicle3D] = []
-var created_controllers:Array[TrainController] = []
+var created_vehicle_nodes: Array[VehiclePhysicsNode] = []
 
 
 func after_each() -> void:
@@ -42,12 +42,7 @@ func after_each() -> void:
             vehicle.queue_free()
     created_vehicles.clear()
 
-    for controller:TrainController in created_controllers:
-        if is_instance_valid(controller):
-            if controller.get_parent():
-                controller.get_parent().remove_child(controller)
-            controller.queue_free()
-    created_controllers.clear()
+    created_vehicle_nodes.clear()
 
     for track_rid:RID in created_tracks:
         if TrackManager.track_exists(track_rid):
@@ -57,7 +52,7 @@ func after_each() -> void:
 
 
 func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.Direction.DIRECTION_NORMAL)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_NORMAL)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -83,7 +78,7 @@ func test_normal_direction_vehicle_orientation_does_not_flip_once_it_moves() -> 
 ## already parked reversed relative to the track, so a further flip would put it back to
 ## looking "normal", which is just as wrong for a REVERSED vehicle).
 func test_reversed_direction_vehicle_orientation_does_not_flip_once_it_moves() -> void:
-    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.Direction.DIRECTION_REVERSED)
+    var vehicle:RailVehicle3D = _spawn_bogie_vehicle(TrackManager.DIRECTION_REVERSED)
 
     await wait_idle_frames(5)
     var forward_while_parked:Vector3 = _vehicle_forward(vehicle)
@@ -106,13 +101,18 @@ func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL,
+        TrackManager.TRACK_NORMAL,
         "start",
     )
     TrackManager.topology_rebuild()
 
-    var controller:TrainController = _create_controller()
-    controller.update_config({"bogie_pivot_spacing": 6.0})
+    var physics_node: VehiclePhysicsNode = _create_vehicle_node()
+    var controller: VehicleController = physics_node.get_controller()
+    # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
+    # composed configuration - so the vehicle has to actually have wheels
+    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    wheels.bogie_pivot_spacing = 6.0
+    controller.add_component(wheels)
 
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     var front_bogie:Node3D = Node3D.new()
@@ -129,25 +129,25 @@ func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
     vehicle.start_track_offset = 20.0
     vehicle.start_direction = direction
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     created_vehicles.append(vehicle)
     return vehicle
 
 
-func _create_controller() -> TrainController:
-    var controller:TrainController = TrainController.new()
-    controller.name = "Controller%d" % created_controllers.size()
-    controller.train_id = "test_train_%d" % created_controllers.size()
-    controller.type_name = "test"
-    add_child(controller)
-    created_controllers.append(controller)
-    return controller
+## The vehicle's node, because RailVehicle3D is pointed at it by path - the controller it owns is
+## not a node and has none.
+func _create_vehicle_node() -> VehiclePhysicsNode:
+    var physics_node: VehiclePhysicsNode = build_vehicle_node(
+            "test_train_%d" % created_vehicle_nodes.size())
+    physics_node.get_controller().type_name = "test"
+    created_vehicle_nodes.append(physics_node)
+    return physics_node
 
 
 func _register_track(
     curve1:MaszynaTrackCurve,
     curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TrackType.TRACK_NORMAL,
+    type:int = TrackManager.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
     var track_rid:RID = TrackManager.track_create()

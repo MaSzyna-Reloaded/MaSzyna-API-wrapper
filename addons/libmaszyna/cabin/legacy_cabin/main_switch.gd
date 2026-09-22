@@ -52,7 +52,7 @@ func _on_button(state:CabinState, action:StringName, value:Variant) -> Variant:
         return null
     var result:Variant = null
     if state.data.get("linebreaker_state", OPEN) == READY \
-            and int(state.vehicle_state().get("engine_type", 0)) == TrainEngine.ELECTRIC_SERIES_MOTOR:
+            and int(state.vehicle_state().get("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         result = state.send_vehicle_command("main_switch", true)
         state.data["linebreaker_state"] = CLOSED if result else OPEN
     state.data["relay_timer"] = 0.0
@@ -108,7 +108,7 @@ func _process(state:CabinState, delta:float) -> void:
     if linebreaker_state == OPEN and relay_timer > float(vehicle.get("line_breaker_initial_delay", 0.0)):
         linebreaker_state = READY
     if linebreaker_state == READY \
-            and not int(vehicle.get("engine_type", 0)) == TrainEngine.ELECTRIC_SERIES_MOTOR:
+            and not int(vehicle.get("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true) else OPEN
 
     state.data["linebreaker_state"] = linebreaker_state

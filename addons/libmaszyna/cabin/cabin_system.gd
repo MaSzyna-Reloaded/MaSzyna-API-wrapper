@@ -9,30 +9,96 @@ extends Node
 ## has no cabin logic and forwards nothing by default.
 
 signal control_changed(train_id:String, cab:int, control_id:StringName, value:Variant)
+## A command reached the vehicle, from wherever - the console, a keybind, another cab. Relayed
+## here so a cabin element can react without ever holding the vehicle itself.
+signal vehicle_command_received(train_id:String, command:String, p1:Variant, p2:Variant)
+## The occupied cab of a vehicle changed - relayed for the same reason as the commands above.
+signal vehicle_cabin_occupied_changed(train_id:String, cabin_occupied:int)
 
 ## Manipulations a control can report (Train.cpp OnCommand_* press/release/repeat/set events).
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
 
 var _states:Dictionary = {}
+## train_id -> the vehicle. The cabin is the one place that knows which vehicle it sits in, so it
+## is the one place that talks to the vehicle servers; a cabin element never does.
+var _vehicles:Dictionary = {}
 var _controls:Dictionary = {}
 var _processes:Dictionary = {}
 
 
 func _ready() -> void:
+    TrainSystem.train_registered.connect(register_vehicle)
     TrainSystem.train_unregistered.connect(_on_train_unregistered)
 
 
 func _exit_tree() -> void:
+    TrainSystem.train_registered.disconnect(register_vehicle)
     TrainSystem.train_unregistered.disconnect(_on_train_unregistered)
 
 
 ## A removed train takes its cabins along - a new vehicle with the same train_id starts clean.
 func _on_train_unregistered(train_id:String) -> void:
+    var vehicle:VehicleController = _vehicles.get(train_id)
+    if vehicle:
+        vehicle.command_received.disconnect(_on_vehicle_command_received.bind(train_id))
+        vehicle.cabin_occupied_changed.disconnect(_on_vehicle_cabin_occupied_changed.bind(train_id))
+    _vehicles.erase(train_id)
     for cab:int in [1, 0, -1]:
         var key:String = _key(train_id, cab)
         _states.erase(key)
         _controls.erase(key)
         _processes.erase(key)
+
+
+## Taken straight off TrainSystem's own announcement: a vehicle is known here from the moment it
+## exists, so a cab only has to name the one it sits in. Everything else about it - the handle,
+## the state, the components - this system takes from the servers. The matching disconnect is in
+## _on_train_unregistered(), which is why the vehicle is kept here rather than looked up: by then
+## TrainSystem has already let go of it.
+func register_vehicle(train_id:String) -> void:
+    var vehicle:VehicleController = TrainSystem.get_train(train_id)
+    if not vehicle:
+        return
+    _vehicles[train_id] = vehicle
+    vehicle.command_received.connect(_on_vehicle_command_received.bind(train_id))
+    vehicle.cabin_occupied_changed.connect(_on_vehicle_cabin_occupied_changed.bind(train_id))
+
+
+func _on_vehicle_command_received(command:String, p1:Variant, p2:Variant, train_id:String) -> void:
+    vehicle_command_received.emit(train_id, command, p1, p2)
+
+
+func _on_vehicle_cabin_occupied_changed(cabin_occupied:int, train_id:String) -> void:
+    vehicle_cabin_occupied_changed.emit(train_id, cabin_occupied)
+
+
+func vehicle_rid(train_id:String) -> RID:
+    var vehicle:VehicleController = _vehicles.get(train_id)
+    return vehicle.get_rid() if vehicle else RID()
+
+
+## The whole vehicle's state, by name. Composed once per physics step by RailVehicleServer, which
+## is what makes it affordable for a cab reading it from dozens of elements.
+func vehicle_state(train_id:String) -> Dictionary:
+    var rid:RID = vehicle_rid(train_id)
+    return RailVehicleServer.vehicle_dump_state(rid) if rid.is_valid() else {}
+
+
+func vehicle_config(train_id:String) -> Dictionary:
+    var rid:RID = vehicle_rid(train_id)
+    return RailVehicleServer.vehicle_dump_config(rid) if rid.is_valid() else {}
+
+
+## One component of the vehicle, by kind - for an element that reads a value often enough to want
+## the typed property rather than the dump.
+func vehicle_component(train_id:String, type:int) -> VehicleComponent:
+    var rid:RID = vehicle_rid(train_id)
+    return RailVehicleServer.vehicle_component_get(rid, type) if rid.is_valid() else null
+
+
+## Which cab of this vehicle is occupied - 1, 0 (machine room) or -1, as CabinState keys on.
+func occupied_cab(train_id:String) -> int:
+    return int(vehicle_state(train_id).get("cabin_occupied", 1))
 
 
 static func _key(train_id:String, cab:int) -> String:

@@ -1,20 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var ep_brake: TrainElectroPneumaticDynamicBrake
+var train: VehicleController
+var ep_brake: VehicleElectroPneumaticDynamicBrake
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    ep_brake = TrainElectroPneumaticDynamicBrake.new()
-    train.add_child(ep_brake)
+    ep_brake = MoverVehicleElectroPneumaticDynamicBrake.new()
+    train.add_component(ep_brake)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_blending_defaults():
     assert_eq(ep_brake.blending_max_velocity, 0.0)
@@ -42,11 +36,11 @@ func test_blending_round_trip_and_update():
     assert_true(ep_brake.blending_velocity_correction)
     assert_true(ep_brake.blending_load_correction)
     assert_eq(ep_brake.blending_min_ed_brake_request, 0.1)
-    assert_true(train.state.has("dcemued/ep_fuse"), "TrainElectroPneumaticDynamicBrake should keep functioning after configuring blending")
+    assert_true(train.state.has("dcemued/ep_fuse"), "VehicleElectroPneumaticDynamicBrake should keep functioning after configuring blending")
 
 func test_fiz_dcemued_uses_canonical_electro_pneumatic_property():
     var context: FizImportContext = FizImportContext.new()
-    context.add_part("TrainElectroPneumaticDynamicBrake", ep_brake)
+    context.add_part("VehicleElectroPneumaticDynamicBrake", ep_brake)
     var parser: FizTrainElectroPneumaticDynamicBrakeParser = FizTrainElectroPneumaticDynamicBrakeParser.new()
     var line: MaszynaParser = MaszynaParser.new()
     line.initialize("EP_min_Im=0.25".to_utf8_buffer())

@@ -8,18 +8,13 @@ extends MaszynaGutTest
 ## radio_channel_increase/decrease/set all silently clamped to a permanent 0 on every vehicle,
 ## since nothing anywhere sets radio_channel_min/max.
 
-var train: TrainController
+var train: VehicleController
 
 func before_each():
-    train = load("res://tests/sm42_controller.tscn").instantiate()
-    train.train_id = "TestTrain"
+    train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
     train.battery_voltage = 110.0
-    add_child(train)
+    train.apply_configuration()
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults_match_the_original_engines_universal_1_to_10_range():
     assert_eq(train.radio_channel_min, 1)

@@ -65,14 +65,14 @@ func _import(context:MaszynaImporterContext, text:String) -> DynamicRailVehicle3
 func test_offset_minus_one_sentinel_imports_as_reversed() -> void:
     var vehicle:DynamicRailVehicle3D = _import(
             _trainset_context(20.0), "fixtures skin short -1.0 headdriver 99 0 enddynamic")
-    assert_eq(vehicle.start_direction, TrackManager.Direction.DIRECTION_REVERSED)
+    assert_eq(vehicle.start_direction, TrackManager.DIRECTION_REVERSED)
     assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 
 func test_normal_offset_imports_as_normal_direction() -> void:
     var vehicle:DynamicRailVehicle3D = _import(
             _trainset_context(20.0), "fixtures skin short 0 headdriver 99 0 enddynamic")
-    assert_eq(vehicle.start_direction, TrackManager.Direction.DIRECTION_NORMAL)
+    assert_eq(vehicle.start_direction, TrackManager.DIRECTION_NORMAL)
     assert_almost_eq(vehicle.start_track_offset, 20.0 - SHORT_LENGTH * 0.5, 0.001)
 
 

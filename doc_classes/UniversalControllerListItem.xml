@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <class name="UniversalControllerListItem" inherits="Resource" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
-		Resource representing a single position in a [TrainUniversalController].
+		Resource representing a single position in a [VehicleUniversalController].
 	</brief_description>
 	<description>
 		[UniversalControllerListItem] defines the behavior for a specific position of a train's universal
-		controller. Its index within [member TrainUniversalController.positions] corresponds to the position number
+		controller. Its index within [member VehicleUniversalController.positions] corresponds to the position number
 		(column A) in the [code]UCList[/code] table.
 	</description>
 	<tutorials>

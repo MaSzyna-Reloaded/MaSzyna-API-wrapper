@@ -3,7 +3,7 @@ class_name MmdCabinDefinition
 
 ## Neutral, parsed representation of one MMD file's cabin data, for one selected cab number.
 ## Produced by MmdCabinInstancer.parse() and consumed by MmdCabinInstancer.build_into() - this
-## class knows nothing about Cabin3D, E3DModelInstance, or TrainController.
+## class knows nothing about Cabin3D, E3DModelInstance, or VehicleController.
 
 ## MMD cab section number: 0 (machine room), 1 or 2.
 var cab_number:int = 1

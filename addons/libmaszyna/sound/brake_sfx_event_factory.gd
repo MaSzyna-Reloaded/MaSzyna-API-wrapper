@@ -2,7 +2,7 @@ extends RefCounted
 class_name BrakeSfxEventFactory
 
 ## Builds gnd-sfx SfxEvents for a vehicle's brake-related MMD sound labels, once, from parsed
-## MmdSoundSourceDefinitions + TrainController.config (brake hardware facts). Composes related
+## MmdSoundSourceDefinitions + VehicleController.config (brake hardware facts). Composes related
 ## labels (begin/middle/end phases, or same-physical-effect variants) into one multi-automation
 ## SfxEvent each, per the brake-sound redesign plan's composition map - NOT one event per label.
 ##
@@ -17,7 +17,7 @@ class_name BrakeSfxEventFactory
 ##
 ## Runtime control (TrainSoundSystem) is correspondingly trivial: play() each event once,
 ## lazily, the first time it's fed (never stop() - an inactive automation costs nothing, and the
-## curves themselves fade gain to ~0 at rest), then just copy TrainController.state values into
+## curves themselves fade gain to ~0 at rest), then just copy VehicleController.state values into
 ## modulate()/set_parameters() every frame. It never decides gain/pitch/which-sample-plays itself.
 
 ## event_name -> ordered MMD labels composing it (first one present in a vehicle's `sources` wins
@@ -379,7 +379,7 @@ static func _domain_clip_automation(
 
 
 ## "localbrakesound" (release, rsSBHiss) + "localbrakesound2" (engage, rsSBHissU) - both keyed off
-## brake_loco_pressure's rate of change, published from TrainBrake.cpp as two already-non-negative
+## brake_loco_pressure's rate of change, published from VehicleBrake.cpp as two already-non-negative
 ## magnitudes (brake_loco_pressure_fall_rate/rise_rate) - two tracks of one independent-brake-
 ## cylinder hiss, one continuously-playing event.
 static func _build_local_brake_hiss(
@@ -418,11 +418,11 @@ static func _build_pipe_hiss(sources:Dictionary, config:Dictionary) -> SfxEvent:
         return null
 
     var brake_handle_type:int = int(config.get(
-            "brake_handle_type", TrainBrake.BRAKE_HANDLE_TYPE_NO_HANDLE))
+            "brake_handle_type", VehicleBrake.BRAKE_HANDLE_TYPE_NO_HANDLE))
     var fv_sound_model:bool = (
-            brake_handle_type == TrainBrake.BRAKE_HANDLE_TYPE_FV4A
-            or brake_handle_type == TrainBrake.BRAKE_HANDLE_TYPE_FVEL6)
-    var fv4a_model:bool = brake_handle_type == TrainBrake.BRAKE_HANDLE_TYPE_FV4A
+            brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FV4A
+            or brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FVEL6)
+    var fv4a_model:bool = brake_handle_type == VehicleBrake.BRAKE_HANDLE_TYPE_FV4A
     var fv_flow_scale:Dictionary = {
         "airsound": 100000.0,
         "airsound2": 800000.0,

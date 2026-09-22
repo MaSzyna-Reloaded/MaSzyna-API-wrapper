@@ -1,20 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var universal_controller: TrainUniversalController
+var train: VehicleController
+var universal_controller: VehicleUniversalController
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    universal_controller = TrainUniversalController.new()
-    train.add_child(universal_controller)
+    universal_controller = MoverVehicleUniversalController.new()
+    train.add_component(universal_controller)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_position(min_percentage: float, max_percentage: float, target_value: float) -> UniversalControllerListItem:
     var item = UniversalControllerListItem.new()

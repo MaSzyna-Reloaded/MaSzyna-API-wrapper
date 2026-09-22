@@ -3,8 +3,8 @@ extends RefCounted
 class_name FizTrainCntrlParser
 
 ## Cntrl. section dispatcher: this single FIZ section's keys fan out to several different
-## Godot classes (TrainController general subset, TrainBrake brake subset, and later
-## TrainEngine's controller-position-count subset once Engine: creates that node - Cntrl.
+## Godot classes (VehicleController general subset, VehicleBrake brake subset, and later
+## VehicleEngine's controller-position-count subset once Engine: creates that node - Cntrl.
 ## conventionally appears before Engine: in real files, so the engine-relevant keys are
 ## stashed on the context for Engine:'s parser to pick up). Also owns the brake-position table
 ## (BPT) that immediately follows the Cntrl. line, by delegating to the brake parser.
@@ -23,14 +23,14 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     controller_parser.apply_cntrl(kv, context)
 
-    var brake: TrainBrake = context.get_part("TrainBrake")
+    var brake: VehicleBrake = context.get_part("VehicleBrake")
     if brake != null:
         brake_parser.apply_cntrl(kv, brake, context)
     else:
-        push_warning("FIZ Cntrl.: no TrainBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
+        push_warning("FIZ Cntrl.: no VehicleBrake node yet (Brake: should precede Cntrl.) - brake-related Cntrl. keys ignored.")
 
     # Engine:'s controller-position-count subset (MCPN, SCPN, AutoRelay, ...) is applied once
-    # Engine: creates the TrainEngine-family node, since Cntrl. conventionally precedes Engine:.
+    # Engine: creates the VehicleEngine-family node, since Cntrl. conventionally precedes Engine:.
     context.cntrl_kv = kv
 
 

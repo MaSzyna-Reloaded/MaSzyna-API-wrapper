@@ -15,7 +15,7 @@ class PlayerStub extends Node3D:
         return camera
 
 
-const REAL_GAME_DIR:String = "/home/marcin/Games/Maszyna"
+const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D

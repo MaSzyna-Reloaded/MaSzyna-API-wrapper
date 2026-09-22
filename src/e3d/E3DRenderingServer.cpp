@@ -163,19 +163,30 @@ namespace godot {
     }
 
     void E3DRenderingServer::instance_free(const RID &p_instance) {
-        const HashMap<RID, E3DInstanceData>::Iterator item = instances.find(p_instance);
-        ERR_FAIL_COND(item == instances.end());
-        if (item->value.stream_rid.is_valid()) {
-            SceneryStreamingServer::get_instance()->stream_free(item->value.stream_rid);
+        E3DInstanceData *found = instances.getptr(p_instance);
+        ERR_FAIL_NULL(found);
+        // Taken out of the registry before anything else runs: freeing a stream, a light or a
+        // smoke source re-enters this server, and an instance created or freed in between
+        // rehashes `instances` - which would leave this holding a dead entry. Cold caches make
+        // that overlap routine, because a vehicle is still building models while a scenery is
+        // being torn down.
+        const E3DInstanceData data = *found;
+        instances.erase(p_instance);
+
+        if (data.stream_rid.is_valid()) {
+            if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
+                streaming != nullptr) {
+                streaming->stream_free(data.stream_rid);
+            }
             MutexLock lock(**models_mutex);
             stream_models.erase(p_instance);
         }
-        _clear_instance_lights(item->value);
-        _clear_instance_smoke_sources(item->value);
-        if (item->value.built) {
-            _get_backend(item->value).clear(item->value);
+        E3DInstanceData clearing = data;
+        _clear_instance_lights(clearing);
+        _clear_instance_smoke_sources(clearing);
+        if (clearing.built) {
+            _get_backend(clearing).clear(clearing);
         }
-        instances.remove(item);
     }
 
     /// Builds (or rebuilds) the instance content. Later changes of options, attached node and

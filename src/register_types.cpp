@@ -1,32 +1,52 @@
-#include "brakes/TrainBrake.hpp"
-#include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
-#include "brakes/TrainSpringBrake.hpp"
-#include "buffers/TrainBuffCoupl.hpp"
-#include "controllers/TrainUniversalController.hpp"
+#include "brakes/MoverVehicleBrake.hpp"
+#include "brakes/VehicleBrake.hpp"
+#include "brakes/MoverVehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/MoverVehicleSpringBrake.hpp"
+#include "brakes/VehicleSpringBrake.hpp"
+#include "buffers/MoverVehicleBuffCoupl.hpp"
+#include "buffers/VehicleBuffCoupl.hpp"
+#include "controllers/MoverVehicleUniversalController.hpp"
+#include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
-#include "core/GenericTrainPart.hpp"
+#include "core/GenericVehicleComponent.hpp"
+#include "core/GenericVehicleComponentNode.hpp"
+#include "cabin/Cabin3D.hpp"
+#include "traction/TractionPowerServer.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
-#include "core/TrainController.hpp"
-#include "core/TrainPart.hpp"
+#include "core/VehicleController.hpp"
+#include "core/VehicleComponent.hpp"
+#include "core/VehicleComponentModel.hpp"
+#include "core/VehicleComponentType.hpp"
+#include "core/VehicleModel.hpp"
+#include "core/VehiclePhysicsNode.hpp"
 #include "core/TrainSystem.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
-#include "doors/TrainDoors.hpp"
+#include "doors/MoverVehicleDoors.hpp"
+#include "doors/VehicleDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
 #include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
-#include "engines/TrainDieselElectricEngine.hpp"
-#include "engines/TrainDieselEngine.hpp"
-#include "engines/TrainElectricEngine.hpp"
-#include "engines/TrainElectricInductionEngine.hpp"
-#include "engines/TrainElectricSeriesEngine.hpp"
-#include "engines/TrainEngine.hpp"
-#include "heating/TrainHeating.hpp"
-#include "lighting/TrainLighting.hpp"
-#include "load/TrainLoad.hpp"
+#include "engines/MoverVehicleDieselElectricEngine.hpp"
+#include "engines/VehicleDieselElectricEngine.hpp"
+#include "engines/MoverVehicleDieselEngine.hpp"
+#include "engines/VehicleDieselEngine.hpp"
+#include "engines/VehicleElectricEngine.hpp"
+#include "engines/MoverVehicleElectricInductionEngine.hpp"
+#include "engines/VehicleElectricInductionEngine.hpp"
+#include "engines/MoverVehicleElectricSeriesEngine.hpp"
+#include "engines/VehicleElectricSeriesEngine.hpp"
+#include "engines/VehicleEngine.hpp"
+#include "heating/MoverVehicleHeating.hpp"
+#include "heating/VehicleHeating.hpp"
+#include "lighting/MoverVehicleLighting.hpp"
+#include "lighting/VehicleLighting.hpp"
+#include "load/MoverVehicleLoad.hpp"
+#include "load/VehicleLoad.hpp"
 #include "loaders/E3DResourceFormatLoader.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "parsers/e3d_parser.hpp"
@@ -48,13 +68,27 @@
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
-#include "speed_control/TrainSpeedControl.hpp"
-#include "switches/TrainSwitches.hpp"
-#include "systems/TrainAIHints.hpp"
-#include "systems/TrainHorns.hpp"
-#include "systems/TrainSecuritySystem.hpp"
-#include "wheels/TrainWheels.hpp"
-#include "wipers/TrainWipers.hpp"
+#include "speed_control/MoverVehicleSpeedControl.hpp"
+#include "speed_control/VehicleSpeedControl.hpp"
+#include "switches/MoverVehicleSwitches.hpp"
+#include "switches/VehicleSwitches.hpp"
+#include "systems/MoverVehicleAIHints.hpp"
+#include "systems/VehicleAIHints.hpp"
+#include "systems/MoverVehicleHorns.hpp"
+#include "systems/VehicleHorns.hpp"
+#include "systems/MoverVehicleSecuritySystem.hpp"
+#include "systems/VehicleSecuritySystem.hpp"
+#include "wheels/MoverVehicleWheels.hpp"
+#include "wheels/VehicleWheels.hpp"
+#include "wipers/MoverVehicleWipers.hpp"
+#include "wipers/VehicleWipers.hpp"
+#include "physics/BaseVehiclePhysicsServer.hpp"
+#include "physics/MaszynaMoverPhysicsServer.hpp"
+#include "physics/RailVehicleServer.hpp"
+#include "physics/RailVehicleStepper.hpp"
+#include "tracks/SpatialIndex.hpp"
+#include "tracks/TrackEndpointRef.hpp"
+#include "tracks/TrackManager.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -70,6 +104,10 @@ E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
 MaszynaRuntime *maszyna_runtime_singleton = nullptr;
 E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
+TrackManager *track_manager_singleton = nullptr;
+MaszynaMoverPhysicsServer *mover_physics_server_singleton = nullptr;
+RailVehicleServer *rail_vehicle_server_singleton = nullptr;
+TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -92,46 +130,81 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DModelSmokeSourceDefinition);
         GDREGISTER_CLASS(E3DRenderingServer);
         GDREGISTER_CLASS(E3DResourceFormatLoader);
+        GDREGISTER_ABSTRACT_CLASS(BaseVehiclePhysicsServer);
+        GDREGISTER_CLASS(MaszynaMoverPhysicsServer);
+        GDREGISTER_CLASS(RailVehicleServer);
+        GDREGISTER_INTERNAL_CLASS(RailVehicleStepper);
+        GDREGISTER_CLASS(TractionPowerServer);
+        GDREGISTER_CLASS(SpatialIndex);
+        GDREGISTER_CLASS(TrackEndpointRef);
+        GDREGISTER_CLASS(TrackBranchNeighbors);
+        GDREGISTER_CLASS(TrackManager);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
         GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
-        GDREGISTER_ABSTRACT_CLASS(TrainPart);
-        GDREGISTER_CLASS(GenericTrainPart);
-        GDREGISTER_CLASS(TrainBrake);
-        GDREGISTER_CLASS(TrainSpringBrake);
-        GDREGISTER_CLASS(TrainDoors);
-        GDREGISTER_ABSTRACT_CLASS(TrainEngine);
-        GDREGISTER_CLASS(TrainDieselEngine);
-        GDREGISTER_CLASS(TrainDieselElectricEngine);
-        GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
-        GDREGISTER_CLASS(TrainElectricSeriesEngine);
-        GDREGISTER_CLASS(TrainElectricInductionEngine);
-        GDREGISTER_CLASS(TrainController);
+        GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
+        GDREGISTER_CLASS(VehicleComponentModel);
+        GDREGISTER_CLASS(VehicleModel);
+        GDREGISTER_CLASS(VehiclePhysicsNode);
+        GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
+        GDREGISTER_CLASS(GenericVehicleComponent);
+        GDREGISTER_CLASS(GenericVehicleComponentNode);
+        GDREGISTER_ABSTRACT_CLASS(VehicleBrake);
+        GDREGISTER_CLASS(MoverVehicleBrake);
+        GDREGISTER_ABSTRACT_CLASS(VehicleSpringBrake);
+        GDREGISTER_CLASS(MoverVehicleSpringBrake);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDoors);
+        GDREGISTER_CLASS(MoverVehicleDoors);
+        GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDieselEngine);
+        GDREGISTER_CLASS(MoverVehicleDieselEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleDieselElectricEngine);
+        GDREGISTER_CLASS(MoverVehicleDieselElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricSeriesEngine);
+        GDREGISTER_CLASS(MoverVehicleElectricSeriesEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
+        GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
+        GDREGISTER_CLASS(VehicleController);
+        GDREGISTER_CLASS(Cabin3D);
         GDREGISTER_CLASS(RailVehicle3D);
-        GDREGISTER_CLASS(TrainHeating);
-        GDREGISTER_CLASS(TrainWheels);
-        GDREGISTER_CLASS(TrainSecuritySystem);
-        GDREGISTER_CLASS(TrainHorns);
-        GDREGISTER_CLASS(TrainAIHints);
+        GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
+        GDREGISTER_CLASS(MoverVehicleHeating);
+        GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
+        GDREGISTER_CLASS(MoverVehicleWheels);
+        GDREGISTER_ABSTRACT_CLASS(VehicleSecuritySystem);
+        GDREGISTER_CLASS(MoverVehicleSecuritySystem);
+        GDREGISTER_ABSTRACT_CLASS(VehicleHorns);
+        GDREGISTER_CLASS(MoverVehicleHorns);
+        GDREGISTER_ABSTRACT_CLASS(VehicleAIHints);
+        GDREGISTER_CLASS(MoverVehicleAIHints);
         GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(TrainLighting)
+        GDREGISTER_ABSTRACT_CLASS(VehicleLighting)
+        GDREGISTER_CLASS(MoverVehicleLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(TrainLoad)
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(MoverVehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_ABSTRACT_CLASS(VehicleLoad)
+        GDREGISTER_CLASS(MoverVehicleLoad)
         GDREGISTER_CLASS(LoadListItem)
-        GDREGISTER_CLASS(TrainBuffCoupl)
-        GDREGISTER_CLASS(TrainSpeedControl)
-        GDREGISTER_CLASS(TrainUniversalController)
+        GDREGISTER_ABSTRACT_CLASS(VehicleBuffCoupl)
+        GDREGISTER_CLASS(MoverVehicleBuffCoupl)
+        GDREGISTER_ABSTRACT_CLASS(VehicleSpeedControl)
+        GDREGISTER_CLASS(MoverVehicleSpeedControl)
+        GDREGISTER_ABSTRACT_CLASS(VehicleUniversalController)
+        GDREGISTER_CLASS(MoverVehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
-        GDREGISTER_CLASS(TrainWipers)
+        GDREGISTER_ABSTRACT_CLASS(VehicleWipers)
+        GDREGISTER_CLASS(MoverVehicleWipers)
         GDREGISTER_CLASS(WiperListItem)
-        GDREGISTER_CLASS(TrainSwitches)
+        GDREGISTER_ABSTRACT_CLASS(VehicleSwitches)
+        GDREGISTER_CLASS(MoverVehicleSwitches)
         GDREGISTER_CLASS(DimmerListItem)
         GDREGISTER_CLASS(BrakePressureTableItem)
         GDREGISTER_CLASS(CompressorListItem)
@@ -146,6 +219,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         e3d_parser_singleton = memnew(E3DParser);
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
+        track_manager_singleton = memnew(TrackManager);
+        mover_physics_server_singleton = memnew(MaszynaMoverPhysicsServer);
+        rail_vehicle_server_singleton = memnew(RailVehicleServer);
+        traction_power_server_singleton = memnew(TractionPowerServer);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -154,6 +231,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
+        Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);                      // 8
+        Engine::get_singleton()->register_singleton(
+                "MaszynaMoverPhysicsServer", mover_physics_server_singleton); // 9
+        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
+        Engine::get_singleton()->register_singleton(
+                "TractionPowerServer", traction_power_server_singleton); // 11
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -177,6 +260,25 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("RailVehicleServer")) {
+        if (Engine::get_singleton()->has_singleton("TractionPowerServer")) {
+            Engine::get_singleton()->unregister_singleton("TractionPowerServer"); // 11
+        }
+        if (traction_power_server_singleton != nullptr) {
+            memdelete(traction_power_server_singleton);
+            traction_power_server_singleton = nullptr;
+        }
+        Engine::get_singleton()->unregister_singleton("RailVehicleServer"); // 10
+    }
+
+    if (Engine::get_singleton()->has_singleton("MaszynaMoverPhysicsServer")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaMoverPhysicsServer"); // 9
+    }
+
+    if (Engine::get_singleton()->has_singleton("TrackManager")) {
+        Engine::get_singleton()->unregister_singleton("TrackManager"); // 8
     }
 
     if (Engine::get_singleton()->has_singleton("MaszynaRuntime")) {
@@ -205,6 +307,21 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
     if (Engine::get_singleton()->has_singleton("UserSettings")) {
         Engine::get_singleton()->unregister_singleton("UserSettings"); // 1
+    }
+
+    if (rail_vehicle_server_singleton != nullptr) { // 10
+        memdelete(rail_vehicle_server_singleton);
+        rail_vehicle_server_singleton = nullptr;
+    }
+
+    if (mover_physics_server_singleton != nullptr) { // 9
+        memdelete(mover_physics_server_singleton);
+        mover_physics_server_singleton = nullptr;
+    }
+
+    if (track_manager_singleton != nullptr) { // 8
+        memdelete(track_manager_singleton);
+        track_manager_singleton = nullptr;
     }
 
     if (maszyna_runtime_singleton != nullptr) { // 7

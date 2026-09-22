@@ -1,8 +1,8 @@
 extends MaszynaGutTest
 
 ## Regression test for the reported "na postoju elektrowozom flapuje napiecie z drutow i nie da
-## sie uruchomic, bo wywala wylacznik szybki" bug. Drives a real RailVehicle3D + TrainController
-## + TrainElectricSeriesEngine + a real overhead wire/power source (TractionPowerServer) through
+## sie uruchomic, bo wywala wylacznik szybki" bug. Drives a real RailVehicle3D + VehicleController
+## + VehicleElectricSeriesEngine + a real overhead wire/power source (TractionPowerServer) through
 ## Godot's actual per-frame _process(), exactly like an electric locomotive sitting at a
 ## platform with its pantograph raised and main switch closed.
 ##
@@ -23,8 +23,9 @@ var created_tracks:Array[RID] = []
 var created_wires:Array[RID] = []
 var created_power_sources:Array[RID] = []
 var vehicle:RailVehicle3D
-var controller:TrainController
-var engine:TrainElectricSeriesEngine
+var controller:VehicleController
+var physics_node:VehiclePhysicsNode
+var engine:VehicleElectricSeriesEngine
 
 
 func after_each() -> void:
@@ -33,10 +34,6 @@ func after_each() -> void:
             vehicle.get_parent().remove_child(vehicle)
         vehicle.queue_free()
     vehicle = null
-    if is_instance_valid(controller):
-        if controller.get_parent():
-            controller.get_parent().remove_child(controller)
-        controller.queue_free()
     controller = null
     engine = null
 
@@ -58,7 +55,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(0.0, 0.0, 60.0)),
         null,
-        TrackManager.TrackType.TRACK_NORMAL,
+        TrackManager.TRACK_NORMAL,
         "start",
     )
     TrackManager.topology_rebuild()
@@ -73,31 +70,32 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
         wire_rid, Vector3(0.0, 5.5, -50.0), Vector3(0.0, 5.5, 100.0), "test_power", 3000.0, 2000.0, 0.01)
     TractionPowerServer.network_build()
 
-    controller = TrainController.new()
-    controller.train_id = "test_idle_pantograph_train"
-    controller.type_name = "test"
-    controller.battery_voltage = 110.0
-    add_child(controller)
+    # the vehicle's own configuration is authored, not written afterwards - a property set after
+    # the vehicle is built does not reach the backend until apply_configuration()
+    var model: VehicleModel = VehicleModel.new()
+    model.properties = {"type_name": "test", "battery_voltage": 110.0}
+    physics_node = build_vehicle_node("test_idle_pantograph_train", model)
+    controller = physics_node.get_controller()
 
-    engine = TrainElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine = MoverVehicleElectricSeriesEngine.new()
+    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 1
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 1
     engine.cntrl_main_controller_position_count = 6
-    controller.add_child(engine)
+    controller.add_component(engine)
 
     vehicle = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = 20.0
-    vehicle.start_direction = TrackManager.Direction.DIRECTION_NORMAL
+    vehicle.start_direction = TrackManager.DIRECTION_NORMAL
     vehicle.pantograph_collector_width = 0.5
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     await wait_idle_frames(2)
 
     controller.send_command("battery", true)
-    controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     var voltage_reached:bool = false
     for i in range(60):
         await wait_idle_frames(1)
@@ -148,7 +146,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     )
 
 
-func _dump(controller:TrainController) -> String:
+func _dump(controller:VehicleController) -> String:
     var keys:Array[String] = [
         "main_switch_enabled", "relay_novolt", "relay_overvoltage", "relay_ground",
         "current_collector/pantograph_first_active", "current_collector/pantograph_first_voltage",
@@ -164,7 +162,7 @@ func _dump(controller:TrainController) -> String:
 func _register_track(
     curve1:MaszynaTrackCurve,
     curve2:MaszynaTrackCurve = null,
-    type:int = TrackManager.TrackType.TRACK_NORMAL,
+    type:int = TrackManager.TRACK_NORMAL,
     name:String = "",
 ) -> RID:
     var track_rid:RID = TrackManager.track_create()

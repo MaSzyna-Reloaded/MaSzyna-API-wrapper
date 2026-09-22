@@ -4,20 +4,17 @@ extends Node
 ## Loader/cache for fully-built RailVehicle3D vehicles, mirroring E3DModelManager's own
 ## ResourceCache pattern (addons/libmaszyna/e3d/e3d_model_manager.gd) one layer up.
 ##
-## MaszynaRailVehicle3DInstancer.build() re-reads and re-parses the vehicle's .mmd (multiple
-## times - body/lowpoly/passengers model names and the sound bank each do their own pass) and
-## .fiz files from scratch every time it runs. A scenery routinely places many vehicles that
-## share the same data_path/file_name/skin (every wagon of one type in a consist, every signal
-## of one type, ...), so this turns an O(vehicle count) MMD/FIZ parse into O(distinct
-## data_path+file_name+skin combinations): build() below caches the structural result (exterior
-## model + FIZ controller + cabin scene + sound bank) as a PackedScene and instantiate()s it -
-## the same "cache a Resource, not the live Node" approach FizTrainControllerInstancer.build()
-## already uses for the FIZTrainController layer.
+## Reading a vehicle's .mmd is several passes over the same file - the body/lowpoly/passengers
+## model names, the cab and the sound bank each do their own - and a scenery routinely places
+## many vehicles sharing one data_path/file_name/skin (every wagon of one type in a consist,
+## every signal of one type, ...). This turns an O(vehicle count) MMD parse into O(distinct
+## data_path+file_name+skin combinations).
 ##
-## train_id/initial_velocity/head_display_material are deliberately NOT part of the cached
-## template (built with neutral placeholder values instead) - they vary per vehicle instance
-## even when data_path/file_name/skin are identical (two wagons of the same type still need
-## distinct TrainSystem ids), so they're re-applied on every instantiate()'d copy instead.
+## What is cached is a VehicleStructure - what the MMD says the vehicle is built from - and not a
+## node tree: a vehicle is a model plus a cab plus a physics handle, which is cheap to assemble
+## and costly to pack. train_id/initial_velocity/cabin_number/head_display_material are not in it
+## at all, because they say which *instance* a vehicle is, and two wagons of the same type still
+## need distinct TrainSystem ids.
 
 var _cache = ResourceCache.create("rail_vehicle")
 
@@ -32,7 +29,7 @@ func _make_cache_path(normalized_data_path:String, file_name:String, skin:String
 
 func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # Only the .mmd's own mtime is checked - not every .e3d/.fiz file it transitively
-    # references - matching FizTrainControllerInstancer._make_cache_hash()'s same simplification
+    # references - matching FizVehicleBuilder._make_cache_hash()'s same simplification
     # for FIZ `include`s.
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
@@ -42,12 +39,14 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # instancer in the template (RailVehicle3D switches it with the distance). v13: the skins
     # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
     # v14: bumped on request together with the E186 cab work, the structure itself is unchanged.
-    return ("structure-v15:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # v18: the cache holds a VehicleStructure - what the MMD says the vehicle is built from -
+    # instead of a PackedScene of the vehicle's nodes.
+    return ("structure-v18:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
-## DynamicRailVehicle3D). Returns null if data_path/file_name are missing. Drop-in replacement
-## for MaszynaRailVehicle3DInstancer.build() - same signature, cached.
+## DynamicRailVehicle3D). Returns null if data_path/file_name are missing. The only way in:
+## every vehicle of a scenery comes through here, so every one of them shares the cache.
 func load(
         data_path:String, file_name:String, skin:String, train_id:String,
         initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
@@ -58,36 +57,14 @@ func load(
     var cache_path:String = _make_cache_path(normalized_data_path, file_name, skin)
     var cache_hash:String = _make_cache_hash(normalized_data_path, file_name)
 
-    var scene:PackedScene = _cache.get(cache_path, cache_hash) as PackedScene
-    if not scene:
-        var template:RailVehicle3D = MaszynaRailVehicle3DInstancer._build_structure(
-                data_path, file_name, skin, "", 0.0)
-        if not template:
+    var structure:VehicleStructure = _cache.get(cache_path, cache_hash) as VehicleStructure
+    if not structure:
+        structure = MaszynaRailVehicle3DInstancer.read_structure(data_path, file_name, skin)
+        if not structure:
             return null
-        # PackedScene.pack() only includes nodes whose `owner` is set (see
-        # MaszynaRailVehicle3DInstancer._build_cabin_scene()'s own comment on the same trick) -
-        # build() parents model/fiz_controller/etc. under `template` without ever setting their
-        # owner, since the un-cached code path returns this live tree directly and never packs it.
-        _set_owner_recursive(template, template)
-        scene = PackedScene.new()
-        var err:Error = scene.pack(template)
-        template.free()
-        if err != OK:
-            push_error("DynamicRailVehicle3DManager: could not pack vehicle scene for %s/%s" % [normalized_data_path, file_name])
-            return null
-        _cache.set(cache_path, scene, cache_hash)
+        _cache.set(cache_path, structure, cache_hash)
 
-    var vehicle:RailVehicle3D = scene.instantiate() as RailVehicle3D
-    var fiz_controller:FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
-    if fiz_controller:
-        fiz_controller.train_id = train_id
-        fiz_controller.initial_velocity = initial_velocity
-        fiz_controller.cabin_number = cabin_number
-    MaszynaRailVehicle3DInstancer._initialize_instance(vehicle, file_name, head_display_material)
+    var vehicle:RailVehicle3D = MaszynaRailVehicle3DInstancer.build_from_structure(
+            structure, train_id, initial_velocity, cabin_number)
+    MaszynaRailVehicle3DInstancer.initialize_instance(vehicle, structure, head_display_material)
     return vehicle
-
-
-func _set_owner_recursive(node:Node, new_owner:Node) -> void:
-    for child:Node in node.get_children(true):
-        child.owner = new_owner
-        _set_owner_recursive(child, new_owner)

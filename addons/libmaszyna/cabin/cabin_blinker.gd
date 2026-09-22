@@ -42,8 +42,8 @@ func _enter_tree():
     _setup_phase = true
 
 func _update_state():
-    if _controller and state_property:
-        enabled = true if _controller.state.get(state_property, false) else false
+    if _train_id and state_property:
+        enabled = true if _vehicle_state().get(state_property, false) else false
 
 func _process_dirty(delta):
     timer.wait_time = blink_time

@@ -258,6 +258,57 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "transducer_input_voltage", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_transducer_input_voltage");
+
+        ClassDB::bind_method(D_METHOD("get_camshaft_available"), &VehicleElectricEngine::get_camshaft_available);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "camshaft_available", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_camshaft_available");
+        ClassDB::bind_method(D_METHOD("get_converter_overload"), &VehicleElectricEngine::get_converter_overload);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "converter_overload", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_converter_overload");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_delay"), &VehicleElectricEngine::get_line_breaker_delay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "line_breaker_delay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_delay");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_initial_delay"), &VehicleElectricEngine::get_line_breaker_initial_delay);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "line_breaker_initial_delay", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_initial_delay");
+        ClassDB::bind_method(D_METHOD("get_line_breaker_closes_at_no_power"), &VehicleElectricEngine::get_line_breaker_closes_at_no_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "line_breaker_closes_at_no_power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_line_breaker_closes_at_no_power");
+        ClassDB::bind_method(D_METHOD("get_motor_current"), &VehicleElectricEngine::get_motor_current);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "motor_current", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_current");
+        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &VehicleElectricEngine::get_circuit_imax);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "circuit_imax", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_circuit_imax");
+        ClassDB::bind_method(D_METHOD("get_dynamic_brake_active"), &VehicleElectricEngine::get_dynamic_brake_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "dynamic_brake_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_dynamic_brake_active");
+        ClassDB::bind_method(D_METHOD("get_fuse_active"), &VehicleElectricEngine::get_fuse_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "fuse_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fuse_active");
+        ClassDB::bind_method(D_METHOD("get_motor_connectors_open"), &VehicleElectricEngine::get_motor_connectors_open);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "motor_connectors_open", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_motor_connectors_open");
     }
 
 
@@ -421,7 +472,42 @@ namespace godot {
         return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::PowerCable;
     }
 
+    bool VehicleElectricEngine::get_camshaft_available() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->HasCamshaft : false;
+    }
+
+    bool VehicleElectricEngine::get_converter_overload() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->ConvOvldFlag : false;
+    }
+
+    double VehicleElectricEngine::get_line_breaker_delay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->CtrlDelay : 0.0;
+    }
+
+    double VehicleElectricEngine::get_line_breaker_initial_delay() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->InitialCtrlDelay : 0.0;
+    }
+
+    bool VehicleElectricEngine::get_line_breaker_closes_at_no_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LineBreakerClosesOnlyAtNoPowerPos : false;
+    }
+
     void VehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        p_state["camshaft_available"] = get_camshaft_available();
+        p_state["converter_overload"] = get_converter_overload();
+        p_state["line_breaker_delay"] = get_line_breaker_delay();
+        p_state["line_breaker_initial_delay"] = get_line_breaker_initial_delay();
+        p_state["line_breaker_closes_at_no_power"] = get_line_breaker_closes_at_no_power();
+        p_state["Im"] = get_motor_current();
+        p_state["circuit_imax"] = get_circuit_imax();
+        p_state["dynamic_brake_active"] = get_dynamic_brake_active();
+        p_state["fuse_active"] = get_fuse_active();
+        p_state["motor_connectors_open"] = get_motor_connectors_open();
         VehicleEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {

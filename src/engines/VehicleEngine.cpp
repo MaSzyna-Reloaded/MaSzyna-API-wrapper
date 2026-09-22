@@ -7,8 +7,6 @@ namespace godot {
     class VehicleController;
     void VehicleEngine::_bind_methods() {
         ClassDB::bind_method(D_METHOD("main_switch", "enabled"), &VehicleEngine::main_switch);
-        ClassDB::bind_method(D_METHOD("fuse_reset"), &VehicleEngine::fuse_reset);
-        ClassDB::bind_method(D_METHOD("motor_connectors_open", "open"), &VehicleEngine::motor_connectors_open);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleEngine, Variant::ARRAY, motor_param_table, PROPERTY_HINT_TYPE_STRING, "MotorParameter");
         BIND_PROPERTY(VehicleEngine, Variant::INT, transmission_gear_teeth_motor, "transmission");
@@ -103,11 +101,6 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tractive_force");
-        ClassDB::bind_method(D_METHOD("get_motor_current"), &VehicleEngine::get_motor_current);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "motor_current", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_current");
         ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleEngine::get_compressor_enabled);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
@@ -123,11 +116,6 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power");
-        ClassDB::bind_method(D_METHOD("get_dynamic_brake_active"), &VehicleEngine::get_dynamic_brake_active);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "dynamic_brake_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_dynamic_brake_active");
         ClassDB::bind_method(D_METHOD("get_rpm_count"), &VehicleEngine::get_rpm_count);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "rpm_count", PROPERTY_HINT_NONE, "",
@@ -138,16 +126,6 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "rpm_ratio", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_rpm_ratio");
-        ClassDB::bind_method(D_METHOD("get_current"), &VehicleEngine::get_current);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "current", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_current");
-        ClassDB::bind_method(D_METHOD("get_circuit_imax"), &VehicleEngine::get_circuit_imax);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "circuit_imax", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_circuit_imax");
         ClassDB::bind_method(D_METHOD("get_circuit_nmax_rpm"), &VehicleEngine::get_circuit_nmax_rpm);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "circuit_nmax_rpm", PROPERTY_HINT_NONE, "",
@@ -168,41 +146,6 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_no_power_pos");
-        ClassDB::bind_method(D_METHOD("get_camshaft_available"), &VehicleEngine::get_camshaft_available);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "camshaft_available", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_camshaft_available");
-        ClassDB::bind_method(D_METHOD("get_converter_overload"), &VehicleEngine::get_converter_overload);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "converter_overload", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_converter_overload");
-        ClassDB::bind_method(D_METHOD("get_line_breaker_delay"), &VehicleEngine::get_line_breaker_delay);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "line_breaker_delay", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_delay");
-        ClassDB::bind_method(D_METHOD("get_line_breaker_initial_delay"), &VehicleEngine::get_line_breaker_initial_delay);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "line_breaker_initial_delay", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_initial_delay");
-        ClassDB::bind_method(D_METHOD("get_line_breaker_closes_at_no_power"), &VehicleEngine::get_line_breaker_closes_at_no_power);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "line_breaker_closes_at_no_power", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_line_breaker_closes_at_no_power");
-        ClassDB::bind_method(D_METHOD("get_fuse_active"), &VehicleEngine::get_fuse_active);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "fuse_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_fuse_active");
-        ClassDB::bind_method(D_METHOD("get_motor_connectors_open"), &VehicleEngine::get_motor_connectors_open);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "motor_connectors_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_motor_connectors_open");
     }
 
     void VehicleEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -333,11 +276,6 @@ namespace godot {
         return mover != nullptr ? mover->Ft : 0.0;
     }
 
-    double VehicleEngine::get_motor_current() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Im : 0.0;
-    }
-
     bool VehicleEngine::get_compressor_enabled() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->CompressorFlag : false;
@@ -353,11 +291,6 @@ namespace godot {
         return mover != nullptr ? mover->EnginePower : 0.0;
     }
 
-    bool VehicleEngine::get_dynamic_brake_active() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->DynamicBrakeFlag : false;
-    }
-
     double VehicleEngine::get_rpm_count() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->enrot : 0.0;
@@ -366,16 +299,6 @@ namespace godot {
     double VehicleEngine::get_rpm_ratio() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->EngineRPMRatio() : 0.0;
-    }
-
-    double VehicleEngine::get_current() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Im : 0.0;
-    }
-
-    double VehicleEngine::get_circuit_imax() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Imax : 0.0;
     }
 
     double VehicleEngine::get_circuit_nmax_rpm() const {
@@ -398,41 +321,6 @@ namespace godot {
         return mover != nullptr ? mover->IsMainCtrlNoPowerPos() : false;
     }
 
-    bool VehicleEngine::get_camshaft_available() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->HasCamshaft : false;
-    }
-
-    bool VehicleEngine::get_converter_overload() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->ConvOvldFlag : false;
-    }
-
-    double VehicleEngine::get_line_breaker_delay() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->CtrlDelay : 0.0;
-    }
-
-    double VehicleEngine::get_line_breaker_initial_delay() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->InitialCtrlDelay : 0.0;
-    }
-
-    bool VehicleEngine::get_line_breaker_closes_at_no_power() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->LineBreakerClosesOnlyAtNoPowerPos : false;
-    }
-
-    bool VehicleEngine::get_fuse_active() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->FuseFlag : false;
-    }
-
-    bool VehicleEngine::get_motor_connectors_open() const {
-        const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->StLinSwitchOff : false;
-    }
-
     void VehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -445,26 +333,15 @@ namespace godot {
         p_state["Mw"] = get_wheel_torque();
         p_state["Fw"] = get_wheel_force();
         p_state["Ft"] = get_tractive_force();
-        p_state["Im"] = get_motor_current();
         p_state["compressor_enabled"] = get_compressor_enabled();
         p_state["compressor_allowed"] = get_compressor_allowed();
         p_state["engine_power"] = get_power();
-        p_state["dynamic_brake_active"] = get_dynamic_brake_active();
         p_state["engine_rpm_count"] = get_rpm_count();
         p_state["engine_rpm_ratio"] = get_rpm_ratio();
-        p_state["engine_current"] = get_current();
-        p_state["circuit_imax"] = get_circuit_imax();
         p_state["circuit_nmax_rpm"] = get_circuit_nmax_rpm();
         p_state["engine_damage"] = get_damage();
         p_state["main_switch_time"] = get_main_switch_time();
         p_state["main_no_power_pos"] = get_main_no_power_pos();
-        p_state["camshaft_available"] = get_camshaft_available();
-        p_state["converter_overload"] = get_converter_overload();
-        p_state["line_breaker_delay"] = get_line_breaker_delay();
-        p_state["line_breaker_initial_delay"] = get_line_breaker_initial_delay();
-        p_state["line_breaker_closes_at_no_power"] = get_line_breaker_closes_at_no_power();
-        p_state["fuse_active"] = get_fuse_active();
-        p_state["motor_connectors_open"] = get_motor_connectors_open();
     }
 
     void VehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {
@@ -485,32 +362,11 @@ namespace godot {
         return mover->MainSwitch(p_enabled);
     }
 
-    void VehicleEngine::fuse_reset() {
-        TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-        // Original engine: OnCommand_motoroverloadrelayreset (Train.cpp:4061) calls this same
-        // FuseOn() on press - "zbij nadmiarowy", clearing the overload/fast-fuse trip
-        // (MoverParameters->FuseFlag) that blocks Mains/converter/compressor from re-enabling.
-        mover->FuseOn();
-    }
-
-    void VehicleEngine::motor_connectors_open(const bool p_open) {
-        TMoverParameters *mover = get_mover();
-        ASSERT_MOVER(mover);
-        // Original engine: OnCommand_motorconnectorsopen/close (Train.cpp:3947-4008) - a plain
-        // field flip, no dedicated setter method exists on the vendored Mover for this one.
-        mover->StLinSwitchOff = p_open;
-    }
-
     void VehicleEngine::_register_commands() {
         register_command("main_switch", Callable(this, "main_switch"));
-        register_command("fuse_reset", Callable(this, "fuse_reset"));
-        register_command("motor_connectors_open", Callable(this, "motor_connectors_open"));
     }
 
     void VehicleEngine::_unregister_commands() {
         unregister_command("main_switch", Callable(this, "main_switch"));
-        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
-        unregister_command("motor_connectors_open", Callable(this, "motor_connectors_open"));
     }
 } // namespace godot

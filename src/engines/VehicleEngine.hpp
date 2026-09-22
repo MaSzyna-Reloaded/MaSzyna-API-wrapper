@@ -21,26 +21,15 @@ namespace godot {
             double get_wheel_torque() const;
             double get_wheel_force() const;
             double get_tractive_force() const;
-            double get_motor_current() const;
             bool get_compressor_enabled() const;
             bool get_compressor_allowed() const;
             double get_power() const;
-            bool get_dynamic_brake_active() const;
             double get_rpm_count() const;
             double get_rpm_ratio() const;
-            double get_current() const;
-            double get_circuit_imax() const;
             double get_circuit_nmax_rpm() const;
             int get_damage() const;
             double get_main_switch_time() const;
             bool get_main_no_power_pos() const;
-            bool get_camshaft_available() const;
-            bool get_converter_overload() const;
-            double get_line_breaker_delay() const;
-            double get_line_breaker_initial_delay() const;
-            bool get_line_breaker_closes_at_no_power() const;
-            bool get_fuse_active() const;
-            bool get_motor_connectors_open() const;
 
             enum EngineType {
                 NONE,
@@ -112,8 +101,6 @@ namespace godot {
             }
 
             bool main_switch(bool p_enabled);
-            void fuse_reset();
-            void motor_connectors_open(bool p_open);
             static void _bind_methods();
             TypedArray<MotorParameter> motor_param_table;
 

@@ -87,6 +87,12 @@ starts with its game directory set to `user://gut/fiz_train_controller` and find
 fixture path should be passed to what is under test instead of being written into the user's
 settings; the same pattern is in `test_dynamic_rail_vehicle_manager` and three more.
 
+**A third test red before this work**, alongside the two already recorded:
+`test_zzz_ep07_main_switch_trip_diagnostic` fails four assertions - the vehicle does not accelerate
+past 2 m/s across five controller notches and the Hasler never sees a speed. Verified at `76ebf3d`
+with the engine work stashed, so it is not from the #184 rework. Same family as
+`test_sm42_startup_sequence`: the vehicle refuses to move.
+
 **Tests that read the game directory** fail whenever it is not mounted, which is exactly what
 `AGENTS.md` forbids them to depend on: `test_zzz_ep07_cabin_main_switch` loads
 `scenery/td.scn` through `user://gut/fiz_train_controller`. Needs a fixture scenery instead.

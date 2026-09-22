@@ -18,6 +18,26 @@ namespace godot {
             bool has_accumulator() const;
             bool has_power_cable() const;
 
+
+            /* Fed from the catenary - a diesel has none of these */
+            bool get_camshaft_available() const;
+            bool get_converter_overload() const;
+            double get_line_breaker_delay() const;
+            double get_line_breaker_initial_delay() const;
+            bool get_line_breaker_closes_at_no_power() const;
+
+            /* Electric traction motors; a diesel-electric declares the same five
+             * and forwards to the same delegate (VehicleElectricTraction.hpp) */
+            virtual double get_motor_current() const = 0;
+            virtual double get_circuit_imax() const = 0;
+            virtual bool get_dynamic_brake_active() const = 0;
+            virtual bool get_fuse_active() const = 0;
+            virtual bool get_motor_connectors_open() const = 0;
+
+            /* Traction commands - "zbij nadmiarowy" and the line contactors */
+            virtual void fuse_reset() = 0;
+            virtual void set_motor_connectors_open(bool p_open) = 0;
+
             /* Live state, read straight from the backend - nothing is stored. */
             bool get_converter_enabled() const;
             bool get_converted_allowed() const;

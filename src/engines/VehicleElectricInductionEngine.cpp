@@ -3,6 +3,46 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    double VehicleElectricInductionEngine::get_motor_current() const {
+        return traction.get_motor_current(get_mover());
+    }
+
+    double VehicleElectricInductionEngine::get_circuit_imax() const {
+        return traction.get_circuit_imax(get_mover());
+    }
+
+    bool VehicleElectricInductionEngine::get_dynamic_brake_active() const {
+        return traction.get_dynamic_brake_active(get_mover());
+    }
+
+    bool VehicleElectricInductionEngine::get_fuse_active() const {
+        return traction.get_fuse_active(get_mover());
+    }
+
+    bool VehicleElectricInductionEngine::get_motor_connectors_open() const {
+        return traction.get_motor_connectors_open(get_mover());
+    }
+
+    void VehicleElectricInductionEngine::fuse_reset() {
+        traction.reset_fuse(get_mover());
+    }
+
+    void VehicleElectricInductionEngine::set_motor_connectors_open(const bool p_open) {
+        traction.open_motor_connectors(get_mover(), p_open);
+    }
+
+    void VehicleElectricInductionEngine::_register_commands() {
+        VehicleElectricEngine::_register_commands();
+        register_command("fuse_reset", Callable(this, "fuse_reset"));
+        register_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
+    }
+
+    void VehicleElectricInductionEngine::_unregister_commands() {
+        VehicleElectricEngine::_unregister_commands();
+        unregister_command("fuse_reset", Callable(this, "fuse_reset"));
+        unregister_command("motor_connectors_open", Callable(this, "set_motor_connectors_open"));
+    }
+
     void VehicleElectricInductionEngine::_bind_methods() {
         BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, slip_current_ratio);
         BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, max_slip);
@@ -29,6 +69,9 @@ namespace godot {
                 "CurvePointItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
+
+        ClassDB::bind_method(D_METHOD("fuse_reset"), &VehicleElectricInductionEngine::fuse_reset);
+        ClassDB::bind_method(D_METHOD("set_motor_connectors_open", "open"), &VehicleElectricInductionEngine::set_motor_connectors_open);
     }
 
     VehicleEngine::EngineType VehicleElectricInductionEngine::get_engine_type() const {

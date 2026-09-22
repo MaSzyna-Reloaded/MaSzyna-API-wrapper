@@ -77,7 +77,7 @@ func create_nodes(world_environment: WorldEnvironment, _environment: Environment
     # Skydome switches this single light between sun and moon by itself.
     sun_light = DirectionalLight3D.new()
     sun_light.name = SUN_LIGHT_NAME
-    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
     world_environment.add_child(sun_light, false, Node.INTERNAL_MODE_BACK)
 
     skydome = Skydome.new()

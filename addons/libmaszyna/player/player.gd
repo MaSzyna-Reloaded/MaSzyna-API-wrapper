@@ -34,7 +34,7 @@ var _cabin_view:bool = false
 
 func _ready() -> void:
     sfx_player.bank = sfx_bank
-    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    headlamp.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
     # the glow follows the spot: both are children of the camera, so their transform is view space
     var glow_material:ShaderMaterial = (headlamp_glow.mesh as QuadMesh).material as ShaderMaterial
     glow_material.set_shader_parameter(&"light_position", headlamp.position)

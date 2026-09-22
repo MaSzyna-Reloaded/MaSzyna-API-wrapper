@@ -162,7 +162,7 @@ func load_texture(model_path:String, material_name:String, normal:bool = false) 
         return UNKNOWN_TEXTURE
 
     var full_path:String = project_data_dir.path_join(final_path)
-    var max_size:int = int(ProjectSettings.get_setting("maszyna/dds_maxtexturesize", 1024))
+    var max_size:int = int(ProjectSettings.get_setting("maszyna/import/dds_max_texture_size", 1024))
     var texture:Texture2D = _load_dds_clamped(full_path, max_size)
     if not texture:
         texture = load(full_path) as Texture2D

@@ -11,6 +11,17 @@ namespace godot {
         BIND_PROPERTY(VehicleWipers, Variant::INT, wiper_count);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleWipers, Variant::ARRAY, positions, PROPERTY_HINT_TYPE_STRING, "WiperListItem");
+
+        ClassDB::bind_method(D_METHOD("get_switch_position"), &VehicleWipers::get_switch_position);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "switch_position", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_switch_position");
+        ClassDB::bind_method(D_METHOD("get_sweep_positions"), &VehicleWipers::get_sweep_positions);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::PACKED_FLOAT64_ARRAY, "sweep_positions", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_sweep_positions");
     }
 
     void VehicleWipers::_register_commands() {
@@ -116,16 +127,23 @@ namespace godot {
     }
 
 
-    void VehicleWipers::_fill_state_dictionary(Dictionary &p_state) const {
-        p_state["wipers_switch_position"] = switch_position;
-        // 0..1 sweeping out, 1..2 on the way back - wiper_pos of the original scene uniforms
-        // (opengl33renderer.cpp:762-766)
-        PackedFloat64Array wiper_positions;
+    int VehicleWipers::get_switch_position() const {
+        return switch_position;
+    }
+
+    /* 0..1 sweeping out, 1..2 on the way back - wiper_pos of the original scene uniforms
+     * (opengl33renderer.cpp:762-766) */
+    PackedFloat64Array VehicleWipers::get_sweep_positions() const {
+        PackedFloat64Array sweep;
         for (const Wiper &wiper: wipers) {
-            wiper_positions.push_back(
-                    wiper.position > 0.0 && wiper.returning ? wiper.position + 1.0 : wiper.position);
+            sweep.push_back(wiper.position > 0.0 && wiper.returning ? wiper.position + 1.0 : wiper.position);
         }
-        p_state["wiper_positions"] = wiper_positions;
+        return sweep;
+    }
+
+    void VehicleWipers::_fill_state_dictionary(Dictionary &p_state) const {
+        p_state["wipers_switch_position"] = get_switch_position();
+        p_state["wiper_positions"] = get_sweep_positions();
     }
 
     void VehicleWipers::_fill_config_dictionary(Dictionary &p_config) const {

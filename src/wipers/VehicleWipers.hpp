@@ -46,6 +46,10 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            int get_switch_position() const;
+            PackedFloat64Array get_sweep_positions() const;
+
             void switch_increase();
             void switch_decrease();
 

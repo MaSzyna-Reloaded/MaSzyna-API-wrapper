@@ -18,6 +18,12 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_ready() const;
+            bool get_shut_off() const;
+            bool get_active() const;
+            double get_cylinder_pressure() const;
+
             static void _bind_methods();
             MAKE_MEMBER_GS(float, spring_actuator_chamber_volume, 1.0f);
             MAKE_MEMBER_GS(float, spring_actuator_max_filling_force, 0.0f);

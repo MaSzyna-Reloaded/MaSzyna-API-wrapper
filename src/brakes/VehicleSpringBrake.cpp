@@ -18,6 +18,27 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("set_spring_brake_enabled", "enabled"), &VehicleSpringBrake::set_spring_brake_enabled);
         ClassDB::bind_method(D_METHOD("spring_brake_release"), &VehicleSpringBrake::spring_brake_release);
+
+        ClassDB::bind_method(D_METHOD("get_ready"), &VehicleSpringBrake::get_ready);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "ready", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_ready");
+        ClassDB::bind_method(D_METHOD("get_shut_off"), &VehicleSpringBrake::get_shut_off);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "shut_off", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_shut_off");
+        ClassDB::bind_method(D_METHOD("get_active"), &VehicleSpringBrake::get_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_cylinder_pressure"), &VehicleSpringBrake::get_cylinder_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "cylinder_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_cylinder_pressure");
     }
 
     void VehicleSpringBrake::set_spring_brake_active(const bool p_active) {
@@ -61,15 +82,35 @@ namespace godot {
     }
 
 
-    void VehicleSpringBrake::_fill_state_dictionary(Dictionary &p_state) const {
+    bool VehicleSpringBrake::get_ready() const {
         const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        return mover != nullptr ? mover->SpringBrake.IsReady : false;
+    }
+
+    bool VehicleSpringBrake::get_shut_off() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpringBrake.ShuttOff : false;
+    }
+
+    bool VehicleSpringBrake::get_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpringBrake.Activate : false;
+    }
+
+    double VehicleSpringBrake::get_cylinder_pressure() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpringBrake.SBP : 0.0;
+    }
+
+    void VehicleSpringBrake::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["spring_brake/is_ready"] = mover->SpringBrake.IsReady;
-        p_state["spring_brake/shut_off"] = mover->SpringBrake.ShuttOff;
-        p_state["spring_brake/active"] = mover->SpringBrake.Activate;
-        p_state["spring_brake/cylinder_pressure"] = mover->SpringBrake.SBP;
+        p_state["spring_brake/is_ready"] = get_ready();
+        p_state["spring_brake/shut_off"] = get_shut_off();
+        p_state["spring_brake/active"] = get_active();
+        p_state["spring_brake/cylinder_pressure"] = get_cylinder_pressure();
     }
 
     void VehicleSpringBrake::_register_commands() {

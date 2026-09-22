@@ -20,6 +20,12 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_active() const;
+            double get_desired_velocity() const;
+            double get_desired_power() const;
+            double get_selected_velocity() const;
+
             MAKE_MEMBER_GS(bool, speed_control_enabled, false);
             MAKE_MEMBER_GS(double, delay, 0.0);
             MAKE_MEMBER_GS(bool, impulse_lever, false);

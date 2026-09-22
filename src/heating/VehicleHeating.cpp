@@ -19,6 +19,17 @@ namespace godot {
                 "NoPower,BioPower,MechPower,ElectricPower,SteamPower");
         BIND_PROPERTY(VehicleHeating, Variant::FLOAT, heating_max_voltage, "heating");
         ClassDB::bind_method(D_METHOD("heating", "enabled"), &VehicleHeating::heating);
+
+        ClassDB::bind_method(D_METHOD("get_active"), &VehicleHeating::get_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_power"), &VehicleHeating::get_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_power");
     }
 
     void VehicleHeating::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -52,13 +63,23 @@ namespace godot {
     }
 
 
-    void VehicleHeating::_fill_state_dictionary(Dictionary &p_state) const {
+    bool VehicleHeating::get_active() const {
         const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        return mover != nullptr ? mover->Heating : false;
+    }
+
+    double VehicleHeating::get_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->HeatingPower : 0.0;
+    }
+
+    void VehicleHeating::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["heating_enabled"] = mover->Heating;
-        p_state["heating_power"] = mover->HeatingPower;
+        p_state["heating_enabled"] = get_active();
+        p_state["heating_power"] = get_power();
     }
 
     void VehicleHeating::heating(const bool p_enabled) {

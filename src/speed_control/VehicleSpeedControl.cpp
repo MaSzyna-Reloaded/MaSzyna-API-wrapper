@@ -29,6 +29,27 @@ namespace godot {
         BIND_PROPERTY(VehicleSpeedControl, Variant::FLOAT, brake_intervention_max_velocity);
         BIND_PROPERTY(VehicleSpeedControl, Variant::FLOAT, power_up_speed);
         BIND_PROPERTY(VehicleSpeedControl, Variant::FLOAT, power_down_speed);
+
+        ClassDB::bind_method(D_METHOD("get_active"), &VehicleSpeedControl::get_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_desired_velocity"), &VehicleSpeedControl::get_desired_velocity);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "desired_velocity", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_desired_velocity");
+        ClassDB::bind_method(D_METHOD("get_desired_power"), &VehicleSpeedControl::get_desired_power);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "desired_power", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_desired_power");
+        ClassDB::bind_method(D_METHOD("get_selected_velocity"), &VehicleSpeedControl::get_selected_velocity);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "selected_velocity", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_selected_velocity");
     }
 
     void VehicleSpeedControl::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -74,14 +95,34 @@ namespace godot {
     }
 
 
-    void VehicleSpeedControl::_fill_state_dictionary(Dictionary &p_state) const {
+    bool VehicleSpeedControl::get_active() const {
         const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        return mover != nullptr ? mover->SpeedCtrlUnit.IsActive : false;
+    }
+
+    double VehicleSpeedControl::get_desired_velocity() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpeedCtrlUnit.DesiredVelocity : 0.0;
+    }
+
+    double VehicleSpeedControl::get_desired_power() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpeedCtrlUnit.DesiredPower : 0.0;
+    }
+
+    double VehicleSpeedControl::get_selected_velocity() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SpeedCtrlValue : 0.0;
+    }
+
+    void VehicleSpeedControl::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["speed_control/active"] = mover->SpeedCtrlUnit.IsActive;
-        p_state["speed_control/desired_velocity"] = mover->SpeedCtrlUnit.DesiredVelocity;
-        p_state["speed_control/desired_power"] = mover->SpeedCtrlUnit.DesiredPower;
-        p_state["speed_control/selected_velocity"] = mover->SpeedCtrlValue;
+        p_state["speed_control/active"] = get_active();
+        p_state["speed_control/desired_velocity"] = get_desired_velocity();
+        p_state["speed_control/desired_power"] = get_desired_power();
+        p_state["speed_control/selected_velocity"] = get_selected_velocity();
     }
 } // namespace godot

@@ -32,6 +32,22 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_low_pressed() const;
+            bool get_high_pressed() const;
+            bool get_whistle_pressed() const;
+            /* Below this the vehicle counts as standing, and the alarm chain does not sound
+             * the emergency signal (DynObj.cpp, the same 0.5 m/s the original compares against) */
+            static constexpr double HORN_EMERGENCY_MIN_SPEED = 0.5;
+
+            /* DynObj.cpp's per-frame horn combination: while moving with the alarm chain
+             * pulled, the emergency signal overrides the manually commanded one. */
+            int get_combined_signal() const;
+            bool get_low_active() const;
+            bool get_high_active() const;
+            bool get_whistle_active() const;
+            int get_horn() const;
+
             static void _bind_methods();
 
             void set_horn_low(bool p_state);

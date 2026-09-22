@@ -26,6 +26,12 @@ namespace godot {
                 VehicleSwitches, Variant::ARRAY, dimmer_list_positions, "dimmer_list_positions",
                 PROPERTY_HINT_TYPE_STRING, "DimmerListItem");
         ClassDB::bind_method(D_METHOD("sand", "active"), &VehicleSwitches::sand);
+
+        ClassDB::bind_method(D_METHOD("get_sand_active"), &VehicleSwitches::get_sand_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "sand_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_sand_active");
     }
 
     void VehicleSwitches::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -38,12 +44,17 @@ namespace godot {
     }
 
 
-    void VehicleSwitches::_fill_state_dictionary(Dictionary &p_state) const {
+    bool VehicleSwitches::get_sand_active() const {
         const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        return mover != nullptr ? mover->SandDose : false;
+    }
+
+    void VehicleSwitches::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["sand_active"] = mover->SandDose;
+        p_state["sand_active"] = get_sand_active();
     }
 
     void VehicleSwitches::sand(const bool p_active) {

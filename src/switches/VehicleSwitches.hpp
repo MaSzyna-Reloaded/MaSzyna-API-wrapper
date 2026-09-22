@@ -30,6 +30,9 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_sand_active() const;
+
             MAKE_MEMBER_GS(bool, pantograph_impulse, false);
             MAKE_MEMBER_GS(bool, converter_impulse, false);
             MAKE_MEMBER_GS(bool, motor_connectors_impulse, true);

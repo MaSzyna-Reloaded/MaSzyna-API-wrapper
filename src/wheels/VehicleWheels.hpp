@@ -11,6 +11,15 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            double get_angle_front_deg() const;
+            double get_angle_powered_deg() const;
+            double get_angle_rear_deg() const;
+            double get_rotation_speed_rps() const;
+            double get_rotation_acceleration_rps2() const;
+            bool get_slipping() const;
+            double get_flat() const;
+
             enum BearingType {
                 BEARING_TYPE_SLIDE = 0,
                 BEARING_TYPE_ROLL = 1,

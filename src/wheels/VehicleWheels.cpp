@@ -17,6 +17,42 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(BEARING_TYPE_SLIDE);
         BIND_ENUM_CONSTANT(BEARING_TYPE_ROLL);
+
+        ClassDB::bind_method(D_METHOD("get_angle_front_deg"), &VehicleWheels::get_angle_front_deg);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "angle_front_deg", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_angle_front_deg");
+        ClassDB::bind_method(D_METHOD("get_angle_powered_deg"), &VehicleWheels::get_angle_powered_deg);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "angle_powered_deg", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_angle_powered_deg");
+        ClassDB::bind_method(D_METHOD("get_angle_rear_deg"), &VehicleWheels::get_angle_rear_deg);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "angle_rear_deg", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_angle_rear_deg");
+        ClassDB::bind_method(D_METHOD("get_rotation_speed_rps"), &VehicleWheels::get_rotation_speed_rps);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rotation_speed_rps", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rotation_speed_rps");
+        ClassDB::bind_method(D_METHOD("get_rotation_acceleration_rps2"), &VehicleWheels::get_rotation_acceleration_rps2);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "rotation_acceleration_rps2", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_rotation_acceleration_rps2");
+        ClassDB::bind_method(D_METHOD("get_slipping"), &VehicleWheels::get_slipping);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "slipping", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_slipping");
+        ClassDB::bind_method(D_METHOD("get_flat"), &VehicleWheels::get_flat);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "flat", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_flat");
     }
 
     void VehicleWheels::_do_update_internal_mover(TMoverParameters *p_mover) {
@@ -56,18 +92,53 @@ namespace godot {
     }
 
 
-    void VehicleWheels::_fill_state_dictionary(Dictionary &p_state) const {
+    double VehicleWheels::get_angle_front_deg() const {
         const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        return mover != nullptr ? wheel_angle_front_deg : 0.0;
+    }
+
+    double VehicleWheels::get_angle_powered_deg() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? wheel_angle_powered_deg : 0.0;
+    }
+
+    double VehicleWheels::get_angle_rear_deg() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? wheel_angle_rear_deg : 0.0;
+    }
+
+    double VehicleWheels::get_rotation_speed_rps() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->nrot : 0.0;
+    }
+
+    double VehicleWheels::get_rotation_acceleration_rps2() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->nrot_eps : 0.0;
+    }
+
+    bool VehicleWheels::get_slipping() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->SlippingWheels : false;
+    }
+
+    double VehicleWheels::get_flat() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->WheelFlat : 0.0;
+    }
+
+    void VehicleWheels::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["wheel_angle_front_deg"] = wheel_angle_front_deg;
-        p_state["wheel_angle_powered_deg"] = wheel_angle_powered_deg;
-        p_state["wheel_angle_rear_deg"] = wheel_angle_rear_deg;
-        p_state["wheel_rotation_speed_rps"] = mover->nrot;
-        p_state["wheel_rotation_acceleration_rps2"] = mover->nrot_eps;
-        p_state["slipping_wheels"] = mover->SlippingWheels;
-        p_state["wheel_flat"] = mover->WheelFlat;
+        p_state["wheel_angle_front_deg"] = get_angle_front_deg();
+        p_state["wheel_angle_powered_deg"] = get_angle_powered_deg();
+        p_state["wheel_angle_rear_deg"] = get_angle_rear_deg();
+        p_state["wheel_rotation_speed_rps"] = get_rotation_speed_rps();
+        p_state["wheel_rotation_acceleration_rps2"] = get_rotation_acceleration_rps2();
+        p_state["slipping_wheels"] = get_slipping();
+        p_state["wheel_flat"] = get_flat();
     }
 
     void VehicleWheels::_fill_config_dictionary(Dictionary &p_config) const {

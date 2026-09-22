@@ -48,11 +48,11 @@ namespace godot {
 
 
     void VehicleUniversalController::_fill_state_dictionary(Dictionary &p_state) const {
-        const TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        p_state["selector_position"] = mover->MainCtrlPos;
+        p_state["selector_position"] = get_selector_position();
     }
 
     void VehicleUniversalController::_fill_config_dictionary(Dictionary &p_config) const {

@@ -11,6 +11,43 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("set_horn_high", "state"), &VehicleHorns::set_horn_high);
         ClassDB::bind_method(D_METHOD("set_whistle", "state"), &VehicleHorns::set_whistle);
         ClassDB::bind_method(D_METHOD("set_horn", "position"), &VehicleHorns::set_horn);
+
+        ClassDB::bind_method(D_METHOD("get_low_pressed"), &VehicleHorns::get_low_pressed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "low_pressed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_low_pressed");
+        ClassDB::bind_method(D_METHOD("get_high_pressed"), &VehicleHorns::get_high_pressed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "high_pressed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_high_pressed");
+        ClassDB::bind_method(D_METHOD("get_whistle_pressed"), &VehicleHorns::get_whistle_pressed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "whistle_pressed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_whistle_pressed");
+        ClassDB::bind_method(D_METHOD("get_combined_signal"), &VehicleHorns::get_combined_signal);
+        ClassDB::bind_method(D_METHOD("get_low_active"), &VehicleHorns::get_low_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "low_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_low_active");
+        ClassDB::bind_method(D_METHOD("get_high_active"), &VehicleHorns::get_high_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "high_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_high_active");
+        ClassDB::bind_method(D_METHOD("get_whistle_active"), &VehicleHorns::get_whistle_active);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "whistle_active", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_whistle_active");
+        ClassDB::bind_method(D_METHOD("get_horn"), &VehicleHorns::get_horn);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "horn", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_horn");
     }
 
     void VehicleHorns::_register_commands() {
@@ -75,25 +112,63 @@ namespace godot {
     }
 
 
-    void VehicleHorns::_fill_state_dictionary(Dictionary &p_state) const {
+    bool VehicleHorns::get_low_pressed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(mover->WarningSignal, 1) : false;
+    }
+
+    bool VehicleHorns::get_high_pressed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(mover->WarningSignal, 2) : false;
+    }
+
+    bool VehicleHorns::get_whistle_pressed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(mover->WarningSignal, 4) : false;
+    }
+
+    int VehicleHorns::get_combined_signal() const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
+            return 0;
+        }
+        return ((mover->Vel > HORN_EMERGENCY_MIN_SPEED) && mover->AlarmChainFlag
+                        ? mover->EmergencyBrakeWarningSignal
+                        : 0) |
+                mover->WarningSignal;
+    }
+
+    bool VehicleHorns::get_low_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(get_combined_signal(), 1) : false;
+    }
+
+    bool VehicleHorns::get_high_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(get_combined_signal(), 2) : false;
+    }
+
+    bool VehicleHorns::get_whistle_active() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(get_combined_signal(), 4) : false;
+    }
+
+    int VehicleHorns::get_horn() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? TestFlag(mover->WarningSignal, 1) ? 1 : (TestFlag(mover->WarningSignal, 2) ? -1 : 0) : 0;
+    }
+
+    void VehicleHorns::_fill_state_dictionary(Dictionary &p_state) const {
+        // a component without a backend publishes nothing at all, rather than zeroes
+        if (get_mover() == nullptr) {
             return;
         }
-        // Mirrors DynObj.cpp's per-frame horn combination: while moving with the manual emergency
-        // brake (alarm chain) pulled, the emergency signal overrides the manually commanded one
-        // for whichever bits it carries.
-        const int combined =
-                ((mover->Vel > 0.5) && mover->AlarmChainFlag ? mover->EmergencyBrakeWarningSignal : 0) |
-                mover->WarningSignal;
-        p_state["horn_low_pressed"] = TestFlag(mover->WarningSignal, 1);
-        p_state["horn_high_pressed"] = TestFlag(mover->WarningSignal, 2);
-        p_state["whistle_pressed"] = TestFlag(mover->WarningSignal, 4);
-        p_state["horn_low_active"] = TestFlag(combined, 1);
-        p_state["horn_high_active"] = TestFlag(combined, 2);
-        p_state["whistle_active"] = TestFlag(combined, 4);
-        // Mirrors set_horn()'s signed input shape, for a widget driven by a single
-        // bidirectional lever to sync its position.
-        p_state["horn"] = TestFlag(mover->WarningSignal, 1) ? 1 : (TestFlag(mover->WarningSignal, 2) ? -1 : 0);
+        p_state["horn_low_pressed"] = get_low_pressed();
+        p_state["horn_high_pressed"] = get_high_pressed();
+        p_state["whistle_pressed"] = get_whistle_pressed();
+        p_state["horn_low_active"] = get_low_active();
+        p_state["horn_high_active"] = get_high_active();
+        p_state["whistle_active"] = get_whistle_active();
+        p_state["horn"] = get_horn();
     }
 } // namespace godot

@@ -19,6 +19,10 @@ namespace godot {
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
+            /* Live state, read straight from the backend - nothing is stored. */
+            bool get_active() const;
+            double get_power() const;
+
             MAKE_MEMBER_GS_NR(
                     VehicleController::TrainPowerSource, heating_source,
                     VehicleController::TrainPowerSource::POWER_SOURCE_GENERATOR);

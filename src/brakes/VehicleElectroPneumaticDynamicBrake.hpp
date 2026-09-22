@@ -8,17 +8,9 @@ namespace godot {
     class VehicleController;
     class VehicleElectroPneumaticDynamicBrake : public VehicleComponent {
             GDCLASS(VehicleElectroPneumaticDynamicBrake, VehicleComponent)
-            enum StateProperty {
-                STATE_COUPLER_CHECK,
-                STATE_EP_DELAY,
-                STATE_EP_MAX_VEL,
-                STATE_EP_MIN_IM,
-                STATE_EP_FORCE,
-                STATE_EP_FUSE,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             static void _bind_methods();
             enum CouplerCheck {
@@ -31,11 +23,9 @@ namespace godot {
             void switch_ep_fuse(bool p_value);
 
         private:
-            int state_base_index = 0;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override {};
             void _register_commands() override;
             void _unregister_commands() override;

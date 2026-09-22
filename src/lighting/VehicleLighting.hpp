@@ -11,37 +11,13 @@ namespace godot {
     class VehicleLighting : public VehicleComponent {
             GDCLASS(VehicleLighting, VehicleComponent);
 
-            enum StateProperty {
-                STATE_LIGHT_POSITION,
-                STATE_LIGHT_POWER,
-                STATE_LIGHT_POWER_SOURCE,
-                STATE_FRONT_HEADLIGHT_UPPER,
-                STATE_FRONT_HEADLIGHT_LEFT,
-                STATE_FRONT_HEADLIGHT_RIGHT,
-                STATE_FRONT_REDMARKER_LEFT,
-                STATE_FRONT_REDMARKER_RIGHT,
-                STATE_REAR_HEADLIGHT_UPPER,
-                STATE_REAR_HEADLIGHT_LEFT,
-                STATE_REAR_HEADLIGHT_RIGHT,
-                STATE_REAR_REDMARKER_LEFT,
-                STATE_REAR_REDMARKER_RIGHT,
-                STATE_ACTIVE_HEADLIGHT_UPPER,
-                STATE_ACTIVE_HEADLIGHT_LEFT,
-                STATE_ACTIVE_HEADLIGHT_RIGHT,
-                STATE_ACTIVE_REDMARKER_LEFT,
-                STATE_ACTIVE_REDMARKER_RIGHT,
-                STATE_OPPOSITE_HEADLIGHT_UPPER,
-                STATE_OPPOSITE_HEADLIGHT_LEFT,
-                STATE_OPPOSITE_HEADLIGHT_RIGHT,
-                STATE_OPPOSITE_REDMARKER_LEFT,
-                STATE_OPPOSITE_REDMARKER_RIGHT,
-                STATE_ROOF_LIGHT_ENABLED,
-                STATE_DEVICES_LIGHT_ENABLED,
-                STATE_ROOF_LIGHT_LEVEL,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
+
+            /* Compartment (roof) light, as the vehicle's own signal reports it: lit only while the
+             * lighting circuit is fed. Read straight from the backend - nothing is stored. */
+            bool get_roof_light_enabled() const;
 
             enum LightEnd { LIGHT_END_FRONT, LIGHT_END_REAR };
             enum LightType {
@@ -77,7 +53,6 @@ namespace godot {
             };
 
         private:
-            int state_base_index = 0;
             /* Confirmed against vehicle/Train.cpp:9199-9208 - the i-upperlight/i-leftlight lamps
              * read the mover's own already-resolved per-end bitmask (iLights), not the selector
              * position or the LightListItem table. */
@@ -96,7 +71,6 @@ namespace godot {
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;

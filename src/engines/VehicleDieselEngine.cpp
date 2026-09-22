@@ -78,62 +78,26 @@ namespace godot {
         return VehicleEngine::EngineType::DIESEL;
     }
 
-    void VehicleDieselEngine::_declare_state_properties() {
-        VehicleEngine::_declare_state_properties();
-        state_base_index = get_state_property_count();
-        declare_state_property("engine_rpm", Variant::FLOAT);
-        declare_state_property("oil_pump_active", Variant::BOOL);
-        declare_state_property("oil_pump_disabled", Variant::BOOL);
-        declare_state_property("oil_pump_pressure", Variant::FLOAT);
-        declare_state_property("fuel_pump_active", Variant::BOOL);
-        declare_state_property("fuel_pump_disabled", Variant::BOOL);
-        declare_state_property("diesel_startup", Variant::BOOL);
-        declare_state_property("diesel_ignition", Variant::BOOL);
-        declare_state_property("diesel_spinup", Variant::BOOL);
-        declare_state_property("diesel_power", Variant::FLOAT);
-        declare_state_property("diesel_torque", Variant::FLOAT);
-        declare_state_property("diesel_fill", Variant::FLOAT);
-        declare_state_property("diesel_max_rpm", Variant::FLOAT);
-    }
 
-    Variant VehicleDieselEngine::_get_state_property(const int p_local_index) const {
-        if (p_local_index < state_base_index) {
-            return VehicleEngine::_get_state_property(p_local_index);
-        }
+    void VehicleDieselEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        VehicleEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_ENGINE_RPM:
-                return mover->EngineRPMRatio() * mover->EngineMaxRPM();
-            case STATE_OIL_PUMP_ACTIVE:
-                return mover->OilPump.is_active;
-            case STATE_OIL_PUMP_DISABLED:
-                return mover->OilPump.is_disabled;
-            case STATE_OIL_PUMP_PRESSURE:
-                return mover->OilPump.pressure;
-            case STATE_FUEL_PUMP_ACTIVE:
-                return mover->FuelPump.is_active;
-            case STATE_FUEL_PUMP_DISABLED:
-                return mover->FuelPump.is_disabled;
-            case STATE_DIESEL_STARTUP:
-                return mover->dizel_startup;
-            case STATE_DIESEL_IGNITION:
-                return mover->dizel_ignition;
-            case STATE_DIESEL_SPINUP:
-                return mover->dizel_spinup;
-            case STATE_DIESEL_POWER:
-                return mover->dizel_Power;
-            case STATE_DIESEL_TORQUE:
-                return mover->dizel_Torque;
-            case STATE_DIESEL_FILL:
-                return mover->dizel_fill;
-            case STATE_DIESEL_MAX_RPM:
-                return mover->EngineMaxRPM();
-            default:
-                return Variant();
-        }
+        p_state["engine_rpm"] = mover->EngineRPMRatio() * mover->EngineMaxRPM();
+        p_state["oil_pump_active"] = mover->OilPump.is_active;
+        p_state["oil_pump_disabled"] = mover->OilPump.is_disabled;
+        p_state["oil_pump_pressure"] = mover->OilPump.pressure;
+        p_state["fuel_pump_active"] = mover->FuelPump.is_active;
+        p_state["fuel_pump_disabled"] = mover->FuelPump.is_disabled;
+        p_state["diesel_startup"] = mover->dizel_startup;
+        p_state["diesel_ignition"] = mover->dizel_ignition;
+        p_state["diesel_spinup"] = mover->dizel_spinup;
+        p_state["diesel_power"] = mover->dizel_Power;
+        p_state["diesel_torque"] = mover->dizel_Torque;
+        p_state["diesel_fill"] = mover->dizel_fill;
+        p_state["diesel_max_rpm"] = mover->EngineMaxRPM();
     }
 
     void VehicleDieselEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

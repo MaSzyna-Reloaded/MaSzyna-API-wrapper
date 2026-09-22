@@ -29,13 +29,10 @@ namespace godot {
         internal_state = call("_get_train_part_state");
     };
 
-    /* The script's own keys, on top of whatever it declares the ordinary way. They are still
-     * pulled per tick rather than declared, which stage 5 replaces with
-     * generic_component_declare_property() - see TODO.md. */
-    Dictionary GenericVehicleComponent::get_state() {
-        Dictionary result = VehicleComponent::get_state();
-        result.merge(internal_state, true);
-        return result;
+    /* The script's own keys. They are still pulled per tick rather than being properties of the
+     * component, which stage C replaces - see TODO.md. */
+    void GenericVehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {
+        p_state.merge(internal_state, true);
     }
 
     VehicleController *GenericVehicleComponent::get_train_controller_node() {

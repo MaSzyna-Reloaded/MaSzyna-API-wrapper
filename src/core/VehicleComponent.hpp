@@ -19,8 +19,6 @@ namespace godot {
 
         private:
             bool _commands_registered = false;
-            /* Local index -> the registry's global id, in declaration order */
-            Vector<int> state_property_ids;
 
         protected:
             // This method cannot be marked as override because it's not virtual in the base class (Wrapped).
@@ -47,27 +45,12 @@ namespace godot {
 
             virtual void _do_process_mover(TMoverParameters *p_mover, double p_delta);
 
-            /* Declares what this component can be asked about, once, when it joins a vehicle.
-             * Each declare_state_property() call returns the local index _get_state_property()
-             * will be handed back. */
-            virtual void _declare_state_properties();
-            /* How many properties are declared so far - a subclass takes this after calling its
-             * base's declaration, so its own local indices start where the base's end. */
-            int get_state_property_count() const;
-
-            int declare_state_property(
-                    const StringName &p_name, Variant::Type p_type, const StringName &p_group = StringName());
-
             virtual void _register_commands();
             virtual void _unregister_commands();
 
             TMoverParameters *get_mover() const;
 
         public:
-            /* The live value of one declared property, by the local index declare_state_property()
-             * returned. Pure read: see CODE_STYLE.md, a getter never changes state. */
-            virtual Variant _get_state_property(int p_local_index) const;
-
             void _process(double p_delta) override;
             virtual void _process_mover(double p_delta);
 
@@ -96,8 +79,15 @@ namespace godot {
              * implementation detail: the interface knows state and config, nothing else. */
             void apply_config();
 
-            /* This part's contribution to the vehicle state */
-            virtual Dictionary get_state();
+            /* Writes this component's share of the vehicle dump. Called only when somebody asks
+             * for a dump - a console, a test, a diagnostic - never per frame: the live values are
+             * read from this component's own typed properties.
+             *
+             * Keys carry the component's name (`heating_enabled`, not `enabled`) because the dump
+             * is one flat Dictionary for the whole vehicle. A key the vehicle's variant does not
+             * have is simply not written, so has() keeps meaning what it meant. */
+            virtual void _fill_state_dictionary(Dictionary &p_state) const;
+            Dictionary get_state();
             void emit_config_changed_signal();
             void mark_dirty();
     };

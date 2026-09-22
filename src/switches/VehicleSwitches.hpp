@@ -22,18 +22,13 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            int state_base_index = 0;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
 
-            enum StateProperty {
-                STATE_SAND_ACTIVE,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             MAKE_MEMBER_GS(bool, pantograph_impulse, false);
             MAKE_MEMBER_GS(bool, converter_impulse, false);

@@ -45,46 +45,21 @@ namespace godot {
         }
     }
 
-    void VehicleSecuritySystem::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("beeping", Variant::BOOL);
-        declare_state_property("blinking", Variant::BOOL);
-        declare_state_property("radiostop_available", Variant::BOOL);
-        declare_state_property("vigilance_blinking", Variant::BOOL);
-        declare_state_property("cabsignal_blinking", Variant::BOOL);
-        declare_state_property("cabsignal_beeping", Variant::BOOL);
-        declare_state_property("braking", Variant::BOOL);
-        declare_state_property("engine_blocked", Variant::BOOL);
-        declare_state_property("separate_acknowledge", Variant::BOOL);
-    }
 
-    Variant VehicleSecuritySystem::_get_state_property(const int p_local_index) const {
+    void VehicleSecuritySystem::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_BEEPING:
-                return mover->SecuritySystem.is_beeping();
-            case STATE_BLINKING:
-                return mover->SecuritySystem.is_blinking();
-            case STATE_RADIOSTOP_AVAILABLE:
-                return mover->SecuritySystem.radiostop_available();
-            case STATE_VIGILANCE_BLINKING:
-                return mover->SecuritySystem.is_vigilance_blinking();
-            case STATE_CABSIGNAL_BLINKING:
-                return mover->SecuritySystem.is_cabsignal_blinking();
-            case STATE_CABSIGNAL_BEEPING:
-                return mover->SecuritySystem.is_cabsignal_beeping();
-            case STATE_BRAKING:
-                return mover->SecuritySystem.is_braking();
-            case STATE_ENGINE_BLOCKED:
-                return mover->SecuritySystem.is_engine_blocked();
-            case STATE_SEPARATE_ACKNOWLEDGE:
-                return mover->SecuritySystem.has_separate_acknowledge();
-            default:
-                return Variant();
-        }
+        p_state["beeping"] = mover->SecuritySystem.is_beeping();
+        p_state["blinking"] = mover->SecuritySystem.is_blinking();
+        p_state["radiostop_available"] = mover->SecuritySystem.radiostop_available();
+        p_state["vigilance_blinking"] = mover->SecuritySystem.is_vigilance_blinking();
+        p_state["cabsignal_blinking"] = mover->SecuritySystem.is_cabsignal_blinking();
+        p_state["cabsignal_beeping"] = mover->SecuritySystem.is_cabsignal_beeping();
+        p_state["braking"] = mover->SecuritySystem.is_braking();
+        p_state["engine_blocked"] = mover->SecuritySystem.is_engine_blocked();
+        p_state["separate_acknowledge"] = mover->SecuritySystem.has_separate_acknowledge();
     }
 
     void VehicleSecuritySystem::_do_update_internal_mover(TMoverParameters *p_mover) {

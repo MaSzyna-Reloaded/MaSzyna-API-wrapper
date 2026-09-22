@@ -51,24 +51,14 @@ namespace godot {
         }
     }
 
-    void VehicleHeating::_declare_state_properties() {
-        declare_state_property("heating_enabled", Variant::BOOL);
-        declare_state_property("heating_power", Variant::FLOAT);
-    }
 
-    Variant VehicleHeating::_get_state_property(const int p_local_index) const {
+    void VehicleHeating::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index) {
-            case STATE_HEATING_ENABLED:
-                return mover->Heating;
-            case STATE_HEATING_POWER:
-                return mover->HeatingPower;
-            default:
-                return Variant();
-        }
+        p_state["heating_enabled"] = mover->Heating;
+        p_state["heating_power"] = mover->HeatingPower;
     }
 
     void VehicleHeating::heating(const bool p_enabled) {

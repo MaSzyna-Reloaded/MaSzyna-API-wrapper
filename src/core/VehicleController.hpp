@@ -15,6 +15,7 @@ namespace godot {
     class VehicleComponent;
     class VehicleEngine;
     class VehicleSecuritySystem;
+    class VehicleLighting;
     class TrainSystem;
 
 
@@ -69,11 +70,9 @@ namespace godot {
             // VehicleController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *p_mover) const;
             void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
-            /* The controller's own contribution to the vehicle state, declared the way a
-             * component declares its own. */
-            void _declare_state_properties();
-            Variant _get_own_state_property(int p_local_index) const;
-            int declare_state_property(const StringName &p_name, Variant::Type p_type);
+            /* The vehicle's own share of the dump - what every vehicle has, whatever it is
+             * made of. Its components add theirs. */
+            void _fill_state_dictionary(Dictionary &p_state) const;
             void _process_mover(double p_delta);
 
 
@@ -309,24 +308,19 @@ namespace godot {
             MAKE_MEMBER_GS(int, cntrl_inactive_cab_flag, 0);
             Dictionary get_state();
 
-            /* Which component answers for one declared property on this vehicle. Filled by the
-             * components as they join, so nothing has to search the subtree for them. */
-            void register_state_property(int p_property_id, VehicleComponent *p_component, int p_local_index);
-            void unregister_state_properties(VehicleComponent *p_component);
-            Variant get_state_value(int p_property_id) const;
-            PackedInt32Array get_state_property_ids() const;
+            /* This vehicle's components, in the order they joined - which is the order of the
+             * FIZ sections that built them. They announce themselves rather than being searched
+             * for in the subtree. */
+            void register_component(VehicleComponent *p_component);
+            void unregister_component(VehicleComponent *p_component);
 
         private:
             // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
             static std::unordered_map<const TMoverParameters *, VehicleController *> controllers_by_mover;
-            /* Who answers for one property of this vehicle. A null component means the
-             * controller itself. */
-            struct StateOwner {
-                    VehicleComponent *component = nullptr;
-                    int local_index = 0;
-            };
-            HashMap<int, StateOwner> state_owners;
-            int own_state_property_count = 0;
+            Vector<VehicleComponent *> components;
+            /* The lighting component, kept because the vehicle raises roof_light_changed for it.
+             * Resolved when the component joins, not searched for per frame. */
+            VehicleLighting *lighting = nullptr;
             RID rid;
             Vector3 last_emitted_position = Vector3(1e10, 1e10, 1e10);
     };

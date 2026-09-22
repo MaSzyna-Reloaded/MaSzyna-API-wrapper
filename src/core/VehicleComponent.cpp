@@ -1,7 +1,6 @@
 #include "./TrainSystem.hpp"
 #include "VehicleController.hpp"
 #include "VehicleComponent.hpp"
-#include "../physics/VehiclePropertyRegistry.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -36,27 +35,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("train_part_disabled"));
     }
 
-    void VehicleComponent::_declare_state_properties() {}
-
-    Variant VehicleComponent::_get_state_property(int) const {
-        return Variant();
-    }
-
-    int VehicleComponent::get_state_property_count() const {
-        return static_cast<int>(state_property_ids.size());
-    }
-
-    int VehicleComponent::declare_state_property(
-            const StringName &p_name, const Variant::Type p_type, const StringName &p_group) {
-        const int id = VehiclePropertyRegistry::declare(p_name, p_type, get_class(), p_group);
-        ERR_FAIL_COND_V(id < 0, -1);
-        const int local_index = state_property_ids.size();
-        state_property_ids.push_back(id);
-        if (train_controller_node != nullptr) {
-            train_controller_node->register_state_property(id, this, local_index);
-        }
-        return local_index;
-    }
+    void VehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {}
 
     void VehicleComponent::_register_commands() {};
     void VehicleComponent::_unregister_commands() {};
@@ -84,6 +63,7 @@ namespace godot {
                     p = p->get_parent();
                 }
                 if (train_controller_node != nullptr) {
+                    train_controller_node->register_component(this);
                     const Error con = train_controller_node->connect(
                             VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
                     if (con != OK) {
@@ -91,10 +71,6 @@ namespace godot {
                                 "VehicleComponent::notification(NOTIFICATION_ENTER_TREE) failed with error code " +
                                 String::num(con));
                     }
-                }
-                if (train_controller_node != nullptr) {
-                    state_property_ids.clear();
-                    _declare_state_properties();
                 }
                 if (enabled) {
                     _register_commands();
@@ -107,7 +83,7 @@ namespace godot {
                     _commands_registered = false;
                 }
                 if (train_controller_node != nullptr) {
-                    train_controller_node->unregister_state_properties(this);
+                    train_controller_node->unregister_component(this);
                     train_controller_node->disconnect(
                             VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
                 }
@@ -190,7 +166,6 @@ namespace godot {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_process_mover(mover, p_delta);
-                train_controller_node->get_state().merge(get_state(), true);
             }
         }
     }
@@ -215,16 +190,11 @@ namespace godot {
         }
     }
 
-    /// A proxy, not a store: this component keeps no Dictionary. Every value is answered live by
-    /// the getter that owns it, and this walks them by name for the callers that still want one.
+    /// The dump of this component alone. Nothing is stored and nothing is computed until asked:
+    /// the live values are this component's own typed properties, read straight from the backend.
     Dictionary VehicleComponent::get_state() {
         Dictionary result;
-        for (int local_index = 0; local_index < state_property_ids.size(); ++local_index) {
-            // a property that answers nothing for this vehicle leaves no key, as it always did
-            if (const Variant value = _get_state_property(local_index); value.get_type() != Variant::NIL) {
-                result[VehiclePropertyRegistry::get_descriptor(state_property_ids[local_index]).name] = value;
-            }
-        }
+        _fill_state_dictionary(result);
         return result;
     }
 

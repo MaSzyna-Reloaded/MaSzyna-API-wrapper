@@ -73,26 +73,14 @@ namespace godot {
         }
     }
 
-    void VehicleElectricSeriesEngine::_declare_state_properties() {
-        VehicleElectricEngine::_declare_state_properties();
-        state_base_index = get_state_property_count();
-        declare_state_property("resistor_fan_rotation", Variant::FLOAT);
-    }
 
-    Variant VehicleElectricSeriesEngine::_get_state_property(const int p_local_index) const {
-        if (p_local_index < state_base_index) {
-            return VehicleElectricEngine::_get_state_property(p_local_index);
-        }
+    void VehicleElectricSeriesEngine::_fill_state_dictionary(Dictionary &p_state) const {
+        VehicleElectricEngine::_fill_state_dictionary(p_state);
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_RESISTOR_FAN_ROTATION:
-                return mover->RventRot;
-            default:
-                return Variant();
-        }
+        p_state["resistor_fan_rotation"] = mover->RventRot;
     }
 
     void VehicleElectricSeriesEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

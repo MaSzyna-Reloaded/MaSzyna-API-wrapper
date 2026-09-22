@@ -10,24 +10,9 @@ namespace godot {
 
     class VehicleDieselEngine : public VehicleEngine {
             GDCLASS(VehicleDieselEngine, VehicleEngine)
-            enum StateProperty {
-                STATE_ENGINE_RPM,
-                STATE_OIL_PUMP_ACTIVE,
-                STATE_OIL_PUMP_DISABLED,
-                STATE_OIL_PUMP_PRESSURE,
-                STATE_FUEL_PUMP_ACTIVE,
-                STATE_FUEL_PUMP_DISABLED,
-                STATE_DIESEL_STARTUP,
-                STATE_DIESEL_IGNITION,
-                STATE_DIESEL_SPINUP,
-                STATE_DIESEL_POWER,
-                STATE_DIESEL_TORQUE,
-                STATE_DIESEL_FILL,
-                STATE_DIESEL_MAX_RPM,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             /* R_Place= : retarder location within the mechanical transmission */
             enum RetarderPlacement {
@@ -89,12 +74,10 @@ namespace godot {
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, torque_table)
 
         private:
-            int state_base_index = 0;
 
         protected:
             EngineType get_engine_type() const override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;

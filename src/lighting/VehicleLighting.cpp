@@ -74,97 +74,43 @@ namespace godot {
         return p_mover->Power24vIsAvailable || p_mover->Power110vIsAvailable;
     }
 
-    void VehicleLighting::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("light_position", Variant::INT);
-        declare_state_property("light_power", Variant::FLOAT);
-        declare_state_property("light_power_source", Variant::INT);
-        declare_state_property("lights/front_headlight_upper_enabled", Variant::BOOL);
-        declare_state_property("lights/front_headlight_left_enabled", Variant::BOOL);
-        declare_state_property("lights/front_headlight_right_enabled", Variant::BOOL);
-        declare_state_property("lights/front_redmarker_left_enabled", Variant::BOOL);
-        declare_state_property("lights/front_redmarker_right_enabled", Variant::BOOL);
-        declare_state_property("lights/rear_headlight_upper_enabled", Variant::BOOL);
-        declare_state_property("lights/rear_headlight_left_enabled", Variant::BOOL);
-        declare_state_property("lights/rear_headlight_right_enabled", Variant::BOOL);
-        declare_state_property("lights/rear_redmarker_left_enabled", Variant::BOOL);
-        declare_state_property("lights/rear_redmarker_right_enabled", Variant::BOOL);
-        declare_state_property("lights/active_headlight_upper_enabled", Variant::BOOL);
-        declare_state_property("lights/active_headlight_left_enabled", Variant::BOOL);
-        declare_state_property("lights/active_headlight_right_enabled", Variant::BOOL);
-        declare_state_property("lights/active_redmarker_left_enabled", Variant::BOOL);
-        declare_state_property("lights/active_redmarker_right_enabled", Variant::BOOL);
-        declare_state_property("lights/opposite_headlight_upper_enabled", Variant::BOOL);
-        declare_state_property("lights/opposite_headlight_left_enabled", Variant::BOOL);
-        declare_state_property("lights/opposite_headlight_right_enabled", Variant::BOOL);
-        declare_state_property("lights/opposite_redmarker_left_enabled", Variant::BOOL);
-        declare_state_property("lights/opposite_redmarker_right_enabled", Variant::BOOL);
-        declare_state_property("roof_light_enabled", Variant::BOOL);
-        declare_state_property("devices_light_enabled", Variant::BOOL);
-        declare_state_property("roof_light_level", Variant::FLOAT);
+
+    bool VehicleLighting::get_roof_light_enabled() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && roof_light_active && _is_powered(mover);
     }
 
-    Variant VehicleLighting::_get_state_property(const int p_local_index) const {
+    void VehicleLighting::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_LIGHT_POSITION:
-                return mover->LightsPosNo;
-            case STATE_LIGHT_POWER:
-                return mover->LightPower;
-            case STATE_LIGHT_POWER_SOURCE:
-                return train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType);
-            case STATE_FRONT_HEADLIGHT_UPPER:
-                return _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER);
-            case STATE_FRONT_HEADLIGHT_LEFT:
-                return _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT);
-            case STATE_FRONT_HEADLIGHT_RIGHT:
-                return _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT);
-            case STATE_FRONT_REDMARKER_LEFT:
-                return _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT);
-            case STATE_FRONT_REDMARKER_RIGHT:
-                return _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT);
-            case STATE_REAR_HEADLIGHT_UPPER:
-                return _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER);
-            case STATE_REAR_HEADLIGHT_LEFT:
-                return _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT);
-            case STATE_REAR_HEADLIGHT_RIGHT:
-                return _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT);
-            case STATE_REAR_REDMARKER_LEFT:
-                return _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT);
-            case STATE_REAR_REDMARKER_RIGHT:
-                return _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT);
-            case STATE_ACTIVE_HEADLIGHT_UPPER:
-                return _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
-            case STATE_ACTIVE_HEADLIGHT_LEFT:
-                return _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
-            case STATE_ACTIVE_HEADLIGHT_RIGHT:
-                return _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
-            case STATE_ACTIVE_REDMARKER_LEFT:
-                return _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
-            case STATE_ACTIVE_REDMARKER_RIGHT:
-                return _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
-            case STATE_OPPOSITE_HEADLIGHT_UPPER:
-                return _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
-            case STATE_OPPOSITE_HEADLIGHT_LEFT:
-                return _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
-            case STATE_OPPOSITE_HEADLIGHT_RIGHT:
-                return _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
-            case STATE_OPPOSITE_REDMARKER_LEFT:
-                return _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
-            case STATE_OPPOSITE_REDMARKER_RIGHT:
-                return _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
-            case STATE_ROOF_LIGHT_ENABLED:
-                return roof_light_active && _is_powered(mover);
-            case STATE_DEVICES_LIGHT_ENABLED:
-                return devices_light_active && _is_powered(mover);
-            case STATE_ROOF_LIGHT_LEVEL:
-                return roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0;
-            default:
-                return Variant();
-        }
+        p_state["light_position"] = mover->LightsPosNo;
+        p_state["light_power"] = mover->LightPower;
+        p_state["light_power_source"] = train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType);
+        p_state["lights/front_headlight_upper_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER);
+        p_state["lights/front_headlight_left_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT);
+        p_state["lights/front_headlight_right_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT);
+        p_state["lights/front_redmarker_left_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT);
+        p_state["lights/front_redmarker_right_enabled"] = _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT);
+        p_state["lights/rear_headlight_upper_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER);
+        p_state["lights/rear_headlight_left_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT);
+        p_state["lights/rear_headlight_right_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT);
+        p_state["lights/rear_redmarker_left_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT);
+        p_state["lights/rear_redmarker_right_enabled"] = _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT);
+        p_state["lights/active_headlight_upper_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
+        p_state["lights/active_headlight_left_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
+        p_state["lights/active_headlight_right_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
+        p_state["lights/active_redmarker_left_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
+        p_state["lights/active_redmarker_right_enabled"] = _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
+        p_state["lights/opposite_headlight_upper_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER);
+        p_state["lights/opposite_headlight_left_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT);
+        p_state["lights/opposite_headlight_right_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT);
+        p_state["lights/opposite_redmarker_left_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_LEFT);
+        p_state["lights/opposite_redmarker_right_enabled"] = _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_RIGHT);
+        p_state["roof_light_enabled"] = get_roof_light_enabled();
+        p_state["devices_light_enabled"] = devices_light_active && _is_powered(mover);
+        p_state["roof_light_level"] = roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0;
     }
 
     void VehicleLighting::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

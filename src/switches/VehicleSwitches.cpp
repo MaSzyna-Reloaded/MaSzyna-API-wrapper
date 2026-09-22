@@ -37,22 +37,13 @@ namespace godot {
         p_mover->StLinSwitchType = motor_connectors_impulse ? "impulse" : "toggle";
     }
 
-    void VehicleSwitches::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("sand_active", Variant::BOOL);
-    }
 
-    Variant VehicleSwitches::_get_state_property(const int p_local_index) const {
+    void VehicleSwitches::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_SAND_ACTIVE:
-                return mover->SandDose;
-            default:
-                return Variant();
-        }
+        p_state["sand_active"] = mover->SandDose;
     }
 
     void VehicleSwitches::sand(const bool p_active) {

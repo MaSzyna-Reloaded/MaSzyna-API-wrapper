@@ -2,9 +2,9 @@
 #include "../core/VehicleComponent.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/VehicleEngine.hpp"
+#include "../lighting/VehicleLighting.hpp"
 #include "../physics/MaszynaMoverPhysicsServer.hpp"
 #include "../physics/RailVehicleServer.hpp"
-#include "../physics/VehiclePropertyRegistry.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -392,7 +392,6 @@ namespace godot {
                 rid = RID();
                 break;
             case NOTIFICATION_READY:
-                _declare_state_properties();
                 initialize_mover();
                 update_state();
                 DEBUG("VehicleController::_ready() signals connected to train parts");
@@ -664,8 +663,7 @@ namespace godot {
             emit_signal(radio_channel_changed, new_radio_channel);
         }
 
-        static const int roof_light_property = VehiclePropertyRegistry::get_id("roof_light_enabled");
-        if (const bool new_roof_light_enabled = get_state_value(roof_light_property);
+        if (const bool new_roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
             prev_roof_light_enabled != new_roof_light_enabled) {
             prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
             emit_signal(roof_light_changed, new_roof_light_enabled);
@@ -780,166 +778,51 @@ namespace godot {
         }
     }
 
-    void VehicleController::_declare_state_properties() {
-        declare_state_property("mass_total", Variant::FLOAT);
-        declare_state_property("velocity", Variant::FLOAT);
-        declare_state_property("speed", Variant::FLOAT);
-        declare_state_property("tachometer_speed", Variant::FLOAT);
-        declare_state_property("tachometer_speed_jump", Variant::FLOAT);
-        declare_state_property("tachometer_clock_speed", Variant::FLOAT);
-        declare_state_property("total_distance", Variant::FLOAT);
-        declare_state_property("direction", Variant::INT);
-        declare_state_property("direction_absolute", Variant::INT);
-        declare_state_property("cabin", Variant::INT);
-        declare_state_property("cabin_controleable", Variant::BOOL);
-        declare_state_property("cabin_occupied", Variant::INT);
-        declare_state_property("battery_enabled", Variant::BOOL);
-        declare_state_property("battery_voltage", Variant::FLOAT);
-        declare_state_property("radio_enabled", Variant::BOOL);
-        declare_state_property("radio_powered", Variant::BOOL);
-        declare_state_property("radio_channel", Variant::INT);
-        declare_state_property("power24_voltage", Variant::FLOAT);
-        declare_state_property("power24_available", Variant::BOOL);
-        declare_state_property("power110_available", Variant::BOOL);
-        declare_state_property("current0", Variant::FLOAT);
-        declare_state_property("current1", Variant::FLOAT);
-        declare_state_property("current2", Variant::FLOAT);
-        declare_state_property("relay_novolt", Variant::BOOL);
-        declare_state_property("relay_overvoltage", Variant::BOOL);
-        declare_state_property("relay_ground", Variant::BOOL);
-        declare_state_property("train_damage", Variant::INT);
-        declare_state_property("controller_second_position", Variant::INT);
-        declare_state_property("controller_main_position", Variant::INT);
-        declare_state_property("controller_joint_position", Variant::INT);
-        declare_state_property("controller_main_actual_position", Variant::INT);
-        declare_state_property("circuit_rlist_size", Variant::INT);
-    }
 
-    int VehicleController::declare_state_property(const StringName &p_name, const Variant::Type p_type) {
-        const int id = VehiclePropertyRegistry::declare(p_name, p_type, "VehicleController");
-        ERR_FAIL_COND_V(id < 0, -1);
-        const int local_index = own_state_property_count;
-        ++own_state_property_count;
-        register_state_property(id, nullptr, local_index);
-        return local_index;
-    }
-
-    Variant VehicleController::_get_own_state_property(const int p_local_index) const {
+    /* The vehicle's own share of the dump - what every vehicle has, whatever it is made of. */
+    void VehicleController::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index) {
-            case 0:  // mass_total
-                return mover->TotalMass;
-            case 1:  // velocity
-                return mover->V;
-            case 2:  // speed
-                return mover->Vel;
-            case 3:  // tachometer_speed
-                return tacho_velocity;
-            case 4:  // tachometer_speed_jump
-                return tacho_velocity_jump;
-            case 5:  // tachometer_clock_speed
-                return tacho_clock_active ? tacho_velocity : 0.0;
-            case 6:  // total_distance
-                return mover->DistCounter;
-            case 7:  // direction
-                return mover->DirActive;
-            case 8:  // direction_absolute
-                return mover->DirAbsolute;
-            case 9:  // cabin
-                return mover->CabActive;
-            case 10:  // cabin_controleable
-                return mover->IsCabMaster();
-            case 11:  // cabin_occupied
-                return mover->CabOccupied;
-            case 12:  // battery_enabled
-                return mover->Battery;
-            case 13:  // battery_voltage
-                return mover->BatteryVoltage;
-            case 14:  // radio_enabled
-                return mover->Radio;
-            case 15:  // radio_powered
-                return mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
-            case 16:  // radio_channel
-                return radio_channel;
-            case 17:  // power24_voltage
-                return mover->Power24vVoltage;
-            case 18:  // power24_available
-                return mover->Power24vIsAvailable;
-            case 19:  // power110_available
-                return mover->Power110vIsAvailable;
-            case 20:  // current0
-                return mover->ShowCurrent(0);
-            case 21:  // current1
-                return mover->ShowCurrent(1);
-            case 22:  // current2
-                return mover->ShowCurrent(2);
-            case 23:  // relay_novolt
-                return mover->NoVoltRelay;
-            case 24:  // relay_overvoltage
-                return mover->OvervoltageRelay;
-            case 25:  // relay_ground
-                return mover->GroundRelay;
-            case 26:  // train_damage
-                return mover->DamageFlag;
-            case 27:  // controller_second_position
-                return mover->ScndCtrlPos;
-            case 28:  // controller_main_position
-                return mover->MainCtrlPos;
-            case 29:  // controller_joint_position
-                return mover->LocalBrakePosA > 0.0
-                        ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo))
-                        : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos);
-            case 30:  // controller_main_actual_position
-                return mover->MainCtrlActualPos;
-            case 31:  // circuit_rlist_size
-                return mover->RlistSize;
-            default:
-                return Variant();
-        }
-    }
-
-    void VehicleController::register_state_property(
-            const int p_property_id, VehicleComponent *p_component, const int p_local_index) {
-        StateOwner owner;
-        owner.component = p_component;
-        owner.local_index = p_local_index;
-        state_owners.insert(p_property_id, owner);
-    }
-
-    void VehicleController::unregister_state_properties(VehicleComponent *p_component) {
-        Vector<int> removed;
-        for (const KeyValue<int, StateOwner> &item: state_owners) {
-            if (item.value.component == p_component) {
-                removed.push_back(item.key);
-            }
-        }
-        for (const int property_id: removed) {
-            state_owners.erase(property_id);
-        }
+        p_state["mass_total"] = mover->TotalMass;
+        p_state["velocity"] = mover->V;
+        p_state["speed"] = mover->Vel;
+        p_state["tachometer_speed"] = tacho_velocity;
+        p_state["tachometer_speed_jump"] = tacho_velocity_jump;
+        p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
+        p_state["total_distance"] = mover->DistCounter;
+        p_state["direction"] = mover->DirActive;
+        p_state["direction_absolute"] = mover->DirAbsolute;
+        p_state["cabin"] = mover->CabActive;
+        p_state["cabin_controleable"] = mover->IsCabMaster();
+        p_state["cabin_occupied"] = mover->CabOccupied;
+        p_state["battery_enabled"] = mover->Battery;
+        p_state["battery_voltage"] = mover->BatteryVoltage;
+        p_state["radio_enabled"] = mover->Radio;
+        p_state["radio_powered"] = mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable);
+        p_state["radio_channel"] = radio_channel;
+        p_state["power24_voltage"] = mover->Power24vVoltage;
+        p_state["power24_available"] = mover->Power24vIsAvailable;
+        p_state["power110_available"] = mover->Power110vIsAvailable;
+        p_state["current0"] = mover->ShowCurrent(0);
+        p_state["current1"] = mover->ShowCurrent(1);
+        p_state["current2"] = mover->ShowCurrent(2);
+        p_state["relay_novolt"] = mover->NoVoltRelay;
+        p_state["relay_overvoltage"] = mover->OvervoltageRelay;
+        p_state["relay_ground"] = mover->GroundRelay;
+        p_state["train_damage"] = mover->DamageFlag;
+        p_state["controller_second_position"] = mover->ScndCtrlPos;
+        p_state["controller_main_position"] = mover->MainCtrlPos;
+        p_state["controller_joint_position"] = mover->LocalBrakePosA > 0.0 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo)) : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos);
+        p_state["controller_main_actual_position"] = mover->MainCtrlActualPos;
+        p_state["circuit_rlist_size"] = mover->RlistSize;
     }
 
 
-    Variant VehicleController::get_state_value(const int p_property_id) const {
-        const StateOwner *owner = state_owners.getptr(p_property_id);
-        if (owner == nullptr) {
-            return Variant();
-        }
-        if (owner->component == nullptr) {
-            return _get_own_state_property(owner->local_index);
-        }
-        return owner->component->_get_state_property(owner->local_index);
-    }
 
-    PackedInt32Array VehicleController::get_state_property_ids() const {
-        PackedInt32Array result;
-        for (const KeyValue<int, StateOwner> &item: state_owners) {
-            result.push_back(item.key);
-        }
-        return result;
-    }
+
+
 
     Dictionary VehicleController::get_config() const {
         return config;
@@ -953,13 +836,29 @@ namespace godot {
     /// A proxy, not a store: the vehicle keeps no state Dictionary of its own. Every value is
     /// answered by the component that owns it, and this walks them by name for the callers that
     /// still want one - a console, a test, a diagnostic dump. Nothing on the frame path builds it.
+    /* The whole vehicle's dump: its own share plus every component's. Expensive on purpose -
+     * a console, a test or a diagnostic asks for it, never a per-frame reader. */
+    void VehicleController::register_component(VehicleComponent *p_component) {
+        components.push_back(p_component);
+        if (VehicleLighting *component_lighting = Object::cast_to<VehicleLighting>(p_component);
+            component_lighting != nullptr) {
+            lighting = component_lighting;
+        }
+    }
+
+    void VehicleController::unregister_component(VehicleComponent *p_component) {
+        components.erase(p_component);
+        if (static_cast<VehicleComponent *>(lighting) == p_component) {
+            lighting = nullptr;
+        }
+    }
+
     Dictionary VehicleController::get_state() {
         Dictionary result;
-        for (const KeyValue<int, StateOwner> &item: state_owners) {
-            // a property that answers nothing for this vehicle - the accumulator's recharge source
-            // on one fed from the catenary, say - leaves no key at all, as it always did
-            if (const Variant value = get_state_value(item.key); value.get_type() != Variant::NIL) {
-                result[VehiclePropertyRegistry::get_descriptor(item.key).name] = value;
+        _fill_state_dictionary(result);
+        for (VehicleComponent *component: components) {
+            if (component->get_enabled()) {
+                component->_fill_state_dictionary(result);
             }
         }
         return result;

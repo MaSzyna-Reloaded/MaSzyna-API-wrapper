@@ -14,15 +14,10 @@ namespace godot {
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
 
-            enum StateProperty {
-                STATE_HEATING_ENABLED,
-                STATE_HEATING_POWER,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             MAKE_MEMBER_GS_NR(
                     VehicleController::TrainPowerSource, heating_source,

@@ -60,31 +60,16 @@ namespace godot {
         VehicleComponent::_do_update_internal_mover(p_mover);
     }
 
-    void VehicleSpringBrake::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("spring_brake/is_ready", Variant::BOOL);
-        declare_state_property("spring_brake/shut_off", Variant::BOOL);
-        declare_state_property("spring_brake/active", Variant::BOOL);
-        declare_state_property("spring_brake/cylinder_pressure", Variant::FLOAT);
-    }
 
-    Variant VehicleSpringBrake::_get_state_property(const int p_local_index) const {
+    void VehicleSpringBrake::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_IS_READY:
-                return mover->SpringBrake.IsReady;
-            case STATE_SHUT_OFF:
-                return mover->SpringBrake.ShuttOff;
-            case STATE_ACTIVE:
-                return mover->SpringBrake.Activate;
-            case STATE_CYLINDER_PRESSURE:
-                return mover->SpringBrake.SBP;
-            default:
-                return Variant();
-        }
+        p_state["spring_brake/is_ready"] = mover->SpringBrake.IsReady;
+        p_state["spring_brake/shut_off"] = mover->SpringBrake.ShuttOff;
+        p_state["spring_brake/active"] = mover->SpringBrake.Activate;
+        p_state["spring_brake/cylinder_pressure"] = mover->SpringBrake.SBP;
     }
 
     void VehicleSpringBrake::_register_commands() {

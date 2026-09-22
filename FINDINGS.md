@@ -3,6 +3,34 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - a regex that deleted 588 lines, and the linker that caught it
+
+* **Symptom:** after a scripted removal of five methods from `RailVehicleServer`, the build
+  succeeded and the editor refused the extension with
+  `undefined symbol: RailVehicleServer::vehicle_move(RID const&, double)`. Every GDScript naming a
+  wrapper class then failed to parse, which reads exactly like a broken `global_script_class_cache`
+  and sends the search in the wrong direction.
+* **Cause:** the deletion used
+  `re.search(r"\n(    /\*.*?\*/\n)?    [\w :<>*&]*?Class::name\(.*?\n    \}\n", s, re.S)`.
+  The *optional* comment group carries `.*?` under `re.S`, so the engine is free to start the match
+  at a newline hundreds of lines earlier, let that group span the whole distance to a comment that
+  happens to sit right above the target, and hand back a match containing everything in between.
+  `s.replace(match, "")` then deleted 588 of the file's 856 lines - every other method with it.
+* **What proved it:** not the compiler. The file still compiled, because a missing definition is
+  only an error at link time, and a GDExtension links lazily - the symbol went missing and nothing
+  said so until Godot loaded the library. `diff` of `grep -oP "Class::\K\w+"` between `HEAD` and
+  the working tree named the casualties in one line.
+* **Fix:** the removal walks lines, finds each definition by its own signature line and deletes to
+  the matching `    }` at that indentation. Re-checked the same way in the other file the same
+  script had touched, which turned out to be intact.
+* **Rule:** do not delete a code span with a regex whose optional prefix can match across lines.
+  When a script edits source, verify structurally afterwards - compare the list of defined symbols
+  against `HEAD`, or the line count - because a deletion that leaves valid syntax has no other
+  symptom until link or run time.
+* **Rule:** `undefined symbol` from a GDExtension means a *declared and bound* method has no
+  definition. Look for a deleted or renamed definition first; the class cache and the import are
+  the second question, not the first.
+
 ## 2026-09-22 - an unguarded singleton dereference only crashes at teardown
 
 * **Symptom:** `test_zzz_ep07_cabin_main_switch` died with signal 11 while the scenery was being

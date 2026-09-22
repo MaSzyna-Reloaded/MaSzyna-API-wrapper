@@ -30,37 +30,18 @@ namespace godot {
         BIND_ENUM_CONSTANT(BACK)
     }
 
-    void VehicleElectroPneumaticDynamicBrake::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("dcemued/coupler_check", Variant::BOOL);
-        declare_state_property("dcemued/ed_braking_ep_delay", Variant::FLOAT);
-        declare_state_property("dcemued/ep_max_brake_engagement_speed", Variant::FLOAT);
-        declare_state_property("dcemued/ep_min_regenerative_braking", Variant::FLOAT);
-        declare_state_property("dcemued/ep_force", Variant::FLOAT);
-        declare_state_property("dcemued/ep_fuse", Variant::BOOL);
-    }
 
-    Variant VehicleElectroPneumaticDynamicBrake::_get_state_property(const int p_local_index) const {
+    void VehicleElectroPneumaticDynamicBrake::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_COUPLER_CHECK:
-                return mover->DCEMUED_CC;
-            case STATE_EP_DELAY:
-                return mover->DCEMUED_EP_delay;
-            case STATE_EP_MAX_VEL:
-                return mover->DCEMUED_EP_max_Vel;
-            case STATE_EP_MIN_IM:
-                return mover->DCEMUED_EP_min_Im;
-            case STATE_EP_FORCE:
-                return mover->EpForce;
-            case STATE_EP_FUSE:
-                return mover->EpFuse;
-            default:
-                return Variant();
-        }
+        p_state["dcemued/coupler_check"] = mover->DCEMUED_CC;
+        p_state["dcemued/ed_braking_ep_delay"] = mover->DCEMUED_EP_delay;
+        p_state["dcemued/ep_max_brake_engagement_speed"] = mover->DCEMUED_EP_max_Vel;
+        p_state["dcemued/ep_min_regenerative_braking"] = mover->DCEMUED_EP_min_Im;
+        p_state["dcemued/ep_force"] = mover->EpForce;
+        p_state["dcemued/ep_fuse"] = mover->EpFuse;
     }
 
     void VehicleElectroPneumaticDynamicBrake::_register_commands() {

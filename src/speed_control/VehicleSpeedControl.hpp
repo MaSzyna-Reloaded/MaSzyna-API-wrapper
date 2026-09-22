@@ -12,21 +12,13 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            int state_base_index = 0;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
 
-            enum StateProperty {
-                STATE_ACTIVE,
-                STATE_DESIRED_VELOCITY,
-                STATE_DESIRED_POWER,
-                STATE_SELECTED_VELOCITY,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             MAKE_MEMBER_GS(bool, speed_control_enabled, false);
             MAKE_MEMBER_GS(double, delay, 0.0);

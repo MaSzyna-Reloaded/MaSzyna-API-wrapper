@@ -73,30 +73,15 @@ namespace godot {
         p_mover->SpeedCtrlUnit.PowerDownSpeed = power_down_speed;
     }
 
-    void VehicleSpeedControl::_declare_state_properties() {
-        state_base_index = get_state_property_count();
-        declare_state_property("speed_control/active", Variant::BOOL);
-        declare_state_property("speed_control/desired_velocity", Variant::FLOAT);
-        declare_state_property("speed_control/desired_power", Variant::FLOAT);
-        declare_state_property("speed_control/selected_velocity", Variant::FLOAT);
-    }
 
-    Variant VehicleSpeedControl::_get_state_property(const int p_local_index) const {
+    void VehicleSpeedControl::_fill_state_dictionary(Dictionary &p_state) const {
         const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
-            return Variant();
+            return;
         }
-        switch (p_local_index - state_base_index) {
-            case STATE_ACTIVE:
-                return mover->SpeedCtrlUnit.IsActive;
-            case STATE_DESIRED_VELOCITY:
-                return mover->SpeedCtrlUnit.DesiredVelocity;
-            case STATE_DESIRED_POWER:
-                return mover->SpeedCtrlUnit.DesiredPower;
-            case STATE_SELECTED_VELOCITY:
-                return mover->SpeedCtrlValue;
-            default:
-                return Variant();
-        }
+        p_state["speed_control/active"] = mover->SpeedCtrlUnit.IsActive;
+        p_state["speed_control/desired_velocity"] = mover->SpeedCtrlUnit.DesiredVelocity;
+        p_state["speed_control/desired_power"] = mover->SpeedCtrlUnit.DesiredPower;
+        p_state["speed_control/selected_velocity"] = mover->SpeedCtrlValue;
     }
 } // namespace godot

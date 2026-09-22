@@ -19,7 +19,7 @@ namespace godot {
         public:
             VehicleController *get_train_controller_node();
             void _process_mover(double p_delta) override;
-            Dictionary get_state() override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
             virtual void _process_train_part(double p_delta);
             virtual Dictionary _get_train_part_state();
             virtual Dictionary _get_train_part_config();

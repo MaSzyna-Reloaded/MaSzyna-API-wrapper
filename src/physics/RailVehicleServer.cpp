@@ -2,7 +2,6 @@
 
 #include "../core/RailVehicle3D.hpp"
 #include "../core/VehicleController.hpp"
-#include "VehiclePropertyRegistry.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -39,17 +38,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
-        ClassDB::bind_method(
-                D_METHOD("state_property_get_id", "name"), &RailVehicleServer::state_property_get_id);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_state_value", "vehicle", "property_id"),
-                &RailVehicleServer::vehicle_get_state_value);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_state_property_ids", "vehicle"),
-                &RailVehicleServer::vehicle_get_state_property_ids);
-        ClassDB::bind_method(D_METHOD("vehicle_get_state", "vehicle"), &RailVehicleServer::vehicle_get_state);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_state_snapshot", "vehicle"), &RailVehicleServer::vehicle_get_state_snapshot);
+        ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
         ClassDB::bind_method(
@@ -115,8 +104,6 @@ namespace godot {
         ++next_vehicle_id;
         const RID vehicle_rid = UtilityFunctions::rid_from_int64(next_vehicle_id);
         VehiclePlacement placement;
-        placement.state.instantiate();
-        placement.state->set_vehicle(vehicle_rid);
         vehicles.insert(vehicle_rid, placement);
         _set_stepping(stepping_enabled);
         return vehicle_rid;
@@ -577,38 +564,16 @@ namespace godot {
         return controller != nullptr ? controller->get_speed() : 0.0;
     }
 
-    int RailVehicleServer::state_property_get_id(const StringName &p_name) const {
-        return VehiclePropertyRegistry::get_id(p_name);
-    }
-
-    Variant RailVehicleServer::vehicle_get_state_value(const RID &p_vehicle, const int p_property_id) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return Variant();
-        }
-        const VehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_state_value(p_property_id) : Variant();
-    }
-
-    PackedInt32Array RailVehicleServer::vehicle_get_state_property_ids(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        if (placement == nullptr) {
-            return PackedInt32Array();
-        }
-        const VehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_state_property_ids() : PackedInt32Array();
-    }
-
-    Ref<VehicleState> RailVehicleServer::vehicle_get_state(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
-        return placement != nullptr ? placement->state : Ref<VehicleState>();
-    }
-
     /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on purpose: it is
-     * what a console, a diagnostic dump or a test wants, never a per-frame reader. */
-    Dictionary RailVehicleServer::vehicle_get_state_snapshot(const RID &p_vehicle) const {
-        const Ref<VehicleState> state = vehicle_get_state(p_vehicle);
-        return state.is_valid() ? state->snapshot() : Dictionary();
+     * what a console, a diagnostic dump or a test wants, never a per-frame reader - those take the
+     * component that owns the value and read its property. */
+    Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return Dictionary();
+        }
+        VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_state() : Dictionary();
     }
 
     void RailVehicleServer::vehicle_process_movement(const RID &p_vehicle, const double p_delta) {

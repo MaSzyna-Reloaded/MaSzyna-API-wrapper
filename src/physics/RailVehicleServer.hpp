@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../tracks/TrackManager.hpp"
-#include "VehicleState.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -77,9 +76,6 @@ namespace godot {
                     /* The RailVehicle3D that owns this handle, so the tick can hand it its new
                      * placement instead of letting it pull one a frame late */
                     uint64_t rail_vehicle_id = 0;
-                    /* Made once with the vehicle, so "take the state and read many" costs one
-                     * crossing and no allocation. */
-                    Ref<VehicleState> state;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
@@ -154,16 +150,13 @@ namespace godot {
              * the track twice - call it only when the radius is needed. */
             Dictionary vehicle_get_curve(const RID &p_vehicle, double p_bogie_pivot_spacing);
 
-            /* The state of a vehicle, in the order a caller should reach for it: the hot values
-             * typed and by handle, a name resolved once to an id, the proxy for many values, and
-             * the snapshot for diagnostics. All of it keyed by the vehicle's own RID - which
-             * backend answers is not the caller's business. */
+            /* The hot values, typed and by handle - which backend answers is not the caller's
+             * business. Everything else is read from the component that owns it. */
             double vehicle_get_velocity(const RID &p_vehicle) const;
             double vehicle_get_speed(const RID &p_vehicle) const;
-            int state_property_get_id(const StringName &p_name) const;
-            Variant vehicle_get_state_value(const RID &p_vehicle, int p_property_id) const;
-            PackedInt32Array vehicle_get_state_property_ids(const RID &p_vehicle) const;
-            Ref<VehicleState> vehicle_get_state(const RID &p_vehicle) const;
-            Dictionary vehicle_get_state_snapshot(const RID &p_vehicle) const;
+            /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on
+             * purpose: a console, a test or a diagnostic dump asks for it, never a per-frame
+             * reader - those take the component that owns the value and read its property. */
+            Dictionary vehicle_dump_state(const RID &p_vehicle) const;
     };
 } // namespace godot

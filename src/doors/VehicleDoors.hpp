@@ -8,42 +8,16 @@ namespace godot {
             GDCLASS(VehicleDoors, VehicleComponent)
 
         private:
-            int state_base_index = 0;
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _declare_state_properties() override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
 
-            enum StateProperty {
-                STATE_LOCKED,
-                STATE_LOCK_ENABLED,
-                STATE_STEP_ENABLED,
-                STATE_OPEN_CONTROL,
-                STATE_LEFT_OPEN,
-                STATE_LEFT_OPEN_PERMIT,
-                STATE_LEFT_LOCAL_OPEN,
-                STATE_LEFT_REMOTE_OPEN,
-                STATE_LEFT_POSITION,
-                STATE_LEFT_POSITION_NORMALIZED,
-                STATE_LEFT_OPERATING,
-                STATE_LEFT_STEP_POSITION,
-                STATE_LEFT_STEP_OPERATING,
-                STATE_RIGHT_OPEN,
-                STATE_RIGHT_OPEN_PERMIT,
-                STATE_RIGHT_LOCAL_OPEN,
-                STATE_RIGHT_REMOTE_OPEN,
-                STATE_RIGHT_POSITION,
-                STATE_RIGHT_POSITION_NORMALIZED,
-                STATE_RIGHT_OPERATING,
-                STATE_RIGHT_STEP_POSITION,
-                STATE_RIGHT_STEP_OPERATING,
-            };
-
+            
         public:
-            Variant _get_state_property(int p_local_index) const override;
+            void _fill_state_dictionary(Dictionary &p_state) const override;
 
             enum PermitLight {
                 PERMIT_LIGHT_CONTINUOUS,

@@ -1,4 +1,5 @@
 #pragma once
+#include "MoverEngineBackend.hpp"
 #include "MoverElectricTraction.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleElectricEngine.hpp"
@@ -11,6 +12,13 @@ namespace godot {
 
     class VehicleElectricInductionEngine : public VehicleElectricEngine {
             GDCLASS(VehicleElectricInductionEngine, VehicleElectricEngine)
+
+
+        private:
+            MoverEngineBackend engine_backend;
+
+        public:
+            VehicleElectricInductionEngine() { backend = &engine_backend; }
 
         private:
             MoverElectricTraction traction;

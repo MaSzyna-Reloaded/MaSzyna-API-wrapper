@@ -1,6 +1,6 @@
 #pragma once
 #include "../core/VehicleComponent.hpp"
-#include "../maszyna/McZapkie/MOVER.h"
+#include "VehicleEngineBackend.hpp"
 #include "macros.hpp"
 #include "resources/engines/MotorParameter.hpp"
 #include <godot_cpp/classes/node.hpp>
@@ -10,6 +10,12 @@ namespace godot {
     class VehicleEngine : public VehicleComponent {
             GDCLASS(VehicleEngine, VehicleComponent)
             
+
+        protected:
+            /* The simulation answering this engine's live values, installed by the implementation
+             * that owns it. The interface never names one. */
+            const VehicleEngineBackend *backend = nullptr;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
@@ -91,7 +97,7 @@ namespace godot {
                     {MAIN, TEngineType::Main}};
 
 
-            TypedArray<MotorParameter> get_motor_param_table() {
+            TypedArray<MotorParameter> get_motor_param_table() const {
                 return motor_param_table;
             }
 
@@ -141,7 +147,13 @@ namespace godot {
             /// not-yet-filled state dictionary.
             bool previous_main_switch = false;
 
+
+        public:
+            /* Which kind of engine this is - part of the contract, and what the simulation keys
+             * its own configuration off */
             virtual EngineType get_engine_type() const = 0;
+
+        protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;

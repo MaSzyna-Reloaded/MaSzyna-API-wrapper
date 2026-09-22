@@ -41,6 +41,16 @@
   no cab window state yet.
 * Random pitch variation per sound source (`pitchvariation:`, default 0.975-1.025,
   `sound.cpp:375`) is parsed but not applied to any sound.
+* `TrainSoundSystem._process` still walks every registered bank every frame
+  (`train_sound_system.gd:139`) to compute the distance and the update interval, so the main
+  thread keeps a per-vehicle loop even though playback itself now ticks on `GndSfxServer`'s
+  worker thread. The same distance is already computed by the streaming server.
+* The gnd-sfx playback tick is GDScript on a worker thread (12 ms per frame for 200 players in
+  the headless benchmark). If that becomes the limit, the runtime is a candidate for a C++
+  singleton next to `E3DRenderingServer`, with the nodes staying proxies as they are now.
+* `SfxGeneratorPlayback.update()` now runs on the sfx worker thread (single producer into the
+  `AudioStreamGeneratorPlayback` ring buffer). No wrapper code uses generator clips; revisit if
+  an implementation ever needs the scene tree.
 
 ## Vehicles
 

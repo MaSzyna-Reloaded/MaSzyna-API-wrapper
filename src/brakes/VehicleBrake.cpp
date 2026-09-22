@@ -403,18 +403,22 @@ namespace godot {
         }
     }
 
-    void VehicleBrake::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+    void VehicleBrake::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
         // Hardware/setup facts - change only when the vehicle's brake config is (re)applied, not
         // every tick, so they belong here rather than in _do_fetch_state_from_mover. Read from
         // VehicleBrake's own already-bound properties (the authoring source of truth) rather than
         // re-deriving from mover internals a second time.
-        p_config["brake_ep_enabled"] = p_mover->BrakeSystem == TBrakeSystem::ElectroPneumatic;
+        p_config["brake_ep_enabled"] = mover->BrakeSystem == TBrakeSystem::ElectroPneumatic;
         p_config["brake_handle_type"] = get_cntrl_brake_handle_type();
         p_config["brake_local_handle_type"] = get_cntrl_local_brake_handle_type();
         p_config["brake_valve_type"] = get_valve_type();
         // available brake delay settings (bdelay_* flags) and main reservoir, used by AutoRewidentNode
-        p_config["brake_delays"] = p_mover->BrakeDelays;
-        p_config["brake_main_reservoir_volume"] = p_mover->VeselVolume;
+        p_config["brake_delays"] = mover->BrakeDelays;
+        p_config["brake_main_reservoir_volume"] = mover->VeselVolume;
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - cntrl_local_brake_handle_type is the real signal.
@@ -423,13 +427,13 @@ namespace godot {
         p_config["brake_max_control_pressure"] =
                 get_max_aux_pressure() >= 0.01 ? get_max_aux_pressure() : get_max_cylinder_pressure();
 
-        if (p_mover->Handle == nullptr) {
+        if (mover->Handle == nullptr) {
             return;
         }
-        p_config["brakes_controller_position_min"] = p_mover->Handle->GetPos(bh_MIN);
-        p_config["brakes_controller_position_max"] = p_mover->Handle->GetPos(bh_MAX);
-        p_config["brakes_controller_position_cutoff"] = p_mover->Handle->GetPos(bh_NP);
-        p_config["brakes_controller_position_emergency"] = p_mover->Handle->GetPos(bh_EB);
+        p_config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
+        p_config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
+        p_config["brakes_controller_position_cutoff"] = mover->Handle->GetPos(bh_NP);
+        p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
     }
 
     // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered rate of

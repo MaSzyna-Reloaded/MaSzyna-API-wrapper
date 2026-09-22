@@ -13,16 +13,16 @@ namespace godot {
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
 
         public:
-            VehicleController *get_train_controller_node();
+            VehicleController *get_controller();
             void _process_mover(double p_delta) override;
             void _fill_state_dictionary(Dictionary &p_state) const override;
-            virtual void _process_train_part(double p_delta);
-            virtual Dictionary _get_train_part_state();
-            virtual Dictionary _get_train_part_config();
-            Dictionary get_train_state();
+            virtual void _process_component(double p_delta);
+            virtual Dictionary _get_component_state();
+            virtual Dictionary _get_component_config();
+            Dictionary get_vehicle_state();
     };
 } // namespace godot

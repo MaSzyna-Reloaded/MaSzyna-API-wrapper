@@ -36,8 +36,12 @@ namespace godot {
     }
 
 
-    void VehicleLoad::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        VehicleComponent::_do_fetch_config_from_mover(p_mover, p_config);
+    void VehicleLoad::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        VehicleComponent::_fill_config_dictionary(p_config);
     }
 
     void VehicleLoad::_register_commands() {

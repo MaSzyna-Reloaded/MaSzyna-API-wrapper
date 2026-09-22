@@ -83,9 +83,13 @@ namespace godot {
         p_state["resistor_fan_rotation"] = mover->RventRot;
     }
 
-    void VehicleElectricSeriesEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        VehicleElectricEngine::_do_fetch_config_from_mover(p_mover, p_config);
-        p_config["resistor_fan_max_rpm"] = p_mover->RVentnmax;
+    void VehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
+        VehicleElectricEngine::_fill_config_dictionary(p_config);
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["resistor_fan_max_rpm"] = mover->RVentnmax;
     }
 
 } // namespace godot

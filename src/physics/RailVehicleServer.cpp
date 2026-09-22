@@ -40,6 +40,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
         ClassDB::bind_method(
+                D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_transform_at_distance", "vehicle", "distance"),
@@ -574,6 +576,17 @@ namespace godot {
         }
         VehicleController *controller = _get_controller(*placement);
         return controller != nullptr ? controller->get_state() : Dictionary();
+    }
+
+    /* The configuration this vehicle was built with, by name. Diagnostic, like the state dump -
+     * a reader after one value takes the component that owns it. */
+    Dictionary RailVehicleServer::vehicle_dump_config(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return Dictionary();
+        }
+        const VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_config() : Dictionary();
     }
 
     void RailVehicleServer::vehicle_process_movement(const RID &p_vehicle, const double p_delta) {

@@ -70,19 +70,23 @@ namespace godot {
         p_state["wheel_flat"] = mover->WheelFlat;
     }
 
-    void VehicleWheels::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        p_config["powered_wheel_diameter"] = p_mover->WheelDiameter;
-        p_config["front_rolling_wheel_diameter"] = p_mover->WheelDiameterL;
-        p_config["rear_rolling_wheel_diameter"] = p_mover->WheelDiameterT;
-        p_config["axle_inertial_moment"] = p_mover->AxleInertialMoment;
-        p_config["track_width"] = p_mover->TrackW;
-        p_config["axle_arrangement"] = String(p_mover->AxleArangement.c_str());
-        p_config["bogie_axle_spacing"] = p_mover->ADist;
-        p_config["bogie_pivot_spacing"] = p_mover->BDist;
+    void VehicleWheels::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["powered_wheel_diameter"] = mover->WheelDiameter;
+        p_config["front_rolling_wheel_diameter"] = mover->WheelDiameterL;
+        p_config["rear_rolling_wheel_diameter"] = mover->WheelDiameterT;
+        p_config["axle_inertial_moment"] = mover->AxleInertialMoment;
+        p_config["track_width"] = mover->TrackW;
+        p_config["axle_arrangement"] = String(mover->AxleArangement.c_str());
+        p_config["bogie_axle_spacing"] = mover->ADist;
+        p_config["bogie_pivot_spacing"] = mover->BDist;
         p_config["minimum_curve_radius"] = minimum_curve_radius;
-        p_config["bearing_type"] = p_mover->BearingType == 0 ? BEARING_TYPE_SLIDE : BEARING_TYPE_ROLL;
-        p_config["axles_powered_count"] = p_mover->NPoweredAxles;
-        p_config["axles_count"] = p_mover->NAxles;
+        p_config["bearing_type"] = mover->BearingType == 0 ? BEARING_TYPE_SLIDE : BEARING_TYPE_ROLL;
+        p_config["axles_powered_count"] = mover->NPoweredAxles;
+        p_config["axles_count"] = mover->NAxles;
     }
 
     void VehicleWheels::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {

@@ -78,7 +78,7 @@ namespace godot {
         protected:
             EngineType get_engine_type() const override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;
 

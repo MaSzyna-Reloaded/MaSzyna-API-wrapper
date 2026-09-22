@@ -41,7 +41,6 @@ namespace godot {
             virtual void _do_update_internal_mover(TMoverParameters *p_mover);
 
 
-            virtual void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config);
 
             virtual void _do_process_mover(TMoverParameters *p_mover, double p_delta);
 
@@ -88,6 +87,12 @@ namespace godot {
              * have is simply not written, so has() keeps meaning what it meant. */
             virtual void _fill_state_dictionary(Dictionary &p_state) const;
             Dictionary get_state();
+
+            /* This component's share of the vehicle's configuration dump. Unlike the state, the
+             * configuration is the wrapper's own - its properties and enums are the authoring
+             * source of truth and the backend is configured from them. */
+            virtual void _fill_config_dictionary(Dictionary &p_config) const;
+            Dictionary get_config();
             void emit_config_changed_signal();
             void mark_dirty();
     };

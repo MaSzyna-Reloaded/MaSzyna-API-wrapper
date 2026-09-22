@@ -79,7 +79,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &VehicleController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &VehicleController::get_velocity);
         ClassDB::bind_method(D_METHOD("get_speed"), &VehicleController::get_speed);
-        ClassDB::bind_method(D_METHOD("update_config"), &VehicleController::update_config);
+        ClassDB::bind_method(D_METHOD("get_mass_total"), &VehicleController::get_mass_total);
+        ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
+        ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
+        ClassDB::bind_method(D_METHOD("emit_config_changed"), &VehicleController::emit_config_changed);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &VehicleController::update_location);
         ClassDB::bind_method(
@@ -732,20 +735,22 @@ namespace godot {
         p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
     }
 
-    void VehicleController::_do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const {
-        // Vehicle-wide, not brake-specific - p_mover->Vmax is set from this same max_velocity
+    void VehicleController::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        // Vehicle-wide, not brake-specific - mover->Vmax is set from this same max_velocity
         // property (see apply_config() below), so this is a thin alias, not new derivation.
         p_config["max_speed"] = max_velocity;
-        p_config["power"] = p_mover->Power;
-        p_config["length"] = p_mover->Dim.L;
+        p_config["power"] = mover->Power;
+        p_config["length"] = mover->Dim.L;
     }
 
     void VehicleController::apply_config() {
         if (TMoverParameters *mover = get_mover(); mover != nullptr) {
             _do_update_internal_mover(mover);
-            Dictionary new_config;
-            _do_fetch_config_from_mover(mover, new_config);
-            update_config(new_config);
+            emit_config_changed();
 
             /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
             mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
@@ -785,14 +790,14 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        p_state["mass_total"] = mover->TotalMass;
-        p_state["velocity"] = mover->V;
-        p_state["speed"] = mover->Vel;
+        p_state["mass_total"] = get_mass_total();
+        p_state["velocity"] = get_velocity();
+        p_state["speed"] = get_speed();
         p_state["tachometer_speed"] = tacho_velocity;
         p_state["tachometer_speed_jump"] = tacho_velocity_jump;
         p_state["tachometer_clock_speed"] = tacho_clock_active ? tacho_velocity : 0.0;
-        p_state["total_distance"] = mover->DistCounter;
-        p_state["direction"] = mover->DirActive;
+        p_state["total_distance"] = get_total_distance();
+        p_state["direction"] = get_direction();
         p_state["direction_absolute"] = mover->DirAbsolute;
         p_state["cabin"] = mover->CabActive;
         p_state["cabin_controleable"] = mover->IsCabMaster();
@@ -819,17 +824,19 @@ namespace godot {
         p_state["circuit_rlist_size"] = mover->RlistSize;
     }
 
-
-
-
-
-
+    /* The whole vehicle's configuration: its own plus every component's, composed when asked.
+     * Unlike the state it is not a view on the backend - the wrapper's own properties and enums
+     * are the authoring source of truth, and the Mover is configured from them. */
     Dictionary VehicleController::get_config() const {
-        return config;
+        Dictionary result;
+        _fill_config_dictionary(result);
+        for (const VehicleComponent *component: components) {
+            component->_fill_config_dictionary(result);
+        }
+        return result;
     }
 
-    void VehicleController::update_config(const Dictionary &p_config) {
-        config.merge(p_config, true);
+    void VehicleController::emit_config_changed() {
         emit_signal(config_changed);
     }
 
@@ -866,6 +873,18 @@ namespace godot {
 
     double VehicleController::get_velocity() const {
         return mover != nullptr ? mover->V : 0.0;
+    }
+
+    double VehicleController::get_mass_total() const {
+        return mover != nullptr ? mover->TotalMass : 0.0;
+    }
+
+    double VehicleController::get_total_distance() const {
+        return mover != nullptr ? mover->DistCounter : 0.0;
+    }
+
+    int VehicleController::get_direction() const {
+        return mover != nullptr ? mover->DirActive : 0;
     }
 
     double VehicleController::get_speed() const {

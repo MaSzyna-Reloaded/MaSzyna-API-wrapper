@@ -113,8 +113,12 @@ namespace godot {
         p_state["roof_light_level"] = roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0;
     }
 
-    void VehicleLighting::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        VehicleComponent::_do_fetch_config_from_mover(p_mover, p_config);
+    void VehicleLighting::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        VehicleComponent::_fill_config_dictionary(p_config);
     }
 
     void VehicleLighting::_register_commands() {

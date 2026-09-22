@@ -80,6 +80,15 @@ lookup.
   writer (two vehicles with an empty one collide today - `dynamic_rail_vehicle_3d.gd:45-49`);
   `TrainSystem` keeps `train_id -> RID`; `vehicle_get_mover()` and the borrowed Mover pointer go.
 
+**Coverage gap, to close before stage C:** nothing tests `GenericVehicleComponent` at all - not one
+of the 95 test scripts instantiates one, and its only proof is the two example scenes
+(`demo/examples/custom_train_part.tscn`, `custom_powered_train_part.tscn`). Its GDScript API was
+renamed in stage B (`_process_train_part` -> `_process_component`, `_get_train_part_state` ->
+`_get_component_state`, `_get_train_part_config` -> `_get_component_config`, `get_train_state` ->
+`get_vehicle_state`, `get_train_controller_node` -> `get_controller`) and verified only by running
+the example scene and seeing no `Invalid call` error. The modder-facing gateway deserves a test of
+its own before it is moved onto the server.
+
 The 30 fps regression on `td.scn` is **not** part of this work: the GPU reports over 40 ms, which
 points at the host rather than at the code, and it is to be settled separately.
 

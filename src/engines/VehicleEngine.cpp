@@ -196,10 +196,14 @@ namespace godot {
         p_state["motor_connectors_open"] = mover->StLinSwitchOff;
     }
 
-    void VehicleEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
-        p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
-        p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
+    void VehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["main_controller_position_max"] = mover->MainCtrlPosNo;
+        p_config["second_controller_position_max"] = mover->ScndCtrlPosNo;
+        p_config["transmission_ratio"] = mover->Transmision.Ratio;
     }
 
     bool VehicleEngine::main_switch(const bool p_enabled) {

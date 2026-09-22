@@ -151,7 +151,11 @@ namespace godot {
     }
 
 
-    void VehicleBuffCoupl::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+    void VehicleBuffCoupl::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
         // Provide config dictionary entries
         p_config.set("buffer_stiffness_k", buffer_stiffness_k);
         p_config.set("buffer_max_compression_tolerance", buffer_max_compression_tolerance);

@@ -158,5 +158,6 @@ namespace godot {
              * purpose: a console, a test or a diagnostic dump asks for it, never a per-frame
              * reader - those take the component that owns the value and read its property. */
             Dictionary vehicle_dump_state(const RID &p_vehicle) const;
+            Dictionary vehicle_dump_config(const RID &p_vehicle) const;
     };
 } // namespace godot

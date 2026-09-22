@@ -35,7 +35,6 @@ namespace godot {
             bool dirty_prop = false; // Refreshes only VehicleController's properties
             /// state is rebuilt from the mover when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
-            Dictionary config;
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
             // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's
@@ -69,7 +68,7 @@ namespace godot {
 
             // VehicleController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
             void _do_update_internal_mover(TMoverParameters *p_mover) const;
-            void _do_fetch_config_from_mover(const TMoverParameters *p_mover, Dictionary &p_config) const;
+            void _fill_config_dictionary(Dictionary &p_config) const;
             /* The vehicle's own share of the dump - what every vehicle has, whatever it is
              * made of. Its components add theirs. */
             void _fill_state_dictionary(Dictionary &p_state) const;
@@ -208,7 +207,8 @@ namespace godot {
             static const char *coupler_detached_signal;
 
             Dictionary get_config() const;
-            void update_config(const Dictionary &p_config);
+            /* One of this vehicle's components (re)applied its configuration. */
+            void emit_config_changed();
             void _process(double p_delta) override;
             void _notification(int p_what);
             Variant send_command(
@@ -241,6 +241,11 @@ namespace godot {
             /// Straight from the backend, like get_velocity() - the speed readers want this
             /// one number, not the whole state
             double get_speed() const;
+            /// The rest of what every vehicle has, whatever it is made of. Read straight from the
+            /// backend - nothing is stored, and the dump is built from these.
+            double get_mass_total() const;
+            double get_total_distance() const;
+            int get_direction() const;
             void apply_config();
             double process_movement(double p_delta);
             void update_location();

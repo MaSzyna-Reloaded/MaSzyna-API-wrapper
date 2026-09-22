@@ -13,6 +13,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
         ClassDB::bind_method(D_METHOD("get_state"), &VehicleComponent::get_state);
+        ClassDB::bind_method(D_METHOD("get_config"), &VehicleComponent::get_config);
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &VehicleComponent::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
@@ -31,8 +32,8 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo("config_changed"));
         ADD_SIGNAL(MethodInfo("enable_changed", PropertyInfo(Variant::BOOL, "enabled")));
-        ADD_SIGNAL(MethodInfo("train_part_enabled"));
-        ADD_SIGNAL(MethodInfo("train_part_disabled"));
+        ADD_SIGNAL(MethodInfo("component_enabled"));
+        ADD_SIGNAL(MethodInfo("component_disabled"));
     }
 
     void VehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {}
@@ -148,16 +149,16 @@ namespace godot {
         if (enabled_changed) {
             enabled_changed = false;
             if (enabled && !_commands_registered) {
-                log_debug("Registering commands for train part " + get_name());
+                log_debug("Registering commands for component " + get_name());
                 _register_commands();
                 _commands_registered = true;
             } else if (!enabled && _commands_registered) {
-                log_debug("Unregistering commands for train part " + get_name());
+                log_debug("Unregistering commands for component " + get_name());
                 _unregister_commands();
                 _commands_registered = false;
             }
             emit_signal("enable_changed", enabled);
-            emit_signal(enabled ? "train_part_enabled" : "train_part_disabled");
+            emit_signal(enabled ? "component_enabled" : "component_disabled");
         }
     }
 
@@ -171,7 +172,13 @@ namespace godot {
     }
 
     void VehicleComponent::_do_process_mover(TMoverParameters *p_mover, double p_delta) {}
-    void VehicleComponent::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {};
+    void VehicleComponent::_fill_config_dictionary(Dictionary &p_config) const {}
+
+    Dictionary VehicleComponent::get_config() {
+        Dictionary result;
+        _fill_config_dictionary(result);
+        return result;
+    }
     void VehicleComponent::_do_update_internal_mover(TMoverParameters *p_mover) {};
 
     void VehicleComponent::apply_config() {
@@ -179,9 +186,7 @@ namespace godot {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_update_internal_mover(mover);
-                Dictionary new_config;
-                _do_fetch_config_from_mover(mover, new_config);
-                train_controller_node->update_config(new_config);
+                train_controller_node->emit_config_changed();
             } else {
                 UtilityFunctions::push_warning("VehicleComponent::apply_config() failed: internal mover not initialized");
             }

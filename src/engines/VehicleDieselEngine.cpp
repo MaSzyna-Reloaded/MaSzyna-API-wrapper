@@ -100,8 +100,12 @@ namespace godot {
         p_state["diesel_max_rpm"] = mover->EngineMaxRPM();
     }
 
-    void VehicleDieselEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
-        VehicleEngine::_do_fetch_config_from_mover(p_mover, p_config);
+    void VehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {
+        VehicleEngine::_fill_config_dictionary(p_config);
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
         p_config["engine_shake_enabled"] = true;
     }
 

@@ -11,8 +11,8 @@ func _enter_tree():
     register_command("lock_power", self._on_lock_power)
 
 
-func _process_train_part(delta):
-    var state = get_train_state()
+func _process_component(delta):
+    var state = get_vehicle_state()
     var power_avail = state.get("power24_available") or state.get("power110_available")
     if not locked and power_avail and has_method("_process_powered"):
         call("_process_powered", delta)

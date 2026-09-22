@@ -338,7 +338,7 @@ namespace godot {
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-            void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;
 

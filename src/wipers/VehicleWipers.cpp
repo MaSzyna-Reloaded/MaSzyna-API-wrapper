@@ -128,7 +128,11 @@ namespace godot {
         p_state["wiper_positions"] = wiper_positions;
     }
 
-    void VehicleWipers::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
+    void VehicleWipers::_fill_config_dictionary(Dictionary &p_config) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
         p_config["wipers_switch_position_max"] = std::max(0, static_cast<int>(positions.size()) - 1);
         p_config["wipers_angle"] = angle;
     }

@@ -9,6 +9,12 @@ namespace godot {
     class VehicleElectroPneumaticDynamicBrake : public VehicleComponent {
             GDCLASS(VehicleElectroPneumaticDynamicBrake, VehicleComponent)
             
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_EP_ED_BRAKE;
+            }
+
         private:
             static void _bind_methods();
         public:

@@ -7,6 +7,12 @@ namespace godot {
     class VehicleDoors : public VehicleComponent {
             GDCLASS(VehicleDoors, VehicleComponent)
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_DOORS;
+            }
+
         private:
             static void _bind_methods();
         protected:

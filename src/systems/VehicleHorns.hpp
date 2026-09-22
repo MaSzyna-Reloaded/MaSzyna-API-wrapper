@@ -22,6 +22,12 @@ namespace godot {
     class VehicleHorns : public VehicleComponent {
             GDCLASS(VehicleHorns, VehicleComponent)
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_HORNS;
+            }
+
         private:
             static void _bind_methods();
         protected:

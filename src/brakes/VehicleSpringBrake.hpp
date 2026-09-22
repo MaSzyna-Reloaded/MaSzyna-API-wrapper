@@ -6,6 +6,12 @@ namespace godot {
     class VehicleSpringBrake : public VehicleComponent {
             GDCLASS(VehicleSpringBrake, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_SPRING_BRAKE;
+            }
+
         private:
             static void _bind_methods();
         protected:

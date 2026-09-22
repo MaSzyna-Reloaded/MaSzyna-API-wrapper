@@ -18,6 +18,12 @@ namespace godot {
     class VehicleWipers : public VehicleComponent {
             GDCLASS(VehicleWipers, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_WIPERS;
+            }
+
         private:
             static void _bind_methods();
         protected:

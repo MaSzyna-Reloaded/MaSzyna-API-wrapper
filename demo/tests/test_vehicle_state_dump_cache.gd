@@ -57,3 +57,22 @@ func test_a_freed_vehicle_dumps_nothing() -> void:
     var empty: Dictionary = RailVehicleServer.vehicle_dump_state(_rid)
     _rid = RID()
     assert_eq(empty.size(), 0, "no handle, no dump")
+
+
+## The public way in: a consumer names the kind, not the implementation, and gets the interface
+## that kind promises - whatever the vehicle turns out to be built from.
+func test_a_component_is_reached_by_its_kind() -> void:
+    var heating: MoverVehicleHeating = MoverVehicleHeating.new()
+    heating.name = "Heating"
+    _controller.add_child(heating)
+    await wait_idle_frames(2)
+
+    var found: VehicleComponent = RailVehicleServer.vehicle_component_get(
+        _rid, VehicleComponentType.COMPONENT_HEATING
+    )
+    assert_same(found, heating, "the vehicle answers with its heating")
+    assert_true(found is VehicleHeating, "and it is the interface that kind promises")
+    assert_null(
+        RailVehicleServer.vehicle_component_get(_rid, VehicleComponentType.COMPONENT_DOORS),
+        "a kind this vehicle has not got answers with nothing"
+    )

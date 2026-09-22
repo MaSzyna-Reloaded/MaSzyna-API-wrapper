@@ -1,4 +1,5 @@
 #pragma once
+#include "../core/VehicleComponentType.hpp"
 
 #include "../tracks/TrackManager.hpp"
 
@@ -13,6 +14,7 @@
 #include <godot_cpp/variant/typed_array.hpp>
 
 namespace godot {
+    class VehicleComponent;
     class VehicleController;
 
     /* Where a rail vehicle is: which track it occupies, how far along it, which way round, and
@@ -165,6 +167,14 @@ namespace godot {
             /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on
              * purpose: a console, a test or a diagnostic dump asks for it, never a per-frame
              * reader - those take the component that owns the value and read its property. */
+            /* The component of a kind, as a typed object - the shape
+             * PhysicsServer3D::body_get_direct_state() has: a live view on the vehicle, valid
+             * while the vehicle is. A per-frame reader takes it once and reads its properties. */
+            VehicleComponent *vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
+            /* Scripted components carrying a tag of the modder's own choosing */
+            TypedArray<VehicleComponent> generic_vehicle_component_find(
+                    const RID &p_vehicle, const StringName &p_tag) const;
+
             Dictionary vehicle_dump_state(const RID &p_vehicle);
             Dictionary vehicle_dump_config(const RID &p_vehicle) const;
     };

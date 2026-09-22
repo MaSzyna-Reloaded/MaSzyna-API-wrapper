@@ -83,6 +83,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
         ClassDB::bind_method(D_METHOD("emit_config_changed"), &VehicleController::emit_config_changed);
+        ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
+        ClassDB::bind_method(
+                D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &VehicleController::update_location);
         ClassDB::bind_method(
@@ -1124,6 +1127,26 @@ namespace godot {
     /// still want one - a console, a test, a diagnostic dump. Nothing on the frame path builds it.
     /* The whole vehicle's dump: its own share plus every component's. Expensive on purpose -
      * a console, a test or a diagnostic asks for it, never a per-frame reader. */
+    VehicleComponent *VehicleController::get_component(const VehicleComponentType::Type p_type) const {
+        for (VehicleComponent *component: components) {
+            if (component->get_component_type() == p_type) {
+                return component;
+            }
+        }
+        return nullptr;
+    }
+
+    TypedArray<VehicleComponent> VehicleController::find_generic_components(const StringName &p_tag) const {
+        TypedArray<VehicleComponent> found;
+        for (VehicleComponent *component: components) {
+            if (component->get_component_type() == VehicleComponentType::COMPONENT_GENERIC
+                && component->get_component_tag() == p_tag) {
+                found.push_back(component);
+            }
+        }
+        return found;
+    }
+
     void VehicleController::register_component(VehicleComponent *p_component) {
         components.push_back(p_component);
         if (VehicleLighting *component_lighting = Object::cast_to<VehicleLighting>(p_component);

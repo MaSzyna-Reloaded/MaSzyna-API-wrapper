@@ -14,6 +14,7 @@
 #include "core/ResourceCache.hpp"
 #include "core/VehicleController.hpp"
 #include "core/VehicleComponent.hpp"
+#include "core/VehicleComponentType.hpp"
 #include "core/TrainSystem.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
@@ -134,6 +135,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
+        GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
         GDREGISTER_CLASS(GenericVehicleComponent);
         GDREGISTER_ABSTRACT_CLASS(VehicleBrake);

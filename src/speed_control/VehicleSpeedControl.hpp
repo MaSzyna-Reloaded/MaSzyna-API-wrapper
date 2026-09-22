@@ -8,6 +8,12 @@ namespace godot {
     class VehicleSpeedControl : public VehicleComponent {
             GDCLASS(VehicleSpeedControl, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_SPEED_CONTROL;
+            }
+
         private:
             static void _bind_methods();
         public:

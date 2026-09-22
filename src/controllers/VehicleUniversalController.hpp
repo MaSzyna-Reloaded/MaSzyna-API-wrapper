@@ -8,6 +8,12 @@ namespace godot {
     class VehicleUniversalController : public VehicleComponent {
             GDCLASS(VehicleUniversalController, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_UNIVERSAL_CONTROLLER;
+            }
+
         private:
             static void _bind_methods();
         public:

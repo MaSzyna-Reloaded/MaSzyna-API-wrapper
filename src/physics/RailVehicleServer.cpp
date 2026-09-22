@@ -1,4 +1,5 @@
 #include "RailVehicleServer.hpp"
+#include "../core/VehicleComponent.hpp"
 
 #include "../core/RailVehicle3D.hpp"
 #include "../core/VehicleController.hpp"
@@ -38,6 +39,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_component_get", "vehicle", "type"),
+                &RailVehicleServer::vehicle_component_get);
+        ClassDB::bind_method(
+                D_METHOD("generic_vehicle_component_find", "vehicle", "tag"),
+                &RailVehicleServer::generic_vehicle_component_find);
         ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
         ClassDB::bind_method(
                 D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
@@ -570,6 +577,27 @@ namespace godot {
      * what a console, a diagnostic dump or a cab full of widgets wants. Built once per physics
      * step and handed out unchanged until the next one, because nothing but a step can change it;
      * a reader after one value still takes the component that owns it and reads its property. */
+    VehicleComponent *RailVehicleServer::vehicle_component_get(
+            const RID &p_vehicle, const VehicleComponentType::Type p_type) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return nullptr;
+        }
+        const VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->get_component(p_type) : nullptr;
+    }
+
+    TypedArray<VehicleComponent> RailVehicleServer::generic_vehicle_component_find(
+            const RID &p_vehicle, const StringName &p_tag) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return TypedArray<VehicleComponent>();
+        }
+        const VehicleController *controller = _get_controller(*placement);
+        return controller != nullptr ? controller->find_generic_components(p_tag)
+                                     : TypedArray<VehicleComponent>();
+    }
+
     Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {

@@ -11,6 +11,12 @@ namespace godot {
             GDCLASS(VehicleEngine, VehicleComponent)
             
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_ENGINE;
+            }
+
         protected:
             /* The simulation answering this engine's live values, installed by the implementation
              * that owns it. The interface never names one. */

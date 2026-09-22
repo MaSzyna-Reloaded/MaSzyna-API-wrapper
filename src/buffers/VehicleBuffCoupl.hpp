@@ -7,6 +7,12 @@ namespace godot {
     class VehicleBuffCoupl : public VehicleComponent {
             GDCLASS(VehicleBuffCoupl, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_BUFFERS;
+            }
+
         private:
             static void _bind_methods();
         protected:

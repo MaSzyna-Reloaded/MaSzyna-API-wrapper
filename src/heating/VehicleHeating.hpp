@@ -15,6 +15,12 @@ namespace godot {
     class VehicleHeating : public VehicleComponent {
             GDCLASS(VehicleHeating, VehicleComponent);
 
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_HEATING;
+            }
+
         private:
             static void _bind_methods();
 

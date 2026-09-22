@@ -1,6 +1,7 @@
 #pragma once
 #include "./GameLog.hpp"
 #include "./TrainSystem.hpp"
+#include "VehicleComponentType.hpp"
 #include "VehicleController.hpp"
 #include <functional>
 #include <godot_cpp/classes/node.hpp>
@@ -19,6 +20,7 @@ namespace godot {
 
         private:
             bool _commands_registered = false;
+            StringName component_tag;
 
         protected:
             // This method cannot be marked as override because it's not virtual in the base class (Wrapped).
@@ -53,6 +55,11 @@ namespace godot {
             TMoverParameters *get_mover() const;
 
         public:
+
+            /* Which kind this component is. Every interface answers for itself; an
+             * implementation inherits the answer. */
+            virtual VehicleComponentType::Type get_component_type() const;
+
             void _process(double p_delta) override;
             virtual void _process_mover(double p_delta);
 
@@ -89,6 +96,11 @@ namespace godot {
              * is one flat Dictionary for the whole vehicle. A key the vehicle's variant does not
              * have is simply not written, so has() keeps meaning what it meant. */
             virtual void _fill_state_dictionary(Dictionary &p_state) const;
+            /* A scripted component's own kind, chosen by whoever wrote it. Empty on the
+             * built-in ones, which are found by their ComponentType instead. */
+            void set_component_tag(const StringName &p_tag);
+            StringName get_component_tag() const;
+
             /* The vehicle this component belongs to */
             VehicleController *get_controller() const;
 
@@ -103,3 +115,4 @@ namespace godot {
             void mark_dirty();
     };
 } // namespace godot
+

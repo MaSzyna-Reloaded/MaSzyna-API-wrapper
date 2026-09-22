@@ -1,5 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "VehicleComponentType.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/rid.hpp>
@@ -7,6 +8,7 @@
 #include <godot_cpp/variant/vector3.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
+#include <godot_cpp/variant/typed_array.hpp>
 #include <unordered_map>
 
 
@@ -349,6 +351,12 @@ namespace godot {
             /* This vehicle's components, in the order they joined - which is the order of the
              * FIZ sections that built them. They announce themselves rather than being searched
              * for in the subtree. */
+            /* The component of a kind, or null when this vehicle has none. One per kind: a
+             * vehicle has one brake system and one engine, whatever kind it is. */
+            VehicleComponent *get_component(VehicleComponentType::Type p_type) const;
+            /* Every scripted component carrying this tag - modders add as many as they like */
+            TypedArray<VehicleComponent> find_generic_components(const StringName &p_tag) const;
+
             void register_component(VehicleComponent *p_component);
             void unregister_component(VehicleComponent *p_component);
 

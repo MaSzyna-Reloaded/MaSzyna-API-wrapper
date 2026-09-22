@@ -6,6 +6,12 @@
 namespace godot {
     class VehicleLoad : public VehicleComponent {
             GDCLASS(VehicleLoad, VehicleComponent)
+
+        public:
+            VehicleComponentType::Type get_component_type() const override {
+                return VehicleComponentType::COMPONENT_LOAD;
+            }
+
         private:
             static void _bind_methods();
         protected:

@@ -12,6 +12,11 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleComponent::register_command);
         ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
+        ClassDB::bind_method(
+                D_METHOD("get_component_type"), &VehicleComponent::get_component_type);
+        ClassDB::bind_method(D_METHOD("set_component_tag", "tag"), &VehicleComponent::set_component_tag);
+        ClassDB::bind_method(D_METHOD("get_component_tag"), &VehicleComponent::get_component_tag);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "component_tag"), "set_component_tag", "get_component_tag");
         ClassDB::bind_method(D_METHOD("get_controller"), &VehicleComponent::get_controller);
         ClassDB::bind_method(D_METHOD("get_state"), &VehicleComponent::get_state);
         ClassDB::bind_method(D_METHOD("get_config"), &VehicleComponent::get_config);
@@ -37,10 +42,22 @@ namespace godot {
         ADD_SIGNAL(MethodInfo("component_disabled"));
     }
 
+    VehicleComponentType::Type VehicleComponent::get_component_type() const {
+        return VehicleComponentType::COMPONENT_NONE;
+    }
+
     void VehicleComponent::_fill_state_dictionary(Dictionary &p_state) const {}
 
     void VehicleComponent::_register_commands() {};
     void VehicleComponent::_unregister_commands() {};
+
+    void VehicleComponent::set_component_tag(const StringName &p_tag) {
+        component_tag = p_tag;
+    }
+
+    StringName VehicleComponent::get_component_tag() const {
+        return component_tag;
+    }
 
     VehicleController *VehicleComponent::get_controller() const {
         return train_controller_node;

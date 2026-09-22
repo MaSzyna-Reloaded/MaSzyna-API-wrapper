@@ -2,26 +2,33 @@
 #include "../core/VehicleComponent.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "macros.hpp"
-#include <godot_cpp/classes/node.hpp>
 
 namespace godot {
     class VehicleController;
+
+    /* Train heating, as a vehicle offers it - the public contract, with no backend in it.
+     *
+     * The configuration is the wrapper's own and lives here, because the wrapper's properties and
+     * enums are the authoring source of truth. The live values are pure virtual: whichever
+     * simulation is underneath answers them, and a caller that took this component through
+     * VehicleServer sees the same interface either way. */
     class VehicleHeating : public VehicleComponent {
             GDCLASS(VehicleHeating, VehicleComponent);
 
         private:
             static void _bind_methods();
 
-        protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-
-            
         public:
-            void _fill_state_dictionary(Dictionary &p_state) const override;
+            /* Live state */
+            virtual bool get_active() const = 0;
+            virtual double get_power() const = 0;
 
-            /* Live state, read straight from the backend - nothing is stored. */
-            bool get_active() const;
-            double get_power() const;
+            /* Original engine: OnCommand_heatingenable/disable (Train.cpp:5256-5296) ->
+             * HeatingSwitch(State) - "trainheating_sw:"/ggTrainHeatingButton (Train.cpp:10116). */
+            virtual void heating(bool p_enabled) = 0;
+
+            void _register_commands() override;
+            void _unregister_commands() override;
 
             MAKE_MEMBER_GS_NR(
                     VehicleController::TrainPowerSource, heating_source,
@@ -35,9 +42,5 @@ namespace godot {
                     VehicleController::TrainPowerType, heating_power_cable_type,
                     VehicleController::TrainPowerType::POWER_TYPE_ELECTRIC);
             MAKE_MEMBER_GS(double, heating_max_voltage, 0.0);
-
-            void heating(bool p_enabled);
-            void _register_commands() override;
-            void _unregister_commands() override;
     };
 } // namespace godot

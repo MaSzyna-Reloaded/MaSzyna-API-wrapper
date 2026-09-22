@@ -8,7 +8,7 @@ class_name FizTrainHeatingParser
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := VehicleHeating.new()
+    var node := MoverVehicleHeating.new()
 
     if kv.has("Heating"):
         node.heating_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Heating"))

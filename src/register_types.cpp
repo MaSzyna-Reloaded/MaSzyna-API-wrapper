@@ -24,6 +24,7 @@
 #include "engines/VehicleElectricInductionEngine.hpp"
 #include "engines/VehicleElectricSeriesEngine.hpp"
 #include "engines/VehicleEngine.hpp"
+#include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
 #include "lighting/VehicleLighting.hpp"
 #include "load/VehicleLoad.hpp"
@@ -127,7 +128,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(VehicleElectricInductionEngine);
         GDREGISTER_CLASS(VehicleController);
         GDREGISTER_CLASS(RailVehicle3D);
-        GDREGISTER_CLASS(VehicleHeating);
+        GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
+        GDREGISTER_CLASS(MoverVehicleHeating);
         GDREGISTER_CLASS(VehicleWheels);
         GDREGISTER_CLASS(VehicleSecuritySystem);
         GDREGISTER_CLASS(VehicleHorns);

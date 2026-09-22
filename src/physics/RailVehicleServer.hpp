@@ -76,6 +76,11 @@ namespace godot {
                     /* The RailVehicle3D that owns this handle, so the tick can hand it its new
                      * placement instead of letting it pull one a frame late */
                     uint64_t rail_vehicle_id = 0;
+                    /* The last dump handed out, and the step it was built for. A cab is dozens of
+                     * widgets asking the same vehicle in one frame; the values cannot change
+                     * between them, because only a step changes them. */
+                    Dictionary state_dump;
+                    uint64_t state_dump_step = 0;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
@@ -85,6 +90,9 @@ namespace godot {
             bool stepping = false;
             bool stepping_enabled = true;
             uint64_t last_step_usec = 0;
+            /* Bumped once per step; a dump older than this is stale. Comparing a
+             * serial beats clearing every vehicle's dump each frame. */
+            uint64_t step_serial = 1;
             /* Rebuilt every tick, kept as members so the step allocates nothing per frame */
             Vector<RID> stepped_vehicles;
             TypedArray<VehicleController> stepped_controllers;
@@ -157,7 +165,7 @@ namespace godot {
             /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on
              * purpose: a console, a test or a diagnostic dump asks for it, never a per-frame
              * reader - those take the component that owns the value and read its property. */
-            Dictionary vehicle_dump_state(const RID &p_vehicle) const;
+            Dictionary vehicle_dump_state(const RID &p_vehicle);
             Dictionary vehicle_dump_config(const RID &p_vehicle) const;
     };
 } // namespace godot

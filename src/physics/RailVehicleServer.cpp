@@ -567,15 +567,21 @@ namespace godot {
     }
 
     /* Everything this vehicle publishes, by name, in one Dictionary. Expensive on purpose: it is
-     * what a console, a diagnostic dump or a test wants, never a per-frame reader - those take the
-     * component that owns the value and read its property. */
-    Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+     * what a console, a diagnostic dump or a cab full of widgets wants. Built once per physics
+     * step and handed out unchanged until the next one, because nothing but a step can change it;
+     * a reader after one value still takes the component that owns it and reads its property. */
+    Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return Dictionary();
         }
+        if (placement->state_dump_step == step_serial) {
+            return placement->state_dump;
+        }
         VehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->get_state() : Dictionary();
+        placement->state_dump = controller != nullptr ? controller->get_state() : Dictionary();
+        placement->state_dump_step = step_serial;
+        return placement->state_dump;
     }
 
     /* The configuration this vehicle was built with, by name. Diagnostic, like the state dump -
@@ -625,6 +631,8 @@ namespace godot {
         if (p_delta <= 0.0) {
             return;
         }
+        // every dump handed out before this step describes the world as it was
+        ++step_serial;
 
         stepped_vehicles.clear();
         stepped_controllers.clear();

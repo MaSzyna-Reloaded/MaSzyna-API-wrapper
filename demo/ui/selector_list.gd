@@ -6,20 +6,15 @@ extends FocusSection
 ## of the screen are this scene, so they look and behave the same and only their content differs.
 ##
 ## The screen supplies the rows, reads the selection and decides what an activated row means. Left
-## and right are the screen's bindings, not the list's - they come back out as navigate_out().
+## and right are the screen's bindings, not the list's - they leave as navigate_left/right.
 
 ## The selection moved, by key, by search or by click. -1 when the search matched nothing, which is
 ## the only state with no row selected at all.
 signal item_selected(index: int)
-## Enter on the selected row. The list makes no sound for it - the gesture belongs to the screen.
-signal item_activated(index: int)
-## Left (-1) or right (1) while this list has the focus
-signal navigate_out(step: int)
-## A row was clicked - the keyboard belongs to this list now, and the screen owns that decision
-signal focus_requested
 
-## UI feedback of the startup screens. Events are named after what happened, not after the sample.
-const UI_SOUNDS: SfxBank = preload("res://startup/ui_sounds.tres")
+## The bank this component plays from - a slot the screen using it fills. Events are named after
+## what happened, not after the sample, and the bank has to name "keystroke" and "change_focus".
+@export var sounds: SfxBank = null
 
 ## Look of a row, by how lit it is - selector_theme.tres
 const ITEM_IDLE: StringName = &"ListItem"
@@ -27,7 +22,7 @@ const ITEM_HOVERED: StringName = &"ListItemHovered"
 const ITEM_SELECTED: StringName = &"ListItemSelected"
 
 ## Blinking triangle at the left edge of the selected row - the blink lives in the shader
-const SELECTION_MARKER_SHADER: Shader = preload("res://scenery_selector/selection_marker.gdshader")
+const SELECTION_MARKER_SHADER: Shader = preload("selection_marker.gdshader")
 const SELECTION_MARKER_SIZE: Vector2 = Vector2(10.0, 12.0)
 ## Room kept for the note on the right of a row
 const NOTE_WIDTH: float = 180.0
@@ -37,6 +32,9 @@ const PAGE_STEP: int = 10
 
 ## Lists without a search field keep the whole row for their content. Read once, in _ready().
 @export var searchable: bool = false
+## What the bank calls a click and a hover on a row
+@export var click_event: StringName = &"list_item_click"
+@export var hover_event: StringName = &"list_item_hover"
 
 var _titles: PackedStringArray = []
 var _notes: PackedStringArray = []
@@ -50,8 +48,9 @@ var _ui_sounds: SfxPlayer
 func _ready() -> void:
     super()
     _ui_sounds = SfxPlayer.new()
-    _ui_sounds.bank = UI_SOUNDS
+    _ui_sounds.bank = sounds
     add_child(_ui_sounds)
+    focus_taken.connect(_ui_sounds.play.bind(&"change_focus"))
     %SearchPanel.visible = searchable
 
 
@@ -63,19 +62,20 @@ func _process_dirty() -> void:
         _markers[_selected].visible = focused
 
 
-## Activating the list hands the keyboard to its own search field; a list without one drops the
-## focus instead, so typing can never land in another list's field.
-##
-## Two traps: release_focus() clears the whole viewport's focus, so only a field that actually holds
-## it may give it up - otherwise the list being deactivated takes away what the activated one just
-## grabbed. And the grab is deferred because a click on a row is still being processed by the
-## viewport when this runs, which drops the key focus afterwards - a row cannot take it.
-func set_section_focused(is_focused: bool) -> void:
-    focused = is_focused
-    if is_focused and searchable:
+## The keyboard of the focused list belongs to its own search field, so typing can never land in
+## another list's field.
+func grab_section_focus() -> void:
+    super()
+    if focused and searchable:
         %Search.grab_focus()
         %Search.grab_click_focus()
-    elif %Search.has_focus():
+
+
+## Only a field that holds the focus gives it up: release_focus() clears the whole viewport's focus,
+## so an unconditional one would take away what the section activated a line earlier just grabbed.
+func release_section_focus() -> void:
+    super()
+    if %Search.has_focus():
         %Search.release_focus()
 
 
@@ -111,9 +111,9 @@ func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
     if event.is_action_pressed("ui_down", true):
-        _go_to(_next_visible_row(_selected, 1))
+        _walk(_next_visible_row(_selected, 1), navigate_down)
     elif event.is_action_pressed("ui_up", true):
-        _go_to(_next_visible_row(_selected, -1))
+        _walk(_next_visible_row(_selected, -1), navigate_up)
     elif event.is_action_pressed("ui_page_down", true):
         _go_to(_next_visible_row(_selected, PAGE_STEP))
     elif event.is_action_pressed("ui_page_up", true):
@@ -122,19 +122,23 @@ func _input(event: InputEvent) -> void:
         _go_to(_next_visible_row(_rows.size(), -1))
     elif event.is_action_pressed("ui_home"):
         _go_to(_next_visible_row(-1, 1))
-    # ui_text_submit and not ui_accept: that one is Space as well, and Space belongs to the search
-    elif event.is_action_pressed("ui_text_submit"):
-        if _selected >= 0:
-            item_activated.emit(_selected)
     elif event.is_action_pressed("ui_right"):
-        navigate_out.emit(1)
+        navigate_right.emit()
     elif event.is_action_pressed("ui_left"):
-        navigate_out.emit(-1)
+        navigate_left.emit()
     else:
-        if searchable and not %Search.has_focus(true):
-            %Search.grab_click_focus()
+        super(event)
         return
     get_viewport().set_input_as_handled()
+
+
+## One step of the keyboard: the row it lands on, or the edge it went over - the search having left
+## no visible row that way counts as the edge too.
+func _walk(index: int, over_the_edge: Signal) -> void:
+    if index < 0:
+        over_the_edge.emit()
+        return
+    _go_to(index)
 
 
 ## The row a key asked for, under the keyboard's own sound. -1 is the search having left no row that
@@ -237,16 +241,17 @@ func _add_marker(line: HBoxContainer) -> ColorRect:
 
 func _on_row_gui_input(event: InputEvent, index: int) -> void:
     if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-        _ui_sounds.play(&"list_item_click")
+        _ui_sounds.play(click_event)
         focus_requested.emit()
         _select(index)
+        activated.emit()
 
 
 func _on_row_hovered(index: int, hovered: bool) -> void:
     if index == _selected:
         return
     if hovered:
-        _ui_sounds.play(&"list_item_hover")
+        _ui_sounds.play(hover_event)
     _rows[index].theme_type_variation = ITEM_HOVERED if hovered else ITEM_IDLE
 
 

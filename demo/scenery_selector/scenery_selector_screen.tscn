@@ -1,13 +1,15 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://bwculmebf7bqm"]
 
-[ext_resource type="Script" path="res://scenery_selector/scenery_selector_screen.gd" id="1_screen"]
-[ext_resource type="Shader" path="res://scenery_selector/scenery_selector_background.gdshader" id="2_shader"]
-[ext_resource type="Texture2D" uid="uid://drby1i7vhvo5f" path="res://loading_screen/loading_screen_bg.jpg" id="3_bg"]
-[ext_resource type="Texture2D" path="res://scenery_selector/logo.png" id="4_logo"]
+[ext_resource type="Script" uid="uid://c8tjaa2mvhqcf" path="res://scenery_selector/scenery_selector_screen.gd" id="1_screen"]
+[ext_resource type="Shader" uid="uid://dhrsqs6eebf6c" path="res://scenery_selector/scenery_selector_background.gdshader" id="2_shader"]
+[ext_resource type="Texture2D" uid="uid://gf4uwruf30ac" path="res://loading_screen/loading_screen_bg.jpg" id="3_bg"]
+[ext_resource type="Texture2D" uid="uid://c4su3anrskdcw" path="res://scenery_selector/logo.png" id="4_logo"]
 [ext_resource type="PackedScene" path="res://scenery_selector/vehicle_viewer.tscn" id="5_viewer"]
-[ext_resource type="PackedScene" path="res://scenery_selector/selector_list.tscn" id="6_list"]
-[ext_resource type="Theme" path="res://scenery_selector/selector_theme.tres" id="7_theme"]
-[ext_resource type="Script" path="res://scenery_selector/focus_section.gd" id="8_focus"]
+[ext_resource type="PackedScene" uid="uid://5f6cnr8et0l6" path="res://ui/selector_list.tscn" id="6_list"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="9_grid"]
+[ext_resource type="Resource" path="res://startup/ui_sounds.tres" id="10_sounds"]
+[ext_resource type="Theme" uid="uid://dydlldjr6yrr2" path="res://scenery_selector/selector_theme.tres" id="7_theme"]
+[ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="8_focus"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -28,47 +30,10 @@ corner_radius_top_right = 6
 corner_radius_bottom_right = 6
 corner_radius_bottom_left = 6
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_item_hovered"]
-content_margin_left = 12.0
-content_margin_right = 12.0
-bg_color = Color(0.35, 0.55, 0.9, 0.1)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.35, 0.55, 0.9, 0.2)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_item_selected"]
-content_margin_left = 12.0
-content_margin_right = 12.0
-bg_color = Color(0.35, 0.55, 0.9, 0.16)
-border_width_left = 1
-border_width_top = 1
-border_width_right = 1
-border_width_bottom = 1
-border_color = Color(0.35, 0.55, 0.9, 0.34)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_load"]
 content_margin_left = 24.0
 content_margin_right = 24.0
 bg_color = Color(0.18, 0.55, 0.2, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_load_hover"]
-content_margin_left = 24.0
-content_margin_right = 24.0
-bg_color = Color(0.23, 0.66, 0.26, 1)
 corner_radius_top_left = 4
 corner_radius_top_right = 4
 corner_radius_bottom_right = 4
@@ -83,6 +48,15 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_load_hover"]
+content_margin_left = 24.0
+content_margin_right = 24.0
+bg_color = Color(0.23, 0.66, 0.26, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_load_disabled"]
 content_margin_left = 24.0
 content_margin_right = 24.0
@@ -92,17 +66,17 @@ corner_radius_top_right = 4
 corner_radius_bottom_right = 4
 corner_radius_bottom_left = 4
 
-[node name="ScenerySelectorScreen" type="Control"]
-theme = ExtResource("7_theme")
+[node name="ScenerySelectorScreen" type="Control" unique_id=743980636]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("7_theme")
 script = ExtResource("1_screen")
 
-[node name="Background" type="TextureRect" parent="."]
+[node name="Background" type="TextureRect" parent="." unique_id=974124618]
 unique_name_in_owner = true
 material = SubResource("ShaderMaterial_background")
 layout_mode = 1
@@ -115,7 +89,7 @@ texture = ExtResource("3_bg")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="Content" type="MarginContainer" parent="."]
+[node name="Content" type="MarginContainer" parent="." unique_id=1367059418]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -128,15 +102,15 @@ theme_override_constants/margin_top = 48
 theme_override_constants/margin_right = 48
 theme_override_constants/margin_bottom = 48
 
-[node name="HBoxContainer" type="HBoxContainer" parent="Content"]
+[node name="HBoxContainer" type="HBoxContainer" parent="Content" unique_id=1995125789]
 layout_mode = 2
 theme_override_constants/separation = 32
 
-[node name="LeftSlot" type="Control" parent="Content/HBoxContainer"]
+[node name="LeftSlot" type="Control" parent="Content/HBoxContainer" unique_id=321663370]
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="ListPanel" type="PanelContainer" parent="Content/HBoxContainer/LeftSlot"]
+[node name="ListPanel" type="PanelContainer" parent="Content/HBoxContainer/LeftSlot" unique_id=503313394]
 unique_name_in_owner = true
 layout_mode = 1
 anchors_preset = 15
@@ -146,19 +120,19 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/LeftSlot/ListPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/LeftSlot/ListPanel" unique_id=127204725]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="SceneryList" parent="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer" instance=ExtResource("6_list")]
+[node name="SceneryList" parent="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer" unique_id=1499469034 instance=ExtResource("6_list")]
+sounds = ExtResource("10_sounds")
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 searchable = true
 
-[node name="VehicleViewer" parent="Content/HBoxContainer/LeftSlot" instance=ExtResource("5_viewer")]
+[node name="VehicleViewer" parent="Content/HBoxContainer/LeftSlot" unique_id=757307533 instance=ExtResource("5_viewer")]
 unique_name_in_owner = true
-visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -166,39 +140,38 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="DetailsPanel" type="PanelContainer" parent="Content/HBoxContainer"]
+[node name="DetailsPanel" type="PanelContainer" parent="Content/HBoxContainer" unique_id=1608227135]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
 
-[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/DetailsPanel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="Content/HBoxContainer/DetailsPanel" unique_id=1199300763]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="TitleRow" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="TitleRow" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=1056939545]
 layout_mode = 2
-alignment = 0
 theme_override_constants/separation = 16
 
-[node name="TitleBox" type="VBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow"]
+[node name="TitleBox" type="VBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow" unique_id=758447228]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 0
 theme_override_constants/separation = 2
 
-[node name="Title" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow/TitleBox"]
+[node name="Title" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow/TitleBox" unique_id=368711892]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 28
 autowrap_mode = 3
 
-[node name="FileName" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow/TitleBox"]
+[node name="FileName" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow/TitleBox" unique_id=743962307]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.72, 0.76, 0.82, 0.65)
 theme_override_font_sizes/font_size = 12
 
-[node name="Logo" type="TextureRect" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow"]
+[node name="Logo" type="TextureRect" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/TitleRow" unique_id=1291062840]
 custom_minimum_size = Vector2(220, 58)
 layout_mode = 2
 size_flags_vertical = 0
@@ -206,76 +179,73 @@ texture = ExtResource("4_logo")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Image" type="TextureRect" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="Image" type="TextureRect" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=1372768297]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 260)
 layout_mode = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ConsistsHeader" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="TrainsetsHeader" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=414054232]
 unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Skład"
 
-[node name="ConsistsList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" instance=ExtResource("6_list")]
+[node name="TrainsetList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=219649123 instance=ExtResource("6_list")]
+sounds = ExtResource("10_sounds")
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
 
-[node name="VehiclesFocus" type="PanelContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" instance=ExtResource("9_grid")]
+sounds = ExtResource("10_sounds")
 unique_name_in_owner = true
 visible = false
-layout_mode = 2
-theme_type_variation = &"FocusSection"
-script = ExtResource("8_focus")
-
-[node name="ConsistPreview" type="ScrollContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/VehiclesFocus"]
-unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
-vertical_scroll_mode = 0
 
-[node name="Vehicles" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/VehiclesFocus/ConsistPreview"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 8
-
-[node name="ScrollContainer" type="ScrollContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="ScrollContainer" type="ScrollContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=831792652]
 custom_minimum_size = Vector2(0, 120)
 layout_mode = 2
 size_flags_vertical = 3
 size_flags_stretch_ratio = 0.5
 horizontal_scroll_mode = 0
 
-[node name="Description" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer"]
+[node name="Description" type="Label" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ScrollContainer" unique_id=1203454179]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_font_sizes/font_size = 16
 autowrap_mode = 3
 
-[node name="Buttons" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer"]
+[node name="ActionsSection" type="PanelContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=772301999]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+size_flags_vertical = 8
+theme_type_variation = &"FocusSection"
+script = ExtResource("8_focus")
+
+[node name="Buttons" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" unique_id=1156773783]
 layout_mode = 2
 alignment = 2
-
-[node name="LoadButton" type="Button" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/Buttons"]
+[node name="LoadButton" type="Button" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons" unique_id=1928215619]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 48)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_font_sizes/font_size = 20
 theme_override_styles/normal = SubResource("StyleBoxFlat_load")
-theme_override_styles/hover = SubResource("StyleBoxFlat_load_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_load_pressed")
+theme_override_styles/hover = SubResource("StyleBoxFlat_load_hover")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_load_disabled")
 disabled = true
 text = "Wczytaj"
 
-[node name="Footer" type="HBoxContainer" parent="."]
+[node name="Footer" type="HBoxContainer" parent="." unique_id=116949608]
 layout_mode = 1
 anchors_preset = 2
 anchor_top = 1.0
@@ -288,14 +258,14 @@ grow_vertical = 0
 mouse_filter = 2
 theme_override_constants/separation = 12
 
-[node name="BuildLabel" type="Label" parent="Footer"]
+[node name="BuildLabel" type="Label" parent="Footer" unique_id=89048218]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.81, 0.88, 1, 0.8)
 theme_override_font_sizes/font_size = 16
 text = "Pre-Alpha Demo Release"
 
-[node name="Link" type="LinkButton" parent="Footer"]
+[node name="Link" type="LinkButton" parent="Footer" unique_id=1203540073]
 layout_mode = 2
 size_flags_vertical = 4
 theme_override_colors/font_color = Color(0.55, 0.75, 1, 1)
@@ -303,15 +273,29 @@ theme_override_font_sizes/font_size = 16
 text = "https://maszyna-reloaded.pl"
 uri = "https://maszyna-reloaded.pl"
 
+[connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_scenery_list"]
+[connection signal="activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_trainset_list"]
+[connection signal="item_selected" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_item_selected"]
+[connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
-[connection signal="skin_clicked" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_clicked"]
-[connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/Buttons/LoadButton" to="." method="_on_load_button_pressed"]
-[connection signal="item_selected" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_item_selected"]
-[connection signal="item_activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_item_activated"]
-[connection signal="navigate_out" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_navigate_out"]
-[connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_focus_requested"]
-[connection signal="item_selected" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ConsistsList" to="." method="_on_consists_list_item_selected"]
-[connection signal="item_activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ConsistsList" to="." method="_on_consists_list_item_activated"]
-[connection signal="navigate_out" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ConsistsList" to="." method="_on_consists_list_navigate_out"]
-[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ConsistsList" to="." method="_on_consists_list_focus_requested"]
+[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
+[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_vehicles"]
+[connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]
+[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
+[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_scenery_list"]
+[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
+[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="load_selected_scenery"]
+[connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
+[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
+[connection signal="item_selected" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="_on_trainset_list_item_selected"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
+[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
+[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
+[connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]

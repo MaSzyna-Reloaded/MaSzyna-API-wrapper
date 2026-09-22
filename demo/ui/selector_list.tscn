@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://5f6cnr8et0l6"]
 
-[ext_resource type="Script" uid="uid://c2eq4kukleoh5" path="res://scenery_selector/selector_list.gd" id="1_list"]
-[ext_resource type="Texture2D" uid="uid://dgvryp8oiphb8" path="res://scenery_selector/search_icon.svg" id="2_search_icon"]
+[ext_resource type="Script" uid="uid://c2eq4kukleoh5" path="res://ui/selector_list.gd" id="1_list"]
+[ext_resource type="Texture2D" uid="uid://dgvryp8oiphb8" path="res://ui/search_icon.svg" id="2_search_icon"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_search"]
 content_margin_left = 12.0

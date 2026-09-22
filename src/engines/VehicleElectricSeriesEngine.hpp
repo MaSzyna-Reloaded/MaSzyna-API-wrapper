@@ -9,7 +9,13 @@ namespace godot {
 
     class VehicleElectricSeriesEngine : public VehicleElectricEngine {
             GDCLASS(VehicleElectricSeriesEngine, VehicleElectricEngine)
+            enum StateProperty {
+                STATE_RESISTOR_FAN_ROTATION,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             /* RVent= (Automatic / Yes / No): resistor cooling fan drive mode */
             enum FanType {
                 FAN_TYPE_NONE,
@@ -19,10 +25,13 @@ namespace godot {
 
             static void _bind_methods();
 
+        private:
+            int state_base_index = 0;
+
         protected:
             EngineType get_engine_type() const override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
 
         public:

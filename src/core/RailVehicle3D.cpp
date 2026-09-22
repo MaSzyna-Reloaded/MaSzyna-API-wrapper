@@ -295,9 +295,9 @@ namespace godot {
                 electric_engine = Object::cast_to<VehicleElectricEngine>(electric_engines[0]);
             }
         }
-        if (rid.is_valid()) {
-            RailVehicleServer::get_instance()->vehicle_attach_controller(
-                    rid, controller != nullptr ? controller->get_instance_id() : 0);
+        if (RailVehicleServer *server = RailVehicleServer::get_instance();
+            server != nullptr && rid.is_valid()) {
+            server->vehicle_attach_controller(rid, controller != nullptr ? controller->get_instance_id() : 0);
         }
         if (cabin != nullptr) {
             cabin->call("set_train_controller", controller);
@@ -307,10 +307,15 @@ namespace godot {
     }
 
     void RailVehicle3D::_enter_tree() {
-        TrackManager::get_instance()->connect(
-                TrackManager::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
-        rid = RailVehicleServer::get_instance()->vehicle_create();
-        RailVehicleServer::get_instance()->vehicle_attach_rail_vehicle(rid, get_instance_id());
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr) {
+            tracks->connect(
+                    TrackManager::tracks_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
+        }
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            rid = server->vehicle_create();
+            server->vehicle_attach_rail_vehicle(rid, get_instance_id());
+        }
         pending_start_track_retry = !start_track_name.is_empty();
         dirty = true;
     }
@@ -326,14 +331,19 @@ namespace godot {
     }
 
     void RailVehicle3D::_exit_tree() {
-        TrackManager::get_instance()->disconnect(
-                TrackManager::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr) {
+            tracks->disconnect(
+                    TrackManager::tracks_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
+        }
         if (model_node != nullptr) {
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
             model_node = nullptr;
         }
         if (rid.is_valid()) {
-            RailVehicleServer::get_instance()->vehicle_free(rid);
+            if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+                server->vehicle_free(rid);
+            }
             rid = RID();
         }
         if (fiz_controller != nullptr) {
@@ -665,7 +675,11 @@ namespace godot {
         if (!rid.is_valid()) {
             return;
         }
-        RailVehicleServer::get_instance()->vehicle_move(rid, p_distance);
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return;
+        }
+        server->vehicle_move(rid, p_distance);
         apply_track_placement();
     }
 
@@ -679,12 +693,17 @@ namespace godot {
         if (start_track_name.is_empty()) {
             return;
         }
-        const RID track_rid = TrackManager::get_instance()->track_get_rid_by_name(start_track_name);
+        TrackManager *tracks = TrackManager::get_instance();
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (tracks == nullptr || server == nullptr) {
+            return;
+        }
+        const RID track_rid = tracks->track_get_rid_by_name(start_track_name);
         if (!track_rid.is_valid()) {
             return;
         }
         pending_start_track_retry = false;
-        RailVehicleServer::get_instance()->vehicle_set_track(
+        server->vehicle_set_track(
                 rid, track_rid, start_track_offset, static_cast<TrackManager::Direction>(start_direction));
         apply_track_placement();
     }
@@ -1064,7 +1083,11 @@ namespace godot {
         if (!rid.is_valid() || start_track_name.is_empty() || pending_start_track_retry) {
             return;
         }
-        const Transform3D center_transform = RailVehicleServer::get_instance()->vehicle_get_transform(rid);
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return;
+        }
+        const Transform3D center_transform = server->vehicle_get_transform(rid);
         const bool moved = center_transform != last_center_transform;
         last_center_transform = center_transform;
         set_global_transform(center_transform);
@@ -1099,7 +1122,6 @@ namespace godot {
         // samples toward the vehicle's rear, not its front - swapped from what the "front"/
         // "rear" naming below implies. Confirmed live: this flipped the whole vehicle 180
         // degrees the instant it started moving (test_rail_vehicle_idle_orientation_regression.gd).
-        RailVehicleServer *server = RailVehicleServer::get_instance();
         const Transform3D front_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * -0.5);
         const Transform3D rear_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * 0.5);
         Vector3 body_forward = front_transform.origin - rear_transform.origin;

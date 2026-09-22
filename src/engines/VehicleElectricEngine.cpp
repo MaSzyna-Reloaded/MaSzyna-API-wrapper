@@ -107,94 +107,128 @@ namespace godot {
         BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
     }
 
-    void VehicleElectricEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        VehicleEngine::_do_fetch_state_from_mover(p_mover, p_state);
-        p_state["compressor_enabled"] = p_mover->CompressorFlag;
-        p_state["compressor_allowed"] = p_mover->CompressorAllow;
-        p_state["converter_enabled"] = p_mover->ConverterFlag;
-        p_state["converted_allowed"] = p_mover->ConverterAllow;
-        p_state["converter_time_to_start"] = p_mover->ConverterStartDelayTimer;
-        p_state["power_source"] = train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.SourceType);
-        // RAccumulator/RPowerCable are only initialized by _do_update_internal_mover() when
-        // SourceType is the matching variant (see the switch below) - reading them
-        // unconditionally reads uninitialized memory for every other source type.
-        if (p_mover->EnginePowerSource.SourceType == TPowerSource::Accumulator) {
-            p_state["accumulator/recharge_source"] =
-                    train_controller_node->tpower_source_map.at(p_mover->EnginePowerSource.RAccumulator.RechargeSource);
+    void VehicleElectricEngine::_declare_state_properties() {
+        VehicleEngine::_declare_state_properties();
+        state_base_index = get_state_property_count();
+        declare_state_property("converter_enabled", Variant::BOOL);
+        declare_state_property("converted_allowed", Variant::BOOL);
+        declare_state_property("converter_time_to_start", Variant::FLOAT);
+        declare_state_property("power_source", Variant::INT);
+        declare_state_property("accumulator/recharge_source", Variant::INT);
+        declare_state_property("current_collector/max_voltage", Variant::FLOAT);
+        declare_state_property("current_collector/max_current", Variant::FLOAT);
+        declare_state_property("current_collector/max_collector_lifting", Variant::FLOAT);
+        declare_state_property("current_collector/min_collector_lifting", Variant::FLOAT);
+        declare_state_property("current_collector/collector_sliding_width", Variant::FLOAT);
+        declare_state_property("current_collector/min_main_switch_voltage", Variant::FLOAT);
+        declare_state_property("current_collector/min_pantograph_tank_pressure", Variant::FLOAT);
+        declare_state_property("current_collector/max_pantograph_tank_pressure", Variant::FLOAT);
+        declare_state_property("current_collector/pantograph_tank_pressure", Variant::FLOAT);
+        declare_state_property("current_collector/pantograph_pressure_switch_armed", Variant::BOOL);
+        declare_state_property("current_collector/pantograph_compressor_valve", Variant::BOOL);
+        declare_state_property("current_collector/overvoltage_relay", Variant::BOOL);
+        declare_state_property("current_collector/required_main_switch_voltage", Variant::FLOAT);
+        declare_state_property("current_collector/valve_active", Variant::BOOL);
+        declare_state_property("current_collector/pantographs_dropped", Variant::BOOL);
+        declare_state_property("current_collector/pantograph_first_active", Variant::BOOL);
+        declare_state_property("current_collector/pantograph_first_voltage", Variant::FLOAT);
+        declare_state_property("current_collector/pantograph_second_active", Variant::BOOL);
+        declare_state_property("current_collector/pantograph_second_voltage", Variant::FLOAT);
+        declare_state_property("current_collector/voltage", Variant::FLOAT);
+        declare_state_property("indicators/contactors_active", Variant::BOOL);
+        declare_state_property("indicators/diff_relay_active", Variant::BOOL);
+        declare_state_property("indicators/resistors_active", Variant::BOOL);
+        declare_state_property("indicators/vent_overload_active", Variant::BOOL);
+        declare_state_property("indicators/highcurrent_active", Variant::BOOL);
+        declare_state_property("indicators/mainbreaker_active", Variant::BOOL);
+        declare_state_property("transducer/input_voltage", Variant::FLOAT);
+        declare_state_property("power_cable/source", Variant::INT);
+        declare_state_property("power_cable/steam_pressure", Variant::FLOAT);
+    }
+
+    Variant VehicleElectricEngine::_get_state_property(const int p_local_index) const {
+        if (p_local_index < state_base_index) {
+            return VehicleEngine::_get_state_property(p_local_index);
         }
-        p_state["current_collector/max_voltage"] = p_mover->EnginePowerSource.MaxVoltage;
-        p_state["current_collector/max_current"] = p_mover->EnginePowerSource.MaxCurrent;
-        p_state["current_collector/max_collector_lifting"] =
-                p_mover->EnginePowerSource.CollectorParameters.MaxH;
-        p_state["current_collector/min_collector_lifting"] =
-                p_mover->EnginePowerSource.CollectorParameters.MinH;
-        p_state["current_collector/collector_sliding_width"] =
-                p_mover->EnginePowerSource.CollectorParameters.CSW;
-        p_state["current_collector/min_main_switch_voltage"] =
-                p_mover->EnginePowerSource.CollectorParameters.MinV;
-        p_state["current_collector/min_pantograph_tank_pressure"] =
-                p_mover->EnginePowerSource.CollectorParameters.MinPress;
-        p_state["current_collector/max_pantograph_tank_pressure"] =
-                p_mover->EnginePowerSource.CollectorParameters.MaxPress;
-        // Diagnostic exposure for the pantograph pressure switch (Mover.cpp ~851-913): PantPress
-        // is the pantograph's own reservoir pressure (fed straight from ScndPipePress by default,
-        // MOVER.h's bPantKurek3=true), and drives an interlock that force-opens Mains for
-        // non-EZT vehicles once armed (PantPress reached >=4.6 with 24V/110V control power up)
-        // and PantPress then drops below MinPress - a one-shot latch, not a continuous relay like
-        // NoVoltRelay/OvervoltageRelay above, so it needs its own state to diagnose separately
-        // from those.
-        p_state["current_collector/pantograph_tank_pressure"] = p_mover->PantPress;
-        p_state["current_collector/pantograph_pressure_switch_armed"] = p_mover->PantPressSwitchActive;
-        // three-way valve: pantographs fed by the auxiliary compressor instead of the main tank
-        // (bPantKurek3 false, "pantcompressorvalve_sw:" position 1, Train.cpp:9572)
-        p_state["current_collector/pantograph_compressor_valve"] = !p_mover->bPantKurek3;
-        p_state["current_collector/overvoltage_relay"] =
-                p_mover->EnginePowerSource.CollectorParameters.OVP;
-        p_state["current_collector/required_main_switch_voltage"] =
-                p_mover->EnginePowerSource.CollectorParameters.InsetV;
-        // Live pantograph state - the mover only tracks a raised/lowered flag per pantograph
-        // (no continuous extension height), matching PantographsCheck()'s own boolean state
-        // machine; any raise/lower animation should tween in response to this flag changing,
-        // not read a position value from the mover.
-        p_state["current_collector/valve_active"] = p_mover->PantsValve.is_active;
-        p_state["current_collector/pantographs_dropped"] = p_mover->PantAllDown;
-        p_state["current_collector/pantograph_first_active"] = p_mover->Pantographs[0].is_active;
-        p_state["current_collector/pantograph_first_voltage"] = p_mover->Pantographs[0].voltage;
-        p_state["current_collector/pantograph_second_active"] = p_mover->Pantographs[1].is_active;
-        p_state["current_collector/pantograph_second_voltage"] = p_mover->Pantographs[1].voltage;
-        // Matches the original engine's own "hvoltage:" cabin gauge source (Train.cpp:6944-6946,
-        // fHVoltage = max(PantographVoltage, GetTrainsetHighVoltage())) for every engine type
-        // that isn't DieselElectric/ElectricInductionMotor - GetTrainsetHighVoltage() only
-        // matters for a multi-unit consist sharing line voltage across couplers, so it's omitted
-        // here rather than guessed at.
-        p_state["current_collector/voltage"] = p_mover->PantographVoltage;
-        // Cabin indicator lamp conditions ("i-*:" labels) - each mirrors the original engine's
-        // own Train.cpp condition exactly, not simplified passthroughs of a single flag:
-        // - i-contactors (Train.cpp:7396-7399, btLampkaStyczn)
-        // - i-diff_relay (Train.cpp:7401-7404, btLampkaPrzekRozn)
-        // - i-resistors (Train.cpp:7387-7390, btLampkaOpory)
-        // - i-vent_ovld (Train.cpp:7425, btLampkaNadmWent)
-        // - i-highcurrent (Train.cpp:7428, btLampkaWysRozr)
-        // i-mainbreaker (btLampkaWylSzybki, Train.cpp:7360-7364) drops the
-        // `m_linebreakerstate == 2` half of the original condition - that's TDriver AI state this
-        // wrapper has no equivalent of, so only the Mains half applies (correct for a
-        // player-driven vehicle, which is the only case this wrapper models).
-        // i-comp_ovld (btLampkaNadmSpr) is deliberately NOT exposed: confirmed against Train.cpp
-        // that nothing ever calls .Turn() on it there either - it's a declared but permanently
-        // inert indicator in the original engine too, not a gap on this side.
-        p_state["indicators/contactors_active"] =
-                (p_mover->StLinFlag || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0);
-        p_state["indicators/diff_relay_active"] =
-                (p_mover->GroundRelay || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0);
-        p_state["indicators/resistors_active"] = p_mover->StLinFlag ? p_mover->ResistorsFlagCheck() : false;
-        p_state["indicators/vent_overload_active"] = (p_mover->RventRot < 5.0) && p_mover->ResistorsFlagCheck();
-        p_state["indicators/highcurrent_active"] = !(p_mover->Imax < p_mover->ImaxHi);
-        p_state["indicators/mainbreaker_active"] = p_mover->Mains;
-        p_state["transducer/input_voltage"] = p_mover->EnginePowerSource.Transducer.InputVoltage;
-        if (p_mover->EnginePowerSource.SourceType == TPowerSource::PowerCable) {
-            p_state["power_cable/source"] =
-                    train_controller_node->tpower_type_map.at(p_mover->EnginePowerSource.RPowerCable.PowerTrans);
-            p_state["power_cable/steam_pressure"] = p_mover->EnginePowerSource.RPowerCable.SteamPressure;
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_CONVERTER_ENABLED:
+                return mover->ConverterFlag;
+            case STATE_CONVERTER_ALLOWED:
+                return mover->ConverterAllow;
+            case STATE_CONVERTER_TIME_TO_START:
+                return mover->ConverterStartDelayTimer;
+            case STATE_POWER_SOURCE:
+                return train_controller_node->tpower_source_map.at(mover->EnginePowerSource.SourceType);
+            case STATE_ACCUMULATOR_RECHARGE_SOURCE:
+                return mover->EnginePowerSource.SourceType == TPowerSource::Accumulator
+                        ? Variant(train_controller_node->tpower_source_map.at(mover->EnginePowerSource.RAccumulator.RechargeSource))
+                        : Variant();
+            case STATE_CC_MAX_VOLTAGE:
+                return mover->EnginePowerSource.MaxVoltage;
+            case STATE_CC_MAX_CURRENT:
+                return mover->EnginePowerSource.MaxCurrent;
+            case STATE_CC_MAX_LIFTING:
+                return mover->EnginePowerSource.CollectorParameters.MaxH;
+            case STATE_CC_MIN_LIFTING:
+                return mover->EnginePowerSource.CollectorParameters.MinH;
+            case STATE_CC_SLIDING_WIDTH:
+                return mover->EnginePowerSource.CollectorParameters.CSW;
+            case STATE_CC_MIN_MAIN_SWITCH_VOLTAGE:
+                return mover->EnginePowerSource.CollectorParameters.MinV;
+            case STATE_CC_MIN_TANK_PRESSURE:
+                return mover->EnginePowerSource.CollectorParameters.MinPress;
+            case STATE_CC_MAX_TANK_PRESSURE:
+                return mover->EnginePowerSource.CollectorParameters.MaxPress;
+            case STATE_CC_TANK_PRESSURE:
+                return mover->PantPress;
+            case STATE_CC_PRESSURE_SWITCH_ARMED:
+                return mover->PantPressSwitchActive;
+            case STATE_CC_COMPRESSOR_VALVE:
+                return !mover->bPantKurek3;
+            case STATE_CC_OVERVOLTAGE_RELAY:
+                return mover->EnginePowerSource.CollectorParameters.OVP;
+            case STATE_CC_REQUIRED_MAIN_SWITCH_VOLTAGE:
+                return mover->EnginePowerSource.CollectorParameters.InsetV;
+            case STATE_CC_VALVE_ACTIVE:
+                return mover->PantsValve.is_active;
+            case STATE_CC_PANTOGRAPHS_DROPPED:
+                return mover->PantAllDown;
+            case STATE_CC_FIRST_ACTIVE:
+                return mover->Pantographs[0].is_active;
+            case STATE_CC_FIRST_VOLTAGE:
+                return mover->Pantographs[0].voltage;
+            case STATE_CC_SECOND_ACTIVE:
+                return mover->Pantographs[1].is_active;
+            case STATE_CC_SECOND_VOLTAGE:
+                return mover->Pantographs[1].voltage;
+            case STATE_CC_VOLTAGE:
+                return mover->PantographVoltage;
+            case STATE_IND_CONTACTORS:
+                return (mover->StLinFlag || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0);
+            case STATE_IND_DIFF_RELAY:
+                return (mover->GroundRelay || mover->ControlPressureSwitch) ? false : (mover->BrakePress < 1.0);
+            case STATE_IND_RESISTORS:
+                return mover->StLinFlag ? mover->ResistorsFlagCheck() : false;
+            case STATE_IND_VENT_OVERLOAD:
+                return (mover->RventRot < 5.0) && mover->ResistorsFlagCheck();
+            case STATE_IND_HIGHCURRENT:
+                return !(mover->Imax < mover->ImaxHi);
+            case STATE_IND_MAINBREAKER:
+                return mover->Mains;
+            case STATE_TRANSDUCER_INPUT_VOLTAGE:
+                return mover->EnginePowerSource.Transducer.InputVoltage;
+            case STATE_POWER_CABLE_SOURCE:
+                return mover->EnginePowerSource.SourceType == TPowerSource::PowerCable
+                        ? Variant(train_controller_node->tpower_type_map.at(mover->EnginePowerSource.RPowerCable.PowerTrans))
+                        : Variant();
+            case STATE_POWER_CABLE_STEAM_PRESSURE:
+                return mover->EnginePowerSource.SourceType == TPowerSource::PowerCable ? Variant(mover->EnginePowerSource.RPowerCable.SteamPressure) : Variant();
+            default:
+                return Variant();
         }
     }
 

@@ -8,7 +8,46 @@ namespace godot {
     class VehicleElectricEngine : public VehicleEngine {
             GDCLASS(VehicleElectricEngine, VehicleEngine)
 
+            enum StateProperty {
+                STATE_CONVERTER_ENABLED,
+                STATE_CONVERTER_ALLOWED,
+                STATE_CONVERTER_TIME_TO_START,
+                STATE_POWER_SOURCE,
+                STATE_ACCUMULATOR_RECHARGE_SOURCE,
+                STATE_CC_MAX_VOLTAGE,
+                STATE_CC_MAX_CURRENT,
+                STATE_CC_MAX_LIFTING,
+                STATE_CC_MIN_LIFTING,
+                STATE_CC_SLIDING_WIDTH,
+                STATE_CC_MIN_MAIN_SWITCH_VOLTAGE,
+                STATE_CC_MIN_TANK_PRESSURE,
+                STATE_CC_MAX_TANK_PRESSURE,
+                STATE_CC_TANK_PRESSURE,
+                STATE_CC_PRESSURE_SWITCH_ARMED,
+                STATE_CC_COMPRESSOR_VALVE,
+                STATE_CC_OVERVOLTAGE_RELAY,
+                STATE_CC_REQUIRED_MAIN_SWITCH_VOLTAGE,
+                STATE_CC_VALVE_ACTIVE,
+                STATE_CC_PANTOGRAPHS_DROPPED,
+                STATE_CC_FIRST_ACTIVE,
+                STATE_CC_FIRST_VOLTAGE,
+                STATE_CC_SECOND_ACTIVE,
+                STATE_CC_SECOND_VOLTAGE,
+                STATE_CC_VOLTAGE,
+                STATE_IND_CONTACTORS,
+                STATE_IND_DIFF_RELAY,
+                STATE_IND_RESISTORS,
+                STATE_IND_VENT_OVERLOAD,
+                STATE_IND_HIGHCURRENT,
+                STATE_IND_MAINBREAKER,
+                STATE_TRANSDUCER_INPUT_VOLTAGE,
+                STATE_POWER_CABLE_SOURCE,
+                STATE_POWER_CABLE_STEAM_PRESSURE,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             /* Which pantograph an individual command applies to - the mover supports at most
              * two (Maszyna::end::front / ::rear); named FIRST/SECOND here rather than
              * FRONT/REAR since which end is physically "front" depends on the active cab. */
@@ -90,9 +129,12 @@ namespace godot {
             void _register_commands() override;
             void _unregister_commands() override;
 
+        private:
+            int state_base_index = 0;
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
     };
 } // namespace godot
 

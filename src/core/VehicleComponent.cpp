@@ -225,6 +225,16 @@ namespace godot {
             TMoverParameters *mover = train_controller_node->get_mover();
             if (mover != nullptr) {
                 _do_fetch_state_from_mover(mover, state);
+                // Compatibility while this component's consumers still read a Dictionary: what it
+                // declares is answered here by name. A property that answers nothing for this
+                // vehicle leaves no key, which is what the Dictionary did before.
+                for (int local_index = 0; local_index < state_property_ids.size(); ++local_index) {
+                    const Variant value = _get_state_property(local_index);
+                    if (value.get_type() == Variant::NIL) {
+                        continue;
+                    }
+                    state[VehiclePropertyRegistry::get_descriptor(state_property_ids[local_index]).name] = value;
+                }
             } else {
                 UtilityFunctions::push_warning("VehicleComponent::get_state() failed: internal mover not initialized");
             }

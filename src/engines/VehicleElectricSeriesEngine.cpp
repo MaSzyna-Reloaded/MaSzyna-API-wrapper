@@ -73,10 +73,26 @@ namespace godot {
         }
     }
 
-    void VehicleElectricSeriesEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        VehicleElectricEngine::_do_fetch_state_from_mover(p_mover, p_state);
-        // ventilator sound driver (DynObj.cpp:8081)
-        p_state["resistor_fan_rotation"] = p_mover->RventRot;
+    void VehicleElectricSeriesEngine::_declare_state_properties() {
+        VehicleElectricEngine::_declare_state_properties();
+        state_base_index = get_state_property_count();
+        declare_state_property("resistor_fan_rotation", Variant::FLOAT);
+    }
+
+    Variant VehicleElectricSeriesEngine::_get_state_property(const int p_local_index) const {
+        if (p_local_index < state_base_index) {
+            return VehicleElectricEngine::_get_state_property(p_local_index);
+        }
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_RESISTOR_FAN_ROTATION:
+                return mover->RventRot;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleElectricSeriesEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

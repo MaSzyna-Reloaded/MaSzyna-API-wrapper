@@ -892,7 +892,12 @@ namespace godot {
             // declares its properties is read here by name, so every existing consumer keeps
             // finding its key. This whole overlay goes when the consumers ask the server instead.
             for (const KeyValue<int, StateOwner> &item: state_owners) {
-                state[VehiclePropertyRegistry::get_descriptor(item.key).name] = get_state_value(item.key);
+                // a property that answers nothing for this vehicle - the accumulator's recharge
+                // source on a vehicle fed from the catenary, say - leaves no key at all, which is
+                // what the Dictionary did before and what has() consumers rely on
+                if (const Variant value = get_state_value(item.key); value.get_type() != Variant::NIL) {
+                    state[VehiclePropertyRegistry::get_descriptor(item.key).name] = value;
+                }
             }
         }
         return state;

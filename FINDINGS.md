@@ -3,6 +3,26 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - an unguarded singleton dereference only crashes at teardown
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` died with signal 11 while the scenery was being
+  freed (`maszyna_include.gd:_free_owned_rids` -> `TrackManager.track_free`), having passed a few
+  commits earlier. Nothing in the state work it was bisected against touched teardown.
+* **Cause:** `RailVehicle3D` reached the new C++ servers as `TrackManager::get_instance()->...`
+  and `RailVehicleServer::get_instance()->...` with no null check. `track_free()` emits
+  `tracks_changed`, the vehicle's handler re-applies its start track, and by then the singletons
+  can already be unregistered - so the call dereferenced nullptr. `CODE_STYLE.md` says this
+  outright ("`Engine::get_singleton()->get_singleton(...)` does not guarantee a valid instance /
+  pointer. Always check that the singleton pointer is not `nullptr`"); the guard was simply
+  skipped while porting the call sites over from the untyped `->call()` form, which had returned
+  a null `Object *` and merely warned.
+* **Fix:** every `get_instance()` result in `RailVehicle3D` is taken into a local and checked.
+* **Rule:** replacing `Engine::get_singleton()->get_singleton(name)->call("x")` with a typed
+  `X::get_instance()->x()` removes the string, not the null. The typed form crashes where the
+  untyped one used to print a warning, so the guard becomes *more* necessary, not less.
+* **Rule:** a signal emitted from a free/teardown path runs handlers against a half-dismantled
+  world. Anything a handler reaches for there has to be checked, whatever it is.
+
 ## 2026-09-22 - what porting an autoload to C++ actually costs, and the crash it hides
 
 * **Context:** `TrackManager` (1023 lines) and `SpatialIndex` (55) moved from GDScript autoloads to

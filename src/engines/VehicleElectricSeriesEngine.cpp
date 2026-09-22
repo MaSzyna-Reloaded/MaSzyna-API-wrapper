@@ -29,7 +29,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(FAN_TYPE_AUTOMATIC);
     }
 
-    VehicleEngine::EngineType VehicleElectricSeriesEngine::get_engine_type() {
+    VehicleEngine::EngineType VehicleElectricSeriesEngine::get_engine_type() const {
         return VehicleEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 

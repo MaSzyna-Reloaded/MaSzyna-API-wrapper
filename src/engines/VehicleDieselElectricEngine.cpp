@@ -16,7 +16,7 @@ namespace godot {
         BIND_PROPERTY(VehicleDieselElectricEngine, Variant::FLOAT, heating_rpm);
     }
 
-    VehicleEngine::EngineType VehicleDieselElectricEngine::get_engine_type() {
+    VehicleEngine::EngineType VehicleDieselElectricEngine::get_engine_type() const {
         return VehicleEngine::EngineType::DIESEL_ELECTRIC;
     }
 

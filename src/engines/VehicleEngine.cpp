@@ -161,44 +161,100 @@ namespace godot {
         emit_signal(previous_main_switch ? "engine_start" : "engine_stop");
     }
 
-    void VehicleEngine::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        p_state["main_switch_enabled"] = p_mover->Mains;
-        // cab layer's line breaker hold timer only runs while this holds (Train.cpp:6795)
-        p_state["main_switch_closable"] = p_mover->MainSwitchCheck();
-        p_state["engine_type"] = get_engine_type();
-        p_state["Mm"] = p_mover->Mm;
-        p_state["Mw"] = p_mover->Mw;
-        p_state["Fw"] = p_mover->Fw;
-        p_state["Ft"] = p_mover->Ft;
-        p_state["Im"] = p_mover->Im;
-        p_state["compressor_enabled"] = p_mover->CompressorFlag;
-        p_state["compressor_allowed"] = p_mover->CompressorAllow;
-        p_state["engine_power"] = p_mover->EnginePower;
-        p_state["dynamic_brake_active"] = p_mover->DynamicBrakeFlag;
-        p_state["engine_rpm_count"] = p_mover->enrot;
-        p_state["engine_rpm_ratio"] = p_mover->EngineRPMRatio();
-        p_state["engine_current"] = p_mover->Im;
-        // Diagnostic: the live motor overload relay threshold (Mover.cpp ~1586-1596, toggled
-        // between ImaxLo/ImaxHi every tick) - not itself in the FIZ, but everything it's derived
-        // from is, so a wrong value here points at a missing/miswired Circuit: field.
-        p_state["circuit_imax"] = p_mover->Imax;
-        p_state["circuit_nmax_rpm"] = p_mover->nmax * 60.0;
-        p_state["engine_damage"] = p_mover->EngDmgFlag;
-        p_state["main_switch_time"] = p_mover->MainsInitTimeCountdown;
-        p_state["main_no_power_pos"] = p_mover->IsMainCtrlNoPowerPos();
-        p_state["camshaft_available"] = p_mover->HasCamshaft;
-        p_state["converter_overload"] = p_mover->ConvOvldFlag;
-        p_state["line_breaker_delay"] = p_mover->CtrlDelay;
-        p_state["line_breaker_initial_delay"] = p_mover->InitialCtrlDelay;
-        p_state["line_breaker_closes_at_no_power"] = p_mover->LineBreakerClosesOnlyAtNoPowerPos;
-        // Original engine: "fuse_bt:"/ggFuseButton (Train.cpp:10052), read here for its light and
-        // reset via fuse_reset()/FuseOn() below - not electric-motor specific, so this lives on
-        // the shared base rather than VehicleElectricEngine.
-        p_state["fuse_active"] = p_mover->FuseFlag;
-        // Original engine: "stlinoff_bt:"/ggStLinOffButton (Train.cpp:10054), forces traction
-        // motor power connectors open regardless of Mains/controller state
-        // (connectorsoff/Mm==0.0 checks read StLinSwitchOff directly, Mover.cpp).
-        p_state["motor_connectors_open"] = p_mover->StLinSwitchOff;
+    void VehicleEngine::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("main_switch_enabled", Variant::BOOL);
+        declare_state_property("main_switch_closable", Variant::BOOL);
+        declare_state_property("engine_type", Variant::INT);
+        declare_state_property("Mm", Variant::FLOAT);
+        declare_state_property("Mw", Variant::FLOAT);
+        declare_state_property("Fw", Variant::FLOAT);
+        declare_state_property("Ft", Variant::FLOAT);
+        declare_state_property("Im", Variant::FLOAT);
+        declare_state_property("compressor_enabled", Variant::BOOL);
+        declare_state_property("compressor_allowed", Variant::BOOL);
+        declare_state_property("engine_power", Variant::FLOAT);
+        declare_state_property("dynamic_brake_active", Variant::BOOL);
+        declare_state_property("engine_rpm_count", Variant::FLOAT);
+        declare_state_property("engine_rpm_ratio", Variant::FLOAT);
+        declare_state_property("engine_current", Variant::FLOAT);
+        declare_state_property("circuit_imax", Variant::FLOAT);
+        declare_state_property("circuit_nmax_rpm", Variant::FLOAT);
+        declare_state_property("engine_damage", Variant::INT);
+        declare_state_property("main_switch_time", Variant::FLOAT);
+        declare_state_property("main_no_power_pos", Variant::BOOL);
+        declare_state_property("camshaft_available", Variant::BOOL);
+        declare_state_property("converter_overload", Variant::BOOL);
+        declare_state_property("line_breaker_delay", Variant::FLOAT);
+        declare_state_property("line_breaker_initial_delay", Variant::FLOAT);
+        declare_state_property("line_breaker_closes_at_no_power", Variant::BOOL);
+        declare_state_property("fuse_active", Variant::BOOL);
+        declare_state_property("motor_connectors_open", Variant::BOOL);
+    }
+
+    Variant VehicleEngine::_get_state_property(const int p_local_index) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_MAIN_SWITCH_ENABLED:
+                return mover->Mains;
+            case STATE_MAIN_SWITCH_CLOSABLE:
+                return mover->MainSwitchCheck();
+            case STATE_ENGINE_TYPE:
+                return get_engine_type();
+            case STATE_MM:
+                return mover->Mm;
+            case STATE_MW:
+                return mover->Mw;
+            case STATE_FW:
+                return mover->Fw;
+            case STATE_FT:
+                return mover->Ft;
+            case STATE_IM:
+                return mover->Im;
+            case STATE_COMPRESSOR_ENABLED:
+                return mover->CompressorFlag;
+            case STATE_COMPRESSOR_ALLOWED:
+                return mover->CompressorAllow;
+            case STATE_ENGINE_POWER:
+                return mover->EnginePower;
+            case STATE_DYNAMIC_BRAKE_ACTIVE:
+                return mover->DynamicBrakeFlag;
+            case STATE_ENGINE_RPM_COUNT:
+                return mover->enrot;
+            case STATE_ENGINE_RPM_RATIO:
+                return mover->EngineRPMRatio();
+            case STATE_ENGINE_CURRENT:
+                return mover->Im;
+            case STATE_CIRCUIT_IMAX:
+                return mover->Imax;
+            case STATE_CIRCUIT_NMAX_RPM:
+                return mover->nmax * 60.0;
+            case STATE_ENGINE_DAMAGE:
+                return mover->EngDmgFlag;
+            case STATE_MAIN_SWITCH_TIME:
+                return mover->MainsInitTimeCountdown;
+            case STATE_MAIN_NO_POWER_POS:
+                return mover->IsMainCtrlNoPowerPos();
+            case STATE_CAMSHAFT_AVAILABLE:
+                return mover->HasCamshaft;
+            case STATE_CONVERTER_OVERLOAD:
+                return mover->ConvOvldFlag;
+            case STATE_LINE_BREAKER_DELAY:
+                return mover->CtrlDelay;
+            case STATE_LINE_BREAKER_INITIAL_DELAY:
+                return mover->InitialCtrlDelay;
+            case STATE_LINE_BREAKER_CLOSES_AT_NO_POWER:
+                return mover->LineBreakerClosesOnlyAtNoPowerPos;
+            case STATE_FUSE_ACTIVE:
+                return mover->FuseFlag;
+            case STATE_MOTOR_CONNECTORS_OPEN:
+                return mover->StLinSwitchOff;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleEngine::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

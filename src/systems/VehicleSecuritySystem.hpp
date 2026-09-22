@@ -11,6 +11,9 @@ namespace godot {
             static void _bind_methods();
             friend class TSecuritySystem;
 
+        private:
+            int state_base_index = 0;
+
         protected:
             /// Change detection for blinking_changed/beeping_changed, compared in
             /// _do_process_mover(). Both start false, as the not-yet-filled state dictionary
@@ -20,11 +23,25 @@ namespace godot {
 
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _register_commands() override;
             void _unregister_commands() override;
 
+            enum StateProperty {
+                STATE_BEEPING,
+                STATE_BLINKING,
+                STATE_RADIOSTOP_AVAILABLE,
+                STATE_VIGILANCE_BLINKING,
+                STATE_CABSIGNAL_BLINKING,
+                STATE_CABSIGNAL_BEEPING,
+                STATE_BRAKING,
+                STATE_ENGINE_BLOCKED,
+                STATE_SEPARATE_ACKNOWLEDGE,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             enum EmergencySignal {
                 EMERGENCY_SIGNAL_SIREN_LOW_TONE,
                 EMERGENCY_SIGNAL_SIREN_HIGH_TONE,

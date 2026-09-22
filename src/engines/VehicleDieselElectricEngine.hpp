@@ -22,7 +22,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, heating_rpm, 0.0);
 
         protected:
-            VehicleEngine::EngineType get_engine_type() override;
+            VehicleEngine::EngineType get_engine_type() const override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
 
         public:

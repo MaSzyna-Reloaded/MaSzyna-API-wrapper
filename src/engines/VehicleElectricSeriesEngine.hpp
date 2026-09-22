@@ -20,7 +20,7 @@ namespace godot {
             static void _bind_methods();
 
         protected:
-            EngineType get_engine_type() override;
+            EngineType get_engine_type() const override;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;

@@ -9,7 +9,39 @@ namespace godot {
     class VehicleController;
     class VehicleEngine : public VehicleComponent {
             GDCLASS(VehicleEngine, VehicleComponent)
+            enum StateProperty {
+                STATE_MAIN_SWITCH_ENABLED,
+                STATE_MAIN_SWITCH_CLOSABLE,
+                STATE_ENGINE_TYPE,
+                STATE_MM,
+                STATE_MW,
+                STATE_FW,
+                STATE_FT,
+                STATE_IM,
+                STATE_COMPRESSOR_ENABLED,
+                STATE_COMPRESSOR_ALLOWED,
+                STATE_ENGINE_POWER,
+                STATE_DYNAMIC_BRAKE_ACTIVE,
+                STATE_ENGINE_RPM_COUNT,
+                STATE_ENGINE_RPM_RATIO,
+                STATE_ENGINE_CURRENT,
+                STATE_CIRCUIT_IMAX,
+                STATE_CIRCUIT_NMAX_RPM,
+                STATE_ENGINE_DAMAGE,
+                STATE_MAIN_SWITCH_TIME,
+                STATE_MAIN_NO_POWER_POS,
+                STATE_CAMSHAFT_AVAILABLE,
+                STATE_CONVERTER_OVERLOAD,
+                STATE_LINE_BREAKER_DELAY,
+                STATE_LINE_BREAKER_INITIAL_DELAY,
+                STATE_LINE_BREAKER_CLOSES_AT_NO_POWER,
+                STATE_FUSE_ACTIVE,
+                STATE_MOTOR_CONNECTORS_OPEN,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             enum EngineType {
                 NONE,
                 DUMB,
@@ -113,6 +145,9 @@ namespace godot {
             MAKE_MEMBER_GS(double, cntrl_controller_step_down_delay, 0.0);
             MAKE_MEMBER_GS(bool, cntrl_fast_series_circuit, false);
 
+        private:
+            int state_base_index = 0;
+
         protected:
             /// Change detection for engine_start/engine_stop, compared in _do_process_mover().
             /// Starts false so a vehicle coming up with the main switch already closed reports
@@ -120,10 +155,10 @@ namespace godot {
             /// not-yet-filled state dictionary.
             bool previous_main_switch = false;
 
-            virtual EngineType get_engine_type() = 0;
+            virtual EngineType get_engine_type() const = 0;
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;

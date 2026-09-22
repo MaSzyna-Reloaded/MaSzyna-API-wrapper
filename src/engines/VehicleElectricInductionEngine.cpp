@@ -31,7 +31,7 @@ namespace godot {
                 VehicleElectricInductionEngine, Variant::ARRAY, wwlist, PROPERTY_HINT_TYPE_STRING, "WWListItem");
     }
 
-    VehicleEngine::EngineType VehicleElectricInductionEngine::get_engine_type() {
+    VehicleEngine::EngineType VehicleElectricInductionEngine::get_engine_type() const {
         return VehicleEngine::EngineType::ELECTRIC_INDUCTION_MOTOR;
     }
 

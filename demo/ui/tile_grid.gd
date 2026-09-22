@@ -127,19 +127,19 @@ func reload_tile(index: int, skin: String) -> void:
 
 
 ## The keys of the grid, taken before the viewport can turn them into focus navigation of its own,
-## and only while this section has the focus. Left and right walk the tiles, up and down the rows,
-## and a step that would leave the grid leaves the section instead.
+## and only while this section has the focus. Left and right walk the tiles, up and down the rows
+## of a grid, and a step that would leave the tiles leaves the section instead.
 func _input(event: InputEvent) -> void:
     if not focused or not is_visible_in_tree():
         return
     if event.is_action_pressed("ui_right", true):
-        _walk(_selected + 1, navigate_right)
+        _walk(_tile_in_row(1), navigate_right)
     elif event.is_action_pressed("ui_left", true):
-        _walk(_selected - 1, navigate_left)
+        _walk(_tile_in_row(-1), navigate_left)
     elif event.is_action_pressed("ui_down", true):
-        _walk(_selected + _tiles_per_row(), navigate_down)
+        _walk(_tile_in_next_row(1), navigate_down)
     elif event.is_action_pressed("ui_up", true):
-        _walk(_selected - _tiles_per_row(), navigate_up)
+        _walk(_tile_in_next_row(-1), navigate_up)
     elif event.is_action_pressed("ui_page_down", true):
         _go_to(_selected + PAGE_STEP)
     elif event.is_action_pressed("ui_page_up", true):
@@ -163,17 +163,51 @@ func _walk(index: int, over_the_edge: Signal) -> void:
     _go_to(index)
 
 
-## Tiles the flow container fits into one row, read from where the tiles actually ended up: the row
-## below starts at the first tile whose top is lower than the selected one's. A single row has none,
-## so the whole grid counts as one and a step up or down always goes over the edge.
-func _tiles_per_row() -> int:
-    if layout == Layout.ROW or _selected < 0:
-        return _controls.size()
-    var row_top: float = _controls[_selected].position.y
-    for index: int in range(_selected + 1, _controls.size()):
-        if _controls[index].position.y > row_top:
-            return index - _selected
-    return _controls.size()
+## The tile beside the selected one, inside its own row. A step sideways never drops into another
+## row - at the edge of the row it leaves the section instead, and -1 says so.
+func _tile_in_row(step: int) -> int:
+    if _selected < 0:
+        return -1
+    var index: int = _selected + step
+    if index < 0 or index >= _controls.size():
+        return -1
+    if not _controls[index].position.y == _controls[_selected].position.y:
+        return -1
+    return index
+
+
+## The tile a step up or down lands on, read from where the tiles actually ended up: the nearest row
+## in that direction, and in it the tile whose centre is closest to the selected one's. A flow
+## container packs a different number of tiles into every row, so a fixed step would drift out of
+## the column; a single row has no row above or below it at all, and -1 says so.
+func _tile_in_next_row(step: int) -> int:
+    if _selected < 0:
+        return -1
+    var current: Control = _controls[_selected]
+    var row_found: bool = false
+    var row_y: float = 0.0
+    for control: Control in _controls:
+        # step * distance is positive only for the tiles on the side the arrow points at
+        if step * (control.position.y - current.position.y) <= 0.0:
+            continue
+        if not row_found or absf(control.position.y - current.position.y) < absf(row_y - current.position.y):
+            row_found = true
+            row_y = control.position.y
+    if not row_found:
+        return -1
+    var centre: float = current.position.x + current.size.x * 0.5
+    var nearest: int = -1
+    var nearest_distance: float = 0.0
+    for index: int in _controls.size():
+        if not _controls[index].position.y == row_y:
+            continue
+        var distance: float = absf(
+            _controls[index].position.x + _controls[index].size.x * 0.5 - centre
+        )
+        if nearest < 0 or distance < nearest_distance:
+            nearest = index
+            nearest_distance = distance
+    return nearest
 
 
 ## The tile a key asked for, clamped to the grid and silent when it is the one already selected

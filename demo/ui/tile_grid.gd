@@ -20,6 +20,11 @@ enum Layout { ROW, GRID }
 
 ## Tile under the pointer or the keyboard gets a lit background; the marked one keeps a green one
 const GLOW_SHADER: Shader = preload("skin_glow.gdshader")
+## A tile whose side view is still rendering shows the silhouette and a spinner instead
+const PLACEHOLDER_SHADER: Shader = preload("tile_placeholder.gdshader")
+## The silhouette is drawn shorter than a locomotive really is, so the placeholder stretches it by
+## a third - closer to the side view that replaces it
+const PLACEHOLDER_STRETCH: float = 4.0 / 3.0
 const SELECTED_COLOR: Color = Color(1.0, 1.0, 1.0)
 const MARKED_COLOR: Color = Color(0.35, 1.0, 0.45)
 
@@ -54,6 +59,10 @@ class Tile:
 ## What the bank calls a click and a hover here - the vehicles and the skins are different gestures
 @export var click_event: StringName = &"vehicle_click"
 @export var hover_event: StringName = &"vehicle_hover"
+## Drawn faint under the spinner while a side view is still being rendered. The data says nothing
+## about how long a vehicle is, so the tile takes this picture's own shape, stretched by
+## PLACEHOLDER_STRETCH.
+@export var placeholder_silhouette: Texture2D = null
 
 var _tiles: Array[Tile] = []
 var _controls: Array[Control] = []
@@ -237,6 +246,10 @@ func _create_tile(index: int) -> Control:
     var tile: Tile = _tiles[index]
     var control := Control.new()
     control.custom_minimum_size = Vector2(tile_height, tile_height * tile_padding)
+    if placeholder_silhouette:
+        control.custom_minimum_size.x = tile_height * PLACEHOLDER_STRETCH * (
+            float(placeholder_silhouette.get_width()) / float(placeholder_silhouette.get_height())
+        )
 
     var background := ColorRect.new()
     background.name = "Background"
@@ -258,6 +271,8 @@ func _create_tile(index: int) -> Control:
     preview.pressed.connect(_on_tile_pressed.bind(index))
     preview.mouse_entered.connect(_on_tile_hovered.bind(index))
     control.add_child(preview)
+    if placeholder_silhouette:
+        control.add_child(_create_placeholder(control.custom_minimum_size))
     _load_profile(preview, tile)
     if not tile.caption:
         return control
@@ -275,18 +290,33 @@ func _create_tile(index: int) -> Control:
     return control
 
 
+## The silhouette and the spinner of a tile that has nothing to show yet
+func _create_placeholder(size: Vector2) -> ColorRect:
+    var placeholder := ColorRect.new()
+    placeholder.name = "Placeholder"
+    placeholder.set_anchors_preset(Control.PRESET_FULL_RECT)
+    placeholder.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    placeholder.material = ShaderMaterial.new()
+    var material: ShaderMaterial = placeholder.material as ShaderMaterial
+    material.shader = PLACEHOLDER_SHADER
+    material.set_shader_parameter("silhouette", placeholder_silhouette)
+    material.set_shader_parameter("rect_size", size)
+    return placeholder
+
+
 ## Side view from VehicleProfileManager (rendered on the spot when the data has no image of it)
 func _load_profile(preview: TextureButton, tile: Tile) -> void:
-    # dimmed until the side view of the skin is there
-    preview.modulate.a = 0.3
+    # nothing of the button is drawn while it has no texture - the placeholder is what shows
     var profile: Texture2D = await VehicleProfileManager.get_profile(
         tile.data_path, tile.file_name, tile.skin
     )
     if not is_instance_valid(preview):
         return
-    preview.modulate.a = 1.0
     if not profile:
         return
+    var placeholder: Node = preview.get_parent().get_node_or_null("Placeholder")
+    if placeholder:
+        placeholder.queue_free()
     preview.texture_normal = profile
     var control: Control = preview.get_parent() as Control
     # as wide as the vehicle is long, so the vehicles of a trainset line up without gaps

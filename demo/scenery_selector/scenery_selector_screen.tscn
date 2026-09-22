@@ -10,6 +10,7 @@
 [ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="8_focus"]
 [ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="9_grid"]
 [ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="10_sounds"]
+[ext_resource type="Texture2D" path="res://startup/eu07_parked_sketch.svg" id="11_sketch"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -201,6 +202,7 @@ layout_mode = 2
 sounds = ExtResource("10_sounds")
 
 [node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=1198650542 instance=ExtResource("9_grid")]
+placeholder_silhouette = ExtResource("11_sketch")
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 76)

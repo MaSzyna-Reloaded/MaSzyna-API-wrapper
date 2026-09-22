@@ -1,20 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var brake: TrainBrake
+var train: VehicleController
+var brake: VehicleBrake
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    brake = TrainBrake.new()
-    train.add_child(brake)
+    brake = MoverVehicleBrake.new()
+    train.add_component(brake)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(brake.compressor_emergency_valve_area, 0.0)
@@ -33,4 +27,4 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(brake.universal_brake_button_1, 1)
     assert_eq(brake.universal_brake_button_2, 16)
     assert_eq(brake.universal_brake_button_3, 8)
-    assert_true(train.state.has("brake_air_pressure"), "TrainBrake should keep functioning after configuring universal brake buttons")
+    assert_true(train.state.has("brake_air_pressure"), "VehicleBrake should keep functioning after configuring universal brake buttons")

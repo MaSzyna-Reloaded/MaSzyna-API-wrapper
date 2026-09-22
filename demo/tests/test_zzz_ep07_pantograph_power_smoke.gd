@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 ## End-to-end smoke test for the pantograph power layer, using the actual td.scn scenery and its
 ## real EP07-424 vehicle (node "EP07-424" in td.scn, dynamic/pkp/303e_v1) - not a synthetic
-## TrainController like test_traction_power_pantograph.gd. Named test_zzz_* (like the existing
+## VehicleController like test_traction_power_pantograph.gd. Named test_zzz_* (like the existing
 ## test_zzz_scenery_scene_smoke.gd/test_zzz_trainset_diagnostic.gd) so it runs last: it's slow
 ## (loads the whole scenery) and exists specifically to catch breaks in the RailVehicle3D
 ## geometry/wire-lookup path that a synthetic-controller test can't reach.
@@ -24,7 +24,7 @@ func after_each():
     scenery.free()
 
 
-func _find_train_controller(root:Node, vehicle_name:String) -> TrainController:
+func _find_train_controller(root:Node, vehicle_name:String) -> VehicleController:
     var dynamic_vehicle:Node = root.find_child(vehicle_name, true, false)
     if not dynamic_vehicle:
         return null
@@ -35,7 +35,7 @@ func _find_train_controller(root:Node, vehicle_name:String) -> TrainController:
 
 
 func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
-    var controller:TrainController = null
+    var controller:VehicleController = null
     for i in range(10):
         controller = _find_train_controller(scenery, "EP07-424")
         if controller:
@@ -53,12 +53,12 @@ func test_ep07_pantograph_draws_wire_voltage_from_td_scn() -> void:
     # master pantograph-valve command - this vehicle's cabin has no such switch (confirmed against
     # its .mmd) and nothing in this wrapper sends one via keybind either. If this ever needs a
     # fourth command again, that's a real regression, not a missing test setup step - see
-    # TrainElectricEngine::pantograph()'s own comment for why it's otherwise self-contained.
+    # VehicleElectricEngine::pantograph()'s own comment for why it's otherwise self-contained.
     controller.send_command("battery", true)
     await wait_seconds(0.5)
     controller.send_command("compressor", true)
     await wait_seconds(0.5)
-    controller.send_command("pantograph", TrainElectricEngine.PANTOGRAPH_FIRST, true)
+    controller.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
 
     var voltage:float = 0.0
     var active:bool = false

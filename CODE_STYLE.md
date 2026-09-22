@@ -193,6 +193,203 @@ scroll.scroll_vertical = int(item.position.y + item.size.y - scroll.size.y)
 It has a failure mode on top of the cost: it reads state that a change made in the same frame has
 just invalidated - a `visible` toggle, a queued re-sort - and then silently does nothing.
 
+### Separation of concerns, enforced
+
+Applies to GDScript and C++ alike, and it is the rule the rest of this file exists to protect.
+
+A layer owns one kind of thing. A simulation backend owns physical quantities; a sound system owns
+what is audible; a rendering server owns what is drawn; a screen owns what is on it. **State that
+only one layer ever needs lives in that layer**, and the question that settles an argument is:
+*if this layer were replaced wholesale, would this field go with it?*
+
+```cpp
+// not this - twelve counters on the vehicle, existing only so a sound trigger can see a change
+int coupler_sound_counts[ 12 ] = {};
+
+// this - the vehicle reports the event once, and whoever cares counts it
+emit_signal( detaching ? coupler_detached_signal : coupler_attached_signal, element );
+```
+
+The failure is not untidiness. It is that the vehicle can no longer be tested without the sound
+model in mind, the sound model cannot be replaced without touching the vehicle, and the field is
+maintained by people who have no idea what it is for.
+
+**The backend never appears in a public interface** - not in a method name, not in a parameter,
+not in a returned type:
+
+```cpp
+// not this - "mover" is the vendored backend, and it is nobody's business out here
+Dictionary get_mover_state();
+void update_mover();
+
+// this - a vehicle has state and config, and operations that change them
+Dictionary get_state();
+void apply_config();
+```
+
+### No magic numbers
+
+Applies to GDScript and C++ alike. A literal that is not self-evident from the expression around
+it gets a named constant: a threshold, a limit, an index base, a conversion factor, a count, a
+delay, a bitmask.
+
+```gdscript
+# not this
+_coupler_events[vehicle_rid][element + 6] += 1
+
+# this - the same code, saying why
+const COUPLER_DETACH_OFFSET:int = 6
+_coupler_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
+```
+
+The name is where the next reader learns what the value means, and the one place it changes. Two
+call sites sharing a literal by coincidence are a bug waiting for one of them to be tuned.
+
+A value ported from the original engine carries **the original's value and a reference to where it
+came from**, never a rounder number that looks safer:
+
+```gdscript
+## Original engine: Track.cpp:35 fMaxOffset
+const SWITCH_MAX_OFFSET: float = 0.1
+```
+
+`FINDINGS.md` (2026-09-20) is what this rule is made of: a 0.25 m tolerance that "looked safe"
+where the original used 0.02 m silently merged every double slip in the data set.
+
+What needs no name: 0, 1, -1 and 2 used as themselves, and an index that is literally the position
+being addressed.
+
+### A getter never changes state
+
+Applies to GDScript and C++ alike. A `get_*`, a property getter, a `_get()` - anything a *reader*
+calls - returns a value and does nothing else. It does not advance a filter, consume a flag, emit
+a signal, write to another object, or build what it returns on the way out.
+
+The failure mode is what makes this worth a rule of its own: a value computed inside a getter
+depends on **how often it is read**, and nothing at the call site says so. One reader looks
+correct. The bug appears when a second reader is added, or when a frame skips the read - far from
+the getter, and looking like anything but a getter.
+
+```cpp
+// not this - the filter advances once per read, so the value depends on the number of readers
+void TrainBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
+    local_brake_pressure_previous += (p_mover->LocBrakePress - local_brake_pressure_previous)
+                                     * get_process_delta_time() * 5.0;
+    p_state["brake_loco_pressure"] = local_brake_pressure_previous;
+}
+
+// this - the filter advances once per tick, with the tick's own delta; the getter returns it
+void TrainBrake::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {
+    local_brake_pressure += (p_mover->LocBrakePress - local_brake_pressure) * p_delta * 5.0;
+}
+```
+
+The same rule kills three more idioms seen in this codebase: consuming a flag on the Mover while
+filling a state dictionary (the flag is then eaten by whoever happened to read first), emitting a
+change signal from inside a fetch (the signal fires on read, not on change), and comparing against
+"the previous value" pulled back out of the dictionary the fetch is filling. Change detection
+belongs in the tick, against the owner's own member.
+
+### Call a method, do not name it
+
+Applies to GDScript and C++ alike. When the class is known, include its header and call the
+method. `Object::call("name")` gives up every check the compiler would have made - the name, the
+argument count, the types - and a typo or a rename returns `null` at run time with nothing
+printed. It is the same class of silent failure as a bare `[]` passed to an `Array[T]` parameter
+(see `FINDINGS.md`, 2026-09-22): the call simply does not happen, and the state stays as it was.
+
+```cpp
+// not this - the header is already included two lines up, and the enum is used typed
+electric_engine->call("set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST, voltage);
+
+// this
+electric_engine->set_pantograph_wire_voltage(TrainElectricEngine::PANTOGRAPH_FIRST, voltage);
+```
+
+A singleton is reached the same way - a typed `static X *get_instance()` and typed methods, the
+shape `TrainSystem`, `SceneryStreamingServer` and `MaszynaRuntime` already have. Not a name looked
+up on an `Object`, and not `get_tree()->get_root()->get_node_or_null(name)` standing in for one.
+
+A string call is allowed only where the class genuinely cannot be known at build time - a GDScript
+node that a C++ node merely hosts - and the call site says so in a comment.
+
+### No pointers in a public API
+
+Applies to C++ above all, and to servers first. A public method takes and returns `RID`s,
+`Variant`s and `Callable`s. A handle is a `RID`, an object is an `ObjectID`, a callback is a
+`Callable`.
+
+```cpp
+// not this - the server now depends on a lifetime it does not own
+RID controller_create(TrainController *p_controller);
+
+// this - Godot's own servers are the reference
+// (PhysicsServer3D::body_attach_object_instance_id)
+RID  vehicle_create();
+void vehicle_attach_object_instance_id(const RID &p_vehicle, uint64_t p_id);
+```
+
+A pointer that crosses a public boundary makes every caller responsible for a lifetime it did not
+create, and the resulting dangle surfaces far from the code that caused it. Pointers stay inside
+one class.
+
+### Never work around a missing event
+
+Applies to GDScript and C++ alike. A value that is not there yet is an ordering defect, and the
+things that look like a fix are all the same mistake:
+
+```cpp
+// not this - the placement could not finish, so it asks to be run again
+if (pivot_spacing <= 0.0) {
+    force_detail_refresh = true;   // "try again next frame"
+    return;
+}
+
+// this - the owner announces that the configuration reached the backend, and the work happens
+// there, once
+controller->connect(VehicleController::mover_config_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+```
+
+The same applies to a deferred call added beside a direct one, a second `_ready()`-time retry, a
+counter that gives up after N frames, and a `_process` that keeps checking whether something has
+appeared. Each of them works often enough to survive review and leaves the real defect - the
+operation that published its result before it had one, or never published it at all - in place.
+
+Two questions settle it. *What produces this value, and has that operation finished?* If it has
+not, the observer is being run too early: move it behind the event, or make the producing
+operation complete before anything can observe it. *Is there an event for it?* If there is none,
+add one at the owner - a signal that means "this has landed", not "this is about to happen" -
+rather than polling for its effect.
+
+### Wiring is not per-frame work
+
+Applies to GDScript and C++ alike. Resolving a path, finding a node, connecting a signal,
+subscribing to anything: that happens **once**, where the node comes into being - `_enter_tree()`,
+`_ready()`, or an init the owner calls. Never in `_process`/`_physics_process`, and a `_dirty`
+flag around it does not make it acceptable - the flag only hides that the wiring is being
+re-decided on a frame boundary.
+
+```cpp
+// not this - the subscription lives in the per-frame path
+void Node::_process(double delta) {
+    if (dirty) {
+        vehicle = get_node_or_null(vehicle_path);
+        vehicle->connect(changed_signal, callable_mp(this, &Node::_on_changed));
+    }
+}
+
+// this - wired on entering the tree, and the frame does only frame work
+void Node::_enter_tree() {
+    vehicle = get_node_or_null(vehicle_path);
+    vehicle->connect(changed_signal, callable_mp(this, &Node::_on_changed));
+}
+```
+
+There is a second failure beyond the cost: a node that switches its processing off until the
+thing it depends on exists can never subscribe to it, because the code that would subscribe is
+the code that is not running. That deadlock is what this rule exists to prevent.
+
 ### Per-frame work
 
 Applies to C++ and GDScript alike - a loop in a native `_process` scales with the collection just

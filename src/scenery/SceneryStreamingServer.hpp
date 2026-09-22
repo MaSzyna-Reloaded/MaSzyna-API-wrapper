@@ -119,6 +119,7 @@ namespace godot {
             bool planning = false;
             bool freed_pending = false; // a piece was freed, the queues may hold dead work
             bool content_dirty = false;
+            bool streaming_enabled = true;
             bool force_plan = false;
 
             Vector<Owner> owners;
@@ -170,6 +171,12 @@ namespace godot {
             int owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
             RID stream_register(int p_owner, const RID &p_user_rid, const Vector3 &p_position, float p_range_end);
             void stream_free(const RID &p_stream_rid);
+
+            /* Streaming builds and clears content on `process_frame`. Tearing a scenery down
+             * frees the very RIDs it streams, and that teardown yields a frame for its budget -
+             * so it has to be paused for the duration, the way RailVehicleServer's step is. */
+            void set_streaming_enabled(bool p_enabled);
+            bool is_streaming_enabled() const;
 
             void set_camera(Camera3D *p_camera);
             float get_draw_distance() const;

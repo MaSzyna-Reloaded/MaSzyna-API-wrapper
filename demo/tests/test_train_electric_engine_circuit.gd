@@ -1,21 +1,15 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var engine: TrainElectricSeriesEngine
+var train: VehicleController
+var engine: VehicleElectricSeriesEngine
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    engine = TrainElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
-    train.add_child(engine)
+    engine = MoverVehicleElectricSeriesEngine.new()
+    engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
+    train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_circuit_defaults():
     assert_eq(engine.circuit_resistance, 0.0)
@@ -46,10 +40,10 @@ func test_circuit_round_trip_and_update():
     assert_eq(engine.circuit_imax_low, 600)
     assert_eq(engine.circuit_imax_high, 900)
     assert_eq(engine.circuit_tuhex_stages, 3)
-    assert_true(train.state.has("main_switch_enabled"), "TrainElectricEngine should keep functioning after configuring the Circuit section")
+    assert_true(train.state.has("main_switch_enabled"), "VehicleElectricEngine should keep functioning after configuring the Circuit section")
 
 func test_physical_layout_updates_without_crashing():
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 3 # front and rear
     await wait_idle_frames(2)
 

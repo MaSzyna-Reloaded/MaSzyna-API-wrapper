@@ -4,49 +4,49 @@ class_name FizTrainBrakeParser
 
 ## Brake: section, the brake-relevant subset of Cntrl. (delegated from FizTrainCntrlParser),
 ## and the brake-position table (BPT, rows immediately following the Cntrl. line) and
-## CompressorList: table -> TrainBrake. LoadFIZ_Brake: Mover.cpp:10394, brake subset of
+## CompressorList: table -> VehicleBrake. LoadFIZ_Brake: Mover.cpp:10394, brake subset of
 ## LoadFIZ_Cntrl: Mover.cpp:10707, readBPT: Mover.cpp:9200, readCompressorList: Mover.cpp:9499.
 ##
 ## Setters are only called when the corresponding FIZ key is present, except where the
 ## original LoadFIZ_Brake/_Cntrl logic computes a default that genuinely differs from
-## TrainBrake's compiled default (rig_effectiveness, valve/type "ESt" fallback).
+## VehicleBrake's compiled default (rig_effectiveness, valve/type "ESt" fallback).
 
 const _VALVE_MAP := {
-    "w": TrainBrake.BRAKE_VALVE_W, "w_lu_l": TrainBrake.BRAKE_VALVE_W_LU_L,
-    "w_lu_xr": TrainBrake.BRAKE_VALVE_W_LU_XR, "w_lu_vi": TrainBrake.BRAKE_VALVE_W_LU_VI,
-    "k": TrainBrake.BRAKE_VALVE_K, "kg": TrainBrake.BRAKE_VALVE_KG, "kp": TrainBrake.BRAKE_VALVE_KP,
-    "kss": TrainBrake.BRAKE_VALVE_KSS, "kkg": TrainBrake.BRAKE_VALVE_KKG, "kkp": TrainBrake.BRAKE_VALVE_KKP,
-    "kks": TrainBrake.BRAKE_VALVE_KKS, "hikp1": TrainBrake.BRAKE_VALVE_HIKP1,
-    "hikss": TrainBrake.BRAKE_VALVE_HIKSS, "hikg1": TrainBrake.BRAKE_VALVE_HIKG1,
-    "ke": TrainBrake.BRAKE_VALVE_KE, "sw": TrainBrake.BRAKE_VALVE_SW, "ested": TrainBrake.BRAKE_VALVE_ESTED,
-    "nest3": TrainBrake.BRAKE_VALVE_NEST3, "est3": TrainBrake.BRAKE_VALVE_EST3, "lst": TrainBrake.BRAKE_VALVE_LST,
-    "est4": TrainBrake.BRAKE_VALVE_EST4, "est3al2": TrainBrake.BRAKE_VALVE_EST3AL2,
-    "ep1": TrainBrake.BRAKE_VALVE_EP1, "ep2": TrainBrake.BRAKE_VALVE_EP2, "m483": TrainBrake.BRAKE_VALVE_M483,
-    "cv1_l_tr": TrainBrake.BRAKE_VALVE_CV1_L_TR, "cv1": TrainBrake.BRAKE_VALVE_CV1,
-    "cv1_r": TrainBrake.BRAKE_VALVE_CV1_R,
+    "w": VehicleBrake.BRAKE_VALVE_W, "w_lu_l": VehicleBrake.BRAKE_VALVE_W_LU_L,
+    "w_lu_xr": VehicleBrake.BRAKE_VALVE_W_LU_XR, "w_lu_vi": VehicleBrake.BRAKE_VALVE_W_LU_VI,
+    "k": VehicleBrake.BRAKE_VALVE_K, "kg": VehicleBrake.BRAKE_VALVE_KG, "kp": VehicleBrake.BRAKE_VALVE_KP,
+    "kss": VehicleBrake.BRAKE_VALVE_KSS, "kkg": VehicleBrake.BRAKE_VALVE_KKG, "kkp": VehicleBrake.BRAKE_VALVE_KKP,
+    "kks": VehicleBrake.BRAKE_VALVE_KKS, "hikp1": VehicleBrake.BRAKE_VALVE_HIKP1,
+    "hikss": VehicleBrake.BRAKE_VALVE_HIKSS, "hikg1": VehicleBrake.BRAKE_VALVE_HIKG1,
+    "ke": VehicleBrake.BRAKE_VALVE_KE, "sw": VehicleBrake.BRAKE_VALVE_SW, "ested": VehicleBrake.BRAKE_VALVE_ESTED,
+    "nest3": VehicleBrake.BRAKE_VALVE_NEST3, "est3": VehicleBrake.BRAKE_VALVE_EST3, "lst": VehicleBrake.BRAKE_VALVE_LST,
+    "est4": VehicleBrake.BRAKE_VALVE_EST4, "est3al2": VehicleBrake.BRAKE_VALVE_EST3AL2,
+    "ep1": VehicleBrake.BRAKE_VALVE_EP1, "ep2": VehicleBrake.BRAKE_VALVE_EP2, "m483": VehicleBrake.BRAKE_VALVE_M483,
+    "cv1_l_tr": VehicleBrake.BRAKE_VALVE_CV1_L_TR, "cv1": VehicleBrake.BRAKE_VALVE_CV1,
+    "cv1_r": VehicleBrake.BRAKE_VALVE_CV1_R,
 }
 
 const _METHOD_MAP := {
-    "p10-bg": TrainBrake.BRAKE_METHOD_P10_BG, "p10-bgu": TrainBrake.BRAKE_METHOD_P10_BGU,
-    "fr513": TrainBrake.BRAKE_METHOD_FR513, "cosid": TrainBrake.BRAKE_METHOD_COSID,
-    "p10ybg": TrainBrake.BRAKE_METHOD_P10Y_BG, "p10ybgu": TrainBrake.BRAKE_METHOD_P10Y_BGU,
-    "disk1": TrainBrake.BRAKE_METHOD_D1, "disk1+mg": TrainBrake.BRAKE_METHOD_D1MG,
-    "disk2": TrainBrake.BRAKE_METHOD_D2,
+    "p10-bg": VehicleBrake.BRAKE_METHOD_P10_BG, "p10-bgu": VehicleBrake.BRAKE_METHOD_P10_BGU,
+    "fr513": VehicleBrake.BRAKE_METHOD_FR513, "cosid": VehicleBrake.BRAKE_METHOD_COSID,
+    "p10ybg": VehicleBrake.BRAKE_METHOD_P10Y_BG, "p10ybgu": VehicleBrake.BRAKE_METHOD_P10Y_BGU,
+    "disk1": VehicleBrake.BRAKE_METHOD_D1, "disk1+mg": VehicleBrake.BRAKE_METHOD_D1MG,
+    "disk2": VehicleBrake.BRAKE_METHOD_D2,
 }
 
 const _HANDLE_TYPE_MAP := {
-    "fv4a": TrainBrake.BRAKE_HANDLE_TYPE_FV4A, "test": TrainBrake.BRAKE_HANDLE_TYPE_TESTH,
-    "d2": TrainBrake.BRAKE_HANDLE_TYPE_D2, "mhz_en57": TrainBrake.BRAKE_HANDLE_TYPE_MHZ_EN57,
-    "mhz_k5p": TrainBrake.BRAKE_HANDLE_TYPE_MHZ_K5P, "mhz_k8p": TrainBrake.BRAKE_HANDLE_TYPE_MHZ_K8P,
-    "mhz_6p": TrainBrake.BRAKE_HANDLE_TYPE_MHZ_6P, "m394": TrainBrake.BRAKE_HANDLE_TYPE_M394,
-    "knorr": TrainBrake.BRAKE_HANDLE_TYPE_KNORR, "west": TrainBrake.BRAKE_HANDLE_TYPE_WESTINGHOUSE,
-    "fvel6": TrainBrake.BRAKE_HANDLE_TYPE_FVEL6, "fve408": TrainBrake.BRAKE_HANDLE_TYPE_FVE408,
-    "st113": TrainBrake.BRAKE_HANDLE_TYPE_ST113,
+    "fv4a": VehicleBrake.BRAKE_HANDLE_TYPE_FV4A, "test": VehicleBrake.BRAKE_HANDLE_TYPE_TESTH,
+    "d2": VehicleBrake.BRAKE_HANDLE_TYPE_D2, "mhz_en57": VehicleBrake.BRAKE_HANDLE_TYPE_MHZ_EN57,
+    "mhz_k5p": VehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K5P, "mhz_k8p": VehicleBrake.BRAKE_HANDLE_TYPE_MHZ_K8P,
+    "mhz_6p": VehicleBrake.BRAKE_HANDLE_TYPE_MHZ_6P, "m394": VehicleBrake.BRAKE_HANDLE_TYPE_M394,
+    "knorr": VehicleBrake.BRAKE_HANDLE_TYPE_KNORR, "west": VehicleBrake.BRAKE_HANDLE_TYPE_WESTINGHOUSE,
+    "fvel6": VehicleBrake.BRAKE_HANDLE_TYPE_FVEL6, "fve408": VehicleBrake.BRAKE_HANDLE_TYPE_FVE408,
+    "st113": VehicleBrake.BRAKE_HANDLE_TYPE_ST113,
 }
 
 const _LOCAL_BRAKE_TYPE_MAP := {
-    "manualbrake": TrainBrake.LOCAL_BRAKE_TYPE_MANUAL, "pneumaticbrake": TrainBrake.LOCAL_BRAKE_TYPE_PNEUMATIC,
-    "hydraulicbrake": TrainBrake.LOCAL_BRAKE_TYPE_HYDRAULIC,
+    "manualbrake": VehicleBrake.LOCAL_BRAKE_TYPE_MANUAL, "pneumaticbrake": VehicleBrake.LOCAL_BRAKE_TYPE_PNEUMATIC,
+    "hydraulicbrake": VehicleBrake.LOCAL_BRAKE_TYPE_HYDRAULIC,
 }
 
 
@@ -54,17 +54,17 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     if prefix == "CompressorList:":
         # header carries only CompressorListPosNo/Wrap/DefPos, none of which have a Godot
-        # property home on TrainBrake yet - just start collecting rows.
+        # property home on VehicleBrake yet - just start collecting rows.
         _active_table = "CompressorList"
         _compressor_rows = []
         return
 
-    var node := TrainBrake.new()
+    var node := MoverVehicleBrake.new()
     _parse_brake(kv, node)
-    context.add_part("TrainBrake", node)
+    context.add_part("VehicleBrake", node)
 
 
-func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
+func _parse_brake(kv: Dictionary, node: VehicleBrake) -> void:
     if kv.has("AirLeakRate"):
         node.air_leak_multiplier = FizLineUtil.get_float(kv, "AirLeakRate") * 0.01
 
@@ -101,7 +101,7 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         node.cylinder_spring_force = FizLineUtil.get_float(kv, "BCS")
     if kv.has("BSA"):
         node.piston_stroke_adjuster_resistance = FizLineUtil.get_float(kv, "BSA")
-    # rig_effectiveness' FIZ-format default (1.0) differs from TrainBrake's compiled default (0.0).
+    # rig_effectiveness' FIZ-format default (1.0) differs from VehicleBrake's compiled default (0.0).
     node.rig_effectiveness = FizLineUtil.get_float(kv, "BRE", 1.0)
     if kv.has("BCM"):
         node.cylinder_gear_ratio = FizLineUtil.get_float(kv, "BCM")
@@ -145,11 +145,11 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         node.compressor_speed = FizLineUtil.get_float(kv, "CompressorSpeed")
     if kv.has("CompressorPower"):
         match FizLineUtil.get_string(kv, "CompressorPower").to_lower():
-            "main": node.compressor_power = TrainBrake.COMPRESSOR_POWER_MAIN
-            "converter": node.compressor_power = TrainBrake.COMPRESSOR_POWER_CONVERTER
-            "engine": node.compressor_power = TrainBrake.COMPRESSOR_POWER_ENGINE
-            "coupler1": node.compressor_power = TrainBrake.COMPRESSOR_POWER_COUPLER1
-            "coupler2": node.compressor_power = TrainBrake.COMPRESSOR_POWER_COUPLER2
+            "main": node.compressor_power = VehicleBrake.COMPRESSOR_POWER_MAIN
+            "converter": node.compressor_power = VehicleBrake.COMPRESSOR_POWER_CONVERTER
+            "engine": node.compressor_power = VehicleBrake.COMPRESSOR_POWER_ENGINE
+            "coupler1": node.compressor_power = VehicleBrake.COMPRESSOR_POWER_COUPLER1
+            "coupler2": node.compressor_power = VehicleBrake.COMPRESSOR_POWER_COUPLER2
     if kv.has("CompressorTankValve"):
         node.compressor_tank_valve_active = FizLineUtil.get_bool(kv, "CompressorTankValve")
     if kv.has("EVArea"):
@@ -176,22 +176,22 @@ func _parse_brake(kv: Dictionary, node: TrainBrake) -> void:
         if _VALVE_MAP.has(valve_str):
             node.valve_type = _VALVE_MAP[valve_str]
         elif valve_str.find("est") != -1:
-            node.valve_type = TrainBrake.BRAKE_VALVE_EST3
+            node.valve_type = VehicleBrake.BRAKE_VALVE_EST3
         else:
-            node.valve_type = TrainBrake.BRAKE_VALVE_OTHER
+            node.valve_type = VehicleBrake.BRAKE_VALVE_OTHER
 
 
 ## Called by FizTrainCntrlParser with the full Cntrl. key/value set - applies only the
 ## brake-relevant subset.
-func apply_cntrl(kv: Dictionary, node: TrainBrake, context: FizImportContext) -> void:
-    var brake_system: int = TrainBrake.BRAKE_SYSTEM_INDIVIDUAL
+func apply_cntrl(kv: Dictionary, node: VehicleBrake, context: FizImportContext) -> void:
+    var brake_system: int = VehicleBrake.BRAKE_SYSTEM_INDIVIDUAL
     match FizLineUtil.get_string(kv, "BrakeSystem").to_lower():
-        "pneumatic": brake_system = TrainBrake.BRAKE_SYSTEM_PNEUMATIC
-        "electropneumatic": brake_system = TrainBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC
+        "pneumatic": brake_system = VehicleBrake.BRAKE_SYSTEM_PNEUMATIC
+        "electropneumatic": brake_system = VehicleBrake.BRAKE_SYSTEM_ELECTRO_PNEUMATIC
     node.cntrl_brake_system = brake_system
     context.brake_system = brake_system
 
-    if brake_system == TrainBrake.BRAKE_SYSTEM_INDIVIDUAL:
+    if brake_system == VehicleBrake.BRAKE_SYSTEM_INDIVIDUAL:
         return
 
     if kv.has("BCPN"):
@@ -212,8 +212,8 @@ func apply_cntrl(kv: Dictionary, node: TrainBrake, context: FizImportContext) ->
 
     var op_modes_str: String = FizLineUtil.get_string(kv, "BrakeOpModes").to_lower()
     match op_modes_str:
-        "pn": node.cntrl_brake_op_modes = TrainBrake.BRAKE_OP_MODE_PN
-        "pnepmed": node.cntrl_brake_op_modes = TrainBrake.BRAKE_OP_MODE_PNEPMED
+        "pn": node.cntrl_brake_op_modes = VehicleBrake.BRAKE_OP_MODE_PN
+        "pnepmed": node.cntrl_brake_op_modes = VehicleBrake.BRAKE_OP_MODE_PNEPMED
         "pnep": pass # TODO: exact bitmask for the intermediate PN+EP-only mode is unverified.
 
     var handle_str: String = FizLineUtil.get_string(kv, "BrakeHandle").to_lower()
@@ -230,16 +230,16 @@ func apply_cntrl(kv: Dictionary, node: TrainBrake, context: FizImportContext) ->
         node.cntrl_manual_brake_present = FizLineUtil.get_bool(kv, "ManualBrake")
 
     match FizLineUtil.get_string(kv, "ASB").to_lower():
-        "manual": node.cntrl_anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_MANUAL
-        "automatic": node.cntrl_anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC
-        "yes": node.cntrl_anti_skid_brake_type = TrainBrake.ANTI_SKID_BRAKE_AUTOMATIC
+        "manual": node.cntrl_anti_skid_brake_type = VehicleBrake.ANTI_SKID_BRAKE_MANUAL
+        "automatic": node.cntrl_anti_skid_brake_type = VehicleBrake.ANTI_SKID_BRAKE_AUTOMATIC
+        "yes": node.cntrl_anti_skid_brake_type = VehicleBrake.ANTI_SKID_BRAKE_AUTOMATIC
 
     var dynamic_str: String = FizLineUtil.get_string(kv, "DynamicBrake").to_lower()
     match dynamic_str:
-        "passive": node.cntrl_dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_PASSIVE
-        "switch": node.cntrl_dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_SWITCH
-        "reversal": node.cntrl_dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_REVERSAL
-        "automatic": node.cntrl_dynamic_brake_type = TrainBrake.DYNAMIC_BRAKE_AUTOMATIC
+        "passive": node.cntrl_dynamic_brake_type = VehicleBrake.DYNAMIC_BRAKE_PASSIVE
+        "switch": node.cntrl_dynamic_brake_type = VehicleBrake.DYNAMIC_BRAKE_SWITCH
+        "reversal": node.cntrl_dynamic_brake_type = VehicleBrake.DYNAMIC_BRAKE_REVERSAL
+        "automatic": node.cntrl_dynamic_brake_type = VehicleBrake.DYNAMIC_BRAKE_AUTOMATIC
 
     if kv.has("LocalBrakeTraxx"):
         node.cntrl_local_brake_traxx = FizLineUtil.get_bool(kv, "LocalBrakeTraxx")
@@ -254,7 +254,7 @@ func apply_cntrl(kv: Dictionary, node: TrainBrake, context: FizImportContext) ->
 
 
 func wants_bpt_table(context: FizImportContext) -> bool:
-    if context.brake_system == TrainBrake.BRAKE_SYSTEM_INDIVIDUAL:
+    if context.brake_system == VehicleBrake.BRAKE_SYSTEM_INDIVIDUAL:
         return false
     _active_table = "BPT"
     _bpt_rows = []
@@ -301,7 +301,7 @@ func _parse_compressor_row(p: MaszynaParser) -> void:
 
 
 func end_table(context: FizImportContext) -> void:
-    var node: TrainBrake = context.get_part("TrainBrake")
+    var node: VehicleBrake = context.get_part("VehicleBrake")
     if node == null:
         return
     if _bpt_rows:

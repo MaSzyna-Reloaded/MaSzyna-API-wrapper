@@ -11,7 +11,7 @@ var e3d_model_instance_icon = preload("res://addons/libmaszyna/e3d/e3d_model_ins
 var track_3d_script = preload("res://addons/libmaszyna/tracks/track_3d.gd")
 var track_normal_3d_script = preload("res://addons/libmaszyna/tracks/track_normal_3d.gd")
 var track_switch_3d_script = preload("res://addons/libmaszyna/tracks/track_switch_3d.gd")
-var fiz_train_controller_script = preload("res://addons/libmaszyna/fiz/fiz_train_controller.gd")
+var fiz_vehicle_physics_node_script = preload("res://addons/libmaszyna/fiz/fiz_vehicle_physics_node.gd")
 var fiz_import_plugin = preload("res://addons/libmaszyna/fiz/fiz_import_plugin.gd").new()
 
 func _enable_plugin():
@@ -27,8 +27,6 @@ func _enable_plugin():
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("CabinSystem", "res://addons/libmaszyna/cabin/cabin_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
-    add_autoload_singleton("TrackManager", "res://addons/libmaszyna/tracks/track_manager.gd")
-    add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
     add_autoload_singleton("SceneryChunkRenderingServer", "res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd")
     add_autoload_singleton("SmokeSourceLibrary", "res://addons/libmaszyna/smoke/smoke_source_library.gd")
 
@@ -68,9 +66,9 @@ func _enable_plugin():
     )
 
     add_custom_type(
-        "FIZTrainController",
+        "FizVehiclePhysicsNode",
         "Node",
-        fiz_train_controller_script,
+        fiz_vehicle_physics_node_script,
         null
     )
 
@@ -94,12 +92,10 @@ func _disable_plugin():
     remove_custom_type("Track3D")
     remove_custom_type("TrackNormal3D")
     remove_custom_type("TrackSwitch3D")
-    remove_custom_type("FIZTrainController")
+    remove_custom_type("FizVehiclePhysicsNode")
 
     remove_autoload_singleton("TrainSoundSystem")
     remove_autoload_singleton("CabinSystem")
-    remove_autoload_singleton("RailVehiclePhysicsServer")
-    remove_autoload_singleton("TrackManager")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("VehicleProfileManager")
@@ -291,6 +287,12 @@ func _enter_tree():
         PROPERTY_HINT_RANGE, "16,8000,1"
     )
     add_custom_project_setting("maszyna/physics/diagnostics", false, TYPE_BOOL)
+    # How much simulation time may be owed before it is taken in one step instead of being spread
+    # over the following frames - see RailVehicleServer::step_frame(). Past it the vehicles jump.
+    add_custom_project_setting(
+        "maszyna/physics/catch_up_limit", 1.0, TYPE_FLOAT,
+        PROPERTY_HINT_RANGE, "0.2,10.0,0.1,suffix:s"
+    )
     add_custom_project_setting(
         "maszyna/import/dds_max_texture_size", 1024, TYPE_INT,
         PROPERTY_HINT_ENUM, "512,1024,2048,4096,8192"

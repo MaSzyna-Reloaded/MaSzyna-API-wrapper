@@ -1,0 +1,172 @@
+#include "MoverEngineBackend.hpp"
+#include "../mover/MoverBackend.hpp"
+#include "VehicleEngine.hpp"
+#include "../core/VehicleController.hpp"
+
+namespace godot {
+    bool MoverEngineBackend::get_main_switch_enabled(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->Mains : false;
+    }
+
+    bool MoverEngineBackend::get_main_switch_closable(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->MainSwitchCheck() : false;
+    }
+
+    double MoverEngineBackend::get_motor_torque(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->Mm : 0.0;
+    }
+
+    double MoverEngineBackend::get_wheel_torque(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->Mw : 0.0;
+    }
+
+    double MoverEngineBackend::get_wheel_force(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->Fw : 0.0;
+    }
+
+    double MoverEngineBackend::get_tractive_force(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->Ft : 0.0;
+    }
+
+    bool MoverEngineBackend::get_compressor_enabled(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->CompressorFlag : false;
+    }
+
+    bool MoverEngineBackend::get_compressor_allowed(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->CompressorAllow : false;
+    }
+
+    double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->EnginePower : 0.0;
+    }
+
+    double MoverEngineBackend::get_rpm_count(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->enrot : 0.0;
+    }
+
+    double MoverEngineBackend::get_rpm_ratio(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;
+    }
+
+    double MoverEngineBackend::get_circuit_nmax_rpm(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->nmax * 60.0 : 0.0;
+    }
+
+    int MoverEngineBackend::get_damage(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->EngDmgFlag : 0;
+    }
+
+    double MoverEngineBackend::get_main_switch_time(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->MainsInitTimeCountdown : 0.0;
+    }
+
+    bool MoverEngineBackend::get_main_no_power_pos(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
+    }
+
+    void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+        p_mover->EngineType = p_engine->engine_type_map.at(p_engine->get_engine_type());
+
+        p_mover->Transmision.NToothM = p_engine->get_transmission_gear_teeth_motor();
+        p_mover->Transmision.NToothW = p_engine->get_transmission_gear_teeth_wheel();
+        // Original engine: LoadFIZ_Engine (Mover.cpp) derives Ratio from the teeth counts
+        // itself right after parsing "Trans=" - NToothM/NToothW alone are never read anywhere
+        // else in Mover.cpp. Without this, Transmision.Ratio stays at its compiled default
+        // (1.0), silently dropping the real gear ratio out of Mw/Fw/Ft (ElectricSeriesMotor
+        // case, Mover.cpp ~line 5791) and undertractioning every geared vehicle.
+        p_mover->Transmision.Ratio =
+                p_engine->get_transmission_gear_teeth_motor() > 0
+                        ? static_cast<double>(p_engine->get_transmission_gear_teeth_wheel()) / p_engine->get_transmission_gear_teeth_motor()
+                        : 1.0;
+        p_mover->Transmision.Efficiency = p_engine->get_transmission_efficiency();
+        p_mover->Ftmax = p_engine->get_maximum_traction_force();
+        p_mover->HasControlPressureSwitch = p_engine->get_pressure_switch_present();
+        p_mover->InvertersNo = p_engine->get_inverters_count();
+        for (auto &fan: p_mover->MotorBlowers) {
+            fan.speed = static_cast<float>(p_engine->get_motor_blowers_speed());
+            fan.sustain_time = static_cast<float>(p_engine->get_motor_blowers_sustain_time());
+            fan.min_start_velocity = static_cast<float>(p_engine->get_motor_blowers_start_velocity());
+            fan.start_type = p_engine->start_mode_map.at(p_engine->get_motor_blowers_start_mode());
+        }
+
+        p_mover->MainCtrlPosNo = p_engine->get_cntrl_main_controller_position_count();
+        p_mover->ScndCtrlPosNo = p_engine->get_cntrl_shunt_controller_position_count();
+        p_mover->MainCtrlMaxDirChangePos = p_engine->get_cntrl_direction_change_max_position();
+        p_mover->EIMCtrlAdditionalZeros = p_engine->get_cntrl_eim_control_additional_zeros();
+        p_mover->EIMCtrlEmergency = p_engine->get_cntrl_eim_control_emergency();
+        p_mover->EIMCtrlType = p_engine->get_cntrl_eim_control_type();
+        p_mover->AutoRelayType = p_engine->get_cntrl_auto_relay_mode();
+        p_mover->CoupledCtrl = p_engine->get_cntrl_coupled_controllers();
+        p_mover->HasCamshaft = p_engine->get_cntrl_has_camshaft();
+        p_mover->ScndS = p_engine->get_cntrl_series_shunt_on_series_position();
+        p_mover->InitialCtrlDelay = p_engine->get_cntrl_initial_controller_delay();
+        p_mover->CtrlDelay = p_engine->get_cntrl_controller_step_delay();
+        p_mover->CtrlDownDelay = p_engine->get_cntrl_controller_step_down_delay();
+        p_mover->FastSerialCircuit = static_cast<int>(p_engine->get_cntrl_fast_series_circuit());
+
+        // Original engine: GroundRelay/NoVoltRelay/OvervoltageRelay/DamageFlag/EngDmgFlag/
+        // ConvOvldFlag are all live, self-computed Mover state (relay checks recomputed every
+        // Update() tick from real voltage/current, e.g. the ElectricSeriesMotor NoVoltRelay/
+        // OvervoltageRelay block, Mover.cpp ~5627) and already default to their "healthy" values
+        // in TMoverParameters's own constructor (MOVER.h:1590/1600/1601/401/1517/1518/1589).
+        // This method reruns on every dirty-flag config reapply (not just once at startup - see
+        // [[p_mover-parity-check]]), so force-resetting them here on every rerun was silently
+        // wiping real relay trips/damage the simulation had legitimately produced since the last
+        // reapply - matching the "traction voltage drops and the engine cuts out, needs the main
+        // switch re-engaged" symptom (NoVoltRelay/OvervoltageRelay flip Mains off for real, then
+        // a later config reapply cosmetically closes the relay again without also restoring
+        // Mains, so the panel looks fine but the loco is still dead).
+
+        /* motor param table */
+        constexpr int MAX = Maszyna::MotorParametersArraySize;
+        for (int i = 0; i < std::min(MAX, static_cast<int>(p_engine->get_motor_param_table().size())); i++) {
+            const Ref<MotorParameter> &row = p_engine->get_motor_param_table()[i];
+            if (row == nullptr || !row.is_valid() || row.is_null()) {
+                UtilityFunctions::push_warning(
+                        "[VehicleEngine]: p_engine->get_motor_param_table() property is null at index " + String::num(i));
+                return;
+            }
+
+            p_mover->MotorParam[i].mIsat = row->get_saturation_current_multiplier();
+            p_mover->MotorParam[i].fi = row->get_voltage_constant();
+            p_mover->MotorParam[i].mfi = row->get_voltage_constant_multiplier();
+            p_mover->MotorParam[i].Isat = row->get_saturation_current();
+            // readMPT0's default case (Mover.cpp:8948, what "MotorParamTable0:" rows actually go
+            // through) reads these two as real columns, unlike readMPTElectricSeries - see
+            // FizTrainEngineCommon.parse_motor_param_row's doc comment for the full story. fi0 in
+            // particular feeds Current()'s back-EMF term (Mover.cpp:389, "U1 = U + Mn*n*fi0*fi"),
+            // so leaving it at TMotorParameters's compiled-zero default here (matching the
+            // never-set case for the OTHER reader) would silently kill that back-EMF term.
+            p_mover->MotorParam[i].mfi0 = row->get_initial_voltage_constant_multiplier();
+            p_mover->MotorParam[i].fi0 = row->get_initial_voltage_constant();
+            p_mover->MPTRelay[i].Iup = row->get_shunting_up();     // bocznikowanie
+            p_mover->MPTRelay[i].Idown = row->get_shunting_down(); // bocznikowanie;
+        }
+    }
+
+    void MoverEngineBackend::fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+                if (p_mover == nullptr) {
+            return;
+        }
+        p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
+        p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
+        p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
+    }
+} // namespace godot

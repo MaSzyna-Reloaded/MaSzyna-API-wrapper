@@ -4,7 +4,7 @@ extends Control
 class_name DebugSwitch
 
 var _dirty = false
-var _controller:TrainController
+var _controller:VehicleController
 
 
 @export var label:String:
@@ -16,7 +16,7 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
 
 @export var type:SwitchType = SwitchType.TOGGLE
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -46,7 +46,8 @@ func _process(delta):
 
         $Label.text = label
         if not _controller and controller:
-            _controller = get_node(controller)
+            var physics_node: VehiclePhysicsNode = get_node_or_null(controller)
+            _controller = physics_node.get_controller() if physics_node else null
             $Switch.disabled = false
         else:
             $Switch.disabled = true

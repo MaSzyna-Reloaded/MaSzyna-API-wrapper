@@ -2,13 +2,13 @@
 extends RefCounted
 class_name FizTrainHeatingParser
 
-## Clima: section -> TrainHeating. LoadFIZ_Clima: Mover.cpp:11049 (delegates to the shared
+## Clima: section -> VehicleHeating. LoadFIZ_Clima: Mover.cpp:11049 (delegates to the shared
 ## LoadFIZ_PowerParamsDecode, Mover.cpp:11547, with prefix "H"/"AlterH").
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := TrainHeating.new()
+    var node := MoverVehicleHeating.new()
 
     if kv.has("Heating"):
         node.heating_source = FizTrainControllerParser.parse_power_source(FizLineUtil.get_string(kv, "Heating"))
@@ -27,4 +27,4 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
     if kv.has("HPowerTrans"):
         node.heating_power_cable_type = FizTrainControllerParser.parse_power_type(FizLineUtil.get_string(kv, "HPowerTrans"))
 
-    context.add_part("TrainHeating", node)
+    context.add_part("VehicleHeating", node)

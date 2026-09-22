@@ -1,7 +1,14 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "../traction/TractionPowerServer.hpp"
+#include "../cabin/Cabin3D.hpp"
+#include "../buffers/VehicleBuffCoupl.hpp"
+#include "../wheels/VehicleWheels.hpp"
+#include "VehiclePhysicsNode.hpp"
 
-#include "../engines/TrainElectricEngine.hpp"
+#include "../engines/VehicleElectricEngine.hpp"
+#include "../physics/RailVehicleServer.hpp"
+#include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
 
 #include <godot_cpp/classes/area3d.hpp>
@@ -20,6 +27,8 @@
 #include <array>
 
 namespace godot {
+    const char *RailVehicle3D::controller_changed_signal = "controller_changed";
+
     namespace {
         struct LightStateBinding {
                 const char *light_name;
@@ -75,7 +84,7 @@ namespace godot {
         PropertyInfo lights_property = GetTypeInfo<TypedDictionary<String, bool>>::get_class_info();
         lights_property.name = "lights";
         ADD_PROPERTY(lights_property, "set_lights", "get_lights");
-        BIND_RAIL_NODE_PATH(controller_path, "TrainController,FIZTrainController");
+        BIND_RAIL_NODE_PATH(controller_path, "VehicleController,FIZTrainController");
         BIND_RAIL_NODE_PATH(front_bogie_path, "Node3D");
         BIND_RAIL_NODE_PATH(rear_bogie_path, "Node3D");
         BIND_RAIL_NODE_PATH_ARRAY(front_rolling_wheel_paths);
@@ -116,6 +125,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("enter_cabin", "player"), &RailVehicle3D::enter_cabin);
         ClassDB::bind_method(D_METHOD("leave_cabin", "player"), &RailVehicle3D::leave_cabin);
         ClassDB::bind_method(D_METHOD("get_controller"), &RailVehicle3D::get_controller);
+        ClassDB::bind_method(D_METHOD("get_rid"), &RailVehicle3D::get_rid);
         ClassDB::bind_method(D_METHOD("move_on_track", "distance"), &RailVehicle3D::move_on_track);
         ClassDB::bind_method(D_METHOD("_process", "delta"), &RailVehicle3D::process_manually);
         ClassDB::bind_method(D_METHOD("_process_dirty"), &RailVehicle3D::_process_dirty);
@@ -125,6 +135,7 @@ namespace godot {
                 D_METHOD("_apply_cabin_camera_configuration"), &RailVehicle3D::_apply_cabin_camera_configuration);
         ClassDB::bind_method(D_METHOD("_on_controller_changed", "controller"), &RailVehicle3D::_on_controller_changed);
         ClassDB::bind_method(D_METHOD("_schedule_head_display_update"), &RailVehicle3D::_schedule_head_display_update);
+        ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loading"), &RailVehicle3D::_on_model_node_e3d_loading);
         ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loaded"), &RailVehicle3D::_on_model_node_e3d_loaded);
         ClassDB::bind_method(D_METHOD("_on_low_poly_cabin_e3d_loaded"), &RailVehicle3D::_on_low_poly_cabin_e3d_loaded);
         ClassDB::bind_method(
@@ -140,10 +151,10 @@ namespace godot {
 #undef BIND_RAIL_NODE_PATH_ARRAY
 #undef BIND_RAIL_NODE_PATH
 #undef BIND_RAIL_PROPERTY
-    }
-
-    Object *RailVehicle3D::_singleton(const StringName &p_name) const {
-        return get_tree()->get_root()->get_node_or_null(NodePath(p_name));
+        /* The vehicle this node renders has changed - it has one now, it has a different one, or
+         * it has none. Whoever needs the vehicle reacts to this instead of looking for it again
+         * later: a consumer wired up before the vehicle is built would otherwise have to poll. */
+        ADD_SIGNAL(MethodInfo(controller_changed_signal));
     }
 
     void RailVehicle3D::enter_cabin(Node *p_player) {
@@ -153,8 +164,8 @@ namespace godot {
         }
 
         camera = Object::cast_to<Node3D>(p_player->call("get_camera"));
-        Node3D *new_cabin = Object::cast_to<Node3D>(cabin_scene->instantiate());
-        if (new_cabin == nullptr || !new_cabin->has_signal("cabin_ready")) {
+        Cabin3D *new_cabin = Object::cast_to<Cabin3D>(cabin_scene->instantiate());
+        if (new_cabin == nullptr) {
             UtilityFunctions::push_error("Root node of cabin scene must be a Cabin3D");
             if (new_cabin != nullptr) {
                 new_cabin->queue_free();
@@ -168,23 +179,21 @@ namespace godot {
             controller->cab_activation_auto();
         }
 
-        if (!controller_path.is_empty()) {
-            TrainController *resolved_controller = _resolve_controller(controller_path);
-            if (resolved_controller != nullptr) {
-                cabin->set("controller_path", resolved_controller->get_path());
-            }
-        }
-
         cabin->set_visible(false);
         cabin->connect(
-                "cabin_ready", Callable(this, "_jump_into_cabin").bind(cabin, p_player), Object::CONNECT_ONE_SHOT);
-        cabin->connect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
-        cabin->connect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
+                Cabin3D::cabin_ready_signal, Callable(this, "_jump_into_cabin").bind(cabin, p_player),
+                Object::CONNECT_ONE_SHOT);
+        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->set_transform(Transform3D());
         if (cabin_rotate_180deg) {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
         }
         add_child(cabin);
+        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem. Told
+         * once it is in the tree, because building its interior puts nodes there, and told here
+         * rather than at the next controller change, which for an existing vehicle never comes. */
+        cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
 
         cabin_show_frames = 2;
         get_tree()->connect("process_frame", Callable(this, "_show_cabin_after_frames"), Object::CONNECT_ONE_SHOT);
@@ -223,8 +232,8 @@ namespace godot {
         camera->set_global_transform(camera_transform);
         camera->look_at(get_global_position() + Vector3(0.0, 1.75, -5.0));
         camera->set("velocity_multiplier", 1.0);
-        cabin->disconnect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
-        cabin->disconnect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
+        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->get_parent()->remove_child(cabin);
         cabin->queue_free();
         cabin = nullptr;
@@ -235,17 +244,17 @@ namespace godot {
         if (cabin == nullptr || camera == nullptr || camera->get_parent() != cabin) {
             return;
         }
-        camera->set("bound_enabled", cabin->get("camera_bound_enabled"));
-        Vector3 bound_min = cabin->get("camera_bound_min");
-        Vector3 bound_max = cabin->get("camera_bound_max");
+        camera->set("bound_enabled", cabin->get_camera_bound_enabled());
+        Vector3 bound_min = cabin->get_camera_bound_min();
+        Vector3 bound_max = cabin->get_camera_bound_max();
         bound_min.y += 0.5;
         bound_max.y += 1.8;
         camera->set("bound_min", bound_min);
         camera->set("bound_max", bound_max);
-        camera->set_global_transform(cabin->call("get_camera_transform"));
+        camera->set_global_transform(cabin->get_camera_transform());
         // Original engine looks along VectorFront * CabOccupied (drivermode.cpp:1071), so cab 2
         // faces the opposite way.
-        const bool rear_cab = static_cast<int>(cabin->get("cab_number")) < 0;
+        const bool rear_cab = static_cast<int>(cabin->get_cab_number()) < 0;
         if (cabin_rotate_180deg != rear_cab) {
             camera->set_global_basis(get_global_basis());
         } else {
@@ -254,56 +263,144 @@ namespace godot {
         }
     }
 
-    TrainController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
-        Node *node = get_node_or_null(p_node_path);
-        if (TrainController *direct_controller = Object::cast_to<TrainController>(node); direct_controller != nullptr) {
-            return direct_controller;
-        }
-        if (node != nullptr && node->has_method("get_controller")) {
-            return Object::cast_to<TrainController>(node->call("get_controller"));
-        }
-        return nullptr;
+    VehicleController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
+        // a vehicle in the tree is a VehiclePhysicsNode; the controller is the object it owns
+        VehiclePhysicsNode *physics = Object::cast_to<VehiclePhysicsNode>(get_node_or_null(p_node_path));
+        return physics == nullptr ? nullptr : physics->get_controller();
     }
 
-    TrainController *RailVehicle3D::get_controller() const {
+    RID RailVehicle3D::get_rid() const {
+        return rid;
+    }
+
+    VehicleController *RailVehicle3D::get_controller() const {
         return controller_path.is_empty() ? nullptr : _resolve_controller(controller_path);
     }
 
-    void RailVehicle3D::_on_controller_changed(TrainController *p_controller) {
+    /* The vehicle this node stands on was rebuilt - take whatever it owns now. */
+    /* The vehicle's configuration reached the backend. The bogie placement is derived from it
+     * (the pivot spacing), so it is recomputed here - not polled for. */
+    void RailVehicle3D::_on_vehicle_config_changed() {
+        force_detail_refresh = true;
+        apply_track_placement();
+    }
+
+    /* The vehicle this node draws has been (re)built. Everything this node sets up needs a
+     * vehicle, so this is where its own initialisation starts - and where processing begins. */
+    void RailVehicle3D::_on_vehicle_changed() {
+        VehicleController *vehicle = fiz_controller != nullptr ? fiz_controller->get_controller() : nullptr;
+        _on_controller_changed(vehicle);
+        // the vehicle was rebuilt in place, so its parts changed even though it did not
+        _adopt_vehicle_parts();
+        dirty = true;
+        set_process(true);
+    }
+
+    /* Resolving the vehicle node and subscribing to it. Done on entering the tree, before any
+     * processing: with the subscription made in _process() instead, a node that waits for its
+     * vehicle would never hear about it. */
+    void RailVehicle3D::_bind_vehicle_node() {
+        Node *controller_node = controller_path.is_empty() ? nullptr : get_node_or_null(controller_path);
+        VehiclePhysicsNode *new_fiz_controller = Object::cast_to<VehiclePhysicsNode>(controller_node);
+        if (new_fiz_controller == nullptr && !controller_path.is_empty()) {
+            const NodePath parent_path = NodePath(String(controller_path).get_base_dir());
+            Node *parent_node = parent_path.is_empty() ? nullptr : get_node_or_null(parent_path);
+            new_fiz_controller = Object::cast_to<VehiclePhysicsNode>(parent_node);
+        }
+        if (fiz_controller != new_fiz_controller) {
+            if (fiz_controller != nullptr) {
+                fiz_controller->disconnect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
+            }
+            fiz_controller = new_fiz_controller;
+            if (fiz_controller != nullptr) {
+                fiz_controller->connect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
+            }
+        }
+        _on_controller_changed(get_controller());
+    }
+
+    /* What the vehicle is made of, re-read from it. Kept apart from taking a *different*
+     * controller because a rebuild keeps the same one - the vehicle is first built empty and its
+     * components arrive with its model, so a guard on the controller's identity would leave this
+     * node holding the parts of the empty vehicle forever. */
+    void RailVehicle3D::_adopt_vehicle_parts() {
+        electric_engine = nullptr;
+        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
+            pantograph_wire_cache[index] = Dictionary();
+        }
+        if (controller == nullptr) {
+            return;
+        }
+        electric_engine = Object::cast_to<VehicleElectricEngine>(
+                controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+    }
+
+    void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
         if (controller == p_controller) {
             return;
         }
         if (controller != nullptr) {
             controller->disconnect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
+            controller->disconnect(
+                    VehicleController::config_changed,
+                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
         }
         controller = p_controller;
-        electric_engine = nullptr;
-        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
-            pantograph_wire_cache[index] = Dictionary();
-        }
         if (controller != nullptr) {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
-            TypedArray<Node> electric_engines = controller->find_children("*", "TrainElectricEngine", true, false);
-            if (!electric_engines.is_empty()) {
-                electric_engine = Object::cast_to<Node>(electric_engines[0]);
+            controller->connect(
+                    VehicleController::config_changed,
+                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+            _adopt_vehicle_parts();
+        }
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            /* A vehicle has one handle. When the controller already carries one - it does
+             * whenever a VehiclePhysicsNode built it - this node renders that vehicle rather than
+             * creating a second one, which would step the same controller twice and place only
+             * one of the two on a track. */
+            const RID vehicle_rid = controller != nullptr ? controller->get_rid() : RID();
+            if (vehicle_rid.is_valid() && vehicle_rid != rid) {
+                if (rid_owned && rid.is_valid()) {
+                    server->vehicle_free(rid);
+                }
+                rid = vehicle_rid;
+                rid_owned = false;
+                server->vehicle_attach_rail_vehicle(rid, get_instance_id());
+            }
+            if (rid.is_valid()) {
+                server->vehicle_attach_controller(rid, controller != nullptr ? controller->get_instance_id() : 0);
             }
         }
-        if (rid.is_valid()) {
-            _singleton("RailVehiclePhysicsServer")
-                    ->call("vehicle_bind_controller", rid, controller != nullptr ? controller->get_rid() : RID());
-        }
         if (cabin != nullptr) {
-            cabin->call("set_train_controller", controller);
+            cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
         }
         const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
         _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
+        emit_signal(controller_changed_signal);
     }
 
     void RailVehicle3D::_enter_tree() {
-        _singleton("TrackManager")->connect("tracks_changed", Callable(this, "_on_track_manager_tracks_changed"));
-        rid = _singleton("RailVehiclePhysicsServer")->call("vehicle_create");
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr) {
+            tracks->connect(
+                    TrackManager::tracks_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
+        }
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            rid = server->vehicle_create();
+            rid_owned = true;
+            server->vehicle_attach_rail_vehicle(rid, get_instance_id());
+        }
         pending_start_track_retry = !start_track_name.is_empty();
         dirty = true;
+        _bind_vehicle_node();
+        /* A node pointed at a vehicle does nothing until that vehicle exists - it would only
+         * place and animate itself against a vehicle that is not there yet. One without a
+         * vehicle of its own has nothing to wait for. */
+        set_process(controller_path.is_empty() || get_controller() != nullptr);
     }
 
     void RailVehicle3D::_ready() {
@@ -317,23 +414,35 @@ namespace godot {
     }
 
     void RailVehicle3D::_exit_tree() {
-        _singleton("TrackManager")->disconnect("tracks_changed", Callable(this, "_on_track_manager_tracks_changed"));
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr) {
+            tracks->disconnect(
+                    TrackManager::tracks_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
+        }
         if (model_node != nullptr) {
+            model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
             model_node = nullptr;
         }
-        if (rid.is_valid()) {
-            _singleton("RailVehiclePhysicsServer")->call("vehicle_free", rid);
-            rid = RID();
+        // only the handle this node created is this node's to free; an adopted one belongs to
+        // the VehiclePhysicsNode that built the vehicle
+        if (rid_owned && rid.is_valid()) {
+            if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+                server->vehicle_free(rid);
+            }
         }
+        rid = RID();
+        rid_owned = false;
         if (fiz_controller != nullptr) {
-            fiz_controller->disconnect("controller_changed", Callable(this, "_on_controller_changed"));
+            fiz_controller->disconnect(
+                        VehiclePhysicsNode::vehicle_changed_signal,
+                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             fiz_controller = nullptr;
         }
-        if (controller != nullptr) {
-            controller->disconnect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
-            controller = nullptr;
-        }
+        // letting go of the vehicle is the same operation as taking a different one, and it is
+        // the only place that disconnects - a second copy of the disconnect here is what made
+        // teardown report a connection that was never made
+        _on_controller_changed(nullptr);
     }
 
     void RailVehicle3D::_notification(int p_what) {
@@ -347,14 +456,16 @@ namespace godot {
     }
 
     void RailVehicle3D::_process_impl(double p_delta) {
-        if (dirty) {
-            _process_dirty();
-        }
+        /* The bindings first: _process_dirty() ends by placing the vehicle on its start track,
+         * and placing it positions the bogies - which needs their rest bases. Cached afterwards,
+         * the first placement finds none and a parked vehicle never gets a second one. */
         if (animation_bindings_dirty) {
             animation_bindings_dirty = false;
             _cache_animation_bindings();
             force_detail_refresh = true;
-            _update_track_transform();
+        }
+        if (dirty) {
+            _process_dirty();
         }
 
         update_time += p_delta;
@@ -369,13 +480,7 @@ namespace godot {
 
         if (!Engine::get_singleton()->is_editor_hint()) {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
-                // only the velocity is wanted here, and asking for the whole state would rebuild
-                // it from the mover for every vehicle of every frame (see get_state())
-                const double velocity = controller != nullptr ? controller->get_velocity() : 0.0;
-                // the vehicle is moved on its track by RailVehiclePhysicsServer's global step
-                if (!Math::is_zero_approx(velocity)) {
-                    _update_track_transform();
-                }
+                // the placement itself is applied by RailVehicleServer at the end of its step
                 if (electric_engine != nullptr) {
                     const Dictionary state = controller->get_state();
                     _update_pantograph_raise_state(p_delta, state);
@@ -434,36 +539,16 @@ namespace godot {
             return;
         }
 
-        Node *controller_node = controller_path.is_empty() ? nullptr : get_node_or_null(controller_path);
-        Node *new_fiz_controller = nullptr;
-        if (controller_node != nullptr && Object::cast_to<TrainController>(controller_node) == nullptr &&
-            controller_node->has_signal("controller_changed")) {
-            new_fiz_controller = controller_node;
-        }
-        if (new_fiz_controller == nullptr && !controller_path.is_empty()) {
-            const NodePath parent_path = NodePath(String(controller_path).get_base_dir());
-            Node *parent_node = parent_path.is_empty() ? nullptr : get_node_or_null(parent_path);
-            if (parent_node != nullptr && parent_node->has_signal("controller_changed")) {
-                new_fiz_controller = parent_node;
-            }
-        }
-        if (fiz_controller != new_fiz_controller) {
-            if (fiz_controller != nullptr) {
-                fiz_controller->disconnect("controller_changed", Callable(this, "_on_controller_changed"));
-            }
-            fiz_controller = new_fiz_controller;
-            if (fiz_controller != nullptr) {
-                fiz_controller->connect("controller_changed", Callable(this, "_on_controller_changed"));
-            }
-        }
-        _on_controller_changed(get_controller());
+        _bind_vehicle_node();
 
         Node3D *new_model_node = model_instance_path.is_empty() ? nullptr : node_at<Node3D>(this, model_instance_path);
         if (model_node != nullptr) {
+            model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
         }
         model_node = new_model_node;
         if (model_node != nullptr) {
+            model_node->connect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->connect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
         }
         _sync_model_lights();
@@ -527,10 +612,27 @@ namespace godot {
         }
     }
 
+    /* The model is about to free and rebuild its children, so every node cached out of it is
+     * about to dangle. Dropped here, at the event that announces it - RailVehicleServer's tick
+     * reaches apply_track_placement() before this node's own _process would. */
+    void RailVehicle3D::_on_model_node_e3d_loading() {
+        front_bogie_node = nullptr;
+        rear_bogie_node = nullptr;
+        front_rolling_wheel_nodes.clear();
+        powered_wheel_nodes.clear();
+        rear_rolling_wheel_nodes.clear();
+        node_rest_bases.clear();
+        bogie_rest_global_bases.clear();
+    }
+
+    /* Emitted after the model has put its children in place (E3DModelInstance.reload()), so the
+     * bindings are taken here rather than left to a flag the next frame would consume. */
     void RailVehicle3D::_on_model_node_e3d_loaded() {
         _sync_model_lights();
         _update_detection_area();
-        animation_bindings_dirty = true;
+        animation_bindings_dirty = false;
+        _cache_animation_bindings();
+        force_detail_refresh = true;
     }
 
     void RailVehicle3D::_on_low_poly_cabin_e3d_loaded() {
@@ -560,9 +662,9 @@ namespace godot {
         if (low_poly_cabin == nullptr) {
             return;
         }
-        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get("cab_number"));
+        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get_cab_number());
         const int occupied_cab_index = cab_number < 0 ? 2 : cab_number;
-        const bool hifi_cab = cabin != nullptr && bool(cabin->get("has_cab_model"));
+        const bool hifi_cab = cabin != nullptr && cabin->get_has_cab_model();
         for (int cab_index = 0; cab_index < 3; ++cab_index) {
             const String cab_name = "cab" + itos(cab_index);
             Node3D *cab_node = Object::cast_to<Node3D>(low_poly_cabin->find_child(cab_name, true, false));
@@ -661,8 +763,12 @@ namespace godot {
         if (!rid.is_valid()) {
             return;
         }
-        _singleton("RailVehiclePhysicsServer")->call("vehicle_move", rid, p_distance);
-        _update_track_transform();
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return;
+        }
+        server->vehicle_move(rid, p_distance);
+        apply_track_placement();
     }
 
     void RailVehicle3D::_on_track_manager_tracks_changed() {
@@ -675,15 +781,19 @@ namespace godot {
         if (start_track_name.is_empty()) {
             return;
         }
-        Object *track_manager = _singleton("TrackManager");
-        const RID track_rid = track_manager->call("track_get_rid_by_name", start_track_name);
+        TrackManager *tracks = TrackManager::get_instance();
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (tracks == nullptr || server == nullptr) {
+            return;
+        }
+        const RID track_rid = tracks->track_get_rid_by_name(start_track_name);
         if (!track_rid.is_valid()) {
             return;
         }
         pending_start_track_retry = false;
-        _singleton("RailVehiclePhysicsServer")
-                ->call("vehicle_set_track", rid, track_rid, start_track_offset, start_direction);
-        _update_track_transform();
+        server->vehicle_set_track(
+                rid, track_rid, start_track_offset, static_cast<TrackManager::Direction>(start_direction));
+        apply_track_placement();
     }
 
     TypedArray<Node3D> RailVehicle3D::_resolve_animation_nodes(const TypedArray<NodePath> &p_paths) const {
@@ -836,17 +946,20 @@ namespace godot {
     // matching the layout of the vehicle coupled at that end: 1 straight, 2 slanted, 3 slanted "r",
     // 4 straight "r"
     int RailVehicle3D::_pneumatic_variant(const int p_end, const bool p_brake_hose) const {
+        const VehicleBuffCoupl *coupler = _coupler();
+        if (coupler == nullptr) {
+            return 0;
+        }
+        const VehicleBuffCoupl::End end = static_cast<VehicleBuffCoupl::End>(p_end);
         const int own = get_pneumatic_layout(p_end, p_brake_hose);
         int other = 0;
-        if (TrainController *other_controller = controller->get_coupled_controller(p_end);
-            other_controller != nullptr) {
-            Node *node = other_controller->get_parent();
-            while (node != nullptr && Object::cast_to<RailVehicle3D>(node) == nullptr) {
-                node = node->get_parent();
-            }
-            if (const RailVehicle3D *other_vehicle = Object::cast_to<RailVehicle3D>(node); other_vehicle != nullptr) {
-                other = other_vehicle->get_pneumatic_layout(
-                        controller->get_mover()->Couplers[p_end].ConnectedNr, p_brake_hose);
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (VehicleController *other_controller = controller->get_coupled_controller(p_end);
+            other_controller != nullptr && server != nullptr) {
+            const ObjectID other_id = ObjectID(server->vehicle_get_rail_vehicle(other_controller->get_rid()));
+            if (const RailVehicle3D *other_vehicle = Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(other_id));
+                other_vehicle != nullptr) {
+                other = other_vehicle->get_pneumatic_layout(coupler->get_connected_end(end), p_brake_hose);
             }
         }
         if (own == other) {
@@ -856,7 +969,7 @@ namespace godot {
                 case 2:
                     return 3;
                 case 3:
-                    return controller->get_mover()->Couplers[p_end].Render ? 1 : 4;
+                    return coupler->is_coupling_owner(end) ? 1 : 4;
                 default:
                     return 0;
             }
@@ -880,21 +993,27 @@ namespace godot {
         }
     }
 
+    const VehicleBuffCoupl *RailVehicle3D::_coupler() const {
+        return controller != nullptr
+                       ? Object::cast_to<VehicleBuffCoupl>(
+                                 controller->get_component(VehicleComponentType::COMPONENT_BUFFERS))
+                       : nullptr;
+    }
+
     // Original engine: coupler and hose submodel visibility (DynObj.cpp:758-925, bnewAirCouplers branch)
     void RailVehicle3D::_update_couplers() {
-        if (coupler_submodel_nodes.is_empty() || controller->get_mover() == nullptr) {
+        const VehicleBuffCoupl *coupler = _coupler();
+        if (coupler_submodel_nodes.is_empty() || coupler == nullptr) {
             return;
         }
-        const TMoverParameters *mover = controller->get_mover();
         int variants[2][3];
         int64_t state = 0;
         for (int end = 0; end < 2; ++end) {
-            const TCoupling &coupler = mover->Couplers[end];
-            const bool coupled = (coupler.CouplingFlag & coupling::coupler) != 0;
-            // _on for the coupling owner (Render), _xon (or _off without it) for the other vehicle
-            variants[end][0] = !coupled ? 0 : (coupler.Render ? 1 : 2);
-            variants[end][1] = (coupler.CouplingFlag & coupling::brakehose) != 0 ? _pneumatic_variant(end, true) : 0;
-            variants[end][2] = (coupler.CouplingFlag & coupling::mainhose) != 0 ? _pneumatic_variant(end, false) : 0;
+            const VehicleBuffCoupl::End vehicle_end = static_cast<VehicleBuffCoupl::End>(end);
+            // _on for the vehicle that draws the coupler, _xon (or _off without it) for the other
+            variants[end][0] = !coupler->is_coupled(vehicle_end) ? 0 : (coupler->is_coupling_owner(vehicle_end) ? 1 : 2);
+            variants[end][1] = coupler->is_brake_hose_connected(vehicle_end) ? _pneumatic_variant(end, true) : 0;
+            variants[end][2] = coupler->is_main_hose_connected(vehicle_end) ? _pneumatic_variant(end, false) : 0;
             for (const int variant: variants[end]) {
                 state = state * 5 + variant;
             }
@@ -963,21 +1082,25 @@ namespace godot {
     }
 
     void RailVehicle3D::_update_wheel_animation_state() {
-        if (controller == nullptr) {
+        const VehicleWheels *wheels =
+                controller != nullptr
+                        ? Object::cast_to<VehicleWheels>(
+                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                        : nullptr;
+        if (wheels == nullptr) {
             return;
         }
-        const Dictionary state = controller->get_state();
         // Same sign as the original's UpdateAxle() (DynObj.cpp:489) - the wheel submodels live in
         // the MaSzyna vehicle frame, which MaszynaRailVehicle3DInstancer converts as a whole.
-        _apply_wheel_rotation(front_rolling_wheel_nodes, double(state.get("wheel_angle_front_deg", 0.0)));
-        _apply_wheel_rotation(powered_wheel_nodes, double(state.get("wheel_angle_powered_deg", 0.0)));
-        _apply_wheel_rotation(rear_rolling_wheel_nodes, double(state.get("wheel_angle_rear_deg", 0.0)));
+        _apply_wheel_rotation(front_rolling_wheel_nodes, wheels->get_angle_front_deg());
+        _apply_wheel_rotation(powered_wheel_nodes, wheels->get_angle_powered_deg());
+        _apply_wheel_rotation(rear_rolling_wheel_nodes, wheels->get_angle_rear_deg());
     }
 
     /// A vehicle far from the camera is rendered from RenderingServer instances instead of a node
     /// hierarchy: nothing animates at that distance, and the hierarchy is what costs - hundreds of
     /// Node3Ds per vehicle to walk, notify and propagate a transform through, times the hundreds of
-    /// vehicles a scenery runs. Its simulation is untouched, it lives in RailVehiclePhysicsServer.
+    /// vehicles a scenery runs. Its simulation is untouched, it lives in RailVehicleServer.
     ///
     /// The vehicle keeps its transform applied either way, so it stays where it belongs; only the
     /// model's instancer changes. Note the OPTIMIZED backend does not render SUBMODEL_FREE_SPOTLIGHT
@@ -1020,8 +1143,8 @@ namespace godot {
             return;
         }
         const Dictionary state = controller->get_state();
-        const int engine_type = state.get("engine_type", TrainEngine::NONE);
-        if (engine_type != TrainEngine::DIESEL && engine_type != TrainEngine::DIESEL_ELECTRIC) {
+        const int engine_type = state.get("engine_type", VehicleEngine::NONE);
+        if (engine_type != VehicleEngine::DIESEL && engine_type != VehicleEngine::DIESEL_ELECTRIC) {
             return;
         }
 
@@ -1057,12 +1180,15 @@ namespace godot {
         model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
-    void RailVehicle3D::_update_track_transform() {
+    void RailVehicle3D::apply_track_placement() {
         if (!rid.is_valid() || start_track_name.is_empty() || pending_start_track_retry) {
             return;
         }
-        Object *physics_server = _singleton("RailVehiclePhysicsServer");
-        const Transform3D center_transform = physics_server->call("vehicle_get_transform", rid);
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr) {
+            return;
+        }
+        const Transform3D center_transform = server->vehicle_get_transform(rid);
         const bool moved = center_transform != last_center_transform;
         last_center_transform = center_transform;
         set_global_transform(center_transform);
@@ -1086,21 +1212,19 @@ namespace godot {
         }
 
         bogie_configuration_warned = false;
-        const double pivot_spacing =
-                controller != nullptr ? double(controller->get_config().get("bogie_pivot_spacing", 0.0)) : 0.0;
-        if (pivot_spacing <= 0.0) {
+        // the running gear is the wheels' business: they know the pivot spacing and where each
+        // bogie sits. This node only puts the nodes there.
+        VehicleWheels *wheels =
+                controller != nullptr
+                        ? Object::cast_to<VehicleWheels>(
+                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                        : nullptr;
+        if (wheels == nullptr) {
             _update_wheel_animation_state();
             return;
         }
-        // RailVehiclePhysicsServer's track-offset distance is rear-relative (see
-        // process_movement()'s own comment on this), so a positive distance here actually
-        // samples toward the vehicle's rear, not its front - swapped from what the "front"/
-        // "rear" naming below implies. Confirmed live: this flipped the whole vehicle 180
-        // degrees the instant it started moving (test_rail_vehicle_idle_orientation_regression.gd).
-        const Transform3D front_transform =
-                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * -0.5);
-        const Transform3D rear_transform =
-                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * 0.5);
+        const Transform3D front_transform = wheels->get_bogie_transform(VehicleWheels::BOGIE_FRONT);
+        const Transform3D rear_transform = wheels->get_bogie_transform(VehicleWheels::BOGIE_REAR);
         Vector3 body_forward = front_transform.origin - rear_transform.origin;
         if (body_forward.is_zero_approx()) {
             _update_wheel_animation_state();
@@ -1160,9 +1284,9 @@ namespace godot {
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
-        electric_engine->call("set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
-        electric_engine->call(
-                "set_pantograph_wire_voltage", TrainElectricEngine::PANTOGRAPH_SECOND,
+        electric_engine->set_pantograph_wire_voltage(VehicleElectricEngine::PANTOGRAPH_FIRST, front_voltage);
+        electric_engine->set_pantograph_wire_voltage(
+                VehicleElectricEngine::PANTOGRAPH_SECOND,
                 rear_active ? _pantograph_wire_voltage(3, pantograph_rear_offset, frame, assumed_voltage, current)
                             : 0.0);
     }
@@ -1177,7 +1301,10 @@ namespace godot {
         if (!wire_rid.is_valid()) {
             return 0.0;
         }
-        return _singleton("TractionPowerServer")->call("wire_get_voltage", wire_rid, p_assumed_voltage, p_current);
+        TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
+        return traction_power_server != nullptr
+                       ? traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current)
+                       : 0.0;
     }
 
     void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
@@ -1210,7 +1337,7 @@ namespace godot {
         const bool power_available =
                 bool(state.get("power24_available", false)) || bool(state.get("power110_available", false));
         const bool is_ezt =
-                (controller->get_train_type() & TrainController::TRAIN_TYPE_EZT) == TrainController::TRAIN_TYPE_EZT;
+                (controller->get_train_type() & VehicleController::TRAIN_TYPE_EZT) == VehicleController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;
         double speed_factor = 0.0;
         if (pressure > pressure_threshold && power_available) {
@@ -1258,16 +1385,24 @@ namespace godot {
     Dictionary RailVehicle3D::_find_pantograph_wire(
             int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
             const Vector3 &p_left) {
-        Object *traction_power_server = _singleton("TractionPowerServer");
+        TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
+        if (traction_power_server == nullptr) {
+            /* "No wire in reach", the same answer the search gives when it finds none - the raise
+             * simulation reads this height and an absent key would read as 0.0, which is
+             * "the wire is right here" and folds the pantograph instead of extending it. */
+            Dictionary missing;
+            missing["rid"] = RID();
+            missing["height"] = INFINITY;
+            return missing;
+        }
         Dictionary cache = pantograph_wire_cache[p_index];
         // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),
         // a new search only once the pantograph left that span - a cached height made the wire height change
         // in steps while driving, dropping the contact (and the voltage) whenever it stepped up
         const RID wire_rid = cache.get("rid", RID());
         if (wire_rid.is_valid()) {
-            const double height = traction_power_server->call(
-                    "wire_get_height_above", wire_rid, p_contact_point, p_up, p_forward, p_left,
-                    pantograph_collector_width);
+            const double height = traction_power_server->wire_get_height_above(
+                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
             if (Math::is_finite(height)) {
                 Dictionary result;
                 result["rid"] = wire_rid;
@@ -1276,8 +1411,8 @@ namespace godot {
             }
         }
         // without a wire, search the region every frame like update_traction() (DynObj.cpp:8292)
-        const Dictionary result = traction_power_server->call(
-                "wire_find_above_with_height", p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
+        const Dictionary result = traction_power_server->wire_find_above_with_height(
+                p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;

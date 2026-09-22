@@ -3,7 +3,7 @@ extends MaszynaGutTest
 var _train_system:Object
 var _created_tracks: Array[RID] = []
 var _created_vehicles: Array[RailVehicle3D] = []
-var _created_controllers: Array[TrainController] = []
+var _created_vehicle_nodes: Array[VehiclePhysicsNode] = []
 
 
 func before_each() -> void:
@@ -18,12 +18,7 @@ func after_each() -> void:
             vehicle.queue_free()
     _created_vehicles.clear()
 
-    for controller: TrainController in _created_controllers:
-        if is_instance_valid(controller):
-            if controller.get_parent():
-                controller.get_parent().remove_child(controller)
-            controller.queue_free()
-    _created_controllers.clear()
+    _created_vehicle_nodes.clear()
 
     for track_rid: RID in _created_tracks:
         if TrackManager.track_exists(track_rid):
@@ -34,7 +29,7 @@ func after_each() -> void:
 
 func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void:
     var fixture: Dictionary = await _create_fixture(0.0)
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(train)
@@ -51,7 +46,7 @@ func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void
 
 func test_train_position_changed_signal_rearms_after_last_emission() -> void:
     var fixture: Dictionary = await _create_fixture(1.1)
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(train)
@@ -65,7 +60,7 @@ func test_train_position_changed_signal_rearms_after_last_emission() -> void:
 
 func test_train_system_bubbling_after_unregistration() -> void:
     var fixture: Dictionary = await _create_fixture(0.0, "test_train_2")
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(_train_system)
@@ -79,26 +74,25 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     var track_rid: RID = TrackManager.track_create()
     _created_tracks.append(track_rid)
     TrackManager.track_update_curves(track_rid, _curve(Vector3(0.0, 0.0, 0.0), Vector3(20.0, 0.0, 0.0)), null)
-    TrackManager.track_update(track_rid, TrackManager.TrackType.TRACK_NORMAL, "start", 1.435)
+    TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "start", 1.435)
     TrackManager.topology_rebuild()
 
-    var controller: TrainController = TrainController.new()
-    controller.train_id = train_id
+    var physics_node: VehiclePhysicsNode = build_vehicle_node(train_id)
+    var controller: VehicleController = physics_node.get_controller()
     controller.type_name = "test"
-    add_child(controller)
-    _created_controllers.append(controller)
+    _created_vehicle_nodes.append(physics_node)
 
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = offset
-    vehicle.set("start_direction", TrackManager.Direction.DIRECTION_REVERSED)
+    vehicle.set("start_direction", TrackManager.DIRECTION_REVERSED)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     _created_vehicles.append(vehicle)
     await wait_idle_frames(2)
 
     return {
-        "controller": controller,
+        "controller": physics_node.get_controller(),
         "vehicle": vehicle,
     }
 

@@ -114,9 +114,9 @@ static func _ensure_built() -> void:
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
-            # brake_level_set expects a normalized 0..1 level (TrainBrake.cpp converts it back to
+            # brake_level_set expects a normalized 0..1 level (VehicleBrake.cpp converts it back to
             # raw internally), so the widget's own value/command domain has to stay normalized -
-            # but MMD's scale is calibrated against the raw handle range (TrainBrake.cpp's
+            # but MMD's scale is calibrated against the raw handle range (VehicleBrake.cpp's
             # fBrakeCtrlPos), so the animation shape needs rescaling by that same raw range or the
             # lever visibly over/under-rotates. See _apply_animation_shape()'s doc comment.
             "animation_range_config_properties": ["brakes_controller_position_min", "brakes_controller_position_max"],
@@ -191,7 +191,7 @@ static func _ensure_built() -> void:
         # (Train.cpp:3567-3585, OnCommand_converteroverloadrelayreset ->
         # RelayReset(relay_t::primaryconverteroverload), and Train.cpp:10053
         # "converterfuse_bt:" -> ggConverterFuseButton). state_property reuses the existing
-        # converter_overload reading (TrainEngine.cpp - MoverParameters->ConvOvldFlag).
+        # converter_overload reading (VehicleEngine.cpp - MoverParameters->ConvOvldFlag).
         # Confirmed against Train.cpp:1917-1939 (OnCommand_sandboxactivate) and Train.cpp:10044
         # ("sand_bt:" -> ggSandButton) - momentary, matching the original's press/release shape
         # (sand only while held), same as fuse_bt/converterfuse_bt above.
@@ -269,13 +269,13 @@ static func _ensure_built() -> void:
         },
         # Confirmed against Train.cpp's own cabin gauge dispatch table (horn_bt:/hornlow_bt:/
         # hornhigh_bt:/whistle_bt: -> ggHornButton/ggHornLowButton/ggHornHighButton/
-        # ggWhistleButton) and TrainHorns' own low/high/whistle command+state model (see
-        # TrainHorns.hpp) - state_property is the RAW commanded press (unaffected by the
+        # ggWhistleButton) and VehicleHorns' own low/high/whistle command+state model (see
+        # VehicleHorns.hpp) - state_property is the RAW commanded press (unaffected by the
         # emergency-brake override), matching the original's UpdateValue() calls firing straight
         # from the command handler, not the combined "_active" (sound-triggering) state.
         # hornlow_bt:/hornhigh_bt: are the dedicated per-slot buttons (present together on ~80
         # real vehicles). action points at dedicated "horn_low"/"horn_high"/"whistle" InputMap
-        # actions (demo/project.godot) - matching TrainHorns' own command naming, not sm42_v1's
+        # actions (demo/project.godot) - matching VehicleHorns' own command naming, not sm42_v1's
         # older horn1/horn2 shim naming (that scene's own action_increase/action_decrease were
         # updated to match).
         #
@@ -287,7 +287,7 @@ static func _ensure_built() -> void:
         # responds to BOTH low and high (swinging the same gauge to -1.0/+1.0 depending on which
         # was pressed), not low-only. Modeled as a CabinSwitch exactly like SM42's own
         # hand-authored "Horn" node (demo/vehicles/sm42/sm_42_cabin.tscn) - a single bidirectional
-        # lever using TrainHorns' "horn" compatibility command (signed: >0 activates low, <0
+        # lever using VehicleHorns' "horn" compatibility command (signed: >0 activates low, <0
         # activates high) - rather than CabinButton, which can only carry one command and would
         # leave one of the two keys permanently dead whenever only horn_bt: exists.
         "horn_bt": {
@@ -461,7 +461,7 @@ static func _ensure_built() -> void:
         },
         # Confirmed against demo/vehicles/sm42/sm_42_cabin.tscn's own hand-authored wiring
         # (command/state_property/action copied verbatim) and now backed generically by
-        # TrainLighting::devices_light()/roof_light() (TrainLighting.cpp) instead of a
+        # VehicleLighting::devices_light()/roof_light() (VehicleLighting.cpp) instead of a
         # per-vehicle script - state is power-gated the same way there (24V/110V availability).
         "instrumentlight_sw": {
             "widget_class": CabinButton,
@@ -569,7 +569,7 @@ static func _ensure_built() -> void:
         # Confirmed against the original engine's own source (Train.cpp:10487-10492, "hvoltage:"
         # loads a gauge and binds it to fHVoltage, itself computed as
         # max(PantographVoltage, GetTrainsetHighVoltage()) - Train.cpp:6944-6946, see
-        # TrainElectricEngine.cpp's own comment on current_collector/voltage). Not in the
+        # VehicleElectricEngine.cpp's own comment on current_collector/voltage). Not in the
         # pressure-family mmd_scale_multiplier list above, so default mul=1.0 like tachometer/
         # enrot/oilpress.
         "hvoltage": {
@@ -631,7 +631,7 @@ static func _ensure_built() -> void:
         # internal Timer, driving a `blink` signal a cabin-script handler uses to toggle those
         # lights externally. blink_time (below) ports that same Timer-based flash directly into
         # CabinSpotLight3D itself instead, so this stays one widget per MMD label.
-        # Confirmed against TrainController.cpp:46/265,429 - exact command+state pair already
+        # Confirmed against VehicleController.cpp:46/265,429 - exact command+state pair already
         # proven in production via SM42's own hand-authored Battery node.
         "battery_sw": {
             "widget_class": CabinButton,
@@ -658,7 +658,7 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against TrainElectricEngine.cpp:160,172,322 - converter()/converter_enabled.
+        # Confirmed against VehicleElectricEngine.cpp:160,172,322 - converter()/converter_enabled.
         "converter_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -670,7 +670,7 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against TrainElectricEngine.cpp:159,170,323 - compressor()/compressor_enabled -
+        # Confirmed against VehicleElectricEngine.cpp:159,170,323 - compressor()/compressor_enabled -
         # the switch label (vehicle/Train.cpp:11875, "compressor_sw:" -> ggCompressorButton), not
         # to be confused with "compressor:"/"compressorb:" (the pressure GAUGE, still genuinely
         # missing - no raw pressure value exists in the wrapper, only the enabled/allowed booleans).
@@ -714,7 +714,7 @@ static func _ensure_built() -> void:
         # wipers_sw: the wiper switch, one position per row of the FIZ WiperList:
         # (Train.cpp:11985 ggWiperSw, drivermouseinput.cpp:1110 wiperswitchincrease/decrease,
         # Train.cpp:2638-2661). The original has no default key for it. The switch and the
-        # wipers live in TrainWipers - the vendored Mover has neither.
+        # wipers live in VehicleWipers - the vendored Mover has neither.
         "wipers_sw": {
             "widget_class": CabinSwitch,
             "fixed_fields": {
@@ -735,7 +735,7 @@ static func _ensure_built() -> void:
         # control, not just a passive readout, so it needs the same CabinSwitch shape as mainctrl
         # (mouse-turnable + command_increase/decrease), not CabinGauge (display-only, no input).
         # switch_min/max_position match radio_channel_min/max's own real default range
-        # (TrainController.hpp - 1..10, the same range the original engine hardcodes universally
+        # (VehicleController.hpp - 1..10, the same range the original engine hardcodes universally
         # in OnCommand_radiochannelset). value_offset=1: confirmed real in-game - channel 1
         # (switch_position=1) was rendering the knob one full step past its physical rest
         # position, and decrease could never visually return to rest, because the knob's own
@@ -788,19 +788,19 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against TrainElectricEngine.cpp:313-318 - pantograph(PantographSelector,bool)
+        # Confirmed against VehicleElectricEngine.cpp:313-318 - pantograph(PantographSelector,bool)
         # takes the selector as its FIRST argument (TrainSystem.cpp:203-209 maps send_command's p1
         # to the Callable's first arg, p2 to the second) - command_param supplies the fixed
         # PANTOGRAPH_FIRST selector, pushed supplies the enabled bool as p2. state_property
-        # confirmed against TrainElectricEngine.cpp:201 (`Pantographs[0].is_active`) -
+        # confirmed against VehicleElectricEngine.cpp:201 (`Pantographs[0].is_active`) -
         # MOVER.h:154's `end { front = 0, rear = 1 }` confirms index 0 really is the front
-        # pantograph, matching PANTOGRAPH_FIRST's own front mapping (TrainElectricEngine.cpp:316).
+        # pantograph, matching PANTOGRAPH_FIRST's own front mapping (VehicleElectricEngine.cpp:316).
         "pantfront_sw": {
             "widget_class": CabinButton,
             "fixed_fields": {
                 "monostable": false,
                 "command": "pantograph",
-                "command_param": TrainElectricEngine.PANTOGRAPH_FIRST,
+                "command_param": VehicleElectricEngine.PANTOGRAPH_FIRST,
                 "state_property": "current_collector/pantograph_first_active",
                 "action": "pantograph_front_toggle",
             },
@@ -815,14 +815,14 @@ static func _ensure_built() -> void:
             "fixed_fields": {
                 "monostable": false,
                 "command": "pantograph",
-                "command_param": TrainElectricEngine.PANTOGRAPH_SECOND,
+                "command_param": VehicleElectricEngine.PANTOGRAPH_SECOND,
                 "state_property": "current_collector/pantograph_second_active",
                 "action": "pantograph_rear_toggle",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against TrainController.cpp:422 - internal_state["total_distance"] =
+        # Confirmed against VehicleController.cpp:422 - internal_state["total_distance"] =
         # p_mover->DistCounter, the exact same field the original engine's own distcounter: gauge
         # binds (vehicle/Train.cpp:12370-12374, gauge.AssignDouble(&mvControlled->DistCounter)) -
         # loaded with no explicit mul argument there, so max_value=1.0 (the same "no correction"
@@ -836,7 +836,7 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "target_mesh_path",
         },
-        # Confirmed against TrainController.cpp:443 - internal_state["current1"] =
+        # Confirmed against VehicleController.cpp:443 - internal_state["current1"] =
         # p_mover->ShowCurrent(1), matching the original engine's own hvcurrent1: gauge
         # (vehicle/Train.cpp:12137-12142, gauge.AssignFloat(fHCurrent + 1)) in its default path
         # (vehicle/Train.cpp:8638-8641, fHCurrent[1] = mvControlled->ShowCurrent(1) - a plain,
@@ -856,7 +856,7 @@ static func _ensure_built() -> void:
         },
         # Same source/shape as hvcurrent1 above, one motor circuit over (Train.cpp:10317
         # "hvcurrent2:"/"hvcurrent2b:", ShowCurrent(2) - internal_state["current2"] already exposed
-        # by TrainController.cpp identically to current1).
+        # by VehicleController.cpp identically to current1).
         "hvcurrent2": {
             "widget_class": CabinGauge,
             "fixed_fields": {
@@ -869,7 +869,7 @@ static func _ensure_built() -> void:
         # Train.cpp:10494-10498 "lvoltage:" ("woltomierz niskiego napiecia" - low voltage
         # voltmeter) loads a plain gauge with no AssignFloat visible at the load site itself;
         # ggLVoltage.GetValue() is read back elsewhere as a plain gauge value, not a computed
-        # one - power24_voltage (TrainController.cpp, p_mover->Power24vVoltage) is this wrapper's
+        # one - power24_voltage (VehicleController.cpp, p_mover->Power24vVoltage) is this wrapper's
         # own low-voltage-circuit reading, same domain (24V control/battery circuit).
         "lvoltage": {
             "widget_class": CabinGauge,
@@ -928,7 +928,7 @@ static func _ensure_built() -> void:
             "position_at_submodel": true,
         },
         # These mirror the original's own combined conditions (not single-flag passthroughs) -
-        # see TrainElectricEngine.cpp's own comment on "indicators/*" for the exact Train.cpp
+        # see VehicleElectricEngine.cpp's own comment on "indicators/*" for the exact Train.cpp
         # line references each one is confirmed against.
         "i-contactors": {
             "widget_class": CabinIndicator3D,
@@ -1065,7 +1065,7 @@ static func _ensure_built() -> void:
         },
         # Confirmed against Mover.cpp:183-188 (is_cabsignal_blinking(): `return power &&
         # cabsignal_active` - same static "alert active" shape as is_blinking(), not a real-time
-        # oscillating value) and TrainSecuritySystem.cpp:64 (p_state["cabsignal_blinking"]).
+        # oscillating value) and VehicleSecuritySystem.cpp:64 (p_state["cabsignal_blinking"]).
         # Same reasoning as i-radio above: SM42's own hand-authored cabin has no dedicated SHP
         # indicator light to copy real numeric params from (only a "czuw_shp" SecurityAcknowledge
         # BUTTON mesh, not a light), so light_enabled stays at its default (false); on_target/
@@ -1084,7 +1084,7 @@ static func _ensure_built() -> void:
             "widget_class": CabinSpotLight3D,
             "fixed_fields": {
                 "state_property": "blinking",
-                # "blinking" (TrainSecuritySystem::is_blinking(), Mover.cpp) is a STATIC "alert
+                # "blinking" (VehicleSecuritySystem::is_blinking(), Mover.cpp) is a STATIC "alert
                 # active" flag, not a real-time oscillating value - blink_time (matching
                 # CabinBlinker's own default, cabin_blinker.gd) is what actually makes the light
                 # flash instead of just turning steadily on.
@@ -1110,10 +1110,10 @@ static func _ensure_built() -> void:
             "aim_at_driver": true,
         },
         # Confirmed against vehicle/Train.cpp:5267-5316 (OnCommand_headlighttoggleleft/enableleft
-        # etc.) and TrainLighting::light_switch()'s own doc comment (TrainLighting.hpp) - these ten
+        # etc.) and VehicleLighting::light_switch()'s own doc comment (VehicleLighting.hpp) - these ten
         # MMD switch labels are cab-relative: upperlight_sw:/leftlight_sw:/rightlight_sw:/
         # leftend_sw:/rightend_sw: (no "rear" prefix) toggle whichever physical end is the
-        # CURRENTLY ACTIVE cab's own front, so their own switch position mirrors TrainLighting's
+        # CURRENTLY ACTIVE cab's own front, so their own switch position mirrors VehicleLighting's
         # "active_..." state; rearupperlight_sw:/etc. toggle the opposite end, mirroring
         # "opposite_...". command_param is light_switch()'s own p_light argument - the MMD label's
         # suffix after stripping "light"/"_sw" (confirmed real examples from that doc comment:
@@ -1245,8 +1245,8 @@ static func _ensure_built() -> void:
         # resolved per-end light bitmask (MOVER.h's iLights[front]/iLights[rear], tested against
         # the `light::` bit flags) directly, not the raw selector position - iLights is the
         # final, live "which bulbs are actually lit" result (already accounts for
-        # light_power/selector position/wiring), added to TrainLighting's own state
-        # (lights/front_headlight_upper_enabled etc., TrainLighting.cpp) specifically for these
+        # light_power/selector position/wiring), added to VehicleLighting's own state
+        # (lights/front_headlight_upper_enabled etc., VehicleLighting.cpp) specifically for these
         # labels.
         # "upper"=headlight_upper, "left/right light"=headlight_left/right (white),
         # "left/right end"=redmarker_left/right (red tail/end-of-train markers) - confirmed via

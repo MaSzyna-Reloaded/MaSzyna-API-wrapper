@@ -15,7 +15,7 @@ const COUPLING_PERMANENT:int = 128
 ## `offset == -1.0 ? trainset.offset : trainset.offset - offset`, then decrements
 ## trainset.offset by the vehicle's own physical length (from its .fiz Dimensions: L=) for the
 ## NEXT vehicle in the consist - read directly and synchronously here (not via
-## FIZTrainController's own async pipeline, which only finishes loading after scene
+## FizVehiclePhysicsNode's own async pipeline, which only finishes loading after scene
 ## construction, too late to affect this vehicle's own placement).
 ##
 ## offset == -1.0 is also, separately, the original's own sentinel for "place this vehicle
@@ -50,7 +50,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     # original gets the same way (DynObj.cpp:2308, fDist -= 0.5 * Dim.L).
     vehicle.start_track_offset = start_offset - 0.5 * length
     vehicle.start_direction = (
-        TrackManager.Direction.DIRECTION_REVERSED if reversed else TrackManager.Direction.DIRECTION_NORMAL
+        TrackManager.DIRECTION_REVERSED if reversed else TrackManager.DIRECTION_NORMAL
     )
     vehicle.initial_velocity = velocity
     # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.

@@ -10,7 +10,8 @@ class_name LegacyCabinLogicDelegate
 ## wired straight to its vehicle command by LegacyCabinForwardCommands.
 
 ## Set by the factory before the node enters the tree.
-var controller:TrainController
+## Which vehicle this cabin logic drives; everything goes through CabinSystem.
+var train_id:String = ""
 var cab:int = 1
 
 var _behaviours:Array = []
@@ -22,7 +23,7 @@ var _unmodelled_controls:LegacyCabinUnmodelledControls
 var _brake_charging:LegacyCabinBrakeCharging
 
 
-# FIXME(#184): train_id comes from the TrainController, see BaseCabinTool3D._act().
+# FIXME(#184): train_id comes from the VehicleController, see BaseCabinTool3D._act().
 func _ready() -> void:
     var main_switch := LegacyCabinMainSwitch.new()
     var claimed:Array[StringName] = main_switch.control_ids()
@@ -50,10 +51,10 @@ func _ready() -> void:
     _brake_charging = LegacyCabinBrakeCharging.new()
     _behaviours.append(_brake_charging)
     for behaviour:RefCounted in _behaviours:
-        behaviour.register(controller.train_id, cab)
+        behaviour.register(train_id, cab)
     # last: whatever is registered by now is taken care of
     _unmodelled_controls = LegacyCabinUnmodelledControls.new(get_parent())
-    _unmodelled_controls.register(controller.train_id, cab)
+    _unmodelled_controls.register(train_id, cab)
     _behaviours.append(_unmodelled_controls)
 
 
@@ -64,12 +65,12 @@ func _unhandled_input(event:InputEvent) -> void:
     # Train.cpp:6285 OnCommand_occupiedcarcouplingdisconnect - uncouples at the occupied cab's end
     # (cab_to_end(), Train.h:216), with or without a couplingdisconnect_sw: gauge
     if event.is_action_pressed(&"coupler_disconnect_occupied", false, true) and not cab == 0:
-        CabinSystem.get_cabin_state(controller.train_id, cab).send_vehicle_command(
+        CabinSystem.get_cabin_state(train_id, cab).send_vehicle_command(
                 "coupler_disconnect", 1 if cab < 0 else 0)
     if event.is_action_pressed(LegacyCabinBrakeCharging.ACTION, false, true):
-        CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
+        CabinSystem.act(train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
     elif event.is_action_released(LegacyCabinBrakeCharging.ACTION, true):
-        CabinSystem.act(controller.train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
+        CabinSystem.act(train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
 
 
 func _has_control(control_id:StringName) -> bool:

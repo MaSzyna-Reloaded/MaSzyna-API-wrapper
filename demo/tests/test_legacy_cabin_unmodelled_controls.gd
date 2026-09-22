@@ -4,23 +4,22 @@ extends MaszynaGutTest
 ## main_on_bt, dirkey, shp_reset_bt, cabactivation_sw, ...): the original runs every OnCommand_*
 ## without its gauge, here LegacyCabinUnmodelledControls registers them in CabinSystem.
 
-var train: TrainController
+var train: VehicleController
 var cabin: Node3D
 
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestUnmodelledControls"
+    train = build_vehicle("TestUnmodelledControls")
     train.battery_voltage = 110.0
+    train.apply_configuration()
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
-    var engine: TrainElectricSeriesEngine = TrainElectricSeriesEngine.new()
+    var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
     engine.cntrl_main_controller_position_count = 4
-    train.add_child(engine)
-    add_child(train)
+    train.add_component(engine)
     cabin = Node3D.new()
     add_child(cabin)
     var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.controller = train
+    logic.train_id = train.train_id
     logic.cab = 1
     cabin.add_child(logic)
     await wait_idle_frames(2)
@@ -29,8 +28,6 @@ func before_each():
 func after_each():
     remove_child(cabin)
     cabin.free()
-    remove_child(train)
-    train.free()
 
 
 func test_catalog_controls_with_keys_are_registered_without_widgets():

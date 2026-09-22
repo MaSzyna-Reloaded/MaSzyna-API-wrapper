@@ -58,10 +58,10 @@ class TrackData:
     var curve1: MaszynaTrackCurve
     var curve2: MaszynaTrackCurve
     var width: float = 0.0
-    var switch_common_endpoint_index: int = TrackManager.SwitchCommonPoint.POINT_NONE
+    var switch_common_endpoint_index: int = TrackManager.POINT_NONE
     var switch_f_offset1: float = 0.0
     var switch_f_offset2: float = 0.0
-    var endpoints: Array[Vector3] = []
+    var endpoints: PackedVector3Array = PackedVector3Array()
 
     func is_valid() -> bool:
         return track_rid.is_valid() and curve1 != null
@@ -225,7 +225,7 @@ func set_switch_blade_offsets(track_render_rid: RID, f_offset1: float, f_offset2
         state.switch_is_right,
         f_offset1,
         f_offset2,
-        TrackManager.SWITCH_MAX_OFFSET
+        TrackManager.switch_max_offset
     )
     var primary_offset: float = switch_layout["primary_blade_offset"]
     var secondary_offset: float = switch_layout["secondary_blade_offset"]
@@ -284,15 +284,15 @@ func _get_track_data(track_rid: RID) -> TrackData:
     if not TrackManager.track_exists(track_rid):
         return track
 
-    var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    var curve1: MaszynaTrackCurve = TrackManager.track_get_curve(track_rid, TrackManager.TRACK_COMMON)
     if not curve1:
         return track
 
     track.track_rid = track_rid
     track.curve1 = curve1
     track.endpoints = TrackManager.track_get_endpoints(track_rid)
-    if track.endpoints.size() > TrackManager.EndpointIndex.CURVE2_P1:
-        track.curve2 = TrackManager.track_get_curve(track_rid, TrackManager.SwitchTrack.TRACK_DIVERGING)
+    if track.endpoints.size() > TrackManager.CURVE2_P1:
+        track.curve2 = TrackManager.track_get_curve(track_rid, TrackManager.TRACK_DIVERGING)
     track.width = TrackManager.track_get_width(track_rid)
     track.switch_common_endpoint_index = TrackManager.track_get_common_endpoint_index(track_rid)
     track.switch_f_offset1 = TrackManager.switch_get_f_offset1(track_rid)
@@ -409,7 +409,7 @@ func rebuild_track(track_render_rid: RID) -> void:
         var blade_sample_count: int = int(ceil(float(_SWITCH_SEGMENT_COUNT) * _SWITCH_BLADE_RATIO))
         var f_offset1: float = track.switch_f_offset1
         var f_offset2: float = track.switch_f_offset2
-        var f_max_offset: float = TrackManager.SWITCH_MAX_OFFSET
+        var f_max_offset: float = TrackManager.switch_max_offset
 
         var switch_layout: Dictionary = _get_switch_blade_layout(
             is_right_switch,
@@ -584,9 +584,9 @@ func rebuild_track(track_render_rid: RID) -> void:
             var end_tex_height: float = state.tex_height + _get_roll_fix_height(curve1_data.roll1)
             var end_tex_width: float = state.tex_width
             var end_tex_slope: float = state.tex_slope
-            var next_connection: TrackManager.EndpointRef = _get_unique_endpoint_connection(
+            var next_connection: TrackEndpointRef = _get_unique_endpoint_connection(
                 state.track_rid,
-                TrackManager.EndpointIndex.CURVE1_P2
+                TrackManager.CURVE1_P2
             )
             var next_track_rid: RID = next_connection.track_rid if next_connection else RID()
             var next_track: TrackData = _get_track_data(next_track_rid) if next_track_rid.is_valid() else TrackData.new()
@@ -695,13 +695,13 @@ func _rebuild_track_and_neighbor_stitches(track_render_rid: RID) -> void:
     if not state:
         return
     var rebuilt_neighbors: Dictionary[RID, bool] = {}
-    var endpoints: Array[Vector3] = TrackManager.track_get_endpoints(state.track_rid)
+    var endpoints: PackedVector3Array = TrackManager.track_get_endpoints(state.track_rid)
     for endpoint_index_value: int in range(endpoints.size()):
-        var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+        var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(
             state.track_rid,
             endpoint_index_value
         )
-        for connection: TrackManager.EndpointRef in connections:
+        for connection: TrackEndpointRef in connections:
             var neighbor_render_rid: RID = _get_track_render_rid_by_track_rid(connection.track_rid)
             if neighbor_render_rid.is_valid() and not rebuilt_neighbors.has(neighbor_render_rid):
                 rebuilt_neighbors[neighbor_render_rid] = true
@@ -732,15 +732,15 @@ func rebuild_track_stitches(track_render_rid: RID) -> void:
     var indices: PackedInt32Array = PackedInt32Array()
     var rail_profile: RailProfile = _get_rail_profile(state.railprofile)
     var rail_height: float = abs(float(rail_profile.rail[0][1]))
-    var endpoints: Array[Vector3] = _track_get_endpoints(track)
+    var endpoints: PackedVector3Array = _track_get_endpoints(track)
 
     for endpoint_index_value: int in range(endpoints.size()):
         var endpoint_index: TrackManager.EndpointIndex = endpoint_index_value
-        var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+        var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(
             state.track_rid,
             endpoint_index
         )
-        for connection: TrackManager.EndpointRef in connections:
+        for connection: TrackEndpointRef in connections:
             var connected_track_rid: RID = connection.track_rid
             var connected_state: TrackState = _get_track_state_by_track_rid(connected_track_rid)
             var connected_track: TrackData = _get_track_data(connected_track_rid)
@@ -830,9 +830,9 @@ func _owns_trackbed_stitch(
 func _get_endpoint_curve_data(track: TrackData, endpoint_index: int) -> MaszynaTrackCurve:
     var curve1: MaszynaTrackCurve = track.curve1
     var curve2: MaszynaTrackCurve = track.curve2
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P1 or endpoint_index == TrackManager.EndpointIndex.CURVE1_P2:
+    if endpoint_index == TrackManager.CURVE1_P1 or endpoint_index == TrackManager.CURVE1_P2:
         return curve1
-    if endpoint_index == TrackManager.EndpointIndex.CURVE2_P1 or endpoint_index == TrackManager.EndpointIndex.CURVE2_P2:
+    if endpoint_index == TrackManager.CURVE2_P1 or endpoint_index == TrackManager.CURVE2_P2:
         return curve2
     return null
 
@@ -864,7 +864,7 @@ func _build_trackbed_stitch_world_section(
     )
     var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
     var sample_distance: float = sample_inset
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P2 or endpoint_index == TrackManager.EndpointIndex.CURVE2_P2:
+    if endpoint_index == TrackManager.CURVE1_P2 or endpoint_index == TrackManager.CURVE2_P2:
         sample_distance = curve_length - sample_inset
     var frame: Transform3D = _build_curve_distance_frame(curve, sample_distance)
     frame.origin.y += rail_height + _TRACKBED_STITCH_HEIGHT_OFFSET
@@ -897,7 +897,7 @@ func _get_stitch_section_uv_y(
 
     var sample_inset: float = minf(_TRACKBED_STITCH_INSET_LENGTH, curve_length * 0.5)
     var sample_distance: float = sample_inset
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P2 or endpoint_index == TrackManager.EndpointIndex.CURVE2_P2:
+    if endpoint_index == TrackManager.CURVE1_P2 or endpoint_index == TrackManager.CURVE2_P2:
         sample_distance = curve_length - sample_inset
 
     var safe_tex_length: float = max(abs(state.tex_length), 0.001)
@@ -1056,9 +1056,9 @@ func _copy_adjacent_trackbed_material(state: TrackState, visited: Dictionary[RID
 func _get_trackbed_material_sources(track_rid: RID, is_switch: bool) -> Array[RID]:
     var sources: Array[RID] = []
     if is_switch:
-        var neighbors: TrackManager.BranchNeighbors = TrackManager.switch_track_get_neighbors(
+        var neighbors: TrackBranchNeighbors = TrackManager.switch_track_get_neighbors(
             track_rid,
-            TrackManager.SwitchTrack.TRACK_COMMON
+            TrackManager.TRACK_COMMON
         )
         sources.append(neighbors.previous_track_rid)
         sources.append(neighbors.next_track_rid)
@@ -1066,10 +1066,10 @@ func _get_trackbed_material_sources(track_rid: RID, is_switch: bool) -> Array[RI
 
     var has_adjacent_switch: bool = false
     for endpoint_index: TrackManager.EndpointIndex in [
-        TrackManager.EndpointIndex.CURVE1_P1,
-        TrackManager.EndpointIndex.CURVE1_P2,
+        TrackManager.CURVE1_P1,
+        TrackManager.CURVE1_P2,
     ]:
-        for connection: TrackManager.EndpointRef in TrackManager.track_get_endpoint_connections(track_rid, endpoint_index):
+        for connection: TrackEndpointRef in TrackManager.track_get_endpoint_connections(track_rid, endpoint_index):
             sources.append(connection.track_rid)
             has_adjacent_switch = has_adjacent_switch or TrackManager.track_is_switch(connection.track_rid)
     if not has_adjacent_switch:
@@ -1106,7 +1106,7 @@ func _build_switch_trackbed_sections(
     end_roll: float,
     rail_height: float
 ) -> Array:
-    var neighbors: TrackManager.BranchNeighbors = TrackManager.switch_track_get_neighbors(state.track_rid, switch_track)
+    var neighbors: TrackBranchNeighbors = TrackManager.switch_track_get_neighbors(state.track_rid, switch_track)
     var previous_track: TrackData = _get_track_data(neighbors.previous_track_rid) if neighbors.previous_track_rid.is_valid() else TrackData.new()
     var next_track: TrackData = _get_track_data(neighbors.next_track_rid) if neighbors.next_track_rid.is_valid() else TrackData.new()
     var previous_state: TrackState = _get_track_state_by_track_rid(neighbors.previous_track_rid)
@@ -1158,7 +1158,7 @@ func _track_has_secondary_curve(track: TrackData) -> bool:
     return track.curve2 != null
 
 
-func _track_get_endpoints(track: TrackData) -> Array[Vector3]:
+func _track_get_endpoints(track: TrackData) -> PackedVector3Array:
     return track.endpoints
 
 
@@ -1167,13 +1167,13 @@ func _get_track_roll(track: TrackData, endpoint_index: int) -> float:
         return 0.0
     var curve1: MaszynaTrackCurve = track.curve1
     var curve2: MaszynaTrackCurve = track.curve2
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P1:
+    if endpoint_index == TrackManager.CURVE1_P1:
         return curve1.roll1 if curve1 else 0.0
-    if endpoint_index == TrackManager.EndpointIndex.CURVE1_P2:
+    if endpoint_index == TrackManager.CURVE1_P2:
         return curve1.roll2 if curve1 else 0.0
-    if endpoint_index == TrackManager.EndpointIndex.CURVE2_P1:
+    if endpoint_index == TrackManager.CURVE2_P1:
         return curve2.roll1 if curve2 else 0.0
-    if endpoint_index == TrackManager.EndpointIndex.CURVE2_P2:
+    if endpoint_index == TrackManager.CURVE2_P2:
         return curve2.roll2 if curve2 else 0.0
     return 0.0
 
@@ -1182,15 +1182,15 @@ func _is_switch_track(track: TrackData) -> bool:
     return (
         track.is_valid()
         and _track_has_secondary_curve(track)
-        and not track.switch_common_endpoint_index == TrackManager.SwitchCommonPoint.POINT_NONE
+        and not track.switch_common_endpoint_index == TrackManager.POINT_NONE
     )
 
 
 func _get_unique_endpoint_connection(
     track_rid: RID,
     endpoint_index: TrackManager.EndpointIndex
-) -> TrackManager.EndpointRef:
-    var connections: Array[TrackManager.EndpointRef] = TrackManager.track_get_endpoint_connections(
+) -> TrackEndpointRef:
+    var connections: Array[TrackEndpointRef] = TrackManager.track_get_endpoint_connections(
         track_rid,
         endpoint_index
     )

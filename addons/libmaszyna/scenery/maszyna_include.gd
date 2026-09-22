@@ -26,7 +26,7 @@ const SceneryEditor = preload("res://addons/libmaszyna/editor/scenery_toolbar/sc
 @export var skin_overrides:Dictionary[String, String] = {}
 
 ## Off by default: loaded content gets no owner and stays unselectable in the editor (matches
-## E3DModelInstance/FIZTrainController's own default). Toggle via the "Edit SCN" editor toolbar
+## E3DModelInstance/FizVehiclePhysicsNode's own default). Toggle via the "Edit SCN" editor toolbar
 ## button (addons/libmaszyna/editor/scenery_toolbar/) to make it inspectable/selectable while
 ## authoring - see scenery_instancer.gd's attach loop for what this actually changes.
 @export var editable_in_editor:bool = false:
@@ -76,23 +76,30 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
     for group:Array in groups:
         var rids:Array[RID] = group[0]
         var free_rid:Callable = group[1]
-        for rid:RID in rids:
+        # Taken off the list before it is freed, not after the whole loop: the budgeted path
+        # awaits a frame in the middle, and leaving the tree during that await runs this again
+        # from _exit_tree over the very same RIDs - a double free.
+        while rids.size() > 0:
+            var rid:RID = rids.pop_back()
             if rid.is_valid():
                 free_rid.call(rid)
             if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
                 await get_tree().process_frame
                 frame_start = Time.get_ticks_msec()
-        rids.clear()
 
 
 ## Nothing in here is worth simulating while it is being torn down, and a real scenery is
 ## hundreds of vehicles with their cabins and sounds, all running their own _process for the
-## seconds the freeing takes. RailVehiclePhysicsServer steps those vehicles from its own registry,
+## seconds the freeing takes. RailVehicleServer steps those vehicles from its own registry,
 ## outside this subtree, so disabling the subtree alone leaves the heaviest part running until the
 ## last vehicle is freed - it is stopped here too and restored once the content is gone.
 func _clear_content(budget_msec:int = 0) -> void:
     process_mode = Node.PROCESS_MODE_DISABLED
-    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_DISABLED
+    RailVehicleServer.set_stepping_enabled(false)
+    # Streaming builds content on process_frame, and the freeing below yields a frame for its
+    # budget - without this it streams new content into the very RIDs being freed, which the
+    # RenderingServer reports as "Initializing already initialized RID" and then aborts.
+    SceneryStreamingServer.set_streaming_enabled(false)
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
@@ -100,7 +107,8 @@ func _clear_content(budget_msec:int = 0) -> void:
         if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
             await get_tree().process_frame
             frame_start = Time.get_ticks_msec()
-    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_INHERIT
+    SceneryStreamingServer.set_streaming_enabled(true)
+    RailVehicleServer.set_stepping_enabled(true)
     process_mode = Node.PROCESS_MODE_INHERIT
 
 

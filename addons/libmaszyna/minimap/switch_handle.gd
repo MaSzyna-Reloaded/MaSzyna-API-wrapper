@@ -33,9 +33,9 @@ func _gui_input(event: InputEvent) -> void:
 func _toggle_switch() -> void:
     var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(track_rid)
     var new_active_track:TrackManager.SwitchTrack = (
-        TrackManager.SwitchTrack.TRACK_COMMON
-        if active_track == TrackManager.SwitchTrack.TRACK_DIVERGING
-        else TrackManager.SwitchTrack.TRACK_DIVERGING
+        TrackManager.TRACK_COMMON
+        if active_track == TrackManager.TRACK_DIVERGING
+        else TrackManager.TRACK_DIVERGING
     )
     TrackManager.switch_set_active_track(track_rid, new_active_track)
     viewer.queue_redraw()
@@ -43,5 +43,5 @@ func _toggle_switch() -> void:
 func _get_tooltip(_at_position: Vector2) -> String:
     var active_track: TrackManager.SwitchTrack = TrackManager.switch_get_active_track(track_rid)
     var name: String = TrackManager.track_get_name(track_rid)
-    var state_str:String = "Straight" if active_track == TrackManager.SwitchTrack.TRACK_COMMON else "Diverging"
+    var state_str:String = "Straight" if active_track == TrackManager.TRACK_COMMON else "Diverging"
     return "Switch: %s\nState: %s" % [name or "unnamed", state_str]

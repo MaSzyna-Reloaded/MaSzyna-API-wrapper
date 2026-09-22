@@ -10,13 +10,13 @@
 
 namespace godot {
 
-    class TrainController;
+    class VehicleController;
 
     class TrainSystem : public Object {
             GDCLASS(TrainSystem, Object);
 
         private:
-            std::map<String, TrainController *> trains;
+            std::map<String, VehicleController *> trains;
             Dictionary commands;
 
         public:
@@ -24,10 +24,10 @@ namespace godot {
                 return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
             }
 
-            void register_train(const String &p_train_id, TrainController *p_train);
+            void register_train(const String &p_train_id, VehicleController *p_train);
             void unregister_train(const String &p_train_id);
             bool is_train_registered(const String &p_train_id) const;
-            TrainController *get_train(const String &p_train_id);
+            VehicleController *get_train(const String &p_train_id);
             Vector3 get_train_world_position(const String &p_train_id) const;
             int get_train_count() const;
             Array get_registered_trains();
@@ -51,22 +51,8 @@ namespace godot {
             void log(const String &p_train_id, GameLog::LogLevel p_level, const String &p_line);
 
             static const char *train_position_changed_signal;
+            static const char *train_registered_signal;
             static const char *train_unregistered_signal;
-
-        public:
-            /// One physics sub-iteration for a whole set of controllers, looped in C++.
-            ///
-            /// Driven from RailVehiclePhysicsServer, which used to make four calls across the
-            /// binding per controller per iteration - with hundreds of vehicles and several
-            /// iterations per frame that is thousands of crossings, each marshalling Variants,
-            /// for arithmetic the original does in a plain loop (vehicle_table::update(),
-            /// DynObj.cpp:8195-8210). The track logic stays in GDScript: this returns how far
-            /// each controller wants to move and the caller walks it along its track.
-            ///
-            /// [param full_movement] picks ComputeMovement() over FastComputeMovement(), which the
-            /// original uses for every sub-iteration but the last (DynObj.cpp:4086).
-            PackedFloat64Array
-            step_movers(const TypedArray<TrainController> &p_controllers, double p_step, bool p_full_movement);
 
         protected:
             static void _bind_methods();

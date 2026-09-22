@@ -1,32 +1,26 @@
 extends MaszynaGutTest
 
-## TrainWipers: the wiper switch (Train.cpp:2638-2661) and the movement of the wipers
+## VehicleWipers: the wiper switch (Train.cpp:2638-2661) and the movement of the wipers
 ## (DynObj.cpp:4048-4115), both kept in the node - the vendored Mover has neither.
 
-var train: TrainController
-var wipers: TrainWipers
+var train: VehicleController
+var wipers: VehicleWipers
 
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrainWipers"
+    train = build_vehicle("TestTrainWipers")
     train.battery_voltage = 110.0
-    wipers = TrainWipers.new()
+    train.apply_configuration()
+    wipers = MoverVehicleWipers.new()
     # WiperList: of ep09_v2/104e-mod-dod-zal.fiz - mask, sweep time, interval, delay at the far end
     wipers.positions = [
         _item(0, 1.0, 0.0, 0.5),
         _item(3, 1.0, 5.0, 0.5),
         _item(3, 0.2, 0.0, 0.1),
     ]
-    train.add_child(wipers)
-    add_child(train)
-    # a TrainPart publishes its state with its first processed frame
+    train.add_component(wipers)
+    # a VehicleComponent publishes its state with its first processed frame
     await wait_idle_frames(2)
-
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 
 func _item(mask: int, transit_time: float, period: float, return_delay: float) -> WiperListItem:
@@ -39,7 +33,7 @@ func _item(mask: int, transit_time: float, period: float, return_delay: float) -
 
 
 func test_defaults():
-    var defaults: TrainWipers = TrainWipers.new()
+    var defaults: VehicleWipers = MoverVehicleWipers.new()
 
     assert_eq(defaults.angle, 0.0)
     assert_eq(defaults.default_position, 0)
@@ -61,7 +55,7 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(wipers.angle, 58.0)
     assert_eq(wipers.positions.size(), 4)
     assert_eq((wipers.positions[1] as WiperListItem).period, 7.0)
-    assert_true(is_instance_valid(train), "TrainController should keep functioning after configuring TrainWipers")
+    assert_true(is_instance_valid(train), "VehicleController should keep functioning after configuring VehicleWipers")
 
 
 func test_switch_is_limited_to_the_wiper_list():
@@ -117,7 +111,7 @@ func test_wipers_stay_parked_without_battery():
 ## are the first two, the wipers of the other end stay parked (DynObj.cpp:4056-4063)
 func test_wiper_count_of_the_model_limits_the_sweep_to_the_active_end():
     wipers.wiper_count = 4
-    wipers.update_mover()
+    wipers.apply_config()
     train.send_command("battery", true)
     train.send_command("cab_activation", true)
     train.send_command("wipers_switch_increase")

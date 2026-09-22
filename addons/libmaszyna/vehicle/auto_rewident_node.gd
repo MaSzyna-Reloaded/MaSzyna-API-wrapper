@@ -27,7 +27,7 @@ const READY_FEED_PIPE_PRESSURE:float = 4.5
 ## Safety limit of the consist walk
 const MAX_CONSIST_VEHICLES:int = 256
 
-var _controller:TrainController
+var _controller:VehicleController
 
 
 ## In the original this is not polled at all: AutoRewident() runs inside CheckVehicles()
@@ -36,7 +36,7 @@ var _controller:TrainController
 ## (Driver.cpp:2142), a direction change, a coupling change (Driver.cpp:2622).
 ##
 ## The wrapper has no driver (TController) layer with orders to hook into, so the only event it can
-## use is TrainController's consist_changed. What is left to poll is the engine becoming ready,
+## use is VehicleController's consist_changed. What is left to poll is the engine becoming ready,
 ## which is a threshold the original's AI watches in its own update too - and this timer stops for
 ## good as soon as that happens, so a prepared vehicle costs nothing until something couples to it.
 const CHECK_INTERVAL:float = 0.5
@@ -57,8 +57,8 @@ func _ready() -> void:
 
 func _check_consist() -> void:
     var vehicle:RailVehicle3D = get_parent() as RailVehicle3D
-    var controller:TrainController = vehicle.get_controller() if vehicle else null
-    if not controller or not controller.is_node_ready():
+    var controller:VehicleController = vehicle.get_controller() if vehicle else null
+    if not controller or not controller.is_simulation_ready():
         return
     # a vehicle without a cab has no driver to inspect its consist, and cabin_number comes from the
     # FIZ - it will not become one later, so there is nothing left for this node to watch
@@ -79,7 +79,7 @@ func _check_consist() -> void:
     _timer.stop()
 
 
-## A vehicle joined or left the consist (TrainController::couple()/uncouple()), the case the
+## A vehicle joined or left the consist (VehicleController::couple()/uncouple()), the case the
 ## original handles with CheckVehicles() (Driver.cpp:2622) - inspect it again once the engine of
 ## the new consist reports ready.
 func _on_consist_changed() -> void:
@@ -88,7 +88,7 @@ func _on_consist_changed() -> void:
 
 ## The readiness condition of TController::PrepareEngine() (isready). Quirk: the converter and
 ## compressor terms are left out - the wrapper doesn't expose whether a vehicle has them.
-func _is_engine_ready(controller:TrainController) -> bool:
+func _is_engine_ready(controller:VehicleController) -> bool:
     var state:Dictionary = controller.state
     var config:Dictionary = controller.config
     var brake_handle_ready:bool = (
@@ -104,22 +104,22 @@ func _is_engine_ready(controller:TrainController) -> bool:
 
 
 ## Coupled vehicles from the head of the train (in the driving direction, CheckVehicles()) to its tail.
-func _get_consist(controller:TrainController) -> Array[TrainController]:
+func _get_consist(controller:VehicleController) -> Array[VehicleController]:
     var driving_sign:int = controller.cabin_number * int(controller.state.get("direction", 1))
     var end:int = 0 if driving_sign >= 0 else 1
-    var head:TrainController = controller
+    var head:VehicleController = controller
     for i:int in MAX_CONSIST_VEHICLES:
-        var next:TrainController = head.get_coupled_controller(end)
+        var next:VehicleController = head.get_coupled_controller(end)
         if not next:
             break
         end = 1 - head.get_coupled_end(end)
         head = next
 
-    var consist:Array[TrainController] = [head]
+    var consist:Array[VehicleController] = [head]
     end = 1 - end
-    var current:TrainController = head
+    var current:VehicleController = head
     for i:int in MAX_CONSIST_VEHICLES:
-        var next:TrainController = current.get_coupled_controller(end)
+        var next:VehicleController = current.get_coupled_controller(end)
         if not next:
             break
         end = 1 - current.get_coupled_end(end)
@@ -130,13 +130,13 @@ func _get_consist(controller:TrainController) -> Array[TrainController]:
 
 ## TController::AutoRewident() (Driver.cpp:2147-2246). The driver's own vehicle is left alone, as the
 ## original does with a human controlled vehicle.
-func _rewident(controller:TrainController, consist:Array[TrainController]) -> void:
+func _rewident(controller:VehicleController, consist:Array[VehicleController]) -> void:
     var express:int = 0
     var freight:int = 0
     var passenger:int = 0
     var length:float = 0.0
     var mass:float = 0.0
-    for member:TrainController in consist:
+    for member:VehicleController in consist:
         length += float(member.config.get("length", 0.0))
         mass += float(member.state.get("mass_total", 0.0))
         if float(member.config.get("power", 0.0)) < 1.0:
@@ -161,7 +161,7 @@ func _rewident(controller:TrainController, consist:Array[TrainController]) -> vo
         setting = BDELAY_G
 
     var near_locomotive:int = 0
-    for member:TrainController in consist:
+    for member:VehicleController in consist:
         var is_locomotive:bool = float(member.config.get("power", 0.0)) > 1.0
         var delays:int = int(member.config.get("brake_delays", 0))
         var brake_delay:int = BDELAY_P

@@ -5,8 +5,8 @@ var _t:float = 0.0
 @onready var train = $SM42
 @onready var brake = $SM42/Brake
 @onready var engine = $SM42/StonkaDieselEngine
-@onready var security = $SM42/TrainSecuritySystem
-@onready var doors = $SM42/TrainDoors
+@onready var security = $SM42/VehicleSecuritySystem
+@onready var doors = $SM42/VehicleDoors
 @onready var battery_progress_bar = $%BatteryProgressBar
 
 @onready var FORWARD = $UI/MoverSwitches/General/HBoxContainer2/Forward
@@ -26,7 +26,7 @@ const loglevel_names = {
     }
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-    $%TrainName.text = "%s (type: %s)" % [train.name, train.type_name]
+    $%TrainName.text = "%s (type: %s)" % [train.train_id, train.type_name]
     GameLog.log_updated.connect(print_log_entry_to_godot_console)
 
 
@@ -63,10 +63,10 @@ func _process(delta: float) -> void:
         $%BatteryProgressBar.value = bv
         $%BatteryValue.text = "%.2f V" % [bv]
 
-        var security_state = security.get_mover_state()
-        var brake_state = brake.get_mover_state()
-        var engine_state = engine.get_mover_state()
-        var door_state = doors.get_mover_state()
+        var security_state = security.get_state()
+        var brake_state = brake.get_state()
+        var engine_state = engine.get_state()
+        var door_state = doors.get_state()
 
         draw_dictionary(engine_state, $%DebugEngine)
         draw_dictionary(train_state, $%DebugTrain)

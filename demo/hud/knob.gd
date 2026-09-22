@@ -4,7 +4,7 @@ extends Control
 class_name DebugKnob
 
 var _dirty = false
-var _controller:TrainController
+var _controller:VehicleController
 
 
 @export var label:String:
@@ -27,7 +27,7 @@ var _controller:TrainController
         _dirty = true
         step = x
 
-@export_node_path("TrainController") var controller:NodePath:
+@export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -54,7 +54,8 @@ func _process(delta):
 
         $Label.text = label
         if not _controller and controller:
-            _controller = get_node(controller)
+            var physics_node: VehiclePhysicsNode = get_node_or_null(controller)
+            _controller = physics_node.get_controller() if physics_node else null
             #$SpinBox.disabled = false
         else:
             pass

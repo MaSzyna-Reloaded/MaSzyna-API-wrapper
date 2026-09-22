@@ -1,20 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var engine: TrainDieselElectricEngine
+var train: VehicleController
+var engine: VehicleDieselElectricEngine
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    engine = TrainDieselElectricEngine.new()
-    train.add_child(engine)
+    engine = MoverVehicleDieselElectricEngine.new()
+    train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_row(rpm: float, gen_power: float) -> WWListItem:
     var item = WWListItem.new()
@@ -23,7 +17,7 @@ func _make_row(rpm: float, gen_power: float) -> WWListItem:
     return item
 
 func test_defaults():
-    engine.update_mover()
+    engine.apply_config()
     assert_false(engine.generator_voltage_flat)
     assert_eq(engine.hyperbolic_speed, 1.0)
     assert_eq(engine.additional_speed, 1.0)
@@ -50,10 +44,10 @@ func test_round_trip_and_wwlist_update():
     assert_true(engine.generator_voltage_flat)
     assert_eq(engine.rpm_change_rate, 1.25)
     assert_eq(engine.wwlist.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "TrainDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
+    assert_true(train.state.has("main_switch_enabled"), "VehicleDieselElectricEngine should keep functioning after configuring its Engine: fields and wwlist")
 
 func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
-    # TrainDieselElectricEngine inherits TrainDieselEngine's mechanical-transmission
+    # VehicleDieselElectricEngine inherits VehicleDieselEngine's mechanical-transmission
     # properties, but a diesel-electric vehicle should simply leave them at their defaults.
     await wait_idle_frames(2)
     assert_false(engine.torque_converter_present)
@@ -61,7 +55,7 @@ func test_inherited_mechanical_fields_stay_at_defaults_when_unused():
 
 func test_fiz_wwlist_row_uses_canonical_shunting_property():
     var context: FizImportContext = FizImportContext.new()
-    context.add_part("TrainEngine", engine)
+    context.add_part("VehicleEngine", engine)
     var parser: FizTrainDieselElectricEngineParser = FizTrainDieselElectricEngineParser.new()
     var header: MaszynaParser = MaszynaParser.new()
     header.initialize(PackedByteArray())

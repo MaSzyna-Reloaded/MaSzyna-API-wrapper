@@ -2,8 +2,8 @@
 extends RefCounted
 class_name FizTrainSpeedControlParser
 
-## SpeedControl: section parser -> TrainSpeedControl. Registered directly in
-## FizTrainControllerInstancer's section table.
+## SpeedControl: section parser -> VehicleSpeedControl. Registered directly in
+## FizVehicleBuilder's section table.
 ##
 ## Key mapping confirmed against a real vehicle line (en57-class cohort):
 ## `SpeedControl: SpeedCtrl=Yes OverrideManual=No InitPwr=1.0 MaxPwrVel=-1 StartVel=-1
@@ -15,14 +15,14 @@ class_name FizTrainSpeedControlParser
 ## file.
 
 
-func create_node() -> TrainSpeedControl:
-    return TrainSpeedControl.new()
+func create_node() -> VehicleSpeedControl:
+    return MoverVehicleSpeedControl.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("TrainSpeedControl", node)
+    context.add_part("VehicleSpeedControl", node)
 
     if kv.has("SpeedCtrl"):
         node.speed_control_enabled = FizLineUtil.get_bool(kv, "SpeedCtrl")

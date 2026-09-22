@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainPowerParser
 
-## Power: section. Its fields belong to the TrainElectricEngine-family node (see
+## Power: section. Its fields belong to the VehicleElectricEngine-family node (see
 ## fiz_train_engine_common.gd's apply_power()), which Engine: hasn't created yet at this point
 ## in the file (Power: conventionally precedes Engine: in real files) - so this parser only
 ## stashes the key/value set on the context for the concrete engine parser to apply once that

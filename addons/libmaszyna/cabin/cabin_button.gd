@@ -27,7 +27,7 @@ enum ControllerMode { OnOff, On, Off }
 
 @export var command = ""
 ## Fixed leading argument sent before `pushed`, for commands that take a selector as their first
-## parameter (e.g. TrainElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
+## parameter (e.g. VehicleElectricEngine::pantograph(PantographSelector, bool)) - unset (null) for
 ## every single-argument command, which keeps existing widgets (fuelpump_sw, battery_sw, ...)
 ## sending exactly the same single-argument call as before.
 @export var command_param:Variant
@@ -70,7 +70,7 @@ func _ready():
     add_child(_sound)
     _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
-    controller_changed.connect(_update_state)
+    train_id_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
 
 func _enter_tree():
@@ -80,8 +80,8 @@ func _on_console_toggled(visible:bool):
     _enabled = not visible
 
 func _update_state():
-    if state_property and _controller:
-        pushed = _controller.state.get(state_property, pushed)
+    if state_property and _train_id:
+        pushed = _vehicle_state().get(state_property, pushed)
     else:
         pushed = false
 

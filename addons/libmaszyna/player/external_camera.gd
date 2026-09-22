@@ -89,7 +89,7 @@ func _process(delta:float) -> void:
 ## the one remembered for this view.
 func _process_dirty() -> void:
     _orbit = Vector2.ZERO
-    var controller:TrainController = vehicle.get_controller()
+    var controller:VehicleController = vehicle.get_controller()
     var state:Dictionary = TrainSystem.get_train_state(controller.train_id)
     var cabin_occupied:int = state.get("cabin_occupied", 0)
     var direction:int = state.get("direction", 0)
@@ -114,7 +114,7 @@ func _process_dirty() -> void:
 
     # Mechanik->Vehicle(end::front / end::rear) - the last vehicle of the consist on that side
     _view_vehicle = _find_vehicle(_get_consist_end(controller, 0 if flip > 0.0 else 1))
-    var owner_controller:TrainController = _view_vehicle.get_controller()
+    var owner_controller:VehicleController = _view_vehicle.get_controller()
     var width:float = owner_controller.dimensions_width
     var height:float = owner_controller.dimensions_height
     var length:float = owner_controller.dimensions_length
@@ -158,9 +158,9 @@ func _get_vehicle_center(p_vehicle:RailVehicle3D) -> Vector3:
     return p_vehicle.global_position + p_vehicle.global_basis.y.normalized() * 0.5 * p_vehicle.get_controller().dimensions_height
 
 
-func _get_consist_end(controller:TrainController, end:int) -> TrainController:
-    var last:TrainController = controller
-    var next:TrainController = last.get_coupled_controller(end)
+func _get_consist_end(controller:VehicleController, end:int) -> VehicleController:
+    var last:VehicleController = controller
+    var next:VehicleController = last.get_coupled_controller(end)
     while next:
         end = 1 - last.get_coupled_end(end)
         last = next
@@ -168,7 +168,7 @@ func _get_consist_end(controller:TrainController, end:int) -> TrainController:
     return last
 
 
-func _find_vehicle(controller:TrainController) -> RailVehicle3D:
+func _find_vehicle(controller:VehicleController) -> RailVehicle3D:
     for node:Node in get_tree().get_root().find_children("", "RailVehicle3D", true, false):
         var candidate:RailVehicle3D = node as RailVehicle3D
         if candidate and candidate.get_controller() == controller:

@@ -1,21 +1,15 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var engine: TrainElectricInductionEngine
+var train: VehicleController
+var engine: VehicleElectricInductionEngine
 
 func before_each():
-    train = TrainController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
-    engine = TrainElectricInductionEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
-    train.add_child(engine)
+    engine = MoverVehicleElectricInductionEngine.new()
+    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_point(x: float, y: float) -> CurvePointItem:
     var item = CurvePointItem.new()
@@ -57,7 +51,7 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.slip_current_ratio, 0.1)
     assert_eq(engine.max_power, 1200.0)
     assert_eq(engine.max_power_table.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "TrainElectricInductionEngine should keep functioning after configuring EIM parameters")
+    assert_true(train.state.has("main_switch_enabled"), "VehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
 
 func test_apply_power_uses_canonical_current_collector_properties():
     var line: MaszynaParser = MaszynaParser.new()

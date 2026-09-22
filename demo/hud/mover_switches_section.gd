@@ -1,28 +1,30 @@
 extends HFlowContainer
 
 
-@export_node_path("TrainController") var train_controller:NodePath = NodePath(""):
+@export_node_path("VehiclePhysicsNode") var train_controller:NodePath = NodePath(""):
     set(x):
         if not train_controller == x:
             train_controller = x
             controller = null
             _do_update()
 
-var controller:TrainController
+var controller:VehicleController
 
 func _ready() -> void:
     _do_update()
 
 func _do_update():
-    if train_controller:
-        controller = get_node(train_controller)
-    _propagate_train_controller(self, controller)
-    
-func _propagate_train_controller(p_node: Node, p_controller: TrainController):
+    var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
+    controller = physics_node.get_controller() if physics_node else null
+    _propagate_vehicle_node(self, physics_node)
+
+## The widgets below point at the vehicle's node, not at the controller it owns - a controller is
+## not a node and has no path.
+func _propagate_vehicle_node(p_node: Node, p_physics_node: VehiclePhysicsNode) -> void:
     for child in p_node.get_children():
-        _propagate_train_controller(child, p_controller)
+        _propagate_vehicle_node(child, p_physics_node)
         if "controller" in child:
-            child.controller = child.get_path_to(p_controller) if p_controller else NodePath("")
+            child.controller = child.get_path_to(p_physics_node) if p_physics_node else NodePath("")
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

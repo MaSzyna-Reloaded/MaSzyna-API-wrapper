@@ -573,8 +573,8 @@ static func _build_track(track_data:MaszynaTrackData, world_3d:World3D) -> Dicti
     TrackManager.track_update(track_rid, track_data.type, track_data.track_name, track_data.width)
     TrackManager.track_update_properties(
             track_rid, track_data.quality_flag, track_data.environment, track_data.sound_distance)
-    if track_data.type == TrackManager.TrackType.TRACK_SWITCH:
-        TrackManager.switch_set_active_track(track_rid, TrackManager.SwitchTrack.TRACK_COMMON)
+    if track_data.type == TrackManager.TRACK_SWITCH:
+        TrackManager.switch_set_active_track(track_rid, TrackManager.TRACK_COMMON)
 
     TrackRenderingServer.set_track_render_options(
         track_render_rid,

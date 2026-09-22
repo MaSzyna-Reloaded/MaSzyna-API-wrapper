@@ -27,18 +27,30 @@ one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
   snapshot); `VehicleState` holds the handle, implements `_get`/`_get_property_list` and refuses
   `_set` naming the owner. `VehicleHeating` is converted as the proof and
   `test_vehicle_state_properties.gd` covers the new ground.
-  **Converted so far (15):** heating, switches, universal controller, speed control, spring brake,
-  EP dynamic brake, wheels, horns, wipers, security system, engine, diesel engine, brake, doors
-  and lighting.
-  **Left (3):** `VehicleElectricEngine` (36 properties, and the only awkward one - today several
-  of its keys exist *only* when the power source matches, so a declared property has to decide
-  what it answers for the wrong variant; `test_train_electric_engine_power_source.gd` records that
-  reading the wrong one used to crash the process), `VehicleElectricSeriesEngine` (1, trivial once
-  the electric base is done) and `VehicleController`'s own 21. `_do_fetch_state_from_mover` is a no-op default, so each converts
-  on its own. While they convert,
-  `VehicleController::get_state()` overlays the declared properties onto the old Dictionary so
-  every existing consumer keeps working; that overlay is deleted once the consumers ask the server.
-  Then the consumer migration (4f) and the `watched` change detection (4d), neither started.
+  **All 18 components and the controller's own 31 keys are converted.** The conditional ones (the
+  accumulator's recharge source, the power cable's source and steam pressure) answer `nil` where
+  the power source is not that variant, and a `nil` leaves no key, so `has()` still means what it
+  meant. Neither `VehicleController` nor `VehicleComponent` keeps a state `Dictionary` any more -
+  `get_state()` builds one on demand from the components, for a console, a test or a dump.
+  **Left in stage 4:**
+  * **4f, the consumer migration** - 28 GDScript files and 8 call sites in `RailVehicle3D` still
+    ask for a Dictionary. Each resolves its name to an id once, where it already builds its record
+    (`Trigger`/`BrakeEvent` in the sound system, `LIGHT_STATE_BINDINGS` in `RailVehicle3D`, the
+    cabin widgets' `state_property`), then reads by id or with one `read_floats()`. Until then the
+    state costs more than it did before the rework, because every read walks every property.
+  * **4d, the `watched` change detection** - `VehicleController::_handle_mover_update()` still does
+    change detection by hand for five signals, each with its own `prev_*` field and its own
+    `// FIXME: I don't like this`. One of them, `roof_light_enabled`, is not even the controller's
+    property; it belongs to the lighting component.
+  * **4g, the config** - it has exactly the fault the state had: a shared `Dictionary` owned by
+    `VehicleController` and filled by the components through `apply_config()`. It moves onto the
+    vehicle record in `RailVehicleServer` behind `vehicle_config_set(key, value)`,
+    `vehicle_config_get(key)`, `vehicle_config_merge(Dictionary)` and `vehicle_config_clear()` -
+    by key, not by id, because it is written at (re)configuration and read rarely, and its names
+    come from the FIZ. Open question on entry: ~40 tests instantiate a bare controller with no
+    vehicle handle, so either a record exists for those too or the config keeps a local path until
+    stage 6.
+
 * **Stage 4 (original scope, for reference) - property registry, `VehicleState`, fast getters.** State becomes pulled, not pushed:
   a component declares its properties once and nothing is computed until someone asks. Five levels
   of access, all keyed by the vehicle RID on `RailVehicleServer`, which forwards to the backend:

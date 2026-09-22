@@ -89,8 +89,9 @@ renamed in stage B (`_process_train_part` -> `_process_component`, `_get_train_p
 the example scene and seeing no `Invalid call` error. The modder-facing gateway deserves a test of
 its own before it is moved onto the server.
 
-The 30 fps regression on `td.scn` is **not** part of this work: the GPU reports over 40 ms, which
-points at the host rather than at the code, and it is to be settled separately.
+The 30 fps on `td.scn` that this branch was split over was **not** a regression: the discrete GPU
+had not woken from powersave and the simulator was running on the integrated RX 780M. Recorded in
+`FINDINGS.md`; nothing here is outstanding because of it.
 
 Traps that apply to every stage: bump the cache tag in the same commit as the code whose output is
 cached (`FIZ_PARSER_FORMAT_VERSION`, `MaterialManager.CACHE_VERSION`, `E3DModel.FORMAT_VERSION`,

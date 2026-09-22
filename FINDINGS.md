@@ -3,6 +3,25 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - "the C++ port made it 4x slower" was a GPU that never woke up
+
+* **Symptom:** `td.scn` ran at about 30 fps where it had run at roughly 200, right after
+  `TrackManager`/`SpatialIndex` moved from GDScript autoloads to C++, and the obvious conclusion
+  was that the port was the cause.
+* **Cause:** the discrete GPU had not come back from powersave, so the simulator was running on the
+  integrated RX 780M. Nothing in the branch was responsible.
+* **What pointed at it:** the GPU frame time reported **over 40 ms**. A CPU-side regression in
+  GDScript-to-C++ ported logic cannot move the GPU's own frame time - that number alone ruled out
+  every code hypothesis, and it was visible from the first measurement.
+* **Cost:** two wrong diagnoses (first the minimap/TrackManager, then an `-O0` build overwriting
+  an `-O2` one - a real trap, but not this one) and a profiling pass that was planned and then
+  cancelled.
+* **Rule:** split the frame time into CPU and GPU **before** forming any hypothesis about a
+  performance regression. If the GPU time moved, the CPU-side change is not the suspect - check
+  which adapter is actually rendering (`--verbose` names it) before touching code.
+* **Rule:** a performance number is a measurement of the whole machine, not of the commit. Confirm
+  the environment is the same - adapter, power profile, build flags - before the code is.
+
 ## 2026-09-22 - a regex that deleted 588 lines, and the linker that caught it
 
 * **Symptom:** after a scripted removal of five methods from `RailVehicleServer`, the build

@@ -4,17 +4,11 @@ var train: VehicleController
 var brake: VehicleBrake
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     brake = MoverVehicleBrake.new()
     train.add_component(brake)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(brake.compressor_emergency_valve_area, 0.0)

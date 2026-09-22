@@ -11,22 +11,16 @@ var engine: VehicleElectricSeriesEngine
 
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestPantographTrain"
+    train = build_vehicle("TestPantographTrain")
     train.battery_voltage = 110.0
+    train.apply_configuration()
     engine = MoverVehicleElectricSeriesEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     engine.power_current_collector_physical_layout = 3 # both pantographs physically present
     engine.power_current_collector_max_voltage = 3600.0
     engine.power_current_collector_number_of_collectors = 2
     train.add_component(engine)
-    add_child(train)
     await wait_idle_frames(2)
-
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 
 func test_raised_pantograph_with_wire_voltage_reaches_mover_state():

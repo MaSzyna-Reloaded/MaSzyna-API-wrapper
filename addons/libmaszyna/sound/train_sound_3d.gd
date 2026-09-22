@@ -2,7 +2,7 @@ extends AudioStreamPlayer3D
 class_name TrainSound3D
 
 @export var state_property = ""
-@export_node_path("VehicleController") var controller_path = NodePath(""):
+@export_node_path("VehiclePhysicsNode") var controller_path = NodePath(""):
     set(x):
         controller_path = x
         _dirty = true
@@ -28,4 +28,5 @@ func _process(_delta):
         _dirty = false
 
         if controller_path and not _train:
-            _train = get_node(controller_path)
+            var physics_node: VehiclePhysicsNode = get_node_or_null(controller_path)
+            _train = physics_node.get_controller() if physics_node else null

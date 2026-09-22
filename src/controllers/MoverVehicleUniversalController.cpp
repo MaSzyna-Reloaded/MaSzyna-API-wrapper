@@ -46,7 +46,7 @@ namespace godot {
         if (get_mover() == nullptr) {
             return;
         }
-        p_state["get_selector_position()"] = get_selector_position();
+        p_state["selector_position"] = get_selector_position();
     }
 
     void MoverVehicleUniversalController::_fill_config_dictionary(Dictionary &p_config) const {

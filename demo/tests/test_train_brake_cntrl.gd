@@ -1,20 +1,24 @@
 extends MaszynaGutTest
 
+var vehicle: VehiclePhysicsNode
 var train: VehicleController
 var brake: VehicleBrake
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    vehicle = VehiclePhysicsNode.new()
+    vehicle.train_id = "TestTrain"
+    add_child(vehicle)
+    train = vehicle.get_controller()
 
     brake = MoverVehicleBrake.new()
     train.add_component(brake)
     await wait_idle_frames(2)
 
 func after_each():
-    remove_child(train)
-    train.free()
+    train = null
+    brake = null
+    remove_child(vehicle)
+    vehicle.free()
 
 func test_defaults_match_original_mover():
     assert_eq(brake.cntrl_brake_system, VehicleBrake.BRAKE_SYSTEM_PNEUMATIC)

@@ -11,11 +11,6 @@ func after_each() -> void:
         RailVehicleServer.vehicle_free(vehicle_rid)
     created_vehicle_rids.clear()
 
-    for controller: VehicleController in created_controllers:
-        if is_instance_valid(controller):
-            if controller.get_parent():
-                controller.get_parent().remove_child(controller)
-            controller.queue_free()
     created_controllers.clear()
 
     for track_rid: RID in created_tracks:
@@ -252,8 +247,9 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
         TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
-    var vehicle_rid: RID = _create_vehicle()
     var controller: VehicleController = _create_controller(5.0)
+    # the vehicle the controller already belongs to - a second handle would step it twice
+    var vehicle_rid: RID = controller.get_rid()
 
     RailVehicleServer.vehicle_set_track(
         vehicle_rid,
@@ -261,7 +257,6 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
         8.0,
         TrackManager.DIRECTION_REVERSED
     )
-    RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
     RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
@@ -278,8 +273,9 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
         TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
-    var vehicle_rid: RID = _create_vehicle()
     var controller: VehicleController = _create_controller(5.0)
+    # the vehicle the controller already belongs to - a second handle would step it twice
+    var vehicle_rid: RID = controller.get_rid()
 
     RailVehicleServer.vehicle_set_track(
         vehicle_rid,
@@ -288,7 +284,6 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
         TrackManager.DIRECTION_NORMAL
     )
     var forward: Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
-    RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
     RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
@@ -332,8 +327,9 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
         TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
-    var vehicle_rid: RID = _create_vehicle()
     var controller: VehicleController = _create_controller(5.0)
+    # the vehicle the controller already belongs to - a second handle would step it twice
+    var vehicle_rid: RID = controller.get_rid()
 
     RailVehicleServer.vehicle_set_track(
         vehicle_rid,
@@ -341,10 +337,8 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
         3.0,
         TrackManager.DIRECTION_REVERSED
     )
-    RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
-    remove_child(controller)
-    controller.queue_free()
+    controller = null
     await wait_idle_frames(1)
 
     RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
@@ -362,8 +356,9 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
         TrackManager.TRACK_NORMAL
     )
     TrackManager.topology_rebuild()
-    var vehicle_rid: RID = _create_vehicle()
     var controller: VehicleController = _create_controller(5.0)
+    # the vehicle the controller already belongs to - a second handle would step it twice
+    var vehicle_rid: RID = controller.get_rid()
 
     RailVehicleServer.vehicle_set_track(
         vehicle_rid,
@@ -371,7 +366,6 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
         3.0,
         TrackManager.DIRECTION_REVERSED
     )
-    RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
     TrackManager.track_free(track_rid)
 
@@ -530,12 +524,10 @@ func _create_vehicle() -> RID:
 
 ## `velocity` (m/s) is the mover's own velocity, given as the initial velocity in km/h.
 func _create_controller(velocity: float = 0.0) -> VehicleController:
-    var controller: VehicleController = VehicleController.new()
-    controller.name = "MockController%d" % created_controllers.size()
-    controller.train_id = "mock_train_%d" % created_controllers.size()
+    # the initial velocity is read while the Mover is initialised, so it goes in before the build
+    var controller: VehicleController = build_vehicle(
+            "mock_train_%d" % created_controllers.size(), null, velocity * 3.6)
     controller.type_name = "test"
-    controller.initial_velocity = velocity * 3.6
-    add_child(controller)
     created_controllers.append(controller)
     return controller
 

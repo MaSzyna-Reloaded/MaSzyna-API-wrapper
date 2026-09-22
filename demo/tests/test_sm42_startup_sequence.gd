@@ -3,15 +3,10 @@ extends MaszynaGutTest
 var train: VehicleController
 
 func before_each():
-    train = load("res://tests/sm42_controller.tscn").instantiate()
-    add_child(train)
+    train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
     await wait_idle_frames(2)
     train.send_command("battery", true)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_successful_enabling_oil_pump():
     train.send_command("oil_pump", true)

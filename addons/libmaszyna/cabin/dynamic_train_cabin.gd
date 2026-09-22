@@ -43,7 +43,8 @@ func _ready() -> void:
     # before add_child() - resolve it here directly rather than waiting for Cabin3D's own
     # _process()-based dirty resolution, which only runs a frame later.
     if controller_path:
-        set_train_controller(get_node_or_null(controller_path))
+        var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
+        set_train_controller(physics_node.get_controller() if physics_node else null)
     _cabin_ready = true
     cabin_ready.emit()
 
@@ -166,7 +167,7 @@ func _build_driver_aid_commands() -> void:
     release_to_drive.command = "brake_level_set_position"
     release_to_drive.command_param = "drive"
     _generated.add_child(release_to_drive)
-    release_to_drive.set_vehicle(_train_id)
+    release_to_drive.set_train_id(_train_id)
 
 
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term
@@ -185,7 +186,7 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.omni_range = maxf((definition.bounds_max - definition.bounds_min).length(), 1.0)
     light.state_property = "roof_light_level"
     _generated.add_child(light)
-    light.set_vehicle(_train_id)
+    light.set_train_id(_train_id)
 
     var cab_model:E3DModelInstance = _generated.get_node_or_null("CabModel") as E3DModelInstance
     if not cab_model:

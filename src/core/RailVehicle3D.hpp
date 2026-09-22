@@ -81,6 +81,8 @@ namespace godot {
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;
             RID rid;
+            /* Whether `rid` is this node's own handle or the vehicle's, adopted from the controller. */
+            bool rid_owned = false;
             bool pending_start_track_retry = false;
             double update_time = 0.0;
             bool animation_bindings_dirty = true;
@@ -109,6 +111,8 @@ namespace godot {
             void _apply_cabin_camera_configuration();
             void _on_controller_changed(VehicleController *p_controller);
             void _on_vehicle_changed();
+            void _bind_vehicle_node();
+            void _on_vehicle_config_changed();
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);

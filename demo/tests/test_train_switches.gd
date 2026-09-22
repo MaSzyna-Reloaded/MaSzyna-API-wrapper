@@ -4,17 +4,11 @@ var train: VehicleController
 var switches: VehicleSwitches
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     switches = MoverVehicleSwitches.new()
     train.add_component(switches)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_dimmer(high_beam: bool, dimmed: bool, off: bool) -> DimmerListItem:
     var item = DimmerListItem.new()

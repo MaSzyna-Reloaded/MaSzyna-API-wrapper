@@ -26,7 +26,7 @@ const SPRING_REST_LENGTH:float = 0.01
 @export var has_cab_model:bool = true
 @export var cab_window_open:bool = false
 
-@export_node_path("VehicleController") var controller_path:NodePath = NodePath(""):
+@export_node_path("VehiclePhysicsNode") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
             _dirty = true
@@ -56,17 +56,17 @@ func get_camera_transform():
 ## with CabinSystem - which from then on is the only thing talking to the vehicle servers - and
 ## hands the vehicle's id down to its elements. They hold no path to a controller and never reach
 ## for one.
-func _propagate_vehicle(node: Node, train_id: String) -> void:
+func _propagate_train_id(node: Node, train_id: String) -> void:
     for child in node.get_children():
-        _propagate_vehicle(child, train_id)
-        if child.has_method("set_vehicle"):
-            child.set_vehicle(train_id)
+        _propagate_train_id(child, train_id)
+        if child.has_method("set_train_id"):
+            child.set_train_id(train_id)
 
 func set_train_controller(controller:VehicleController) -> void:
     _shake_controller = controller
     _train_id = controller.train_id if controller else ""
     CabinSystem.register_vehicle(_train_id, controller.get_rid() if controller else RID())
-    _propagate_vehicle(self, _train_id)
+    _propagate_train_id(self, _train_id)
 
 
 func get_sound_listener_context() -> int:
@@ -89,7 +89,8 @@ func _process_dirty() -> void:
         return
     _dirty = false
     if controller_path or _shake_controller:
-        var controller:VehicleController = get_node_or_null(controller_path) if controller_path else null
+        var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path) if controller_path else null
+        var controller:VehicleController = physics_node.get_controller() if physics_node else null
         set_train_controller(controller)
 
 func _process_engine_shake(delta:float) -> void:

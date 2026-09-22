@@ -14,11 +14,12 @@ func after_each() -> void:
 
 
 func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
-    var controller: VehicleController = autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var rain_volume: RainVolume = autofree(RainVolume.new())
     controller.dimensions_length = 14.24
     controller.dimensions_width = 3.1
     controller.dimensions_height = 4.4
+    controller.apply_configuration()
 
     MaszynaRailVehicle3DInstancer._fit_rain_volume(controller, rain_volume)
 

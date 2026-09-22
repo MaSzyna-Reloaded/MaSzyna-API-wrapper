@@ -4,17 +4,11 @@ var train: VehicleController
 var engine: VehicleDieselEngine
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     engine = MoverVehicleDieselEngine.new()
     train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(engine.transmission_gear_teeth_motor, 0)

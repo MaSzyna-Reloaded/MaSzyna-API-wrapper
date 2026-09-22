@@ -2,7 +2,7 @@ extends Node3D
 class_name CabinIndicator3D
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_vehicle(train_id:String) -> void:
+func set_train_id(train_id:String) -> void:
     if _train_id == train_id:
         return
     _train_id = train_id

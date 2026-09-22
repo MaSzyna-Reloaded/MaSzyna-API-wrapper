@@ -9,14 +9,13 @@ var cabin: Node3D
 
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestUnmodelledControls"
+    train = build_vehicle("TestUnmodelledControls")
     train.battery_voltage = 110.0
+    train.apply_configuration()
     # the reverser does not move on a vehicle without a main controller (Mover.cpp DirectionForward)
     var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
     engine.cntrl_main_controller_position_count = 4
     train.add_component(engine)
-    add_child(train)
     cabin = Node3D.new()
     add_child(cabin)
     var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
@@ -29,8 +28,6 @@ func before_each():
 func after_each():
     remove_child(cabin)
     cabin.free()
-    remove_child(train)
-    train.free()
 
 
 func test_catalog_controls_with_keys_are_registered_without_widgets():

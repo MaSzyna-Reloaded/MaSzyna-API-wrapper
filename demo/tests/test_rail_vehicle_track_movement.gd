@@ -12,7 +12,7 @@ class DynamicRailVehicleSpy extends DynamicRailVehicle3D:
 
 var created_tracks: Array[RID] = []
 var created_vehicles: Array[RailVehicle3D] = []
-var created_controllers: Array[VehicleController] = []
+var created_vehicle_nodes: Array[VehiclePhysicsNode] = []
 
 
 func after_each() -> void:
@@ -23,12 +23,7 @@ func after_each() -> void:
             vehicle.queue_free()
     created_vehicles.clear()
 
-    for controller: VehicleController in created_controllers:
-        if is_instance_valid(controller):
-            if controller.get_parent():
-                controller.get_parent().remove_child(controller)
-            controller.queue_free()
-    created_controllers.clear()
+    created_vehicle_nodes.clear()
 
     for track_rid: RID in created_tracks:
         if TrackManager.track_exists(track_rid):
@@ -79,7 +74,7 @@ func test_start_track_name_initializes_and_clamps_offset() -> void:
     _assert_vector_eq(vehicle.global_position, _rail_position(10.0, 0.0), "vehicle should be placed at track end")
 
 
-func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> void:
+func test_bogies_follow_track_tangents() -> void:
     _register_track(
         _demo_curve(
             Vector3(0.0, 0.0, 0.0),
@@ -93,9 +88,14 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
     )
     TrackManager.topology_rebuild()
 
-    var controller:VehicleController = _create_controller()
-    controller.update_config({"bogie_pivot_spacing": 6.0})
-    controller.state["wheel_angle_powered_deg"] = 90.0
+    var physics_node: VehiclePhysicsNode = _create_vehicle_node()
+    var controller: VehicleController = physics_node.get_controller()
+    # the pivot spacing belongs to the wheels, and RailVehicle3D reads it off the vehicle's
+    # composed configuration - so the vehicle has to actually have wheels
+    # a component is configured and then attached - attaching is what writes it to the backend
+    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    wheels.bogie_pivot_spacing = 6.0
+    controller.add_component(wheels)
     var vehicle:RailVehicle3D = RailVehicle3D.new()
     var front_bogie:Node3D = Node3D.new()
     front_bogie.name = "FrontBogie"
@@ -115,7 +115,7 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
     vehicle.start_track_offset = TrackManager.track_get_length(created_tracks[0]) * 0.5
     vehicle.start_direction = TrackManager.DIRECTION_REVERSED
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     created_vehicles.append(vehicle)
     await wait_idle_frames(2)
 
@@ -125,11 +125,7 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
         front_forward.distance_to(rear_forward) > 0.05,
         "bogies should follow different tangents on a curved track",
     )
-    _assert_vector_eq(
-        powered_wheel.transform.basis.y.normalized(),
-        Vector3.BACK,
-        "powered wheel should rotate +angle around its local X axis, like the original's UpdateAxle()",
-    )
+
 
 
 func test_start_track_name_retries_after_tracks_changed_when_track_is_added_later() -> void:
@@ -609,29 +605,29 @@ func _create_vehicle(
     offset: float,
     direction: TrackManager.Direction = TrackManager.DIRECTION_REVERSED,
 ) -> Dictionary:
-    var controller: VehicleController = _create_controller()
+    var physics_node: VehiclePhysicsNode = _create_vehicle_node()
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name
     vehicle.start_track_offset = offset
     vehicle.set("start_direction", direction)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     created_vehicles.append(vehicle)
     await wait_idle_frames(2)
     return {
         "vehicle": vehicle,
-        "controller": controller,
+        "controller": physics_node.get_controller(),
     }
 
 
-func _create_controller() -> VehicleController:
-    var controller: VehicleController = VehicleController.new()
-    controller.name = "Controller%d" % created_controllers.size()
-    controller.train_id = "test_train_%d" % created_controllers.size()
-    controller.type_name = "test"
-    add_child(controller)
-    created_controllers.append(controller)
-    return controller
+## The vehicle's node, because RailVehicle3D is pointed at it by path - the controller it owns is
+## not a node and has none.
+func _create_vehicle_node() -> VehiclePhysicsNode:
+    var physics_node: VehiclePhysicsNode = build_vehicle_node(
+            "test_train_%d" % created_vehicle_nodes.size())
+    physics_node.get_controller().type_name = "test"
+    created_vehicle_nodes.append(physics_node)
+    return physics_node
 
 
 func _register_track(

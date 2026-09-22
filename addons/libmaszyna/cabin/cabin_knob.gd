@@ -87,7 +87,7 @@ func _update_state():
 func _ready():
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    vehicle_changed.connect(_update_state)
+    train_id_changed.connect(_update_state)
 
 func _on_console_toggle(console_visible):
     _handle_actions = not console_visible

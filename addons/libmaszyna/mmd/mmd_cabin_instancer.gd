@@ -347,7 +347,7 @@ static func build_into(
         # no common ancestor with `model`'s submodels until it's actually parented under the same
         # generated_root.
         _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
-        widget.set_vehicle(train_id)
+        widget.set_train_id(train_id)
 
 
 static func _empty_cab_data() -> Dictionary:
@@ -919,7 +919,7 @@ static func _build_indicator_lights(
             widget.set("on_target_path", widget.get_path_to(on_node))
         if off_node:
             widget.set("off_target_path", widget.get_path_to(off_node))
-        widget.set_vehicle(train_id)
+        widget.set_train_id(train_id)
 
         if entry.has("light_widget_class"):
             var lamp:Node3D = on_node if on_node else off_node
@@ -939,7 +939,7 @@ static func _build_indicator_lights(
                     light.global_position = light_points[j]
                 if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
                     _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
-                light.set_vehicle(train_id)
+                light.set_train_id(train_id)
 
 
 ## Quirk for ceiling lamps: one lamp submodel may hold a whole row of bulbs (EP07 machine room

@@ -163,12 +163,9 @@ static func _build_structure(
     auto_rewident.name = "AutoRewident"
     vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
-    # FizVehicleBuilder.build() hardcodes the generated controller's name to
-    # "VehicleController", so this relative path is deterministic even though the controller
-    # itself doesn't exist yet (FizVehiclePhysicsNode defers its own build by one frame) - do not
-    # resolve it with get_path_to() here, RailVehicle3D's own _process_dirty() will do that once
-    # the deferred build has actually run.
-    vehicle.controller_path = NodePath("%s/VehicleController" % fiz_controller.name)
+    # the vehicle's presence in the tree is the FizVehiclePhysicsNode itself - the controller it
+    # owns is not a node and has no path of its own.
+    vehicle.controller_path = NodePath(fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     vehicle.cabin_rotate_180deg = true
     vehicle.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)

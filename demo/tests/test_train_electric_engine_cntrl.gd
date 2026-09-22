@@ -4,18 +4,12 @@ var train: VehicleController
 var engine: VehicleElectricSeriesEngine
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     engine = MoverVehicleElectricSeriesEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
     train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(engine.cntrl_converter_start_mode, VehicleEngine.START_MODE_MANUAL)

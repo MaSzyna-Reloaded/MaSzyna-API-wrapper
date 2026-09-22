@@ -96,7 +96,7 @@ namespace godot {
                     float, power_current_collector_min_main_switch_voltage, 0.5f * power_current_collector_max_voltage);
             MAKE_MEMBER_GS(float, power_current_collector_min_pantograph_tank_pressure, 0.0);
             MAKE_MEMBER_GS(float, power_current_collector_max_pantograph_tank_pressure, 0.0);
-            MAKE_MEMBER_GS_DIRTY(bool, power_current_collector_overvoltage_relay, false);
+            MAKE_MEMBER_GS(bool, power_current_collector_overvoltage_relay, false);
             MAKE_MEMBER_GS(
                     float, power_current_collector_required_main_switch_voltage,
                     0.6f * power_current_collector_max_voltage);

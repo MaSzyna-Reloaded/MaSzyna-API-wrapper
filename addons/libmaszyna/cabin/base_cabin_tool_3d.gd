@@ -10,9 +10,9 @@ var _train_id:String = ""
 var _dirty:bool = false
 var _applying_control_value:bool = false
 
-signal vehicle_changed
+signal train_id_changed
 ## Emitted while the previous vehicle is still the one connected, for disconnecting from it.
-signal vehicle_changing
+signal train_id_changing
 
 ## Cabin control id (MMD label) - manipulations are reported to CabinSystem under this id; the
 ## registered cabin logic decides what they do to the vehicle.
@@ -20,17 +20,17 @@ signal vehicle_changing
 
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_vehicle(train_id:String) -> void:
+func set_train_id(train_id:String) -> void:
     if _train_id == train_id:
         return
-    vehicle_changing.emit()
+    train_id_changing.emit()
     _train_id = train_id
     _dirty = true
     if _train_id:
-        vehicle_changed.emit()
+        train_id_changed.emit()
 
 
-func get_vehicle_id() -> String:
+func get_train_id() -> String:
     return _train_id
 
 
@@ -72,7 +72,7 @@ func _apply_control_value(_value:Variant) -> void:
 
 
 func _exit_tree() -> void:
-    set_vehicle("")
+    set_train_id("")
     _dirty = true
 
 

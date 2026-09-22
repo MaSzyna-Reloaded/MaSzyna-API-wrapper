@@ -14,7 +14,7 @@ var _train_id:String = ""
 
 
 ## The vehicle this element belongs to, as the cabin root hands it down.
-func set_vehicle(train_id:String) -> void:
+func set_train_id(train_id:String) -> void:
     _train_id = train_id
 
 

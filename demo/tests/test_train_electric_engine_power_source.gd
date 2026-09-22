@@ -12,13 +12,7 @@ var train: VehicleController
 
 
 func before_each():
-    train = VehicleController.new()
-    add_child(train)
-
-
-func after_each():
-    remove_child(train)
-    train.free()
+    train = build_vehicle()
 
 
 func test_current_collector_power_source_does_not_crash_on_process():

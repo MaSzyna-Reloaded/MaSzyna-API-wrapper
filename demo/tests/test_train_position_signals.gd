@@ -3,7 +3,7 @@ extends MaszynaGutTest
 var _train_system:Object
 var _created_tracks: Array[RID] = []
 var _created_vehicles: Array[RailVehicle3D] = []
-var _created_controllers: Array[VehicleController] = []
+var _created_vehicle_nodes: Array[VehiclePhysicsNode] = []
 
 
 func before_each() -> void:
@@ -18,12 +18,7 @@ func after_each() -> void:
             vehicle.queue_free()
     _created_vehicles.clear()
 
-    for controller: VehicleController in _created_controllers:
-        if is_instance_valid(controller):
-            if controller.get_parent():
-                controller.get_parent().remove_child(controller)
-            controller.queue_free()
-    _created_controllers.clear()
+    _created_vehicle_nodes.clear()
 
     for track_rid: RID in _created_tracks:
         if TrackManager.track_exists(track_rid):
@@ -82,23 +77,22 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "start", 1.435)
     TrackManager.topology_rebuild()
 
-    var controller: VehicleController = VehicleController.new()
-    controller.train_id = train_id
+    var physics_node: VehiclePhysicsNode = build_vehicle_node(train_id)
+    var controller: VehicleController = physics_node.get_controller()
     controller.type_name = "test"
-    add_child(controller)
-    _created_controllers.append(controller)
+    _created_vehicle_nodes.append(physics_node)
 
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = "start"
     vehicle.start_track_offset = offset
     vehicle.set("start_direction", TrackManager.DIRECTION_REVERSED)
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     _created_vehicles.append(vehicle)
     await wait_idle_frames(2)
 
     return {
-        "controller": controller,
+        "controller": physics_node.get_controller(),
         "vehicle": vehicle,
     }
 

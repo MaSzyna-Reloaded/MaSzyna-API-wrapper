@@ -1,7 +1,7 @@
 extends HFlowContainer
 
 
-@export_node_path("VehicleController") var train_controller:NodePath = NodePath(""):
+@export_node_path("VehiclePhysicsNode") var train_controller:NodePath = NodePath(""):
     set(x):
         if not train_controller == x:
             train_controller = x
@@ -15,7 +15,8 @@ func _ready() -> void:
 
 func _do_update():
     if train_controller:
-        controller = get_node(train_controller)
+        var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller)
+        controller = physics_node.get_controller() if physics_node else null
     _propagate_train_controller(self, controller)
     
 func _propagate_train_controller(p_node: Node, p_controller: VehicleController):

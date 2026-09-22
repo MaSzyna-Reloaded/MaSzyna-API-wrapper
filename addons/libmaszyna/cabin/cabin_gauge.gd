@@ -51,7 +51,7 @@ var _t = 0.0
 var _setup_phase:bool = true
 
 func _ready():
-    vehicle_changed.connect(_do_setup)
+    train_id_changed.connect(_do_setup)
 
 func _enter_tree():
     _setup_phase = true

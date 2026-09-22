@@ -85,6 +85,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
         ClassDB::bind_method(D_METHOD("emit_config_changed"), &VehicleController::emit_config_changed);
+        ClassDB::bind_method(D_METHOD("apply_configuration"), &VehicleController::apply_configuration);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
         ClassDB::bind_method(
@@ -417,18 +418,15 @@ namespace godot {
     void VehicleController::initialize_mover() {
         const auto initial_vel = this->initial_velocity;
         const auto mover_type_name = std::string(type_name.utf8().ptr());
-        const auto name = std::string(this->get_name().left(this->get_name().length()).utf8().ptr());
         MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
         ERR_FAIL_NULL(physics);
-        physics_rid = physics->vehicle_create(
-                type_name, String(name.c_str()), initial_vel, this->cabin_number);
+        // the vehicle used to be named by its node; what identifies one now is its train id
+        physics_rid = physics->vehicle_create(type_name, train_id, initial_vel, this->cabin_number);
         mover = physics->vehicle_get_mover(physics_rid);
         ERR_FAIL_NULL(mover);
         controllers_by_mover[mover] = this;
 
-        dirty = true;
-        dirty_prop = true;
-        _update_mover_config_if_dirty();
+        apply_configuration();
 
         /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
         mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
@@ -436,14 +434,12 @@ namespace godot {
         /* CheckLocomotiveParameters() will reset some parameters, so the changes
          * must be applied second time */
 
-        dirty = true;
-        dirty_prop = true;
-        _update_mover_config_if_dirty();
+        apply_configuration();
         initialize_mover_state();
 
         // Original engine: Load() (Mover.cpp:11692) calls ComputeConstans() once, after every
         // physical parameter (TotalMass, Dim, Cx, BearingType, NPoweredAxles, TrackW - all
-        // already applied above by the two _update_mover_config_if_dirty() passes) is settled -
+        // already applied above by the two apply_configuration() passes) is settled -
         // it derives FrictConst1/FrictConst2s/FrictConst2d, the per-vehicle rolling/air-drag
         // resistance coefficients FrictionForce() (called every tick from ComputeTotalForce())
         // actually uses. Never called anywhere else in the original either (a single call at
@@ -502,32 +498,21 @@ namespace godot {
             physics_rid = RID();
             mover = nullptr;
         }
-        switch (p_what) {
-            case NOTIFICATION_ENTER_TREE:
-                break;
-            case NOTIFICATION_EXIT_TREE:
-                break;
-            case NOTIFICATION_READY:
-                initialize();
-                break;
-            default:;
-        }
     }
 
-    void VehicleController::_update_mover_config_if_dirty() {
-        if (dirty) {
-            /* update all train parts
-             */
-            emit_signal(mover_config_changed_signal);
-
-            dirty = false;
-            dirty_prop = true; // sforsowanie odswiezenia stanu lokalnych propsow
+    /* Applying the vehicle's configuration to the backend: the vehicle's own, then every
+     * component's, in registration order. The signal is emitted afterwards and means exactly
+     * "the backend now carries this" - it is not how the components are reached, because a
+     * component of this vehicle is applied by name here rather than by whoever happens to be
+     * connected. */
+    void VehicleController::apply_configuration() {
+        apply_config();
+        for (VehicleComponent *component: components) {
+            if (component != nullptr) {
+                component->apply_config();
+            }
         }
-
-        if (dirty_prop) {
-            apply_config();
-            dirty_prop = false;
-        }
+        emit_signal(mover_config_changed_signal);
     }
 
     void VehicleController::_process_mover(const double p_delta) {
@@ -539,7 +524,10 @@ namespace godot {
 
     /* Registering the vehicle and its commands used to wait for NOTIFICATION_ENTER_TREE. A
      * vehicle is not in a tree any more, so it happens where the vehicle comes into being. */
-    void VehicleController::initialize() {
+    /* Registering the vehicle and its own commands. It happens before any component attaches,
+     * because a component registers commands too and TrainSystem refuses those of a train it does
+     * not know yet. */
+    void VehicleController::attach_to_system() {
         // the vehicle handle is RailVehicle3D's to create; the server hands it here
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->register_train(train_id, this);
@@ -560,6 +548,11 @@ namespace godot {
         register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
         register_command("coupler_connect", Callable(this, "coupler_connect"));
         register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
+    }
+
+    /* The Mover, once every component is attached - initialize_mover() pushes the configuration
+     * out to all of them (mover_config_changed). */
+    void VehicleController::initialize() {
         initialize_mover();
         update_state();
         emit_signal(power_changed_signal, prev_is_powered);
@@ -626,9 +619,6 @@ namespace godot {
     }
 
     void VehicleController::compute_forces(const double p_delta) {
-        // the components' authored config is applied before the backend integrates anything;
-        // this becomes the server's own `configure` phase once the components move there
-        _update_mover_config_if_dirty();
         MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
         if (physics == nullptr) {
             return;
@@ -820,19 +810,6 @@ namespace godot {
             prev_cabin_occupied = new_cabin_occupied;
             emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
-    }
-
-    void VehicleController::_process(const double p_delta) {
-        /* nie daj borze w edytorze */
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-
-        // controllers registered in RailVehiclePhysicsServer are stepped by its global tick
-        if (rid.is_valid()) {
-            return;
-        }
-        _process_mover(p_delta);
     }
 
     double VehicleController::process_movement(const double p_delta) {
@@ -1144,9 +1121,16 @@ namespace godot {
         return found;
     }
 
+    /* Attaching a component is a complete operation: it joins the vehicle and, when the vehicle
+     * is already running, its configuration is written to the backend and announced there and
+     * then. A component added to a built vehicle - a modder's, or one a test adds - must not
+     * leave the vehicle describing geometry it does not have. */
     void VehicleController::add_component(VehicleComponent *p_component) {
         ERR_FAIL_NULL(p_component);
         p_component->attach(this);
+        if (mover != nullptr) {
+            p_component->apply_config();
+        }
     }
 
     /* Every component goes with the vehicle; nothing outside it holds one. */

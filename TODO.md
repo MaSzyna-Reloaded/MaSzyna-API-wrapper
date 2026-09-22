@@ -73,9 +73,15 @@ serialises without a line of per-component code.
   `PhysicsServer3D::body_get_direct_state(RID)` does. The interface/implementation split
   (`Vehicle<Domain>` / `Mover<Interface>`) is its own commit at the start. `GenericVehicleComponent`
   gets its dump for free from `get_property_list()` + `PROPERTY_USAGE_SCRIPT_VARIABLE`.~~
-* **D - `VehicleController` stops being a `Node`.** `initialize_mover()` moves into
-  `vehicle_create()`, so the Mover no longer waits for `_ready()`; registration in `TrainSystem`
-  stops hanging off `ENTER_TREE`.
+* ~~**D - `VehicleController` stops being a `Node`.**~~ Done. It is an `Object` the vehicle owns:
+  `attach_to_system()` registers the vehicle and its commands before any component attaches (a
+  command of a train the system does not know yet is refused), `initialize()` then starts the
+  Mover, and `RailVehicleServer`'s `process_frame` tick drives it. `RailVehicle3D` adopts the
+  vehicle's handle instead of creating a second one, binds to it in `_enter_tree()` and does not
+  process until `vehicle_changed` says there is a vehicle. The controller's `dirty` flag is gone
+  with it: configuration is written by the named `apply_configuration()` - the vehicle's own and
+  every component's, in registration order - and `add_component()` applies and announces a
+  component added to a vehicle that is already running.
 * **E - proxy nodes.** `VehicleControllerNode` plus one `<Interface>Node` per component, each
   thin: `@export`s for the editor, forward to the server object, no logic.
 * **F - `DynamicRailVehicle3D` stops fabricating nodes** (the FIZ half is done, see above) -
@@ -498,3 +504,47 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   than patched now.
 * **The `.fiz` path has not been run in the game**, only in tests. Nothing has driven a vehicle
   end to end since the components stopped being nodes.
+
+### Wheel geometry is computed by the node that draws it, not by the wheels
+
+`RailVehicle3D` reads `bogie_pivot_spacing` out of the vehicle's config, asks
+`RailVehicleServer.vehicle_get_curve(rid, spacing)` for the two bogie placements, and reads
+`wheel_angle_powered_deg` out of the state dump to turn the wheel submodel. That is wheel
+geometry living in a rendering node. The split: `RailVehicle3D` keeps the **paths and the
+animating** - `front_bogie_path`, `powered_wheel_paths`, the rest bases and applying the
+transforms - while `VehicleWheels` owns the wheels, so it owns the angle and the bogie placement
+and reads them off the vehicle server itself (`vehicle_get_transform_at_distance`) by RID.
+
+Moving it there is what makes it testable again. `test_rail_vehicle_track_movement` used to
+assert the wheel rotation by writing `controller.state["wheel_angle_powered_deg"] = 90.0`; the
+state is read-only now, so that assertion was dropped. Once `VehicleWheels` computes the angle
+and the bogie placement, the test asserts them on the component - no node, no state injection.
+
+
+### RailVehicle3D runs before it has a vehicle
+
+The node enters the tree, creates a handle, starts `_process` and applies its start-track
+placement - all before any vehicle exists. The controller only arrives when `controller_path`
+resolves, a frame later, so the first placement runs with a pivot spacing of 0 and bails out;
+`_on_controller_changed()` now re-applies the placement to make up for it. That is a patch over
+the ordering: the node should not place or animate anything until it has a vehicle, and the
+vehicle should be known to it before it starts processing (the `VehiclePhysicsNode` is its
+sibling or parent in the scene, so it can be resolved on entering the tree).
+
+### Adding a component to a built vehicle is not a complete operation
+
+Components are no longer nodes, so `add_component()` on a vehicle that has already been through
+`initialize()` is an ordinary path now - a modder's `GenericVehicleComponentNode` does exactly
+that, and so do the tests. What it is missing:
+
+* the new component's configuration reaches the backend through `dirty_prop`, and
+  `_update_mover_config_if_dirty()` emits `mover_config_changed` off the *other* flag (`dirty`),
+  before `apply_config()` runs. So configuration lands with nothing announced - measured: the
+  signal never reaches a listener connected after the build.
+* consumers that derive geometry from it therefore cannot be event-driven.
+  `RailVehicle3D::apply_track_placement()` currently re-requests a placement when the bogie pivot
+  spacing is not there yet, which is a retry standing in for the missing event.
+
+The fix is to make attaching a component a named, complete operation: apply its configuration and
+announce that it was applied (a signal that means "the backend now carries this", not "it is
+about to"). Then `RailVehicle3D` reacts to it and the retry goes away.

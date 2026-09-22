@@ -2,7 +2,7 @@
 #include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleComponentType.hpp"
 #include "macros.hpp"
-#include <godot_cpp/classes/node.hpp>
+#include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/variant/rid.hpp>
 #include <godot_cpp/variant/transform3d.hpp>
 #include <godot_cpp/variant/vector3.hpp>
@@ -21,8 +21,11 @@ namespace godot {
     class TrainSystem;
 
 
-    class VehicleController : public Node {
-            GDCLASS(VehicleController, Node)
+    /// The vehicle itself: the Mover, the components and the operations that change them. It is
+    /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
+    /// these. Reached from outside by RID, through RailVehicleServer.
+    class VehicleController : public Object {
+            GDCLASS(VehicleController, Object)
         private:
             /* Owned by MaszynaMoverPhysicsServer, which created it and will free it; this
              * is a borrowed pointer, cached because every component reaches for it per
@@ -33,8 +36,6 @@ namespace godot {
             int cabin_number = 0;
             void initialize_mover();
             void initialize_mover_state();
-            bool dirty = false;      // Refreshes all elements
-            bool dirty_prop = false; // Refreshes only VehicleController's properties
             /// state is rebuilt from the mover when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
@@ -58,7 +59,9 @@ namespace godot {
             bool tacho_clock_active = false;
             void _update_tachometer(double p_delta);
 
-            void _update_mover_config_if_dirty();
+            /// Writes the wrapper's configuration - the vehicle's and every component's - to the
+            /// backend, then announces that the backend carries it.
+            void apply_configuration();
             void _handle_mover_update();
             int _resolve_coupler_end(const Variant &p_where) const;
             void _consume_coupler_sounds(TMoverParameters *p_mover);
@@ -244,7 +247,6 @@ namespace godot {
             Dictionary get_config() const;
             /* One of this vehicle's components (re)applied its configuration. */
             void emit_config_changed();
-            void _process(double p_delta) override;
             void _notification(int p_what);
             Variant send_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(),
@@ -274,6 +276,7 @@ namespace godot {
             /* Brings the vehicle up: its simulation, its state and the signals whose initial
              * value listeners expect. Called by whatever owns the vehicle, once it is built -
              * it used to wait for NOTIFICATION_READY, which a vehicle outside a tree never gets. */
+            void attach_to_system();
             void initialize();
             /* The reverse: the vehicle leaves TrainSystem and gives its commands back. */
             void shutdown();
@@ -318,7 +321,7 @@ namespace godot {
             Transform3D get_world_transform() const;
             MAKE_MEMBER_GS(String, train_id, "");
             MAKE_MEMBER_GS(String, type_name, "");
-            MAKE_MEMBER_GS_DIRTY(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
+            MAKE_MEMBER_GS(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);

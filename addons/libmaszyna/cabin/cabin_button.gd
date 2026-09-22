@@ -70,7 +70,7 @@ func _ready():
     add_child(_sound)
     _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
-    vehicle_changed.connect(_update_state)
+    train_id_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
 
 func _enter_tree():

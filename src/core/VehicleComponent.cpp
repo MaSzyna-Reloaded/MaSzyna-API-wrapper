@@ -192,18 +192,19 @@ namespace godot {
     }
     void VehicleComponent::_do_update_internal_mover(TMoverParameters *p_mover) {};
 
+    /* Writing the component's configuration into the backend and saying so. A component that is
+     * not in a vehicle yet, or whose vehicle has not started its backend yet, simply has nowhere
+     * to write - it is configured before it is attached, and initialize() applies all of it. */
     void VehicleComponent::apply_config() {
-        if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
-                _do_update_internal_mover(mover);
-                train_controller_node->emit_config_changed();
-            } else {
-                UtilityFunctions::push_warning("VehicleComponent::apply_config() failed: internal mover not initialized");
-            }
-        } else {
-            UtilityFunctions::push_warning("VehicleComponent::apply_config() failed: missing train controller node");
+        if (train_controller_node == nullptr) {
+            return;
         }
+        TMoverParameters *mover = train_controller_node->get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        _do_update_internal_mover(mover);
+        train_controller_node->emit_config_changed();
     }
 
     /// The dump of this component alone. Nothing is stored and nothing is computed until asked:

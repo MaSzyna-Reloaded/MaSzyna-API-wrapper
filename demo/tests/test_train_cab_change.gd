@@ -7,14 +7,7 @@ var train:VehicleController
 
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestCabChangeTrain"
-    add_child(train)
-
-
-func after_each():
-    remove_child(train)
-    train.free()
+    train = build_vehicle("TestCabChangeTrain")
 
 
 ## An unmanned vehicle keeps its cab inactive (the original activates only a driven one,
@@ -66,13 +59,12 @@ func test_cab_change_stops_at_vehicle_end():
 
 
 func test_starts_in_cab_two_for_rear_driver():
-    var rear_train := VehicleController.new()
-    rear_train.train_id = "TestCabChangeRearTrain"
-    rear_train.cabin_number = -1
-    add_child(rear_train)
+    var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+    physics_node.train_id = "TestCabChangeRearTrain"
+    physics_node.cabin_number = -1
+    add_child_autofree(physics_node)
+    var rear_train: VehicleController = physics_node.get_controller()
 
     assert_eq(rear_train.state["cabin_occupied"], -1)
     assert_eq(rear_train.state["cabin"], -1)
 
-    remove_child(rear_train)
-    rear_train.free()

@@ -333,6 +333,63 @@ A pointer that crosses a public boundary makes every caller responsible for a li
 create, and the resulting dangle surfaces far from the code that caused it. Pointers stay inside
 one class.
 
+### Never work around a missing event
+
+Applies to GDScript and C++ alike. A value that is not there yet is an ordering defect, and the
+things that look like a fix are all the same mistake:
+
+```cpp
+// not this - the placement could not finish, so it asks to be run again
+if (pivot_spacing <= 0.0) {
+    force_detail_refresh = true;   // "try again next frame"
+    return;
+}
+
+// this - the owner announces that the configuration reached the backend, and the work happens
+// there, once
+controller->connect(VehicleController::mover_config_changed_signal,
+                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+```
+
+The same applies to a deferred call added beside a direct one, a second `_ready()`-time retry, a
+counter that gives up after N frames, and a `_process` that keeps checking whether something has
+appeared. Each of them works often enough to survive review and leaves the real defect - the
+operation that published its result before it had one, or never published it at all - in place.
+
+Two questions settle it. *What produces this value, and has that operation finished?* If it has
+not, the observer is being run too early: move it behind the event, or make the producing
+operation complete before anything can observe it. *Is there an event for it?* If there is none,
+add one at the owner - a signal that means "this has landed", not "this is about to happen" -
+rather than polling for its effect.
+
+### Wiring is not per-frame work
+
+Applies to GDScript and C++ alike. Resolving a path, finding a node, connecting a signal,
+subscribing to anything: that happens **once**, where the node comes into being - `_enter_tree()`,
+`_ready()`, or an init the owner calls. Never in `_process`/`_physics_process`, and a `_dirty`
+flag around it does not make it acceptable - the flag only hides that the wiring is being
+re-decided on a frame boundary.
+
+```cpp
+// not this - the subscription lives in the per-frame path
+void Node::_process(double delta) {
+    if (dirty) {
+        vehicle = get_node_or_null(vehicle_path);
+        vehicle->connect(changed_signal, callable_mp(this, &Node::_on_changed));
+    }
+}
+
+// this - wired on entering the tree, and the frame does only frame work
+void Node::_enter_tree() {
+    vehicle = get_node_or_null(vehicle_path);
+    vehicle->connect(changed_signal, callable_mp(this, &Node::_on_changed));
+}
+```
+
+There is a second failure beyond the cost: a node that switches its processing off until the
+thing it depends on exists can never subscribe to it, because the code that would subscribe is
+the code that is not running. That deadlock is what this rule exists to prevent.
+
 ### Per-frame work
 
 Applies to C++ and GDScript alike - a loop in a native `_process` scales with the collection just

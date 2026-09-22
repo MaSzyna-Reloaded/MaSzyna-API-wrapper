@@ -46,9 +46,9 @@ namespace godot {
         // on entering, not on ready: Godot readies children before their parent, and a
         // component proxy below this node has to find a vehicle already standing
         if (p_what == NOTIFICATION_ENTER_TREE && controller == nullptr) {
-            // a vehicle with nothing in it is still a vehicle - components can be added to it,
-            // and a model applied over it later
-            _build(Ref<VehicleModel>());
+            // with whatever model the node was given before it entered; without one the vehicle
+            // still comes up, empty - components can be added to it, or a model applied later
+            _build(model);
         }
         if (p_what == NOTIFICATION_PREDELETE) {
             if (RailVehicleServer *server = RailVehicleServer::get_instance();
@@ -82,6 +82,18 @@ namespace godot {
         if (p_model.is_valid()) {
             VehicleModel::apply(controller, p_model->get_properties());
         }
+        controller->set_train_id(train_id);
+        controller->set_initial_velocity(initial_velocity);
+        controller->set_cabin_number(cabin_number);
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            if (!vehicle_rid.is_valid()) {
+                vehicle_rid = server->vehicle_create();
+            }
+            server->vehicle_attach_controller(vehicle_rid, controller->get_instance_id());
+            controller->set_vehicle_rid(vehicle_rid);
+        }
+        controller->attach_to_system();
+
         const TypedArray<VehicleComponentModel> components =
                 p_model.is_valid() ? p_model->get_components() : TypedArray<VehicleComponentModel>();
         for (int i = 0; i < components.size(); i++) {
@@ -99,17 +111,6 @@ namespace godot {
             controller->add_component(component);
         }
 
-        controller->set_train_id(train_id);
-        controller->set_initial_velocity(initial_velocity);
-        controller->set_cabin_number(cabin_number);
-
-        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
-            if (!vehicle_rid.is_valid()) {
-                vehicle_rid = server->vehicle_create();
-            }
-            server->vehicle_attach_controller(vehicle_rid, controller->get_instance_id());
-            controller->set_vehicle_rid(vehicle_rid);
-        }
         controller->initialize();
         emit_signal(vehicle_changed_signal);
     }

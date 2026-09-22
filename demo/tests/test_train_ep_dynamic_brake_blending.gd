@@ -4,17 +4,11 @@ var train: VehicleController
 var ep_brake: VehicleElectroPneumaticDynamicBrake
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     ep_brake = MoverVehicleElectroPneumaticDynamicBrake.new()
     train.add_component(ep_brake)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_blending_defaults():
     assert_eq(ep_brake.blending_max_velocity, 0.0)

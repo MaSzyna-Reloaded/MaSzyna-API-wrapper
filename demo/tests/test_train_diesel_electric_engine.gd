@@ -4,17 +4,11 @@ var train: VehicleController
 var engine: VehicleDieselElectricEngine
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     engine = MoverVehicleDieselElectricEngine.new()
     train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_row(rpm: float, gen_power: float) -> WWListItem:
     var item = WWListItem.new()

@@ -104,14 +104,14 @@ func _ready():
 
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    vehicle_changed.connect(_on_vehicle_changed)
-    vehicle_changing.connect(_on_vehicle_changing)
+    train_id_changed.connect(_on_train_id_changed)
+    train_id_changing.connect(_on_train_id_changing)
 
-func _on_vehicle_changing() -> void:
+func _on_train_id_changing() -> void:
     if CabinSystem.vehicle_command_received.is_connected(_on_command_received):
         CabinSystem.vehicle_command_received.disconnect(_on_command_received)
 
-func _on_vehicle_changed() -> void:
+func _on_train_id_changed() -> void:
     CabinSystem.vehicle_command_received.connect(_on_command_received)
     _update_state()
 

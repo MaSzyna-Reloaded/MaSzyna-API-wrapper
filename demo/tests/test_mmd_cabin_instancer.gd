@@ -282,7 +282,7 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var submodel_index:Dictionary = {"czuwak_on": [on_node], "czuwak_off": [off_node]}
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var driver_position:Vector3 = Vector3(1.0, 2.0, 10.0)
     MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, generated_root, 1, driver_position, diagnostics)
@@ -316,7 +316,7 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
     var submodel_index:Dictionary = {"czuwak_on": [on_a, on_b]}
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
 
@@ -330,7 +330,7 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-security_aware")
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, {}, generated_root, 1, Vector3.ZERO, diagnostics)
 
@@ -354,7 +354,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var submodel_index:Dictionary = {"cab_lamp_on": [on_node], "cab_lamp_off": [off_node]}
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
             descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
@@ -382,7 +382,7 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     var submodel_index:Dictionary = {"instrument_lamp_on": [on_node]}
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
             descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
@@ -407,7 +407,7 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
     var submodel_index:Dictionary = {"radio_lamp_on": [on_node]}
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     MmdCabinInstancer._build_indicator_lights(
             descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
@@ -440,7 +440,7 @@ func test_localbrake_rotation_is_scaled_by_local_brake_position_count():
     descriptor.animation_type = "rot"
     descriptor.scale = -0.0125
     var widget:CabinKnob = autofree(CabinKnob.new())
-    var controller:VehicleController = add_child_autofree(VehicleController.new())
+    var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
 
     MmdCabinInstancer._apply_animation_shape(

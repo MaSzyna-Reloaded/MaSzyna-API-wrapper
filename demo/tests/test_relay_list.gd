@@ -4,9 +4,7 @@ var train: VehicleController
 var engine: VehicleElectricSeriesEngine
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     engine = MoverVehicleElectricSeriesEngine.new()
     # NOTE: engine_power_source must be set explicitly here - a freshly created engine without
@@ -16,10 +14,6 @@ func before_each():
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_row(relay_position: int, resistance: float, auto_switch: bool) -> RelayListItem:
     var item = RelayListItem.new()

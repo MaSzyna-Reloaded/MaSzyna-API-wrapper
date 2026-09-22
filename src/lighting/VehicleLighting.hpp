@@ -63,7 +63,7 @@ namespace godot {
             void _unregister_commands() override;
         public:
             static const char *selector_position_changed_signal;
-            MAKE_MEMBER_GS_DIRTY(int, lights_selector_position, 0);
+            MAKE_MEMBER_GS(int, lights_selector_position, 0);
             MAKE_MEMBER_GS(bool, lights_wrap_selector, false);
             MAKE_MEMBER_GS(int, lights_default_selector_position, 0);
             MAKE_MEMBER_GS_NR(

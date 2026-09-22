@@ -3,14 +3,8 @@ extends MaszynaGutTest
 var train: VehicleController
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(train.cntrl_battery_start_mode, VehicleController.START_MODE_MANUAL)

@@ -96,16 +96,16 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        p_config["get_powered_wheel_diameter()"] = mover->WheelDiameter;
-        p_config["get_front_rolling_wheel_diameter()"] = mover->WheelDiameterL;
-        p_config["get_rear_rolling_wheel_diameter()"] = mover->WheelDiameterT;
-        p_config["get_axle_inertial_moment()"] = mover->AxleInertialMoment;
-        p_config["get_track_width()"] = mover->TrackW;
-        p_config["get_axle_arrangement()"] = String(mover->AxleArangement.c_str());
-        p_config["get_bogie_axle_spacing()"] = mover->ADist;
-        p_config["get_bogie_pivot_spacing()"] = mover->BDist;
-        p_config["get_minimum_curve_radius()"] = get_minimum_curve_radius();
-        p_config["get_bearing_type()"] = mover->BearingType == 0 ? BEARING_TYPE_SLIDE : BEARING_TYPE_ROLL;
+        p_config["powered_wheel_diameter"] = mover->WheelDiameter;
+        p_config["front_rolling_wheel_diameter"] = mover->WheelDiameterL;
+        p_config["rear_rolling_wheel_diameter"] = mover->WheelDiameterT;
+        p_config["axle_inertial_moment"] = mover->AxleInertialMoment;
+        p_config["track_width"] = mover->TrackW;
+        p_config["axle_arrangement"] = String(mover->AxleArangement.c_str());
+        p_config["bogie_axle_spacing"] = mover->ADist;
+        p_config["bogie_pivot_spacing"] = mover->BDist;
+        p_config["minimum_curve_radius"] = get_minimum_curve_radius();
+        p_config["bearing_type"] = mover->BearingType == 0 ? BEARING_TYPE_SLIDE : BEARING_TYPE_ROLL;
         p_config["axles_powered_count"] = mover->NPoweredAxles;
         p_config["axles_count"] = mover->NAxles;
     }

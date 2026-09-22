@@ -58,6 +58,7 @@ const SOUND_KEYS: PackedStringArray = [
 var _tracks: Array[RID] = []
 var _vehicles: Array[RID] = []
 var _controllers: Array[VehicleController] = []
+var _vehicle_nodes: Array[VehiclePhysicsNode] = []
 
 
 func before_all() -> void:
@@ -73,30 +74,32 @@ func before_all() -> void:
         _tracks.append(track_rid)
     TrackManager.topology_rebuild()
 
+    # the vehicle is configured by its model, before the Mover is initialised - applying a FIZ
+    # afterwards leaves the backend running on the zeros it started with (mass 0 -> NaN velocity)
+    var model: VehicleModel = FizVehicleBuilder.build_model_at(FIXTURE_FIZ)
     for index: int in VEHICLE_COUNT:
-        var controller: VehicleController = VehicleController.new()
-        controller.name = "BenchController%d" % index
-        controller.train_id = "bench_vehicle_%d" % index
-        FizVehicleBuilder.build_into(controller, FIXTURE_FIZ)
+        var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+        physics_node.train_id = "bench_vehicle_%d" % index
+        physics_node.set_model(model)
+        add_child(physics_node)
+        _vehicle_nodes.append(physics_node)
+        var controller: VehicleController = physics_node.get_controller()
 
         # the two biggest publishers the fixture has no section for, added as a scene would
         var engine: VehicleElectricSeriesEngine = MoverVehicleElectricSeriesEngine.new()
-        engine.name = "Engine"
         engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_component(engine)
         var lighting: VehicleLighting = MoverVehicleLighting.new()
-        lighting.name = "Lighting"
         controller.add_component(lighting)
         var spring_brake: VehicleSpringBrake = MoverVehicleSpringBrake.new()
-        spring_brake.name = "SpringBrake"
         controller.add_component(spring_brake)
 
-        add_child(controller)
         _controllers.append(controller)
 
-        var vehicle_rid: RID = RailVehicleServer.vehicle_create()
+        # the vehicle's own handle - creating a second one here would step the same controller
+        # twice and free it twice
+        var vehicle_rid: RID = physics_node.get_vehicle_rid()
         _vehicles.append(vehicle_rid)
-        RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
         var offset: float = index * VEHICLE_SPACING
         var track_rid: RID = _tracks[int(offset / TRACK_LENGTH)]
         RailVehicleServer.vehicle_set_track(
@@ -109,14 +112,13 @@ func before_all() -> void:
 
 
 func after_all() -> void:
-    for vehicle_rid: RID in _vehicles:
-        RailVehicleServer.vehicle_free(vehicle_rid)
+    # the handles belong to the nodes below and go with them
     _vehicles.clear()
-    for controller: VehicleController in _controllers:
-        if is_instance_valid(controller):
-            remove_child(controller)
-            controller.free()
     _controllers.clear()
+    for physics_node: VehiclePhysicsNode in _vehicle_nodes:
+        remove_child(physics_node)
+        physics_node.free()
+    _vehicle_nodes.clear()
     for track_rid: RID in _tracks:
         if TrackManager.track_exists(track_rid):
             TrackManager.track_free(track_rid)
@@ -185,4 +187,11 @@ func test_bench_sound_shaped_read() -> void:
         SOUND_KEYS.size(),
         float(elapsed) / SAMPLE_FRAMES / VEHICLE_COUNT,
         float(elapsed) / SAMPLE_FRAMES / MICROSECONDS_PER_MILLISECOND])
+    if is_nan(sink):
+        var offenders: PackedStringArray = PackedStringArray()
+        var probe: Dictionary = _controllers[0].get_state()
+        for key: String in SOUND_KEYS:
+            if is_nan(float(probe.get(key, 0.0))):
+                offenders.append(key)
+        fail_test("these published state values are NaN: %s" % [offenders])
     assert_true(not is_nan(sink), "the reads were not optimised away")

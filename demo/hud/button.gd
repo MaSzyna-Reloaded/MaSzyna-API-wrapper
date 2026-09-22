@@ -6,7 +6,7 @@ class_name DebugButton
 var _dirty = false
 var _controller:VehicleController
 
-@export_node_path("VehicleController") var controller:NodePath:
+@export_node_path("VehiclePhysicsNode") var controller:NodePath:
     set(x):
         _dirty = true
         _controller = null
@@ -24,7 +24,8 @@ func _process(delta):
         _dirty = false
 
         if not _controller and controller:
-            _controller = get_node(controller)
+            var physics_node: VehiclePhysicsNode = get_node_or_null(controller)
+            _controller = physics_node.get_controller() if physics_node else null
             disabled = false
         else:
             disabled = true

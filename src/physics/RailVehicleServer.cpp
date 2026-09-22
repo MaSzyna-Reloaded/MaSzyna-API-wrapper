@@ -74,6 +74,11 @@ namespace godot {
         placement->rail_vehicle_id = p_rail_vehicle_id;
     }
 
+    uint64_t RailVehicleServer::vehicle_get_rail_vehicle(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement == nullptr ? 0 : placement->rail_vehicle_id;
+    }
+
     void RailVehicleServer::set_stepping_enabled(const bool p_enabled) {
         stepping_enabled = p_enabled;
         _set_stepping(p_enabled && !vehicles.is_empty());

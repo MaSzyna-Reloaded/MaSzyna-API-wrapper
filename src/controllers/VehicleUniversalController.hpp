@@ -19,7 +19,7 @@ namespace godot {
         public:
             MAKE_MEMBER_GS(bool, integrated_brake_pn, true);
             MAKE_MEMBER_GS(bool, integrated_brake, true);
-            MAKE_MEMBER_GS_DIRTY(int, selector_position, 0);
+            MAKE_MEMBER_GS(int, selector_position, 0);
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<UniversalControllerListItem>, positions)
     };
 } // namespace godot

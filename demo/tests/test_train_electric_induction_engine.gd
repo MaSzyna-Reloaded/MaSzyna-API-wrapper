@@ -4,18 +4,12 @@ var train: VehicleController
 var engine: VehicleElectricInductionEngine
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     engine = MoverVehicleElectricInductionEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_component(engine)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_point(x: float, y: float) -> CurvePointItem:
     var item = CurvePointItem.new()

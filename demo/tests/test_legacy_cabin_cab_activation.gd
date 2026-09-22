@@ -9,10 +9,9 @@ var cabin: Node3D
 
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestCabActivation"
+    train = build_vehicle("TestCabActivation")
     train.battery_voltage = 110.0
-    add_child(train)
+    train.apply_configuration()
     # a cabin with no controls at all
     cabin = Node3D.new()
     add_child(cabin)
@@ -26,8 +25,6 @@ func before_each():
 func after_each():
     remove_child(cabin)
     cabin.free()
-    remove_child(train)
-    train.free()
 
 
 func test_cab_without_the_gauge_registers_the_control():

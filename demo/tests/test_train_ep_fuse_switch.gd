@@ -3,15 +3,10 @@ extends MaszynaGutTest
 var train: VehicleController
 
 func before_each():
-    train = load("res://tests/sm42_controller.tscn").instantiate()
-    train.train_id = "TestTrain"
+    train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
     train.battery_voltage = 110.0
-    add_child(train)
+    train.apply_configuration()
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_successful_ep_fuse_enabling():
     train.send_command("switch_ep_fuse", true)

@@ -3,6 +3,60 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - a parked vehicle never had its bogies placed, and four guesses before one print
+
+* **Symptom:** both bogies of a vehicle standing on a curve carried the same tangent
+  (`test_rail_vehicle_track_movement::test_bogies_follow_track_tangents`). Nudging the vehicle by
+  1 mm fixed it, which made it read as a test artefact rather than a bug.
+* **Four wrong hypotheses first**, each argued from reading the code: the config key names, the
+  `bogie_rest_global_bases` cache, the order of `_cache_animation_bindings()` against
+  `_process_dirty()`, and the duplicated vehicle handle. Two of those were real bugs, fixed in
+  the same commit, and neither was this one.
+* **What found it:** a `UtilityFunctions::print` of every guard at the top of
+  `apply_track_placement()`, plus one inside the bogie loop. The first printed once with
+  `force_detail_refresh=1` and then a dozen times with `0`; the second never printed at all. So
+  the function returned at `!moved && !force_detail_refresh` on every call after the first, and
+  the first had found a pivot spacing of 0.
+* **Cause, and the lifecycle that explains it:** `VehiclePhysicsNode::_build()` creates the
+  controller, applies the model, attaches the components and then calls `initialize()`, whose
+  `initialize_mover()` pushes the wrapper's configuration into the backend before
+  `vehicle_changed` is emitted. A component added **after** that - a modder's
+  `GenericVehicleComponentNode`, or the wheels a test adds - configures nothing until the next
+  tick dirties the Mover. `MoverVehicleWheels` publishes `bogie_pivot_spacing` by reading
+  `mover->BDist`, so the one placement the vehicle got saw 0, and `moved` is false forever for a
+  vehicle that is standing still.
+* **Fix:** `RailVehicle3D` reacts to the controller's `mover_config_changed` signal, which is
+  emitted exactly when the configuration reaches the backend, instead of polling a retry flag.
+* **Rule:** a per-frame path gated on "something moved" never picks up a value that arrives late.
+  Anything derived from configuration is recomputed when the configuration lands - and there is a
+  signal for that; do not invent a retry flag beside it.
+* **Rule:** after two hypotheses read off the code have failed, stop reading and print. Four
+  reasoned guesses cost more than the one `print` that named the branch in a single run.
+
+## 2026-09-23 - every vehicle ran with a bogie pivot spacing of zero
+
+* **Symptom:** `test_rail_vehicle_track_movement::test_bogies_follow_track_tangents` - "bogies
+  should follow different tangents on a curved track". Both bogies sat on the same tangent, as if
+  the vehicle had no length at all.
+* **Cause:** `MoverVehicleWheels::_fill_config_dictionary()` published its keys as **the names of
+  the methods that produced them, parentheses and all** - `p_config["get_bogie_pivot_spacing()"]`,
+  `p_config["get_track_width()"]`, and nine more across that file and
+  `MoverVehicleUniversalController`. Every reader asks for the plain name, so
+  `RailVehicle3D.cpp:1106` (`get_config().get("bogie_pivot_spacing", 0.0)`) took the default **for
+  every vehicle in the game**, not only in the test: the front and rear bogie were sampled at the
+  same point on the track.
+* **What proved it:** reading the fill itself after the test failed. A `Dictionary.get(key,
+  default)` cannot report a missing key - it returns the default and the caller carries on, so
+  there is no error anywhere to grep for. The count is the whole diagnosis: 11 keys, 2 files.
+* **Fix:** the keys carry the value's name (`bogie_pivot_spacing`), as every other component's
+  fill already did.
+* **Rule:** a state or config key is data, not a method name. When a fill is written by
+  transcribing accessors - by hand or by a script - grep the result for `["get_` before trusting
+  it; the mistake is invisible at the producer and silent at every consumer.
+* **Rule:** `Dictionary.get(key, default)` hides a typo forever. Where a key is part of a
+  published contract, the test that matters asserts the **key is present**, not merely that the
+  value reads sensibly.
+
 ## 2026-09-22 - a teardown abort that is RID allocator corruption, not a double free
 
 * **Symptom:** `test_zzz_ep07_cabin_main_switch` aborts during scenery teardown, in maybe half of

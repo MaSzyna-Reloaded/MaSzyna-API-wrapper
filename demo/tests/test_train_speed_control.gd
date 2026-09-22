@@ -4,17 +4,11 @@ var train: VehicleController
 var speed_control: VehicleSpeedControl
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     speed_control = MoverVehicleSpeedControl.new()
     train.add_component(speed_control)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_false(speed_control.speed_control_enabled)

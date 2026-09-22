@@ -4,17 +4,11 @@ var train: VehicleController
 var heating: VehicleHeating
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     heating = MoverVehicleHeating.new()
     train.add_component(heating)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func test_defaults():
     assert_eq(heating.heating_source, VehicleController.POWER_SOURCE_GENERATOR)

@@ -108,6 +108,19 @@ Code generation:
   that crosses a public boundary makes the caller responsible for a lifetime it does not own, and
   the resulting dangle surfaces far from the code that caused it. Pointers stay inside one class -
   see `CODE_STYLE.md`
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never work around a missing or mistimed event.**
+  When a value is not there yet, the answer is never a retry, a re-request, a poll, a "try again
+  next frame" flag, a deferred call or a second attempt. Those hide a broken order of operations
+  and they keep working just well enough that nobody finds the real defect. Fix it where it is:
+  make the operation that produces the value complete before anything observes it, or give the
+  owner an event that says the value has landed and react to that. A flag whose name means
+  "do it again" is the smell; if one is being added, the ordering is wrong
+* PROHIBITED, in GDSCRIPT and in C++ alike: **never wire anything up in a hot path.** A
+  `connect`, a `get_node`, a path resolution, a subscription - none of it belongs in `_process`,
+  `_physics_process` or a per-frame tick, not even behind a `_dirty` flag. Wiring happens once,
+  where the node comes into being: `_enter_tree()`, `_ready()`, or an explicit init called by the
+  owner. A subscription made from `_process` also cannot be waited for - a node that stops
+  processing until the thing it subscribes to exists would never subscribe at all
 * GDSCRIPT: interpretation costs. For anything recurring prefer, in this order: C++ (a singleton on
   `SceneTree`'s `process_frame`), then a `Timer` (unless it would be one per instance of something
   numerous), then `_process` with a delta accumulator. Never a bare per-frame `_process` doing a

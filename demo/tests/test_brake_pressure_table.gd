@@ -4,17 +4,11 @@ var train: VehicleController
 var brake: VehicleBrake
 
 func before_each():
-    train = VehicleController.new()
-    train.train_id = "TestTrain"
-    add_child(train)
+    train = build_vehicle("TestTrain")
 
     brake = MoverVehicleBrake.new()
     train.add_component(brake)
     await wait_idle_frames(2)
-
-func after_each():
-    remove_child(train)
-    train.free()
 
 func _make_row(handle_position: int, pipe_pressure: float, brake_type: int) -> BrakePressureTableItem:
     var item = BrakePressureTableItem.new()

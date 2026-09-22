@@ -8,11 +8,8 @@ var _controller: VehicleController = null
 
 
 func before_each() -> void:
-    _controller = VehicleController.new()
-    _controller.name = "DumpCacheController"
-    _controller.train_id = "dump_cache_test"
+    _controller = build_vehicle("dump_cache_test")
     _controller.type_name = "test"
-    add_child(_controller)
     _rid = RailVehicleServer.vehicle_create()
     RailVehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
     await wait_idle_frames(2)
@@ -22,8 +19,6 @@ func after_each() -> void:
     if _rid.is_valid():
         RailVehicleServer.vehicle_free(_rid)
         _rid = RID()
-    remove_child(_controller)
-    _controller.free()
     _controller = null
 
 
@@ -63,7 +58,6 @@ func test_a_freed_vehicle_dumps_nothing() -> void:
 ## that kind promises - whatever the vehicle turns out to be built from.
 func test_a_component_is_reached_by_its_kind() -> void:
     var heating: MoverVehicleHeating = MoverVehicleHeating.new()
-    heating.name = "Heating"
     _controller.add_component(heating)
     await wait_idle_frames(2)
 

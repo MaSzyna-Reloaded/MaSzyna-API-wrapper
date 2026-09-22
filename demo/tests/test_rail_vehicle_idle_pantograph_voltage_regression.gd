@@ -24,6 +24,7 @@ var created_wires:Array[RID] = []
 var created_power_sources:Array[RID] = []
 var vehicle:RailVehicle3D
 var controller:VehicleController
+var physics_node:VehiclePhysicsNode
 var engine:VehicleElectricSeriesEngine
 
 
@@ -33,10 +34,6 @@ func after_each() -> void:
             vehicle.get_parent().remove_child(vehicle)
         vehicle.queue_free()
     vehicle = null
-    if is_instance_valid(controller):
-        if controller.get_parent():
-            controller.get_parent().remove_child(controller)
-        controller.queue_free()
     controller = null
     engine = null
 
@@ -73,11 +70,12 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
         wire_rid, Vector3(0.0, 5.5, -50.0), Vector3(0.0, 5.5, 100.0), "test_power", 3000.0, 2000.0, 0.01)
     TractionPowerServer.network_build()
 
-    controller = VehicleController.new()
-    controller.train_id = "test_idle_pantograph_train"
-    controller.type_name = "test"
-    controller.battery_voltage = 110.0
-    add_child(controller)
+    # the vehicle's own configuration is authored, not written afterwards - a property set after
+    # the vehicle is built does not reach the backend until apply_configuration()
+    var model: VehicleModel = VehicleModel.new()
+    model.properties = {"type_name": "test", "battery_voltage": 110.0}
+    physics_node = build_vehicle_node("test_idle_pantograph_train", model)
+    controller = physics_node.get_controller()
 
     engine = MoverVehicleElectricSeriesEngine.new()
     engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
@@ -93,7 +91,7 @@ func test_parked_electric_locomotive_keeps_stable_wire_voltage_and_main_switch_c
     vehicle.start_direction = TrackManager.DIRECTION_NORMAL
     vehicle.pantograph_collector_width = 0.5
     add_child(vehicle)
-    vehicle.controller_path = vehicle.get_path_to(controller)
+    vehicle.controller_path = vehicle.get_path_to(physics_node)
     await wait_idle_frames(2)
 
     controller.send_command("battery", true)

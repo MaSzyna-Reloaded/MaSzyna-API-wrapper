@@ -133,6 +133,7 @@ namespace godot {
             void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
+            uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;
 
             /* Freezing the step while a scenery is torn down: the vehicles are freed one by one and
              * stepping a registry that is being emptied is work for nothing. Replaces toggling the

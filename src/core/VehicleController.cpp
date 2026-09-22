@@ -467,11 +467,15 @@ namespace godot {
     }
 
     void VehicleController::register_command(const String &p_command, const Callable &p_callable) {
-        TrainSystem::get_instance()->register_command(train_id, p_command, p_callable);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->register_command(train_id, p_command, p_callable);
+        }
     }
 
     void VehicleController::unregister_command(const String &p_command, const Callable &p_callable) {
-        TrainSystem::get_instance()->unregister_command(train_id, p_command, p_callable);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->unregister_command(train_id, p_command, p_callable);
+        }
     }
 
     void VehicleController::_notification(const int p_what) {
@@ -491,7 +495,9 @@ namespace godot {
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
                 // the vehicle handle is RailVehicle3D's to create; the server hands it here
-                TrainSystem::get_instance()->register_train(train_id, this);
+                if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+                    system->register_train(train_id, this);
+                }
                 register_command("battery", Callable(this, "battery"));
                 register_command("cab_change", Callable(this, "cab_change"));
                 register_command("cab_activation", Callable(this, "cab_activation"));
@@ -526,7 +532,9 @@ namespace godot {
                 unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
                 unregister_command("coupler_connect", Callable(this, "coupler_connect"));
                 unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
-                TrainSystem::get_instance()->unregister_train(train_id);
+                if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+                    system->unregister_train(train_id);
+                }
                 // the handle belongs to RailVehicle3D, which frees it with itself
                 rid = RID();
                 break;
@@ -1196,11 +1204,14 @@ namespace godot {
     }
 
     void VehicleController::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        TrainSystem::get_instance()->broadcast_command(p_command, p_p1, p_p2);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->broadcast_command(p_command, p_p1, p_p2);
+        }
     }
 
     Variant VehicleController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
-        return TrainSystem::get_instance()->send_command(train_id, String(p_command), p_p1, p_p2);
+        TrainSystem *system = TrainSystem::get_instance();
+        return system != nullptr ? system->send_command(train_id, String(p_command), p_p1, p_p2) : Variant();
     }
 
     void VehicleController::battery(const bool p_enabled) const {

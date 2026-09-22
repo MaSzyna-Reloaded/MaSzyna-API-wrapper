@@ -101,7 +101,9 @@ namespace godot {
 
     void VehicleComponent::log(const GameLog::LogLevel p_level, const String &p_line) {
         if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->log(train_controller_node->get_train_id(), p_level, p_line);
+            if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+                system->log(train_controller_node->get_train_id(), p_level, p_line);
+            }
         }
     }
     void VehicleComponent::log_debug(const String &p_line) {
@@ -121,11 +123,15 @@ namespace godot {
     }
 
     void VehicleComponent::register_command(const String &p_command, const Callable &p_callback) {
-        TrainSystem::get_instance()->register_command(train_controller_node->get_train_id(), p_command, p_callback);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->register_command(train_controller_node->get_train_id(), p_command, p_callback);
+        }
     }
 
     void VehicleComponent::unregister_command(const String &p_command, const Callable &p_callback) {
-        TrainSystem::get_instance()->unregister_command(train_controller_node->get_train_id(), p_command, p_callback);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->unregister_command(train_controller_node->get_train_id(), p_command, p_callback);
+        }
     }
 
     void VehicleComponent::emit_config_changed_signal() {
@@ -220,12 +226,16 @@ namespace godot {
 
     void VehicleComponent::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (train_controller_node != nullptr) {
-            TrainSystem::get_instance()->send_command(train_controller_node->get_train_id(), p_command, p_p1, p_p2);
+            if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+                system->send_command(train_controller_node->get_train_id(), p_command, p_p1, p_p2);
+            }
         }
     }
 
     void VehicleComponent::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        TrainSystem::get_instance()->broadcast_command(p_command, p_p1, p_p2);
+        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
+            system->broadcast_command(p_command, p_p1, p_p2);
+        }
     }
 
 } // namespace godot

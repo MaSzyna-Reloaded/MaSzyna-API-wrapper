@@ -108,7 +108,9 @@ namespace godot {
     }
 
     void TrainSystem::log(const String &p_train_id, const GameLog::LogLevel p_level, const String &p_line) {
-        GameLog::get_instance()->log(p_level, vformat(String("%s: %s"), p_train_id, p_line));
+        if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+            game_log->log(p_level, vformat(String("%s: %s"), p_train_id, p_line));
+        }
     }
 
     void TrainSystem::register_train(const String &p_train_id, VehicleController *p_train) {
@@ -294,7 +296,9 @@ namespace godot {
 
     void TrainSystem::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (!is_command_supported(p_command)) {
-            GameLog::get_instance()->error("Unknown command: " + p_command);
+            if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+                game_log->error("Unknown command: " + p_command);
+            }
             ERR_PRINT("Unknown command: " + p_command);
             return;
         }

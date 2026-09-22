@@ -446,57 +446,104 @@ namespace godot {
         local_brake_pressure_previous = p_mover->LocBrakePress;
     }
 
-    void VehicleBrake::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        const double brake_controller_pos = p_mover->fBrakeCtrlPos;
-        const double brake_controller_min = p_mover->Handle->GetPos(bh_MIN);
-        const double brake_controller_max = p_mover->Handle->GetPos(bh_MAX);
-        double brake_controller_pos_normalized = 0.0;
-        if (brake_controller_max != brake_controller_min) {
-            brake_controller_pos_normalized =
-                    (brake_controller_pos - brake_controller_min) / (brake_controller_max - brake_controller_min);
+    double VehicleBrake::_controller_position_normalized(const TMoverParameters *p_mover) {
+        const double minimum = p_mover->Handle->GetPos(bh_MIN);
+        const double maximum = p_mover->Handle->GetPos(bh_MAX);
+        if (maximum == minimum) {
+            return 0.0;
         }
-        // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle) - "alarmchain:"/ggAlarmChain
-        // (Train.cpp:10027), manual emergency brake pull cord.
-        p_state["alarm_chain_pulled"] = p_mover->AlarmChainFlag;
-        p_state["brake_air_pressure"] = p_mover->BrakePress;
-        p_state["brake_loco_pressure"] = p_mover->LocBrakePress;
-        p_state["brake_pipe_pressure"] = p_mover->PipeBrakePress;
-        p_state["pipe_pressure"] = p_mover->PipePress;
-        // "przewod zasilajacy" (feed pipe) - shared with the pantograph reservoir by default
-        // (bPantKurek3=true, see VehicleElectricEngine.cpp's pantograph_tank_pressure comment) and
-        // with the local/independent brake valve's own flow (Hamulec->GetHPFlow, Mover.cpp:4755).
-        p_state["feed_pipe_pressure"] = p_mover->ScndPipePress;
-        p_state["brake_tank_volume"] = p_mover->Volume;
-        // Original engine: "compressor:"/"compressorb:" (Train.cpp:10407-10412), a gauge bound
-        // straight to mvOccupied->Compressor - "cisnienie w ukladzie zasilajacym" (MOVER.h:1455),
-        // the main reservoir pressure. Lives here, not VehicleEngine, matching this file's existing
-        // compressor command surface (CompressorTankValve/CompressorSpeed/CompressorPower below).
-        p_state["compressor_pressure"] = p_mover->Compressor;
-        p_state["brake_controller_position"] = brake_controller_pos;
-        p_state["brake_controller_position_normalized"] = brake_controller_pos_normalized;
-        // LocalBrakePosA ("nastawa hamulca pomocniczego") is already normalized 0..1 in the
-        // mover, unlike the main brake's arbitrary Handle-position units above.
-        p_state["brake_local_position_normalized"] = p_mover->LocalBrakePosA;
-        // ManualBrakePos notch 0..ManualBrakePosNo, fed to the "manualbrake:" gauge as is (Train.cpp:10255)
-        p_state["brake_manual_position"] = p_mover->ManualBrakePos;
+        return (p_mover->fBrakeCtrlPos - minimum) / (maximum - minimum);
+    }
 
-        p_state["brake_unit_force"] = p_mover->UnitBrakeForce;
-        const double brake_force_max_per_block =
-                p_mover->BrakeForceR(1.0, p_mover->Vel) / (std::max(1, p_mover->NAxles) * std::max(1, p_mover->NBpA));
-        p_state["brake_force_ratio"] =
-                std::clamp(p_mover->UnitBrakeForce / std::max(1.0, brake_force_max_per_block), 0.0, 1.0);
-        p_state["brake_emergency_valve_flow"] = p_mover->EmergencyValveFlow;
-        const double main_valve_flow = p_mover->dpMainValve;
-        p_state["brake_main_valve_flow"] = std::isfinite(main_valve_flow) ? main_valve_flow : 0.0;
-        p_state["brake_local_valve_flow"] = p_mover->dpLocalValve;
-        // Filtered in _do_process_mover(), once per tick - a getter never changes state, and a
-        // value advanced while the state is read depends on how often it is read.
-        p_state["brake_loco_pressure_fall_rate"] = std::max(0.0, -local_brake_pressure_change_rate);
-        p_state["brake_loco_pressure_rise_rate"] = std::max(0.0, local_brake_pressure_change_rate);
-        p_state["brake_control_pressure"] = p_mover->LocHandle ? p_mover->LocHandle->GetCP() : 0.0;
-        p_state["brake_local_aeim_position"] = p_mover->LocalBrakePosAEIM;
-        p_state["brake_edb_cylinder_pressure"] = p_mover->Hamulec ? p_mover->Hamulec->GetEDBCP() : 0.0;
-        p_state["brake_releaser_active"] = p_mover->Hamulec && p_mover->Hamulec->Releaser();
+    double VehicleBrake::_force_ratio(const TMoverParameters *p_mover) {
+        TMoverParameters *mover = const_cast<TMoverParameters *>(p_mover);
+        const double max_per_block =
+                mover->BrakeForceR(1.0, mover->Vel) / (std::max(1, mover->NAxles) * std::max(1, mover->NBpA));
+        return std::clamp(mover->UnitBrakeForce / std::max(1.0, max_per_block), 0.0, 1.0);
+    }
+
+    void VehicleBrake::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("alarm_chain_pulled", Variant::BOOL);
+        declare_state_property("brake_air_pressure", Variant::FLOAT);
+        declare_state_property("brake_loco_pressure", Variant::FLOAT);
+        declare_state_property("brake_pipe_pressure", Variant::FLOAT);
+        declare_state_property("pipe_pressure", Variant::FLOAT);
+        declare_state_property("feed_pipe_pressure", Variant::FLOAT);
+        declare_state_property("brake_tank_volume", Variant::FLOAT);
+        declare_state_property("compressor_pressure", Variant::FLOAT);
+        declare_state_property("brake_controller_position", Variant::FLOAT);
+        declare_state_property("brake_controller_position_normalized", Variant::FLOAT);
+        declare_state_property("brake_local_position_normalized", Variant::FLOAT);
+        declare_state_property("brake_manual_position", Variant::INT);
+        declare_state_property("brake_unit_force", Variant::FLOAT);
+        declare_state_property("brake_force_ratio", Variant::FLOAT);
+        declare_state_property("brake_emergency_valve_flow", Variant::FLOAT);
+        declare_state_property("brake_main_valve_flow", Variant::FLOAT);
+        declare_state_property("brake_local_valve_flow", Variant::FLOAT);
+        declare_state_property("brake_loco_pressure_fall_rate", Variant::FLOAT);
+        declare_state_property("brake_loco_pressure_rise_rate", Variant::FLOAT);
+        declare_state_property("brake_control_pressure", Variant::FLOAT);
+        declare_state_property("brake_local_aeim_position", Variant::FLOAT);
+        declare_state_property("brake_edb_cylinder_pressure", Variant::FLOAT);
+        declare_state_property("brake_releaser_active", Variant::BOOL);
+    }
+
+    Variant VehicleBrake::_get_state_property(const int p_local_index) const {
+        TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_ALARM_CHAIN_PULLED:
+                return mover->AlarmChainFlag;
+            case STATE_AIR_PRESSURE:
+                return mover->BrakePress;
+            case STATE_LOCO_PRESSURE:
+                return mover->LocBrakePress;
+            case STATE_PIPE_BRAKE_PRESSURE:
+                return mover->PipeBrakePress;
+            case STATE_PIPE_PRESSURE:
+                return mover->PipePress;
+            case STATE_FEED_PIPE_PRESSURE:
+                return mover->ScndPipePress;
+            case STATE_TANK_VOLUME:
+                return mover->Volume;
+            case STATE_COMPRESSOR_PRESSURE:
+                return mover->Compressor;
+            case STATE_CONTROLLER_POSITION:
+                return mover->fBrakeCtrlPos;
+            case STATE_CONTROLLER_POSITION_NORMALIZED:
+                return _controller_position_normalized(mover);
+            case STATE_LOCAL_POSITION_NORMALIZED:
+                return mover->LocalBrakePosA;
+            case STATE_MANUAL_POSITION:
+                return mover->ManualBrakePos;
+            case STATE_UNIT_FORCE:
+                return mover->UnitBrakeForce;
+            case STATE_FORCE_RATIO:
+                return _force_ratio(mover);
+            case STATE_EMERGENCY_VALVE_FLOW:
+                return mover->EmergencyValveFlow;
+            case STATE_MAIN_VALVE_FLOW:
+                return std::isfinite(mover->dpMainValve) ? mover->dpMainValve : 0.0;
+            case STATE_LOCAL_VALVE_FLOW:
+                return mover->dpLocalValve;
+            case STATE_LOCO_PRESSURE_FALL_RATE:
+                return std::max(0.0, -local_brake_pressure_change_rate);
+            case STATE_LOCO_PRESSURE_RISE_RATE:
+                return std::max(0.0, local_brake_pressure_change_rate);
+            case STATE_CONTROL_PRESSURE:
+                return mover->LocHandle ? mover->LocHandle->GetCP() : 0.0;
+            case STATE_LOCAL_AEIM_POSITION:
+                return mover->LocalBrakePosAEIM;
+            case STATE_EDB_CYLINDER_PRESSURE:
+                return mover->Hamulec ? mover->Hamulec->GetEDBCP() : 0.0;
+            case STATE_RELEASER_ACTIVE:
+                return mover->Hamulec && mover->Hamulec->Releaser();
+            default:
+                return Variant();
+        }
     }
 
     void VehicleBrake::_do_update_internal_mover(TMoverParameters *p_mover) {

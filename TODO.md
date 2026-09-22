@@ -27,13 +27,13 @@ one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
   snapshot); `VehicleState` holds the handle, implements `_get`/`_get_property_list` and refuses
   `_set` naming the owner. `VehicleHeating` is converted as the proof and
   `test_vehicle_state_properties.gd` covers the new ground.
-  **Converted so far (12):** heating, switches, universal controller, speed control, spring brake,
-  EP dynamic brake, wheels, horns, wipers, security system, engine and diesel engine.
-  **Left (6):** `VehicleElectricEngine` (36 properties, and the only awkward one - today several
+  **Converted so far (13):** heating, switches, universal controller, speed control, spring brake,
+  EP dynamic brake, wheels, horns, wipers, security system, engine, diesel engine and brake.
+  **Left (5):** `VehicleElectricEngine` (36 properties, and the only awkward one - today several
   of its keys exist *only* when the power source matches, so a declared property has to decide
   what it answers for the wrong variant; `test_train_electric_engine_power_source.gd` records that
   reading the wrong one used to crash the process), `VehicleElectricSeriesEngine` (1, trivial once
-  the electric base is done), `VehicleBrake` (23), `VehicleDoors` (22), `VehicleLighting` (26) and
+  the electric base is done), `VehicleDoors` (22), `VehicleLighting` (26) and
   `VehicleController`'s own 21. `_do_fetch_state_from_mover` is a no-op default, so each converts
   on its own. While they convert,
   `VehicleController::get_state()` overlays the declared properties onto the old Dictionary so

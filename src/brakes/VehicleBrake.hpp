@@ -15,7 +15,35 @@ namespace godot {
     class VehicleController;
     class VehicleBrake : public VehicleComponent {
             GDCLASS(VehicleBrake, VehicleComponent)
+            enum StateProperty {
+                STATE_ALARM_CHAIN_PULLED,
+                STATE_AIR_PRESSURE,
+                STATE_LOCO_PRESSURE,
+                STATE_PIPE_BRAKE_PRESSURE,
+                STATE_PIPE_PRESSURE,
+                STATE_FEED_PIPE_PRESSURE,
+                STATE_TANK_VOLUME,
+                STATE_COMPRESSOR_PRESSURE,
+                STATE_CONTROLLER_POSITION,
+                STATE_CONTROLLER_POSITION_NORMALIZED,
+                STATE_LOCAL_POSITION_NORMALIZED,
+                STATE_MANUAL_POSITION,
+                STATE_UNIT_FORCE,
+                STATE_FORCE_RATIO,
+                STATE_EMERGENCY_VALVE_FLOW,
+                STATE_MAIN_VALVE_FLOW,
+                STATE_LOCAL_VALVE_FLOW,
+                STATE_LOCO_PRESSURE_FALL_RATE,
+                STATE_LOCO_PRESSURE_RISE_RATE,
+                STATE_CONTROL_PRESSURE,
+                STATE_LOCAL_AEIM_POSITION,
+                STATE_EDB_CYLINDER_PRESSURE,
+                STATE_RELEASER_ACTIVE,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -325,10 +353,18 @@ namespace godot {
             double local_brake_pressure_previous = -1.0;
             double local_brake_pressure_change_rate = 0.0;
 
+        private:
+            int state_base_index = 0;
+            /* The main brake handle position as 0..1 of its own travel; the raw value is in the
+             * handle's arbitrary units. */
+            static double _controller_position_normalized(const TMoverParameters *p_mover);
+            /* How much of the maximum force one block is making, 0..1. */
+            static double _force_ratio(const TMoverParameters *p_mover);
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _register_commands() override;
             void _unregister_commands() override;

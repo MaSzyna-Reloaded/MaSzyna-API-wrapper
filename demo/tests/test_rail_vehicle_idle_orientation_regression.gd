@@ -9,7 +9,7 @@ extends MaszynaGutTest
 ## (RailVehicle3D.cpp) samples "front_transform" at +bogie_pivot_spacing*0.5 and
 ## "rear_transform" at -bogie_pivot_spacing*0.5 along the track, unconditionally, regardless of
 ## the vehicle's own DIRECTION_NORMAL/DIRECTION_REVERSED placement. But
-## RailVehiclePhysicsServer._move_vehicle_state()'s distance sign convention is itself
+## RailVehicleServer._move_vehicle_state()'s distance sign convention is itself
 ## direction-dependent (a positive distance argument DECREASES the track offset for a NORMAL
 ## vehicle, and INCREASES it for a REVERSED one - see vehicle_set_track()'s own
 ## "direction_sign" and process_movement()'s "front-relative vs rear-relative" comment). For a

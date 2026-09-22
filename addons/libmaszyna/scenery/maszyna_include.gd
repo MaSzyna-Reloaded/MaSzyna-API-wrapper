@@ -87,12 +87,12 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
 
 ## Nothing in here is worth simulating while it is being torn down, and a real scenery is
 ## hundreds of vehicles with their cabins and sounds, all running their own _process for the
-## seconds the freeing takes. RailVehiclePhysicsServer steps those vehicles from its own registry,
+## seconds the freeing takes. RailVehicleServer steps those vehicles from its own registry,
 ## outside this subtree, so disabling the subtree alone leaves the heaviest part running until the
 ## last vehicle is freed - it is stopped here too and restored once the content is gone.
 func _clear_content(budget_msec:int = 0) -> void:
     process_mode = Node.PROCESS_MODE_DISABLED
-    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_DISABLED
+    RailVehicleServer.set_stepping_enabled(false)
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
@@ -100,7 +100,7 @@ func _clear_content(budget_msec:int = 0) -> void:
         if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
             await get_tree().process_frame
             frame_start = Time.get_ticks_msec()
-    RailVehiclePhysicsServer.process_mode = Node.PROCESS_MODE_INHERIT
+    RailVehicleServer.set_stepping_enabled(true)
     process_mode = Node.PROCESS_MODE_INHERIT
 
 

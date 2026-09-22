@@ -59,8 +59,6 @@ namespace godot {
             void _collect_train_parts(const Node *p_node, Vector<VehicleComponent *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
-            Object *_get_rail_vehicle_physics_server() const;
-            void _emit_position_changed_if_needed();
             int _resolve_coupler_end(const Variant &p_where) const;
             void _consume_coupler_sounds(TMoverParameters *p_mover);
 
@@ -258,7 +256,10 @@ namespace godot {
             int get_cabin_number() const;
             static void _bind_methods();
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
+            /* This vehicle's handle in RailVehicleServer, set when the server attaches it. */
+            void set_vehicle_rid(const RID &p_vehicle_rid);
             RID get_rid() const;
+            void emit_position_changed_if_needed();
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;
             MAKE_MEMBER_GS(String, train_id, "");

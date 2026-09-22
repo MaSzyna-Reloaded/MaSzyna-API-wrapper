@@ -44,7 +44,7 @@ var DEFAULT_PROOFING:Array[PackedFloat32Array] = [
 class BankRuntime extends RefCounted:
     var player:SfxPlayer3D
     var vehicle:RailVehicle3D
-    ## The vehicle's handle in RailVehiclePhysicsServer - the key of its entry in _coupler_events
+    ## The vehicle's handle in RailVehicleServer - the key of its entry in _coupler_events
     var vehicle_rid:RID = RID()
     var controller:VehicleController
     var cabin_only:bool = false

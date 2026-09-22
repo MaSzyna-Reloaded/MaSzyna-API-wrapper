@@ -7,7 +7,7 @@ extends MaszynaGutTest
 ##
 ## Root cause (confirmed with this test before the fix, still printed as a running dump for
 ## future debugging): RailVehicle3D::_update_track_transform()'s bogie-refined orientation
-## branch sampled "front" and "rear" track-offset distances swapped (RailVehiclePhysicsServer's
+## branch sampled "front" and "rear" track-offset distances swapped (RailVehicleServer's
 ## offset-distance sign convention is rear-relative, not what the naive +0.5/-0.5 sampling
 ## assumed), so body_forward pointed opposite the vehicle's real forward direction. That branch
 ## only runs once bogies are resolved *and* the vehicle has visibly moved - while parked the

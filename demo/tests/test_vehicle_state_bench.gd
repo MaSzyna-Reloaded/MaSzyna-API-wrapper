@@ -94,12 +94,12 @@ func before_all() -> void:
         add_child(controller)
         _controllers.append(controller)
 
-        var vehicle_rid: RID = RailVehiclePhysicsServer.vehicle_create()
+        var vehicle_rid: RID = RailVehicleServer.vehicle_create()
         _vehicles.append(vehicle_rid)
-        RailVehiclePhysicsServer.vehicle_bind_controller(vehicle_rid, controller.get_rid())
+        RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
         var offset: float = index * VEHICLE_SPACING
         var track_rid: RID = _tracks[int(offset / TRACK_LENGTH)]
-        RailVehiclePhysicsServer.vehicle_set_track(
+        RailVehicleServer.vehicle_set_track(
             vehicle_rid, track_rid, fmod(offset, TRACK_LENGTH),
             TrackManager.DIRECTION_NORMAL)
 
@@ -110,7 +110,7 @@ func before_all() -> void:
 
 func after_all() -> void:
     for vehicle_rid: RID in _vehicles:
-        RailVehiclePhysicsServer.vehicle_free(vehicle_rid)
+        RailVehicleServer.vehicle_free(vehicle_rid)
     _vehicles.clear()
     for controller: VehicleController in _controllers:
         if is_instance_valid(controller):
@@ -139,7 +139,7 @@ func test_bench_fixture_is_sound() -> void:
     assert_eq(missing.size(), 0, "the sound-shaped read hits real keys, missing: %s" % [missing])
 
     for vehicle_rid: RID in _vehicles:
-        var origin: Vector3 = RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid).origin
+        var origin: Vector3 = RailVehicleServer.vehicle_get_transform(vehicle_rid).origin
         assert_false(is_nan(origin.x), "a vehicle without a track is never culled - see the header")
     print("[bench] %d vehicles, %d state keys each" % [VEHICLE_COUNT, published.size()])
 
@@ -147,7 +147,7 @@ func test_bench_fixture_is_sound() -> void:
 func test_bench_physics_server_tick() -> void:
     var started: int = Time.get_ticks_usec()
     for frame: int in SAMPLE_FRAMES:
-        RailVehiclePhysicsServer._process(FRAME_DELTA)
+        RailVehicleServer._process(FRAME_DELTA)
     var elapsed: int = Time.get_ticks_usec() - started
     print("[bench] server tick: %.3f ms/frame for %d vehicles" % [
         float(elapsed) / SAMPLE_FRAMES / MICROSECONDS_PER_MILLISECOND, VEHICLE_COUNT])

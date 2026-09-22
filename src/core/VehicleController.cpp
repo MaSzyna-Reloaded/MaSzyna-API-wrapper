@@ -3,6 +3,7 @@
 #include "../core/TrainSystem.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "../physics/MaszynaMoverPhysicsServer.hpp"
+#include "../physics/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -101,7 +102,8 @@ namespace godot {
                 &VehicleController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &VehicleController::get_rid);
         ClassDB::bind_method(
-                D_METHOD("_emit_position_changed_if_needed"), &VehicleController::_emit_position_changed_if_needed);
+                D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
+        ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);
 
         BIND_PROPERTY(VehicleController, Variant::STRING, train_id);
         BIND_PROPERTY(VehicleController, Variant::STRING, type_name);
@@ -347,10 +349,7 @@ namespace godot {
         }
         switch (p_what) {
             case NOTIFICATION_ENTER_TREE:
-                if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
-                    rail_vehicle_physics_server != nullptr) {
-                    rid = rail_vehicle_physics_server->call("controller_create", this);
-                }
+                // the vehicle handle is RailVehicle3D's to create; the server hands it here
                 TrainSystem::get_instance()->register_train(train_id, this);
                 register_command("battery", Callable(this, "battery"));
                 register_command("cab_change", Callable(this, "cab_change"));
@@ -387,10 +386,7 @@ namespace godot {
                 unregister_command("coupler_connect", Callable(this, "coupler_connect"));
                 unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
                 TrainSystem::get_instance()->unregister_train(train_id);
-                if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
-                    rail_vehicle_physics_server != nullptr && rid.is_valid()) {
-                    rail_vehicle_physics_server->call("controller_free", rid);
-                }
+                // the handle belongs to RailVehicle3D, which frees it with itself
                 rid = RID();
                 break;
             case NOTIFICATION_READY:
@@ -691,15 +687,11 @@ namespace godot {
         _process_mover(p_delta);
     }
 
-    Object *VehicleController::_get_rail_vehicle_physics_server() const {
-        return Engine::get_singleton()->get_singleton("RailVehiclePhysicsServer");
-    }
-
     double VehicleController::process_movement(const double p_delta) {
         return mover != nullptr ? mover->V * p_delta : 0.0;
     }
 
-    void VehicleController::_emit_position_changed_if_needed() {
+    void VehicleController::emit_position_changed_if_needed() {
         const Vector3 position = get_world_position();
         if (position.distance_to(last_emitted_position) < 1.0) {
             return;
@@ -874,11 +866,15 @@ namespace godot {
     }
 
     Transform3D VehicleController::get_world_transform() const {
-        if (Object *rail_vehicle_physics_server = _get_rail_vehicle_physics_server();
-            rail_vehicle_physics_server != nullptr && rid.is_valid()) {
-            return rail_vehicle_physics_server->call("controller_get_transform", rid);
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr || !rid.is_valid()) {
+            return Transform3D();
         }
-        return Transform3D();
+        return server->vehicle_get_transform(rid);
+    }
+
+    void VehicleController::set_vehicle_rid(const RID &p_vehicle_rid) {
+        rid = p_vehicle_rid;
     }
 
     RID VehicleController::get_rid() const {

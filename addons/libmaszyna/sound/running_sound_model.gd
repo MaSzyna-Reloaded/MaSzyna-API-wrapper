@@ -47,9 +47,9 @@ func update(
     var shape:Dictionary = {}
     if speed > 0.0 and (_labels.has("wheel_clatter") or _labels.has("curve")
             or _labels.has("outernoise") or _labels.has("runningnoise")):
-        shape = RailVehiclePhysicsServer.controller_get_track_position(controller.get_rid())
+        shape = RailVehicleServer.vehicle_get_track_position(controller.get_rid())
     if speed > 5.0 and _labels.has("curve"):
-        shape.merge(RailVehiclePhysicsServer.controller_get_curve(
+        shape.merge(RailVehicleServer.vehicle_get_curve(
                 controller.get_rid(), float(config.get("bogie_pivot_spacing", 0.0))))
     var track_rid:RID = shape.get("track_rid", RID())
     var quality_volume:float = lerpf(

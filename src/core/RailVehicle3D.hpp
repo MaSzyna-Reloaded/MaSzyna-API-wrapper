@@ -136,7 +136,6 @@ namespace godot {
             void _update_wipers();
             void _apply_wheel_rotation(const TypedArray<Node3D> &p_nodes, double p_angle_degrees);
             void _update_wheel_animation_state();
-            void _update_track_transform();
             void _update_model_detail();
             void _update_smoke();
             /// Vehicle frame the pantograph geometry is expressed in. Built once per frame: it used
@@ -180,9 +179,14 @@ namespace godot {
             void leave_cabin(Node *p_player);
             void process_manually(const Variant &p_delta);
             VehicleController *get_controller() const;
-            /// This vehicle's handle in RailVehiclePhysicsServer - the key anything
+            /// This vehicle's handle in RailVehicleServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.
             RID get_rid() const;
+            /* Applies the placement RailVehicleServer's step just produced - the bogie
+             * pivots, the body basis derived from them and the wheel animation. The server
+             * calls it at the end of its tick, so nothing here renders a frame behind its
+             * own physics. */
+            void apply_track_placement();
             void move_on_track(double p_distance);
             void _on_model_node_e3d_loaded();
 

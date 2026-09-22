@@ -27,7 +27,6 @@ func _enable_plugin():
     add_autoload_singleton("TrainSoundSystem", "res://addons/libmaszyna/sound/train_sound_system.gd")
     add_autoload_singleton("CabinSystem", "res://addons/libmaszyna/cabin/cabin_system.gd")
     add_autoload_singleton("FIZResourceLoaderRegistrar", "res://addons/libmaszyna/fiz/fiz_resource_loader_registrar.gd")
-    add_autoload_singleton("RailVehiclePhysicsServer", "res://addons/libmaszyna/servers/rail_vehicle_physics_server.gd")
     add_autoload_singleton("SceneryChunkRenderingServer", "res://addons/libmaszyna/servers/scenery_chunk_rendering_server.gd")
     add_autoload_singleton("SmokeSourceLibrary", "res://addons/libmaszyna/smoke/smoke_source_library.gd")
 
@@ -97,7 +96,6 @@ func _disable_plugin():
 
     remove_autoload_singleton("TrainSoundSystem")
     remove_autoload_singleton("CabinSystem")
-    remove_autoload_singleton("RailVehiclePhysicsServer")
     remove_autoload_singleton("AudioStreamManager")
     remove_autoload_singleton("FIZResourceLoaderRegistrar")
     remove_autoload_singleton("VehicleProfileManager")

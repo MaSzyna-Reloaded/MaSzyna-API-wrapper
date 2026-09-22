@@ -733,15 +733,15 @@ func _rail_position(x: float, z: float) -> Vector3:
 
 
 func _track_position(track_rid: RID, offset: float) -> Vector3:
-    var vehicle_rid: RID = RailVehiclePhysicsServer.vehicle_create()
-    RailVehiclePhysicsServer.vehicle_set_track(
+    var vehicle_rid: RID = RailVehicleServer.vehicle_create()
+    RailVehicleServer.vehicle_set_track(
         vehicle_rid,
         track_rid,
         offset,
         TrackManager.DIRECTION_NORMAL
     )
-    var transform: Transform3D = RailVehiclePhysicsServer.vehicle_get_transform(vehicle_rid)
-    RailVehiclePhysicsServer.vehicle_free(vehicle_rid)
+    var transform: Transform3D = RailVehicleServer.vehicle_get_transform(vehicle_rid)
+    RailVehicleServer.vehicle_free(vehicle_rid)
     return transform.origin
 
 

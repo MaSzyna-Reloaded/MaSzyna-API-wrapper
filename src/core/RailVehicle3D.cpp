@@ -2,6 +2,7 @@
 #include "RailVehicle3D.hpp"
 
 #include "../engines/VehicleElectricEngine.hpp"
+#include "../physics/RailVehicleServer.hpp"
 #include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
 
@@ -295,8 +296,8 @@ namespace godot {
             }
         }
         if (rid.is_valid()) {
-            _singleton("RailVehiclePhysicsServer")
-                    ->call("vehicle_bind_controller", rid, controller != nullptr ? controller->get_rid() : RID());
+            RailVehicleServer::get_instance()->vehicle_attach_controller(
+                    rid, controller != nullptr ? controller->get_instance_id() : 0);
         }
         if (cabin != nullptr) {
             cabin->call("set_train_controller", controller);
@@ -308,7 +309,8 @@ namespace godot {
     void RailVehicle3D::_enter_tree() {
         TrackManager::get_instance()->connect(
                 TrackManager::tracks_changed_signal, callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
-        rid = _singleton("RailVehiclePhysicsServer")->call("vehicle_create");
+        rid = RailVehicleServer::get_instance()->vehicle_create();
+        RailVehicleServer::get_instance()->vehicle_attach_rail_vehicle(rid, get_instance_id());
         pending_start_track_retry = !start_track_name.is_empty();
         dirty = true;
     }
@@ -331,7 +333,7 @@ namespace godot {
             model_node = nullptr;
         }
         if (rid.is_valid()) {
-            _singleton("RailVehiclePhysicsServer")->call("vehicle_free", rid);
+            RailVehicleServer::get_instance()->vehicle_free(rid);
             rid = RID();
         }
         if (fiz_controller != nullptr) {
@@ -362,7 +364,7 @@ namespace godot {
             animation_bindings_dirty = false;
             _cache_animation_bindings();
             force_detail_refresh = true;
-            _update_track_transform();
+            apply_track_placement();
         }
 
         update_time += p_delta;
@@ -377,13 +379,7 @@ namespace godot {
 
         if (!Engine::get_singleton()->is_editor_hint()) {
             if (rid.is_valid() && !start_track_name.is_empty() && !pending_start_track_retry) {
-                // only the velocity is wanted here, and asking for the whole state would rebuild
-                // it from the mover for every vehicle of every frame (see get_state())
-                const double velocity = controller != nullptr ? controller->get_velocity() : 0.0;
-                // the vehicle is moved on its track by RailVehiclePhysicsServer's global step
-                if (!Math::is_zero_approx(velocity)) {
-                    _update_track_transform();
-                }
+                // the placement itself is applied by RailVehicleServer at the end of its step
                 if (electric_engine != nullptr) {
                     const Dictionary state = controller->get_state();
                     _update_pantograph_raise_state(p_delta, state);
@@ -669,8 +665,8 @@ namespace godot {
         if (!rid.is_valid()) {
             return;
         }
-        _singleton("RailVehiclePhysicsServer")->call("vehicle_move", rid, p_distance);
-        _update_track_transform();
+        RailVehicleServer::get_instance()->vehicle_move(rid, p_distance);
+        apply_track_placement();
     }
 
     void RailVehicle3D::_on_track_manager_tracks_changed() {
@@ -688,9 +684,9 @@ namespace godot {
             return;
         }
         pending_start_track_retry = false;
-        _singleton("RailVehiclePhysicsServer")
-                ->call("vehicle_set_track", rid, track_rid, start_track_offset, start_direction);
-        _update_track_transform();
+        RailVehicleServer::get_instance()->vehicle_set_track(
+                rid, track_rid, start_track_offset, static_cast<TrackManager::Direction>(start_direction));
+        apply_track_placement();
     }
 
     TypedArray<Node3D> RailVehicle3D::_resolve_animation_nodes(const TypedArray<NodePath> &p_paths) const {
@@ -984,7 +980,7 @@ namespace godot {
     /// A vehicle far from the camera is rendered from RenderingServer instances instead of a node
     /// hierarchy: nothing animates at that distance, and the hierarchy is what costs - hundreds of
     /// Node3Ds per vehicle to walk, notify and propagate a transform through, times the hundreds of
-    /// vehicles a scenery runs. Its simulation is untouched, it lives in RailVehiclePhysicsServer.
+    /// vehicles a scenery runs. Its simulation is untouched, it lives in RailVehicleServer.
     ///
     /// The vehicle keeps its transform applied either way, so it stays where it belongs; only the
     /// model's instancer changes. Note the OPTIMIZED backend does not render SUBMODEL_FREE_SPOTLIGHT
@@ -1064,12 +1060,11 @@ namespace godot {
         model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
-    void RailVehicle3D::_update_track_transform() {
+    void RailVehicle3D::apply_track_placement() {
         if (!rid.is_valid() || start_track_name.is_empty() || pending_start_track_retry) {
             return;
         }
-        Object *physics_server = _singleton("RailVehiclePhysicsServer");
-        const Transform3D center_transform = physics_server->call("vehicle_get_transform", rid);
+        const Transform3D center_transform = RailVehicleServer::get_instance()->vehicle_get_transform(rid);
         const bool moved = center_transform != last_center_transform;
         last_center_transform = center_transform;
         set_global_transform(center_transform);
@@ -1099,15 +1094,14 @@ namespace godot {
             _update_wheel_animation_state();
             return;
         }
-        // RailVehiclePhysicsServer's track-offset distance is rear-relative (see
+        // RailVehicleServer's track-offset distance is rear-relative (see
         // process_movement()'s own comment on this), so a positive distance here actually
         // samples toward the vehicle's rear, not its front - swapped from what the "front"/
         // "rear" naming below implies. Confirmed live: this flipped the whole vehicle 180
         // degrees the instant it started moving (test_rail_vehicle_idle_orientation_regression.gd).
-        const Transform3D front_transform =
-                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * -0.5);
-        const Transform3D rear_transform =
-                physics_server->call("vehicle_get_transform_at_distance", rid, pivot_spacing * 0.5);
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        const Transform3D front_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * -0.5);
+        const Transform3D rear_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * 0.5);
         Vector3 body_forward = front_transform.origin - rear_transform.origin;
         if (body_forward.is_zero_approx()) {
             _update_wheel_animation_state();

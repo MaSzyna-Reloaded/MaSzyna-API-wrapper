@@ -13,7 +13,6 @@ namespace godot {
     }
 
     void GenericVehicleComponent::_do_update_internal_mover(TMoverParameters *p_mover) {};
-    void GenericVehicleComponent::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {};
     void GenericVehicleComponent::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         p_config.merge(call("_get_train_part_config"), true);
     };
@@ -27,10 +26,17 @@ namespace godot {
     };
     void GenericVehicleComponent::_process_mover(const double p_delta) {
         call("_process_train_part", p_delta);
-        // FIXME: this should not be called each frame, but only when state changes
         internal_state = call("_get_train_part_state");
-        train_controller_node->get_state().merge(internal_state, true);
     };
+
+    /* The script's own keys, on top of whatever it declares the ordinary way. They are still
+     * pulled per tick rather than declared, which stage 5 replaces with
+     * generic_component_declare_property() - see TODO.md. */
+    Dictionary GenericVehicleComponent::get_state() {
+        Dictionary result = VehicleComponent::get_state();
+        result.merge(internal_state, true);
+        return result;
+    }
 
     VehicleController *GenericVehicleComponent::get_train_controller_node() {
         return train_controller_node;

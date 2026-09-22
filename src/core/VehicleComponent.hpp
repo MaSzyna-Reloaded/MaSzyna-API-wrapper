@@ -18,7 +18,6 @@ namespace godot {
             static void _bind_methods();
 
         private:
-            Dictionary state;
             bool _commands_registered = false;
             /* Local index -> the registry's global id, in declaration order */
             Vector<int> state_property_ids;
@@ -37,23 +36,13 @@ namespace godot {
              * i powinna byc wywolywana przez VehicleComponent::initialize_mover() */
             // virtual void _do_initialize_internal_mover(TMoverParameters *mover) = 0;
 
-            /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
-             * for creating Train nodes. Pointer to `mover` and reference to `state` should stay "as is",
-             * because the mover initialization and state sharing routines can be changed in the future. */
 
             /* Transfers data from Godot's node to original/internal Mover instance.
              * `mover` is always set */
 
             virtual void _do_update_internal_mover(TMoverParameters *p_mover);
 
-            /* Transfers state from the original/internal Mover instance to Godot's Dictionary.
-             * `mover` and `state` are always set
-             * */
 
-            /* The old push path: a component that has not been converted to declared
-             * properties yet still merges its keys into the vehicle's Dictionary. Empty by
-             * default, so a converted component simply stops having one. */
-            virtual void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state);
             virtual void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config);
 
             virtual void _do_process_mover(TMoverParameters *p_mover, double p_delta);
@@ -108,7 +97,7 @@ namespace godot {
             void apply_config();
 
             /* This part's contribution to the vehicle state */
-            Dictionary get_state();
+            virtual Dictionary get_state();
             void emit_config_changed_signal();
             void mark_dirty();
     };

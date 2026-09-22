@@ -22,9 +22,6 @@ namespace godot {
         return length1;
     }
 
-    bool TrackManager::TrackSegment::has_curve(const int p_switch_track) const {
-        return p_switch_track == TRACK_DIVERGING ? curve2.is_valid() : curve1.is_valid();
-    }
 
     TrackManager::TrackManager() {
         spatial_index.instantiate();

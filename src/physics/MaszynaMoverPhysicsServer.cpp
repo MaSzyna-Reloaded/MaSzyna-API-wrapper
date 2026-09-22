@@ -10,7 +10,6 @@ namespace godot {
             delete item.value.mover;
         }
         vehicles.clear();
-        vehicles_by_mover.clear();
     }
 
     RID MaszynaMoverPhysicsServer::vehicle_create(
@@ -23,7 +22,6 @@ namespace godot {
                 p_initial_velocity, std::string(p_type_name.utf8().get_data()),
                 std::string(p_name.utf8().get_data()), p_cabin_number);
         vehicles.insert(vehicle_rid, record);
-        vehicles_by_mover[record.mover] = vehicle_rid;
         return vehicle_rid;
     }
 
@@ -32,7 +30,6 @@ namespace godot {
         if (record == nullptr) {
             return;
         }
-        vehicles_by_mover.erase(record->mover);
         delete record->mover;
         vehicles.erase(p_vehicle);
     }
@@ -101,8 +98,4 @@ namespace godot {
         return record != nullptr ? record->mover : nullptr;
     }
 
-    RID MaszynaMoverPhysicsServer::vehicle_get_rid_by_mover(const TMoverParameters *p_mover) const {
-        const auto item = vehicles_by_mover.find(p_mover);
-        return item == vehicles_by_mover.end() ? RID() : item->second;
-    }
 } // namespace godot

@@ -24,9 +24,6 @@ namespace godot {
             };
 
             HashMap<RID, VehicleRecord> vehicles;
-            /* Coupled movers only know each other (TCoupling::Connected), so this maps one back to
-             * the handle its owner holds. */
-            std::unordered_map<const TMoverParameters *, RID> vehicles_by_mover;
             int64_t next_vehicle_id = 0;
 
         protected:
@@ -56,6 +53,5 @@ namespace godot {
              * has no place in a public API. It is reachable from the components while they are
              * still written against it - see TODO.md, the #184 stages that end that. */
             TMoverParameters *vehicle_get_mover(const RID &p_vehicle) const;
-            RID vehicle_get_rid_by_mover(const TMoverParameters *p_mover) const;
     };
 } // namespace godot

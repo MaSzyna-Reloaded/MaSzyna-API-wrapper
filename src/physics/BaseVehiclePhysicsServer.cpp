@@ -26,8 +26,6 @@ namespace godot {
 
         BIND_ENUM_CONSTANT(MOVEMENT_FAST);
         BIND_ENUM_CONSTANT(MOVEMENT_FULL);
-        BIND_ENUM_CONSTANT(VEHICLE_END_FRONT);
-        BIND_ENUM_CONSTANT(VEHICLE_END_REAR);
     }
 
     /* The contract has no behaviour of its own: an implementation that forgets one of these says

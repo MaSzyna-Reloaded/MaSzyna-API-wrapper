@@ -24,12 +24,6 @@ namespace godot {
                 MOVEMENT_FULL,
             };
 
-            /* The two ends of a vehicle, as the original indexes its couplers. */
-            enum VehicleEnd {
-                VEHICLE_END_FRONT = 0,
-                VEHICLE_END_REAR = 1,
-            };
-
         protected:
             static void _bind_methods();
 
@@ -58,4 +52,3 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(BaseVehiclePhysicsServer::MovementKind);
-VARIANT_ENUM_CAST(BaseVehiclePhysicsServer::VehicleEnd);

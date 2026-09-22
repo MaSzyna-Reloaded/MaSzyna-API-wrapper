@@ -35,9 +35,6 @@ namespace godot {
         return id != nullptr ? *id : -1;
     }
 
-    int VehiclePropertyRegistry::get_count() {
-        return static_cast<int>(descriptors.size());
-    }
 
     const VehiclePropertyDescriptor &VehiclePropertyRegistry::get_descriptor(const int p_id) {
         static const VehiclePropertyDescriptor unknown;

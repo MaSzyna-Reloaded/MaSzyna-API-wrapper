@@ -35,7 +35,6 @@ namespace godot {
         VehicleComponent::_do_update_internal_mover(p_mover);
     }
 
-    void VehicleLoad::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {}
 
     void VehicleLoad::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         VehicleComponent::_do_fetch_config_from_mover(p_mover, p_config);

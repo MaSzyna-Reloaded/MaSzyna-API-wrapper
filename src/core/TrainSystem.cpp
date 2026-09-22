@@ -259,13 +259,6 @@ namespace godot {
                     args.append(p_p2);
                 }
                 result = c.callv(args);
-                // refresh the handling part's state right away, so the command's effect is visible
-                // to whoever reads the train state next (not only after that part's own _process)
-                // FIXME(#57, #184): workaround for state being copied per VehicleComponent in _process -
-                // a stale read made the cabin line breaker logic see a just-closed breaker as open.
-                if (VehicleComponent *part = Object::cast_to<VehicleComponent>(c.get_object()); part != nullptr) {
-                    train->get_state().merge(part->get_state(), true);
-                }
 #if DEBUG_MODE
                 int arg_required = 0;
                 if (p1.get_type() != Variant::NIL) {

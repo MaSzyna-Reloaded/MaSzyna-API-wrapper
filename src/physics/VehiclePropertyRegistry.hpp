@@ -39,7 +39,6 @@ namespace godot {
 
             /* The id of a name, or -1 when nothing declares it. */
             static int get_id(const StringName &p_name);
-            static int get_count();
             static const VehiclePropertyDescriptor &get_descriptor(int p_id);
             static bool has_id(int p_id);
     };

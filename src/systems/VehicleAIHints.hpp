@@ -21,7 +21,6 @@ namespace godot {
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
 
         public:
             MAKE_MEMBER_GS_NR(PantographState, pantograph_state, PANTOGRAPH_STATE_FRONT);

@@ -25,7 +25,4 @@ namespace godot {
         p_mover->AIHintLocalBrakeAccFactor = local_brake_acceleration_factor;
     }
 
-    void VehicleAIHints::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        ASSERT_MOVER(p_mover);
-    }
 } // namespace godot

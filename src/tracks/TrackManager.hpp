@@ -161,7 +161,6 @@ namespace godot {
                     PackedVector3Array cached_endpoints;
 
                     double get_length(int p_switch_track) const;
-                    bool has_curve(int p_switch_track) const;
             };
 
             /* One (track, endpoint) pair. The Godot-visible TrackEndpointRef is built from this

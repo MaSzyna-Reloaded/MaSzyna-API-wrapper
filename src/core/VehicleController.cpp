@@ -641,7 +641,6 @@ namespace godot {
     /// signals below have to be decided every step though, so they read the mover directly rather
     /// than through a dictionary that may not be built at all.
     void VehicleController::_handle_mover_update() {
-        state_dirty = true;
         TMoverParameters *mover_ptr = get_mover();
         if (mover_ptr == nullptr) {
             return;
@@ -665,7 +664,8 @@ namespace godot {
             emit_signal(radio_channel_changed, new_radio_channel);
         }
 
-        if (const bool new_roof_light_enabled = state.get("roof_light_enabled", false);
+        static const int roof_light_property = VehiclePropertyRegistry::get_id("roof_light_enabled");
+        if (const bool new_roof_light_enabled = get_state_value(roof_light_property);
             prev_roof_light_enabled != new_roof_light_enabled) {
             prev_roof_light_enabled = new_roof_light_enabled; // FIXME: I don't like this
             emit_signal(roof_light_changed, new_roof_light_enabled);
@@ -921,9 +921,6 @@ namespace godot {
         }
     }
 
-    bool VehicleController::has_state_property(const int p_property_id) const {
-        return state_owners.has(p_property_id);
-    }
 
     Variant VehicleController::get_state_value(const int p_property_id) const {
         const StateOwner *owner = state_owners.getptr(p_property_id);
@@ -953,24 +950,19 @@ namespace godot {
         emit_signal(config_changed);
     }
 
-    /// Compatibility shim while the consumers still read a Dictionary. Nothing fabricates one on
-    /// the frame path any more once they ask the server by id - see TODO.md, stage 4f.
+    /// A proxy, not a store: the vehicle keeps no state Dictionary of its own. Every value is
+    /// answered by the component that owns it, and this walks them by name for the callers that
+    /// still want one - a console, a test, a diagnostic dump. Nothing on the frame path builds it.
     Dictionary VehicleController::get_state() {
-        if (state_dirty) {
-            state_dirty = false;
-            // Compatibility while the components move off the Dictionary: whatever already
-            // declares its properties is read here by name, so every existing consumer keeps
-            // finding its key. This whole overlay goes when the consumers ask the server instead.
-            for (const KeyValue<int, StateOwner> &item: state_owners) {
-                // a property that answers nothing for this vehicle - the accumulator's recharge
-                // source on a vehicle fed from the catenary, say - leaves no key at all, which is
-                // what the Dictionary did before and what has() consumers rely on
-                if (const Variant value = get_state_value(item.key); value.get_type() != Variant::NIL) {
-                    state[VehiclePropertyRegistry::get_descriptor(item.key).name] = value;
-                }
+        Dictionary result;
+        for (const KeyValue<int, StateOwner> &item: state_owners) {
+            // a property that answers nothing for this vehicle - the accumulator's recharge source
+            // on one fed from the catenary, say - leaves no key at all, as it always did
+            if (const Variant value = get_state_value(item.key); value.get_type() != Variant::NIL) {
+                result[VehiclePropertyRegistry::get_descriptor(item.key).name] = value;
             }
         }
-        return state;
+        return result;
     }
 
     double VehicleController::get_velocity() const {

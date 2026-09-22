@@ -150,9 +150,6 @@ namespace godot {
         }
     }
 
-    void VehicleBuffCoupl::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        // Expose the current config / state if needed
-    }
 
     void VehicleBuffCoupl::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {
         // Provide config dictionary entries

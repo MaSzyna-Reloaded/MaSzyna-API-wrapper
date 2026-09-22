@@ -38,8 +38,6 @@ namespace godot {
 
     void VehicleComponent::_declare_state_properties() {}
 
-    void VehicleComponent::_do_fetch_state_from_mover(TMoverParameters *, Dictionary &) {}
-
     Variant VehicleComponent::_get_state_property(int) const {
         return Variant();
     }
@@ -217,31 +215,17 @@ namespace godot {
         }
     }
 
+    /// A proxy, not a store: this component keeps no Dictionary. Every value is answered live by
+    /// the getter that owns it, and this walks them by name for the callers that still want one.
     Dictionary VehicleComponent::get_state() {
-        if (!get_enabled()) {
-            return state;
-        }
-        if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
-                _do_fetch_state_from_mover(mover, state);
-                // Compatibility while this component's consumers still read a Dictionary: what it
-                // declares is answered here by name. A property that answers nothing for this
-                // vehicle leaves no key, which is what the Dictionary did before.
-                for (int local_index = 0; local_index < state_property_ids.size(); ++local_index) {
-                    const Variant value = _get_state_property(local_index);
-                    if (value.get_type() == Variant::NIL) {
-                        continue;
-                    }
-                    state[VehiclePropertyRegistry::get_descriptor(state_property_ids[local_index]).name] = value;
-                }
-            } else {
-                UtilityFunctions::push_warning("VehicleComponent::get_state() failed: internal mover not initialized");
+        Dictionary result;
+        for (int local_index = 0; local_index < state_property_ids.size(); ++local_index) {
+            // a property that answers nothing for this vehicle leaves no key, as it always did
+            if (const Variant value = _get_state_property(local_index); value.get_type() != Variant::NIL) {
+                result[VehiclePropertyRegistry::get_descriptor(state_property_ids[local_index]).name] = value;
             }
-        } else {
-            UtilityFunctions::push_warning("VehicleComponent::get_state() failed: missing train controller node");
         }
-        return state;
+        return result;
     }
 
     void VehicleComponent::set_enabled(const bool p_value) {

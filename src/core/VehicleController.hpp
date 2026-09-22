@@ -32,10 +32,8 @@ namespace godot {
             void initialize_mover_state();
             bool dirty = false;      // Refreshes all elements
             bool dirty_prop = false; // Refreshes only VehicleController's properties
-            Dictionary state;
             /// state is rebuilt from the mover when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
-            bool state_dirty = true;
             Dictionary config;
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
@@ -58,7 +56,6 @@ namespace godot {
             bool tacho_clock_active = false;
             void _update_tachometer(double p_delta);
 
-            void _collect_train_parts(const Node *p_node, Vector<VehicleComponent *> &p_train_parts) {};
             void _update_mover_config_if_dirty();
             void _handle_mover_update();
             int _resolve_coupler_end(const Variant &p_where) const;
@@ -316,7 +313,6 @@ namespace godot {
              * components as they join, so nothing has to search the subtree for them. */
             void register_state_property(int p_property_id, VehicleComponent *p_component, int p_local_index);
             void unregister_state_properties(VehicleComponent *p_component);
-            bool has_state_property(int p_property_id) const;
             Variant get_state_value(int p_property_id) const;
             PackedInt32Array get_state_property_ids() const;
 

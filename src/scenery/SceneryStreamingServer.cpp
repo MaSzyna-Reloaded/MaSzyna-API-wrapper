@@ -14,6 +14,12 @@ namespace godot {
                 D_METHOD("stream_register", "owner", "rid", "position", "range_end"),
                 &SceneryStreamingServer::stream_register);
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
+        ClassDB::bind_method(
+                D_METHOD("set_streaming_enabled", "enabled"),
+                &SceneryStreamingServer::set_streaming_enabled);
+        ClassDB::bind_method(
+                D_METHOD("is_streaming_enabled"),
+                &SceneryStreamingServer::is_streaming_enabled);
         ClassDB::bind_method(D_METHOD("set_camera", "camera"), &SceneryStreamingServer::set_camera);
         ClassDB::bind_method(D_METHOD("get_draw_distance"), &SceneryStreamingServer::get_draw_distance);
         ClassDB::bind_method(D_METHOD("get_camera_position"), &SceneryStreamingServer::get_camera_position);
@@ -361,7 +367,18 @@ namespace godot {
 
     /// Plans after a meaningful camera move or a content change and applies whatever the worker has
     /// published so far, a few milliseconds per frame.
+    void SceneryStreamingServer::set_streaming_enabled(const bool p_enabled) {
+        streaming_enabled = p_enabled;
+    }
+
+    bool SceneryStreamingServer::is_streaming_enabled() const {
+        return streaming_enabled;
+    }
+
     void SceneryStreamingServer::_process_streaming() {
+        if (!streaming_enabled) {
+            return;
+        }
         ObjectID current_camera_id;
         bool requested;
         {

@@ -87,6 +87,13 @@ starts with its game directory set to `user://gut/fiz_train_controller` and find
 fixture path should be passed to what is under test instead of being written into the user's
 settings; the same pattern is in `test_dynamic_rail_vehicle_manager` and three more.
 
+**Scenery teardown aborts when streaming is busy** - `FINDINGS.md`, 2026-09-22. The streaming
+worker runs `e3d_model_manager.gd::load_model`, which is a full `ResourceLoader.load()`, so
+renderer resources are created off the main thread while a teardown frees them. Reproduce by
+clearing `user://cache/rail_vehicle` and `fiz` and running
+`test_zzz_ep07_cabin_main_switch` - it aborts on roughly half the cold runs. The fix is a choice:
+parse on the worker and build on the main thread, or drain the worker before freeing anything.
+
 **`test_zzz_ep07_cabin_main_switch` is non-deterministic and the cause is not found.** Runs of one
 build have given 5/5, 4/1 and a teardown core dump in `_free_owned_rids`. A clean build of the
 commit before the engine work gave 2/3 with no crash, so it is unstable on both sides. One real

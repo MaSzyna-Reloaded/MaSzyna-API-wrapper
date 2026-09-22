@@ -96,6 +96,10 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
 func _clear_content(budget_msec:int = 0) -> void:
     process_mode = Node.PROCESS_MODE_DISABLED
     RailVehicleServer.set_stepping_enabled(false)
+    # Streaming builds content on process_frame, and the freeing below yields a frame for its
+    # budget - without this it streams new content into the very RIDs being freed, which the
+    # RenderingServer reports as "Initializing already initialized RID" and then aborts.
+    SceneryStreamingServer.set_streaming_enabled(false)
     await _free_owned_rids(budget_msec)
     var frame_start:int = Time.get_ticks_msec()
     for child:Node in get_children(true):
@@ -103,6 +107,7 @@ func _clear_content(budget_msec:int = 0) -> void:
         if budget_msec > 0 and Time.get_ticks_msec() - frame_start >= budget_msec:
             await get_tree().process_frame
             frame_start = Time.get_ticks_msec()
+    SceneryStreamingServer.set_streaming_enabled(true)
     RailVehicleServer.set_stepping_enabled(true)
     process_mode = Node.PROCESS_MODE_INHERIT
 

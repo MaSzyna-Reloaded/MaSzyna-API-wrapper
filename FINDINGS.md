@@ -3,6 +3,49 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - a teardown abort that is RID allocator corruption, not a double free
+
+* **Symptom:** `test_zzz_ep07_cabin_main_switch` aborts during scenery teardown, in maybe half of
+  the runs. Godot's own crash dump shows no extension frames at all, which sends the reader to the
+  tail of a backtrace full of unresolved `main+...` offsets.
+* **Two instruments that finally said something.** A `print` per group in
+  `MaszynaInclude._free_owned_rids()` named the group it dies in - group 5,
+  `E3DRenderingServer.instance_free`, 324 instances, and group 6 never runs. Then
+  `coredumpctl debug` on the core gave the real stack, which the dump had not:
+  `instance_free` -> `E3DOptimizedBackend::clear` -> a RenderingServer call taking a RID -> abort.
+  It is **SIGABRT, not SIGSEGV** - the process is not dereferencing null, something is calling
+  `abort()`.
+* **What the errors say:** `Initializing already initialized RID`, `Attempting to initialize the
+  wrong RID`, `Attempting to use an uninitialized RID`, `unimplemented base type encountered in
+  renderer scene cull`. That is the RenderingServer's **RID allocator** in an inconsistent state,
+  which a plain double free does not produce - it produces "Attempted to free invalid RID".
+* **The mechanism, and what correlates with it:** `E3DRenderingServer::_stream_preload()` runs on
+  `SceneryStreamingServer`'s **worker thread** and calls the `model_loader` Callable, which is
+  GDScript (`e3d_model_manager.gd::load_model`) doing a full `load()` of a resource. Resource
+  loading creates renderer resources; the main thread is freeing them at the same moment. Clearing
+  `user://cache/rail_vehicle` and `fiz` reproduces it on the first runs and it stops once the cache
+  is warm, because a cold cache means far more vehicles being built and therefore far more
+  streaming work in flight.
+* **Three real hazards found and fixed on the way, none of which was the cause** - worth keeping
+  anyway, and worth knowing they are not it:
+  * `_free_owned_rids()` cleared each RID list only after its whole loop while the budgeted path
+    awaits a frame in the middle, so leaving the tree during that await freed the same RIDs twice;
+  * 14 `X::get_instance()->` dereferences had no null check, among them `stream_free()` inside
+    `instance_free()` itself and the `EXIT_TREE` pair;
+  * `instance_free()` held a `HashMap` iterator across cleanup that re-enters the same server.
+* **Not yet fixed.** The remedy is a design decision: either the streaming preload stops creating
+  renderer resources (parse on the worker, build on the main thread), or the worker is drained
+  before a teardown frees anything. Recorded in `TODO.md`.
+* **Rule:** when a crash is an **abort** rather than a segfault, read the engine's error lines
+  before the stack - "already initialized RID" names a corrupted allocator and points at
+  concurrency, while "invalid RID" names a double free. They are different bugs and the stack
+  looks the same.
+* **Rule:** Godot's crash dump is not the stack. When the extension's frames are missing, take the
+  core (`coredumpctl debug`) - it resolves the extension's symbols that the in-process dumper does
+  not.
+* **Rule:** a `Callable` handed to a server that documents "runs on the worker thread" must be read
+  all the way down. `load_model` looks like parsing; it is `ResourceLoader.load()`.
+
 ## 2026-09-22 - "the C++ port made it 4x slower" was a GPU that never woke up
 
 * **Symptom:** `td.scn` ran at about 30 fps where it had run at roughly 200, right after

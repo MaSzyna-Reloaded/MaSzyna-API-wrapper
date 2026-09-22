@@ -263,7 +263,7 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
     )
     RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
-    RailVehicleServer.process_movement(vehicle_rid, 1.0)
+    RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
     _assert_vector_eq(
         RailVehicleServer.vehicle_get_transform(vehicle_rid).origin,
@@ -290,7 +290,7 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
     var forward: Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle_rid).basis.z.normalized()
     RailVehicleServer.vehicle_attach_controller(vehicle_rid, controller.get_instance_id())
 
-    RailVehicleServer.process_movement(vehicle_rid, 1.0)
+    RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
     var moved_by: Vector3 = (
         RailVehicleServer.vehicle_get_transform(vehicle_rid).origin
@@ -317,7 +317,7 @@ func test_process_movement_without_bound_controller_is_noop() -> void:
         3.0,
         TrackManager.DIRECTION_REVERSED
     )
-    RailVehicleServer.process_movement(vehicle_rid, 1.0)
+    RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
     _assert_vector_eq(
         RailVehicleServer.vehicle_get_transform(vehicle_rid).origin,
@@ -347,7 +347,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
     controller.queue_free()
     await wait_idle_frames(1)
 
-    RailVehicleServer.process_movement(vehicle_rid, 1.0)
+    RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
     _assert_vector_eq(
         RailVehicleServer.vehicle_get_transform(vehicle_rid).origin,
@@ -376,7 +376,7 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
     TrackManager.track_free(track_rid)
 
     RailVehicleServer.vehicle_move(vehicle_rid, 5.0)
-    RailVehicleServer.process_movement(vehicle_rid, 1.0)
+    RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)
 
     assert_eq(
         RailVehicleServer.vehicle_get_transform(vehicle_rid),

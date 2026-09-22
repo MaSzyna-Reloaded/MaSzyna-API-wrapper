@@ -147,7 +147,7 @@ func test_bench_fixture_is_sound() -> void:
 func test_bench_physics_server_tick() -> void:
     var started: int = Time.get_ticks_usec()
     for frame: int in SAMPLE_FRAMES:
-        RailVehicleServer._process(FRAME_DELTA)
+        RailVehicleServer.step(FRAME_DELTA)
     var elapsed: int = Time.get_ticks_usec() - started
     print("[bench] server tick: %.3f ms/frame for %d vehicles" % [
         float(elapsed) / SAMPLE_FRAMES / MICROSECONDS_PER_MILLISECOND, VEHICLE_COUNT])

@@ -8,45 +8,17 @@ the `get_mover_state()` / `update_mover()` / `step_movers()` rename, the `power_
 stage 0 (the baseline bench) and stage 2 (`TrackManager` and `SpatialIndex` in C++). Each stage is
 one PR, titled `(#184) <area> - <what>`, and each leaves the game runnable.
 
-* **Stage 3, still open.** Done: the `Train*` -> `Vehicle*` rename, and
-  `BaseVehiclePhysicsServer` + `MaszynaMoverPhysicsServer`, which now own every
-  `TMoverParameters` (created and freed with the handle - they used to leak) and run the force and
-  movement integration. `VehicleController` keeps a borrowed pointer to the Mover because every
-  component still reaches for it per frame; that pointer goes when the components move onto the
-  server. Left to do: `RailVehicleServer` (the C++ port of `rail_vehicle_physics_server.gd`,
-  binding the vehicle RID to the physics RID), moving the step loop off `TrainSystem` and into the
-  server, and `_update_tachometer` / `_update_mover_config_if_dirty`, which stay on the controller
-  until the state registry and the `configure` phase exist.
-* **Stage 3, the `RailVehicleServer` port, and the one thing that makes it not mechanical.** The
-  placement half (create/free/attach/set_track/move/transform/transform_at_distance/track_position/
-  curve, plus `_move_placement` and `_motion_connection`) is written and parked in
-  `git stash` ("wip: RailVehicleServer port"). What stopped it is the frame ordering, and it needs
-  deciding before the rest is written: the GDScript autoload runs its step in `_process` with
-  `process_priority = -100`, i.e. **before** every vehicle's own `_process`, while a C++ singleton
-  can only hang the tick off `SceneTree.process_frame`, which fires **after** them. Moving it
-  naively puts every vehicle one frame behind its own physics - the judder that priority was there
-  to prevent. The fix is for the server to drive the vehicles at the end of its tick rather than
-  letting them pull, but that is not a one-line transform push:
-  `RailVehicle3D::_update_track_transform()` also samples both bogie pivots, re-derives the body
-  basis from them, rotates the bogie nodes and updates the wheel animation - the code three
-  `FINDINGS.md` entries are about (the 60%-short cubic sampling, the rear-relative sign that
-  flipped vehicles 180 degrees, the coupled-end neighbour refresh). It wants its own pass, with
-  `test_rail_vehicle_idle_orientation_regression.gd` and
-  `test_zzz_ep07_orientation_regression.gd` as the guard.
-* **Stage 3 (original scope, for reference).** `BaseVehiclePhysicsServer`
-  (abstract contract, its own RIDs) + `MaszynaMoverPhysicsServer` (the only place that knows
-  `TMoverParameters`, factories `MoverVehicleController`/`MoverVehicle*`) + `RailVehicleServer`
-  (today's `RailVehiclePhysicsServer`: track placement, movement, switches, neighbour scan,
-  transforms), whose `vehicle_create(RID physics_vehicle)` binds the two RIDs - the shape
-  `TrackRenderingServer.create_track(track_rid)` already has. Built in the target shape directly,
-  not as a 1:1 port. `TrainController` -> `VehicleController`, `TrainPart` -> `VehicleComponent`,
-  `GenericTrainPart` -> `GenericVehicleComponent`, proxy nodes gaining the `Node` suffix; the
-  rename is its own commit at the head of the stage, and it bumps `structure-vN` in the same one
-  because vehicle templates are cached as `PackedScene`. `TrainSystem::step_vehicles()` is deleted
-  (the caller is C++ now). The tick hangs off `process_frame` with idle shutdown, and the server
-  **pushes** the transform onto the vehicle's `Node3D` at the end of it - `process_frame` fires
-  after every node's `_process`, so pulling it would bring back the judder that
-  `process_priority = -100` used to prevent.
+* **Stage 3 is done.** `BaseVehiclePhysicsServer` states what simulating a vehicle means in RIDs;
+  `MaszynaMoverPhysicsServer` is the only class that knows `TMoverParameters` and owns every Mover
+  (created and freed with the handle, which also ended the leak); `RailVehicleServer` owns track
+  placement, movement along the route, switch crossing, the neighbour scan, the transforms and the
+  step itself. `rail_vehicle_physics_server.gd` and `TrainSystem::step_vehicles()` are gone, and
+  the controller RID space with them - a vehicle has one handle. Because `process_frame` fires
+  after every node's `_process`, the step hands each `RailVehicle3D` its placement
+  (`apply_track_placement()`) instead of letting it pull one a frame late.
+  Still carried by `VehicleController` and waiting for the stages below: the borrowed Mover
+  pointer every component reaches for per frame, `_update_tachometer` (vehicle state, goes with the
+  registry) and `_update_mover_config_if_dirty` (goes with the `configure` phase).
 * **Stage 4 - property registry, `VehicleState`, fast getters.** State becomes pulled, not pushed:
   a component declares its properties once and nothing is computed until someone asks. Five levels
   of access, all keyed by the vehicle RID on `RailVehicleServer`, which forwards to the backend:

@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="RailVehicleServer" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="is_stepping_enabled" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="set_stepping_enabled">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="step">
+			<return type="void" />
+			<param index="0" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_attach_controller">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="controller_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_attach_rail_vehicle">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="rail_vehicle_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_create">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_exists" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_free">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_curve">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="bogie_pivot_spacing" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_track_position" qualifiers="const">
+			<return type="Dictionary" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform" qualifiers="const">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_get_transform_at_distance">
+			<return type="Transform3D" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_move">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="distance" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_process_movement">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="delta" type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="vehicle_set_track">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<param index="1" name="track" type="RID" />
+			<param index="2" name="track_offset" type="float" />
+			<param index="3" name="track_direction" type="int" enum="TrackManager.Direction" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

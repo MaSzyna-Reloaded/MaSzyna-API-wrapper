@@ -7,8 +7,6 @@ namespace godot {
     const char *TrainSystem::train_unregistered_signal = "train_unregistered";
 
     void TrainSystem::_bind_methods() {
-        ClassDB::bind_method(
-                D_METHOD("step_vehicles", "controllers", "step", "full_movement"), &TrainSystem::step_vehicles);
         ClassDB::bind_method(D_METHOD("register_train", "train_id", "train"), &TrainSystem::register_train);
         ClassDB::bind_method(D_METHOD("unregister_train", "train_id"), &TrainSystem::unregister_train);
         ClassDB::bind_method(D_METHOD("is_train_registered", "train_id"), &TrainSystem::is_train_registered);
@@ -316,35 +314,4 @@ namespace godot {
         emit_signal(train_position_changed_signal, p_train_id, p_position);
     }
 
-    PackedFloat64Array TrainSystem::step_vehicles(
-            const TypedArray<VehicleController> &p_controllers, const double p_step, const bool p_full_movement) {
-        const int count = p_controllers.size();
-        PackedFloat64Array distances;
-        distances.resize(count);
-        double *distance = distances.ptrw();
-
-        // the original computes the forces of every vehicle before moving any of them, so coupled
-        // vehicles see a consistent state (DynObj.cpp:8199-8205)
-        for (int i = 0; i < count; i++) {
-            VehicleController *controller = Object::cast_to<VehicleController>(p_controllers[i]);
-            if (controller != nullptr) {
-                controller->compute_forces(p_step);
-            }
-        }
-        for (int i = 0; i < count; i++) {
-            VehicleController *controller = Object::cast_to<VehicleController>(p_controllers[i]);
-            if (controller == nullptr || !controller->is_physics_active()) {
-                distance[i] = 0.0;
-                continue;
-            }
-            if (p_full_movement) {
-                controller->compute_movement(p_step);
-            } else {
-                controller->compute_fast_movement(p_step);
-            }
-            // rear-relative, like RailVehiclePhysicsServer.process_movement() expects
-            distance[i] = -controller->process_movement(p_step);
-        }
-        return distances;
-    }
 } // namespace godot

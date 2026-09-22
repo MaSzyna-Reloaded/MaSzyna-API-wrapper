@@ -111,6 +111,11 @@
 				Decrease direction by one step
 			</description>
 		</method>
+		<method name="emit_position_changed_if_needed">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="get_coupled_controller" qualifiers="const">
 			<return type="VehicleController" />
 			<param index="0" name="end" type="int" />
@@ -230,6 +235,12 @@
 			<description>
 				Sends command to train controlled by this node.
 				This is a shortcut for [method TrainSystem.send_command] and returns its result.
+			</description>
+		</method>
+		<method name="set_vehicle_rid">
+			<return type="void" />
+			<param index="0" name="vehicle" type="RID" />
+			<description>
 			</description>
 		</method>
 		<method name="uncouple">

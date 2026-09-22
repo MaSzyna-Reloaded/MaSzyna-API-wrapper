@@ -132,14 +132,6 @@
 				Sends a command to a specified train and returns the command handler's result (e.g. whether it was accepted). Returns [code]null[/code] when the train or command is unknown, or when the handler returns nothing.
 			</description>
 		</method>
-		<method name="step_vehicles">
-			<return type="PackedFloat64Array" />
-			<param index="0" name="controllers" type="VehicleController[]" />
-			<param index="1" name="step" type="float" />
-			<param index="2" name="full_movement" type="bool" />
-			<description>
-			</description>
-		</method>
 		<method name="unregister_command">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />

@@ -6,10 +6,10 @@
 [ext_resource type="Texture2D" uid="uid://c4su3anrskdcw" path="res://scenery_selector/logo.png" id="4_logo"]
 [ext_resource type="PackedScene" path="res://scenery_selector/vehicle_viewer.tscn" id="5_viewer"]
 [ext_resource type="PackedScene" uid="uid://5f6cnr8et0l6" path="res://ui/selector_list.tscn" id="6_list"]
-[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="9_grid"]
-[ext_resource type="Resource" path="res://startup/ui_sounds.tres" id="10_sounds"]
 [ext_resource type="Theme" uid="uid://dydlldjr6yrr2" path="res://scenery_selector/selector_theme.tres" id="7_theme"]
 [ext_resource type="Script" uid="uid://bp7jxwcq7ajtb" path="res://ui/focus_section.gd" id="8_focus"]
+[ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="9_grid"]
+[ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="10_sounds"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -125,10 +125,10 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="SceneryList" parent="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer" unique_id=1499469034 instance=ExtResource("6_list")]
-sounds = ExtResource("10_sounds")
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
+sounds = ExtResource("10_sounds")
 searchable = true
 
 [node name="VehicleViewer" parent="Content/HBoxContainer/LeftSlot" unique_id=757307533 instance=ExtResource("5_viewer")]
@@ -194,18 +194,18 @@ theme_override_font_sizes/font_size = 18
 text = "Skład"
 
 [node name="TrainsetList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=219649123 instance=ExtResource("6_list")]
-sounds = ExtResource("10_sounds")
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 220)
 layout_mode = 2
-
-[node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" instance=ExtResource("9_grid")]
 sounds = ExtResource("10_sounds")
+
+[node name="TrainsetGrid" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=1198650542 instance=ExtResource("9_grid")]
 unique_name_in_owner = true
 visible = false
 custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
+sounds = ExtResource("10_sounds")
 
 [node name="ScrollContainer" type="ScrollContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=831792652]
 custom_minimum_size = Vector2(0, 120)
@@ -232,6 +232,7 @@ script = ExtResource("8_focus")
 [node name="Buttons" type="HBoxContainer" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" unique_id=1156773783]
 layout_mode = 2
 alignment = 2
+
 [node name="LoadButton" type="Button" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons" unique_id=1928215619]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(180, 48)
@@ -273,29 +274,29 @@ theme_override_font_sizes/font_size = 16
 text = "https://maszyna-reloaded.pl"
 uri = "https://maszyna-reloaded.pl"
 
-[connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_scenery_list"]
 [connection signal="activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_trainset_list"]
+[connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]
+[connection signal="focus_requested" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_scenery_list"]
 [connection signal="item_selected" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="_on_scenery_list_item_selected"]
 [connection signal="navigate_right" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_previous_section"]
 [connection signal="closed" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_closed"]
 [connection signal="skin_applied" from="Content/HBoxContainer/LeftSlot/VehicleViewer" to="." method="_on_vehicle_viewer_skin_applied"]
-[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]
-[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
-[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_vehicles"]
-[connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
+[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_list"]
+[connection signal="item_selected" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="_on_trainset_list_item_selected"]
+[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
+[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
+[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="_on_trainset_grid_item_activated"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
-[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_scenery_list"]
-[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
-[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="focus_requested" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_vehicles"]
 [connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_scenery_list"]
+[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_actions"]
+[connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetGrid" to="." method="focus_trainset_list"]
 [connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="load_selected_scenery"]
 [connection signal="cancelled" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
 [connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_scenery_list"]
 [connection signal="navigate_up" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection" to="." method="focus_trainset_vehicles"]
-[connection signal="activated" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
-[connection signal="item_selected" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="_on_trainset_list_item_selected"]
-[connection signal="navigate_left" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_scenery_list"]
-[connection signal="navigate_down" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
-[connection signal="navigate_right" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/TrainsetList" to="." method="focus_trainset_vehicles"]
 [connection signal="pressed" from="Content/HBoxContainer/DetailsPanel/VBoxContainer/ActionsSection/Buttons/LoadButton" to="." method="load_selected_scenery"]

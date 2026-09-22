@@ -30,6 +30,12 @@ const NOTE_WIDTH: float = 180.0
 ## Rows PgUp and PgDown move over - about what a list shows at once
 const PAGE_STEP: int = 10
 
+## What counts as a word in a search: letters and digits, so whitespace, dashes, brackets and
+## punctuation all separate tokens and none of them ever has to be typed
+const TOKEN_PATTERN: String = "[\\p{L}\\p{N}]+"
+## A typed token shorter than this filters nothing - one letter would only throw rows away
+const MIN_FRAGMENT: int = 2
+
 ## Lists without a search field keep the whole row for their content. Read once, in _ready().
 @export var searchable: bool = false
 ## What the bank calls a click and a hover on a row
@@ -38,6 +44,9 @@ const PAGE_STEP: int = 10
 
 var _titles: PackedStringArray = []
 var _notes: PackedStringArray = []
+## Everything a row can be found by, tokenized once when the rows are set, in the order of _rows
+var _row_tokens: Array[PackedStringArray] = []
+var _tokenizer: RegEx = RegEx.create_from_string(TOKEN_PATTERN)
 var _rows: Array[PanelContainer] = []
 ## Marker of each row, shown on the selected one, in the order of _rows
 var _markers: Array[ColorRect] = []
@@ -86,12 +95,14 @@ func set_rows(titles: PackedStringArray, notes: PackedStringArray) -> void:
         row.queue_free()
     _rows.clear()
     _markers.clear()
+    _row_tokens.clear()
     _titles = titles
     _notes = notes
     _selected = -1
     for index: int in _titles.size():
         var row: PanelContainer = _create_row(index)
         _rows.append(row)
+        _row_tokens.append(_tokenize("%s %s" % [_titles[index], _notes[index]]))
         %List.add_child(row)
     if searchable:
         %Search.text = ""
@@ -279,12 +290,34 @@ func _on_clear_search_pressed() -> void:
     %Search.grab_click_focus()
 
 
-## Rows whose title or note contain the searched text
+## Rows that carry every token of the search, and carry each one as a fragment: "krak tarn" finds
+## "Krakow - Tarnow" whichever order the two are typed in, and neither the dash nor the spacing has
+## to be guessed.
 func _filter(text: String) -> void:
-    var needle: String = text.strip_edges().to_lower()
+    var needles: PackedStringArray = _tokenize(text)
     for index: int in _rows.size():
-        _rows[index].visible = (
-            not needle
-            or _titles[index].to_lower().contains(needle)
-            or _notes[index].to_lower().contains(needle)
-        )
+        _rows[index].visible = _row_carries(index, needles)
+
+
+## Every needle long enough to mean something has to sit inside one of the row's own tokens - AND
+## over the needles, a fragment match over each
+func _row_carries(index: int, needles: PackedStringArray) -> bool:
+    for needle: String in needles:
+        if needle.length() < MIN_FRAGMENT:
+            continue
+        var carried: bool = false
+        for token: String in _row_tokens[index]:
+            if token.contains(needle):
+                carried = true
+                break
+        if not carried:
+            return false
+    return true
+
+
+## The searchable words of a text: lower case, letters and digits only
+func _tokenize(text: String) -> PackedStringArray:
+    var tokens: PackedStringArray = []
+    for found: RegExMatch in _tokenizer.search_all(text.to_lower()):
+        tokens.append(found.get_string())
+    return tokens

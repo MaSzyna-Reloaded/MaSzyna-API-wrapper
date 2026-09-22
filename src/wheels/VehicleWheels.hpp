@@ -7,7 +7,19 @@ namespace godot {
     class VehicleWheels : public VehicleComponent {
             GDCLASS(VehicleWheels, VehicleComponent)
 
+            enum StateProperty {
+                STATE_ANGLE_FRONT,
+                STATE_ANGLE_POWERED,
+                STATE_ANGLE_REAR,
+                STATE_ROTATION_SPEED,
+                STATE_ROTATION_ACCELERATION,
+                STATE_SLIPPING,
+                STATE_WHEEL_FLAT,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             enum BearingType {
                 BEARING_TYPE_SLIDE = 0,
                 BEARING_TYPE_ROLL = 1,
@@ -18,9 +30,12 @@ namespace godot {
             double wheel_angle_powered_deg = 0.0;
             double wheel_angle_rear_deg = 0.0;
 
+        private:
+            int state_base_index = 0;
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
 

@@ -74,30 +74,47 @@ namespace godot {
         set_horn_high(p_position < 0.0);
     }
 
-    void VehicleHorns::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        // Mirrors DynObj.cpp's per-frame horn combination: while moving with the manual
-        // emergency brake (alarm chain) pulled, the emergency signal overrides the
-        // manually commanded one for whichever bits it carries.
-        int const combined =
-                ((p_mover->Vel > 0.5) && p_mover->AlarmChainFlag ? p_mover->EmergencyBrakeWarningSignal : 0) |
-                p_mover->WarningSignal;
+    void VehicleHorns::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("horn_low_pressed", Variant::BOOL);
+        declare_state_property("horn_high_pressed", Variant::BOOL);
+        declare_state_property("whistle_pressed", Variant::BOOL);
+        declare_state_property("horn_low_active", Variant::BOOL);
+        declare_state_property("horn_high_active", Variant::BOOL);
+        declare_state_property("whistle_active", Variant::BOOL);
+        declare_state_property("horn", Variant::INT);
+    }
 
-        p_state["horn_low_pressed"] = TestFlag(p_mover->WarningSignal, 1);
-        p_state["horn_high_pressed"] = TestFlag(p_mover->WarningSignal, 2);
-        p_state["whistle_pressed"] = TestFlag(p_mover->WarningSignal, 4);
-
-        p_state["horn_low_active"] = TestFlag(combined, 1);
-        p_state["horn_high_active"] = TestFlag(combined, 2);
-        p_state["whistle_active"] = TestFlag(combined, 4);
-
-        // Mirrors set_horn()'s signed input shape, for widgets driven by a single
-        // bidirectional lever (e.g. CabinSwitch's state_property) to sync their position.
-        if (TestFlag(p_mover->WarningSignal, 1)) {
-            p_state["horn"] = 1;
-        } else if (TestFlag(p_mover->WarningSignal, 2)) {
-            p_state["horn"] = -1;
-        } else {
-            p_state["horn"] = 0;
+    Variant VehicleHorns::_get_state_property(const int p_local_index) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        // Mirrors DynObj.cpp's per-frame horn combination: while moving with the manual emergency
+        // brake (alarm chain) pulled, the emergency signal overrides the manually commanded one
+        // for whichever bits it carries.
+        const int combined =
+                ((mover->Vel > 0.5) && mover->AlarmChainFlag ? mover->EmergencyBrakeWarningSignal : 0) |
+                mover->WarningSignal;
+        switch (p_local_index - state_base_index) {
+            case STATE_HORN_LOW_PRESSED:
+                return TestFlag(mover->WarningSignal, 1);
+            case STATE_HORN_HIGH_PRESSED:
+                return TestFlag(mover->WarningSignal, 2);
+            case STATE_WHISTLE_PRESSED:
+                return TestFlag(mover->WarningSignal, 4);
+            case STATE_HORN_LOW_ACTIVE:
+                return TestFlag(combined, 1);
+            case STATE_HORN_HIGH_ACTIVE:
+                return TestFlag(combined, 2);
+            case STATE_WHISTLE_ACTIVE:
+                return TestFlag(combined, 4);
+            // Mirrors set_horn()'s signed input shape, for a widget driven by a single
+            // bidirectional lever to sync its position.
+            case STATE_HORN:
+                return TestFlag(mover->WarningSignal, 1) ? 1 : (TestFlag(mover->WarningSignal, 2) ? -1 : 0);
+            default:
+                return Variant();
         }
     }
 } // namespace godot

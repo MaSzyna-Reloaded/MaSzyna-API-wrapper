@@ -46,9 +46,22 @@ namespace godot {
         p_mover->MainCtrlPos = selector_position;
     }
 
-    void VehicleUniversalController::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        ASSERT_MOVER(p_mover);
-        p_state["selector_position"] = p_mover->MainCtrlPos;
+    void VehicleUniversalController::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("selector_position", Variant::INT);
+    }
+
+    Variant VehicleUniversalController::_get_state_property(const int p_local_index) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_SELECTOR_POSITION:
+                return mover->MainCtrlPos;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleUniversalController::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

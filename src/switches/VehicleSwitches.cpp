@@ -37,10 +37,22 @@ namespace godot {
         p_mover->StLinSwitchType = motor_connectors_impulse ? "impulse" : "toggle";
     }
 
-    void VehicleSwitches::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        // RelayResetButtonX/PantographPresets/ModernDimmer/DimmerList are not wired to the
-        // mover: see the class-level note in VehicleSwitches.hpp.
-        p_state["sand_active"] = p_mover->SandDose;
+    void VehicleSwitches::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("sand_active", Variant::BOOL);
+    }
+
+    Variant VehicleSwitches::_get_state_property(const int p_local_index) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_SAND_ACTIVE:
+                return mover->SandDose;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleSwitches::sand(const bool p_active) {

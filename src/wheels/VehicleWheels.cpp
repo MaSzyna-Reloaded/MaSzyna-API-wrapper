@@ -55,14 +55,40 @@ namespace godot {
         }
     }
 
-    void VehicleWheels::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        p_state["wheel_angle_front_deg"] = wheel_angle_front_deg;
-        p_state["wheel_angle_powered_deg"] = wheel_angle_powered_deg;
-        p_state["wheel_angle_rear_deg"] = wheel_angle_rear_deg;
-        p_state["wheel_rotation_speed_rps"] = p_mover->nrot;
-        p_state["wheel_rotation_acceleration_rps2"] = p_mover->nrot_eps;
-        p_state["slipping_wheels"] = p_mover->SlippingWheels;
-        p_state["wheel_flat"] = p_mover->WheelFlat;
+    void VehicleWheels::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("wheel_angle_front_deg", Variant::FLOAT);
+        declare_state_property("wheel_angle_powered_deg", Variant::FLOAT);
+        declare_state_property("wheel_angle_rear_deg", Variant::FLOAT);
+        declare_state_property("wheel_rotation_speed_rps", Variant::FLOAT);
+        declare_state_property("wheel_rotation_acceleration_rps2", Variant::FLOAT);
+        declare_state_property("slipping_wheels", Variant::BOOL);
+        declare_state_property("wheel_flat", Variant::FLOAT);
+    }
+
+    Variant VehicleWheels::_get_state_property(const int p_local_index) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return Variant();
+        }
+        switch (p_local_index - state_base_index) {
+            case STATE_ANGLE_FRONT:
+                return wheel_angle_front_deg;
+            case STATE_ANGLE_POWERED:
+                return wheel_angle_powered_deg;
+            case STATE_ANGLE_REAR:
+                return wheel_angle_rear_deg;
+            case STATE_ROTATION_SPEED:
+                return mover->nrot;
+            case STATE_ROTATION_ACCELERATION:
+                return mover->nrot_eps;
+            case STATE_SLIPPING:
+                return mover->SlippingWheels;
+            case STATE_WHEEL_FLAT:
+                return mover->WheelFlat;
+            default:
+                return Variant();
+        }
     }
 
     void VehicleWheels::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

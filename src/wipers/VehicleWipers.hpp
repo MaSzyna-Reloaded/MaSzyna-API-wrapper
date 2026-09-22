@@ -35,13 +35,23 @@ namespace godot {
 
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override;
             void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
             void _register_commands() override;
             void _unregister_commands() override;
 
+            enum StateProperty {
+                STATE_SWITCH_POSITION,
+                STATE_WIPER_POSITIONS,
+            };
+
+        private:
+            int state_base_index = 0;
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             void switch_increase();
             void switch_decrease();
 

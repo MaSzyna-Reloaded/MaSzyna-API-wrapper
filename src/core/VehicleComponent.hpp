@@ -62,6 +62,10 @@ namespace godot {
              * Each declare_state_property() call returns the local index _get_state_property()
              * will be handed back. */
             virtual void _declare_state_properties();
+            /* How many properties are declared so far - a subclass takes this after calling its
+             * base's declaration, so its own local indices start where the base's end. */
+            int get_state_property_count() const;
+
             int declare_state_property(
                     const StringName &p_name, Variant::Type p_type, const StringName &p_group = StringName());
 

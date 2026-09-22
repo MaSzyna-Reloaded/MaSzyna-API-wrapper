@@ -23,11 +23,26 @@ namespace godot {
             GDCLASS(VehicleHorns, VehicleComponent)
 
         protected:
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _register_commands() override;
             void _unregister_commands() override;
 
+            enum StateProperty {
+                STATE_HORN_LOW_PRESSED,
+                STATE_HORN_HIGH_PRESSED,
+                STATE_WHISTLE_PRESSED,
+                STATE_HORN_LOW_ACTIVE,
+                STATE_HORN_HIGH_ACTIVE,
+                STATE_WHISTLE_ACTIVE,
+                STATE_HORN,
+            };
+
+        private:
+            int state_base_index = 0;
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             static void _bind_methods();
 
             void set_horn_low(bool p_state);

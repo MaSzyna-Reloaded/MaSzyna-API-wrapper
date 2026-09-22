@@ -115,15 +115,29 @@ namespace godot {
         }
     }
 
-    void VehicleWipers::_do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) {
-        PackedFloat64Array wiper_positions;
-        // 0..1 sweeping out, 1..2 on the way back - wiper_pos of the original scene uniforms
-        // (opengl33renderer.cpp:762-766)
-        for (const Wiper &wiper: wipers) {
-            wiper_positions.push_back(wiper.position > 0.0 && wiper.returning ? wiper.position + 1.0 : wiper.position);
+    void VehicleWipers::_declare_state_properties() {
+        state_base_index = get_state_property_count();
+        declare_state_property("wipers_switch_position", Variant::INT);
+        declare_state_property("wiper_positions", Variant::PACKED_FLOAT64_ARRAY);
+    }
+
+    Variant VehicleWipers::_get_state_property(const int p_local_index) const {
+        switch (p_local_index - state_base_index) {
+            case STATE_SWITCH_POSITION:
+                return switch_position;
+            case STATE_WIPER_POSITIONS: {
+                // 0..1 sweeping out, 1..2 on the way back - wiper_pos of the original scene
+                // uniforms (opengl33renderer.cpp:762-766)
+                PackedFloat64Array wiper_positions;
+                for (const Wiper &wiper: wipers) {
+                    wiper_positions.push_back(
+                            wiper.position > 0.0 && wiper.returning ? wiper.position + 1.0 : wiper.position);
+                }
+                return wiper_positions;
+            }
+            default:
+                return Variant();
         }
-        p_state["wipers_switch_position"] = switch_position;
-        p_state["wiper_positions"] = wiper_positions;
     }
 
     void VehicleWipers::_do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) {

@@ -6,14 +6,26 @@ namespace godot {
     class VehicleSpringBrake : public VehicleComponent {
             GDCLASS(VehicleSpringBrake, VehicleComponent);
 
+        private:
+            int state_base_index = 0;
+
         protected:
             void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_fetch_state_from_mover(TMoverParameters *p_mover, Dictionary &p_state) override;
+            void _declare_state_properties() override;
             void _do_fetch_config_from_mover(TMoverParameters *p_mover, Dictionary &p_config) override {};
             void _register_commands() override;
             void _unregister_commands() override;
 
+            enum StateProperty {
+                STATE_IS_READY,
+                STATE_SHUT_OFF,
+                STATE_ACTIVE,
+                STATE_CYLINDER_PRESSURE,
+            };
+
         public:
+            Variant _get_state_property(int p_local_index) const override;
+
             static void _bind_methods();
             MAKE_MEMBER_GS(float, spring_actuator_chamber_volume, 1.0f);
             MAKE_MEMBER_GS(float, spring_actuator_max_filling_force, 0.0f);

@@ -44,6 +44,10 @@ namespace godot {
         return Variant();
     }
 
+    int VehicleComponent::get_state_property_count() const {
+        return static_cast<int>(state_property_ids.size());
+    }
+
     int VehicleComponent::declare_state_property(
             const StringName &p_name, const Variant::Type p_type, const StringName &p_group) {
         const int id = VehiclePropertyRegistry::declare(p_name, p_type, get_class(), p_group);

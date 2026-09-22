@@ -988,7 +988,7 @@ namespace godot {
             return;
         }
         const float detail_distance = ProjectSettings::get_singleton()->get_setting(
-                "maszyna/rendering/vehicle_detail_distance", DEFAULT_VEHICLE_DETAIL_DISTANCE_M);
+                "maszyna/vehicles/detail_distance", DEFAULT_VEHICLE_DETAIL_DISTANCE_M);
         const double distance = get_global_position().distance_to(streaming->get_camera_position());
         const float hysteresis = MAX(VEHICLE_DETAIL_HYSTERESIS_MIN_M, detail_distance * VEHICLE_DETAIL_HYSTERESIS);
         const bool detailed = model_detailed ? distance <= detail_distance : distance <= detail_distance - hysteresis;

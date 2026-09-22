@@ -1,7 +1,7 @@
 extends MainLoop
 
 ## Generates res://vfx/smoke_atlas.png - the flipbook that replaces the original's fx/smoke.dds
-## when maszyna/rendering/smoke_generator_mode is "Modern". A drop-in swap for that one sprite:
+## when maszyna/smoke/generator_mode is "Modern". A drop-in swap for that one sprite:
 ## same role, same single quad, only animated over the particle's lifetime.
 ##
 ## What makes a puff read as smoke rather than as a ball is the structure inside it, not the

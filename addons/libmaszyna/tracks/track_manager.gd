@@ -1006,7 +1006,7 @@ func _mark_topology_changed() -> void:
 func _build_domain_curve(curve_data: MaszynaTrackCurve) -> Curve3D:
     var curve: Curve3D = Curve3D.new()
     curve.closed = false
-    curve.bake_interval = float(ProjectSettings.get_setting("maszyna/track_curve_bake_interval", 10.0))
+    curve.bake_interval = float(ProjectSettings.get_setting("maszyna/scenery/track_curve_bake_interval", 10.0))
     curve.add_point(
         curve_data.p1 + Vector3(0.0, _get_roll_fix_height(curve_data.roll1), 0.0),
         Vector3.ZERO,

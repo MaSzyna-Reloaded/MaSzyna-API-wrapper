@@ -38,13 +38,13 @@ func create_nodes(world_environment: WorldEnvironment, p_environment: Environmen
     sun_light = DirectionalLight3D.new()
     sun_light.name = &"SunLight"
     sun_light.shadow_enabled = true
-    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    sun_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
     world_environment.add_child(sun_light, false, Node.INTERNAL_MODE_BACK)
 
     moon_light = DirectionalLight3D.new()
     moon_light.name = &"MoonLight"
     moon_light.shadow_enabled = true
-    moon_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    moon_light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
     world_environment.add_child(moon_light, false, Node.INTERNAL_MODE_BACK)
 
     sky_dome = SkyDome.new()

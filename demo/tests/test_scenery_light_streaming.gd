@@ -8,7 +8,7 @@ extends MaszynaGutTest
 const NIGHT_LIGHT_LEVEL: float = 0.1
 const DAY_LIGHT_LEVEL: float = 1.0
 const MIDDAY: float = 12.0
-## maszyna/rendering/scenery_light_mode
+## maszyna/scenery/lights/mode
 const LIGHTS_OFF: int = 0
 const ECONOMY: int = 1
 const HIGH_QUALITY: int = 2
@@ -20,7 +20,7 @@ var _instance: RID
 
 
 func before_each() -> void:
-    ProjectSettings.set_setting("maszyna/rendering/scenery_light_mode", HIGH_QUALITY)
+    ProjectSettings.set_setting("maszyna/scenery/lights/mode", HIGH_QUALITY)
     _camera = Camera3D.new()
     add_child_autoqfree(_camera)
     _camera.global_position = Vector3.ZERO
@@ -65,7 +65,7 @@ func test_wide_cone_becomes_an_omni_light() -> void:
 
 func test_economy_mode_merges_a_multi_armed_lamp_into_one_light() -> void:
     E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
-    ProjectSettings.set_setting("maszyna/rendering/scenery_light_mode", ECONOMY)
+    ProjectSettings.set_setting("maszyna/scenery/lights/mode", ECONOMY)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
 
@@ -76,7 +76,7 @@ func test_economy_mode_merges_a_multi_armed_lamp_into_one_light() -> void:
 
 func test_lights_off_creates_no_real_lights() -> void:
     E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
-    ProjectSettings.set_setting("maszyna/rendering/scenery_light_mode", LIGHTS_OFF)
+    ProjectSettings.set_setting("maszyna/scenery/lights/mode", LIGHTS_OFF)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
 
@@ -87,7 +87,7 @@ func test_lights_off_creates_no_real_lights() -> void:
 
 func test_high_quality_keeps_every_arm() -> void:
     E3DRenderingServer.set_light_level(NIGHT_LIGHT_LEVEL)
-    ProjectSettings.set_setting("maszyna/rendering/scenery_light_mode", HIGH_QUALITY)
+    ProjectSettings.set_setting("maszyna/scenery/lights/mode", HIGH_QUALITY)
     _instance = _register_lamp(40.0, 5)
     E3DRenderingServer.instance_set_lights_modes(_instance, [float(E3DRenderingServer.LIGHT_MODE_DARK)])
 

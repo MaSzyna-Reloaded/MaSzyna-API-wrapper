@@ -24,7 +24,7 @@ class VehicleState:
 const PHYSICS_STEP: float = 0.01
 const MAX_PHYSICS_ITERATIONS: int = 20
 ## Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps)
-const DIAGNOSTICS_SETTING: StringName = &"maszyna/debug/physics_diagnostics"
+const DIAGNOSTICS_SETTING: StringName = &"maszyna/physics/diagnostics"
 ## A vehicle moved along the track by more or less than requested (m)
 const DIAGNOSTICS_MOVE_TOLERANCE: float = 0.001
 ## Velocity change of a vehicle within one physics frame reported as a kick (m/s^2)

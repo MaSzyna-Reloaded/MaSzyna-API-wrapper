@@ -3,6 +3,69 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-22 - the sound system's per-frame cost was not where the loop was
+
+* **Context:** after the playback tick moved to a worker thread, `TrainSoundSystem._process` was
+  the sound system's remaining main-thread cost, and the obvious suspect was its walk over every
+  bank of the scenery, every frame.
+* **Measured** (headless bench: 300 vehicles, 600 banks, 297 of them in range and updated every
+  frame, `Time.get_ticks_usec()` around `_process`): **11.8 ms per frame**, split into
+  `controller.state` 5.0, `_update_triggers` 4.8, `_update_brake_sounds` 1.5,
+  `_ensure_brake_events` 0.23, running sounds 0.12, `set_parameters` 0.07. The walk itself -
+  `_banks.values()`, `is_instance_valid`, `global_position.distance_to` over all 600 - measured
+  **0.35 ms**, one thirtieth of it.
+* **Where it really went:** `_update_triggers` re-read an untyped descriptor `Dictionary` per
+  trigger per tick and converted its fields every time (`String(trigger.get("state_property"))`,
+  `StringName(trigger.get("sound_event"))`, ...), and `_update_brake_sounds` walked
+  `BrakeSfxEventFactory`'s static tables and called `_primary_source()` per event per tick.
+  Those are resolved once now, into `Trigger` and `BrakeEvent` records built where a trigger is
+  registered and where the brake events are built.
+* **Result: 11.8 ms -> 2.35 ms** for the same workload, of which the remaining bulk is
+  `TrainController.state` - a whole state Dictionary rebuilt from the Mover per controller per
+  update (~17 us), which is where to look next.
+* **Rule:** a loop over a big collection is what the eye finds; what the frame pays is what the
+  *body* does. Split the measurement by phase before deciding what to restructure - the walk
+  this change was planned around turned out to be 3% of the cost.
+* **Trap in the bench, worth knowing in game:** a `RailVehicle3D` with no track computes a
+  **NaN** global transform, and `NaN > culling_distance` is false - so such a vehicle is never
+  culled and is updated every frame, whatever its distance. It is what made the bench measure
+  the in-range path for all 300 vehicles; in game it means a vehicle whose track placement
+  failed costs full price forever.
+
+## 2026-09-22 - the sfx playback tick moved off the main thread, and what the numbers showed
+
+* **Context:** the audio crackled, and every playing `SfxPlayer`/`SfxPlayer3D` drove its own
+  GDScript `_process` (2-3 per vehicle, hundreds per scenery). The tick now runs on
+  `GndSfxServer`'s worker thread and the nodes are proxies.
+* **Measured** (headless bench, 200 players with four crossfading automation voices each, main
+  thread `Performance.TIME_PROCESS`): **24.7 ms before, 19.7 ms after**, and inside the new one
+  wait 12.2 ms, flush+observe 2.2 ms, tick (on the worker) 12.1 ms.
+* **Trap - a headless bench understates a worker thread.** With nothing to render, the main
+  thread has nothing to overlap with and spends the whole tick inside
+  `wait_for_task_completion`, so the total barely moves. What the split shows is the real
+  result: 12 ms of GDScript left the frame, and what stays on the main thread is the 2.2 ms
+  that copies values into the audio nodes. In game that 12 ms runs against the frame's
+  rendering.
+* **The other half of it, found by the same measurement:** `modulate()` did the automation
+  refresh *and* `_apply_voice_state()` for every voice of the instance synchronously, on the
+  caller's thread - while the tick recomputes exactly those gains for every voice anyway
+  (`_update_voice`). `TrainSoundSystem` calls `set_parameters` per vehicle per frame, so the
+  duplicate was 7.6 ms of the 27.9 ms first measured. `modulate()` now only stores the values
+  and raises `automation_refresh_pending`; the clips are looked at by the next tick.
+* **Rule:** work that the per-frame tick redoes anyway does not belong in the synchronous API
+  path as well. "Apply it now *and* apply it in the tick" is the same doubling as an immediate
+  call plus a deferred one.
+* **Rule:** the scene tree is not thread safe, global-scope servers are (Godot's
+  "Thread-safe APIs"). So the worker writes values (`SfxVoiceSlot`) and the main thread is the
+  only code that touches an `AudioStreamPlayer(3D)` - it copies the values in and reads
+  `playing` / `get_playback_position()` back for the next tick. No lock: the tick is posted at
+  `process_frame` and waited for at the start of the next frame, in `_physics_process` and
+  `_process` alike, so the worker only ever runs while the main thread sits inside the engine.
+* **Trap:** after running the project against a different checkout of an addon (a `git worktree`
+  of the previous commit, to get the "before" number), `.godot/global_script_class_cache.cfg`
+  no longer knows the new `class_name`s and every script using them fails to parse. Run
+  `--import` before believing that error.
+
 ## 2026-09-22 - a vehicle of the previous scenery left in the strip when the search found nothing
 
 * **Symptom:** a search with no results cleared the scenery list, the details and the trainsets,

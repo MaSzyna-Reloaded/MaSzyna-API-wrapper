@@ -91,7 +91,7 @@ static func _build_structure(
     var model := E3DModelInstance.new()
     model.name = "ExteriorModel"
     # The .scn calls a vehicle a "dynamic" and a static prop a "node model"; the wrapper builds
-    # only the first kind here. Smoke density reads it (maszyna/rendering/smoke_density_*).
+    # only the first kind here. Smoke density reads it (maszyna/smoke/*/density).
     model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
     model.data_path = normalized_data_path
     model.model_filename = body_model_filename

@@ -101,8 +101,7 @@ namespace godot {
             const bool force_alpha =
                     _is_force_alpha(p_instance, submodel.ptr(), p_force_alpha_submodels, p_force_alpha);
             if (GeometryInstance3D *geometry = Object::cast_to<GeometryInstance3D>(child); geometry != nullptr) {
-                const Ref<Material> material =
-                        p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
+                const Ref<Material> material = p_material_resolver.resolve(p_instance, submodel.ptr(), force_alpha);
                 if (material.is_valid()) {
                     geometry->set_material_override(material);
                 }
@@ -167,10 +166,10 @@ namespace godot {
                 spotlight->set_color(color);
                 spotlight->set_param(
                         Light3D::PARAM_VOLUMETRIC_FOG_ENERGY,
-                        settings->get_setting("maszyna/vehicle_lights_volumetric_fog_energy", 4.0));
+                        settings->get_setting("maszyna/vehicles/lights_volumetric_fog_energy", 4.0));
                 spotlight->set_shadow(true);
                 spotlight->set_shadow_reverse_cull_face(
-                        settings->get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true));
+                        settings->get_setting("maszyna/lights/reverse_cull_face", true));
                 spotlight->set_enable_distance_fade(true);
                 spotlight->set_distance_fade_begin(150.0);
                 spotlight->set_distance_fade_shadow(100.0);

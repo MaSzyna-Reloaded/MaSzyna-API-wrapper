@@ -2,7 +2,7 @@ extends MaszynaGutTest
 
 
 func test_engine_gain_uses_rpm_and_load_without_synthetic_sound_state() -> void:
-    var controller:TrainController = TrainController.new()
+    var controller:VehicleController = VehicleController.new()
     controller.power = 1000.0
     var runtime:TrainSoundSystem.BankRuntime = TrainSoundSystem.BankRuntime.new()
     runtime.controller = controller
@@ -21,7 +21,7 @@ func test_engine_gain_uses_rpm_and_load_without_synthetic_sound_state() -> void:
 
 
 func test_engine_gain_clamps_to_event_modulation_domain() -> void:
-    var controller:TrainController = TrainController.new()
+    var controller:VehicleController = VehicleController.new()
     controller.power = 1000.0
     var runtime:TrainSoundSystem.BankRuntime = TrainSoundSystem.BankRuntime.new()
     runtime.controller = controller

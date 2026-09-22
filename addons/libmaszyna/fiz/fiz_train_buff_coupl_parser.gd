@@ -2,20 +2,20 @@
 extends RefCounted
 class_name FizTrainBuffCouplParser
 
-## BuffCoupl./BuffCoupl1./BuffCoupl2. sections -> TrainBuffCoupl (one node per coupler end
+## BuffCoupl./BuffCoupl1./BuffCoupl2. sections -> VehicleBuffCoupl (one node per coupler end
 ## encountered). LoadFIZ_BuffCoupl: Mover.cpp:10619.
 ##
-## Setters are only called when the corresponding FIZ key is present - TrainBuffCoupl's own
+## Setters are only called when the corresponding FIZ key is present - VehicleBuffCoupl's own
 ## compiled-in property defaults already match the FIZ format's "key absent" behavior.
-## kC/FmaxC/kB/FmaxB stay in the FIZ units (kN, kN/m): TrainBuffCoupl applies the x1000
+## kC/FmaxC/kB/FmaxB stay in the FIZ units (kN, kN/m): VehicleBuffCoupl applies the x1000
 ## conversion itself, depending on the coupler type (Mover.cpp:10350).
 
 const _COUPLER_TYPE_MAP := {
-    "automatic": TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC,
-    "screw": TrainBuffCoupl.COUPLER_TYPE_SCREW,
-    "chain": TrainBuffCoupl.COUPLER_TYPE_CHAIN,
-    "bare": TrainBuffCoupl.COUPLER_TYPE_BARE,
-    "articulated": TrainBuffCoupl.COUPLER_TYPE_ARTICULATED,
+    "automatic": VehicleBuffCoupl.COUPLER_TYPE_AUTOMATIC,
+    "screw": VehicleBuffCoupl.COUPLER_TYPE_SCREW,
+    "chain": VehicleBuffCoupl.COUPLER_TYPE_CHAIN,
+    "bare": VehicleBuffCoupl.COUPLER_TYPE_BARE,
+    "articulated": VehicleBuffCoupl.COUPLER_TYPE_ARTICULATED,
 }
 
 const ALLOWED_FIXED_COUPLING_LOCK := 128
@@ -23,10 +23,10 @@ const ALLOWED_FIXED_COUPLING_LOCK := 128
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
-    var node := TrainBuffCoupl.new()
+    var node := VehicleBuffCoupl.new()
     node.buffer_location = _buffer_location_for(prefix)
 
-    var coupler_type: int = _COUPLER_TYPE_MAP.get(FizLineUtil.get_string(kv, "CType").to_lower(), TrainBuffCoupl.COUPLER_TYPE_AUTOMATIC)
+    var coupler_type: int = _COUPLER_TYPE_MAP.get(FizLineUtil.get_string(kv, "CType").to_lower(), VehicleBuffCoupl.COUPLER_TYPE_AUTOMATIC)
     if kv.has("CType"):
         node.coupler_type = coupler_type
 
@@ -68,13 +68,13 @@ func _part_name_for(prefix: String, context: FizImportContext) -> String:
     match prefix:
         "BuffCoupl1.": return "TrainBuffCouplFront"
         "BuffCoupl2.": return "TrainBuffCouplBack"
-        _: return "TrainBuffCoupl"
+        _: return "VehicleBuffCoupl"
 
 
 ## LoadFIZ_BuffCoupl (Mover.cpp:9613-9629): BuffCoupl. describes both couplers, BuffCoupl1. the
 ## front one and BuffCoupl2. the rear one.
-func _buffer_location_for(prefix: String) -> TrainBuffCoupl.BufferLocation:
+func _buffer_location_for(prefix: String) -> VehicleBuffCoupl.BufferLocation:
     match prefix:
-        "BuffCoupl1.": return TrainBuffCoupl.BUFFER_LOCATION_FRONT
-        "BuffCoupl2.": return TrainBuffCoupl.BUFFER_LOCATION_BACK
-        _: return TrainBuffCoupl.BUFFER_LOCATION_BOTH
+        "BuffCoupl1.": return VehicleBuffCoupl.BUFFER_LOCATION_FRONT
+        "BuffCoupl2.": return VehicleBuffCoupl.BUFFER_LOCATION_BACK
+        _: return VehicleBuffCoupl.BUFFER_LOCATION_BOTH

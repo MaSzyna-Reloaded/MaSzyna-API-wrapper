@@ -14,7 +14,7 @@ func after_each() -> void:
 
 
 func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
-    var controller: TrainController = autofree(TrainController.new())
+    var controller: VehicleController = autofree(VehicleController.new())
     var rain_volume: RainVolume = autofree(RainVolume.new())
     controller.dimensions_length = 14.24
     controller.dimensions_width = 3.1
@@ -39,7 +39,7 @@ func test_real_vehicle_excludes_rain_over_its_body() -> void:
     var fiz_controller: FIZTrainController = vehicle.get_node("FIZTrainController") as FIZTrainController
     await wait_idle_frames(2)
 
-    var controller: TrainController = fiz_controller.get_controller()
+    var controller: VehicleController = fiz_controller.get_controller()
     var rain_volume: RainVolume = vehicle.get_node("RainExclusion") as RainVolume
     assert_not_null(controller)
     assert_gt(controller.dimensions_length, 0.0)

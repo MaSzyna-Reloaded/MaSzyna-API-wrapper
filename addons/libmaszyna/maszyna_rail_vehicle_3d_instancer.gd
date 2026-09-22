@@ -16,7 +16,7 @@ class_name MaszynaRailVehicle3DInstancer
 ## axles into front-rolling/powered/rear-rolling groups based on AxleArangement letters/digits
 ## (DynObj.cpp:5150-5176), but only when a vehicle's rolling-wheel diameter differs from its
 ## powered-wheel diameter - no vehicle in the current game data needs that, and it would require
-## threading the parsed TrainWheels config through to spawn time. Left unimplemented until an
+## threading the parsed VehicleWheels config through to spawn time. Left unimplemented until an
 ## actual vehicle needs it.
 const COUPLER_SUBMODEL_NAMES:Array[String] = [
     "coupler1", "coupler2",
@@ -164,11 +164,11 @@ static func _build_structure(
     vehicle.add_child(auto_rewident, false, Node.INTERNAL_MODE_BACK)
     vehicle.model_instance_path = vehicle.get_path_to(model)
     # FizTrainControllerInstancer.build() hardcodes the generated controller's name to
-    # "TrainController", so this relative path is deterministic even though the controller
+    # "VehicleController", so this relative path is deterministic even though the controller
     # itself doesn't exist yet (FIZTrainController defers its own build by one frame) - do not
     # resolve it with get_path_to() here, RailVehicle3D's own _process_dirty() will do that once
     # the deferred build has actually run.
-    vehicle.controller_path = NodePath("%s/TrainController" % fiz_controller.name)
+    vehicle.controller_path = NodePath("%s/VehicleController" % fiz_controller.name)
     vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
     vehicle.cabin_rotate_180deg = true
     vehicle.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
@@ -193,7 +193,7 @@ static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_d
     fiz_controller.controller_changed.connect(_fit_rain_volume.bind(rain_volume))
 
 
-static func _fit_rain_volume(controller:TrainController, rain_volume:RainVolume) -> void:
+static func _fit_rain_volume(controller:VehicleController, rain_volume:RainVolume) -> void:
     if not controller:
         return
     rain_volume.size = Vector3(
@@ -308,12 +308,12 @@ static func _find_pantograph_arm_paths(
     return paths
 
 
-## TrainWipers has to know how many wipers the model has: from cab 2 they are numbered from the
+## VehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
-static func _apply_wiper_count(controller:TrainController, vehicle:RailVehicle3D) -> void:
+static func _apply_wiper_count(controller:VehicleController, vehicle:RailVehicle3D) -> void:
     if not controller:
         return
-    var wipers:TrainWipers = controller.get_node_or_null("TrainWipers") as TrainWipers
+    var wipers:VehicleWipers = controller.get_node_or_null("VehicleWipers") as VehicleWipers
     if wipers:
         wipers.wiper_count = vehicle.wiper_arm_paths.size() / WIPER_ELEMENT_SUFFIXES.size()
         wipers.apply_config()

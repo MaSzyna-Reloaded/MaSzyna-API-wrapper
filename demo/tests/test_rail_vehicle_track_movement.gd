@@ -12,7 +12,7 @@ class DynamicRailVehicleSpy extends DynamicRailVehicle3D:
 
 var created_tracks: Array[RID] = []
 var created_vehicles: Array[RailVehicle3D] = []
-var created_controllers: Array[TrainController] = []
+var created_controllers: Array[VehicleController] = []
 
 
 func after_each() -> void:
@@ -23,7 +23,7 @@ func after_each() -> void:
             vehicle.queue_free()
     created_vehicles.clear()
 
-    for controller: TrainController in created_controllers:
+    for controller: VehicleController in created_controllers:
         if is_instance_valid(controller):
             if controller.get_parent():
                 controller.get_parent().remove_child(controller)
@@ -73,7 +73,7 @@ func test_start_track_name_initializes_and_clamps_offset() -> void:
 
     var fixture: Dictionary = await _create_vehicle("start", 15.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     _assert_vector_eq(controller.get_world_position(), _rail_position(10.0, 0.0), "controller should be placed at track end")
     _assert_vector_eq(vehicle.global_position, _rail_position(10.0, 0.0), "vehicle should be placed at track end")
@@ -93,7 +93,7 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
     )
     TrackManager.topology_rebuild()
 
-    var controller:TrainController = _create_controller()
+    var controller:VehicleController = _create_controller()
     controller.update_config({"bogie_pivot_spacing": 6.0})
     controller.state["wheel_angle_powered_deg"] = 90.0
     var vehicle:RailVehicle3D = RailVehicle3D.new()
@@ -135,7 +135,7 @@ func test_bogies_follow_track_tangents_and_wheels_follow_controller_angles() -> 
 func test_start_track_name_retries_after_tracks_changed_when_track_is_added_later() -> void:
     var fixture: Dictionary = await _create_vehicle("late_track", 4.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     _assert_vector_eq(controller.get_world_position(), Vector3.ZERO, "controller should stay at origin before the named track exists")
     _assert_vector_eq(vehicle.global_position, Vector3.ZERO, "vehicle should stay at origin before the named track exists")
@@ -163,7 +163,7 @@ func test_move_on_track_moves_forward_and_backward_on_current_track() -> void:
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 2.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(3.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(5.0, 0.0), "positive movement should update controller position")
@@ -185,7 +185,7 @@ func test_move_on_track_crosses_connected_tracks_and_clamps_at_dead_end() -> voi
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(5.0)
     _assert_vector_eq(controller.get_world_position(), _rail_position(13.0, 0.0), "movement should continue on next track")
@@ -207,7 +207,7 @@ func test_move_on_track_updates_direction_when_entering_track_end() -> void:
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(5.0)
 
@@ -233,7 +233,7 @@ func test_move_on_track_uses_switch_common_route() -> void:
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(15.0)
 
@@ -259,7 +259,7 @@ func test_move_on_track_uses_switch_diverging_route() -> void:
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(19.1421)
 
@@ -286,7 +286,7 @@ func test_move_on_track_forces_switch_diverging_when_entering_from_diverging_bra
     var distance_on_switch: float = move_distance - (TrackManager.track_get_length(start_rid) - start_offset)
     var fixture: Dictionary = await _create_vehicle("start", start_offset)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(move_distance)
 
@@ -317,7 +317,7 @@ func test_move_on_track_does_not_force_switch_before_entering_from_diverging_tra
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 14.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(0.1)
 
@@ -343,7 +343,7 @@ func test_move_on_track_does_not_force_switch_when_approaching_diverging_endpoin
         TrackManager.track_get_length(start_rid) - 0.1
     )
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(0.05)
 
@@ -366,7 +366,7 @@ func test_move_on_track_forces_switch_common_when_entering_from_straight_branch(
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(5.0)
 
@@ -394,7 +394,7 @@ func test_switch_change_does_not_move_vehicle_already_on_switch() -> void:
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(5.0)
     var position_before_switch_change: Vector3 = controller.get_world_position()
@@ -431,7 +431,7 @@ func test_switch_change_then_reverse_keeps_vehicle_on_occupied_diverging_branch(
     TrackManager.topology_rebuild()
     var fixture: Dictionary = await _create_vehicle("start", 8.0)
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(5.0)
 
@@ -473,7 +473,7 @@ func test_reversing_from_diverging_track_forces_switch_at_blade_boundary() -> vo
         TrackManager.DIRECTION_NORMAL
     )
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     TrackManager.switch_set_active_track(switch_rid, TrackManager.TRACK_COMMON)
     vehicle._process(0.0)
@@ -499,7 +499,7 @@ func test_move_on_track_forces_demo3d_second_switch_when_entering_from_diverging
         TrackManager.track_get_length(TrackManager.track_get_rid_by_name("diverging2")) - 1.0
     )
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.move_on_track(2.0)
 
@@ -519,7 +519,7 @@ func test_move_on_track_continues_after_entering_demo3d_second_switch() -> void:
         TrackManager.DIRECTION_NORMAL
     )
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
     var second_switch_offset: float = 2.0
     var distance_to_second_switch: float = (
         12.0 + TrackManager.track_get_length(first_switch_rid, TrackManager.TRACK_DIVERGING) + second_switch_offset
@@ -589,7 +589,7 @@ func test_start_track_properties_reapply_vehicle_track() -> void:
         TrackManager.DIRECTION_NORMAL
     )
     var vehicle: RailVehicle3D = fixture["vehicle"]
-    var controller: TrainController = fixture["controller"]
+    var controller: VehicleController = fixture["controller"]
 
     vehicle.start_track_offset = 6.0
     await wait_idle_frames(2)
@@ -609,7 +609,7 @@ func _create_vehicle(
     offset: float,
     direction: TrackManager.Direction = TrackManager.DIRECTION_REVERSED,
 ) -> Dictionary:
-    var controller: TrainController = _create_controller()
+    var controller: VehicleController = _create_controller()
     var vehicle: RailVehicle3D = RailVehicle3D.new()
     vehicle.start_track_name = track_name
     vehicle.start_track_offset = offset
@@ -624,8 +624,8 @@ func _create_vehicle(
     }
 
 
-func _create_controller() -> TrainController:
-    var controller: TrainController = TrainController.new()
+func _create_controller() -> VehicleController:
+    var controller: VehicleController = VehicleController.new()
     controller.name = "Controller%d" % created_controllers.size()
     controller.train_id = "test_train_%d" % created_controllers.size()
     controller.type_name = "test"

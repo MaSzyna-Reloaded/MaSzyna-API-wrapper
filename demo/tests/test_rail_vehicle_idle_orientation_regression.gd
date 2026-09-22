@@ -31,7 +31,7 @@ extends MaszynaGutTest
 
 var created_tracks:Array[RID] = []
 var created_vehicles:Array[RailVehicle3D] = []
-var created_controllers:Array[TrainController] = []
+var created_controllers:Array[VehicleController] = []
 
 
 func after_each() -> void:
@@ -42,7 +42,7 @@ func after_each() -> void:
             vehicle.queue_free()
     created_vehicles.clear()
 
-    for controller:TrainController in created_controllers:
+    for controller:VehicleController in created_controllers:
         if is_instance_valid(controller):
             if controller.get_parent():
                 controller.get_parent().remove_child(controller)
@@ -111,7 +111,7 @@ func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
     )
     TrackManager.topology_rebuild()
 
-    var controller:TrainController = _create_controller()
+    var controller:VehicleController = _create_controller()
     controller.update_config({"bogie_pivot_spacing": 6.0})
 
     var vehicle:RailVehicle3D = RailVehicle3D.new()
@@ -134,8 +134,8 @@ func _spawn_bogie_vehicle(direction:TrackManager.Direction) -> RailVehicle3D:
     return vehicle
 
 
-func _create_controller() -> TrainController:
-    var controller:TrainController = TrainController.new()
+func _create_controller() -> VehicleController:
+    var controller:VehicleController = VehicleController.new()
     controller.name = "Controller%d" % created_controllers.size()
     controller.train_id = "test_train_%d" % created_controllers.size()
     controller.type_name = "test"

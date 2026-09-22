@@ -82,7 +82,7 @@ zwiekszenie nacisku przy duzych predkosciach w hamulcach Oerlikona
 */
 
 namespace godot {
-    class TrainSecuritySystem;
+    class VehicleSecuritySystem;
 }
 
 namespace Maszyna {
@@ -689,7 +689,7 @@ namespace Maszyna {
     using TUniversalCtrlTable = std::array<TUniversalCtrl, UniversalCtrlArraySize + 1>;
 
     class TSecuritySystem {
-            friend class godot::TrainSecuritySystem;
+            friend class godot::VehicleSecuritySystem;
             bool vigilance_enabled = false;
             bool cabsignal_enabled = false;
             bool radiostop_enabled = false;

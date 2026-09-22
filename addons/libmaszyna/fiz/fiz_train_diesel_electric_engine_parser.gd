@@ -2,12 +2,12 @@
 extends RefCounted
 class_name FizTrainDieselElectricEngineParser
 
-## TrainDieselElectricEngine's own subset of Engine: (EngineType=DieselElectric/DumbDE, called
+## VehicleDieselElectricEngine's own subset of Engine: (EngineType=DieselElectric/DumbDE, called
 ## directly by FizTrainEngineParser once it creates the node), plus WWList:+rows and
 ## MotorParamTable:+rows (both registered directly in FizTrainControllerInstancer's section
 ## table, using the standard parse()/parse_row()/end_table() interface).
 ##
-## WWList: rows map 1:1 onto TrainDieselElectricEngine.wwlist (WWListItem), which
+## WWList: rows map 1:1 onto VehicleDieselElectricEngine.wwlist (WWListItem), which
 ## _do_update_internal_mover already pushes into the mover's DElist/SST tables - that C++ side
 ## was already fully wired, only the FIZ-side parser was missing (this is what blocked
 ## main_switch/direction/brake on any DumbDE vehicle: DElist stayed all-zero, and MainCtrlPosNo
@@ -20,7 +20,7 @@ class_name FizTrainDieselElectricEngineParser
 ##
 ## MotorParamTable: (the diesel/diesel-electric variant, no "0" suffix - distinct from
 ## MotorParamTable0:, which only ElectricSeriesMotor uses) rows share FizTrainEngineCommon's
-## parse_motor_param_row() and populate the same TrainEngine.motor_param_table -> mover
+## parse_motor_param_row() and populate the same VehicleEngine.motor_param_table -> mover
 ## MotorParam[] used by TractionForce()'s DieselElectric branch for Im (motor current). Without
 ## it MotorParam[] stays all-zero, which divides by zero computing Im (-> inf), which then
 ## zeroes Ft via the "clamp Im to tempImax" step (Mover.cpp ~5403-5423) - this is what left a
@@ -40,13 +40,13 @@ var _motor_param_rows: Array[MotorParameter] = []
 var _active_table: String = ""
 
 
-func create_node() -> TrainDieselElectricEngine:
-    return TrainDieselElectricEngine.new()
+func create_node() -> VehicleDieselElectricEngine:
+    return VehicleDieselElectricEngine.new()
 
 
 ## The diesel-electric-specific subset of Engine:'s key/value set (common fields already
 ## applied by FizTrainEngineCommon via FizTrainEngineParser).
-func apply_engine_fields(kv: Dictionary, node: TrainDieselElectricEngine) -> void:
+func apply_engine_fields(kv: Dictionary, node: VehicleDieselElectricEngine) -> void:
     if kv.has("Flat"):
         # Original quirk: compares to the literal string "1", not the normal Yes/No convention.
         node.generator_voltage_flat = FizLineUtil.get_string(kv, "Flat") == "1"
@@ -78,9 +78,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _wwlist_rows = []
 
 
-func _get_node(context: FizImportContext) -> TrainDieselElectricEngine:
-    var node: TrainPart = context.get_part("TrainEngine")
-    return node as TrainDieselElectricEngine
+func _get_node(context: FizImportContext) -> VehicleDieselElectricEngine:
+    var node: VehicleComponent = context.get_part("VehicleEngine")
+    return node as VehicleDieselElectricEngine
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:

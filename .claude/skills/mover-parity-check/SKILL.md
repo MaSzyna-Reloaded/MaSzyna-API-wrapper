@@ -34,7 +34,7 @@ you actually need saves a lot of grepping in the wrong place.
 | --- | --- | --- |
 | `McZapkie/Mover.cpp` / `MOVER.h` (`TMoverParameters`) | Physics/electrical core: relays, valves, pressures, engine curves, per-tick `Update()` state machine | `src/maszyna/McZapkie/` - **vendored byte-identical**, never edited (see Hard constraints below) |
 | `DynObj.cpp` / `DynObj.h` (`TDynamicObject`) | Per-vehicle *scene* layer sitting on top of Mover: submodel animation (`UpdatePant`, `UpdateDoorTranslate`, wheel spin), geometry-derived config read from the model file at load time, wire/traction contact search dispatch | **Not vendored at all** (see `feedback_vendoring_scope` memory - only narrow, isolated pieces may ever be vendored, never this file wholesale). Reimplemented piecemeal in GDScript, mainly `addons/libmaszyna/rail_vehicle_3d.gd` (e.g. `_update_pantograph_raise_state`/`_apply_pantograph_animation` are a from-scratch port of `DynObj.cpp`'s pantograph block, not a vendored copy) |
-| `Train.cpp` (`TTrain`) | Player cab: `OnCommand_*` handlers, `user_command::` table, cab mesh label (`ggXxxButton`) → command wiring, indicator lamp conditions | `src/core/TrainController.cpp` (`send_command`/`register_command` dispatch, mirrors `OnCommand_*`) + `src/engines/*.cpp` (one `TrainXxxEngine` per subsystem, e.g. `TrainElectricEngine` for pantograph/converter/compressor) + `addons/libmaszyna/mmd/mmd_semantic_catalog.gd` (MMD label → command mapping, mirrors `Train.cpp`'s `Load()` label table) |
+| `Train.cpp` (`TTrain`) | Player cab: `OnCommand_*` handlers, `user_command::` table, cab mesh label (`ggXxxButton`) → command wiring, indicator lamp conditions | `src/core/VehicleController.cpp` (`send_command`/`register_command` dispatch, mirrors `OnCommand_*`) + `src/engines/*.cpp` (one `TrainXxxEngine` per subsystem, e.g. `VehicleElectricEngine` for pantograph/converter/compressor) + `addons/libmaszyna/mmd/mmd_semantic_catalog.gd` (MMD label → command mapping, mirrors `Train.cpp`'s `Load()` label table) |
 | `scene.cpp` (`basic_cell::update_traction`) / `Traction.cpp` (`TTractionPowerSource`, network) | Scenery-level overhead wire geometry search and electrical network solve | `addons/libmaszyna/servers/traction_power_server.gd` (`TractionPowerServer`) |
 | Track/switch topology (scattered across `scene.cpp`/track pieces) | Track graph, switch state, vehicle-on-track offset math | `addons/libmaszyna/servers/rail_vehicle_physics_server.gd` (`RailVehiclePhysicsServer`) + `src/tracks/TrackManager.cpp` |
 | `LoadFIZ_*` functions (`Mover.cpp`) | `.fiz` per-vehicle config parsing, including original engine's fallback defaults when a key is absent | `addons/libmaszyna/fiz/fiz_train_*_parser.gd` - must match the *default*, not just the parsed value, when a key is missing |
@@ -113,7 +113,7 @@ never sets may be intentionally absent for that vehicle, not a parsing bug.
   grep the MMD label name to confirm a real cab click reaches the command at
   all. A command that exists in C++ but has no catalog entry is unreachable
   from the cab (only from the console/tests).
-- Per-frame vs. dirty-flag config: this codebase's `TrainController`/engine
+- Per-frame vs. dirty-flag config: this codebase's `VehicleController`/engine
   nodes distinguish `state` (recomputed every tick) from `config`
   (change-notified, applied only when dirty). A setter that only takes
   effect through the dirty-flag config path has **zero effect** if called

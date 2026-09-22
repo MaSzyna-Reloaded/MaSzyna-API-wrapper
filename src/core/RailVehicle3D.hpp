@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TrainController.hpp"
+#include "VehicleController.hpp"
 
 #include <godot_cpp/classes/material.hpp>
 #include <godot_cpp/classes/node3d.hpp>
@@ -13,7 +13,7 @@
 
 namespace godot {
     class Area3D;
-    class TrainElectricEngine;
+    class VehicleElectricEngine;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
@@ -57,8 +57,8 @@ namespace godot {
             Node3D *camera = nullptr;
             Node *cabin_player = nullptr;
             int cabin_show_frames = 0;
-            TrainController *controller = nullptr;
-            TrainElectricEngine *electric_engine = nullptr;
+            VehicleController *controller = nullptr;
+            VehicleElectricEngine *electric_engine = nullptr;
             Node *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
@@ -102,11 +102,11 @@ namespace godot {
             TypedArray<Dictionary> pantograph_wire_cache;
 
             Object *_singleton(const StringName &p_name) const;
-            TrainController *_resolve_controller(const NodePath &p_node_path) const;
+            VehicleController *_resolve_controller(const NodePath &p_node_path) const;
             void _jump_into_cabin(Node3D *p_cabin, Node *p_player);
             void _show_cabin_after_frames();
             void _apply_cabin_camera_configuration();
-            void _on_controller_changed(TrainController *p_controller);
+            void _on_controller_changed(VehicleController *p_controller);
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);
@@ -179,7 +179,7 @@ namespace godot {
             void enter_cabin(Node *p_player);
             void leave_cabin(Node *p_player);
             void process_manually(const Variant &p_delta);
-            TrainController *get_controller() const;
+            VehicleController *get_controller() const;
             /// This vehicle's handle in RailVehiclePhysicsServer - the key anything
             /// keeping per-vehicle state of its own is meant to use.
             RID get_rid() const;

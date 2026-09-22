@@ -110,7 +110,7 @@ saturation_current_multiplier = 183.3
 voltage_constant = 2000.0
 saturation_current = 49.0
 
-[node name="SM42v1" type="TrainController" unique_id=1082540440]
+[node name="SM42v1" type="VehicleController" unique_id=1082540440]
 train_id = "TestTrain"
 type_name = "6d"
 mass = 74000.0
@@ -119,7 +119,7 @@ max_velocity = 90.0
 axle_arrangement = "Bo'Bo'"
 battery_voltage = 110.0
 
-[node name="Brake" type="TrainBrake" parent="." unique_id=1554328118]
+[node name="Brake" type="VehicleBrake" parent="." unique_id=1554328118]
 valve_type = 20
 friction_elements_per_axle = 4
 brake_force_max = 85.0
@@ -137,13 +137,13 @@ compressor_speed = 0.057
 compressor_power = 3
 rig_effectiveness = 0.85
 
-[node name="StonkaDieselEngine" type="TrainDieselElectricEngine" parent="." unique_id=845067085]
+[node name="StonkaDieselEngine" type="VehicleDieselElectricEngine" parent="." unique_id=845067085]
 oil_pump_pressure_minimum = 0.15
 maximum_traction_force = 228000.0
 wwlist = Array[WWListItem]([SubResource("WWListItem_tqpff"), SubResource("WWListItem_083b8"), SubResource("WWListItem_0r5q0"), SubResource("WWListItem_vjhrb"), SubResource("WWListItem_6sfix"), SubResource("WWListItem_jxcvy"), SubResource("WWListItem_q4qj4"), SubResource("WWListItem_p5gw0"), SubResource("WWListItem_laio0"), SubResource("WWListItem_qppya"), SubResource("WWListItem_65frr"), SubResource("WWListItem_e4rmd")])
 motor_param_table = Array[MotorParameter]([SubResource("MotorParameter_210ku"), SubResource("MotorParameter_ewrnx")])
 
-[node name="TrainSecuritySystem" type="TrainSecuritySystem" parent="." unique_id=2012613590]
+[node name="VehicleSecuritySystem" type="VehicleSecuritySystem" parent="." unique_id=2012613590]
 aware_system_active = true
 aware_delay = 60.0
 emergency_brake_delay = 2.5
@@ -151,6 +151,6 @@ sound_signal_delay = 2.5
 shp_magnet_distance = 3.0
 ca_max_hold_time = 1.0
 
-[node name="TrainElectroPneumaticDynamicBrake" type="TrainElectroPneumaticDynamicBrake" parent="." unique_id=298279043]
+[node name="VehicleElectroPneumaticDynamicBrake" type="VehicleElectroPneumaticDynamicBrake" parent="." unique_id=298279043]
 
-[node name="TrainSpringBrake" type="TrainSpringBrake" parent="." unique_id=1624912560]
+[node name="VehicleSpringBrake" type="VehicleSpringBrake" parent="." unique_id=1624912560]

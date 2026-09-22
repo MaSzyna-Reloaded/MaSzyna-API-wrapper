@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-## Regression test: TrainElectricEngine::_do_fetch_state_from_mover used to unconditionally
+## Regression test: VehicleElectricEngine::_do_fetch_state_from_mover used to unconditionally
 ## reverse-map EnginePowerSource.RAccumulator.RechargeSource and .RPowerCable.PowerTrans, both
 ## of which are only initialized by _do_update_internal_mover() when power_source is the
 ## matching variant (Accumulator / PowerCable respectively). For any other power_source -
@@ -8,11 +8,11 @@ extends MaszynaGutTest
 ## fields held uninitialized memory, and get_state() crashed the whole process with an
 ## uncaught std::out_of_range from std::map::at() on the very first _process() tick.
 
-var train: TrainController
+var train: VehicleController
 
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     add_child(train)
 
 
@@ -22,8 +22,8 @@ func after_each():
 
 
 func test_current_collector_power_source_does_not_crash_on_process():
-    var engine := TrainElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_CURRENTCOLLECTOR
+    var engine := VehicleElectricSeriesEngine.new()
+    engine.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
     train.add_child(engine)
     await wait_idle_frames(3)
 
@@ -35,7 +35,7 @@ func test_current_collector_power_source_does_not_crash_on_process():
 
 func test_default_power_source_does_not_crash_on_process():
     # The compiled default (power_source == NotDefined) hits the same unconditional-read path.
-    var engine := TrainElectricSeriesEngine.new()
+    var engine := VehicleElectricSeriesEngine.new()
     train.add_child(engine)
     await wait_idle_frames(3)
 
@@ -43,10 +43,10 @@ func test_default_power_source_does_not_crash_on_process():
 
 
 func test_accumulator_power_source_still_reports_recharge_source():
-    var engine := TrainElectricSeriesEngine.new()
-    engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
-    engine.power_accumulator_recharge_source = TrainController.POWER_SOURCE_GENERATOR
+    var engine := VehicleElectricSeriesEngine.new()
+    engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
+    engine.power_accumulator_recharge_source = VehicleController.POWER_SOURCE_GENERATOR
     train.add_child(engine)
     await wait_idle_frames(3)
 
-    assert_eq(engine.get_state().get("accumulator/recharge_source"), TrainController.POWER_SOURCE_GENERATOR)
+    assert_eq(engine.get_state().get("accumulator/recharge_source"), VehicleController.POWER_SOURCE_GENERATOR)

@@ -11,7 +11,7 @@ const WIPERS:int = 4
 const NEVER:float = 1000.0
 
 ## Set by the factory before the node enters the tree.
-var controller:TrainController
+var controller:VehicleController
 
 var _since_out:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)
 var _since_return:Vector4 = Vector4(NEVER, NEVER, NEVER, NEVER)

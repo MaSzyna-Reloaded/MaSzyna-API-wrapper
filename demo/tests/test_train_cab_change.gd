@@ -3,11 +3,11 @@ extends MaszynaGutTest
 ## Cab switching - original engine: TTrain::CabChange() (Train.cpp:8516) stepping
 ## TMoverParameters::ChangeCab() (Mover.cpp:779) 1 -> 0 (machine room) -> -1.
 
-var train:TrainController
+var train:VehicleController
 
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestCabChangeTrain"
     add_child(train)
 
@@ -66,7 +66,7 @@ func test_cab_change_stops_at_vehicle_end():
 
 
 func test_starts_in_cab_two_for_rear_driver():
-    var rear_train := TrainController.new()
+    var rear_train := VehicleController.new()
     rear_train.train_id = "TestCabChangeRearTrain"
     rear_train.cabin_number = -1
     add_child(rear_train)

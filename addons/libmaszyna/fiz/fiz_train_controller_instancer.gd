@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 4
+const FIZ_PARSER_FORMAT_VERSION := 5
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
 ## headers. `parser` is a section parser instance (see fiz_train_*_parser.gd) exposing
@@ -101,7 +101,7 @@ static func _ensure_sections() -> void:
         {"prefix": "Engine:", "parser": engine_parser, "table_end": ""},
         # MotorParamTable0: is what ElectricSeriesMotor vehicles use; MotorParamTable: (no "0")
         # is the same row shape for DieselElectric vehicles' traction motors - both populate
-        # TrainEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
+        # VehicleEngine.motor_param_table via FizTrainEngineCommon.parse_motor_param_row().
         {"prefix": "MotorParamTable0:", "parser": electric_series_parser, "table_end": "END-MPT"},
         {"prefix": "MotorParamTable:", "parser": engine_parser.diesel_electric_parser, "table_end": "END-MPT"},
         {"prefix": "Circuit:", "parser": electric_series_parser, "table_end": ""},
@@ -124,15 +124,15 @@ static func _ensure_sections() -> void:
     ]
 
 
-## Populates an EXISTING TrainController (`target`) from a FIZ file: root-level properties
+## Populates an EXISTING VehicleController (`target`) from a FIZ file: root-level properties
 ## (Param./Dimensions:/Cntrl. general subset/...) are applied directly to `target`, and its
-## parsed TrainPart children are added under it. `target` must have no children of its own
+## parsed VehicleComponent children are added under it. `target` must have no children of its own
 ## yet - the caller is responsible for clearing any previous FIZ-sourced children first (see
 ## FIZTrainController._reload()). `fiz_path` must already be a fully resolved, openable path
 ## (res://, user://, or absolute) - e.g. UserSettings.get_maszyna_game_dir().path_join(
 ## "pkp/eu04_v1/eu04-01.fiz"). `include` directives inside the file resolve relative to its
 ## own containing directory.
-static func build_into(target: TrainController, fiz_path: String) -> void:
+static func build_into(target: VehicleController, fiz_path: String) -> void:
     _ensure_sections()
     var context := FizImportContext.new()
     context.base_dir = fiz_path.get_base_dir()
@@ -149,13 +149,13 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
         node.name = part_name
         target.add_child(node)
 
-    # TrainHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
-    # mover-level horn count config - see TrainHorns.hpp's header comment: a vehicle's 0-3 horn
+    # VehicleHorns has no FIZ section of its own to trigger on (the original engine has no FIZ/
+    # mover-level horn count config - see VehicleHorns.hpp's header comment: a vehicle's 0-3 horn
     # complement is implied entirely by which MMD cabin-button/sound labels it declares), so
-    # unlike every other TrainPart above it's attached unconditionally here rather than only when
-    # a matching section is found - every TrainController gets one, same as a hand-authored scene
+    # unlike every other VehicleComponent above it's attached unconditionally here rather than only when
+    # a matching section is found - every VehicleController gets one, same as a hand-authored scene
     # (e.g. sm_42v_1.tscn's own "Horns" node) would.
-    var horns := TrainHorns.new()
+    var horns := VehicleHorns.new()
     horns.name = "Horns"
     target.add_child(horns)
 
@@ -163,7 +163,7 @@ static func build_into(target: TrainController, fiz_path: String) -> void:
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
 ## edited .fiz (or an `include`d one - mtime isn't recursive, but editing a shared .fiz.inc
 ## while iterating is rare enough not to warrant walking every include) invalidates the entry.
-## Stored as a PackedScene, not the TrainController Node directly - ResourceCache persists
+## Stored as a PackedScene, not the VehicleController Node directly - ResourceCache persists
 ## godot::Resource instances, and PackedScene.instantiate() is the standard, engine-native way
 ## to stamp out an independent copy of a template tree (see build() below).
 static var _cache = ResourceCache.create("fiz")
@@ -180,24 +180,24 @@ static func _make_cache_hash(fiz_path: String) -> String:
         FileAccess.get_modified_time(fiz_path), FIZ_PARSER_FORMAT_VERSION, fiz_path
     ]).md5_text()
 
-## Builds a new, unparented TrainController + children from a FIZ file. A scenery routinely
+## Builds a new, unparented VehicleController + children from a FIZ file. A scenery routinely
 ## repeats the same wagon/locomotive .fiz across many consist entries, so this turns an
 ## O(vehicle count) FIZ text parse (section dispatch + per-line MaszynaParser allocations) into
 ## O(distinct files) - build_scene()'s cached PackedScene is instantiate()'d instead.
-static func build(fiz_path: String) -> TrainController:
+static func build(fiz_path: String) -> VehicleController:
     var scene: PackedScene = build_scene(fiz_path)
     if not scene:
         return null
 
-    var controller := scene.instantiate() as TrainController
-    # Otherwise Godot auto-assigns an ugly, unstable "@TrainController@<N>" name (the counter
+    var controller := scene.instantiate() as VehicleController
+    # Otherwise Godot auto-assigns an ugly, unstable "@VehicleController@<N>" name (the counter
     # increments per instance created this session), which breaks any NodePath saved against it
     # the moment the node is rebuilt (e.g. RailVehicle3D.controller_path across scene reloads).
-    controller.name = "TrainController"
+    controller.name = "VehicleController"
     return controller
 
 
-## Builds (or reuses the cached) TrainController + children from a FIZ file, packed as a
+## Builds (or reuses the cached) VehicleController + children from a FIZ file, packed as a
 ## PackedScene - each independent runtime instance (mass, wear, velocity, ...) then comes from
 ## instantiate()'ing this template, never by sharing the template's own live node.
 static func build_scene(fiz_path: String) -> PackedScene:
@@ -207,11 +207,11 @@ static func build_scene(fiz_path: String) -> PackedScene:
     if scene:
         return scene
 
-    var root := TrainController.new()
-    root.name = "TrainController"
+    var root := VehicleController.new()
+    root.name = "VehicleController"
     build_into(root, fiz_path)
     # PackedScene.pack() only includes nodes whose `owner` is set - without this, the packed
-    # scene would contain just the root TrainController and silently drop every TrainPart child.
+    # scene would contain just the root VehicleController and silently drop every VehicleComponent child.
     for child: Node in root.get_children():
         child.owner = root
     scene = PackedScene.new()
@@ -387,7 +387,7 @@ static func _dispatch_header(
         section["parser"].parse(line_parser, context, prefix)
 
     # Cntrl. additionally opens the brake-position table (only when BrakeSystem != Individual,
-    # decided by Brake:/Cntrl. themselves inside TrainBrake's own parser). Any other recognized
+    # decided by Brake:/Cntrl. themselves inside VehicleBrake's own parser). Any other recognized
     # header - including one encountered while a table (BPT or otherwise) is still active -
     # ends whatever table was active, matching header-match precedence over table-row fallback.
     if prefix == "Cntrl." and section["parser"] != null and section["parser"].wants_bpt_table(context):

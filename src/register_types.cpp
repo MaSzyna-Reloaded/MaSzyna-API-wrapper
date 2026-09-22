@@ -1,32 +1,32 @@
-#include "brakes/TrainBrake.hpp"
-#include "brakes/TrainElectroPneumaticDynamicBrake.hpp"
-#include "brakes/TrainSpringBrake.hpp"
-#include "buffers/TrainBuffCoupl.hpp"
-#include "controllers/TrainUniversalController.hpp"
+#include "brakes/VehicleBrake.hpp"
+#include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
+#include "brakes/VehicleSpringBrake.hpp"
+#include "buffers/VehicleBuffCoupl.hpp"
+#include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
-#include "core/GenericTrainPart.hpp"
+#include "core/GenericVehicleComponent.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
-#include "core/TrainController.hpp"
-#include "core/TrainPart.hpp"
+#include "core/VehicleController.hpp"
+#include "core/VehicleComponent.hpp"
 #include "core/TrainSystem.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
-#include "doors/TrainDoors.hpp"
+#include "doors/VehicleDoors.hpp"
 #include "e3d/E3DModel.hpp"
 #include "e3d/E3DModelLightDefinition.hpp"
 #include "e3d/E3DModelSmokeSourceDefinition.hpp"
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
-#include "engines/TrainDieselElectricEngine.hpp"
-#include "engines/TrainDieselEngine.hpp"
-#include "engines/TrainElectricEngine.hpp"
-#include "engines/TrainElectricInductionEngine.hpp"
-#include "engines/TrainElectricSeriesEngine.hpp"
-#include "engines/TrainEngine.hpp"
-#include "heating/TrainHeating.hpp"
-#include "lighting/TrainLighting.hpp"
-#include "load/TrainLoad.hpp"
+#include "engines/VehicleDieselElectricEngine.hpp"
+#include "engines/VehicleDieselEngine.hpp"
+#include "engines/VehicleElectricEngine.hpp"
+#include "engines/VehicleElectricInductionEngine.hpp"
+#include "engines/VehicleElectricSeriesEngine.hpp"
+#include "engines/VehicleEngine.hpp"
+#include "heating/VehicleHeating.hpp"
+#include "lighting/VehicleLighting.hpp"
+#include "load/VehicleLoad.hpp"
 #include "loaders/E3DResourceFormatLoader.hpp"
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "parsers/e3d_parser.hpp"
@@ -48,13 +48,13 @@
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
-#include "speed_control/TrainSpeedControl.hpp"
-#include "switches/TrainSwitches.hpp"
-#include "systems/TrainAIHints.hpp"
-#include "systems/TrainHorns.hpp"
-#include "systems/TrainSecuritySystem.hpp"
-#include "wheels/TrainWheels.hpp"
-#include "wipers/TrainWipers.hpp"
+#include "speed_control/VehicleSpeedControl.hpp"
+#include "switches/VehicleSwitches.hpp"
+#include "systems/VehicleAIHints.hpp"
+#include "systems/VehicleHorns.hpp"
+#include "systems/VehicleSecuritySystem.hpp"
+#include "wheels/VehicleWheels.hpp"
+#include "wipers/VehicleWipers.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackManager.hpp"
@@ -106,40 +106,40 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(SceneryStreamingServer);
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
-        GDREGISTER_ABSTRACT_CLASS(TrainPart);
-        GDREGISTER_CLASS(GenericTrainPart);
-        GDREGISTER_CLASS(TrainBrake);
-        GDREGISTER_CLASS(TrainSpringBrake);
-        GDREGISTER_CLASS(TrainDoors);
-        GDREGISTER_ABSTRACT_CLASS(TrainEngine);
-        GDREGISTER_CLASS(TrainDieselEngine);
-        GDREGISTER_CLASS(TrainDieselElectricEngine);
-        GDREGISTER_ABSTRACT_CLASS(TrainElectricEngine);
-        GDREGISTER_CLASS(TrainElectricSeriesEngine);
-        GDREGISTER_CLASS(TrainElectricInductionEngine);
-        GDREGISTER_CLASS(TrainController);
+        GDREGISTER_ABSTRACT_CLASS(VehicleComponent);
+        GDREGISTER_CLASS(GenericVehicleComponent);
+        GDREGISTER_CLASS(VehicleBrake);
+        GDREGISTER_CLASS(VehicleSpringBrake);
+        GDREGISTER_CLASS(VehicleDoors);
+        GDREGISTER_ABSTRACT_CLASS(VehicleEngine);
+        GDREGISTER_CLASS(VehicleDieselEngine);
+        GDREGISTER_CLASS(VehicleDieselElectricEngine);
+        GDREGISTER_ABSTRACT_CLASS(VehicleElectricEngine);
+        GDREGISTER_CLASS(VehicleElectricSeriesEngine);
+        GDREGISTER_CLASS(VehicleElectricInductionEngine);
+        GDREGISTER_CLASS(VehicleController);
         GDREGISTER_CLASS(RailVehicle3D);
-        GDREGISTER_CLASS(TrainHeating);
-        GDREGISTER_CLASS(TrainWheels);
-        GDREGISTER_CLASS(TrainSecuritySystem);
-        GDREGISTER_CLASS(TrainHorns);
-        GDREGISTER_CLASS(TrainAIHints);
+        GDREGISTER_CLASS(VehicleHeating);
+        GDREGISTER_CLASS(VehicleWheels);
+        GDREGISTER_CLASS(VehicleSecuritySystem);
+        GDREGISTER_CLASS(VehicleHorns);
+        GDREGISTER_CLASS(VehicleAIHints);
         GDREGISTER_CLASS(TrainSystem);
-        GDREGISTER_CLASS(TrainLighting)
+        GDREGISTER_CLASS(VehicleLighting)
         GDREGISTER_CLASS(GameLog);
         GDREGISTER_CLASS(WWListItem);
         GDREGISTER_CLASS(MotorParameter);
         GDREGISTER_CLASS(LightListItem)
-        GDREGISTER_CLASS(TrainElectroPneumaticDynamicBrake)
-        GDREGISTER_CLASS(TrainLoad)
+        GDREGISTER_CLASS(VehicleElectroPneumaticDynamicBrake)
+        GDREGISTER_CLASS(VehicleLoad)
         GDREGISTER_CLASS(LoadListItem)
-        GDREGISTER_CLASS(TrainBuffCoupl)
-        GDREGISTER_CLASS(TrainSpeedControl)
-        GDREGISTER_CLASS(TrainUniversalController)
+        GDREGISTER_CLASS(VehicleBuffCoupl)
+        GDREGISTER_CLASS(VehicleSpeedControl)
+        GDREGISTER_CLASS(VehicleUniversalController)
         GDREGISTER_CLASS(UniversalControllerListItem)
-        GDREGISTER_CLASS(TrainWipers)
+        GDREGISTER_CLASS(VehicleWipers)
         GDREGISTER_CLASS(WiperListItem)
-        GDREGISTER_CLASS(TrainSwitches)
+        GDREGISTER_CLASS(VehicleSwitches)
         GDREGISTER_CLASS(DimmerListItem)
         GDREGISTER_CLASS(BrakePressureTableItem)
         GDREGISTER_CLASS(CompressorListItem)

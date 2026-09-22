@@ -38,7 +38,7 @@ var _vehicles: Dictionary[RID, VehicleState] = {}
 var _next_controller_id: int = 0
 var _next_vehicle_id: int = 0
 var _diagnostics: bool = false
-var _diagnostics_velocity: Dictionary[TrainController, float] = {}
+var _diagnostics_velocity: Dictionary[VehicleController, float] = {}
 
 
 func _enter_tree() -> void:
@@ -65,9 +65,9 @@ func _exit_tree() -> void:
 func _process(delta: float) -> void:
     if Engine.is_editor_hint():
         return
-    var controllers: Array[TrainController] = []
+    var controllers: Array[VehicleController] = []
     for controller_rid: RID in _controllers:
-        var controller: TrainController = _get_controller(controller_rid)
+        var controller: VehicleController = _get_controller(controller_rid)
         if controller:
             controllers.append(controller)
     if not controllers:
@@ -75,7 +75,7 @@ func _process(delta: float) -> void:
     _diagnostics = bool(ProjectSettings.get_setting(DIAGNOSTICS_SETTING, false))
 
     var track_vehicles: Dictionary[RID, Array] = {}
-    for controller: TrainController in controllers:
+    for controller: VehicleController in controllers:
         var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
         var state: VehicleState = _vehicles.get(vehicle_rid)
         # a vehicle that has not moved keeps its location - sampling the track is not needed
@@ -88,7 +88,7 @@ func _process(delta: float) -> void:
                 track_vehicles[state.track_rid] = []
             track_vehicles[state.track_rid].append(vehicle_rid)
     # once per update(), like the original (DynObj.cpp:8186-8193)
-    for controller: TrainController in controllers:
+    for controller: VehicleController in controllers:
         _update_neighbours(controller, track_vehicles)
 
     var iterations: int = clampi(ceili(delta / PHYSICS_STEP), 1, MAX_PHYSICS_ITERATIONS)
@@ -107,7 +107,7 @@ func _process(delta: float) -> void:
             var vehicle_rid: RID = _controller_vehicles.get(controllers[index].get_rid(), RID())
             if vehicle_rid.is_valid():
                 _apply_movement(vehicle_rid, distances[index])
-    for controller: TrainController in controllers:
+    for controller: VehicleController in controllers:
         if controller.is_physics_active():
             controller.update_state()
     if _diagnostics:
@@ -116,8 +116,8 @@ func _process(delta: float) -> void:
 
 ## Diagnostics: a velocity jump within one frame is a kick - with a consistent track movement it
 ## comes from the forces, typically a coupler reacting to an inconsistent vehicle position.
-func _check_velocity_jumps(controllers: Array[TrainController], delta: float) -> void:
-    for controller: TrainController in controllers:
+func _check_velocity_jumps(controllers: Array[VehicleController], delta: float) -> void:
+    for controller: VehicleController in controllers:
         var velocity: float = controller.get_velocity()
         var acceleration: float = (velocity - _diagnostics_velocity.get(controller, velocity)) / delta
         _diagnostics_velocity[controller] = velocity
@@ -128,7 +128,7 @@ func _check_velocity_jumps(controllers: Array[TrainController], delta: float) ->
 
 ## Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135) - a coupled end keeps its
 ## coupled vehicle (resolved by the controller), a free end looks for the nearest vehicle on the route.
-func _clear_neighbour(controller: TrainController, state: VehicleState, end: int) -> void:
+func _clear_neighbour(controller: VehicleController, state: VehicleState, end: int) -> void:
     if state and state.neighbour_cleared[end]:
         return
     if state:
@@ -136,7 +136,7 @@ func _clear_neighbour(controller: TrainController, state: VehicleState, end: int
     controller.update_neighbour(end, null, -1, 0.0)
 
 
-func _update_neighbours(controller: TrainController, track_vehicles: Dictionary[RID, Array]) -> void:
+func _update_neighbours(controller: VehicleController, track_vehicles: Dictionary[RID, Array]) -> void:
     var vehicle_rid: RID = _controller_vehicles.get(controller.get_rid(), RID())
     var state: VehicleState = _vehicles.get(vehicle_rid)
     # straight from the mover: asking for the whole state here rebuilt it for every
@@ -222,11 +222,11 @@ func _find_vehicle(
     return []
 
 
-func _get_controller(controller_rid: RID) -> TrainController:
+func _get_controller(controller_rid: RID) -> VehicleController:
     var controller_state: ControllerState = _controllers.get(controller_rid)
     if not controller_state or controller_state.object_id == 0:
         return null
-    return instance_from_id(controller_state.object_id) as TrainController
+    return instance_from_id(controller_state.object_id) as VehicleController
 
 
 func controller_create(controller: Object = null) -> RID:
@@ -277,7 +277,7 @@ func vehicle_bind_controller(vehicle_rid: RID, controller_rid: RID) -> void:
     if controller_rid.is_valid():
         _controller_vehicles[controller_rid] = vehicle_rid
         var controller_state: ControllerState = _controllers.get(controller_rid)
-        var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
+        var controller: VehicleController = instance_from_id(controller_state.object_id) as VehicleController
         if controller:
             controller._emit_position_changed_if_needed()
 
@@ -306,7 +306,7 @@ func vehicle_set_track(
 ## costs two dictionary lookups and an instance_from_id() on every vehicle of every iteration, and
 ## an EZT/DMU is never deactivated by the physics (Mover.cpp:4489), so a scenery full of EMUs pays
 ## it hundreds of times per frame while standing still.
-func process_movement(vehicle_rid: RID, delta: float, controller: TrainController = null) -> void:
+func process_movement(vehicle_rid: RID, delta: float, controller: VehicleController = null) -> void:
     var state: VehicleState = _vehicles.get(vehicle_rid)
     if not state:
         return
@@ -318,10 +318,10 @@ func process_movement(vehicle_rid: RID, delta: float, controller: TrainControlle
         var controller_state: ControllerState = _controllers.get(state.controller_rid)
         if not controller_state or controller_state.object_id == 0:
             return
-        controller = instance_from_id(controller_state.object_id) as TrainController
+        controller = instance_from_id(controller_state.object_id) as VehicleController
         if not controller:
             return
-    # TrainController.process_movement() is front-relative (mirrors mover->V);
+    # VehicleController.process_movement() is front-relative (mirrors mover->V);
     # this server's track-offset math is rear-relative - negate at the boundary.
     var distance: float = -controller.process_movement(delta)
     # the track was checked above and Mover physics cannot remove one; a track that disappears
@@ -350,7 +350,7 @@ func vehicle_move(vehicle_rid: RID, distance: float) -> void:
     _move_vehicle_state(state, distance, true)
     if state.controller_rid.is_valid():
         var controller_state: ControllerState = _controllers.get(state.controller_rid)
-        var controller: TrainController = instance_from_id(controller_state.object_id) as TrainController
+        var controller: VehicleController = instance_from_id(controller_state.object_id) as VehicleController
         if controller:
             controller._emit_position_changed_if_needed()
 

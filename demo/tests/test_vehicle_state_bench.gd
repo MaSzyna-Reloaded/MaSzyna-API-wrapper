@@ -57,7 +57,7 @@ const SOUND_KEYS: PackedStringArray = [
 
 var _tracks: Array[RID] = []
 var _vehicles: Array[RID] = []
-var _controllers: Array[TrainController] = []
+var _controllers: Array[VehicleController] = []
 
 
 func before_all() -> void:
@@ -74,20 +74,20 @@ func before_all() -> void:
     TrackManager.topology_rebuild()
 
     for index: int in VEHICLE_COUNT:
-        var controller: TrainController = TrainController.new()
+        var controller: VehicleController = VehicleController.new()
         controller.name = "BenchController%d" % index
         controller.train_id = "bench_vehicle_%d" % index
         FizTrainControllerInstancer.build_into(controller, FIXTURE_FIZ)
 
         # the two biggest publishers the fixture has no section for, added as a scene would
-        var engine: TrainElectricSeriesEngine = TrainElectricSeriesEngine.new()
+        var engine: VehicleElectricSeriesEngine = VehicleElectricSeriesEngine.new()
         engine.name = "Engine"
-        engine.power_source = TrainController.POWER_SOURCE_ACCUMULATOR
+        engine.power_source = VehicleController.POWER_SOURCE_ACCUMULATOR
         controller.add_child(engine)
-        var lighting: TrainLighting = TrainLighting.new()
+        var lighting: VehicleLighting = VehicleLighting.new()
         lighting.name = "Lighting"
         controller.add_child(lighting)
-        var spring_brake: TrainSpringBrake = TrainSpringBrake.new()
+        var spring_brake: VehicleSpringBrake = VehicleSpringBrake.new()
         spring_brake.name = "SpringBrake"
         controller.add_child(spring_brake)
 
@@ -112,7 +112,7 @@ func after_all() -> void:
     for vehicle_rid: RID in _vehicles:
         RailVehiclePhysicsServer.vehicle_free(vehicle_rid)
     _vehicles.clear()
-    for controller: TrainController in _controllers:
+    for controller: VehicleController in _controllers:
         if is_instance_valid(controller):
             remove_child(controller)
             controller.free()
@@ -159,7 +159,7 @@ func test_bench_physics_server_tick() -> void:
 func test_bench_state_build() -> void:
     var started: int = Time.get_ticks_usec()
     for frame: int in SAMPLE_FRAMES:
-        for controller: TrainController in _controllers:
+        for controller: VehicleController in _controllers:
             controller.update_state()
             controller.get_state()
     var elapsed: int = Time.get_ticks_usec() - started
@@ -175,7 +175,7 @@ func test_bench_sound_shaped_read() -> void:
     var sink: float = 0.0
     var started: int = Time.get_ticks_usec()
     for frame: int in SAMPLE_FRAMES:
-        for controller: TrainController in _controllers:
+        for controller: VehicleController in _controllers:
             controller.update_state()
             var state: Dictionary = controller.get_state()
             for key: String in SOUND_KEYS:

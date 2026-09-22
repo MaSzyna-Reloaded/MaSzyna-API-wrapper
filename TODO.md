@@ -292,6 +292,10 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   shows, and fabricated vehicles (`RailVehicle3D`, a cabin with only the controls under test,
   `TrainController` with a trimmed `.fiz`/`.mmd`, no e3d) - copied and cut from what the data-dir
   scenery parses into.
+* `test_dynamic_rail_vehicle_manager.gd` fails - the bank's `registration.controller` is null
+  while `vehicle.get_controller()` already returns one, so the sound bank registered before the
+  vehicle had resolved its controller and the 4 Hz sweep has not caught up within the three idle
+  frames the test waits. Confirmed pre-existing at `87d5f8d`, before any of the #184 work.
 * `test_sm42_startup_sequence.gd::test_successful_moving_on` fails - "Speed should be > 0" at
   line 69, the vehicle never starts moving after the startup sequence. Confirmed pre-existing on
   a clean tree (stash the work, rebuild, run: it fails the same way), so it is not a regression of

@@ -1,7 +1,7 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
 
-#include "../engines/TrainElectricEngine.hpp"
+#include "../engines/VehicleElectricEngine.hpp"
 #include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
 
@@ -76,7 +76,7 @@ namespace godot {
         PropertyInfo lights_property = GetTypeInfo<TypedDictionary<String, bool>>::get_class_info();
         lights_property.name = "lights";
         ADD_PROPERTY(lights_property, "set_lights", "get_lights");
-        BIND_RAIL_NODE_PATH(controller_path, "TrainController,FIZTrainController");
+        BIND_RAIL_NODE_PATH(controller_path, "VehicleController,FIZTrainController");
         BIND_RAIL_NODE_PATH(front_bogie_path, "Node3D");
         BIND_RAIL_NODE_PATH(rear_bogie_path, "Node3D");
         BIND_RAIL_NODE_PATH_ARRAY(front_rolling_wheel_paths);
@@ -171,7 +171,7 @@ namespace godot {
         }
 
         if (!controller_path.is_empty()) {
-            TrainController *resolved_controller = _resolve_controller(controller_path);
+            VehicleController *resolved_controller = _resolve_controller(controller_path);
             if (resolved_controller != nullptr) {
                 cabin->set("controller_path", resolved_controller->get_path());
             }
@@ -256,13 +256,13 @@ namespace godot {
         }
     }
 
-    TrainController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
+    VehicleController *RailVehicle3D::_resolve_controller(const NodePath &p_node_path) const {
         Node *node = get_node_or_null(p_node_path);
-        if (TrainController *direct_controller = Object::cast_to<TrainController>(node); direct_controller != nullptr) {
+        if (VehicleController *direct_controller = Object::cast_to<VehicleController>(node); direct_controller != nullptr) {
             return direct_controller;
         }
         if (node != nullptr && node->has_method("get_controller")) {
-            return Object::cast_to<TrainController>(node->call("get_controller"));
+            return Object::cast_to<VehicleController>(node->call("get_controller"));
         }
         return nullptr;
     }
@@ -271,11 +271,11 @@ namespace godot {
         return rid;
     }
 
-    TrainController *RailVehicle3D::get_controller() const {
+    VehicleController *RailVehicle3D::get_controller() const {
         return controller_path.is_empty() ? nullptr : _resolve_controller(controller_path);
     }
 
-    void RailVehicle3D::_on_controller_changed(TrainController *p_controller) {
+    void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
         if (controller == p_controller) {
             return;
         }
@@ -289,9 +289,9 @@ namespace godot {
         }
         if (controller != nullptr) {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
-            TypedArray<Node> electric_engines = controller->find_children("*", "TrainElectricEngine", true, false);
+            TypedArray<Node> electric_engines = controller->find_children("*", "VehicleElectricEngine", true, false);
             if (!electric_engines.is_empty()) {
-                electric_engine = Object::cast_to<TrainElectricEngine>(electric_engines[0]);
+                electric_engine = Object::cast_to<VehicleElectricEngine>(electric_engines[0]);
             }
         }
         if (rid.is_valid()) {
@@ -444,7 +444,7 @@ namespace godot {
 
         Node *controller_node = controller_path.is_empty() ? nullptr : get_node_or_null(controller_path);
         Node *new_fiz_controller = nullptr;
-        if (controller_node != nullptr && Object::cast_to<TrainController>(controller_node) == nullptr &&
+        if (controller_node != nullptr && Object::cast_to<VehicleController>(controller_node) == nullptr &&
             controller_node->has_signal("controller_changed")) {
             new_fiz_controller = controller_node;
         }
@@ -845,7 +845,7 @@ namespace godot {
     int RailVehicle3D::_pneumatic_variant(const int p_end, const bool p_brake_hose) const {
         const int own = get_pneumatic_layout(p_end, p_brake_hose);
         int other = 0;
-        if (TrainController *other_controller = controller->get_coupled_controller(p_end);
+        if (VehicleController *other_controller = controller->get_coupled_controller(p_end);
             other_controller != nullptr) {
             Node *node = other_controller->get_parent();
             while (node != nullptr && Object::cast_to<RailVehicle3D>(node) == nullptr) {
@@ -1027,8 +1027,8 @@ namespace godot {
             return;
         }
         const Dictionary state = controller->get_state();
-        const int engine_type = state.get("engine_type", TrainEngine::NONE);
-        if (engine_type != TrainEngine::DIESEL && engine_type != TrainEngine::DIESEL_ELECTRIC) {
+        const int engine_type = state.get("engine_type", VehicleEngine::NONE);
+        if (engine_type != VehicleEngine::DIESEL && engine_type != VehicleEngine::DIESEL_ELECTRIC) {
             return;
         }
 
@@ -1167,9 +1167,9 @@ namespace godot {
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
-        electric_engine->set_pantograph_wire_voltage(TrainElectricEngine::PANTOGRAPH_FIRST, front_voltage);
+        electric_engine->set_pantograph_wire_voltage(VehicleElectricEngine::PANTOGRAPH_FIRST, front_voltage);
         electric_engine->set_pantograph_wire_voltage(
-                TrainElectricEngine::PANTOGRAPH_SECOND,
+                VehicleElectricEngine::PANTOGRAPH_SECOND,
                 rear_active ? _pantograph_wire_voltage(3, pantograph_rear_offset, frame, assumed_voltage, current)
                             : 0.0);
     }
@@ -1217,7 +1217,7 @@ namespace godot {
         const bool power_available =
                 bool(state.get("power24_available", false)) || bool(state.get("power110_available", false));
         const bool is_ezt =
-                (controller->get_train_type() & TrainController::TRAIN_TYPE_EZT) == TrainController::TRAIN_TYPE_EZT;
+                (controller->get_train_type() & VehicleController::TRAIN_TYPE_EZT) == VehicleController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;
         double speed_factor = 0.0;
         if (pressure > pressure_threshold && power_available) {

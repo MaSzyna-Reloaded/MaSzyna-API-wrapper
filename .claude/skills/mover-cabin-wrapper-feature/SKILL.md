@@ -21,9 +21,9 @@ in any layer before.
    command/key triggers it in `~/src/maszyna/Train.cpp` + `command.h` +
    `eu07_input-keyboard.ini`. Never add a new field to the vendored file itself.
 
-2. **Wrapper command** - a method on the relevant `TrainPart` subclass
-   (`src/brakes/TrainBrake.cpp`, `src/engines/TrainEngine.cpp`,
-   `src/core/TrainController.cpp`, etc.), following the existing sibling pattern
+2. **Wrapper command** - a method on the relevant `VehicleComponent` subclass
+   (`src/brakes/VehicleBrake.cpp`, `src/engines/VehicleEngine.cpp`,
+   `src/core/VehicleController.cpp`, etc.), following the existing sibling pattern
    exactly:
    - Declare in the `.hpp` next to its sibling (e.g. `brake_level_increase()` ->
      `local_brake_increase()`).
@@ -95,8 +95,8 @@ in any layer before.
 **Sending commands:** code outside the train composition (player, UI, console) sends
 commands through the high-level API, `TrainSystem.send_command(train_id, command, p1, p2)`,
 using the train id it already tracks (e.g. `MaszynaPlayer.last_controlled_train_id`) - never
-`vehicle.get_controller().send_command(...)`. Direct `TrainController` access is fine only
-where the composition already holds that controller (e.g. `TrainPart`s).
+`vehicle.get_controller().send_command(...)`. Direct `VehicleController` access is fine only
+where the composition already holds that controller (e.g. `VehicleComponent`s).
 
 **Cabin controls are a separate layer (#94):** `CabinButton`/`CabinSwitch`/`CabinKnob`/
 `CabinCommand` never send vehicle commands. They only report manipulations
@@ -114,7 +114,7 @@ A new cab control that only maps to a vehicle command needs no code there, just 
 One whose original behaviour lives in `TTrain` gets a new `legacy_cabin/<name>.gd` behaviour that
 claims its control ids. Behaviours reach the train only through `CabinState.vehicle_state()` /
 `send_vehicle_command()`, never the Mover. Anything they need to read is exposed in
-`TrainController.state` first.
+`VehicleController.state` first.
 
 ## Verifying
 

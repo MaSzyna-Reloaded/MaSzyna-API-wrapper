@@ -3,7 +3,7 @@ extends MaszynaGutTest
 
 var created_tracks: Array[RID] = []
 var created_vehicle_rids: Array[RID] = []
-var created_controllers: Array[TrainController] = []
+var created_controllers: Array[VehicleController] = []
 
 
 func after_each() -> void:
@@ -11,7 +11,7 @@ func after_each() -> void:
         RailVehiclePhysicsServer.vehicle_free(vehicle_rid)
     created_vehicle_rids.clear()
 
-    for controller: TrainController in created_controllers:
+    for controller: VehicleController in created_controllers:
         if is_instance_valid(controller):
             if controller.get_parent():
                 controller.get_parent().remove_child(controller)
@@ -253,7 +253,7 @@ func test_process_movement_advances_bound_controller_vehicle() -> void:
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
-    var controller: TrainController = _create_controller(5.0)
+    var controller: VehicleController = _create_controller(5.0)
 
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
@@ -279,7 +279,7 @@ func test_process_movement_moves_vehicle_toward_its_own_front() -> void:
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
-    var controller: TrainController = _create_controller(5.0)
+    var controller: VehicleController = _create_controller(5.0)
 
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
@@ -333,7 +333,7 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
-    var controller: TrainController = _create_controller(5.0)
+    var controller: VehicleController = _create_controller(5.0)
 
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
@@ -363,7 +363,7 @@ func test_removed_track_makes_transform_and_movement_noop() -> void:
     )
     TrackManager.topology_rebuild()
     var vehicle_rid: RID = _create_vehicle()
-    var controller: TrainController = _create_controller(5.0)
+    var controller: VehicleController = _create_controller(5.0)
 
     RailVehiclePhysicsServer.vehicle_set_track(
         vehicle_rid,
@@ -529,8 +529,8 @@ func _create_vehicle() -> RID:
 
 
 ## `velocity` (m/s) is the mover's own velocity, given as the initial velocity in km/h.
-func _create_controller(velocity: float = 0.0) -> TrainController:
-    var controller: TrainController = TrainController.new()
+func _create_controller(velocity: float = 0.0) -> VehicleController:
+    var controller: VehicleController = VehicleController.new()
     controller.name = "MockController%d" % created_controllers.size()
     controller.train_id = "mock_train_%d" % created_controllers.size()
     controller.type_name = "test"

@@ -48,26 +48,26 @@ func test_builds_child_controller_from_data_path_and_filename():
     _set_fixture_path()
     await wait_idle_frames(2)
 
-    var controller: TrainController = node.get_controller()
+    var controller: VehicleController = node.get_controller()
     assert_not_null(controller)
     # default (non-editable) children are added INTERNAL, so they don't show up in the plain
     # (non-internal) child count or the Scene dock - see FIZTrainController.editable_in_editor.
-    assert_eq(node.get_child_count(), 0, "the built TrainController should be internal by default")
-    assert_eq(node.get_child_count(true), 1, "the built TrainController should still be reachable as an internal child")
+    assert_eq(node.get_child_count(), 0, "the built VehicleController should be internal by default")
+    assert_eq(node.get_child_count(true), 1, "the built VehicleController should still be reachable as an internal child")
     assert_eq(controller.mass, 74000.0)
-    assert_not_null(controller.get_node_or_null("TrainWheels"))
-    assert_not_null(controller.get_node_or_null("TrainBrake"))
-    assert_not_null(controller.get_node_or_null("TrainDoors"))
-    assert_not_null(controller.get_node_or_null("TrainBuffCoupl"))
+    assert_not_null(controller.get_node_or_null("VehicleWheels"))
+    assert_not_null(controller.get_node_or_null("VehicleBrake"))
+    assert_not_null(controller.get_node_or_null("VehicleDoors"))
+    assert_not_null(controller.get_node_or_null("VehicleBuffCoupl"))
 
 
 func test_native_mover_still_updates():
     _set_fixture_path()
     await wait_idle_frames(3)
 
-    var controller: TrainController = node.get_controller()
-    assert_true(controller.state.has("velocity"), "TrainController's native state dictionary should populate")
-    assert_true(controller.state.has("brake_air_pressure"), "TrainBrake's mover state should be live")
+    var controller: VehicleController = node.get_controller()
+    assert_true(controller.state.has("velocity"), "VehicleController's native state dictionary should populate")
+    assert_true(controller.state.has("brake_air_pressure"), "VehicleBrake's mover state should be live")
 
 
 func test_editable_in_editor_toggles_internal_mode():

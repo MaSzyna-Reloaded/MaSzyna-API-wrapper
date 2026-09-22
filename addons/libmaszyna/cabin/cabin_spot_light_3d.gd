@@ -1,7 +1,7 @@
 extends SpotLight3D
 class_name CabinSpotLight3D
 
-var _controller:TrainController
+var _controller:VehicleController
 
 var _dirty:bool = false
 var _setup_phase: bool = true
@@ -9,7 +9,7 @@ var _t = 0.0
 var _target_light_energy = 0.0
 
 @export var enabled:bool = false
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("VehicleController") var controller_path:NodePath = "":
     set(x):
         controller_path = x
         _controller = null
@@ -67,7 +67,7 @@ var _off_target:Node3D
 ## 0 (default) = steady on/off, matching prior behavior exactly. >0 = flash the light on/off at
 ## this interval while `enabled` stays true - mirrors CabinBlinker's own Timer-based algorithm
 ## (cabin_blinker.gd). Needed because the wrapper's "blinking"-family state properties
-## (TrainSecuritySystem::is_blinking() etc., Mover.cpp) are STATIC "is the alert condition active"
+## (VehicleSecuritySystem::is_blinking() etc., Mover.cpp) are STATIC "is the alert condition active"
 ## flags (`alert_timer > 0.0`), not a real-time oscillating value - the actual flashing pattern
 ## has always been a presentation-layer concern, never baked into the state itself.
 @export var blink_time:float = 0.0

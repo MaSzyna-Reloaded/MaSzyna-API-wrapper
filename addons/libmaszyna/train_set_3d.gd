@@ -22,12 +22,12 @@ func _process(_delta:float) -> void:
 
 func _process_coupling_dirty() -> void:
     var vehicles:Array[DynamicRailVehicle3D] = []
-    var controllers:Array[TrainController] = []
+    var controllers:Array[VehicleController] = []
     for child:Node in get_children():
         var vehicle:DynamicRailVehicle3D = child as DynamicRailVehicle3D
         if not vehicle:
             continue
-        var controller:TrainController = vehicle.get_controller()
+        var controller:VehicleController = vehicle.get_controller()
         if not controller or not controller.is_node_ready():
             return
         vehicles.append(vehicle)

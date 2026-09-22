@@ -9,7 +9,7 @@ var _dirty = true
 var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
-var _shake_controller:TrainController
+var _shake_controller:VehicleController
 var _engine_angle:float = PI * 0.5
 var _shake_velocity:Vector3 = Vector3.ZERO
 var _shake_offset:Vector3 = Vector3.ZERO
@@ -24,7 +24,7 @@ const SPRING_REST_LENGTH:float = 0.01
 @export var has_cab_model:bool = true
 @export var cab_window_open:bool = false
 
-@export_node_path("TrainController") var controller_path:NodePath = NodePath(""):
+@export_node_path("VehicleController") var controller_path:NodePath = NodePath(""):
     set(x):
         if not x == controller_path:
             _dirty = true
@@ -50,7 +50,7 @@ const SPRING_REST_LENGTH:float = 0.01
 func get_camera_transform():
     return global_transform.translated_local(driver_position)
 
-func _propagate_train_controller(node: Node, controller: TrainController):
+func _propagate_train_controller(node: Node, controller: VehicleController):
     for child in node.get_children():
         _propagate_train_controller(child, controller)
         if "controller_path" in child:
@@ -61,7 +61,7 @@ func _propagate_train_controller(node: Node, controller: TrainController):
             if child is BaseCabinTool3D:
                 child.set_train_controller(controller)
 
-func set_train_controller(controller:TrainController) -> void:
+func set_train_controller(controller:VehicleController) -> void:
     controller_path = controller.get_path() if controller else NodePath("")
     _shake_controller = controller
     _propagate_train_controller(self, controller)
@@ -87,7 +87,7 @@ func _process_dirty() -> void:
         return
     _dirty = false
     if controller_path or _shake_controller:
-        var controller:TrainController = get_node_or_null(controller_path) if controller_path else null
+        var controller:VehicleController = get_node_or_null(controller_path) if controller_path else null
         set_train_controller(controller)
 
 func _process_engine_shake(delta:float) -> void:

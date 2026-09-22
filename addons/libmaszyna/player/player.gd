@@ -204,7 +204,7 @@ func _find_start_vehicle() -> RailVehicle3D:
     return null
 
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
-    var controller:TrainController = vehicle.get_controller()
+    var controller:VehicleController = vehicle.get_controller()
     return controller.train_id if controller else ""
 
 ## The cab camera is frozen while the external camera is current, so the arrow keys do not move it.

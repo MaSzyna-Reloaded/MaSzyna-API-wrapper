@@ -1,4 +1,4 @@
-extends GenericTrainPart
+extends GenericVehicleComponent
 
 var _total_time = 0.0
 

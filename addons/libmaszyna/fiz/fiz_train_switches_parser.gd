@@ -2,15 +2,15 @@
 extends RefCounted
 class_name FizTrainSwitchesParser
 
-## Switches: and DimmerList: section parser -> TrainSwitches. Registered directly in
+## Switches: and DimmerList: section parser -> VehicleSwitches. Registered directly in
 ## FizTrainControllerInstancer's section table (both prefixes share this one instance).
 ##
 ## `Pantograph=`/`Converter=`/`MotorConnectors=` are string switch-type values, not Yes/No -
-## confirmed against TrainSwitches::_do_update_internal_mover: "Impulse" (case-insensitive)
+## confirmed against VehicleSwitches::_do_update_internal_mover: "Impulse" (case-insensitive)
 ## maps to true, anything else (including absent) to false ("impulse"/"" or "impulse"/"toggle"
 ## on the mover side). `RelayResetButtonX=`/`PantographPresets=`/`PantographPresetDefault=`/
 ## `ModernDimmer=`/`DimmerList:` have no effect on the simulation in this vendored Mover (see
-## TrainSwitches.hpp's class doc) but are still parsed and stored on the node faithfully.
+## VehicleSwitches.hpp's class doc) but are still parsed and stored on the node faithfully.
 ##
 ## DimmerList: row format has no real example in the operator's ~1300-file corpus (0
 ## occurrences) - the 3-column mapping to DimmerListItem's high_beam/dimmed/off booleans is a
@@ -19,8 +19,8 @@ class_name FizTrainSwitchesParser
 var _dimmer_rows: Array[DimmerListItem] = []
 
 
-func create_node() -> TrainSwitches:
-    return TrainSwitches.new()
+func create_node() -> VehicleSwitches:
+    return VehicleSwitches.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
@@ -37,7 +37,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
 
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("TrainSwitches", node)
+    context.add_part("VehicleSwitches", node)
 
     if kv.has("Pantograph"):
         node.pantograph_impulse = FizLineUtil.get_string(kv, "Pantograph").to_lower() == "impulse"
@@ -64,9 +64,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         node.modern_dimmer = FizLineUtil.get_bool(kv, "ModernDimmer")
 
 
-func _get_node(context: FizImportContext) -> TrainSwitches:
-    var node: TrainPart = context.get_part("TrainSwitches")
-    return node as TrainSwitches
+func _get_node(context: FizImportContext) -> VehicleSwitches:
+    var node: VehicleComponent = context.get_part("VehicleSwitches")
+    return node as VehicleSwitches
 
 
 func parse_row(p: MaszynaParser, context: FizImportContext) -> void:

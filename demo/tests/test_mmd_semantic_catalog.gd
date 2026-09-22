@@ -64,7 +64,7 @@ func test_pantfront_sw_sends_front_selector_as_command_param():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("pantfront_sw")
     assert_eq(entry["widget_class"], CabinButton)
     assert_eq(entry["fixed_fields"]["command"], "pantograph")
-    assert_eq(entry["fixed_fields"]["command_param"], TrainElectricEngine.PANTOGRAPH_FIRST)
+    assert_eq(entry["fixed_fields"]["command_param"], VehicleElectricEngine.PANTOGRAPH_FIRST)
     assert_eq(entry["fixed_fields"]["state_property"], "current_collector/pantograph_first_active")
 
 

@@ -282,7 +282,7 @@ static func parse_passengers_model(abs_mmd_path:String) -> String:
 ## scene tree. Appends any build-time diagnostics to `diagnostics` (caller-owned, merged with
 ## `definition.diagnostics` by DynamicTrainCabin.get_diagnostics()).
 static func build_into(
-        generated_root:Node3D, definition:MmdCabinDefinition, controller:TrainController,
+        generated_root:Node3D, definition:MmdCabinDefinition, controller:VehicleController,
         data_path:String, skin:String, diagnostics:Array[Dictionary]) -> void:
     if not definition.model_relpath:
         # Valid in the original (e.g. su46 cab0) - the low-poly interior is shown instead.
@@ -666,7 +666,7 @@ static func _index_submodels(node:Node, index:Dictionary) -> void:
 
 
 static func _build_widget(
-        descriptor:MmdInstrumentDescriptor, controller:TrainController,
+        descriptor:MmdInstrumentDescriptor, controller:VehicleController,
         cab_number:int, diagnostics:Array[Dictionary]) -> Node:
     var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
     var widget:Node = entry["widget_class"].new()
@@ -753,9 +753,9 @@ static func _build_audio_stream(filename:String) -> AudioStream:
 ##
 ## `entry["animation_range_config_properties"]`, when present, is `[min_key, max_key]` into
 ## controller.config - MMD's scale is calibrated against MaSzyna's raw value domain for a
-## property (e.g. TrainBrake's fBrakeCtrlPos), but the widget may be bound to an already-
+## property (e.g. VehicleBrake's fBrakeCtrlPos), but the widget may be bound to an already-
 ## normalized (0..1) state_property instead (brakectrl: the command it sends,
-## TrainBrake::brake_level_set, itself expects a normalized level, so the widget's value/command
+## VehicleBrake::brake_level_set, itself expects a normalized level, so the widget's value/command
 ## domain has to stay normalized even though that's not what MMD's scale assumes). Multiplying
 ## the raw-domain-derived degrees/position by (max-min) - the same range the state's own
 ## normalization divides by - converts it to the correct per-normalized-unit amount without
@@ -768,7 +768,7 @@ static func _build_audio_stream(filename:String) -> AudioStream:
 ## uses the implicit default of 1.0. This is the original engine's own fixed per-label
 ## correction factor, not a per-vehicle guess - confirmed by reading vehicle/Train.cpp directly.
 static func _apply_animation_shape(
-        widget:Node, descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
+        widget:Node, descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:VehicleController,
         cab_number:int, diagnostics:Array[Dictionary]) -> void:
     var range_scale:float = 1.0
     var range_properties:Array = entry.get("animation_range_config_properties", [])
@@ -878,7 +878,7 @@ static func _wire_mesh_path(
 ## ".../czuwak_on" directly, and real-vehicle diagnostics confirmed the bare name is never found -
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
-        descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:TrainController,
+        descriptor:MmdInstrumentDescriptor, entry:Dictionary, controller:VehicleController,
         submodel_index:Dictionary, generated_root:Node3D, cab_number:int, driver_position:Vector3,
         diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()

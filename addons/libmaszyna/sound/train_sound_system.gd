@@ -46,7 +46,7 @@ class BankRuntime extends RefCounted:
     var vehicle:RailVehicle3D
     ## The vehicle's handle in RailVehiclePhysicsServer - the key of its entry in _coupler_events
     var vehicle_rid:RID = RID()
-    var controller:TrainController
+    var controller:VehicleController
     var cabin_only:bool = false
     var enabled:bool = true
     var brake_sources:Dictionary = {}
@@ -101,7 +101,7 @@ class BrakeEvent extends RefCounted:
     var source:MmdSoundSourceDefinition
 
 
-## The coupling elements the physics side reports, in the order of TrainController.CouplingElement,
+## The coupling elements the physics side reports, in the order of VehicleController.CouplingElement,
 ## attach first and detach second - the layout of a vehicle's entry in _coupler_events.
 const COUPLER_EVENT_INDICES:Dictionary[String, int] = {
     "coupler_sound/attach_coupler": 0,
@@ -131,7 +131,7 @@ var _active:Array[BankRuntime] = []
 var _coupler_events:Dictionary[RID, PackedInt32Array] = {}
 ## The controller each counted vehicle is connected to, so the connection is made once per
 ## vehicle rather than once per bank, and is remade when the vehicle's controller is replaced.
-var _coupler_sources:Dictionary[RID, TrainController] = {}
+var _coupler_sources:Dictionary[RID, VehicleController] = {}
 ## Controllers of the listener's own consist, refreshed with the sweep and on a context change
 var _listener_consist_ids:Dictionary = {}
 var _culling_distance:float = 1000.0
@@ -198,7 +198,7 @@ func register_trigger(player:SfxPlayer3D, descriptor:Dictionary) -> int:
         runtime.vehicle = descriptor.get("vehicle") as RailVehicle3D
         if runtime.vehicle:
             _banks_by_vehicle[runtime.vehicle] = runtime
-        runtime.controller = descriptor.get("controller") as TrainController
+        runtime.controller = descriptor.get("controller") as VehicleController
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     var trigger_id:int = _add_trigger(runtime, descriptor)
@@ -331,7 +331,7 @@ func _resolve_controller(runtime:BankRuntime) -> void:
     if not runtime.controller:
         return
     runtime.vehicle_rid = runtime.vehicle.get_rid()
-    var counted:TrainController = _coupler_sources.get(runtime.vehicle_rid)
+    var counted:VehicleController = _coupler_sources.get(runtime.vehicle_rid)
     if counted == runtime.controller:
         return
     if is_instance_valid(counted):
@@ -346,11 +346,11 @@ func _resolve_controller(runtime:BankRuntime) -> void:
     runtime.controller.coupler_detached.connect(_on_coupler_detached.bind(runtime.vehicle_rid))
 
 
-func _on_coupler_attached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_attached(element:VehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _coupler_events[vehicle_rid][element] += 1
 
 
-func _on_coupler_detached(element:TrainController.CouplingElement, vehicle_rid:RID) -> void:
+func _on_coupler_detached(element:VehicleController.CouplingElement, vehicle_rid:RID) -> void:
     _coupler_events[vehicle_rid][COUPLER_DETACH_OFFSET + element] += 1
 
 
@@ -492,9 +492,9 @@ func _refresh_listener_consist() -> void:
     _listener_consist_ids.clear()
     if not _listener or not _listener.listener_cabin or not _listener.listener_vehicle:
         return
-    var pending:Array[TrainController] = [_listener.listener_vehicle.get_controller()]
+    var pending:Array[VehicleController] = [_listener.listener_vehicle.get_controller()]
     while pending:
-        var controller:TrainController = pending.pop_back()
+        var controller:VehicleController = pending.pop_back()
         if not controller or _listener_consist_ids.has(controller.get_instance_id()):
             continue
         _listener_consist_ids[controller.get_instance_id()] = true
@@ -720,7 +720,7 @@ func _unregister_bank(bank_id:int) -> void:
         _banks_by_vehicle.erase(removed.vehicle)
     _banks.erase(bank_id)
     if removed.vehicle_rid.is_valid() and not _has_bank_of_vehicle(removed.vehicle_rid):
-        var counted:TrainController = _coupler_sources.get(removed.vehicle_rid)
+        var counted:VehicleController = _coupler_sources.get(removed.vehicle_rid)
         if is_instance_valid(counted):
             counted.coupler_attached.disconnect(_on_coupler_attached.bind(removed.vehicle_rid))
             counted.coupler_detached.disconnect(_on_coupler_detached.bind(removed.vehicle_rid))

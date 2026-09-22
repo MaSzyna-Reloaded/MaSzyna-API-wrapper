@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainDieselEngineParser
 
-## TrainDieselEngine's DList:/DMList:/HTCList:/V2NList: table sections. Registered directly in
+## VehicleDieselEngine's DList:/DMList:/HTCList:/V2NList: table sections. Registered directly in
 ## FizTrainControllerInstancer's section table. These are independent of whether Engine:'s own
 ## plain-DieselEngine field subset has a dedicated parser yet (still common-fields-only, same
 ## status ElectricInductionMotor was in before FizTrainDieselElectricEngineParser existed) -
@@ -10,8 +10,8 @@ class_name FizTrainDieselEngineParser
 ##
 ## DList: header keys confirmed against a real vehicle line: `DList: Size=10 Mmax=2750
 ## nMmax=18.3 nmax=33.3 Mnmax=2142 nominalfill=1.0 Mstand=250.0 NomFuelConsRate=220`, cross-
-## checked directly against TrainDieselEngine::_do_update_internal_mover's own field mapping
-## (`dizel_nominalfill = nominal_fuel_dose` etc.) - all six keys map onto TrainDieselEngine's
+## checked directly against VehicleDieselEngine::_do_update_internal_mover's own field mapping
+## (`dizel_nominalfill = nominal_fuel_dose` etc.) - all six keys map onto VehicleDieselEngine's
 ## existing throttle_table-related properties. Row format confirmed via readDList
 ## (Mover.cpp:8444-8456): 3 columns, `Relay R Mn` -> ThrottlePositionItem's
 ## throttle_position/fuel_dose/clutch_behavior.
@@ -33,9 +33,9 @@ var _v2n_rows: Array[CurvePointItem] = []
 var _active_table: String = ""
 
 
-func _get_node(context: FizImportContext) -> TrainDieselEngine:
-    var node: TrainPart = context.get_part("TrainEngine")
-    return node as TrainDieselEngine
+func _get_node(context: FizImportContext) -> VehicleDieselEngine:
+    var node: VehicleComponent = context.get_part("VehicleEngine")
+    return node as VehicleDieselEngine
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:

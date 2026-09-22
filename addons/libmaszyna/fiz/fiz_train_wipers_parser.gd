@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainWipersParser
 
-## WiperList: section parser -> TrainWipers. Registered directly in
+## WiperList: section parser -> VehicleWipers. Registered directly in
 ## FizTrainControllerInstancer's section table. Rows as TMoverParameters::readWiperList()
 ## (Mover.cpp:9429) reads them: byteSum -> wiper_mask, WiperSpeed -> transit_time,
 ## interval -> period, outBackDelay -> return_delay.
@@ -14,14 +14,14 @@ var _rows: Array[WiperListItem] = []
 var _size: int = 0
 
 
-func create_node() -> TrainWipers:
-    return TrainWipers.new()
+func create_node() -> VehicleWipers:
+    return VehicleWipers.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("TrainWipers", node)
+    context.add_part("VehicleWipers", node)
 
     if kv.has("Angle"):
         node.angle = FizLineUtil.get_float(kv, "Angle")
@@ -44,10 +44,10 @@ func parse_row(p: MaszynaParser, context: FizImportContext) -> void:
 
 
 func end_table(context: FizImportContext) -> void:
-    var node: TrainPart = context.get_part("TrainWipers")
+    var node: VehicleComponent = context.get_part("VehicleWipers")
     if node == null:
         _rows = []
         return
     if _rows:
-        (node as TrainWipers).positions = _rows
+        (node as VehicleWipers).positions = _rows
     _rows = []

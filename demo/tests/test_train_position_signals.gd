@@ -3,7 +3,7 @@ extends MaszynaGutTest
 var _train_system:Object
 var _created_tracks: Array[RID] = []
 var _created_vehicles: Array[RailVehicle3D] = []
-var _created_controllers: Array[TrainController] = []
+var _created_controllers: Array[VehicleController] = []
 
 
 func before_each() -> void:
@@ -18,7 +18,7 @@ func after_each() -> void:
             vehicle.queue_free()
     _created_vehicles.clear()
 
-    for controller: TrainController in _created_controllers:
+    for controller: VehicleController in _created_controllers:
         if is_instance_valid(controller):
             if controller.get_parent():
                 controller.get_parent().remove_child(controller)
@@ -34,7 +34,7 @@ func after_each() -> void:
 
 func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void:
     var fixture: Dictionary = await _create_fixture(0.0)
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(train)
@@ -51,7 +51,7 @@ func test_train_position_changed_signal_emits_after_crossing_one_meter() -> void
 
 func test_train_position_changed_signal_rearms_after_last_emission() -> void:
     var fixture: Dictionary = await _create_fixture(1.1)
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(train)
@@ -65,7 +65,7 @@ func test_train_position_changed_signal_rearms_after_last_emission() -> void:
 
 func test_train_system_bubbling_after_unregistration() -> void:
     var fixture: Dictionary = await _create_fixture(0.0, "test_train_2")
-    var train: TrainController = fixture["controller"]
+    var train: VehicleController = fixture["controller"]
     var vehicle: RailVehicle3D = fixture["vehicle"]
 
     watch_signals(_train_system)
@@ -82,7 +82,7 @@ func _create_fixture(offset: float, train_id: String = "test_train") -> Dictiona
     TrackManager.track_update(track_rid, TrackManager.TRACK_NORMAL, "start", 1.435)
     TrackManager.topology_rebuild()
 
-    var controller: TrainController = TrainController.new()
+    var controller: VehicleController = VehicleController.new()
     controller.train_id = train_id
     controller.type_name = "test"
     add_child(controller)

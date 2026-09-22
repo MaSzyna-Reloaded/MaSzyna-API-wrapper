@@ -1,14 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var brake: TrainBrake
+var train: VehicleController
+var brake: VehicleBrake
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     add_child(train)
 
-    brake = TrainBrake.new()
+    brake = VehicleBrake.new()
     train.add_child(brake)
     await wait_idle_frames(2)
 
@@ -52,4 +52,4 @@ func test_brake_pressure_table_accepts_negative_handle_positions():
     await wait_idle_frames(2)
 
     assert_eq(brake.brake_pressure_table.size(), 3, "brake_pressure_table should hold the assigned rows")
-    assert_true(train.state.has("brake_air_pressure"), "TrainBrake should keep functioning after assigning brake_pressure_table")
+    assert_true(train.state.has("brake_air_pressure"), "VehicleBrake should keep functioning after assigning brake_pressure_table")

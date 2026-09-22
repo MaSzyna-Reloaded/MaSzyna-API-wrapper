@@ -80,7 +80,7 @@ func test_ep07_plays_motor_clatter_and_outer_noise_when_rolling_on_td_scn() -> v
     assert_not_null(rail_vehicle)
     if not rail_vehicle:
         return
-    var controller:TrainController = rail_vehicle.get_controller()
+    var controller:VehicleController = rail_vehicle.get_controller()
     var running:SfxPlayer3D = rail_vehicle.get_node_or_null("RunningSfxPlayer3D") as SfxPlayer3D
     assert_not_null(running)
     if not running:

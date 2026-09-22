@@ -49,7 +49,7 @@ func test_machine_room_without_cab_model_shows_low_poly_interior() -> void:
         if vehicle.get_controller():
             break
         await wait_idle_frames(1)
-    var controller:TrainController = vehicle.get_controller()
+    var controller:VehicleController = vehicle.get_controller()
     assert_not_null(controller, "SU46's FIZ controller should be built")
     if not controller:
         return

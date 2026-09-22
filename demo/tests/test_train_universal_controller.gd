@@ -1,14 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var universal_controller: TrainUniversalController
+var train: VehicleController
+var universal_controller: VehicleUniversalController
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     add_child(train)
 
-    universal_controller = TrainUniversalController.new()
+    universal_controller = VehicleUniversalController.new()
     train.add_child(universal_controller)
     await wait_idle_frames(2)
 

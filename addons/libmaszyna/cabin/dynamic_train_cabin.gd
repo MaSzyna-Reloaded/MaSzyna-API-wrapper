@@ -32,7 +32,7 @@ const CAB_LAMP_SUBMODEL_NAMES:Array[String] = [
 ## it would light nothing.
 const CAB_LIGHT_BELOW_LAMP:float = 0.05
 
-var _controller:TrainController
+var _controller:VehicleController
 var _generated:Node3D
 var _diagnostics:Array[Dictionary] = []
 var _random_choices:Dictionary = {}
@@ -49,7 +49,7 @@ func _ready() -> void:
     cabin_ready.emit()
 
 
-func set_train_controller(controller:TrainController) -> void:
+func set_train_controller(controller:VehicleController) -> void:
     if _controller == controller:
         return
     if _controller:
@@ -157,7 +157,7 @@ func _rebuild_generated() -> void:
 
 ## Keyboard-only driver aids that have no cabin lever/MMD instrument of their own (nothing to
 ## parse, nothing to animate) - demo/vehicles/sm42/sm_42_cabin.tscn wires the same thing by hand
-## via a plain "Commands/" CabinCommand node. brake_level_set_position/_str (TrainBrake.cpp) is
+## via a plain "Commands/" CabinCommand node. brake_level_set_position/_str (VehicleBrake.cpp) is
 ## already generic across handle types - it resolves a NAMED position ("drive" -> Maszyna::bh_RP,
 ## the original engine's own "running position" handle-position constant, McZapkie/hamulce.h) per
 ## vehicle rather than a hardcoded value, so this "jump the brake handle to driving/release

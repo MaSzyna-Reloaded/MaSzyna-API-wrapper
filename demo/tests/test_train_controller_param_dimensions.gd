@@ -1,9 +1,9 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: VehicleController
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     add_child(train)
     await wait_idle_frames(2)
@@ -13,8 +13,8 @@ func after_each():
     train.free()
 
 func test_param_and_dimensions_defaults():
-    assert_eq(train.category, TrainController.CATEGORY_TRAIN)
-    assert_eq(train.train_type, TrainController.TRAIN_TYPE_DEFAULT)
+    assert_eq(train.category, VehicleController.CATEGORY_TRAIN)
+    assert_eq(train.train_type, VehicleController.TRAIN_TYPE_DEFAULT)
     assert_eq(train.reduced_mass, 0.0)
     assert_eq(train.sand_capacity, 0.0)
     assert_eq(train.heating_power, 0.0)
@@ -26,8 +26,8 @@ func test_param_and_dimensions_defaults():
     assert_eq(train.dimensions_floor_height, 0.96)
 
 func test_param_and_dimensions_round_trip_and_update():
-    train.category = TrainController.CATEGORY_ROAD
-    train.train_type = TrainController.TRAIN_TYPE_ET22
+    train.category = VehicleController.CATEGORY_ROAD
+    train.train_type = VehicleController.TRAIN_TYPE_ET22
     train.reduced_mass = 500.0
     train.sand_capacity = 300.0
     train.heating_power = 20.0
@@ -39,8 +39,8 @@ func test_param_and_dimensions_round_trip_and_update():
     train.dimensions_floor_height = 1.1
     await wait_idle_frames(2)
 
-    assert_eq(train.category, TrainController.CATEGORY_ROAD)
-    assert_eq(train.train_type, TrainController.TRAIN_TYPE_ET22)
+    assert_eq(train.category, VehicleController.CATEGORY_ROAD)
+    assert_eq(train.train_type, VehicleController.TRAIN_TYPE_ET22)
     assert_eq(train.reduced_mass, 500.0)
     assert_eq(train.sand_capacity, 300.0)
     assert_eq(train.heating_power, 20.0)
@@ -50,4 +50,4 @@ func test_param_and_dimensions_round_trip_and_update():
     assert_eq(train.dimensions_width, 2.9)
     assert_eq(train.dimensions_drag_coefficient, 1.2)
     assert_almost_eq(train.dimensions_floor_height, 1.1, 0.001)
-    assert_true(train.state.has("mass_total"), "TrainController should keep functioning after configuring Param/Dimensions")
+    assert_true(train.state.has("mass_total"), "VehicleController should keep functioning after configuring Param/Dimensions")

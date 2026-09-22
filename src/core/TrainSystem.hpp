@@ -10,13 +10,13 @@
 
 namespace godot {
 
-    class TrainController;
+    class VehicleController;
 
     class TrainSystem : public Object {
             GDCLASS(TrainSystem, Object);
 
         private:
-            std::map<String, TrainController *> trains;
+            std::map<String, VehicleController *> trains;
             Dictionary commands;
 
         public:
@@ -24,10 +24,10 @@ namespace godot {
                 return dynamic_cast<TrainSystem *>(godot::Engine::get_singleton()->get_singleton("TrainSystem"));
             }
 
-            void register_train(const String &p_train_id, TrainController *p_train);
+            void register_train(const String &p_train_id, VehicleController *p_train);
             void unregister_train(const String &p_train_id);
             bool is_train_registered(const String &p_train_id) const;
-            TrainController *get_train(const String &p_train_id);
+            VehicleController *get_train(const String &p_train_id);
             Vector3 get_train_world_position(const String &p_train_id) const;
             int get_train_count() const;
             Array get_registered_trains();
@@ -66,7 +66,7 @@ namespace godot {
             /// [param full_movement] picks ComputeMovement() over FastComputeMovement(), which the
             /// original uses for every sub-iteration but the last (DynObj.cpp:4086).
             PackedFloat64Array
-            step_vehicles(const TypedArray<TrainController> &p_controllers, double p_step, bool p_full_movement);
+            step_vehicles(const TypedArray<VehicleController> &p_controllers, double p_step, bool p_full_movement);
 
         protected:
             static void _bind_methods();

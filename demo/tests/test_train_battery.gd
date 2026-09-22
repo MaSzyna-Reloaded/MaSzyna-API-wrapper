@@ -1,9 +1,9 @@
 extends MaszynaGutTest
 
-var train: TrainController
+var train: VehicleController
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     train.battery_voltage = 110.0
     add_child(train)
@@ -19,7 +19,7 @@ func test_battery_starts_off_when_not_ready_to_depart():
     assert_false(train.state["battery_enabled"], "Battery should start off for initial_velocity == 0")
 
 func test_battery_starts_on_when_ready_to_depart():
-    var ready_train := TrainController.new()
+    var ready_train := VehicleController.new()
     ready_train.train_id = "TestTrainReady"
     ready_train.battery_voltage = 110.0
     ready_train.initial_velocity = 10.0
@@ -40,7 +40,7 @@ func test_battery_start_disabled_from_zero_voltage_blocks_switching():
     # real vehicle's voltage changes into at runtime. So this must be set before the vehicle
     # ever initializes, not mutated afterward (Battery itself, once on, isn't retroactively
     # switched off by a later voltage change - only BatterySwitch()'s manual-mode gate is).
-    var disabled_train := TrainController.new()
+    var disabled_train := VehicleController.new()
     disabled_train.train_id = "TestTrainZeroVoltage"
     disabled_train.battery_voltage = 0.0
     add_child(disabled_train)

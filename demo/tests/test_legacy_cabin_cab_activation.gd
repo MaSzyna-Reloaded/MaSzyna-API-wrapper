@@ -4,12 +4,12 @@ extends MaszynaGutTest
 ## is still activated through CabinSystem, as TTrain::OnCommand_cabactivationtoggle does regardless
 ## of the gauge (Train.cpp:3077).
 
-var train: TrainController
+var train: VehicleController
 var cabin: Node3D
 
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestCabActivation"
     train.battery_voltage = 110.0
     add_child(train)

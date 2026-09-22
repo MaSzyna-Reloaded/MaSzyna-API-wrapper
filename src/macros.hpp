@@ -200,8 +200,8 @@ namespace libmaszyna::internal {
  * Binds a property and its conventionally named setter and getter. An optional slash-separated grouping path accepts
  * a group and a subgroup. Group markers are generated from the path automatically.
  * <example>
- * BIND_PROPERTY(TrainWheels, Variant::FLOAT, bogie_pivot_spacing);
- * BIND_PROPERTY(TrainBrake, Variant::FLOAT, brake_force_max, "brake_force");
+ * BIND_PROPERTY(VehicleWheels, Variant::FLOAT, bogie_pivot_spacing);
+ * BIND_PROPERTY(VehicleBrake, Variant::FLOAT, brake_force_max, "brake_force");
  * </example>
  */
 #define INTERNAL_BIND_PROPERTY(p_class, p_type, p_name)                                                                \

@@ -14,7 +14,7 @@
 			</description>
 		</method>
 		<method name="get_controller" qualifiers="const">
-			<return type="TrainController" />
+			<return type="VehicleController" />
 			<description>
 			</description>
 		</method>

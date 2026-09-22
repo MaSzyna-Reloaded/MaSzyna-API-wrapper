@@ -2,8 +2,8 @@
 extends ResourceFormatLoader
 class_name FIZResourceLoader
 
-## Makes `.fiz` files directly `load()`-able as a PackedScene (a TrainController + typed
-## TrainPart children tree), the same way `.e3d` files are directly loadable as an E3DModel
+## Makes `.fiz` files directly `load()`-able as a PackedScene (a VehicleController + typed
+## VehicleComponent children tree), the same way `.e3d` files are directly loadable as an E3DModel
 ## via E3DResourceFormatLoader - no import step. Registered in libmaszyna.gd.
 
 

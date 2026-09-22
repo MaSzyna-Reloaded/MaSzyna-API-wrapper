@@ -1,7 +1,7 @@
 extends Node3D
 class_name CabinIndicator3D
 
-var _controller:TrainController
+var _controller:VehicleController
 var _on_target:Node3D
 var _off_target:Node3D
 var _dirty:bool = false
@@ -9,7 +9,7 @@ var _update_elapsed:float = 0.0
 
 @export var enabled:bool = false
 @export var state_property:String = ""
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("VehicleController") var controller_path:NodePath = "":
     set(value):
         controller_path = value
         _controller = null

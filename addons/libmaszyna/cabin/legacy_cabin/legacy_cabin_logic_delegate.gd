@@ -10,7 +10,7 @@ class_name LegacyCabinLogicDelegate
 ## wired straight to its vehicle command by LegacyCabinForwardCommands.
 
 ## Set by the factory before the node enters the tree.
-var controller:TrainController
+var controller:VehicleController
 var cab:int = 1
 
 var _behaviours:Array = []
@@ -22,7 +22,7 @@ var _unmodelled_controls:LegacyCabinUnmodelledControls
 var _brake_charging:LegacyCabinBrakeCharging
 
 
-# FIXME(#184): train_id comes from the TrainController, see BaseCabinTool3D._act().
+# FIXME(#184): train_id comes from the VehicleController, see BaseCabinTool3D._act().
 func _ready() -> void:
     var main_switch := LegacyCabinMainSwitch.new()
     var claimed:Array[StringName] = main_switch.control_ids()

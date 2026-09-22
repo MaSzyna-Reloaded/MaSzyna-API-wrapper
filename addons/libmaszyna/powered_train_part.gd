@@ -1,7 +1,7 @@
-extends GenericTrainPart
+extends GenericVehicleComponent
 class_name PoweredTrainPart
 
-## Example of a customization based on a GenericTrainPart interface.
+## Example of a customization based on a GenericVehicleComponent interface.
 ## PoweredTrainPart will call [method _process_powered] when low power is
 ## available in a train (24V or 110V), [method _process_unpowered] otherwise.
 

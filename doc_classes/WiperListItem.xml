@@ -5,8 +5,8 @@
 	</brief_description>
 	<description>
 		Each [WiperListItem] corresponds to one line of the [code]WiperList[/code] table. Its index within
-		[member TrainWipers.positions] corresponds to the switch position, starting from 0.
-		[b]Not wired to the mover[/b] - see [TrainWipers].
+		[member VehicleWipers.positions] corresponds to the switch position, starting from 0.
+		[b]Not wired to the mover[/b] - see [VehicleWipers].
 	</description>
 	<tutorials>
 	</tutorials>

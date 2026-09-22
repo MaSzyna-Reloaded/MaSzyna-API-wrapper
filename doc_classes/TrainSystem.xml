@@ -35,7 +35,7 @@
 		<method name="get_registered_trains">
 			<return type="Array" />
 			<description>
-				Return list of registered [TrainController]s.
+				Return list of registered [VehicleController]s.
 			</description>
 		</method>
 		<method name="get_supported_commands">
@@ -52,7 +52,7 @@
 			</description>
 		</method>
 		<method name="get_train">
-			<return type="TrainController" />
+			<return type="VehicleController" />
 			<param index="0" name="train_id" type="String" />
 			<description>
 			</description>
@@ -117,9 +117,9 @@
 		<method name="register_train">
 			<return type="void" />
 			<param index="0" name="train_id" type="String" />
-			<param index="1" name="train" type="TrainController" />
+			<param index="1" name="train" type="VehicleController" />
 			<description>
-				Registers a [TrainController] with an unique ID
+				Registers a [VehicleController] with an unique ID
 			</description>
 		</method>
 		<method name="send_command">
@@ -134,7 +134,7 @@
 		</method>
 		<method name="step_vehicles">
 			<return type="PackedFloat64Array" />
-			<param index="0" name="controllers" type="TrainController[]" />
+			<param index="0" name="controllers" type="VehicleController[]" />
 			<param index="1" name="step" type="float" />
 			<param index="2" name="full_movement" type="bool" />
 			<description>

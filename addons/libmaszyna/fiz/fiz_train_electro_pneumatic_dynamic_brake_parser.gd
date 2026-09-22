@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainElectroPneumaticDynamicBrakeParser
 
-## Blending: and DCEMUED: section parser -> TrainElectroPneumaticDynamicBrake. Registered
+## Blending: and DCEMUED: section parser -> VehicleElectroPneumaticDynamicBrake. Registered
 ## directly in FizTrainControllerInstancer's section table (both prefixes share this instance,
 ## since they configure the same node - a vehicle can have either or both).
 ##
@@ -13,8 +13,8 @@ class_name FizTrainElectroPneumaticDynamicBrakeParser
 ## EP_max_Vel=48`. Properties use their canonical public names directly.
 
 
-func create_node() -> TrainElectroPneumaticDynamicBrake:
-    return TrainElectroPneumaticDynamicBrake.new()
+func create_node() -> VehicleElectroPneumaticDynamicBrake:
+    return VehicleElectroPneumaticDynamicBrake.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> void:
@@ -22,7 +22,7 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
     var node := _get_node(context)
     if node == null:
         node = create_node()
-        context.add_part("TrainElectroPneumaticDynamicBrake", node)
+        context.add_part("VehicleElectroPneumaticDynamicBrake", node)
 
     if prefix == "DCEMUED:":
         _apply_dcemued(kv, node)
@@ -30,12 +30,12 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _apply_blending(kv, node)
 
 
-func _get_node(context: FizImportContext) -> TrainElectroPneumaticDynamicBrake:
-    var node: TrainPart = context.get_part("TrainElectroPneumaticDynamicBrake")
-    return node as TrainElectroPneumaticDynamicBrake
+func _get_node(context: FizImportContext) -> VehicleElectroPneumaticDynamicBrake:
+    var node: VehicleComponent = context.get_part("VehicleElectroPneumaticDynamicBrake")
+    return node as VehicleElectroPneumaticDynamicBrake
 
 
-func _apply_blending(kv: Dictionary, node: TrainElectroPneumaticDynamicBrake) -> void:
+func _apply_blending(kv: Dictionary, node: VehicleElectroPneumaticDynamicBrake) -> void:
     if kv.has("MED_Vmax"):
         node.blending_max_velocity = FizLineUtil.get_float(kv, "MED_Vmax")
     if kv.has("MED_Vmin"):
@@ -52,7 +52,7 @@ func _apply_blending(kv: Dictionary, node: TrainElectroPneumaticDynamicBrake) ->
         node.blending_min_ed_brake_request = FizLineUtil.get_float(kv, "MED_MinBrakeReqED")
 
 
-func _apply_dcemued(kv: Dictionary, node: TrainElectroPneumaticDynamicBrake) -> void:
+func _apply_dcemued(kv: Dictionary, node: VehicleElectroPneumaticDynamicBrake) -> void:
     if kv.has("CouplerCheck"):
         node.coupler_check = FizLineUtil.get_int(kv, "CouplerCheck")
     if kv.has("EP_max_Vel"):

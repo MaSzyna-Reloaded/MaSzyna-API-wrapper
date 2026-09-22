@@ -1,7 +1,7 @@
 extends Node3D
 class_name BaseCabinTool3D
 
-var _controller:TrainController
+var _controller:VehicleController
 var _dirty:bool = false
 var _applying_control_value:bool = false
 
@@ -9,7 +9,7 @@ signal controller_changed
 ## Emitted while the previous controller is still available for disconnecting signals.
 signal controller_changing
 
-@export_node_path("TrainController") var controller_path:NodePath = "":
+@export_node_path("VehicleController") var controller_path:NodePath = "":
     set(x):
         controller_path = x
         _dirty = true
@@ -18,7 +18,7 @@ signal controller_changing
 ## registered cabin logic decides what they do to the vehicle.
 @export var control_id:StringName = &""
 
-func set_train_controller(controller:TrainController) -> void:
+func set_train_controller(controller:VehicleController) -> void:
     if _controller == controller:
         return
     controller_changing.emit()
@@ -27,7 +27,7 @@ func set_train_controller(controller:TrainController) -> void:
         controller_changed.emit()
 
 ## Reports a manipulation of this control to CabinSystem, for the occupied cab of its train.
-# FIXME(#184): train_id is taken from TrainController, which should not own it (it belongs to the
+# FIXME(#184): train_id is taken from VehicleController, which should not own it (it belongs to the
 # vehicle in the scene).
 func _act(action:StringName, value:Variant = null) -> Variant:
     if _applying_control_value or not _controller or not control_id:
@@ -66,7 +66,7 @@ func _process_tool(delta):
 func _process(delta):
     if _dirty:
         _dirty = false
-        var controller:TrainController = get_node_or_null(controller_path) if controller_path else null
+        var controller:VehicleController = get_node_or_null(controller_path) if controller_path else null
         set_train_controller(controller)
 
         if has_method("_process_dirty"):

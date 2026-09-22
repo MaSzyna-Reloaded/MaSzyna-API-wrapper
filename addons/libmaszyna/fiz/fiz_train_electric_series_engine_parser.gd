@@ -2,7 +2,7 @@
 extends RefCounted
 class_name FizTrainElectricSeriesEngineParser
 
-## TrainElectricSeriesEngine's own subset of Engine: (EngineType=ElectricSeriesMotor, called
+## VehicleElectricSeriesEngine's own subset of Engine: (EngineType=ElectricSeriesMotor, called
 ## directly by FizTrainEngineParser once it creates the node), plus Circuit:, RList:+rows, and
 ## MotorParamTable0:+rows (all registered directly in FizTrainControllerInstancer's section
 ## table, using the standard parse()/parse_row()/end_table() interface) - all configure the
@@ -21,13 +21,13 @@ var _motor_param_rows: Array[MotorParameter] = []
 var _active_table: String = ""
 
 
-func create_node() -> TrainElectricSeriesEngine:
-    return TrainElectricSeriesEngine.new()
+func create_node() -> VehicleElectricSeriesEngine:
+    return VehicleElectricSeriesEngine.new()
 
 
 ## The series-motor-specific subset of Engine:'s key/value set (common fields already applied
 ## by FizTrainEngineCommon via FizTrainEngineParser).
-func apply_engine_fields(kv: Dictionary, node: TrainElectricSeriesEngine) -> void:
+func apply_engine_fields(kv: Dictionary, node: VehicleElectricSeriesEngine) -> void:
     if kv.has("Volt"):
         node.nominal_voltage = FizLineUtil.get_float(kv, "Volt")
     if kv.has("WindingRes"):
@@ -35,7 +35,7 @@ func apply_engine_fields(kv: Dictionary, node: TrainElectricSeriesEngine) -> voi
         node.winding_resistance = maxf(FizLineUtil.get_float(kv, "WindingRes"), 0.01)
     if kv.has("nmax"):
         # max_rpm holds raw RPM, matching its name and the FIZ's own "nmax" units -
-        # TrainElectricSeriesEngine::_do_update_internal_mover does the RPM->rev/s conversion
+        # VehicleElectricSeriesEngine::_do_update_internal_mover does the RPM->rev/s conversion
         # (p_mover->nmax = max_rpm/60.0, mirroring the original's own LoadFIZ_Engine "nmax /= 60.0",
         # Mover.cpp:10884). Dividing here too silently double-converted it (3600x too small),
         # making Mover's own motor-overspeed damage check (Mover.cpp:446, FuzzyLogic(abs(enrot),
@@ -58,9 +58,9 @@ func parse(p: MaszynaParser, context: FizImportContext, prefix: String = "") -> 
         _motor_param_rows = []
 
 
-func _get_node(context: FizImportContext) -> TrainElectricSeriesEngine:
-    var node: TrainPart = context.get_part("TrainEngine")
-    return node as TrainElectricSeriesEngine
+func _get_node(context: FizImportContext) -> VehicleElectricSeriesEngine:
+    var node: VehicleComponent = context.get_part("VehicleEngine")
+    return node as VehicleElectricSeriesEngine
 
 
 func _parse_circuit(kv: Dictionary, context: FizImportContext) -> void:
@@ -101,8 +101,8 @@ func _parse_rlist_header(kv: Dictionary, context: FizImportContext) -> void:
         return
     var vent_str: String = FizLineUtil.get_string(kv, "RVent").to_lower()
     match vent_str:
-        "automatic": node.resistor_fan_type = TrainElectricSeriesEngine.FAN_TYPE_AUTOMATIC
-        "yes": node.resistor_fan_type = TrainElectricSeriesEngine.FAN_TYPE_YES
+        "automatic": node.resistor_fan_type = VehicleElectricSeriesEngine.FAN_TYPE_AUTOMATIC
+        "yes": node.resistor_fan_type = VehicleElectricSeriesEngine.FAN_TYPE_YES
     if vent_str == "automatic" or vent_str == "yes":
         if kv.has("RVentnmax"):
             node.resistor_fan_max_rpm = FizLineUtil.get_float(kv, "RVentnmax") / 60.0

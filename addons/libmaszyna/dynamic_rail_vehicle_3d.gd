@@ -7,7 +7,7 @@ class_name DynamicRailVehicle3D
 ## placed on a named track at a given offset. Deliberately does NOT extend RailVehicle3D -
 ## it builds one internally and delegates all vehicle behavior (motion, enter_cabin/leave_cabin,
 ## player-detection Area3D, light sync) to it unmodified, exactly like FIZTrainController wraps
-## a generated TrainController instead of extending it.
+## a generated VehicleController instead of extending it.
 ##
 ## MaszynaPlayer needs no changes to detect the generated RailVehicle3D: its detection Area3D
 ## is `_update_detection_area()`'s own direct child of that RailVehicle3D, so a raycast hit on
@@ -46,7 +46,7 @@ class_name DynamicRailVehicle3D
 ## lookups). Not derived from any data file - every DynamicRailVehicle3D otherwise builds its
 ## FIZTrainController with train_id left at "", so two or more dynamic vehicles all collide on
 ## the same empty TrainSystem registry key. Must be set explicitly and kept unique per vehicle,
-## same as on a hand-authored TrainController.
+## same as on a hand-authored VehicleController.
 @export var train_id:String = "":
     set(x):
         if not x == train_id:
@@ -117,7 +117,7 @@ func is_built() -> bool:
     return not _dirty
 
 
-func get_controller() -> TrainController:
+func get_controller() -> VehicleController:
     return _vehicle.get_controller() if _vehicle else null
 
 

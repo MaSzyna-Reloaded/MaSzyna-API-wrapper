@@ -2,20 +2,20 @@
 extends RefCounted
 class_name FizTrainSpringBrakeParser
 
-## SpringBrake: section parser -> TrainSpringBrake. Registered directly in
+## SpringBrake: section parser -> VehicleSpringBrake. Registered directly in
 ## FizTrainControllerInstancer's section table. Key mapping confirmed directly against
-## TrainSpringBrake::_do_update_internal_mover's own field-name comments (which mirror the
+## VehicleSpringBrake::_do_update_internal_mover's own field-name comments (which mirror the
 ## original MaSzyna short key names almost 1:1, e.g. MaxSetPressure/ResetPressure/PressureOff).
 
 
-func create_node() -> TrainSpringBrake:
-    return TrainSpringBrake.new()
+func create_node() -> VehicleSpringBrake:
+    return VehicleSpringBrake.new()
 
 
 func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") -> void:
     var kv: Dictionary = FizLineUtil.read_key_values(p)
     var node := create_node()
-    context.add_part("TrainSpringBrake", node)
+    context.add_part("VehicleSpringBrake", node)
 
     if kv.has("Volume"):
         node.spring_actuator_chamber_volume = FizLineUtil.get_float(kv, "Volume")

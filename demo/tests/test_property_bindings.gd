@@ -12,29 +12,29 @@ const BOUND_CLASSES: Array[StringName] = [
     &"MotorParameter",
     &"RelayListItem",
     &"ThrottlePositionItem",
-    &"TrainAIHints",
-    &"TrainBrake",
-    &"TrainBuffCoupl",
-    &"TrainController",
-    &"TrainDieselElectricEngine",
-    &"TrainDieselEngine",
-    &"TrainDoors",
-    &"TrainElectricEngine",
-    &"TrainElectricInductionEngine",
-    &"TrainElectricSeriesEngine",
-    &"TrainElectroPneumaticDynamicBrake",
-    &"TrainEngine",
-    &"TrainHeating",
-    &"TrainHorns",
-    &"TrainLighting",
-    &"TrainLoad",
-    &"TrainSecuritySystem",
-    &"TrainSpeedControl",
-    &"TrainSpringBrake",
-    &"TrainSwitches",
-    &"TrainUniversalController",
-    &"TrainWheels",
-    &"TrainWipers",
+    &"VehicleAIHints",
+    &"VehicleBrake",
+    &"VehicleBuffCoupl",
+    &"VehicleController",
+    &"VehicleDieselElectricEngine",
+    &"VehicleDieselEngine",
+    &"VehicleDoors",
+    &"VehicleElectricEngine",
+    &"VehicleElectricInductionEngine",
+    &"VehicleElectricSeriesEngine",
+    &"VehicleElectroPneumaticDynamicBrake",
+    &"VehicleEngine",
+    &"VehicleHeating",
+    &"VehicleHorns",
+    &"VehicleLighting",
+    &"VehicleLoad",
+    &"VehicleSecuritySystem",
+    &"VehicleSpeedControl",
+    &"VehicleSpringBrake",
+    &"VehicleSwitches",
+    &"VehicleUniversalController",
+    &"VehicleWheels",
+    &"VehicleWipers",
     &"UniversalControllerListItem",
     &"WWListItem",
     &"WiperListItem",
@@ -69,13 +69,13 @@ func test_bound_properties_use_canonical_names_and_accessors() -> void:
 
 
 func test_properties_are_available_through_direct_gdscript_access() -> void:
-    var brake: TrainBrake = TrainBrake.new()
+    var brake: VehicleBrake = VehicleBrake.new()
     brake.brake_force_max = 85.0
     assert_eq(brake.brake_force_max, 85.0)
 
-    var electric_engine: TrainElectricEngine = TrainElectricSeriesEngine.new()
-    electric_engine.power_cable_source = TrainController.POWER_TYPE_STEAM
-    assert_eq(electric_engine.power_cable_source, TrainController.POWER_TYPE_STEAM)
+    var electric_engine: VehicleElectricEngine = VehicleElectricSeriesEngine.new()
+    electric_engine.power_cable_source = VehicleController.POWER_TYPE_STEAM
+    assert_eq(electric_engine.power_cable_source, VehicleController.POWER_TYPE_STEAM)
 
     var lights: LightListItem = LightListItem.new()
     lights.cabin_a_left_white_signal = false
@@ -90,7 +90,7 @@ func test_properties_are_available_through_direct_gdscript_access() -> void:
 func test_group_paths_do_not_change_public_property_names() -> void:
     var current_group: String = ""
     var current_subgroup: String = ""
-    var properties: Array[Dictionary] = ClassDB.class_get_property_list(&"TrainElectricEngine", true)
+    var properties: Array[Dictionary] = ClassDB.class_get_property_list(&"VehicleElectricEngine", true)
     for property in properties:
         var usage: int = int(property["usage"])
         if bool(usage & PROPERTY_USAGE_GROUP):
@@ -108,10 +108,10 @@ func test_group_paths_do_not_change_public_property_names() -> void:
 
 func test_migrated_scene_properties_are_loaded() -> void:
     var scene: PackedScene = load("res://tests/sm42_controller.tscn")
-    var train: TrainController = scene.instantiate()
-    var brake: TrainBrake = train.get_node("Brake")
-    var engine: TrainDieselEngine = train.get_node("StonkaDieselEngine")
-    var security_system: TrainSecuritySystem = train.get_node("TrainSecuritySystem")
+    var train: VehicleController = scene.instantiate()
+    var brake: VehicleBrake = train.get_node("Brake")
+    var engine: VehicleDieselEngine = train.get_node("StonkaDieselEngine")
+    var security_system: VehicleSecuritySystem = train.get_node("VehicleSecuritySystem")
 
     assert_eq(brake.valve_type, 20)
     assert_eq(brake.brake_force_max, 85.0)

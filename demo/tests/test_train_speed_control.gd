@@ -1,14 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var speed_control: TrainSpeedControl
+var train: VehicleController
+var speed_control: VehicleSpeedControl
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     add_child(train)
 
-    speed_control = TrainSpeedControl.new()
+    speed_control = VehicleSpeedControl.new()
     train.add_child(speed_control)
     await wait_idle_frames(2)
 
@@ -44,4 +44,4 @@ func test_oversized_preset_speeds_is_truncated_without_crashing():
 
     # The mover only has room for 10 preset speed buttons; assigning more than that must not
     # corrupt memory or crash the train, it should simply be truncated.
-    assert_true(is_instance_valid(speed_control), "TrainSpeedControl should keep functioning after an oversized preset_speeds array")
+    assert_true(is_instance_valid(speed_control), "VehicleSpeedControl should keep functioning after an oversized preset_speeds array")

@@ -5,8 +5,8 @@ var _t:float = 0.0
 @onready var train = $SM42
 @onready var brake = $SM42/Brake
 @onready var engine = $SM42/StonkaDieselEngine
-@onready var security = $SM42/TrainSecuritySystem
-@onready var doors = $SM42/TrainDoors
+@onready var security = $SM42/VehicleSecuritySystem
+@onready var doors = $SM42/VehicleDoors
 @onready var battery_progress_bar = $%BatteryProgressBar
 
 @onready var FORWARD = $UI/MoverSwitches/General/HBoxContainer2/Forward

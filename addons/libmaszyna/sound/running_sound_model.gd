@@ -31,7 +31,7 @@ var _labels:Dictionary[String, bool] = {}
 ## for events that play or have to stop. `outer_noise_audible` is false for the consist the
 ## listener drives from a cab (DynObj.cpp:4632-4640).
 func update(
-        controller:TrainController, state:Dictionary, delta:float,
+        controller:VehicleController, state:Dictionary, delta:float,
         outer_noise_audible:bool) -> Dictionary:
     if not _labels:
         for entry:Dictionary in sources:
@@ -98,18 +98,18 @@ func _traction_motor(
         return []
     var max_rpm:float = float(state.get("circuit_nmax_rpm", 0.0))
     var engine_power:float = float(state.get("engine_power", 0.0))
-    var engine_type:int = int(state.get("engine_type", TrainEngine.NONE))
+    var engine_type:int = int(state.get("engine_type", VehicleEngine.NONE))
     # combined motor sound selects its chunks in motor rpm
     var normalizer:float = 60.0 * 0.01 if _is_combined(source) else 1.0
     var motor_revolutions:float = wheel_revolutions * float(config.get("transmission_ratio", 1.0))
     var frequency:float = source.frequency_offset + source.frequency_factor * motor_revolutions * normalizer
     var amplitude_factor:float = source.amplitude_factor / (max_rpm + power * 3.0)
     var volume:float = source.amplitude_offset + amplitude_factor * motor_revolutions * 60.0
-    if engine_type == TrainEngine.ELECTRIC_INDUCTION_MOTOR:
+    if engine_type == VehicleEngine.ELECTRIC_INDUCTION_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 2.0)
-    elif engine_type == TrainEngine.ELECTRIC_SERIES_MOTOR:
+    elif engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         volume = source.amplitude_offset + amplitude_factor * (engine_power + motor_revolutions * 60.0)
-    if engine_type == TrainEngine.ELECTRIC_SERIES_MOTOR:
+    if engine_type == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         if volume < 1.0 and engine_power < 100.0:
             var variation:float = (
                     randf_range(0.0, 100.0) * float(state.get("engine_rpm_count", 0.0))

@@ -1,14 +1,14 @@
 extends MaszynaGutTest
 
-var train: TrainController
-var engine: TrainDieselEngine
+var train: VehicleController
+var engine: VehicleDieselEngine
 
 func before_each():
-    train = TrainController.new()
+    train = VehicleController.new()
     train.train_id = "TestTrain"
     add_child(train)
 
-    engine = TrainDieselEngine.new()
+    engine = VehicleDieselEngine.new()
     train.add_child(engine)
     await wait_idle_frames(2)
 
@@ -36,7 +36,7 @@ func test_defaults():
     assert_eq(engine.mechanical_inertia, 1.0)
     assert_false(engine.torque_converter_present)
     assert_false(engine.retarder_present)
-    assert_eq(engine.retarder_placement, TrainDieselEngine.RETARDER_PLACEMENT_AFTER_GEARBOX)
+    assert_eq(engine.retarder_placement, VehicleDieselEngine.RETARDER_PLACEMENT_AFTER_GEARBOX)
     assert_eq((engine.throttle_table_positions as Array).size(), 0)
     assert_eq(engine.torque_table.size(), 0)
     assert_eq((engine.torque_converter_table as Array).size(), 0)
@@ -53,7 +53,7 @@ func test_mechanical_and_torque_converter_round_trip():
     engine.torque_converter_max_torque_ratio = 2.5
     engine.torque_converter_coupling_point = 0.9
     engine.retarder_present = true
-    engine.retarder_placement = TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC
+    engine.retarder_placement = VehicleDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC
     engine.retarder_max_torque = 500.0
     engine.torque_converter_table = [_make_point(0.0, 4.89), _make_point(1.0, 0.0)]
     await wait_idle_frames(2)
@@ -63,9 +63,9 @@ func test_mechanical_and_torque_converter_round_trip():
     assert_true(engine.torque_converter_present)
     assert_eq(engine.torque_converter_max_torque_ratio, 2.5)
     assert_true(engine.retarder_present)
-    assert_eq(engine.retarder_placement, TrainDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC)
+    assert_eq(engine.retarder_placement, VehicleDieselEngine.RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC)
     assert_eq((engine.torque_converter_table as Array).size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "TrainDieselEngine should keep functioning after configuring mechanical/torque converter/retarder")
+    assert_true(train.state.has("main_switch_enabled"), "VehicleDieselEngine should keep functioning after configuring mechanical/torque converter/retarder")
 
 func test_throttle_table_and_torque_curve_round_trip():
     engine.throttle_table_max_torque = 1400.0
@@ -83,7 +83,7 @@ func test_throttle_table_and_torque_curve_round_trip():
     assert_eq(throttle_table.size(), 2)
     assert_eq((throttle_table[1] as ThrottlePositionItem).fuel_dose, 0.15)
     assert_eq(engine.torque_table.size(), 2)
-    assert_true(train.state.has("main_switch_enabled"), "TrainDieselEngine should keep functioning after configuring the throttle table and torque curve")
+    assert_true(train.state.has("main_switch_enabled"), "VehicleDieselEngine should keep functioning after configuring the throttle table and torque curve")
 
 func test_oversized_throttle_table_is_truncated_without_crashing():
     var rows: Array[ThrottlePositionItem] = []
@@ -92,4 +92,4 @@ func test_oversized_throttle_table_is_truncated_without_crashing():
     engine.throttle_table_positions = rows
     await wait_idle_frames(2)
 
-    assert_true(is_instance_valid(engine), "TrainDieselEngine should keep functioning after an oversized throttle_table")
+    assert_true(is_instance_valid(engine), "VehicleDieselEngine should keep functioning after an oversized throttle_table")

@@ -5,7 +5,7 @@
 	</brief_description>
 	<description>
 		Each [RelayListItem] corresponds to one line of the [code]RList[/code] table. Its index within
-		[member TrainElectricSeriesEngine.relay_list] corresponds to the controller position, starting from 1
+		[member VehicleElectricSeriesEngine.relay_list] corresponds to the controller position, starting from 1
 		(position 0 is not part of the list).
 	</description>
 	<tutorials>

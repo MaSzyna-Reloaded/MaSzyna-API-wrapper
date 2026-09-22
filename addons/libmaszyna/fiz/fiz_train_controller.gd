@@ -3,19 +3,19 @@ extends Node
 class_name FIZTrainController
 
 ## Emitted with null before removing the old controller, then with the initialized replacement.
-signal controller_changed(controller:TrainController)
+signal controller_changed(controller:VehicleController)
 
 ## Live/no-import FIZ vehicle loader, analogous to E3DModelInstance for E3D models: set
-## `data_path`/`fiz_filename` and this node (re)builds a child TrainController + its
-## TrainPart children from that file via FizTrainControllerInstancer, in-editor and at
+## `data_path`/`fiz_filename` and this node (re)builds a child VehicleController + its
+## VehicleComponent children from that file via FizTrainControllerInstancer, in-editor and at
 ## runtime, without any import step. Point a RailVehicle3D.controller_path at the generated
-## child TrainController, the same way RailVehicle3D.model_instance_path points at a separate
+## child VehicleController, the same way RailVehicle3D.model_instance_path points at a separate
 ## E3DModelInstance.
 ##
-## Deliberately does NOT extend TrainController: TrainController's own exported properties
+## Deliberately does NOT extend VehicleController: VehicleController's own exported properties
 ## (mass, power, dimensions, ...) get serialized into the .tscn on save, which would directly
 ## conflict with them also being derived fresh from the FIZ file on every load - the node
-## holding data_path/fiz_filename and the node holding the FIZ-derived TrainController state
+## holding data_path/fiz_filename and the node holding the FIZ-derived VehicleController state
 ## must stay separate, exactly like E3DModelInstance (VisualInstance3D) never inherits from
 ## E3DModel itself.
 
@@ -33,9 +33,9 @@ signal controller_changed(controller:TrainController)
             fiz_filename = x
             _request_reload()
 
-## Forwarded to the built child TrainController's train_id (used for TrainSystem
+## Forwarded to the built child VehicleController's train_id (used for TrainSystem
 ## registration/console lookups). Not derived from the FIZ file - it has no [code]Section:Key[/code]
-## mapping, same as on a hand-authored TrainController - so it must be set here explicitly.
+## mapping, same as on a hand-authored VehicleController - so it must be set here explicitly.
 @export var train_id:String = "":
     set(x):
         if not x == train_id:
@@ -43,7 +43,7 @@ signal controller_changed(controller:TrainController)
             if _controller:
                 _controller.train_id = train_id
 
-## Forwarded to the built child TrainController's initial_velocity. Not derived from the FIZ
+## Forwarded to the built child VehicleController's initial_velocity. Not derived from the FIZ
 ## file - same as train_id above. 0.0 (default) means the vehicle starts not-ready-to-depart
 ## (battery off, matching the original engine's scenery velocity token); a non-zero value
 ## marks it ready (battery on per battery_start_mode).
@@ -54,7 +54,7 @@ signal controller_changed(controller:TrainController)
             if _controller:
                 _controller.initial_velocity = initial_velocity
 
-## Forwarded to the built child TrainController's cabin_number: 1 = cab 1, -1 = cab 2, 0 = none
+## Forwarded to the built child VehicleController's cabin_number: 1 = cab 1, -1 = cab 2, 0 = none
 ## (original engine's scenery driver type, DynObj.cpp:1812-1825).
 @export var cabin_number:int = 0:
     set(x):
@@ -63,7 +63,7 @@ signal controller_changed(controller:TrainController)
             if _controller:
                 _controller.cabin_number = cabin_number
 
-## When false (default), the generated TrainController subtree is added as INTERNAL children:
+## When false (default), the generated VehicleController subtree is added as INTERNAL children:
 ## hidden from the Scene dock and excluded from scene serialization, so it never gets baked
 ## into the .tscn (it's re-derived from the FIZ file on every load instead). Toggle via the
 ## "Edit FIZ" 3D-viewport toolbar button (see addons/libmaszyna/editor/fiz_toolbar/) to make
@@ -76,10 +76,10 @@ var editable_in_editor:bool = false:
             _request_reload()
 
 var _reload_pending:bool = false
-var _controller:TrainController = null
+var _controller:VehicleController = null
 
 
-func get_controller() -> TrainController:
+func get_controller() -> VehicleController:
     return _controller
 
 
@@ -98,7 +98,7 @@ func _reload() -> void:
     _reload_pending = false
 
     if _controller:
-        var previous_controller:TrainController = _controller
+        var previous_controller:VehicleController = _controller
         _controller = null
         controller_changed.emit(null)
         remove_child(previous_controller)

@@ -12,7 +12,7 @@ enum TriggerMode { TOGGLE, CONTINUOUS, CHANGE }
 @export var sound_parameter:StringName = &""
 @export var sound_placement:StringName = &"general"
 
-@export_node_path("TrainController") var controller_path:NodePath = NodePath("")
+@export_node_path("VehicleController") var controller_path:NodePath = NodePath("")
 
 var _sfxplayer:SfxPlayer3D
 var _trigger_id:int = 0
@@ -21,7 +21,7 @@ var _trigger_id:int = 0
 func _ready() -> void:
     _sfxplayer = get_parent() as SfxPlayer3D
     var vehicle:RailVehicle3D = _find_vehicle()
-    var controller:TrainController = get_node_or_null(controller_path) as TrainController if controller_path else null
+    var controller:VehicleController = get_node_or_null(controller_path) as VehicleController if controller_path else null
     if not sound_placement == &"general":
         var event:SfxEvent = _sfxplayer.bank.get_event(sound_event)
         if event:

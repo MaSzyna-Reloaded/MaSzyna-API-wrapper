@@ -120,18 +120,22 @@ namespace godot {
         OS *os = OS::get_singleton();
         ERR_FAIL_NULL_V(os, ".");
 
-        if (os->has_feature("release") && !os->has_feature("editor")) {
-            return ".";
-        }
-
-        Variant value = get_setting(MASZYNA_GAMEDIR_SECTION, MASZYNA_GAMEDIR_KEY, ".");
-
-        String dir = String(value);
+        const bool is_shipped = os->has_feature("release") && !os->has_feature("editor");
+        String dir = is_shipped ? String(".") : String(get_setting(MASZYNA_GAMEDIR_SECTION, MASZYNA_GAMEDIR_KEY, "."));
         if (dir.is_empty()) {
-            return ".";
+            dir = ".";
         }
 
-        return dir;
+        /* Made absolute here, once, against the directory the game itself sits in - so a build
+         * dropped anywhere still finds the data next to it, and "." keeps meaning what it meant.
+         * It must not be left relative: a path with no prefix is read as res://, which in a
+         * shipped build is the packed data and holds no game files, so every FileAccess check
+         * over such a path answers "missing" (see FINDINGS.md, 2026-09-23). */
+        if (dir.is_relative_path()) {
+            dir = os->get_executable_path().get_base_dir().path_join(dir);
+        }
+
+        return dir.simplify_path();
     }
 
     void UserSettings::save_maszyna_game_dir(const String &p_path) {

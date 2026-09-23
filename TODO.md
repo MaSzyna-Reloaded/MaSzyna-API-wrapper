@@ -586,11 +586,20 @@ holds `TMoverParameters *mover`, `initialize_mover()`, `initialize_mover_state()
 out loud, which is exactly what the rule forbids, and renaming them alone would be churn undone
 by the split.
 
+The controller does not even need the pointer: it already holds `RID physics_rid`, the vehicle's
+handle in `MaszynaMoverPhysicsServer`. The raw `TMoverParameters *` beside it is a cache, kept
+because every component reaches for it every frame - which is how a borrowed pointer to a
+structure another layer owns ended up crossing the boundary.
+
 What the split looks like, mirroring the components: `VehicleController` keeps the vehicle's
 state, configuration and operations and names no backend; a `MoverVehicleController` owns the
 Mover handle, creates it, configures it and ticks it. `get_mover()` disappears from the interface,
 which is what today's components reach through - so this and the entry below are one piece of
 work, not two.
+
+**Measured scale, so nobody starts this thinking it is a field move:** `get_mover()` has **316
+call sites across 27 files**, **32 component methods take `TMoverParameters *` in their
+signature**, and `VehicleController` itself dereferences `mover->` **103 times**.
 
 ### A non-Mover component cannot exist yet - the backend is in the component base
 

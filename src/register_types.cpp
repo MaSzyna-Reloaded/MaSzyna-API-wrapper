@@ -12,6 +12,7 @@
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
 #include "cabin/Cabin3D.hpp"
+#include "traction/TractionPowerServer.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/VehicleController.hpp"
@@ -105,6 +106,7 @@ E3DRenderingServer *e3d_rendering_server_singleton = nullptr;
 TrackManager *track_manager_singleton = nullptr;
 MaszynaMoverPhysicsServer *mover_physics_server_singleton = nullptr;
 RailVehicleServer *rail_vehicle_server_singleton = nullptr;
+TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -130,6 +132,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(BaseVehiclePhysicsServer);
         GDREGISTER_CLASS(MaszynaMoverPhysicsServer);
         GDREGISTER_CLASS(RailVehicleServer);
+        GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
         GDREGISTER_CLASS(TrackBranchNeighbors);
@@ -217,6 +220,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         track_manager_singleton = memnew(TrackManager);
         mover_physics_server_singleton = memnew(MaszynaMoverPhysicsServer);
         rail_vehicle_server_singleton = memnew(RailVehicleServer);
+        traction_power_server_singleton = memnew(TractionPowerServer);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -229,6 +233,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton(
                 "MaszynaMoverPhysicsServer", mover_physics_server_singleton); // 9
         Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
+        Engine::get_singleton()->register_singleton(
+                "TractionPowerServer", traction_power_server_singleton); // 11
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -255,6 +261,13 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     }
 
     if (Engine::get_singleton()->has_singleton("RailVehicleServer")) {
+        if (Engine::get_singleton()->has_singleton("TractionPowerServer")) {
+            Engine::get_singleton()->unregister_singleton("TractionPowerServer"); // 11
+        }
+        if (traction_power_server_singleton != nullptr) {
+            memdelete(traction_power_server_singleton);
+            traction_power_server_singleton = nullptr;
+        }
         Engine::get_singleton()->unregister_singleton("RailVehicleServer"); // 10
     }
 

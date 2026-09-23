@@ -106,7 +106,6 @@ namespace godot {
             bool pantograph_rear_converged = true;
             TypedArray<Dictionary> pantograph_wire_cache;
 
-            Object *_singleton(const StringName &p_name) const;
             VehicleController *_resolve_controller(const NodePath &p_node_path) const;
             void _jump_into_cabin(Node3D *p_cabin, Node *p_player);
             void _show_cabin_after_frames();

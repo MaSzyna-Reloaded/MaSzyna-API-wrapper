@@ -627,8 +627,21 @@ rest are not.
 | `RainVolume` | 6 | `velocity_multiplier`, `bound_enabled`, `bound_min`, `bound_max` |
 | `MaszynaPlayer` | 1 | `get_camera` |
 
-**A rule broken outright**, not an exception: `RailVehicle3D.cpp:1286` and `:1367` reach
-`TractionPowerServer` through `_singleton("TractionPowerServer")` - a name looked up in the tree -
-and then call `wire_get_voltage` by name on the result. `AGENTS.md` forbids both, and
-`FINDINGS.md` (2026-09-22) records exactly this shape turning "an autoload moved" into a segfault.
-It needs a typed `TractionPowerServer::get_instance()`.
+~~**A rule broken outright**: `RailVehicle3D` reached `TractionPowerServer` through
+`_singleton("TractionPowerServer")`.~~ Done - the server is a C++ singleton with a typed
+`get_instance()`, the `_singleton()` helper is gone with its last caller, and the power sources
+tick off `SceneTree`'s `process_frame` instead of an autoload's `_process`.
+
+### The traction network's star branch is unreachable
+
+`TractionPowerServer::wire_get_voltage()` returns a wire's **nominal** voltage whenever that wire
+is not powered directly, and `power_source` is set only on directly powered wires
+(`_resolve_power_sources()`). The whole two-source branch below it - `power_near`, the two
+`resistance` values, the `r0g`/`r1g` split of TTraction::VoltageGet() - therefore never runs. It
+was already unreachable in the GDScript this was ported from; the port kept the behaviour rather
+than the dead code, and says so at that early return.
+
+So `_connect_wires()` and `_propagate_resistance()` build a network nothing reads. Either the
+early return is wrong (a wire fed through the network should take the computed voltage, which is
+what the original does) or the network is not needed - worth settling before anyone tunes
+resistivity and finds it changes nothing.

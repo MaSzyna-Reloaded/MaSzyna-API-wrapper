@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "../traction/TractionPowerServer.hpp"
 #include "../cabin/Cabin3D.hpp"
 #include "../buffers/VehicleBuffCoupl.hpp"
 #include "../wheels/VehicleWheels.hpp"
@@ -148,10 +149,6 @@ namespace godot {
 #undef BIND_RAIL_NODE_PATH_ARRAY
 #undef BIND_RAIL_NODE_PATH
 #undef BIND_RAIL_PROPERTY
-    }
-
-    Object *RailVehicle3D::_singleton(const StringName &p_name) const {
-        return get_tree()->get_root()->get_node_or_null(NodePath(p_name));
     }
 
     void RailVehicle3D::enter_cabin(Node *p_player) {
@@ -1283,7 +1280,10 @@ namespace godot {
         if (!wire_rid.is_valid()) {
             return 0.0;
         }
-        return _singleton("TractionPowerServer")->call("wire_get_voltage", wire_rid, p_assumed_voltage, p_current);
+        TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
+        return traction_power_server != nullptr
+                       ? traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current)
+                       : 0.0;
     }
 
     void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
@@ -1364,16 +1364,18 @@ namespace godot {
     Dictionary RailVehicle3D::_find_pantograph_wire(
             int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
             const Vector3 &p_left) {
-        Object *traction_power_server = _singleton("TractionPowerServer");
+        TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
+        if (traction_power_server == nullptr) {
+            return Dictionary();
+        }
         Dictionary cache = pantograph_wire_cache[p_index];
         // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),
         // a new search only once the pantograph left that span - a cached height made the wire height change
         // in steps while driving, dropping the contact (and the voltage) whenever it stepped up
         const RID wire_rid = cache.get("rid", RID());
         if (wire_rid.is_valid()) {
-            const double height = traction_power_server->call(
-                    "wire_get_height_above", wire_rid, p_contact_point, p_up, p_forward, p_left,
-                    pantograph_collector_width);
+            const double height = traction_power_server->wire_get_height_above(
+                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
             if (Math::is_finite(height)) {
                 Dictionary result;
                 result["rid"] = wire_rid;
@@ -1382,8 +1384,8 @@ namespace godot {
             }
         }
         // without a wire, search the region every frame like update_traction() (DynObj.cpp:8292)
-        const Dictionary result = traction_power_server->call(
-                "wire_find_above_with_height", p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
+        const Dictionary result = traction_power_server->wire_find_above_with_height(
+                p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;

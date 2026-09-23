@@ -247,7 +247,9 @@ namespace godot {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         instance->transform = p_transform;
-        _update_if_built(*instance);
+        if (instance->built) {
+            _get_backend(*instance).apply_transform(*instance);
+        }
         _update_instance_smoke(*instance);
     }
 

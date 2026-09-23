@@ -61,6 +61,14 @@ namespace godot {
         }
     }
 
+    void E3DOptimizedBackend::apply_transform(const E3DInstanceData &p_instance) {
+        RenderingServer *rs = RenderingServer::get_singleton();
+        ERR_FAIL_NULL(rs);
+        for (int i = 0; i < p_instance.rids.size(); i++) {
+            rs->instance_set_transform(p_instance.rids[i], p_instance.transform * p_instance.local_transforms[i]);
+        }
+    }
+
     void E3DOptimizedBackend::_add_submodels(
             E3DInstanceData &p_instance, const TypedArray<E3DSubModel> &p_submodels,
             const Transform3D &p_parent_transform, const Vector<E3DSubModel *> &p_parent_chain,

@@ -111,6 +111,43 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   published contract, the test that matters asserts the **key is present**, not merely that the
   value reads sensibly.
 
+## 2026-09-23 - the cab's instrument backlight blinking, once per frame, from the transform
+
+* **Symptom:** in the EP07 cab the desk backlight and the ceiling lamp, switched on, read as
+  blinking 0-1-0-1 rather than lit. It looks like z-fighting between the `_on` and `_off`
+  submodels, which is what sent the first guesses at the geometry and at double precision.
+* **Cheapest instrument first, and it ruled out half the system:** a headless probe printing
+  `vehicle_dump_state()`'s `devices_light_enabled`/`roof_light_enabled` every frame in `td.scn` -
+  120 frames of `11 11 11 ...`. The state never moves, so nothing on the simulation side is
+  involved and the cabin widgets are reading the right value.
+* **What proved it:** the same probe with the cab entered (`RailVehicle3D::enter_cabin()`),
+  sampling `visible` of every submodel a cabin widget points at. `podswietlenie_on` came out
+  `000010000000000000010000000000000010...` - visible for exactly **one frame in fifteen**, and
+  `podswietlenie_off` its exact complement. One writer sets it at 10 Hz (`CabinIndicator3D`
+  samples every 0.1 s); another clears it every single frame.
+* **Cause:** `E3DRenderingServer::instance_set_transform()` ended in `_update_if_built()`, i.e.
+  the backend's `update()`, and `E3DNodesBackend::update()` does one thing only - show and hide
+  the `_on`/`_off` submodels of every light from `lights_state`. So *moving* a model re-applied
+  its whole light state. Harmless while only OPTIMIZED instances pushed a transform
+  (`set_notify_transform(instancer == Instancer.OPTIMIZED)`, `2125898`); `9ca6b9f` made the
+  notification unconditional so a model's smoke emitter would follow it, and from then on every
+  node-instanced model - every cab - re-applied its lights once per frame.
+* **Fix:** a transform applies the transform. `E3DInstanceBackend::apply_transform()` is its own
+  operation: nothing at all for `E3DNodesBackend` (the generated tree hangs under the attached
+  node and moves with it) and just `instance_set_transform` per RID for `E3DOptimizedBackend`,
+  which also drops a per-frame re-resolve of the light overrides, the visibility and the layer
+  mask for every optimized instance in the scenery.
+* **Found on the way:** the czuwak/SHP blinker was broken by the same thing - it was flashing for
+  single frames instead of blinking in ~1 s blocks, which nobody had reported as a bug.
+* **Rule:** a setter applies what it is named after. Routing every `instance_set_*` through one
+  "apply everything the instance knows" call makes the cheapest, most frequent change - a move -
+  quietly overwrite state that a different owner set, and the damage is proportional to the frame
+  rate rather than to the change.
+* **Still open:** the submodels a light switches have **two** managers - the server, through
+  `lights_state`, and the cab's MMD widgets, which write `Node3D.visible` directly. They agree
+  today only because nothing pushes `lights_state` at a cab after it is built, and the widgets do
+  nothing at all under the OPTIMIZED instancer. Recorded in `TODO.md`.
+
 ## 2026-09-22 - a teardown abort that is RID allocator corruption, not a double free
 
 * **Symptom:** `test_zzz_ep07_cabin_main_switch` aborts during scenery teardown, in maybe half of

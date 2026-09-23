@@ -229,6 +229,17 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ## Rendering
 
+### A light's submodels have two managers
+
+`E3DRenderingServer` owns which of a light's `_on`/`_off` submodels is shown - it resolves
+`lights_state` out of the declared modes, the manual override and the time of day, and the backends
+apply it. The cab's MMD widgets (`CabinIndicator3D`, `CabinSpotLight3D`) switch the very same
+submodels by writing `Node3D.visible` on them directly. That is the same exclusive state held by
+two owners, and it only looks correct because nothing pushes `lights_state` at a cab model after it
+is built (see `FINDINGS.md`, 2026-09-23, where a per-frame push made them fight). It also means the
+widgets do nothing whatsoever under the OPTIMIZED instancer, which has no nodes to write to. The
+widgets should ask the model to switch the light (`lights_state`) instead of poking its nodes.
+
 ### Smoke emitters
 
 * The vertical decay of a particle is not ported (`particles.cpp:365-380`): the original slows a

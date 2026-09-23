@@ -1253,9 +1253,14 @@ namespace godot {
         return rid;
     }
 
-    void
-    VehicleController::emit_command_received_signal(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+    void VehicleController::command_executed(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+        ++command_serial;
+        update_state();
         emit_signal(command_received, p_command, p_p1, p_p2);
+    }
+
+    uint64_t VehicleController::get_command_serial() const {
+        return command_serial;
     }
 
     void VehicleController::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {

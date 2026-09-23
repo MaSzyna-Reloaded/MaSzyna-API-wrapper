@@ -47,6 +47,20 @@ func test_a_change_is_not_visible_until_the_next_step() -> void:
     )
 
 
+## Regression: a cabin widget reads the state the moment it reports a manipulation, and the whole
+## cab is driven that way. Keyed on the step alone the dump still held the values from before the
+## command, so pressing a key played its sound and the operation only showed up on the next
+## keypress (see FINDINGS.md, 2026-09-23).
+func test_a_command_shows_in_the_dump_without_waiting_for_a_step() -> void:
+    var before: int = int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
+    TrainSystem.send_command("dump_cache_test", "radio_channel_set", before + 1, null)
+    assert_eq(
+        int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
+        before + 1,
+        "the dump follows the command, not the next step"
+    )
+
+
 func test_a_freed_vehicle_dumps_nothing() -> void:
     RailVehicleServer.vehicle_free(_rid)
     var empty: Dictionary = RailVehicleServer.vehicle_dump_state(_rid)

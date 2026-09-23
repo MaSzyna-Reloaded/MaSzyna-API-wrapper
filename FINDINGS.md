@@ -3,6 +3,30 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
+
+* **Symptom:** a key in the cab plays its sound at once, but the operation only happens when the
+  next key is pressed - so every command appears to lag one keypress behind.
+* **Cause:** `RailVehicleServer::vehicle_dump_state()` composes the vehicle's state once per
+  physics step and hands the same `Dictionary` to every reader of that step. Its own comment
+  stated the premise - "the values cannot change between them, because only a step changes them" -
+  and that premise is false: `TrainSystem::send_command()` runs the command synchronously, in the
+  middle of a step. A cab widget reports a manipulation and reads the state in the same call
+  (`CabinSwitch._on_command_received()` -> `_update_state()`), so it read the values from *before*
+  its own command and only caught up when the next command forced a rebuild.
+* **Fix:** the cache is keyed on the step **and** on a command counter the vehicle owns.
+  `VehicleController::command_executed()` is now the one named operation for "a command has run
+  against this vehicle" - it bumps the serial, updates the state and announces it, replacing the
+  `update_state()` + `emit_command_received_signal()` pair at the call site.
+* **Why not key it on `update_state()` alone:** the step calls that only for a vehicle whose
+  physics is active (`RailVehicleServer.cpp`), so a parked or unmanned vehicle would keep a dump
+  that nothing ever invalidates.
+* **Rule:** a cache keyed on a tick is only correct while the tick is the *only* thing that
+  changes what it holds. Write that premise down where the cache lives - and when something
+  synchronous can change the same state, the key needs a second half.
+* **Rule:** the lag a user reports as "one action late" is a read of a snapshot taken before the
+  write, not a slow write. Look for the cache between them before looking at the input path.
+
 ## 2026-09-23 - the release re-parsed every scenery because its game dir was "."
 
 * **Symptom:** "scenerie sie nie cachuja, tylko zawsze ida parsing" - in the shipped build every

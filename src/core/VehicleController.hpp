@@ -49,6 +49,8 @@ namespace godot {
             bool prev_radio_enabled = false;
             int prev_radio_channel = radio_channel;
             bool prev_roof_light_enabled = false;
+            /// Bumped by command_executed(); what tells a cached state dump that it is stale.
+            uint64_t command_serial = 0;
             int prev_cabin_occupied = 0;
 
             // Hasler speed recorder (Train.cpp:6917-6940 fTachoVelocity/fTachoVelocityJump/fTachoCount)
@@ -265,8 +267,12 @@ namespace godot {
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
-            void emit_command_received_signal(
+            /* A command has run against this vehicle. Its state has moved on in the middle of a
+             * step, which is the one thing a dump cached for that step cannot see by itself -
+             * hence the serial below (RailVehicleServer::vehicle_dump_state). */
+            void command_executed(
                     const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            uint64_t get_command_serial() const;
             void broadcast_command(
                     const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
             void register_command(const String &p_command, const Callable &p_callable);

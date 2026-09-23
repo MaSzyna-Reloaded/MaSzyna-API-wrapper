@@ -292,8 +292,7 @@ namespace godot {
             ERR_PRINT("[" + p_train_id + "] Unknown command: " + p_command);
         }
 
-        train->update_state();
-        train->emit_command_received_signal(p_command, p_p1, p_p2);
+        train->command_executed(p_command, p_p1, p_p2);
         return result;
     }
 

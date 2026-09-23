@@ -79,10 +79,13 @@ namespace godot {
                      * placement instead of letting it pull one a frame late */
                     uint64_t rail_vehicle_id = 0;
                     /* The last dump handed out, and the step it was built for. A cab is dozens of
-                     * widgets asking the same vehicle in one frame; the values cannot change
-                     * between them, because only a step changes them. */
+                     * widgets asking the same vehicle in one frame, and a step is what normally
+                     * moves the values between them. */
                     Dictionary state_dump;
                     uint64_t state_dump_step = 0;
+                    /// ...and the vehicle's command count it was built after, because a command
+                    /// changes the state inside a step (VehicleController::command_executed()).
+                    uint64_t state_dump_command_serial = 0;
             };
 
             HashMap<RID, VehiclePlacement> vehicles;

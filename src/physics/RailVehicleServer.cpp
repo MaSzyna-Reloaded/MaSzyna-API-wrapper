@@ -608,12 +608,18 @@ namespace godot {
         if (placement == nullptr) {
             return Dictionary();
         }
-        if (placement->state_dump_step == step_serial) {
+        VehicleController *controller = _get_controller(*placement);
+        /* A command runs between two reads of the same step and changes what the vehicle says, so
+         * the step alone does not decide whether the dump still describes it. A widget reads the
+         * state the moment it sends a command; keyed on the step alone it read the values from
+         * before the command and only caught up one command later. */
+        const uint64_t command_serial = controller != nullptr ? controller->get_command_serial() : 0;
+        if (placement->state_dump_step == step_serial && placement->state_dump_command_serial == command_serial) {
             return placement->state_dump;
         }
-        VehicleController *controller = _get_controller(*placement);
         placement->state_dump = controller != nullptr ? controller->get_state() : Dictionary();
         placement->state_dump_step = step_serial;
+        placement->state_dump_command_serial = command_serial;
         return placement->state_dump;
     }
 

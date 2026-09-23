@@ -5,8 +5,15 @@ extends VBoxContainer
 
 @export var environment_node_path: NodePath
 
+## How often the running clock is read back. The environment announces every other change, so
+## this is the only thing left that has to be looked at repeatedly - and a label showing hours and
+## minutes gains nothing from being rewritten 60 times a second.
+const CLOCK_REFRESH_INTERVAL: float = 0.1
+
 var _environment_node: MaszynaEnvironmentNode
 var _time_slider_dragging: bool = false
+var _dirty: bool = true
+var _refresh_timer: Timer
 
 @onready var _wind_value_label: Label = $WeatherRow/WindGroup/Row/WindValueLabel
 @onready var _rain_value_label: Label = $WeatherRow/RainGroup/Row/RainValueLabel
@@ -49,13 +56,36 @@ func _ready() -> void:
     _month_slider.value_changed.connect(_on_month_changed)
     _year_slider.value_changed.connect(_on_year_changed)
     _system_time_check_box.toggled.connect(_on_system_time_toggled)
+    _environment_node.configuration_changed.connect(_on_environment_configuration_changed)
+    _refresh_timer = Timer.new()
+    _refresh_timer.wait_time = CLOCK_REFRESH_INTERVAL
+    add_child(_refresh_timer)
+    _refresh_timer.timeout.connect(_on_refresh_timeout)
+    _refresh_timer.start()
 
 
-# Mirrors the environment node, so presets and changes made elsewhere show up in the controls.
-func _process(_delta: float) -> void:
+func _exit_tree() -> void:
+    _environment_node.configuration_changed.disconnect(_on_environment_configuration_changed)
+
+
+## The environment applied a change, so everything the window shows is out of date.
+func _on_environment_configuration_changed() -> void:
+    _dirty = true
+
+
+func _on_refresh_timeout() -> void:
     if not is_visible_in_tree():
         return
+    if _dirty:
+        _dirty = false
+        _process_dirty()
+        return
+    _refresh_clock()
 
+
+## Mirrors the whole environment node, so presets and changes made elsewhere show up in the
+## controls.
+func _process_dirty() -> void:
     # the system clock drives the time and the date, the sliders only show them
     var editable: bool = not _environment_node.use_system_time
     _system_time_check_box.set_pressed_no_signal(_environment_node.use_system_time)
@@ -63,9 +93,7 @@ func _process(_delta: float) -> void:
     _day_slider.editable = editable
     _month_slider.editable = editable
     _year_slider.editable = editable
-    if not _time_slider_dragging:
-        _time_slider.set_value_no_signal(_environment_node.current_time)
-        _time_value_label.text = _format_time_label(_environment_node.current_time)
+    _refresh_clock()
     _day_slider.set_value_no_signal(_environment_node.day)
     _day_value_label.text = str(_environment_node.day)
     _month_slider.set_value_no_signal(_environment_node.month)
@@ -86,6 +114,14 @@ func _process(_delta: float) -> void:
     _fog_distance_value_label.text = _format_meters(_environment_node.fog_distance)
     _time_scale_slider.set_value_no_signal(_environment_node.simulation_speed)
     _time_scale_value_label.text = "%dx" % _environment_node.simulation_speed
+
+
+## The only part of the state that moves on its own, so the only part read on a timer.
+func _refresh_clock() -> void:
+    if _time_slider_dragging:
+        return
+    _time_slider.set_value_no_signal(_environment_node.current_time)
+    _time_value_label.text = _format_time_label(_environment_node.current_time)
 
 
 func _on_wind_strength_changed(value: float) -> void:

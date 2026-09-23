@@ -22,8 +22,8 @@ namespace godot {
             double wheel_angle_powered_deg = 0.0;
             double wheel_angle_rear_deg = 0.0;
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            void _do_process_component(double p_delta) override;
     };
 } // namespace godot

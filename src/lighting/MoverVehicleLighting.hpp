@@ -56,7 +56,7 @@ namespace godot {
             static LightEnd _opposite_end(const TMoverParameters *p_mover);
             static bool _is_powered(const TMoverParameters *p_mover);
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
         public:
             TypedArray<LightListItem> get_lights_list() override {

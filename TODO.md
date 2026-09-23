@@ -601,6 +601,15 @@ work, not two.
 call sites across 27 files**, **32 component methods take `TMoverParameters *` in their
 signature**, and `VehicleController` itself dereferences `mover->` **103 times**.
 
+### RailVehicle3D reads the coupler straight off the backend
+
+`_update_couplers()` takes `controller->get_mover()` and walks `mover->Couplers[end]` for
+`CouplingFlag`, `Render` and `ConnectedNr` - a rendering node reaching into `TMoverParameters`.
+It is the last such read left in `src/core/RailVehicle3D.cpp`, and it is the same move the wheels
+already made: the coupler belongs to `VehicleBuffCoupl`, so it should publish what each end is
+coupled with and the node should only pick the submodel. The one wrinkle is `coupling::` - a
+backend enum that must not travel out, so the component needs its own.
+
 ### A non-Mover component cannot exist yet - the backend is in the component base
 
 Asked directly: could the vehicle take a `CarBrakes` today? The slot would accept it -

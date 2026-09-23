@@ -1,4 +1,5 @@
 #include "MoverVehicleSecuritySystem.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
@@ -11,7 +12,9 @@ namespace godot {
     // Detected once per tick against this part's own members - these used to be compared against
     // the state dictionary while that dictionary was being filled, so the signals fired on a read
     // rather than on a change.
-    void MoverVehicleSecuritySystem::_do_process_mover(TMoverParameters *p_mover, double p_delta) {
+    void MoverVehicleSecuritySystem::_do_process_component(const double p_delta) {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         if (const bool blinking = p_mover->SecuritySystem.is_blinking(); previous_blinking != blinking) {
             previous_blinking = blinking;
             emit_signal("blinking_changed", blinking);
@@ -24,52 +27,52 @@ namespace godot {
 
 
     bool MoverVehicleSecuritySystem::get_beeping() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_beeping() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_blinking() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_blinking() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_radiostop_available() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.radiostop_available() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_vigilance_blinking() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_vigilance_blinking() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_cabsignal_blinking() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_cabsignal_blinking() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_cabsignal_beeping() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_cabsignal_beeping() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_braking() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_braking() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_engine_blocked() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.is_engine_blocked() : false;
     }
 
     bool MoverVehicleSecuritySystem::get_separate_acknowledge() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SecuritySystem.has_separate_acknowledge() : false;
     }
 
     void MoverVehicleSecuritySystem::_fill_state_dictionary(Dictionary &p_state) const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -84,7 +87,9 @@ namespace godot {
         p_state["separate_acknowledge"] = get_separate_acknowledge();
     }
 
-    void MoverVehicleSecuritySystem::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleSecuritySystem::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         p_mover->SecuritySystem.set_enabled(enabled);
 
         p_mover->SecuritySystem.vigilance_enabled = get_aware_system_active();
@@ -120,7 +125,7 @@ namespace godot {
     // Train.cpp:2876 OnCommand_cabsignalacknowledge - the cab signalling of a vehicle with a separate
     // acknowledge button (FIZ SeparateAcknowledge) is not reset by the vigilance button
     void MoverVehicleSecuritySystem::security_cabsignal_acknowledge() {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         if (mover->SecuritySystem.has_separate_acknowledge()) {
             mover->SecuritySystem.cabsignal_reset();
@@ -128,7 +133,7 @@ namespace godot {
     }
 
     void MoverVehicleSecuritySystem::security_acknowledge(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         if (p_enabled) {
             mover->SecuritySystem.acknowledge_press();

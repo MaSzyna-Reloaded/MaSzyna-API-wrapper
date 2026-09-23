@@ -1,13 +1,16 @@
 #include "MoverVehicleLighting.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void MoverVehicleLighting::_bind_methods() {}
 
 
-    void MoverVehicleLighting::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleLighting::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        ASSERT_MOVER(p_mover);
+        VehicleComponent::_apply_configuration();
         p_mover->LightsPosNo =
                 static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int
         p_mover->LightsWrap = get_lights_wrap_selector();
@@ -38,137 +41,137 @@ namespace godot {
 
 
     bool MoverVehicleLighting::get_roof_light_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr && roof_light_active && _is_powered(mover);
     }
 
     int MoverVehicleLighting::get_position() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->LightsPosNo : 0;
     }
 
     double MoverVehicleLighting::get_power() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->LightPower : 0.0;
     }
 
     int MoverVehicleLighting::get_power_source() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType) : 0;
     }
 
     bool MoverVehicleLighting::get_front_headlight_upper_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_UPPER) : false;
     }
 
     bool MoverVehicleLighting::get_front_headlight_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_front_headlight_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_front_redmarker_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_front_redmarker_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_FRONT, LIGHT_TYPE_REDMARKER_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_rear_headlight_upper_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_UPPER) : false;
     }
 
     bool MoverVehicleLighting::get_rear_headlight_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_rear_headlight_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_rear_redmarker_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_rear_redmarker_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, LIGHT_END_REAR, LIGHT_TYPE_REDMARKER_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_active_headlight_upper_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER) : false;
     }
 
     bool MoverVehicleLighting::get_active_headlight_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_active_headlight_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_active_redmarker_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_active_redmarker_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _active_end(mover), LIGHT_TYPE_REDMARKER_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_opposite_headlight_upper_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_UPPER) : false;
     }
 
     bool MoverVehicleLighting::get_opposite_headlight_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_opposite_headlight_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_HEADLIGHT_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_opposite_redmarker_left_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_LEFT) : false;
     }
 
     bool MoverVehicleLighting::get_opposite_redmarker_right_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? _light_enabled(mover, _opposite_end(mover), LIGHT_TYPE_REDMARKER_RIGHT) : false;
     }
 
     bool MoverVehicleLighting::get_devices_light_enabled() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? devices_light_active && _is_powered(mover) : false;
     }
 
     double MoverVehicleLighting::get_roof_light_level() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? roof_light_active && _is_powered(mover) ? (mover->Power110vIsAvailable ? 1.0 : 0.5) : 0.0 : 0.0;
     }
 
     void MoverVehicleLighting::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -201,7 +204,7 @@ namespace godot {
     }
 
     void MoverVehicleLighting::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -243,7 +246,7 @@ namespace godot {
     } // namespace
 
     void MoverVehicleLighting::light(const String &p_light, const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
 
         for (const LightBit &bit: LIGHT_BITS) {
@@ -287,7 +290,7 @@ namespace godot {
     // subsuming the marker light), which would require cross-widget awareness this catalog-driven
     // instancer doesn't have.
     void MoverVehicleLighting::light_switch(const String &p_light, const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
 
         const bool is_rear = p_light.begins_with("rear");

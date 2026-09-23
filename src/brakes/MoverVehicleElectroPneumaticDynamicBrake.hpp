@@ -18,7 +18,7 @@ namespace godot {
             void set_ep_brake_force(int p_value) override;
             void switch_ep_fuse(bool p_value) override;
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override {};
     };
 } // namespace godot

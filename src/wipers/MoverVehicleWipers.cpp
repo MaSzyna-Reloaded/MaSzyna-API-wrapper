@@ -1,4 +1,5 @@
 #include "MoverVehicleWipers.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <algorithm>
 
 namespace godot {
@@ -7,7 +8,9 @@ namespace godot {
 
 
 
-    void MoverVehicleWipers::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleWipers::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         size_t count = static_cast<size_t>(std::max(0, get_wiper_count()));
         if (count == 0) {
             int mask = 0;
@@ -45,7 +48,9 @@ namespace godot {
     }
 
     // DynObj.cpp:4048-4115
-    void MoverVehicleWipers::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {
+    void MoverVehicleWipers::_do_process_component(const double p_delta) {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         if (get_positions().size() == 0) {
             return;
         }
@@ -120,7 +125,7 @@ namespace godot {
     }
 
     void MoverVehicleWipers::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }

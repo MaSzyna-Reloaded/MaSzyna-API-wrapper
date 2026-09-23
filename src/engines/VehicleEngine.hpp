@@ -147,7 +147,7 @@ namespace godot {
         private:
 
         protected:
-            /// Change detection for engine_start/engine_stop, compared in _do_process_mover().
+            /// Change detection for engine_start/engine_stop, compared in _do_process_component().
             /// Starts false so a vehicle coming up with the main switch already closed reports
             /// engine_start on its first tick, as it did when this was compared against the
             /// not-yet-filled state dictionary.
@@ -160,8 +160,8 @@ namespace godot {
             virtual EngineType get_engine_type() const = 0;
 
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            void _apply_configuration() override;
+            void _do_process_component(double p_delta) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
             void _register_commands() override;
             void _unregister_commands() override;

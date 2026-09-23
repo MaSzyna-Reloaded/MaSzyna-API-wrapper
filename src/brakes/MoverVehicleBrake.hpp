@@ -113,8 +113,8 @@ namespace godot {
             static double _controller_position_normalized(const TMoverParameters *p_mover);
             static double _force_ratio(const TMoverParameters *p_mover);
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            void _apply_configuration() override;
+            void _do_process_component(double p_delta) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
         public:
             void brake_releaser(bool p_pressed) override;

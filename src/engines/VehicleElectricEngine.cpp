@@ -1,4 +1,5 @@
 #include "VehicleElectricEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "MoverElectricEngineBackend.hpp"
 #include "macros.hpp"
 
@@ -10,112 +11,114 @@
 
 namespace godot {
     bool VehicleElectricEngine::get_converter_enabled() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_enabled(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_converter_enabled(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_converted_allowed() const {
-        return electric_backend != nullptr ? electric_backend->get_converted_allowed(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_converted_allowed(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_converter_time_to_start() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_time_to_start(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_converter_time_to_start(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_current() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_current(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_current(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_lifting(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_lifting(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_lifting(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_lifting(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_sliding_width() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_sliding_width(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_sliding_width(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_main_switch_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_main_switch_voltage(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_pantograph_tank_pressure(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_pantograph_tank_pressure(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_pantograph_tank_pressure(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_pantograph_tank_pressure(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_tank_pressure(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_tank_pressure(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_pantograph_pressure_switch_armed() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_pressure_switch_armed(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_pressure_switch_armed(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_collector_overvoltage_relay() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_collector_required_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_required_main_switch_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_required_main_switch_voltage(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_valve_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_valve_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_valve_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_collector_pantographs_dropped() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_collector_pantograph_first_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_collector_pantograph_first_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_voltage(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_pantograph_second_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_active(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_collector_pantograph_second_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_voltage(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_collector_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_voltage(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_contactors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_contactors_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_contactors_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_diff_relay_active() const {
-        return electric_backend != nullptr ? electric_backend->get_diff_relay_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_diff_relay_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_resistors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_resistors_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_resistors_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_vent_overload_active() const {
-        return electric_backend != nullptr ? electric_backend->get_vent_overload_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_vent_overload_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_highcurrent_active() const {
-        return electric_backend != nullptr ? electric_backend->get_highcurrent_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_highcurrent_active(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_mainbreaker_active() const {
-        return electric_backend != nullptr ? electric_backend->get_mainbreaker_active(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_mainbreaker_active(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_transducer_input_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_transducer_input_voltage(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_transducer_input_voltage(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_camshaft_available() const {
-        return electric_backend != nullptr ? electric_backend->get_camshaft_available(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_camshaft_available(mover_of(this)) : false;
     }
     bool VehicleElectricEngine::get_converter_overload() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_overload(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_converter_overload(mover_of(this)) : false;
     }
     double VehicleElectricEngine::get_line_breaker_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_delay(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_delay(mover_of(this)) : 0.0;
     }
     double VehicleElectricEngine::get_line_breaker_initial_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_initial_delay(get_mover()) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_initial_delay(mover_of(this)) : 0.0;
     }
     bool VehicleElectricEngine::get_line_breaker_closes_at_no_power() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_closes_at_no_power(get_mover()) : false;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_closes_at_no_power(mover_of(this)) : false;
     }
-    void VehicleElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
-        VehicleEngine::_do_update_internal_mover(p_mover);
+    void VehicleElectricEngine::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
+        VehicleEngine::_apply_configuration();
         if (electric_backend != nullptr) {
             electric_backend->update_mover(this, p_mover);
         }
@@ -426,12 +429,12 @@ namespace godot {
 
 
     bool VehicleElectricEngine::has_accumulator() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::Accumulator;
     }
 
     bool VehicleElectricEngine::has_power_cable() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::PowerCable;
     }
 
@@ -447,7 +450,7 @@ namespace godot {
         p_state["fuse_active"] = get_fuse_active();
         p_state["motor_connectors_open"] = get_motor_connectors_open();
         VehicleEngine::_fill_state_dictionary(p_state);
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -494,19 +497,19 @@ namespace godot {
     }
 
     void VehicleElectricEngine::converter(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->ConverterSwitch(p_enabled);
     }
 
     void VehicleElectricEngine::compressor(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->CompressorSwitch(p_enabled);
     }
 
     void VehicleElectricEngine::converter_fuse_reset() {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_converteroverloadrelayreset (Train.cpp:3567-3585) ->
         // RelayReset(relay_t::primaryconverteroverload), "converterfuse_bt:"/ggConverterFuseButton
@@ -515,20 +518,20 @@ namespace godot {
     }
 
     void VehicleElectricEngine::pantographs_valve(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
     // Train.cpp:3336 OnCommand_pantographlowerall
     void VehicleElectricEngine::pantographs_drop_all(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->DropAllPantographs(p_enabled);
     }
 
     void VehicleElectricEngine::pantograph_compressor(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressoractivate (Train.cpp:2912) - runs while held,
         // starting only with low enough pressure and live 24V power
@@ -542,14 +545,14 @@ namespace godot {
     }
 
     void VehicleElectricEngine::pantograph_compressor_valve(const bool p_to_compressor) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressorvalveenable/disable (Train.cpp:2869-2909)
         mover->bPantKurek3 = !p_to_compressor;
     }
 
     void VehicleElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         const Maszyna::end end = (p_selector == PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
@@ -571,10 +574,10 @@ namespace godot {
     }
 
     void VehicleElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         // Written straight to the mover, like the other per-frame-relevant setters above
-        // (pantograph(), pantographs_valve()) - _do_update_internal_mover() only runs when the
+        // (pantograph(), pantographs_valve()) - _apply_configuration() only runs when the
         // controller is dirty (effectively once, at startup), so stashing this in a member for
         // that path to pick up later would mean every subsequent frame's wire voltage is ignored.
         if (p_selector == PANTOGRAPH_FIRST) {

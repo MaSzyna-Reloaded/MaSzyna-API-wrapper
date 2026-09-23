@@ -1,11 +1,14 @@
 #include "MoverVehicleWheels.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <godot_cpp/core/math.hpp>
 
 namespace godot {
     void MoverVehicleWheels::_bind_methods() {}
 
 
-    void MoverVehicleWheels::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleWheels::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         const double resolved_powered_wheel_diameter = get_powered_wheel_diameter() > 0.0 ? get_powered_wheel_diameter() : 1.0;
         const double resolved_front_rolling_wheel_diameter =
                 get_front_rolling_wheel_diameter() > 0.0 ? get_front_rolling_wheel_diameter() : resolved_powered_wheel_diameter;
@@ -43,43 +46,43 @@ namespace godot {
 
 
     double MoverVehicleWheels::get_angle_front_deg() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? wheel_angle_front_deg : 0.0;
     }
 
     double MoverVehicleWheels::get_angle_powered_deg() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? wheel_angle_powered_deg : 0.0;
     }
 
     double MoverVehicleWheels::get_angle_rear_deg() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? wheel_angle_rear_deg : 0.0;
     }
 
     double MoverVehicleWheels::get_rotation_speed_rps() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->nrot : 0.0;
     }
 
     double MoverVehicleWheels::get_rotation_acceleration_rps2() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->nrot_eps : 0.0;
     }
 
     bool MoverVehicleWheels::get_slipping() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SlippingWheels : false;
     }
 
     double MoverVehicleWheels::get_flat() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->WheelFlat : 0.0;
     }
 
     void MoverVehicleWheels::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
+        if (mover_of(this) == nullptr) {
             return;
         }
         p_state["wheel_angle_front_deg"] = get_angle_front_deg();
@@ -92,7 +95,7 @@ namespace godot {
     }
 
     void MoverVehicleWheels::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -110,7 +113,9 @@ namespace godot {
         p_config["axles_count"] = mover->NAxles;
     }
 
-    void MoverVehicleWheels::_do_process_mover(TMoverParameters *p_mover, const double p_delta) {
+    void MoverVehicleWheels::_do_process_component(const double p_delta) {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         if (p_mover->Vel == 0.0) {
             return;
         }

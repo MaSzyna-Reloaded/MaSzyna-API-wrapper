@@ -13,8 +13,8 @@ namespace godot {
             bool previous_blinking = false;
             bool previous_beeping = false;
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
-            void _do_process_mover(TMoverParameters *p_mover, double p_delta) override;
+            void _apply_configuration() override;
+            void _do_process_component(double p_delta) override;
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_beeping() const override;

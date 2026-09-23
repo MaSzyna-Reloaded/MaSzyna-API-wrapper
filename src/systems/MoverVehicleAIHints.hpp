@@ -9,6 +9,6 @@ namespace godot {
         private:
             static void _bind_methods();
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
     };
 } // namespace godot

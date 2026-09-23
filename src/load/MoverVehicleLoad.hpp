@@ -11,7 +11,7 @@ namespace godot {
         private:
             TypedArray<LoadListItem> load_list;
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
         public:
             void set_load_list(const TypedArray<LoadListItem> &p_load_list) override {

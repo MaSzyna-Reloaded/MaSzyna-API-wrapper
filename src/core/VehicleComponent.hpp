@@ -7,11 +7,6 @@
 #include <godot_cpp/classes/object.hpp>
 #include <godot_cpp/templates/vector.hpp>
 
-#define ASSERT_MOVER(mover_ptr)                                                                                        \
-    if ((mover_ptr) == nullptr) {                                                                                      \
-        return;                                                                                                        \
-    }
-
 namespace godot {
     /* One thing a vehicle is made of.
      *
@@ -35,25 +30,15 @@ namespace godot {
              * joined; a property read does (see FINDINGS.md, 2026-09-22). */
             VehicleController *train_controller_node = nullptr;
 
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do _do_update_internal_mover(),
-             * i powinna byc wywolywana przez VehicleComponent::initialize_mover() */
-            // virtual void _do_initialize_internal_mover(TMoverParameters *mover) = 0;
+            /* Writes this component's configuration into whatever simulates the vehicle. What
+             * that is belongs to the implementation - the interface does not name it. */
+            virtual void _apply_configuration();
 
-
-            /* Transfers data from Godot's node to original/internal Mover instance.
-             * `mover` is always set */
-
-            virtual void _do_update_internal_mover(TMoverParameters *p_mover);
-
-
-
-            virtual void _do_process_mover(TMoverParameters *p_mover, double p_delta);
+            /* One tick of this component. */
+            virtual void _do_process_component(double p_delta);
 
             virtual void _register_commands();
             virtual void _unregister_commands();
-
-            TMoverParameters *get_mover() const;
 
         public:
 

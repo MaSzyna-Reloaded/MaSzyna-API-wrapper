@@ -1,4 +1,5 @@
 #include "VehicleElectricSeriesEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "macros.hpp"
 
 #include <algorithm>
@@ -39,8 +40,10 @@ namespace godot {
         return VehicleEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 
-    void VehicleElectricSeriesEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
-        VehicleElectricEngine::_do_update_internal_mover(p_mover);
+    void VehicleElectricSeriesEngine::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
+        VehicleElectricEngine::_apply_configuration();
         p_mover->NominalVoltage = nominal_voltage;
         p_mover->WindingRes = winding_resistance;
         p_mover->nmax = max_rpm / 60.0;
@@ -81,13 +84,13 @@ namespace godot {
 
 
     double VehicleElectricSeriesEngine::get_resistor_fan_rotation() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->RventRot : 0.0;
     }
 
     void VehicleElectricSeriesEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleElectricEngine::_fill_state_dictionary(p_state);
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -96,7 +99,7 @@ namespace godot {
 
     void VehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleElectricEngine::_fill_config_dictionary(p_config);
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }

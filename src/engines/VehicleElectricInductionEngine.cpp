@@ -1,4 +1,5 @@
 #include "VehicleElectricInductionEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -35,8 +36,10 @@ namespace godot {
         return VehicleEngine::EngineType::ELECTRIC_INDUCTION_MOTOR;
     }
 
-    void VehicleElectricInductionEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
-        VehicleElectricEngine::_do_update_internal_mover(p_mover);
+    void VehicleElectricInductionEngine::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
+        VehicleElectricEngine::_apply_configuration();
 
         p_mover->eimc[Maszyna::eimc_s_dfic] = slip_current_ratio;
         p_mover->eimc[Maszyna::eimc_s_dfmax] = max_slip;

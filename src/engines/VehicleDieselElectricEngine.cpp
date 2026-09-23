@@ -1,4 +1,5 @@
 #include "VehicleDieselElectricEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -29,8 +30,10 @@ namespace godot {
         return VehicleEngine::EngineType::DIESEL_ELECTRIC;
     }
 
-    void VehicleDieselElectricEngine::_do_update_internal_mover(TMoverParameters *p_mover) {
-        VehicleDieselEngine::_do_update_internal_mover(p_mover);
+    void VehicleDieselElectricEngine::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
+        VehicleDieselEngine::_apply_configuration();
 
         p_mover->Flat = generator_voltage_flat;
         p_mover->Vhyp = hyperbolic_speed;

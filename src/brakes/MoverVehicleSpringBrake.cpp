@@ -1,4 +1,5 @@
 #include "MoverVehicleSpringBrake.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "VehicleSpringBrake.hpp"
 
 namespace godot {
@@ -6,24 +7,26 @@ namespace godot {
 
 
     void MoverVehicleSpringBrake::set_spring_brake_active(const bool p_active) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->SpringBrakeActivate(p_active);
     }
 
     void MoverVehicleSpringBrake::set_spring_brake_enabled(const bool p_active) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->SpringBrakeShutOff(p_active);
     }
 
     void MoverVehicleSpringBrake::spring_brake_release() {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->SpringBrakeRelease();
     }
 
-    void MoverVehicleSpringBrake::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleSpringBrake::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         if (!p_mover->SpringBrake.Cylinder) {
             p_mover->SpringBrake.Cylinder = std::make_shared<TReservoir>();
         }
@@ -42,33 +45,33 @@ namespace godot {
 
         //@TODO: There might be a need to update Spring Brake in the mover internally but it seems to be working as for
         // now
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        VehicleComponent::_apply_configuration();
     }
 
 
     bool MoverVehicleSpringBrake::get_ready() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpringBrake.IsReady : false;
     }
 
     bool MoverVehicleSpringBrake::get_shut_off() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpringBrake.ShuttOff : false;
     }
 
     bool MoverVehicleSpringBrake::get_active() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpringBrake.Activate : false;
     }
 
     double MoverVehicleSpringBrake::get_cylinder_pressure() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpringBrake.SBP : 0.0;
     }
 
     void MoverVehicleSpringBrake::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
+        if (mover_of(this) == nullptr) {
             return;
         }
         p_state["spring_brake/is_ready"] = get_ready();

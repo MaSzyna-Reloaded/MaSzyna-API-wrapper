@@ -1,4 +1,5 @@
 #include "MoverVehicleSpeedControl.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -6,9 +7,11 @@ namespace godot {
     void MoverVehicleSpeedControl::_bind_methods() {}
 
 
-    void MoverVehicleSpeedControl::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleSpeedControl::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        ASSERT_MOVER(p_mover);
+        VehicleComponent::_apply_configuration();
 
         p_mover->SpeedCtrl = get_speed_control_enabled();
         p_mover->SpeedCtrlDelay = get_delay();
@@ -50,28 +53,28 @@ namespace godot {
 
 
     bool MoverVehicleSpeedControl::get_active() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpeedCtrlUnit.IsActive : false;
     }
 
     double MoverVehicleSpeedControl::get_desired_velocity() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpeedCtrlUnit.DesiredVelocity : 0.0;
     }
 
     double MoverVehicleSpeedControl::get_desired_power() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpeedCtrlUnit.DesiredPower : 0.0;
     }
 
     double MoverVehicleSpeedControl::get_selected_velocity() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpeedCtrlValue : 0.0;
     }
 
     void MoverVehicleSpeedControl::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
+        if (mover_of(this) == nullptr) {
             return;
         }
         p_state["speed_control/active"] = get_active();

@@ -9,7 +9,7 @@ namespace godot {
         private:
             static void _bind_methods();
         protected:
-            void _do_update_internal_mover(TMoverParameters *p_mover) override;
+            void _apply_configuration() override;
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_sand_active() const override;

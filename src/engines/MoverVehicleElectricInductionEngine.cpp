@@ -1,4 +1,5 @@
 #include "MoverVehicleElectricInductionEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 
 namespace godot {
     void MoverVehicleElectricInductionEngine::_bind_methods() {
@@ -12,31 +13,31 @@ namespace godot {
     }
 
     double MoverVehicleElectricInductionEngine::get_motor_current() const {
-        return traction.get_motor_current(get_mover());
+        return traction.get_motor_current(mover_of(this));
     }
 
     double MoverVehicleElectricInductionEngine::get_circuit_imax() const {
-        return traction.get_circuit_imax(get_mover());
+        return traction.get_circuit_imax(mover_of(this));
     }
 
     bool MoverVehicleElectricInductionEngine::get_dynamic_brake_active() const {
-        return traction.get_dynamic_brake_active(get_mover());
+        return traction.get_dynamic_brake_active(mover_of(this));
     }
 
     bool MoverVehicleElectricInductionEngine::get_fuse_active() const {
-        return traction.get_fuse_active(get_mover());
+        return traction.get_fuse_active(mover_of(this));
     }
 
     bool MoverVehicleElectricInductionEngine::get_motor_connectors_open() const {
-        return traction.get_motor_connectors_open(get_mover());
+        return traction.get_motor_connectors_open(mover_of(this));
     }
 
     void MoverVehicleElectricInductionEngine::fuse_reset() {
-        traction.reset_fuse(get_mover());
+        traction.reset_fuse(mover_of(this));
     }
 
     void MoverVehicleElectricInductionEngine::set_motor_connectors_open(const bool p_open) {
-        traction.open_motor_connectors(get_mover(), p_open);
+        traction.open_motor_connectors(mover_of(this), p_open);
     }
 
     void MoverVehicleElectricInductionEngine::_register_commands() {

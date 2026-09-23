@@ -1,4 +1,5 @@
 #include "GenericVehicleComponent.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <godot_cpp/classes/gd_extension.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -21,7 +22,7 @@ namespace godot {
         script_owner = p_owner;
     }
 
-    void GenericVehicleComponent::_do_update_internal_mover(TMoverParameters *p_mover) {};
+    void GenericVehicleComponent::_apply_configuration() {};
     /* A script's own configuration is its own - it does not come from the backend, so there is
      * nothing to guard against here. The script cannot be known at build time (that is what this
      * class is for) and Object::call() is non-const, though the call only reads. */
@@ -29,17 +30,20 @@ namespace godot {
         Object *target = const_cast<GenericVehicleComponent *>(this)->script_target();
         p_config.merge(target->call("_get_component_config"), true);
     }
-    void GenericVehicleComponent::_do_process_mover(TMoverParameters *mover, double p_delta) {};
-    void GenericVehicleComponent::_process_component(const double p_delta) {};
+    /* The component's tick is the modder's script: this class exists precisely because that
+     * script cannot be known at build time, which is why the calls go by name. */
+    void GenericVehicleComponent::_do_process_component(const double p_delta) {
+        script_target()->call("_process_component", p_delta);
+        internal_state = script_target()->call("_get_component_state");
+    }
+
+    /* The script's own default, for a script that does not override it. */
+    void GenericVehicleComponent::_process_component(const double p_delta) {}
     Dictionary GenericVehicleComponent::_get_component_state() {
         return internal_state;
     };
     Dictionary GenericVehicleComponent::_get_component_config() {
         return {};
-    };
-    void GenericVehicleComponent::_process_mover(const double p_delta) {
-        script_target()->call("_process_component", p_delta);
-        internal_state = script_target()->call("_get_component_state");
     };
 
     /* The script's own keys. They are still pulled per tick rather than being properties of the

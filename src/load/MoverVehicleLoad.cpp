@@ -1,11 +1,14 @@
 #include "MoverVehicleLoad.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "VehicleLoad.hpp"
 
 namespace godot {
     void MoverVehicleLoad::_bind_methods() {}
 
 
-    void MoverVehicleLoad::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleLoad::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         p_mover->MaxLoad = get_max_load();
         // Build LoadAttributes from get_accepted_loads() with optional per-load minimum offset
         const int loads_count = static_cast<int>(get_accepted_loads().size());
@@ -23,12 +26,12 @@ namespace godot {
         p_mover->LoadSpeed = get_load_speed();
         p_mover->UnLoadSpeed = get_unload_speed();
         p_mover->OverLoadFactor = static_cast<float>(get_overload_factor());
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        VehicleComponent::_apply_configuration();
     }
 
 
     void MoverVehicleLoad::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }

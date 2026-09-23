@@ -63,14 +63,6 @@ namespace godot {
         return train_controller_node;
     }
 
-    TMoverParameters *VehicleComponent::get_mover() const {
-        if (train_controller_node != nullptr) {
-            return train_controller_node->get_mover();
-        }
-
-        return nullptr;
-    }
-
     void VehicleComponent::attach(VehicleController *p_controller) {
         train_controller_node = p_controller;
         if (train_controller_node == nullptr) {
@@ -174,15 +166,11 @@ namespace godot {
     }
 
     void VehicleComponent::_process_mover(const double p_delta) {
-        if (train_controller_node != nullptr) {
-            TMoverParameters *mover = train_controller_node->get_mover();
-            if (mover != nullptr) {
-                _do_process_mover(mover, p_delta);
-            }
-        }
+        _do_process_component(p_delta);
     }
 
-    void VehicleComponent::_do_process_mover(TMoverParameters *p_mover, double p_delta) {}
+    void VehicleComponent::_do_process_component(const double p_delta) {}
+
     void VehicleComponent::_fill_config_dictionary(Dictionary &p_config) const {}
 
     Dictionary VehicleComponent::get_config() {
@@ -190,7 +178,7 @@ namespace godot {
         _fill_config_dictionary(result);
         return result;
     }
-    void VehicleComponent::_do_update_internal_mover(TMoverParameters *p_mover) {};
+    void VehicleComponent::_apply_configuration() {};
 
     /* Writing the component's configuration into the backend and saying so. A component that is
      * not in a vehicle yet, or whose vehicle has not started its backend yet, simply has nowhere
@@ -199,11 +187,7 @@ namespace godot {
         if (train_controller_node == nullptr) {
             return;
         }
-        TMoverParameters *mover = train_controller_node->get_mover();
-        if (mover == nullptr) {
-            return;
-        }
-        _do_update_internal_mover(mover);
+        _apply_configuration();
         train_controller_node->emit_config_changed();
     }
 

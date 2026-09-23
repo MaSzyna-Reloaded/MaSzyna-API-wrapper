@@ -1,11 +1,14 @@
 #include "MoverVehicleBuffCoupl.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "VehicleBuffCoupl.hpp"
 
 namespace godot {
     void MoverVehicleBuffCoupl::_bind_methods() {}
 
 
-    void MoverVehicleBuffCoupl::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleBuffCoupl::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
+        ASSERT_MOVER(p_mover);
         ASSERT_MOVER(p_mover)
         // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
@@ -92,7 +95,7 @@ namespace godot {
 
 
     void MoverVehicleBuffCoupl::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }
@@ -116,7 +119,7 @@ namespace godot {
 
 
     void MoverVehicleBuffCoupl::couple() {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
 
         UtilityFunctions::push_warning(
@@ -128,7 +131,7 @@ namespace godot {
     }
 
     void MoverVehicleBuffCoupl::decouple() {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
 
         UtilityFunctions::push_warning(

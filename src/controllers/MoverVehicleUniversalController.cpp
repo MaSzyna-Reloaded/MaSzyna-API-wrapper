@@ -1,4 +1,5 @@
 #include "MoverVehicleUniversalController.hpp"
+#include "../mover/MoverBackend.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -6,9 +7,11 @@ namespace godot {
     void MoverVehicleUniversalController::_bind_methods() {}
 
 
-    void MoverVehicleUniversalController::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleUniversalController::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        ASSERT_MOVER(p_mover);
+        VehicleComponent::_apply_configuration();
 
         p_mover->UniCtrlIntegratedBrakePNCtrl = get_integrated_brake_pn();
         p_mover->UniCtrlIntegratedBrakeCtrl = get_integrated_brake();
@@ -43,14 +46,14 @@ namespace godot {
 
     void MoverVehicleUniversalController::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
+        if (mover_of(this) == nullptr) {
             return;
         }
         p_state["selector_position"] = get_selector_position();
     }
 
     void MoverVehicleUniversalController::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {
             return;
         }

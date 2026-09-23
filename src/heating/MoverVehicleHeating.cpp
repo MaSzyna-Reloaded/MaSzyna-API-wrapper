@@ -1,12 +1,15 @@
 #include "MoverVehicleHeating.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "../core/VehicleController.hpp"
 
 namespace godot {
     void MoverVehicleHeating::_bind_methods() {}
 
-    void MoverVehicleHeating::_do_update_internal_mover(TMoverParameters *p_mover) {
+    void MoverVehicleHeating::_apply_configuration() {
+        TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        VehicleComponent::_do_update_internal_mover(p_mover);
+        ASSERT_MOVER(p_mover);
+        VehicleComponent::_apply_configuration();
 
         p_mover->HeatingPowerSource.SourceType = train_controller_node->power_source_map.at(get_heating_source());
         p_mover->HeatingPowerSource.MaxVoltage = get_heating_max_voltage();
@@ -35,24 +38,24 @@ namespace godot {
     }
 
     bool MoverVehicleHeating::get_active() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->Heating : false;
     }
 
     double MoverVehicleHeating::get_power() const {
-        const TMoverParameters *mover = get_mover();
+        const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->HeatingPower : 0.0;
     }
 
     void MoverVehicleHeating::heating(const bool p_enabled) {
-        TMoverParameters *mover = get_mover();
+        TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
         mover->HeatingSwitch(p_enabled);
     }
 
     void MoverVehicleHeating::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (get_mover() == nullptr) {
+        if (mover_of(this) == nullptr) {
             return;
         }
         p_state["heating_enabled"] = get_active();

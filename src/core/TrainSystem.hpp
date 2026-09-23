@@ -51,6 +51,7 @@ namespace godot {
             void log(const String &p_train_id, GameLog::LogLevel p_level, const String &p_line);
 
             static const char *train_position_changed_signal;
+            static const char *train_registered_signal;
             static const char *train_unregistered_signal;
 
         protected:

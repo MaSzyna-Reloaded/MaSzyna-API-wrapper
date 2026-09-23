@@ -604,3 +604,31 @@ It stops being an exception when the cabin's base is C++: a `Cabin3D` with a typ
 `set_train_id(const String &)`, with the cabin scripts extending it. Then the handoff is an
 ordinary compiled call and the two `connect("camera_configuration_changed", ...)` beside it
 become `callable_mp` too.
+
+### What still reaches a class by name from C++
+
+Counted after `Cabin3D` moved to C++. Two of these are the exception `CODE_STYLE.md` allows, the
+rest are not.
+
+**Allowed, and commented at the call site** - a GDScript class the C++ node merely hosts:
+
+* `Cabin3D::_propagate_train_id()` calls `set_train_id` on the cab's elements.
+* `GenericVehicleComponent` calls `_process_component`, `_get_component_state` and
+  `_get_component_config` on the modder's script - the class cannot be known at build time, which
+  is what that class exists for.
+
+**Not allowed - our own classes that are simply still GDScript.** Each is the same situation
+`Cabin3D` was in, and each stops being an exception when its base moves to C++:
+
+| Class | Named accesses from C++ | Where |
+| --- | --- | --- |
+| `E3DModelInstance` | 15 | `is_e3d_loaded` x6, `reload` x2, `get_aabb`, `set_smoke_intensity`, `instancer` x2, `lights_state` x3 |
+| `MaszynaTrackCurve` | 10 | `p1`, `c1`, `c2`, `p2`, `roll1`, `roll2` in `TrackManager` and `RailVehicleServer` - on the track path |
+| `RainVolume` | 6 | `velocity_multiplier`, `bound_enabled`, `bound_min`, `bound_max` |
+| `MaszynaPlayer` | 1 | `get_camera` |
+
+**A rule broken outright**, not an exception: `RailVehicle3D.cpp:1286` and `:1367` reach
+`TractionPowerServer` through `_singleton("TractionPowerServer")` - a name looked up in the tree -
+and then call `wire_get_voltage` by name on the result. `AGENTS.md` forbids both, and
+`FINDINGS.md` (2026-09-22) records exactly this shape turning "an autoload moved" into a segfault.
+It needs a typed `TractionPowerServer::get_instance()`.

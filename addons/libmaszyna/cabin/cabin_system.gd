@@ -27,10 +27,12 @@ var _processes:Dictionary = {}
 
 
 func _ready() -> void:
+    TrainSystem.train_registered.connect(register_vehicle)
     TrainSystem.train_unregistered.connect(_on_train_unregistered)
 
 
 func _exit_tree() -> void:
+    TrainSystem.train_registered.disconnect(register_vehicle)
     TrainSystem.train_unregistered.disconnect(_on_train_unregistered)
 
 
@@ -46,8 +48,9 @@ func _on_train_unregistered(train_id:String) -> void:
 
 ## Called by the cabin root when it is given its vehicle, and again with an invalid handle when
 ## the cabin is taken out of it.
-## The cab names the vehicle it sits in; everything else about it - the handle, the state, the
-## components - this system takes from the servers. Nothing hands it a controller.
+## Taken straight off TrainSystem's own announcement: a vehicle is known here from the moment it
+## exists, so a cab only has to name the one it sits in. Everything else about it - the handle,
+## the state, the components - this system takes from the servers.
 func register_vehicle(train_id:String) -> void:
     var previous:VehicleController = TrainSystem.get_train(train_id) if _vehicles.has(train_id) else null
     if previous:

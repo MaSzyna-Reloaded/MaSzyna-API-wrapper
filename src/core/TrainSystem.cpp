@@ -4,6 +4,7 @@
 
 namespace godot {
     const char *TrainSystem::train_position_changed_signal = "train_position_changed";
+    const char *TrainSystem::train_registered_signal = "train_registered";
     const char *TrainSystem::train_unregistered_signal = "train_unregistered";
 
     void TrainSystem::_bind_methods() {
@@ -40,6 +41,7 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(
                 train_position_changed_signal, PropertyInfo(Variant::STRING, "train_id"),
                 PropertyInfo(Variant::VECTOR3, "position")));
+        ADD_SIGNAL(MethodInfo(train_registered_signal, PropertyInfo(Variant::STRING, "train_id")));
         ADD_SIGNAL(MethodInfo(train_unregistered_signal, PropertyInfo(Variant::STRING, "train_id")));
     }
 
@@ -122,6 +124,7 @@ namespace godot {
                     VehicleController::position_changed_signal,
                     Callable(this, "_on_train_position_changed").bind(p_train_id));
             log(p_train_id, GameLog::DEBUG, "Registered train");
+            emit_signal(train_registered_signal, p_train_id);
         }
     }
 

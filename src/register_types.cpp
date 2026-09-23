@@ -11,6 +11,7 @@
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
+#include "cabin/Cabin3D.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/VehicleController.hpp"
@@ -163,6 +164,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(VehicleElectricInductionEngine);
         GDREGISTER_CLASS(MoverVehicleElectricInductionEngine);
         GDREGISTER_CLASS(VehicleController);
+        GDREGISTER_CLASS(Cabin3D);
         GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
         GDREGISTER_CLASS(MoverVehicleHeating);

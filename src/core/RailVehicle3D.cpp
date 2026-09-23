@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "../cabin/Cabin3D.hpp"
 #include "../buffers/VehicleBuffCoupl.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "VehiclePhysicsNode.hpp"
@@ -160,8 +161,8 @@ namespace godot {
         }
 
         camera = Object::cast_to<Node3D>(p_player->call("get_camera"));
-        Node3D *new_cabin = Object::cast_to<Node3D>(cabin_scene->instantiate());
-        if (new_cabin == nullptr || !new_cabin->has_signal("cabin_ready")) {
+        Cabin3D *new_cabin = Object::cast_to<Cabin3D>(cabin_scene->instantiate());
+        if (new_cabin == nullptr) {
             UtilityFunctions::push_error("Root node of cabin scene must be a Cabin3D");
             if (new_cabin != nullptr) {
                 new_cabin->queue_free();
@@ -177,20 +178,19 @@ namespace godot {
 
         cabin->set_visible(false);
         cabin->connect(
-                "cabin_ready", Callable(this, "_jump_into_cabin").bind(cabin, p_player), Object::CONNECT_ONE_SHOT);
-        cabin->connect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
-        cabin->connect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
+                Cabin3D::cabin_ready_signal, Callable(this, "_jump_into_cabin").bind(cabin, p_player),
+                Object::CONNECT_ONE_SHOT);
+        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->set_transform(Transform3D());
         if (cabin_rotate_180deg) {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
         }
         add_child(cabin);
-        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem, so
-         * what crosses here is the vehicle's name. Handed over once the cabin is in the tree,
-         * because building its interior puts nodes there; and handed over here rather than at
-         * the next controller change, which for an existing vehicle never comes. The cabin is a
-         * GDScript node this class only hosts, hence the named call. */
-        cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
+        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem. Told
+         * once it is in the tree, because building its interior puts nodes there, and told here
+         * rather than at the next controller change, which for an existing vehicle never comes. */
+        cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
 
         cabin_show_frames = 2;
         get_tree()->connect("process_frame", Callable(this, "_show_cabin_after_frames"), Object::CONNECT_ONE_SHOT);
@@ -229,8 +229,8 @@ namespace godot {
         camera->set_global_transform(camera_transform);
         camera->look_at(get_global_position() + Vector3(0.0, 1.75, -5.0));
         camera->set("velocity_multiplier", 1.0);
-        cabin->disconnect("camera_configuration_changed", Callable(this, "_apply_cabin_camera_configuration"));
-        cabin->disconnect("camera_configuration_changed", Callable(this, "_update_low_poly_cabs_visibility"));
+        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->get_parent()->remove_child(cabin);
         cabin->queue_free();
         cabin = nullptr;
@@ -241,17 +241,17 @@ namespace godot {
         if (cabin == nullptr || camera == nullptr || camera->get_parent() != cabin) {
             return;
         }
-        camera->set("bound_enabled", cabin->get("camera_bound_enabled"));
-        Vector3 bound_min = cabin->get("camera_bound_min");
-        Vector3 bound_max = cabin->get("camera_bound_max");
+        camera->set("bound_enabled", cabin->get_camera_bound_enabled());
+        Vector3 bound_min = cabin->get_camera_bound_min();
+        Vector3 bound_max = cabin->get_camera_bound_max();
         bound_min.y += 0.5;
         bound_max.y += 1.8;
         camera->set("bound_min", bound_min);
         camera->set("bound_max", bound_max);
-        camera->set_global_transform(cabin->call("get_camera_transform"));
+        camera->set_global_transform(cabin->get_camera_transform());
         // Original engine looks along VectorFront * CabOccupied (drivermode.cpp:1071), so cab 2
         // faces the opposite way.
-        const bool rear_cab = static_cast<int>(cabin->get("cab_number")) < 0;
+        const bool rear_cab = static_cast<int>(cabin->get_cab_number()) < 0;
         if (cabin_rotate_180deg != rear_cab) {
             camera->set_global_basis(get_global_basis());
         } else {
@@ -359,7 +359,7 @@ namespace godot {
             }
         }
         if (cabin != nullptr) {
-            cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
+            cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
         }
         const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
         _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
@@ -644,9 +644,9 @@ namespace godot {
         if (low_poly_cabin == nullptr) {
             return;
         }
-        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get("cab_number"));
+        const int cab_number = cabin == nullptr ? 0 : static_cast<int>(cabin->get_cab_number());
         const int occupied_cab_index = cab_number < 0 ? 2 : cab_number;
-        const bool hifi_cab = cabin != nullptr && bool(cabin->get("has_cab_model"));
+        const bool hifi_cab = cabin != nullptr && cabin->get_has_cab_model();
         for (int cab_index = 0; cab_index < 3; ++cab_index) {
             const String cab_name = "cab" + itos(cab_index);
             Node3D *cab_node = Object::cast_to<Node3D>(low_poly_cabin->find_child(cab_name, true, false));

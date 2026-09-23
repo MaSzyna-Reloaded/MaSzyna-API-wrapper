@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/typed_dictionary.hpp>
 
 namespace godot {
+    class Cabin3D;
     class VehicleBuffCoupl;
     class VehiclePhysicsNode;
     class Area3D;
@@ -55,7 +56,7 @@ namespace godot {
             bool dirty = true;
             bool needs_head_display_update = false;
             Node *head_display_e3d = nullptr;
-            Node3D *cabin = nullptr;
+            Cabin3D *cabin = nullptr;
             Node3D *camera = nullptr;
             Node *cabin_player = nullptr;
             int cabin_show_frames = 0;

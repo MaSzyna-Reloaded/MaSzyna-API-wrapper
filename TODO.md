@@ -576,3 +576,26 @@ and nothing does today. Measured cost of the rename, should it be taken: `Vehicl
 
 What already holds and must stay either way: these interfaces name no backend at all, and the
 `Mover*` implementation is the only class touching `TMoverParameters`.
+
+### A non-Mover component cannot exist yet - the backend is in the component base
+
+Asked directly: could the vehicle take a `CarBrakes` today? The slot would accept it -
+`COMPONENT_BRAKES` names a kind rather than a class, `add_component()` takes any
+`VehicleComponent *`, and `VehicleComponentModel.implementation` is a class name ClassDB
+instantiates. What stops it is a layer below:
+
+* **`VehicleComponent` names the backend in its own API**: `_do_update_internal_mover(
+  TMoverParameters *)`, `_do_process_mover(TMoverParameters *, double)` and `get_mover()` are on
+  the base every component derives from, so any implementation has to speak `TMoverParameters`.
+  That is the prohibition in `AGENTS.md` ("the backend never appears in a public interface")
+  standing in the middle of the component model.
+* **`VehicleController::initialize_mover()` always creates a Mover** and `ERR_FAIL_NULL`s on it.
+  There is no vehicle without one.
+* **`VehicleComponent::apply_config()` does nothing without a Mover**, so a component backed by
+  anything else has nowhere to write its configuration.
+
+So "the same servers carry road vehicles" is a statement of intent, not a fact. The shape that
+would make it one: the component's tick and configuration take no backend type at all - the
+component reaches its own backend through its implementation, the way `MoverVehicleBrake` already
+does internally - and `initialize()` asks a backend factory for the vehicle's simulation instead
+of naming `MaszynaMoverPhysicsServer`.

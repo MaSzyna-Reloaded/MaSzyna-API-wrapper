@@ -170,11 +170,6 @@ namespace godot {
         }
         cabin = new_cabin;
         cabin_player = p_player;
-        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem, so
-         * what crosses here is the vehicle's name. It is handed over at creation: the controller
-         * does not change again, and waiting for that would leave the cab without a vehicle
-         * forever. The cabin is a GDScript node this class only hosts, hence the named call. */
-        cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
         // taking over the vehicle activates its cab when the FIZ allows it (Train.cpp:9147)
         if (controller != nullptr) {
             controller->cab_activation_auto();
@@ -190,6 +185,12 @@ namespace godot {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
         }
         add_child(cabin);
+        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem, so
+         * what crosses here is the vehicle's name. Handed over once the cabin is in the tree,
+         * because building its interior puts nodes there; and handed over here rather than at
+         * the next controller change, which for an existing vehicle never comes. The cabin is a
+         * GDScript node this class only hosts, hence the named call. */
+        cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
 
         cabin_show_frames = 2;
         get_tree()->connect("process_frame", Callable(this, "_show_cabin_after_frames"), Object::CONNECT_ONE_SHOT);

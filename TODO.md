@@ -590,3 +590,17 @@ would make it one: the component's tick and configuration take no backend type a
 component reaches its own backend through its implementation, the way `MoverVehicleBrake` already
 does internally - and `initialize()` asks a backend factory for the vehicle's simulation instead
 of naming `MaszynaMoverPhysicsServer`.
+
+### The cabin is reached by name because its base class is GDScript
+
+`RailVehicle3D::enter_cabin()` hands the cabin its vehicle with
+`cabin->call("set_train_id", ...)`. That is the one exception `CODE_STYLE.md` allows - a GDScript
+node a C++ node merely hosts - but it is an exception only because `Cabin3D`/`DynamicTrainCabin`
+are GDScript. Every route from C++ into them is by name: `call()`, `set()` or `connect()`, none
+of them checked at build time, and a rename is a silent no-op (which is exactly how the HUD's
+`controller_changed` connections went dead unnoticed).
+
+It stops being an exception when the cabin's base is C++: a `Cabin3D` with a typed
+`set_train_id(const String &)`, with the cabin scripts extending it. Then the handoff is an
+ordinary compiled call and the two `connect("camera_configuration_changed", ...)` beside it
+become `callable_mp` too.

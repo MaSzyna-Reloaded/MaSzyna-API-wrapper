@@ -44,13 +44,13 @@ func _ready() -> void:
     # _process()-based dirty resolution, which only runs a frame later.
     if controller_path:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
-        set_train_controller(physics_node.get_controller() if physics_node else null)
+        set_train_id(physics_node.train_id if physics_node else "")
     _cabin_ready = true
     cabin_ready.emit()
 
 
-func set_train_controller(controller:VehicleController) -> void:
-    super.set_train_controller(controller)
+func set_train_id(train_id:String) -> void:
+    super.set_train_id(train_id)
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
     _rebuild_generated()
@@ -59,7 +59,7 @@ func set_train_controller(controller:VehicleController) -> void:
 func _exit_tree() -> void:
     if CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    _shake_controller = null
+    _train_id = ""
 
 
 func get_diagnostics() -> Array[Dictionary]:

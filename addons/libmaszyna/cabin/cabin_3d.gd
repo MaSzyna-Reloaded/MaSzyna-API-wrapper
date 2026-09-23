@@ -9,7 +9,6 @@ var _dirty = true
 var _cabin_ready:bool = false
 var _e3d_instances:Array[E3DModelInstance] = []
 var _e3d_loaded_count:int = 0
-var _shake_controller:VehicleController
 ## Which vehicle this cabin sits in; every read of it goes through CabinSystem.
 var _train_id:String = ""
 var _engine_angle:float = PI * 0.5
@@ -62,10 +61,11 @@ func _propagate_train_id(node: Node, train_id: String) -> void:
         if child.has_method("set_train_id"):
             child.set_train_id(train_id)
 
-func set_train_controller(controller:VehicleController) -> void:
-    _shake_controller = controller
-    _train_id = controller.train_id if controller else ""
-    CabinSystem.register_vehicle(_train_id, controller.get_rid() if controller else RID())
+## The vehicle this cab sits in, by name. There is deliberately no path to a controller here -
+## every read and every manipulation goes through CabinSystem.
+func set_train_id(train_id:String) -> void:
+    _train_id = train_id
+    CabinSystem.register_vehicle(_train_id)
     _propagate_train_id(self, _train_id)
 
 
@@ -88,14 +88,13 @@ func _process_dirty() -> void:
     if not _dirty:
         return
     _dirty = false
-    if controller_path or _shake_controller:
+    if controller_path or _train_id:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path) if controller_path else null
-        var controller:VehicleController = physics_node.get_controller() if physics_node else null
-        set_train_controller(controller)
+        set_train_id(physics_node.train_id if physics_node else "")
 
 func _process_engine_shake(delta:float) -> void:
     var shake_vector:Vector3 = Vector3.ZERO
-    if _shake_controller and CabinSystem.vehicle_config(_train_id).get("engine_shake_enabled", false):
+    if _train_id and CabinSystem.vehicle_config(_train_id).get("engine_shake_enabled", false):
         var engine_revolutions:float = absf(float(CabinSystem.vehicle_state(_train_id).get("engine_rpm_count", 0.0)))
         if engine_revolutions > 0.0:
             _engine_angle = fmod(_engine_angle + engine_revolutions * delta, TAU)

@@ -196,6 +196,7 @@ namespace godot {
              * own physics. */
             void apply_track_placement();
             void move_on_track(double p_distance);
+            void _on_model_node_e3d_loading();
             void _on_model_node_e3d_loaded();
 
             void set_model_instance_path(const NodePath &p_value);

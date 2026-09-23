@@ -131,6 +131,7 @@ namespace godot {
                 D_METHOD("_apply_cabin_camera_configuration"), &RailVehicle3D::_apply_cabin_camera_configuration);
         ClassDB::bind_method(D_METHOD("_on_controller_changed", "controller"), &RailVehicle3D::_on_controller_changed);
         ClassDB::bind_method(D_METHOD("_schedule_head_display_update"), &RailVehicle3D::_schedule_head_display_update);
+        ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loading"), &RailVehicle3D::_on_model_node_e3d_loading);
         ClassDB::bind_method(D_METHOD("_on_model_node_e3d_loaded"), &RailVehicle3D::_on_model_node_e3d_loaded);
         ClassDB::bind_method(D_METHOD("_on_low_poly_cabin_e3d_loaded"), &RailVehicle3D::_on_low_poly_cabin_e3d_loaded);
         ClassDB::bind_method(
@@ -169,6 +170,11 @@ namespace godot {
         }
         cabin = new_cabin;
         cabin_player = p_player;
+        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem, so
+         * what crosses here is the vehicle's name. It is handed over at creation: the controller
+         * does not change again, and waiting for that would leave the cab without a vehicle
+         * forever. The cabin is a GDScript node this class only hosts, hence the named call. */
+        cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
         // taking over the vehicle activates its cab when the FIZ allows it (Train.cpp:9147)
         if (controller != nullptr) {
             controller->cab_activation_auto();
@@ -352,7 +358,7 @@ namespace godot {
             }
         }
         if (cabin != nullptr) {
-            cabin->call("set_train_controller", controller);
+            cabin->call("set_train_id", controller != nullptr ? controller->get_train_id() : String());
         }
         const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
         _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
@@ -395,6 +401,7 @@ namespace godot {
                     callable_mp(this, &RailVehicle3D::_on_track_manager_tracks_changed));
         }
         if (model_node != nullptr) {
+            model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
             model_node = nullptr;
         }
@@ -517,10 +524,12 @@ namespace godot {
 
         Node3D *new_model_node = model_instance_path.is_empty() ? nullptr : node_at<Node3D>(this, model_instance_path);
         if (model_node != nullptr) {
+            model_node->disconnect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->disconnect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
         }
         model_node = new_model_node;
         if (model_node != nullptr) {
+            model_node->connect("e3d_loading", Callable(this, "_on_model_node_e3d_loading"));
             model_node->connect("e3d_loaded", Callable(this, "_on_model_node_e3d_loaded"));
         }
         _sync_model_lights();
@@ -584,10 +593,27 @@ namespace godot {
         }
     }
 
+    /* The model is about to free and rebuild its children, so every node cached out of it is
+     * about to dangle. Dropped here, at the event that announces it - RailVehicleServer's tick
+     * reaches apply_track_placement() before this node's own _process would. */
+    void RailVehicle3D::_on_model_node_e3d_loading() {
+        front_bogie_node = nullptr;
+        rear_bogie_node = nullptr;
+        front_rolling_wheel_nodes.clear();
+        powered_wheel_nodes.clear();
+        rear_rolling_wheel_nodes.clear();
+        node_rest_bases.clear();
+        bogie_rest_global_bases.clear();
+    }
+
+    /* Emitted after the model has put its children in place (E3DModelInstance.reload()), so the
+     * bindings are taken here rather than left to a flag the next frame would consume. */
     void RailVehicle3D::_on_model_node_e3d_loaded() {
         _sync_model_lights();
         _update_detection_area();
-        animation_bindings_dirty = true;
+        animation_bindings_dirty = false;
+        _cache_animation_bindings();
+        force_detail_refresh = true;
     }
 
     void RailVehicle3D::_on_low_poly_cabin_e3d_loaded() {

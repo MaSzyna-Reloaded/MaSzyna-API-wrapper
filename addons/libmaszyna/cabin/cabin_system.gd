@@ -46,21 +46,22 @@ func _on_train_unregistered(train_id:String) -> void:
 
 ## Called by the cabin root when it is given its vehicle, and again with an invalid handle when
 ## the cabin is taken out of it.
-func register_vehicle(train_id:String, vehicle_rid:RID) -> void:
+## The cab names the vehicle it sits in; everything else about it - the handle, the state, the
+## components - this system takes from the servers. Nothing hands it a controller.
+func register_vehicle(train_id:String) -> void:
     var previous:VehicleController = TrainSystem.get_train(train_id) if _vehicles.has(train_id) else null
     if previous:
         for signal_name:StringName in [&"command_received", &"cabin_occupied_changed"]:
             for connection:Dictionary in previous.get_signal_connection_list(signal_name):
                 if connection["callable"].get_object() == self:
                     previous.disconnect(signal_name, connection["callable"])
-    if not vehicle_rid.is_valid():
+    var vehicle:VehicleController = TrainSystem.get_train(train_id) if train_id else null
+    if not vehicle:
         _vehicles.erase(train_id)
         return
-    _vehicles[train_id] = vehicle_rid
-    var vehicle:VehicleController = TrainSystem.get_train(train_id)
-    if vehicle:
-        vehicle.command_received.connect(_on_vehicle_command_received.bind(train_id))
-        vehicle.cabin_occupied_changed.connect(_on_vehicle_cabin_occupied_changed.bind(train_id))
+    _vehicles[train_id] = vehicle.get_rid()
+    vehicle.command_received.connect(_on_vehicle_command_received.bind(train_id))
+    vehicle.cabin_occupied_changed.connect(_on_vehicle_cabin_occupied_changed.bind(train_id))
 
 
 func _on_vehicle_command_received(command:String, p1:Variant, p2:Variant, train_id:String) -> void:

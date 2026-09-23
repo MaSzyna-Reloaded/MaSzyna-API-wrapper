@@ -2,6 +2,7 @@
 
 #include "../core/VehicleComponent.hpp"
 #include "../macros.hpp"
+#include <godot_cpp/variant/transform3d.hpp>
 
 namespace godot {
     class VehicleWheels : public VehicleComponent {
@@ -25,6 +26,17 @@ namespace godot {
             virtual double get_rotation_acceleration_rps2() const = 0;
             virtual bool get_slipping() const = 0;
             virtual double get_flat() const = 0;
+            /// Which of the vehicle's two bogies a placement is asked for.
+            enum Bogie {
+                BOGIE_FRONT = 0,
+                BOGIE_REAR = 1,
+            };
+            /// Where a bogie sits on the track: the wheels own the running gear, so they own its
+            /// geometry. Sampled from the vehicle's placement at half the pivot spacing to each
+            /// side; a vehicle whose pivot spacing is unknown yet has both bogies at the same
+            /// point, which is what the caller sees.
+            Transform3D get_bogie_transform(Bogie p_bogie) const;
+
             enum BearingType {
                 BEARING_TYPE_SLIDE = 0,
                 BEARING_TYPE_ROLL = 1,
@@ -43,3 +55,4 @@ namespace godot {
 } // namespace godot
 
 VARIANT_ENUM_CAST(godot::VehicleWheels::BearingType);
+VARIANT_ENUM_CAST(godot::VehicleWheels::Bogie);

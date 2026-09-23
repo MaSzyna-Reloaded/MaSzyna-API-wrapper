@@ -548,3 +548,16 @@ that, and so do the tests. What it is missing:
 The fix is to make attaching a component a named, complete operation: apply its configuration and
 announce that it was applied (a signal that means "the backend now carries this", not "it is
 about to"). Then `RailVehicle3D` reacts to it and the retry goes away.
+
+### Bogies are a rail concept sitting in the generic wheels interface
+
+`VehicleWheels` is the interface every vehicle's running gear implements, and
+`MaszynaMoverPhysicsServer`/`RailVehicleServer` are meant to carry road vehicles too. But the
+interface names bogies throughout: `Bogie`, `get_bogie_transform()`, `bogie_axle_spacing`,
+`bogie_pivot_spacing`, and `minimum_curve_radius` beside them. A car has wheels and no bogies.
+
+Either the rail specifics move to a rail-side interface below `VehicleWheels`, or the concept is
+widened to what it really describes (an axle group and where it sits). Worth settling before more
+consumers read `get_bogie_transform()`. The split that already holds and should stay:
+`VehicleWheels` names no backend at all and `MoverVehicleWheels` is the only class that touches
+`TMoverParameters`.

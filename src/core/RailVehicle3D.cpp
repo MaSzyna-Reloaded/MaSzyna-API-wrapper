@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "../wheels/VehicleWheels.hpp"
 #include "VehiclePhysicsNode.hpp"
 
 #include "../engines/VehicleElectricEngine.hpp"
@@ -1028,15 +1029,19 @@ namespace godot {
     }
 
     void RailVehicle3D::_update_wheel_animation_state() {
-        if (controller == nullptr) {
+        const VehicleWheels *wheels =
+                controller != nullptr
+                        ? Object::cast_to<VehicleWheels>(
+                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                        : nullptr;
+        if (wheels == nullptr) {
             return;
         }
-        const Dictionary state = controller->get_state();
         // Same sign as the original's UpdateAxle() (DynObj.cpp:489) - the wheel submodels live in
         // the MaSzyna vehicle frame, which MaszynaRailVehicle3DInstancer converts as a whole.
-        _apply_wheel_rotation(front_rolling_wheel_nodes, double(state.get("wheel_angle_front_deg", 0.0)));
-        _apply_wheel_rotation(powered_wheel_nodes, double(state.get("wheel_angle_powered_deg", 0.0)));
-        _apply_wheel_rotation(rear_rolling_wheel_nodes, double(state.get("wheel_angle_rear_deg", 0.0)));
+        _apply_wheel_rotation(front_rolling_wheel_nodes, wheels->get_angle_front_deg());
+        _apply_wheel_rotation(powered_wheel_nodes, wheels->get_angle_powered_deg());
+        _apply_wheel_rotation(rear_rolling_wheel_nodes, wheels->get_angle_rear_deg());
     }
 
     /// A vehicle far from the camera is rendered from RenderingServer instances instead of a node
@@ -1154,19 +1159,19 @@ namespace godot {
         }
 
         bogie_configuration_warned = false;
-        const double pivot_spacing =
-                controller != nullptr ? double(controller->get_config().get("bogie_pivot_spacing", 0.0)) : 0.0;
-        if (pivot_spacing <= 0.0) {
+        // the running gear is the wheels' business: they know the pivot spacing and where each
+        // bogie sits. This node only puts the nodes there.
+        VehicleWheels *wheels =
+                controller != nullptr
+                        ? Object::cast_to<VehicleWheels>(
+                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
+                        : nullptr;
+        if (wheels == nullptr) {
             _update_wheel_animation_state();
             return;
         }
-        // RailVehicleServer's track-offset distance is rear-relative (see
-        // process_movement()'s own comment on this), so a positive distance here actually
-        // samples toward the vehicle's rear, not its front - swapped from what the "front"/
-        // "rear" naming below implies. Confirmed live: this flipped the whole vehicle 180
-        // degrees the instant it started moving (test_rail_vehicle_idle_orientation_regression.gd).
-        const Transform3D front_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * -0.5);
-        const Transform3D rear_transform = server->vehicle_get_transform_at_distance(rid, pivot_spacing * 0.5);
+        const Transform3D front_transform = wheels->get_bogie_transform(VehicleWheels::BOGIE_FRONT);
+        const Transform3D rear_transform = wheels->get_bogie_transform(VehicleWheels::BOGIE_REAR);
         Vector3 body_forward = front_transform.origin - rear_transform.origin;
         if (body_forward.is_zero_approx()) {
             _update_wheel_animation_state();

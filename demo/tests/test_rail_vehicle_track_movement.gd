@@ -126,6 +126,19 @@ func test_bogies_follow_track_tangents() -> void:
         "bogies should follow different tangents on a curved track",
     )
 
+    # The vehicle publishes the axle angle; the node's only job is to put it on the wheel, around
+    # its local X, like the original's UpdateAxle() (DynObj.cpp:489). Driving the vehicle is what
+    # makes the angle non-trivial - the state is read-only, so it cannot be injected.
+    vehicle.move_on_track(1.5)
+    await wait_idle_frames(2)
+    var published_angle:float = wheels.get_angle_powered_deg()
+    assert_almost_eq(
+        Basis(Vector3.RIGHT, deg_to_rad(published_angle)).get_euler().x,
+        powered_wheel.transform.basis.get_euler().x,
+        0.001,
+        "the powered wheel should carry the angle the vehicle publishes",
+    )
+
 
 
 func test_start_track_name_retries_after_tracks_changed_when_track_is_added_later() -> void:

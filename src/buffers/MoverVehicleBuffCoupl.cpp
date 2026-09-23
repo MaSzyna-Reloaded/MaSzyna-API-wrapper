@@ -5,11 +5,37 @@
 namespace godot {
     void MoverVehicleBuffCoupl::_bind_methods() {}
 
+    /* The coupling flags of one end, read straight from the backend - this class is the only one
+     * that may (Mover.h: TCoupling, coupling::). */
+    bool MoverVehicleBuffCoupl::is_coupled(const End p_end) const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::coupler) != 0;
+    }
+
+    bool MoverVehicleBuffCoupl::is_brake_hose_connected(const End p_end) const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::brakehose) != 0;
+    }
+
+    bool MoverVehicleBuffCoupl::is_main_hose_connected(const End p_end) const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::mainhose) != 0;
+    }
+
+    bool MoverVehicleBuffCoupl::is_coupling_owner(const End p_end) const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr && mover->Couplers[p_end].Render;
+    }
+
+    VehicleBuffCoupl::End MoverVehicleBuffCoupl::get_connected_end(const End p_end) const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr && mover->Couplers[p_end].ConnectedNr == 1 ? END_REAR : END_FRONT;
+    }
+
 
     void MoverVehicleBuffCoupl::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover)
         // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
         if (get_buffer_location() == BufferLocation::BUFFER_LOCATION_BACK) {

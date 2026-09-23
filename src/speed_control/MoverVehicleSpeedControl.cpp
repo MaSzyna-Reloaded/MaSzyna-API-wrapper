@@ -10,7 +10,6 @@ namespace godot {
     void MoverVehicleSpeedControl::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
         p_mover->SpeedCtrl = get_speed_control_enabled();

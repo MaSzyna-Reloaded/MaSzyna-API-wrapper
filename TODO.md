@@ -139,7 +139,8 @@ rarer but did not go away. Until the rest is found this test cannot gate anythin
 `test_zzz_ep07_main_switch_trip_diagnostic` fails four assertions - the vehicle does not accelerate
 past 2 m/s across five controller notches and the Hasler never sees a speed. Verified at `76ebf3d`
 with the engine work stashed, so it is not from the #184 rework. Same family as
-`test_sm42_startup_sequence`: the vehicle refuses to move.
+`test_sm42_startup_sequence` was - and that one turned out to be a vehicle with nobody in the cab
+(see `FINDINGS.md`, 2026-09-23), so check `cabin_number`/`CabActive` here before anything else.
 
 **Tests that read the game directory** fail whenever it is not mounted, which is exactly what
 `AGENTS.md` forbids them to depend on: `test_zzz_ep07_cabin_main_switch` loads
@@ -408,11 +409,6 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   while `vehicle.get_controller()` already returns one, so the sound bank registered before the
   vehicle had resolved its controller and the 4 Hz sweep has not caught up within the three idle
   frames the test waits. Confirmed pre-existing at `87d5f8d`, before any of the #184 work.
-* `test_sm42_startup_sequence.gd::test_successful_moving_on` fails - "Speed should be > 0" at
-  line 69, the vehicle never starts moving after the startup sequence. Confirmed pre-existing on
-  a clean tree (stash the work, rebuild, run: it fails the same way), so it is not a regression of
-  the #184 work - but it is a red test nobody is looking at, and it is the only test covering that
-  the startup sequence ends in motion.
 * Tests switch the game dir with `UserSettings.save_maszyna_game_dir()`, which writes the user's
   `settings.cfg` (a failed/killed test leaves it pointing at a `user://gut/...` fixture dir):
   `test_dynamic_rail_vehicle_manager.gd`, `test_e3d_lights_state.gd`,
@@ -495,13 +491,11 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ### Left behind by the VehiclePhysicsNode commit
 
-* **Who owns the vehicle RID** is not settled. `VehiclePhysicsNode` creates one and frees it, and
-  `RailVehicle3D` has its own; a vehicle carrying both has two, and only one of them is stepped.
-  It has to become one owner before stage I moves `train_id` to `RailVehicle3D`.
-* **`test_dynamic_rail_vehicle_manager` and `test_zzz_ep07_main_switch_trip_diagnostic`** are red,
-  together with `test_sm42_startup_sequence` (recorded below, pre-existing). The first two follow
-  the vehicle-building path that stage F is about to replace, so they are rewritten there rather
-  than patched now.
+* **`test_dynamic_rail_vehicle_manager` and `test_zzz_ep07_main_switch_trip_diagnostic`** are
+  red. Both follow the vehicle-building path that stage F is about to replace, so they are
+  rewritten there rather than patched now - but the second one describes a vehicle that will not
+  accelerate, which is exactly what `test_sm42_startup_sequence` turned out to be: an unoccupied
+  cab, so no physics.
 * **The `.fiz` path has not been run in the game**, only in tests. Nothing has driven a vehicle
   end to end since the components stopped being nodes.
 
@@ -600,15 +594,6 @@ work, not two.
 **Measured scale, so nobody starts this thinking it is a field move:** `get_mover()` has **316
 call sites across 27 files**, **32 component methods take `TMoverParameters *` in their
 signature**, and `VehicleController` itself dereferences `mover->` **103 times**.
-
-### RailVehicle3D reads the coupler straight off the backend
-
-`_update_couplers()` takes `controller->get_mover()` and walks `mover->Couplers[end]` for
-`CouplingFlag`, `Render` and `ConnectedNr` - a rendering node reaching into `TMoverParameters`.
-It is the last such read left in `src/core/RailVehicle3D.cpp`, and it is the same move the wheels
-already made: the coupler belongs to `VehicleBuffCoupl`, so it should publish what each end is
-coupled with and the node should only pick the submodel. The one wrinkle is `coupling::` - a
-backend enum that must not travel out, so the component needs its own.
 
 ### A non-Mover component cannot exist yet - the backend is in the component base
 

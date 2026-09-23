@@ -9,7 +9,6 @@ namespace godot {
     void MoverVehicleAIHints::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
         p_mover->AIHintPantstate = get_pantograph_state();

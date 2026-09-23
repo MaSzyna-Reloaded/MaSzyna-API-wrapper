@@ -57,6 +57,21 @@ namespace godot {
             MAKE_MEMBER_GS(String, control_type, "");
             MAKE_MEMBER_GS_NR(CouplerType, coupler_type, CouplerType::COUPLER_TYPE_AUTOMATIC);
             MAKE_MEMBER_GS_NR(BufferLocation, buffer_location, BufferLocation::BUFFER_LOCATION_FRONT);
+            /// Which end of a vehicle a query is about.
+            enum End {
+                END_FRONT = 0,
+                END_REAR = 1,
+            };
+            /* What is attached at an end. The coupler owns the coupling, so it answers for it -
+             * a consumer picking a submodel to show has no business reading the simulation. */
+            virtual bool is_coupled(End p_end) const = 0;
+            virtual bool is_brake_hose_connected(End p_end) const = 0;
+            virtual bool is_main_hose_connected(End p_end) const = 0;
+            /// Which of the two coupled vehicles draws the coupler itself.
+            virtual bool is_coupling_owner(End p_end) const = 0;
+            /// The end of the neighbour this end is attached to.
+            virtual End get_connected_end(End p_end) const = 0;
+
             virtual void couple() = 0;
             virtual void decouple() = 0;
     };
@@ -66,3 +81,4 @@ VARIANT_ENUM_CAST(VehicleBuffCoupl::CouplerType)
 VARIANT_ENUM_CAST(VehicleBuffCoupl::AllowedFlagBits)
 VARIANT_ENUM_CAST(VehicleBuffCoupl::PowerFlagBits)
 VARIANT_ENUM_CAST(VehicleBuffCoupl::BufferLocation)
+VARIANT_ENUM_CAST(VehicleBuffCoupl::End)

@@ -12,6 +12,12 @@ namespace godot {
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
         public:
+            bool is_coupled(End p_end) const override;
+            bool is_brake_hose_connected(End p_end) const override;
+            bool is_main_hose_connected(End p_end) const override;
+            bool is_coupling_owner(End p_end) const override;
+            End get_connected_end(End p_end) const override;
+
             void couple() override;
             void decouple() override;
     };

@@ -12,6 +12,7 @@
 #include <godot_cpp/variant/typed_dictionary.hpp>
 
 namespace godot {
+    class VehicleBuffCoupl;
     class VehiclePhysicsNode;
     class Area3D;
     class VehicleElectricEngine;
@@ -112,6 +113,7 @@ namespace godot {
             void _on_controller_changed(VehicleController *p_controller);
             void _on_vehicle_changed();
             void _bind_vehicle_node();
+            const VehicleBuffCoupl *_coupler() const;
             void _on_vehicle_config_changed();
             void _update_head_display();
             void _schedule_head_display_update();

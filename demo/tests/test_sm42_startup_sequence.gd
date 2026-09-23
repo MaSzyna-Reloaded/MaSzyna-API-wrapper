@@ -3,7 +3,15 @@ extends MaszynaGutTest
 var train: VehicleController
 
 func before_each():
-    train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
+    # A startup sequence is a driver operating the loco, so the cab is occupied. Without it
+    # CabActive stays 0 and TMoverParameters::ComputeTotalForce() switches the physics off once
+    # LastSwitchingTime passes 5 s (Mover.cpp:4485) - the engine runs and the vehicle never moves.
+    var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+    physics_node.train_id = "TestTrain"
+    physics_node.cabin_number = 1
+    physics_node.set_model(load("res://tests/fixtures/sm42_vehicle.tres"))
+    add_child_autofree(physics_node)
+    train = physics_node.get_controller()
     await wait_idle_frames(2)
     train.send_command("battery", true)
     await wait_idle_frames(2)

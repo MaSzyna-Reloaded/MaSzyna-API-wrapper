@@ -8,7 +8,6 @@ namespace godot {
     void MoverVehicleHeating::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
         p_mover->HeatingPowerSource.SourceType = train_controller_node->power_source_map.at(get_heating_source());

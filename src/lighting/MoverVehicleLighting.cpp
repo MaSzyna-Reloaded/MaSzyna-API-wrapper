@@ -9,7 +9,6 @@ namespace godot {
     void MoverVehicleLighting::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
         p_mover->LightsPosNo =
                 static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int

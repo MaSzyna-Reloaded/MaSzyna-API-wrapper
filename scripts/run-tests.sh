@@ -33,8 +33,9 @@ LOG_DIR="${LOG_DIR:-${TMPDIR:-/tmp}/maszyna-tests}"
 mkdir -p "$LOG_DIR"
 
 if [ "${1:-}" = "--changed" ]; then
+    # only the test scripts themselves: fixtures carry no tests and would report NO RESULT
     mapfile -t NAMES < <(git -C "$REPO" diff --name-only HEAD -- demo/tests \
-        | grep '^demo/tests/.*\.gd$' | xargs -r -n1 basename | sed 's/\.gd$//' | sort -u)
+        | grep '^demo/tests/test_[^/]*\.gd$' | xargs -r -n1 basename | sed 's/\.gd$//' | sort -u)
 else
     NAMES=("${@%.gd}")
 fi

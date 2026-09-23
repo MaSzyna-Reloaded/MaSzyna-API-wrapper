@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "RailVehicle3D.hpp"
+#include "../buffers/VehicleBuffCoupl.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "VehiclePhysicsNode.hpp"
 
@@ -903,6 +904,11 @@ namespace godot {
     // matching the layout of the vehicle coupled at that end: 1 straight, 2 slanted, 3 slanted "r",
     // 4 straight "r"
     int RailVehicle3D::_pneumatic_variant(const int p_end, const bool p_brake_hose) const {
+        const VehicleBuffCoupl *coupler = _coupler();
+        if (coupler == nullptr) {
+            return 0;
+        }
+        const VehicleBuffCoupl::End end = static_cast<VehicleBuffCoupl::End>(p_end);
         const int own = get_pneumatic_layout(p_end, p_brake_hose);
         int other = 0;
         RailVehicleServer *server = RailVehicleServer::get_instance();
@@ -911,8 +917,7 @@ namespace godot {
             const ObjectID other_id = ObjectID(server->vehicle_get_rail_vehicle(other_controller->get_rid()));
             if (const RailVehicle3D *other_vehicle = Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(other_id));
                 other_vehicle != nullptr) {
-                other = other_vehicle->get_pneumatic_layout(
-                        controller->get_mover()->Couplers[p_end].ConnectedNr, p_brake_hose);
+                other = other_vehicle->get_pneumatic_layout(coupler->get_connected_end(end), p_brake_hose);
             }
         }
         if (own == other) {
@@ -922,7 +927,7 @@ namespace godot {
                 case 2:
                     return 3;
                 case 3:
-                    return controller->get_mover()->Couplers[p_end].Render ? 1 : 4;
+                    return coupler->is_coupling_owner(end) ? 1 : 4;
                 default:
                     return 0;
             }
@@ -946,21 +951,27 @@ namespace godot {
         }
     }
 
+    const VehicleBuffCoupl *RailVehicle3D::_coupler() const {
+        return controller != nullptr
+                       ? Object::cast_to<VehicleBuffCoupl>(
+                                 controller->get_component(VehicleComponentType::COMPONENT_BUFFERS))
+                       : nullptr;
+    }
+
     // Original engine: coupler and hose submodel visibility (DynObj.cpp:758-925, bnewAirCouplers branch)
     void RailVehicle3D::_update_couplers() {
-        if (coupler_submodel_nodes.is_empty() || controller->get_mover() == nullptr) {
+        const VehicleBuffCoupl *coupler = _coupler();
+        if (coupler_submodel_nodes.is_empty() || coupler == nullptr) {
             return;
         }
-        const TMoverParameters *mover = controller->get_mover();
         int variants[2][3];
         int64_t state = 0;
         for (int end = 0; end < 2; ++end) {
-            const TCoupling &coupler = mover->Couplers[end];
-            const bool coupled = (coupler.CouplingFlag & coupling::coupler) != 0;
-            // _on for the coupling owner (Render), _xon (or _off without it) for the other vehicle
-            variants[end][0] = !coupled ? 0 : (coupler.Render ? 1 : 2);
-            variants[end][1] = (coupler.CouplingFlag & coupling::brakehose) != 0 ? _pneumatic_variant(end, true) : 0;
-            variants[end][2] = (coupler.CouplingFlag & coupling::mainhose) != 0 ? _pneumatic_variant(end, false) : 0;
+            const VehicleBuffCoupl::End vehicle_end = static_cast<VehicleBuffCoupl::End>(end);
+            // _on for the vehicle that draws the coupler, _xon (or _off without it) for the other
+            variants[end][0] = !coupler->is_coupled(vehicle_end) ? 0 : (coupler->is_coupling_owner(vehicle_end) ? 1 : 2);
+            variants[end][1] = coupler->is_brake_hose_connected(vehicle_end) ? _pneumatic_variant(end, true) : 0;
+            variants[end][2] = coupler->is_main_hose_connected(vehicle_end) ? _pneumatic_variant(end, false) : 0;
             for (const int variant: variants[end]) {
                 state = state * 5 + variant;
             }

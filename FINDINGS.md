@@ -3,6 +3,29 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - the loco that would not move had nobody in the cab
+
+* **Symptom:** `test_sm42_startup_sequence::test_successful_moving_on` - "Speed should be > 0" -
+  red since `87d5f8d`, through weeks of unrelated work. The startup itself was fine: the engine
+  reached its revolutions and the brakes released, both asserted two lines above the failure.
+* **Cause:** `TMoverParameters::ComputeTotalForce()` decides whether the vehicle is worth
+  simulating at all (`Mover.cpp:4485`): `vehicleisactive` is `CabActive != 0 || Vel > 0.0001 ||
+  |AccS| > 0.0001 || LastSwitchingTime < 5 || EZT || DMU`, and `switch_physics()` turns the
+  integration off when none of them holds. The test built its locomotive with the default
+  `cabin_number = 0`, so `VehicleController::initialize_mover()` never called `CabActivisation()`
+  - by the original's own rule, an unmanned vehicle stays inactive (`Driver.cpp:2126`). For the
+  first five seconds `LastSwitchingTime` kept the physics alive, which is why the early
+  assertions passed; the test then waits 5 s + 5 s + 1 s + 2 s, and by the time it looks at the
+  speed the Mover had long stopped integrating.
+* **Fix:** the test occupies the cab (`cabin_number = 1`), which is what a startup sequence is -
+  a driver operating the locomotive.
+* **Rule:** a vehicle that is not driven is not simulated, on purpose. Before treating "it does
+  not move" as a physics or a wiring bug, check `CabActive`/`PhysicActivation` - the backend
+  switches itself off and reports nothing.
+* **Rule:** a red test that survives many unrelated commits stops being evidence of the commit
+  that turned it red. This one was read as a regression of the physics-server port for weeks; it
+  was a test that had never set up a driven vehicle.
+
 ## 2026-09-23 - a parked vehicle never had its bogies placed, and four guesses before one print
 
 * **Symptom:** both bogies of a vehicle standing on a curve carried the same tangent

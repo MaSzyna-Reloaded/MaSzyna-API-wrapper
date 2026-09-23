@@ -10,7 +10,6 @@ namespace godot {
     void MoverVehicleUniversalController::_apply_configuration() {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
         p_mover->UniCtrlIntegratedBrakePNCtrl = get_integrated_brake_pn();

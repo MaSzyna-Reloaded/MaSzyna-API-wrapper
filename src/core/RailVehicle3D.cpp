@@ -282,7 +282,10 @@ namespace godot {
     /* The vehicle this node draws has been (re)built. Everything this node sets up needs a
      * vehicle, so this is where its own initialisation starts - and where processing begins. */
     void RailVehicle3D::_on_vehicle_changed() {
-        _on_controller_changed(fiz_controller != nullptr ? fiz_controller->get_controller() : nullptr);
+        VehicleController *vehicle = fiz_controller != nullptr ? fiz_controller->get_controller() : nullptr;
+        _on_controller_changed(vehicle);
+        // the vehicle was rebuilt in place, so its parts changed even though it did not
+        _adopt_vehicle_parts();
         dirty = true;
         set_process(true);
     }
@@ -314,6 +317,22 @@ namespace godot {
         _on_controller_changed(get_controller());
     }
 
+    /* What the vehicle is made of, re-read from it. Kept apart from taking a *different*
+     * controller because a rebuild keeps the same one - the vehicle is first built empty and its
+     * components arrive with its model, so a guard on the controller's identity would leave this
+     * node holding the parts of the empty vehicle forever. */
+    void RailVehicle3D::_adopt_vehicle_parts() {
+        electric_engine = nullptr;
+        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
+            pantograph_wire_cache[index] = Dictionary();
+        }
+        if (controller == nullptr) {
+            return;
+        }
+        electric_engine = Object::cast_to<VehicleElectricEngine>(
+                controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+    }
+
     void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
         if (controller == p_controller) {
             return;
@@ -325,17 +344,12 @@ namespace godot {
                     callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
         }
         controller = p_controller;
-        electric_engine = nullptr;
-        for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
-            pantograph_wire_cache[index] = Dictionary();
-        }
         if (controller != nullptr) {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
             controller->connect(
                     VehicleController::config_changed,
                     callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
-            electric_engine = Object::cast_to<VehicleElectricEngine>(
-                    controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+            _adopt_vehicle_parts();
         }
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
             /* A vehicle has one handle. When the controller already carries one - it does
@@ -1366,7 +1380,13 @@ namespace godot {
             const Vector3 &p_left) {
         TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
         if (traction_power_server == nullptr) {
-            return Dictionary();
+            /* "No wire in reach", the same answer the search gives when it finds none - the raise
+             * simulation reads this height and an absent key would read as 0.0, which is
+             * "the wire is right here" and folds the pantograph instead of extending it. */
+            Dictionary missing;
+            missing["rid"] = RID();
+            missing["height"] = INFINITY;
+            return missing;
         }
         Dictionary cache = pantograph_wire_cache[p_index];
         // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),

@@ -115,6 +115,7 @@ namespace godot {
             void _bind_vehicle_node();
             const VehicleBuffCoupl *_coupler() const;
             void _on_vehicle_config_changed();
+            void _adopt_vehicle_parts();
             void _update_head_display();
             void _schedule_head_display_update();
             void _process_impl(double p_delta);

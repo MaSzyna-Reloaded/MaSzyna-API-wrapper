@@ -511,13 +511,11 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ### RailVehicle3D runs before it has a vehicle
 
-The node enters the tree, creates a handle, starts `_process` and applies its start-track
-placement - all before any vehicle exists. The controller only arrives when `controller_path`
-resolves, a frame later, so the first placement runs with a pivot spacing of 0 and bails out;
-`_on_controller_changed()` now re-applies the placement to make up for it. That is a patch over
-the ordering: the node should not place or animate anything until it has a vehicle, and the
-vehicle should be known to it before it starts processing (the `VehiclePhysicsNode` is its
-sibling or parent in the scene, so it can be resolved on entering the tree).
+Half done. The node now binds its `VehiclePhysicsNode` in `_enter_tree()` and does not process
+until `vehicle_changed` says there is a vehicle, so nothing is placed against a vehicle that is
+not there. What is left: it still creates a handle of its own in `_enter_tree()` and adopts the
+vehicle's later, rather than never creating one - a node that draws a vehicle should not own a
+handle at all.
 
 ### Rail concepts living in interfaces named "Vehicle"
 
@@ -590,20 +588,6 @@ would make it one: the component's tick and configuration take no backend type a
 component reaches its own backend through its implementation, the way `MoverVehicleBrake` already
 does internally - and `initialize()` asks a backend factory for the vehicle's simulation instead
 of naming `MaszynaMoverPhysicsServer`.
-
-### The cabin is reached by name because its base class is GDScript
-
-`RailVehicle3D::enter_cabin()` hands the cabin its vehicle with
-`cabin->call("set_train_id", ...)`. That is the one exception `CODE_STYLE.md` allows - a GDScript
-node a C++ node merely hosts - but it is an exception only because `Cabin3D`/`DynamicTrainCabin`
-are GDScript. Every route from C++ into them is by name: `call()`, `set()` or `connect()`, none
-of them checked at build time, and a rename is a silent no-op (which is exactly how the HUD's
-`controller_changed` connections went dead unnoticed).
-
-It stops being an exception when the cabin's base is C++: a `Cabin3D` with a typed
-`set_train_id(const String &)`, with the cabin scripts extending it. Then the handoff is an
-ordinary compiled call and the two `connect("camera_configuration_changed", ...)` beside it
-become `callable_mp` too.
 
 ### What still reaches a class by name from C++
 

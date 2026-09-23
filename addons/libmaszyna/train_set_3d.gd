@@ -28,7 +28,7 @@ func _process_coupling_dirty() -> void:
         if not vehicle:
             continue
         var controller:VehicleController = vehicle.get_controller()
-        if not controller or not controller.is_node_ready():
+        if not controller or not controller.is_simulation_ready():
             return
         vehicles.append(vehicle)
         controllers.append(controller)

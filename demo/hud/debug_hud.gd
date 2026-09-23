@@ -12,11 +12,12 @@ func _ready() -> void:
             _player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed)
 
 func _on_controlled_vehicle_changed():
-    var controller:VehicleController
     if _player.controlled_vehicle and _player.controlled_vehicle.controller_path:
-        controller = _player.controlled_vehicle.get_controller()
-        $MoverSwitches.train_controller = $MoverSwitches.get_path_to(controller)
-        $Gauges.train_controller = $Gauges.get_path_to(controller)
+        # the vehicle's node is what carries a path; the controller it owns is not a node
+        var physics_node: Node = _player.controlled_vehicle.get_node_or_null(
+                _player.controlled_vehicle.controller_path)
+        $MoverSwitches.train_controller = $MoverSwitches.get_path_to(physics_node)
+        $Gauges.train_controller = $Gauges.get_path_to(physics_node)
     else:
         $MoverSwitches.train_controller = NodePath("")
         $Gauges.train_controller = NodePath("")

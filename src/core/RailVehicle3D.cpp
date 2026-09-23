@@ -413,13 +413,10 @@ namespace godot {
                         callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             fiz_controller = nullptr;
         }
-        if (controller != nullptr) {
-            controller->disconnect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
-            controller->disconnect(
-                    VehicleController::config_changed,
-                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
-            controller = nullptr;
-        }
+        // letting go of the vehicle is the same operation as taking a different one, and it is
+        // the only place that disconnects - a second copy of the disconnect here is what made
+        // teardown report a connection that was never made
+        _on_controller_changed(nullptr);
     }
 
     void RailVehicle3D::_notification(int p_what) {

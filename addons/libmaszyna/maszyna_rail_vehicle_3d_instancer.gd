@@ -187,10 +187,11 @@ static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_d
     # FIZ Dimensions are known only once FizVehiclePhysicsNode has built its deferred controller.
     var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
     var rain_volume:RainVolume = vehicle.get_node(NodePath(RAIN_VOLUME_NAME)) as RainVolume
-    fiz_controller.controller_changed.connect(_fit_rain_volume.bind(rain_volume))
+    fiz_controller.vehicle_changed.connect(_fit_rain_volume.bind(fiz_controller, rain_volume))
 
 
-static func _fit_rain_volume(controller:VehicleController, rain_volume:RainVolume) -> void:
+static func _fit_rain_volume(physics_node:VehiclePhysicsNode, rain_volume:RainVolume) -> void:
+    var controller:VehicleController = physics_node.get_controller()
     if not controller:
         return
     rain_volume.size = Vector3(
@@ -274,8 +275,8 @@ static func _resolve_animation_paths(vehicle:RailVehicle3D, model:E3DModelInstan
     if wiper_prefix:
         vehicle.wiper_arm_paths = _find_wiper_arm_paths(vehicle, submodel_index, wiper_prefix)
         var fiz_controller:FizVehiclePhysicsNode = vehicle.get_node("FizVehiclePhysicsNode") as FizVehiclePhysicsNode
-        fiz_controller.controller_changed.connect(_apply_wiper_count.bind(vehicle))
-        _apply_wiper_count(fiz_controller.get_controller(), vehicle)
+        fiz_controller.vehicle_changed.connect(_apply_wiper_count.bind(fiz_controller, vehicle))
+        _apply_wiper_count(fiz_controller, vehicle)
 
     # coupler and air hose submodels (AirCoupler::Init(), DynObj.cpp:2170-2181, AirCoupler.cpp:54)
     var coupler_paths:Dictionary = {}
@@ -307,7 +308,8 @@ static func _find_pantograph_arm_paths(
 
 ## VehicleWipers has to know how many wipers the model has: from cab 2 they are numbered from the
 ## other end (DynObj.cpp:4062).
-static func _apply_wiper_count(controller:VehicleController, vehicle:RailVehicle3D) -> void:
+static func _apply_wiper_count(physics_node:VehiclePhysicsNode, vehicle:RailVehicle3D) -> void:
+    var controller:VehicleController = physics_node.get_controller()
     if not controller:
         return
     var wipers:VehicleWipers = controller.get_component(VehicleComponentType.COMPONENT_WIPERS) as VehicleWipers

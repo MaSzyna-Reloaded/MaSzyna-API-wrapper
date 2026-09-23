@@ -11,116 +11,114 @@
 
 namespace godot {
     bool VehicleElectricEngine::get_converter_enabled() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_enabled(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_converter_enabled(this) : false;
     }
     bool VehicleElectricEngine::get_converted_allowed() const {
-        return electric_backend != nullptr ? electric_backend->get_converted_allowed(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_converted_allowed(this) : false;
     }
     double VehicleElectricEngine::get_converter_time_to_start() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_time_to_start(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_converter_time_to_start(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_voltage(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_current() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_current(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_current(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_lifting(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_lifting(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_lifting() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_lifting(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_lifting(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_sliding_width() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_sliding_width(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_sliding_width(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_main_switch_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_main_switch_voltage(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_min_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_min_pantograph_tank_pressure(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_min_pantograph_tank_pressure(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_max_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_max_pantograph_tank_pressure(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_max_pantograph_tank_pressure(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_pantograph_tank_pressure() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_tank_pressure(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_tank_pressure(this) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_pantograph_pressure_switch_armed() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_pressure_switch_armed(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_pressure_switch_armed(this) : false;
     }
     bool VehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(this) : false;
     }
     bool VehicleElectricEngine::get_collector_overvoltage_relay() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(this) : false;
     }
     double VehicleElectricEngine::get_collector_required_main_switch_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_required_main_switch_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_required_main_switch_voltage(this) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_valve_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_valve_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_valve_active(this) : false;
     }
     bool VehicleElectricEngine::get_collector_pantographs_dropped() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(this) : false;
     }
     bool VehicleElectricEngine::get_collector_pantograph_first_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(this) : false;
     }
     double VehicleElectricEngine::get_collector_pantograph_first_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_voltage(this) : 0.0;
     }
     bool VehicleElectricEngine::get_collector_pantograph_second_active() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_active(this) : false;
     }
     double VehicleElectricEngine::get_collector_pantograph_second_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_second_voltage(this) : 0.0;
     }
     double VehicleElectricEngine::get_collector_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_collector_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_collector_voltage(this) : 0.0;
     }
     bool VehicleElectricEngine::get_contactors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_contactors_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_contactors_active(this) : false;
     }
     bool VehicleElectricEngine::get_diff_relay_active() const {
-        return electric_backend != nullptr ? electric_backend->get_diff_relay_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_diff_relay_active(this) : false;
     }
     bool VehicleElectricEngine::get_resistors_active() const {
-        return electric_backend != nullptr ? electric_backend->get_resistors_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_resistors_active(this) : false;
     }
     bool VehicleElectricEngine::get_vent_overload_active() const {
-        return electric_backend != nullptr ? electric_backend->get_vent_overload_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_vent_overload_active(this) : false;
     }
     bool VehicleElectricEngine::get_highcurrent_active() const {
-        return electric_backend != nullptr ? electric_backend->get_highcurrent_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_highcurrent_active(this) : false;
     }
     bool VehicleElectricEngine::get_mainbreaker_active() const {
-        return electric_backend != nullptr ? electric_backend->get_mainbreaker_active(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_mainbreaker_active(this) : false;
     }
     double VehicleElectricEngine::get_transducer_input_voltage() const {
-        return electric_backend != nullptr ? electric_backend->get_transducer_input_voltage(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_transducer_input_voltage(this) : 0.0;
     }
     bool VehicleElectricEngine::get_camshaft_available() const {
-        return electric_backend != nullptr ? electric_backend->get_camshaft_available(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_camshaft_available(this) : false;
     }
     bool VehicleElectricEngine::get_converter_overload() const {
-        return electric_backend != nullptr ? electric_backend->get_converter_overload(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_converter_overload(this) : false;
     }
     double VehicleElectricEngine::get_line_breaker_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_delay(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_delay(this) : 0.0;
     }
     double VehicleElectricEngine::get_line_breaker_initial_delay() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_initial_delay(mover_of(this)) : 0.0;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_initial_delay(this) : 0.0;
     }
     bool VehicleElectricEngine::get_line_breaker_closes_at_no_power() const {
-        return electric_backend != nullptr ? electric_backend->get_line_breaker_closes_at_no_power(mover_of(this)) : false;
+        return electric_backend != nullptr ? electric_backend->get_line_breaker_closes_at_no_power(this) : false;
     }
     void VehicleElectricEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
         VehicleEngine::_apply_configuration();
         if (electric_backend != nullptr) {
-            electric_backend->update_mover(this, p_mover);
+            electric_backend->apply_configuration(this);
         }
     }
 

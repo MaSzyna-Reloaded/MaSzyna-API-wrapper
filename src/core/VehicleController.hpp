@@ -276,7 +276,15 @@ namespace godot {
             /* Brings the vehicle up: its simulation, its state and the signals whose initial
              * value listeners expect. Called by whatever owns the vehicle, once it is built -
              * it used to wait for NOTIFICATION_READY, which a vehicle outside a tree never gets. */
+            /// Whether this vehicle's simulation exists yet. A vehicle is a vehicle from the
+            /// moment it is built, but nothing can be coupled to it or read off it until the
+            /// backend behind it is there.
+            bool is_simulation_ready() const;
             void attach_to_system();
+            /// Lets go of everything this vehicle holds - its components, its registration and
+            /// its simulation - without destroying the vehicle, so every reference to it stays
+            /// valid across a rebuild.
+            void release();
             void initialize();
             /* The reverse: the vehicle leaves TrainSystem and gives its commands back. */
             void shutdown();

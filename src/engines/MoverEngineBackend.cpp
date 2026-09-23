@@ -1,69 +1,86 @@
 #include "MoverEngineBackend.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "../core/VehicleController.hpp"
 
 namespace godot {
-    bool MoverEngineBackend::get_main_switch_enabled(const TMoverParameters *p_mover) const {
+    bool MoverEngineBackend::get_main_switch_enabled(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->Mains : false;
     }
 
-    bool MoverEngineBackend::get_main_switch_closable(const TMoverParameters *p_mover) const {
+    bool MoverEngineBackend::get_main_switch_closable(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->MainSwitchCheck() : false;
     }
 
-    double MoverEngineBackend::get_motor_torque(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_motor_torque(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->Mm : 0.0;
     }
 
-    double MoverEngineBackend::get_wheel_torque(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_wheel_torque(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->Mw : 0.0;
     }
 
-    double MoverEngineBackend::get_wheel_force(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_wheel_force(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->Fw : 0.0;
     }
 
-    double MoverEngineBackend::get_tractive_force(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_tractive_force(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
 
-    bool MoverEngineBackend::get_compressor_enabled(const TMoverParameters *p_mover) const {
+    bool MoverEngineBackend::get_compressor_enabled(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->CompressorFlag : false;
     }
 
-    bool MoverEngineBackend::get_compressor_allowed(const TMoverParameters *p_mover) const {
+    bool MoverEngineBackend::get_compressor_allowed(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->CompressorAllow : false;
     }
 
-    double MoverEngineBackend::get_power(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->EnginePower : 0.0;
     }
 
-    double MoverEngineBackend::get_rpm_count(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_rpm_count(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->enrot : 0.0;
     }
 
-    double MoverEngineBackend::get_rpm_ratio(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_rpm_ratio(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;
     }
 
-    double MoverEngineBackend::get_circuit_nmax_rpm(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_circuit_nmax_rpm(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->nmax * 60.0 : 0.0;
     }
 
-    int MoverEngineBackend::get_damage(const TMoverParameters *p_mover) const {
+    int MoverEngineBackend::get_damage(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->EngDmgFlag : 0;
     }
 
-    double MoverEngineBackend::get_main_switch_time(const TMoverParameters *p_mover) const {
+    double MoverEngineBackend::get_main_switch_time(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->MainsInitTimeCountdown : 0.0;
     }
 
-    bool MoverEngineBackend::get_main_no_power_pos(const TMoverParameters *p_mover) const {
+    bool MoverEngineBackend::get_main_no_power_pos(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
     }
 
-    void MoverEngineBackend::update_mover(const VehicleEngine *p_engine, TMoverParameters *p_mover) const {
+    void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
         p_mover->EngineType = p_engine->engine_type_map.at(p_engine->get_engine_type());
 
         p_mover->Transmision.NToothM = p_engine->get_transmission_gear_teeth_motor();
@@ -143,7 +160,8 @@ namespace godot {
         }
     }
 
-    void MoverEngineBackend::fill_config(const VehicleEngine *p_engine, const TMoverParameters *p_mover, Dictionary &p_config) const {
+    void MoverEngineBackend::fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 if (p_mover == nullptr) {
             return;
         }

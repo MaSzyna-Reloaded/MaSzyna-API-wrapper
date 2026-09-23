@@ -491,29 +491,23 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ### Left behind by the VehiclePhysicsNode commit
 
-* **`test_dynamic_rail_vehicle_manager` and `test_zzz_ep07_main_switch_trip_diagnostic`** are
-  red. Both follow the vehicle-building path that stage F is about to replace, so they are
+* **`test_dynamic_rail_vehicle_manager`** is red, and what it reports was measured rather than
+  guessed at: `registration.controller` is a plain `null`, so the sound bank never captured a
+  controller at all, while `vehicle.get_controller()` returns a valid one at assert time. It was
+  a **freed** object before `VehicleController::release()` preserved the vehicle's identity
+  across a rebuild - that part is fixed. What remains is that the bank registers against a
+  vehicle that has no controller yet and only the 4 Hz sweep repairs it, later than the three
+  idle frames the test waits. Connecting the repair to the vehicle's `ready` does not help
+  (the vehicle is already ready by then) and connecting it to `tree_entered` fires too early,
+  so the bank is most likely registered against the template rather than the instance - which
+  is exactly the packing-and-instancing that stage F removes. Fix it there, not in the sound
+  system.
+* **`test_zzz_ep07_main_switch_trip_diagnostic`** is red. Both follow the vehicle-building path that stage F is about to replace, so they are
   rewritten there rather than patched now - but the second one describes a vehicle that will not
   accelerate, which is exactly what `test_sm42_startup_sequence` turned out to be: an unoccupied
   cab, so no physics.
 * **The `.fiz` path has not been run in the game**, only in tests. Nothing has driven a vehicle
   end to end since the components stopped being nodes.
-
-### Wheel geometry is computed by the node that draws it, not by the wheels
-
-`RailVehicle3D` reads `bogie_pivot_spacing` out of the vehicle's config, asks
-`RailVehicleServer.vehicle_get_curve(rid, spacing)` for the two bogie placements, and reads
-`wheel_angle_powered_deg` out of the state dump to turn the wheel submodel. That is wheel
-geometry living in a rendering node. The split: `RailVehicle3D` keeps the **paths and the
-animating** - `front_bogie_path`, `powered_wheel_paths`, the rest bases and applying the
-transforms - while `VehicleWheels` owns the wheels, so it owns the angle and the bogie placement
-and reads them off the vehicle server itself (`vehicle_get_transform_at_distance`) by RID.
-
-Moving it there is what makes it testable again. `test_rail_vehicle_track_movement` used to
-assert the wheel rotation by writing `controller.state["wheel_angle_powered_deg"] = 90.0`; the
-state is read-only now, so that assertion was dropped. Once `VehicleWheels` computes the angle
-and the bogie placement, the test asserts them on the component - no node, no state injection.
-
 
 ### RailVehicle3D runs before it has a vehicle
 
@@ -524,24 +518,6 @@ resolves, a frame later, so the first placement runs with a pivot spacing of 0 a
 the ordering: the node should not place or animate anything until it has a vehicle, and the
 vehicle should be known to it before it starts processing (the `VehiclePhysicsNode` is its
 sibling or parent in the scene, so it can be resolved on entering the tree).
-
-### Adding a component to a built vehicle is not a complete operation
-
-Components are no longer nodes, so `add_component()` on a vehicle that has already been through
-`initialize()` is an ordinary path now - a modder's `GenericVehicleComponentNode` does exactly
-that, and so do the tests. What it is missing:
-
-* the new component's configuration reaches the backend through `dirty_prop`, and
-  `_update_mover_config_if_dirty()` emits `mover_config_changed` off the *other* flag (`dirty`),
-  before `apply_config()` runs. So configuration lands with nothing announced - measured: the
-  signal never reaches a listener connected after the build.
-* consumers that derive geometry from it therefore cannot be event-driven.
-  `RailVehicle3D::apply_track_placement()` currently re-requests a placement when the bogie pivot
-  spacing is not there yet, which is a retry standing in for the missing event.
-
-The fix is to make attaching a component a named, complete operation: apply its configuration and
-announce that it was applied (a signal that means "the backend now carries this", not "it is
-about to"). Then `RailVehicle3D` reacts to it and the retry goes away.
 
 ### Rail concepts living in interfaces named "Vehicle"
 
@@ -595,22 +571,19 @@ work, not two.
 call sites across 27 files**, **32 component methods take `TMoverParameters *` in their
 signature**, and `VehicleController` itself dereferences `mover->` **103 times**.
 
-### A non-Mover component cannot exist yet - the backend is in the component base
+### A non-Mover component still cannot exist - one layer left
 
-Asked directly: could the vehicle take a `CarBrakes` today? The slot would accept it -
+Could the vehicle take a `CarBrakes` today? The component model itself is ready:
 `COMPONENT_BRAKES` names a kind rather than a class, `add_component()` takes any
-`VehicleComponent *`, and `VehicleComponentModel.implementation` is a class name ClassDB
-instantiates. What stops it is a layer below:
+`VehicleComponent *`, `VehicleComponentModel.implementation` is a class name ClassDB
+instantiates, and the component base and every interface now name no backend at all - its tick
+and configuration are `_do_process_component(delta)` and `_apply_configuration()`, and Mover
+access lives in `src/mover/MoverBackend.hpp`.
 
-* **`VehicleComponent` names the backend in its own API**: `_do_update_internal_mover(
-  TMoverParameters *)`, `_do_process_mover(TMoverParameters *, double)` and `get_mover()` are on
-  the base every component derives from, so any implementation has to speak `TMoverParameters`.
-  That is the prohibition in `AGENTS.md` ("the backend never appears in a public interface")
-  standing in the middle of the component model.
-* **`VehicleController::initialize_mover()` always creates a Mover** and `ERR_FAIL_NULL`s on it.
-  There is no vehicle without one.
-* **`VehicleComponent::apply_config()` does nothing without a Mover**, so a component backed by
-  anything else has nowhere to write its configuration.
+What is left is the controller: **`VehicleController::initialize_mover()` always creates a
+Mover** and `ERR_FAIL_NULL`s on it, so there is no vehicle without one. That is the same piece of
+work as the split above - `initialize()` has to ask a backend factory for the vehicle's
+simulation instead of naming `MaszynaMoverPhysicsServer`.
 
 So "the same servers carry road vehicles" is a statement of intent, not a fact. The shape that
 would make it one: the component's tick and configuration take no backend type at all - the

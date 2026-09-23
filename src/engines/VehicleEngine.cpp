@@ -8,62 +8,60 @@
 namespace godot {
     class VehicleController;
     bool VehicleEngine::get_main_switch_enabled() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_enabled(mover_of(this)) : false;
+        return engine_backend != nullptr ? engine_backend->get_main_switch_enabled(this) : false;
     }
     bool VehicleEngine::get_main_switch_closable() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_closable(mover_of(this)) : false;
+        return engine_backend != nullptr ? engine_backend->get_main_switch_closable(this) : false;
     }
     double VehicleEngine::get_motor_torque() const {
-        return engine_backend != nullptr ? engine_backend->get_motor_torque(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_motor_torque(this) : 0.0;
     }
     double VehicleEngine::get_wheel_torque() const {
-        return engine_backend != nullptr ? engine_backend->get_wheel_torque(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_wheel_torque(this) : 0.0;
     }
     double VehicleEngine::get_wheel_force() const {
-        return engine_backend != nullptr ? engine_backend->get_wheel_force(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_wheel_force(this) : 0.0;
     }
     double VehicleEngine::get_tractive_force() const {
-        return engine_backend != nullptr ? engine_backend->get_tractive_force(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_tractive_force(this) : 0.0;
     }
     bool VehicleEngine::get_compressor_enabled() const {
-        return engine_backend != nullptr ? engine_backend->get_compressor_enabled(mover_of(this)) : false;
+        return engine_backend != nullptr ? engine_backend->get_compressor_enabled(this) : false;
     }
     bool VehicleEngine::get_compressor_allowed() const {
-        return engine_backend != nullptr ? engine_backend->get_compressor_allowed(mover_of(this)) : false;
+        return engine_backend != nullptr ? engine_backend->get_compressor_allowed(this) : false;
     }
     double VehicleEngine::get_power() const {
-        return engine_backend != nullptr ? engine_backend->get_power(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_power(this) : 0.0;
     }
     double VehicleEngine::get_rpm_count() const {
-        return engine_backend != nullptr ? engine_backend->get_rpm_count(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_rpm_count(this) : 0.0;
     }
     double VehicleEngine::get_rpm_ratio() const {
-        return engine_backend != nullptr ? engine_backend->get_rpm_ratio(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_rpm_ratio(this) : 0.0;
     }
     double VehicleEngine::get_circuit_nmax_rpm() const {
-        return engine_backend != nullptr ? engine_backend->get_circuit_nmax_rpm(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_circuit_nmax_rpm(this) : 0.0;
     }
     int VehicleEngine::get_damage() const {
-        return engine_backend != nullptr ? engine_backend->get_damage(mover_of(this)) : 0;
+        return engine_backend != nullptr ? engine_backend->get_damage(this) : 0;
     }
     double VehicleEngine::get_main_switch_time() const {
-        return engine_backend != nullptr ? engine_backend->get_main_switch_time(mover_of(this)) : 0.0;
+        return engine_backend != nullptr ? engine_backend->get_main_switch_time(this) : 0.0;
     }
     bool VehicleEngine::get_main_no_power_pos() const {
-        return engine_backend != nullptr ? engine_backend->get_main_no_power_pos(mover_of(this)) : false;
+        return engine_backend != nullptr ? engine_backend->get_main_no_power_pos(this) : false;
     }
     void VehicleEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
         if (engine_backend != nullptr) {
-            engine_backend->update_mover(this, p_mover);
+            engine_backend->apply_configuration(this);
         }
     }
     void VehicleEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleComponent::_fill_config_dictionary(p_config);
         if (engine_backend != nullptr) {
-            engine_backend->fill_config(this, mover_of(this), p_config);
+            engine_backend->fill_config(this, p_config);
         }
     }
 
@@ -215,7 +213,7 @@ namespace godot {
     // used to be compared against the state dictionary while that dictionary was being filled,
     // so the signal fired on a read rather than on a change.
     void VehicleEngine::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
+        const TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);
         if (previous_main_switch == p_mover->Mains) {
             return;
@@ -226,8 +224,7 @@ namespace godot {
 
 
     int VehicleEngine::get_type() const {
-        const TMoverParameters *mover = mover_of(this);
-        return mover != nullptr ? get_engine_type() : 0;
+        return get_engine_type();
     }
 
     void VehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {

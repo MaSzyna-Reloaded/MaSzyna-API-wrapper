@@ -10,56 +10,54 @@
 
 namespace godot {
     double VehicleDieselEngine::get_rpm() const {
-        return diesel_backend != nullptr ? diesel_backend->get_rpm(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_rpm(this) : 0.0;
     }
     bool VehicleDieselEngine::get_oil_pump_active() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_active(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_active(this) : false;
     }
     bool VehicleDieselEngine::get_oil_pump_disabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_disabled(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_disabled(this) : false;
     }
     double VehicleDieselEngine::get_oil_pump_pressure() const {
-        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_pressure(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_pressure(this) : 0.0;
     }
     bool VehicleDieselEngine::get_fuel_pump_active() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_active(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_active(this) : false;
     }
     bool VehicleDieselEngine::get_fuel_pump_disabled() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_disabled(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_disabled(this) : false;
     }
     bool VehicleDieselEngine::get_startup() const {
-        return diesel_backend != nullptr ? diesel_backend->get_startup(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_startup(this) : false;
     }
     bool VehicleDieselEngine::get_ignition() const {
-        return diesel_backend != nullptr ? diesel_backend->get_ignition(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_ignition(this) : false;
     }
     bool VehicleDieselEngine::get_spinup() const {
-        return diesel_backend != nullptr ? diesel_backend->get_spinup(mover_of(this)) : false;
+        return diesel_backend != nullptr ? diesel_backend->get_spinup(this) : false;
     }
     double VehicleDieselEngine::get_output_power() const {
-        return diesel_backend != nullptr ? diesel_backend->get_output_power(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_output_power(this) : 0.0;
     }
     double VehicleDieselEngine::get_torque() const {
-        return diesel_backend != nullptr ? diesel_backend->get_torque(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_torque(this) : 0.0;
     }
     double VehicleDieselEngine::get_fill() const {
-        return diesel_backend != nullptr ? diesel_backend->get_fill(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_fill(this) : 0.0;
     }
     double VehicleDieselEngine::get_max_rpm() const {
-        return diesel_backend != nullptr ? diesel_backend->get_max_rpm(mover_of(this)) : 0.0;
+        return diesel_backend != nullptr ? diesel_backend->get_max_rpm(this) : 0.0;
     }
     void VehicleDieselEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
         VehicleEngine::_apply_configuration();
         if (diesel_backend != nullptr) {
-            diesel_backend->update_mover(this, p_mover);
+            diesel_backend->apply_configuration(this);
         }
     }
     void VehicleDieselEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleEngine::_fill_config_dictionary(p_config);
         if (diesel_backend != nullptr) {
-            diesel_backend->fill_config(this, mover_of(this), p_config);
+            diesel_backend->fill_config(this, p_config);
         }
     }
 

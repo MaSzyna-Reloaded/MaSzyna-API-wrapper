@@ -86,6 +86,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
         ClassDB::bind_method(D_METHOD("emit_config_changed"), &VehicleController::emit_config_changed);
         ClassDB::bind_method(D_METHOD("apply_configuration"), &VehicleController::apply_configuration);
+        ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
         ClassDB::bind_method(
@@ -485,18 +486,7 @@ namespace godot {
             return;
         }
         if (p_what == NOTIFICATION_PREDELETE) {
-            shutdown();
-            free_components();
-        }
-        if (p_what == NOTIFICATION_PREDELETE && mover != nullptr) {
-            controllers_by_mover.erase(mover);
-            // the backend owns the Mover, so freeing the handle is what destroys it
-            if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-                physics != nullptr) {
-                physics->vehicle_free(physics_rid);
-            }
-            physics_rid = RID();
-            mover = nullptr;
+            release();
         }
     }
 
@@ -527,6 +517,27 @@ namespace godot {
     /* Registering the vehicle and its own commands. It happens before any component attaches,
      * because a component registers commands too and TrainSystem refuses those of a train it does
      * not know yet. */
+    /* A vehicle that is rebuilt keeps its identity - every reference taken to it stays valid -
+     * so what it holds is handed back by name rather than by destroying the vehicle. */
+    void VehicleController::release() {
+        shutdown();
+        free_components();
+        if (mover == nullptr) {
+            return;
+        }
+        controllers_by_mover.erase(mover);
+        // the backend owns the Mover, so freeing the handle is what destroys it
+        if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance(); physics != nullptr) {
+            physics->vehicle_free(physics_rid);
+        }
+        physics_rid = RID();
+        mover = nullptr;
+    }
+
+    bool VehicleController::is_simulation_ready() const {
+        return mover != nullptr;
+    }
+
     void VehicleController::attach_to_system() {
         // the vehicle handle is RailVehicle3D's to create; the server hands it here
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {

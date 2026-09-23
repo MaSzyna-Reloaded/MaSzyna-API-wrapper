@@ -13,31 +13,31 @@ namespace godot {
     }
 
     double MoverVehicleElectricSeriesEngine::get_motor_current() const {
-        return traction.get_motor_current(mover_of(this));
+        return traction.get_motor_current(this);
     }
 
     double MoverVehicleElectricSeriesEngine::get_circuit_imax() const {
-        return traction.get_circuit_imax(mover_of(this));
+        return traction.get_circuit_imax(this);
     }
 
     bool MoverVehicleElectricSeriesEngine::get_dynamic_brake_active() const {
-        return traction.get_dynamic_brake_active(mover_of(this));
+        return traction.get_dynamic_brake_active(this);
     }
 
     bool MoverVehicleElectricSeriesEngine::get_fuse_active() const {
-        return traction.get_fuse_active(mover_of(this));
+        return traction.get_fuse_active(this);
     }
 
     bool MoverVehicleElectricSeriesEngine::get_motor_connectors_open() const {
-        return traction.get_motor_connectors_open(mover_of(this));
+        return traction.get_motor_connectors_open(this);
     }
 
     void MoverVehicleElectricSeriesEngine::fuse_reset() {
-        traction.reset_fuse(mover_of(this));
+        traction.reset_fuse(this);
     }
 
     void MoverVehicleElectricSeriesEngine::set_motor_connectors_open(const bool p_open) {
-        traction.open_motor_connectors(mover_of(this), p_open);
+        traction.open_motor_connectors(this, p_open);
     }
 
     void MoverVehicleElectricSeriesEngine::_register_commands() {

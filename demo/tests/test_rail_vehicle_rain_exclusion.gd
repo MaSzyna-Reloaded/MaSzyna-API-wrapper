@@ -14,14 +14,15 @@ func after_each() -> void:
 
 
 func test_fits_rain_exclusion_to_fiz_dimensions() -> void:
-    var controller: VehicleController = build_vehicle()
+    var physics_node: VehiclePhysicsNode = build_vehicle_node()
+    var controller: VehicleController = physics_node.get_controller()
     var rain_volume: RainVolume = autofree(RainVolume.new())
     controller.dimensions_length = 14.24
     controller.dimensions_width = 3.1
     controller.dimensions_height = 4.4
     controller.apply_configuration()
 
-    MaszynaRailVehicle3DInstancer._fit_rain_volume(controller, rain_volume)
+    MaszynaRailVehicle3DInstancer._fit_rain_volume(physics_node, rain_volume)
 
     assert_eq(rain_volume.size, Vector3(3.1, 4.4, 14.24))
     assert_almost_eq(rain_volume.position.y, 2.2, 0.000001)

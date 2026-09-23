@@ -2,6 +2,7 @@
 #include "../maszyna/McZapkie/MOVER.h"
 
 namespace godot {
+    class VehicleEngine;
     /* Electric traction motors, as a contract rather than a class in the hierarchy.
      *
      * A diesel-electric has them without being fed from the catenary, and a catenary-fed
@@ -16,17 +17,17 @@ namespace godot {
             virtual ~VehicleElectricTraction() = default;
 
             /* Motor current (Im) */
-            virtual double get_motor_current(const TMoverParameters *p_mover) const = 0;
+            virtual double get_motor_current(const VehicleEngine *p_engine) const = 0;
             /* Current limit of the traction circuit (Imax) */
-            virtual double get_circuit_imax(const TMoverParameters *p_mover) const = 0;
+            virtual double get_circuit_imax(const VehicleEngine *p_engine) const = 0;
             /* Rheostatic / regenerative braking is engaged */
-            virtual bool get_dynamic_brake_active(const TMoverParameters *p_mover) const = 0;
+            virtual bool get_dynamic_brake_active(const VehicleEngine *p_engine) const = 0;
             /* The motor overload fuse has tripped */
-            virtual bool get_fuse_active(const TMoverParameters *p_mover) const = 0;
+            virtual bool get_fuse_active(const VehicleEngine *p_engine) const = 0;
             /* The line contactors are open */
-            virtual bool get_motor_connectors_open(const TMoverParameters *p_mover) const = 0;
+            virtual bool get_motor_connectors_open(const VehicleEngine *p_engine) const = 0;
 
-            virtual void reset_fuse(TMoverParameters *p_mover) const = 0;
-            virtual void open_motor_connectors(TMoverParameters *p_mover, bool p_open) const = 0;
+            virtual void reset_fuse(const VehicleEngine *p_engine) const = 0;
+            virtual void open_motor_connectors(const VehicleEngine *p_engine, bool p_open) const = 0;
     };
 } // namespace godot

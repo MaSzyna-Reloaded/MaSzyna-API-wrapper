@@ -11,17 +11,17 @@ extends HBoxContainer
 var controller:VehicleController
 
 func _do_update():
-    if train_controller:
-        var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller)
-        controller = physics_node.get_controller() if physics_node else null
-    _propagate_train_controller(self, controller)
+    var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
+    controller = physics_node.get_controller() if physics_node else null
+    _propagate_vehicle_node(self, physics_node)
     modulate = Color.WHITE
     modulate.a = 1.0 if controller else 0.1
 
-func _propagate_train_controller(node: Node, controller: VehicleController):
+## The sections below point at the vehicle's node, not at the controller it owns.
+func _propagate_vehicle_node(node: Node, physics_node: VehiclePhysicsNode) -> void:
     for child in node.get_children():
         if "train_controller" in child:
-            child.train_controller = child.get_path_to(controller) if controller else NodePath("")
+            child.train_controller = child.get_path_to(physics_node) if physics_node else NodePath("")
 
 func _ready():
     _do_update()

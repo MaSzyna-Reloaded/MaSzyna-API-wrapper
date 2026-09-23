@@ -74,11 +74,14 @@ namespace godot {
     }
 
     void VehiclePhysicsNode::_build(const Ref<VehicleModel> &p_model) {
-        if (controller != nullptr) {
-            memdelete(controller);
-            controller = nullptr;
+        if (controller == nullptr) {
+            controller = memnew(VehicleController);
+        } else {
+            /* Rebuilding replaces what the vehicle is made of, not the vehicle. Destroying the
+             * controller here left every reference taken to it dangling - a sound bank registered
+             * against the vehicle before its model arrived held a freed object. */
+            controller->release();
         }
-        controller = memnew(VehicleController);
         if (p_model.is_valid()) {
             VehicleModel::apply(controller, p_model->get_properties());
         }

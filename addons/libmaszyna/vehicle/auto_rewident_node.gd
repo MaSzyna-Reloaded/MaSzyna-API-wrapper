@@ -58,7 +58,7 @@ func _ready() -> void:
 func _check_consist() -> void:
     var vehicle:RailVehicle3D = get_parent() as RailVehicle3D
     var controller:VehicleController = vehicle.get_controller() if vehicle else null
-    if not controller or not controller.is_node_ready():
+    if not controller or not controller.is_simulation_ready():
         return
     # a vehicle without a cab has no driver to inspect its consist, and cabin_number comes from the
     # FIZ - it will not become one later, so there is nothing left for this node to watch

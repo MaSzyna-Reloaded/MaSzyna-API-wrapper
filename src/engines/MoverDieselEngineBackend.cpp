@@ -1,60 +1,76 @@
 #include "MoverDieselEngineBackend.hpp"
+#include "VehicleDieselEngine.hpp"
+#include "../mover/MoverBackend.hpp"
 #include "../core/VehicleController.hpp"
 
 namespace godot {
-    double MoverDieselEngineBackend::get_rpm(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_rpm(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM() : 0.0;
     }
 
-    bool MoverDieselEngineBackend::get_oil_pump_active(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_oil_pump_active(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->OilPump.is_active : false;
     }
 
-    bool MoverDieselEngineBackend::get_oil_pump_disabled(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_oil_pump_disabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->OilPump.is_disabled : false;
     }
 
-    double MoverDieselEngineBackend::get_oil_pump_pressure(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_oil_pump_pressure(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->OilPump.pressure : 0.0;
     }
 
-    bool MoverDieselEngineBackend::get_fuel_pump_active(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_fuel_pump_active(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->FuelPump.is_active : false;
     }
 
-    bool MoverDieselEngineBackend::get_fuel_pump_disabled(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_fuel_pump_disabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->FuelPump.is_disabled : false;
     }
 
-    bool MoverDieselEngineBackend::get_startup(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_startup(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_startup : false;
     }
 
-    bool MoverDieselEngineBackend::get_ignition(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_ignition(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_ignition : false;
     }
 
-    bool MoverDieselEngineBackend::get_spinup(const TMoverParameters *p_mover) const {
+    bool MoverDieselEngineBackend::get_spinup(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_spinup : false;
     }
 
-    double MoverDieselEngineBackend::get_output_power(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_output_power(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_Power : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_torque(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_torque(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_Torque : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_fill(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_fill(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->dizel_fill : 0.0;
     }
 
-    double MoverDieselEngineBackend::get_max_rpm(const TMoverParameters *p_mover) const {
+    double MoverDieselEngineBackend::get_max_rpm(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 return p_mover != nullptr ? p_mover->EngineMaxRPM() : 0.0;
     }
 
-    void MoverDieselEngineBackend::update_mover(const VehicleDieselEngine *p_engine, TMoverParameters *p_mover) const {
+    void MoverDieselEngineBackend::apply_configuration(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
 
         // FIXME: test data
         p_mover->EnginePowerSource.SourceType = TPowerSource::Accumulator;
@@ -160,7 +176,8 @@ namespace godot {
         }
     }
 
-    void MoverDieselEngineBackend::fill_config(const VehicleDieselEngine *p_engine, const TMoverParameters *p_mover, Dictionary &p_config) const {
+    void MoverDieselEngineBackend::fill_config(const VehicleDieselEngine *p_engine, Dictionary &p_config) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
                 if (p_mover == nullptr) {
             return;
         }

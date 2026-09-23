@@ -70,15 +70,13 @@ func _ready() -> void:
         notes.append(file.get_basename().to_upper())
     # the list selects its first row and reports it back, so the details follow from here on
     %SceneryList.set_rows(_titles, notes)
-    %BuildLabel.text = "Pre-Alpha Demo Release %s (build %s)" % [
-        ProjectSettings.get_setting("application/config/version"), _build_number()
-    ]
-
-
-## The stamp of the build that is actually loaded; a checkout that was never built has none.
-func _build_number() -> String:
+    # Both halves come from the file the build writes (cmake/write_build_number.cmake, stamped
+    # "%Y%m%d%H%M%S"), so the label names the library that is actually loaded. A date typed into
+    # project.godot cannot do that - it kept showing 2026-09-19 through every build after it.
     var stamp:String = MaszynaRuntime.get_build_number()
-    return stamp if stamp else "unbuilt"
+    %BuildLabel.text = ("Pre-Alpha Demo Release %s-%s-%s (build %s)" % [
+        stamp.substr(0, 4), stamp.substr(4, 2), stamp.substr(6, 2), stamp
+    ]) if stamp else "Pre-Alpha Demo Release (unbuilt)"
 
 
 func open() -> void:

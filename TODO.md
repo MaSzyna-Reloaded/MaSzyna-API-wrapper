@@ -549,15 +549,30 @@ The fix is to make attaching a component a named, complete operation: apply its 
 announce that it was applied (a signal that means "the backend now carries this", not "it is
 about to"). Then `RailVehicle3D` reacts to it and the retry goes away.
 
-### Bogies are a rail concept sitting in the generic wheels interface
+### Rail concepts living in interfaces named "Vehicle"
 
-`VehicleWheels` is the interface every vehicle's running gear implements, and
-`MaszynaMoverPhysicsServer`/`RailVehicleServer` are meant to carry road vehicles too. But the
-interface names bogies throughout: `Bogie`, `get_bogie_transform()`, `bogie_axle_spacing`,
-`bogie_pivot_spacing`, and `minimum_curve_radius` beside them. A car has wheels and no bogies.
+`VehicleComponent`/`VehicleController` are generic on purpose - the same servers are meant to
+carry road vehicles. Several component interfaces below them are not generic at all, and their
+names say otherwise. Counted by rail-specific vocabulary in each header:
 
-Either the rail specifics move to a rail-side interface below `VehicleWheels`, or the concept is
-widened to what it really describes (an axle group and where it sits). Worth settling before more
-consumers read `get_bogie_transform()`. The split that already holds and should stay:
-`VehicleWheels` names no backend at all and `MoverVehicleWheels` is the only class that touches
-`TMoverParameters`.
+| Interface | rail terms | what they are |
+| --- | --- | --- |
+| `VehicleBrake` | 43 | the brake pipe, the W/Lu/L, W/Lu/VI, W/Lu/XR and K valves, FV4a handles |
+| `VehicleElectricEngine` | 34 | pantographs, traction circuit |
+| `VehicleBuffCoupl` | 13 | buffers, screw coupler |
+| `VehicleWheels` | 12 | bogies, pivot spacing, `get_bogie_transform()`, minimum curve radius |
+| `VehicleSecuritySystem` | 2 | SHP, vigilance device |
+| `VehicleSpringBrake`, `VehicleElectroPneumaticDynamicBrake` | 1-3 | rail brakes |
+
+Genuinely generic and correctly named: `VehicleWipers`, `VehicleUniversalController`,
+`VehicleSpeedControl`, `VehicleHorns`, `VehicleDoors`, `VehicleHeating`, `VehicleLighting`,
+`VehicleLoad`.
+
+A car has wheels and no bogies, brakes and no brake pipe. Two ways out - rename the rail ones to
+`Train*` (with their `Mover*` implementations), or keep the generic name and put the rail parts
+in a subclass. The second only pays once something road-side actually shares the generic half,
+and nothing does today. Measured cost of the rename, should it be taken: `VehicleWheels` 13 files
+/ 50 mentions, `VehicleBrake` 24 files / 283 mentions.
+
+What already holds and must stay either way: these interfaces name no backend at all, and the
+`Mover*` implementation is the only class touching `TMoverParameters`.

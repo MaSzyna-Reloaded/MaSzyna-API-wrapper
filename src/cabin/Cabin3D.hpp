@@ -19,6 +19,7 @@ namespace godot {
         public:
             static const char *cabin_ready_signal;
             static const char *camera_configuration_changed_signal;
+            static const char *train_id_changed_signal;
 
         private:
             static void _bind_methods();

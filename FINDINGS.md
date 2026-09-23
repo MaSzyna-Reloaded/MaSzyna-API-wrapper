@@ -24,6 +24,15 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 * **Rule:** the same move is safe for `_notification()` in both directions, which is why
   `VehiclePhysicsNode` and `VehicleController` never showed this - they have no GDScript
   subclass defining the same virtual. The trap needs a subclass to appear.
+* **The second half of it, found the same way:** with the lifecycle fixed the camera entered the
+  cab and the interior was still missing. `DynamicTrainCabin` also overrode `set_train_id()`, and
+  that is where it rebuilt the interior - but `RailVehicle3D` now calls that method **typed**,
+  which reaches `Cabin3D::set_train_id()` and never the script's. A script only shadows a native
+  method for callers going through `call()`; making the call typed is exactly what removes the
+  shadowing.
+* **Rule:** a C++ base does not offer a subclass "override this method" unless the method is a
+  registered virtual. It announces instead - `Cabin3D` emits `train_id_changed` and the subclass
+  reacts - which works the same whether the caller is C++ or GDScript.
 
 ## 2026-09-23 - the loco that would not move had nobody in the cab
 

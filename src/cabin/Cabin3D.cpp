@@ -9,6 +9,7 @@
 namespace godot {
     const char *Cabin3D::cabin_ready_signal = "cabin_ready";
     const char *Cabin3D::camera_configuration_changed_signal = "camera_configuration_changed";
+    const char *Cabin3D::train_id_changed_signal = "train_id_changed";
 
     void Cabin3D::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &Cabin3D::set_train_id);
@@ -117,6 +118,10 @@ namespace godot {
                 "get_engine_shake_fade_out_factor");
 
         ADD_SIGNAL(MethodInfo(cabin_ready_signal));
+        /* The cab now sits in a different vehicle. A subclass reacts to this rather than
+         * overriding set_train_id(): a typed call from C++ reaches the native method, and a
+         * script's method of the same name would simply be skipped. */
+        ADD_SIGNAL(MethodInfo(train_id_changed_signal, PropertyInfo(Variant::STRING, "train_id")));
         /// Emitted after rebuilding the cabin's driver position and camera bounds.
         ADD_SIGNAL(MethodInfo(camera_configuration_changed_signal));
     }
@@ -205,6 +210,7 @@ namespace godot {
     void Cabin3D::set_train_id(const String &p_train_id) {
         train_id = p_train_id;
         _propagate_train_id(this);
+        emit_signal(train_id_changed_signal, train_id);
     }
 
     String Cabin3D::get_train_id() const {

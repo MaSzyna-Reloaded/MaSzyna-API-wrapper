@@ -39,6 +39,7 @@ var _last_cab_number:int = 0
 
 
 func _ready() -> void:
+    train_id_changed.connect(_on_train_id_changed)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
     # placed in a scene rather than built by RailVehicle3D.enter_cabin(), which names it itself.
     if controller_path:
@@ -47,16 +48,19 @@ func _ready() -> void:
     # Cabin3D's own _ready() emits cabin_ready; the engine calls it beside this one.
 
 
-func set_train_id(train_id:String) -> void:
-    super.set_train_id(train_id)
+## Cabin3D announces the vehicle rather than letting a subclass override set_train_id(): the
+## vehicle calls that method typed, so a script method of the same name would never run.
+func _on_train_id_changed(_train_id:String) -> void:
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
     _rebuild_generated()
 
 
 func _exit_tree() -> void:
-    if CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
-        CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
+    # the announcement goes first: clearing the vehicle would otherwise rebuild the cab on its
+    # way out of the tree
+    train_id_changed.disconnect(_on_train_id_changed)
+    CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_train_id("")
 
 

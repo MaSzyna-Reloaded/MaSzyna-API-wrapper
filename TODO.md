@@ -577,6 +577,21 @@ and nothing does today. Measured cost of the rename, should it be taken: `Vehicl
 What already holds and must stay either way: these interfaces name no backend at all, and the
 `Mover*` implementation is the only class touching `TMoverParameters`.
 
+### The controller was never split into interface and implementation
+
+The convention the components follow - `Vehicle<Domain>` names no backend, `Mover<Interface>` is
+the only class that touches `TMoverParameters` - was never applied to `VehicleController`. It
+holds `TMoverParameters *mover`, `initialize_mover()`, `initialize_mover_state()` and
+`get_mover()` in the class that is supposed to be the interface. The method names say the backend
+out loud, which is exactly what the rule forbids, and renaming them alone would be churn undone
+by the split.
+
+What the split looks like, mirroring the components: `VehicleController` keeps the vehicle's
+state, configuration and operations and names no backend; a `MoverVehicleController` owns the
+Mover handle, creates it, configures it and ticks it. `get_mover()` disappears from the interface,
+which is what today's components reach through - so this and the entry below are one piece of
+work, not two.
+
 ### A non-Mover component cannot exist yet - the backend is in the component base
 
 Asked directly: could the vehicle take a `CarBrakes` today? The slot would accept it -

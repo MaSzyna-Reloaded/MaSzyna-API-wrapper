@@ -26,7 +26,8 @@ namespace godot {
     TrackManager::TrackManager() {
         spatial_index.instantiate();
         spatial_index->set_cell_size(GRID_CELL_SIZE);
-        curve_bake_interval = ProjectSettings::get_singleton()->get_setting("maszyna/track_curve_bake_interval", 10.0);
+        curve_bake_interval =
+                ProjectSettings::get_singleton()->get_setting("maszyna/scenery/track_curve_bake_interval", 10.0);
     }
 
     TrackManager::~TrackManager() {
@@ -44,8 +45,7 @@ namespace godot {
                 D_METHOD("switch_track_get_length", "track", "switch_track"), &TrackManager::switch_track_get_length);
         ClassDB::bind_method(
                 D_METHOD("track_update_curves", "track", "curve1", "curve2"), &TrackManager::track_update_curves);
-        ClassDB::bind_method(
-                D_METHOD("track_update", "track", "type", "name", "width"), &TrackManager::track_update);
+        ClassDB::bind_method(D_METHOD("track_update", "track", "type", "name", "width"), &TrackManager::track_update);
         ClassDB::bind_method(
                 D_METHOD("track_update_properties", "track", "quality_flag", "environment", "sound_distance"),
                 &TrackManager::track_update_properties);
@@ -97,8 +97,8 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_switch_max_offset"), &TrackManager::get_switch_max_offset);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "switch_max_offset", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
-                "", "get_switch_max_offset");
+                PropertyInfo(Variant::FLOAT, "switch_max_offset", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
+                "get_switch_max_offset");
         ClassDB::bind_method(D_METHOD("get_switch_offset_delay"), &TrackManager::get_switch_offset_delay);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "switch_offset_delay", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY),
@@ -107,8 +107,7 @@ namespace godot {
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "rail_height", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_READ_ONLY), "",
                 "get_rail_height");
-        ClassDB::bind_method(
-                D_METHOD("set_is_topology_changed", "changed"), &TrackManager::set_is_topology_changed);
+        ClassDB::bind_method(D_METHOD("set_is_topology_changed", "changed"), &TrackManager::set_is_topology_changed);
         ClassDB::bind_method(D_METHOD("get_is_topology_changed"), &TrackManager::get_is_topology_changed);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "is_topology_changed"), "set_is_topology_changed",
@@ -173,8 +172,8 @@ namespace godot {
      * used everywhere two track endpoints are checked for being the same point. */
     bool TrackManager::_endpoints_equal(const Vector3 &p_first, const Vector3 &p_second) {
         return Math::abs(p_first.x - p_second.x) <= ENDPOINT_EPSILON &&
-                Math::abs(p_first.y - p_second.y) <= ENDPOINT_EPSILON &&
-                Math::abs(p_first.z - p_second.z) <= ENDPOINT_EPSILON;
+               Math::abs(p_first.y - p_second.y) <= ENDPOINT_EPSILON &&
+               Math::abs(p_first.z - p_second.z) <= ENDPOINT_EPSILON;
     }
 
     int TrackManager::_track_type_group(const int p_type) {
@@ -218,10 +217,8 @@ namespace godot {
         curve->set_bake_interval(static_cast<real_t>(curve_bake_interval));
         const double roll_fix1 = Math::abs(Math::sin(Math::deg_to_rad(p_points.roll1)) * ROLL_FIX_FACTOR);
         const double roll_fix2 = Math::abs(Math::sin(Math::deg_to_rad(p_points.roll2)) * ROLL_FIX_FACTOR);
-        curve->add_point(
-                p_points.p1 + Vector3(0.0, static_cast<real_t>(roll_fix1), 0.0), Vector3(), p_points.c1);
-        curve->add_point(
-                p_points.p2 + Vector3(0.0, static_cast<real_t>(roll_fix2), 0.0), p_points.c2, Vector3());
+        curve->add_point(p_points.p1 + Vector3(0.0, static_cast<real_t>(roll_fix1), 0.0), Vector3(), p_points.c1);
+        curve->add_point(p_points.p2 + Vector3(0.0, static_cast<real_t>(roll_fix2), 0.0), p_points.c2, Vector3());
         return curve;
     }
 
@@ -333,9 +330,9 @@ namespace godot {
             return 0.0;
         }
         double boundary_offset = 0.0;
-        const int blade_sample_count = MIN(
-                static_cast<int>(Math::ceil(SWITCH_BLADE_SEGMENT_COUNT * SWITCH_BLADE_RATIO)),
-                static_cast<int>(sampled.size()) - 1);
+        const int blade_sample_count =
+                MIN(static_cast<int>(Math::ceil(SWITCH_BLADE_SEGMENT_COUNT * SWITCH_BLADE_RATIO)),
+                    static_cast<int>(sampled.size()) - 1);
         for (int index = 0; index < blade_sample_count; ++index) {
             boundary_offset += sampled[index].distance_to(sampled[index + 1]);
         }
@@ -367,8 +364,8 @@ namespace godot {
                 _switch_blade_boundary_offset(p_track.domain_curve2, frog_distance);
     }
 
-    void TrackManager::_set_curves(
-            TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
+    void
+    TrackManager::_set_curves(TrackSegment &p_track, const Ref<Resource> &p_curve1, const Ref<Resource> &p_curve2) {
         p_track.curve1 = p_curve1;
         p_track.curve2 = p_curve2;
         _read_curve_points(p_curve1, p_track.points1);
@@ -568,8 +565,7 @@ namespace godot {
         }
     }
 
-    void TrackManager::track_update(
-            const RID &p_track, const int p_type, const String &p_name, const double p_width) {
+    void TrackManager::track_update(const RID &p_track, const int p_type, const String &p_name, const double p_width) {
         TrackSegment *track = tracks.getptr(p_track);
         if (track == nullptr) {
             return;
@@ -748,8 +744,8 @@ namespace godot {
         return spatial_index->query(p_aabb);
     }
 
-    TypedArray<TrackEndpointRef> TrackManager::track_get_endpoint_connections(
-            const RID &p_track, const int p_endpoint_index) {
+    TypedArray<TrackEndpointRef>
+    TrackManager::track_get_endpoint_connections(const RID &p_track, const int p_endpoint_index) {
         TypedArray<TrackEndpointRef> result;
         const TrackSegment *track = tracks.getptr(p_track);
         if (track == nullptr || p_endpoint_index < 0 || p_endpoint_index > CURVE2_P2) {
@@ -784,8 +780,7 @@ namespace godot {
         return result;
     }
 
-    Ref<TrackBranchNeighbors> TrackManager::switch_track_get_neighbors(
-            const RID &p_track, const int p_switch_track) {
+    Ref<TrackBranchNeighbors> TrackManager::switch_track_get_neighbors(const RID &p_track, const int p_switch_track) {
         Ref<TrackBranchNeighbors> neighbors;
         neighbors.instantiate();
         const TrackSegment *track = tracks.getptr(p_track);
@@ -857,8 +852,8 @@ namespace godot {
         const int from_track = track->active_track;
         track->active_track = p_active_track;
         track->switch_desired_offset = p_active_track == TRACK_DIVERGING
-                ? SWITCH_MAX_OFFSET + track->switch_f_offset_delay
-                : -track->switch_f_offset_delay;
+                                               ? SWITCH_MAX_OFFSET + track->switch_f_offset_delay
+                                               : -track->switch_f_offset_delay;
 
         emit_signal(switch_active_track_changed_signal, p_track, track->active_track);
         emit_signal(switching_started_signal, p_track, from_track, p_active_track);

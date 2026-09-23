@@ -1,13 +1,13 @@
+#include "../core/VehicleComponent.hpp"
 #include "../radio/VehicleRadio.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
 #include "RailVehicleStepper.hpp"
 #include <godot_cpp/classes/window.hpp>
-#include "../core/VehicleComponent.hpp"
 
-#include "../core/RailVehicle3D.hpp"
 #include "../core/GameLog.hpp"
 #include "../core/MaszynaRuntime.hpp"
+#include "../core/RailVehicle3D.hpp"
 #include "../core/VehicleController.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
@@ -19,7 +19,7 @@
 
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps) */
-    static const char *DIAGNOSTICS_SETTING = "maszyna/debug/physics_diagnostics";
+    static const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -45,11 +45,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_controller", "vehicle", "controller_id"),
                 &RailVehicleServer::vehicle_attach_controller);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
+        ClassDB::bind_method(D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
+        ClassDB::bind_method(D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
@@ -65,29 +63,24 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
-                D_METHOD("vehicle_component_get", "vehicle", "type"),
-                &RailVehicleServer::vehicle_component_get);
+                D_METHOD("vehicle_component_get", "vehicle", "type"), &RailVehicleServer::vehicle_component_get);
         ClassDB::bind_method(
                 D_METHOD("generic_vehicle_component_find", "vehicle", "tag"),
                 &RailVehicleServer::generic_vehicle_component_find);
         ClassDB::bind_method(D_METHOD("vehicle_dump_state", "vehicle"), &RailVehicleServer::vehicle_dump_state);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
-        ClassDB::bind_method(
-                D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
+        ClassDB::bind_method(D_METHOD("vehicle_dump_config", "vehicle"), &RailVehicleServer::vehicle_dump_config);
+        ClassDB::bind_method(D_METHOD("vehicle_get_transform", "vehicle"), &RailVehicleServer::vehicle_get_transform);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_transform_at_distance", "vehicle", "distance"),
                 &RailVehicleServer::vehicle_get_transform_at_distance);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_track_position", "vehicle"), &RailVehicleServer::vehicle_get_track_position);
         ClassDB::bind_method(
-                D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"),
-                &RailVehicleServer::vehicle_get_curve);
+                D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_rail_vehicle", "vehicle", "rail_vehicle_id"),
                 &RailVehicleServer::vehicle_attach_rail_vehicle);
-        ClassDB::bind_method(
-                D_METHOD("set_stepping_enabled", "enabled"), &RailVehicleServer::set_stepping_enabled);
+        ClassDB::bind_method(D_METHOD("set_stepping_enabled", "enabled"), &RailVehicleServer::set_stepping_enabled);
         ClassDB::bind_method(D_METHOD("is_stepping_enabled"), &RailVehicleServer::is_stepping_enabled);
     }
 
@@ -219,8 +212,8 @@ namespace godot {
                 _placement_transform(entry.value).origin.distance_to(origin) > RADIO_STOP_RANGE) {
                 continue;
             }
-            if (VehicleRadio *radio = Object::cast_to<VehicleRadio>(
-                        controller->get_component(VehicleComponentType::COMPONENT_RADIO));
+            if (VehicleRadio *radio =
+                        Object::cast_to<VehicleRadio>(controller->get_component(VehicleComponentType::COMPONENT_RADIO));
                 radio != nullptr) {
                 radio->radio_stop_receive();
             }
@@ -289,9 +282,10 @@ namespace godot {
         placement->moved = true;
         placement->body_transform_valid = false;
         placement->track_is_switch = tracks->track_is_switch(p_track);
-        placement->switch_track = placement->track_is_switch
-                ? static_cast<TrackManager::SwitchTrack>(tracks->switch_get_active_track(p_track))
-                : TrackManager::TRACK_COMMON;
+        placement->switch_track =
+                placement->track_is_switch
+                        ? static_cast<TrackManager::SwitchTrack>(tracks->switch_get_active_track(p_track))
+                        : TrackManager::TRACK_COMMON;
         placement->track_offset =
                 CLAMP(p_track_offset, 0.0, tracks->track_get_length(p_track, placement->switch_track));
         const double remaining_offset = p_track_offset - placement->track_offset;
@@ -339,8 +333,7 @@ namespace godot {
         }
         // Convert movement relative to the vehicle front into curve offset movement. Positive sign
         // moves toward the branch end, negative toward the branch start.
-        double movement_sign =
-                (current_track_direction == TrackManager::DIRECTION_NORMAL ? -1.0 : 1.0) * request_sign;
+        double movement_sign = (current_track_direction == TrackManager::DIRECTION_NORMAL ? -1.0 : 1.0) * request_sign;
 
         while (remaining > MOVEMENT_EPSILON) {
             // track_get_length() returns 0 for a track that is gone, so this covers track_exists()
@@ -353,9 +346,10 @@ namespace godot {
                     movement_sign > 0.0 ? current_length - current_track_offset : current_track_offset;
             int endpoint_index = 0;
             if (current_is_switch) {
-                endpoint_index = movement_sign > 0.0
-                        ? tracks->switch_get_branch_end_endpoint(current_track, current_switch_track)
-                        : tracks->switch_get_branch_start_endpoint(current_track, current_switch_track);
+                endpoint_index =
+                        movement_sign > 0.0
+                                ? tracks->switch_get_branch_end_endpoint(current_track, current_switch_track)
+                                : tracks->switch_get_branch_start_endpoint(current_track, current_switch_track);
                 // Reversing through a switch blade on a non-active branch keeps the branch the
                 // vehicle already occupies and forces the switch back.
                 if (tracks->switch_get_active_track(current_track) != current_switch_track) {
@@ -410,7 +404,7 @@ namespace godot {
             current_length = tracks->track_get_length(current_track, current_switch_track);
             current_track_offset = movement_sign > 0.0 ? 0.0 : current_length;
             current_track_direction = movement_sign * request_sign < 0.0 ? TrackManager::DIRECTION_NORMAL
-                                                                        : TrackManager::DIRECTION_REVERSED;
+                                                                         : TrackManager::DIRECTION_REVERSED;
         }
 
         p_placement.track = current_track;
@@ -438,9 +432,9 @@ namespace godot {
         const Vector3 end_point = curve->sample_baked(static_cast<real_t>(p_placement.track_offset), false);
         const double world_moved = p_start.distance_to(end_point);
         if (Math::abs(world_moved - p_moved) > DIAGNOSTICS_MOVE_TOLERANCE) {
-            UtilityFunctions::push_error(vformat(
-                    "RailVehicleServer: moved %.4f m in the world instead of %.4f m on track %s (offset %.3f)",
-                    world_moved, p_moved, tracks->track_get_name(p_placement.track), p_placement.track_offset));
+            UtilityFunctions::push_error(
+                    vformat("RailVehicleServer: moved %.4f m in the world instead of %.4f m on track %s (offset %.3f)",
+                            world_moved, p_moved, tracks->track_get_name(p_placement.track), p_placement.track_offset));
         }
     }
 
@@ -464,8 +458,8 @@ namespace godot {
     }
 
     Transform3D RailVehicleServer::_compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle) {
-        const VehicleWheels *wheels =
-                Object::cast_to<VehicleWheels>(vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS));
+        const VehicleWheels *wheels = Object::cast_to<VehicleWheels>(
+                vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS));
         const double spacing = wheels != nullptr ? wheels->get_bogie_pivot_spacing() : 0.0;
         if (spacing <= 0.0) {
             // no bogies to be carried by: the track under the vehicle's own centre is all there is
@@ -487,8 +481,7 @@ namespace godot {
         return Transform3D(Basis(x_axis, y_axis, z_axis).orthonormalized(), (front.origin + rear.origin) * 0.5);
     }
 
-    Transform3D RailVehicleServer::vehicle_get_transform_at_distance(
-            const RID &p_vehicle, const double p_distance) {
+    Transform3D RailVehicleServer::vehicle_get_transform_at_distance(const RID &p_vehicle, const double p_distance) {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         const TrackManager *tracks = TrackManager::get_instance();
         if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
@@ -497,8 +490,8 @@ namespace godot {
         return _placement_transform(_sample_placement(*placement, p_distance));
     }
 
-    RailVehicleServer::VehiclePlacement RailVehicleServer::_sample_placement(
-            const VehiclePlacement &p_placement, const double p_distance) {
+    RailVehicleServer::VehiclePlacement
+    RailVehicleServer::_sample_placement(const VehiclePlacement &p_placement, const double p_distance) {
         VehiclePlacement sampled = p_placement;
         sampled.controller_id = ObjectID();
         _move_placement(sampled, p_distance, false);
@@ -528,7 +521,7 @@ namespace godot {
             next_offset = length;
         }
         Vector3 forward = curve->sample_baked(static_cast<real_t>(next_offset), false) -
-                curve->sample_baked(static_cast<real_t>(previous_offset), false);
+                          curve->sample_baked(static_cast<real_t>(previous_offset), false);
         if (forward.length_squared() <= 0.000001) {
             forward = Vector3(0.0, 0.0, -1.0);
         } else {
@@ -545,8 +538,7 @@ namespace godot {
         const Vector3 y_axis = z_axis.cross(x_axis).normalized();
         const double roll1 = curve_data->get("roll1");
         const double roll2 = curve_data->get("roll2");
-        const double roll =
-                length <= 0.0 ? roll1 : Math::lerp(roll1, roll2, CLAMP(safe_offset / length, 0.0, 1.0));
+        const double roll = length <= 0.0 ? roll1 : Math::lerp(roll1, roll2, CLAMP(safe_offset / length, 0.0, 1.0));
         Transform3D track_transform(
                 Basis(x_axis, y_axis, z_axis)
                         .orthonormalized()
@@ -587,7 +579,7 @@ namespace godot {
         result["track_rid"] = placement->track;
         // moving forward decreases the offset on a track run in its normal direction
         result["along"] = placement->track_direction == TrackManager::DIRECTION_NORMAL ? -placement->track_offset
-                                                                                      : placement->track_offset;
+                                                                                       : placement->track_offset;
         return result;
     }
 
@@ -604,8 +596,8 @@ namespace godot {
         const VehiclePlacement rear = _sample_placement(*placement, -0.5 * p_bogie_pivot_spacing);
         const Vector3 front_forward = -_placement_transform(front).basis.get_column(2);
         const Vector3 rear_forward = -_placement_transform(rear).basis.get_column(2);
-        double yaw_difference = Math::atan2(front_forward.x, front_forward.z) -
-                Math::atan2(rear_forward.x, rear_forward.z);
+        double yaw_difference =
+                Math::atan2(front_forward.x, front_forward.z) - Math::atan2(rear_forward.x, rear_forward.z);
         yaw_difference = Math::wrapf(yaw_difference, -Math_PI, Math_PI);
         double radius = 0.0;
         if (!Math::is_zero_approx(Math::sin(yaw_difference * 0.5))) {
@@ -653,9 +645,10 @@ namespace godot {
                     // shared endpoint to the active branch endpoint at the same physical point.
                     const int active_track = tracks->switch_get_active_track(candidate_track);
                     const int branch_start = tracks->switch_get_branch_start_endpoint(candidate_track, active_track);
-                    candidate_endpoint = common_endpoints.has(branch_start)
-                            ? branch_start
-                            : tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
+                    candidate_endpoint =
+                            common_endpoints.has(branch_start)
+                                    ? branch_start
+                                    : tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
                 } else {
                     candidate_forced_switch_track =
                             tracks->switch_get_endpoint_branch(candidate_track, raw->get_endpoint_index());
@@ -690,8 +683,8 @@ namespace godot {
 
             // More than one different usable target means the node is ambiguous. Identical
             // candidates can happen at switch common points and still count as one route.
-            const bool is_same_candidate = unique_track == candidate_track &&
-                    unique_endpoint == candidate_endpoint &&
+            const bool is_same_candidate =
+                    unique_track == candidate_track && unique_endpoint == candidate_endpoint &&
                     has_unique_forced_switch_track == has_candidate_forced_switch_track &&
                     (!has_unique_forced_switch_track || unique_forced_switch_track == candidate_forced_switch_track);
             if (!is_same_candidate) {
@@ -742,8 +735,8 @@ namespace godot {
      * what a console, a diagnostic dump or a cab full of widgets wants. Built once per physics
      * step and handed out unchanged until the next one, because nothing but a step can change it;
      * a reader after one value still takes the component that owns it and reads its property. */
-    VehicleComponent *RailVehicleServer::vehicle_component_get(
-            const RID &p_vehicle, const VehicleComponentType::Type p_type) const {
+    VehicleComponent *
+    RailVehicleServer::vehicle_component_get(const RID &p_vehicle, const VehicleComponentType::Type p_type) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return nullptr;
@@ -752,15 +745,14 @@ namespace godot {
         return controller != nullptr ? controller->get_component(p_type) : nullptr;
     }
 
-    TypedArray<VehicleComponent> RailVehicleServer::generic_vehicle_component_find(
-            const RID &p_vehicle, const StringName &p_tag) const {
+    TypedArray<VehicleComponent>
+    RailVehicleServer::generic_vehicle_component_find(const RID &p_vehicle, const StringName &p_tag) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return TypedArray<VehicleComponent>();
         }
         const VehicleController *controller = _get_controller(*placement);
-        return controller != nullptr ? controller->find_generic_components(p_tag)
-                                     : TypedArray<VehicleComponent>();
+        return controller != nullptr ? controller->find_generic_components(p_tag) : TypedArray<VehicleComponent>();
     }
 
     Dictionary RailVehicleServer::vehicle_dump_state(const RID &p_vehicle) {
@@ -843,10 +835,10 @@ namespace godot {
         double budget = MIN(owed_seconds, MAX_PHYSICS_ITERATIONS * PHYSICS_STEP);
         if (owed_seconds > catch_up_limit) {
             if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
-                game_log->warning(vformat(
-                        "RailVehicleServer: %.2f s of simulation owed, over the %.2f s catch-up "
-                        "limit - taking it in one step, so the vehicles jump",
-                        owed_seconds, catch_up_limit));
+                game_log->warning(
+                        vformat("RailVehicleServer: %.2f s of simulation owed, over the %.2f s catch-up "
+                                "limit - taking it in one step, so the vehicles jump",
+                                owed_seconds, catch_up_limit));
             }
             budget = owed_seconds;
         }
@@ -892,8 +884,7 @@ namespace godot {
             _update_neighbours(vehicle_rid, *vehicles.getptr(vehicle_rid));
         }
 
-        const int iterations =
-                CLAMP(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1, MAX_PHYSICS_ITERATIONS);
+        const int iterations = CLAMP(static_cast<int>(Math::ceil(p_delta / PHYSICS_STEP)), 1, MAX_PHYSICS_ITERATIONS);
         const double sub_step = p_delta / iterations;
         for (int iteration = 0; iteration < iterations; ++iteration) {
             // the original computes the forces of every vehicle before moving any of them, so
@@ -934,8 +925,8 @@ namespace godot {
             if (placement->rail_vehicle_id == 0) {
                 continue;
             }
-            if (RailVehicle3D *rail_vehicle = Object::cast_to<RailVehicle3D>(
-                        ObjectDB::get_instance(ObjectID(placement->rail_vehicle_id)));
+            if (RailVehicle3D *rail_vehicle =
+                        Object::cast_to<RailVehicle3D>(ObjectDB::get_instance(ObjectID(placement->rail_vehicle_id)));
                 rail_vehicle != nullptr) {
                 rail_vehicle->apply_track_placement();
             }
@@ -1027,8 +1018,7 @@ namespace godot {
             }
             if (found_rid.is_valid()) {
                 const VehiclePlacement *found = vehicles.getptr(found_rid);
-                const double found_front_sign =
-                        found->track_direction == TrackManager::DIRECTION_NORMAL ? 1.0 : -1.0;
+                const double found_front_sign = found->track_direction == TrackManager::DIRECTION_NORMAL ? 1.0 : -1.0;
                 p_found_out = found_rid;
                 p_found_end_out = Math::is_equal_approx(found_front_sign, -movement_sign) ? 0 : 1;
                 p_found_distance_out = scanned + found_along;
@@ -1061,9 +1051,9 @@ namespace godot {
             const double acceleration = (velocity - (previous != nullptr ? *previous : velocity)) / p_delta;
             diagnostics_velocity[id] = velocity;
             if (Math::abs(acceleration) > DIAGNOSTICS_MAX_ACCELERATION) {
-                UtilityFunctions::push_error(vformat(
-                        "RailVehicleServer: %s kicked, dV/dt=%.2f m/s^2 at V=%.2f m/s", controller->get_train_id(),
-                        acceleration, velocity));
+                UtilityFunctions::push_error(
+                        vformat("RailVehicleServer: %s kicked, dV/dt=%.2f m/s^2 at V=%.2f m/s",
+                                controller->get_train_id(), acceleration, velocity));
             }
         }
     }

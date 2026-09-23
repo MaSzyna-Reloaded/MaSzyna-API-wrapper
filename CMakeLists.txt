@@ -170,12 +170,11 @@ TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
 # PythonScreenServer loads CPython at run time (dlopen)
 TARGET_LINK_LIBRARIES(${LIBNAME} ${CMAKE_DL_LIBS})
 
-# Every build stamps demo/build_number.txt with the time it was made, so the number shown in the
-# app identifies the library that is actually loaded rather than whatever the checkout says.
-ADD_CUSTOM_TARGET(build_number ALL
-        COMMAND ${CMAKE_COMMAND} -DOUT=${PROJECT_SOURCE_DIR}/${GODOT_PROJECT_DIR}/build_number.txt
-        -P ${PROJECT_SOURCE_DIR}/cmake/write_build_number.cmake)
-ADD_DEPENDENCIES(${LIBNAME} build_number)
+# The build number is not stamped here. A stamp written while the library links is overwritten by
+# the next build of any other configuration, and the export then packs whichever one happened to
+# be on disk - which is how a release shipped a library and a project two hours apart. The
+# Makefile's `build-number` target writes it when asked, so it describes a release and so the
+# Linux and the Windows package, built by separate invocations, carry the same one.
 
 # A MinGW-built DLL otherwise needs libstdc++-6.dll, libgcc_s_seh-1.dll and libwinpthread-1.dll
 # sitting next to the game, and Godot only ships the executable and this library - the extension

@@ -62,8 +62,11 @@ namespace godot {
             double _engine_revolutions() const;
 
         public:
-            void _ready() override;
-            void _process(double p_delta) override;
+            /* Notifications, not the _ready()/_process() virtuals: a GDScript subclass that
+             * defines _ready() *replaces* the native virtual, and DynamicTrainCabin does - the
+             * cab would then never announce itself and the camera would never enter it. A
+             * notification reaches the native class and the script alike. */
+            void _notification(int p_what);
 
             /// The vehicle this cab sits in, by name. There is deliberately no path to a
             /// controller here.

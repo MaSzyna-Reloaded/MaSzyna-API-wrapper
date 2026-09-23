@@ -121,22 +121,24 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(camera_configuration_changed_signal));
     }
 
-    void Cabin3D::_ready() {
+    void Cabin3D::_notification(const int p_what) {
         if (Engine::get_singleton()->is_editor_hint()) {
             return;
         }
-        cabin_ready = true;
-        emit_signal(cabin_ready_signal);
-    }
-
-    void Cabin3D::_process(const double p_delta) {
-        if (Engine::get_singleton()->is_editor_hint()) {
-            return;
-        }
-        shake_accumulator += p_delta;
-        while (shake_accumulator >= SHAKE_STEP) {
-            _process_engine_shake(SHAKE_STEP);
-            shake_accumulator -= SHAKE_STEP;
+        switch (p_what) {
+            case NOTIFICATION_READY:
+                set_process(true);
+                cabin_ready = true;
+                emit_signal(cabin_ready_signal);
+                break;
+            case NOTIFICATION_PROCESS: {
+                shake_accumulator += get_process_delta_time();
+                while (shake_accumulator >= SHAKE_STEP) {
+                    _process_engine_shake(SHAKE_STEP);
+                    shake_accumulator -= SHAKE_STEP;
+                }
+            } break;
+            default:;
         }
     }
 

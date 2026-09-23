@@ -3,6 +3,28 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - a GDScript subclass silently replaced the native _ready()
+
+* **Symptom:** right after `Cabin3D` moved from GDScript to C++, the camera stopped entering the
+  cab at all - not "the interior is missing", but nothing happened. No error, no crash, every
+  cabin test green.
+* **Cause:** the C++ class implemented `_ready()` as the GDExtension virtual and emitted
+  `cabin_ready` from it, which `RailVehicle3D::enter_cabin()` waits on with a one-shot
+  connection. `DynamicTrainCabin` (GDScript) defines `_ready()` too - and a script that defines a
+  virtual **replaces** the native implementation rather than adding to it. The native `_ready()`
+  therefore never ran, the signal was never emitted, and the camera had nothing to wait for.
+  `super._ready()` is not a way out either: GDScript refuses it for a native virtual
+  ("Cannot call the parent class' virtual function").
+* **Fix:** `_notification()` with `NOTIFICATION_READY` / `NOTIFICATION_PROCESS`. A notification is
+  delivered to the whole chain - the native class and the script both get it - so a script
+  overriding `_ready()` no longer switches the base class off.
+* **Rule:** when a C++ class is moved under an existing GDScript subclass, its lifecycle goes in
+  `_notification()`, never in the `_ready()`/`_process()` virtuals. Those are overridable, and a
+  subclass that already defines one silently takes the base out of the picture.
+* **Rule:** the same move is safe for `_notification()` in both directions, which is why
+  `VehiclePhysicsNode` and `VehicleController` never showed this - they have no GDScript
+  subclass defining the same virtual. The trap needs a subclass to appear.
+
 ## 2026-09-23 - the loco that would not move had nobody in the cab
 
 * **Symptom:** `test_sm42_startup_sequence::test_successful_moving_on` - "Speed should be > 0" -

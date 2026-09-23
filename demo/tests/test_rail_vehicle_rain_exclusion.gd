@@ -1,6 +1,6 @@
 extends MaszynaGutTest
 
-const REAL_GAME_DIR: String = "/home/marcin/Games/Maszyna"
+const REAL_GAME_DIR: String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir: String
 

@@ -19,8 +19,8 @@ signal vehicle_cabin_occupied_changed(train_id:String, cabin_occupied:int)
 const ACTIONS:Array[StringName] = [&"increase", &"decrease", &"hold", &"release", &"toggle", &"set"]
 
 var _states:Dictionary = {}
-## train_id -> the vehicle's handle. The cabin is the one place that knows which vehicle it sits
-## in, so it is the one place that talks to the vehicle servers; a cabin element never does.
+## train_id -> the vehicle. The cabin is the one place that knows which vehicle it sits in, so it
+## is the one place that talks to the vehicle servers; a cabin element never does.
 var _vehicles:Dictionary = {}
 var _controls:Dictionary = {}
 var _processes:Dictionary = {}
@@ -38,6 +38,10 @@ func _exit_tree() -> void:
 
 ## A removed train takes its cabins along - a new vehicle with the same train_id starts clean.
 func _on_train_unregistered(train_id:String) -> void:
+    var vehicle:VehicleController = _vehicles.get(train_id)
+    if vehicle:
+        vehicle.command_received.disconnect(_on_vehicle_command_received.bind(train_id))
+        vehicle.cabin_occupied_changed.disconnect(_on_vehicle_cabin_occupied_changed.bind(train_id))
     _vehicles.erase(train_id)
     for cab:int in [1, 0, -1]:
         var key:String = _key(train_id, cab)
@@ -46,23 +50,16 @@ func _on_train_unregistered(train_id:String) -> void:
         _processes.erase(key)
 
 
-## Called by the cabin root when it is given its vehicle, and again with an invalid handle when
-## the cabin is taken out of it.
 ## Taken straight off TrainSystem's own announcement: a vehicle is known here from the moment it
 ## exists, so a cab only has to name the one it sits in. Everything else about it - the handle,
-## the state, the components - this system takes from the servers.
+## the state, the components - this system takes from the servers. The matching disconnect is in
+## _on_train_unregistered(), which is why the vehicle is kept here rather than looked up: by then
+## TrainSystem has already let go of it.
 func register_vehicle(train_id:String) -> void:
-    var previous:VehicleController = TrainSystem.get_train(train_id) if _vehicles.has(train_id) else null
-    if previous:
-        for signal_name:StringName in [&"command_received", &"cabin_occupied_changed"]:
-            for connection:Dictionary in previous.get_signal_connection_list(signal_name):
-                if connection["callable"].get_object() == self:
-                    previous.disconnect(signal_name, connection["callable"])
-    var vehicle:VehicleController = TrainSystem.get_train(train_id) if train_id else null
+    var vehicle:VehicleController = TrainSystem.get_train(train_id)
     if not vehicle:
-        _vehicles.erase(train_id)
         return
-    _vehicles[train_id] = vehicle.get_rid()
+    _vehicles[train_id] = vehicle
     vehicle.command_received.connect(_on_vehicle_command_received.bind(train_id))
     vehicle.cabin_occupied_changed.connect(_on_vehicle_cabin_occupied_changed.bind(train_id))
 
@@ -76,7 +73,8 @@ func _on_vehicle_cabin_occupied_changed(cabin_occupied:int, train_id:String) -> 
 
 
 func vehicle_rid(train_id:String) -> RID:
-    return _vehicles.get(train_id, RID())
+    var vehicle:VehicleController = _vehicles.get(train_id)
+    return vehicle.get_rid() if vehicle else RID()
 
 
 ## The whole vehicle's state, by name. Composed once per physics step by RailVehicleServer, which

@@ -5,7 +5,7 @@ extends MaszynaGutTest
 ## got an empty on/off path, the nodes instancer never matched them ("LightInfo not found for light")
 ## and no lamp could be switched on.
 
-const REAL_GAME_DIR:String = "/home/marcin/Games/Maszyna"
+const REAL_GAME_DIR:String = "/home/marcin/Games/MaSzyna"
 
 var _previous_game_dir:String
 var vehicle:RailVehicle3D

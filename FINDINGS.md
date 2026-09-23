@@ -3,6 +3,47 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-23 - the release re-parsed every scenery because its game dir was "."
+
+* **Symptom:** "scenerie sie nie cachuja, tylko zawsze ida parsing" - in the shipped build every
+  scenery and every large include is parsed from scratch on each launch, while the same data
+  caches correctly in the editor.
+* **First diagnosis, and it was wrong:** the build stamps itself on every build
+  (`ADD_CUSTOM_TARGET(build_number ALL)`), and `MaszynaRuntime::check_build_version()` clears
+  caches when the stamp moves, so an `upgrade-linux.sh` cycle looked like a guaranteed wipe.
+  Reading the code killed it: `clear_cache()` only emits `cache_clear_requested`, and the only
+  listeners are `material_manager.gd` and `vehicle_profile_manager.gd` - the scenery cache is not
+  connected to it at all.
+* **The experiment that pointed the right way:** two headless loads of the same scenery with no
+  rebuild between them. The second one did not rewrite its cache entry, so the scenery cache hits
+  and nothing about it is broken.
+* **What proved it:** loading every `user://cache/scenery_compiled/*.res` and running
+  `_is_cache_valid()`'s own checks over it. The entry written by the editor carries
+  `src=/home/marcin/Games/MaSzyna/scenery/td.scn` and all 36 dependencies resolve; the five
+  entries written by the release carry `src=scenery/baltyk/mod/drogi.scm` and **102 of 102
+  dependencies report missing**.
+* **Cause, in two halves that only fail together:**
+  * `UserSettings::get_maszyna_game_dir()` returns `"."` in an exported build
+    (`UserSettings.cpp:119`, there since `d3e7d52`), so `_get_source_path()` records
+    `scenery/<file>` and every dependency with it;
+  * a bare relative path handed to `FileAccess` resolves against **`res://`**, not against the
+    process's working directory - measured: `FileAccess.file_exists("project.godot")` is true and
+    `file_exists("README.md")` is false with the repository as the cwd. In an export `res://` is
+    the embedded pack, which holds no `scenery/` at all.
+  So `_is_cache_valid()` failed on the first dependency of every entry, every time. Parsing still
+  worked, because the parser reaches the files by a different route - which is exactly what kept
+  the defect invisible.
+* **Fix:** the game dir is a real directory in a release too - the one holding the executable
+  (`OS::get_executable_path().get_base_dir()`). The editor keeps reading the setting. As a side
+  effect the editor and the shipped build now write cache entries under the same key, and the
+  game no longer depends on the process's working directory.
+* **Rule:** a path that will be handed to `FileAccess` is absolute, or it is silently a `res://`
+  path. `"."` for "where the game lives" only works while something else happens to resolve it,
+  and it fails in the one place that merely *checks* a file rather than opening it.
+* **Rule:** when a cache "does not work", load an entry and run its own validity check over it
+  before suspecting whatever invalidates it. Here the invalidation was innocent, the cache hit
+  correctly in the editor, and the whole defect was in one field's value.
+
 ## 2026-09-23 - a GDScript subclass silently replaced the native _ready()
 
 * **Symptom:** right after `Cabin3D` moved from GDScript to C++, the camera stopped entering the

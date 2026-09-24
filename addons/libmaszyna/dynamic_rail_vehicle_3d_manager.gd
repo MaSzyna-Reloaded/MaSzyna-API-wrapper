@@ -12,7 +12,7 @@ extends Node
 ##
 ## What is cached is a VehicleStructure - what the MMD says the vehicle is built from - and not a
 ## node tree: a vehicle is a model plus a cab plus a physics handle, which is cheap to assemble
-## and costly to pack. train_id/initial_velocity/cabin_number/head_display_material are not in it
+## and costly to pack. train_id/initial_velocity/driver_type/load/head_display_material are not in it
 ## at all, because they say which *instance* a vehicle is, and two wagons of the same type still
 ## need distinct TrainSystem ids.
 
@@ -50,7 +50,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
 ## every vehicle of a scenery comes through here, so every one of them shares the cache.
 func load(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
+        initial_velocity:float, head_display_material:Material,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY,
+        load_name:String = "", load_amount:float = 0.0) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -66,6 +68,6 @@ func load(
         _cache.set(cache_path, structure, cache_hash)
 
     var vehicle:RailVehicle3D = MaszynaRailVehicle3DInstancer.build_from_structure(
-            structure, train_id, initial_velocity, cabin_number)
+            structure, train_id, initial_velocity, driver_type, load_name, load_amount)
     MaszynaRailVehicle3DInstancer.initialize_instance(vehicle, structure, head_display_material)
     return vehicle

@@ -101,7 +101,8 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> V
 ## own nodes instead of a copy of a packed tree.
 static func build_from_structure(
         structure:VehicleStructure, train_id:String, initial_velocity:float,
-        cabin_number:int = 0) -> RailVehicle3D:
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY,
+        load_name:String = "", load_amount:float = 0.0) -> RailVehicle3D:
     var model:E3DModelInstance = _build_model(
             structure.data_path, "ExteriorModel", structure.body_model_filename, structure.skins)
 
@@ -132,7 +133,9 @@ static func build_from_structure(
     fiz_controller.fiz_filename = structure.file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
-    fiz_controller.cabin_number = cabin_number
+    fiz_controller.driver_type = driver_type
+    fiz_controller.load_name = load_name
+    fiz_controller.load_amount = load_amount
 
     var rain_volume := RainVolume.new()
     rain_volume.name = RAIN_VOLUME_NAME

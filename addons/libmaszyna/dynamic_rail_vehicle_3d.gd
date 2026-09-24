@@ -62,12 +62,27 @@ class_name DynamicRailVehicle3D
             initial_velocity = x
             _dirty = true
 
-## Forwarded to the generated FizVehiclePhysicsNode.cabin_number: 1 = cab 1 (headdriver), -1 = cab 2
-## (reardriver), 0 = nobody (original engine's scenery driver type, DynObj.cpp:1812-1825).
-@export var cabin_number:int = 0:
+## Who is aboard, in the words the `.scn` uses for it - `headdriver`, `reardriver` or `nobody`
+## (DynObj.cpp:1812-1825). Not the number of a cab: it says which cab is occupied, and a vehicle
+## nobody occupies is not simulated at all (Driver.cpp:2126).
+@export var driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY:
     set(x):
-        if not x == cabin_number:
-            cabin_number = x
+        if not x == driver_type:
+            driver_type = x
+            _dirty = true
+
+## What the scenery loaded the vehicle with: the cargo's own name and how much of it
+## (`loadcount` and `loadtype` of a `dynamic`).
+@export var load_name:String = "":
+    set(x):
+        if not x == load_name:
+            load_name = x
+            _dirty = true
+
+@export var load_amount:float = 0.0:
+    set(x):
+        if not x == load_amount:
+            load_amount = x
             _dirty = true
 
 ## TrackManager name of the track used to place the generated vehicle.
@@ -145,7 +160,8 @@ func _rebuild() -> void:
         _vehicle = null
 
     var vehicle:RailVehicle3D = DynamicRailVehicle3DManager.load(
-            data_path, file_name, skin, train_id, initial_velocity, head_display_material, cabin_number)
+            data_path, file_name, skin, train_id, initial_velocity, head_display_material,
+            driver_type, load_name, load_amount)
     if not vehicle:
         return
 

@@ -14,7 +14,7 @@ class_name AutoRewidentNode
 ## speed start braked with a full manual brake (CheckLocomotiveParameters, Mover.cpp:8946), so
 ## without this the wagons of such a consist never get released.
 ##
-## Added to every vehicle by MaszynaRailVehicle3DInstancer; inactive without a driver (cabin_number 0).
+## Added to every vehicle by MaszynaRailVehicle3DInstancer; inactive without a driver aboard.
 
 ## bdelay_* brake delay flags (hamulce.h:49-51)
 const BDELAY_G:int = 1
@@ -60,9 +60,9 @@ func _check_consist() -> void:
     var controller:VehicleController = vehicle.get_controller() if vehicle else null
     if not controller or not controller.is_simulation_ready():
         return
-    # a vehicle without a cab has no driver to inspect its consist, and cabin_number comes from the
+    # a vehicle without a cab has no driver to inspect its consist, and the driver_type comes from the
     # FIZ - it will not become one later, so there is nothing left for this node to watch
-    if controller.cabin_number == 0:
+    if controller.driver_type == VehicleController.DRIVER_NOBODY:
         _timer.stop()
         return
 
@@ -105,7 +105,7 @@ func _is_engine_ready(controller:VehicleController) -> bool:
 
 ## Coupled vehicles from the head of the train (in the driving direction, CheckVehicles()) to its tail.
 func _get_consist(controller:VehicleController) -> Array[VehicleController]:
-    var driving_sign:int = controller.cabin_number * int(controller.state.get("direction", 1))
+    var driving_sign:int = controller.get_occupied_cab() * int(controller.state.get("direction", 1))
     var end:int = 0 if driving_sign >= 0 else 1
     var head:VehicleController = controller
     for i:int in MAX_CONSIST_VEHICLES:

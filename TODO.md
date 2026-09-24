@@ -101,11 +101,13 @@ serialises without a line of per-component code.
     What stays exported is what says which *instance* this is and where it stands:
     `train_id`, `initial_velocity`, the occupant, `start_track_name`, `start_track_offset`,
     `start_direction`, and `head_display_material` as the project's own asset slot.
-  * `cabin_number:int` (1 / -1 / 0) is neither a number nor a cab: it is **who occupies the
-    vehicle**, and the data has the vocabulary - `headdriver`, `reardriver`, `nobody`
-    (`DynObj.cpp:1812-1825`). It becomes an enum, which is what `CODE_STYLE.md` asks for.
-  * `loadcount`/`loadtype` and the trailing `destination` of the `dynamic` line are parsed and
-    thrown away (`maszyna_node_dynamic_importer.gd`, "not used yet") - see `## Vehicles`.
+  * ~~`cabin_number:int` is neither a number nor a cab.~~ Done: `VehicleController.DriverType`
+    (`DRIVER_NOBODY`/`DRIVER_HEAD`/`DRIVER_REAR`), named after the `drivertype` a `dynamic`
+    declares, carried by the node, the physics node and the controller; the backend's own +1/-1/0
+    stays behind `get_occupied_cab()`.
+  * ~~`loadcount`/`loadtype` are parsed and thrown away.~~ Done: they reach the vehicle as
+    `load_name`/`load_amount` and `TMoverParameters::AssignLoad()` takes both at once. The
+    trailing `destination` of the same line is still dropped.
   * `_process` runs in every vehicle of the scenery forever to look at two dirty flags. The
     `_dirty`/`_process` pattern stays; the setter turns processing on and the tick turns it off.
 * **The pantograph's power path is simulation, and it lives in a node.**
@@ -273,11 +275,12 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   which is why the junction fix works there; a scenery that declares them will pick the wrong
   span. `iLast` - the original forcing the same search on the last and second-to-last span of a
   section - is not ported either.
-* **A vehicle's load is not implemented at all.** The `.scn` `dynamic` line carries `loadcount`
-  and, when it is not zero, `loadtype`; `maszyna_node_dynamic_importer.gd` reads both and drops
-  them (`var _load_type`). The Mover has the concept, so the load has to reach it - and the load
-  also has a visual side (`loads:` in the MMD, which is where the passenger model comes from).
-  The trailing `destination` of the same line is dropped the same way.
+* **A vehicle's load reaches the backend, but has no visual side.** `loadcount`/`loadtype` of a
+  `dynamic` now become `load_name`/`load_amount` and are handed to
+  `TMoverParameters::AssignLoad()`, which is also how a scenery starts a locomotive with raised
+  pantographs (`pantstate`, `Mover.cpp:7647`). What is still missing is the cargo a load is drawn
+  as - the MMD's own `loads:` block, which is where the passenger model already comes from - and
+  the trailing `destination` of the `dynamic` line, which is still dropped.
 * `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
   `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
   after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The

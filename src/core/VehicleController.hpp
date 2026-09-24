@@ -26,6 +26,18 @@ namespace godot {
     /// these. Reached from outside by RID, through RailVehicleServer.
     class VehicleController : public Object {
             GDCLASS(VehicleController, Object)
+        public:
+            /* Who drives the vehicle, in the words the `.scn` uses for it - a `dynamic` names
+             * `headdriver`, `reardriver` or `nobody` as its drivertype (DynObj.cpp:1812-1825). It
+             * says which cab is manned, not how many cabs there are, and a vehicle nobody drives
+             * is not simulated at all (Driver.cpp:2126). */
+            enum DriverType {
+                DRIVER_NOBODY,
+                DRIVER_HEAD,
+                DRIVER_REAR,
+            };
+
+
         private:
             /* Owned by MaszynaMoverPhysicsServer, which created it and will free it; this
              * is a borrowed pointer, cached because every component reaches for it per
@@ -33,7 +45,7 @@ namespace godot {
             TMoverParameters *mover{};
             /* This vehicle's handle in the simulation backend. */
             RID physics_rid;
-            int cabin_number = 0;
+            DriverType driver_type = DRIVER_NOBODY;
             void initialize_mover();
             void initialize_mover_state();
             /// state is rebuilt from the mover when it is asked for, not on every physics step:
@@ -323,8 +335,11 @@ namespace godot {
             TMoverParameters *get_mover() const;
             VehicleController *get_coupled_controller(int p_end) const;
             int get_coupled_end(int p_end) const;
-            void set_cabin_number(int p_value);
-            int get_cabin_number() const;
+            void set_driver_type(DriverType p_value);
+            DriverType get_driver_type() const;
+            /* The cab the driver_type sits in, as the backend counts it: 1 for the front cab, -1 for
+             * the rear one, 0 for nobody (TMoverParameters::CabActivisation). */
+            int get_occupied_cab() const;
             static void _bind_methods();
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
             /* This vehicle's handle in RailVehicleServer, set when the server attaches it. */
@@ -334,6 +349,13 @@ namespace godot {
             Vector3 get_world_position() const;
             Transform3D get_world_transform() const;
             MAKE_MEMBER_GS(String, train_id, "");
+            /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
+             * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The
+             * backend takes both at once, and it reads more than cargo out of them: `pantstate`
+             * is how a scenery starts a locomotive with its pantographs already up
+             * (TMoverParameters::AssignLoad, Mover.cpp:7647). */
+            MAKE_MEMBER_GS(String, load_name, "");
+            MAKE_MEMBER_GS(double, load_amount, 0.0);
             MAKE_MEMBER_GS(String, type_name, "");
             MAKE_MEMBER_GS(double, battery_voltage, 0.0); // FIXME: move to TrainPower ?
             MAKE_MEMBER_GS(double, mass, 0.0);
@@ -404,6 +426,7 @@ namespace godot {
     };
 } // namespace godot
 
+VARIANT_ENUM_CAST(VehicleController::DriverType);
 VARIANT_ENUM_CAST(VehicleController::TrainPowerSource);
 VARIANT_ENUM_CAST(VehicleController::TrainPowerType);
 VARIANT_ENUM_CAST(VehicleController::Category);

@@ -158,7 +158,14 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_drag_coefficient, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_floor_height, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, initial_velocity);
-        BIND_PROPERTY(VehicleController, Variant::INT, cabin_number);
+        BIND_PROPERTY_W_HINT(
+                VehicleController, Variant::INT, driver_type, "", PROPERTY_HINT_ENUM,
+                "Nobody,HeadDriver,RearDriver");
+        BIND_ENUM_CONSTANT(DRIVER_NOBODY);
+        BIND_ENUM_CONSTANT(DRIVER_HEAD);
+        BIND_ENUM_CONSTANT(DRIVER_REAR);
+        BIND_PROPERTY(VehicleController, Variant::STRING, load_name);
+        BIND_PROPERTY(VehicleController, Variant::FLOAT, load_amount);
         BIND_PROPERTY_W_HINT(
                 VehicleController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
@@ -412,7 +419,7 @@ namespace godot {
         mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
         mover->LocalBrakePosA = 0.0;
         mover->BrakeCtrlPos =
-                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && cabin_number != 0 ? bh_RP : bh_NP)));
+                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && driver_type != DRIVER_NOBODY ? bh_RP : bh_NP)));
         mover->BrakeLevelSet(mover->BrakeCtrlPos);
     }
 
@@ -422,7 +429,7 @@ namespace godot {
         MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
         ERR_FAIL_NULL(physics);
         // the vehicle used to be named by its node; what identifies one now is its train id
-        physics_rid = physics->vehicle_create(type_name, train_id, initial_vel, this->cabin_number);
+        physics_rid = physics->vehicle_create(type_name, train_id, initial_vel, get_occupied_cab());
         mover = physics->vehicle_get_mover(physics_rid);
         ERR_FAIL_NULL(mover);
         controllers_by_mover[mover] = this;
@@ -458,8 +465,14 @@ namespace godot {
         }
         // only a driven vehicle gets its cab activated by the driver (Driver.cpp:2126); an unmanned
         // one stays inactive, so ComputeTotalForce() can switch its physics off
-        if (cabin_number != 0) {
+        if (driver_type != DRIVER_NOBODY) {
             mover->CabActivisation();
+        }
+        /* What the scenery loaded the vehicle with. The backend takes the cargo's name and its
+         * amount together and reads more than cargo out of them - `pantstate` is how a scenery
+         * starts a locomotive with raised pantographs (Mover.cpp:7647). */
+        if (!load_name.is_empty()) {
+            mover->AssignLoad(std::string(load_name.utf8().ptr()), static_cast<float>(load_amount));
         }
 
         /* switch_physics() raczej trzeba zostawic */
@@ -1300,12 +1313,26 @@ namespace godot {
         mover->CabActivisationAuto();
     }
 
-    void VehicleController::set_cabin_number(const int p_value) {
-        cabin_number = p_value;
+    void VehicleController::set_driver_type(const DriverType p_value) {
+        driver_type = p_value;
     }
 
-    int VehicleController::get_cabin_number() const {
-        return cabin_number;
+    VehicleController::DriverType VehicleController::get_driver_type() const {
+        return driver_type;
+    }
+
+    /* The backend counts the occupied cab as +1 for the front one and -1 for the rear
+     * (DynObj.cpp:1812-1825); nobody aboard is 0, and that is what keeps an unmanned vehicle out
+     * of the physics. */
+    int VehicleController::get_occupied_cab() const {
+        switch (driver_type) {
+            case DRIVER_HEAD:
+                return 1;
+            case DRIVER_REAR:
+                return -1;
+            default:
+                return 0;
+        }
     }
 
     void VehicleController::main_controller_increase(const int p_step) const {

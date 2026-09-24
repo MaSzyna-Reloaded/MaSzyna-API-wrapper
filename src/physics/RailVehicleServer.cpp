@@ -13,7 +13,7 @@
 
 namespace godot {
     /* Reports physics inconsistencies with push_error (see _check_movement, _check_velocity_jumps) */
-    static const char *DIAGNOSTICS_SETTING = "maszyna/debug/physics_diagnostics";
+    static const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
 
     RailVehicleServer::RailVehicleServer() {
         diagnostics = ProjectSettings::get_singleton()->get_setting(DIAGNOSTICS_SETTING, false);

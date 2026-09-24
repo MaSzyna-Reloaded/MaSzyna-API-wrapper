@@ -439,21 +439,22 @@ redmarker_rear_right_toggle={
 
 [maszyna]
 
-rendering/shadow_blur=0.4
-rendering/shadow_exterior_max_distance=300.0
-rendering/shadow_cabin_mode=2
-track_curve_bake_interval=0.5
-rendering/volumetric_fog_energy=4.0
-rendering/scenery_draw_distance=1000.0
-rendering/fog_curve=2.0
-rendering/scenery_light_energy=2.0
-rendering/scenery_light_volumetric_fog_energy=16.0
-rendering/fog_night_distance_factor=6.0
-rendering/scenery_lamp_light_attenuation=0.10000000000000002
-rendering/smoke_generator_mode=1
-rendering/smoke_density_dynamic=3.0
-rendering/smoke_density_static=0.5
-rendering/smoke_atlas="res://vfx/smoke_atlas.png"
+scenery/shadows/blur=0.4
+cabin/shadows/blur=0.4
+scenery/shadows/max_distance=300.0
+cabin/shadows/mode=2
+scenery/track_curve_bake_interval=0.5
+weather/fog/volumetric_energy=4.0
+scenery/draw_distance=1000.0
+weather/fog/curve=2.0
+scenery/lights/energy=2.0
+scenery/lights/volumetric_fog_energy=16.0
+weather/fog/night_distance_factor=6.0
+scenery/lights/lamp_attenuation=0.10000000000000002
+smoke/generator_mode=1
+smoke/dynamic/density=3.0
+smoke/static/density=0.5
+smoke/modern/atlas="res://vfx/smoke_atlas.png"
 
 [physics]
 

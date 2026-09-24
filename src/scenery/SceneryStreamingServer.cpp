@@ -34,7 +34,7 @@ namespace godot {
         mutex.instantiate();
         semaphore.instantiate();
         draw_distance = ProjectSettings::get_singleton()->get_setting(
-                "maszyna/rendering/scenery_draw_distance", DEFAULT_DRAW_DISTANCE_M);
+                "maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
     }
 
     /// The worker finishes the pass it is in before it is joined

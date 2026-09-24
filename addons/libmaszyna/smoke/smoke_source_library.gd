@@ -16,20 +16,20 @@ extends Node
 ## Multiplies how many particles an emitter spawns per second, over what its template asks for.
 ## Each one is made correspondingly fainter, so a denser plume is smoother rather than darker -
 ## the original's gfx.smoke.fidelity does the same (particles.cpp:73, :128, :165).
-const DENSITY_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_density_dynamic"
-const DENSITY_STATIC_SETTING:String = "maszyna/rendering/smoke_density_static"
+const DENSITY_DYNAMIC_SETTING:String = "maszyna/smoke/dynamic/density"
+const DENSITY_STATIC_SETTING:String = "maszyna/smoke/static/density"
 const DEFAULT_DENSITY:float = 1.0
 ## Scales how long a particle lives, over what its template asks for. A chimney template fades at
 ## 0.01 per second, which is a minute of particle in the air - far more than a scenery prop needs,
 ## and it is also what decides how many of them are in flight at once.
-const LIFETIME_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_lifetime_dynamic"
-const LIFETIME_STATIC_SETTING:String = "maszyna/rendering/smoke_lifetime_static"
+const LIFETIME_DYNAMIC_SETTING:String = "maszyna/smoke/dynamic/lifetime"
+const LIFETIME_STATIC_SETTING:String = "maszyna/smoke/static/lifetime"
 const DEFAULT_LIFETIME_DYNAMIC:float = 1.0
 const DEFAULT_LIFETIME_STATIC:float = 0.5
 ## Particle budget of a single emitter, which the original caps at 500 per source at its lowest
 ## smoke fidelity (particles.cpp:128). It has to leave room for the density above.
-const MAX_PARTICLES_DYNAMIC_SETTING:String = "maszyna/rendering/smoke_max_particles_dynamic"
-const MAX_PARTICLES_STATIC_SETTING:String = "maszyna/rendering/smoke_max_particles_static"
+const MAX_PARTICLES_DYNAMIC_SETTING:String = "maszyna/smoke/dynamic/max_particles"
+const MAX_PARTICLES_STATIC_SETTING:String = "maszyna/smoke/static/max_particles"
 const DEFAULT_MAX_PARTICLES_DYNAMIC:int = 2000
 const DEFAULT_MAX_PARTICLES_STATIC:int = 500
 ## How much of a static emitter's plume is already in the air when it is built, so a chimney is
@@ -44,12 +44,13 @@ const SMOKE_TEXTURE:String = "fx/smoke"
 ## into wisps and dissolves on its own.
 enum GeneratorMode {ORIGINAL, MODERN}
 
-const GENERATOR_MODE_SETTING:String = "maszyna/rendering/smoke_generator_mode"
-## Path of the flipbook MODERN uses. Empty in the addon - the slot is filled by the project that
-## ships the asset (the demo sets it to res://vfx/smoke_atlas.png).
-const ATLAS_SETTING:String = "maszyna/rendering/smoke_atlas"
+const GENERATOR_MODE_SETTING:String = "maszyna/smoke/generator_mode"
+## Path of the flipbook MODERN uses. Empty here, because the asset belongs to whoever uses the
+## addon, not to the addon: a project that wants MODERN points this at its own flipbook. Left
+## empty, _modern_material() says so and falls back to the original sprite.
+const ATLAS_SETTING:String = "maszyna/smoke/modern/atlas"
 ## Columns and rows of that flipbook
-const ATLAS_FRAMES_SETTING:String = "maszyna/rendering/smoke_atlas_frames"
+const ATLAS_FRAMES_SETTING:String = "maszyna/smoke/modern/atlas_frames"
 
 ## cParser stop characters of the template grammar (particles.cpp:24); the braces are tokens of
 ## their own and must not be listed here

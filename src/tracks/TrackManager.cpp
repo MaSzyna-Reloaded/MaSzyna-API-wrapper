@@ -26,7 +26,7 @@ namespace godot {
     TrackManager::TrackManager() {
         spatial_index.instantiate();
         spatial_index->set_cell_size(GRID_CELL_SIZE);
-        curve_bake_interval = ProjectSettings::get_singleton()->get_setting("maszyna/track_curve_bake_interval", 10.0);
+        curve_bake_interval = ProjectSettings::get_singleton()->get_setting("maszyna/scenery/track_curve_bake_interval", 10.0);
     }
 
     TrackManager::~TrackManager() {

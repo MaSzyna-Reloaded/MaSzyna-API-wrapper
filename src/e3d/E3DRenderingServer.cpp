@@ -575,7 +575,7 @@ namespace godot {
     void E3DRenderingServer::_build_instance_lights(const RID &p_instance, E3DInstanceData &p_instance_data) {
         // The NODES backends build SpotLight3D nodes of their own. A vehicle far enough away to
         // have switched to OPTIMIZED is past the distance where those were faded out anyway
-        // (maszyna/rendering/vehicle_detail_distance), so only the streamed scenery gets lights
+        // (maszyna/vehicles/detail_distance), so only the streamed scenery gets lights
         // here - the ones a caller asks for by hand still go through *_light_create().
         if (p_instance_data.instancer != INSTANCER_OPTIMIZED || !p_instance_data.stream_rid.is_valid()) {
             return;
@@ -637,12 +637,17 @@ namespace godot {
         }
 
         SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-        const float distance = settings->get_setting(SMOKE_DISTANCE_SETTING, DEFAULT_SMOKE_DISTANCE);
+        // a locomotive's plume and a chimney's are seen from different distances, and they are
+        // streamed by the same range, so each kind carries its own
+        const bool dynamic_instance = p_instance_data.instance_kind == INSTANCE_KIND_DYNAMIC;
+        const float distance = settings->get_setting(
+                dynamic_instance ? SMOKE_DYNAMIC_DISTANCE_SETTING : SMOKE_STATIC_DISTANCE_SETTING,
+                DEFAULT_SMOKE_DISTANCE);
 
         for (const E3DSmokeSourcePlacement &placement: placements) {
             const RID rid = UtilityFunctions::rid_from_int64(UtilityFunctions::rid_allocate_id());
             SmokeObject &smoke = smoke_objects[rid];
-            if (p_instance_data.instance_kind == INSTANCE_KIND_DYNAMIC) {
+            if (dynamic_instance) {
                 smoke_order.push_back(rid);
             }
             smoke.owner = p_instance;

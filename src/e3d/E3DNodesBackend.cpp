@@ -167,10 +167,10 @@ namespace godot {
                 spotlight->set_color(color);
                 spotlight->set_param(
                         Light3D::PARAM_VOLUMETRIC_FOG_ENERGY,
-                        settings->get_setting("maszyna/vehicle_lights_volumetric_fog_energy", 4.0));
+                        settings->get_setting("maszyna/vehicles/lights_volumetric_fog_energy", 4.0));
                 spotlight->set_shadow(true);
                 spotlight->set_shadow_reverse_cull_face(
-                        settings->get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true));
+                        settings->get_setting("maszyna/lights/reverse_cull_face", true));
                 spotlight->set_enable_distance_fade(true);
                 spotlight->set_distance_fade_begin(150.0);
                 spotlight->set_distance_fade_shadow(100.0);

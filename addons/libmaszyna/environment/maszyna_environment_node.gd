@@ -131,7 +131,7 @@ signal configuration_changed
 
 ## Distance the fog reaches fog_density at, growing linearly up to it. The sky backend may tell
 ## day from night
-## (maszyna/rendering/fog_day_distance_factor, fog_night_distance_factor).
+## (maszyna/weather/fog/day_distance_factor, night_distance_factor).
 @export_range(10.0, 25000.0, 1.0, "suffix:m") var fog_distance: float = 470.0:
     set(value):
         fog_distance = value

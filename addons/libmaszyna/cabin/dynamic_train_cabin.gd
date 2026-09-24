@@ -181,7 +181,7 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.name = "CabLight"
     light.light_color = Color(0.9, 0.9 * 216.0 / 255.0, 0.9 * 176.0 / 255.0)
     light.shadow_enabled = true
-    light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+    light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
     # without a cab model: the top of the camera bounds
     light.position = (definition.bounds_min + definition.bounds_max) * 0.5
     light.position.y = definition.bounds_max.y

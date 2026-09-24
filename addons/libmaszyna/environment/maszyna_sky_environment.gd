@@ -3,38 +3,44 @@
 extends RefCounted
 class_name MaszynaSkyEnvironment
 
-const SHADOW_ENABLED_SETTING: StringName = &"maszyna/rendering/shadow_enabled"
-const SHADOW_MODE_SETTING: StringName = &"maszyna/rendering/shadow_mode"
+const SHADOW_SCENERY_ENABLED_SETTING: StringName = &"maszyna/scenery/shadows/enabled"
+const SHADOW_CABIN_ENABLED_SETTING: StringName = &"maszyna/cabin/shadows/enabled"
+const SHADOW_SCENERY_MODE_SETTING: StringName = &"maszyna/scenery/shadows/mode"
 ## The cabin view fills the screen with close surfaces, where every PSSM split costs a full
 ## screen of filtering - fewer splits than outside are enough for the few metres it needs
-const SHADOW_CABIN_MODE_SETTING: StringName = &"maszyna/rendering/shadow_cabin_mode"
-const SHADOW_BLUR_SETTING: StringName = &"maszyna/rendering/shadow_blur"
-const SHADOW_OPACITY_SETTING: StringName = &"maszyna/rendering/shadow_opacity"
-const SHADOW_BIAS_SETTING: StringName = &"maszyna/rendering/shadow_bias"
-const SHADOW_NORMAL_BIAS_SETTING: StringName = &"maszyna/rendering/shadow_normal_bias"
-const SHADOW_EXTERIOR_MAX_DISTANCE_SETTING: StringName = &"maszyna/rendering/shadow_exterior_max_distance"
-const SHADOW_CABIN_MAX_DISTANCE_SETTING: StringName = &"maszyna/rendering/shadow_cabin_max_distance"
-const SHADOW_BLEND_SPLITS_SETTING: StringName = &"maszyna/rendering/shadow_blend_splits"
-const SHADOW_EXTERIOR_SPLIT_SETTINGS: Array[StringName] = [
-    &"maszyna/rendering/shadow_exterior_split_1",
-    &"maszyna/rendering/shadow_exterior_split_2",
-    &"maszyna/rendering/shadow_exterior_split_3",
+const SHADOW_CABIN_MODE_SETTING: StringName = &"maszyna/cabin/shadows/mode"
+const SHADOW_SCENERY_BLUR_SETTING: StringName = &"maszyna/scenery/shadows/blur"
+const SHADOW_CABIN_BLUR_SETTING: StringName = &"maszyna/cabin/shadows/blur"
+const SHADOW_SCENERY_OPACITY_SETTING: StringName = &"maszyna/scenery/shadows/opacity"
+const SHADOW_CABIN_OPACITY_SETTING: StringName = &"maszyna/cabin/shadows/opacity"
+const SHADOW_SCENERY_BIAS_SETTING: StringName = &"maszyna/scenery/shadows/bias"
+const SHADOW_CABIN_BIAS_SETTING: StringName = &"maszyna/cabin/shadows/bias"
+const SHADOW_SCENERY_NORMAL_BIAS_SETTING: StringName = &"maszyna/scenery/shadows/normal_bias"
+const SHADOW_CABIN_NORMAL_BIAS_SETTING: StringName = &"maszyna/cabin/shadows/normal_bias"
+const SHADOW_SCENERY_MAX_DISTANCE_SETTING: StringName = &"maszyna/scenery/shadows/max_distance"
+const SHADOW_CABIN_MAX_DISTANCE_SETTING: StringName = &"maszyna/cabin/shadows/max_distance"
+const SHADOW_SCENERY_BLEND_SPLITS_SETTING: StringName = &"maszyna/scenery/shadows/blend_splits"
+const SHADOW_CABIN_BLEND_SPLITS_SETTING: StringName = &"maszyna/cabin/shadows/blend_splits"
+const SHADOW_SCENERY_SPLIT_SETTINGS: Array[StringName] = [
+    &"maszyna/scenery/shadows/split_1",
+    &"maszyna/scenery/shadows/split_2",
+    &"maszyna/scenery/shadows/split_3",
 ]
 const SHADOW_CABIN_SPLIT_SETTINGS: Array[StringName] = [
-    &"maszyna/rendering/shadow_cabin_split_1",
-    &"maszyna/rendering/shadow_cabin_split_2",
-    &"maszyna/rendering/shadow_cabin_split_3",
+    &"maszyna/cabin/shadows/split_1",
+    &"maszyna/cabin/shadows/split_2",
+    &"maszyna/cabin/shadows/split_3",
 ]
 ## Godot's DirectionalLight3D defaults for the exterior, the cabin keeps most of the map up close
-const SHADOW_EXTERIOR_SPLITS: Array[float] = [0.1, 0.2, 0.5]
+const SHADOW_SCENERY_SPLITS: Array[float] = [0.1, 0.2, 0.5]
 const SHADOW_CABIN_SPLITS: Array[float] = [0.01, 0.02, 0.2]
 ## Sun altitude (degrees) between which get_light_level() ramps from night to full day. The
 ## original lights a scenery light set to "on when dark" below a light level of 0.325
 ## (AnimModel.cpp:598), which on this ramp falls at about 1.4 degrees below the horizon. Both ends
 ## have to stay clear of a winter noon - at 50 N the sun peaks at 16-19 degrees in January, so a
 ## day threshold anywhere near that would light the whole town at midday (see FINDINGS.md).
-const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_night_altitude"
-const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/rendering/light_level_day_altitude"
+const LIGHT_LEVEL_NIGHT_ALTITUDE_SETTING: StringName = &"maszyna/lights/night_altitude"
+const LIGHT_LEVEL_DAY_ALTITUDE_SETTING: StringName = &"maszyna/lights/day_altitude"
 const LIGHT_LEVEL_NIGHT_ALTITUDE: float = -6.0
 const LIGHT_LEVEL_DAY_ALTITUDE: float = 6.0
 ## Overcast dims the key light in the original by this much at full cover
@@ -47,13 +53,13 @@ const LIGHT_LEVEL_OVERCAST_FACTOR: float = 0.65
 ## by night and 192 m by day. Raising it further spreads the same froxel depth slices over more
 ## metres, which softens the fog near the camera, and shafts still stop where the light's shadow
 ## does (E3DRenderingServer.SCENERY_LIGHT_SHADOW_FADE_DISTANCE) - the two have to be raised together.
-const FOG_VOLUMETRIC_LENGTH_SCALE_SETTING: StringName = &"maszyna/rendering/fog_volumetric_length_scale"
+const FOG_VOLUMETRIC_LENGTH_SCALE_SETTING: StringName = &"maszyna/weather/fog/volumetric_length_scale"
 const FOG_VOLUMETRIC_LENGTH_SCALE_DEFAULT: float = 24.0
-const VOLUMETRIC_FOG_ENERGY_SETTING: StringName = &"maszyna/rendering/volumetric_fog_energy"
+const VOLUMETRIC_FOG_ENERGY_SETTING: StringName = &"maszyna/weather/fog/volumetric_energy"
 ## MaszynaEnvironmentNode.fog_distance is scaled by these for the day and for the night fog of a
 ## sky backend that tells them apart; the night default keeps Skydome's own 200 m to 470 m ratio
-const FOG_DAY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_day_distance_factor"
-const FOG_NIGHT_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_night_distance_factor"
+const FOG_DAY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/weather/fog/day_distance_factor"
+const FOG_NIGHT_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/weather/fog/night_distance_factor"
 ## How the fog builds up with the distance z from the camera: opacity = fog_density *
 ## (z / fog_distance) ^ exponent (Environment.fog_depth_curve). 1 - evenly, above 1 - clear near the
 ## camera and thickening further away, below 1 - thick right away. It has nothing to do with how
@@ -68,7 +74,7 @@ const FOG_NIGHT_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_ni
 ## fog is 1 - exp(-(z / range)^2) (apply_fog.glsl:16); a curve of 1.5 with the fog complete at 1.5
 ## of that range starts as slowly as it does (19/54/100% against 22/63/90% at 0.5/1/1.5 of the
 ## range) - hence the two defaults.
-const FOG_CURVE_SETTING: StringName = &"maszyna/rendering/fog_curve"
+const FOG_CURVE_SETTING: StringName = &"maszyna/weather/fog/curve"
 const FOG_CURVE_DEFAULT: float = 1.5
 const FOG_CURVE_MIN: float = 0.5
 ## How much fog there is looking up, as a distance: the sky takes the share of the fog a terrain
@@ -76,36 +82,36 @@ const FOG_CURVE_MIN: float = 0.5
 ## kilometres is a thin layer and leaves the stars, the moon and the clouds alone; a fog of a
 ## hundred metres hides them. Rain is no thin layer - it fills the air all the way up - so the fog
 ## a downpour brings reaches the sky in full.
-const FOG_SKY_HEIGHT_SETTING: StringName = &"maszyna/rendering/fog_sky_height"
+const FOG_SKY_HEIGHT_SETTING: StringName = &"maszyna/weather/fog/sky_height"
 const FOG_SKY_HEIGHT_DEFAULT: float = 1000.0
 ## How much the fog takes the colour of the sky's radiance instead of its own
 ## (Environment.fog_aerial_perspective). Off by default: at dusk that radiance is as dark as the
 ## scene itself, so a fully fogged object stays a dark silhouette against a brighter sky instead of
 ## fading out - the fog stops reading as fog.
-const FOG_AERIAL_PERSPECTIVE_SETTING: StringName = &"maszyna/rendering/fog_aerial_perspective"
+const FOG_AERIAL_PERSPECTIVE_SETTING: StringName = &"maszyna/weather/fog/aerial_perspective"
 const FOG_AERIAL_PERSPECTIVE_DEFAULT: float = 0.0
 ## A downpour brings a fog of its own, whatever fog is set: towards a full precipitation the fog
 ## distance shortens to this visibility and the fog density rises to this opacity (never the other
 ## way - a fog already closer or thicker stays as it is).
-const RAIN_FOG_DISTANCE_SETTING: StringName = &"maszyna/rendering/rain_fog_distance"
+const RAIN_FOG_DISTANCE_SETTING: StringName = &"maszyna/weather/rain/fog_distance"
 const RAIN_FOG_DISTANCE_DEFAULT: float = 800.0
-const RAIN_FOG_DENSITY_SETTING: StringName = &"maszyna/rendering/rain_fog_density"
+const RAIN_FOG_DENSITY_SETTING: StringName = &"maszyna/weather/rain/fog_density"
 const RAIN_FOG_DENSITY_DEFAULT: float = 0.6
 ## How fast the fog right in front of the camera (the volumetric layer) dies out once fog_distance
 ## grows past the distance the sky backend is tuned for: its density follows
 ## (reference / fog_distance) ^ falloff there. 1 - as below that distance; 2 - a fog reaching
 ## kilometres leaves the view in front of the camera as crisp as no fog at all.
-const FOG_VOLUMETRIC_FAR_FALLOFF_SETTING: StringName = &"maszyna/rendering/fog_volumetric_far_falloff"
+const FOG_VOLUMETRIC_FAR_FALLOFF_SETTING: StringName = &"maszyna/weather/fog/volumetric_far_falloff"
 const FOG_VOLUMETRIC_FAR_FALLOFF_DEFAULT: float = 2.0
 ## Floor under that falloff, as a share of the volumetric density at the reference distance. A
 ## scenery that declares a fog of kilometres (stary_jawor_noc asks for 2-4 km, which becomes a
 ## fog_distance of 2250-4500 m) drives the falloff to 0.01-0.04 and leaves the air by the camera
 ## with no haze at all - and a street lamp with nothing to scatter in casts no visible shaft. Real
 ## night air is never that clean, so the haze thins towards this share instead of towards nothing.
-const FOG_VOLUMETRIC_MINIMUM_SETTING: StringName = &"maszyna/rendering/fog_volumetric_minimum"
+const FOG_VOLUMETRIC_MINIMUM_SETTING: StringName = &"maszyna/weather/fog/volumetric_minimum"
 const FOG_VOLUMETRIC_MINIMUM_DEFAULT: float = 0.25
 ## fog_distance of a scenery that declares its fog, as a multiple of the original's fog range
-const FOG_SCENERY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/rendering/fog_scenery_distance_factor"
+const FOG_SCENERY_DISTANCE_FACTOR_SETTING: StringName = &"maszyna/weather/fog/scenery_distance_factor"
 const FOG_SCENERY_DISTANCE_FACTOR_DEFAULT: float = 1.5
 const FOG_DAY_DISTANCE_FACTOR_DEFAULT: float = 1.0
 const FOG_NIGHT_DISTANCE_FACTOR_DEFAULT: float = 0.4255
@@ -135,7 +141,7 @@ func _init(node: Node) -> void:
 @abstract func apply_visual_configuration() -> void
 
 
-## Applies the maszyna/rendering/* light settings to the backend's directional lights.
+## Applies the maszyna/shadows/* settings to the backend's directional lights.
 @abstract func apply_light_configuration() -> void
 
 
@@ -180,31 +186,58 @@ func process(_delta: float) -> void:
 
 
 func _apply_directional_light_settings(light: DirectionalLight3D) -> void:
-    light.shadow_enabled = bool(ProjectSettings.get_setting(SHADOW_ENABLED_SETTING, true))
-    light.shadow_blur = float(ProjectSettings.get_setting(SHADOW_BLUR_SETTING, 1.0))
-    light.shadow_opacity = float(ProjectSettings.get_setting(SHADOW_OPACITY_SETTING, 1.0))
-    light.shadow_bias = float(ProjectSettings.get_setting(SHADOW_BIAS_SETTING, 0.1))
-    light.shadow_normal_bias = float(ProjectSettings.get_setting(SHADOW_NORMAL_BIAS_SETTING, 2.0))
     # the cabin view needs sharp near shadows only, the exterior view far ones
     var cabin_view: bool = (environment_node as MaszynaEnvironmentNode).cabin_view
+    light.shadow_enabled = bool(
+        ProjectSettings.get_setting(SHADOW_CABIN_ENABLED_SETTING, true)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_ENABLED_SETTING, true)
+    )
+    light.shadow_opacity = float(
+        ProjectSettings.get_setting(SHADOW_CABIN_OPACITY_SETTING, 1.0)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_OPACITY_SETTING, 1.0)
+    )
+    light.shadow_bias = float(
+        ProjectSettings.get_setting(SHADOW_CABIN_BIAS_SETTING, 0.1)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_BIAS_SETTING, 0.1)
+    )
+    light.shadow_blur = float(
+        ProjectSettings.get_setting(SHADOW_CABIN_BLUR_SETTING, 1.0)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_BLUR_SETTING, 1.0)
+    )
+    # Normal bias pushes the shadow lookup along the surface normal, so it hides the acne a large
+    # split produces at a grazing sun - which is why the exterior, drawn from far splits, needs
+    # far more of it than the cabin, whose splits are metres wide and whose detail it would eat.
+    light.shadow_normal_bias = float(
+        ProjectSettings.get_setting(SHADOW_CABIN_NORMAL_BIAS_SETTING, 5.0)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_NORMAL_BIAS_SETTING, 10.0)
+    )
     light.directional_shadow_mode = int(
         ProjectSettings.get_setting(SHADOW_CABIN_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS)
         if cabin_view
-        else ProjectSettings.get_setting(SHADOW_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
+        else ProjectSettings.get_setting(SHADOW_SCENERY_MODE_SETTING, DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS)
     ) as DirectionalLight3D.ShadowMode
     light.directional_shadow_max_distance = (
         float(ProjectSettings.get_setting(SHADOW_CABIN_MAX_DISTANCE_SETTING, 150.0))
         if cabin_view
-        else float(ProjectSettings.get_setting(SHADOW_EXTERIOR_MAX_DISTANCE_SETTING, 100.0))
+        else float(ProjectSettings.get_setting(SHADOW_SCENERY_MAX_DISTANCE_SETTING, 100.0))
     )
     var split_settings: Array[StringName] = (
-        SHADOW_CABIN_SPLIT_SETTINGS if cabin_view else SHADOW_EXTERIOR_SPLIT_SETTINGS
+        SHADOW_CABIN_SPLIT_SETTINGS if cabin_view else SHADOW_SCENERY_SPLIT_SETTINGS
     )
-    var split_defaults: Array[float] = SHADOW_CABIN_SPLITS if cabin_view else SHADOW_EXTERIOR_SPLITS
+    var split_defaults: Array[float] = SHADOW_CABIN_SPLITS if cabin_view else SHADOW_SCENERY_SPLITS
     light.directional_shadow_split_1 = float(ProjectSettings.get_setting(split_settings[0], split_defaults[0]))
     light.directional_shadow_split_2 = float(ProjectSettings.get_setting(split_settings[1], split_defaults[1]))
     light.directional_shadow_split_3 = float(ProjectSettings.get_setting(split_settings[2], split_defaults[2]))
-    light.directional_shadow_blend_splits = bool(ProjectSettings.get_setting(SHADOW_BLEND_SPLITS_SETTING, true))
+    light.directional_shadow_blend_splits = bool(
+        ProjectSettings.get_setting(SHADOW_CABIN_BLEND_SPLITS_SETTING, true)
+        if cabin_view
+        else ProjectSettings.get_setting(SHADOW_SCENERY_BLEND_SPLITS_SETTING, true)
+    )
     light.light_volumetric_fog_energy = float(
         ProjectSettings.get_setting(VOLUMETRIC_FOG_ENERGY_SETTING, 1.0)
     )

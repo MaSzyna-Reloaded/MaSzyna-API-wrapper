@@ -68,16 +68,16 @@ namespace godot {
                 SCENERY_LIGHTS_ECONOMY = 1,
                 SCENERY_LIGHTS_HIGH_QUALITY = 2,
             };
-            static constexpr const char *LIGHT_MODE_SETTING = "maszyna/rendering/scenery_light_mode";
+            static constexpr const char *LIGHT_MODE_SETTING = "maszyna/scenery/lights/mode";
             static constexpr int DEFAULT_LIGHT_MODE = SCENERY_LIGHTS_ECONOMY;
             static constexpr const char *ECONOMY_HEIGHT_OFFSET_SETTING =
-                    "maszyna/rendering/scenery_light_economy_height_offset";
+                    "maszyna/scenery/lights/economy_height_offset";
             static constexpr float DEFAULT_ECONOMY_HEIGHT_OFFSET = 1.0;
             static constexpr const char *ECONOMY_CONE_SCALE_SETTING =
-                    "maszyna/rendering/scenery_light_economy_cone_scale";
+                    "maszyna/scenery/lights/economy_cone_scale";
             static constexpr float DEFAULT_ECONOMY_CONE_SCALE = 1.2;
             /// Source radius of a light the model declares on its own, which carries no size
-            static constexpr const char *LIGHT_SIZE_SETTING = "maszyna/rendering/scenery_light_size";
+            static constexpr const char *LIGHT_SIZE_SETTING = "maszyna/scenery/lights/size";
             static constexpr float DEFAULT_LIGHT_SIZE = 0.25;
 
 
@@ -94,17 +94,17 @@ namespace godot {
             /// The synthesized street lamp light sits this far above the halo billboard that marks
             /// the lamp head. Nothing in the data asks for it - it is a plain tuning offset.
             static constexpr const char *LAMP_LIGHT_HEIGHT_OFFSET_SETTING =
-                    "maszyna/rendering/scenery_lamp_light_height_offset";
+                    "maszyna/scenery/lights/lamp_height_offset";
             static constexpr float DEFAULT_LAMP_LIGHT_HEIGHT_OFFSET = 0.5;
             /// Widens the cone past the patch the model draws. 1.0 covers exactly the patch.
             static constexpr const char *LAMP_LIGHT_CONE_SCALE_SETTING =
-                    "maszyna/rendering/scenery_lamp_light_cone_scale";
+                    "maszyna/scenery/lights/lamp_cone_scale";
             static constexpr float DEFAULT_LAMP_LIGHT_CONE_SCALE = 1.5;
             /// Falloff exponent of a synthesized lamp light; below 1.0 keeps the pool bright out to
             /// its edge instead of fading through most of it. Lights the model declares keep the
             /// falloff their own iFarAttenDecay asks for.
             static constexpr const char *LAMP_LIGHT_ATTENUATION_SETTING =
-                    "maszyna/rendering/scenery_lamp_light_attenuation";
+                    "maszyna/scenery/lights/lamp_attenuation";
             static constexpr float DEFAULT_LAMP_LIGHT_ATTENUATION = 0.5;
             static constexpr float FORCED_END_LIGHT_SPOT_RANGE = 3.0;
 

@@ -46,7 +46,7 @@ namespace godot {
             static constexpr uint64_t CATCHUP_BUDGET_MSEC = 16;
             /// Backlog above which the catch-up budget is used
             static constexpr int CATCHUP_BACKLOG = 64;
-            /// Fallback for maszyna/rendering/scenery_draw_distance, also the range of the pieces
+            /// Fallback for maszyna/scenery/draw_distance, also the range of the pieces
             /// that declare none of their own
             static constexpr float DEFAULT_DRAW_DISTANCE_M = 3000.0;
 

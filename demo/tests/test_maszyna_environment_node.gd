@@ -96,12 +96,12 @@ func test_weather_preset_sets_weather_controls() -> void:
 
 func test_applies_rendering_light_settings_on_ready() -> void:
     var settings: Dictionary = {
-        MaszynaSkyEnvironment.SHADOW_ENABLED_SETTING: false,
-        MaszynaSkyEnvironment.SHADOW_MODE_SETTING: DirectionalLight3D.SHADOW_ORTHOGONAL,
-        MaszynaSkyEnvironment.SHADOW_BLUR_SETTING: 0.5,
-        MaszynaSkyEnvironment.SHADOW_BIAS_SETTING: 0.2,
-        MaszynaSkyEnvironment.SHADOW_NORMAL_BIAS_SETTING: 1.5,
-        MaszynaSkyEnvironment.SHADOW_EXTERIOR_MAX_DISTANCE_SETTING: 250.0,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_ENABLED_SETTING: false,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_MODE_SETTING: DirectionalLight3D.SHADOW_ORTHOGONAL,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_BLUR_SETTING: 0.5,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_BIAS_SETTING: 0.2,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_NORMAL_BIAS_SETTING: 1.5,
+        MaszynaSkyEnvironment.SHADOW_SCENERY_MAX_DISTANCE_SETTING: 250.0,
         MaszynaSkyEnvironment.VOLUMETRIC_FOG_ENERGY_SETTING: 12.5,
     }
     var previous: Dictionary = {}

@@ -54,13 +54,13 @@ namespace godot {
             static constexpr double HOME_LIGHTS_OFF_FROM_HOUR = 1.0;
             static constexpr double HOME_LIGHTS_OFF_TO_HOUR = 5.0;
 
-            static constexpr const char *SCENERY_LIGHT_DISTANCE_SETTING = "maszyna/rendering/scenery_light_distance";
+            static constexpr const char *SCENERY_LIGHT_DISTANCE_SETTING = "maszyna/scenery/lights/distance";
             static constexpr float DEFAULT_SCENERY_LIGHT_DISTANCE = 400.0;
-            static constexpr const char *SCENERY_LIGHT_SHADOWS_SETTING = "maszyna/rendering/scenery_lights_shadows";
+            static constexpr const char *SCENERY_LIGHT_SHADOWS_SETTING = "maszyna/scenery/lights/cast_shadows";
             static constexpr bool DEFAULT_SCENERY_LIGHT_SHADOWS = true;
             /// The original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
             static constexpr const char *LIGHTS_SHADOW_REVERSE_CULL_FACE_SETTING =
-                    "maszyna/rendering/lights_shadow_reverse_cull_face";
+                    "maszyna/lights/reverse_cull_face";
             /// Shadows are dropped well before the light itself is, the way E3DNodesBackend fades
             /// a vehicle spotlight out
             static constexpr float SCENERY_LIGHT_SHADOW_FADE_DISTANCE = 80.0;
@@ -77,24 +77,25 @@ namespace godot {
             static constexpr float SPOT_LIGHT_SHADOW_BIAS = 0.03;
             static constexpr float OMNI_LIGHT_SHADOW_BIAS = 0.1;
             static constexpr float LIGHT_SHADOW_NORMAL_BIAS = 1.0;
-            static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/rendering/scenery_light_energy";
+            static constexpr const char *SCENERY_LIGHT_ENERGY_SETTING = "maszyna/scenery/lights/energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_ENERGY = 1.0;
             /// How much of the lamp's own colour is mixed into a white light. A sodium lamp's
             /// (1.0, 0.66, 0.18) used raw throws away most of the light's luminance and the pool
             /// comes out nearly black, so the colour tints white light instead of replacing it.
-            static constexpr const char *SCENERY_LIGHT_TINT_SETTING = "maszyna/rendering/scenery_light_tint";
+            static constexpr const char *SCENERY_LIGHT_TINT_SETTING = "maszyna/scenery/lights/tint";
             static constexpr float DEFAULT_SCENERY_LIGHT_TINT = 0.5;
             static constexpr const char *SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY_SETTING =
-                    "maszyna/rendering/scenery_light_volumetric_fog_energy";
+                    "maszyna/scenery/lights/volumetric_fog_energy";
             static constexpr float DEFAULT_SCENERY_LIGHT_VOLUMETRIC_FOG_ENERGY = 4.0;
 
             /// The original's gfx.smoke (Globals.cpp:1314). With it off no emitter is created at all.
-            static constexpr const char *SMOKE_ENABLED_SETTING = "maszyna/rendering/smoke_enabled";
+            static constexpr const char *SMOKE_ENABLED_SETTING = "maszyna/smoke/enabled";
             static constexpr bool DEFAULT_SMOKE_ENABLED = true;
             /// A scenery emitter streams in at this distance. The original stops spawning beyond
             /// 2 * BaseDrawRange * fDistanceFactor (particles.cpp:452); a chimney has to be visible
             /// from further away than a street lamp, so this is not the scenery light distance.
-            static constexpr const char *SMOKE_DISTANCE_SETTING = "maszyna/rendering/smoke_distance";
+            static constexpr const char *SMOKE_DYNAMIC_DISTANCE_SETTING = "maszyna/smoke/dynamic/distance";
+            static constexpr const char *SMOKE_STATIC_DISTANCE_SETTING = "maszyna/smoke/static/distance";
             static constexpr float DEFAULT_SMOKE_DISTANCE = 1500.0;
             /// The original displaces a particle by 0.1 * age * wind every step
             /// (particles.cpp:383), which integrates to 0.05 * wind * t^2 - exactly what a
@@ -132,7 +133,7 @@ namespace godot {
             };
 
             /// A particle emitter of an instance. Unlike a light it exists for every instancer:
-            /// a vehicle past maszyna/rendering/vehicle_detail_distance has no node tree left to
+            /// a vehicle past maszyna/vehicles/detail_distance has no node tree left to
             /// hang one on, and its plume is the thing still visible at that range.
             struct SmokeObject {
                     RID owner; // the E3D instance this emitter belongs to

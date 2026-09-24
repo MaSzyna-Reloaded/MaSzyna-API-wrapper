@@ -901,7 +901,7 @@ static func _build_indicator_lights(
         for field_name:String in entry["fixed_fields"]:
             widget.set(field_name, entry["fixed_fields"][field_name])
         if widget is Light3D:
-            (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+            (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
         # unlike _build_widget(), this doesn't go through _apply_animation_shape() (indicator
         # descriptors never have a rot/mov shape - see _parse_indicator()) but DOES still need
         # _apply_sound() for soundinc:/sounddec: (confirmed real: SU45's own
@@ -932,7 +932,7 @@ static func _build_indicator_lights(
                         descriptor.label, descriptor.submodel_name, i, "_%d" % j if j else ""]
                 for field_name:String in entry["light_fixed_fields"]:
                     light.set(field_name, entry["light_fixed_fields"][field_name])
-                light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/rendering/lights_shadow_reverse_cull_face", true)
+                light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
                 generated_root.add_child(light)
                 _position_at_submodel_instance(light, lamp)
                 if light_points:

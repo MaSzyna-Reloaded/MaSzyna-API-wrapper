@@ -79,7 +79,7 @@ func _update_state():
         if config_max_property:
             value_max = _vehicle_config().get(config_max_property, value_max)
         if state_property:
-            value = _vehicle_state().get(state_property, value)
+            value = _vehicle_state_value(state_property, value)
         _value_normalized = value / (value_max - value_min)
         _target_mesh_position = mesh_position_offset + mesh_position * _value_normalized
         _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * _value_normalized

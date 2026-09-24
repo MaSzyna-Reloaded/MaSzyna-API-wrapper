@@ -9,12 +9,11 @@ namespace godot {
 
     /* Wraps the FIZ Switches: and DimmerList: sections.
      *
-     * NOTE: PantSwitchType/ConvSwitchType/StLinSwitchType exist as std::string fields on
-     * TMoverParameters (see MOVER.h, marked "TODO: move these switch types where they belong")
-     * but are not read anywhere else in this codebase, so setting them currently has no observable
-     * effect on the simulation. RelayResetButtonX=, PantographPresets=, PantographPresetDefault=,
-     * ModernDimmer= and DimmerList: have no backing field at all - they are stored on this node
-     * only, ready to be wired up if support is ever added to the mover. */
+     * NOTE: the simulation keeps the pantograph, converter and line contactor switch types as
+     * fields nothing reads, so setting them currently has no observable effect on it.
+     * RelayResetButtonX=, PantographPresets=, PantographPresetDefault=, ModernDimmer= and
+     * DimmerList: have no counterpart in the simulation at all - they are stored on this
+     * component only, ready to be wired up if the simulation ever supports them. */
     class VehicleSwitches : public VehicleComponent {
             GDCLASS(VehicleSwitches, VehicleComponent);
 

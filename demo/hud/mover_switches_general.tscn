@@ -6,7 +6,6 @@
 
 [node name="General" type="HFlowContainer" unique_id=1612449326]
 script = ExtResource("1_tjh4e")
-train_controller = null
 
 [node name="Label" type="Label" parent="." unique_id=940045347]
 layout_mode = 2

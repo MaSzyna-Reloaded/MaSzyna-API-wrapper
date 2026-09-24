@@ -1,5 +1,5 @@
-#include "MoverVehicleUniversalController.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleUniversalController.hpp"
 #include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
@@ -8,7 +8,7 @@ namespace godot {
 
 
     void MoverVehicleUniversalController::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
@@ -45,14 +45,14 @@ namespace godot {
 
     void MoverVehicleUniversalController::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (mover_of(this) == nullptr) {
+        if (get_mover() == nullptr) {
             return;
         }
         p_state["selector_position"] = get_selector_position();
     }
 
     void MoverVehicleUniversalController::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }

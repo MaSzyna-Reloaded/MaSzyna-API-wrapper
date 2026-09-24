@@ -42,7 +42,7 @@
 		</member>
 		<member name="integral_gain_negative" type="float" setter="set_integral_gain_negative" getter="get_integral_gain_negative" default="0.0">
 			[code]SpeedControl:kIneg[/code]
-			Integral gain applied to a 1 km/h excess in velocity, in km/h/s. Not currently used by the mover -
+			Integral gain applied to a 1 km/h excess in velocity, in km/h/s. Not currently used by the simulation -
 			[member integral_gain_positive] is used instead, regardless of sign.
 		</member>
 		<member name="integral_gain_positive" type="float" setter="set_integral_gain_positive" getter="get_integral_gain_positive" default="0.0">

@@ -1,7 +1,4 @@
 #include "VehicleElectricInductionEngine.hpp"
-#include "../mover/MoverBackend.hpp"
-#include <algorithm>
-#include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void VehicleElectricInductionEngine::_bind_methods() {
@@ -42,72 +39,40 @@ namespace godot {
         return VehicleEngine::EngineType::ELECTRIC_INDUCTION_MOTOR;
     }
 
-    void VehicleElectricInductionEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
-        VehicleElectricEngine::_apply_configuration();
-
-        p_mover->eimc[Maszyna::eimc_s_dfic] = slip_current_ratio;
-        p_mover->eimc[Maszyna::eimc_s_dfmax] = max_slip;
-        p_mover->eimc[Maszyna::eimc_s_p] = pole_pairs;
-        p_mover->eimc[Maszyna::eimc_s_cfu] = nominal_uf_ratio;
-        p_mover->eimc[Maszyna::eimc_s_cim] = current_torque_ratio;
-        p_mover->eimc[Maszyna::eimc_s_icif] = current_three_phase_ratio;
-        p_mover->eimc[Maszyna::eimc_f_Uzmax] = max_supply_voltage;
-        p_mover->eimc[Maszyna::eimc_f_Uzh] = max_supply_voltage_braking;
-        p_mover->eimc[Maszyna::eimc_f_DU] = inverter_voltage_drop;
-        p_mover->eimc[Maszyna::eimc_f_I0] = no_load_current;
-        p_mover->eimc[Maszyna::eimc_f_cfu] = inverter_uf_setpoint;
-        p_mover->eimc[Maszyna::eimc_f_cfuH] = inverter_uf_setpoint_braking;
-        p_mover->eimc[Maszyna::eimc_p_F0] = initial_force;
-        p_mover->eimc[Maszyna::eimc_p_a1] = force_drop_rate;
-        p_mover->eimc[Maszyna::eimc_p_Pmax] = max_power;
-        p_mover->eimc[Maszyna::eimc_p_Fh] = max_braking_force;
-        p_mover->eimc[Maszyna::eimc_p_Ph] = max_braking_power;
-        p_mover->eimc[Maszyna::eimc_p_Vh0] = braking_decay_velocity;
-        p_mover->eimc[Maszyna::eimc_p_Vh1] = braking_decay_start_velocity;
-        p_mover->eimc[Maszyna::eimc_p_Imax] = motor_max_current;
-        p_mover->eimc[Maszyna::eimc_p_abed] = electrodynamic_brake_cylinder_ratio;
-        p_mover->eimc[Maszyna::eimc_p_eped] = electrodynamic_ep_ratio;
-        p_mover->NominalVoltage = nominal_voltage;
-        p_mover->EIMCLogForce = logarithmic_force_control;
-        p_mover->InverterControlCouplerFlag = inverter_control_coupler_flag;
-        p_mover->Flat = flat_force_characteristic;
-        // Mover.cpp:11302 - a powered EIM without InvNo has one inverter; with none the traction
-        // step divides by InvertersNo (Mover.cpp:5627) and every force becomes NaN
-        if (p_mover->eimc[Maszyna::eimc_p_Pmax] > 0 && p_mover->Power > 0 && p_mover->InvertersNo == 0) {
-            p_mover->InvertersNo = 1;
-        }
-        p_mover->Inverters.resize(p_mover->InvertersNo);
-
-        /* Pmaxlist: tabela mocy maksymalnej od predkosci (niedokumentowana na wiki, patrz EIM_Pmax_Table w MOVER.h) */
-        p_mover->EIM_Pmax_Table.clear();
-        for (int i = 0; i < max_power_table.size(); i++) {
-            const Ref<CurvePointItem> &row = max_power_table[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleElectricInductionEngine]: max_power_table property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->EIM_Pmax_Table.emplace(row->get_x(), row->get_y());
-        }
-
-        /* ffList:/ffBrakeList: -> DElist/RlistSize, read by TractionForce()'s
-         * ElectricInductionMotor branch to compute InverterFrequency (Mover.cpp:5895-5908).
-         * RlistSize mirrors VehicleElectricSeriesEngine's own RList:-driven wiring exactly - it's
-         * a single mover-wide field, so only one engine part may legitimately drive it. */
-        const int max_delist = sizeof(p_mover->DElist) / sizeof(Maszyna::TDEScheme);
-        const int wwlist_size = static_cast<int>(wwlist.size());
-        p_mover->RlistSize = std::min(max_delist, wwlist_size);
-        for (int i = 0; i < p_mover->RlistSize; i++) {
-            const Ref<WWListItem> &row = wwlist[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleElectricInductionEngine]: wwlist property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->DElist[i].RPM = row->get_rpm();
-            p_mover->DElist[i].GenPower = row->get_max_power();
-        }
+    void VehicleElectricInductionEngine::set_nominal_voltage(const double p_value) {
+        nominal_voltage = p_value;
+    }
+    double VehicleElectricInductionEngine::get_nominal_voltage() const {
+        return nominal_voltage;
+    }
+    void VehicleElectricInductionEngine::set_electrodynamic_brake_cylinder_ratio(const double p_value) {
+        electrodynamic_brake_cylinder_ratio = p_value;
+    }
+    double VehicleElectricInductionEngine::get_electrodynamic_brake_cylinder_ratio() const {
+        return electrodynamic_brake_cylinder_ratio;
+    }
+    void VehicleElectricInductionEngine::set_electrodynamic_ep_ratio(const double p_value) {
+        electrodynamic_ep_ratio = p_value;
+    }
+    double VehicleElectricInductionEngine::get_electrodynamic_ep_ratio() const {
+        return electrodynamic_ep_ratio;
+    }
+    void VehicleElectricInductionEngine::set_logarithmic_force_control(const bool p_value) {
+        logarithmic_force_control = p_value;
+    }
+    bool VehicleElectricInductionEngine::get_logarithmic_force_control() const {
+        return logarithmic_force_control;
+    }
+    void VehicleElectricInductionEngine::set_inverter_control_coupler_flag(const int p_value) {
+        inverter_control_coupler_flag = p_value;
+    }
+    int VehicleElectricInductionEngine::get_inverter_control_coupler_flag() const {
+        return inverter_control_coupler_flag;
+    }
+    void VehicleElectricInductionEngine::set_flat_force_characteristic(const bool p_value) {
+        flat_force_characteristic = p_value;
+    }
+    bool VehicleElectricInductionEngine::get_flat_force_characteristic() const {
+        return flat_force_characteristic;
     }
 } // namespace godot

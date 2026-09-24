@@ -1,5 +1,5 @@
-#include "MoverVehicleBuffCoupl.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleBuffCoupl.hpp"
 #include "VehicleBuffCoupl.hpp"
 
 namespace godot {
@@ -8,33 +8,33 @@ namespace godot {
     /* The coupling flags of one end, read straight from the backend - this class is the only one
      * that may (Mover.h: TCoupling, coupling::). */
     bool MoverVehicleBuffCoupl::is_coupled(const End p_end) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::coupler) != 0;
     }
 
     bool MoverVehicleBuffCoupl::is_brake_hose_connected(const End p_end) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::brakehose) != 0;
     }
 
     bool MoverVehicleBuffCoupl::is_main_hose_connected(const End p_end) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr && (mover->Couplers[p_end].CouplingFlag & coupling::mainhose) != 0;
     }
 
     bool MoverVehicleBuffCoupl::is_coupling_owner(const End p_end) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr && mover->Couplers[p_end].Render;
     }
 
     VehicleBuffCoupl::End MoverVehicleBuffCoupl::get_connected_end(const End p_end) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr && mover->Couplers[p_end].ConnectedNr == 1 ? END_REAR : END_FRONT;
     }
 
 
     void MoverVehicleBuffCoupl::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         // LoadFIZ_BuffCoupl (Mover.cpp:10297): BuffCoupl2. -> rear coupler, BuffCoupl./BuffCoupl1. -> front
         TCoupling *coupler;
@@ -121,7 +121,7 @@ namespace godot {
 
 
     void MoverVehicleBuffCoupl::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
@@ -143,9 +143,8 @@ namespace godot {
     }
 
 
-
     void MoverVehicleBuffCoupl::couple() {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
 
         UtilityFunctions::push_warning(
@@ -157,7 +156,7 @@ namespace godot {
     }
 
     void MoverVehicleBuffCoupl::decouple() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
 
         UtilityFunctions::push_warning(

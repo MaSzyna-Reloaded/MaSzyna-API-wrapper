@@ -72,7 +72,7 @@ func _unhandled_input(event:InputEvent) -> void:
         var state:CabinState = CabinSystem.get_cabin_state(train_id, cab)
         # the command takes "enabled", the opposite of the valve, so the valve's state is the new value
         state.send_vehicle_command(
-                "set_spring_brake_enabled", bool(state.vehicle_state().get("spring_brake/shut_off", false)))
+                "set_spring_brake_enabled", bool(state.vehicle_state_value("spring_brake/shut_off", false)))
     if event.is_action_pressed(LegacyCabinBrakeCharging.ACTION, false, true):
         CabinSystem.act(train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
     elif event.is_action_released(LegacyCabinBrakeCharging.ACTION, true):

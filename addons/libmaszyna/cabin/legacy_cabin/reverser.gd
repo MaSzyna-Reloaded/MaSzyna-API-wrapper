@@ -40,7 +40,7 @@ func _button(state:CabinState, action:StringName, value:Variant, button:StringNa
     if not pressed:
         return null
     var result:Variant = null
-    var steps:int = BUTTONS[button] - int(state.vehicle_state().get("direction", 0))
+    var steps:int = BUTTONS[button] - int(state.vehicle_state_value("direction", 0))
     for step:int in absi(steps):
         result = state.send_vehicle_command("direction_increase" if steps > 0 else "direction_decrease")
     return result

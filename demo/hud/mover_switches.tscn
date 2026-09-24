@@ -14,7 +14,6 @@ script = ExtResource("1_khm1i")
 
 [node name="General" parent="." unique_id=1612449326 instance=ExtResource("2_6ijjf")]
 layout_mode = 2
-train_controller = NodePath("")
 
 [node name="Security" parent="." unique_id=628826945 instance=ExtResource("3_slxh6")]
 layout_mode = 2

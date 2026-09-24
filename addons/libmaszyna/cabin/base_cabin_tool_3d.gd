@@ -34,7 +34,13 @@ func get_train_id() -> String:
     return _train_id
 
 
-## The whole vehicle's state, composed once per physics step whoever asks for it.
+## One named value of the vehicle's state - what a control reads, being driven by a property name
+## out of the MMD. The dump behind it is built once a frame for the whole cab.
+func _vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
+    return CabinSystem.vehicle_state_value(_train_id, key, default_value)
+
+
+## The whole of it, for the few places that genuinely read several unrelated values at once.
 func _vehicle_state() -> Dictionary:
     return CabinSystem.vehicle_state(_train_id)
 

@@ -1,43 +1,42 @@
-#include "MoverVehicleElectroPneumaticDynamicBrake.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleElectroPneumaticDynamicBrake.hpp"
 #include "VehicleElectroPneumaticDynamicBrake.hpp"
 
 namespace godot {
     void MoverVehicleElectroPneumaticDynamicBrake::_bind_methods() {}
 
 
-
     double MoverVehicleElectroPneumaticDynamicBrake::get_ed_braking_ep_delay() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->DCEMUED_EP_delay : 0.0;
     }
 
     double MoverVehicleElectroPneumaticDynamicBrake::get_ep_max_brake_engagement_speed() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->DCEMUED_EP_max_Vel : 0.0;
     }
 
     double MoverVehicleElectroPneumaticDynamicBrake::get_ep_min_regenerative_braking() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->DCEMUED_EP_min_Im : 0.0;
     }
 
     double MoverVehicleElectroPneumaticDynamicBrake::get_ep_force() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->EpForce : 0.0;
     }
 
     bool MoverVehicleElectroPneumaticDynamicBrake::get_ep_fuse() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->EpFuse : false;
     }
 
     void MoverVehicleElectroPneumaticDynamicBrake::_fill_state_dictionary(Dictionary &p_state) const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
-        p_state["dcemued/get_coupler_check()"] = get_coupler_check();
+        p_state["dcemued/coupler_check"] = get_coupler_check();
         p_state["dcemued/ed_braking_ep_delay"] = get_ed_braking_ep_delay();
         p_state["dcemued/ep_max_brake_engagement_speed"] = get_ep_max_brake_engagement_speed();
         p_state["dcemued/ep_min_regenerative_braking"] = get_ep_min_regenerative_braking();
@@ -46,9 +45,8 @@ namespace godot {
     }
 
 
-
     void MoverVehicleElectroPneumaticDynamicBrake::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->DCEMUED_CC = get_coupler_check();
         p_mover->DCEMUED_EP_delay = get_electro_pneumatic_brake_delay();
@@ -66,14 +64,14 @@ namespace godot {
     }
 
     void MoverVehicleElectroPneumaticDynamicBrake::set_ep_brake_force(const int p_value) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->SwitchEPBrake(p_value);
     }
 
 
     void MoverVehicleElectroPneumaticDynamicBrake::switch_ep_fuse(const bool p_value) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->EpFuseSwitch(p_value);
     }

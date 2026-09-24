@@ -1,15 +1,13 @@
-#include "MoverVehicleWipers.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleWipers.hpp"
 #include <algorithm>
 
 namespace godot {
     void MoverVehicleWipers::_bind_methods() {}
 
 
-
-
     void MoverVehicleWipers::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         size_t count = static_cast<size_t>(std::max(0, get_wiper_count()));
         if (count == 0) {
@@ -48,8 +46,10 @@ namespace godot {
     }
 
     // DynObj.cpp:4048-4115
+    // The wiper movement is the vehicle layer's, not the Mover's - the vendored Mover has no
+    // wipers at all. From the Mover it reads Battery and CabActive only.
     void MoverVehicleWipers::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         if (get_positions().size() == 0) {
             return;
@@ -125,7 +125,7 @@ namespace godot {
     }
 
     void MoverVehicleWipers::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }

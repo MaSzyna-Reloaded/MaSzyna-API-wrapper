@@ -5,11 +5,8 @@
 	</brief_description>
 	<description>
 		[VehicleSwitches] wraps the FIZ [code]Switches:[/code] and [code]DimmerList:[/code] sections.
-		[member pantograph_impulse], [member converter_impulse] and [member motor_connectors_impulse] map to real
-		[code]TMoverParameters[/code] fields ([code]PantSwitchType[/code], [code]ConvSwitchType[/code],
-		[code]StLinSwitchType[/code]), but those fields are marked [code]TODO: move these switch types where they
-		belong[/code] in [code]MOVER.h[/code] and are not read anywhere else in this codebase - setting them
-		currently has no observable effect on the simulation. [member relay_reset_button_1]/2/3,
+		[member pantograph_impulse], [member converter_impulse] and [member motor_connectors_impulse] map to switch types
+		the simulation keeps but never reads - setting them currently has no observable effect on it. [member relay_reset_button_1]/2/3,
 		[member pantograph_presets], [member pantograph_preset_default], [member modern_dimmer] and
 		[member dimmer_list_positions] have no backing field at all and are only stored on this node.
 	</description>

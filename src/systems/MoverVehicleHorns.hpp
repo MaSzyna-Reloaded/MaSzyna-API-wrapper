@@ -1,13 +1,16 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleHorns.hpp"
 
 namespace godot {
     /* VehicleHorns on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleHorns : public VehicleHorns {
+    class MoverVehicleHorns : public VehicleHorns, public MoverComponent {
             GDCLASS(MoverVehicleHorns, VehicleHorns);
 
         private:
             static void _bind_methods();
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_low_pressed() const override;

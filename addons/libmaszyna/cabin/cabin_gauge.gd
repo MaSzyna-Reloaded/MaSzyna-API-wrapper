@@ -99,6 +99,6 @@ func _on_state_update_timer_timeout():
     if _train_id and max_config_property:
         max_value = _vehicle_config().get(max_state_property, 0.0)
     elif _train_id and max_state_property:
-        max_value = _vehicle_state().get(max_state_property, 0.0)
+        max_value = _vehicle_state_value(max_state_property, 0.0)
     if _train_id and state_property:
-        value = _vehicle_state().get(state_property, 0.0)
+        value = _vehicle_state_value(state_property, 0.0)

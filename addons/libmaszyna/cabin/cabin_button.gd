@@ -85,7 +85,7 @@ func _on_console_toggled(visible:bool):
 
 func _update_state():
     if state_property and _train_id:
-        pushed = _vehicle_state().get(state_property, pushed)
+        pushed = _vehicle_state_value(state_property, pushed)
     else:
         pushed = false
 

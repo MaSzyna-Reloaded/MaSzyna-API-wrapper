@@ -1,15 +1,19 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleSwitches.hpp"
 
 namespace godot {
     /* VehicleSwitches on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleSwitches : public VehicleSwitches {
+    class MoverVehicleSwitches : public VehicleSwitches, public MoverComponent {
             GDCLASS(MoverVehicleSwitches, VehicleSwitches);
 
         private:
             static void _bind_methods();
+
         protected:
             void _apply_configuration() override;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_sand_active() const override;

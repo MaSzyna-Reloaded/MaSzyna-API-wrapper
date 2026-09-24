@@ -1,11 +1,19 @@
-#include "VehiclePhysicsNode.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include "VehicleComponent.hpp"
+#include "VehiclePhysicsNode.hpp"
 #include <godot_cpp/classes/class_db_singleton.hpp>
 #include <godot_cpp/classes/engine.hpp>
 
 namespace godot {
     const char *VehiclePhysicsNode::vehicle_changed_signal = "vehicle_changed";
+    StringName &VehiclePhysicsNode::controller_implementation() {
+        static StringName implementation;
+        return implementation;
+    }
+
+    void VehiclePhysicsNode::set_controller_implementation(const StringName &p_class) {
+        controller_implementation() = p_class;
+    }
 
     void VehiclePhysicsNode::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_model", "model"), &VehiclePhysicsNode::set_model);
@@ -15,23 +23,19 @@ namespace godot {
          * vehicle authored as a .tres is referenced by the subclass that loads it. */
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::OBJECT, "model", PROPERTY_HINT_RESOURCE_TYPE, "VehicleModel",
-                        PROPERTY_USAGE_EDITOR),
+                        Variant::OBJECT, "model", PROPERTY_HINT_RESOURCE_TYPE, "VehicleModel", PROPERTY_USAGE_EDITOR),
                 "set_model", "get_model");
 
         ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &VehiclePhysicsNode::set_train_id);
         ClassDB::bind_method(D_METHOD("get_train_id"), &VehiclePhysicsNode::get_train_id);
         ADD_PROPERTY(PropertyInfo(Variant::STRING, "train_id"), "set_train_id", "get_train_id");
-        ClassDB::bind_method(
-                D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
+        ClassDB::bind_method(D_METHOD("set_initial_velocity", "velocity"), &VehiclePhysicsNode::set_initial_velocity);
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
         ClassDB::bind_method(D_METHOD("set_driver_type", "driver_type"), &VehiclePhysicsNode::set_driver_type);
         ClassDB::bind_method(D_METHOD("get_driver_type"), &VehiclePhysicsNode::get_driver_type);
         ADD_PROPERTY(
-                PropertyInfo(
-                        Variant::INT, "driver_type", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver"),
+                PropertyInfo(Variant::INT, "driver_type", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver"),
                 "set_driver_type", "get_driver_type");
         ClassDB::bind_method(D_METHOD("set_load_name", "load_name"), &VehiclePhysicsNode::set_load_name);
         ClassDB::bind_method(D_METHOD("get_load_name"), &VehiclePhysicsNode::get_load_name);
@@ -83,7 +87,10 @@ namespace godot {
 
     void VehiclePhysicsNode::_build(const Ref<VehicleModel> &p_model) {
         if (controller == nullptr) {
-            controller = memnew(VehicleController);
+            controller = Object::cast_to<VehicleController>(
+                    ClassDBSingleton::get_singleton()->instantiate(controller_implementation()));
+            ERR_FAIL_NULL_MSG(
+                    controller, vformat("Unknown vehicle controller implementation: %s", controller_implementation()));
         } else {
             /* Rebuilding replaces what the vehicle is made of, not the vehicle. Destroying the
              * controller here left every reference taken to it dangling - a sound bank registered

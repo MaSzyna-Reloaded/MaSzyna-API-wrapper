@@ -1,20 +1,24 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleSecuritySystem.hpp"
 
 namespace godot {
     /* VehicleSecuritySystem on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleSecuritySystem : public VehicleSecuritySystem {
+    class MoverVehicleSecuritySystem : public VehicleSecuritySystem, public MoverComponent {
             GDCLASS(MoverVehicleSecuritySystem, VehicleSecuritySystem);
 
         private:
             static void _bind_methods();
+
         private:
-            friend class TSecuritySystem;
             bool previous_blinking = false;
             bool previous_beeping = false;
+
         protected:
             void _apply_configuration() override;
             void _do_process_component(double p_delta) override;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_beeping() const override;

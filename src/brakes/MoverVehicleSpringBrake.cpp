@@ -1,5 +1,5 @@
-#include "MoverVehicleSpringBrake.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleSpringBrake.hpp"
 #include "VehicleSpringBrake.hpp"
 
 namespace godot {
@@ -7,26 +7,26 @@ namespace godot {
 
 
     void MoverVehicleSpringBrake::set_spring_brake_active(const bool p_active) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->SpringBrakeActivate(p_active);
     }
 
     void MoverVehicleSpringBrake::set_spring_brake_enabled(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         // the backend takes the shut-off valve (Train.cpp:6859), the opposite of "enabled"
         mover->SpringBrakeShutOff(!p_enabled);
     }
 
     void MoverVehicleSpringBrake::spring_brake_release() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->SpringBrakeRelease();
     }
 
     void MoverVehicleSpringBrake::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         if (!p_mover->SpringBrake.Cylinder) {
             p_mover->SpringBrake.Cylinder = std::make_shared<TReservoir>();
@@ -43,6 +43,7 @@ namespace godot {
         p_mover->SpringBrake.ValveOnArea = get_valve_cross_section_actuator_charge();
         p_mover->SpringBrake.ValvePNBrakeArea = get_valve_cross_section_pneumatic_brake();
         p_mover->SpringBrake.PNBrakeConnection = p_mover->SpringBrake.ValvePNBrakeArea > 0;
+        // defaults to spring_brake::MultiTractionCoupler{127} (MOVER.h) when the FIZ has no MTC=
         p_mover->SpringBrake.MultiTractionCoupler = get_required_coupler_connection_method();
         // Mover.cpp:11028 - loading the section leaves the brake armed, not shut off and released; the
         // struct defaults (ShuttOff{true}, IsReady{false}) describe a vehicle without one
@@ -57,33 +58,33 @@ namespace godot {
 
 
     bool MoverVehicleSpringBrake::get_ready() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SpringBrake.IsReady : false;
     }
 
     bool MoverVehicleSpringBrake::get_shut_off() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SpringBrake.ShuttOff : false;
     }
 
     bool MoverVehicleSpringBrake::get_active() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SpringBrake.Activate : false;
     }
 
     bool MoverVehicleSpringBrake::get_braking() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SpringBrake.IsActive : false;
     }
 
     double MoverVehicleSpringBrake::get_cylinder_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SpringBrake.SBP : 0.0;
     }
 
     void MoverVehicleSpringBrake::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (mover_of(this) == nullptr) {
+        if (get_mover() == nullptr) {
             return;
         }
         p_state["spring_brake/is_ready"] = get_ready();

@@ -1,13 +1,15 @@
-#include "../scenery/SceneryStreamingServer.hpp"
-#include "../load/VehicleLoad.hpp"
-#include "RailVehicle3D.hpp"
-#include "../traction/TractionPowerServer.hpp"
-#include "../cabin/Cabin3D.hpp"
 #include "../buffers/VehicleBuffCoupl.hpp"
+#include "../cabin/Cabin3D.hpp"
+#include "../load/VehicleLoad.hpp"
+#include "../scenery/SceneryStreamingServer.hpp"
+#include "../traction/TractionPowerServer.hpp"
 #include "../wheels/VehicleWheels.hpp"
+#include "RailVehicle3D.hpp"
 #include "VehiclePhysicsNode.hpp"
 
+#include "../engines/VehicleDieselEngine.hpp"
 #include "../engines/VehicleElectricEngine.hpp"
+#include "../lighting/VehicleLighting.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
@@ -31,22 +33,25 @@ namespace godot {
     const char *RailVehicle3D::controller_changed_signal = "controller_changed";
 
     namespace {
+        /* Which submodel of the model shows which of the vehicle's lamps. The lamp is read off
+         * the lighting component, so a renamed or removed one is a build error rather than a
+         * light that silently stops working. */
         struct LightStateBinding {
                 const char *light_name;
-                const char *state_name;
+                bool (VehicleLighting::*is_enabled)() const;
         };
 
         constexpr std::array<LightStateBinding, 10> LIGHT_STATE_BINDINGS = {{
-                {"headlamp11", "lights/front_headlight_upper_enabled"},
-                {"headlamp12", "lights/front_headlight_right_enabled"},
-                {"headlamp13", "lights/front_headlight_left_enabled"},
-                {"headlamp21", "lights/rear_headlight_upper_enabled"},
-                {"headlamp22", "lights/rear_headlight_right_enabled"},
-                {"headlamp23", "lights/rear_headlight_left_enabled"},
-                {"endsignal12", "lights/front_redmarker_right_enabled"},
-                {"endsignal13", "lights/front_redmarker_left_enabled"},
-                {"endsignal22", "lights/rear_redmarker_right_enabled"},
-                {"endsignal23", "lights/rear_redmarker_left_enabled"},
+                {"headlamp11", &VehicleLighting::get_front_headlight_upper_enabled},
+                {"headlamp12", &VehicleLighting::get_front_headlight_right_enabled},
+                {"headlamp13", &VehicleLighting::get_front_headlight_left_enabled},
+                {"headlamp21", &VehicleLighting::get_rear_headlight_upper_enabled},
+                {"headlamp22", &VehicleLighting::get_rear_headlight_right_enabled},
+                {"headlamp23", &VehicleLighting::get_rear_headlight_left_enabled},
+                {"endsignal12", &VehicleLighting::get_front_redmarker_right_enabled},
+                {"endsignal13", &VehicleLighting::get_front_redmarker_left_enabled},
+                {"endsignal22", &VehicleLighting::get_rear_redmarker_right_enabled},
+                {"endsignal23", &VehicleLighting::get_rear_redmarker_left_enabled},
         }};
     } // namespace
 
@@ -185,8 +190,12 @@ namespace godot {
         cabin->connect(
                 Cabin3D::cabin_ready_signal, Callable(this, "_jump_into_cabin").bind(cabin, p_player),
                 Object::CONNECT_ONE_SHOT);
-        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
-        cabin->connect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
+        cabin->connect(
+                Cabin3D::camera_configuration_changed_signal,
+                callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->connect(
+                Cabin3D::camera_configuration_changed_signal,
+                callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->set_transform(Transform3D());
         if (cabin_rotate_180deg) {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
@@ -234,8 +243,12 @@ namespace godot {
         camera->set_global_transform(camera_transform);
         camera->look_at(get_global_position() + Vector3(0.0, 1.75, -5.0));
         camera->set("velocity_multiplier", 1.0);
-        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
-        cabin->disconnect(Cabin3D::camera_configuration_changed_signal, callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
+        cabin->disconnect(
+                Cabin3D::camera_configuration_changed_signal,
+                callable_mp(this, &RailVehicle3D::_apply_cabin_camera_configuration));
+        cabin->disconnect(
+                Cabin3D::camera_configuration_changed_signal,
+                callable_mp(this, &RailVehicle3D::_update_low_poly_cabs_visibility));
         cabin->get_parent()->remove_child(cabin);
         cabin->queue_free();
         cabin = nullptr;
@@ -292,8 +305,8 @@ namespace godot {
         if (load_model == nullptr || controller == nullptr) {
             return;
         }
-        VehicleLoad *load = Object::cast_to<VehicleLoad>(
-                controller->get_component(VehicleComponentType::COMPONENT_LOAD));
+        VehicleLoad *load =
+                Object::cast_to<VehicleLoad>(controller->get_component(VehicleComponentType::COMPONENT_LOAD));
         if (load == nullptr) {
             return;
         }
@@ -311,8 +324,7 @@ namespace godot {
             return;
         }
         const double max_load = load->get_max_load();
-        const double fill =
-                max_load > 0.0 ? CLAMP(controller->get_load_amount() / max_load, 0.0, 1.0) : 0.0;
+        const double fill = max_load > 0.0 ? CLAMP(controller->get_load_amount() / max_load, 0.0, 1.0) : 0.0;
         Vector3 position = load_model->get_position();
         position.y = static_cast<real_t>(Math::lerp(offset_min, 0.0, fill));
         load_model->set_position(position);
@@ -368,14 +380,21 @@ namespace godot {
      * node holding the parts of the empty vehicle forever. */
     void RailVehicle3D::_adopt_vehicle_parts() {
         electric_engine = nullptr;
+        engine = nullptr;
+        diesel_engine = nullptr;
+        lighting = nullptr;
         for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
             pantograph_wire_cache[index] = Dictionary();
         }
         if (controller == nullptr) {
             return;
         }
-        electric_engine = Object::cast_to<VehicleElectricEngine>(
-                controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+        VehicleComponent *engine_component = controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
+        electric_engine = Object::cast_to<VehicleElectricEngine>(engine_component);
+        engine = Object::cast_to<VehicleEngine>(engine_component);
+        diesel_engine = Object::cast_to<VehicleDieselEngine>(engine_component);
+        lighting =
+                Object::cast_to<VehicleLighting>(controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
         /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
          * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
          * exported width stands in for a vehicle with no electric engine to read it from. */
@@ -391,15 +410,13 @@ namespace godot {
         if (controller != nullptr) {
             controller->disconnect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
             controller->disconnect(
-                    VehicleController::config_changed,
-                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+                    VehicleController::config_changed, callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
         }
         controller = p_controller;
         if (controller != nullptr) {
             controller->connect("roof_light_changed", Callable(this, "_on_roof_light_changed"));
             controller->connect(
-                    VehicleController::config_changed,
-                    callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
+                    VehicleController::config_changed, callable_mp(this, &RailVehicle3D::_on_vehicle_config_changed));
             _adopt_vehicle_parts();
         }
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
@@ -423,8 +440,7 @@ namespace godot {
         if (cabin != nullptr) {
             cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
         }
-        const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
-        _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
+        _on_roof_light_changed(lighting != nullptr && lighting->get_roof_light_enabled());
         emit_signal(controller_changed_signal);
     }
 
@@ -480,8 +496,7 @@ namespace godot {
         rid_owned = false;
         if (fiz_controller != nullptr) {
             fiz_controller->disconnect(
-                        VehiclePhysicsNode::vehicle_changed_signal,
-                        callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
+                    VehiclePhysicsNode::vehicle_changed_signal, callable_mp(this, &RailVehicle3D::_on_vehicle_changed));
             fiz_controller = nullptr;
         }
         // letting go of the vehicle is the same operation as taking a different one, and it is
@@ -637,15 +652,17 @@ namespace godot {
         if (model_node == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
             return;
         }
+        if (lighting == nullptr) {
+            return;
+        }
         bool changed = false;
-        const Dictionary state = controller->get_state();
         const Array keys = lights.keys();
         for (int index = 0; index < keys.size(); ++index) {
             const Variant &light_name = keys[index];
             const String light_name_string = light_name;
             for (const LightStateBinding &binding: LIGHT_STATE_BINDINGS) {
                 if (light_name_string == binding.light_name) {
-                    const bool new_value = state.get(binding.state_name, false);
+                    const bool new_value = (lighting->*binding.is_enabled)();
                     if (bool(lights[light_name]) != new_value) {
                         lights[light_name] = new_value;
                         changed = true;
@@ -1041,10 +1058,9 @@ namespace godot {
     }
 
     const VehicleBuffCoupl *RailVehicle3D::_coupler() const {
-        return controller != nullptr
-                       ? Object::cast_to<VehicleBuffCoupl>(
-                                 controller->get_component(VehicleComponentType::COMPONENT_BUFFERS))
-                       : nullptr;
+        return controller != nullptr ? Object::cast_to<VehicleBuffCoupl>(
+                                               controller->get_component(VehicleComponentType::COMPONENT_BUFFERS))
+                                     : nullptr;
     }
 
     // Original engine: coupler and hose submodel visibility (DynObj.cpp:758-925, bnewAirCouplers branch)
@@ -1058,7 +1074,8 @@ namespace godot {
         for (int end = 0; end < 2; ++end) {
             const VehicleBuffCoupl::End vehicle_end = static_cast<VehicleBuffCoupl::End>(end);
             // _on for the vehicle that draws the coupler, _xon (or _off without it) for the other
-            variants[end][0] = !coupler->is_coupled(vehicle_end) ? 0 : (coupler->is_coupling_owner(vehicle_end) ? 1 : 2);
+            variants[end][0] =
+                    !coupler->is_coupled(vehicle_end) ? 0 : (coupler->is_coupling_owner(vehicle_end) ? 1 : 2);
             variants[end][1] = coupler->is_brake_hose_connected(vehicle_end) ? _pneumatic_variant(end, true) : 0;
             variants[end][2] = coupler->is_main_hose_connected(vehicle_end) ? _pneumatic_variant(end, false) : 0;
             for (const int variant: variants[end]) {
@@ -1131,11 +1148,9 @@ namespace godot {
     }
 
     void RailVehicle3D::_update_wheel_animation_state() {
-        const VehicleWheels *wheels =
-                controller != nullptr
-                        ? Object::cast_to<VehicleWheels>(
-                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
-                        : nullptr;
+        const VehicleWheels *wheels = controller != nullptr ? Object::cast_to<VehicleWheels>(controller->get_component(
+                                                                      VehicleComponentType::COMPONENT_WHEELS))
+                                                            : nullptr;
         if (wheels == nullptr) {
             return;
         }
@@ -1191,20 +1206,21 @@ namespace godot {
         if (model_node == nullptr || controller == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
             return;
         }
-        const Dictionary state = controller->get_state();
-        const int engine_type = state.get("engine_type", VehicleEngine::NONE);
+        const int engine_type = engine != nullptr ? engine->get_type() : VehicleEngine::NONE;
         if (engine_type != VehicleEngine::DIESEL && engine_type != VehicleEngine::DIESEL_ELECTRIC) {
             return;
         }
 
-        const double revolutions = state.get("engine_rpm_count", 0.0); // rev/s, as the Mover keeps enrot
-        const double max_rpm = state.get("diesel_max_rpm", 0.0);       // rev/min, the top notch of the characteristic
-        const double power = state.get("engine_power", 0.0);           // kW
-        const double current = state.get("engine_current", 0.0);
-        const double direction = state.get("direction_absolute", 0.0);
+        const double revolutions = engine->get_rpm_count(); // rev/s, as the Mover keeps enrot
+        const double max_rpm = diesel_engine != nullptr ? diesel_engine->get_max_rpm() : 0.0;
+        const double power = engine->get_power(); // kW
+        /* The motor's current, which only an engine that has motors has - it used to be read as
+         * "engine_current", a key no component publishes, so this term was always zero. */
+        const double current = electric_engine != nullptr ? electric_engine->get_motor_current() : 0.0;
+        const double direction = controller->get_direction_absolute();
 
         double intensity;
-        if (bool(state.get("diesel_spinup", false))) {
+        if (diesel_engine != nullptr && diesel_engine->get_spinup()) {
             intensity = revolutions / 4.0 * 0.01;
         } else {
             // The original compares rev/min against rev/s (particles.cpp:196), which leaves the
@@ -1225,7 +1241,7 @@ namespace godot {
         // particles already in the air, so it scales how many are born instead - the plume thins
         // out rather than stepping down as a whole (see FINDINGS.md). The original also lets the
         // revolutions deficit go negative and subtract from the particle budget; this clamps.
-        const double fill = CLAMP(double(state.get("diesel_fill", 0.0)), 0.0, 1.0);
+        const double fill = CLAMP(diesel_engine != nullptr ? diesel_engine->get_fill() : 0.0, 0.0, 1.0);
         model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
@@ -1269,11 +1285,9 @@ namespace godot {
         bogie_configuration_warned = false;
         // the running gear is the wheels' business: they know the pivot spacing and where each
         // bogie sits. This node only puts the nodes there.
-        VehicleWheels *wheels =
-                controller != nullptr
-                        ? Object::cast_to<VehicleWheels>(
-                                  controller->get_component(VehicleComponentType::COMPONENT_WHEELS))
-                        : nullptr;
+        VehicleWheels *wheels = controller != nullptr ? Object::cast_to<VehicleWheels>(controller->get_component(
+                                                                VehicleComponentType::COMPONENT_WHEELS))
+                                                      : nullptr;
         if (wheels == nullptr) {
             _update_wheel_animation_state();
             return;
@@ -1339,9 +1353,9 @@ namespace godot {
         Dictionary cache = pantograph_wire_cache[p_index];
         const bool was_touching = cache.get("touching", false);
         if (p_is_active && was_touching && !p_converged) {
-            UtilityFunctions::push_warning(vformat(
-                    "Lost contact: %s pantograph %d is not reaching the wire - %s", get_name(), p_index,
-                    _track_position_text()));
+            UtilityFunctions::push_warning(
+                    vformat("Lost contact: %s pantograph %d is not reaching the wire - %s", get_name(), p_index,
+                            _track_position_text()));
         }
         cache["touching"] = p_is_active && p_converged;
         pantograph_wire_cache[p_index] = cache;
@@ -1357,22 +1371,17 @@ namespace godot {
             return;
         }
         const PantographFrame frame = _pantograph_frame();
-        const Dictionary &state = p_state;
+        const bool first_active = electric_engine->get_collector_pantograph_first_active();
+        const bool second_active = electric_engine->get_collector_pantograph_second_active();
         const double assumed_voltage =
-                MAX(Math::abs(double(state.get("current_collector/pantograph_first_voltage", 0.0))),
-                    Math::abs(double(state.get("current_collector/pantograph_second_voltage", 0.0))));
-        const bool front_active =
-                bool(state.get("current_collector/pantograph_first_active", false)) && pantograph_front_converged;
-        const bool rear_active =
-                bool(state.get("current_collector/pantograph_second_active", false)) && pantograph_rear_converged;
+                MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
+                    Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
+        const bool front_active = first_active && pantograph_front_converged;
+        const bool rear_active = second_active && pantograph_rear_converged;
         const int active_count = int(front_active) + int(rear_active);
-        const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
-        _report_contact_gap(
-                2, bool(state.get("current_collector/pantograph_first_active", false)),
-                pantograph_front_converged);
-        _report_contact_gap(
-                3, bool(state.get("current_collector/pantograph_second_active", false)),
-                pantograph_rear_converged);
+        const double current = active_count > 0 ? controller->get_current0() / active_count : 0.0;
+        _report_contact_gap(2, first_active, pantograph_front_converged);
+        _report_contact_gap(3, second_active, pantograph_rear_converged);
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
@@ -1405,9 +1414,9 @@ namespace godot {
         Dictionary cache = pantograph_wire_cache[p_index];
         const bool had_voltage = cache.get("powered", false);
         if (had_voltage && Math::is_zero_approx(voltage)) {
-            UtilityFunctions::push_warning(vformat(
-                    "Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
-                    get_name(), p_index, _track_position_text(), contact_point));
+            UtilityFunctions::push_warning(
+                    vformat("Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v", get_name(),
+                            p_index, _track_position_text(), contact_point));
         }
         cache["powered"] = !Math::is_zero_approx(voltage);
         pantograph_wire_cache[p_index] = cache;
@@ -1420,16 +1429,15 @@ namespace godot {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
         }
-        const Dictionary &state = p_state;
         pantograph_front_converged = _update_pantograph_arm(
                 0, pantograph_front_geometry, pantograph_front_arm_nodes,
-                state.get("current_collector/pantograph_first_active", false), p_delta, state);
+                electric_engine->get_collector_pantograph_first_active(), p_delta);
         if (is_visible && !pantograph_front_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_front_arm_nodes, pantograph_front_geometry);
         }
         pantograph_rear_converged = _update_pantograph_arm(
                 1, pantograph_rear_geometry, pantograph_rear_arm_nodes,
-                state.get("current_collector/pantograph_second_active", false), p_delta, state);
+                electric_engine->get_collector_pantograph_second_active(), p_delta);
         if (is_visible && !pantograph_rear_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_rear_arm_nodes, pantograph_rear_geometry);
         }
@@ -1437,14 +1445,12 @@ namespace godot {
 
     bool RailVehicle3D::_update_pantograph_arm(
             const int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, const bool p_is_active,
-            const double p_delta, const Dictionary &p_state) {
+            const double p_delta) {
         if (p_geometry.is_empty()) {
             return true;
         }
-        const Dictionary &state = p_state;
-        const double pressure = state.get("current_collector/pantograph_tank_pressure", 0.0);
-        const bool power_available =
-                bool(state.get("power24_available", false)) || bool(state.get("power110_available", false));
+        const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
+        const bool power_available = controller->get_power24_available() || controller->get_power110_available();
         const bool is_ezt =
                 (controller->get_train_type() & VehicleController::TRAIN_TYPE_EZT) == VehicleController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;
@@ -1531,9 +1537,9 @@ namespace godot {
          * event with the place it happened (scene.cpp:112, "Bad traction"), which is the only way
          * to tell a hole in the scenery's wiring from a defect in this search. */
         if (wire_rid.is_valid() && !RID(result["rid"]).is_valid()) {
-            UtilityFunctions::push_warning(vformat(
-                    "Bad traction: %s lost the wire under pantograph %d - %s, %v", get_name(), p_index,
-                    _track_position_text(), p_contact_point));
+            UtilityFunctions::push_warning(
+                    vformat("Bad traction: %s lost the wire under pantograph %d - %s, %v", get_name(), p_index,
+                            _track_position_text(), p_contact_point));
         }
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;

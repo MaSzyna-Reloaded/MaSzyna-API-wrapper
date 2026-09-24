@@ -8,7 +8,7 @@ namespace godot {
 
 
         public:
-            /// MOVER.h spring_brake::MultiTractionCoupler - every coupling passes the command on
+            /// The original's default - every coupling passes the command on
             static constexpr int ALL_COUPLER_CONNECTIONS = 127;
 
             VehicleComponentType::Type get_component_type() const override {
@@ -17,9 +17,11 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         protected:
             void _register_commands() override;
             void _unregister_commands() override;
+
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_ready() const = 0;

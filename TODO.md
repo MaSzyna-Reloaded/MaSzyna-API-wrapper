@@ -8,10 +8,12 @@ runnable.
 
 **Done: stages 1-3.** The prohibitions in `AGENTS.md`/`CODE_STYLE.md`; the four read side effects;
 the coupler counters leaving the vehicle; the `power_source` collision; `TrackManager` and
-`SpatialIndex` in C++; and the three servers - `BaseVehiclePhysicsServer` states what simulating a
-vehicle means in RIDs, `MaszynaMoverPhysicsServer` is the only class that knows `TMoverParameters`
-and owns every Mover, `RailVehicleServer` owns track placement, movement, switch crossing, the
-neighbour scan, the transforms and the step.
+`SpatialIndex` in C++; and `RailVehicleServer`, which owns track placement, movement, switch
+crossing, the neighbour scan, the transforms and the step, and ties the vehicle to the track and
+traction servers. The vehicle's simulation is its controller's: `VehicleController` is the
+interface, `MoverVehicleController` owns the `TMoverParameters`, and every `Mover*` component
+reaches it through `MoverComponent` (2026-09-24; `BaseVehiclePhysicsServer` and
+`MaszynaMoverPhysicsServer` were removed - they only held the Mover pointers).
 
 **Stage 4 was designed wrong and has been withdrawn.** It put the vehicle's state behind a global
 name registry with integer ids, per-class local indexes and a `switch` over declaration order -
@@ -41,12 +43,61 @@ are deleted; all 21 components and the controller's own 32 keys answer through
 `VehicleLighting::get_roof_light_enabled()`, the first typed state property, instead of a registry
 lookup.
 
-**Stages B and C are done.** `_fill_state_dictionary`/`_fill_config_dictionary` with
-`vehicle_dump_state(rid)`/`vehicle_dump_config(rid)` (the dump is composed once per physics step
-and cached until the next one); the controller's common properties; and `VehicleComponent` is an
-`Object` owned by the vehicle, not a node - `attach(controller)`/`detach()`/`process(delta)`
-replace the notifications, `get_component(TYPE)` replaces walking the tree, and
-`GenericVehicleComponentNode` is the modder's authoring point.
+**Stage status, verified against the code on 2026-09-24.** What follows replaces the claims this
+file used to make. Those were written when the *first* part of a stage landed and were never
+corrected, so the list announced stages nobody had finished - stage D was recorded as done with one
+of its three bullets in place, and that reading was then repeated as fact for weeks. Every line
+below was checked against the code, not against this file.
+
+* **A - done**, except `doc_classes/VehicleState.xml` and `doc_classes/RailVehicleServer.xml:77-95`,
+  which still publish the API stage A deleted.
+* **B - partial.** The dumps and the server's `vehicle_dump_state`/`vehicle_dump_config` exist, but
+  `TrainSystem.cpp:88,103` still call `train->get_state()`/`get_config()` directly and so bypass
+  the dump cache. The five common values (`velocity`, `speed`, `mass_total`, `total_distance`,
+  `direction`) are bound methods rather than properties, and only the first two have a forwarder on
+  the server.
+* **C - partial.** The component is an `Object`, the fetch/tick split is done, and the
+  interface/implementation split holds (17 interfaces, 25 `Mover*`, and no interface names the
+  Mover). Missing: **`vehicle_component_create` does not exist at all** - components are made by
+  `ClassDBSingleton::instantiate()` and `memnew`; `generic_vehicle_component_find` has zero callers;
+  `GenericVehicleComponent` still copies `_get_component_state` per tick instead of being walked for
+  `PROPERTY_USAGE_SCRIPT_VARIABLE`; `GenericVehicleComponentNode` still finds its vehicle by walking
+  `get_parent()`; and the dump carries two competing key conventions - nine `prefix/key` namespaces
+  against a majority of flat `component_key` names.
+* **D - one of three.** The controller is an `Object`. But the vehicle is still created, owned and
+  freed by `VehiclePhysicsNode::_build()` (`:92-96`, `:113-116`, `:70-79`): `vehicle_create()`
+  inserts an empty placement and `vehicle_free()` frees no controller. Registering with
+  `TrainSystem` still hangs off `attach_to_system()`, called from `NOTIFICATION_ENTER_TREE`. On top
+  of that `RailVehicle3D.cpp:449` creates a second handle of its own, so the vehicle has two
+  node-side owners and no server-side one.
+* **E - not started.** Zero proxy nodes of the ~20 the plan asks for, and no
+  `VehicleControllerNode`.
+* **F - done.** The cache holds a `VehicleStructure`, the FIZ side builds a `VehicleModel`, and
+  both node-name lookups are gone. `FIZ_PARSER_FORMAT_VERSION` did move 7 -> 9; the note below
+  claiming it was deliberately left alone was wrong.
+* **G - partial, 17 live call sites.** `FIXME(#57)` is gone. But `vehicle_dump_state` is called from
+  `_process` - `cabin_windscreen_wipers.gd` calls it twice in one frame - and `RailVehicle3D` still
+  builds the dump four times, three of them per frame, rather than the zero once reported here
+  (that count was taken by grepping `state.get(` instead of `get_state()`). `TrainSoundSystem` and
+  `RailVehicle3D` reach `VehicleController::get_state()` directly and so bypass the server's cache.
+  `CabinSystem`'s whole vehicle-facing surface is still keyed on `train_id` rather than the handle.
+* **H - not started.** No `UpdatePhase` anywhere; the order is a hand-written sequence in
+  `RailVehicleServer.cpp:647`. The `FIXME(#57)` in `send_command` is gone.
+* **I - one of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` no longer exist, and
+  the Mover pointer is owned rather than borrowed. But `TrainSystem.hpp:20` still holds
+  `std::map<String, VehicleController *>` and hands that pointer out; `train_id` has seven writers;
+  and there is still no unique default, so two vehicles with an empty `train_id` collide and the
+  second is never registered at all.
+
+**Two of those are live bugs, not debt:**
+
+* `MoverVehicleElectroPneumaticDynamicBrake.cpp` publishes the dump key
+  `dcemued/get_coupler_check()` - a method name used as a key. That is the exact mistake
+  `FINDINGS.md` records under 2026-09-23, where it cost every vehicle in the game its bogie spacing,
+  and the rule it left behind was to grep a fill for `["get_` before trusting it.
+* `RailVehicle3D.cpp:93` offers the editor a node path of type
+  `"VehicleController,FIZTrainController"`: the first is an `Object` now and cannot be picked in the
+  inspector, and the second names a class that exists nowhere in the repository.
 
 **The FIZ half of stage F is done.** A `.fiz` parses into a `VehicleModel` +
 `VehicleComponentModel`s (typed C++ `Resource`s, modelled on `E3DModel`/`E3DSubModel`) rather than
@@ -58,11 +109,13 @@ serialises without a line of per-component code.
 
 **Remaining stages** (the full plan, with per-stage verification, is in the session plan file):
 
-* ~~**B - dumps and the vehicle's common properties.** `_fill_config_dictionary` beside the state
+* **B - dumps and the vehicle's common properties** (partial, see the status above).
+  `_fill_config_dictionary` beside the state
   one; `vehicle_dump_config(rid)`; `velocity`, `speed`, `mass_total`, `total_distance`,
   `direction` as typed properties of `VehicleController` with `vehicle_velocity_get(rid)`
-  forwarding to them; `Dictionary config` leaves the controller for the components that parse it.~~
-* ~~**C - `VehicleComponent` stops being a `Node`.** An `Object` owned by the server: no
+  forwarding to them; `Dictionary config` leaves the controller for the components that parse it.
+* **C - `VehicleComponent` stops being a `Node`** (partial, see the status above). An `Object`
+  owned by the server: no
   `_notification`, no `_process`, the controller handed to it at creation instead of being found
   by walking `get_parent()`. `_do_process_mover` becomes `_process_state(delta)`. Every
   component's state becomes typed properties and the flat-dictionary prefixes are cut
@@ -73,7 +126,17 @@ serialises without a line of per-component code.
   `PhysicsServer3D::body_get_direct_state(RID)` does. The interface/implementation split
   (`Vehicle<Domain>` / `Mover<Interface>`) is its own commit at the start. `GenericVehicleComponent`
   gets its dump for free from `get_property_list()` + `PROPERTY_USAGE_SCRIPT_VARIABLE`.~~
-* ~~**D - `VehicleController` stops being a `Node`.**~~ Done. It is an `Object` the vehicle owns:
+* **D - `VehicleController` stops being a `Node`.** The half that names it is done; two of its
+  three bullets are not, and this entry claimed the whole stage for months because it was written
+  when the first one landed:
+  * **not done:** the vehicle is still created by `VehiclePhysicsNode::_build()`, which
+    instantiates the controller by class name and owns it. It belongs in `vehicle_create()`, and
+    then the server owns the object it already owns the handle of - which is also what would
+    remove `VehiclePlacement::controller_id`, the id the server keeps only because somebody else
+    may free the controller under it.
+  * **not done:** registering with `TrainSystem` still hangs off the controller's
+    `attach_to_system()` rather than off the server creating and freeing the vehicle.
+  * done: it is an `Object` the vehicle owns:
   `attach_to_system()` registers the vehicle and its commands before any component attaches (a
   command of a train the system does not know yet is refused), `initialize()` then starts the
   Mover, and `RailVehicleServer`'s `process_frame` tick drives it. `RailVehicle3D` adopts the
@@ -91,7 +154,8 @@ serialises without a line of per-component code.
   `PackedScene.pack()`/`instantiate()`. `read_structure()` is the expensive half and the only
   thing cached; `initialize_instance()` is what a vehicle gets for itself (sound pools, and the
   animation bindings, which are paths into its own submodel tree). Tag bumped to `structure-v18`;
-  `FIZ_PARSER_FORMAT_VERSION` deliberately not touched, since no FIZ parser changed. The cab
+  `FIZ_PARSER_FORMAT_VERSION` has since moved 7 -> 9 (this line used to claim it was deliberately
+  left alone, which was wrong). The cab
   stays a `PackedScene`, because a cab genuinely is a tree of widgets.
   What is left of this area:
   * **The node's public API is the `.scn` `dynamic` line and nothing else.** `data_path` +
@@ -123,6 +187,16 @@ serialises without a line of per-component code.
   (the original keeps them in `TAnimPant::vPos`) and have to reach the vehicle for this to move.
   The same question applies, more weakly, to `_update_wipers()` and `_update_smoke()` - those
   consume state to drive submodels, which is drawing, but the wiper *positions* are simulation.
+* **The vehicle's name belongs to the vehicle server, not to a system beside it.** `TrackManager`
+  already has the shape: `track_get_rid_by_name()`. The vehicle server should have
+  `vehicle_set_name()` / `vehicle_get_rid_by_name()`, and then `TrainSystem` shrinks to what it
+  actually is - the registry that lets a scenery, an event, the console and the radio name a
+  vehicle they only know by name. Everything that *has* the vehicle stops going through a name at
+  all: the HUD already does (it takes the vehicle from the player's own announcement), and
+  `CabinSystem` is next - its whole vehicle-facing surface (`vehicle_state`, `vehicle_config`,
+  `vehicle_component`, `vehicle_state_value`, `occupied_cab`) is keyed on `train_id` today, which
+  addresses a handle by a name that may be empty or repeated. Flip that surface to the RID in one
+  pass rather than half of it, which is stage I's own subject.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,
@@ -136,8 +210,6 @@ serialises without a line of per-component code.
     (`base_cabin_tool_3d.gd`, which is the base of every cabin tool, plus the two cabin lights and
     `train_sound_3d.gd`). The six `demo/hud/` files never resolve it at all.
   * `cabin_state.gd` stops keying on `train_id` and reading `TrainSystem.get_train_state()`.
-  * The sound system, the HUD and the 8 call sites in `RailVehicle3D` take the component once and
-    read typed properties.
   * Afterwards nothing may call `vehicle_dump_state()` per frame - it is composed once per physics
     step, which is enough for a cab reading it from dozens of widgets, but it is still a whole
     Dictionary.
@@ -148,6 +220,83 @@ serialises without a line of per-component code.
 * **I - `train_id` and removing the shims.** `train_id` moves to `RailVehicle3D` as its only
   writer (two vehicles with an empty one collide today - `dynamic_rail_vehicle_3d.gd:45-49`);
   `TrainSystem` keeps `train_id -> RID`; `vehicle_get_mover()` and the borrowed Mover pointer go.
+**Stage status, verified against the code on 2026-09-25** (earlier claims in this file were
+against this file; the 09-24 list had already gone stale in G by the time it was re-measured):
+
+* **A - done**, except `doc_classes/VehicleState.xml` (50 lines), which still publishes the deleted
+  class. `doc_classes/RailVehicleServer.xml` is clean now.
+* **B - partial.** **Three caches where there should be one** - see the next block.
+  `TrainSystem.cpp:88,104` call `train->get_state()`/`get_config()` directly. None of the five
+  common values (`velocity`, `speed`, `mass_total`, `total_distance`, `direction`) is a property;
+  only the first two have a server forwarder. `Dictionary config` has left the controller.
+  split (21 `MoverVehicle<Domain>` classes, each with a `Vehicle<Domain>` interface of the same
+  name, none of which names the Mover), and **`vehicle_component_get(rid, type)` now exists and is
+  bound** (`RailVehicleServer.hpp:222`). Missing: `vehicle_component_create` (zero occurrences) -
+  components still come from `ClassDBSingleton::instantiate()`/`memnew`;
+  `generic_vehicle_component_find` has zero callers; `GenericVehicleComponent` copies
+  `_get_component_state` per tick instead of being walked for `PROPERTY_USAGE_SCRIPT_VARIABLE`
+  (which appears nowhere); `GenericVehicleComponentNode` finds its vehicle via `get_parent()`; the
+  dump mixes nine `prefix/key` namespaces with flat `component_key` names. Typed state names drop
+  the prefix (`brake_pipe_pressure` -> `brakes.pipe_pressure`); dump keys keep it.
+* **D - one of three.** The controller is an `Object`. Not done: it is still created and owned by
+  `VehiclePhysicsNode::_build()` (`:94` creates it, `:114` takes the handle) - it belongs in
+  `vehicle_create()`, which would also remove `VehiclePlacement::controller_id`; registering with
+  `TrainSystem` still hangs off `attach_to_system()` (2 call sites) from `NOTIFICATION_ENTER_TREE`.
+  `RailVehicle3D` creates a second handle of its own - a node that draws a vehicle should own none.
+* **E - not started.** Zero of the ~20 proxy nodes; no `VehicleControllerNode`.
+  * `RailVehicle3D` switches processing on (`:64`, `:340`) and never off, so every vehicle ticks
+    forever to look at two dirty flags; the setter should turn processing on and the tick off.
+* **G - most of it landed.** `@export_node_path("VehicleController")` is gone from **all 14 files**.
+  Of the cabin scripts, **20 take a single key** through `CabinSystem.vehicle_state_value()` and
+  **9 still take the whole dump**, of which only `cabin_windscreen_wipers.gd` does it per frame.
+  Left: `RailVehicle3D` reads the whole dump 4 times (`:541`, `:553` pantograph helpers, `:712`
+  roof light, `:1108` wiper positions), `TrainSoundSystem` once, and `CabinSystem`'s whole
+  vehicle-facing surface is still keyed on `train_id:String` (24 occurrences) rather than the RID.
+  The one-cache change below removes the *cost* of those reads; taking the component removes the
+  *coupling*, and both are still wanted.
+* **H - not started.** No `UpdatePhase`; the order is hand-written in
+  `RailVehicleServer::step_frame()` (`:803`). Check it against
+  `TMoverParameters::ComputeMovement`/`Update` and the three ordering bugs on record (#57 line
+  breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` must exist first - `VehicleDoors`
+  ticks and has no test.
+* **I - one of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone.
+  `TrainSystem.hpp:19,30` still holds `std::map<String, VehicleController *>` and hands the pointer
+  out; `train_id` is written in 34 files and has no unique default, so two vehicles with an empty
+  `train_id` collide and the second is never registered (`dynamic_rail_vehicle_3d.gd:45-49`).
+
+**One state cache, and it lives in the vehicle server.** Measured 2026-09-25: the state is cached
+twice and the hottest path misses both.
+
+* `RailVehicleServer::vehicle_dump_state(rid)` (`:766`) holds the dump **per RID**, keyed on the
+  physics step **and** the command serial. This is the right place and it works.
+* `CabinSystem` (`:32-34`, `:102-109`) caches the same thing again, keyed on the frame and the
+  serial, and on a miss calls the server's already-cached dump - a cache in front of a cache.
+* `VehicleController::get_state()` caches nothing: it composes the whole dictionary from every
+  enabled component on every call. The dependency runs server -> controller, so every direct
+  reader (`RailVehicle3D` 4x, `TrainSoundSystem`, `TrainSystem.cpp:88`) rebuilds it and never
+  touches the cache.
+
+The fix is to turn that dependency round. The body of `get_state()` becomes a private
+`_compose_state()` - the one place that builds the dictionary - and `get_state()` asks
+`RailVehicleServer::vehicle_dump_state(get_rid())` instead; the controller already knows its RID
+(`VehicleController.hpp:274-275,344`), so this needs no part of stage D. The server's miss path
+calls `_compose_state()`, so there is no recursion, and a controller with no handle (built by
+`FizVehicleBuilder`, never attached) composes its own. `CabinSystem`'s three cache members then go.
+
+**The key stays the step plus the command serial, not the frame.** A step is at least as fine as a
+frame, and the second half of the key is there for a recorded reason (`FINDINGS.md`, 2026-09-23): a
+command runs synchronously in the middle of a step, so keying on the step alone made the cab act
+one keypress late. Moving to a bare frame counter would bring that back.
+
+**The vehicle's name belongs to the vehicle server - half done.** `vehicle_set_name()` /
+`vehicle_get_name()` / `vehicle_get_rid_by_name()` exist on `RailVehicleServer`, like
+`TrackManager::track_get_rid_by_name()`. What is left: `TrainSystem` does not call them once
+(`vehicle_get_rid_by_name` has zero uses there) and keeps its own name -> pointer map, so it should
+shrink to a thin front for callers that only know a name (scenery, events, console, radio).
+`CabinSystem`'s whole vehicle-facing surface (`vehicle_state`, `vehicle_config`,
+`vehicle_component`, `vehicle_state_value`, `occupied_cab`) is keyed on `train_id` - flip it to the
+RID in one pass.
+
 
 **A test must not clobber a global setting.** `test_fiz_train_controller` points
 `UserSettings.save_maszyna_game_dir()` at its own fixture in `before_all` and restores it in
@@ -229,6 +378,14 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   vehicle's MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
 * E186 on td_e186.scn: the line breaker opens at about 17 km/h under traction (headless probe,
   2026-09-24) - not diagnosed yet.
+* `VehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
+  `set_pantograph_wire_voltage()` and read by nothing - drop them or give them a reader.
+* Rolling wheels turn at half speed: `MoverVehicleWheels::_do_process_component` adds
+  `rad_to_deg(V*dt/D)`, the original `114.59155... * V * dt / D` = `rad_to_deg(2*V*dt/D)`
+  (DynObj.cpp:3780-3784 at df5a8a8). Not fixed yet - waiting for the operator.
+* Source citations drifted: many `DynObj.cpp`/`Train.cpp`/`Mover.cpp` line numbers in comments
+  point at an older checkout of the original (e.g. wipers `DynObj.cpp:4048-4115` is 4129-4201 at
+  df5a8a8, `Train.cpp:2912` is 3682/3695). Refresh them against one named revision.
 * EIM keys `Imaxrpc` and `BRVto` (`LoadFIZ_Engine`, Mover.cpp:11304-11305) are not ported: the
   vendored Mover predates them and has no such fields.
 * Spring brake, what is left after the parity pass (2026-09-24): `springbrakerelease`
@@ -478,6 +635,17 @@ widgets should ask the model to switch the light (`lights_state`) instead of pok
   first and third, so those two constants have not been verified by ear at 2.0.
 
 ## Tests
+
+* **No test stands a HUD panel next to a vehicle that is not a diesel.** Moving the panels off the
+  state dump onto typed getters broke `mover_gauges.gd` on an induction motor - it asked the
+  `VehicleEngine` interface for `get_rpm()` and `get_oil_pump_pressure()`, which belong to
+  `VehicleDieselEngine` - and nothing caught it: the fixtures build a diesel, where the call
+  resolves, and the headless smoke run has no vehicle at all. A panel test per engine kind
+  (diesel, series, induction) would have. The same gap covers the other migrated panels.
+* **A dump key does not tell you which class owns its getter.** `p_state["engine_rpm"] = get_rpm()`
+  says the name and nothing about where it is declared, so mapping keys to typed reads by grepping
+  the fill puts subclass calls behind a base-class reference. It compiles in GDScript and errors at
+  run time only on the vehicle that lacks the subclass. Check the declaring header, not the fill.
 
 * Remove simulator game data from tests - CI has no game dir. Tests loading real sceneries or
   vehicles (`td.scn`, `demo_scenery_loading.tscn`, `dynamic/pkp/...`): `test_zzz_ep07_*`

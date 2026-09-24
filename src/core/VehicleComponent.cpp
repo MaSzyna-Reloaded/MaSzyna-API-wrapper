@@ -1,6 +1,6 @@
 #include "./TrainSystem.hpp"
-#include "VehicleController.hpp"
 #include "VehicleComponent.hpp"
+#include "VehicleController.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/node.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -10,10 +10,10 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("emit_config_changed_signal"), &VehicleComponent::emit_config_changed_signal);
         ClassDB::bind_method(D_METHOD("mark_dirty"), &VehicleComponent::mark_dirty);
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleComponent::register_command);
-        ClassDB::bind_method(D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
-        ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
         ClassDB::bind_method(
-                D_METHOD("get_component_type"), &VehicleComponent::get_component_type);
+                D_METHOD("unregister_command", "command", "callable"), &VehicleComponent::unregister_command);
+        ClassDB::bind_method(D_METHOD("apply_config"), &VehicleComponent::apply_config);
+        ClassDB::bind_method(D_METHOD("get_component_type"), &VehicleComponent::get_component_type);
         ClassDB::bind_method(D_METHOD("set_component_tag", "tag"), &VehicleComponent::set_component_tag);
         ClassDB::bind_method(D_METHOD("get_component_tag"), &VehicleComponent::get_component_tag);
         ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "component_tag"), "set_component_tag", "get_component_tag");
@@ -24,8 +24,8 @@ namespace godot {
                 D_METHOD("send_command", "command", "p1", "p2"), &VehicleComponent::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
         ClassDB::bind_method(
-                D_METHOD("broadcast_command", "command", "p1", "p2"), &VehicleComponent::broadcast_command, DEFVAL(Variant()),
-                DEFVAL(Variant()));
+                D_METHOD("broadcast_command", "command", "p1", "p2"), &VehicleComponent::broadcast_command,
+                DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("log", "loglevel", "line"), &VehicleComponent::log);
         ClassDB::bind_method(D_METHOD("log_debug", "line"), &VehicleComponent::log_debug);
         ClassDB::bind_method(D_METHOD("log_info", "line"), &VehicleComponent::log_info);
@@ -70,7 +70,7 @@ namespace godot {
         }
         train_controller_node->register_component(this);
         const Error connected = train_controller_node->connect(
-                VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+                VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
         if (connected != OK) {
             log_warning("VehicleComponent::attach() failed with error code " + String::num(connected));
         }
@@ -88,7 +88,7 @@ namespace godot {
         if (train_controller_node != nullptr) {
             train_controller_node->unregister_component(this);
             train_controller_node->disconnect(
-                    VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+                    VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
         }
         train_controller_node = nullptr;
     }
@@ -146,7 +146,7 @@ namespace godot {
         }
 
         if (enabled) {
-            _process_mover(p_delta);
+            _do_process_component(p_delta);
         }
 
         if (enabled_changed) {
@@ -165,10 +165,6 @@ namespace godot {
         }
     }
 
-    void VehicleComponent::_process_mover(const double p_delta) {
-        _do_process_component(p_delta);
-    }
-
     void VehicleComponent::_do_process_component(const double p_delta) {}
 
     void VehicleComponent::_fill_config_dictionary(Dictionary &p_config) const {}
@@ -178,6 +174,10 @@ namespace godot {
         _fill_config_dictionary(result);
         return result;
     }
+    bool VehicleComponent::is_simulation_ready() const {
+        return train_controller_node != nullptr && train_controller_node->is_simulation_ready();
+    }
+
     void VehicleComponent::_apply_configuration() {};
 
     /* Writing the component's configuration into the backend and saying so. A component that is

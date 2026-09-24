@@ -1,9 +1,11 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleLighting.hpp"
 
 namespace godot {
     /* VehicleLighting on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleLighting : public VehicleLighting {
+    class MoverVehicleLighting : public VehicleLighting, public MoverComponent {
             GDCLASS(MoverVehicleLighting, VehicleLighting);
 
         private:

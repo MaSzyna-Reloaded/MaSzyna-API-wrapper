@@ -15,7 +15,7 @@ namespace godot {
 
 
     void MoverVehicleBrake::alarm_chain(const bool p_pulled) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle/enable/disable) ->
         // AlarmChainSwitch(State) - manual emergency brake pull cord.
@@ -23,13 +23,13 @@ namespace godot {
     }
 
     void MoverVehicleBrake::brake_releaser(const bool p_pressed) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->BrakeReleaser(p_pressed ? 1 : 0);
     }
 
     void MoverVehicleBrake::brake_level_set(const double p_level) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         const double level = CLAMP(p_level, 0.0, 1.0);
         const double brake_controller_min = mover->Handle->GetPos(bh_MIN);
@@ -40,7 +40,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::brake_level_set_position(const BrakeHandlePosition p_position) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         if (const std::unordered_map<BrakeHandlePosition, int>::const_iterator it =
                     brake_handle_position_map.find(p_position);
@@ -52,7 +52,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::brake_level_set_position_str(const String &p_position) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         const std::unordered_map<std::string, int>::const_iterator it =
                 brake_handle_position_string_map.find(std::string(p_position.utf8()));
@@ -64,13 +64,13 @@ namespace godot {
     }
 
     void MoverVehicleBrake::brake_level_increase() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->IncBrakeLevel();
     }
 
     void MoverVehicleBrake::brake_level_decrease() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->DecBrakeLevel();
     }
@@ -81,7 +81,7 @@ namespace godot {
     // default to num_1/num_7 (eu07_input-keyboard.ini) - there was previously no equivalent
     // command in this wrapper at all, so the handle could never move.
     void MoverVehicleBrake::local_brake_set(const double p_level) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         // LocalBrakePosA is already normalized 0..1 in the mover (unlike the main brake's
         // arbitrary Handle-position units), so no range conversion is needed here.
@@ -89,7 +89,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::local_brake_increase() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         // One notch per call, mirroring this wrapper's main_controller_increase(step=1)
         // convention for a single cab-click/command invocation.
@@ -97,7 +97,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::local_brake_decrease() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->DecLocalBrakeLevel(1);
     }
@@ -105,7 +105,7 @@ namespace godot {
     // Original engine: TTrain::OnCommand_manualbrakeincrease/decrease (Train.cpp:1809-1837) - one notch,
     // only on a vehicle with a manual brake
     void MoverVehicleBrake::manual_brake_increase() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         if (mover->LocalBrake == TLocalBrake::ManualBrake || mover->MBrake) {
             mover->IncManualBrakeLevel(1);
@@ -115,7 +115,7 @@ namespace godot {
     // Original engine: the per-vehicle part of TController::AutoRewident() (Driver.cpp:2193-2246) - brake
     // delay setting chosen for the train, manual and spring brake released without any power condition
     void MoverVehicleBrake::auto_rewident(const int p_brake_delay) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         mover->BrakeDelaySwitch(p_brake_delay);
         mover->DecManualBrakeLevel(ManualBrakePosNo);
@@ -126,7 +126,7 @@ namespace godot {
     // charging position -1; released, only self-returning EP handles go back to the running position
     // (zero_charging_train_brake(), Train.cpp:960), an FV4a stays where it is
     void MoverVehicleBrake::brake_level_charging(const bool p_active) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         if (p_active) {
             mover->BrakeLevelSet(-1);
@@ -140,7 +140,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::manual_brake_decrease() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         if (mover->LocalBrake == TLocalBrake::ManualBrake || mover->MBrake) {
             mover->DecManualBrakeLevel(1);
@@ -148,7 +148,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
@@ -187,7 +187,7 @@ namespace godot {
     // how brake_sfx_event_factory.gd's local-brake-hiss automation consumes them (one track per
     // sign, same shape as the original's separate rsSBHiss/rsSBHissU sounds).
     void MoverVehicleBrake::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         if (local_brake_pressure_previous >= 0.0 && p_delta > 0.0) {
             const double raw_rate = 10.0 * ((p_mover->LocBrakePress - local_brake_pressure_previous) / p_delta);
@@ -214,127 +214,127 @@ namespace godot {
 
 
     bool MoverVehicleBrake::get_alarm_chain_pulled() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->AlarmChainFlag : false;
     }
 
     double MoverVehicleBrake::get_air_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->BrakePress : 0.0;
     }
 
     double MoverVehicleBrake::get_loco_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->LocBrakePress : 0.0;
     }
 
     double MoverVehicleBrake::get_pipe_brake_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->PipeBrakePress : 0.0;
     }
 
     double MoverVehicleBrake::get_pipe_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->PipePress : 0.0;
     }
 
     double MoverVehicleBrake::get_feed_pipe_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->ScndPipePress : 0.0;
     }
 
     double MoverVehicleBrake::get_tank_volume() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Volume : 0.0;
     }
 
     double MoverVehicleBrake::get_compressor_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Compressor : 0.0;
     }
 
     double MoverVehicleBrake::get_controller_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->fBrakeCtrlPos : 0.0;
     }
 
     double MoverVehicleBrake::get_controller_position_normalized() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? _controller_position_normalized(mover) : 0.0;
     }
 
     double MoverVehicleBrake::get_local_position_normalized() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->LocalBrakePosA : 0.0;
     }
 
     int MoverVehicleBrake::get_manual_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->ManualBrakePos : 0;
     }
 
     double MoverVehicleBrake::get_unit_force() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->UnitBrakeForce : 0.0;
     }
 
     double MoverVehicleBrake::get_force_ratio() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? _force_ratio(mover) : 0.0;
     }
 
     double MoverVehicleBrake::get_emergency_valve_flow() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->EmergencyValveFlow : 0.0;
     }
 
     double MoverVehicleBrake::get_main_valve_flow() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? std::isfinite(mover->dpMainValve) ? mover->dpMainValve : 0.0 : 0.0;
     }
 
     double MoverVehicleBrake::get_local_valve_flow() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->dpLocalValve : 0.0;
     }
 
     double MoverVehicleBrake::get_loco_pressure_fall_rate() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? std::max(0.0, -local_brake_pressure_change_rate) : 0.0;
     }
 
     double MoverVehicleBrake::get_loco_pressure_rise_rate() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? std::max(0.0, local_brake_pressure_change_rate) : 0.0;
     }
 
     double MoverVehicleBrake::get_control_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->LocHandle ? mover->LocHandle->GetCP() : 0.0 : 0.0;
     }
 
     double MoverVehicleBrake::get_handle_control_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Handle ? mover->Handle->GetCP() : 0.0 : 0.0;
     }
 
     double MoverVehicleBrake::get_local_aeim_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->LocalBrakePosAEIM : 0.0;
     }
 
     double MoverVehicleBrake::get_edb_cylinder_pressure() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Hamulec ? mover->Hamulec->GetEDBCP() : 0.0 : 0.0;
     }
 
     bool MoverVehicleBrake::get_releaser_active() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Hamulec && mover->Hamulec->Releaser() : false;
     }
 
     void MoverVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
@@ -365,7 +365,7 @@ namespace godot {
     }
 
     void MoverVehicleBrake::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         /* logika z Mover::LoadFiz_Brake */
         p_mover->BrakeSystem = brake_system_type_map.at(get_cntrl_brake_system());               // BrakeSystem

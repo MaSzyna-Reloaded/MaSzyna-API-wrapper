@@ -22,6 +22,16 @@ var _states:Dictionary = {}
 ## train_id -> the vehicle. The cabin is the one place that knows which vehicle it sits in, so it
 ## is the one place that talks to the vehicle servers; a cabin element never does.
 var _vehicles:Dictionary = {}
+## The vehicle dumps handed out this frame, by vehicle handle, with the command counter each was
+## built at. A cab is dozens of elements asking the same vehicle within one frame, so the first of
+## them builds the dump and the rest read what it built - but a control reports its manipulation
+## and reads the result in that same frame, so a command run since makes the dump stale. That is
+## what the counter is for, and it is the half the server's own cache is keyed on for the same
+## reason (see `FINDINGS.md`, 2026-09-23). Held per frame rather than emptied by a tick of its
+## own, so nothing here runs while no cab is looking.
+var _vehicle_states:Dictionary[RID, Dictionary] = {}
+var _vehicle_state_serials:Dictionary[RID, int] = {}
+var _vehicle_states_frame:int = -1
 var _controls:Dictionary = {}
 var _processes:Dictionary = {}
 
@@ -42,6 +52,9 @@ func _on_train_unregistered(train_id:String) -> void:
     if vehicle:
         vehicle.command_received.disconnect(_on_vehicle_command_received.bind(train_id))
         vehicle.cabin_occupied_changed.disconnect(_on_vehicle_cabin_occupied_changed.bind(train_id))
+        # the dump this frame described a vehicle that is gone; whoever asks after this gets none
+        _vehicle_states.erase(vehicle.get_rid())
+        _vehicle_state_serials.erase(vehicle.get_rid())
     _vehicles.erase(train_id)
     for cab:int in [1, 0, -1]:
         var key:String = _key(train_id, cab)
@@ -77,11 +90,33 @@ func vehicle_rid(train_id:String) -> RID:
     return vehicle.get_rid() if vehicle else RID()
 
 
-## The whole vehicle's state, by name. Composed once per physics step by RailVehicleServer, which
-## is what makes it affordable for a cab reading it from dozens of elements.
+## The whole vehicle's state, by name - built on the first ask of each frame and handed out
+## unchanged to every element that asks after it. An element that reads one value often enough to
+## care takes its component instead (vehicle_component() below); this is for the ones that read a
+## handful of unrelated ones, which is most of a cab.
 func vehicle_state(train_id:String) -> Dictionary:
     var rid:RID = vehicle_rid(train_id)
-    return RailVehicleServer.vehicle_dump_state(rid) if rid.is_valid() else {}
+    if not rid.is_valid():
+        return {}
+    var frame:int = Engine.get_process_frames()
+    if not _vehicle_states_frame == frame:
+        _vehicle_states_frame = frame
+        _vehicle_states.clear()
+        _vehicle_state_serials.clear()
+    var vehicle:VehicleController = _vehicles.get(train_id)
+    var serial:int = vehicle.get_command_serial() if vehicle else 0
+    if not _vehicle_states.has(rid) or not _vehicle_state_serials.get(rid, -1) == serial:
+        _vehicle_states[rid] = RailVehicleServer.vehicle_dump_state(rid)
+        _vehicle_state_serials[rid] = serial
+    return _vehicle_states[rid]
+
+
+## One named value of the vehicle's state. This is what a cabin element wants: it is driven by a
+## property name out of the MMD and reads exactly one of them, so handing it the whole dump only
+## gives it something to hold wrongly. The dump behind this is still built once a frame, so asking
+## for six values costs one.
+func vehicle_state_value(train_id:String, key:String, default_value:Variant = null) -> Variant:
+    return vehicle_state(train_id).get(key, default_value)
 
 
 func vehicle_config(train_id:String) -> Dictionary:

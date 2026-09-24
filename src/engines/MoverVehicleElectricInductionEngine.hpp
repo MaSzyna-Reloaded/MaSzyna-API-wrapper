@@ -1,21 +1,23 @@
 #pragma once
-#include "VehicleElectricInductionEngine.hpp"
-#include "MoverEngineBackend.hpp"
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "MoverElectricEngineBackend.hpp"
 #include "MoverElectricTraction.hpp"
+#include "MoverEngineBackend.hpp"
+#include "VehicleElectricInductionEngine.hpp"
 
 namespace godot {
-    /* VehicleElectricInductionEngine on the vendored Mover. It owns no logic of its own - it installs the delegates that
-     * carry the shared implementation, which is what lets engine kinds share code their
-     * interfaces cannot inherit from one another. */
-    class MoverVehicleElectricInductionEngine : public VehicleElectricInductionEngine {
+    /* VehicleElectricInductionEngine on the vendored Mover. It installs the delegates that carry
+     * the implementation shared with other engine kinds, and writes the induction motor's own
+     * configuration into the Mover, which none of those delegates covers. */
+    class MoverVehicleElectricInductionEngine : public VehicleElectricInductionEngine, public MoverComponent {
             GDCLASS(MoverVehicleElectricInductionEngine, VehicleElectricInductionEngine);
 
         private:
             static void _bind_methods();
-            MoverEngineBackend engine_backend_impl;
-            MoverElectricEngineBackend electric_backend_impl;
-            MoverElectricTraction traction;
+            MoverEngineBackend engine_backend_impl{*this};
+            MoverElectricEngineBackend electric_backend_impl{*this};
+            MoverElectricTraction traction{*this};
 
 
         public:
@@ -33,5 +35,8 @@ namespace godot {
             void set_motor_connectors_open(bool p_open) override;
             void _register_commands() override;
             void _unregister_commands() override;
+
+        protected:
+            void _apply_configuration() override;
     };
 } // namespace godot

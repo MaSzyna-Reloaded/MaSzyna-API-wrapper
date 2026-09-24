@@ -3,7 +3,6 @@
 #include "../core/TrainSystem.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "../lighting/VehicleLighting.hpp"
-#include "../physics/MaszynaMoverPhysicsServer.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -13,8 +12,8 @@
 
 namespace godot {
 
-    const char *VehicleController::mover_config_changed_signal = "mover_config_changed";
-    const char *VehicleController::mover_initialized_signal = "mover_initialized";
+    const char *VehicleController::simulation_configured_signal = "simulation_configured";
+    const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
     const char *VehicleController::power_changed_signal = "power_changed";
     const char *VehicleController::command_received = "command_received";
     const char *VehicleController::radio_toggled = "radio_toggled";
@@ -89,6 +88,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
+        /* Read by whoever caches this vehicle's dump: a command runs synchronously, in the middle
+         * of a step, so the step alone does not say whether a dump is still current. */
+        ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
         ClassDB::bind_method(
                 D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
@@ -114,6 +116,7 @@ namespace godot {
                 D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
                 &VehicleController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &VehicleController::get_rid);
+        ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(
                 D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);
@@ -181,8 +184,8 @@ namespace godot {
                 "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
                 "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
-        ADD_SIGNAL(MethodInfo(mover_config_changed_signal));
-        ADD_SIGNAL(MethodInfo(mover_initialized_signal));
+        ADD_SIGNAL(MethodInfo(simulation_configured_signal));
+        ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
@@ -391,97 +394,6 @@ namespace godot {
                 "", "get_circuit_rlist_size");
     }
 
-    std::unordered_map<const TMoverParameters *, VehicleController *> VehicleController::controllers_by_mover;
-
-    TMoverParameters *VehicleController::get_mover() const {
-        return mover;
-    }
-
-    // the end of the coupled vehicle facing this one (TCoupling::ConnectedNr), -1 when not coupled
-    int VehicleController::get_coupled_end(const int p_end) const {
-        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
-            return -1;
-        }
-        return mover->Couplers[p_end].ConnectedNr;
-    }
-
-    VehicleController *VehicleController::get_coupled_controller(const int p_end) const {
-        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
-            return nullptr;
-        }
-        const auto it = controllers_by_mover.find(mover->Couplers[p_end].Connected);
-        return it == controllers_by_mover.end() ? nullptr : it->second;
-    }
-
-    void VehicleController::initialize_mover_state() {
-        const bool driver_active = initial_velocity != 0.0;
-
-        mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
-        mover->LocalBrakePosA = 0.0;
-        mover->BrakeCtrlPos =
-                static_cast<int>(std::floor(mover->Handle->GetPos(driver_active && driver_type != DRIVER_NOBODY ? bh_RP : bh_NP)));
-        mover->BrakeLevelSet(mover->BrakeCtrlPos);
-    }
-
-    void VehicleController::initialize_mover() {
-        const auto initial_vel = this->initial_velocity;
-        const auto mover_type_name = std::string(type_name.utf8().ptr());
-        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        ERR_FAIL_NULL(physics);
-        // the vehicle used to be named by its node; what identifies one now is its train id
-        physics_rid = physics->vehicle_create(type_name, train_id, initial_vel, get_occupied_cab());
-        mover = physics->vehicle_get_mover(physics_rid);
-        ERR_FAIL_NULL(mover);
-        controllers_by_mover[mover] = this;
-
-        apply_configuration();
-
-        /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-        mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
-
-        /* CheckLocomotiveParameters() will reset some parameters, so the changes
-         * must be applied second time */
-
-        apply_configuration();
-        initialize_mover_state();
-
-        // Original engine: Load() (Mover.cpp:11692) calls ComputeConstans() once, after every
-        // physical parameter (TotalMass, Dim, Cx, BearingType, NPoweredAxles, TrackW - all
-        // already applied above by the two apply_configuration() passes) is settled -
-        // it derives FrictConst1/FrictConst2s/FrictConst2d, the per-vehicle rolling/air-drag
-        // resistance coefficients FrictionForce() (called every tick from ComputeTotalForce())
-        // actually uses. Never called anywhere else in the original either (a single call at
-        // load time is correct - the original itself never updates curve-dependent resistance
-        // terms after that point). Without this, every one of this wrapper's vehicles ran with
-        // zero rolling/air resistance: free acceleration to unrealistic speeds and near-zero
-        // coasting deceleration, since FrictConst1/2s/2d all silently stayed at their
-        // compiled-zero defaults.
-        mover->ComputeConstans();
-
-        // Original engine: the scenery's driver type picks the cab (DynObj.cpp:1812-1825).
-        // FIXME: a vehicle without a driver stays in cab 0 there; here it still starts in cab 1.
-        if (mover->CabOccupied == 0) {
-            mover->CabOccupied = 1;
-        }
-        // only a driven vehicle gets its cab activated by the driver (Driver.cpp:2126); an unmanned
-        // one stays inactive, so ComputeTotalForce() can switch its physics off
-        if (driver_type != DRIVER_NOBODY) {
-            mover->CabActivisation();
-        }
-        /* What the scenery loaded the vehicle with. The backend takes the cargo's name and its
-         * amount together and reads more than cargo out of them - `pantstate` is how a scenery
-         * starts a locomotive with raised pantographs (Mover.cpp:7647). */
-        if (!load_name.is_empty()) {
-            mover->AssignLoad(std::string(load_name.utf8().ptr()), static_cast<float>(load_amount));
-        }
-
-        /* switch_physics() raczej trzeba zostawic */
-        mover->switch_physics(true);
-
-        DEBUG("[MaSzyna::TMoverParameters] Mover initialized successfully");
-        emit_signal(mover_initialized_signal);
-    }
-
     void VehicleController::register_command(const String &p_command, const Callable &p_callable) {
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->register_command(train_id, p_command, p_callable);
@@ -515,14 +427,7 @@ namespace godot {
                 component->apply_config();
             }
         }
-        emit_signal(mover_config_changed_signal);
-    }
-
-    void VehicleController::_process_mover(const double p_delta) {
-        compute_forces(p_delta);
-        compute_movement(p_delta);
-        _handle_mover_update();
-        process_components(p_delta);
+        emit_signal(simulation_configured_signal);
     }
 
     /* Registering the vehicle and its commands used to wait for NOTIFICATION_ENTER_TREE. A
@@ -535,24 +440,15 @@ namespace godot {
     void VehicleController::release() {
         shutdown();
         free_components();
-        if (mover == nullptr) {
-            return;
-        }
-        controllers_by_mover.erase(mover);
-        // the backend owns the Mover, so freeing the handle is what destroys it
-        if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance(); physics != nullptr) {
-            physics->vehicle_free(physics_rid);
-        }
-        physics_rid = RID();
-        mover = nullptr;
-    }
-
-    bool VehicleController::is_simulation_ready() const {
-        return mover != nullptr;
     }
 
     void VehicleController::attach_to_system() {
-        // the vehicle handle is RailVehicle3D's to create; the server hands it here
+        /* The name the scenery gave this vehicle goes to the server that owns its handle, so that
+         * whoever knows the vehicle only by name - an event, the console, a `.scn` command - can
+         * find the handle. Everything that already holds the vehicle uses the handle. */
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            server->vehicle_set_name(rid, train_id);
+        }
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->register_train(train_id, this);
         }
@@ -574,10 +470,10 @@ namespace godot {
         register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
     }
 
-    /* The Mover, once every component is attached - initialize_mover() pushes the configuration
-     * out to all of them (mover_config_changed). */
+    /* The simulation, once every component is attached - _initialize_simulation() pushes the
+     * configuration out to all of them (simulation_configured). */
     void VehicleController::initialize() {
-        initialize_mover();
+        _initialize_simulation();
         update_state();
         emit_signal(power_changed_signal, prev_is_powered);
         emit_signal(radio_channel_changed, prev_radio_channel);
@@ -590,230 +486,20 @@ namespace godot {
         }
     }
 
-    // Original engine: TDynamicObject::Move sets Loc = {-x, z, y} (DynObj.cpp:2334); dMoveLen collects the
-    // movement of one simulation frame and is reset after it (ResetdMoveLen, DynObj.cpp:3473)
-    bool VehicleController::is_physics_active() const {
-        const MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        return physics != nullptr && physics->vehicle_is_active(physics_rid);
-    }
-
-    void VehicleController::update_location() {
-        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        if (physics == nullptr) {
-            return;
-        }
-        physics->vehicle_set_location(physics_rid, get_world_position());
-    }
-
-    // Original engine: TDynamicObject::update_neighbours() (DynObj.cpp:7135); the track scan itself
-    // (find_vehicle) is done by RailVehiclePhysicsServer, which passes the center to center track distance
-    void VehicleController::update_neighbour(
-            const int p_end, VehicleController *p_other, const int p_other_end, const double p_track_distance) {
-        if (mover == nullptr) {
-            return;
-        }
-        neighbour_data &neighbour = mover->Neighbours[p_end];
-        const TCoupling &coupler = mover->Couplers[p_end];
-
-        if (coupler.Connected != nullptr) {
-            // physical connection with another vehicle locks down collision source on this end
-            neighbour.vehicle = coupler.Connected;
-            neighbour.vehicle_end = coupler.ConnectedNr;
-            neighbour.distance = static_cast<float>(
-                    TMoverParameters::CouplerDist(mover, coupler.Connected) - coupler.adapter_length -
-                    coupler.Connected->Couplers[coupler.ConnectedNr].adapter_length);
-            return;
-        }
-
-        neighbour = neighbour_data();
-        if (p_other == nullptr || p_other->mover == nullptr) {
-            return;
-        }
-        TMoverParameters *other_mover = p_other->mover;
-        const TCoupling &other_coupler = other_mover->Couplers[p_other_end];
-        neighbour.vehicle = other_mover;
-        neighbour.vehicle_end = p_other_end;
-        neighbour.distance = static_cast<float>(p_track_distance - 0.5 * (mover->Dim.L + other_mover->Dim.L));
-        if (neighbour.distance < (other_mover->CategoryFlag == 2 ? 50 : 100)) {
-            // at short distances (re)calculate range between couplers directly
-            neighbour.distance = static_cast<float>(
-                    TMoverParameters::CouplerDist(mover, other_mover) - coupler.adapter_length -
-                    other_coupler.adapter_length);
-        }
-    }
-
-    void VehicleController::compute_forces(const double p_delta) {
-        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        if (physics == nullptr) {
-            return;
-        }
-        physics->vehicle_compute_forces(physics_rid, p_delta);
-    }
-
-    void VehicleController::compute_movement(const double p_delta) {
-        MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        if (physics == nullptr) {
-            return;
-        }
-        physics->vehicle_compute_movement(
-                physics_rid, p_delta, MaszynaMoverPhysicsServer::MOVEMENT_FULL);
-        // the Hasler recorder is vehicle state, not integration - it stays here until the state
-        // registry takes it over
-        _update_tachometer(p_delta);
-    }
-
-    /// The cheap movement of the intermediate physics iterations: the original runs UpdateForce +
-    /// FastUpdate for every sub-iteration and the full Update() only once per frame
-    /// (DynObj.cpp:8195-8210), where FastUpdate calls Mover::FastComputeMovement()
-    /// (DynObj.cpp:4086) instead of the full ComputeMovement().
-    void VehicleController::compute_fast_movement(const double p_delta) {
-        if (MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-            physics != nullptr) {
-            physics->vehicle_compute_movement(
-                    physics_rid, p_delta, MaszynaMoverPhysicsServer::MOVEMENT_FAST);
-        }
-    }
-
-    // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
-    void VehicleController::couple(
-            VehicleController *p_other, const int p_end, const int p_other_end, const int p_coupling_type) {
-        if (mover == nullptr || p_other == nullptr || p_other->mover == nullptr) {
-            UtilityFunctions::push_error("Cannot couple vehicles without initialized movers.");
-            return;
-        }
-        int coupling_type = p_coupling_type;
-        // a coupler allowing only permanent coupling keeps it permanent (simulationstateserializer.cpp:990)
-        if (coupling_type != coupling::faux && (mover->Couplers[p_end].AllowedFlag & coupling::permanent) != 0) {
-            coupling_type |= coupling::permanent;
-        }
-        mover->Attach(p_end, p_other_end, p_other->mover, coupling_type, true, false);
-        // the original re-inspects the consist on a coupling change (CheckVehicles(), Driver.cpp:2622)
-        emit_signal(consist_changed_signal);
-        p_other->emit_signal(consist_changed_signal);
-    }
-
-    void VehicleController::uncouple(const int p_end) {
-        if (mover == nullptr || mover->Couplers[p_end].Connected == nullptr) {
-            return;
-        }
-        mover->Dettach(p_end);
-        emit_signal(consist_changed_signal);
-    }
-
-    bool VehicleController::is_coupled(const int p_end) const {
-        return mover != nullptr && mover->Couplers[p_end].Connected != nullptr;
-    }
-
-    // p_where is a coupler end (0 front, 1 rear) or a world position - then the vehicle end nearest to
-    // it is used, like the walk mode commands of the original (ABuScanNearestObject, Train.cpp:6213)
-    int VehicleController::_resolve_coupler_end(const Variant &p_where) const {
-        if (p_where.get_type() != Variant::VECTOR3) {
-            return CLAMP(static_cast<int>(p_where), 0, 1);
-        }
-        const Transform3D transform = get_world_transform();
-        // vehicles face -Z; the front coupler (end 0) is half the length ahead of the center
-        const Vector3 front = transform.origin - transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
-        const Vector3 rear = transform.origin + transform.basis.get_column(2).normalized() * (0.5 * mover->Dim.L);
-        const Vector3 position = p_where;
-        return position.distance_squared_to(front) <= position.distance_squared_to(rear) ? 0 : 1;
-    }
-
-    // Original engine: TDynamicObject::couple() (DynObj.cpp:1509) - one more coupling type per call,
-    // with the vehicle detected at that end
-    void VehicleController::coupler_connect(const Variant &p_where) {
-        if (mover == nullptr) {
-            return;
-        }
-        const int side = _resolve_coupler_end(p_where);
-        const neighbour_data &neighbour = mover->Neighbours[side];
-        if (neighbour.vehicle == nullptr) {
-            return;
-        }
-        const TCoupling &coupler = mover->Couplers[side];
-        const TCoupling &other_coupler = neighbour.vehicle->Couplers[neighbour.vehicle_end];
-        const int allowed = coupler.AllowedFlag & other_coupler.AllowedFlag;
-
-        if (coupler.CouplingFlag == coupling::faux && (allowed & coupling::coupler) == coupling::coupler &&
-            mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupling::coupler)) {
-            return;
-        }
-        for (const int flag:
-             {coupling::brakehose, coupling::mainhose, coupling::control, coupling::gangway, coupling::heating}) {
-            if ((coupler.CouplingFlag & flag) == flag || (allowed & flag) != flag) {
-                continue;
-            }
-            if (flag == coupling::control && coupler.control_type != other_coupler.control_type) {
-                continue;
-            }
-            if (mover->Attach(side, neighbour.vehicle_end, neighbour.vehicle, coupler.CouplingFlag | flag)) {
-                return;
-            }
-        }
-    }
-
-    // Original engine: TDynamicObject::uncouple() (DynObj.cpp:1614)
-    void VehicleController::coupler_disconnect(const Variant &p_where) {
-        if (mover == nullptr) {
-            return;
-        }
-        const int side = _resolve_coupler_end(p_where);
-        if (mover->DettachStatus(side) >= 0 || (mover->Couplers[side].CouplingFlag & coupling::permanent) != 0) {
-            return;
-        }
-        mover->Dettach(side);
-    }
-
-    // Original engine: TTrain::Update() Hasler block (Train.cpp:6917-6940) and its tachoclock
-    // sound gate (Train.cpp:8323-8335).
-    void VehicleController::_update_tachometer(const double p_delta) {
-        const double max_tacho = 3.0;
-        tacho_velocity = std::min(std::abs(11.31 * mover->WheelDiameter * mover->nrot), mover->Vmax * 1.05);
-
-        // the needle jumps once per simulation second, with a small random error
-        const double previous_second = std::floor(tacho_time);
-        tacho_time += p_delta;
-        if (std::floor(tacho_time) != previous_second) {
-            tacho_velocity_jump = tacho_velocity > 1.0
-                                          ? tacho_velocity + (2.0 - UtilityFunctions::randf_range(0.0, 3.0) +
-                                                              UtilityFunctions::randf_range(0.0, 3.0)) *
-                                                                     0.5
-                                          : 0.0;
-        }
-
-        // ticking starts ~1 s after moving off and fades out slowly after stopping
-        if (tacho_velocity > 1.0) {
-            tacho_count = std::min(max_tacho, tacho_count + p_delta * 3.0);
-        } else if (tacho_count > 0.0) {
-            tacho_count = std::max(0.0, tacho_count - p_delta * 0.66);
-        }
-        if (tacho_count >= 3.0) {
-            tacho_clock_active = true;
-        } else if (tacho_count < 1.0) {
-            tacho_clock_active = false;
-        }
-    }
-
-    void VehicleController::update_state() {
-        _handle_mover_update();
-    }
-
     /// Only marks the state for a rebuild - whoever reads it gets it fresh (see get_state()). The
-    /// signals below have to be decided every step though, so they read the mover directly rather
-    /// than through a dictionary that may not be built at all.
-    void VehicleController::_handle_mover_update() {
-        TMoverParameters *mover_ptr = get_mover();
-        if (mover_ptr == nullptr) {
+    /// signals below have to be decided every step though, so they read the live getters directly
+    /// rather than through a dictionary that may not be built at all.
+    void VehicleController::update_state() {
+        if (!is_simulation_ready()) {
             return;
         }
-        _consume_coupler_sounds(mover_ptr);
-
-        const bool new_is_powered = mover_ptr->Power24vIsAvailable || mover_ptr->Power110vIsAvailable;
+        const bool new_is_powered = get_power24_available() || get_power110_available();
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(power_changed_signal, prev_is_powered);
         }
 
-        if (const bool new_radio_enabled = mover_ptr->Radio && new_is_powered;
+        if (const bool new_radio_enabled = get_radio_enabled() && new_is_powered;
             prev_radio_enabled != new_radio_enabled) {
             prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
             emit_signal(radio_toggled, new_radio_enabled);
@@ -830,14 +516,10 @@ namespace godot {
             emit_signal(roof_light_changed, new_roof_light_enabled);
         }
 
-        if (const int new_cabin_occupied = mover_ptr->CabOccupied; prev_cabin_occupied != new_cabin_occupied) {
+        if (const int new_cabin_occupied = get_cabin_occupied(); prev_cabin_occupied != new_cabin_occupied) {
             prev_cabin_occupied = new_cabin_occupied;
             emit_signal(cabin_occupied_changed, new_cabin_occupied);
         }
-    }
-
-    double VehicleController::process_movement(const double p_delta) {
-        return mover != nullptr ? mover->V * p_delta : 0.0;
     }
 
     void VehicleController::emit_position_changed_if_needed() {
@@ -849,225 +531,13 @@ namespace godot {
         emit_signal(position_changed_signal, position);
     }
 
-    void VehicleController::_do_update_internal_mover(TMoverParameters *p_mover) const {
-        p_mover->Mass = mass;
-        p_mover->Power = power;
-        p_mover->Vmax = max_velocity;
-        p_mover->Mred = reduced_mass;
-
-        p_mover->ComputeMass();
-
-        p_mover->CategoryFlag = category;
-        p_mover->TrainType = train_type;
-        p_mover->SandCapacity = static_cast<int>(sand_capacity);
-        p_mover->HeatingPower = heating_power;
-        p_mover->LightPower = light_power;
-
-        p_mover->Dim.L = dimensions_length;
-        p_mover->Dim.H = dimensions_height;
-        p_mover->Dim.W = dimensions_width;
-        p_mover->Cx = dimensions_drag_coefficient;
-        p_mover->Floor = static_cast<float>(dimensions_floor_height);
-
-        p_mover->BatteryStart = start_mode_map.at(cntrl_battery_start_mode);
-        p_mover->GroundRelayStart = start_mode_map.at(cntrl_ground_relay_start_mode);
-        p_mover->CompartmentLights.start_type = start_mode_map.at(cntrl_compartment_lights_start_mode);
-        p_mover->AutomaticCabActivation = cntrl_automatic_cab_activation;
-        p_mover->InactiveCabFlag = cntrl_inactive_cab_flag;
-
-        // FIXME: move to TrainPower
-        p_mover->BatteryVoltage = battery_voltage;
-        p_mover->NominalBatteryVoltage = static_cast<float>(battery_voltage); // LoadFIZ_Light
-    }
-
-    void VehicleController::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
-            return;
-        }
-        // Vehicle-wide, not brake-specific - mover->Vmax is set from this same max_velocity
-        // property (see apply_config() below), so this is a thin alias, not new derivation.
-        p_config["max_speed"] = max_velocity;
-        p_config["power"] = mover->Power;
-        p_config["length"] = mover->Dim.L;
-    }
-
-    void VehicleController::apply_config() {
-        if (TMoverParameters *mover = get_mover(); mover != nullptr) {
-            _do_update_internal_mover(mover);
-            emit_config_changed();
-
-            /* FIXME: CheckLocomotiveParameters should be called after (re)initialization */
-            mover->CheckLocomotiveParameters(initial_velocity != 0.0, 0); // FIXME: brakujace parametery
-            initialize_mover_state();
-        } else {
-            UtilityFunctions::push_warning("VehicleController::apply_config() failed: internal mover not initialized");
-        }
-    }
-
-    // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
-    // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there.
-    //
-    // Consuming is a tick job, not a read job: this clears the mover's flags, so doing it while
-    // filling the state dictionary made the events belong to whoever happened to read first.
-    void VehicleController::_consume_coupler_sounds(TMoverParameters *p_mover) {
-        static const int flags[] = {sound::attachcoupler, sound::attachbrakehose, sound::attachmainhose,
-                                    sound::attachcontrol, sound::attachgangway,   sound::attachheating};
-        for (TCoupling &coupler: p_mover->Couplers) {
-            if (coupler.sounds == sound::none) {
-                continue;
-            }
-            const bool detaching = (coupler.sounds & sound::detach) != 0;
-            for (int index = 0; index < 6; ++index) {
-                if ((coupler.sounds & flags[index]) != 0) {
-                    emit_signal(detaching ? coupler_detached_signal : coupler_attached_signal,
-                                static_cast<CouplingElement>(index));
-                }
-            }
-            coupler.sounds = sound::none;
-        }
-    }
-
-
-    /* The vehicle's own share of the dump - what every vehicle has, whatever it is made of. */
-    double VehicleController::get_tachometer_speed() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? tacho_velocity : 0.0;
-    }
-
-    double VehicleController::get_tachometer_speed_jump() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? tacho_velocity_jump : 0.0;
-    }
-
-    double VehicleController::get_tachometer_clock_speed() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? tacho_clock_active ? tacho_velocity : 0.0 : 0.0;
-    }
-
-    int VehicleController::get_direction_absolute() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->DirAbsolute : 0;
-    }
-
-    int VehicleController::get_cabin() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->CabActive : 0;
-    }
-
-    bool VehicleController::get_cabin_controleable() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->IsCabMaster() : false;
-    }
-
-    int VehicleController::get_cabin_occupied() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->CabOccupied : 0;
-    }
-
-    double VehicleController::get_live_battery_voltage() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->BatteryVoltage : 0.0;
-    }
-
-    bool VehicleController::get_battery_enabled() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Battery : false;
-    }
-
-    bool VehicleController::get_radio_enabled() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Radio : false;
-    }
-
-    bool VehicleController::get_radio_powered() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable) : false;
-    }
 
     int VehicleController::get_radio_channel() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? radio_channel : 0;
-    }
-
-    double VehicleController::get_power24_voltage() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Power24vVoltage : 0.0;
-    }
-
-    bool VehicleController::get_power24_available() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Power24vIsAvailable : false;
-    }
-
-    bool VehicleController::get_power110_available() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Power110vIsAvailable : false;
-    }
-
-    double VehicleController::get_current0() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->ShowCurrent(0) : 0.0;
-    }
-
-    double VehicleController::get_current1() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->ShowCurrent(1) : 0.0;
-    }
-
-    double VehicleController::get_current2() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->ShowCurrent(2) : 0.0;
-    }
-
-    bool VehicleController::get_relay_novolt() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->NoVoltRelay : false;
-    }
-
-    bool VehicleController::get_relay_overvoltage() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->OvervoltageRelay : false;
-    }
-
-    bool VehicleController::get_relay_ground() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->GroundRelay : false;
-    }
-
-    int VehicleController::get_train_damage() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->DamageFlag : 0;
-    }
-
-    int VehicleController::get_controller_second_position() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->ScndCtrlPos : 0;
-    }
-
-    int VehicleController::get_controller_main_position() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->MainCtrlPos : 0;
-    }
-
-    int VehicleController::get_controller_joint_position() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->LocalBrakePosA > 0.0 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo)) : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos) : 0;
-    }
-
-    int VehicleController::get_controller_main_actual_position() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->MainCtrlActualPos : 0;
-    }
-
-    int VehicleController::get_circuit_rlist_size() const {
-        TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->RlistSize : 0;
+        return is_simulation_ready() ? radio_channel : 0;
     }
 
     void VehicleController::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = get_mover();
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["mass_total"] = get_mass_total();
@@ -1106,7 +576,7 @@ namespace godot {
 
     /* The whole vehicle's configuration: its own plus every component's, composed when asked.
      * Unlike the state it is not a view on the backend - the wrapper's own properties and enums
-     * are the authoring source of truth, and the Mover is configured from them. */
+     * are the authoring source of truth, and the backend is configured from them. */
     Dictionary VehicleController::get_config() const {
         Dictionary result;
         _fill_config_dictionary(result);
@@ -1152,7 +622,7 @@ namespace godot {
     void VehicleController::add_component(VehicleComponent *p_component) {
         ERR_FAIL_NULL(p_component);
         p_component->attach(this);
-        if (mover != nullptr) {
+        if (is_simulation_ready()) {
             p_component->apply_config();
         }
     }
@@ -1194,6 +664,7 @@ namespace godot {
 
     void VehicleController::register_component(VehicleComponent *p_component) {
         components.push_back(p_component);
+        _component_attached(p_component);
         if (VehicleLighting *component_lighting = Object::cast_to<VehicleLighting>(p_component);
             component_lighting != nullptr) {
             lighting = component_lighting;
@@ -1201,6 +672,7 @@ namespace godot {
     }
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
+        _component_detached(p_component);
         components.erase(p_component);
         if (static_cast<VehicleComponent *>(lighting) == p_component) {
             lighting = nullptr;
@@ -1216,27 +688,6 @@ namespace godot {
             }
         }
         return result;
-    }
-
-    double VehicleController::get_velocity() const {
-        return mover != nullptr ? mover->V : 0.0;
-    }
-
-    double VehicleController::get_mass_total() const {
-        return mover != nullptr ? mover->TotalMass : 0.0;
-    }
-
-    double VehicleController::get_total_distance() const {
-        return mover != nullptr ? mover->DistCounter : 0.0;
-    }
-
-    int VehicleController::get_direction() const {
-        return mover != nullptr ? mover->DirActive : 0;
-    }
-
-    double VehicleController::get_speed() const {
-        const MaszynaMoverPhysicsServer *physics = MaszynaMoverPhysicsServer::get_instance();
-        return physics != nullptr ? physics->vehicle_get_speed(physics_rid) : 0.0;
     }
 
     void
@@ -1287,32 +738,6 @@ namespace godot {
         return system != nullptr ? system->send_command(train_id, String(p_command), p_p1, p_p2) : Variant();
     }
 
-    void VehicleController::battery(const bool p_enabled) const {
-        mover->BatterySwitch(p_enabled);
-    }
-
-    // Original engine: OnCommand_cabactivationenable/disable (Train.cpp:2430-2472)
-    void VehicleController::cab_activation(const bool p_enabled) const {
-        if (p_enabled) {
-            mover->CabActivisation();
-            return;
-        }
-        mover->CabDeactivisation();
-    }
-
-    // Original engine: taking over a vehicle activates its cab if the FIZ allows automatic
-    // activation (Train.cpp:9086, 9147); otherwise the driver uses cab_activation
-    void VehicleController::cab_activation_auto() const {
-        mover->CabActivisationAuto(true);
-    }
-
-    // Original engine: TTrain::CabChange() (Train.cpp:8516) - steps 1 -> 0 (machine room) -> -1.
-    void VehicleController::cab_change(const int p_direction) const {
-        mover->CabDeactivisationAuto();
-        mover->ChangeCab(p_direction);
-        mover->CabActivisationAuto();
-    }
-
     void VehicleController::set_driver_type(const DriverType p_value) {
         driver_type = p_value;
     }
@@ -1335,35 +760,6 @@ namespace godot {
         }
     }
 
-    void VehicleController::main_controller_increase(const int p_step) const {
-        const int step = p_step > 0 ? p_step : 1;
-        mover->IncMainCtrl(step);
-    }
-
-    void VehicleController::main_controller_decrease(const int p_step) const {
-        const int step = p_step > 0 ? p_step : 1;
-        mover->DecMainCtrl(step);
-    }
-
-    // Original engine: OnCommand_secondcontrollerincrease/decrease (Train.cpp:1188, 1349), regular mode
-    void VehicleController::second_controller_increase(const int p_step) const {
-        const int step = p_step > 0 ? p_step : 1;
-        mover->IncScndCtrl(step);
-    }
-
-    void VehicleController::second_controller_decrease(const int p_step) const {
-        const int step = p_step > 0 ? p_step : 1;
-        mover->DecScndCtrl(step);
-    }
-
-    void VehicleController::direction_increase() const {
-        mover->DirectionForward();
-    }
-
-    void VehicleController::direction_decrease() const {
-        mover->DirectionBackward();
-    }
-
     void VehicleController::radio_channel_increase(const int p_step) {
         const int step = p_step > 0 ? p_step : 1;
         radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
@@ -1378,7 +774,4 @@ namespace godot {
         radio_channel = Math::clamp(p_channel, radio_channel_min, radio_channel_max);
     }
 
-    void VehicleController::radio(const bool p_enabled) {
-        mover->Radio = p_enabled;
-    }
 } // namespace godot

@@ -28,15 +28,14 @@ func unregister() -> void:
 
 
 func _joint_controller(state:CabinState, action:StringName, _value:Variant) -> Variant:
-    var vehicle:Dictionary = state.vehicle_state()
     if action == &"increase":
         # Train.cpp:1098 - an applied local brake is released first
-        if float(vehicle.get("brake_local_position_normalized", 0.0)) > 0.0:
+        if float(state.vehicle_state_value("brake_local_position_normalized", 0.0)) > 0.0:
             return state.send_vehicle_command("local_brake_decrease")
         return state.send_vehicle_command("main_controller_increase")
     if action == &"decrease":
         # Train.cpp:1138 - below the no-power position the handle applies the local brake
-        if vehicle.get("main_no_power_pos", false):
+        if state.vehicle_state_value("main_no_power_pos", false):
             return state.send_vehicle_command("local_brake_increase")
         return state.send_vehicle_command("main_controller_decrease")
     return null

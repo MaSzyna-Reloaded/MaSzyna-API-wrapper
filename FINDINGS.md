@@ -97,6 +97,39 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   silently the moment an instancer without nodes appears. The server that owns the visuals
   subscribes to the manager's events itself.
 
+## 2026-09-24 - what a "load" turns out to be in this engine
+
+Porting `loadcount`/`loadtype` off a `.scn` `dynamic` line meant reading what the original does
+with them, and almost none of it is what the words suggest. Written down because every one of
+these is invisible from the wrapper's side and each would have been ported wrongly by guessing.
+
+* **A load is not always cargo.** `TMoverParameters::AssignLoad(name, amount)` branches on the
+  name first, and `"pantstate"` is not a cargo at all (`Mover.cpp:7649`): the *amount* is read as a
+  bitmask and it raises pantographs and picks the vehicle's direction. That is how a scenery
+  starts a locomotive with its pantographs already up - written as a load, on a vehicle that
+  carries nothing. So the load has to reach the backend as a name and an amount **together**,
+  through that one call, and not as two tidy properties of a cargo component.
+* **A count with no name behind it is not a load.** The `.scn` gives the count first and the
+  cargo's name only when the count is non-zero, so a line that ends right after the number is
+  valid - and the original zeroes both on the spot, with the comment "idiotoodporność"
+  (`simulationstateserializer.cpp:1031`). Reading the next token unconditionally eats
+  `enddynamic` and desyncs the rest of the node.
+* **Passengers are cargo.** The MMD's `loads:` block maps a cargo name to the model it is drawn
+  as (`logs: loads/eaos_vrz-99_logs`), and `passengers` is simply one of its entries. The wrapper
+  had been reading that one key and throwing the block away, which is why it could draw people
+  but not a container. 235 vehicles of the datapack declare the block.
+* **A cargo with no model is normal, and the lookup has three steps.** The original tries the
+  vehicle's own override for that cargo, then a model named `<vehicle type>_<cargo>`, then one
+  named after the cargo alone, and accepts finding none (`DynObj.cpp:7195`) - plenty of loads are
+  only mass. `dynamic/zssk/lgs_v1` declares no `loads:` block at all and its containers are drawn
+  by the third rule, straight out of the vehicle's own folder.
+* **The load's height is not fixed.** `LoadOffset` is lerped from the cargo's own `offset_min` to
+  zero with how full the vehicle is (`DynObj.cpp:3079`), so a half-empty wagon shows its load
+  lower. Only the full case is ported; the rest is in `TODO.md`.
+* **Rule:** before porting a field that looks like data, read what the backend does with its
+  *name*. Two of the five surprises here - `pantstate` and the missing-name case - are branches on
+  a string that no amount of reading the wrapper's own side would have revealed.
+
 ## 2026-09-24 - a consist ringing like metal, and the original naming the bug in a comment
 
 * **Symptom:** from outside, a moving consist sounds metallic - a ringing colour that no single

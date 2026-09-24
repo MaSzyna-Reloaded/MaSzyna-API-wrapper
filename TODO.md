@@ -283,6 +283,11 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   pantographs (`pantstate`, `Mover.cpp:7647`). What is still missing is the cargo a load is drawn
   as - the MMD's own `loads:` block, which is where the passenger model already comes from - and
   the trailing `destination` of the `dynamic` line, which is still dropped.
+* **A load is drawn at full height whatever its amount.** The original lerps `LoadOffset` from the
+  cargo's own `offset_min` to zero with how full the vehicle is (`DynObj.cpp:3079`), so a
+  half-loaded wagon shows its cargo sunk into the body; the wrapper draws every load as if the
+  vehicle were full. `offset_min` is per accepted cargo and comes off the FIZ `Load` section,
+  which `VehicleLoad.minimum_load_offsets` already parses.
 * `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
   `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
   after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The

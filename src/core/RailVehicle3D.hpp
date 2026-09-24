@@ -34,6 +34,10 @@ namespace godot {
             TypedArray<NodePath> front_rolling_wheel_paths;
             TypedArray<NodePath> powered_wheel_paths;
             TypedArray<NodePath> rear_rolling_wheel_paths;
+            /* FIXME(#184): where a collector sits is the vehicle's geometry, not the drawing
+             * node's - the original keeps it in TAnimPant::vPos. It is exported here only because
+             * the instancer reads it off the model, and the pantograph power path cannot move to
+             * RailVehicleServer until it does not have to come back here for these. */
             Vector3 pantograph_front_offset;
             Vector3 pantograph_rear_offset;
             double pantograph_collector_width = 0.5;

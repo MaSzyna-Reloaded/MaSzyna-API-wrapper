@@ -1045,6 +1045,8 @@ namespace godot {
 
     // TDynamicObject::UpdateWiper() (DynObj.cpp:716-731): both arms swing by the wiper angle, the
     // blade swings back by it to stay upright; every other wiper is mirrored.
+    /* FIXME(#184): a wiper's position is simulation, not drawing - the node should be handed
+     * where the blades are, the way it is handed the state of a light. */
     void RailVehicle3D::_update_wipers() {
         if (wiper_arm_nodes.is_empty()) {
             return;
@@ -1272,6 +1274,11 @@ namespace godot {
         return frame;
     }
 
+    /* FIXME(#184): this belongs in RailVehicleServer's step, not in the node that draws the
+     * vehicle. Nothing here needs a node - the server already owns the placement and
+     * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
+     * thing a rendering layer must not do. Moving it needs the collector offsets below to reach
+     * the vehicle first; the original keeps them in TAnimPant::vPos. */
     void RailVehicle3D::_update_pantograph_power(const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || electric_engine == nullptr || controller == nullptr) {
             return;
@@ -1297,6 +1304,7 @@ namespace godot {
                             : 0.0);
     }
 
+    /// FIXME(#184): moves to RailVehicleServer with _update_pantograph_power().
     double RailVehicle3D::_pantograph_wire_voltage(
             const int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, const double p_assumed_voltage,
             const double p_current) {
@@ -1308,11 +1316,27 @@ namespace godot {
             return 0.0;
         }
         TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
-        return traction_power_server != nullptr
-                       ? traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current)
-                       : 0.0;
+        if (traction_power_server == nullptr) {
+            return 0.0;
+        }
+        const double voltage = traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current);
+        /* A span that is overhead but carries nothing is a different defect from a hole in the
+         * wiring - it means the network behind it has no source, or the resistance never reached
+         * it - and the two are indistinguishable from the cab, where both read as a dead line. */
+        Dictionary cache = pantograph_wire_cache[p_index];
+        const bool had_voltage = cache.get("powered", false);
+        if (had_voltage && Math::is_zero_approx(voltage)) {
+            UtilityFunctions::push_warning(vformat(
+                    "Dead traction: %s has a wire under pantograph %d at %v carrying no voltage", get_name(),
+                    p_index, contact_point));
+        }
+        cache["powered"] = !Math::is_zero_approx(voltage);
+        pantograph_wire_cache[p_index] = cache;
+        return voltage;
     }
 
+    /* FIXME(#184): the arm geometry is the vehicle's own state (TAnimPant, DynObj.h:106) and
+     * belongs beside the Mover; only _apply_pantograph_animation() below is drawing. */
     void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
@@ -1388,6 +1412,9 @@ namespace godot {
         return p_is_active && pant_diff < 0.01;
     }
 
+    /* FIXME(#184): moves to RailVehicleServer with _update_pantograph_power(), and
+     * pantograph_wire_cache - which span each pantograph is on - is the vehicle's state, not the
+     * node's. */
     Dictionary RailVehicle3D::_find_pantograph_wire(
             int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
             const Vector3 &p_left) {
@@ -1420,6 +1447,15 @@ namespace godot {
         // the chain ran out, so search the region like update_traction() does (DynObj.cpp:8799)
         const Dictionary result = traction_power_server->wire_find_above_with_height(
                 p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width, PANTOGRAPH_HORN_WIDTH);
+        /* A pantograph that had a wire and now has none is what the vehicle reads as a loss of
+         * line voltage, and it trips the main switch. The original reports the same class of
+         * event with the place it happened (scene.cpp:112, "Bad traction"), which is the only way
+         * to tell a hole in the scenery's wiring from a defect in this search. */
+        if (wire_rid.is_valid() && !RID(result["rid"]).is_valid()) {
+            UtilityFunctions::push_warning(vformat(
+                    "Bad traction: %s lost the wire under pantograph %d at %v", get_name(), p_index,
+                    p_contact_point));
+        }
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;

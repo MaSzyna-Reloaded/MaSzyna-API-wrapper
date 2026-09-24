@@ -111,7 +111,9 @@ namespace godot {
         if (p_stepping) {
             RailVehicleStepper *stepper = memnew(RailVehicleStepper);
             stepper_id = stepper->get_instance_id();
-            tree->get_root()->add_child(stepper);
+            // internal, so a node nobody declared does not turn up in the root's children and
+            // surprise whatever walks the tree
+            tree->get_root()->add_child(stepper, false, Node::INTERNAL_MODE_FRONT);
             return;
         }
         if (Node *stepper = Object::cast_to<Node>(ObjectDB::get_instance(ObjectID(stepper_id))); stepper != nullptr) {

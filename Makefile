@@ -1,10 +1,11 @@
 .PHONY: linux-sdk-image compile-release-linux docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
-# The build stamps itself (cmake/write_build_number.cmake) and the app shows that number, so the
-# archive name stays the same from build to build and does not carry a branch or a date
+# The app shows the build number (cmake/write_build_number.cmake), so the archive name stays the
+# same from build to build and does not carry a branch or a date
 LINUX_ZIP:=bin/linux/maszyna-reloaded-linux64.zip
 WINDOWS_ZIP:=bin/windows/maszyna-reloaded-win64.zip
+BUILD_NUMBER_FILE:=demo/build_number.txt
 CMAKE_BUILD_JOBS=$(shell cores=$$(nproc 2>/dev/null || sysctl -n hw.ncpu 2>/dev/null || echo 1); if [ "$$cores" -gt 2 ]; then echo $$((cores - 2)); else echo 1; fi)
 CLANG_TIDY_BUILD_DIR=build-clang-tidy
 CLANG_TIDY_COMPILE_COMMANDS_FILE=$(CLANG_TIDY_BUILD_DIR)/compile_commands.json
@@ -58,12 +59,25 @@ cleanup-build-release:
 cleanup-builds: cleanup-build-debug cleanup-build-release
 	
 
-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
+# The build number is stamped only when it is asked for, so a build never changes it. That is
+# what lets `upgrade-linux.sh` and `upgrade-windows.sh` - two separate make invocations, often
+# hours apart - ship the same number, and it makes the number describe a release rather than the
+# last time somebody compiled anything. Bump it deliberately: `make build-number`.
+.PHONY: build-number
+build-number:
+	cmake -DOUT=$(BUILD_NUMBER_FILE) -P cmake/write_build_number.cmake
+
+# A checkout that has never been stamped gets a number on its first build, and keeps it.
+$(BUILD_NUMBER_FILE):
+	$(MAKE) build-number
+
+
+compile-debug: $(BUILD_NUMBER_FILE) $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_FILE)
 	cmake -B build-debug -DCMAKE_BUILD_TYPE=Debug -DGODOTCPP_TARGET=template_debug -DLIBMASZYNA_DEBUG=$(LIBMASZYNA_DEBUG) -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-release:
+compile-release: $(BUILD_NUMBER_FILE)
 	cmake -B build-release -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-release --parallel $(CMAKE_BUILD_JOBS)
 
@@ -72,7 +86,7 @@ compile-release:
 # compile-debug builds the vendored Mover at -O0, which makes the physics several times slower
 # than it is in a shipped build and sends any frame-time investigation after the wrong subsystem.
 # Overwrites the same .so as compile-debug; run that to go back.
-compile-profiling:
+compile-profiling: $(BUILD_NUMBER_FILE)
 	cmake -B build-profiling -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-profiling --parallel $(CMAKE_BUILD_JOBS)
 
@@ -82,7 +96,7 @@ compile-profiling:
 # on (its cmake/common_compiler_flags.cmake), and DEBUG_SYMBOLS is Debug or RelWithDebInfo. The
 # price is -O2 instead of -O3, so this build is for diagnosing a crash and not for measuring frame
 # times. It writes the same library as compile-release, so rebuild that one afterwards.
-compile-release-symbols:
+compile-release-symbols: $(BUILD_NUMBER_FILE)
 	cmake -B build-release-symbols -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-release-symbols --parallel $(CMAKE_BUILD_JOBS)
 
@@ -119,7 +133,7 @@ cross-compile-debug: $(CLANG_TIDY_COMPILE_COMMANDS_FILE) $(CLANG_TIDY_BINDINGS_F
 	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-windows-debug:
+compile-windows-debug: $(BUILD_NUMBER_FILE)
 	cmake -B build-win64-debug \
           -DCMAKE_BUILD_TYPE=Debug \
           -DGODOTCPP_TARGET="template_debug" \
@@ -132,7 +146,7 @@ compile-windows-debug:
 	cmake --build build-win64-debug --parallel $(CMAKE_BUILD_JOBS)
 
 
-compile-windows-release:
+compile-windows-release: $(BUILD_NUMBER_FILE)
 	cmake -B build-win64-release \
           -DCMAKE_BUILD_TYPE=Release \
           -DGODOTCPP_TARGET="template_release" \
@@ -149,7 +163,7 @@ linux-sdk-image:
 	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
 
 
-compile-release-linux: linux-sdk-image
+compile-release-linux: $(BUILD_NUMBER_FILE) linux-sdk-image
 	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
 
 

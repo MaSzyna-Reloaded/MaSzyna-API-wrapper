@@ -83,6 +83,136 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   silently the moment an instancer without nodes appears. The server that owns the visuals
   subscribes to the manager's events itself.
 
+## 2026-09-24 - a consist ringing like metal, and the original naming the bug in a comment
+
+* **Symptom:** from outside, a moving consist sounds metallic - a ringing colour that no single
+  vehicle has. Reported as "podwójne dźwięki", which is exactly what comb filtering sounds like.
+* **Ruled out first, cheaply:** the built banks. A headless probe walked the `SfxPlayer3D`s of
+  three vehicles and printed every event name per player - EP07 5/3/30, E186 7/4/9, no name twice
+  in a bank and none across two banks of one vehicle. So nothing was registered or played twice,
+  which is where the search would otherwise have gone.
+* **Cause:** every wagon of a consist plays the *same* running-noise recording, and they all start
+  it at the same moment - when their bank is registered. Identical loops a few metres apart comb
+  against each other, and the effect grows with the number of wagons.
+* **The original names it** at the one place it works around it: "potentially adjust starting point
+  of the last buffer (to reduce chance of reverb effect with multiple, looping copies playing)"
+  (`audiorenderer.cpp:99`). Its answer is `m_outernoise.start( Random( 0.0, 80.0 ) * 0.01 )`
+  (`DynObj.cpp:6511`) - a start offset drawn once per vehicle when the model is loaded.
+* **Two details worth keeping:** the offset is a **fraction of the sample**, not a time - the
+  original multiplies it by the buffer size - so a short recording is shifted as much as a long
+  one; and it is drawn **once per vehicle**, not per playback, so a vehicle keeps its own phase.
+* **Fix:** `TrainSoundSystem` draws `randf_range(0.0, 0.8)` per bank runtime and starts a looping
+  running sound at that fraction of its own clip. `gnd-sfx` needed no change at all -
+  `SfxPlayer.play()` already takes an offset, which is worth knowing before extending it.
+* **Not the clatter.** The wheel clatter was already right: `RunningSoundModel._wheel_clatter()`
+  phases each axle by its own position along the vehicle and the rail joint spacing, which is the
+  original's own model (`DynObj.cpp:3671-3730`, each axle's `distance` seeded from `axle.offset`).
+  A one-shot per rail joint does not comb; a shared loop does.
+* **Rule:** when many copies of one sound play at once, the defect is phase, not level. Look for a
+  start offset before touching a gain, and check whether the player already has one.
+
+## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
+
+* **Symptom:** driving an EP08 on `zwierzyniec_tlk`, the line voltage drops a few times per run and
+  trips the main switch. The operator's own words: "w oryginale tak nie było". Later, after two of
+  the four causes were fixed: it still dies **exactly at the exit of one switch, at any speed**.
+* **Measured before anything was read.** Every traction span of the scenery (1335 spans, 2670
+  ends): 2414 ends have exactly one neighbour, 116 are genuine line ends, **126 have three** -
+  four spans meeting over a switch - and exactly **two** ends anywhere have a gap wider than the
+  joining tolerance. So the wiring is not holed; choosing among the spans is the whole problem.
+  A second pass killed the next two hypotheses just as cheaply: all 1387 joined pairs differ in
+  height by **0.000 m**, and every span around the reported spot is dead flat.
+* **Four separate divergences from the original, each enough on its own:**
+  * **No guide horn.** The original accepts a wire up to `fWidthExtra` = 0.381 m outside the
+    slider and counts it as geometrically higher (`scene.cpp:105-112`, `DynObj.cpp:93`). Its
+    comment describes this exact failure: "problem jest, gdy nowy drut jest wyżej, wtedy pantograf
+    odłącza się od starego, a na podniesienie do nowego potrzebuje czasu". The wrapper had one
+    width and dropped anything beyond it.
+  * **The slider width never came from the data.** `RailVehicle3D::pantograph_collector_width`
+    sat at its header default of 0.5 for every vehicle in the game; the only assignment in the
+    repository was in a test. An EP08 declares `CSW=1.4`, so the original searches 0.7 + 0.381 =
+    1.081 m to each side and the wrapper searched 0.5 - less than half.
+  * **No chain.** Running off the end of a span is not a loss of contact: the original steps along
+    `hvNext` until the point falls inside a span (`DynObj.cpp:8742`). The wrapper dropped the wire
+    and re-searched the area, which papered over it with a 0.25 m tolerance at each span's end.
+  * **`iLast` - and this is the one that killed it at the switch.** The original marks a span that
+    ends a section, or whose neighbour does (`TTraction::WhereIs()`, `Traction.cpp:392`), and for
+    such a span it **does not follow the chain at all** - "dla ostatniego i przedostatniego przęsła
+    wymuszamy szukanie innego; nie to, że nie ma, ale trzeba sprawdzić inne" (`DynObj.cpp:8747`).
+    A switch exit is exactly that: the branch ends there. The wrapper followed `next[]`, which at a
+    three-way meeting had been chosen first-come-first-served, onto a span the switch does not
+    continue into.
+* **A fifth, found by the same reading:** the joining tolerance was 0.25 m as a euclidean radius
+  where the original uses **0.025 m per axis** (`TTraction::TestPoint`, `Traction.cpp:355`). At 25
+  span ends of this scenery that made us see three candidate neighbours where the original sees
+  one. It was harmless while nothing walked the chain, and stopped being harmless the moment
+  something did.
+* **`parallel` and `section` were parsed and thrown away.** Both are read by the importers into
+  their data holders and neither reached the server: a span sharing a running (`hvParallel`) must
+  not trust the chain either, and a supply declared `section` is *not* a substation - it names the
+  part of the network a span belongs to, and the power has to reach it along the wires
+  (`TTraction::PowerSet()`, `Traction.cpp:460`). `TTraction::VoltageGet` was ported whole with
+  them, including a star branch that this wrapper had written down as unreachable.
+* **A trap in that data, worth knowing before reading a scenery's wiring:** every supply is
+  declared **twice** under one name, once `section` and once as a substation. The original's name
+  table keeps the **last** one (`Names.h:38`), and in these files the substation is last - so both
+  engines end up treating `pwr01`/`pwr17` as substations, and the section half changes nothing
+  here. A port that had picked the first declaration would have unpowered half the scenery.
+* **Rule:** measure the data before reading the code. Three of the first four hypotheses - gaps
+  between spans, a height step at a junction, an arm lagging a rising wire - each died to a single
+  pass over the scenery's own numbers, and each would have cost an afternoon in the debugger.
+* **Rule:** a tolerance that "papers over" data is load-bearing the moment something else starts
+  trusting the structure underneath it. The 0.25 m span-end tolerance and the 0.25 m join radius
+  were both harmless until the chain walk was ported, and then they chose the wrong wire.
+* **Rule:** a raised pantograph reads 0 V in three different ways - no wire in reach, a wire
+  carrying nothing, and a wire it is not touching (`PantDiff >= 0.01`, `DynObj.cpp:3866`) - and
+  from the cab all three look identical. Report them separately, with the track and the offset,
+  or every diagnosis starts by guessing which one it was.
+
+## 2026-09-24 - a parked vehicle jumping, because two writers disagreed about where it stands
+
+* **Symptom:** at zero speed the vehicle's transform changes slightly and it visibly jumps. Only
+  on curves, most of all on one switch, never on straight track - and the position readout does
+  not move while it happens.
+* **What that combination says on its own:** the position is stable and the attitude is not, and
+  the difference is a function of curvature. Only two placements in this code have that property.
+* **Cause:** `RailVehicle3D::apply_track_placement()` wrote the body transform **twice**. First
+  unconditionally, from `RailVehicleServer::vehicle_get_transform()` - the track sampled under the
+  vehicle's centre. Then, when `moved || force_detail_refresh`, again, from a chord it composed
+  between the two bogie pivots. On straight track the two agree exactly; on a curve they do not,
+  and on a switch they differ most. A parked vehicle therefore showed the centre one every frame
+  and the chord one in any frame where something raised `force_detail_refresh` - entering the
+  screen, a detail switch, a rebuilt animation binding.
+* **Fix:** the composition moved to `RailVehicleServer`, which owns the placement it is made of:
+  a vehicle on bogies has its body built from the two pivots, cached against the placement, and
+  `RailVehicle3D` takes that one answer and nothing else. The node keeps only what draws - putting
+  the bogie nodes where the wheels say they are.
+* **Rule:** one piece of state, one writer - and a second writer is not obvious when both look
+  correct in isolation. Here the two agreed on every straight track in the game, which is most of
+  it, so the disagreement only ever showed where the geometry made it visible.
+* **Trap met on the way:** a vehicle built with no mass integrates to **NaN**, and a NaN transform
+  never equals itself, so every "did it move" test says yes forever. A fixture without a mass is
+  not a vehicle at rest, it is no vehicle at all.
+
+## 2026-09-24 - a .fiz in the project stopped importing, silently
+
+* **Symptom:** `godot-double --headless --path demo --import` prints `Error importing
+  'res://tests/fixtures/test_vehicle.fiz'` and rewrites its `.import` with `valid=false`. Nothing
+  else says anything, and the tracked `.import` still claimed `type="PackedScene"`.
+* **What proved it, in one run:** a probe calling `FizVehicleBuilder.build_model_at()` on the
+  fixture and then saving the result by hand. The model built fine (28 properties, 6 components);
+  `ResourceSaver.save(model, "...scn")` returned **15**, `ERR_FILE_UNRECOGNIZED`, and the same
+  resource saved to `.res` returned 0.
+* **Cause:** `.fiz` stopped producing a `PackedScene` when a vehicle became a `VehicleModel`, but
+  `FIZImportPlugin._get_save_extension()` still said `"scn"` - and `.scn` is the packed-scene
+  extension, which `ResourceSaver` refuses to write a plain `Resource` into.
+* **Trap:** Godot does not reimport after `touch` - it compares the source's md5 - so testing an
+  importer change means deleting the artifact under `.godot/imported/` first. Two runs looked like
+  the fix had not worked when it had.
+* **Rule:** an `EditorImportPlugin`'s save extension is part of its contract with `ResourceSaver`.
+  When `_get_resource_type()` changes, that extension changes with it, and the only symptom of
+  getting it wrong is one line in an import log.
+
 ## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
 
 * **Symptom:** a key in the cab plays its sound at once, but the operation only happens when the

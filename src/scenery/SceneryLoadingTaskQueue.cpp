@@ -4,6 +4,7 @@
 
 namespace godot {
     void SceneryLoadingTaskQueue::_bind_methods() {
+        ClassDB::bind_method(D_METHOD("drain"), &SceneryLoadingTaskQueue::drain);
         ClassDB::bind_method(D_METHOD("submit", "task"), &SceneryLoadingTaskQueue::submit);
         ClassDB::bind_method(D_METHOD("is_done", "task_id"), &SceneryLoadingTaskQueue::is_done);
         ClassDB::bind_method(D_METHOD("wait", "task_id"), &SceneryLoadingTaskQueue::wait);
@@ -28,6 +29,10 @@ namespace godot {
 
     /// Queued tasks are dropped, running ones are finished before the workers are joined.
     SceneryLoadingTaskQueue::~SceneryLoadingTaskQueue() {
+        drain();
+    }
+
+    void SceneryLoadingTaskQueue::drain() {
         {
             MutexLock lock(**mutex);
             exiting = true;
@@ -40,6 +45,7 @@ namespace godot {
         for (const Ref<Thread> &worker: workers) {
             worker->wait_to_finish();
         }
+        workers.clear();
     }
 
     int SceneryLoadingTaskQueue::submit(const Callable &p_task) {

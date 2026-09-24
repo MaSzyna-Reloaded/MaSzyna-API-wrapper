@@ -68,6 +68,39 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   before suspecting whatever invalidates it. Here the invalidation was innocent, the cache hit
   correctly in the editor, and the whole defect was in one field's value.
 
+## 2026-09-24 - the shipped library had no symbols, and the crash was in the parser
+
+* **Symptom:** closing the game during loading segfaults. Two cores, both on a non-main thread,
+  both with a first frame that is not code (`#0 0x0` and then a wild address).
+* **What cost the most time:** the shipped `libmaszyna.64.so` was **stripped**, so every frame of
+  our own library read `?? ()`. Two cores were diagnosed by the *shape* of the stack alone, and
+  both guesses were wrong. godot-cpp links with `-s` unless `DEBUG_SYMBOLS` is on, and that is
+  `$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>` - a generator expression on **its** target,
+  propagated to ours through `TARGET_LINK_LIBRARIES`. Removing `-s` from our own target's
+  `LINK_OPTIONS` (which the build already did for `template_debug`) therefore changes nothing for
+  a release: the flag was never there. `make release-linux-symbols` builds `RelWithDebInfo` with
+  `template_release` instead, which is what actually keeps the symbols.
+* **With symbols, one backtrace named it:**
+  `MaszynaParser::parse_chunk (maszyna_parser.cpp:270)` -> `Callable::call(...)` -> freed code.
+  The parse runs as a `SceneryLoadingTaskQueue` task, i.e. on a worker, and every token is
+  dispatched to a GDScript handler through a `Callable`. `callback.is_valid()` is checked and does
+  not help: during teardown the object still answers, the script behind it does not.
+* **Cause:** nothing stopped the loading queue before the scripts went away. Its destructor does
+  drain - drop the pending tasks, join the workers - but it runs when the last reference to a
+  `RefCounted` created inside an awaiting coroutine goes, which is *during* that teardown rather
+  than before it. The streaming server's planning thread had the same defect and the same shape of
+  fix the same day; this is a second worker nobody had drained.
+* **Fix:** `SceneryLoadingTaskQueue::drain()` is callable from outside, `SceneryInstancer` keeps
+  the queues that are parsing in `_active_queues` and `cancel_loading()` drains them, and
+  `maszyna_include.gd::_exit_tree()` calls it before anything is freed - while the scripts are
+  still there to be waited for.
+* **Rule:** a shipped build keeps its symbol table. The frames worth reading in a crash are the
+  extension's own, and without them a core costs hours and still ends in a guess.
+* **Rule:** a `Callable` held across a thread boundary is only as valid as the script behind it,
+  and `is_valid()` does not tell you that. Whoever owns the thread stops it before the scripts go.
+* **Rule:** every worker in the process needs an owner that stops it at teardown. Two were found
+  in one day by the same symptom; a destructor is not that owner, because it runs too late.
+
 ## 2026-09-24 - the simulation stepped after everything that reads it
 
 * **Symptom:** vehicles judder, worst seen from the external view; a single locomotive does it

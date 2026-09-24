@@ -28,11 +28,24 @@ const PARSE_PROGRESS:float = 0.5
 const PROGRESS_FRAME_BUDGET_MSEC:int = 100
 
 static var _cache:ResourceCache = ResourceCache.create(CACHE_DIRECTORY)
+## Queues currently parsing, so a scenery leaving the tree can stop them - their tasks are
+## GDScript and call GDScript handlers, which must not be reached once the scripts are going away
+static var _active_queues:Array[SceneryLoadingTaskQueue] = []
 static var _last_report_msec:int = 0
 static var _include_regex:RegEx = RegEx.create_from_string("(?i)(?:^|\\s)include\\s+(\\S+)")
 ## Cache paths of subscenes being saved by queue workers - one writer per file
 static var _saving_subscenes:Dictionary = {}
 static var _saving_subscenes_mutex:Mutex = Mutex.new()
+
+
+## Stops every parse in flight and joins its workers. Called by a scenery leaving the tree: the
+## tasks are GDScript and the parser calls GDScript handlers through a Callable, so a worker still
+## inside one when the scripts are freed jumps into code that is gone (see FINDINGS.md,
+## 2026-09-24). Waiting here is safe, because here the scripts are still alive.
+static func cancel_loading() -> void:
+    for queue:SceneryLoadingTaskQueue in _active_queues.duplicate():
+        queue.drain()
+    _active_queues.clear()
 
 
 ## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
@@ -328,9 +341,11 @@ static func _load_cached_with_progress(
     parameters_hash:String,
 ) -> MaszynaCompiledScenery:
     var queue := SceneryLoadingTaskQueue.new()
+    _active_queues.append(queue)
     var task_id:int = queue.submit(_load_cached.bind(cache_path, source_path, parameters_hash))
     while not queue.is_done(task_id):
         await _report_progress(root, 0.0, "Reading cache")
+    _active_queues.erase(queue)
     return queue.wait(task_id) as MaszynaCompiledScenery
 
 
@@ -476,6 +491,7 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
     root_context.rotate = root.context_rotate
     root_context.origin = root.context_origin
     var queue := SceneryLoadingTaskQueue.new()
+    _active_queues.append(queue)
     # the prescan reads every included file - on a worker thread, like the parsing itself, so the
     # main thread keeps drawing frames
     var count_task_id:int = queue.submit(_count_includes.bind(root.filename, {}))
@@ -490,6 +506,7 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
         )
         await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
+    _active_queues.erase(queue)
     if not context:
         push_error("Cannot parse scenery: " + root.filename)
         return MaszynaImporterContext.new()

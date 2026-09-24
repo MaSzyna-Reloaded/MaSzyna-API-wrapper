@@ -23,6 +23,9 @@ const _RANDOM_INCLUDE_OPEN := "["
 const _RANDOM_INCLUDE_CLOSE := "]"
 const _INCLUDE_END_KEYWORD := "end"
 const _VARIABLE_ANIMATION_TYPES := ["rotvar", "movvar"]
+## Original engine: Globals.h:123 PythonScreenUpdateRate - the shortest interval a Python screen is
+## redrawn at, in milliseconds
+const PYTHON_SCREEN_UPDATE_TIME_MSEC:int = 200
 
 
 ## Parses an MMD file (with includes expanded) into a neutral MmdCabinDefinition for one cab.
@@ -60,6 +63,8 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
         2: _empty_cab_data(),
     }
     var instruments:Array[MmdInstrumentDescriptor] = []
+    var python_screens:Array[MmdPythonScreenDescriptor] = []
+    var python_screen_update_time_msec:int = 0
 
     var i := start_index
     while i < end_index:
@@ -98,6 +103,42 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                 cab_data[n]["model_relpath"] = _resolve_model_relpath(model_token)
             "clock:":
                 i += 1 # analog/digital clock type, not an instrument definition
+            "pyscreen:":
+                # TTrain::screen_entry::deserialize_mapping() (Train.cpp:93): either
+                # "{ script target: x updatetime: n parameters: a=1&b=2 }" or the legacy
+                # "target script". Every token is lowercased, as cParser::getToken() does.
+                var screen := MmdPythonScreenDescriptor.new()
+                var script:String = ""
+                while i < end_index:
+                    var key:String = tokens[i].to_lower()
+                    i += 1
+                    if key == "}":
+                        break
+                    if key == "{":
+                        script = tokens[i].to_lower()
+                    elif key == "target:":
+                        screen.target = tokens[i].to_lower()
+                    elif key == "updatetime:":
+                        screen.update_time_msec = int(tokens[i])
+                    elif key == "parameters:":
+                        for pair:String in tokens[i].to_lower().split("&", false):
+                            # "$timetable=" pulls another vehicle's timetable in - not ported
+                            if not pair.begins_with("$"):
+                                screen.parameters[pair.get_slice("=", 0)] = pair.substr(pair.find("=") + 1)
+                    else:
+                        screen.target = key
+                        script = tokens[i].to_lower()
+                        i += 1
+                        break
+                    i += 1
+                # a script given without a directory lives next to the vehicle (Train.cpp:10667)
+                screen.script_path = (
+                        context.base_dir.path_join(script) if not script.get_base_dir()
+                        else UserSettings.get_maszyna_game_dir().path_join(script))
+                python_screens.append(screen)
+            "pyscreenupdatetime:":
+                python_screen_update_time_msec = int(tokens[i])
+                i += 1
             _:
                 if not label.ends_with(":"):
                     continue # stray value token, not a label - most likely a leftover from a
@@ -144,6 +185,17 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
     definition.driver_angle = cab_data[cab_number]["driver_angle"]
     definition.model_relpath = cab_data[cab_number]["model_relpath"]
     definition.instruments = instruments
+    # Train.cpp:10729-10740 - the screen's own interval, bounded by the global one, or the
+    # vehicle's pyscreenupdatetime: when it has none; below -1 it is taken as it is, unbounded,
+    # and -1 stays: the screen is drawn once (TTrain::update_screens(), Train.cpp:10297)
+    for screen:MmdPythonScreenDescriptor in python_screens:
+        if screen.update_time_msec > 0:
+            screen.update_time_msec = maxi(screen.update_time_msec, PYTHON_SCREEN_UPDATE_TIME_MSEC)
+        elif screen.update_time_msec == 0:
+            screen.update_time_msec = maxi(PYTHON_SCREEN_UPDATE_TIME_MSEC, python_screen_update_time_msec)
+        elif screen.update_time_msec < -1:
+            screen.update_time_msec = -screen.update_time_msec
+    definition.python_screens = python_screens
     definition.diagnostics = context.diagnostics
     return definition
 
@@ -353,6 +405,27 @@ static func build_into(
         # generated_root.
         _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
         widget.set_train_id(train_id)
+
+    for descriptor:MmdPythonScreenDescriptor in definition.python_screens:
+        if not FileAccess.file_exists(descriptor.script_path + ".py"):
+            diagnostics.append(_diag("warning", "MMD_PYTHON_SCRIPT_NOT_FOUND", "Python screen script '%s.py' not found" % descriptor.script_path, definition.cab_number, "pyscreen", descriptor.target))
+            continue
+        var mesh:MeshInstance3D = null
+        if not descriptor.target == "none":
+            # Train.cpp:10676-10689 - a screen whose submodel is missing or has no texture is dropped
+            var matches:Array = submodel_index.get(descriptor.target.validate_node_name().to_lower(), [])
+            mesh = matches[0] as MeshInstance3D if matches else null
+            if not mesh or not mesh.material_override is ShaderMaterial:
+                diagnostics.append(_diag("warning", "MMD_SUBMODEL_NOT_FOUND", "Python screen submodel '%s' not found or has no texture" % descriptor.target, definition.cab_number, "pyscreen", descriptor.target))
+                continue
+        var screen := CabinPythonScreen.new()
+        screen.name = "PythonScreen_" + descriptor.target.validate_node_name()
+        screen.mesh = mesh
+        screen.train_id = train_id
+        screen.script_path = descriptor.script_path
+        screen.parameters = descriptor.parameters
+        screen.update_time_msec = descriptor.update_time_msec
+        generated_root.add_child(screen)
 
 
 static func _empty_cab_data() -> Dictionary:

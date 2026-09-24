@@ -115,6 +115,9 @@ func _enter_tree():
     # Quirk: the original renders shadow maps with front faces culled (opengl33renderer.cpp:1634)
     # against self-shadowing acne; Godot's default culls the same faces as the color pass
     add_custom_project_setting("maszyna/lights/reverse_cull_face", true, TYPE_BOOL)
+    # CPython 2.7 prefix PythonScreenServer runs the cab screens with (lib/libpython2.7.so.1.0 on
+    # Linux); empty is python2.7 in the game directory on Linux and the original's python64 on Windows
+    add_custom_project_setting("maszyna/python/home", "", TYPE_STRING, PROPERTY_HINT_GLOBAL_DIR)
     # E3DRenderingServer streams registered scenery models in and out around the camera; this caps
     # every node's own range and stands in for the nodes that declare none (read at startup)
     add_custom_project_setting(

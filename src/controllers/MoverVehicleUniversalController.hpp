@@ -1,10 +1,11 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleUniversalController.hpp"
 
 namespace godot {
     /* VehicleUniversalController on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleUniversalController : public VehicleUniversalController {
+    class MoverVehicleUniversalController : public VehicleUniversalController, public MoverComponent {
             GDCLASS(MoverVehicleUniversalController, VehicleUniversalController);
 
         private:

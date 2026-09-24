@@ -655,6 +655,7 @@ namespace godot {
 
     void VehicleController::register_component(VehicleComponent *p_component) {
         components.push_back(p_component);
+        _component_attached(p_component);
         if (VehicleLighting *component_lighting = Object::cast_to<VehicleLighting>(p_component);
             component_lighting != nullptr) {
             lighting = component_lighting;
@@ -662,6 +663,7 @@ namespace godot {
     }
 
     void VehicleController::unregister_component(VehicleComponent *p_component) {
+        _component_detached(p_component);
         components.erase(p_component);
         if (static_cast<VehicleComponent *>(lighting) == p_component) {
             lighting = nullptr;

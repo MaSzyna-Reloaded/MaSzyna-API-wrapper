@@ -6,182 +6,182 @@
 
 namespace godot {
     bool MoverElectricEngineBackend::get_converter_enabled(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->ConverterFlag : false;
     }
 
     bool MoverElectricEngineBackend::get_converted_allowed(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->ConverterAllow : false;
     }
 
     double MoverElectricEngineBackend::get_converter_time_to_start(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->ConverterStartDelayTimer : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_max_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.MaxVoltage : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_max_current(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.MaxCurrent : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_max_lifting(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MaxH : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_min_lifting(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinH : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_sliding_width(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.CSW : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_min_main_switch_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinV : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_min_pantograph_tank_pressure(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MinPress : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_max_pantograph_tank_pressure(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.MaxPress : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_pantograph_tank_pressure(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantPress : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_pressure_switch_armed(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantPressSwitchActive : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_compressor_valve(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? !p_mover->bPantKurek3 : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_overvoltage_relay(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.OVP : false;
     }
 
     double MoverElectricEngineBackend::get_collector_required_main_switch_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.InsetV : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_collector_valve_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantsValve.is_active : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantographs_dropped(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantAllDown : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_first_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->Pantographs[0].is_active : false;
     }
 
     double MoverElectricEngineBackend::get_collector_pantograph_first_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->Pantographs[0].voltage : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantograph_second_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->Pantographs[1].is_active : false;
     }
 
     double MoverElectricEngineBackend::get_collector_pantograph_second_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->Pantographs[1].voltage : 0.0;
     }
 
     double MoverElectricEngineBackend::get_collector_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantographVoltage : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_contactors_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? (p_mover->StLinFlag || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0) : false;
     }
 
     bool MoverElectricEngineBackend::get_diff_relay_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? (p_mover->GroundRelay || p_mover->ControlPressureSwitch) ? false : (p_mover->BrakePress < 1.0) : false;
     }
 
     bool MoverElectricEngineBackend::get_resistors_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->StLinFlag ? p_mover->ResistorsFlagCheck() : false : false;
     }
 
     bool MoverElectricEngineBackend::get_vent_overload_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? (p_mover->RventRot < 5.0) && p_mover->ResistorsFlagCheck() : false;
     }
 
     bool MoverElectricEngineBackend::get_highcurrent_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? !(p_mover->Imax < p_mover->ImaxHi) : false;
     }
 
     bool MoverElectricEngineBackend::get_mainbreaker_active(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->Mains : false;
     }
 
     double MoverElectricEngineBackend::get_transducer_input_voltage(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.Transducer.InputVoltage : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_camshaft_available(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->HasCamshaft : false;
     }
 
     bool MoverElectricEngineBackend::get_converter_overload(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->ConvOvldFlag : false;
     }
 
     double MoverElectricEngineBackend::get_line_breaker_delay(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->CtrlDelay : 0.0;
     }
 
     double MoverElectricEngineBackend::get_line_breaker_initial_delay(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->InitialCtrlDelay : 0.0;
     }
 
     bool MoverElectricEngineBackend::get_line_breaker_closes_at_no_power(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->LineBreakerClosesOnlyAtNoPowerPos : false;
     }
 
     void MoverElectricEngineBackend::apply_configuration(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
+        TMoverParameters *p_mover = owner.get_mover();
         // Pantographs[*].voltage/PantFrontVolt/PantRearVolt/PantographVoltage are NOT set here:
         // this only runs when the controller is dirty (effectively once, at startup), but wire
         // voltage changes every frame as the vehicle moves - see set_pantograph_wire_voltage(),
@@ -271,19 +271,19 @@ namespace godot {
     }
 
     void MoverElectricEngineBackend::converter(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->ConverterSwitch(p_enabled);
     }
 
     void MoverElectricEngineBackend::compressor(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->CompressorSwitch(p_enabled);
     }
 
     void MoverElectricEngineBackend::converter_fuse_reset(const VehicleElectricEngine *p_engine) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_converteroverloadrelayreset (Train.cpp:3567-3585) ->
         // RelayReset(relay_t::primaryconverteroverload), "converterfuse_bt:"/ggConverterFuseButton
@@ -292,20 +292,20 @@ namespace godot {
     }
 
     void MoverElectricEngineBackend::pantographs_valve(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
     // Train.cpp:3336 OnCommand_pantographlowerall
     void MoverElectricEngineBackend::pantographs_drop_all(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         mover->DropAllPantographs(p_enabled);
     }
 
     void MoverElectricEngineBackend::pantograph_compressor(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressoractivate (Train.cpp:2912) - runs while held,
         // starting only with low enough pressure and live 24V power
@@ -319,7 +319,7 @@ namespace godot {
     }
 
     void MoverElectricEngineBackend::pantograph_compressor_valve(const VehicleElectricEngine *p_engine, const bool p_to_compressor) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Original engine: OnCommand_pantographcompressorvalveenable/disable (Train.cpp:2869-2909)
         mover->bPantKurek3 = !p_to_compressor;
@@ -328,7 +328,7 @@ namespace godot {
     void MoverElectricEngineBackend::pantograph(
             const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
             const bool p_enabled) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         const Maszyna::end end = (p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
@@ -352,7 +352,7 @@ namespace godot {
     void MoverElectricEngineBackend::set_pantograph_wire_voltage(
             const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
             const float p_voltage) const {
-        TMoverParameters *mover = mover_of(p_engine);
+        TMoverParameters *mover = owner.get_mover();
         ASSERT_MOVER(mover);
         // Written straight to the mover, like the other per-frame-relevant setters above
         // (pantograph(), pantographs_valve()) - _apply_configuration() only runs when the

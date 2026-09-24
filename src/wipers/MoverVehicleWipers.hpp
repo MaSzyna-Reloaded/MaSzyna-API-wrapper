@@ -1,10 +1,11 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleWipers.hpp"
 
 namespace godot {
     /* VehicleWipers on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleWipers : public VehicleWipers {
+    class MoverVehicleWipers : public VehicleWipers, public MoverComponent {
             GDCLASS(MoverVehicleWipers, VehicleWipers);
 
         private:

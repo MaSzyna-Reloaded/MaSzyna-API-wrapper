@@ -8,10 +8,12 @@ runnable.
 
 **Done: stages 1-3.** The prohibitions in `AGENTS.md`/`CODE_STYLE.md`; the four read side effects;
 the coupler counters leaving the vehicle; the `power_source` collision; `TrackManager` and
-`SpatialIndex` in C++; and the three servers - `BaseVehiclePhysicsServer` states what simulating a
-vehicle means in RIDs, `MaszynaMoverPhysicsServer` is the only class that knows `TMoverParameters`
-and owns every Mover, `RailVehicleServer` owns track placement, movement, switch crossing, the
-neighbour scan, the transforms and the step.
+`SpatialIndex` in C++; and `RailVehicleServer`, which owns track placement, movement, switch
+crossing, the neighbour scan, the transforms and the step, and ties the vehicle to the track and
+traction servers. The vehicle's simulation is its controller's: `VehicleController` is the
+interface, `MoverVehicleController` owns the `TMoverParameters`, and every `Mover*` component
+reaches it through `MoverComponent` (2026-09-24; `BaseVehiclePhysicsServer` and
+`MaszynaMoverPhysicsServer` were removed - they only held the Mover pointers).
 
 **Stage 4 was designed wrong and has been withdrawn.** It put the vehicle's state behind a global
 name registry with integer ids, per-class local indexes and a `switch` over declaration order -

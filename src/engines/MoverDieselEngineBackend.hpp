@@ -1,5 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleDieselEngineBackend.hpp"
 #include "VehicleDieselEngine.hpp"
 
@@ -7,7 +8,13 @@ namespace godot {
     class VehicleDieselEngine;
     /* VehicleDieselEngine on the vendored Mover. */
     class MoverDieselEngineBackend : public VehicleDieselEngineBackend {
+        private:
+            /* The Mover* component that installs this delegate - it reaches the Mover through it. */
+            const MoverComponent &owner;
+
         public:
+            explicit MoverDieselEngineBackend(const MoverComponent &p_owner) : owner(p_owner) {}
+
             double get_rpm(const VehicleDieselEngine *p_engine) const override;
             bool get_oil_pump_active(const VehicleDieselEngine *p_engine) const override;
             bool get_oil_pump_disabled(const VehicleDieselEngine *p_engine) const override;

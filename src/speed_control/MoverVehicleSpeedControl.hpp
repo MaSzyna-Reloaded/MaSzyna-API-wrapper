@@ -1,10 +1,11 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleSpeedControl.hpp"
 
 namespace godot {
     /* VehicleSpeedControl on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleSpeedControl : public VehicleSpeedControl {
+    class MoverVehicleSpeedControl : public VehicleSpeedControl, public MoverComponent {
             GDCLASS(MoverVehicleSpeedControl, VehicleSpeedControl);
 
         private:

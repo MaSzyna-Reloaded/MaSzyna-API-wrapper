@@ -7,7 +7,7 @@ namespace godot {
 
 
     void MoverVehicleAIHints::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 

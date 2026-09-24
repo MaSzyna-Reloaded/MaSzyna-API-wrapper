@@ -62,6 +62,9 @@ namespace godot {
             void apply_configuration();
             /* Creates the simulation behind the vehicle and writes its configuration there. */
             virtual void _initialize_simulation() = 0;
+            /* A component joined or left the vehicle - the implementation hooks it up to itself. */
+            virtual void _component_attached(VehicleComponent *p_component) {}
+            virtual void _component_detached(VehicleComponent *p_component) {}
             virtual void _fill_config_dictionary(Dictionary &p_config) const = 0;
             /* The vehicle's own share of the dump - what every vehicle has, whatever it is
              * made of. Its components add theirs. */

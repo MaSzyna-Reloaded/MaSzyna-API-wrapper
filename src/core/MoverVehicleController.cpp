@@ -1,4 +1,5 @@
 #include "MoverVehicleController.hpp"
+#include "../mover/MoverComponent.hpp"
 #include "../mover/MoverTypes.hpp"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
@@ -16,6 +17,19 @@ namespace godot {
             controllers_by_mover.erase(mover);
             delete mover;
             mover = nullptr;
+        }
+    }
+
+    /* A Mover* component reaches this vehicle's Mover through here from now on. */
+    void MoverVehicleController::_component_attached(VehicleComponent *p_component) {
+        if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
+            mover_component->mover_controller = this;
+        }
+    }
+
+    void MoverVehicleController::_component_detached(VehicleComponent *p_component) {
+        if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
+            mover_component->mover_controller = nullptr;
         }
     }
 

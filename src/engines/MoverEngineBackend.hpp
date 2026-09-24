@@ -1,12 +1,19 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleEngineBackend.hpp"
 
 namespace godot {
     class VehicleEngine;
     /* The engine on the vendored Mover. */
     class MoverEngineBackend : public VehicleEngineBackend {
+        private:
+            /* The Mover* component that installs this delegate - it reaches the Mover through it. */
+            const MoverComponent &owner;
+
         public:
+            explicit MoverEngineBackend(const MoverComponent &p_owner) : owner(p_owner) {}
+
             bool get_main_switch_enabled(const VehicleEngine *p_engine) const override;
             bool get_main_switch_closable(const VehicleEngine *p_engine) const override;
             double get_motor_torque(const VehicleEngine *p_engine) const override;

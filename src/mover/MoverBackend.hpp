@@ -1,6 +1,4 @@
 #pragma once
-#include "../core/VehicleComponent.hpp"
-#include "../core/MoverVehicleController.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
 
 /* The vendored Mover is the backend a component may happen to be implemented on. It is named
@@ -19,13 +17,3 @@
         return __VA_ARGS__;                                                                                            \
     }
 
-namespace godot {
-    /// The Mover of the vehicle this component belongs to, or nullptr while it belongs to none.
-    inline TMoverParameters *mover_of(const VehicleComponent *p_component) {
-        if (p_component == nullptr) {
-            return nullptr;
-        }
-        const MoverVehicleController *controller = Object::cast_to<MoverVehicleController>(p_component->get_controller());
-        return controller != nullptr ? controller->get_mover() : nullptr;
-    }
-} // namespace godot

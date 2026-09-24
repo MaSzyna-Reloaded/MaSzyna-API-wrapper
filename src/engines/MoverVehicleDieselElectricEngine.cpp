@@ -56,7 +56,7 @@ namespace godot {
     }
 
     void MoverVehicleDieselElectricEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleDieselElectricEngine::_apply_configuration();
 

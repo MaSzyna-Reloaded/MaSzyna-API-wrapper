@@ -42,6 +42,8 @@ namespace godot {
         protected:
             static void _bind_methods();
             void _initialize_simulation() override;
+            void _component_attached(VehicleComponent *p_component) override;
+            void _component_detached(VehicleComponent *p_component) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
 
             double get_live_battery_voltage() const override;

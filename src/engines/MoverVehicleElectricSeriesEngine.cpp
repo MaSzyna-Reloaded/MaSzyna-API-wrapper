@@ -55,7 +55,7 @@ namespace godot {
     }
 
     void MoverVehicleElectricSeriesEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleElectricSeriesEngine::_apply_configuration();
         p_mover->NominalVoltage = get_nominal_voltage();
@@ -97,13 +97,13 @@ namespace godot {
     }
 
     double MoverVehicleElectricSeriesEngine::get_resistor_fan_rotation() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->RventRot : 0.0;
     }
 
     void MoverVehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
         VehicleElectricSeriesEngine::_fill_config_dictionary(p_config);
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }

@@ -1,5 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleElectricEngineBackend.hpp"
 #include "VehicleElectricEngine.hpp"
 
@@ -7,7 +8,13 @@ namespace godot {
     class VehicleElectricEngine;
     /* VehicleElectricEngine on the vendored Mover. */
     class MoverElectricEngineBackend : public VehicleElectricEngineBackend {
+        private:
+            /* The Mover* component that installs this delegate - it reaches the Mover through it. */
+            const MoverComponent &owner;
+
         public:
+            explicit MoverElectricEngineBackend(const MoverComponent &p_owner) : owner(p_owner) {}
+
             bool get_converter_enabled(const VehicleElectricEngine *p_engine) const override;
             bool get_converted_allowed(const VehicleElectricEngine *p_engine) const override;
             double get_converter_time_to_start(const VehicleElectricEngine *p_engine) const override;

@@ -7,7 +7,7 @@ namespace godot {
 
 
     void MoverVehicleLoad::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->MaxLoad = get_max_load();
         // Build LoadAttributes from get_accepted_loads() with optional per-load minimum offset
@@ -31,7 +31,7 @@ namespace godot {
 
 
     void MoverVehicleLoad::_fill_config_dictionary(Dictionary &p_config) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }

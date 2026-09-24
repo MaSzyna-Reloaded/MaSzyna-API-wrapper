@@ -1,5 +1,6 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleElectricInductionEngine.hpp"
 #include "MoverEngineBackend.hpp"
 #include "MoverElectricEngineBackend.hpp"
@@ -9,14 +10,14 @@ namespace godot {
     /* VehicleElectricInductionEngine on the vendored Mover. It installs the delegates that carry
      * the implementation shared with other engine kinds, and writes the induction motor's own
      * configuration into the Mover, which none of those delegates covers. */
-    class MoverVehicleElectricInductionEngine : public VehicleElectricInductionEngine {
+    class MoverVehicleElectricInductionEngine : public VehicleElectricInductionEngine, public MoverComponent {
             GDCLASS(MoverVehicleElectricInductionEngine, VehicleElectricInductionEngine);
 
         private:
             static void _bind_methods();
-            MoverEngineBackend engine_backend_impl;
-            MoverElectricEngineBackend electric_backend_impl;
-            MoverElectricTraction traction;
+            MoverEngineBackend engine_backend_impl{*this};
+            MoverElectricEngineBackend electric_backend_impl{*this};
+            MoverElectricTraction traction{*this};
 
 
         public:

@@ -7,7 +7,7 @@ namespace godot {
     void MoverVehicleHeating::_bind_methods() {}
 
     void MoverVehicleHeating::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
@@ -38,24 +38,24 @@ namespace godot {
     }
 
     bool MoverVehicleHeating::get_active() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Heating : false;
     }
 
     double MoverVehicleHeating::get_power() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->HeatingPower : 0.0;
     }
 
     void MoverVehicleHeating::heating(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->HeatingSwitch(p_enabled);
     }
 
     void MoverVehicleHeating::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (mover_of(this) == nullptr) {
+        if (get_mover() == nullptr) {
             return;
         }
         p_state["heating_enabled"] = get_active();

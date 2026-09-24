@@ -1,10 +1,11 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleElectroPneumaticDynamicBrake.hpp"
 
 namespace godot {
     /* VehicleElectroPneumaticDynamicBrake on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleElectroPneumaticDynamicBrake : public VehicleElectroPneumaticDynamicBrake {
+    class MoverVehicleElectroPneumaticDynamicBrake : public VehicleElectroPneumaticDynamicBrake, public MoverComponent {
             GDCLASS(MoverVehicleElectroPneumaticDynamicBrake, VehicleElectroPneumaticDynamicBrake);
 
         private:

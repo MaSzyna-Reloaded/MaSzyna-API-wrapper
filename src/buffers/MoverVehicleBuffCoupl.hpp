@@ -1,10 +1,11 @@
 #pragma once
 #include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleBuffCoupl.hpp"
 
 namespace godot {
     /* VehicleBuffCoupl on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleBuffCoupl : public VehicleBuffCoupl {
+    class MoverVehicleBuffCoupl : public VehicleBuffCoupl, public MoverComponent {
             GDCLASS(MoverVehicleBuffCoupl, VehicleBuffCoupl);
 
         private:

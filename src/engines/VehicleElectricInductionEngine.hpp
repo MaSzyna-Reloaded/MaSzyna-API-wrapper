@@ -11,7 +11,11 @@ namespace godot {
     class VehicleElectricInductionEngine : public VehicleElectricEngine {
             GDCLASS(VehicleElectricInductionEngine, VehicleElectricEngine)
         public:
-        public:
+            /// Mover.cpp:497 eimc[eimc_p_eped] = 1.5
+            static constexpr double EIMC_P_EPED_DEFAULT = 1.5;
+            /// MOVER.h InverterControlCouplerFlag{4}
+            static constexpr int INVERTER_CONTROL_COUPLER_FLAG_DEFAULT = 4;
+
             static void _bind_methods();
 
         private:
@@ -51,6 +55,13 @@ namespace godot {
             MAKE_MEMBER_GS(double, braking_decay_velocity, 0.0);
             MAKE_MEMBER_GS(double, braking_decay_start_velocity, 0.0);
             MAKE_MEMBER_GS(double, motor_max_current, 0.0);
+            /* The rest of LoadFIZ_Engine's EIM block (Mover.cpp:11276-11306); defaults are the Mover's own. */
+            MAKE_MEMBER_GS(double, nominal_voltage, 0.0);                  // Volt -> NominalVoltage
+            MAKE_MEMBER_GS(double, electrodynamic_brake_cylinder_ratio, 0.0); // abed -> eimc[eimc_p_abed]
+            MAKE_MEMBER_GS(double, electrodynamic_ep_ratio, EIMC_P_EPED_DEFAULT); // edep -> eimc[eimc_p_eped]
+            MAKE_MEMBER_GS(bool, logarithmic_force_control, false);        // eimclf -> EIMCLogForce
+            MAKE_MEMBER_GS(int, inverter_control_coupler_flag, INVERTER_CONTROL_COUPLER_FLAG_DEFAULT); // InvCtrCplFlag
+            MAKE_MEMBER_GS(bool, flat_force_characteristic, false);        // Flat -> Flat
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, max_power_table)
     };
 } // namespace godot

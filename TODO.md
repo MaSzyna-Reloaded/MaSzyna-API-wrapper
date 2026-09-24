@@ -226,6 +226,8 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 * `CabinSwitch` has no `mesh_rotation_offset`/`mesh_position_offset`, so the MMD offset of a
   switch is dropped (`MMD_ANIMATION_UNSUPPORTED`), e.g. SM42 `dirkey: kier rot -0.09 0.01`. The
   original renders `value * scale + offset` (`Gauge.cpp:456`); `CabinButton` already does.
+* EIM keys `Imaxrpc` and `BRVto` (`LoadFIZ_Engine`, Mover.cpp:11304-11305) are not ported: the
+  vendored Mover predates them and has no such fields.
 * Spring brake, what is left after the parity pass (2026-09-24): `springbrakerelease`
   (`Train.cpp:6874`, the emergency release rod) and the `springbrakepress:` gauge
   (`Train.cpp:12221`) have no cab control and no key, the game's `eu07_input-keyboard.ini` binds

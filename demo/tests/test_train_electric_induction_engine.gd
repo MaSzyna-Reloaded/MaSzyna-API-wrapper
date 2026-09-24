@@ -59,7 +59,7 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     # occupied - an unmanned vehicle is not simulated and would never open it.
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
     physics_node.train_id = "TestEimTrain"
-    physics_node.cabin_number = 1
+    physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = physics_node.get_controller()
     driven.battery_voltage = 110.0
@@ -91,6 +91,57 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
         await wait_idle_frames(1)
 
     assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
+
+
+func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan():
+    # Regression: without InvNo the Mover divides by InvertersNo (Mover.cpp:5627); the original
+    # gives a powered EIM one inverter (Mover.cpp:11302), the wrapper left it at 0 and every force
+    # of the vehicle became NaN as soon as a direction was set
+    var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+    physics_node.train_id = "TestEimInverters"
+    physics_node.driver_type = VehicleController.DRIVER_HEAD
+    add_child_autofree(physics_node)
+    var driven: VehicleController = physics_node.get_controller()
+    driven.battery_voltage = 110.0
+    driven.power = 5600.0
+    driven.mass = 81000.0
+    var wheels: VehicleWheels = MoverVehicleWheels.new()
+    wheels.powered_wheel_diameter = 1.25
+    wheels.axle_arrangement = "Bo'Bo'"
+    driven.add_component(wheels)
+    var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
+    eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    eim.cntrl_main_controller_position_count = 4
+    eim.transmission_gear_teeth_motor = 48
+    eim.transmission_gear_teeth_wheel = 251
+    # the Engine: line of dynamic/pkp/e186_v2/p160dc.fiz, without InvNo
+    var line: MaszynaParser = MaszynaParser.new()
+    line.initialize(("dfic=861 dfmax=1.84 p=2 cfu=43.7 cim=13.4 icif=0.679 Uzmax=2183 Uzh=2183 DU=20"
+            + " I0=20 fcfu=43.7 F0=300 a1=0.4 Pmax=5600 Fh=150 Ph=2600 Vh0=5 Vh1=10 Imax=1950 abed=1"
+            + " Flat=Yes").to_utf8_buffer())
+    FizTrainElectricInductionEngineParser.new().apply_engine_fields(FizLineUtil.read_key_values(line), eim)
+    eim.power_current_collector_max_voltage = 3900.0
+    eim.power_current_collector_min_main_switch_voltage = 1900.0
+    eim.power_current_collector_physical_layout = 3
+    eim.power_current_collector_number_of_collectors = 2
+    driven.add_component(eim)
+    driven.apply_configuration()
+    await wait_idle_frames(2)
+    driven.send_command("battery", true)
+    driven.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    for i in 10:
+        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        await wait_idle_frames(1)
+    await wait_seconds(1.0)
+    driven.send_command("main_switch", true)
+    driven.send_command("direction_increase")
+    for i in 5:
+        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        await wait_idle_frames(1)
+
+    assert_true(driven.state["main_switch_enabled"], "the line breaker should be closed")
+    assert_false(is_nan(float(driven.state["velocity"])), "velocity should not be NaN")
+    assert_false(is_nan(float(driven.state["Ft"])), "traction force should not be NaN")
 
 
 func test_apply_power_uses_canonical_current_collector_properties():

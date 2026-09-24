@@ -3,6 +3,20 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - every force of the E186 turned NaN once a direction was set
+
+* **Symptom:** `get` showed `velocity`, `Ft`, `brake_unit_force` and the wheel angles as `nan`
+  as soon as the reverser left neutral with the line breaker closed; the breaker then dropped.
+* **What proved it:** a headless probe on `p160dc.fiz` printing the forces every half second -
+  `Ft`, `Mm`, `Im` went `nan` in the first step after `direction_increase`.
+* **Cause:** the EIM traction step divides by `InvertersNo` (`InvertersRatio`, Mover.cpp:5627).
+  `LoadFIZ_Engine` gives a powered EIM without `InvNo` one inverter and sizes `Inverters`
+  (Mover.cpp:11302); the wrapper did neither, so 0/0. The same block also defaulted `fcfuH` to
+  `fcfu` (Mover.cpp:11290) and read `Volt`, `abed`, `edep`, `eimclf`, `InvCtrCplFlag`, `Flat` -
+  none of which reached the Mover; all are ported now.
+* **Rule:** porting a `LoadFIZ_*` block means porting what it does after the `extract_value`
+  lines too - derived counts, container sizes, fallbacks to another key.
+
 ## 2026-09-24 - the E186 line breaker opened the moment it closed
 
 * **Symptom:** on `td_e186.scn`, with the pantographs up, the main switch (line breaker) could not

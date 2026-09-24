@@ -247,6 +247,15 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ## Vehicles
 
+* **Traction: `hvParallel` (bieznia wspolna) is not ported.** A `traction` node may name a
+  parallel span (`parallel <name>`); `maszyna_node_traction_importer.gd` reads it into
+  `MaszynaTractionData.parallel` and nothing carries it to `TractionPowerServer`. The original
+  puts such spans in a ring and, while the pantograph is on one of them, always searches the area
+  instead of following the chain, because the wire actually overhead may be a sibling it cannot
+  reach along `hvNext` (Traction.cpp:838-852, DynObj.cpp:8753). `zwierzyniec_tlk` declares none,
+  which is why the junction fix works there; a scenery that declares them will pick the wrong
+  span. `iLast` - the original forcing the same search on the last and second-to-last span of a
+  section - is not ported either.
 * **A vehicle's load is not implemented at all.** The `.scn` `dynamic` line carries `loadcount`
   and, when it is not zero, `loadtype`; `maszyna_node_dynamic_importer.gd` reads both and drops
   them (`var _load_type`). The Mover has the concept, so the load has to reach it - and the load

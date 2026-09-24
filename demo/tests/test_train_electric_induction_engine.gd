@@ -53,6 +53,46 @@ func test_round_trip_and_update_without_crashing():
     assert_eq(engine.max_power_table.size(), 2)
     assert_true(train.state.has("main_switch_enabled"), "VehicleElectricInductionEngine should keep functioning after configuring EIM parameters")
 
+func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
+    # Regression: CollectorParameters.MaxV (FIZ MaxVoltage, Mover.cpp:11622) was never set, so an
+    # induction motor opened the line breaker above 0 + 200 V right after it closed. The cab is
+    # occupied - an unmanned vehicle is not simulated and would never open it.
+    var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
+    physics_node.train_id = "TestEimTrain"
+    physics_node.cabin_number = 1
+    add_child_autofree(physics_node)
+    var driven: VehicleController = physics_node.get_controller()
+    driven.battery_voltage = 110.0
+    # the breaker is checked against the voltage in TractionForce(), run only with Power > 0
+    driven.power = 5600.0
+    var eim: VehicleElectricInductionEngine = MoverVehicleElectricInductionEngine.new()
+    eim.power_source = VehicleController.POWER_SOURCE_CURRENTCOLLECTOR
+    eim.cntrl_main_controller_position_count = 4
+    eim.power_current_collector_max_voltage = 3900.0
+    eim.power_current_collector_min_main_switch_voltage = 1900.0
+    eim.power_current_collector_physical_layout = 3
+    eim.power_current_collector_number_of_collectors = 2
+    driven.add_component(eim)
+    driven.apply_configuration()
+    await wait_idle_frames(2)
+    driven.send_command("battery", true)
+    await wait_idle_frames(2)
+    driven.send_command("pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    for i in 10:
+        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        await wait_idle_frames(1)
+    await wait_seconds(1.0)
+    eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+    assert_true(driven.state["main_switch_closable"], "the line breaker should be closable at 3000 V")
+
+    driven.send_command("main_switch", true)
+    for i in 5:
+        eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        await wait_idle_frames(1)
+
+    assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
+
+
 func test_apply_power_uses_canonical_current_collector_properties():
     var line: MaszynaParser = MaszynaParser.new()
     line.initialize("CollectorsNo=2 MaxVoltage=3000.0 MaxCurrent=800.0".to_utf8_buffer())

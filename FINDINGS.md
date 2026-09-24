@@ -3,6 +3,26 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - the E186 line breaker opened the moment it closed
+
+* **Symptom:** on `td_e186.scn`, with the pantographs up, the main switch (line breaker) could not
+  be switched on.
+* **What proved it:** a headless probe building `p160dc.fiz` with the cab occupied and 3000 V fed
+  to both pantographs: `main_switch_closable` went true, the `main_switch` command returned true,
+  and three frames later `main_switch_enabled` was false again.
+* **Cause:** an induction motor opens the breaker when the line voltage is above
+  `CollectorParameters.MaxV + 200` (`Mover.cpp:5706`). The original reads FIZ `MaxVoltage` into
+  both `EnginePowerSource.MaxVoltage` and `CollectorParameters.MaxV` (`Mover.cpp:11622`); the
+  wrapper wrote only the first, so `MaxV` stayed 0 and any voltage above 200 V knocked it out.
+  Series motor vehicles (EP07, EU07) never showed it - their relay treats `MaxV` only with
+  `OverVoltProt`, which they do not set.
+* **Trap in the regression test:** the knock-out sits in `TractionForce()`, which the Mover runs
+  only with `Power > 0`, and only for a driven vehicle. The first two versions of the test passed
+  with and without the fix; it was checked against a build with the line commented out before
+  being kept.
+* **Rule:** one FIZ key can feed several Mover fields. Porting a key means grepping every
+  `extract_value(..., "Key", ...)` for it, not the first one found.
+
 ## 2026-09-24 - every spring brake started shut off, because the struct defaults were kept
 
 * **Symptom:** on `td_e186.scn` it was unclear whether the spring brake did anything at all, and

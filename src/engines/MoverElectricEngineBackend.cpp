@@ -217,6 +217,9 @@ namespace godot {
                 p_mover->EnginePowerSource.CollectorParameters.MinH = p_engine->get_power_current_collector_min_collector_lifting();
                 p_mover->EnginePowerSource.CollectorParameters.MaxH = p_engine->get_power_current_collector_max_collector_lifting();
                 p_mover->EnginePowerSource.CollectorParameters.CSW = p_engine->get_power_current_collector_sliding_width();
+                // Mover.cpp:11622 - MaxVoltage is also the collector's own limit; left at 0, an induction
+                // motor opens the line breaker above MaxV + 200 V (Mover.cpp:5706) the moment it closes
+                p_mover->EnginePowerSource.CollectorParameters.MaxV = p_engine->get_power_current_collector_max_voltage();
                 p_mover->EnginePowerSource.CollectorParameters.MinV = p_engine->get_power_current_collector_min_main_switch_voltage();
                 p_mover->EnginePowerSource.CollectorParameters.MinPress =
                         p_engine->get_power_current_collector_min_pantograph_tank_pressure();

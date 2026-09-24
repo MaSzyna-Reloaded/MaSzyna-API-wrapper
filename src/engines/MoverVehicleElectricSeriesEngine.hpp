@@ -5,9 +5,9 @@
 #include "MoverElectricTraction.hpp"
 
 namespace godot {
-    /* VehicleElectricSeriesEngine on the vendored Mover. It owns no logic of its own - it installs the delegates that
-     * carry the shared implementation, which is what lets engine kinds share code their
-     * interfaces cannot inherit from one another. */
+    /* VehicleElectricSeriesEngine on the vendored Mover. It installs the delegates that carry the
+     * implementation shared with other engine kinds, and writes the series motor's own
+     * configuration into the Mover, which none of those delegates covers. */
     class MoverVehicleElectricSeriesEngine : public VehicleElectricSeriesEngine {
             GDCLASS(MoverVehicleElectricSeriesEngine, VehicleElectricSeriesEngine);
 
@@ -33,5 +33,10 @@ namespace godot {
             void set_motor_connectors_open(bool p_open) override;
             void _register_commands() override;
             void _unregister_commands() override;
+            double get_resistor_fan_rotation() const override;
+
+        protected:
+            void _apply_configuration() override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
     };
 } // namespace godot

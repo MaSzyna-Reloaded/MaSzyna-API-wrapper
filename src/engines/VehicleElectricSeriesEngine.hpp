@@ -1,5 +1,4 @@
 #pragma once
-#include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleElectricEngine.hpp"
 #include "macros.hpp"
 #include "resources/engines/RelayListItem.hpp"
@@ -14,7 +13,7 @@ namespace godot {
             void _fill_state_dictionary(Dictionary &p_state) const override;
 
             /* Live state, read straight from the backend - nothing is stored. */
-            double get_resistor_fan_rotation() const;
+            virtual double get_resistor_fan_rotation() const = 0;
 
             /* RVent= (Automatic / Yes / No): resistor cooling fan drive mode */
             enum FanType {
@@ -29,8 +28,6 @@ namespace godot {
 
         protected:
             EngineType get_engine_type() const override;
-            void _apply_configuration() override;
-            void _fill_config_dictionary(Dictionary &p_config) const override;
 
         public:
             MAKE_MEMBER_GS(double, nominal_voltage, 0.0);

@@ -333,6 +333,32 @@ is built (see `FINDINGS.md`, 2026-09-23, where a per-frame push made them fight)
 widgets do nothing whatsoever under the OPTIMIZED instancer, which has no nodes to write to. The
 widgets should ask the model to switch the light (`lights_state`) instead of poking its nodes.
 
+### Self-illumination of light submodels (reported 2026-09-24: lights shine, `_on` meshes do not)
+
+Checked headlessly. In a scenery, `light_onNN` is shown from the declared modes and its material
+comes out with `emission_enabled`, energy 1.0 (`EMISSION = albedo * texture`, the original's
+`basecolor * emission * texture`, `light_common.glsl:164`). Across 248 models the `light_on`
+meshes carry `fLight` 2.0 (264), 1.0 (39) and -1.0 (3). What is left:
+
+* **`E3DModelInstance` nodes never light up automatically.** `_merge_lights_state()`
+  (`e3d_model_instance.gd:214`) fills every light of the model with `false` and pushes it through
+  `instance_set_lights_state()`; the server treats that as a manual override, which wins over the
+  declared mode (`state.merge(lights_override, true)`). Measured: `latarnial_str`, `ls_Dark`,
+  light level 0.05 - `light_on00` stays hidden. Sceneries are not affected - they only call
+  `instance_set_lights_modes()`.
+* **A `colored` light submodel has no emission.** `get_submodel_material()` returns
+  `COLORED_MATERIAL` before the self-illumination options are looked at (1 of 306, e.g.
+  `lampa_parkowa01`'s `light_on00`).
+* **`lightcolors` do not tint the submodel.** The colour reaches only the `Light3D`; the original
+  also overrides the `light_on` submodel's diffuse (`SetDiffuseOverride`, `AnimModel.cpp:625`),
+  which is the colour it glows with.
+* **Self-illumination is baked, not per frame.** The original lights a submodel while
+  `Global.fLuminance < fLight` (`opengl33renderer.cpp:3452`); `material_manager.gd:118` decides
+  once with `lights_on_threshold >= 1.0`, so 1.0 glows in full daylight and a threshold in (0, 1)
+  never glows.
+* **Unmeasured:** how bright emission 1.0 reads after AgX (`tonemap_agx_white` 6.19, contrast
+  1.55, `maszyna_environment_node.gd`). Needs the operator's scenery/model and a rendered frame.
+
 ### Smoke emitters
 
 * The vertical decay of a particle is not ported (`particles.cpp:365-380`): the original slows a

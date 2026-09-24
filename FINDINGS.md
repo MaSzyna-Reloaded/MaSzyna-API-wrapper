@@ -94,6 +94,18 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   the queues that are parsing in `_active_queues` and `cancel_loading()` drains them, and
   `maszyna_include.gd::_exit_tree()` calls it before anything is freed - while the scripts are
   still there to be waited for.
+* **The fix's own regression, and the lesson in it:** draining a queue means *waiting* for the
+  task that is running, and a scenery parse takes seconds. Quitting mid-parse therefore stopped
+  crashing and started hanging - the window would not close, and on Windows there is no shell to
+  interrupt it from. A stop that waits for the work to finish is not a stop. `MaszynaParser`
+  already had an `interrupted` flag for its own budgeting; it now also carries a static
+  `cancelled` that the token loop checks, and the GDScript half of a loading task
+  (`_count_includes`, which reads every included file) checks the same flag - so the join has
+  something short to wait for.
+* **Not covered by a test, and the attempt is worth recording.** A test that frees a scenery
+  mid-parse and asserts the teardown is quick passes *with and without* the fix: headless, the
+  parse of `td.scn` is over before the test can interrupt it. A green test that cannot fail is
+  worse than none, so it was deleted rather than kept.
 * **Rule:** a shipped build keeps its symbol table. The frames worth reading in a crash are the
   extension's own, and without them a core costs hours and still ends in a guess.
 * **Rule:** a `Callable` held across a thread boundary is only as valid as the script behind it,

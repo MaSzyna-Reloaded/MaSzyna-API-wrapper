@@ -43,9 +43,13 @@ static var _saving_subscenes_mutex:Mutex = Mutex.new()
 ## inside one when the scripts are freed jumps into code that is gone (see FINDINGS.md,
 ## 2026-09-24). Waiting here is safe, because here the scripts are still alive.
 static func cancel_loading() -> void:
+    # the parse has to stop between tokens, or joining its worker means waiting out a whole file
+    MaszynaParser.set_cancelled(true)
     for queue:SceneryLoadingTaskQueue in _active_queues.duplicate():
         queue.drain()
     _active_queues.clear()
+    # the workers are joined, so nothing is parsing and the next scenery may start clean
+    MaszynaParser.set_cancelled(false)
 
 
 ## Wired into the "Clear caches" button (user_settings_dock.gd) alongside
@@ -517,6 +521,10 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
 ## occurrence counts, files are scanned once - counts caches the per-file totals). Parameterised
 ## include paths that don't resolve to a file count as one include without children.
 func _count_includes(filename:String, counts:Dictionary) -> int:
+    # the prescan runs on the same worker as the parse and reads every included file, so it stops
+    # on the same signal - otherwise a teardown joining that worker waits the whole scan out
+    if MaszynaParser.is_cancelled():
+        return 0
     if counts.has(filename):
         return counts[filename]
     counts[filename] = 0
@@ -525,6 +533,8 @@ func _count_includes(filename:String, counts:Dictionary) -> int:
         return 0
     var total:int = 0
     for line:String in FileAccess.get_file_as_bytes(path).get_string_from_ascii().split("\n"):
+        if MaszynaParser.is_cancelled():
+            return 0
         var code:String = line.get_slice("//", 0)
         if not code.containsn("include"):
             continue

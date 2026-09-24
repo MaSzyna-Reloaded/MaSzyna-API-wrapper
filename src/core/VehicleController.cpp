@@ -106,6 +106,7 @@ namespace godot {
                 D_METHOD("couple", "other", "end", "other_end", "coupling_type"), &VehicleController::couple);
         ClassDB::bind_method(D_METHOD("uncouple", "end"), &VehicleController::uncouple);
         ClassDB::bind_method(D_METHOD("is_coupled", "end"), &VehicleController::is_coupled);
+        ClassDB::bind_method(D_METHOD("is_coupled_by", "end", "element"), &VehicleController::is_coupled_by);
         ClassDB::bind_method(D_METHOD("get_coupled_controller", "end"), &VehicleController::get_coupled_controller);
         ClassDB::bind_method(D_METHOD("get_coupled_end", "end"), &VehicleController::get_coupled_end);
         ClassDB::bind_method(D_METHOD("coupler_connect", "where"), &VehicleController::coupler_connect);
@@ -199,7 +200,8 @@ namespace godot {
                            {"MainHose", COUPLING_ELEMENT_MAINHOSE},
                            {"Control", COUPLING_ELEMENT_CONTROL},
                            {"Gangway", COUPLING_ELEMENT_GANGWAY},
-                           {"Heating", COUPLING_ELEMENT_HEATING}});
+                           {"Heating", COUPLING_ELEMENT_HEATING},
+                           {"Permanent", COUPLING_ELEMENT_PERMANENT}});
         ADD_SIGNAL(MethodInfo(
                 coupler_attached_signal,
                 PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
@@ -232,6 +234,7 @@ namespace godot {
         BIND_ENUM_CONSTANT(COUPLING_ELEMENT_CONTROL);
         BIND_ENUM_CONSTANT(COUPLING_ELEMENT_GANGWAY);
         BIND_ENUM_CONSTANT(COUPLING_ELEMENT_HEATING);
+        BIND_ENUM_CONSTANT(COUPLING_ELEMENT_PERMANENT);
         BIND_ENUM_CONSTANT(CATEGORY_TRAIN);
         BIND_ENUM_CONSTANT(CATEGORY_ROAD);
         BIND_ENUM_CONSTANT(CATEGORY_SHIP);

@@ -41,6 +41,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
 
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
@@ -194,6 +196,37 @@ namespace godot {
     RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {
         const RID *found = vehicles_by_name.getptr(p_name);
         return found != nullptr ? *found : RID();
+    }
+
+    TypedArray<RID> RailVehicleServer::vehicle_get_coupled(
+            const RID &p_vehicle, const int p_end, const VehicleController::CouplingElement p_element) const {
+        TypedArray<RID> result;
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        VehicleController *first = placement != nullptr ? _get_controller(*placement) : nullptr;
+        if (first == nullptr) {
+            return result;
+        }
+        // out through p_end to the last vehicle; entering a neighbour by one end, the walk leaves it
+        // by the other, whichever way round it stands
+        int end = p_end;
+        while (first->is_coupled_by(end, p_element)) {
+            const int entered = first->get_coupled_end(end);
+            first = first->get_coupled_controller(end);
+            end = 1 - entered;
+        }
+        // and back, from that end, through every vehicle joined the same way
+        VehicleController *vehicle = first;
+        end = 1 - end;
+        while (vehicle != nullptr) {
+            result.push_back(vehicle->get_rid());
+            if (!vehicle->is_coupled_by(end, p_element)) {
+                break;
+            }
+            const int entered = vehicle->get_coupled_end(end);
+            vehicle = vehicle->get_coupled_controller(end);
+            end = 1 - entered;
+        }
+        return result;
     }
 
     void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {

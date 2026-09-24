@@ -167,6 +167,8 @@ IF (DOC_XML)
 ENDIF ()
 
 TARGET_LINK_LIBRARIES(${LIBNAME} godot-cpp)
+# PythonScreenServer loads CPython at run time (dlopen)
+TARGET_LINK_LIBRARIES(${LIBNAME} ${CMAKE_DL_LIBS})
 
 # Every build stamps demo/build_number.txt with the time it was made, so the number shown in the
 # app identifies the library that is actually loaded rather than whatever the checkout says.

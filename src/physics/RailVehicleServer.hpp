@@ -1,5 +1,6 @@
 #pragma once
 #include "../core/VehicleComponentType.hpp"
+#include "../core/VehicleController.hpp"
 
 #include "../tracks/TrackManager.hpp"
 
@@ -164,6 +165,11 @@ namespace godot {
             void vehicle_set_name(const RID &p_vehicle, const String &p_name);
             String vehicle_get_name(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
+            /* The vehicles joined to this one by p_element, in order: from the last of them beyond
+             * p_end back through this one to the last on the other side (TDynamicObject::
+             * GetFirstDynamic() + Next(), DynObj.cpp:501) */
+            TypedArray<RID> vehicle_get_coupled(
+                    const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;

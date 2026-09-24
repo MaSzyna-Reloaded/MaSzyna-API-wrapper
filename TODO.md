@@ -125,6 +125,16 @@ serialises without a line of per-component code.
   (the original keeps them in `TAnimPant::vPos`) and have to reach the vehicle for this to move.
   The same question applies, more weakly, to `_update_wipers()` and `_update_smoke()` - those
   consume state to drive submodels, which is drawing, but the wiper *positions* are simulation.
+* **The vehicle's name belongs to the vehicle server, not to a system beside it.** `TrackManager`
+  already has the shape: `track_get_rid_by_name()`. The vehicle server should have
+  `vehicle_set_name()` / `vehicle_get_rid_by_name()`, and then `TrainSystem` shrinks to what it
+  actually is - the registry that lets a scenery, an event, the console and the radio name a
+  vehicle they only know by name. Everything that *has* the vehicle stops going through a name at
+  all: the HUD already does (it takes the vehicle from the player's own announcement), and
+  `CabinSystem` is next - its whole vehicle-facing surface (`vehicle_state`, `vehicle_config`,
+  `vehicle_component`, `vehicle_state_value`, `occupied_cab`) is keyed on `train_id` today, which
+  addresses a handle by a name that may be empty or repeated. Flip that surface to the RID in one
+  pass rather than half of it, which is stage I's own subject.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,

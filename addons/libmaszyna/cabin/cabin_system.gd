@@ -111,6 +111,14 @@ func vehicle_state(train_id:String) -> Dictionary:
     return _vehicle_states[rid]
 
 
+## One named value of the vehicle's state. This is what a cabin element wants: it is driven by a
+## property name out of the MMD and reads exactly one of them, so handing it the whole dump only
+## gives it something to hold wrongly. The dump behind this is still built once a frame, so asking
+## for six values costs one.
+func vehicle_state_value(train_id:String, key:String, default_value:Variant = null) -> Variant:
+    return vehicle_state(train_id).get(key, default_value)
+
+
 func vehicle_config(train_id:String) -> Dictionary:
     var rid:RID = vehicle_rid(train_id)
     return RailVehicleServer.vehicle_dump_config(rid) if rid.is_valid() else {}

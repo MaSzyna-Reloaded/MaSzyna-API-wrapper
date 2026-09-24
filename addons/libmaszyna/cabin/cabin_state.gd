@@ -48,5 +48,10 @@ func vehicle_state() -> Dictionary:
     return CabinSystem.vehicle_state(train_id)
 
 
+## One named value of it - what a control driven by an MMD property name actually reads.
+func vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
+    return CabinSystem.vehicle_state_value(train_id, key, default_value)
+
+
 func send_vehicle_command(command:String, p1:Variant = null, p2:Variant = null) -> Variant:
     return TrainSystem.send_command(train_id, command, p1, p2)

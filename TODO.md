@@ -88,6 +88,20 @@ serialises without a line of per-component code.
   `dynamic_rail_vehicle_3d_manager.gd` packs model + FIZ controller + cabin + sound bank into a
   `PackedScene` today and instantiates copies of it. The cache holds a vehicle configuration, not
   a node tree. Bump `structure-vN` and `FIZ_PARSER_FORMAT_VERSION` in that same commit.
+  * **The node's public API is the `.scn` `dynamic` line and nothing else.** `data_path` +
+    `file_name` + `skin` locate the data, and the `.fiz`/`.mmd`/`.e3d` behind them say what the
+    vehicle *is* - measured for the cabs: `cab1model`/`cab2model`, `cabXdefinition` and
+    `jointcabs` are all MMD, so no cabin, sound, pantograph or light property belongs on the node.
+    What stays exported is what says which *instance* this is and where it stands:
+    `train_id`, `initial_velocity`, the occupant, `start_track_name`, `start_track_offset`,
+    `start_direction`, and `head_display_material` as the project's own asset slot.
+  * `cabin_number:int` (1 / -1 / 0) is neither a number nor a cab: it is **who occupies the
+    vehicle**, and the data has the vocabulary - `headdriver`, `reardriver`, `nobody`
+    (`DynObj.cpp:1812-1825`). It becomes an enum, which is what `CODE_STYLE.md` asks for.
+  * `loadcount`/`loadtype` and the trailing `destination` of the `dynamic` line are parsed and
+    thrown away (`maszyna_node_dynamic_importer.gd`, "not used yet") - see `## Vehicles`.
+  * `_process` runs in every vehicle of the scenery forever to look at two dirty flags. The
+    `_dirty`/`_process` pattern stays; the setter turns processing on and the tick turns it off.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,
@@ -191,6 +205,15 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 * `CabinSwitch` has no `mesh_rotation_offset`/`mesh_position_offset`, so the MMD offset of a
   switch is dropped (`MMD_ANIMATION_UNSUPPORTED`), e.g. SM42 `dirkey: kier rot -0.09 0.01`. The
   original renders `value * scale + offset` (`Gauge.cpp:456`); `CabinButton` already does.
+* Intermittent, not reproduced (2026-09-24): after the first entry into a cab, the releaser
+  (num4, `releaser_bt`) and the drive shortcut (num6, `brake_level_drive`) sometimes do nothing
+  until the brake handle is moved once (num3/num9). A headless probe entering every cab of
+  `td.scn` in turn with real key events (EP07-424, 111aw, two bdhpumn) worked every time: handle
+  -2 -> 0, releaser active, both controls registered in `CabinSystem`. The one difference found:
+  the handle (`CabinKnob`) polls `Input` every frame, while `CabinButton`/`CabinCommand` react
+  only to events in `_input` - so suspect the event not reaching the cab, or reaching it with the
+  wrong `occupied_cab()`. Next time it happens, check the log for
+  `Unknown cabin control: ... (cab N)` - present means a wrong cab, absent means a lost event.
 
 ## Sounds
 
@@ -218,6 +241,11 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ## Vehicles
 
+* **A vehicle's load is not implemented at all.** The `.scn` `dynamic` line carries `loadcount`
+  and, when it is not zero, `loadtype`; `maszyna_node_dynamic_importer.gd` reads both and drops
+  them (`var _load_type`). The Mover has the concept, so the load has to reach it - and the load
+  also has a visual side (`loads:` in the MMD, which is where the passenger model comes from).
+  The trailing `destination` of the same line is dropped the same way.
 * `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
   `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
   after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The

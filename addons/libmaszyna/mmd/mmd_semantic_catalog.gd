@@ -993,6 +993,14 @@ static func _ensure_built() -> void:
             "mesh_path_field": "",
             "position_at_submodel": true,
         },
+        # Train.cpp:9196 - lit while the spring is not braking
+        "i-springbrakeinactive": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "spring_brake/braking", "invert_value": true },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
         "i-mainbreaker": {
             "widget_class": CabinIndicator3D,
             "fixed_fields": { "state_property": "indicators/mainbreaker_active" },

@@ -92,6 +92,16 @@ func test_i_radio_indicator_and_powered_omnilight_are_separate():
     assert_eq(entry["light_fixed_fields"]["omni_range"], 0.1)
 
 
+func test_spring_brake_indicators_show_the_spring_braking_and_its_inverse():
+    var active:Dictionary = MmdSemanticCatalog.get_entry("i-springbrakeactive")
+    var inactive:Dictionary = MmdSemanticCatalog.get_entry("i-springbrakeinactive")
+    assert_eq(active["fixed_fields"]["state_property"], "spring_brake/braking")
+    assert_false(active["fixed_fields"].get("invert_value", false))
+    assert_eq(inactive["widget_class"], CabinIndicator3D)
+    assert_eq(inactive["fixed_fields"]["state_property"], "spring_brake/braking")
+    assert_true(inactive["fixed_fields"]["invert_value"])
+
+
 func test_cab_light_indicator_and_spotlight_are_separate():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("i-cablight")
     assert_eq(entry["widget_class"], CabinIndicator3D)

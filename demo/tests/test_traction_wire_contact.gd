@@ -64,6 +64,35 @@ func test_a_pantograph_crossing_a_span_junction_keeps_contact() -> void:
     assert_eq(held, second, "and the pantograph should end up on the second span")
 
 
+## The spans a scenery leaves a hand's width apart are not one wire. The original joins two ends
+## only within 0.025 m on every axis (Traction.cpp:355); joining what is further apart sends the
+## pantograph along a chain into a span the author never connected. In zwierzyniec_tlk a 0.25 m
+## tolerance saw three candidate neighbours at 25 span ends where the original sees one.
+func test_spans_are_joined_at_the_distance_the_original_joins_them() -> void:
+    var joined_gap:float = 0.02
+    var first:RID = _add_wire(
+            Vector3(0.0, WIRE_HEIGHT, 0.0), Vector3(0.0, WIRE_HEIGHT, SPAN_LENGTH))
+    var second:RID = _add_wire(
+            Vector3(0.0, WIRE_HEIGHT, SPAN_LENGTH + joined_gap),
+            Vector3(0.0, WIRE_HEIGHT, 2.0 * SPAN_LENGTH))
+    TractionPowerServer.network_build()
+    var followed:Dictionary = TractionPowerServer.wire_follow_above(
+            first, Vector3(0.0, 0.0, SPAN_LENGTH + 5.0), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
+    assert_eq(followed["rid"], second, "ends within the original's tolerance are one wire")
+
+    after_each()
+    var apart_gap:float = 0.1
+    var third:RID = _add_wire(
+            Vector3(0.0, WIRE_HEIGHT, 0.0), Vector3(0.0, WIRE_HEIGHT, SPAN_LENGTH))
+    _add_wire(
+            Vector3(0.0, WIRE_HEIGHT, SPAN_LENGTH + apart_gap),
+            Vector3(0.0, WIRE_HEIGHT, 2.0 * SPAN_LENGTH))
+    TractionPowerServer.network_build()
+    followed = TractionPowerServer.wire_follow_above(
+            third, Vector3(0.0, 0.0, SPAN_LENGTH + 5.0), UP, FORWARD, LEFT, SLIDER_HALF_WIDTH, HORN_WIDTH)
+    assert_false(RID(followed["rid"]).is_valid(), "ends further apart are two wires, and the chain ends")
+
+
 ## What following the chain buys over searching the area every frame: the pantograph stays on the
 ## wire it is under. The original only looks around once its own span stops being usable
 ## (DynObj.cpp:8796), so a lower wire crossing overhead - which over a switch is the diverging

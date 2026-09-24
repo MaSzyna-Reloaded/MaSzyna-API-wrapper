@@ -35,7 +35,17 @@ namespace godot {
             /* Original engine: Traction.cpp's own "close enough to be one continuous wire"
              * distance, used both for the connectivity graph and for the tolerance at a span's
              * ends in the contact test. */
-            static constexpr double ENDPOINT_EPSILON = 0.25;
+            /* Two span ends are the same point. The original's own value, compared per axis
+             * (TTraction::TestPoint(), Traction.cpp:355) - a rounder, safer-looking number joins
+             * spans the scenery deliberately placed apart, and since the pantograph now follows
+             * the chain, a wrong join sends it onto the wrong wire (see `FINDINGS.md`,
+             * 2026-09-20, where the same mistake on track endpoints merged every double slip). */
+            static constexpr double WIRE_JOIN_EPSILON = 0.025;
+            /* How far past a span's own end the pantograph still counts as on it. An absolute
+             * tolerance rather than a fraction of the span: hand-authored scenery leaves ends a
+             * few centimetres apart, and a span whose neighbour is beyond WIRE_JOIN_EPSILON has
+             * no chain to follow, so this is what carries the contact across the gap. */
+            static constexpr double SPAN_END_TOLERANCE = 0.25;
             static constexpr double GRID_CELL_SIZE = 500.0;
             static constexpr double QUERY_MARGIN = 10.0;
             /* How far a wire may sit outside the collector's own half width and still be caught,

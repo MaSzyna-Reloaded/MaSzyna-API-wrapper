@@ -266,8 +266,8 @@ namespace godot {
         for (int index = 0; index < endpoints.size(); ++index) {
             const Vector3 &position = endpoints[index].position;
             const Vector2i cell(
-                    static_cast<int32_t>(Math::floor(position.x / ENDPOINT_EPSILON)),
-                    static_cast<int32_t>(Math::floor(position.z / ENDPOINT_EPSILON)));
+                    static_cast<int32_t>(Math::floor(position.x / WIRE_JOIN_EPSILON)),
+                    static_cast<int32_t>(Math::floor(position.z / WIRE_JOIN_EPSILON)));
             cells[cell].push_back(index);
         }
 
@@ -278,10 +278,10 @@ namespace godot {
                 continue;
             }
             const Vector2i cell(
-                    static_cast<int32_t>(Math::floor(ep1.position.x / ENDPOINT_EPSILON)),
-                    static_cast<int32_t>(Math::floor(ep1.position.z / ENDPOINT_EPSILON)));
+                    static_cast<int32_t>(Math::floor(ep1.position.x / WIRE_JOIN_EPSILON)),
+                    static_cast<int32_t>(Math::floor(ep1.position.z / WIRE_JOIN_EPSILON)));
             int best_index = -1;
-            double best_distance = ENDPOINT_EPSILON;
+            double best_distance = INFINITY;
             for (int dx = -1; dx <= 1; ++dx) {
                 for (int dz = -1; dz <= 1; ++dz) {
                     const Vector<int> *bucket = cells.getptr(cell + Vector2i(dx, dz));
@@ -296,8 +296,16 @@ namespace godot {
                         if (wire2 == nullptr || wire2->next[endpoints[j].endpoint_index].is_valid()) {
                             continue;
                         }
-                        const double distance = ep1.position.distance_to(endpoints[j].position);
-                        if (distance <= best_distance) {
+                        /* Per axis, like the original's epsilonEqual (Traction.cpp:355) - a
+                         * euclidean radius accepts a pair that is off by the tolerance on every
+                         * axis at once, which is not the same point. */
+                        const Vector3 offset = ep1.position - endpoints[j].position;
+                        if (Math::abs(offset.x) > WIRE_JOIN_EPSILON || Math::abs(offset.y) > WIRE_JOIN_EPSILON
+                            || Math::abs(offset.z) > WIRE_JOIN_EPSILON) {
+                            continue;
+                        }
+                        const double distance = offset.length();
+                        if (distance < best_distance) {
                             best_distance = distance;
                             best_index = j;
                         }
@@ -433,7 +441,7 @@ namespace godot {
             /* Which end the pantograph ran off decides which neighbour it ran onto - the two
              * ends of a span are hvNext[0] and hvNext[1] of the original's own list. */
             const double t = -(wire->p1.dot(p_forward) - p_position.dot(p_forward)) / front_dot;
-            const double t_tolerance = ENDPOINT_EPSILON / Math::abs(front_dot);
+            const double t_tolerance = SPAN_END_TOLERANCE / Math::abs(front_dot);
             if (t < -t_tolerance) {
                 wire_rid = wire->next[0];
                 continue;
@@ -466,13 +474,9 @@ namespace godot {
             return INFINITY;
         }
         const double t = -(p_wire.p1.dot(p_forward) - p_position.dot(p_forward)) / front_dot;
-        /* An absolute tolerance at each span's own ends, not a fraction of its length: a fraction
-         * shrinks to a couple of centimetres of real overlap on a typical 20 m span, tighter than
-         * the gap hand-authored scenery regularly leaves between adjacent pieces. Confirmed live -
-         * a test caught EP07-424 crossing td.scn losing pantograph voltage for a frame at one
-         * fixed point, which the Mover's NoVoltRelay then correctly read as a real loss of
-         * contact. ENDPOINT_EPSILON is this file's own "close enough to be one wire" distance. */
-        const double t_tolerance = ENDPOINT_EPSILON / Math::abs(front_dot);
+        // Confirmed live: a test caught EP07-424 crossing td.scn losing pantograph voltage for a
+        // frame at one fixed point, which the Mover's NoVoltRelay read as a real loss of contact.
+        const double t_tolerance = SPAN_END_TOLERANCE / Math::abs(front_dot);
         if (t < -t_tolerance || t > 1.0 + t_tolerance) {
             return INFINITY;
         }

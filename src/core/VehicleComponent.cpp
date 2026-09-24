@@ -178,6 +178,10 @@ namespace godot {
         _fill_config_dictionary(result);
         return result;
     }
+    bool VehicleComponent::is_simulation_ready() const {
+        return train_controller_node != nullptr && train_controller_node->is_simulation_ready();
+    }
+
     void VehicleComponent::_apply_configuration() {};
 
     /* Writing the component's configuration into the backend and saying so. A component that is

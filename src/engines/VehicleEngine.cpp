@@ -1,5 +1,4 @@
 #include "VehicleEngine.hpp"
-#include "../mover/MoverBackend.hpp"
 #include "macros.hpp"
 
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -229,8 +228,7 @@ namespace godot {
     }
 
     void VehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["main_switch_enabled"] = get_main_switch_enabled();
@@ -252,11 +250,7 @@ namespace godot {
     }
 
     bool VehicleEngine::main_switch(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
-            return false;
-        }
-        return mover->MainSwitch(p_enabled);
+        return engine_backend != nullptr ? engine_backend->main_switch(this, p_enabled) : false;
     }
 
     void VehicleEngine::_register_commands() {

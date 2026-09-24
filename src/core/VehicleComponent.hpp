@@ -40,6 +40,10 @@ namespace godot {
             virtual void _register_commands();
             virtual void _unregister_commands();
 
+            /* Whether the vehicle this component belongs to is simulated yet - a dump of a
+             * component whose vehicle is not publishes nothing, rather than zeroes. */
+            bool is_simulation_ready() const;
+
         public:
 
             /* Which kind this component is. Every interface answers for itself; an

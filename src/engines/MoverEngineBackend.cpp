@@ -172,6 +172,11 @@ namespace godot {
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
     }
 
+    bool MoverEngineBackend::main_switch(const VehicleEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+        return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
+    }
+
     void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
         TMoverParameters *p_mover = mover_of(p_engine);
         const VehicleController *controller = p_engine->get_controller();

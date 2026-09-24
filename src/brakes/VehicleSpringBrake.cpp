@@ -14,30 +14,41 @@ namespace godot {
         BIND_PROPERTY(VehicleSpringBrake, Variant::FLOAT, valve_cross_section_pneumatic_brake, "valve_cross_section")
         BIND_PROPERTY(VehicleSpringBrake, Variant::INT, required_coupler_connection_method)
 
-        ClassDB::bind_method(D_METHOD("set_spring_brake_active", "active"), &VehicleSpringBrake::set_spring_brake_active);
+        ClassDB::bind_method(
+                D_METHOD("set_spring_brake_active", "active"), &VehicleSpringBrake::set_spring_brake_active);
         ClassDB::bind_method(
                 D_METHOD("set_spring_brake_enabled", "enabled"), &VehicleSpringBrake::set_spring_brake_enabled);
         ClassDB::bind_method(D_METHOD("spring_brake_release"), &VehicleSpringBrake::spring_brake_release);
 
         ClassDB::bind_method(D_METHOD("get_ready"), &VehicleSpringBrake::get_ready);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "ready", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "ready", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_ready");
         ClassDB::bind_method(D_METHOD("get_shut_off"), &VehicleSpringBrake::get_shut_off);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "shut_off", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "shut_off", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_shut_off");
         ClassDB::bind_method(D_METHOD("get_active"), &VehicleSpringBrake::get_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_braking"), &VehicleSpringBrake::get_braking);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "braking", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_braking");
         ClassDB::bind_method(D_METHOD("get_cylinder_pressure"), &VehicleSpringBrake::get_cylinder_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "cylinder_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "cylinder_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_cylinder_pressure");
     }
 

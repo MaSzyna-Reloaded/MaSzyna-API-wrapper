@@ -8,7 +8,7 @@ func before_each():
     # LastSwitchingTime passes 5 s (Mover.cpp:4485) - the engine runs and the vehicle never moves.
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
     physics_node.train_id = "TestTrain"
-    physics_node.cabin_number = 1
+    physics_node.driver_type = VehicleController.DRIVER_HEAD
     physics_node.set_model(load("res://tests/fixtures/sm42_vehicle.tres"))
     add_child_autofree(physics_node)
     train = physics_node.get_controller()

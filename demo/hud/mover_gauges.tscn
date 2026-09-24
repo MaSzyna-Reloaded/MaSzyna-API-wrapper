@@ -106,3 +106,9 @@ label = "Spring brake enabled"
 layout_mode = 2
 color_active = Color(0, 0.679688, 0.090271, 1)
 label = "Spring brake active"
+
+[node name="SpringBrakeBraking" parent="VBoxContainer/HBoxContainer3" unique_id=1421657373 instance=ExtResource("2_rwq8g")]
+unique_name_in_owner = true
+layout_mode = 2
+color_active = Color(0, 0.679688, 0.090271, 1)
+label = "Spring brake braking"

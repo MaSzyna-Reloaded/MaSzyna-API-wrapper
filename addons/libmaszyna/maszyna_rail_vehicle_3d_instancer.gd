@@ -85,7 +85,8 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> V
         structure.low_poly_model_filename = MmdCabinInstancer.resolve_model_case(
                 normalized_data_path, lowpoly_filename)
 
-    var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
+    structure.load_models = MmdCabinInstancer.parse_loads(abs_mmd_path)
+    var passengers_filename:String = structure.load_models.get("passengers", "")
     if passengers_filename:
         structure.passengers_model_filename = MmdCabinInstancer.resolve_model_case(
                 normalized_data_path, passengers_filename)
@@ -101,7 +102,8 @@ static func read_structure(data_path:String, file_name:String, skin:String) -> V
 ## own nodes instead of a copy of a packed tree.
 static func build_from_structure(
         structure:VehicleStructure, train_id:String, initial_velocity:float,
-        cabin_number:int = 0) -> RailVehicle3D:
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY,
+        load_name:String = "", load_amount:float = 0.0) -> RailVehicle3D:
     var model:E3DModelInstance = _build_model(
             structure.data_path, "ExteriorModel", structure.body_model_filename, structure.skins)
 
@@ -111,6 +113,13 @@ static func build_from_structure(
             _build_model(structure.data_path, "LowPolyInterior", structure.low_poly_model_filename,
                     structure.skins)
             if structure.low_poly_model_filename else null)
+
+    var load_model:E3DModelInstance = null
+    var load_model_filename:String = _load_model_filename(structure, load_name)
+    if load_model_filename:
+        # the original draws the load at the floor of the vehicle (DynObj.cpp:866)
+        load_model = _build_model(structure.data_path, "Load", load_model_filename, PackedStringArray())
+        load_model.instancer = E3DModelInstance.Instancer.OPTIMIZED
 
     var passengers_model:E3DModelInstance = null
     if structure.passengers_model_filename:
@@ -132,7 +141,9 @@ static func build_from_structure(
     fiz_controller.fiz_filename = structure.file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
-    fiz_controller.cabin_number = cabin_number
+    fiz_controller.driver_type = driver_type
+    fiz_controller.load_name = load_name
+    fiz_controller.load_amount = load_amount
 
     var rain_volume := RainVolume.new()
     rain_volume.name = RAIN_VOLUME_NAME
@@ -146,6 +157,9 @@ static func build_from_structure(
     if low_poly_model:
         vehicle.add_child(low_poly_model, false, Node.INTERNAL_MODE_BACK)
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
+    if load_model:
+        vehicle.add_child(load_model, false, Node.INTERNAL_MODE_BACK)
+        vehicle.load_model_path = vehicle.get_path_to(load_model)
     if passengers_model:
         vehicle.add_child(passengers_model, false, Node.INTERNAL_MODE_BACK)
     var auto_rewident := AutoRewidentNode.new()
@@ -181,6 +195,32 @@ static func _build_model(
     model.rotation.y = PI
     return model
 
+
+
+## Which model a cargo is drawn as, in the order the original tries them
+## (TDynamicObject::LoadMMediaFile_mdload(), DynObj.cpp:7195): the vehicle's own override for that
+## cargo, then a model named for this vehicle and the cargo together, then one named after the
+## cargo alone. Empty when the cargo has no model anywhere, which is not an error - plenty of
+## loads are only mass.
+static func _load_model_filename(structure:VehicleStructure, load_name:String) -> String:
+    if not load_name:
+        return ""
+    var override:String = structure.load_models.get(load_name.to_lower(), "")
+    if override:
+        return MmdCabinInstancer.resolve_model_case(structure.data_path, override)
+    var specialized:String = MmdCabinInstancer.resolve_model_case(
+            structure.data_path, "%s_%s" % [structure.file_name, load_name])
+    if _model_exists(structure.data_path, specialized):
+        return specialized
+    var generic:String = MmdCabinInstancer.resolve_model_case(structure.data_path, load_name)
+    return generic if _model_exists(structure.data_path, generic) else ""
+
+
+static func _model_exists(data_path:String, relpath:String) -> bool:
+    if not relpath:
+        return false
+    return FileAccess.file_exists(
+            UserSettings.get_maszyna_game_dir().path_join(data_path).path_join(relpath + ".e3d"))
 
 ## What every vehicle gets for itself rather than from the cache: its sound pools, and the
 ## animation bindings, which are paths into the E3D submodel tree this very vehicle builds.

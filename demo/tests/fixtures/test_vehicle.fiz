@@ -9,3 +9,9 @@ Cntrl.BrakeSystem=Pneumatic BCPN=6 BDelay1=15 BDelay2=3 BDelay3=36 BDelay4=22 Br
 3 3.5 3.8 0.0 P
 Doors:OpenCtrl=Passenger CloseCtrl=Passenger DoorStayOpen=3.0 OpenSpeed=1.0 CloseSpeed=1.0 DoorMaxShiftR=3.0 DoorOpenMethod=Rotate DoorVoltage=24
 BuffCoupl.CType=Screw kC=2.5 DmaxC=0.11 FmaxC=1000 kB=1.2 DmaxB=0.08 FmaxB=1500 beta=0.3 AllowedFlag=63
+WiperList: Size=4 Angle=70
+    0    0.8    0.0    0.5
+    3    0.8    5.0    0.5
+	3    0.8    0.5    0.0
+	3    0.6    0.5    0.0
+endL

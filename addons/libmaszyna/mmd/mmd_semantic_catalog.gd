@@ -403,7 +403,20 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Spring brake buttons (drivermouseinput.cpp:612-617 -> springbrakeenable/disable).
+        # Spring brake buttons (drivermouseinput.cpp:642-649 -> springbraketoggle/enable/disable).
+        # The toggle flips SpringBrake.Activate (Train.cpp:6780); its key is the game's
+        # eu07_input-keyboard.ini binding, the original has no default one.
+        "springbraketoggle_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "set_spring_brake_active",
+                "state_property": "spring_brake/active",
+                "action": "spring_brake_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "springbrakeon_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -550,6 +563,29 @@ static func _ensure_built() -> void:
             "widget_class": CabinGauge,
             "fixed_fields": {
                 "state_property": "brake_air_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
+        # Train.cpp:12185 - brakepressb: is the same brake cylinder gauge as brakepress:
+        "brakepressb": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "brake_air_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
+        # Train.cpp:12207 - limpipepress: the control reservoir of the driver's brake valve
+        # (m_brakehandlecp = Handle->GetCP(), Train.cpp:8908)
+        "limpipepress": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "brake_handle_control_pressure",
                 "max_value": 1.0,
             },
             "config_max_property": "",
@@ -974,7 +1010,16 @@ static func _ensure_built() -> void:
         },
         "i-springbrakeactive": {
             "widget_class": CabinIndicator3D,
-            "fixed_fields": { "state_property": "spring_brake/active" },
+            # Train.cpp:9195 - lit by SpringBrake.IsActive, the spring braking, not by the switch
+            "fixed_fields": { "state_property": "spring_brake/braking" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Train.cpp:9196 - lit while the spring is not braking
+        "i-springbrakeinactive": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "spring_brake/braking", "invert_value": true },
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,

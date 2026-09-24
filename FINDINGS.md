@@ -3,6 +3,112 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - the E186 line breaker dropped at 17 km/h: the wire was a hundred times too resistive
+## 2026-09-24 - every brake handle froze under 1 bar of difference, because of C's abs()
+
+* **Symptom:** the E186 brake pipe stopped at 4.0 bar in the running position and never reached
+  5; the pipe lock (`LPOn=3.0 LPOff=4.5`) therefore never released and the loco had no power.
+* **What proved it:** a temporary print of the Mover's handle fields showed everything right
+  (position 0, no lock, PN mode, cab occupied, `MHZ_6P`) and the control reservoir still frozen.
+  The formula is `CP += 9 * min(abs(LimCP - CP), 0.05) * PR(...) * dt`; a scratch program built
+  with `hamulce.cpp`'s own includes printed `abs(0.89) = 0.000000` and a `-Wfloat-conversion`
+  warning - the unqualified `abs` is C's `int abs(int)`.
+* **Cause:** the original compiles every file with its `stdafx.h`, which includes `<stdlib.h>`;
+  libstdc++'s `<stdlib.h>` puts `std::abs` overloads in the global namespace. The vendored files
+  have no `stdafx.h`, so the integer one won and any difference below 1 bar truncated to 0. It
+  hits the control reservoir of `MHZ_EN57`, `MHZ_K5P`, `MHZ_6P`, `M394` and `St113`, and the EP
+  valve step of `TEStEP1` (`hamulce.cpp`, 11 calls). `FV4a` does not use it.
+* **Fix:** CMake force-includes `stdlib.h` into `src/maszyna/*.cpp` (non-MSVC), which is what the
+  original's precompiled header does; the vendored files stay untouched.
+* **Rule:** the vendored engine was written against its own precompiled header. A name that
+  resolves differently without it compiles silently - vendored files build with warnings off -
+  so check overload-sensitive calls (`abs`, `min`, `max`) when something numeric just stops.
+
+## 2026-09-24 - an induction motor never pulled: nobody turned the controller into power
+
+* **Symptom:** E186 with brakes released, direction set and the controller on T+: `Ft = 0`.
+* **Cause:** the integrated controller's setpoint (`CheckEIMIC`, `CheckSpeedCtrl`, `eimic_real`)
+  is computed by the vehicle layer - `TDynamicObject::Update`, DynObj.cpp:3246-3283 - which the
+  wrapper does not vendor. `TractionForce` reads `eimic_real`, which stayed 0.
+* **Fix:** `VehicleEngine::_do_process_component` does it for a vehicle with a driver. The
+  train-wide ED/PN brake force split that follows it in DynObj.cpp is not ported (TODO.md).
+* **Rule:** a Mover method that nothing in `Mover.cpp` calls is called from DynObj.cpp or
+  Train.cpp - grep the original for its callers before assuming the backend drives itself.
+
+## 2026-09-24 - every force of the E186 turned NaN once a direction was set
+
+* **Symptom:** `get` showed `velocity`, `Ft`, `brake_unit_force` and the wheel angles as `nan`
+  as soon as the reverser left neutral with the line breaker closed; the breaker then dropped.
+* **What proved it:** a headless probe on `p160dc.fiz` printing the forces every half second -
+  `Ft`, `Mm`, `Im` went `nan` in the first step after `direction_increase`.
+* **Cause:** the EIM traction step divides by `InvertersNo` (`InvertersRatio`, Mover.cpp:5627).
+  `LoadFIZ_Engine` gives a powered EIM without `InvNo` one inverter and sizes `Inverters`
+  (Mover.cpp:11302); the wrapper did neither, so 0/0. The same block also defaulted `fcfuH` to
+  `fcfu` (Mover.cpp:11290) and read `Volt`, `abed`, `edep`, `eimclf`, `InvCtrCplFlag`, `Flat` -
+  none of which reached the Mover; all are ported now.
+* **Rule:** porting a `LoadFIZ_*` block means porting what it does after the `extract_value`
+  lines too - derived counts, container sizes, fallbacks to another key.
+
+## 2026-09-24 - the E186 line breaker opened the moment it closed
+
+* **Symptom:** on `td_e186.scn`, with the pantographs up, the main switch (line breaker) could not
+  be switched on.
+* **What proved it:** a headless probe building `p160dc.fiz` with the cab occupied and 3000 V fed
+  to both pantographs: `main_switch_closable` went true, the `main_switch` command returned true,
+  and three frames later `main_switch_enabled` was false again.
+* **Cause:** an induction motor opens the breaker when the line voltage is above
+  `CollectorParameters.MaxV + 200` (`Mover.cpp:5706`). The original reads FIZ `MaxVoltage` into
+  both `EnginePowerSource.MaxVoltage` and `CollectorParameters.MaxV` (`Mover.cpp:11622`); the
+  wrapper wrote only the first, so `MaxV` stayed 0 and any voltage above 200 V knocked it out.
+  Series motor vehicles (EP07, EU07) never showed it - their relay treats `MaxV` only with
+  `OverVoltProt`, which they do not set.
+* **Trap in the regression test:** the knock-out sits in `TractionForce()`, which the Mover runs
+  only with `Power > 0`, and only for a driven vehicle. The first two versions of the test passed
+  with and without the fix; it was checked against a build with the line commented out before
+  being kept.
+* **Rule:** one FIZ key can feed several Mover fields. Porting a key means grepping every
+  `extract_value(..., "Key", ...)` for it, not the first one found.
+
+## 2026-09-24 - every spring brake started shut off, because the struct defaults were kept
+
+* **Symptom:** on `td_e186.scn` it was unclear whether the spring brake did anything at all, and
+  the debug window's "Enable" button shut it off.
+* **What proved it:** a headless probe building a vehicle with e186's `SpringBrake:` values and
+  printing `spring_brake/*` once a second: `shut_off=true` and `is_ready=false` from the first
+  frame. The cylinder was filled only through the pneumatic bypass (`BP`), never to `MaxSP`,
+  because `UpdateSpringBrake` takes `MSP = ShuttOff ? 0 : MaxSetPressure` (`Mover.cpp:4836`).
+  With the train brake released the spring brakes the vehicle whatever the driver does.
+* **Cause:** the original's `LoadFIZ_SpringBrake` ends with `ShuttOff = false; Activate = false;
+  IsReady = true;` (`Mover.cpp:11028`), and the struct defaults (`ShuttOff{true}`,
+  `IsReady{false}`) describe a vehicle *without* a spring brake. The port copied the parameters
+  and dropped those three lines. Putting them in the `if (!Cylinder)` branch did not help:
+  `CheckLocomotiveParameters()` creates a fallback cylinder (`Mover.cpp:8881`) before any
+  component is configured, so that branch never runs.
+* **Found on the way:** `set_spring_brake_enabled(true)` called `SpringBrakeShutOff(true)`, and
+  the test locked that inverted meaning in; the valve areas were read straight while the original
+  reads FIZ `ValveOnArea` into `ValveOffArea` and vice versa (`Mover.cpp:11025`); and
+  `MTC` defaulted to 0 instead of the original's 127, so a FIZ without it never passed the
+  command along the consist. `i-springbrakeactive` showed the switch (`Activate`) where the
+  original shows the spring braking (`IsActive`, `Train.cpp:9195`).
+* **Rule:** porting a FIZ section means porting the whole loader function, including the state it
+  sets at the end - not only the `extract_value` lines. A struct default is what a vehicle
+  without that section gets.
+
+
+* **Symptom:** the E186 pulled away and the line breaker opened after about 120 m, at 17 km/h.
+* **What proved it:** a per-frame headless probe on `td_e186.scn`: with a steady 250-270 A the
+  pantograph voltage slid 2267 -> 1889 V over one metre of travel and the breaker opened the frame
+  it passed `MinV` (1900 V) - several ohms of line, growing with the distance from the feed.
+* **Cause:** a scenery declares a span's resistivity in Ohm/km (`traction pwr01 3500 4500 0.01`);
+  the original turns it into Ohm/m (`fResistivity *= 0.001`, Traction.cpp:112, with 0.01 read as
+  the default 0.075). `TractionPowerServer` multiplied the raw 0.01 by the length in metres - 10
+  Ohm/km. Only a vehicle drawing real current shows it, and the E186 had never drawn any before
+  the brake and EIM fixes of the same day.
+* **Fix:** `wire_set_params()` takes the scenery's Ohm/km and stores Ohm/m, as the original does.
+  With it the same run reaches 44 km/h at 3547 V.
+* **Rule:** a value copied from a scenery token carries the unit the original's loader gives it
+  right after parsing - read the lines after `>>`, not just the `>>`.
+
 ## 2026-09-24 - switch blades in a scenery never moved, because only a node listened
 
 * **Symptom:** throwing a switch in a loaded scenery changes the route - the train takes the other
@@ -18,6 +124,172 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 * **Rule:** the same shape as the scenery lights (2026-09-21): a feature parked on a node vanishes
   silently the moment an instancer without nodes appears. The server that owns the visuals
   subscribes to the manager's events itself.
+
+## 2026-09-24 - what a "load" turns out to be in this engine
+
+Porting `loadcount`/`loadtype` off a `.scn` `dynamic` line meant reading what the original does
+with them, and almost none of it is what the words suggest. Written down because every one of
+these is invisible from the wrapper's side and each would have been ported wrongly by guessing.
+
+* **A load is not always cargo.** `TMoverParameters::AssignLoad(name, amount)` branches on the
+  name first, and `"pantstate"` is not a cargo at all (`Mover.cpp:7649`): the *amount* is read as a
+  bitmask and it raises pantographs and picks the vehicle's direction. That is how a scenery
+  starts a locomotive with its pantographs already up - written as a load, on a vehicle that
+  carries nothing. So the load has to reach the backend as a name and an amount **together**,
+  through that one call, and not as two tidy properties of a cargo component.
+* **A count with no name behind it is not a load.** The `.scn` gives the count first and the
+  cargo's name only when the count is non-zero, so a line that ends right after the number is
+  valid - and the original zeroes both on the spot, with the comment "idiotoodporność"
+  (`simulationstateserializer.cpp:1031`). Reading the next token unconditionally eats
+  `enddynamic` and desyncs the rest of the node.
+* **Passengers are cargo.** The MMD's `loads:` block maps a cargo name to the model it is drawn
+  as (`logs: loads/eaos_vrz-99_logs`), and `passengers` is simply one of its entries. The wrapper
+  had been reading that one key and throwing the block away, which is why it could draw people
+  but not a container. 235 vehicles of the datapack declare the block.
+* **A cargo with no model is normal, and the lookup has three steps.** The original tries the
+  vehicle's own override for that cargo, then a model named `<vehicle type>_<cargo>`, then one
+  named after the cargo alone, and accepts finding none (`DynObj.cpp:7195`) - plenty of loads are
+  only mass. `dynamic/zssk/lgs_v1` declares no `loads:` block at all and its containers are drawn
+  by the third rule, straight out of the vehicle's own folder.
+* **The load's height is not fixed, and it is not known when the model is built.** `LoadOffset` is
+  lerped from the cargo's own `offset_min` to zero with how full the vehicle is
+  (`DynObj.cpp:3079`), so a half-empty wagon shows its load sunk into the body. Both numbers -
+  that cargo's `offset_min` and the vehicle's `MaxLoad` - are the vehicle's own configuration and
+  do not exist yet when the load model is created, so the height is set when the configuration
+  lands, on the same event the bogie spacing waits for (see 2026-09-23).
+* **Rule:** before porting a field that looks like data, read what the backend does with its
+  *name*. Two of the five surprises here - `pantstate` and the missing-name case - are branches on
+  a string that no amount of reading the wrapper's own side would have revealed.
+
+## 2026-09-24 - a consist ringing like metal, and the original naming the bug in a comment
+
+* **Symptom:** from outside, a moving consist sounds metallic - a ringing colour that no single
+  vehicle has. Reported as "podwójne dźwięki", which is exactly what comb filtering sounds like.
+* **Ruled out first, cheaply:** the built banks. A headless probe walked the `SfxPlayer3D`s of
+  three vehicles and printed every event name per player - EP07 5/3/30, E186 7/4/9, no name twice
+  in a bank and none across two banks of one vehicle. So nothing was registered or played twice,
+  which is where the search would otherwise have gone.
+* **Cause:** every wagon of a consist plays the *same* running-noise recording, and they all start
+  it at the same moment - when their bank is registered. Identical loops a few metres apart comb
+  against each other, and the effect grows with the number of wagons.
+* **The original names it** at the one place it works around it: "potentially adjust starting point
+  of the last buffer (to reduce chance of reverb effect with multiple, looping copies playing)"
+  (`audiorenderer.cpp:99`). Its answer is `m_outernoise.start( Random( 0.0, 80.0 ) * 0.01 )`
+  (`DynObj.cpp:6511`) - a start offset drawn once per vehicle when the model is loaded.
+* **Two details worth keeping:** the offset is a **fraction of the sample**, not a time - the
+  original multiplies it by the buffer size - so a short recording is shifted as much as a long
+  one; and it is drawn **once per vehicle**, not per playback, so a vehicle keeps its own phase.
+* **Fix:** `TrainSoundSystem` draws `randf_range(0.0, 0.8)` per bank runtime and starts a looping
+  running sound at that fraction of its own clip. `gnd-sfx` needed no change at all -
+  `SfxPlayer.play()` already takes an offset, which is worth knowing before extending it.
+* **Not the clatter.** The wheel clatter was already right: `RunningSoundModel._wheel_clatter()`
+  phases each axle by its own position along the vehicle and the rail joint spacing, which is the
+  original's own model (`DynObj.cpp:3671-3730`, each axle's `distance` seeded from `axle.offset`).
+  A one-shot per rail joint does not comb; a shared loop does.
+* **Rule:** when many copies of one sound play at once, the defect is phase, not level. Look for a
+  start offset before touching a gain, and check whether the player already has one.
+
+## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
+
+* **Symptom:** driving an EP08 on `zwierzyniec_tlk`, the line voltage drops a few times per run and
+  trips the main switch. The operator's own words: "w oryginale tak nie było". Later, after two of
+  the four causes were fixed: it still dies **exactly at the exit of one switch, at any speed**.
+* **Measured before anything was read.** Every traction span of the scenery (1335 spans, 2670
+  ends): 2414 ends have exactly one neighbour, 116 are genuine line ends, **126 have three** -
+  four spans meeting over a switch - and exactly **two** ends anywhere have a gap wider than the
+  joining tolerance. So the wiring is not holed; choosing among the spans is the whole problem.
+  A second pass killed the next two hypotheses just as cheaply: all 1387 joined pairs differ in
+  height by **0.000 m**, and every span around the reported spot is dead flat.
+* **Four separate divergences from the original, each enough on its own:**
+  * **No guide horn.** The original accepts a wire up to `fWidthExtra` = 0.381 m outside the
+    slider and counts it as geometrically higher (`scene.cpp:105-112`, `DynObj.cpp:93`). Its
+    comment describes this exact failure: "problem jest, gdy nowy drut jest wyżej, wtedy pantograf
+    odłącza się od starego, a na podniesienie do nowego potrzebuje czasu". The wrapper had one
+    width and dropped anything beyond it.
+  * **The slider width never came from the data.** `RailVehicle3D::pantograph_collector_width`
+    sat at its header default of 0.5 for every vehicle in the game; the only assignment in the
+    repository was in a test. An EP08 declares `CSW=1.4`, so the original searches 0.7 + 0.381 =
+    1.081 m to each side and the wrapper searched 0.5 - less than half.
+  * **No chain.** Running off the end of a span is not a loss of contact: the original steps along
+    `hvNext` until the point falls inside a span (`DynObj.cpp:8742`). The wrapper dropped the wire
+    and re-searched the area, which papered over it with a 0.25 m tolerance at each span's end.
+  * **`iLast` - and this is the one that killed it at the switch.** The original marks a span that
+    ends a section, or whose neighbour does (`TTraction::WhereIs()`, `Traction.cpp:392`), and for
+    such a span it **does not follow the chain at all** - "dla ostatniego i przedostatniego przęsła
+    wymuszamy szukanie innego; nie to, że nie ma, ale trzeba sprawdzić inne" (`DynObj.cpp:8747`).
+    A switch exit is exactly that: the branch ends there. The wrapper followed `next[]`, which at a
+    three-way meeting had been chosen first-come-first-served, onto a span the switch does not
+    continue into.
+* **A fifth, found by the same reading:** the joining tolerance was 0.25 m as a euclidean radius
+  where the original uses **0.025 m per axis** (`TTraction::TestPoint`, `Traction.cpp:355`). At 25
+  span ends of this scenery that made us see three candidate neighbours where the original sees
+  one. It was harmless while nothing walked the chain, and stopped being harmless the moment
+  something did.
+* **`parallel` and `section` were parsed and thrown away.** Both are read by the importers into
+  their data holders and neither reached the server: a span sharing a running (`hvParallel`) must
+  not trust the chain either, and a supply declared `section` is *not* a substation - it names the
+  part of the network a span belongs to, and the power has to reach it along the wires
+  (`TTraction::PowerSet()`, `Traction.cpp:460`). `TTraction::VoltageGet` was ported whole with
+  them, including a star branch that this wrapper had written down as unreachable.
+* **A trap in that data, worth knowing before reading a scenery's wiring:** every supply is
+  declared **twice** under one name, once `section` and once as a substation. The original's name
+  table keeps the **last** one (`Names.h:38`), and in these files the substation is last - so both
+  engines end up treating `pwr01`/`pwr17` as substations, and the section half changes nothing
+  here. A port that had picked the first declaration would have unpowered half the scenery.
+* **Rule:** measure the data before reading the code. Three of the first four hypotheses - gaps
+  between spans, a height step at a junction, an arm lagging a rising wire - each died to a single
+  pass over the scenery's own numbers, and each would have cost an afternoon in the debugger.
+* **Rule:** a tolerance that "papers over" data is load-bearing the moment something else starts
+  trusting the structure underneath it. The 0.25 m span-end tolerance and the 0.25 m join radius
+  were both harmless until the chain walk was ported, and then they chose the wrong wire.
+* **Rule:** a raised pantograph reads 0 V in three different ways - no wire in reach, a wire
+  carrying nothing, and a wire it is not touching (`PantDiff >= 0.01`, `DynObj.cpp:3866`) - and
+  from the cab all three look identical. Report them separately, with the track and the offset,
+  or every diagnosis starts by guessing which one it was.
+
+## 2026-09-24 - a parked vehicle jumping, because two writers disagreed about where it stands
+
+* **Symptom:** at zero speed the vehicle's transform changes slightly and it visibly jumps. Only
+  on curves, most of all on one switch, never on straight track - and the position readout does
+  not move while it happens.
+* **What that combination says on its own:** the position is stable and the attitude is not, and
+  the difference is a function of curvature. Only two placements in this code have that property.
+* **Cause:** `RailVehicle3D::apply_track_placement()` wrote the body transform **twice**. First
+  unconditionally, from `RailVehicleServer::vehicle_get_transform()` - the track sampled under the
+  vehicle's centre. Then, when `moved || force_detail_refresh`, again, from a chord it composed
+  between the two bogie pivots. On straight track the two agree exactly; on a curve they do not,
+  and on a switch they differ most. A parked vehicle therefore showed the centre one every frame
+  and the chord one in any frame where something raised `force_detail_refresh` - entering the
+  screen, a detail switch, a rebuilt animation binding.
+* **Fix:** the composition moved to `RailVehicleServer`, which owns the placement it is made of:
+  a vehicle on bogies has its body built from the two pivots, cached against the placement, and
+  `RailVehicle3D` takes that one answer and nothing else. The node keeps only what draws - putting
+  the bogie nodes where the wheels say they are.
+* **Rule:** one piece of state, one writer - and a second writer is not obvious when both look
+  correct in isolation. Here the two agreed on every straight track in the game, which is most of
+  it, so the disagreement only ever showed where the geometry made it visible.
+* **Trap met on the way:** a vehicle built with no mass integrates to **NaN**, and a NaN transform
+  never equals itself, so every "did it move" test says yes forever. A fixture without a mass is
+  not a vehicle at rest, it is no vehicle at all.
+
+## 2026-09-24 - a .fiz in the project stopped importing, silently
+
+* **Symptom:** `godot-double --headless --path demo --import` prints `Error importing
+  'res://tests/fixtures/test_vehicle.fiz'` and rewrites its `.import` with `valid=false`. Nothing
+  else says anything, and the tracked `.import` still claimed `type="PackedScene"`.
+* **What proved it, in one run:** a probe calling `FizVehicleBuilder.build_model_at()` on the
+  fixture and then saving the result by hand. The model built fine (28 properties, 6 components);
+  `ResourceSaver.save(model, "...scn")` returned **15**, `ERR_FILE_UNRECOGNIZED`, and the same
+  resource saved to `.res` returned 0.
+* **Cause:** `.fiz` stopped producing a `PackedScene` when a vehicle became a `VehicleModel`, but
+  `FIZImportPlugin._get_save_extension()` still said `"scn"` - and `.scn` is the packed-scene
+  extension, which `ResourceSaver` refuses to write a plain `Resource` into.
+* **Trap:** Godot does not reimport after `touch` - it compares the source's md5 - so testing an
+  importer change means deleting the artifact under `.godot/imported/` first. Two runs looked like
+  the fix had not worked when it had.
+* **Rule:** an `EditorImportPlugin`'s save extension is part of its contract with `ResourceSaver`.
+  When `_get_resource_type()` changes, that extension changes with it, and the only symptom of
+  getting it wrong is one line in an import log.
 
 ## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
 

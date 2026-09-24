@@ -101,13 +101,28 @@ serialises without a line of per-component code.
     What stays exported is what says which *instance* this is and where it stands:
     `train_id`, `initial_velocity`, the occupant, `start_track_name`, `start_track_offset`,
     `start_direction`, and `head_display_material` as the project's own asset slot.
-  * `cabin_number:int` (1 / -1 / 0) is neither a number nor a cab: it is **who occupies the
-    vehicle**, and the data has the vocabulary - `headdriver`, `reardriver`, `nobody`
-    (`DynObj.cpp:1812-1825`). It becomes an enum, which is what `CODE_STYLE.md` asks for.
-  * `loadcount`/`loadtype` and the trailing `destination` of the `dynamic` line are parsed and
-    thrown away (`maszyna_node_dynamic_importer.gd`, "not used yet") - see `## Vehicles`.
+  * ~~`cabin_number:int` is neither a number nor a cab.~~ Done: `VehicleController.DriverType`
+    (`DRIVER_NOBODY`/`DRIVER_HEAD`/`DRIVER_REAR`), named after the `drivertype` a `dynamic`
+    declares, carried by the node, the physics node and the controller; the backend's own +1/-1/0
+    stays behind `get_occupied_cab()`.
+  * ~~`loadcount`/`loadtype` are parsed and thrown away.~~ Done: they reach the vehicle as
+    `load_name`/`load_amount` and `TMoverParameters::AssignLoad()` takes both at once. The
+    trailing `destination` of the same line is still dropped.
   * `_process` runs in every vehicle of the scenery forever to look at two dirty flags. The
     `_dirty`/`_process` pattern stays; the setter turns processing on and the tick turns it off.
+* **The pantograph's power path is simulation, and it lives in a node.**
+  `RailVehicle3D::_update_pantograph_power()` takes the vehicle's transform, works out each
+  collector's contact point, asks `TractionPowerServer` which span is overhead, reads its voltage
+  and writes it into `VehicleElectricEngine` - every frame, from a `Node3D` whose job is to draw
+  the vehicle. Nothing there needs a node: `RailVehicleServer` already owns the placement and
+  `vehicle_get_transform(rid)`, so the whole path belongs in its step, beside the movement and the
+  neighbour scan, with the remembered span per pantograph kept there too. What stays in the node
+  is what genuinely draws: `_apply_pantograph_animation()` on the arm submodels.
+  The collector offsets (`pantograph_front_offset`/`pantograph_rear_offset`) are exported on the
+  node today because the instancer reads them off the model; they are the vehicle's own geometry
+  (the original keeps them in `TAnimPant::vPos`) and have to reach the vehicle for this to move.
+  The same question applies, more weakly, to `_update_wipers()` and `_update_smoke()` - those
+  consume state to drive submodels, which is drawing, but the wiper *positions* are simulation.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,
@@ -208,6 +223,18 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   only through the `pantcompressor_sw`/`pantcompressorvalve_sw` widgets. The original also allows
   them in the machine room (cab 0) of the pantograph unit when the MMD has no such switch
   (`Train.cpp:2872`, `2915`).
+* The rest of TDynamicObject::Update's driver block (DynObj.cpp:3240-3400) is not ported: the
+  train-wide ED/PN brake force split of an induction motor consist, and `EqvtPipePress = GetEPP()`
+  (the handles' equivalent pipe pressure input). Also the unpowered-car copy of the controlling
+  vehicle's MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
+* E186 on td_e186.scn: the line breaker opens at about 17 km/h under traction (headless probe,
+  2026-09-24) - not diagnosed yet.
+* EIM keys `Imaxrpc` and `BRVto` (`LoadFIZ_Engine`, Mover.cpp:11304-11305) are not ported: the
+  vendored Mover predates them and has no such fields.
+* Spring brake, what is left after the parity pass (2026-09-24): `springbrakerelease`
+  (`Train.cpp:6874`, the emergency release rod) and the `springbrakepress:` gauge
+  (`Train.cpp:12221`) have no cab control and no key, the game's `eu07_input-keyboard.ini` binds
+  the release to `none` as well.
 * Intermittent, not reproduced (2026-09-24): after the first entry into a cab, the releaser
   (num4, `releaser_bt`) and the drive shortcut (num6, `brake_level_drive`) sometimes do nothing
   until the brake handle is moved once (num3/num9). A headless probe entering every cab of
@@ -217,6 +244,9 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   only to events in `_input` - so suspect the event not reaching the cab, or reaching it with the
   wrong `occupied_cab()`. Next time it happens, check the log for
   `Unknown cabin control: ... (cab N)` - present means a wrong cab, absent means a lost event.
+* `CabinSwitch` has no `mesh_rotation_offset`/`mesh_position_offset`, so the MMD offset of a
+  switch is dropped (`MMD_ANIMATION_UNSUPPORTED`), e.g. SM42 `dirkey: kier rot -0.09 0.01`. The
+  original renders `value * scale + offset` (`Gauge.cpp:456`); `CabinButton` already does.
 
 ## Sounds
 
@@ -244,11 +274,22 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ## Vehicles
 
-* **A vehicle's load is not implemented at all.** The `.scn` `dynamic` line carries `loadcount`
-  and, when it is not zero, `loadtype`; `maszyna_node_dynamic_importer.gd` reads both and drops
-  them (`var _load_type`). The Mover has the concept, so the load has to reach it - and the load
-  also has a visual side (`loads:` in the MMD, which is where the passenger model comes from).
-  The trailing `destination` of the same line is dropped the same way.
+* **Traction: `hvParallel` (bieznia wspolna) is not ported.** A `traction` node may name a
+  parallel span (`parallel <name>`); `maszyna_node_traction_importer.gd` reads it into
+  `MaszynaTractionData.parallel` and nothing carries it to `TractionPowerServer`. The original
+  puts such spans in a ring and, while the pantograph is on one of them, always searches the area
+  instead of following the chain, because the wire actually overhead may be a sibling it cannot
+  reach along `hvNext` (Traction.cpp:838-852, DynObj.cpp:8753). `zwierzyniec_tlk` declares none,
+  which is why the junction fix works there; a scenery that declares them will pick the wrong
+  span. `iLast` - the original forcing the same search on the last and second-to-last span of a
+  section - is not ported either.
+* **A vehicle's load reaches the backend, but has no visual side.** `loadcount`/`loadtype` of a
+  `dynamic` now become `load_name`/`load_amount` and are handed to
+  `TMoverParameters::AssignLoad()`, which is also how a scenery starts a locomotive with raised
+  pantographs (`pantstate`, `Mover.cpp:7647`). What is still missing is the cargo a load is drawn
+  as - the MMD's own `loads:` block, which is where the passenger model already comes from - and
+  the trailing `destination` of the `dynamic` line, which is still dropped. The load's own height
+  follows how full the vehicle is, as the original's does.
 * `DynamicRailVehicle3D` builds its `RailVehicle3D` itself (`_rebuild()` ->
   `DynamicRailVehicle3DManager.load()` in its own `_process`), so vehicles are instanced a frame
   after the scenery is attached (`SceneryInstancer._wait_for_vehicles()` waits for them). The

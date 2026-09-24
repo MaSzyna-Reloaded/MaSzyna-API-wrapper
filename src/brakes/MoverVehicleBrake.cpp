@@ -313,6 +313,11 @@ namespace godot {
         return mover != nullptr ? mover->LocHandle ? mover->LocHandle->GetCP() : 0.0 : 0.0;
     }
 
+    double MoverVehicleBrake::get_handle_control_pressure() const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr ? mover->Handle ? mover->Handle->GetCP() : 0.0 : 0.0;
+    }
+
     double MoverVehicleBrake::get_local_aeim_position() const {
         const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->LocalBrakePosAEIM : 0.0;
@@ -353,6 +358,7 @@ namespace godot {
         p_state["brake_loco_pressure_fall_rate"] = get_loco_pressure_fall_rate();
         p_state["brake_loco_pressure_rise_rate"] = get_loco_pressure_rise_rate();
         p_state["brake_control_pressure"] = get_control_pressure();
+        p_state["brake_handle_control_pressure"] = get_handle_control_pressure();
         p_state["brake_local_aeim_position"] = get_local_aeim_position();
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();

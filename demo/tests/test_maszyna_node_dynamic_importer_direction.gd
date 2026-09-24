@@ -99,6 +99,24 @@ func test_driver_type_selects_occupied_cab() -> void:
     var rear:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 reardriver 3 0 enddynamic")
     var nobody:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
 
-    assert_eq(head.cabin_number, 1)
-    assert_eq(rear.cabin_number, -1)
-    assert_eq(nobody.cabin_number, 0)
+    assert_eq(head.driver_type, VehicleController.DRIVER_HEAD)
+    assert_eq(rear.driver_type, VehicleController.DRIVER_REAR)
+    assert_eq(nobody.driver_type, VehicleController.DRIVER_NOBODY)
+
+
+## What the scenery loaded the vehicle with. The count comes first and the cargo's name only
+## follows it when the count is not zero; a count with no name behind it is not a load at all
+## (simulationstateserializer.cpp:1031), which is how a `dynamic` ending right there reads.
+func test_the_load_a_dynamic_declares_reaches_the_vehicle() -> void:
+    var context:MaszynaImporterContext = _trainset_context(20.0)
+    var loaded:DynamicRailVehicle3D = _import(
+            context, "fixtures skin short 0 nobody 3 24 coal enddynamic")
+    var empty:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 0 enddynamic")
+    var unnamed:DynamicRailVehicle3D = _import(context, "fixtures skin short 0 nobody 3 24 enddynamic")
+
+    assert_eq(loaded.load_name, "coal", "the cargo is named as the scenery names it")
+    assert_almost_eq(loaded.load_amount, 24.0, 0.001, "and carried in the amount it declares")
+    assert_eq(empty.load_name, "", "a count of zero carries nothing")
+    assert_almost_eq(empty.load_amount, 0.0, 0.001)
+    assert_eq(unnamed.load_name, "", "a count with no cargo named behind it is not a load")
+    assert_almost_eq(unnamed.load_amount, 0.0, 0.001)

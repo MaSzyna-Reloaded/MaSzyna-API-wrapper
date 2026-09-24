@@ -123,9 +123,12 @@ these is invisible from the wrapper's side and each would have been ported wrong
   named after the cargo alone, and accepts finding none (`DynObj.cpp:7195`) - plenty of loads are
   only mass. `dynamic/zssk/lgs_v1` declares no `loads:` block at all and its containers are drawn
   by the third rule, straight out of the vehicle's own folder.
-* **The load's height is not fixed.** `LoadOffset` is lerped from the cargo's own `offset_min` to
-  zero with how full the vehicle is (`DynObj.cpp:3079`), so a half-empty wagon shows its load
-  lower. Only the full case is ported; the rest is in `TODO.md`.
+* **The load's height is not fixed, and it is not known when the model is built.** `LoadOffset` is
+  lerped from the cargo's own `offset_min` to zero with how full the vehicle is
+  (`DynObj.cpp:3079`), so a half-empty wagon shows its load sunk into the body. Both numbers -
+  that cargo's `offset_min` and the vehicle's `MaxLoad` - are the vehicle's own configuration and
+  do not exist yet when the load model is created, so the height is set when the configuration
+  lands, on the same event the bogie spacing waits for (see 2026-09-23).
 * **Rule:** before porting a field that looks like data, read what the backend does with its
   *name*. Two of the five surprises here - `pantstate` and the missing-name case - are branches on
   a string that no amount of reading the wrapper's own side would have revealed.

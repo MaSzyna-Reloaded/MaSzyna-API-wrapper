@@ -159,6 +159,7 @@ static func build_from_structure(
         vehicle.low_poly_cabin_path = vehicle.get_path_to(low_poly_model)
     if load_model:
         vehicle.add_child(load_model, false, Node.INTERNAL_MODE_BACK)
+        vehicle.load_model_path = vehicle.get_path_to(load_model)
     if passengers_model:
         vehicle.add_child(passengers_model, false, Node.INTERNAL_MODE_BACK)
     var auto_rewident := AutoRewidentNode.new()

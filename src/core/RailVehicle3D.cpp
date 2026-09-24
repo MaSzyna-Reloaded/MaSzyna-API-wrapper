@@ -1,4 +1,5 @@
 #include "../scenery/SceneryStreamingServer.hpp"
+#include "../load/VehicleLoad.hpp"
 #include "RailVehicle3D.hpp"
 #include "../traction/TractionPowerServer.hpp"
 #include "../cabin/Cabin3D.hpp"
@@ -112,6 +113,7 @@ namespace godot {
         BIND_RAIL_PROPERTY(cabin_rotate_180deg, Variant::BOOL);
         BIND_RAIL_PROPERTY(joint_cabs, Variant::BOOL);
         BIND_RAIL_NODE_PATH(low_poly_cabin_path, "E3DModelInstance");
+        BIND_RAIL_NODE_PATH(load_model_path, "E3DModelInstance");
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_energy, Variant::FLOAT);
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_fade_time, Variant::FLOAT);
         BIND_RAIL_NODE_PATH(head_display_e3d_path, "E3DModelInstance");
@@ -280,8 +282,45 @@ namespace godot {
     /* The vehicle this node stands on was rebuilt - take whatever it owns now. */
     /* The vehicle's configuration reached the backend. The bogie placement is derived from it
      * (the pivot spacing), so it is recomputed here - not polled for. */
+    /* Where the cargo sits: the original sinks it into the body as the vehicle empties, lerping
+     * from the cargo's own offset_min to zero with how full it is (DynObj.cpp:3070-3080), and
+     * leaves it alone when that cargo declares no offset. Both numbers are the vehicle's
+     * configuration, so this runs when the configuration lands rather than when the model is
+     * built - the load component does not exist yet at that point (see `FINDINGS.md`,
+     * 2026-09-23, for the same lifecycle biting the bogie spacing). */
+    void RailVehicle3D::_apply_load_offset() {
+        if (load_model == nullptr || controller == nullptr) {
+            return;
+        }
+        VehicleLoad *load = Object::cast_to<VehicleLoad>(
+                controller->get_component(VehicleComponentType::COMPONENT_LOAD));
+        if (load == nullptr) {
+            return;
+        }
+        const TypedArray<String> accepted = load->get_accepted_loads();
+        const TypedArray<float> offsets = load->get_minimum_load_offsets();
+        const String cargo = controller->get_load_name().to_lower();
+        double offset_min = 0.0;
+        for (int index = 0; index < accepted.size() && index < offsets.size(); ++index) {
+            if (String(accepted[index]).to_lower() == cargo) {
+                offset_min = double(offsets[index]);
+                break;
+            }
+        }
+        if (Math::is_zero_approx(offset_min)) {
+            return;
+        }
+        const double max_load = load->get_max_load();
+        const double fill =
+                max_load > 0.0 ? CLAMP(controller->get_load_amount() / max_load, 0.0, 1.0) : 0.0;
+        Vector3 position = load_model->get_position();
+        position.y = static_cast<real_t>(Math::lerp(offset_min, 0.0, fill));
+        load_model->set_position(position);
+    }
+
     void RailVehicle3D::_on_vehicle_config_changed() {
         force_detail_refresh = true;
+        _apply_load_offset();
         apply_track_placement();
     }
 
@@ -563,6 +602,8 @@ namespace godot {
         if (low_poly_cabin != nullptr) {
             low_poly_cabin->disconnect("e3d_loaded", Callable(this, "_on_low_poly_cabin_e3d_loaded"));
         }
+        load_model = load_model_path.is_empty() ? nullptr : node_at<Node3D>(this, load_model_path);
+        _apply_load_offset();
         low_poly_cabin = low_poly_cabin_path.is_empty() ? nullptr : node_at<Node3D>(this, low_poly_cabin_path);
         if (low_poly_cabin != nullptr) {
             low_poly_cabin->connect("e3d_loaded", Callable(this, "_on_low_poly_cabin_e3d_loaded"));
@@ -1636,6 +1677,15 @@ namespace godot {
     }
     bool RailVehicle3D::get_joint_cabs() const {
         return joint_cabs;
+    }
+    void RailVehicle3D::set_load_model_path(const NodePath &p_value) {
+        if (load_model_path != p_value) {
+            load_model_path = p_value;
+            dirty = true;
+        }
+    }
+    NodePath RailVehicle3D::get_load_model_path() const {
+        return load_model_path;
     }
     void RailVehicle3D::set_low_poly_cabin_path(const NodePath &p_value) {
         if (low_poly_cabin_path != p_value) {

@@ -62,6 +62,11 @@ namespace godot {
             bool cabin_rotate_180deg = false;
             bool joint_cabs = false;
             NodePath low_poly_cabin_path;
+            /* The cargo the scenery gave this vehicle, drawn as its own model. It sits lower the
+             * emptier the vehicle is, so where it sits is not known until the vehicle's
+             * configuration has landed - see _apply_load_offset(). */
+            NodePath load_model_path;
+            Node3D *load_model = nullptr;
             double low_poly_cabin_emission_energy = 0.2;
             double low_poly_cabin_emission_fade_time = 0.2;
             NodePath head_display_e3d_path;
@@ -140,6 +145,7 @@ namespace godot {
             void _on_low_poly_cabin_e3d_loaded();
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
+            void _apply_load_offset();
             String _track_position_text() const;
             void _report_contact_gap(int p_index, bool p_is_active, bool p_converged);
 
@@ -263,6 +269,8 @@ namespace godot {
             bool get_joint_cabs() const;
             void set_low_poly_cabin_path(const NodePath &p_value);
             NodePath get_low_poly_cabin_path() const;
+            void set_load_model_path(const NodePath &p_value);
+            NodePath get_load_model_path() const;
             void set_low_poly_cabin_emission_energy(double p_value);
             double get_low_poly_cabin_emission_energy() const;
             void set_low_poly_cabin_emission_fade_time(double p_value);

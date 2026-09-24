@@ -1274,6 +1274,25 @@ namespace godot {
         return frame;
     }
 
+    /* Where the vehicle is, in the terms a scenery is written in: a warning that only carries
+     * world coordinates cannot be looked up in the .scn that produced the wiring. */
+    String RailVehicle3D::_track_position_text() const {
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        TrackManager *tracks = TrackManager::get_instance();
+        if (server == nullptr || tracks == nullptr) {
+            return String("unknown track");
+        }
+        const Dictionary placement = server->vehicle_get_track_position(rid);
+        const RID track = placement.get("track_rid", RID());
+        if (!track.is_valid()) {
+            return String("no track");
+        }
+        const String name = tracks->track_get_name(track);
+        return vformat(
+                "%s at %.2f m", name.is_empty() ? String("(unnamed track)") : name,
+                double(placement.get("along", 0.0)));
+    }
+
     /* FIXME(#184): this belongs in RailVehicleServer's step, not in the node that draws the
      * vehicle. Nothing here needs a node - the server already owns the placement and
      * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
@@ -1327,8 +1346,8 @@ namespace godot {
         const bool had_voltage = cache.get("powered", false);
         if (had_voltage && Math::is_zero_approx(voltage)) {
             UtilityFunctions::push_warning(vformat(
-                    "Dead traction: %s has a wire under pantograph %d at %v carrying no voltage", get_name(),
-                    p_index, contact_point));
+                    "Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
+                    get_name(), p_index, _track_position_text(), contact_point));
         }
         cache["powered"] = !Math::is_zero_approx(voltage);
         pantograph_wire_cache[p_index] = cache;
@@ -1453,8 +1472,8 @@ namespace godot {
          * to tell a hole in the scenery's wiring from a defect in this search. */
         if (wire_rid.is_valid() && !RID(result["rid"]).is_valid()) {
             UtilityFunctions::push_warning(vformat(
-                    "Bad traction: %s lost the wire under pantograph %d at %v", get_name(), p_index,
-                    p_contact_point));
+                    "Bad traction: %s lost the wire under pantograph %d - %s, %v", get_name(), p_index,
+                    _track_position_text(), p_contact_point));
         }
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;

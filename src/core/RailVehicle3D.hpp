@@ -140,6 +140,7 @@ namespace godot {
             void _on_low_poly_cabin_e3d_loaded();
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
+            String _track_position_text() const;
 
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();

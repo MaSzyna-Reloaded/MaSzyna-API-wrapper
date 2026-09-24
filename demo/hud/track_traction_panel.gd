@@ -3,14 +3,13 @@ extends VBoxContainer
 ## Where the driven vehicle is and what it is collecting from: the track under it with its own
 ## name and offset, and, per pantograph, the wire overhead with its height and voltage.
 ##
-## Written to answer one question in the field - at which point of a scenery does a vehicle lose
-## the line, and is it losing the wire or finding a wire that carries nothing. The wire query is
-## the same TractionPowerServer call the vehicle itself makes, so what the panel shows is what the
-## vehicle sees, not a second opinion.
+## Catching a loss of contact is deliberately NOT this panel's job. It lasts two or three frames -
+## measured on zwierzyniec_tlk - so watching for it here would mean running GDScript every frame
+## for something the vehicle already sees. RailVehicle3D warns with the place the moment it
+## happens; this is the live readout beside those warnings.
 
-## Seconds between refreshes. Faster than the streaming panel's: a loss of contact lasts a few
-## frames, and a readout that only looks four times a second would walk straight past it.
-const REFRESH_INTERVAL:float = 0.1
+## Seconds between refreshes. Only the live rows change with it, and only while the window is open.
+const REFRESH_INTERVAL:float = 0.25
 
 ## Half of the slider's width when the vehicle has no electric engine to declare its CSW.
 const FALLBACK_SLIDER_HALF_WIDTH:float = 0.5
@@ -21,20 +20,26 @@ const HORN_WIDTH:float = 0.381
 
 var _rows:Dictionary[String, Label] = {}
 var _elapsed:float = 0.0
-## Lowest voltage seen since the last reset, with where it was - a drop of three frames is gone
-## from the live readout before anyone can read it.
-var _worst_voltage:float = INF
-var _worst_at:Vector3 = Vector3.ZERO
-var _worst_track:String = ""
+## Taken once per vehicle rather than looked up per refresh; null for anything that is not
+## electric, and then the traction rows have nothing to say.
+var _engine:VehicleElectricEngine = null
+var _engine_vehicle:RailVehicle3D = null
 
 
 func _ready() -> void:
     for caption:String in [
         "Vehicle", "Track", "Offset", "Track length", "Switch", "Position",
-        "Pantograph 1", "Wire 1", "Pantograph 2", "Wire 2", "Slider", "Worst drop",
+        "Pantograph 1", "Wire 1", "Pantograph 2", "Wire 2", "Slider",
     ]:
         _rows[caption] = _add_row(caption)
+    set_process(is_visible_in_tree())
     _refresh()
+
+
+## A debug window costs nothing while it is closed.
+func _notification(what:int) -> void:
+    if what == NOTIFICATION_VISIBILITY_CHANGED:
+        set_process(is_visible_in_tree())
 
 
 func _process(delta:float) -> void:
@@ -45,22 +50,20 @@ func _process(delta:float) -> void:
     _refresh()
 
 
-## Clears the remembered drop, so the next run over a suspect spot is read on its own.
-func reset_worst_drop() -> void:
-    _worst_voltage = INF
-    _worst_at = Vector3.ZERO
-    _worst_track = ""
-
-
 func _refresh() -> void:
     var player:MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
     var vehicle:RailVehicle3D = player.controlled_vehicle if player else null
     if not vehicle:
         _rows["Vehicle"].text = "none"
+        _engine = null
+        _engine_vehicle = null
         return
-    _rows["Vehicle"].text = vehicle.name
 
     var rid:RID = vehicle.get_rid()
+    var controller:VehicleController = vehicle.get_controller()
+    var train_id:String = controller.train_id if controller else ""
+    _rows["Vehicle"].text = train_id if train_id else "(no train id)"
+
     var placement:Dictionary = RailVehicleServer.vehicle_get_track_position(rid)
     var track:RID = placement["track_rid"]
     if track.is_valid():
@@ -84,31 +87,31 @@ func _refresh() -> void:
     var origin:Vector3 = vehicle.global_position
     _rows["Position"].text = "%.1f, %.1f, %.1f" % [origin.x, origin.y, origin.z]
 
-    var engine:VehicleElectricEngine = RailVehicleServer.vehicle_component_get(
-            rid, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+    if not _engine_vehicle == vehicle:
+        _engine_vehicle = vehicle
+        _engine = RailVehicleServer.vehicle_component_get(
+                rid, VehicleComponentType.COMPONENT_ENGINE) as VehicleElectricEngine
+    if not _engine:
+        _rows["Slider"].text = "-"
+        for number:int in [1, 2]:
+            _rows["Pantograph %d" % number].text = "not an electric vehicle"
+            _rows["Wire %d" % number].text = "-"
+        return
+
     var half_width:float = FALLBACK_SLIDER_HALF_WIDTH
-    if engine:
-        var sliding_width:float = engine.power_current_collector_sliding_width
-        if sliding_width > 0.0:
-            half_width = 0.5 * sliding_width
+    var sliding_width:float = _engine.power_current_collector_sliding_width
+    if sliding_width > 0.0:
+        half_width = 0.5 * sliding_width
     _rows["Slider"].text = "%.3f m half width + %.3f m horn" % [half_width, HORN_WIDTH]
 
-    var state:Dictionary = RailVehicleServer.vehicle_dump_state(rid)
     _report_pantograph(
             vehicle, 1, vehicle.pantograph_front_offset, half_width,
-            bool(state.get("current_collector/pantograph_first_active", false)),
-            float(state.get("current_collector/pantograph_first_voltage", 0.0)))
+            _engine.get_collector_pantograph_first_active(),
+            _engine.get_collector_pantograph_first_voltage())
     _report_pantograph(
             vehicle, 2, vehicle.pantograph_rear_offset, half_width,
-            bool(state.get("current_collector/pantograph_second_active", false)),
-            float(state.get("current_collector/pantograph_second_voltage", 0.0)))
-
-    if _worst_voltage < INF:
-        _rows["Worst drop"].text = "%.0f V on %s at %.0f, %.0f, %.0f" % [
-            _worst_voltage, _worst_track, _worst_at.x, _worst_at.y, _worst_at.z,
-        ]
-    else:
-        _rows["Worst drop"].text = "none yet"
+            _engine.get_collector_pantograph_second_active(),
+            _engine.get_collector_pantograph_second_voltage())
 
 
 func _report_pantograph(
@@ -130,21 +133,10 @@ func _report_pantograph(
     var wire:RID = found["rid"]
     if not wire.is_valid():
         wire_row.text = "NO WIRE in reach"
-        _remember_drop(vehicle, 0.0)
         return
-    var wire_voltage:float = TractionPowerServer.wire_get_voltage(wire, voltage, 0.0)
-    wire_row.text = "%.2f m above, %.0f V" % [float(found["height"]), wire_voltage]
-    _remember_drop(vehicle, wire_voltage)
-
-
-func _remember_drop(vehicle:RailVehicle3D, voltage:float) -> void:
-    if voltage >= _worst_voltage:
-        return
-    _worst_voltage = voltage
-    _worst_at = vehicle.global_position
-    var placement:Dictionary = RailVehicleServer.vehicle_get_track_position(vehicle.get_rid())
-    var track:RID = placement["track_rid"]
-    _worst_track = TrackManager.track_get_name(track) if track.is_valid() else "(no track)"
+    wire_row.text = "%.2f m above, %.0f V" % [
+        float(found["height"]), TractionPowerServer.wire_get_voltage(wire, voltage, 0.0),
+    ]
 
 
 func _add_row(caption:String) -> Label:

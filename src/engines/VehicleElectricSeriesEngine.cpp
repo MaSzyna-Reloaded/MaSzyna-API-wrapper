@@ -1,5 +1,4 @@
 #include "VehicleElectricSeriesEngine.hpp"
-#include "../mover/MoverBackend.hpp"
 #include "macros.hpp"
 
 #include <algorithm>
@@ -29,10 +28,12 @@ namespace godot {
         BIND_ENUM_CONSTANT(FAN_TYPE_YES);
         BIND_ENUM_CONSTANT(FAN_TYPE_AUTOMATIC);
 
-        ClassDB::bind_method(D_METHOD("get_resistor_fan_rotation"), &VehicleElectricSeriesEngine::get_resistor_fan_rotation);
+        ClassDB::bind_method(
+                D_METHOD("get_resistor_fan_rotation"), &VehicleElectricSeriesEngine::get_resistor_fan_rotation);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "resistor_fan_rotation", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_resistor_fan_rotation");
     }
 
@@ -40,70 +41,12 @@ namespace godot {
         return VehicleEngine::EngineType::ELECTRIC_SERIES_MOTOR;
     }
 
-    void VehicleElectricSeriesEngine::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
-        VehicleElectricEngine::_apply_configuration();
-        p_mover->NominalVoltage = nominal_voltage;
-        p_mover->WindingRes = winding_resistance;
-        p_mover->nmax = max_rpm / 60.0;
-
-        p_mover->RVentType = static_cast<int>(resistor_fan_type);
-        p_mover->RVentnmax = resistor_fan_max_rpm;
-        p_mover->RVentCutOff = resistor_fan_cutoff_resistance;
-        p_mover->RVentMinI = resistor_fan_min_current;
-        p_mover->RVentSpeed = resistor_fan_speed;
-        p_mover->DynamicBrakeRes = dynamic_brake_resistance;
-        p_mover->DynamicBrakeRes1 = dynamic_brake_resistance_1;
-        p_mover->DynamicBrakeRes2 = dynamic_brake_resistance_2;
-
-        /* RList: lista rezystorow rozruchowych i polaczen silnikow (rozruch samoczynny) */
-        constexpr int MAX_RELAY_LIST = Maszyna::ResArraySize + 1;
-        const int relay_list_size = static_cast<int>(relay_list.size());
-        if (relay_list_size > MAX_RELAY_LIST) {
-            UtilityFunctions::push_warning(
-                    "[VehicleElectricSeriesEngine]: relay_list has " + String::num(relay_list_size) +
-                    " entries, exceeding the mover's limit of " + String::num(MAX_RELAY_LIST) + "; truncating.");
-        }
-        p_mover->RlistSize = std::min(MAX_RELAY_LIST, relay_list_size);
-        for (int i = 0; i < p_mover->RlistSize; i++) {
-            const Ref<RelayListItem> &row = relay_list[i];
-            if (row == nullptr || !row.is_valid()) {
-                UtilityFunctions::push_warning(
-                        "[VehicleElectricSeriesEngine]: relay_list property is null at index " + String::num(i));
-                continue;
-            }
-            p_mover->RList[i].Relay = row->get_relay_position();
-            p_mover->RList[i].R = row->get_resistance();
-            p_mover->RList[i].Bn = row->get_branch_count();
-            p_mover->RList[i].Mn = row->get_motors_per_branch();
-            p_mover->RList[i].AutoSwitch = row->get_auto_switch();
-            p_mover->RList[i].ScndAct = row->get_shunt_index();
-        }
-    }
-
-
-    double VehicleElectricSeriesEngine::get_resistor_fan_rotation() const {
-        const TMoverParameters *mover = mover_of(this);
-        return mover != nullptr ? mover->RventRot : 0.0;
-    }
-
     void VehicleElectricSeriesEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleElectricEngine::_fill_state_dictionary(p_state);
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["resistor_fan_rotation"] = get_resistor_fan_rotation();
-    }
-
-    void VehicleElectricSeriesEngine::_fill_config_dictionary(Dictionary &p_config) const {
-        VehicleElectricEngine::_fill_config_dictionary(p_config);
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
-            return;
-        }
-        p_config["resistor_fan_max_rpm"] = mover->RVentnmax;
     }
 
 } // namespace godot

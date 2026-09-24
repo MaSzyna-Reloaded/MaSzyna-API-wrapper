@@ -1,6 +1,5 @@
 #pragma once
 #include "../core/VehicleComponent.hpp"
-#include "../maszyna/McZapkie/MOVER.h"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 
@@ -15,9 +14,11 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         protected:
             void _register_commands() override;
             void _unregister_commands() override;
+
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_beeping() const = 0;

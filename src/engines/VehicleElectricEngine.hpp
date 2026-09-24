@@ -1,10 +1,10 @@
 #pragma once
-#include "VehicleElectricEngineBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 
 namespace godot {
     class VehicleController;
+    class VehicleElectricEngineBackend;
 
     class VehicleElectricEngine : public VehicleEngine {
             GDCLASS(VehicleElectricEngine, VehicleEngine)
@@ -76,8 +76,8 @@ namespace godot {
             bool get_mainbreaker_active() const;
             double get_transducer_input_voltage() const;
 
-            /* Which pantograph an individual command applies to - the mover supports at most
-             * two (Maszyna::end::front / ::rear); named FIRST/SECOND here rather than
+            /* Which pantograph an individual command applies to - a vehicle has at most two
+             * (the front and the rear one); named FIRST/SECOND here rather than
              * FRONT/REAR since which end is physically "front" depends on the active cab. */
             enum PantographSelector {
                 PANTOGRAPH_FIRST,
@@ -138,7 +138,7 @@ namespace godot {
 
             /* Voltage of the overhead wire each pantograph is currently touching, fed in once
              * per frame from outside (RailVehicle3D's own geometric wire lookup against
-             * TractionPowerServer - the mover has no scenery/geometry access of its own).
+             * TractionPowerServer - the simulation has no scenery/geometry access of its own).
              * 0.0 (the default) means "not touching a wire", same as a lowered pantograph. */
             float pantograph_first_wire_voltage = 0.0f;
             float pantograph_second_wire_voltage = 0.0f;

@@ -24,6 +24,9 @@ func _enter_tree() -> void:
 
 
 func _ready() -> void:
+    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
+    if player:
+        player.controlled_vehicle_changed.connect(_bind_vehicle.bind(null))
     var menu: PopupMenu = $TopBar/HBoxContainer/MenuBar/PopupMenu as PopupMenu
     for child: Node in $ControlWindows.get_children():
         var win: HUDWindow = child as HUDWindow
@@ -49,24 +52,28 @@ func _on_popup_menu_index_pressed(index: int) -> void:
         return
     var win: HUDWindow = _windows[index]
     win.visible = not win.visible
-    _bind_train_controller(win)
+    _bind_vehicle(win)
 
 
 func _on_show_all_controls_button_toggled(toggled_on: bool) -> void:
     for win: Node in $ControlWindows.get_children():
         win.visible = toggled_on
-        _bind_train_controller(win)
+        _bind_vehicle(win)
 
 
-func _bind_train_controller(win: Node) -> void:
-    var player: MaszynaPlayer = get_node(player_path) as MaszynaPlayer
-    if not player.controlled_vehicle:
-        return
-    # the widgets point at the vehicle's node; the controller it owns is not a node and has no path
-    var vehicle: RailVehicle3D = player.controlled_vehicle
-    var physics_node: Node = vehicle.get_node_or_null(vehicle.controller_path) if vehicle.controller_path else null
-    if not physics_node:
-        return
-    for child: Node in win.get_children():
-        if "train_controller" in child:
-            child.train_controller = child.get_path_to(physics_node)
+## The vehicle the player is driving, handed to every widget that shows something about it. The
+## widgets used to be given a NodePath into the vehicle's own subtree and resolve it themselves,
+## which reached across two scenes and could resolve before the vehicle had been built. They are
+## given the vehicle itself now, and the player says when it changes.
+func _bind_vehicle(node: Node = null) -> void:
+    var player: MaszynaPlayer = get_node_or_null(player_path) as MaszynaPlayer
+    var vehicle: RailVehicle3D = player.controlled_vehicle if player else null
+    var controller: VehicleController = vehicle.get_controller() if vehicle else null
+    _propagate_vehicle(node if node else $ControlWindows, controller)
+
+
+func _propagate_vehicle(node: Node, controller: VehicleController) -> void:
+    for child: Node in node.get_children():
+        if "vehicle" in child:
+            child.vehicle = controller
+        _propagate_vehicle(child, controller)

@@ -117,7 +117,7 @@ func _on_train_id_changed() -> void:
 
 func _update_state() -> void:
     if state_property and _train_id:
-        switch_position = int(_vehicle_state().get(state_property, switch_position))
+        switch_position = int(_vehicle_state_value(state_property, switch_position))
     _target_mesh_position = (switch_position - value_offset) * mesh_position
     _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
 

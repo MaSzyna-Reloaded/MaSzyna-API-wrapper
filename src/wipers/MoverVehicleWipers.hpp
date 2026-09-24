@@ -1,13 +1,16 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
+#include "../mover/MoverComponent.hpp"
 #include "VehicleWipers.hpp"
 
 namespace godot {
     /* VehicleWipers on the vendored Mover - the only class here that knows TMoverParameters. */
-    class MoverVehicleWipers : public VehicleWipers {
+    class MoverVehicleWipers : public VehicleWipers, public MoverComponent {
             GDCLASS(MoverVehicleWipers, VehicleWipers);
 
         private:
             static void _bind_methods();
+
         private:
             struct Wiper {
                     double position = 0.0;  // dWiperPos: 0 parked, 1 fully out
@@ -20,10 +23,12 @@ namespace godot {
             int switch_position = 0;
             bool switch_initialized = false;
             void _set_switch_position(int p_position);
+
         protected:
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
             void _do_process_component(double p_delta) override;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             int get_switch_position() const override;

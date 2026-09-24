@@ -17,6 +17,8 @@ namespace godot {
     class VehiclePhysicsNode;
     class Area3D;
     class VehicleElectricEngine;
+    class VehicleDieselEngine;
+    class VehicleLighting;
     class VisibleOnScreenNotifier3D;
 
     class RailVehicle3D : public Node3D {
@@ -82,6 +84,11 @@ namespace godot {
             int cabin_show_frames = 0;
             VehicleController *controller = nullptr;
             VehicleElectricEngine *electric_engine = nullptr;
+            /* The components this node draws from, taken when the vehicle's parts are adopted
+             * rather than looked for per frame. Each is null on a vehicle that has not got one. */
+            VehicleEngine *engine = nullptr;
+            VehicleDieselEngine *diesel_engine = nullptr;
+            VehicleLighting *lighting = nullptr;
             VehiclePhysicsNode *fiz_controller = nullptr;
             Node3D *model_node = nullptr;
             Area3D *detection_area = nullptr;
@@ -191,7 +198,7 @@ namespace godot {
             void _update_pantograph_raise_state(double p_delta, const Dictionary &p_state);
             bool _update_pantograph_arm(
                     int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, bool p_is_active,
-                    double p_delta, const Dictionary &p_state);
+                    double p_delta);
             Dictionary _find_pantograph_wire(
                     int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
                     const Vector3 &p_left);

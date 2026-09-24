@@ -28,6 +28,6 @@ func _cab_activation(state:CabinState, action:StringName, value:Variant) -> Vari
     if not action == &"toggle" and not action == &"set":
         return null
     # Train.cpp:3083 - toggling activates the cab when none is active
-    var enabled:bool = state.vehicle_state().get("cabin", 0) == 0 if value == null else bool(value)
+    var enabled:bool = state.vehicle_state_value("cabin", 0) == 0 if value == null else bool(value)
     state.set_value(CONTROL, enabled)
     return state.send_vehicle_command("cab_activation", enabled)

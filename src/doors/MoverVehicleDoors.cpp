@@ -11,117 +11,117 @@ namespace godot {
 
 
     bool MoverVehicleDoors::get_locked() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.is_locked : false;
     }
 
     bool MoverVehicleDoors::get_lock_enabled() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.lock_enabled : false;
     }
 
     bool MoverVehicleDoors::get_step_enabled() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.step_enabled : false;
     }
 
     int MoverVehicleDoors::get_open_control() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.open_control : 0;
     }
 
     bool MoverVehicleDoors::get_left_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].is_open : false;
     }
 
     bool MoverVehicleDoors::get_left_open_permit() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].open_permit : false;
     }
 
     bool MoverVehicleDoors::get_left_local_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].local_open : false;
     }
 
     bool MoverVehicleDoors::get_left_remote_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].remote_open : false;
     }
 
     double MoverVehicleDoors::get_left_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].position : 0.0;
     }
 
     double MoverVehicleDoors::get_left_position_normalized() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].position / get_max_shift() : 0.0;
     }
 
     bool MoverVehicleDoors::get_left_operating() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing : false;
     }
 
     double MoverVehicleDoors::get_left_step_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].step_position : 0.0;
     }
 
     bool MoverVehicleDoors::get_left_step_operating() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::left].step_folding || mover->Doors.instances[side::left].step_unfolding : false;
     }
 
     bool MoverVehicleDoors::get_right_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].is_open : false;
     }
 
     bool MoverVehicleDoors::get_right_open_permit() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].open_permit : false;
     }
 
     bool MoverVehicleDoors::get_right_local_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].local_open : false;
     }
 
     bool MoverVehicleDoors::get_right_remote_open() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].remote_open : false;
     }
 
     double MoverVehicleDoors::get_right_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].position : 0.0;
     }
 
     double MoverVehicleDoors::get_right_position_normalized() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].position / get_max_shift() : 0.0;
     }
 
     bool MoverVehicleDoors::get_right_operating() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].is_opening || mover->Doors.instances[side::right].is_closing : false;
     }
 
     double MoverVehicleDoors::get_right_step_position() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].step_position : 0.0;
     }
 
     bool MoverVehicleDoors::get_right_step_operating() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Doors.instances[side::right].step_folding || mover->Doors.instances[side::right].step_unfolding : false;
     }
 
     void MoverVehicleDoors::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
             return;
         }
@@ -150,31 +150,31 @@ namespace godot {
     }
 
     void MoverVehicleDoors::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->update_doors(p_delta);
     }
 
     void MoverVehicleDoors::next_permit_preset() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorPermitPreset(1);
     }
 
     void MoverVehicleDoors::previous_permit_preset() {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorPermitPreset(-1);
     }
 
     void MoverVehicleDoors::permit_step(const bool p_state) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoorStep(p_state);
     }
 
     void MoverVehicleDoors::permit_doors(const Side p_side, const bool p_state) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->PermitDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
     }
@@ -188,7 +188,7 @@ namespace godot {
     }
 
     void MoverVehicleDoors::operate_doors(const Side p_side, const bool p_state) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->OperateDoors(p_side == Side::SIDE_LEFT ? side::left : side::right, p_state);
     }
@@ -202,19 +202,19 @@ namespace godot {
     }
 
     void MoverVehicleDoors::door_lock(const bool p_state) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->LockDoors(p_state);
     }
 
     void MoverVehicleDoors::door_remote_control(const bool p_state) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         mover->ChangeDoorControlMode(p_state);
     }
 
     void MoverVehicleDoors::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         if (door_controls_map.find(get_open_method()) != door_controls_map.end()) {
             p_mover->Doors.open_control = door_controls_map.at(get_open_method());

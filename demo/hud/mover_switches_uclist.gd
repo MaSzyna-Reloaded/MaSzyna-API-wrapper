@@ -2,10 +2,12 @@ extends "res://hud/mover_switches_section.gd"
 
 @onready var POS = %MainCtrlPos
 
-func _process(delta: float) -> void:
-    if controller:
-        var state = controller.state
-        if "selector_position" in state:
-            POS.text = "Pos: " + str(state.get("selector_position", 0))
-        elif "controller_main_position" in state: # for fallback/older version compatibility if needed
-            POS.text = "Pos: " + str(state.get("controller_main_position", 0))
+## Two different things end up in this one readout, which is why it has two sources: a vehicle
+## with a universal controller shows that controller's selector, and every other vehicle shows the
+## position of its main controller. Dropping the second one emptied the panel on every locomotive
+## that has no universal controller, which is most of them.
+func _process(_delta: float) -> void:
+    if universal_controller:
+        POS.text = "Pos: " + str(universal_controller.get_selector_position())
+    elif controller:
+        POS.text = "Pos: " + str(controller.get_controller_main_position())

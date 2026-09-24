@@ -6,6 +6,16 @@ class_name DebugSwitch
 var _dirty = false
 var _controller:VehicleController
 
+## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:VehicleController:
+    set(x):
+        if not vehicle == x:
+            vehicle = x
+            _controller = x
+            _dirty = true
+
+
 
 @export var label:String:
     set(x):
@@ -45,9 +55,7 @@ func _process(delta):
 
 
         $Label.text = label
-        if not _controller and controller:
-            var physics_node: VehiclePhysicsNode = get_node_or_null(controller)
-            _controller = physics_node.get_controller() if physics_node else null
+        if _controller:
             $Switch.disabled = false
         else:
             $Switch.disabled = true

@@ -14,6 +14,7 @@ namespace godot {
                 D_METHOD("send_command", "command", "p1", "p2"), &GenericVehicleComponentNode::send_command,
                 DEFVAL(Variant()), DEFVAL(Variant()));
         ClassDB::bind_method(D_METHOD("get_vehicle_state"), &GenericVehicleComponentNode::get_vehicle_state);
+        ClassDB::bind_method(D_METHOD("get_controller"), &GenericVehicleComponentNode::get_controller);
         ClassDB::bind_method(D_METHOD("log_debug", "line"), &GenericVehicleComponentNode::log_debug);
         ClassDB::bind_method(D_METHOD("log_info", "line"), &GenericVehicleComponentNode::log_info);
         ClassDB::bind_method(D_METHOD("log_warning", "line"), &GenericVehicleComponentNode::log_warning);
@@ -67,8 +68,8 @@ namespace godot {
         component->unregister_command(p_command, p_callback);
     }
 
-    Variant GenericVehicleComponentNode::send_command(
-            const String &p_command, const Variant &p_p1, const Variant &p_p2) {
+    Variant
+    GenericVehicleComponentNode::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         ERR_FAIL_NULL_V(component, Variant());
         component->send_command(p_command, p_p1, p_p2);
         return Variant();
@@ -77,6 +78,11 @@ namespace godot {
     Dictionary GenericVehicleComponentNode::get_vehicle_state() {
         ERR_FAIL_NULL_V(component, Dictionary());
         return component->get_vehicle_state();
+    }
+
+    VehicleController *GenericVehicleComponentNode::get_controller() const {
+        GenericVehicleComponent *component = get_component();
+        return component != nullptr ? component->get_controller() : nullptr;
     }
 
     void GenericVehicleComponentNode::log_debug(const String &p_line) {

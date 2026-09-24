@@ -12,8 +12,11 @@ func _ready():
 
 
 func _process_component(delta):
-    var state = get_vehicle_state()
-    var power_avail = state.get("power24_available") or state.get("power110_available")
+    # the two values this reads are the vehicle's own, so they are read off the vehicle rather
+    # than out of a dump composed of everything every component publishes
+    var controller:VehicleController = get_controller()
+    var power_avail:bool = controller and (
+            controller.get_power24_available() or controller.get_power110_available())
     if not locked and power_avail and has_method("_process_powered"):
         call("_process_powered", delta)
     elif (locked or not power_avail) and has_method("_process_unpowered"):

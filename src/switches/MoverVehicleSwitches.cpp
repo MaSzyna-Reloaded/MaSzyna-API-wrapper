@@ -1,5 +1,5 @@
-#include "MoverVehicleSwitches.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleSwitches.hpp"
 #include "VehicleSwitches.hpp"
 
 namespace godot {
@@ -7,7 +7,7 @@ namespace godot {
 
 
     void MoverVehicleSwitches::_apply_configuration() {
-        TMoverParameters *p_mover = mover_of(this);
+        TMoverParameters *p_mover = get_mover();
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
@@ -18,20 +18,20 @@ namespace godot {
 
 
     bool MoverVehicleSwitches::get_sand_active() const {
-        const TMoverParameters *mover = mover_of(this);
+        const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->SandDose : false;
     }
 
     void MoverVehicleSwitches::_fill_state_dictionary(Dictionary &p_state) const {
         // a component without a backend publishes nothing at all, rather than zeroes
-        if (mover_of(this) == nullptr) {
+        if (get_mover() == nullptr) {
             return;
         }
         p_state["sand_active"] = get_sand_active();
     }
 
     void MoverVehicleSwitches::sand(const bool p_active) {
-        TMoverParameters *mover = mover_of(this);
+        TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);
         // Train.cpp:1917-1939 (OnCommand_sandboxactivate) -> SandboxManual(State),
         // "sand_bt:"/ggSandButton (Train.cpp:10044) - momentary, active only while held.

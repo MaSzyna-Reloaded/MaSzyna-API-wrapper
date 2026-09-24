@@ -87,10 +87,11 @@ func input(event:InputEvent) -> void:
         elif event.is_action_pressed(fields["action"], false, true):
             # a two-state control follows the vehicle, there is no widget holding its position
             var state_property:String = fields.get("state_property", "")
-            var vehicle:Dictionary = CabinSystem.get_cabin_state(_train_id, _cab).vehicle_state()
+
             CabinSystem.act(
                     _train_id, _cab, control_id, &"toggle",
-                    not bool(vehicle.get(state_property, false)) if state_property else null)
+                    not bool(CabinSystem.vehicle_state_value(_train_id, state_property, false))
+                    if state_property else null)
 
 
 static func _wiring(widget_class:Variant, fields:Dictionary) -> Dictionary:

@@ -17,6 +17,10 @@ namespace godot {
             GDCLASS(VehiclePhysicsNode, Node)
 
         private:
+            /* The VehicleController implementation every vehicle is built with - the simulation
+             * the extension ships, named once where the classes are registered. Held in a function
+             * rather than a static member: a StringName cannot be built before the engine is up. */
+            static StringName &controller_implementation();
             RID vehicle_rid;
             VehicleController *controller = nullptr;
             Ref<VehicleModel> model;
@@ -33,6 +37,9 @@ namespace godot {
 
         public:
             static const char *vehicle_changed_signal;
+
+            /* C++ only: register_types says which simulation the vehicles run on. */
+            static void set_controller_implementation(const StringName &p_class);
 
             /* Builds the vehicle this model describes, replacing whatever this node held. */
             void set_model(const Ref<VehicleModel> &p_model);

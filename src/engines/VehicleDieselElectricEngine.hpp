@@ -15,6 +15,7 @@ namespace godot {
             virtual bool get_motor_connectors_open() const = 0;
             virtual void fuse_reset() = 0;
             virtual void set_motor_connectors_open(bool p_open) = 0;
+
         private:
             static void _bind_methods();
             TypedArray<WWListItem> wwlist;
@@ -31,7 +32,6 @@ namespace godot {
 
         protected:
             VehicleEngine::EngineType get_engine_type() const override;
-            void _apply_configuration() override;
 
         public:
             TypedArray<WWListItem> get_wwlist() {

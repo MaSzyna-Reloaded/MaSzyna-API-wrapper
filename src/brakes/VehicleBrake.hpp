@@ -6,11 +6,6 @@
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
 
-#define ASSERT_MOVER_BRAKE(mover_ptr, ...)                                                                             \
-    if ((mover_ptr) == nullptr || mover_ptr->Hamulec == nullptr) {                                                     \
-        return __VA_ARGS__;                                                                                            \
-    }
-
 namespace godot {
     class VehicleController;
     class VehicleBrake : public VehicleComponent {
@@ -182,7 +177,7 @@ namespace godot {
             };
         private:
             MAKE_MEMBER_GS_NR(
-                    TrainBrakeValve, valve_type, static_cast<TrainBrakeValve>(static_cast<int>(TBrakeValve::NoValve)));
+                    TrainBrakeValve, valve_type, BRAKE_VALVE_NO_VALVE);
             MAKE_MEMBER_GS(int, est_valve_size, 0);
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
             MAKE_MEMBER_GS(double, brake_force_max, 1.0);

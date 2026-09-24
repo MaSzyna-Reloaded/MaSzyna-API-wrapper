@@ -40,8 +40,11 @@ namespace godot {
             virtual void _register_commands();
             virtual void _unregister_commands();
 
-        public:
+            /* Whether the vehicle this component belongs to is simulated yet - a dump of a
+             * component whose vehicle is not publishes nothing, rather than zeroes. */
+            bool is_simulation_ready() const;
 
+        public:
             /* Which kind this component is. Every interface answers for itself; an
              * implementation inherits the answer. */
             virtual VehicleComponentType::Type get_component_type() const;
@@ -52,7 +55,6 @@ namespace godot {
             void detach();
             /* One tick of this component, driven by the vehicle that owns it. */
             void process(double p_delta);
-            virtual void _process_mover(double p_delta);
 
             void register_command(const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_command, const Callable &p_callback);
@@ -69,11 +71,6 @@ namespace godot {
             void set_enabled(bool p_value);
             bool get_enabled();
 
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do apply_config(),
-             * i powinna byc wywolywana z poziomu VehicleController::initialize_mover() */
-            // void initialize_mover(VehicleController *train_controller_node);
-
             /* Applies this part's authored configuration to the vehicle and publishes back
              * whatever config the vehicle derives from it. The simulation backend is an
              * implementation detail: the interface knows state and config, nothing else. */
@@ -83,9 +80,14 @@ namespace godot {
              * for a dump - a console, a test, a diagnostic - never per frame: the live values are
              * read from this component's own typed properties.
              *
-             * Keys carry the component's name (`heating_enabled`, not `enabled`) because the dump
-             * is one flat Dictionary for the whole vehicle. A key the vehicle's variant does not
-             * have is simply not written, so has() keeps meaning what it meant. */
+             * The dump is one flat Dictionary for the whole vehicle, so every key is qualified by
+             * what owns it and no key is ever bare: `heating_enabled`, not `enabled`. A component
+             * that publishes a whole sub-device's block qualifies it with a namespace instead -
+             * `spring_brake/cylinder_pressure`, `current_collector/max_voltage`. A key is the
+             * value's name and never the name of the accessor that produced it (see `FINDINGS.md`,
+             * 2026-09-23, where `get_bogie_pivot_spacing()` as a key cost every vehicle its bogie
+             * spacing). A key the vehicle's variant does not have is simply not written, so has()
+             * keeps meaning what it meant. */
             virtual void _fill_state_dictionary(Dictionary &p_state) const;
             /* A scripted component's own kind, chosen by whoever wrote it. Empty on the
              * built-in ones, which are found by their ComponentType instead. */
@@ -106,4 +108,3 @@ namespace godot {
             void mark_dirty();
     };
 } // namespace godot
-

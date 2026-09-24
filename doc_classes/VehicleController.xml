@@ -15,7 +15,7 @@
 		<method name="apply_config" experimental="true">
 			<return type="void" />
 			<description>
-				Updates iternal mover based on the config stored in node properties (should not be called directly)
+				Writes the vehicle's configuration into its simulation (should not be called directly)
 			</description>
 		</method>
 		<method name="battery" qualifiers="const">
@@ -383,8 +383,8 @@
 		<member name="train_type" type="int" setter="set_train_type" getter="get_train_type" enum="VehicleController.TrainType" default="0">
 			[code]Param.Type[/code]
 			Bitmask identifying a vehicle's special-cased behavior family (e.g. EZT, ET22, ET40, ET42, EP05, DMU).
-			Not every value listed on the FIZ wiki is implemented by the mover - only the ones with a matching
-			[code]dt_*[/code] constant in [code]MOVER.h[/code] are exposed here (notably, [code]182[/code] is missing).
+			Not every value listed on the FIZ wiki is implemented by the simulation - only the ones it knows are exposed
+			here (notably, [code]182[/code] is missing).
 		</member>
 		<member name="type_name" type="String" setter="set_type_name" getter="get_type_name" default="&quot;&quot;">
 			Train type name
@@ -424,14 +424,14 @@
 			<description>
 			</description>
 		</signal>
-		<signal name="mover_config_changed">
+		<signal name="simulation_configured">
 			<description>
-				Train internal configuration changed
+				The simulation now carries the vehicle's configuration - its own and every component's.
 			</description>
 		</signal>
-		<signal name="mover_initialized">
+		<signal name="simulation_initialized">
 			<description>
-				Train internal subsystem initialized
+				The simulation behind the vehicle exists and carries its configuration.
 			</description>
 		</signal>
 		<signal name="position_changed">

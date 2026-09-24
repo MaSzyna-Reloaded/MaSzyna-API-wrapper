@@ -27,6 +27,6 @@ func _battery(state:CabinState, action:StringName, value:Variant) -> Variant:
     if not action == &"toggle" and not action == &"set":
         return null
     # Train.cpp:2363 - toggling turns the battery on when the 24V circuit is not powered
-    var enabled:bool = not state.vehicle_state().get("power24_available", false) if value == null else bool(value)
+    var enabled:bool = not state.vehicle_state_value("power24_available", false) if value == null else bool(value)
     state.set_value(CONTROL, enabled)
     return state.send_vehicle_command("battery", enabled)

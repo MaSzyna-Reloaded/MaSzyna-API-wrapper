@@ -1,87 +1,89 @@
-#include "MoverEngineBackend.hpp"
-#include "../mover/MoverBackend.hpp"
-#include "VehicleEngine.hpp"
 #include "../core/VehicleController.hpp"
+#include "../mover/MoverBackend.hpp"
+#include "../mover/MoverTypes.hpp"
+#include "MoverEngineBackend.hpp"
+#include "VehicleEngine.hpp"
+#include <algorithm>
 
 namespace godot {
     bool MoverEngineBackend::get_main_switch_enabled(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->Mains : false;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Mains : false;
     }
 
     bool MoverEngineBackend::get_main_switch_closable(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->MainSwitchCheck() : false;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->MainSwitchCheck() : false;
     }
 
     double MoverEngineBackend::get_motor_torque(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->Mm : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Mm : 0.0;
     }
 
     double MoverEngineBackend::get_wheel_torque(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->Mw : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Mw : 0.0;
     }
 
     double MoverEngineBackend::get_wheel_force(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->Fw : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Fw : 0.0;
     }
 
     double MoverEngineBackend::get_tractive_force(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->Ft : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->Ft : 0.0;
     }
 
     bool MoverEngineBackend::get_compressor_enabled(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->CompressorFlag : false;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->CompressorFlag : false;
     }
 
     bool MoverEngineBackend::get_compressor_allowed(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->CompressorAllow : false;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->CompressorAllow : false;
     }
 
     double MoverEngineBackend::get_power(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->EnginePower : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EnginePower : 0.0;
     }
 
     double MoverEngineBackend::get_rpm_count(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->enrot : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->enrot : 0.0;
     }
 
     double MoverEngineBackend::get_rpm_ratio(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EngineRPMRatio() : 0.0;
     }
 
     double MoverEngineBackend::get_circuit_nmax_rpm(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->nmax * 60.0 : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->nmax * 60.0 : 0.0;
     }
 
     int MoverEngineBackend::get_damage(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->EngDmgFlag : 0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->EngDmgFlag : 0;
     }
 
     double MoverEngineBackend::get_main_switch_time(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->MainsInitTimeCountdown : 0.0;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->MainsInitTimeCountdown : 0.0;
     }
 
     bool MoverEngineBackend::get_main_no_power_pos(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->IsMainCtrlNoPowerPos() : false;
     }
 
     void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-        p_mover->EngineType = p_engine->engine_type_map.at(p_engine->get_engine_type());
+        TMoverParameters *p_mover = owner.get_mover();
+        p_mover->EngineType = mover_engine_type(p_engine->get_engine_type());
 
         p_mover->Transmision.NToothM = p_engine->get_transmission_gear_teeth_motor();
         p_mover->Transmision.NToothW = p_engine->get_transmission_gear_teeth_wheel();
@@ -90,10 +92,10 @@ namespace godot {
         // else in Mover.cpp. Without this, Transmision.Ratio stays at its compiled default
         // (1.0), silently dropping the real gear ratio out of Mw/Fw/Ft (ElectricSeriesMotor
         // case, Mover.cpp ~line 5791) and undertractioning every geared vehicle.
-        p_mover->Transmision.Ratio =
-                p_engine->get_transmission_gear_teeth_motor() > 0
-                        ? static_cast<double>(p_engine->get_transmission_gear_teeth_wheel()) / p_engine->get_transmission_gear_teeth_motor()
-                        : 1.0;
+        p_mover->Transmision.Ratio = p_engine->get_transmission_gear_teeth_motor() > 0
+                                             ? static_cast<double>(p_engine->get_transmission_gear_teeth_wheel()) /
+                                                       p_engine->get_transmission_gear_teeth_motor()
+                                             : 1.0;
         p_mover->Transmision.Efficiency = p_engine->get_transmission_efficiency();
         p_mover->Ftmax = p_engine->get_maximum_traction_force();
         p_mover->HasControlPressureSwitch = p_engine->get_pressure_switch_present();
@@ -102,7 +104,7 @@ namespace godot {
             fan.speed = static_cast<float>(p_engine->get_motor_blowers_speed());
             fan.sustain_time = static_cast<float>(p_engine->get_motor_blowers_sustain_time());
             fan.min_start_velocity = static_cast<float>(p_engine->get_motor_blowers_start_velocity());
-            fan.start_type = p_engine->start_mode_map.at(p_engine->get_motor_blowers_start_mode());
+            fan.start_type = mover_start_mode(p_engine->get_motor_blowers_start_mode());
         }
 
         p_mover->MainCtrlPosNo = p_engine->get_cntrl_main_controller_position_count();
@@ -139,7 +141,8 @@ namespace godot {
             const Ref<MotorParameter> &row = p_engine->get_motor_param_table()[i];
             if (row == nullptr || !row.is_valid() || row.is_null()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleEngine]: p_engine->get_motor_param_table() property is null at index " + String::num(i));
+                        "[VehicleEngine]: p_engine->get_motor_param_table() property is null at index " +
+                        String::num(i));
                 return;
             }
 
@@ -161,12 +164,42 @@ namespace godot {
     }
 
     void MoverEngineBackend::fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const {
-        TMoverParameters *p_mover = mover_of(p_engine);
-                if (p_mover == nullptr) {
+        TMoverParameters *p_mover = owner.get_mover();
+        if (p_mover == nullptr) {
             return;
         }
         p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
         p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
+    }
+
+    bool MoverEngineBackend::main_switch(const VehicleEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->MainSwitch(p_enabled) : false;
+    }
+
+    void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        const VehicleController *controller = p_engine->get_controller();
+        if (p_mover == nullptr || controller == nullptr ||
+            controller->get_driver_type() == VehicleController::DRIVER_NOBODY) {
+            return;
+        }
+        // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its
+        // integrated controller into the power setpoint every step and passes it along the
+        // consist; without it eimic_real stays 0 and an induction motor never pulls. The
+        // train-wide ED/PN brake force split that follows it there is not ported (TODO.md).
+        const bool diesel = p_mover->EngineType == Maszyna::TEngineType::DieselEngine ||
+                            p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
+        const bool induction = p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor;
+        if (induction || (diesel && p_mover->EIMCtrlType > 0)) {
+            p_mover->CheckEIMIC(p_delta);
+            if (induction || p_mover->SpeedCtrl) {
+                p_mover->CheckSpeedCtrl(p_delta);
+            }
+            p_mover->eimic_real = std::min(p_mover->eimic, p_mover->eimicSpeedCtrl);
+            // the consist gets traction only; braking is the ED/PN split's business
+            p_mover->SendCtrlToNext("EIMIC", std::max(0.0, p_mover->eimic_real), p_mover->CabActive);
+        }
     }
 } // namespace godot

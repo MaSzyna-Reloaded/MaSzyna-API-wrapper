@@ -1,8 +1,4 @@
 #include "VehicleEngine.hpp"
-#include "../mover/MoverBackend.hpp"
-#include "MoverEngineBackend.hpp"
-#include "../core/VehicleController.hpp"
-#include <algorithm>
 #include "macros.hpp"
 
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -88,7 +84,8 @@ namespace godot {
         BIND_PROPERTY(VehicleEngine, Variant::INT, cntrl_direction_change_max_position, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_eim_control_additional_zeros, "cntrl");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_eim_control_emergency, "cntrl");
-        BIND_PROPERTY_W_HINT(VehicleEngine, Variant::INT, cntrl_eim_control_type, "cntrl", PROPERTY_HINT_ENUM, "0,1,2,3");
+        BIND_PROPERTY_W_HINT(
+                VehicleEngine, Variant::INT, cntrl_eim_control_type, "cntrl", PROPERTY_HINT_ENUM, "0,1,2,3");
         BIND_PROPERTY_W_HINT(
                 VehicleEngine, Variant::INT, cntrl_auto_relay_mode, "cntrl", PROPERTY_HINT_ENUM, "No,Yes,Optional");
         BIND_PROPERTY(VehicleEngine, Variant::BOOL, cntrl_coupled_controllers, "cntrl");
@@ -130,116 +127,114 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_main_switch_enabled"), &VehicleEngine::get_main_switch_enabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "main_switch_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "main_switch_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_switch_enabled");
         ClassDB::bind_method(D_METHOD("get_main_switch_closable"), &VehicleEngine::get_main_switch_closable);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "main_switch_closable", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "main_switch_closable", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_switch_closable");
         ClassDB::bind_method(D_METHOD("get_type"), &VehicleEngine::get_type);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "type", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "type", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_type");
         ClassDB::bind_method(D_METHOD("get_motor_torque"), &VehicleEngine::get_motor_torque);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "motor_torque", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "motor_torque", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_motor_torque");
         ClassDB::bind_method(D_METHOD("get_wheel_torque"), &VehicleEngine::get_wheel_torque);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "wheel_torque", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "wheel_torque", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_wheel_torque");
         ClassDB::bind_method(D_METHOD("get_wheel_force"), &VehicleEngine::get_wheel_force);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "wheel_force", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "wheel_force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_wheel_force");
         ClassDB::bind_method(D_METHOD("get_tractive_force"), &VehicleEngine::get_tractive_force);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "tractive_force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tractive_force");
         ClassDB::bind_method(D_METHOD("get_compressor_enabled"), &VehicleEngine::get_compressor_enabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "compressor_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_compressor_enabled");
         ClassDB::bind_method(D_METHOD("get_compressor_allowed"), &VehicleEngine::get_compressor_allowed);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "compressor_allowed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_compressor_allowed");
         ClassDB::bind_method(D_METHOD("get_power"), &VehicleEngine::get_power);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power");
         ClassDB::bind_method(D_METHOD("get_rpm_count"), &VehicleEngine::get_rpm_count);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "rpm_count", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "rpm_count", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_rpm_count");
         ClassDB::bind_method(D_METHOD("get_rpm_ratio"), &VehicleEngine::get_rpm_ratio);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "rpm_ratio", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "rpm_ratio", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_rpm_ratio");
         ClassDB::bind_method(D_METHOD("get_circuit_nmax_rpm"), &VehicleEngine::get_circuit_nmax_rpm);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "circuit_nmax_rpm", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "circuit_nmax_rpm", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_circuit_nmax_rpm");
         ClassDB::bind_method(D_METHOD("get_damage"), &VehicleEngine::get_damage);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "damage", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "damage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_damage");
         ClassDB::bind_method(D_METHOD("get_main_switch_time"), &VehicleEngine::get_main_switch_time);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "main_switch_time", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "main_switch_time", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_switch_time");
         ClassDB::bind_method(D_METHOD("get_main_no_power_pos"), &VehicleEngine::get_main_no_power_pos);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "main_no_power_pos", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_no_power_pos");
     }
 
     // Original engine: the main switch closing and opening is what "the engine started/stopped"
-    // means here (Mains, Mover.cpp). Detected once per tick against this part's own member - it
+    // means here. Detected once per tick against this part's own member - it
     // used to be compared against the state dictionary while that dictionary was being filled,
     // so the signal fired on a read rather than on a change.
     void VehicleEngine::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
-        const VehicleController *controller = get_controller();
-        if (controller != nullptr && controller->get_driver_type() != VehicleController::DRIVER_NOBODY) {
-            // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its
-            // integrated controller into the power setpoint every step and passes it along the
-            // consist; without it eimic_real stays 0 and an induction motor never pulls. The
-            // train-wide ED/PN brake force split that follows it there is not ported (TODO.md).
-            const bool diesel = p_mover->EngineType == Maszyna::TEngineType::DieselEngine ||
-                                p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
-            const bool induction = p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor;
-            if (induction || (diesel && p_mover->EIMCtrlType > 0)) {
-                p_mover->CheckEIMIC(p_delta);
-                if (induction || p_mover->SpeedCtrl) {
-                    p_mover->CheckSpeedCtrl(p_delta);
-                }
-                p_mover->eimic_real = std::min(p_mover->eimic, p_mover->eimicSpeedCtrl);
-                // the consist gets traction only; braking is the ED/PN split's business
-                p_mover->SendCtrlToNext("EIMIC", std::max(0.0, p_mover->eimic_real), p_mover->CabActive);
-            }
+        if (engine_backend != nullptr) {
+            engine_backend->process(this, p_delta);
         }
-        if (previous_main_switch == p_mover->Mains) {
+        const bool main_switch_enabled = get_main_switch_enabled();
+        if (previous_main_switch == main_switch_enabled) {
             return;
         }
-        previous_main_switch = p_mover->Mains;
+        previous_main_switch = main_switch_enabled;
         emit_signal(previous_main_switch ? "engine_start" : "engine_stop");
     }
 
@@ -249,8 +244,7 @@ namespace godot {
     }
 
     void VehicleEngine::_fill_state_dictionary(Dictionary &p_state) const {
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["main_switch_enabled"] = get_main_switch_enabled();
@@ -272,11 +266,7 @@ namespace godot {
     }
 
     bool VehicleEngine::main_switch(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
-            return false;
-        }
-        return mover->MainSwitch(p_enabled);
+        return engine_backend != nullptr ? engine_backend->main_switch(this, p_enabled) : false;
     }
 
     void VehicleEngine::_register_commands() {

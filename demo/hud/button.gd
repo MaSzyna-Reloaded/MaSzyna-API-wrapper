@@ -6,11 +6,14 @@ class_name DebugButton
 var _dirty = false
 var _controller:VehicleController
 
-@export_node_path("VehiclePhysicsNode") var controller:NodePath:
+## The vehicle this widget drives, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:VehicleController:
     set(x):
-        _dirty = true
-        _controller = null
-        controller = x
+        if not vehicle == x:
+            vehicle = x
+            _controller = x
+            _dirty = true
 
 @export var command:String
 @export var command_argument:String
@@ -23,9 +26,7 @@ func _process(delta):
     if _dirty:
         _dirty = false
 
-        if not _controller and controller:
-            var physics_node: VehiclePhysicsNode = get_node_or_null(controller)
-            _controller = physics_node.get_controller() if physics_node else null
+        if _controller:
             disabled = false
         else:
             disabled = true

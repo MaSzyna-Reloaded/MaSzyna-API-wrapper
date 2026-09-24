@@ -1,6 +1,5 @@
 #include "VehicleElectricEngine.hpp"
-#include "../mover/MoverBackend.hpp"
-#include "MoverElectricEngineBackend.hpp"
+#include "VehicleElectricEngineBackend.hpp"
 #include "macros.hpp"
 
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -427,13 +426,11 @@ namespace godot {
 
 
     bool VehicleElectricEngine::has_accumulator() const {
-        const TMoverParameters *mover = mover_of(this);
-        return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::Accumulator;
+        return power_source == VehicleController::POWER_SOURCE_ACCUMULATOR;
     }
 
     bool VehicleElectricEngine::has_power_cable() const {
-        const TMoverParameters *mover = mover_of(this);
-        return mover != nullptr && mover->EnginePowerSource.SourceType == TPowerSource::PowerCable;
+        return power_source == VehicleController::POWER_SOURCE_POWERCABLE;
     }
 
     void VehicleElectricEngine::_fill_state_dictionary(Dictionary &p_state) const {
@@ -448,8 +445,7 @@ namespace godot {
         p_state["fuse_active"] = get_fuse_active();
         p_state["motor_connectors_open"] = get_motor_connectors_open();
         VehicleEngine::_fill_state_dictionary(p_state);
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["converter_enabled"] = get_converter_enabled();
@@ -495,99 +491,62 @@ namespace godot {
     }
 
     void VehicleElectricEngine::converter(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->ConverterSwitch(p_enabled);
+        if (electric_backend != nullptr) {
+            electric_backend->converter(this, p_enabled);
+        }
     }
 
     void VehicleElectricEngine::compressor(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->CompressorSwitch(p_enabled);
+        if (electric_backend != nullptr) {
+            electric_backend->compressor(this, p_enabled);
+        }
     }
 
     void VehicleElectricEngine::converter_fuse_reset() {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        // Original engine: OnCommand_converteroverloadrelayreset (Train.cpp:3567-3585) ->
-        // RelayReset(relay_t::primaryconverteroverload), "converterfuse_bt:"/ggConverterFuseButton
-        // (Train.cpp:10053) - the converter-specific counterpart to fuse_reset()/FuseOn() above.
-        mover->RelayReset(Maszyna::primaryconverteroverload);
+        if (electric_backend != nullptr) {
+            electric_backend->converter_fuse_reset(this);
+        }
     }
 
     void VehicleElectricEngine::pantographs_valve(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
+        if (electric_backend != nullptr) {
+            electric_backend->pantographs_valve(this, p_enabled);
+        }
     }
 
-    // Train.cpp:3336 OnCommand_pantographlowerall
     void VehicleElectricEngine::pantographs_drop_all(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->DropAllPantographs(p_enabled);
+        if (electric_backend != nullptr) {
+            electric_backend->pantographs_drop_all(this, p_enabled);
+        }
     }
 
     void VehicleElectricEngine::pantograph_compressor(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        // Original engine: OnCommand_pantographcompressoractivate (Train.cpp:2912) - runs while held,
-        // starting only with low enough pressure and live 24V power
-        if (!p_enabled) {
-            mover->PantCompFlag = false;
-            return;
-        }
-        if (mover->PantPress < 4.8 && mover->Power24vIsAvailable) {
-            mover->PantCompFlag = true;
+        if (electric_backend != nullptr) {
+            electric_backend->pantograph_compressor(this, p_enabled);
         }
     }
 
     void VehicleElectricEngine::pantograph_compressor_valve(const bool p_to_compressor) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        // Original engine: OnCommand_pantographcompressorvalveenable/disable (Train.cpp:2869-2909)
-        mover->bPantKurek3 = !p_to_compressor;
+        if (electric_backend != nullptr) {
+            electric_backend->pantograph_compressor_valve(this, p_to_compressor);
+        }
     }
 
     void VehicleElectricEngine::pantograph(const PantographSelector p_selector, const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        const Maszyna::end end = (p_selector == PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
-        mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
-        // The mover also gates every pantograph on a separate master air valve (PantsValve -
-        // PantographsCheck(), Mover.cpp) that the original engine opens from its own
-        // "raise selected pantograph" key command (Train.cpp's
-        // OnCommand_pantographraiseselected calls OperatePantographsValve itself) for vehicles -
-        // like every one wired through this wrapper's cabin today - that have no separate
-        // master-valve switch of their own ("pantvalves_sw:"/ggPantValvesButton in Train.cpp is
-        // genuinely absent from this vehicle's cabin, and nothing here has a keybind path
-        // either). Without this, no pantograph could ever be raised through the cabin, on any
-        // vehicle. Only opened here, never closed: PantographsCheck() ANDs it with each
-        // pantograph's own individual valve, so leaving it open doesn't keep a lowered
-        // pantograph powered - closing it here on every lower would also drop any OTHER,
-        // still-raised pantograph sharing the same master valve on a two-pantograph vehicle.
-        if (p_enabled) {
-            mover->OperatePantographsValve(Maszyna::operation_t::enable);
+        if (electric_backend != nullptr) {
+            electric_backend->pantograph(this, p_selector, p_enabled);
         }
     }
 
     void VehicleElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        // Written straight to the mover, like the other per-frame-relevant setters above
-        // (pantograph(), pantographs_valve()) - _apply_configuration() only runs when the
-        // controller is dirty (effectively once, at startup), so stashing this in a member for
-        // that path to pick up later would mean every subsequent frame's wire voltage is ignored.
         if (p_selector == PANTOGRAPH_FIRST) {
             pantograph_first_wire_voltage = p_voltage;
-            mover->Pantographs[0].voltage = p_voltage;
-            mover->PantFrontVolt = mover->Pantographs[0].is_active ? p_voltage : 0.0;
         } else {
             pantograph_second_wire_voltage = p_voltage;
-            mover->Pantographs[1].voltage = p_voltage;
-            mover->PantRearVolt = mover->Pantographs[1].is_active ? p_voltage : 0.0;
         }
-        mover->PantographVoltage = std::max(std::fabs(mover->PantFrontVolt), std::fabs(mover->PantRearVolt));
+        if (electric_backend != nullptr) {
+            electric_backend->set_pantograph_wire_voltage(this, p_selector, p_voltage);
+        }
     }
 
     void VehicleElectricEngine::_register_commands() {

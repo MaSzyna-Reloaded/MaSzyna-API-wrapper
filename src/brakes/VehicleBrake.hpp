@@ -6,11 +6,6 @@
 #include <godot_cpp/classes/node.hpp>
 #include <unordered_map>
 
-#define ASSERT_MOVER_BRAKE(mover_ptr, ...)                                                                             \
-    if ((mover_ptr) == nullptr || mover_ptr->Hamulec == nullptr) {                                                     \
-        return __VA_ARGS__;                                                                                            \
-    }
-
 namespace godot {
     class VehicleController;
     class VehicleBrake : public VehicleComponent {

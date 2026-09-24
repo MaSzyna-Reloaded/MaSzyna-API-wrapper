@@ -13,6 +13,12 @@
         return;                                                                                                        \
     }
 
+/* A brake component's Mover work also needs the Mover's own brake (Hamulec). */
+#define ASSERT_MOVER_BRAKE(mover_ptr, ...)                                                                             \
+    if ((mover_ptr) == nullptr || mover_ptr->Hamulec == nullptr) {                                                     \
+        return __VA_ARGS__;                                                                                            \
+    }
+
 namespace godot {
     /// The Mover of the vehicle this component belongs to, or nullptr while it belongs to none.
     inline TMoverParameters *mover_of(const VehicleComponent *p_component) {

@@ -1,6 +1,5 @@
 #pragma once
 #include "../core/VehicleComponent.hpp"
-#include "../maszyna/McZapkie/MOVER.h"
 #include "macros.hpp"
 #include <godot_cpp/classes/node.hpp>
 

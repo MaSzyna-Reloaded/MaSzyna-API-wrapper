@@ -1,6 +1,5 @@
 #include "VehicleDieselEngine.hpp"
 #include "../mover/MoverBackend.hpp"
-#include "MoverDieselEngineBackend.hpp"
 #include "macros.hpp"
 
 #include <algorithm>

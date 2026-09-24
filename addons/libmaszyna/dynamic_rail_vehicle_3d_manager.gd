@@ -40,8 +40,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
     # v14: bumped on request together with the E186 cab work, the structure itself is unchanged.
     # v18: the cache holds a VehicleStructure - what the MMD says the vehicle is built from -
-    # instead of a PackedScene of the vehicle's nodes.
-    return ("structure-v18:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # instead of a PackedScene of the vehicle's nodes. v19: spring brake, line breaker and cab gauge
+    # fixes of 2026-09-24 (catalog entries, component defaults) - bumped on request.
+    return ("structure-v19:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a

@@ -68,7 +68,7 @@ namespace godot {
             VisibleOnScreenNotifier3D *visibility_notifier = nullptr;
             bool is_visible = true;
             /// Fallback for maszyna/vehicles/detail_distance
-            static constexpr float DEFAULT_VEHICLE_DETAIL_DISTANCE_M = 1000.0;
+            static constexpr float DEFAULT_VEHICLE_DETAIL_DISTANCE_M = 350.0;
             /// maszyna/vehicles/detail_distance is the distance the node hierarchy is
             /// dropped at; it is taken back this much closer, so a vehicle sitting on the boundary
             /// is not rebuilt over and over. Proportional, because a fixed margin is either nothing

@@ -1,4 +1,4 @@
-extends HFlowContainer
+extends VBoxContainer
 
 
 ## The vehicle this panel shows, handed to it by the HUD - never looked up by a path into
@@ -20,11 +20,8 @@ func _ready() -> void:
 
 func _do_update():
     controller = vehicle
-    universal_controller = (
-            controller.get_component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER)
-            as VehicleUniversalController) if controller else null
+    universal_controller = _component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER) as VehicleUniversalController
 
 
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-    pass
+func _component(type:VehicleComponentType.Type) -> VehicleComponent:
+    return controller.get_component(type) if controller else null

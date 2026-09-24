@@ -42,6 +42,15 @@ offset_bottom = 71.0
 rotation = 4.712389
 texture = SubResource("CanvasTexture_883b5")
 
+[node name="Value" type="Label" parent="."]
+layout_mode = 0
+offset_left = 22.0
+offset_top = 92.0
+offset_right = 122.0
+offset_bottom = 115.0
+theme_override_colors/font_color = Color(0, 0, 0, 1)
+horizontal_alignment = 1
+
 [node name="Label" type="Label" parent="." unique_id=1257079469]
 layout_mode = 0
 offset_left = 4.0

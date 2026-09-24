@@ -23,6 +23,11 @@ const WEATHER_PRESETS: Dictionary = {
     },
 }
 
+## The environment applied a change of its configuration - a preset, a scenery's own declarations
+## or a property written from anywhere. Whoever shows this state reacts to this instead of reading
+## the node every frame; the running clock is deliberately not announced here (see _process()).
+signal configuration_changed
+
 @export_category("Time")
 @export var use_system_time: bool = false:
     set(value):
@@ -228,21 +233,30 @@ func set_date(next_year: int, next_month: int, next_day: int) -> void:
 
 
 func _process_dirty() -> void:
+    var applied: bool = false
+
     if _dirty_weather_preset:
         _dirty_weather_preset = false
         _apply_weather_preset()
+        applied = true
 
     if _dirty_visuals:
         _dirty_visuals = false
         _apply_visual_configuration()
+        applied = true
 
     if _dirty_lights:
         _dirty_lights = false
         _sky_environment.apply_light_configuration()
+        applied = true
 
     if _dirty_time:
         _dirty_time = false
         _apply_time_configuration()
+        applied = true
+
+    if applied:
+        configuration_changed.emit()
 
 
 func _ensure_environment() -> void:

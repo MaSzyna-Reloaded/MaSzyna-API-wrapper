@@ -43,7 +43,7 @@ func test_controls_follow_weather_preset() -> void:
     controls.visible = true
     environment_node.weather = MaszynaEnvironment.Weather.WEATHER_RAIN
     environment_node._process(0.0)
-    controls._process(0.0)
+    controls._on_refresh_timeout()
 
     assert_almost_eq(controls._rain_slider.value, 0.8, 0.000001)
     assert_almost_eq(controls._cloud_slider.value, 0.9, 0.000001)

@@ -9,8 +9,8 @@ var _t:float = 0.0
 @onready var doors = $SM42/VehicleDoors
 @onready var battery_progress_bar = $%BatteryProgressBar
 
-@onready var FORWARD = $UI/MoverSwitches/General/HBoxContainer2/Forward
-@onready var REVERSE = $UI/MoverSwitches/General/HBoxContainer2/Reverse
+@onready var FORWARD = $UI/MoverSwitches/Controller/Direction/Forward
+@onready var REVERSE = $UI/MoverSwitches/Controller/Direction/Reverse
 
 const rich_print_loglevel_colors = {
     GameLog.LogLevel.DEBUG: "#777",

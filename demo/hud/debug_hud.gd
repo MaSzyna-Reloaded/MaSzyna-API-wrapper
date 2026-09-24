@@ -17,8 +17,3 @@ func _on_controlled_vehicle_changed():
     var vehicle:RailVehicle3D = _player.controlled_vehicle
     var controller:VehicleController = vehicle.get_controller() if vehicle else null
     $MoverSwitches.vehicle = controller
-    $Gauges.vehicle = controller
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-    pass

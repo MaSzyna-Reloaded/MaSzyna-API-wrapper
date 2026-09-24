@@ -1,0 +1,137 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://hud/mover_switches_engine.gd" id="1_engine"]
+[ext_resource type="PackedScene" uid="uid://cslby72tp46ig" path="res://hud/switch.tscn" id="2_switch"]
+[ext_resource type="PackedScene" uid="uid://dy8wkx8wr4gjf" path="res://hud/button.tscn" id="3_button"]
+[ext_resource type="PackedScene" path="res://hud/vertical_gauge.tscn" id="9_vgauge"]
+
+[node name="Engine" type="VBoxContainer"]
+script = ExtResource("1_engine")
+
+[node name="EngineType" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Type: -"
+
+[node name="Main" parent="." instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Main"
+type = 0
+state_property = "main_switch_enabled"
+command = "main_switch"
+
+[node name="Compressor" parent="." instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Compressor"
+state_property = "compressor_enabled"
+command = "compressor"
+
+[node name="FuseReset" parent="." instance=ExtResource("3_button")]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Overload relay reset"
+command = "fuse_reset"
+
+[node name="Diesel" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="OilPump" parent="Diesel" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Oil Pump"
+type = 1
+state_property = "oil_pump_active"
+command = "oil_pump"
+
+[node name="FuelPump" parent="Diesel" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Fuel Pump"
+type = 1
+state_property = "fuel_pump_active"
+command = "fuel_pump"
+
+[node name="Gauges" type="HFlowContainer" parent="Diesel"]
+layout_mode = 2
+
+[node name="EngineRPM" parent="Diesel/Gauges" instance=ExtResource("9_vgauge")]
+unique_name_in_owner = true
+layout_mode = 2
+value = 0.0
+max_value = 1400.0
+unit = "rpm"
+decimals = 0
+label = "RPM"
+
+[node name="OilPressure" parent="Diesel/Gauges" instance=ExtResource("9_vgauge")]
+unique_name_in_owner = true
+layout_mode = 2
+value = 0.0
+max_value = 1.0
+unit = "MPa"
+decimals = 2
+label = "Oil"
+
+[node name="Electric" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="Converter" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Converter"
+state_property = "converter_enabled"
+command = "converter"
+
+[node name="PantographsValve" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Pantographs valve"
+state_property = "current_collector/valve_enabled"
+command = "pantographs_valve"
+
+[node name="PantographFirst" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "First pantograph"
+state_property = "current_collector/pantograph_first_active"
+command = "pantograph"
+command_argument = 0
+
+[node name="PantographSecond" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Second pantograph"
+state_property = "current_collector/pantograph_second_active"
+command = "pantograph"
+command_argument = 1
+
+[node name="PantographCompressor" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Pantograph compressor"
+state_property = "current_collector/pantograph_compressor_enabled"
+command = "pantograph_compressor"
+
+[node name="PantographsDropAll" parent="Electric" instance=ExtResource("2_switch")]
+layout_mode = 2
+label = "Drop all pantographs"
+type = 0
+command = "pantographs_drop_all"
+
+[node name="ConverterFuseReset" parent="Electric" instance=ExtResource("3_button")]
+layout_mode = 2
+text = "Converter fuse reset"
+command = "converter_fuse_reset"
+
+[node name="Gauges" type="HFlowContainer" parent="Electric"]
+layout_mode = 2
+
+[node name="EngineCurrent" parent="Electric/Gauges" instance=ExtResource("9_vgauge")]
+unique_name_in_owner = true
+layout_mode = 2
+value = 0.0
+max_value = 1500.0
+unit = "A"
+decimals = 0
+label = "Current"
+
+[node name="RefreshTimer" type="Timer" parent="."]
+wait_time = 0.1
+autostart = true
+
+[connection signal="timeout" from="RefreshTimer" to="." method="_on_refresh_timer_timeout"]

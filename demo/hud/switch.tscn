@@ -8,14 +8,13 @@ offset_bottom = 24.0
 size_flags_horizontal = 3
 script = ExtResource("1_7hfja")
 
+[node name="Switch" type="CheckButton" parent="." unique_id=1943980002]
+layout_mode = 2
+disabled = true
+
 [node name="Label" type="Label" parent="." unique_id=1711133923]
 layout_mode = 2
 size_flags_horizontal = 3
-
-[node name="Switch" type="CheckButton" parent="." unique_id=1943980002]
-layout_mode = 2
-size_flags_horizontal = 10
-disabled = true
 
 [connection signal="button_up" from="Switch" to="." method="_on_switch_button_up"]
 [connection signal="pressed" from="Switch" to="." method="_on_switch_pressed"]

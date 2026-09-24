@@ -12,6 +12,8 @@ var controller:VehicleController
 ## Taken once per vehicle rather than looked up per frame - a component is a live view on the
 ## vehicle, valid for as long as the vehicle is.
 var universal_controller:VehicleUniversalController
+## The node whose vehicle_changed this panel listens to - one connection, one disconnection.
+var _bound_node:VehiclePhysicsNode
 
 
 func _ready() -> void:
@@ -19,6 +21,14 @@ func _ready() -> void:
 
 func _do_update():
     var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
+    if _bound_node and not _bound_node == physics_node:
+        _bound_node.vehicle_changed.disconnect(_do_update)
+        _bound_node = null
+    if physics_node and not _bound_node:
+        # the window can be opened before the vehicle is built, and then the component resolved
+        # here is null - the vehicle says when it has one rather than being asked again later
+        physics_node.vehicle_changed.connect(_do_update)
+        _bound_node = physics_node
     controller = physics_node.get_controller() if physics_node else null
     universal_controller = (
             controller.get_component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER)

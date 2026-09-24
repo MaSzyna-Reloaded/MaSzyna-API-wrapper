@@ -27,10 +27,20 @@ var _brakes:VehicleBrake
 var _spring_brake:VehicleSpringBrake
 var _doors:VehicleDoors
 var _security:VehicleSecuritySystem
+## The node whose vehicle_changed this panel listens to - one connection, one disconnection.
+var _bound_node:VehiclePhysicsNode
 
 
 func _do_update():
     var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
+    if _bound_node and not _bound_node == physics_node:
+        _bound_node.vehicle_changed.disconnect(_do_update)
+        _bound_node = null
+    if physics_node and not _bound_node:
+        # the window can be opened before the vehicle is built, and then the components resolved
+        # here are null - the vehicle says when it has them rather than being asked again later
+        physics_node.vehicle_changed.connect(_do_update)
+        _bound_node = physics_node
     controller = physics_node.get_controller() if physics_node else null
     _engine = _component(VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
     _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake

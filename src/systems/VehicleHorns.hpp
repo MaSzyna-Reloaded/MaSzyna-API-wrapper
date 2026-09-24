@@ -38,7 +38,7 @@ namespace godot {
             virtual bool get_high_pressed() const = 0;
             virtual bool get_whistle_pressed() const = 0;
             /* Below this the vehicle counts as standing, and the alarm chain does not sound
-             * the emergency signal (DynObj.cpp, the same 0.5 m/s the original compares against) */
+             * the emergency signal (DynObj.cpp:4888, the same 0.5 m/s the original compares against) */
             static constexpr double HORN_EMERGENCY_MIN_SPEED = 0.5;
             /* DynObj.cpp's per-frame horn combination: while moving with the alarm chain
              * pulled, the emergency signal overrides the manually commanded one. */

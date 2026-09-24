@@ -230,6 +230,12 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   train-wide ED/PN brake force split of an induction motor consist, and `EqvtPipePress = GetEPP()`
   (the handles' equivalent pipe pressure input). Also the unpowered-car copy of the controlling
   vehicle's MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
+* Rolling wheels turn at half speed: `MoverVehicleWheels::_do_process_component` adds
+  `rad_to_deg(V*dt/D)`, the original `114.59155... * V * dt / D` = `rad_to_deg(2*V*dt/D)`
+  (DynObj.cpp:3780-3784 at df5a8a8). Not fixed yet - waiting for the operator.
+* Source citations drifted: many `DynObj.cpp`/`Train.cpp`/`Mover.cpp` line numbers in comments
+  point at an older checkout of the original (e.g. wipers `DynObj.cpp:4048-4115` is 4129-4201 at
+  df5a8a8, `Train.cpp:2912` is 3682/3695). Refresh them against one named revision.
 * EIM keys `Imaxrpc` and `BRVto` (`LoadFIZ_Engine`, Mover.cpp:11304-11305) are not ported: the
   vendored Mover predates them and has no such fields.
 * Spring brake, what is left after the parity pass (2026-09-24): `springbrakerelease`

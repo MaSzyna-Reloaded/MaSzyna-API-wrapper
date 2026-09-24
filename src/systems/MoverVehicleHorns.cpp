@@ -72,6 +72,8 @@ namespace godot {
         return mover != nullptr ? TestFlag(mover->WarningSignal, 4) : false;
     }
 
+    // The combination is the vehicle layer's, not the Mover's: DynObj.cpp:4884-4891. From the
+    // Mover it reads Vel, AlarmChainFlag, EmergencyBrakeWarningSignal and WarningSignal.
     int MoverVehicleHorns::get_combined_signal() const {
         const TMoverParameters *mover = mover_of(this);
         if (mover == nullptr) {

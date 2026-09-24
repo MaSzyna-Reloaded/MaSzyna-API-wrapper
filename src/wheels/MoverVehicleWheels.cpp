@@ -113,6 +113,9 @@ namespace godot {
         p_config["axles_count"] = mover->NAxles;
     }
 
+    // The wheel angles are the vehicle layer's, not the Mover's: DynObj.cpp:3776-3792
+    // (TDynamicObject::Update, "krecenie kolami"). From the Mover it reads Vel, V, nrot and
+    // WheelDiameterL/T only.
     void MoverVehicleWheels::_do_process_component(const double p_delta) {
         TMoverParameters *p_mover = mover_of(this);
         ASSERT_MOVER(p_mover);

@@ -9,6 +9,8 @@ const VOLUME_FACTOR:float = 2.0
 const EXTERIOR_VOLUME_FACTOR:float = 1.0
 const CABIN_UNIT_SIZE_FACTOR:float = 2.0
 const EXTERIOR_UNIT_SIZE_FACTOR:float = 1.0
+## How far into its own sample a vehicle's looping running noise may start (DynObj.cpp:6511).
+const RUNNING_NOISE_MAX_START_FRACTION:float = 0.8
 const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
 ## The cab wall, as heard from inside: everything on the Exterior bus goes through one low-pass
 ## whose corner follows the listener's context. A barrier is a property of the barrier, not of
@@ -59,6 +61,9 @@ class BankRuntime extends RefCounted:
     var events_built:bool = false
     var anchored_cabin_instance_id:int = 0
     var sound_update_elapsed:float = 0.0
+    ## Where this vehicle's looping running noise starts inside its own sample, as a fraction of
+    ## it - drawn once, so every wagon of a consist runs its copy out of phase with the others.
+    var running_start_fraction:float = 0.0
     var culled:bool = false
     var last_batch:Dictionary = {}
     ## Within the culling distance, so the frame visits it - owned by _refresh_active_banks()
@@ -172,6 +177,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
     if not runtime:
         runtime = BankRuntime.new()
         runtime.player = player
+        runtime.running_start_fraction = randf_range(0.0, RUNNING_NOISE_MAX_START_FRACTION)
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
     _set_bank_vehicle(runtime, registration.get("vehicle") as RailVehicle3D)
@@ -475,8 +481,23 @@ func _update_running_sounds(
             runtime.player.play(event_name, parameters)
             continue
         if not runtime.player.is_playing(event_name):
-            runtime.player.play(event_name, parameters)
+            runtime.player.play(event_name, _loop_start_offset(runtime, event_name), parameters)
         batch[event_name] = parameters
+
+
+## Where a looping running sound starts inside its own sample. Every wagon of a consist plays the
+## same recording, and started together they comb-filter into a metallic ring heard from outside -
+## which the original names at the one place it works around it: "to reduce chance of reverb effect
+## with multiple, looping copies playing" (audiorenderer.cpp:99). Its answer is a start offset
+## drawn once per vehicle, over the first 0.8 of the sample (DynObj.cpp:6511,
+## `m_outernoise.start(Random(0.0, 80.0) * 0.01)`), and the offset is a fraction of the sample
+## rather than a time, so a short recording is shifted as much as a long one.
+func _loop_start_offset(runtime:BankRuntime, event_name:StringName) -> float:
+    var event:SfxEvent = runtime.player.bank.get_event(event_name) if runtime.player.bank else null
+    if not event or not event.clips:
+        return 0.0
+    var stream:AudioStream = (event.clips[0] as SfxClip).stream
+    return runtime.running_start_fraction * stream.get_length() if stream else 0.0
 
 
 ## Controllers of the consist driven from the listener's cab - their outer noise is replaced by the

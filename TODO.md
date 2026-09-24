@@ -585,6 +585,17 @@ meshes carry `fLight` 2.0 (264), 1.0 (39) and -1.0 (3). What is left:
 
 ## Tests
 
+* **No test stands a HUD panel next to a vehicle that is not a diesel.** Moving the panels off the
+  state dump onto typed getters broke `mover_gauges.gd` on an induction motor - it asked the
+  `VehicleEngine` interface for `get_rpm()` and `get_oil_pump_pressure()`, which belong to
+  `VehicleDieselEngine` - and nothing caught it: the fixtures build a diesel, where the call
+  resolves, and the headless smoke run has no vehicle at all. A panel test per engine kind
+  (diesel, series, induction) would have. The same gap covers the other migrated panels.
+* **A dump key does not tell you which class owns its getter.** `p_state["engine_rpm"] = get_rpm()`
+  says the name and nothing about where it is declared, so mapping keys to typed reads by grepping
+  the fill puts subclass calls behind a base-class reference. It compiles in GDScript and errors at
+  run time only on the vehicle that lacks the subclass. Check the declaring header, not the fill.
+
 * Remove simulator game data from tests - CI has no game dir. Tests loading real sceneries or
   vehicles (`td.scn`, `demo_scenery_loading.tscn`, `dynamic/pkp/...`): `test_zzz_ep07_*`
   (cab_change, cabin_main_switch, main_switch_trip_diagnostic, orientation_regression,

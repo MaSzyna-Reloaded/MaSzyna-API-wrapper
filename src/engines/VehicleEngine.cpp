@@ -1,8 +1,6 @@
 #include "VehicleEngine.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "MoverEngineBackend.hpp"
-#include "../core/VehicleController.hpp"
-#include <algorithm>
 #include "macros.hpp"
 
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -215,31 +213,14 @@ namespace godot {
     // used to be compared against the state dictionary while that dictionary was being filled,
     // so the signal fired on a read rather than on a change.
     void VehicleEngine::_do_process_component(const double p_delta) {
-        TMoverParameters *p_mover = mover_of(this);
-        ASSERT_MOVER(p_mover);
-        const VehicleController *controller = get_controller();
-        if (controller != nullptr && controller->get_driver_type() != VehicleController::DRIVER_NOBODY) {
-            // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its
-            // integrated controller into the power setpoint every step and passes it along the
-            // consist; without it eimic_real stays 0 and an induction motor never pulls. The
-            // train-wide ED/PN brake force split that follows it there is not ported (TODO.md).
-            const bool diesel = p_mover->EngineType == Maszyna::TEngineType::DieselEngine ||
-                                p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
-            const bool induction = p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor;
-            if (induction || (diesel && p_mover->EIMCtrlType > 0)) {
-                p_mover->CheckEIMIC(p_delta);
-                if (induction || p_mover->SpeedCtrl) {
-                    p_mover->CheckSpeedCtrl(p_delta);
-                }
-                p_mover->eimic_real = std::min(p_mover->eimic, p_mover->eimicSpeedCtrl);
-                // the consist gets traction only; braking is the ED/PN split's business
-                p_mover->SendCtrlToNext("EIMIC", std::max(0.0, p_mover->eimic_real), p_mover->CabActive);
-            }
+        if (engine_backend != nullptr) {
+            engine_backend->process(this, p_delta);
         }
-        if (previous_main_switch == p_mover->Mains) {
+        const bool main_switch_enabled = get_main_switch_enabled();
+        if (previous_main_switch == main_switch_enabled) {
             return;
         }
-        previous_main_switch = p_mover->Mains;
+        previous_main_switch = main_switch_enabled;
         emit_signal(previous_main_switch ? "engine_start" : "engine_stop");
     }
 

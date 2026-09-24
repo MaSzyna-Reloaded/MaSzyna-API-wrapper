@@ -22,6 +22,7 @@ namespace godot {
             double get_main_switch_time(const VehicleEngine *p_engine) const override;
             bool get_main_no_power_pos(const VehicleEngine *p_engine) const override;
             void apply_configuration(const VehicleEngine *p_engine) const override;
+            void process(const VehicleEngine *p_engine, double p_delta) const override;
             void fill_config(const VehicleEngine *p_engine, Dictionary &p_config) const override;
     };
 } // namespace godot

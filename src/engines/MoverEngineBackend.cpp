@@ -2,6 +2,7 @@
 #include "../mover/MoverBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "../core/VehicleController.hpp"
+#include <algorithm>
 
 namespace godot {
     bool MoverEngineBackend::get_main_switch_enabled(const VehicleEngine *p_engine) const {
@@ -168,5 +169,30 @@ namespace godot {
         p_config["main_controller_position_max"] = p_mover->MainCtrlPosNo;
         p_config["second_controller_position_max"] = p_mover->ScndCtrlPosNo;
         p_config["transmission_ratio"] = p_mover->Transmision.Ratio;
+    }
+
+    void MoverEngineBackend::process(const VehicleEngine *p_engine, const double p_delta) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+        const VehicleController *controller = p_engine->get_controller();
+        if (p_mover == nullptr || controller == nullptr ||
+            controller->get_driver_type() == VehicleController::DRIVER_NOBODY) {
+            return;
+        }
+        // Original engine: DynObj.cpp:3246-3283 - the driven vehicle turns the position of its
+        // integrated controller into the power setpoint every step and passes it along the
+        // consist; without it eimic_real stays 0 and an induction motor never pulls. The
+        // train-wide ED/PN brake force split that follows it there is not ported (TODO.md).
+        const bool diesel = p_mover->EngineType == Maszyna::TEngineType::DieselEngine ||
+                            p_mover->EngineType == Maszyna::TEngineType::DieselElectric;
+        const bool induction = p_mover->EngineType == Maszyna::TEngineType::ElectricInductionMotor;
+        if (induction || (diesel && p_mover->EIMCtrlType > 0)) {
+            p_mover->CheckEIMIC(p_delta);
+            if (induction || p_mover->SpeedCtrl) {
+                p_mover->CheckSpeedCtrl(p_delta);
+            }
+            p_mover->eimic_real = std::min(p_mover->eimic, p_mover->eimicSpeedCtrl);
+            // the consist gets traction only; braking is the ED/PN split's business
+            p_mover->SendCtrlToNext("EIMIC", std::max(0.0, p_mover->eimic_real), p_mover->CabActive);
+        }
     }
 } // namespace godot

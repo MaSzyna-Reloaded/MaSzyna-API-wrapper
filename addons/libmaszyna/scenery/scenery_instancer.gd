@@ -685,6 +685,8 @@ static func _build_power_source(power_source_data:MaszynaPowerSourceData) -> RID
         power_source_data.fast_fuse_repetition,
         power_source_data.slow_fuse_timeout,
         power_source_data.recuperation,
+        false,
+        power_source_data.is_section,
     )
     return power_source_rid
 

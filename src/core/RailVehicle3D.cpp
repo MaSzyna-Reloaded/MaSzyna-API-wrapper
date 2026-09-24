@@ -337,6 +337,12 @@ namespace godot {
         }
         electric_engine = Object::cast_to<VehicleElectricEngine>(
                 controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+        /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
+         * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
+         * exported width stands in for a vehicle with no electric engine to read it from. */
+        const double sliding_width =
+                electric_engine != nullptr ? electric_engine->get_power_current_collector_sliding_width() : 0.0;
+        pantograph_slider_half_width = sliding_width > 0.0 ? 0.5 * sliding_width : pantograph_collector_width;
     }
 
     void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
@@ -1396,23 +1402,24 @@ namespace godot {
             return missing;
         }
         Dictionary cache = pantograph_wire_cache[p_index];
-        // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),
-        // a new search only once the pantograph left that span - a cached height made the wire height change
-        // in steps while driving, dropping the contact (and the voltage) whenever it stepped up
+        /* The wire found last frame is kept and followed: running off the end of a span is not a
+         * loss of contact, the neighbouring span is reached along the chain in the same frame
+         * (DynObj.cpp:8742-8770). Its height is recomputed every frame - a cached height made the
+         * wire step up and down while driving and dropped the contact with it. */
         const RID wire_rid = cache.get("rid", RID());
         if (wire_rid.is_valid()) {
-            const double height = traction_power_server->wire_get_height_above(
-                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
-            if (Math::is_finite(height)) {
-                Dictionary result;
-                result["rid"] = wire_rid;
-                result["height"] = height;
-                return result;
+            const Dictionary followed = traction_power_server->wire_follow_above(
+                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width,
+                    PANTOGRAPH_HORN_WIDTH);
+            if (RID(followed["rid"]).is_valid()) {
+                cache["rid"] = followed["rid"];
+                pantograph_wire_cache[p_index] = cache;
+                return followed;
             }
         }
-        // without a wire, search the region every frame like update_traction() (DynObj.cpp:8292)
+        // the chain ran out, so search the region like update_traction() does (DynObj.cpp:8799)
         const Dictionary result = traction_power_server->wire_find_above_with_height(
-                p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
+                p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width, PANTOGRAPH_HORN_WIDTH);
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;

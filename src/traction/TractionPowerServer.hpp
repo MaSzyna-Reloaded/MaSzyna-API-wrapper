@@ -38,6 +38,13 @@ namespace godot {
             static constexpr double ENDPOINT_EPSILON = 0.25;
             static constexpr double GRID_CELL_SIZE = 500.0;
             static constexpr double QUERY_MARGIN = 10.0;
+            /* How far a wire may sit outside the collector's own half width and still be caught,
+             * by the pantograph's guide horn (DynObj.cpp:93, fWidthExtra), and how much higher a
+             * wire at the horn's tip counts than one on the slider (scene.cpp:109). */
+            static constexpr double HORN_CONTACT_RISE = 0.15;
+            /* An upper bound on stepping along the chain of spans in one frame, the original's own
+             * (DynObj.cpp:8743) - a chain that loops would otherwise never end. */
+            static constexpr int MAX_WIRE_HOPS = 30;
 
             /// Mirrors TTractionPowerSource's own members.
             struct PowerSource {
@@ -105,11 +112,11 @@ namespace godot {
             void _propagate_resistance();
             void _resistance_walk(const RID &p_from_wire, int p_direction, double p_resistance, const RID &p_source);
             /* Height of one wire above a point along the pantograph's plane; INF when the plane
-             * misses the span, or the wire is below the point or outside the collector width
-             * (scene::basic_cell::update_traction()'s geometry test). */
+             * misses the span, or the wire is below the point or beyond the reach of the collector
+             * and its horns (scene::basic_cell::update_traction()'s geometry test). */
             double _wire_height_above(
                     const Wire &p_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
-                    const Vector3 &p_left, double p_width) const;
+                    const Vector3 &p_left, double p_width, double p_horn_width) const;
 
         public:
             TractionPowerServer();
@@ -142,22 +149,22 @@ namespace godot {
              * relaxation the original uses - and `p_current` the instantaneous draw. */
             double wire_get_voltage(const RID &p_wire, double p_assumed_voltage, double p_current);
 
-            /// Which wire span passes above a point within the collector's width, or an invalid RID.
-            RID wire_find_above(
-                    const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward, const Vector3 &p_left,
-                    double p_width) const;
-            /* The same query with the wire's height, as {rid, height}. `height` is INF when no
+            /* Which wire span passes above a point, as {rid, height}. `height` is INF when no
              * wire is found - the original's own "no wire in reach" (scene.cpp resets
              * PantTraction to DBL_MAX before every scan), which the raise simulation relies on to
              * keep extending the pantograph to its joint limit. */
             Dictionary wire_find_above_with_height(
                     const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward, const Vector3 &p_left,
-                    double p_width) const;
-            /* The height of an already found wire, recomputed every frame like the original does
-             * for the pantograph's current wire (DynObj.cpp:8255-8284) - INF once the pantograph
-             * has left the span, which calls for a new search. */
-            double wire_get_height_above(
-                    const RID &p_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
-                    const Vector3 &p_left, double p_width) const;
+                    double p_width, double p_horn_width) const;
+
+            /* Where a pantograph already on `p_from_wire` is now, as {rid, height}. Running off
+             * the end of a span is not a loss of contact: the spans are a doubly linked list and
+             * the original steps along it until the point falls inside one
+             * (vehicle_table::update_traction(), DynObj.cpp:8742-8770). An invalid `rid` means
+             * the chain ran out or the wire left the collector's reach sideways, which is the
+             * original's own signal to search the area instead. */
+            Dictionary wire_follow_above(
+                    const RID &p_from_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
+                    const Vector3 &p_left, double p_width, double p_horn_width) const;
     };
 } // namespace godot

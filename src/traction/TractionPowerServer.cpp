@@ -31,14 +31,13 @@ namespace godot {
                 D_METHOD("wire_get_voltage", "wire", "assumed_voltage", "current"),
                 &TractionPowerServer::wire_get_voltage);
         ClassDB::bind_method(
-                D_METHOD("wire_find_above", "position", "up", "forward", "left", "width"),
-                &TractionPowerServer::wire_find_above);
-        ClassDB::bind_method(
-                D_METHOD("wire_find_above_with_height", "position", "up", "forward", "left", "width"),
+                D_METHOD("wire_find_above_with_height", "position", "up", "forward", "left", "width", "horn_width"),
                 &TractionPowerServer::wire_find_above_with_height);
         ClassDB::bind_method(
-                D_METHOD("wire_get_height_above", "wire", "position", "up", "forward", "left", "width"),
-                &TractionPowerServer::wire_get_height_above);
+                D_METHOD(
+                        "wire_follow_above", "from_wire", "position", "up", "forward", "left", "width",
+                        "horn_width"),
+                &TractionPowerServer::wire_follow_above);
     }
 
     TractionPowerServer::TractionPowerServer() {
@@ -385,15 +384,9 @@ namespace godot {
         return 0.0;
     }
 
-    RID TractionPowerServer::wire_find_above(
-            const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward, const Vector3 &p_left,
-            const double p_width) const {
-        return wire_find_above_with_height(p_position, p_up, p_forward, p_left, p_width)["rid"];
-    }
-
     Dictionary TractionPowerServer::wire_find_above_with_height(
             const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward, const Vector3 &p_left,
-            const double p_width) const {
+            const double p_width, const double p_horn_width) const {
         const Vector2 query_center(p_position.x, p_position.z);
         const Rect2 query_aabb(
                 query_center - (Vector2(1.0, 1.0) * QUERY_MARGIN), Vector2(1.0, 1.0) * QUERY_MARGIN * 2.0);
@@ -406,7 +399,8 @@ namespace godot {
             if (wire == nullptr) {
                 continue;
             }
-            const double vertical = _wire_height_above(*wire, p_position, p_up, p_forward, p_left, p_width);
+            const double vertical =
+                    _wire_height_above(*wire, p_position, p_up, p_forward, p_left, p_width, p_horn_width);
             if (vertical < best_height) {
                 best_height = vertical;
                 best_rid = wire_rid;
@@ -418,19 +412,54 @@ namespace godot {
         return result;
     }
 
-    double TractionPowerServer::wire_get_height_above(
-            const RID &p_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
-            const Vector3 &p_left, const double p_width) const {
-        const Wire *wire = wires.getptr(p_wire);
-        if (wire == nullptr) {
-            return INFINITY;
+    Dictionary TractionPowerServer::wire_follow_above(
+            const RID &p_from_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
+            const Vector3 &p_left, const double p_width, const double p_horn_width) const {
+        Dictionary result;
+        result["rid"] = RID();
+        result["height"] = INFINITY;
+
+        RID wire_rid = p_from_wire;
+        for (int hop = 0; hop < MAX_WIRE_HOPS; ++hop) {
+            const Wire *wire = wires.getptr(wire_rid);
+            if (wire == nullptr) {
+                return result;
+            }
+            const Vector3 parametric = wire->p2 - wire->p1;
+            const double front_dot = parametric.dot(p_forward);
+            if (Math::is_zero_approx(front_dot)) {
+                return result;
+            }
+            /* Which end the pantograph ran off decides which neighbour it ran onto - the two
+             * ends of a span are hvNext[0] and hvNext[1] of the original's own list. */
+            const double t = -(wire->p1.dot(p_forward) - p_position.dot(p_forward)) / front_dot;
+            const double t_tolerance = ENDPOINT_EPSILON / Math::abs(front_dot);
+            if (t < -t_tolerance) {
+                wire_rid = wire->next[0];
+                continue;
+            }
+            if (t > 1.0 + t_tolerance) {
+                wire_rid = wire->next[1];
+                continue;
+            }
+            const double vertical =
+                    _wire_height_above(*wire, p_position, p_up, p_forward, p_left, p_width, p_horn_width);
+            if (!Math::is_finite(vertical)) {
+                /* Under the span but out of the collector's reach sideways. The original gives up
+                 * on the chain here too and searches the area, because a parallel span it cannot
+                 * see from this one may be the wire actually overhead (DynObj.cpp:8791). */
+                return result;
+            }
+            result["rid"] = wire_rid;
+            result["height"] = vertical;
+            return result;
         }
-        return _wire_height_above(*wire, p_position, p_up, p_forward, p_left, p_width);
+        return result;
     }
 
     double TractionPowerServer::_wire_height_above(
             const Wire &p_wire, const Vector3 &p_position, const Vector3 &p_up, const Vector3 &p_forward,
-            const Vector3 &p_left, const double p_width) const {
+            const Vector3 &p_left, const double p_width, const double p_horn_width) const {
         const Vector3 parametric = p_wire.p2 - p_wire.p1;
         const double front_dot = parametric.dot(p_forward);
         if (Math::is_zero_approx(front_dot)) {
@@ -453,9 +482,16 @@ namespace godot {
         if (vertical < 0.0) {
             return INFINITY;
         }
-        if (Math::abs(to_contact.dot(p_left)) - p_width > 0.0) {
+        /* Beyond the slider the wire is not lost: it runs onto the horn, which leads it back
+         * (scene.cpp:105-112). A wire over the horn is counted as geometrically higher, rising to
+         * HORN_CONTACT_RISE at the horn's tip, so a span properly overhead still wins against it. */
+        const double lateral = Math::abs(to_contact.dot(p_left)) - p_width;
+        if (lateral <= 0.0) {
+            return vertical;
+        }
+        if (lateral >= p_horn_width) {
             return INFINITY;
         }
-        return vertical;
+        return vertical + (HORN_CONTACT_RISE * lateral / p_horn_width);
     }
 } // namespace godot

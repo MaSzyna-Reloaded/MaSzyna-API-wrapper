@@ -37,6 +37,14 @@ namespace godot {
             Vector3 pantograph_front_offset;
             Vector3 pantograph_rear_offset;
             double pantograph_collector_width = 0.5;
+            /* Half of the slider's width, taken from the vehicle's own CSW when its configuration
+             * lands - see _on_vehicle_config_changed(). */
+            double pantograph_slider_half_width = 0.5;
+            /* How far outside the slider the guide horn still catches a wire (DynObj.cpp:93,
+             * fWidthExtra). Without it a pantograph drops the wire wherever it swings sideways -
+             * at a span junction, over a switch, or on the zigzag - and the vehicle reads a real
+             * loss of voltage where the original keeps contact. */
+            static constexpr double PANTOGRAPH_HORN_WIDTH = 0.381;
             TypedArray<NodePath> pantograph_front_arm_paths;
             TypedArray<NodePath> pantograph_rear_arm_paths;
             // three per wiper (arm 1, arm 2, blade), an empty path for a missing one

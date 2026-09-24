@@ -419,10 +419,12 @@ widgets should ask the model to switch the light (`lights_state`) instead of pok
   shows, and fabricated vehicles (`RailVehicle3D`, a cabin with only the controls under test,
   `TrainController` with a trimmed `.fiz`/`.mmd`, no e3d) - copied and cut from what the data-dir
   scenery parses into.
-* `test_dynamic_rail_vehicle_manager.gd` fails - the bank's `registration.controller` is null
-  while `vehicle.get_controller()` already returns one, so the sound bank registered before the
-  vehicle had resolved its controller and the 4 Hz sweep has not caught up within the three idle
-  frames the test waits. Confirmed pre-existing at `87d5f8d`, before any of the #184 work.
+* `demo/tests/fixtures/test_vehicle.fiz` no longer imports - `godot-double --headless --path demo
+  --import` prints `Error importing 'res://tests/fixtures/test_vehicle.fiz'` and rewrites its
+  `.import` with `valid=false`. `FizImportPlugin._get_resource_type()` returns `Resource` since
+  `b0affd6` while the committed `.import` still says `PackedScene`, so either
+  `FizVehicleBuilder.build_model_at()` returns null on the fixture or the save fails. Everything
+  resting on that fixture is dead until it is fixed.
 * Tests switch the game dir with `UserSettings.save_maszyna_game_dir()`, which writes the user's
   `settings.cfg` (a failed/killed test leaves it pointing at a `user://gut/...` fixture dir):
   `test_dynamic_rail_vehicle_manager.gd`, `test_e3d_lights_state.gd`,
@@ -432,6 +434,10 @@ widgets should ask the model to switch the light (`lights_state`) instead of pok
 
 ## Physics performance
 
+* The frame-rate drop with a consist in a scenery is **the scenery's dynamic lights**, reported by
+  the operator - not the vehicle step, which is where this section spent its measurements. The
+  lights became real spot/omni RIDs streamed per instance with `FINDINGS.md`, 2026-09-21; nothing
+  bounds how many of them are lit at once. Measure the count before changing anything.
 
 
 * Those measurements were taken on a `make compile-debug` build, where the vendored `Mover.cpp` is

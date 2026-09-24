@@ -70,7 +70,11 @@ namespace godot {
              * made of. Its components add theirs. */
             void _fill_state_dictionary(Dictionary &p_state) const;
 
-            /* Live state, read straight from the backend - nothing is stored. */
+        public:
+            /* Live state, read straight from the backend - nothing is stored. Public because it
+             * is: every one of these is bound for GDScript, and a reader in C++ - the node that
+             * draws the vehicle, a component of another kind - has the same right to it as a
+             * script has. */
             /* The battery as it actually is, which drains and recharges. The authored
              * `battery_voltage` property next to it is the nominal one the vehicle is built with
              * and that the simulation keeps as the nominal battery voltage - the two are only equal

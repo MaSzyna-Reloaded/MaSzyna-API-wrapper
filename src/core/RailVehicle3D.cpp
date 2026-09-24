@@ -8,6 +8,8 @@
 #include "VehiclePhysicsNode.hpp"
 
 #include "../engines/VehicleElectricEngine.hpp"
+#include "../engines/VehicleDieselEngine.hpp"
+#include "../lighting/VehicleLighting.hpp"
 #include "../physics/RailVehicleServer.hpp"
 #include "../tracks/TrackManager.hpp"
 #include "GameLog.hpp"
@@ -368,14 +370,21 @@ namespace godot {
      * node holding the parts of the empty vehicle forever. */
     void RailVehicle3D::_adopt_vehicle_parts() {
         electric_engine = nullptr;
+        engine = nullptr;
+        diesel_engine = nullptr;
+        lighting = nullptr;
         for (int index = 0; index < pantograph_wire_cache.size(); ++index) {
             pantograph_wire_cache[index] = Dictionary();
         }
         if (controller == nullptr) {
             return;
         }
-        electric_engine = Object::cast_to<VehicleElectricEngine>(
-                controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+        VehicleComponent *engine_component = controller->get_component(VehicleComponentType::COMPONENT_ENGINE);
+        electric_engine = Object::cast_to<VehicleElectricEngine>(engine_component);
+        engine = Object::cast_to<VehicleEngine>(engine_component);
+        diesel_engine = Object::cast_to<VehicleDieselEngine>(engine_component);
+        lighting = Object::cast_to<VehicleLighting>(
+                controller->get_component(VehicleComponentType::COMPONENT_LIGHTING));
         /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
          * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
          * exported width stands in for a vehicle with no electric engine to read it from. */
@@ -423,8 +432,7 @@ namespace godot {
         if (cabin != nullptr) {
             cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
         }
-        const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
-        _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
+        _on_roof_light_changed(lighting != nullptr && lighting->get_roof_light_enabled());
         emit_signal(controller_changed_signal);
     }
 
@@ -1191,20 +1199,21 @@ namespace godot {
         if (model_node == nullptr || controller == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
             return;
         }
-        const Dictionary state = controller->get_state();
-        const int engine_type = state.get("engine_type", VehicleEngine::NONE);
+        const int engine_type = engine != nullptr ? engine->get_type() : VehicleEngine::NONE;
         if (engine_type != VehicleEngine::DIESEL && engine_type != VehicleEngine::DIESEL_ELECTRIC) {
             return;
         }
 
-        const double revolutions = state.get("engine_rpm_count", 0.0); // rev/s, as the Mover keeps enrot
-        const double max_rpm = state.get("diesel_max_rpm", 0.0);       // rev/min, the top notch of the characteristic
-        const double power = state.get("engine_power", 0.0);           // kW
-        const double current = state.get("engine_current", 0.0);
-        const double direction = state.get("direction_absolute", 0.0);
+        const double revolutions = engine->get_rpm_count(); // rev/s, as the Mover keeps enrot
+        const double max_rpm = diesel_engine != nullptr ? diesel_engine->get_max_rpm() : 0.0;
+        const double power = engine->get_power(); // kW
+        /* The motor's current, which only an engine that has motors has - it used to be read as
+         * "engine_current", a key no component publishes, so this term was always zero. */
+        const double current = electric_engine != nullptr ? electric_engine->get_motor_current() : 0.0;
+        const double direction = controller->get_direction_absolute();
 
         double intensity;
-        if (bool(state.get("diesel_spinup", false))) {
+        if (diesel_engine != nullptr && diesel_engine->get_spinup()) {
             intensity = revolutions / 4.0 * 0.01;
         } else {
             // The original compares rev/min against rev/s (particles.cpp:196), which leaves the
@@ -1225,7 +1234,7 @@ namespace godot {
         // particles already in the air, so it scales how many are born instead - the plume thins
         // out rather than stepping down as a whole (see FINDINGS.md). The original also lets the
         // revolutions deficit go negative and subtract from the particle budget; this clamps.
-        const double fill = CLAMP(double(state.get("diesel_fill", 0.0)), 0.0, 1.0);
+        const double fill = CLAMP(diesel_engine != nullptr ? diesel_engine->get_fill() : 0.0, 0.0, 1.0);
         model_node->call("set_smoke_intensity", CLAMP(intensity, 0.0, 1.0) * fill);
     }
 
@@ -1357,22 +1366,17 @@ namespace godot {
             return;
         }
         const PantographFrame frame = _pantograph_frame();
-        const Dictionary &state = p_state;
+        const bool first_active = electric_engine->get_collector_pantograph_first_active();
+        const bool second_active = electric_engine->get_collector_pantograph_second_active();
         const double assumed_voltage =
-                MAX(Math::abs(double(state.get("current_collector/pantograph_first_voltage", 0.0))),
-                    Math::abs(double(state.get("current_collector/pantograph_second_voltage", 0.0))));
-        const bool front_active =
-                bool(state.get("current_collector/pantograph_first_active", false)) && pantograph_front_converged;
-        const bool rear_active =
-                bool(state.get("current_collector/pantograph_second_active", false)) && pantograph_rear_converged;
+                MAX(Math::abs(electric_engine->get_collector_pantograph_first_voltage()),
+                    Math::abs(electric_engine->get_collector_pantograph_second_voltage()));
+        const bool front_active = first_active && pantograph_front_converged;
+        const bool rear_active = second_active && pantograph_rear_converged;
         const int active_count = int(front_active) + int(rear_active);
-        const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
-        _report_contact_gap(
-                2, bool(state.get("current_collector/pantograph_first_active", false)),
-                pantograph_front_converged);
-        _report_contact_gap(
-                3, bool(state.get("current_collector/pantograph_second_active", false)),
-                pantograph_rear_converged);
+        const double current = active_count > 0 ? controller->get_current0() / active_count : 0.0;
+        _report_contact_gap(2, first_active, pantograph_front_converged);
+        _report_contact_gap(3, second_active, pantograph_rear_converged);
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
@@ -1420,16 +1424,15 @@ namespace godot {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
         }
-        const Dictionary &state = p_state;
         pantograph_front_converged = _update_pantograph_arm(
                 0, pantograph_front_geometry, pantograph_front_arm_nodes,
-                state.get("current_collector/pantograph_first_active", false), p_delta, state);
+                electric_engine->get_collector_pantograph_first_active(), p_delta);
         if (is_visible && !pantograph_front_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_front_arm_nodes, pantograph_front_geometry);
         }
         pantograph_rear_converged = _update_pantograph_arm(
                 1, pantograph_rear_geometry, pantograph_rear_arm_nodes,
-                state.get("current_collector/pantograph_second_active", false), p_delta, state);
+                electric_engine->get_collector_pantograph_second_active(), p_delta);
         if (is_visible && !pantograph_rear_geometry.is_empty()) {
             _apply_pantograph_animation(pantograph_rear_arm_nodes, pantograph_rear_geometry);
         }
@@ -1437,14 +1440,13 @@ namespace godot {
 
     bool RailVehicle3D::_update_pantograph_arm(
             const int p_index, Dictionary p_geometry, const TypedArray<Node3D> &p_arm_nodes, const bool p_is_active,
-            const double p_delta, const Dictionary &p_state) {
+            const double p_delta) {
         if (p_geometry.is_empty()) {
             return true;
         }
-        const Dictionary &state = p_state;
-        const double pressure = state.get("current_collector/pantograph_tank_pressure", 0.0);
+        const double pressure = electric_engine->get_collector_pantograph_tank_pressure();
         const bool power_available =
-                bool(state.get("power24_available", false)) || bool(state.get("power110_available", false));
+                controller->get_power24_available() || controller->get_power110_available();
         const bool is_ezt =
                 (controller->get_train_type() & VehicleController::TRAIN_TYPE_EZT) == VehicleController::TRAIN_TYPE_EZT;
         const double pressure_threshold = is_ezt ? 2.45 : 3.45;

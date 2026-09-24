@@ -291,9 +291,22 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   * 14 `X::get_instance()->` dereferences had no null check, among them `stream_free()` inside
     `instance_free()` itself and the `EXIT_TREE` pair;
   * `instance_free()` held a `HashMap` iterator across cleanup that re-enters the same server.
-* **Not yet fixed.** The remedy is a design decision: either the streaming preload stops creating
-  renderer resources (parse on the worker, build on the main thread), or the worker is drained
-  before a teardown frees anything. Recorded in `TODO.md`.
+* **Half fixed, 2026-09-24.** The worker is now drained before a teardown frees anything:
+  `SceneryStreamingServer::drain()` stops the planning thread and joins it, and
+  `maszyna_include.gd::_exit_tree()` calls it before `_free_owned_rids()`. The timing is the whole
+  point - the server's own destructor already joined the thread, but it runs at module
+  de-initialisation, long after the scripts the worker calls into are gone, which is why quitting
+  during a load crashed on a worker thread with `#0 0x0`, a jump through a Callable that no longer
+  had a script. The reload path (`_clear_content()`) had been stopping streaming since `8d02b43`;
+  `_exit_tree()` had not.
+* **Still open:** the preload still creates renderer resources on the worker, so the race exists
+  whenever a teardown overlaps a *running* stream rather than a shutdown. Parsing on the worker
+  and building on the main thread is the remedy; recorded in `TODO.md`.
+* **Not reproducible headlessly.** Three attempts - a `SceneTree` script, a scene, a scene with a
+  registered camera - all quit mid-load without crashing. A `--script` run has no autoloads, so
+  the GDScript `model_loader` is never registered and the worker never enters it at all; and the
+  headless renderer does not create the resources the real one does. This one is verified by
+  quitting the game during loading, not by a test.
 * **Rule:** when a crash is an **abort** rather than a segfault, read the engine's error lines
   before the stack - "already initialized RID" names a corrupted allocator and points at
   concurrency, while "invalid RID" names a double free. They are different bugs and the stack

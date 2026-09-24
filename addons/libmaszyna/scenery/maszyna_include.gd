@@ -57,6 +57,10 @@ func _ready() -> void:
 
 
 func _exit_tree() -> void:
+    # The planning thread calls back into GDScript (the owner's preload) and can be creating
+    # rendering resources for the very RIDs freed below. It is stopped and joined here, while the
+    # scripts still exist - the server's own destructor runs long after they are gone.
+    SceneryStreamingServer.drain()
     _free_owned_rids()
 
 

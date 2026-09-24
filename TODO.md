@@ -108,6 +108,19 @@ serialises without a line of per-component code.
     thrown away (`maszyna_node_dynamic_importer.gd`, "not used yet") - see `## Vehicles`.
   * `_process` runs in every vehicle of the scenery forever to look at two dirty flags. The
     `_dirty`/`_process` pattern stays; the setter turns processing on and the tick turns it off.
+* **The pantograph's power path is simulation, and it lives in a node.**
+  `RailVehicle3D::_update_pantograph_power()` takes the vehicle's transform, works out each
+  collector's contact point, asks `TractionPowerServer` which span is overhead, reads its voltage
+  and writes it into `VehicleElectricEngine` - every frame, from a `Node3D` whose job is to draw
+  the vehicle. Nothing there needs a node: `RailVehicleServer` already owns the placement and
+  `vehicle_get_transform(rid)`, so the whole path belongs in its step, beside the movement and the
+  neighbour scan, with the remembered span per pantograph kept there too. What stays in the node
+  is what genuinely draws: `_apply_pantograph_animation()` on the arm submodels.
+  The collector offsets (`pantograph_front_offset`/`pantograph_rear_offset`) are exported on the
+  node today because the instancer reads them off the model; they are the vehicle's own geometry
+  (the original keeps them in `TAnimPant::vPos`) and have to reach the vehicle for this to move.
+  The same question applies, more weakly, to `_update_wipers()` and `_update_smoke()` - those
+  consume state to drive submodels, which is drawing, but the wiper *positions* are simulation.
 * **G - consumer migration, and the cabin goes through CabinSystem.** Cabin elements stop knowing
   about vehicles at all: they talk to `CabinSystem`, and it holds the vehicle **RID** and takes
   what it needs from the servers (`vehicle_component_get(rid, TYPE)` for live values,

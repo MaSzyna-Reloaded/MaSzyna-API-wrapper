@@ -25,6 +25,8 @@ namespace godot {
             virtual double get_fill(const VehicleDieselEngine *p_engine) const = 0;
             virtual double get_max_rpm(const VehicleDieselEngine *p_engine) const = 0;
             virtual void apply_configuration(const VehicleDieselEngine *p_engine) const = 0;
+            virtual void oil_pump(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
+            virtual void fuel_pump(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
             virtual void fill_config(const VehicleDieselEngine *p_engine, Dictionary &p_config) const = 0;
     };
 } // namespace godot

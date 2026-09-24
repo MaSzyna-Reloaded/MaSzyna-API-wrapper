@@ -184,4 +184,16 @@ namespace godot {
         }
         p_config["engine_shake_enabled"] = true;
     }
+
+    void MoverDieselEngineBackend::oil_pump(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+        ASSERT_MOVER(p_mover);
+        p_mover->OilPumpSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineBackend::fuel_pump(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = mover_of(p_engine);
+        ASSERT_MOVER(p_mover);
+        p_mover->FuelPumpSwitch(p_enabled);
+    }
 } // namespace godot

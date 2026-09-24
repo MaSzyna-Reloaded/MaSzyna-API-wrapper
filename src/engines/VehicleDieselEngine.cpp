@@ -1,5 +1,4 @@
 #include "VehicleDieselEngine.hpp"
-#include "../mover/MoverBackend.hpp"
 #include "macros.hpp"
 
 #include <algorithm>
@@ -200,8 +199,7 @@ namespace godot {
 
     void VehicleDieselEngine::_fill_state_dictionary(Dictionary &p_state) const {
         VehicleEngine::_fill_state_dictionary(p_state);
-        TMoverParameters *mover = mover_of(this);
-        if (mover == nullptr) {
+        if (!is_simulation_ready()) {
             return;
         }
         p_state["engine_rpm"] = get_rpm();
@@ -220,15 +218,15 @@ namespace godot {
     }
 
     void VehicleDieselEngine::oil_pump(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->OilPumpSwitch(p_enabled);
+        if (diesel_backend != nullptr) {
+            diesel_backend->oil_pump(this, p_enabled);
+        }
     }
 
     void VehicleDieselEngine::fuel_pump(const bool p_enabled) {
-        TMoverParameters *mover = mover_of(this);
-        ASSERT_MOVER(mover);
-        mover->FuelPumpSwitch(p_enabled);
+        if (diesel_backend != nullptr) {
+            diesel_backend->fuel_pump(this, p_enabled);
+        }
     }
 
     void VehicleDieselEngine::_register_commands() {

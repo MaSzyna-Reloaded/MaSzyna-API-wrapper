@@ -1,10 +1,10 @@
 #pragma once
-#include "VehicleElectricEngineBackend.hpp"
 #include "VehicleEngine.hpp"
 #include "macros.hpp"
 
 namespace godot {
     class VehicleController;
+    class VehicleElectricEngineBackend;
 
     class VehicleElectricEngine : public VehicleEngine {
             GDCLASS(VehicleElectricEngine, VehicleEngine)

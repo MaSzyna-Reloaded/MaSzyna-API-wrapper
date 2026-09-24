@@ -1,5 +1,4 @@
 #pragma once
-#include "../maszyna/McZapkie/MOVER.h"
 #include <godot_cpp/variant/dictionary.hpp>
 
 namespace godot {

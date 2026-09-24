@@ -1,5 +1,4 @@
 #pragma once
-#include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleElectricEngine.hpp"
 #include "macros.hpp"
 #include "resources/engines/CurvePointItem.hpp"

@@ -230,6 +230,8 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   train-wide ED/PN brake force split of an induction motor consist, and `EqvtPipePress = GetEPP()`
   (the handles' equivalent pipe pressure input). Also the unpowered-car copy of the controlling
   vehicle's MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
+* `VehicleElectricEngine::pantograph_first/second_wire_voltage` are written by
+  `set_pantograph_wire_voltage()` and read by nothing - drop them or give them a reader.
 * Rolling wheels turn at half speed: `MoverVehicleWheels::_do_process_component` adds
   `rad_to_deg(V*dt/D)`, the original `114.59155... * V * dt / D` = `rad_to_deg(2*V*dt/D)`
   (DynObj.cpp:3780-3784 at df5a8a8). Not fixed yet - waiting for the operator.

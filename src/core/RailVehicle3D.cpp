@@ -33,22 +33,25 @@ namespace godot {
     const char *RailVehicle3D::controller_changed_signal = "controller_changed";
 
     namespace {
+        /* Which submodel of the model shows which of the vehicle's lamps. The lamp is read off
+         * the lighting component, so a renamed or removed one is a build error rather than a
+         * light that silently stops working. */
         struct LightStateBinding {
                 const char *light_name;
-                const char *state_name;
+                bool (VehicleLighting::*is_enabled)() const;
         };
 
         constexpr std::array<LightStateBinding, 10> LIGHT_STATE_BINDINGS = {{
-                {"headlamp11", "lights/front_headlight_upper_enabled"},
-                {"headlamp12", "lights/front_headlight_right_enabled"},
-                {"headlamp13", "lights/front_headlight_left_enabled"},
-                {"headlamp21", "lights/rear_headlight_upper_enabled"},
-                {"headlamp22", "lights/rear_headlight_right_enabled"},
-                {"headlamp23", "lights/rear_headlight_left_enabled"},
-                {"endsignal12", "lights/front_redmarker_right_enabled"},
-                {"endsignal13", "lights/front_redmarker_left_enabled"},
-                {"endsignal22", "lights/rear_redmarker_right_enabled"},
-                {"endsignal23", "lights/rear_redmarker_left_enabled"},
+                {"headlamp11", &VehicleLighting::get_front_headlight_upper_enabled},
+                {"headlamp12", &VehicleLighting::get_front_headlight_right_enabled},
+                {"headlamp13", &VehicleLighting::get_front_headlight_left_enabled},
+                {"headlamp21", &VehicleLighting::get_rear_headlight_upper_enabled},
+                {"headlamp22", &VehicleLighting::get_rear_headlight_right_enabled},
+                {"headlamp23", &VehicleLighting::get_rear_headlight_left_enabled},
+                {"endsignal12", &VehicleLighting::get_front_redmarker_right_enabled},
+                {"endsignal13", &VehicleLighting::get_front_redmarker_left_enabled},
+                {"endsignal22", &VehicleLighting::get_rear_redmarker_right_enabled},
+                {"endsignal23", &VehicleLighting::get_rear_redmarker_left_enabled},
         }};
     } // namespace
 
@@ -645,15 +648,17 @@ namespace godot {
         if (model_node == nullptr || !bool(model_node->call("is_e3d_loaded"))) {
             return;
         }
+        if (lighting == nullptr) {
+            return;
+        }
         bool changed = false;
-        const Dictionary state = controller->get_state();
         const Array keys = lights.keys();
         for (int index = 0; index < keys.size(); ++index) {
             const Variant &light_name = keys[index];
             const String light_name_string = light_name;
             for (const LightStateBinding &binding: LIGHT_STATE_BINDINGS) {
                 if (light_name_string == binding.light_name) {
-                    const bool new_value = state.get(binding.state_name, false);
+                    const bool new_value = (lighting->*binding.is_enabled)();
                     if (bool(lights[light_name]) != new_value) {
                         lights[light_name] = new_value;
                         changed = true;

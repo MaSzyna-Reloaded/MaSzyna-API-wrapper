@@ -15,12 +15,10 @@ namespace godot {
                 &SceneryStreamingServer::stream_register);
         ClassDB::bind_method(D_METHOD("stream_free", "stream_rid"), &SceneryStreamingServer::stream_free);
         ClassDB::bind_method(
-                D_METHOD("set_streaming_enabled", "enabled"),
-                &SceneryStreamingServer::set_streaming_enabled);
-        ClassDB::bind_method(
-                D_METHOD("is_streaming_enabled"),
-                &SceneryStreamingServer::is_streaming_enabled);
+                D_METHOD("set_streaming_enabled", "enabled"), &SceneryStreamingServer::set_streaming_enabled);
+        ClassDB::bind_method(D_METHOD("is_streaming_enabled"), &SceneryStreamingServer::is_streaming_enabled);
         ClassDB::bind_method(D_METHOD("set_camera", "camera"), &SceneryStreamingServer::set_camera);
+        ClassDB::bind_method(D_METHOD("drain"), &SceneryStreamingServer::drain);
         ClassDB::bind_method(D_METHOD("get_draw_distance"), &SceneryStreamingServer::get_draw_distance);
         ClassDB::bind_method(D_METHOD("get_camera_position"), &SceneryStreamingServer::get_camera_position);
         ClassDB::bind_method(D_METHOD("has_camera"), &SceneryStreamingServer::has_camera);
@@ -33,21 +31,31 @@ namespace godot {
     SceneryStreamingServer::SceneryStreamingServer() {
         mutex.instantiate();
         semaphore.instantiate();
-        draw_distance = ProjectSettings::get_singleton()->get_setting(
-                "maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
+        draw_distance =
+                ProjectSettings::get_singleton()->get_setting("maszyna/scenery/draw_distance", DEFAULT_DRAW_DISTANCE_M);
     }
 
     /// The worker finishes the pass it is in before it is joined
     SceneryStreamingServer::~SceneryStreamingServer() {
         set_camera(nullptr);
+        drain();
+    }
+
+    void SceneryStreamingServer::drain() {
+        if (worker.is_null()) {
+            return;
+        }
         {
             MutexLock lock(**mutex);
             exiting = true;
         }
         semaphore->post();
-        if (worker.is_valid()) {
-            worker->wait_to_finish();
-        }
+        worker->wait_to_finish();
+        worker.unref();
+        // the thread is joined, so the next plan may start a new one
+        MutexLock lock(**mutex);
+        exiting = false;
+        planning = false;
     }
 
     Vector2i SceneryStreamingServer::_get_chunk_key(const Vector3 &p_origin) {

@@ -18,5 +18,6 @@ namespace godot {
             void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) override;
             void clear(E3DInstanceData &p_instance) override;
             void update(const E3DInstanceData &p_instance) override;
+            void apply_transform(const E3DInstanceData &p_instance) override;
     };
 } // namespace godot

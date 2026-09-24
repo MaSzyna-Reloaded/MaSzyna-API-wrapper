@@ -1,4 +1,4 @@
-.PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix
+.PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The build stamps itself (cmake/write_build_number.cmake) and the app shows that number, so the
@@ -61,6 +61,23 @@ compile-release:
 compile-profiling:
 	cmake -B build-profiling -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_debug -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
 	cmake --build build-profiling --parallel $(CMAKE_BUILD_JOBS)
+
+
+# A shipped build that keeps its symbols, for turning a core dump into names. The switch that
+# matters is the build type, not a flag of ours: godot-cpp links with -s unless DEBUG_SYMBOLS is
+# on (its cmake/common_compiler_flags.cmake), and DEBUG_SYMBOLS is Debug or RelWithDebInfo. The
+# price is -O2 instead of -O3, so this build is for diagnosing a crash and not for measuring frame
+# times. It writes the same library as compile-release, so rebuild that one afterwards.
+compile-release-symbols:
+	cmake -B build-release-symbols -DCMAKE_BUILD_TYPE=RelWithDebInfo -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION)
+	cmake --build build-release-symbols --parallel $(CMAKE_BUILD_JOBS)
+
+
+release-linux-symbols: compile-release-symbols
+	mkdir -p bin/linux
+	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
+	mv bin/linux/reloaded.zip $(LINUX_ZIP)
+	@echo "Exported with symbols: $(LINUX_ZIP)"
 
 
 compile-all: compile-debug compile-release

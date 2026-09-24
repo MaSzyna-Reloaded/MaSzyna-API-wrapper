@@ -174,8 +174,7 @@ namespace godot {
         instances.erase(p_instance);
 
         if (data.stream_rid.is_valid()) {
-            if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance();
-                streaming != nullptr) {
+            if (SceneryStreamingServer *streaming = SceneryStreamingServer::get_instance(); streaming != nullptr) {
                 streaming->stream_free(data.stream_rid);
             }
             MutexLock lock(**models_mutex);
@@ -247,7 +246,9 @@ namespace godot {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         instance->transform = p_transform;
-        _update_if_built(*instance);
+        if (instance->built) {
+            _get_backend(*instance).apply_transform(*instance);
+        }
         _update_instance_smoke(*instance);
     }
 
@@ -430,8 +431,8 @@ namespace godot {
     }
 
     RID E3DRenderingServer::_light_create(
-            const RID &p_instance, const String &p_light_name, const LightKind p_kind,
-            const E3DLightParams &p_params, const bool p_synthesized) {
+            const RID &p_instance, const String &p_light_name, const LightKind p_kind, const E3DLightParams &p_params,
+            const bool p_synthesized) {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL_V(instance, RID());
 

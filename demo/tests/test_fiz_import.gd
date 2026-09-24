@@ -95,3 +95,10 @@ func test_buff_coupl():
     assert_eq(coupler.buffer_location, VehicleBuffCoupl.BUFFER_LOCATION_BOTH)
     assert_eq(coupler.allowed_flag, 63)
 
+
+
+## WiperList: as e186_v2 writes it - bounded by Size= and closed by "endL" instead of "endwl"
+func test_wiper_list_reaches_the_vehicle():
+    assert_eq(controller.config.get("wipers_switch_position_max", -1), 3)
+    controller.send_command("wipers_switch_increase")
+    assert_eq(controller.state.get("wipers_switch_position", -1), 1)

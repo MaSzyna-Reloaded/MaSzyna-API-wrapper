@@ -31,7 +31,6 @@ namespace godot {
 
         protected:
             VehicleEngine::EngineType get_engine_type() const override;
-            void _apply_configuration() override;
 
         public:
             TypedArray<WWListItem> get_wwlist() {

@@ -5,9 +5,9 @@
 #include "MoverElectricTraction.hpp"
 
 namespace godot {
-    /* VehicleDieselElectricEngine on the vendored Mover. It owns no logic of its own - it installs the delegates that
-     * carry the shared implementation, which is what lets engine kinds share code their
-     * interfaces cannot inherit from one another. */
+    /* VehicleDieselElectricEngine on the vendored Mover. It installs the delegates that carry the
+     * implementation shared with other engine kinds, and writes the diesel-electric engine's own
+     * configuration into the Mover, which none of those delegates covers. */
     class MoverVehicleDieselElectricEngine : public VehicleDieselElectricEngine {
             GDCLASS(MoverVehicleDieselElectricEngine, VehicleDieselElectricEngine);
 
@@ -33,5 +33,11 @@ namespace godot {
             void set_motor_connectors_open(bool p_open) override;
             void _register_commands() override;
             void _unregister_commands() override;
+
+        protected:
+            /// Mover.cpp:8551-8552 (readWWList) - the shunting power bounds of a WWList row
+            static constexpr double WWLIST_SHUNT_POWER_DIVISOR = 47.6;
+
+            void _apply_configuration() override;
     };
 } // namespace godot

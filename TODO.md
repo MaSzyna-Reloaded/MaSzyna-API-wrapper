@@ -188,6 +188,9 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   only through the `pantcompressor_sw`/`pantcompressorvalve_sw` widgets. The original also allows
   them in the machine room (cab 0) of the pantograph unit when the MMD has no such switch
   (`Train.cpp:2872`, `2915`).
+* `CabinSwitch` has no `mesh_rotation_offset`/`mesh_position_offset`, so the MMD offset of a
+  switch is dropped (`MMD_ANIMATION_UNSUPPORTED`), e.g. SM42 `dirkey: kier rot -0.09 0.01`. The
+  original renders `value * scale + offset` (`Gauge.cpp:456`); `CabinButton` already does.
 
 ## Sounds
 

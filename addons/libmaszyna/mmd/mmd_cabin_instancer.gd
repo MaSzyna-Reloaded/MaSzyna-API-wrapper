@@ -750,7 +750,7 @@ static func _build_audio_stream(filename:String) -> AudioStream:
 ## widget's mesh_rotation_offset/mesh_position_offset field - unlike `scale` it is never rescaled
 ## by range_scale (it doesn't depend on the value domain) or by mmd_scale_multiplier (the original
 ## engine's own gauge.Load(..., mul) only multiplies scale, per vehicle/Gauge.cpp:182). Widgets
-## without an offset field (e.g. CabinButton/CabinSwitch) still report it as unsupported instead
+## without an offset field (e.g. CabinSwitch) still report it as unsupported instead
 ## of silently dropping it.
 ##
 ## `entry["animation_range_config_properties"]`, when present, is `[min_key, max_key]` into

@@ -30,6 +30,7 @@ namespace godot {
             double get_loco_pressure_fall_rate() const override;
             double get_loco_pressure_rise_rate() const override;
             double get_control_pressure() const override;
+            double get_handle_control_pressure() const override;
             double get_local_aeim_position() const override;
             double get_edb_cylinder_pressure() const override;
             bool get_releaser_active() const override;

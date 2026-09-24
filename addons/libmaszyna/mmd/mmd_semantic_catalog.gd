@@ -569,6 +569,29 @@ static func _ensure_built() -> void:
             "mesh_path_field": "target_mesh_path",
             "mmd_scale_multiplier": 0.1,
         },
+        # Train.cpp:12185 - brakepressb: is the same brake cylinder gauge as brakepress:
+        "brakepressb": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "brake_air_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
+        # Train.cpp:12207 - limpipepress: the control reservoir of the driver's brake valve
+        # (m_brakehandlecp = Handle->GetCP(), Train.cpp:8908)
+        "limpipepress": {
+            "widget_class": CabinGauge,
+            "fixed_fields": {
+                "state_property": "brake_handle_control_pressure",
+                "max_value": 1.0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "target_mesh_path",
+            "mmd_scale_multiplier": 0.1,
+        },
         "pipepress": {
             "widget_class": CabinGauge,
             "fixed_fields": {

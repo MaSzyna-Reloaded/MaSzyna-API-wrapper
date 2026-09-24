@@ -92,6 +92,17 @@ func test_i_radio_indicator_and_powered_omnilight_are_separate():
     assert_eq(entry["light_fixed_fields"]["omni_range"], 0.1)
 
 
+func test_brake_cylinder_and_driver_valve_control_reservoir_gauges():
+    var brakepressb:Dictionary = MmdSemanticCatalog.get_entry("brakepressb")
+    var limpipepress:Dictionary = MmdSemanticCatalog.get_entry("limpipepress")
+    assert_eq(brakepressb["widget_class"], CabinGauge)
+    assert_eq(brakepressb["fixed_fields"]["state_property"], "brake_air_pressure")
+    assert_eq(brakepressb["mmd_scale_multiplier"], 0.1)
+    assert_eq(limpipepress["widget_class"], CabinGauge)
+    assert_eq(limpipepress["fixed_fields"]["state_property"], "brake_handle_control_pressure")
+    assert_eq(limpipepress["mmd_scale_multiplier"], 0.1)
+
+
 func test_spring_brake_indicators_show_the_spring_braking_and_its_inverse():
     var active:Dictionary = MmdSemanticCatalog.get_entry("i-springbrakeactive")
     var inactive:Dictionary = MmdSemanticCatalog.get_entry("i-springbrakeinactive")

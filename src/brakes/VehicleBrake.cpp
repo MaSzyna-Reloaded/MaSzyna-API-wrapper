@@ -337,6 +337,11 @@ namespace godot {
                 PropertyInfo(Variant::FLOAT, "control_pressure", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_control_pressure");
+        ClassDB::bind_method(D_METHOD("get_handle_control_pressure"), &VehicleBrake::get_handle_control_pressure);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::FLOAT, "handle_control_pressure", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_handle_control_pressure");
         ClassDB::bind_method(D_METHOD("get_local_aeim_position"), &VehicleBrake::get_local_aeim_position);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "local_aeim_position", PROPERTY_HINT_NONE, "",

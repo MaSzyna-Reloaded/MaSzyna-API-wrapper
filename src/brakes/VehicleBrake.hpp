@@ -46,6 +46,8 @@ namespace godot {
             virtual double get_loco_pressure_fall_rate() const = 0;
             virtual double get_loco_pressure_rise_rate() const = 0;
             virtual double get_control_pressure() const = 0;
+            /* Control reservoir of the driver's brake valve (Handle->GetCP(), Train.cpp:8908) */
+            virtual double get_handle_control_pressure() const = 0;
             virtual double get_local_aeim_position() const = 0;
             virtual double get_edb_cylinder_pressure() const = 0;
             virtual bool get_releaser_active() const = 0;

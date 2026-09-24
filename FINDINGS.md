@@ -3,6 +3,22 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - switch blades in a scenery never moved, because only a node listened
+
+* **Symptom:** throwing a switch in a loaded scenery changes the route - the train takes the other
+  branch - but the blades stay where they were built. `TrackSwitch3D` nodes in `demo_3d` still
+  animate, so it read as "it used to work".
+* **Cause:** `TrackManager::_process_switches()` steps the blade offset and emits
+  `switch_offset_updated` every frame of the move, and the only listener turning that into blade
+  movement was `TrackSwitch3D._on_track_manager_switch_offset_updated()`. Since `923b293` a
+  scenery builds its tracks through `TrackRenderingServer`'s RID API with no nodes at all, so the
+  blades got their pose once, in `_stream_build()`, and nothing ever moved them again.
+* **Fix:** `TrackRenderingServer` subscribes to `switch_offset_updated` itself and moves the
+  blades of whichever render track belongs to the switch; the node's copy is removed.
+* **Rule:** the same shape as the scenery lights (2026-09-21): a feature parked on a node vanishes
+  silently the moment an instancer without nodes appears. The server that owns the visuals
+  subscribes to the manager's events itself.
+
 ## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
 
 * **Symptom:** a key in the cab plays its sound at once, but the operation only happens when the
@@ -28,6 +44,63 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   write, not a slow write. Look for the cache between them before looking at the input path.
 
 
+
+## 2026-09-24 - the shipped library had no symbols, and the crash was in the parser
+
+* **Symptom:** closing the game during loading segfaults. Two cores, both on a non-main thread,
+  both with a first frame that is not code (`#0 0x0` and then a wild address).
+* **What cost the most time:** the shipped `libmaszyna.64.so` was **stripped**, so every frame of
+  our own library read `?? ()`. Two cores were diagnosed by the *shape* of the stack alone, and
+  both guesses were wrong. godot-cpp links with `-s` unless `DEBUG_SYMBOLS` is on, and that is
+  `$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>` - a generator expression on **its** target,
+  propagated to ours through `TARGET_LINK_LIBRARIES`. Removing `-s` from our own target's
+  `LINK_OPTIONS` (which the build already did for `template_debug`) therefore changes nothing for
+  a release: the flag was never there. `make release-linux-symbols` builds `RelWithDebInfo` with
+  `template_release` instead, which is what actually keeps the symbols.
+* **With symbols, one backtrace named it:**
+  `MaszynaParser::parse_chunk (maszyna_parser.cpp:270)` -> `Callable::call(...)` -> freed code.
+  The parse runs as a `SceneryLoadingTaskQueue` task, i.e. on a worker, and every token is
+  dispatched to a GDScript handler through a `Callable`. `callback.is_valid()` is checked and does
+  not help: during teardown the object still answers, the script behind it does not.
+* **Cause:** nothing stopped the loading queue before the scripts went away. Its destructor does
+  drain - drop the pending tasks, join the workers - but it runs when the last reference to a
+  `RefCounted` created inside an awaiting coroutine goes, which is *during* that teardown rather
+  than before it. The streaming server's planning thread had the same defect and the same shape of
+  fix the same day; this is a second worker nobody had drained.
+* **Fix:** `SceneryLoadingTaskQueue::drain()` is callable from outside, `SceneryInstancer` keeps
+  the queues that are parsing in `_active_queues` and `cancel_loading()` drains them, and
+  `maszyna_include.gd::_exit_tree()` calls it before anything is freed - while the scripts are
+  still there to be waited for.
+* **The fix's own regression, and the lesson in it:** draining a queue means *waiting* for the
+  task that is running, and a scenery parse takes seconds. Quitting mid-parse therefore stopped
+  crashing and started hanging - the window would not close, and on Windows there is no shell to
+  interrupt it from. A stop that waits for the work to finish is not a stop. `MaszynaParser`
+  already had an `interrupted` flag for its own budgeting; it now also carries a static
+  `cancelled` that the token loop checks, and the GDScript half of a loading task
+  (`_count_includes`, which reads every included file) checks the same flag - so the join has
+  something short to wait for.
+* **And the fix for that had a deadlock in it.** `drain()` drops the queued tasks - but a task in
+  this queue may `wait()` for a task it submitted, which the header says outright. Dropping a
+  queued task therefore left its waiter spinning in `wait()` for something that would never run,
+  the worker was never joined, and `wait_to_finish()` on the main thread blocked for good: the
+  window simply never closed. Named from a core taken with `kill -ABRT` on the hung process -
+  several threads in `SceneryLoadingTaskQueue::wait` (`:90`) reached from `_run` (`:146`), all on
+  the same queue. `wait()` and `is_done()` now give up while the queue is draining.
+* **Reading a hang costs nothing, and that is the lesson.** `ptrace_scope=1` blocks attaching a
+  debugger to a process that is not a child, but `/proc/<pid>/task/*/wchan` needs no privileges
+  and already said "main thread in futex_do_wait, 41 of 62 threads waiting" - and `kill -ABRT`
+  turns the hang into a core with a full, symbolised stack. Three guesses were spent before that;
+  the measurement took a minute.
+* **Not covered by a test, and the attempt is worth recording.** A test that frees a scenery
+  mid-parse and asserts the teardown is quick passes *with and without* the fix: headless, the
+  parse of `td.scn` is over before the test can interrupt it. A green test that cannot fail is
+  worse than none, so it was deleted rather than kept.
+* **Rule:** a shipped build keeps its symbol table. The frames worth reading in a crash are the
+  extension's own, and without them a core costs hours and still ends in a guess.
+* **Rule:** a `Callable` held across a thread boundary is only as valid as the script behind it,
+  and `is_valid()` does not tell you that. Whoever owns the thread stops it before the scripts go.
+* **Rule:** every worker in the process needs an owner that stops it at teardown. Two were found
+  in one day by the same symptom; a destructor is not that owner, because it runs too late.
 
 ## 2026-09-24 - the simulation stepped after everything that reads it
 
@@ -185,6 +258,43 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   published contract, the test that matters asserts the **key is present**, not merely that the
   value reads sensibly.
 
+## 2026-09-23 - the cab's instrument backlight blinking, once per frame, from the transform
+
+* **Symptom:** in the EP07 cab the desk backlight and the ceiling lamp, switched on, read as
+  blinking 0-1-0-1 rather than lit. It looks like z-fighting between the `_on` and `_off`
+  submodels, which is what sent the first guesses at the geometry and at double precision.
+* **Cheapest instrument first, and it ruled out half the system:** a headless probe printing
+  `vehicle_dump_state()`'s `devices_light_enabled`/`roof_light_enabled` every frame in `td.scn` -
+  120 frames of `11 11 11 ...`. The state never moves, so nothing on the simulation side is
+  involved and the cabin widgets are reading the right value.
+* **What proved it:** the same probe with the cab entered (`RailVehicle3D::enter_cabin()`),
+  sampling `visible` of every submodel a cabin widget points at. `podswietlenie_on` came out
+  `000010000000000000010000000000000010...` - visible for exactly **one frame in fifteen**, and
+  `podswietlenie_off` its exact complement. One writer sets it at 10 Hz (`CabinIndicator3D`
+  samples every 0.1 s); another clears it every single frame.
+* **Cause:** `E3DRenderingServer::instance_set_transform()` ended in `_update_if_built()`, i.e.
+  the backend's `update()`, and `E3DNodesBackend::update()` does one thing only - show and hide
+  the `_on`/`_off` submodels of every light from `lights_state`. So *moving* a model re-applied
+  its whole light state. Harmless while only OPTIMIZED instances pushed a transform
+  (`set_notify_transform(instancer == Instancer.OPTIMIZED)`, `2125898`); `9ca6b9f` made the
+  notification unconditional so a model's smoke emitter would follow it, and from then on every
+  node-instanced model - every cab - re-applied its lights once per frame.
+* **Fix:** a transform applies the transform. `E3DInstanceBackend::apply_transform()` is its own
+  operation: nothing at all for `E3DNodesBackend` (the generated tree hangs under the attached
+  node and moves with it) and just `instance_set_transform` per RID for `E3DOptimizedBackend`,
+  which also drops a per-frame re-resolve of the light overrides, the visibility and the layer
+  mask for every optimized instance in the scenery.
+* **Found on the way:** the czuwak/SHP blinker was broken by the same thing - it was flashing for
+  single frames instead of blinking in ~1 s blocks, which nobody had reported as a bug.
+* **Rule:** a setter applies what it is named after. Routing every `instance_set_*` through one
+  "apply everything the instance knows" call makes the cheapest, most frequent change - a move -
+  quietly overwrite state that a different owner set, and the damage is proportional to the frame
+  rate rather than to the change.
+* **Still open:** the submodels a light switches have **two** managers - the server, through
+  `lights_state`, and the cab's MMD widgets, which write `Node3D.visible` directly. They agree
+  today only because nothing pushes `lights_state` at a cab after it is built, and the widgets do
+  nothing at all under the OPTIMIZED instancer. Recorded in `TODO.md`.
+
 ## 2026-09-22 - a teardown abort that is RID allocator corruption, not a double free
 
 * **Symptom:** `test_zzz_ep07_cabin_main_switch` aborts during scenery teardown, in maybe half of
@@ -215,9 +325,22 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   * 14 `X::get_instance()->` dereferences had no null check, among them `stream_free()` inside
     `instance_free()` itself and the `EXIT_TREE` pair;
   * `instance_free()` held a `HashMap` iterator across cleanup that re-enters the same server.
-* **Not yet fixed.** The remedy is a design decision: either the streaming preload stops creating
-  renderer resources (parse on the worker, build on the main thread), or the worker is drained
-  before a teardown frees anything. Recorded in `TODO.md`.
+* **Half fixed, 2026-09-24.** The worker is now drained before a teardown frees anything:
+  `SceneryStreamingServer::drain()` stops the planning thread and joins it, and
+  `maszyna_include.gd::_exit_tree()` calls it before `_free_owned_rids()`. The timing is the whole
+  point - the server's own destructor already joined the thread, but it runs at module
+  de-initialisation, long after the scripts the worker calls into are gone, which is why quitting
+  during a load crashed on a worker thread with `#0 0x0`, a jump through a Callable that no longer
+  had a script. The reload path (`_clear_content()`) had been stopping streaming since `8d02b43`;
+  `_exit_tree()` had not.
+* **Still open:** the preload still creates renderer resources on the worker, so the race exists
+  whenever a teardown overlaps a *running* stream rather than a shutdown. Parsing on the worker
+  and building on the main thread is the remedy; recorded in `TODO.md`.
+* **Not reproducible headlessly.** Three attempts - a `SceneTree` script, a scene, a scene with a
+  registered camera - all quit mid-load without crashing. A `--script` run has no autoloads, so
+  the GDScript `model_loader` is never registered and the worker never enters it at all; and the
+  headless renderer does not create the resources the real one does. This one is verified by
+  quitting the game during loading, not by a test.
 * **Rule:** when a crash is an **abort** rather than a segfault, read the engine's error lines
   before the stack - "already initialized RID" names a corrupted allocator and points at
   concurrency, while "invalid RID" names a double free. They are different bugs and the stack

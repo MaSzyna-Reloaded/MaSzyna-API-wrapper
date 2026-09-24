@@ -115,6 +115,7 @@ func _init() -> void:
 
 func _ready() -> void:
     TrackManager.topology_rebuilt.connect(_on_topology_rebuilt)
+    TrackManager.switch_offset_updated.connect(_on_switch_offset_updated)
 
 
 func create_track(track_rid: RID) -> RID:
@@ -801,6 +802,16 @@ func _on_topology_rebuilt() -> void:
         state.resolved_trackbed_material_valid = false
     for track_render_rid: RID in _tracks.keys():
         rebuild_track_stitches(track_render_rid)
+
+
+## The blades follow the manager's animation step for every switch, scenery RIDs included -
+## a scenery has no TrackSwitch3D nodes to forward it.
+func _on_switch_offset_updated(track_rid: RID, _offset: float) -> void:
+    set_switch_blade_offsets(
+        _get_track_render_rid_by_track_rid(track_rid),
+        TrackManager.switch_get_f_offset1(track_rid),
+        TrackManager.switch_get_f_offset2(track_rid)
+    )
 
 
 func _get_track_render_rid_by_track_rid(track_rid: RID) -> RID:

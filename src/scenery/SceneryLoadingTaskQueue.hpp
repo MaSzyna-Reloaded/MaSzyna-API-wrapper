@@ -46,6 +46,13 @@ namespace godot {
             SceneryLoadingTaskQueue();
             ~SceneryLoadingTaskQueue() override;
 
+            /* Drops what is queued and joins the workers, finishing whatever is running. Called
+             * while the scene tree is still alive: the tasks are GDScript and they call GDScript
+             * handlers (MaszynaParser's), so a worker still inside one when the scripts go away
+             * jumps into freed code (see `FINDINGS.md`, 2026-09-24). The destructor does the same,
+             * but it runs when the last reference goes - which is during that teardown, not
+             * before it. */
+            void drain();
             int submit(const Callable &p_task);
             bool is_done(int p_task_id) const;
             Variant wait(int p_task_id);

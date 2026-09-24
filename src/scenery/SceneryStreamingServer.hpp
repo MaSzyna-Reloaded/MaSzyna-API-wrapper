@@ -168,6 +168,12 @@ namespace godot {
             SceneryStreamingServer();
             ~SceneryStreamingServer() override;
 
+            /* Stops the planning thread and waits for the pass it is in, then leaves the server
+             * able to start a fresh one. Called while the scene tree is still alive: the worker
+             * calls the owner's preload Callable, which is GDScript, and that Callable is gone
+             * once the scripts are - and it must not be creating rendering resources while the
+             * scenery frees them (see FINDINGS.md, 2026-09-22). */
+            void drain();
             int owner_create(const Callable &p_preload, const Callable &p_build, const Callable &p_clear);
             RID stream_register(int p_owner, const RID &p_user_rid, const Vector3 &p_position, float p_range_end);
             void stream_free(const RID &p_stream_rid);

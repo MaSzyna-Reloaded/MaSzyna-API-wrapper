@@ -89,6 +89,11 @@ namespace godot {
             virtual void clear(E3DInstanceData &p_instance) = 0;
             /// Applies transform, visibility, layers and lights state
             virtual void update(const E3DInstanceData &p_instance) = 0;
+            /* Moves what was built, and nothing else. A moving instance is the per-frame path, so
+             * it must not re-apply the lights state: the submodels a light switches are shown and
+             * hidden by whoever owns that light, and re-applying them on every move overwrites
+             * that owner once per frame (see `FINDINGS.md`, 2026-09-23). */
+            virtual void apply_transform(const E3DInstanceData &p_instance) = 0;
 
         protected:
             static bool _is_submodel_valid(const E3DSubModel *p_submodel, const Array &p_exclude_node_names);

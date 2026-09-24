@@ -31,5 +31,7 @@ namespace godot {
             void build(E3DInstanceData &p_instance, E3DMaterialResolver &p_material_resolver) override;
             void clear(E3DInstanceData &p_instance) override;
             void update(const E3DInstanceData &p_instance) override;
+            /// The generated node tree hangs under the attached node and moves with it.
+            void apply_transform(const E3DInstanceData &p_instance) override {}
     };
 } // namespace godot

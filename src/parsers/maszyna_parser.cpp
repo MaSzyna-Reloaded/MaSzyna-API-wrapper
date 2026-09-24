@@ -1,7 +1,12 @@
 #include "maszyna_parser.hpp"
 
 namespace godot {
+    std::atomic<bool> MaszynaParser::cancelled{false};
+
     void MaszynaParser::_bind_methods() {
+        ClassDB::bind_static_method(
+                "MaszynaParser", D_METHOD("set_cancelled", "cancelled"), &MaszynaParser::set_cancelled);
+        ClassDB::bind_static_method("MaszynaParser", D_METHOD("is_cancelled"), &MaszynaParser::is_cancelled);
         ClassDB::bind_method(
                 D_METHOD("initialize", "buffer", "default_stop"), &MaszynaParser::initialize, DEFVAL(Array()));
         ClassDB::bind_method(D_METHOD("get8"), &MaszynaParser::get8);
@@ -255,6 +260,14 @@ namespace godot {
     }
 
 
+    void MaszynaParser::set_cancelled(const bool p_cancelled) {
+        cancelled = p_cancelled;
+    }
+
+    bool MaszynaParser::is_cancelled() {
+        return cancelled;
+    }
+
     Array MaszynaParser::parse() {
         return parse_chunk(length);
     }
@@ -264,7 +277,7 @@ namespace godot {
         Array result;
         const int end = cursor + p_bytes;
         interrupted = false;
-        while (!eof_reached() && cursor < end && !interrupted) {
+        while (!eof_reached() && cursor < end && !interrupted && !cancelled) {
             if (String token = next_token(); handlers.has(token)) {
                 if (Callable callback = handlers[token]; callback.is_valid()) {
                     Variant parsed_v = callback.call(this);

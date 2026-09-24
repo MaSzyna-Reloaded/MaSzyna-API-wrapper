@@ -63,6 +63,36 @@ func test_nodes_instancer_maps_light_on_prefix_family() -> void:
     assert_true(spotlight_node.visible, "Spotlight should become visible when light is enabled")
 
 
+## Regression: a moving model re-applied its whole lights state once per frame, which wiped the
+## visibility of every light submodel another owner had set - the cabin's own MMD indicators show
+## and hide exactly those submodels, so the instrument backlight and the cab lamp blinked on for
+## one frame in ten and were dark in between (see FINDINGS.md, 2026-09-23).
+func test_moving_a_model_does_not_reapply_its_lights_state() -> void:
+    var target_node: E3DModelInstance = E3DModelInstance.new()
+    var model: E3DModel = E3DModel.new()
+    var light_on: E3DSubModel = _create_transform_submodel("light_on00", false)
+    var light_off: E3DSubModel = _create_transform_submodel("light_off00", true)
+    var light_definition: E3DModelLightDefinition = E3DModelLightDefinition.new()
+
+    model.submodels = [light_on, light_off]
+    light_definition.on_submodel_path = NodePath("light_on00")
+    light_definition.off_submodel_path = NodePath("light_off00")
+    model.register_light("00", light_definition)
+
+    target_node.model = model
+    target_node.lights_state = {"00": true}
+    add_child_autoqfree(target_node)
+
+    # what the cabin's indicator widget does with the very same submodels
+    var light_on_node: Node3D = target_node.get_node(NodePath("light_on00"))
+    light_on_node.visible = false
+
+    target_node.position = Vector3(0.0, 0.0, 1.0)
+    await wait_idle_frames(2)
+
+    assert_false(light_on_node.visible, "moving the model must leave its light submodels alone")
+
+
 ## Regression: the E3D submodel material override (now MaterialManager.get_submodel_material())
 ## never populated MaterialOptions.diffuse_color from the real parsed submodel (left as a TODO, silently leaving
 ## every textured/named-material submodel's albedo at the shader's default white) - unlike

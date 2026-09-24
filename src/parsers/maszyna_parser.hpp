@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <godot_cpp/classes/ref_counted.hpp>
 #include <godot_cpp/core/class_db.hpp>
 #include <godot_cpp/variant/dictionary.hpp>
@@ -21,6 +22,11 @@ namespace godot {
             int cursor = 0;
             int length = 0;
             bool interrupted = false;
+            /* Set while everything is being torn down. A parse runs on a loading-queue worker and
+             * the teardown joins that worker, so it has to be able to stop between tokens - a big
+             * .scn otherwise held the window open until the whole file was through, and on
+             * Windows there is no shell to interrupt it from (see `FINDINGS.md`, 2026-09-24). */
+            static std::atomic<bool> cancelled;
             TypedArray<Dictionary> meta;
             Array default_stop_chars;
             bool default_stop_table[128] = {};
@@ -34,6 +40,10 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            /// Stops every parse in flight at its next token; cleared once the workers are joined.
+            static void set_cancelled(bool p_cancelled);
+            /// So the GDScript half of a loading task can stop on the same signal.
+            static bool is_cancelled();
             MaszynaParser();
             void initialize(const PackedByteArray &p_buffer, const Array &p_default_stop_chars);
             // void _create_instance(const PackedByteArray &buffer);

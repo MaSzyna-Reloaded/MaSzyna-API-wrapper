@@ -7,11 +7,12 @@ const ENGINE_CURRENT_FULL_SCALE:float = 1500.0
 const PRESSURE_FULL_SCALE:float = 10.0
 const SPEED_FULL_SCALE:float = 100.0
 
-@export_node_path("VehiclePhysicsNode") var train_controller:NodePath = NodePath(""):
+## The vehicle this panel shows, handed to it by the HUD - never looked up by a path into
+## somebody else's scene.
+var vehicle:VehicleController:
     set(x):
-        if not train_controller == x:
-            train_controller = x
-            controller = null
+        if not vehicle == x:
+            vehicle = x
             _do_update()
 
 @onready var LeftDoorsOpenLight = $VBoxContainer/HBoxContainer2/LeftDoorsOpenLight
@@ -27,40 +28,21 @@ var _brakes:VehicleBrake
 var _spring_brake:VehicleSpringBrake
 var _doors:VehicleDoors
 var _security:VehicleSecuritySystem
-## The node whose vehicle_changed this panel listens to - one connection, one disconnection.
-var _bound_node:VehiclePhysicsNode
 
 
 func _do_update():
-    var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
-    if _bound_node and not _bound_node == physics_node:
-        _bound_node.vehicle_changed.disconnect(_do_update)
-        _bound_node = null
-    if physics_node and not _bound_node:
-        # the window can be opened before the vehicle is built, and then the components resolved
-        # here are null - the vehicle says when it has them rather than being asked again later
-        physics_node.vehicle_changed.connect(_do_update)
-        _bound_node = physics_node
-    controller = physics_node.get_controller() if physics_node else null
+    controller = vehicle
     _engine = _component(VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
     _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake
     _spring_brake = _component(VehicleComponentType.COMPONENT_SPRING_BRAKE) as VehicleSpringBrake
     _doors = _component(VehicleComponentType.COMPONENT_DOORS) as VehicleDoors
     _security = _component(VehicleComponentType.COMPONENT_SECURITY) as VehicleSecuritySystem
-    _propagate_vehicle_node(self, physics_node)
     modulate = Color.WHITE
     modulate.a = 1.0 if controller else 0.1
 
 func _component(type:VehicleComponentType.Type) -> VehicleComponent:
     return controller.get_component(type) if controller else null
 
-
-## The widgets below point at the vehicle's node, not at the controller it owns.
-func _propagate_vehicle_node(node: Node, physics_node: VehiclePhysicsNode) -> void:
-    for child in node.get_children():
-        _propagate_vehicle_node(child, physics_node)
-        if "controller" in child:
-            child.controller = child.get_path_to(physics_node) if physics_node else NodePath("")
 
 func _ready():
     _do_update()

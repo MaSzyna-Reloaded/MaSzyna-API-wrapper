@@ -86,7 +86,6 @@ title = "General"
 [node name="General" parent="ControlWindows/General" unique_id=897642042 instance=ExtResource("3_l04v0")]
 clip_contents = true
 layout_mode = 2
-train_controller = NodePath("")
 
 [node name="Diesel" type="Container" parent="ControlWindows" unique_id=834001622]
 top_level = true

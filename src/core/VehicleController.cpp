@@ -113,6 +113,7 @@ namespace godot {
                 D_METHOD("change_track", "track_name", "track_offset", "track_direction"),
                 &VehicleController::change_track);
         ClassDB::bind_method(D_METHOD("get_rid"), &VehicleController::get_rid);
+        ClassDB::bind_method(D_METHOD("get_occupied_cab"), &VehicleController::get_occupied_cab);
         ClassDB::bind_method(
                 D_METHOD("emit_position_changed_if_needed"), &VehicleController::emit_position_changed_if_needed);
         ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle"), &VehicleController::set_vehicle_rid);

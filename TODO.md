@@ -251,9 +251,9 @@ them on it (Gauge.cpp:379).
 
 ### DebugWindow
 
-Requested: basic gauges into General, the rest split into sections that match the components
-(the spring brake and its controls in one place), an Engine section showing the engine type with
-its switches and debug controls completed, a Lights section, and a font a few px smaller.
+* `debug_hud.tscn` (used by `examples/mover_demo.tscn`) hands the vehicle only to `MoverSwitches`,
+  which does not pass it on to its sections - there the sections stay disabled. `game_hud.gd`
+  propagates it to every widget.
 
 ### Python integration
 

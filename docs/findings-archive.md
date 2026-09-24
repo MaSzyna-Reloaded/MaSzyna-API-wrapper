@@ -271,6 +271,15 @@ Porting `loadcount`/`loadtype` from a `.scn` `dynamic` line.
   (DynObj.cpp:3671-3730). A one-shot per joint does not comb; a shared loop does.
 * **Rule:** when many copies of one sound play at once, the defect is phase, not level. Look for a
   start offset before touching a gain.
+* **The fix did not work, twice.** The offset was first applied only to a clip picked without an
+  automation (000fe9b moved it into gnd-sfx). The second time it was added in
+  `_resolve_voice_start_position` and overwritten one line later: both voice-start paths then called
+  `_resolve_phase_locked_automation_start_position` for every automation, and that returned a bare
+  `clip.stream_offset` when `phase_locked` was false (the default). A probe that played an automation
+  event with `start_fraction` 0.5 printed a start of 0.0 at the first start and after a chunk swap.
+  With the phase-lock override limited to phase-locked automations, it prints 0.5 in both places
+  (`demo/tests/test_sfx_start_fraction.gd`).
+* **Rule:** prove a fix to a value by printing the value where it is used, not where it is set.
 
 ## 2026-09-24 - the pantograph lost the wire where the original keeps it, in four different ways
 

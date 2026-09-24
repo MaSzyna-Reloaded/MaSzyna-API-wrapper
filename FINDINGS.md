@@ -3,6 +3,22 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - switch blades in a scenery never moved, because only a node listened
+
+* **Symptom:** throwing a switch in a loaded scenery changes the route - the train takes the other
+  branch - but the blades stay where they were built. `TrackSwitch3D` nodes in `demo_3d` still
+  animate, so it read as "it used to work".
+* **Cause:** `TrackManager::_process_switches()` steps the blade offset and emits
+  `switch_offset_updated` every frame of the move, and the only listener turning that into blade
+  movement was `TrackSwitch3D._on_track_manager_switch_offset_updated()`. Since `923b293` a
+  scenery builds its tracks through `TrackRenderingServer`'s RID API with no nodes at all, so the
+  blades got their pose once, in `_stream_build()`, and nothing ever moved them again.
+* **Fix:** `TrackRenderingServer` subscribes to `switch_offset_updated` itself and moves the
+  blades of whichever render track belongs to the switch; the node's copy is removed.
+* **Rule:** the same shape as the scenery lights (2026-09-21): a feature parked on a node vanishes
+  silently the moment an instancer without nodes appears. The server that owns the visuals
+  subscribes to the manager's events itself.
+
 ## 2026-09-23 - the cab acted one keypress late, because the dump was cached per step
 
 * **Symptom:** a key in the cab plays its sound at once, but the operation only happens when the

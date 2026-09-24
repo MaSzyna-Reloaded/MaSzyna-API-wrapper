@@ -50,7 +50,6 @@ func _enter_tree():
     if diverging_curve:
         diverging_curve.changed.connect(_mark_dirty)
     TrackManager.switch_active_track_changed.connect(_on_track_manager_switch_active_track_changed)
-    TrackManager.switch_offset_updated.connect(_on_track_manager_switch_offset_updated)
     TrackManager.switching_started.connect(_on_track_manager_switching_started)
     TrackManager.switching_finished.connect(_on_track_manager_switching_finished)
 
@@ -58,7 +57,6 @@ func _exit_tree() -> void:
     if diverging_curve:
         diverging_curve.changed.disconnect(_mark_dirty)
     TrackManager.switch_active_track_changed.disconnect(_on_track_manager_switch_active_track_changed)
-    TrackManager.switch_offset_updated.disconnect(_on_track_manager_switch_offset_updated)
     TrackManager.switching_started.disconnect(_on_track_manager_switching_started)
     TrackManager.switching_finished.disconnect(_on_track_manager_switching_finished)
     super._exit_tree()
@@ -79,16 +77,6 @@ func _on_track_manager_switching_finished(track_rid: RID, active_track_value: in
     if not track_rid == _track_rid:
         return
     switching_finished.emit(active_track_value)
-
-func _on_track_manager_switch_offset_updated(track_rid: RID, _offset: float) -> void:
-    if not track_rid == _track_rid:
-        return
-    if _track_render_rid.is_valid() and TrackManager.track_exists(_track_rid):
-        TrackRenderingServer.set_switch_blade_offsets(
-            _track_render_rid,
-            TrackManager.switch_get_f_offset1(_track_rid),
-            TrackManager.switch_get_f_offset2(_track_rid)
-        )
 
 func _on_track_manager_switch_active_track_changed(track_rid: RID, active_track_value: int) -> void:
     if not track_rid == _track_rid:

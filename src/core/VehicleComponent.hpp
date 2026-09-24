@@ -81,9 +81,14 @@ namespace godot {
              * for a dump - a console, a test, a diagnostic - never per frame: the live values are
              * read from this component's own typed properties.
              *
-             * Keys carry the component's name (`heating_enabled`, not `enabled`) because the dump
-             * is one flat Dictionary for the whole vehicle. A key the vehicle's variant does not
-             * have is simply not written, so has() keeps meaning what it meant. */
+             * The dump is one flat Dictionary for the whole vehicle, so every key is qualified by
+             * what owns it and no key is ever bare: `heating_enabled`, not `enabled`. A component
+             * that publishes a whole sub-device's block qualifies it with a namespace instead -
+             * `spring_brake/cylinder_pressure`, `current_collector/max_voltage`. A key is the
+             * value's name and never the name of the accessor that produced it (see `FINDINGS.md`,
+             * 2026-09-23, where `get_bogie_pivot_spacing()` as a key cost every vehicle its bogie
+             * spacing). A key the vehicle's variant does not have is simply not written, so has()
+             * keeps meaning what it meant. */
             virtual void _fill_state_dictionary(Dictionary &p_state) const;
             /* A scripted component's own kind, chosen by whoever wrote it. Empty on the
              * built-in ones, which are found by their ComponentType instead. */

@@ -134,14 +134,14 @@ static func _static_init() -> void:
     ]
 
 
-## Populates an EXISTING VehicleController (`target`) from a FIZ file: root-level properties
-## (Param./Dimensions:/Cntrl. general subset/...) are applied directly to `target`, and its
-## parsed VehicleComponent children are added under it. `target` must have no children of its own
-## yet - the caller is responsible for clearing any previous FIZ-sourced children first (see
-## FizVehiclePhysicsNode._reload()). `fiz_path` must already be a fully resolved, openable path
-## (res://, user://, or absolute) - e.g. UserSettings.get_maszyna_game_dir().path_join(
-## "pkp/eu04_v1/eu04-01.fiz"). `include` directives inside the file resolve relative to its
-## own containing directory.
+## Parses a FIZ file into a fresh VehicleController: root-level properties (Param./Dimensions:/
+## Cntrl. general subset/...) are applied to `target` and every section's VehicleComponent is
+## attached to it with add_component(). `target` is expected to carry no components yet - a
+## second run would attach a second component of the same type - which is why its one caller,
+## build_model_at(), hands it a controller it has just created and throws away once the model is
+## captured. `fiz_path` must already be a fully resolved, openable path (res://, user://, or
+## absolute) - e.g. UserSettings.get_maszyna_game_dir().path_join("pkp/eu04_v1/eu04-01.fiz").
+## `include` directives inside the file resolve relative to its own containing directory.
 static func build_into(target: VehicleController, fiz_path: String) -> void:
     var context := FizImportContext.new()
     context.base_dir = fiz_path.get_base_dir()

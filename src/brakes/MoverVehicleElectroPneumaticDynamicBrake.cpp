@@ -37,7 +37,7 @@ namespace godot {
         if (mover == nullptr) {
             return;
         }
-        p_state["dcemued/get_coupler_check()"] = get_coupler_check();
+        p_state["dcemued/coupler_check"] = get_coupler_check();
         p_state["dcemued/ed_braking_ep_delay"] = get_ed_braking_ep_delay();
         p_state["dcemued/ep_max_brake_engagement_speed"] = get_ep_max_brake_engagement_speed();
         p_state["dcemued/ep_min_regenerative_braking"] = get_ep_min_regenerative_braking();

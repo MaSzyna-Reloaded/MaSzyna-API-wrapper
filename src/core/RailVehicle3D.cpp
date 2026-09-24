@@ -1293,6 +1293,22 @@ namespace godot {
                 double(placement.get("along", 0.0)));
     }
 
+    /* The third way a raised pantograph reads no voltage, and the only one that is not about the
+     * wire: the arm has not reached it (PantDiff >= 0.01, DynObj.cpp:3866), so the vehicle is fed
+     * 0 V while a perfectly good span is overhead. Reported on the transition, like the other two,
+     * because from the cab all three look the same. */
+    void RailVehicle3D::_report_contact_gap(const int p_index, const bool p_is_active, const bool p_converged) {
+        Dictionary cache = pantograph_wire_cache[p_index];
+        const bool was_touching = cache.get("touching", false);
+        if (p_is_active && was_touching && !p_converged) {
+            UtilityFunctions::push_warning(vformat(
+                    "Lost contact: %s pantograph %d is not reaching the wire - %s", get_name(), p_index,
+                    _track_position_text()));
+        }
+        cache["touching"] = p_is_active && p_converged;
+        pantograph_wire_cache[p_index] = cache;
+    }
+
     /* FIXME(#184): this belongs in RailVehicleServer's step, not in the node that draws the
      * vehicle. Nothing here needs a node - the server already owns the placement and
      * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
@@ -1313,6 +1329,12 @@ namespace godot {
                 bool(state.get("current_collector/pantograph_second_active", false)) && pantograph_rear_converged;
         const int active_count = int(front_active) + int(rear_active);
         const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
+        _report_contact_gap(
+                2, bool(state.get("current_collector/pantograph_first_active", false)),
+                pantograph_front_converged);
+        _report_contact_gap(
+                3, bool(state.get("current_collector/pantograph_second_active", false)),
+                pantograph_rear_converged);
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;

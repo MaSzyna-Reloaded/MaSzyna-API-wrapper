@@ -141,6 +141,7 @@ namespace godot {
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
             String _track_position_text() const;
+            void _report_contact_gap(int p_index, bool p_is_active, bool p_converged);
 
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();

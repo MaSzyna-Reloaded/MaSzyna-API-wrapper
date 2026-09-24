@@ -101,6 +101,15 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 * **Rule:** when a fix is being reinvented, find the commit that made it the first time
   (`git log -S` on the moved code) and read its message before proposing the opposite. Two of the
   three things tried here had already been decided, with reasons, in `4ec5490`.
+* **What the fix left open, and how it was closed.** Taking the frame delta as it comes means a
+  stalled frame is integrated with `sub_step = delta / MAX_PHYSICS_ITERATIONS`, which past 0.2 s
+  is larger than `PHYSICS_STEP` - the one thing that constant exists to prevent. Dropping the
+  excess was the obvious answer and it is wrong here: the scenario's events and multiplayer are
+  driven by time, so a simulation running slower than the clock drifts out of both. `step_frame()`
+  therefore *owes* what it cannot integrate and the following frames pay it off, and only past
+  `maszyna/physics/catch_up_limit` does it take the debt in one step - a visible jump, logged,
+  because a jump beats a clock that lies. The debt is reset whenever stepping starts, since time
+  that passed while the simulation was stopped is not time it failed to integrate.
 * **Trap it exposed:** `test_process_movement_with_invalid_controller_reference_is_noop` passed
   only because the step used to run after GUT's coroutine resumed. Its premise was never true -
   `controller = null` drops a GDScript reference and leaves the object attached to the vehicle. It

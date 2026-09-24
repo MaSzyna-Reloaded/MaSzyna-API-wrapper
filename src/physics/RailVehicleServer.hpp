@@ -42,6 +42,15 @@ namespace godot {
             }
 
         private:
+            /* Simulation time owed but not yet integrated - see step_frame(). Kept in seconds,
+             * never dropped while it stays under the catch-up limit. */
+            double owed_seconds = 0.0;
+            /* How much owed time may pile up before the simulation stops spreading it and takes
+             * it in one step instead. A setting, because the answer depends on the machine. */
+            static constexpr const char *CATCH_UP_LIMIT_SETTING = "maszyna/physics/catch_up_limit";
+            static constexpr double DEFAULT_CATCH_UP_LIMIT = 1.0;
+            /// Read once - step_frame() runs every frame and must not look a setting up there.
+            double catch_up_limit = DEFAULT_CATCH_UP_LIMIT;
             /* Distance the neighbour scan steps past a track endpoint to enter the next track */
             static constexpr double SCAN_ENDPOINT_EPSILON = 0.001;
             /* 10 m is about 140 km/h at 4 fps, plus a safety margin (DynObj.cpp:7160) */

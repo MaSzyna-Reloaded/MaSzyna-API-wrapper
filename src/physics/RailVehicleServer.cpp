@@ -4,6 +4,7 @@
 #include "../core/VehicleComponent.hpp"
 
 #include "../core/RailVehicle3D.hpp"
+#include "../core/GameLog.hpp"
 #include "../core/VehicleController.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
@@ -18,7 +19,9 @@ namespace godot {
     static const char *DIAGNOSTICS_SETTING = "maszyna/physics/diagnostics";
 
     RailVehicleServer::RailVehicleServer() {
-        diagnostics = ProjectSettings::get_singleton()->get_setting(DIAGNOSTICS_SETTING, false);
+        ProjectSettings *settings = ProjectSettings::get_singleton();
+        diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
+        catch_up_limit = settings->get_setting(CATCH_UP_LIMIT_SETTING, DEFAULT_CATCH_UP_LIMIT);
     }
 
     RailVehicleServer::~RailVehicleServer() {
@@ -39,6 +42,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_process_movement", "vehicle", "delta"), &RailVehicleServer::vehicle_process_movement);
         ClassDB::bind_method(D_METHOD("step", "delta"), &RailVehicleServer::step);
+        ClassDB::bind_method(D_METHOD("step_frame", "delta"), &RailVehicleServer::step_frame);
         ClassDB::bind_method(D_METHOD("vehicle_get_velocity", "vehicle"), &RailVehicleServer::vehicle_get_velocity);
         ClassDB::bind_method(D_METHOD("vehicle_get_speed", "vehicle"), &RailVehicleServer::vehicle_get_speed);
         ClassDB::bind_method(
@@ -101,6 +105,9 @@ namespace godot {
             return;
         }
         stepping = p_stepping;
+        // a simulation that is starting owes nothing: whatever passed while it was stopped is not
+        // time it failed to integrate
+        owed_seconds = 0.0;
         if (p_stepping) {
             RailVehicleStepper *stepper = memnew(RailVehicleStepper);
             stepper_id = stepper->get_instance_id();
@@ -662,11 +669,42 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
+    /* Simulation time is never dropped: the scenario's events and, later, multiplayer are driven
+     * by it, so a simulation that quietly ran slower than the clock would drift out of both.
+     *
+     * A frame therefore hands over its whole delta, and what cannot be integrated now is owed and
+     * paid off by the frames that follow. What "cannot be integrated now" means is one thing:
+     * the sub-step must stay at or below PHYSICS_STEP, because that is what the coupler springs
+     * were tuned for - integrate a stiff spring with a step several times larger and the consist
+     * kicks. MAX_PHYSICS_ITERATIONS sub-steps of PHYSICS_STEP is the most a frame can honestly
+     * take, so that product is the budget.
+     *
+     * Every frame still integrates at least its own delta, so nothing is quantised and the motion
+     * stays as smooth as the frame rate - only the backlog is spread.
+     *
+     * Past CATCH_UP_LIMIT_SETTING the machine is not stalling, it is too slow to simulate in real
+     * time, and spreading the debt would only add work to frames that are already late. There the
+     * debt is taken in one step: the step is too large for the couplers and the consist visibly
+     * jumps, which is the deliberate choice - a jump that can be seen beats a clock that silently
+     * lies. It is logged, so it is not mistaken for a physics bug. */
     void RailVehicleServer::step_frame(const double p_delta) {
         if (!stepping_enabled || Engine::get_singleton()->is_editor_hint() || p_delta <= 0.0) {
             return;
         }
-        step(p_delta);
+        owed_seconds += p_delta;
+
+        double budget = MIN(owed_seconds, MAX_PHYSICS_ITERATIONS * PHYSICS_STEP);
+        if (owed_seconds > catch_up_limit) {
+            if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+                game_log->warning(vformat(
+                        "RailVehicleServer: %.2f s of simulation owed, over the %.2f s catch-up "
+                        "limit - taking it in one step, so the vehicles jump",
+                        owed_seconds, catch_up_limit));
+            }
+            budget = owed_seconds;
+        }
+        owed_seconds -= budget;
+        step(budget);
     }
 
     void RailVehicleServer::step(const double p_delta) {

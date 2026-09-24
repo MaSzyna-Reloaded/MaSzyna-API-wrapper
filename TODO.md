@@ -276,6 +276,61 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 
 ## Cabins
 
+### Python integration
+
+`PythonScreenServer` runs the original's Python 2 screen scripts, `CabinPythonScreen` puts what
+they draw on the cab's submodel and `PythonScreenState` maps the vehicles' state onto the
+original's `TTrain::GetTrainState()` keys. Left out:
+
+* **The runtime is not shipped.** CPython 2.7.18 + Pillow 6.2.2 (the last release for Python 2)
+  build fine, but `make release-linux` does not build them yet - they belong in
+  `ci/docker/linux-sdk`, like the export template (FINDINGS 2026-09-24, glibc), installed as
+  `python2.7/` in the game directory, where the server looks for it. The original's own
+  `linuxpython64` is only a virtualenv over the system's libpython and has no PIL. Windows is
+  untested; it should use the game directory's own `python27.dll` and `python64/`
+  (PyInt.cpp:233). The development copy in the game directory was built by hand on this machine
+  and links the system's libjpeg/freetype/zlib.
+* **Keys with no source in the vehicle state yet** - each needs its Mover field published by the
+  component that owns it, then one line in `PythonScreenState`:
+  * occupied/controlled vehicle: `pant_compressor` (PantCompFlag), `new_speed` (NewSpeed),
+    `speedctrlstandby` (SpeedCtrlUnit.Standby), `scnd_ctrl_actual_pos` (ScndCtrlActualPos),
+    `brake_delay_flag` (BrakeDelayFlag), `brake_op_mode_flag` (BrakeOpModeFlag), `pipelock`
+    (LockPipe), `tractionforce` (Ft), `voltage` (EngineVoltage), `im` (Im), `power_drawn` /
+    `power_returned` (EnergyMeter), `lights_compartments` (CompartmentLights), `off_from_dimmer`
+    (dimPositions), `main_init` (MainsInitTime), the lamps outside the five the state carries
+    (rearendsignals, auxiliary_*) in `lights_front`/`lights_rear`;
+  * the train row `eimp_t_*` and the ED share of `dir_brake` (eimic_real, eimv[eimv_Fful], Itot);
+  * per car: `eimp_pnN_cp` (CntrlPipePress), `eimp_pnN_rp` (Hamulec->GetBRP()), `eimp_pnN_mass`
+    (TotalMass - Mred), `code_N` (the last letter of TypeName - `type_name` is a controller
+    property, not in the config dump), `doors_no_N` (iAnimType[ANIM_DOORS], the vehicle's door
+    animations);
+  * per powered car: `eimp_cN_fr`..`uhv` (eimv[], Itot, EngineVoltage), `eimp_cN_invno` and
+    `eimp_cN_invM_act/error/allow` (InvertersNo, Inverters[] - read by 38 scripts),
+    `diesel_param_N_fill_des`/`clutch_des` (RList[MainCtrlPos]), `clutch_real` (dizel_engage),
+    `water_temp`/`engine_temp` (dizel_heat), `retarder_fill` (hydro_R_Fill); a powered car is
+    told by its engine type, where the original tests eimc[eimc_p_Pmax] > 1;
+  * `TDynamicObject::FindPowered()` searches only the unit of an EZT/DMU - the train type is not
+    in the config dump, so the controlled vehicle is looked for across the whole control coupling.
+* **Keys that belong to the cab** (TTrain members, not the vehicle): `universal0`..`29`
+  (ggUniversals), `universal3` (InstrumentLightActive), `radio_volume`, `distance_counter`,
+  `main_ready` (it reads the cab's voltmeter, fHVoltage), `lights_train_front`/`rear`.
+* **The AI driver and its timetable do not exist in the wrapper** - `velocity_desired`,
+  `velroad`, `vellimitlast`, `velsignallast`, `velsignalnext`, `velnext`, `actualproximitydist`,
+  `train_atpassengerstop`, `train_length`, `trainnumber` and every `train_*` key
+  (TTrainParameters::serialize(), mtable.cpp:641), and the `$timetable=` parameter
+  (dictionary.cpp:36).
+* **No test covers the consist walk or the mapping.** `RailVehicleServer.vehicle_get_coupled()`
+  needs one on coupled fixture vehicles (the order from the far end, the stop at a coupling
+  without the element, a vehicle turned round in the middle), and `PythonScreenState.compose()`
+  one that checks the mapped keys against a fixture vehicle's state; both were only checked by
+  running the E186 in `td_e186.scn`.
+* **Commands a script returns are not executed.** Only two scripts send any (`lightsset`);
+  `CabinPythonScreen` reports them once. They need the original's `simulation::commandMap`
+  names mapped onto `TrainSystem` commands (PyInt.cpp:138-194).
+* **Touch input** (`touches`, `screen_touch_list`, Train.cpp:10713) is always an empty list.
+* `pyrylandia` (a bare name, so next to its vehicle) is referenced by an MMD and exists nowhere
+  under `dynamic/`.
+
 * `VirtualCabin` for cabs without a hi-fi model (MMD `cabNmodel: none` or missing, e.g. su46
   `cab0definition:`) - built only when the cab exists, purely for input actions and command
   translation (no geometry, no MMD instrument widgets). The original keeps such a cab enterable

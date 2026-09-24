@@ -111,6 +111,7 @@ namespace godot {
             void couple(VehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) override;
             void uncouple(int p_end) override;
             bool is_coupled(int p_end) const override;
+            bool is_coupled_by(int p_end, CouplingElement p_element) const override;
             void coupler_connect(const Variant &p_where) override;
             void coupler_disconnect(const Variant &p_where) override;
             VehicleController *get_coupled_controller(int p_end) const override;

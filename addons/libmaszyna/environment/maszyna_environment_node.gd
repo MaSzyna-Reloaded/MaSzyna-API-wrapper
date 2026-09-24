@@ -113,7 +113,7 @@ signal configuration_changed
         precipitation = value
         _dirty_visuals = true
 
-## Air temperature; nothing consumes it yet (see TODO.md)
+## Air temperature, published to MaszynaRuntime
 @export_range(-15.0, 45.0, 0.1, "suffix:°C") var temperature: float = 15.0
 
 @export_group("Fog")
@@ -378,7 +378,9 @@ func _apply_time_configuration() -> void:
 
 
 ## Scenery lights set to come on automatically are decided by E3DRenderingServer out of the time of
-## day and the light level, and the particle emitters drift with the wind. None of the three
+## day and the light level, and the particle emitters drift with the wind; MaszynaRuntime carries
+## the time, the light level and the temperature for everything else (a cab screen's clock, once
+## a second, is exactly the resolution it shows). None of the three
 ## changes fast enough to be worth pushing every frame - a whole scenery is re-resolved on each
 ## push - so they go at a fixed interval, and at once when the time was jumped rather than merely
 ## running.
@@ -387,8 +389,12 @@ func _push_environment_state(delta: float) -> void:
     if _light_state_elapsed < LIGHT_STATE_UPDATE_INTERVAL and not _dirty_time:
         return
     _light_state_elapsed = 0.0
+    var light_level:float = _sky_environment.get_light_level()
     E3DRenderingServer.set_current_time(current_time)
-    E3DRenderingServer.set_light_level(_sky_environment.get_light_level())
+    E3DRenderingServer.set_light_level(light_level)
+    MaszynaRuntime.time_of_day = current_time
+    MaszynaRuntime.light_level = light_level
+    MaszynaRuntime.air_temperature = temperature
     E3DRenderingServer.set_wind(
         _sky_environment.get_wind_strength(), _sky_environment.get_wind_direction()
     )

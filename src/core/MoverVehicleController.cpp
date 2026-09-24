@@ -1,6 +1,7 @@
 #include "MoverVehicleController.hpp"
 #include "../mover/MoverComponent.hpp"
 #include "../mover/MoverTypes.hpp"
+#include "maszyna/utilities.h"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
@@ -260,6 +261,13 @@ namespace godot {
 
     bool MoverVehicleController::is_coupled(const int p_end) const {
         return mover != nullptr && mover->Couplers[p_end].Connected != nullptr;
+    }
+
+    bool MoverVehicleController::is_coupled_by(const int p_end, const CouplingElement p_element) const {
+        // indexed by CouplingElement
+        static constexpr int flags[] = {coupling::coupler, coupling::brakehose, coupling::mainhose, coupling::control,
+                                        coupling::gangway, coupling::heating, coupling::permanent};
+        return mover != nullptr && TestFlag(mover->Couplers[p_end].CouplingFlag, flags[p_element]);
     }
 
     // p_where is a coupler end (0 front, 1 rear) or a world position - then the vehicle end nearest to

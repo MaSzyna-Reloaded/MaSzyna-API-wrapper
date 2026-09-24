@@ -37,6 +37,9 @@ var model_relpath:String = ""
 ## cab's `cabNdefinition:` and the following `cab0definition:`/EOF.
 var instruments:Array[MmdInstrumentDescriptor] = []
 
+## Every `pyscreen:` of this cab, in file order, with the update interval already resolved.
+var python_screens:Array[MmdPythonScreenDescriptor] = []
+
 ## Parse-time diagnostics (severity/code/source_file/line/cabin_number/mmd_label/
 ## submodel_name/message), collected while building this definition. MmdCabinInstancer.
 ## build_into() appends its own build-time diagnostics to the same shape separately.

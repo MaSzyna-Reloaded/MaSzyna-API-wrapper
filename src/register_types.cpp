@@ -13,6 +13,7 @@
 #include "core/GenericVehicleComponentNode.hpp"
 #include "cabin/Cabin3D.hpp"
 #include "traction/TractionPowerServer.hpp"
+#include "scripting/PythonScreenServer.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
 #include "core/VehicleController.hpp"
@@ -107,6 +108,7 @@ TrackManager *track_manager_singleton = nullptr;
 RailVehicleServer *rail_vehicle_server_singleton = nullptr;
 TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
+PythonScreenServer *python_screen_server_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -139,6 +141,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaTrianglesImporter);
         GDREGISTER_CLASS(SceneryLoadingTaskQueue);
         GDREGISTER_CLASS(SceneryStreamingServer);
+        GDREGISTER_CLASS(PythonScreenServer);
         GDREGISTER_CLASS(SceneryTrianglesBuilder);
         GDREGISTER_CLASS(OggVorbisFormatLoader);
         GDREGISTER_ABSTRACT_CLASS(VehicleComponentType);
@@ -221,6 +224,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         track_manager_singleton = memnew(TrackManager);
         rail_vehicle_server_singleton = memnew(RailVehicleServer);
         traction_power_server_singleton = memnew(TractionPowerServer);
+        python_screen_server_singleton = memnew(PythonScreenServer);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -233,6 +237,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
         Engine::get_singleton()->register_singleton(
                 "TractionPowerServer", traction_power_server_singleton); // 11
+        Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -256,6 +261,14 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("PythonScreenServer")) {
+        Engine::get_singleton()->unregister_singleton("PythonScreenServer"); // 12
+    }
+    if (python_screen_server_singleton != nullptr) {
+        memdelete(python_screen_server_singleton);
+        python_screen_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("RailVehicleServer")) {

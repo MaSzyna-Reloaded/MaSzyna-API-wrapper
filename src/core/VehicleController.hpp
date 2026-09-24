@@ -123,7 +123,8 @@ namespace godot {
             };
 
             /* The element a coupler attached or detached, as the original names them (coupler,
-             * brake hose, main hose, control, gangway, heating) */
+             * brake hose, main hose, control, gangway, heating); permanent marks the couplings inside
+             * one unit (coupling::permanent) */
             enum CouplingElement {
                 COUPLING_ELEMENT_COUPLER,
                 COUPLING_ELEMENT_BRAKEHOSE,
@@ -131,6 +132,7 @@ namespace godot {
                 COUPLING_ELEMENT_CONTROL,
                 COUPLING_ELEMENT_GANGWAY,
                 COUPLING_ELEMENT_HEATING,
+                COUPLING_ELEMENT_PERMANENT,
             };
 
             /* Category= (train / road / ship / airplane) */
@@ -268,6 +270,8 @@ namespace godot {
             virtual void couple(VehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) = 0;
             virtual void uncouple(int p_end) = 0;
             virtual bool is_coupled(int p_end) const = 0;
+            /* Whether this end is joined by p_element (TestFlag(Couplers[end].CouplingFlag, ...)) */
+            virtual bool is_coupled_by(int p_end, CouplingElement p_element) const = 0;
             virtual void coupler_connect(const Variant &p_where) = 0;
             virtual void coupler_disconnect(const Variant &p_where) = 0;
             virtual VehicleController *get_coupled_controller(int p_end) const = 0;

@@ -3,6 +3,37 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - Python cab screens: what the original's scripts actually need
+
+Porting `pyscreen:` meant running the original's own Python 2 scripts, and four things about
+them were only visible by running them.
+
+* **A missing key is not a missing value, it is a blank screen.** A script reads
+  `state['hours']`, and a key the dictionary lacks raises KeyError - the whole `render()` fails
+  and nothing is drawn. Measured with a harness that feeds `{}` and adds each key a script asks
+  for: `timetable` needs 2, `etcs_180kmh` 8, and the 145 scripts together read about 250 of
+  `GetTrainState()`'s keys. So `PythonScreenState` always hands over the original's whole key set,
+  with the value types it uses, and only fills in what the wrapper has.
+* **The parser was eating the labels after a screen.** `pyscreen:` went through the generic
+  instrument branch, which reads five value tokens, while a screen has two (legacy form) or a
+  `{...}` block; the labels that followed were swallowed as values. A test now puts an ordinary
+  instrument right after each form of a screen.
+* **Scripts assume the game directory is the working directory** (`./fonts/`, `./textures/`,
+  `from scripts import`), and importing a module writes a `.pyc` beside it. The interpreter
+  `chdir`s to the game directory and runs with `dont_write_bytecode`, so it never writes into the
+  game data.
+* **A leaked screen with a GDScript lambda as its callback crashes the exit.** A probe that never
+  freed its screens aborted with "corrupted size vs. prev_size": the core showed `~Callable` in
+  `PythonScreenServer`'s destructor at module de-initialisation, destroying a lambda whose script
+  was gone. The same probe freeing its screens, with a method as the callback, exits cleanly;
+  `CabinPythonScreen` does both.
+* **Trap in the test:** the headless dummy renderer keeps no texture data, so a texture replaced by
+  `ImageTexture.set_image()` reads back as the old 1x1 placeholder. The test checks the size (the
+  `ImageTexture` keeps it) and has the fixture script send back the state it received.
+* **Rule:** when porting a data contract consumed by scripts nobody here maintains, run the real
+  scripts against it before designing it - the contract is what they read, not what the producer
+  happens to write.
+
 ## 2026-09-24 - the E186 line breaker dropped at 17 km/h: the wire was a hundred times too resistive
 
 * **Symptom:** the E186 pulled away and the line breaker opened after about 120 m, at 17 km/h.

@@ -187,15 +187,7 @@ static func _make_cache_hash(fiz_path: String) -> String:
         fiz_path
     ]).md5_text()
 
-## Builds a new, unparented VehicleController + children from a FIZ file. A scenery routinely
-## repeats the same wagon/locomotive .fiz across many consist entries, so this turns an
-## O(vehicle count) FIZ text parse (section dispatch + per-line MaszynaParser allocations) into
-## O(distinct files) - build_scene()'s cached PackedScene is instantiate()'d instead.
 
-
-## Builds (or reuses the cached) description of a vehicle from a FIZ file. Parsing a .fiz is the
-## expensive part and a scenery repeats the same file across many consist entries, so it is done
-## once per distinct file and every vehicle is built from the result.
 ## The vehicle a .fiz describes, parsed once and cached on disk - the shape
 ## E3DModelManager.load_model() has, and for the same reason: a scenery repeats the same file
 ## across many consist entries, and parsing it is the expensive part.

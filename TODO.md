@@ -84,10 +84,16 @@ serialises without a line of per-component code.
   component added to a vehicle that is already running.
 * **E - proxy nodes.** `VehicleControllerNode` plus one `<Interface>Node` per component, each
   thin: `@export`s for the editor, forward to the server object, no logic.
-* **F - `DynamicRailVehicle3D` stops fabricating nodes** (the FIZ half is done, see above) -
-  `dynamic_rail_vehicle_3d_manager.gd` packs model + FIZ controller + cabin + sound bank into a
-  `PackedScene` today and instantiates copies of it. The cache holds a vehicle configuration, not
-  a node tree. Bump `structure-vN` and `FIZ_PARSER_FORMAT_VERSION` in that same commit.
+* ~~**F - `DynamicRailVehicle3D` stops fabricating nodes.**~~ Done. The `rail_vehicle` cache
+  holds a `VehicleStructure` - what the `.mmd` says a vehicle is built from: the exterior,
+  low-poly and passengers model filenames, the resolved skin slots, the wiper prefix, `jointcabs`
+  and the cab scene - and `build_from_structure()` assembles the nodes per vehicle instead of
+  `PackedScene.pack()`/`instantiate()`. `read_structure()` is the expensive half and the only
+  thing cached; `initialize_instance()` is what a vehicle gets for itself (sound pools, and the
+  animation bindings, which are paths into its own submodel tree). Tag bumped to `structure-v18`;
+  `FIZ_PARSER_FORMAT_VERSION` deliberately not touched, since no FIZ parser changed. The cab
+  stays a `PackedScene`, because a cab genuinely is a tree of widgets.
+  What is left of this area:
   * **The node's public API is the `.scn` `dynamic` line and nothing else.** `data_path` +
     `file_name` + `skin` locate the data, and the `.fiz`/`.mmd`/`.e3d` behind them say what the
     vehicle *is* - measured for the cabs: `cab1model`/`cab2model`, `cabXdefinition` and

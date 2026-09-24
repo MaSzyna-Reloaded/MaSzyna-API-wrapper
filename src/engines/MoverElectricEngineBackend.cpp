@@ -1,6 +1,7 @@
 #include "MoverElectricEngineBackend.hpp"
 #include "VehicleElectricEngine.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "../mover/MoverTypes.hpp"
 #include "../core/VehicleController.hpp"
 
 namespace godot {
@@ -185,14 +186,11 @@ namespace godot {
         // this only runs when the controller is dirty (effectively once, at startup), but wire
         // voltage changes every frame as the vehicle moves - see set_pantograph_wire_voltage(),
         // which writes them straight to the p_mover instead.
-        p_mover->EnginePowerSource.SourceType = p_engine->get_controller()->power_source_map.at(p_engine->get_power_source());
+        p_mover->EnginePowerSource.SourceType = mover_power_source(p_engine->get_power_source());
 
         switch (p_engine->get_power_source()) {
             case VehicleController::POWER_SOURCE_INTERNAL: {
-                const std::map<VehicleController::TrainPowerType, TPowerType>::const_iterator lookup =
-                        p_engine->get_controller()->power_type_map.find(p_engine->get_power_cable_source());
-                p_mover->EnginePowerSource.PowerType =
-                        lookup != p_engine->get_controller()->power_type_map.end() ? lookup->second : TPowerType::NoPower;
+                p_mover->EnginePowerSource.PowerType = mover_power_type(p_engine->get_power_cable_source());
                 break;
             }
             case VehicleController::POWER_SOURCE_TRANSDUCER: {
@@ -210,7 +208,7 @@ namespace godot {
             }
             case VehicleController::POWER_SOURCE_ACCUMULATOR: {
                 p_mover->EnginePowerSource.RAccumulator.RechargeSource =
-                        p_engine->get_controller()->power_source_map.at(p_engine->get_power_accumulator_recharge_source());
+                        mover_power_source(p_engine->get_power_accumulator_recharge_source());
                 break;
             }
             case VehicleController::POWER_SOURCE_CURRENTCOLLECTOR: {
@@ -237,7 +235,7 @@ namespace godot {
             }
             case VehicleController::POWER_SOURCE_POWERCABLE: {
                 p_mover->EnginePowerSource.RPowerCable.PowerTrans =
-                        p_engine->get_controller()->power_type_map.at(p_engine->get_power_cable_source());
+                        mover_power_type(p_engine->get_power_cable_source());
                 if (p_mover->EnginePowerSource.RPowerCable.PowerTrans == TPowerType::SteamPower) {
                     p_mover->EnginePowerSource.RPowerCable.SteamPressure = p_engine->get_power_cable_steam_pressure();
                 }
@@ -263,12 +261,12 @@ namespace godot {
         p_mover->TUHEX_Sum2 = p_engine->get_circuit_tuhex_sum_2();
         p_mover->TUHEX_Sum3 = p_engine->get_circuit_tuhex_sum_3();
 
-        p_mover->ConverterStart = p_engine->start_mode_map.at(p_engine->get_cntrl_converter_start_mode());
+        p_mover->ConverterStart = mover_start_mode(p_engine->get_cntrl_converter_start_mode());
         p_mover->ConverterStartDelay = static_cast<float>(p_engine->get_cntrl_converter_start_delay());
-        p_mover->ConverterOverloadRelayStart = p_engine->start_mode_map.at(p_engine->get_cntrl_converter_overload_relay_start_mode());
+        p_mover->ConverterOverloadRelayStart = mover_start_mode(p_engine->get_cntrl_converter_overload_relay_start_mode());
         p_mover->ConverterOverloadRelayOffWhenMainIsOff = p_engine->get_cntrl_converter_overload_relay_off_when_main_is_off();
-        p_mover->PantographCompressorStart = p_engine->start_mode_map.at(p_engine->get_cntrl_pantograph_compressor_start_mode());
+        p_mover->PantographCompressorStart = mover_start_mode(p_engine->get_cntrl_pantograph_compressor_start_mode());
         p_mover->PantAutoValve = p_engine->get_cntrl_pantograph_auto_valve();
-        p_mover->MainsStart = p_engine->start_mode_map.at(p_engine->get_cntrl_main_switch_start_mode());
+        p_mover->MainsStart = mover_start_mode(p_engine->get_cntrl_main_switch_start_mode());
     }
 } // namespace godot

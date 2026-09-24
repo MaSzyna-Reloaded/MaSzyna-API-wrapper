@@ -141,16 +141,6 @@ namespace godot {
                 START_MODE_DIRECTION,
             };
 
-            const std::map<StartMode, Maszyna::start_t> start_mode_map = {
-                    {START_MODE_DISABLED, Maszyna::start_t::disabled},
-                    {START_MODE_MANUAL, Maszyna::start_t::manual},
-                    {START_MODE_AUTOMATIC, Maszyna::start_t::automatic},
-                    {START_MODE_MANUAL_WITH_AUTO_FALLBACK, Maszyna::start_t::manualwithautofallback},
-                    {START_MODE_CONVERTER, Maszyna::start_t::converter},
-                    {START_MODE_BATTERY, Maszyna::start_t::battery},
-                    {START_MODE_DIRECTION, Maszyna::start_t::direction},
-            };
-
             /* The element a coupler attached or detached, as the original names them
              * (coupling::coupler, coupling::brakehose, ..., Mover.cpp:590) */
             enum CouplingElement {
@@ -205,41 +195,6 @@ namespace godot {
                 POWER_TYPE_STEAM
             };
 
-            const std::map<TrainPowerSource, TPowerSource> power_source_map = {
-                    {TrainPowerSource::POWER_SOURCE_NOT_DEFINED, TPowerSource::NotDefined},
-                    {TrainPowerSource::POWER_SOURCE_INTERNAL, TPowerSource::InternalSource},
-                    {TrainPowerSource::POWER_SOURCE_TRANSDUCER, TPowerSource::Transducer},
-                    {TrainPowerSource::POWER_SOURCE_GENERATOR, TPowerSource::Generator},
-                    {TrainPowerSource::POWER_SOURCE_ACCUMULATOR, TPowerSource::Accumulator},
-                    {TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR, TPowerSource::CurrentCollector},
-                    {TrainPowerSource::POWER_SOURCE_POWERCABLE, TPowerSource::PowerCable},
-                    {TrainPowerSource::POWER_SOURCE_HEATER, TPowerSource::Heater},
-                    {TrainPowerSource::POWER_SOURCE_MAIN, TPowerSource::Main}};
-
-            const std::map<TPowerSource, TrainPowerSource> tpower_source_map = {
-                    {TPowerSource::NotDefined, TrainPowerSource::POWER_SOURCE_NOT_DEFINED},
-                    {TPowerSource::InternalSource, TrainPowerSource::POWER_SOURCE_INTERNAL},
-                    {TPowerSource::Transducer, TrainPowerSource::POWER_SOURCE_TRANSDUCER},
-                    {TPowerSource::Generator, TrainPowerSource::POWER_SOURCE_GENERATOR},
-                    {TPowerSource::Accumulator, TrainPowerSource::POWER_SOURCE_ACCUMULATOR},
-                    {TPowerSource::CurrentCollector, TrainPowerSource::POWER_SOURCE_CURRENTCOLLECTOR},
-                    {TPowerSource::PowerCable, TrainPowerSource::POWER_SOURCE_POWERCABLE},
-                    {TPowerSource::Heater, TrainPowerSource::POWER_SOURCE_HEATER},
-                    {TPowerSource::Main, TrainPowerSource::POWER_SOURCE_MAIN}};
-
-            const std::map<TrainPowerType, TPowerType> power_type_map = {
-                    {TrainPowerType::POWER_TYPE_NONE, TPowerType::NoPower},
-                    {TrainPowerType::POWER_TYPE_BIO, TPowerType::BioPower},
-                    {TrainPowerType::POWER_TYPE_MECH, TPowerType::MechPower},
-                    {TrainPowerType::POWER_TYPE_ELECTRIC, TPowerType::ElectricPower},
-                    {TrainPowerType::POWER_TYPE_STEAM, TPowerType::SteamPower}};
-
-            const std::map<TPowerType, TrainPowerType> tpower_type_map = {
-                    {TPowerType::NoPower, TrainPowerType::POWER_TYPE_NONE},
-                    {TPowerType::BioPower, TrainPowerType::POWER_TYPE_BIO},
-                    {TPowerType::MechPower, TrainPowerType::POWER_TYPE_MECH},
-                    {TPowerType::ElectricPower, TrainPowerType::POWER_TYPE_ELECTRIC},
-                    {TPowerType::SteamPower, TrainPowerType::POWER_TYPE_STEAM}};
 
             static const char *mover_config_changed_signal;
             static const char *mover_initialized_signal;

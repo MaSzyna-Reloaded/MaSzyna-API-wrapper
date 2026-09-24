@@ -1,5 +1,6 @@
 #include "MoverVehicleLighting.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "../mover/MoverTypes.hpp"
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -14,9 +15,9 @@ namespace godot {
                 static_cast<int>(light_position_list.size()); // To fix narrowing conversion from int64_t to int
         p_mover->LightsWrap = get_lights_wrap_selector();
         p_mover->LightsDefPos = get_lights_default_selector_position();
-        p_mover->LightPowerSource.SourceType = train_controller_node->power_source_map.at(get_light_source());
+        p_mover->LightPowerSource.SourceType = mover_power_source(get_light_source());
         p_mover->AlterLightPowerSource.SourceType =
-                train_controller_node->power_source_map.at(get_light_alternative_source());
+                mover_power_source(get_light_alternative_source());
         p_mover->LightsPos = get_lights_selector_position();
     }
 
@@ -56,7 +57,7 @@ namespace godot {
 
     int MoverVehicleLighting::get_power_source() const {
         const TMoverParameters *mover = mover_of(this);
-        return mover != nullptr ? train_controller_node->tpower_source_map.at(mover->LightPowerSource.SourceType) : 0;
+        return mover != nullptr ? power_source_of_mover(mover->LightPowerSource.SourceType) : 0;
     }
 
     bool MoverVehicleLighting::get_front_headlight_upper_enabled() const {

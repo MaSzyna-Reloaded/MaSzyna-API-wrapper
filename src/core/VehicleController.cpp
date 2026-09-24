@@ -1,4 +1,5 @@
 #include "../core/VehicleController.hpp"
+#include "../mover/MoverTypes.hpp"
 #include "../core/VehicleComponent.hpp"
 #include "../core/TrainSystem.hpp"
 #include "../engines/VehicleEngine.hpp"
@@ -869,9 +870,9 @@ namespace godot {
         p_mover->Cx = dimensions_drag_coefficient;
         p_mover->Floor = static_cast<float>(dimensions_floor_height);
 
-        p_mover->BatteryStart = start_mode_map.at(cntrl_battery_start_mode);
-        p_mover->GroundRelayStart = start_mode_map.at(cntrl_ground_relay_start_mode);
-        p_mover->CompartmentLights.start_type = start_mode_map.at(cntrl_compartment_lights_start_mode);
+        p_mover->BatteryStart = mover_start_mode(cntrl_battery_start_mode);
+        p_mover->GroundRelayStart = mover_start_mode(cntrl_ground_relay_start_mode);
+        p_mover->CompartmentLights.start_type = mover_start_mode(cntrl_compartment_lights_start_mode);
         p_mover->AutomaticCabActivation = cntrl_automatic_cab_activation;
         p_mover->InactiveCabFlag = cntrl_inactive_cab_flag;
 

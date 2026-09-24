@@ -1,5 +1,6 @@
 #include "MoverVehicleHeating.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "../mover/MoverTypes.hpp"
 #include "../core/VehicleController.hpp"
 
 namespace godot {
@@ -10,7 +11,7 @@ namespace godot {
         ASSERT_MOVER(p_mover);
         VehicleComponent::_apply_configuration();
 
-        p_mover->HeatingPowerSource.SourceType = train_controller_node->power_source_map.at(get_heating_source());
+        p_mover->HeatingPowerSource.SourceType = mover_power_source(get_heating_source());
         p_mover->HeatingPowerSource.MaxVoltage = get_heating_max_voltage();
 
         switch (get_heating_source()) {
@@ -28,7 +29,7 @@ namespace godot {
             }
             case VehicleController::POWER_SOURCE_POWERCABLE: {
                 p_mover->HeatingPowerSource.RPowerCable.PowerTrans =
-                        train_controller_node->power_type_map.at(get_heating_power_cable_type());
+                        mover_power_type(get_heating_power_cable_type());
                 break;
             }
             default:

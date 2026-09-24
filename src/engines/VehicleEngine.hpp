@@ -66,16 +66,6 @@ namespace godot {
                 START_MODE_DIRECTION,
             };
 
-            const std::map<StartMode, Maszyna::start_t> start_mode_map = {
-                    {START_MODE_DISABLED, Maszyna::start_t::disabled},
-                    {START_MODE_MANUAL, Maszyna::start_t::manual},
-                    {START_MODE_AUTOMATIC, Maszyna::start_t::automatic},
-                    {START_MODE_MANUAL_WITH_AUTO_FALLBACK, Maszyna::start_t::manualwithautofallback},
-                    {START_MODE_CONVERTER, Maszyna::start_t::converter},
-                    {START_MODE_BATTERY, Maszyna::start_t::battery},
-                    {START_MODE_DIRECTION, Maszyna::start_t::direction},
-            };
-
             /* EIMCtrlType= : traction lever variant, for vehicles with an EIM-style controller */
             enum EimControlType {
                 EIM_CONTROL_TYPE_0,
@@ -91,16 +81,6 @@ namespace godot {
                 AUTO_RELAY_OPTIONAL,
             };
 
-            const std::map<EngineType, TEngineType> engine_type_map = {
-                    {NONE, TEngineType::None},
-                    {DUMB, TEngineType::Dumb},
-                    {WHEELS_DRIVEN, TEngineType::WheelsDriven},
-                    {ELECTRIC_SERIES_MOTOR, TEngineType::ElectricSeriesMotor},
-                    {ELECTRIC_INDUCTION_MOTOR, TEngineType::ElectricInductionMotor},
-                    {DIESEL, TEngineType::DieselEngine},
-                    {STEAM, TEngineType::SteamEngine},
-                    {DIESEL_ELECTRIC, TEngineType::DieselElectric},
-                    {MAIN, TEngineType::Main}};
 
 
             TypedArray<MotorParameter> get_motor_param_table() const {

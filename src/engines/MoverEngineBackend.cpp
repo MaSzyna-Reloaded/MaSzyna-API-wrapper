@@ -1,5 +1,6 @@
 #include "MoverEngineBackend.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "../mover/MoverTypes.hpp"
 #include "VehicleEngine.hpp"
 #include "../core/VehicleController.hpp"
 #include <algorithm>
@@ -82,7 +83,7 @@ namespace godot {
 
     void MoverEngineBackend::apply_configuration(const VehicleEngine *p_engine) const {
         TMoverParameters *p_mover = mover_of(p_engine);
-        p_mover->EngineType = p_engine->engine_type_map.at(p_engine->get_engine_type());
+        p_mover->EngineType = mover_engine_type(p_engine->get_engine_type());
 
         p_mover->Transmision.NToothM = p_engine->get_transmission_gear_teeth_motor();
         p_mover->Transmision.NToothW = p_engine->get_transmission_gear_teeth_wheel();
@@ -103,7 +104,7 @@ namespace godot {
             fan.speed = static_cast<float>(p_engine->get_motor_blowers_speed());
             fan.sustain_time = static_cast<float>(p_engine->get_motor_blowers_sustain_time());
             fan.min_start_velocity = static_cast<float>(p_engine->get_motor_blowers_start_velocity());
-            fan.start_type = p_engine->start_mode_map.at(p_engine->get_motor_blowers_start_mode());
+            fan.start_type = mover_start_mode(p_engine->get_motor_blowers_start_mode());
         }
 
         p_mover->MainCtrlPosNo = p_engine->get_cntrl_main_controller_position_count();

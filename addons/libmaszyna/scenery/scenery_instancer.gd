@@ -685,6 +685,8 @@ static func _build_power_source(power_source_data:MaszynaPowerSourceData) -> RID
         power_source_data.fast_fuse_repetition,
         power_source_data.slow_fuse_timeout,
         power_source_data.recuperation,
+        false,
+        power_source_data.is_section,
     )
     return power_source_rid
 
@@ -702,6 +704,8 @@ static func _build_wire_power(traction_data:MaszynaTractionData) -> RID:
         traction_data.max_current,
         traction_data.resistivity,
     )
+    # the span this one shares its running with, which a pantograph cannot reach along the chain
+    TractionPowerServer.wire_set_parallel(wire_rid, traction_data.parallel)
     return wire_rid
 
 

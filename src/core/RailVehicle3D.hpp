@@ -34,9 +34,21 @@ namespace godot {
             TypedArray<NodePath> front_rolling_wheel_paths;
             TypedArray<NodePath> powered_wheel_paths;
             TypedArray<NodePath> rear_rolling_wheel_paths;
+            /* FIXME(#184): where a collector sits is the vehicle's geometry, not the drawing
+             * node's - the original keeps it in TAnimPant::vPos. It is exported here only because
+             * the instancer reads it off the model, and the pantograph power path cannot move to
+             * RailVehicleServer until it does not have to come back here for these. */
             Vector3 pantograph_front_offset;
             Vector3 pantograph_rear_offset;
             double pantograph_collector_width = 0.5;
+            /* Half of the slider's width, taken from the vehicle's own CSW when its configuration
+             * lands - see _on_vehicle_config_changed(). */
+            double pantograph_slider_half_width = 0.5;
+            /* How far outside the slider the guide horn still catches a wire (DynObj.cpp:93,
+             * fWidthExtra). Without it a pantograph drops the wire wherever it swings sideways -
+             * at a span junction, over a switch, or on the zigzag - and the vehicle reads a real
+             * loss of voltage where the original keeps contact. */
+            static constexpr double PANTOGRAPH_HORN_WIDTH = 0.381;
             TypedArray<NodePath> pantograph_front_arm_paths;
             TypedArray<NodePath> pantograph_rear_arm_paths;
             // three per wiper (arm 1, arm 2, blade), an empty path for a missing one
@@ -50,6 +62,11 @@ namespace godot {
             bool cabin_rotate_180deg = false;
             bool joint_cabs = false;
             NodePath low_poly_cabin_path;
+            /* The cargo the scenery gave this vehicle, drawn as its own model. It sits lower the
+             * emptier the vehicle is, so where it sits is not known until the vehicle's
+             * configuration has landed - see _apply_load_offset(). */
+            NodePath load_model_path;
+            Node3D *load_model = nullptr;
             double low_poly_cabin_emission_energy = 0.2;
             double low_poly_cabin_emission_fade_time = 0.2;
             NodePath head_display_e3d_path;
@@ -81,7 +98,7 @@ namespace godot {
             /// The model currently uses the node hierarchy (bogies, wheels, pantograph arms)
             bool model_detailed = true;
             bool force_detail_refresh = true;
-            Transform3D last_center_transform;
+            Transform3D last_body_transform;
             Node3D *low_poly_cabin = nullptr;
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;
@@ -128,6 +145,9 @@ namespace godot {
             void _on_low_poly_cabin_e3d_loaded();
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
+            void _apply_load_offset();
+            String _track_position_text() const;
+            void _report_contact_gap(int p_index, bool p_is_active, bool p_converged);
 
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();
@@ -249,6 +269,8 @@ namespace godot {
             bool get_joint_cabs() const;
             void set_low_poly_cabin_path(const NodePath &p_value);
             NodePath get_low_poly_cabin_path() const;
+            void set_load_model_path(const NodePath &p_value);
+            NodePath get_load_model_path() const;
             void set_low_poly_cabin_emission_energy(double p_value);
             double get_low_poly_cabin_emission_energy() const;
             void set_low_poly_cabin_emission_fade_time(double p_value);

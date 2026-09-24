@@ -34,7 +34,11 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     var coupling_data:String = p.next_token() if context.trainset_open else "3"
     var velocity:float = context.trainset_velocity if context.trainset_open else float(p.next_token())
     var load_count:int = int(p.next_token())
-    var _load_type:String = p.next_token() if load_count != 0 else ""
+    # a load with no type named is not a load (simulationstateserializer.cpp:1031)
+    var load_type:String = p.next_token() if load_count != 0 else ""
+    if load_type == "enddynamic":
+        load_count = 0
+        load_type = ""
 
     var reversed:bool = is_equal_approx(offset, -1.0)
     var trainset_offset:float = context.trainset_offset if context.trainset_open else 0.0
@@ -54,7 +58,13 @@ func import(p:MaszynaParser, context: MaszynaImporterContext) -> DynamicRailVehi
     )
     vehicle.initial_velocity = velocity
     # DynObj.cpp:1812-1825 - headdriver occupies cab 1, reardriver cab 2 (-1), anything else none.
-    vehicle.cabin_number = 1 if driver_type == "headdriver" else (-1 if driver_type == "reardriver" else 0)
+    vehicle.driver_type = (
+        VehicleController.DRIVER_HEAD if driver_type == "headdriver"
+        else VehicleController.DRIVER_REAR if driver_type == "reardriver"
+        else VehicleController.DRIVER_NOBODY
+    )
+    vehicle.load_name = load_type
+    vehicle.load_amount = float(load_count)
 
     if context.trainset_open:
         context.trainset_offset -= length

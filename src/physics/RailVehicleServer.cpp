@@ -1,3 +1,4 @@
+#include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
 #include "RailVehicleStepper.hpp"
 #include <godot_cpp/classes/window.hpp>
@@ -178,6 +179,7 @@ namespace godot {
         placement->track = p_track;
         placement->track_direction = p_track_direction;
         placement->moved = true;
+        placement->body_transform_valid = false;
         placement->track_is_switch = tracks->track_is_switch(p_track);
         placement->switch_track = placement->track_is_switch
                 ? static_cast<TrackManager::SwitchTrack>(tracks->switch_get_active_track(p_track))
@@ -308,6 +310,7 @@ namespace godot {
         p_placement.track_offset = current_track_offset;
         p_placement.track_direction = current_track_direction;
         p_placement.switch_track = current_switch_track;
+        p_placement.body_transform_valid = false;
         if (diagnostics && p_force_switch_state) {
             _check_movement(p_placement, start_point, Math::abs(p_distance) - remaining);
         }
@@ -333,13 +336,47 @@ namespace godot {
         }
     }
 
-    Transform3D RailVehicleServer::vehicle_get_transform(const RID &p_vehicle) const {
-        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+    /* Where the vehicle's body is. A vehicle on bogies is carried by them, so its body is the
+     * chord between the two pivots and its attitude the mean of theirs - which is how the
+     * original reads the running shape too (DynObj.cpp:2950-2970). The track sampled under the
+     * vehicle's centre is the same thing only on straight track; on a curve it differs, and on a
+     * switch it differs most. One of them has to be the answer, and it is this one. */
+    Transform3D RailVehicleServer::vehicle_get_transform(const RID &p_vehicle) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         const TrackManager *tracks = TrackManager::get_instance();
         if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
             return Transform3D();
         }
-        return _placement_transform(*placement);
+        if (placement->body_transform_valid) {
+            return placement->body_transform;
+        }
+        placement->body_transform = _compose_body_transform(*placement, p_vehicle);
+        placement->body_transform_valid = true;
+        return placement->body_transform;
+    }
+
+    Transform3D RailVehicleServer::_compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle) {
+        const VehicleWheels *wheels =
+                Object::cast_to<VehicleWheels>(vehicle_component_get(p_vehicle, VehicleComponentType::COMPONENT_WHEELS));
+        const double spacing = wheels != nullptr ? wheels->get_bogie_pivot_spacing() : 0.0;
+        if (spacing <= 0.0) {
+            // no bogies to be carried by: the track under the vehicle's own centre is all there is
+            return _placement_transform(p_placement);
+        }
+        /* The offset is rear-relative, the same sign VehicleWheels::get_bogie_transform() uses -
+         * getting it wrong flips the vehicle the moment it moves. */
+        const Transform3D front = _placement_transform(_sample_placement(p_placement, -0.5 * spacing));
+        const Transform3D rear = _placement_transform(_sample_placement(p_placement, 0.5 * spacing));
+        Vector3 body_forward = front.origin - rear.origin;
+        if (body_forward.is_zero_approx()) {
+            return _placement_transform(p_placement);
+        }
+        body_forward.normalize();
+        const Vector3 average_up = (front.basis.get_column(1) + rear.basis.get_column(1)).normalized();
+        const Vector3 z_axis = -body_forward;
+        const Vector3 x_axis = average_up.cross(z_axis).normalized();
+        const Vector3 y_axis = z_axis.cross(x_axis).normalized();
+        return Transform3D(Basis(x_axis, y_axis, z_axis).orthonormalized(), (front.origin + rear.origin) * 0.5);
     }
 
     Transform3D RailVehicleServer::vehicle_get_transform_at_distance(

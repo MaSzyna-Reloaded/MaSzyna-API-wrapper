@@ -1,4 +1,5 @@
 #include "../scenery/SceneryStreamingServer.hpp"
+#include "../load/VehicleLoad.hpp"
 #include "RailVehicle3D.hpp"
 #include "../traction/TractionPowerServer.hpp"
 #include "../cabin/Cabin3D.hpp"
@@ -112,6 +113,7 @@ namespace godot {
         BIND_RAIL_PROPERTY(cabin_rotate_180deg, Variant::BOOL);
         BIND_RAIL_PROPERTY(joint_cabs, Variant::BOOL);
         BIND_RAIL_NODE_PATH(low_poly_cabin_path, "E3DModelInstance");
+        BIND_RAIL_NODE_PATH(load_model_path, "E3DModelInstance");
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_energy, Variant::FLOAT);
         BIND_RAIL_PROPERTY(low_poly_cabin_emission_fade_time, Variant::FLOAT);
         BIND_RAIL_NODE_PATH(head_display_e3d_path, "E3DModelInstance");
@@ -280,8 +282,45 @@ namespace godot {
     /* The vehicle this node stands on was rebuilt - take whatever it owns now. */
     /* The vehicle's configuration reached the backend. The bogie placement is derived from it
      * (the pivot spacing), so it is recomputed here - not polled for. */
+    /* Where the cargo sits: the original sinks it into the body as the vehicle empties, lerping
+     * from the cargo's own offset_min to zero with how full it is (DynObj.cpp:3070-3080), and
+     * leaves it alone when that cargo declares no offset. Both numbers are the vehicle's
+     * configuration, so this runs when the configuration lands rather than when the model is
+     * built - the load component does not exist yet at that point (see `FINDINGS.md`,
+     * 2026-09-23, for the same lifecycle biting the bogie spacing). */
+    void RailVehicle3D::_apply_load_offset() {
+        if (load_model == nullptr || controller == nullptr) {
+            return;
+        }
+        VehicleLoad *load = Object::cast_to<VehicleLoad>(
+                controller->get_component(VehicleComponentType::COMPONENT_LOAD));
+        if (load == nullptr) {
+            return;
+        }
+        const TypedArray<String> accepted = load->get_accepted_loads();
+        const TypedArray<float> offsets = load->get_minimum_load_offsets();
+        const String cargo = controller->get_load_name().to_lower();
+        double offset_min = 0.0;
+        for (int index = 0; index < accepted.size() && index < offsets.size(); ++index) {
+            if (String(accepted[index]).to_lower() == cargo) {
+                offset_min = double(offsets[index]);
+                break;
+            }
+        }
+        if (Math::is_zero_approx(offset_min)) {
+            return;
+        }
+        const double max_load = load->get_max_load();
+        const double fill =
+                max_load > 0.0 ? CLAMP(controller->get_load_amount() / max_load, 0.0, 1.0) : 0.0;
+        Vector3 position = load_model->get_position();
+        position.y = static_cast<real_t>(Math::lerp(offset_min, 0.0, fill));
+        load_model->set_position(position);
+    }
+
     void RailVehicle3D::_on_vehicle_config_changed() {
         force_detail_refresh = true;
+        _apply_load_offset();
         apply_track_placement();
     }
 
@@ -337,6 +376,12 @@ namespace godot {
         }
         electric_engine = Object::cast_to<VehicleElectricEngine>(
                 controller->get_component(VehicleComponentType::COMPONENT_ENGINE));
+        /* The collector's half width belongs to the vehicle, not to this node: the FIZ declares
+         * the slider's full width (CSW) and the original halves it (DynObj.cpp:5718). The
+         * exported width stands in for a vehicle with no electric engine to read it from. */
+        const double sliding_width =
+                electric_engine != nullptr ? electric_engine->get_power_current_collector_sliding_width() : 0.0;
+        pantograph_slider_half_width = sliding_width > 0.0 ? 0.5 * sliding_width : pantograph_collector_width;
     }
 
     void RailVehicle3D::_on_controller_changed(VehicleController *p_controller) {
@@ -557,6 +602,8 @@ namespace godot {
         if (low_poly_cabin != nullptr) {
             low_poly_cabin->disconnect("e3d_loaded", Callable(this, "_on_low_poly_cabin_e3d_loaded"));
         }
+        load_model = load_model_path.is_empty() ? nullptr : node_at<Node3D>(this, load_model_path);
+        _apply_load_offset();
         low_poly_cabin = low_poly_cabin_path.is_empty() ? nullptr : node_at<Node3D>(this, low_poly_cabin_path);
         if (low_poly_cabin != nullptr) {
             low_poly_cabin->connect("e3d_loaded", Callable(this, "_on_low_poly_cabin_e3d_loaded"));
@@ -1039,6 +1086,8 @@ namespace godot {
 
     // TDynamicObject::UpdateWiper() (DynObj.cpp:716-731): both arms swing by the wiper angle, the
     // blade swings back by it to stay upright; every other wiper is mirrored.
+    /* FIXME(#184): a wiper's position is simulation, not drawing - the node should be handed
+     * where the blades are, the way it is handed the state of a light. */
     void RailVehicle3D::_update_wipers() {
         if (wiper_arm_nodes.is_empty()) {
             return;
@@ -1188,10 +1237,16 @@ namespace godot {
         if (server == nullptr) {
             return;
         }
-        const Transform3D center_transform = server->vehicle_get_transform(rid);
-        const bool moved = center_transform != last_center_transform;
-        last_center_transform = center_transform;
-        set_global_transform(center_transform);
+        const Transform3D body_transform = server->vehicle_get_transform(rid);
+        const bool moved = body_transform != last_body_transform;
+        last_body_transform = body_transform;
+
+        /* The body's transform is the server's answer and nothing else. It used to be written
+         * twice here - the server's, then one this node composed from the bogies - and the two
+         * differ on anything but straight track, so a parked vehicle on a curve flicked between
+         * them whenever something raised force_detail_refresh. The composition moved to the
+         * server, which owns the placement it is made of. */
+        set_global_transform(body_transform);
 
         if (!is_visible || (!moved && !force_detail_refresh)) {
             return;
@@ -1231,15 +1286,6 @@ namespace godot {
             return;
         }
         body_forward.normalize();
-        const Vector3 average_up =
-                (front_transform.basis.get_column(1) + rear_transform.basis.get_column(1)).normalized();
-        const Vector3 z_axis = -body_forward;
-        const Vector3 x_axis = average_up.cross(z_axis).normalized();
-        const Vector3 y_axis = z_axis.cross(x_axis).normalized();
-        set_global_transform(Transform3D(
-                Basis(x_axis, y_axis, z_axis).orthonormalized(),
-                (front_transform.origin + rear_transform.origin) * 0.5));
-
         const double body_yaw = Math::atan2(-body_forward.x, body_forward.z);
         Node3D *bogie_nodes[] = {front_bogie_node, rear_bogie_node};
         Transform3D bogie_transforms[] = {front_transform, rear_transform};
@@ -1266,6 +1312,46 @@ namespace godot {
         return frame;
     }
 
+    /* Where the vehicle is, in the terms a scenery is written in: a warning that only carries
+     * world coordinates cannot be looked up in the .scn that produced the wiring. */
+    String RailVehicle3D::_track_position_text() const {
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        TrackManager *tracks = TrackManager::get_instance();
+        if (server == nullptr || tracks == nullptr) {
+            return String("unknown track");
+        }
+        const Dictionary placement = server->vehicle_get_track_position(rid);
+        const RID track = placement.get("track_rid", RID());
+        if (!track.is_valid()) {
+            return String("no track");
+        }
+        const String name = tracks->track_get_name(track);
+        return vformat(
+                "%s at %.2f m", name.is_empty() ? String("(unnamed track)") : name,
+                double(placement.get("along", 0.0)));
+    }
+
+    /* The third way a raised pantograph reads no voltage, and the only one that is not about the
+     * wire: the arm has not reached it (PantDiff >= 0.01, DynObj.cpp:3866), so the vehicle is fed
+     * 0 V while a perfectly good span is overhead. Reported on the transition, like the other two,
+     * because from the cab all three look the same. */
+    void RailVehicle3D::_report_contact_gap(const int p_index, const bool p_is_active, const bool p_converged) {
+        Dictionary cache = pantograph_wire_cache[p_index];
+        const bool was_touching = cache.get("touching", false);
+        if (p_is_active && was_touching && !p_converged) {
+            UtilityFunctions::push_warning(vformat(
+                    "Lost contact: %s pantograph %d is not reaching the wire - %s", get_name(), p_index,
+                    _track_position_text()));
+        }
+        cache["touching"] = p_is_active && p_converged;
+        pantograph_wire_cache[p_index] = cache;
+    }
+
+    /* FIXME(#184): this belongs in RailVehicleServer's step, not in the node that draws the
+     * vehicle. Nothing here needs a node - the server already owns the placement and
+     * vehicle_get_transform(rid) - and it decides what the simulation is fed, which is the one
+     * thing a rendering layer must not do. Moving it needs the collector offsets below to reach
+     * the vehicle first; the original keeps them in TAnimPant::vPos. */
     void RailVehicle3D::_update_pantograph_power(const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || electric_engine == nullptr || controller == nullptr) {
             return;
@@ -1281,6 +1367,12 @@ namespace godot {
                 bool(state.get("current_collector/pantograph_second_active", false)) && pantograph_rear_converged;
         const int active_count = int(front_active) + int(rear_active);
         const double current = active_count > 0 ? double(state.get("current0", 0.0)) / active_count : 0.0;
+        _report_contact_gap(
+                2, bool(state.get("current_collector/pantograph_first_active", false)),
+                pantograph_front_converged);
+        _report_contact_gap(
+                3, bool(state.get("current_collector/pantograph_second_active", false)),
+                pantograph_rear_converged);
         const double front_voltage =
                 front_active ? _pantograph_wire_voltage(2, pantograph_front_offset, frame, assumed_voltage, current)
                              : 0.0;
@@ -1291,6 +1383,7 @@ namespace godot {
                             : 0.0);
     }
 
+    /// FIXME(#184): moves to RailVehicleServer with _update_pantograph_power().
     double RailVehicle3D::_pantograph_wire_voltage(
             const int p_index, const Vector3 &p_offset, const PantographFrame &p_frame, const double p_assumed_voltage,
             const double p_current) {
@@ -1302,11 +1395,27 @@ namespace godot {
             return 0.0;
         }
         TractionPowerServer *traction_power_server = TractionPowerServer::get_instance();
-        return traction_power_server != nullptr
-                       ? traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current)
-                       : 0.0;
+        if (traction_power_server == nullptr) {
+            return 0.0;
+        }
+        const double voltage = traction_power_server->wire_get_voltage(wire_rid, p_assumed_voltage, p_current);
+        /* A span that is overhead but carries nothing is a different defect from a hole in the
+         * wiring - it means the network behind it has no source, or the resistance never reached
+         * it - and the two are indistinguishable from the cab, where both read as a dead line. */
+        Dictionary cache = pantograph_wire_cache[p_index];
+        const bool had_voltage = cache.get("powered", false);
+        if (had_voltage && Math::is_zero_approx(voltage)) {
+            UtilityFunctions::push_warning(vformat(
+                    "Dead traction: %s has a wire under pantograph %d carrying no voltage - %s, %v",
+                    get_name(), p_index, _track_position_text(), contact_point));
+        }
+        cache["powered"] = !Math::is_zero_approx(voltage);
+        pantograph_wire_cache[p_index] = cache;
+        return voltage;
     }
 
+    /* FIXME(#184): the arm geometry is the vehicle's own state (TAnimPant, DynObj.h:106) and
+     * belongs beside the Mover; only _apply_pantograph_animation() below is drawing. */
     void RailVehicle3D::_update_pantograph_raise_state(const double p_delta, const Dictionary &p_state) {
         if (Engine::get_singleton()->is_editor_hint() || controller == nullptr || electric_engine == nullptr) {
             return;
@@ -1382,6 +1491,9 @@ namespace godot {
         return p_is_active && pant_diff < 0.01;
     }
 
+    /* FIXME(#184): moves to RailVehicleServer with _update_pantograph_power(), and
+     * pantograph_wire_cache - which span each pantograph is on - is the vehicle's state, not the
+     * node's. */
     Dictionary RailVehicle3D::_find_pantograph_wire(
             int p_index, const Vector3 &p_contact_point, const Vector3 &p_up, const Vector3 &p_forward,
             const Vector3 &p_left) {
@@ -1396,23 +1508,33 @@ namespace godot {
             return missing;
         }
         Dictionary cache = pantograph_wire_cache[p_index];
-        // Original engine: the found wire is kept and its height recomputed every frame (DynObj.cpp:8255-8284),
-        // a new search only once the pantograph left that span - a cached height made the wire height change
-        // in steps while driving, dropping the contact (and the voltage) whenever it stepped up
+        /* The wire found last frame is kept and followed: running off the end of a span is not a
+         * loss of contact, the neighbouring span is reached along the chain in the same frame
+         * (DynObj.cpp:8742-8770). Its height is recomputed every frame - a cached height made the
+         * wire step up and down while driving and dropped the contact with it. */
         const RID wire_rid = cache.get("rid", RID());
         if (wire_rid.is_valid()) {
-            const double height = traction_power_server->wire_get_height_above(
-                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
-            if (Math::is_finite(height)) {
-                Dictionary result;
-                result["rid"] = wire_rid;
-                result["height"] = height;
-                return result;
+            const Dictionary followed = traction_power_server->wire_follow_above(
+                    wire_rid, p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width,
+                    PANTOGRAPH_HORN_WIDTH);
+            if (RID(followed["rid"]).is_valid()) {
+                cache["rid"] = followed["rid"];
+                pantograph_wire_cache[p_index] = cache;
+                return followed;
             }
         }
-        // without a wire, search the region every frame like update_traction() (DynObj.cpp:8292)
+        // the chain ran out, so search the region like update_traction() does (DynObj.cpp:8799)
         const Dictionary result = traction_power_server->wire_find_above_with_height(
-                p_contact_point, p_up, p_forward, p_left, pantograph_collector_width);
+                p_contact_point, p_up, p_forward, p_left, pantograph_slider_half_width, PANTOGRAPH_HORN_WIDTH);
+        /* A pantograph that had a wire and now has none is what the vehicle reads as a loss of
+         * line voltage, and it trips the main switch. The original reports the same class of
+         * event with the place it happened (scene.cpp:112, "Bad traction"), which is the only way
+         * to tell a hole in the scenery's wiring from a defect in this search. */
+        if (wire_rid.is_valid() && !RID(result["rid"]).is_valid()) {
+            UtilityFunctions::push_warning(vformat(
+                    "Bad traction: %s lost the wire under pantograph %d - %s, %v", get_name(), p_index,
+                    _track_position_text(), p_contact_point));
+        }
         cache["rid"] = result["rid"];
         pantograph_wire_cache[p_index] = cache;
         return result;
@@ -1555,6 +1677,15 @@ namespace godot {
     }
     bool RailVehicle3D::get_joint_cabs() const {
         return joint_cabs;
+    }
+    void RailVehicle3D::set_load_model_path(const NodePath &p_value) {
+        if (load_model_path != p_value) {
+            load_model_path = p_value;
+            dirty = true;
+        }
+    }
+    NodePath RailVehicle3D::get_load_model_path() const {
+        return load_model_path;
     }
     void RailVehicle3D::set_low_poly_cabin_path(const NodePath &p_value) {
         if (low_poly_cabin_path != p_value) {

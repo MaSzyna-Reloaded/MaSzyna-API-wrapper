@@ -15,11 +15,8 @@ class_name FizTrainElectricInductionEngineParser
 ## Uzh:,DU:,I0:,fcfu:,F0:,a1:,Pmax:,Fh:,Ph:,Vh0:,Vh1:,Imax:,abed:,eped:") - matching 1:1
 ## against the real file's key order confirms the semantic identity of each key (minor label
 ## spelling quirks: "scfu"/"cfu" and "eped"/"edep" are the same key, just written differently
-## in the debug label vs the real FIZ key). `abed`/`edep` have no corresponding
-## VehicleElectricInductionEngine property at all (not invented here - see AGENTS.md). `fcfuH`
-## (the braking-mode counterpart of `fcfu`, mirroring `Uzh` being `Uzmax`'s braking
-## counterpart) maps to `inverter_uf_setpoint_braking` by the same naming pattern, though it
-## doesn't appear in the one real example checked.
+## in the debug label vs the real FIZ key). `fcfuH` (the braking-mode counterpart of `fcfu`)
+## maps to `inverter_uf_setpoint_braking` and falls back to `fcfu`, as the original does.
 ##
 ## DElist-backed property (`wwlist`, reused from VehicleDieselElectricEngine's row shape - see
 ## FizTrainDieselElectricEngineParser's docstring) is what unblocks `ffList:`/`ffBrakeList:` in
@@ -61,8 +58,11 @@ func apply_engine_fields(kv: Dictionary, node: VehicleElectricInductionEngine) -
         node.no_load_current = FizLineUtil.get_float(kv, "I0")
     if kv.has("fcfu"):
         node.inverter_uf_setpoint = FizLineUtil.get_float(kv, "fcfu")
+    # Mover.cpp:11290 - without fcfuH braking uses the traction setpoint fcfu
     if kv.has("fcfuH"):
         node.inverter_uf_setpoint_braking = FizLineUtil.get_float(kv, "fcfuH")
+    elif kv.has("fcfu"):
+        node.inverter_uf_setpoint_braking = FizLineUtil.get_float(kv, "fcfu")
     if kv.has("F0"):
         node.initial_force = FizLineUtil.get_float(kv, "F0")
     if kv.has("a1"):
@@ -83,6 +83,20 @@ func apply_engine_fields(kv: Dictionary, node: VehicleElectricInductionEngine) -
         node.braking_decay_start_velocity = FizLineUtil.get_float(kv, "Vh1")
     if kv.has("Imax"):
         node.motor_max_current = FizLineUtil.get_float(kv, "Imax")
+    # the rest of the EIM block, Mover.cpp:11276-11306 (Imaxrpc and BRVto have no field in the
+    # vendored Mover - see TODO.md)
+    if kv.has("Volt"):
+        node.nominal_voltage = FizLineUtil.get_float(kv, "Volt")
+    if kv.has("abed"):
+        node.electrodynamic_brake_cylinder_ratio = FizLineUtil.get_float(kv, "abed")
+    if kv.has("edep"):
+        node.electrodynamic_ep_ratio = FizLineUtil.get_float(kv, "edep")
+    if kv.has("eimclf"):
+        node.logarithmic_force_control = FizLineUtil.get_bool(kv, "eimclf")
+    if kv.has("InvCtrCplFlag"):
+        node.inverter_control_coupler_flag = FizLineUtil.get_int(kv, "InvCtrCplFlag")
+    if kv.has("Flat"):
+        node.flat_force_characteristic = FizLineUtil.get_bool(kv, "Flat")
 
 
 ## Standard section-parser interface, used for "ffList:"/"ffBrakeList:" (both share this

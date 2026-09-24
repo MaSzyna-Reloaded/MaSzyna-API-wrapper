@@ -25,6 +25,12 @@ namespace godot {
         BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, braking_decay_velocity);
         BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, braking_decay_start_velocity);
         BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, motor_max_current);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, nominal_voltage);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, electrodynamic_brake_cylinder_ratio);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::FLOAT, electrodynamic_ep_ratio);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::BOOL, logarithmic_force_control);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::INT, inverter_control_coupler_flag);
+        BIND_PROPERTY(VehicleElectricInductionEngine, Variant::BOOL, flat_force_characteristic);
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleElectricInductionEngine, Variant::ARRAY, max_power_table, PROPERTY_HINT_TYPE_STRING,
                 "CurvePointItem");
@@ -61,6 +67,18 @@ namespace godot {
         p_mover->eimc[Maszyna::eimc_p_Vh0] = braking_decay_velocity;
         p_mover->eimc[Maszyna::eimc_p_Vh1] = braking_decay_start_velocity;
         p_mover->eimc[Maszyna::eimc_p_Imax] = motor_max_current;
+        p_mover->eimc[Maszyna::eimc_p_abed] = electrodynamic_brake_cylinder_ratio;
+        p_mover->eimc[Maszyna::eimc_p_eped] = electrodynamic_ep_ratio;
+        p_mover->NominalVoltage = nominal_voltage;
+        p_mover->EIMCLogForce = logarithmic_force_control;
+        p_mover->InverterControlCouplerFlag = inverter_control_coupler_flag;
+        p_mover->Flat = flat_force_characteristic;
+        // Mover.cpp:11302 - a powered EIM without InvNo has one inverter; with none the traction
+        // step divides by InvertersNo (Mover.cpp:5627) and every force becomes NaN
+        if (p_mover->eimc[Maszyna::eimc_p_Pmax] > 0 && p_mover->Power > 0 && p_mover->InvertersNo == 0) {
+            p_mover->InvertersNo = 1;
+        }
+        p_mover->Inverters.resize(p_mover->InvertersNo);
 
         /* Pmaxlist: tabela mocy maksymalnej od predkosci (niedokumentowana na wiki, patrz EIM_Pmax_Table w MOVER.h) */
         p_mover->EIM_Pmax_Table.clear();

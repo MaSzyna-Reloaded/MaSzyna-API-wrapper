@@ -27,10 +27,18 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("get_initial_velocity"), &VehiclePhysicsNode::get_initial_velocity);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "initial_velocity"), "set_initial_velocity", "get_initial_velocity");
-        ClassDB::bind_method(
-                D_METHOD("set_cabin_number", "cabin_number"), &VehiclePhysicsNode::set_cabin_number);
-        ClassDB::bind_method(D_METHOD("get_cabin_number"), &VehiclePhysicsNode::get_cabin_number);
-        ADD_PROPERTY(PropertyInfo(Variant::INT, "cabin_number"), "set_cabin_number", "get_cabin_number");
+        ClassDB::bind_method(D_METHOD("set_driver_type", "driver_type"), &VehiclePhysicsNode::set_driver_type);
+        ClassDB::bind_method(D_METHOD("get_driver_type"), &VehiclePhysicsNode::get_driver_type);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::INT, "driver_type", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver"),
+                "set_driver_type", "get_driver_type");
+        ClassDB::bind_method(D_METHOD("set_load_name", "load_name"), &VehiclePhysicsNode::set_load_name);
+        ClassDB::bind_method(D_METHOD("get_load_name"), &VehiclePhysicsNode::get_load_name);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "load_name"), "set_load_name", "get_load_name");
+        ClassDB::bind_method(D_METHOD("set_load_amount", "load_amount"), &VehiclePhysicsNode::set_load_amount);
+        ClassDB::bind_method(D_METHOD("get_load_amount"), &VehiclePhysicsNode::get_load_amount);
+        ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "load_amount"), "set_load_amount", "get_load_amount");
 
         ClassDB::bind_method(D_METHOD("get_vehicle_rid"), &VehiclePhysicsNode::get_vehicle_rid);
         ClassDB::bind_method(D_METHOD("get_controller"), &VehiclePhysicsNode::get_controller);
@@ -87,7 +95,9 @@ namespace godot {
         }
         controller->set_train_id(train_id);
         controller->set_initial_velocity(initial_velocity);
-        controller->set_cabin_number(cabin_number);
+        controller->set_driver_type(driver_type);
+        controller->set_load_name(load_name);
+        controller->set_load_amount(load_amount);
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
             if (!vehicle_rid.is_valid()) {
                 vehicle_rid = server->vehicle_create();
@@ -158,14 +168,36 @@ namespace godot {
         return initial_velocity;
     }
 
-    void VehiclePhysicsNode::set_cabin_number(const int p_cabin_number) {
-        cabin_number = p_cabin_number;
+    void VehiclePhysicsNode::set_driver_type(const VehicleController::DriverType p_driver_type) {
+        driver_type = p_driver_type;
         if (controller != nullptr) {
-            controller->set_cabin_number(cabin_number);
+            controller->set_driver_type(driver_type);
         }
     }
 
-    int VehiclePhysicsNode::get_cabin_number() const {
-        return cabin_number;
+    VehicleController::DriverType VehiclePhysicsNode::get_driver_type() const {
+        return driver_type;
+    }
+
+    void VehiclePhysicsNode::set_load_name(const String &p_load_name) {
+        load_name = p_load_name;
+        if (controller != nullptr) {
+            controller->set_load_name(load_name);
+        }
+    }
+
+    String VehiclePhysicsNode::get_load_name() const {
+        return load_name;
+    }
+
+    void VehiclePhysicsNode::set_load_amount(const double p_load_amount) {
+        load_amount = p_load_amount;
+        if (controller != nullptr) {
+            controller->set_load_amount(load_amount);
+        }
+    }
+
+    double VehiclePhysicsNode::get_load_amount() const {
+        return load_amount;
     }
 } // namespace godot

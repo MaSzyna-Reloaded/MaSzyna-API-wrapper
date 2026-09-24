@@ -145,14 +145,14 @@ func _date_from_day_of_year(year_day:int, year:int) -> Dictionary:
 
 
 ## The player belongs in a vehicle with a driver, not in whatever vehicle the scenery declares
-## first (DynamicRailVehicle3D.cabin_number: 1 = headdriver, -1 = reardriver, 0 = nobody)
+## first (DynamicRailVehicle3D.driver_type)
 func _find_driver_train_id(vehicles:Array[Node]) -> String:
     var reverse_driver_train_id:String = ""
     for node:Node in vehicles:
         var vehicle:DynamicRailVehicle3D = node as DynamicRailVehicle3D
-        if vehicle.cabin_number == 1:
+        if vehicle.driver_type == VehicleController.DRIVER_HEAD:
             return vehicle.train_id
-        if vehicle.cabin_number == -1 and not reverse_driver_train_id:
+        if vehicle.driver_type == VehicleController.DRIVER_REAR and not reverse_driver_train_id:
             reverse_driver_train_id = vehicle.train_id
     if reverse_driver_train_id:
         return reverse_driver_train_id

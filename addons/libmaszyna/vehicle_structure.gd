@@ -31,6 +31,11 @@ class_name VehicleStructure
 ## The passenger visualization from the MMD's `loads:` block. Most MMDs declare none.
 @export var passengers_model_filename:String = ""
 
+## The rest of that same block: a model per cargo this vehicle can carry, by the cargo's own name.
+## A vehicle that declares none still shows its load - the model is then simply named after the
+## cargo (TDynamicObject::LoadMMediaFile_mdload(), DynObj.cpp:7195).
+@export var load_models:Dictionary[String, String] = {}
+
 ## The skin expanded to its numbered material slots, one entry per slot.
 @export var skins:PackedStringArray = PackedStringArray()
 

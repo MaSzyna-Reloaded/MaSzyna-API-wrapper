@@ -61,7 +61,7 @@ func test_cab_change_stops_at_vehicle_end():
 func test_starts_in_cab_two_for_rear_driver():
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
     physics_node.train_id = "TestCabChangeRearTrain"
-    physics_node.cabin_number = -1
+    physics_node.driver_type = VehicleController.DRIVER_REAR
     add_child_autofree(physics_node)
     var rear_train: VehicleController = physics_node.get_controller()
 

@@ -30,7 +30,7 @@ func before_each() -> void:
     _controller = build_vehicle("catch_up_test", model, VELOCITY_MS * 3.6)
     _controller.type_name = "test"
     # an unmanned vehicle is not simulated at all (Mover.cpp:4485) - see FINDINGS.md, 2026-09-23
-    _controller.cabin_number = 1
+    _controller.driver_type = VehicleController.DRIVER_HEAD
     _vehicle = _controller.get_rid()
     RailVehicleServer.vehicle_set_track(_vehicle, _track, 100.0, TrackManager.DIRECTION_NORMAL)
     await wait_idle_frames(1)

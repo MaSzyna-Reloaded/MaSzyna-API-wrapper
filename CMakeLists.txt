@@ -146,6 +146,14 @@ IF (CMAKE_SYSTEM_NAME STREQUAL "Android")
     ENDIF()
 ENDIF ()
 
+IF (NOT MSVC)
+    # The vendored engine is written against its own stdafx.h, which includes <stdlib.h>: that is
+    # what makes an unqualified abs(double) resolve to std::abs. Without it C's int abs() wins and
+    # every |x| < 1 truncates to 0 - the brake handles' control reservoir froze (FINDINGS 2026-09-24)
+    FILE(GLOB_RECURSE MASZYNA_VENDORED_FILES "src/maszyna/*.cpp")
+    SET_PROPERTY(SOURCE ${MASZYNA_VENDORED_FILES} APPEND PROPERTY COMPILE_OPTIONS "-include" "stdlib.h")
+ENDIF ()
+
 ADD_LIBRARY(${LIBNAME} SHARED ${SRC_FILES})
 TARGET_INCLUDE_DIRECTORIES(${LIBNAME} PRIVATE src)
 TARGET_SOURCES(${LIBNAME} PRIVATE)

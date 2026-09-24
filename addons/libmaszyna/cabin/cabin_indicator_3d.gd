@@ -18,6 +18,8 @@ var _update_elapsed:float = 0.0
 
 @export var enabled:bool = false
 @export var state_property:String = ""
+## Lit while state_property is false - an "inactive" lamp of the same state (Train.cpp:9196).
+@export var invert_value:bool = false
 @export_node_path("Node3D") var on_target_path:NodePath = "":
     set(value):
         on_target_path = value
@@ -51,7 +53,8 @@ func _process_dirty() -> void:
 
 func _update_state() -> void:
     if _train_id and state_property:
-        enabled = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
+        var value:bool = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
+        enabled = not value if invert_value else value
     if _on_target:
         _on_target.visible = enabled
     if _off_target:

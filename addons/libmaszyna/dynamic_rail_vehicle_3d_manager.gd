@@ -12,7 +12,7 @@ extends Node
 ##
 ## What is cached is a VehicleStructure - what the MMD says the vehicle is built from - and not a
 ## node tree: a vehicle is a model plus a cab plus a physics handle, which is cheap to assemble
-## and costly to pack. train_id/initial_velocity/cabin_number/head_display_material are not in it
+## and costly to pack. train_id/initial_velocity/driver_type/load/head_display_material are not in it
 ## at all, because they say which *instance* a vehicle is, and two wagons of the same type still
 ## need distinct TrainSystem ids.
 
@@ -40,8 +40,10 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
     # of the models are resolved into texture-only slots too (MmdCabinInstancer.resolve_skins).
     # v14: bumped on request together with the E186 cab work, the structure itself is unchanged.
     # v18: the cache holds a VehicleStructure - what the MMD says the vehicle is built from -
-    # instead of a PackedScene of the vehicle's nodes.
-    return ("structure-v18:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
+    # instead of a PackedScene of the vehicle's nodes. v19: it carries the whole `loads:` block,
+    # so a vehicle can be drawn with the cargo the scenery gave it. v19: spring brake, line breaker and cab gauge
+    # fixes of 2026-09-24 (catalog entries, component defaults) - bumped on request.
+    return ("structure-v19:%s:%s" % [FileAccess.get_modified_time(abs_mmd_path), abs_mmd_path]).md5_text()
 
 
 ## Loads a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
@@ -49,7 +51,9 @@ func _make_cache_hash(normalized_data_path:String, file_name:String) -> String:
 ## every vehicle of a scenery comes through here, so every one of them shares the cache.
 func load(
         data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
+        initial_velocity:float, head_display_material:Material,
+        driver_type:VehicleController.DriverType = VehicleController.DRIVER_NOBODY,
+        load_name:String = "", load_amount:float = 0.0) -> RailVehicle3D:
     if not data_path or not file_name:
         return null
 
@@ -65,6 +69,6 @@ func load(
         _cache.set(cache_path, structure, cache_hash)
 
     var vehicle:RailVehicle3D = MaszynaRailVehicle3DInstancer.build_from_structure(
-            structure, train_id, initial_velocity, cabin_number)
+            structure, train_id, initial_velocity, driver_type, load_name, load_amount)
     MaszynaRailVehicle3DInstancer.initialize_instance(vehicle, structure, head_display_material)
     return vehicle

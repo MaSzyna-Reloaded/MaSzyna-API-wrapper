@@ -22,7 +22,7 @@
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
 			<description>
-				Enables spring brake to be controlled from specific vehicle/cabin
+				Opens ([code]true[/code]) or closes ([code]false[/code]) the spring brake's shut-off valve. A disabled spring brake is shut off: its cylinder is not charged and it does not brake.
 			</description>
 		</method>
 		<method name="spring_brake_release">
@@ -42,7 +42,7 @@
 		<member name="pressure_force_coefficient" type="float" setter="set_pressure_force_coefficient" getter="get_pressure_force_coefficient" default="0.0">
 			Pressure force coefficient, kN/bar
 		</member>
-		<member name="required_coupler_connection_method" type="int" setter="set_required_coupler_connection_method" getter="get_required_coupler_connection_method" default="0">
+		<member name="required_coupler_connection_method" type="int" setter="set_required_coupler_connection_method" getter="get_required_coupler_connection_method" default="127">
 			The bit flag specifying the required coupling method to transmit brake control signals in multiple unit operation, e.g. 132 for the necessity of connection with a Jacobs bogie – this allows command transmission e.g. within a permanently coupled unit, but not to subsequent multiple units.
 		</member>
 		<member name="spring_actuator_chamber_volume" type="float" setter="set_spring_actuator_chamber_volume" getter="get_spring_actuator_chamber_volume" default="1.0">

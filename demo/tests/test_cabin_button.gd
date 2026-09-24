@@ -38,3 +38,27 @@ func test_monostable_on_mode_fires_command_once_on_press_via_real_input_event():
     await wait_idle_frames(1)
 
     assert_false(widget.pushed, "releasing the bound key should set pushed=false")
+
+## E186's vigilance pedal (pedal_sifa rot 0.008 -0.008) is modelled pushed: released it rests at
+## the MMD offset, pushed it returns to the model's own pose.
+func test_rotation_offset_is_the_released_pose():
+    const ROTATION_DEGREES:float = 0.008 * 360.0
+    var cab:Node3D = Node3D.new()
+    var pedal:MeshInstance3D = MeshInstance3D.new()
+    pedal.name = "Pedal"
+    cab.add_child(pedal)
+    var widget:CabinButton = CabinButton.new()
+    widget.mesh_rotation = Vector3(0.0, ROTATION_DEGREES, 0.0)
+    widget.mesh_rotation_offset = Vector3(0.0, -ROTATION_DEGREES, 0.0)
+    cab.add_child(widget)
+    widget.mesh_path = NodePath("../Pedal")
+    add_child_autofree(cab)
+    await wait_idle_frames(3)
+
+    var released:Basis = Basis(Vector3.UP, deg_to_rad(-ROTATION_DEGREES))
+    assert_true(pedal.transform.basis.is_equal_approx(released), "released pedal should rest at the offset")
+
+    widget.pushed = true
+    await wait_seconds(1.5)
+
+    assert_true(pedal.transform.basis.is_equal_approx(Basis.IDENTITY), "pushed pedal should reach the modelled pose")

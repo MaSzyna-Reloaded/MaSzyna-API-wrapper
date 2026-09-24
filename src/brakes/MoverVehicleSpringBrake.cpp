@@ -12,10 +12,11 @@ namespace godot {
         mover->SpringBrakeActivate(p_active);
     }
 
-    void MoverVehicleSpringBrake::set_spring_brake_enabled(const bool p_active) {
+    void MoverVehicleSpringBrake::set_spring_brake_enabled(const bool p_enabled) {
         TMoverParameters *mover = mover_of(this);
         ASSERT_MOVER(mover);
-        mover->SpringBrakeShutOff(p_active);
+        // the backend takes the shut-off valve (Train.cpp:6859), the opposite of "enabled"
+        mover->SpringBrakeShutOff(!p_enabled);
     }
 
     void MoverVehicleSpringBrake::spring_brake_release() {
@@ -37,11 +38,17 @@ namespace godot {
         p_mover->SpringBrake.MinForcePressure = get_spring_full_balance_pressure();
         p_mover->SpringBrake.PressureOff = get_brake_signal_released_state_pressure();
         p_mover->SpringBrake.PressureOn = get_brake_signal_braked_state_pressure();
-        p_mover->SpringBrake.ValveOffArea = get_valve_cross_section_actuator_charge();
-        p_mover->SpringBrake.ValveOnArea = get_valve_cross_section_actuator_discharge();
+        // Mover.cpp:11025 - the original reads FIZ ValveOnArea into ValveOffArea and vice versa
+        p_mover->SpringBrake.ValveOffArea = get_valve_cross_section_actuator_discharge();
+        p_mover->SpringBrake.ValveOnArea = get_valve_cross_section_actuator_charge();
         p_mover->SpringBrake.ValvePNBrakeArea = get_valve_cross_section_pneumatic_brake();
         p_mover->SpringBrake.PNBrakeConnection = p_mover->SpringBrake.ValvePNBrakeArea > 0;
         p_mover->SpringBrake.MultiTractionCoupler = get_required_coupler_connection_method();
+        // Mover.cpp:11028 - loading the section leaves the brake armed, not shut off and released; the
+        // struct defaults (ShuttOff{true}, IsReady{false}) describe a vehicle without one
+        p_mover->SpringBrake.ShuttOff = false;
+        p_mover->SpringBrake.Activate = false;
+        p_mover->SpringBrake.IsReady = true;
 
         //@TODO: There might be a need to update Spring Brake in the mover internally but it seems to be working as for
         // now
@@ -64,6 +71,11 @@ namespace godot {
         return mover != nullptr ? mover->SpringBrake.Activate : false;
     }
 
+    bool MoverVehicleSpringBrake::get_braking() const {
+        const TMoverParameters *mover = mover_of(this);
+        return mover != nullptr ? mover->SpringBrake.IsActive : false;
+    }
+
     double MoverVehicleSpringBrake::get_cylinder_pressure() const {
         const TMoverParameters *mover = mover_of(this);
         return mover != nullptr ? mover->SpringBrake.SBP : 0.0;
@@ -77,6 +89,7 @@ namespace godot {
         p_state["spring_brake/is_ready"] = get_ready();
         p_state["spring_brake/shut_off"] = get_shut_off();
         p_state["spring_brake/active"] = get_active();
+        p_state["spring_brake/braking"] = get_braking();
         p_state["spring_brake/cylinder_pressure"] = get_cylinder_pressure();
     }
 

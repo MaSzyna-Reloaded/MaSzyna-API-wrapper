@@ -7,8 +7,11 @@ func test_parse_body_model_reads_top_level_models_key():
     assert_eq(MmdCabinInstancer.parse_body_model(FIXTURE_PATH), "test_body")
 
 
-func test_parse_passengers_model_reads_loads_block():
-    assert_eq(MmdCabinInstancer.parse_passengers_model(FIXTURE_PATH), "loads/test_passengers")
+## The passenger model is one entry of the `loads:` block, not a thing of its own: a vehicle's
+## passengers are cargo as far as the MMD is concerned, which is why they are read from here.
+func test_parse_loads_reads_every_cargo_model_including_the_passengers():
+    var loads:Dictionary[String, String] = MmdCabinInstancer.parse_loads(FIXTURE_PATH)
+    assert_eq(loads.get("passengers", ""), "loads/test_passengers")
 
 
 func test_resolve_skins_maps_numbered_materials_directly_to_dynamic_slots():

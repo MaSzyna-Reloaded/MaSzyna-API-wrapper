@@ -79,6 +79,11 @@ namespace godot {
                     bool track_is_switch = false;
                     /* Moved since the simulated vehicle's location was last updated */
                     bool moved = true;
+                    /* The body's transform and whether it still describes the placement above. A
+                     * parked vehicle is asked for it every frame by everything that draws it or
+                     * listens from it, and composing it samples the track twice. */
+                    Transform3D body_transform;
+                    bool body_transform_valid = false;
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
@@ -116,6 +121,7 @@ namespace godot {
             VehicleController *_get_controller(const VehiclePlacement &p_placement) const;
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
+            Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
             Transform3D _placement_transform(const VehiclePlacement &p_placement) const;
             double _placement_roll(const VehiclePlacement &p_placement) const;
             bool _motion_connection(
@@ -167,7 +173,7 @@ namespace godot {
             /* One frame's worth of simulation, called by RailVehicleStepper before any node has
              * been processed - see that class for why the timing matters. */
             void step_frame(double p_delta);
-            Transform3D vehicle_get_transform(const RID &p_vehicle) const;
+            Transform3D vehicle_get_transform(const RID &p_vehicle);
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;

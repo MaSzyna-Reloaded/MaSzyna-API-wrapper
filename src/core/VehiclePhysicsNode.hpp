@@ -23,7 +23,9 @@ namespace godot {
             void _build(const Ref<VehicleModel> &p_model);
             String train_id;
             double initial_velocity = 0.0;
-            int cabin_number = 0;
+            VehicleController::DriverType driver_type = VehicleController::DRIVER_NOBODY;
+            String load_name;
+            double load_amount = 0.0;
 
         protected:
             static void _bind_methods();
@@ -51,7 +53,11 @@ namespace godot {
             String get_train_id() const;
             void set_initial_velocity(double p_velocity);
             double get_initial_velocity() const;
-            void set_cabin_number(int p_cabin_number);
-            int get_cabin_number() const;
+            void set_driver_type(VehicleController::DriverType p_driver_type);
+            VehicleController::DriverType get_driver_type() const;
+            void set_load_name(const String &p_load_name);
+            String get_load_name() const;
+            void set_load_amount(double p_load_amount);
+            double get_load_amount() const;
     };
 } // namespace godot

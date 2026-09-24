@@ -53,12 +53,14 @@ layout_mode = 2
 text = "Spring brake: On"
 command = "set_spring_brake_active"
 command_argument = "true"
+convert_argument_to_bool = true
 
 [node name="SpringBrakeDeactivate" parent="HBoxContainer4" unique_id=1332250693 instance=ExtResource("2_tjh4e")]
 layout_mode = 2
 text = "Spring brake: Off"
 command = "set_spring_brake_active"
 command_argument = "false"
+convert_argument_to_bool = true
 
 [node name="HBoxContainer5" type="HBoxContainer" parent="." unique_id=833808159]
 layout_mode = 2
@@ -68,12 +70,19 @@ layout_mode = 2
 text = "Spring brake: Enable"
 command = "set_spring_brake_enabled"
 command_argument = "true"
+convert_argument_to_bool = true
 
 [node name="SpringBrakeDisable" parent="HBoxContainer5" unique_id=333931020 instance=ExtResource("2_tjh4e")]
 layout_mode = 2
 text = "Spring brake: Disable"
 command = "set_spring_brake_enabled"
 command_argument = "false"
+convert_argument_to_bool = true
+
+[node name="SpringBrakeRelease" parent="HBoxContainer5" unique_id=426302650 instance=ExtResource("2_tjh4e")]
+layout_mode = 2
+text = "Spring brake: Release rod"
+command = "spring_brake_release"
 
 [node name="HBoxContainer6" type="HBoxContainer" parent="." unique_id=172976274]
 layout_mode = 2

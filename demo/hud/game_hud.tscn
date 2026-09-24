@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://pgf35en812s1" path="res://hud/help.tscn" id="12_help"]
 [ext_resource type="PackedScene" uid="uid://dqg8w15j37q0" path="res://hud/mover_switches_uclist.tscn" id="20_5crau"]
 [ext_resource type="PackedScene" uid="uid://cs3n2ry5tr34m" path="res://hud/scenery_streaming_panel.tscn" id="21_streaming"]
+[ext_resource type="PackedScene" uid="uid://ctrktrct1on01" path="res://hud/track_traction_panel.tscn" id="22_tracktrac"]
 [ext_resource type="Script" path="res://hud/game_hud.gd" id="game_hud"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
 
@@ -213,6 +214,23 @@ title = "Scenery Streaming"
 metadata/_custom_type_script = "uid://bwbpde8e6vyk"
 
 [node name="SceneryStreamingPanel" parent="ControlWindows/SceneryStreaming" unique_id=1011989969 instance=ExtResource("21_streaming")]
+clip_contents = true
+layout_mode = 2
+
+[node name="TrackAndTraction" type="Container" parent="ControlWindows" unique_id=609847833]
+top_level = true
+custom_minimum_size = Vector2(100, 50)
+clip_contents = true
+layout_mode = 0
+offset_left = 700.0
+offset_top = 420.0
+offset_right = 1060.0
+offset_bottom = 700.0
+script = ExtResource("9_window")
+title = "Track & Traction"
+metadata/_custom_type_script = "uid://bwbpde8e6vyk"
+
+[node name="TrackTractionPanel" parent="ControlWindows/TrackAndTraction" unique_id=1011989970 instance=ExtResource("22_tracktrac")]
 clip_contents = true
 layout_mode = 2
 

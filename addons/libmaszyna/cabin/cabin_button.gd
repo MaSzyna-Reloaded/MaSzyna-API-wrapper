@@ -8,14 +8,9 @@ enum ControllerMode { OnOff, On, Off }
 
 @export var pushed:bool = false:
     set(x):
-        if x:
-            _target_mesh_position = mesh_position
-            _target_mesh_rotation = mesh_rotation
-        else:
-            _target_mesh_rotation = Vector3.ZERO
-            _target_mesh_position = Vector3.ZERO
         if not x == pushed:
             pushed = x
+            _update_mesh_target()
             emit_signal("pushed_changed")
 
 @export var monostable:bool = false
@@ -36,13 +31,22 @@ enum ControllerMode { OnOff, On, Off }
 @export var mesh_position:Vector3 = Vector3.ZERO:
     set(x):
         mesh_position = x
-        if pushed:
-            _target_mesh_position = x
+        _update_mesh_target()
 @export var mesh_rotation:Vector3 = Vector3.ZERO:
     set(x):
         mesh_rotation = x
-        if pushed:
-            _target_mesh_rotation = x
+        _update_mesh_target()
+## Pose of the released button, the MMD offset (value * scale + offset, Gauge.cpp:456). A model
+## authored in its pushed pose rests displaced from it, e.g. E186's vigilance pedal
+## (pedal_sifa rot 0.008 -0.008).
+@export var mesh_position_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_position_offset = x
+        _update_mesh_target()
+@export var mesh_rotation_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_rotation_offset = x
+        _update_mesh_target()
 @export var speed = 10.0
 @export var sound_on:AudioStream
 @export var sound_off:AudioStream
@@ -95,6 +99,10 @@ func _input(event):
         else:
             if event.is_action_pressed(action, false, true):
                 pushed = not pushed
+
+func _update_mesh_target() -> void:
+    _target_mesh_position = mesh_position_offset + (mesh_position if pushed else Vector3.ZERO)
+    _target_mesh_rotation = mesh_rotation_offset + (mesh_rotation if pushed else Vector3.ZERO)
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:

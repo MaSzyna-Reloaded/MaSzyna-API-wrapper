@@ -209,7 +209,8 @@ namespace godot {
         wire->power_supply_name = p_power_supply_name;
         wire->nominal_voltage = p_nominal_voltage;
         wire->max_current = p_max_current;
-        wire->resistivity = p_resistivity;
+        wire->resistivity = (Math::is_equal_approx(p_resistivity, LEGACY_RESISTIVITY) ? DEFAULT_RESISTIVITY : p_resistivity) *
+                            OHM_PER_KM_TO_OHM_PER_M;
         Rect2 rect(Vector2(p_p1.x, p_p1.z), Vector2());
         rect = rect.expand(Vector2(p_p2.x, p_p2.z));
         spatial_index->remove(p_wire);

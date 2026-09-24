@@ -55,6 +55,11 @@ namespace godot {
             /* An upper bound on stepping along the chain of spans in one frame, the original's own
              * (DynObj.cpp:8743) - a chain that loops would otherwise never end. */
             static constexpr int MAX_WIRE_HOPS = 30;
+            /// Traction.cpp:107-110 - a span declaring 0.01 Ohm/km (the old default) gets 0.075
+            static constexpr double LEGACY_RESISTIVITY = 0.01;
+            static constexpr double DEFAULT_RESISTIVITY = 0.075;
+            /// Traction.cpp:112 - the data gives Ohm/km, the network works in Ohm/m
+            static constexpr double OHM_PER_KM_TO_OHM_PER_M = 0.001;
             /* Either flag of TTraction::iLast sends the pantograph back to an area search
              * (DynObj.cpp:8747). */
             static constexpr int LAST_SPAN_FLAGS = 0x3;
@@ -103,7 +108,7 @@ namespace godot {
                     String power_supply_name;
                     double nominal_voltage = 0.0;
                     double max_current = 0.0;
-                    double resistivity = 0.0;
+                    double resistivity = 0.0; // Ohm/m
 
                     /// psPowered - a directly powered (short-circuit) wire.
                     RID power_source;
@@ -165,6 +170,7 @@ namespace godot {
             void power_source_free(const RID &p_power_source);
 
             RID wire_create();
+            /* p_resistivity is the span's resistivity as a scenery declares it, in Ohm/km. */
             void wire_set_params(
                     const RID &p_wire, const Vector3 &p_p1, const Vector3 &p_p2, const String &p_power_supply_name,
                     double p_nominal_voltage, double p_max_current, double p_resistivity);

@@ -97,3 +97,26 @@ func test_a_span_with_no_supply_keeps_its_own_voltage() -> void:
     assert_almost_eq(
             TractionPowerServer.wire_get_voltage(wire, 0.0, NO_CURRENT), NOMINAL_VOLTAGE, 1.0,
             "no section and no supply means the span's own nominal voltage")
+
+
+## A scenery declares resistivity in Ohm/km (Traction.cpp:112 turns it into Ohm/m). Read as Ohm/m
+## a kilometre of wire had ten ohms, and a locomotive drawing a few hundred amps pulled the line
+## under the line breaker's minimum voltage a few hundred metres from the substation.
+func test_a_loaded_span_a_kilometre_from_the_substation_keeps_its_voltage() -> void:
+    const SPANS_PER_KILOMETRE:int = 50
+    const LOAD_CURRENT:float = 400.0
+    const MIN_VOLTAGE_UNDER_LOAD:float = 3400.0
+    _add_source("sekcja", SUBSTATION_VOLTAGE, true)
+    _add_wire(0, "podstacja")
+    _add_source("podstacja", SUBSTATION_VOLTAGE, false)
+    var far:RID = RID()
+    for i in range(1, SPANS_PER_KILOMETRE + 1):
+        far = _add_wire(i, "sekcja")
+    TractionPowerServer.network_build()
+
+    var voltage:float = SUBSTATION_VOLTAGE
+    for i in 30:
+        voltage = TractionPowerServer.wire_get_voltage(far, voltage, LOAD_CURRENT)
+        await wait_idle_frames(1)
+
+    assert_gt(voltage, MIN_VOLTAGE_UNDER_LOAD, "a kilometre of wire should cost tens of volts, not the line")

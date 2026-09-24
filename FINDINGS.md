@@ -3,6 +3,22 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - the E186 line breaker dropped at 17 km/h: the wire was a hundred times too resistive
+
+* **Symptom:** the E186 pulled away and the line breaker opened after about 120 m, at 17 km/h.
+* **What proved it:** a per-frame headless probe on `td_e186.scn`: with a steady 250-270 A the
+  pantograph voltage slid 2267 -> 1889 V over one metre of travel and the breaker opened the frame
+  it passed `MinV` (1900 V) - several ohms of line, growing with the distance from the feed.
+* **Cause:** a scenery declares a span's resistivity in Ohm/km (`traction pwr01 3500 4500 0.01`);
+  the original turns it into Ohm/m (`fResistivity *= 0.001`, Traction.cpp:112, with 0.01 read as
+  the default 0.075). `TractionPowerServer` multiplied the raw 0.01 by the length in metres - 10
+  Ohm/km. Only a vehicle drawing real current shows it, and the E186 had never drawn any before
+  the brake and EIM fixes of the same day.
+* **Fix:** `wire_set_params()` takes the scenery's Ohm/km and stores Ohm/m, as the original does.
+  With it the same run reaches 44 km/h at 3547 V.
+* **Rule:** a value copied from a scenery token carries the unit the original's loader gives it
+  right after parsing - read the lines after `>>`, not just the `>>`.
+
 ## 2026-09-24 - every brake handle froze under 1 bar of difference, because of C's abs()
 
 * **Symptom:** the E186 brake pipe stopped at 4.0 bar in the running position and never reached

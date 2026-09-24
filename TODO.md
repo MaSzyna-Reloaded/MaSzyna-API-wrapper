@@ -230,8 +230,6 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
   train-wide ED/PN brake force split of an induction motor consist, and `EqvtPipePress = GetEPP()`
   (the handles' equivalent pipe pressure input). Also the unpowered-car copy of the controlling
   vehicle's MainCtrlPos/SpeedCtrl (DynObj.cpp:3272-3276).
-* E186 on td_e186.scn: the line breaker opens at about 17 km/h under traction (headless probe,
-  2026-09-24) - not diagnosed yet.
 * EIM keys `Imaxrpc` and `BRVto` (`LoadFIZ_Engine`, Mover.cpp:11304-11305) are not ported: the
   vendored Mover predates them and has no such fields.
 * Spring brake, what is left after the parity pass (2026-09-24): `springbrakerelease`

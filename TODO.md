@@ -685,3 +685,10 @@ So `_connect_wires()` and `_propagate_resistance()` build a network nothing read
 early return is wrong (a wire fed through the network should take the computed voltage, which is
 what the original does) or the network is not needed - worth settling before anyone tunes
 resistivity and finds it changes nothing.
+
+## Linux release built on an old glibc - what is left
+
+* `release-linux-symbols` (`compile-release-symbols`) still builds on the host, so a build with
+  symbols asks for the host's glibc again and does not start on the machines whose crashes it is
+  meant to diagnose. It needs the same container as `release-linux`.
+* The debug export template (`linux_debug.x86_64`) is still the host-built one.

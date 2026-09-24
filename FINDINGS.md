@@ -3,6 +3,25 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - the Linux release would not start on most machines, because of the build host's glibc
+
+* **Symptom:** the Linux zip starts on the machine it was built on and fails on "many PCs".
+* **What proved it:** `objdump -T <file> | grep -oE 'GLIBC_[0-9.]+' | sort -Vu | tail -1` on both
+  files of the zip. `libmaszyna.64.so` asked for **GLIBC_2.43** (`sqrtf`, `atan2f`, `acosf`, and
+  2.38 for `__isoc23_strtol`), and `reloaded` - the double precision export template built on the
+  same Manjaro host - for **GLIBC_2.44**. Ubuntu 24.04 has 2.39, Debian 12 2.36, Ubuntu 22.04 2.35.
+  libstdc++ was never the problem: it is linked statically, and `NEEDED` lists only libc, libm and
+  the loader.
+* **Trap:** the repository's CI image (`jezsonic/build-tools:4.7.stable`) is Ubuntu 26.04 with
+  glibc 2.43, so moving the build into "the docker we have" changes nothing. And rebuilding only the
+  library is not enough - the template binary asks for the newer glibc of the two.
+* **Fix:** `make release-linux` builds both in `ci/docker/linux-sdk`, Godot's own buildroot SDK -
+  the one Godot 4.7's official builds use (`godot-2026.05.x-1`, GCC 15.2, glibc 2.34). The template
+  is built once from the `4.7.2-stable` sources and installed where the export looks it up.
+* **Rule:** glibc is only forward compatible. What a release needs is decided by the build host,
+  not by the code - check the highest `GLIBC_` version of every shipped binary, and build on a
+  sysroot at least as old as the oldest distribution meant to run it.
+
 ## 2026-09-24 - switch blades in a scenery never moved, because only a node listened
 
 * **Symptom:** throwing a switch in a loaded scenery changes the route - the train takes the other

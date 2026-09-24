@@ -1,4 +1,4 @@
-.PHONY: docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
+.PHONY: linux-sdk-image compile-release-linux docs compile watch-and-compile docs-server docs-install cleanup style-check style-fix compile-release-symbols release-linux-symbols
 .DEFAULT_GOAL = compile-debug
 
 # The build stamps itself (cmake/write_build_number.cmake) and the app shows that number, so the
@@ -16,6 +16,20 @@ LIBMASZYNA_DEBUG:=""
 #   make release-linux GODOT=godot-double
 GODOT?=godot-double
 CMAKE_GODOTCPP_API_VERSION=4.7
+# The engine the release is exported with - it has to match the editor exactly, since the export
+# looks its template up by this version
+GODOT_VERSION:=4.7.2
+
+# glibc is only forward compatible: a library or template linked against a rolling distribution's
+# glibc (2.43-2.44 here) refuses to start on anything older - Ubuntu 22.04/24.04, Debian 12, Mint.
+# The Linux release is therefore built in ci/docker/linux-sdk, Godot's own buildroot SDK
+# (glibc 2.34). The checkout is mounted at its own path and the build runs as the host user, so
+# the cmake cache and every output land exactly where a host build would put them.
+LINUX_SDK_IMAGE:=maszyna-linux-sdk
+LINUX_SDK_RUN=docker run --rm --user $(shell id -u):$(shell id -g) -v $(CURDIR):$(CURDIR) -w $(CURDIR) $(LINUX_SDK_IMAGE)
+GODOT_SOURCE_DIR:=build-godot-$(GODOT_VERSION)
+LINUX_TEMPLATE:=$(GODOT_SOURCE_DIR)/bin/godot.linuxbsd.template_release.double.x86_64
+LINUX_TEMPLATE_INSTALLED:=$(HOME)/.local/share/godot/export_templates/$(GODOT_VERSION).stable.double/linux_release.x86_64
 
 #Helper for CLion so it would see generated bindings
 generate-bindings:
@@ -131,7 +145,28 @@ compile-windows-release:
 	cmake --build build-win64-release --parallel $(CMAKE_BUILD_JOBS)
 
 
-release-linux: compile-release
+linux-sdk-image:
+	docker build -q -t $(LINUX_SDK_IMAGE) ci/docker/linux-sdk
+
+
+compile-release-linux: linux-sdk-image
+	$(LINUX_SDK_RUN) sh -c 'cmake -B build-release-linux -DCMAKE_BUILD_TYPE=Release -DGODOTCPP_TARGET=template_release -DGODOTCPP_API_VERSION=$(CMAKE_GODOTCPP_API_VERSION) && cmake --build build-release-linux --parallel $(CMAKE_BUILD_JOBS)'
+
+
+$(GODOT_SOURCE_DIR):
+	git clone --depth 1 --branch $(GODOT_VERSION)-stable https://github.com/godotengine/godot.git $@
+
+
+# Built once per engine version - the editor's own template is linked against the host's glibc
+$(LINUX_TEMPLATE): | $(GODOT_SOURCE_DIR) linux-sdk-image
+	$(LINUX_SDK_RUN) sh -c 'cd $(GODOT_SOURCE_DIR) && scons platform=linuxbsd arch=x86_64 target=template_release precision=double production=yes -j$(CMAKE_BUILD_JOBS)'
+
+
+$(LINUX_TEMPLATE_INSTALLED): $(LINUX_TEMPLATE)
+	install -D $< $@
+
+
+release-linux: compile-release-linux $(LINUX_TEMPLATE_INSTALLED)
 	mkdir -p bin/linux
 	cd demo && $(GODOT) --headless --export-release "linux_x86_64" ../bin/linux/reloaded.zip
 	mv bin/linux/reloaded.zip $(LINUX_ZIP)

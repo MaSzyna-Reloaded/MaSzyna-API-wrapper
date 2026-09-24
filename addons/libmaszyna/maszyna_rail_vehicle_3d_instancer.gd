@@ -51,21 +51,9 @@ const PANTOGRAPH_ARM_SUBMODEL_PREFIXES:Array[String] = [
 ]
 
 
-## Builds a fully wired RailVehicle3D (not yet track-placed, not yet parented under a
-## DynamicRailVehicle3D). Returns null if data_path/file_name are missing.
-static func build(
-        data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, head_display_material:Material, cabin_number:int = 0) -> RailVehicle3D:
-    var vehicle:RailVehicle3D = _build_structure(data_path, file_name, skin, train_id, initial_velocity, cabin_number)
-    if vehicle:
-        _initialize_instance(vehicle, file_name, head_display_material)
-    return vehicle
-
-
-## Only declarative nodes belong in a PackedScene template; runtime sound pools and bindings do not.
-static func _build_structure(
-        data_path:String, file_name:String, skin:String, train_id:String,
-        initial_velocity:float, cabin_number:int = 0) -> RailVehicle3D:
+## Reads what the vehicle's MMD says it is built from. This is the expensive half - every call
+## opens and re-parses the MMD - and its result is what DynamicRailVehicle3DManager caches.
+static func read_structure(data_path:String, file_name:String, skin:String) -> VehicleStructure:
     if not data_path or not file_name:
         return null
 
@@ -76,9 +64,12 @@ static func _build_structure(
     # (e.g. "/dynamic/pkp/ep09_v1/") for exactly this reason. Normalize here so operators don't
     # need to know about this quirk.
     var normalized_data_path:String = data_path if data_path.begins_with("/") else "/" + data_path
-
     var abs_mmd_path:String = (
             UserSettings.get_maszyna_game_dir().path_join(normalized_data_path).path_join(file_name + ".mmd"))
+
+    var structure := VehicleStructure.new()
+    structure.data_path = normalized_data_path
+    structure.file_name = file_name
     # The exterior body model filename is NOT the same as file_name in general (confirmed
     # against real data: dynamic/pkp/st44_v2's body model isn't named after its .fiz/.mmd base) -
     # it comes from the MMD's own top-level "models:" line. Fall back to file_name only if that
@@ -86,48 +77,46 @@ static func _build_structure(
     var body_model_filename:String = MmdCabinInstancer.parse_body_model(abs_mmd_path)
     if not body_model_filename:
         body_model_filename = file_name
-    body_model_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, body_model_filename)
+    structure.body_model_filename = MmdCabinInstancer.resolve_model_case(
+            normalized_data_path, body_model_filename)
 
-    var model := E3DModelInstance.new()
-    model.name = "ExteriorModel"
-    # The .scn calls a vehicle a "dynamic" and a static prop a "node model"; the wrapper builds
-    # only the first kind here. Smoke density reads it (maszyna/smoke/*/density).
-    model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
-    model.data_path = normalized_data_path
-    model.model_filename = body_model_filename
-    model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
-    # Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab)
-    # lives in one vehicle-local frame where +Z is the direction of travel: the original draws
-    # all of them under the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp,
-    # vFront) (DynObj.cpp:2506-2508; opengl33renderer.cpp:1174, 2856, 2976). RailVehicle3D uses
-    # Godot's -Z forward, so each of them gets the same 180 degree yaw - the cab via
-    # cabin_rotate_180deg below.
-    model.rotation.y = PI
+    var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path)
+    if lowpoly_filename:
+        structure.low_poly_model_filename = MmdCabinInstancer.resolve_model_case(
+                normalized_data_path, lowpoly_filename)
+
+    var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
+    if passengers_filename:
+        structure.passengers_model_filename = MmdCabinInstancer.resolve_model_case(
+                normalized_data_path, passengers_filename)
+
+    structure.skins = PackedStringArray(MmdCabinInstancer.resolve_skins(normalized_data_path, skin))
+    structure.wiper_prefix = MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path)
+    structure.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
+    structure.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
+    return structure
+
+
+## Builds the vehicle a structure describes. Cheap - it reads no file - so every vehicle gets its
+## own nodes instead of a copy of a packed tree.
+static func build_from_structure(
+        structure:VehicleStructure, train_id:String, initial_velocity:float,
+        cabin_number:int = 0) -> RailVehicle3D:
+    var model:E3DModelInstance = _build_model(
+            structure.data_path, "ExteriorModel", structure.body_model_filename, structure.skins)
 
     # Optional: the lower-detail interior seen from outside (through windows) before the player
     # enters the cabin. Most MMD files don't declare one - only build it if present.
-    var low_poly_model:E3DModelInstance = null
-    var lowpoly_filename:String = MmdCabinInstancer.parse_lowpoly_interior_model(abs_mmd_path)
-    if lowpoly_filename:
-        lowpoly_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, lowpoly_filename)
-        low_poly_model = E3DModelInstance.new()
-        low_poly_model.name = "LowPolyInterior"
-        low_poly_model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
-        low_poly_model.data_path = normalized_data_path
-        low_poly_model.model_filename = lowpoly_filename
-        low_poly_model.skins = MmdCabinInstancer.resolve_skins(normalized_data_path, skin)
-        low_poly_model.rotation.y = PI
+    var low_poly_model:E3DModelInstance = (
+            _build_model(structure.data_path, "LowPolyInterior", structure.low_poly_model_filename,
+                    structure.skins)
+            if structure.low_poly_model_filename else null)
 
     var passengers_model:E3DModelInstance = null
-    var passengers_filename:String = MmdCabinInstancer.parse_passengers_model(abs_mmd_path)
-    if passengers_filename:
-        passengers_filename = MmdCabinInstancer.resolve_model_case(normalized_data_path, passengers_filename)
-        passengers_model = E3DModelInstance.new()
-        passengers_model.name = "Passengers"
-        passengers_model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
-        passengers_model.data_path = normalized_data_path
-        passengers_model.model_filename = passengers_filename
-        passengers_model.rotation.y = PI
+    if structure.passengers_model_filename:
+        # the passengers carry no skin of their own
+        passengers_model = _build_model(structure.data_path, "Passengers",
+                structure.passengers_model_filename, PackedStringArray())
         # nobody looks into the passengers by node name or collects their materials, so they need
         # no node tree - one RenderingServer instance per submodel instead of a Node3D each.
         # The low-poly interior starts as NODES instead: RailVehicle3D finds its cab0/cab1/cab2
@@ -139,8 +128,8 @@ static func _build_structure(
 
     var fiz_controller := FizVehiclePhysicsNode.new()
     fiz_controller.name = "FizVehiclePhysicsNode"
-    fiz_controller.data_path = normalized_data_path
-    fiz_controller.fiz_filename = file_name
+    fiz_controller.data_path = structure.data_path
+    fiz_controller.fiz_filename = structure.file_name
     fiz_controller.train_id = train_id
     fiz_controller.initial_velocity = initial_velocity
     fiz_controller.cabin_number = cabin_number
@@ -166,16 +155,42 @@ static func _build_structure(
     # the vehicle's presence in the tree is the FizVehiclePhysicsNode itself - the controller it
     # owns is not a node and has no path of its own.
     vehicle.controller_path = NodePath(fiz_controller.name)
-    vehicle.cabin_scene = _build_cabin_scene(normalized_data_path, file_name, skin)
+    vehicle.cabin_scene = structure.cabin_scene
     vehicle.cabin_rotate_180deg = true
-    vehicle.joint_cabs = MmdCabinInstancer.parse_joint_cabs(abs_mmd_path)
+    vehicle.joint_cabs = structure.joint_cabs
     return vehicle
 
 
-static func _initialize_instance(vehicle:RailVehicle3D, file_name:String, head_display_material:Material) -> void:
+## Every MaSzyna-authored piece of a vehicle (exterior, low-poly interior, passengers, cab)
+## lives in one vehicle-local frame where +Z is the direction of travel: the original draws
+## all of them under the same TDynamicObject::mMatrix, built by BasisChange(vLeft, vUp,
+## vFront) (DynObj.cpp:2506-2508; opengl33renderer.cpp:1174, 2856, 2976). RailVehicle3D uses
+## Godot's -Z forward, so each of them gets the same 180 degree yaw - the cab via
+## cabin_rotate_180deg above.
+static func _build_model(
+        data_path:String, node_name:String, model_filename:String,
+        skins:PackedStringArray) -> E3DModelInstance:
+    var model := E3DModelInstance.new()
+    model.name = node_name
+    # The .scn calls a vehicle a "dynamic" and a static prop a "node model"; the wrapper builds
+    # only the first kind here. Smoke density reads it (maszyna/smoke/*/density).
+    model.instance_kind = E3DRenderingServer.INSTANCE_KIND_DYNAMIC
+    model.data_path = data_path
+    model.model_filename = model_filename
+    model.skins = skins
+    model.rotation.y = PI
+    return model
+
+
+## What every vehicle gets for itself rather than from the cache: its sound pools, and the
+## animation bindings, which are paths into the E3D submodel tree this very vehicle builds.
+static func initialize_instance(
+        vehicle:RailVehicle3D, structure:VehicleStructure, head_display_material:Material) -> void:
     var model:E3DModelInstance = vehicle.get_node(vehicle.model_instance_path) as E3DModelInstance
-    var abs_mmd_path:String = UserSettings.get_maszyna_game_dir().path_join(model.data_path).path_join(file_name + ".mmd")
-    _bind_animation_paths(vehicle, model, MmdCabinInstancer.parse_wiper_prefix(abs_mmd_path))
+    var abs_mmd_path:String = (
+            UserSettings.get_maszyna_game_dir().path_join(structure.data_path)
+            .path_join(structure.file_name + ".mmd"))
+    _bind_animation_paths(vehicle, model, structure.wiper_prefix)
     var sound_diagnostics:Array[Dictionary] = []
     MmdSoundBankInstancer.build_into(vehicle, abs_mmd_path, "FizVehiclePhysicsNode", {}, sound_diagnostics)
     for diagnostic:Dictionary in sound_diagnostics:

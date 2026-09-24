@@ -8,9 +8,9 @@ namespace godot {
     // Ports the original engine's horn model (Train.cpp's OnCommand_hornlowactivate/
     // OnCommand_hornhighactivate/OnCommand_whistleactivate, DynObj.cpp's per-frame
     // WarningSignal -> sHorn1/sHorn2/sHorn3 dispatch): exactly 3 fixed slots (low/high/
-    // whistle) backed by TMoverParameters::WarningSignal bits 1/2/4 - the same bit
-    // convention VehicleSecuritySystem::emergency_signal already uses for
-    // EmergencyBrakeWarningSignal. The original engine has no FIZ/mover-level config for
+    // whistle), the original's warning signal bits 1/2/4 - the same bit convention
+    // VehicleSecuritySystem::emergency_signal already uses for the emergency brake warning
+    // signal. The original engine has no FIZ-level config for
     // horn count - a vehicle's 0-3 horn complement is implied entirely by which MMD cabin
     // button (horn_bt:/hornlow_bt:/hornhigh_bt:/whistle_bt:) and sound (horn1:/horn2:/
     // horn3:) labels it declares. low_horn_enabled/high_horn_enabled/whistle_enabled

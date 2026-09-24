@@ -206,8 +206,7 @@
 		</member>
 		<member name="compressor_list" type="CompressorListItem[]" setter="set_compressor_list" getter="get_compressor_list" default="[]">
 			[code]CompressorList[/code]
-			Compressor programmer table (not documented on the FIZ wiki; see [code]TCompressorList[/code] in
-			[code]MOVER.h[/code]). Each item is one programmer position controlling whether the compressor is allowed
+			Compressor programmer table (not documented on the FIZ wiki). Each item is one programmer position controlling whether the compressor is allowed
 			to run and multipliers for its speed and cut-in/cut-out pressure thresholds.
 		</member>
 		<member name="compressor_lower_emergency_closing_pressure" type="float" setter="set_compressor_lower_emergency_closing_pressure" getter="get_compressor_lower_emergency_closing_pressure" default="-1.0">

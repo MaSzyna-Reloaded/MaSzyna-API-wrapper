@@ -91,5 +91,5 @@ func _on_reverse_button_up():
 func _on_forward_button_up():
     train.send_command("direction_increase")
 
-func _on_sm_42_mover_initialized():
+func _on_sm_42_simulation_initialized():
     print("Mover initialized. Train config: ", $SM42.config)

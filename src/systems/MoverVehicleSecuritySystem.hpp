@@ -11,7 +11,6 @@ namespace godot {
         private:
             static void _bind_methods();
         private:
-            friend class TSecuritySystem;
             bool previous_blinking = false;
             bool previous_beeping = false;
         protected:

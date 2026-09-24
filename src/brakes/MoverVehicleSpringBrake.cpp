@@ -43,6 +43,7 @@ namespace godot {
         p_mover->SpringBrake.ValveOnArea = get_valve_cross_section_actuator_charge();
         p_mover->SpringBrake.ValvePNBrakeArea = get_valve_cross_section_pneumatic_brake();
         p_mover->SpringBrake.PNBrakeConnection = p_mover->SpringBrake.ValvePNBrakeArea > 0;
+        // defaults to spring_brake::MultiTractionCoupler{127} (MOVER.h) when the FIZ has no MTC=
         p_mover->SpringBrake.MultiTractionCoupler = get_required_coupler_connection_method();
         // Mover.cpp:11028 - loading the section leaves the brake armed, not shut off and released; the
         // struct defaults (ShuttOff{true}, IsReady{false}) describe a vehicle without one

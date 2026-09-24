@@ -56,7 +56,6 @@ namespace godot {
             void detach();
             /* One tick of this component, driven by the vehicle that owns it. */
             void process(double p_delta);
-            virtual void _process_mover(double p_delta);
 
             void register_command(const String &p_command, const Callable &p_callback);
             void unregister_command(const String &p_command, const Callable &p_callback);
@@ -72,11 +71,6 @@ namespace godot {
 
             void set_enabled(bool p_value);
             bool get_enabled();
-
-            /* Jesli bedzie potrzeba rozdzielenia etapow inicjalizacji movera od jego aktualizacji,
-             * to ta metoda powinna byc zaimplementowana analogicznie do apply_config(),
-             * i powinna byc wywolywana z poziomu VehicleController::initialize_mover() */
-            // void initialize_mover(VehicleController *train_controller_node);
 
             /* Applies this part's authored configuration to the vehicle and publishes back
              * whatever config the vehicle derives from it. The simulation backend is an

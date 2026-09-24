@@ -12,8 +12,8 @@
 
 namespace godot {
 
-    const char *VehicleController::mover_config_changed_signal = "mover_config_changed";
-    const char *VehicleController::mover_initialized_signal = "mover_initialized";
+    const char *VehicleController::simulation_configured_signal = "simulation_configured";
+    const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
     const char *VehicleController::power_changed_signal = "power_changed";
     const char *VehicleController::command_received = "command_received";
     const char *VehicleController::radio_toggled = "radio_toggled";
@@ -88,6 +88,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("is_simulation_ready"), &VehicleController::is_simulation_ready);
         ClassDB::bind_method(D_METHOD("add_component", "component"), &VehicleController::add_component);
         ClassDB::bind_method(D_METHOD("get_component", "type"), &VehicleController::get_component);
+        /* Read by whoever caches this vehicle's dump: a command runs synchronously, in the middle
+         * of a step, so the step alone does not say whether a dump is still current. */
+        ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
         ClassDB::bind_method(
                 D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
@@ -181,8 +184,8 @@ namespace godot {
                 "Emergency Brake,Toggle Mirrors,Raise Second Pantograph,End Of Train Lights,Grant Both Side Permits,"
                 "Apply Spring Brake,Release Spring Brake,Reset Direction");
 
-        ADD_SIGNAL(MethodInfo(mover_config_changed_signal));
-        ADD_SIGNAL(MethodInfo(mover_initialized_signal));
+        ADD_SIGNAL(MethodInfo(simulation_configured_signal));
+        ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
         ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
@@ -424,7 +427,7 @@ namespace godot {
                 component->apply_config();
             }
         }
-        emit_signal(mover_config_changed_signal);
+        emit_signal(simulation_configured_signal);
     }
 
     /* Registering the vehicle and its commands used to wait for NOTIFICATION_ENTER_TREE. A
@@ -463,7 +466,7 @@ namespace godot {
     }
 
     /* The simulation, once every component is attached - _initialize_simulation() pushes the
-     * configuration out to all of them (mover_config_changed). */
+     * configuration out to all of them (simulation_configured). */
     void VehicleController::initialize() {
         _initialize_simulation();
         update_state();

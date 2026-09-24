@@ -97,7 +97,7 @@ train_controller = NodePath("../../SM42")
 
 [node name="SM42" parent="." unique_id=851805456 instance=ExtResource("6_7bum4")]
 
-[connection signal="mover_initialized" from="SM42" to="." method="_on_sm_42_mover_initialized"]
+[connection signal="simulation_initialized" from="SM42" to="." method="_on_sm_42_simulation_initialized"]
 
 [editable path="UI/MoverSwitches"]
 [editable path="SM42"]

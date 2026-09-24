@@ -10,9 +10,9 @@ namespace godot {
     class VehicleElectricInductionEngine : public VehicleElectricEngine {
             GDCLASS(VehicleElectricInductionEngine, VehicleElectricEngine)
         public:
-            /// FIZ edep when absent (Mover.cpp:497)
+            /// FIZ edep when absent, the original's default
             static constexpr double DEFAULT_ELECTRODYNAMIC_EP_RATIO = 1.5;
-            /// FIZ InvCtrCplFlag when absent (MOVER.h InverterControlCouplerFlag)
+            /// FIZ InvCtrCplFlag when absent, the original's default
             static constexpr int DEFAULT_INVERTER_CONTROL_COUPLER_FLAG = 4;
 
             static void _bind_methods();
@@ -56,7 +56,7 @@ namespace godot {
             MAKE_MEMBER_GS_NR_NO_DEF(TypedArray<CurvePointItem>, max_power_table)
 
         private:
-            /* The rest of the FIZ Engine: line of an induction motor (Mover.cpp:11276-11306). */
+            /* The rest of the FIZ Engine: line of an induction motor. */
             double nominal_voltage = 0.0;                                      // Volt
             double electrodynamic_brake_cylinder_ratio = 0.0;                  // abed
             double electrodynamic_ep_ratio = DEFAULT_ELECTRODYNAMIC_EP_RATIO;  // edep

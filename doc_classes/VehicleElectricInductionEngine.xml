@@ -60,7 +60,7 @@
 		</member>
 		<member name="max_power_table" type="CurvePointItem[]" setter="set_max_power_table" getter="get_max_power_table" default="[]">
 			[code]Pmaxlist[/code] (undocumented on the wiki)
-			Maximum power as a function of velocity; see [code]EIM_Pmax_Table[/code] in [code]MOVER.h[/code]. Each
+			Maximum power as a function of velocity; Each
 			item's [member CurvePointItem.x] is velocity and [member CurvePointItem.y] is the maximum power at that
 			velocity.
 		</member>

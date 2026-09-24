@@ -5,11 +5,8 @@
 	</brief_description>
 	<description>
 		[VehicleWipers] wraps the FIZ [code]WiperList:[/code] section.
-		[b]Not wired to the mover:[/b] this fork of the MaSzyna simulation has no field anywhere for wiper state or
-		configuration - "wiper" does not appear in [code]MOVER.h[/code], [code]Mover.cpp[/code], or any GDScript
-		addon. There is nothing in [code]TMoverParameters[/code] to write these values into, so this node only
-		stores the configuration; it currently has no effect on the simulated vehicle. It exists so the section has
-		a documented home, ready to be wired up if wiper simulation is ever implemented.
+		[b]Not part of the simulation:[/b] the vehicle's simulation has no wiper state or configuration, so the
+		wipers - the switch and the movement of every wiper - are simulated by this component itself.
 	</description>
 	<tutorials>
 	</tutorials>

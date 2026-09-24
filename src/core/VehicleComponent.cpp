@@ -70,7 +70,7 @@ namespace godot {
         }
         train_controller_node->register_component(this);
         const Error connected = train_controller_node->connect(
-                VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+                VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
         if (connected != OK) {
             log_warning("VehicleComponent::attach() failed with error code " + String::num(connected));
         }
@@ -88,7 +88,7 @@ namespace godot {
         if (train_controller_node != nullptr) {
             train_controller_node->unregister_component(this);
             train_controller_node->disconnect(
-                    VehicleController::mover_config_changed_signal, Callable(this, "apply_config"));
+                    VehicleController::simulation_configured_signal, Callable(this, "apply_config"));
         }
         train_controller_node = nullptr;
     }
@@ -146,7 +146,7 @@ namespace godot {
         }
 
         if (enabled) {
-            _process_mover(p_delta);
+            _do_process_component(p_delta);
         }
 
         if (enabled_changed) {
@@ -163,10 +163,6 @@ namespace godot {
             emit_signal("enable_changed", enabled);
             emit_signal(enabled ? "component_enabled" : "component_disabled");
         }
-    }
-
-    void VehicleComponent::_process_mover(const double p_delta) {
-        _do_process_component(p_delta);
     }
 
     void VehicleComponent::_do_process_component(const double p_delta) {}

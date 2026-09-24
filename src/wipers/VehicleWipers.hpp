@@ -11,8 +11,8 @@ namespace godot {
 
     /* Wraps the FIZ WiperList: section and simulates the wipers.
      *
-     * The vendored Mover has no wiper switch or wiper state at all (they were added to the original
-     * later: MOVER.h wiperSwitchPos, DynObj.h dWiperPos), so both live in this node. The movement is
+     * The simulation has no wiper switch or wiper state at all (the original keeps them in its
+     * vehicle layer, DynObj.h dWiperPos), so both live in this component. The movement is
      * a port of TDynamicObject::update() (DynObj.cpp:4048-4115), the switch of
      * TTrain::OnCommand_wiperswitchincrease/decrease (Train.cpp:2638-2661). */
     class VehicleWipers : public VehicleComponent {

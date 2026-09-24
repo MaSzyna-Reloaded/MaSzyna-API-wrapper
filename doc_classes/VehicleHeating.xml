@@ -21,7 +21,7 @@
 		<member name="heating_generator_engine" type="int" setter="set_heating_generator_engine" getter="get_heating_generator_engine" enum="VehicleEngine.EngineType" default="8">
 			[code]Clima:HGeneratorEngine[/code]
 			Type of engine driving the heating generator, when [member heating_source] is Generator. Only
-			[constant VehicleEngine.MAIN] is actually supported by the mover today.
+			[constant VehicleEngine.MAIN] is actually supported by the simulation today.
 		</member>
 		<member name="heating_generator_max_rpm" type="float" setter="set_heating_generator_max_rpm" getter="get_heating_generator_max_rpm" default="0.0">
 			[code]Clima:HGeneratorMaxRPM[/code]

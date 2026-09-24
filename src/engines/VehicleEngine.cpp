@@ -207,7 +207,7 @@ namespace godot {
     }
 
     // Original engine: the main switch closing and opening is what "the engine started/stopped"
-    // means here (Mains, Mover.cpp). Detected once per tick against this part's own member - it
+    // means here. Detected once per tick against this part's own member - it
     // used to be compared against the state dictionary while that dictionary was being filled,
     // so the signal fired on a read rather than on a change.
     void VehicleEngine::_do_process_component(const double p_delta) {

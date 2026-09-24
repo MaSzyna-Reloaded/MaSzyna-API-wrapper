@@ -79,6 +79,8 @@ namespace godot {
         p_mover->eimc[Maszyna::eimc_p_Vh0] = get_braking_decay_velocity();
         p_mover->eimc[Maszyna::eimc_p_Vh1] = get_braking_decay_start_velocity();
         p_mover->eimc[Maszyna::eimc_p_Imax] = get_motor_max_current();
+        // the rest of LoadFIZ_Engine's induction motor block (Mover.cpp:11276-11306); edep defaults
+        // to eimc[eimc_p_eped] = 1.5 (Mover.cpp:497), InvCtrCplFlag to InverterControlCouplerFlag{4}
         p_mover->eimc[Maszyna::eimc_p_abed] = get_electrodynamic_brake_cylinder_ratio();
         p_mover->eimc[Maszyna::eimc_p_eped] = get_electrodynamic_ep_ratio();
         p_mover->NominalVoltage = get_nominal_voltage();

@@ -12,7 +12,7 @@
 		<method name="apply_config">
 			<return type="void" />
 			<description>
-				Performs update on an iternal mover of [VehicleController]
+				Writes this component's configuration into the simulation of its [VehicleController].
 			</description>
 		</method>
 		<method name="broadcast_command">
@@ -33,7 +33,7 @@
 		<method name="get_state">
 			<return type="Dictionary" />
 			<description>
-				Returns dictionary ov properties with values from iternal mover
+				Returns a dictionary of this component's live state, read from the simulation.
 			</description>
 		</method>
 		<method name="log">
@@ -107,7 +107,7 @@
 	</methods>
 	<members>
 		<member name="enabled" type="bool" setter="set_enabled" getter="get_enabled" default="true">
-			If true, this train part will be processed by [VehicleController] during updating and fetching a mover's state.
+			If true, this train part will be processed by [VehicleController] during updating and fetching the simulation's state.
 		</member>
 	</members>
 	<signals>

@@ -20,16 +20,18 @@ namespace godot {
         }
     }
 
-    /* A Mover* component reaches this vehicle's Mover through here from now on. */
+    /* A Mover* component reaches this vehicle's Mover through here from now on. `dynamic_cast`
+     * rather than `Object::cast_to`, because MoverComponent is not an Object - see its own
+     * header for why that is the right tool and what it costs to get wrong. */
     void MoverVehicleController::_component_attached(VehicleComponent *p_component) {
         if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
-            mover_component->mover_controller = this;
+            mover_component->set_mover_controller(this);
         }
     }
 
     void MoverVehicleController::_component_detached(VehicleComponent *p_component) {
         if (MoverComponent *mover_component = dynamic_cast<MoverComponent *>(p_component); mover_component != nullptr) {
-            mover_component->mover_controller = nullptr;
+            mover_component->set_mover_controller(nullptr);
         }
     }
 
@@ -67,7 +69,8 @@ namespace godot {
         // the vehicle used to be named by its node; what identifies one now is its train id
         mover = new TMoverParameters(
                 get_initial_velocity(), std::string(get_type_name().utf8().get_data()),
-                std::string(get_train_id().utf8().get_data()), get_occupied_cab());
+                std::string(get_train_id().utf8().get_data()),
+                get_occupied_cab()); // the cab as TMoverParameters::CabActivisation counts it
         controllers_by_mover[mover] = this;
 
         apply_configuration();
@@ -115,7 +118,7 @@ namespace godot {
         mover->switch_physics(true);
 
         DEBUG("[MaSzyna::TMoverParameters] Mover initialized successfully");
-        emit_signal(mover_initialized_signal);
+        emit_signal(simulation_initialized_signal);
     }
 
     /* The base lets go of the components and the registration; the Mover goes last. */
@@ -356,6 +359,7 @@ namespace godot {
         VehicleController::update_state();
     }
 
+    // The elements follow the original's coupling:: flags (Mover.cpp:590).
     // Original engine: coupler attach/detach sounds (DynObj.cpp:4855-4905) - each request of the mover
     // (TCoupling::sounds) bumps a counter the sound triggers play on; the flags are consumed as there.
     //
@@ -415,6 +419,7 @@ namespace godot {
 
         // FIXME: move to TrainPower
         mover->BatteryVoltage = get_battery_voltage();
+        // the nominal voltage, which BatteryVoltage then drains from (Mover.cpp:946)
         mover->NominalBatteryVoltage = static_cast<float>(get_battery_voltage()); // LoadFIZ_Light
         emit_config_changed();
 

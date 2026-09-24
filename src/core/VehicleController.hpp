@@ -20,9 +20,9 @@ namespace godot {
 
 
     /// The vehicle itself: its configuration, its components and the operations that change them,
-    /// with no statement about what simulates it - that is the implementation's business
-    /// (MoverVehicleController). It is not a node - VehiclePhysicsNode is the vehicle's presence in
-    /// the tree, and it owns one of these. Reached from outside by RID, through RailVehicleServer.
+    /// with no statement about what simulates it - that is the implementation's business. It is
+    /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
+    /// these. Reached from outside by RID, through RailVehicleServer.
     class VehicleController : public Object {
             GDCLASS(VehicleController, Object)
         public:
@@ -73,8 +73,8 @@ namespace godot {
             /* Live state, read straight from the backend - nothing is stored. */
             /* The battery as it actually is, which drains and recharges. The authored
              * `battery_voltage` property next to it is the nominal one the vehicle is built with
-             * and that the backend keeps as NominalBatteryVoltage (Mover.cpp:946) - the two are
-             * only equal on a full battery. */
+             * and that the simulation keeps as the nominal battery voltage - the two are only equal
+             * on a full battery. */
             virtual double get_live_battery_voltage() const = 0;
             virtual double get_tachometer_speed() const = 0;
             virtual double get_tachometer_speed_jump() const = 0;
@@ -118,8 +118,8 @@ namespace godot {
                 START_MODE_DIRECTION,
             };
 
-            /* The element a coupler attached or detached, as the original names them
-             * (coupling::coupler, coupling::brakehose, ..., Mover.cpp:590) */
+            /* The element a coupler attached or detached, as the original names them (coupler,
+             * brake hose, main hose, control, gangway, heating) */
             enum CouplingElement {
                 COUPLING_ELEMENT_COUPLER,
                 COUPLING_ELEMENT_BRAKEHOSE,
@@ -173,8 +173,10 @@ namespace godot {
             };
 
 
-            static const char *mover_config_changed_signal;
-            static const char *mover_initialized_signal;
+            /// The simulation now carries the configuration (the vehicle's and every component's)
+            static const char *simulation_configured_signal;
+            /// The simulation behind the vehicle exists and is configured
+            static const char *simulation_initialized_signal;
             static const char *power_changed_signal;
             static const char *command_received;
             static const char *radio_toggled;
@@ -268,8 +270,8 @@ namespace godot {
             virtual int get_coupled_end(int p_end) const = 0;
             void set_driver_type(DriverType p_value);
             DriverType get_driver_type() const;
-            /* The cab the driver_type sits in, as the backend counts it: 1 for the front cab, -1 for
-             * the rear one, 0 for nobody (TMoverParameters::CabActivisation). */
+            /* The cab the driver_type sits in, as the simulation counts it: 1 for the front cab, -1
+             * for the rear one, 0 for nobody. */
             int get_occupied_cab() const;
             static void _bind_methods();
             void change_track(const String &p_track_name, float p_track_offset, int p_track_direction);
@@ -282,9 +284,8 @@ namespace godot {
             MAKE_MEMBER_GS(String, train_id, "");
             /* What the vehicle carries when the scenery places it, as the `.scn` names it - the
              * amount and the cargo's own name (`loadcount` and `loadtype` of a `dynamic`). The
-             * backend takes both at once, and it reads more than cargo out of them: `pantstate`
-             * is how a scenery starts a locomotive with its pantographs already up
-             * (TMoverParameters::AssignLoad, Mover.cpp:7647). */
+             * simulation takes both at once, and it reads more than cargo out of them: `pantstate`
+             * is how a scenery starts a locomotive with its pantographs already up. */
             MAKE_MEMBER_GS(String, load_name, "");
             MAKE_MEMBER_GS(double, load_amount, 0.0);
             MAKE_MEMBER_GS(String, type_name, "");

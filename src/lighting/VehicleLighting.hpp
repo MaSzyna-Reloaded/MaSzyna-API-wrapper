@@ -104,8 +104,8 @@ namespace godot {
             // "left", "leftend", "rearupper", "rearleftend".
             virtual void light_switch(const String &p_light, bool p_enabled) = 0;
             // Cab interior lamp ("cablight_sw:") and instrument/dashboard backlighting
-            // ("instrumentlight_sw:") - both plain manual toggles with no counterpart on the
-            // wrapped mover itself, gated only by 24V/110V power availability (mirrors the
+            // ("instrumentlight_sw:") - both plain manual toggles with no counterpart in the
+            // simulation itself, gated only by 24V/110V power availability (mirrors the
             // original engine's own "cablightlevel"/"lightpower" power gating, vehicle/Train.cpp).
             virtual void roof_light(bool p_enabled) = 0;
             virtual void devices_light(bool p_enabled) = 0;

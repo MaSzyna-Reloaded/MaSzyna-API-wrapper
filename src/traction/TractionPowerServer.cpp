@@ -31,6 +31,8 @@ namespace godot {
                 D_METHOD("wire_get_voltage", "wire", "assumed_voltage", "current"),
                 &TractionPowerServer::wire_get_voltage);
         ClassDB::bind_method(
+                D_METHOD("wire_set_parallel", "wire", "parallel_name"), &TractionPowerServer::wire_set_parallel);
+        ClassDB::bind_method(
                 D_METHOD("wire_find_above_with_height", "position", "up", "forward", "left", "width", "horn_width"),
                 &TractionPowerServer::wire_find_above_with_height);
         ClassDB::bind_method(
@@ -213,6 +215,12 @@ namespace godot {
         spatial_index->add(p_wire, rect.grow(5.0));
     }
 
+    void TractionPowerServer::wire_set_parallel(const RID &p_wire, const String &p_parallel_name) {
+        if (Wire *wire = wires.getptr(p_wire); wire != nullptr) {
+            wire->parallel_name = p_parallel_name;
+        }
+    }
+
     void TractionPowerServer::wire_free(const RID &p_wire) {
         spatial_index->remove(p_wire);
         wires.erase(p_wire);
@@ -221,7 +229,62 @@ namespace godot {
     void TractionPowerServer::network_build() {
         _resolve_power_sources();
         _connect_wires();
+        _resolve_parallel_spans();
+        _mark_section_ends();
         _propagate_resistance();
+    }
+
+    /* Port of TTraction::WhereIs() (Traction.cpp:392), run over every span once the chain exists.
+     * The original computes it lazily per span; here it is one pass, which is the same answer
+     * because nothing links spans after network_build(). */
+    void TractionPowerServer::_mark_section_ends() {
+        for (KeyValue<RID, Wire> &entry: wires) {
+            Wire &wire = entry.value;
+            for (int end = 0; end < 2; ++end) {
+                const Wire *neighbour = wires.getptr(wire.next[end]);
+                if (neighbour == nullptr) {
+                    // no neighbour on this end: this span ends the section
+                    wire.last_flags |= 1;
+                    continue;
+                }
+                // the neighbour's far end is open, so this span is the second to last
+                if (!neighbour->next[1 - wire.next_endpoint[end]].is_valid()) {
+                    wire.last_flags |= 2;
+                }
+            }
+        }
+    }
+
+    /* Port of the parallel half of traction_table::InitTraction() (Traction.cpp:830-856). The
+     * original builds a ring of the spans sharing one running and uses it for two things: dimming
+     * them when drawn, and keeping a pantograph from trusting hvNext among them. Only the second
+     * is ported - a pantograph needs to know that a sibling it cannot reach along the chain may be
+     * the wire actually overhead, and that is a flag, not a ring (the ring is in `TODO.md`). */
+    void TractionPowerServer::_resolve_parallel_spans() {
+        HashMap<String, RID> by_parallel_name;
+        for (const KeyValue<RID, Wire> &entry: wires) {
+            if (!entry.value.parallel_name.is_empty()) {
+                by_parallel_name[entry.value.parallel_name] = entry.key;
+            }
+        }
+        for (KeyValue<RID, Wire> &entry: wires) {
+            Wire &wire = entry.value;
+            if (wire.parallel_name.is_empty()) {
+                continue;
+            }
+            if (wire.parallel_name == "none" || wire.parallel_name == "*") {
+                // the author says there is a parallel span but does not name it: search anyway
+                wire.last_flags |= 2;
+                continue;
+            }
+            wire.has_parallel = true;
+        }
+        // the span that was named shares the running just as much as the one naming it
+        for (const KeyValue<String, RID> &entry: by_parallel_name) {
+            if (Wire *named = wires.getptr(entry.value); named != nullptr) {
+                named->has_parallel = true;
+            }
+        }
     }
 
     void TractionPowerServer::_resolve_power_sources() {
@@ -431,6 +494,13 @@ namespace godot {
         for (int hop = 0; hop < MAX_WIRE_HOPS; ++hop) {
             const Wire *wire = wires.getptr(wire_rid);
             if (wire == nullptr) {
+                return result;
+            }
+            /* At the end of a section, and among spans sharing a running, the chain is not the
+             * whole story - the wire actually overhead may be one this span does not point to.
+             * The original gives up on the chain here and looks around, whether or not the
+             * current span would still do (DynObj.cpp:8747-8757). */
+            if ((wire->last_flags & LAST_SPAN_FLAGS) != 0 || wire->has_parallel) {
                 return result;
             }
             const Vector3 parametric = wire->p2 - wire->p1;

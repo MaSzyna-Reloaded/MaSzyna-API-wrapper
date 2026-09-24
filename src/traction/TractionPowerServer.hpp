@@ -55,6 +55,9 @@ namespace godot {
             /* An upper bound on stepping along the chain of spans in one frame, the original's own
              * (DynObj.cpp:8743) - a chain that loops would otherwise never end. */
             static constexpr int MAX_WIRE_HOPS = 30;
+            /* Either flag of TTraction::iLast sends the pantograph back to an area search
+             * (DynObj.cpp:8747). */
+            static constexpr int LAST_SPAN_FLAGS = 0x3;
 
             /// Mirrors TTractionPowerSource's own members.
             struct PowerSource {
@@ -103,6 +106,15 @@ namespace godot {
                     double resistance[2] = {-1.0, -1.0}; // fResistance
                     RID next[2];         // hvNext
                     int next_endpoint[2] = {-1, -1};     // iNext
+                    /* TTraction::iLast - bit 0: this span ends a section, bit 1: the one after it
+                     * does (TTraction::WhereIs(), Traction.cpp:392). Either makes a pantograph
+                     * stop trusting the chain and look around instead. */
+                    int last_flags = 0;
+                    /* The span shares its running with another (TTraction::hvParallel) - the
+                     * sibling is not reachable along hvNext, so the chain must not be trusted
+                     * here either. Named in the data as `parallel <name>`. */
+                    String parallel_name;
+                    bool has_parallel = false;
 
                     double length() const {
                         return p1.distance_to(p2);
@@ -119,6 +131,10 @@ namespace godot {
             void _on_process_frame();
             void _resolve_power_sources();
             void _connect_wires();
+            /// Port of TTraction::WhereIs() over every span, once the chain is built.
+            void _mark_section_ends();
+            /// Port of the `parallel` half of traction_table::InitTraction() (Traction.cpp:830-856).
+            void _resolve_parallel_spans();
             void _propagate_resistance();
             void _resistance_walk(const RID &p_from_wire, int p_direction, double p_resistance, const RID &p_source);
             /* Height of one wire above a point along the pantograph's plane; INF when the plane
@@ -146,6 +162,9 @@ namespace godot {
                     const RID &p_wire, const Vector3 &p_p1, const Vector3 &p_p2, const String &p_power_supply_name,
                     double p_nominal_voltage, double p_max_current, double p_resistivity);
             void wire_free(const RID &p_wire);
+            /* The span this one shares its running with, by name, as the data declares it. "none"
+             * and "*" mean the author knows there is one but did not name it. */
+            void wire_set_parallel(const RID &p_wire, const String &p_parallel_name);
 
             /* Resolves named power sources (auto-creating one from a wire's own nominal values
              * when the name matches none - traction_table::InitTraction()'s fallback,

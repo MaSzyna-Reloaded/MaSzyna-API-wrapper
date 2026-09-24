@@ -19,6 +19,8 @@ func _enter_tree() -> void:
     # levels below this node, so the path given relative to this node is rebased by that much
     $ControlWindows/WeatherAndTime/WeatherControls.environment_node_path = NodePath(
         "../../../%s" % environment_node_path)
+    $ControlWindows/TrackAndTraction/TrackTractionPanel.player_path = NodePath(
+        "../../../%s" % player_path)
 
 
 func _ready() -> void:

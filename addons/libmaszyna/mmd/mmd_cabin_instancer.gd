@@ -255,13 +255,17 @@ static func parse_joint_cabs(abs_mmd_path:String) -> bool:
     return tokens[index + 1].to_lower() in ["true", "yes", "1"]
 
 
-## Reads the passenger visualization model from the MMD's top-level `loads:` block.
-static func parse_passengers_model(abs_mmd_path:String) -> String:
+## The MMD's top-level `loads:` block, as the cargo names it maps to their own models. A vehicle
+## declares one entry per cargo it can carry (`logs: loads/eaos_vrz-99_logs`), and `passengers` is
+## one of those entries - which is why the passenger model comes out of here too. 235 vehicles of
+## the datapack declare the block; the rest rely on the model simply being named after the cargo.
+static func parse_loads(abs_mmd_path:String) -> Dictionary[String, String]:
+    var models:Dictionary[String, String] = {}
     var context := MmdImportContext.new()
     var tokens:Array[String] = _tokenize_file(abs_mmd_path, context)
     var loads_index:int = _find_label_index(tokens, "loads:")
     if loads_index == -1 or loads_index + 1 >= tokens.size() or not tokens[loads_index + 1] == "{":
-        return ""
+        return models
 
     var depth:int = 0
     for i:int in range(loads_index + 1, tokens.size()):
@@ -272,9 +276,10 @@ static func parse_passengers_model(abs_mmd_path:String) -> String:
             depth -= 1
             if depth == 0:
                 break
-        elif depth == 1 and token.to_lower() == "passengers:" and i + 1 < tokens.size():
-            return _resolve_model_relpath(tokens[i + 1])
-    return ""
+        elif depth == 1 and token.ends_with(":") and i + 1 < tokens.size():
+            var name:String = token.substr(0, token.length() - 1).to_lower()
+            models[name] = _resolve_model_relpath(tokens[i + 1])
+    return models
 
 
 ## Builds real, interactive cabin widgets (CabinButton/CabinSwitch/CabinKnob/CabinGauge) plus

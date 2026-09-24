@@ -3,6 +3,37 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - every brake handle froze under 1 bar of difference, because of C's abs()
+
+* **Symptom:** the E186 brake pipe stopped at 4.0 bar in the running position and never reached
+  5; the pipe lock (`LPOn=3.0 LPOff=4.5`) therefore never released and the loco had no power.
+* **What proved it:** a temporary print of the Mover's handle fields showed everything right
+  (position 0, no lock, PN mode, cab occupied, `MHZ_6P`) and the control reservoir still frozen.
+  The formula is `CP += 9 * min(abs(LimCP - CP), 0.05) * PR(...) * dt`; a scratch program built
+  with `hamulce.cpp`'s own includes printed `abs(0.89) = 0.000000` and a `-Wfloat-conversion`
+  warning - the unqualified `abs` is C's `int abs(int)`.
+* **Cause:** the original compiles every file with its `stdafx.h`, which includes `<stdlib.h>`;
+  libstdc++'s `<stdlib.h>` puts `std::abs` overloads in the global namespace. The vendored files
+  have no `stdafx.h`, so the integer one won and any difference below 1 bar truncated to 0. It
+  hits the control reservoir of `MHZ_EN57`, `MHZ_K5P`, `MHZ_6P`, `M394` and `St113`, and the EP
+  valve step of `TEStEP1` (`hamulce.cpp`, 11 calls). `FV4a` does not use it.
+* **Fix:** CMake force-includes `stdlib.h` into `src/maszyna/*.cpp` (non-MSVC), which is what the
+  original's precompiled header does; the vendored files stay untouched.
+* **Rule:** the vendored engine was written against its own precompiled header. A name that
+  resolves differently without it compiles silently - vendored files build with warnings off -
+  so check overload-sensitive calls (`abs`, `min`, `max`) when something numeric just stops.
+
+## 2026-09-24 - an induction motor never pulled: nobody turned the controller into power
+
+* **Symptom:** E186 with brakes released, direction set and the controller on T+: `Ft = 0`.
+* **Cause:** the integrated controller's setpoint (`CheckEIMIC`, `CheckSpeedCtrl`, `eimic_real`)
+  is computed by the vehicle layer - `TDynamicObject::Update`, DynObj.cpp:3246-3283 - which the
+  wrapper does not vendor. `TractionForce` reads `eimic_real`, which stayed 0.
+* **Fix:** `VehicleEngine::_do_process_component` does it for a vehicle with a driver. The
+  train-wide ED/PN brake force split that follows it in DynObj.cpp is not ported (TODO.md).
+* **Rule:** a Mover method that nothing in `Mover.cpp` calls is called from DynObj.cpp or
+  Train.cpp - grep the original for its callers before assuming the backend drives itself.
+
 ## 2026-09-24 - every force of the E186 turned NaN once a direction was set
 
 * **Symptom:** `get` showed `velocity`, `Ft`, `brake_unit_force` and the wheel angles as `nan`

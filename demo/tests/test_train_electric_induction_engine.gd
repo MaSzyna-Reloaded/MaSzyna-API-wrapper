@@ -93,12 +93,11 @@ func test_line_breaker_stays_closed_under_the_nominal_wire_voltage():
     assert_true(driven.state["main_switch_enabled"], "the line breaker should stay closed at 3000 V")
 
 
-func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan():
-    # Regression: without InvNo the Mover divides by InvertersNo (Mover.cpp:5627); the original
-    # gives a powered EIM one inverter (Mover.cpp:11302), the wrapper left it at 0 and every force
-    # of the vehicle became NaN as soon as a direction was set
+## A driven E186-like vehicle (the Engine: line of dynamic/pkp/e186_v2/p160dc.fiz, without InvNo)
+## under 3000 V, with the line breaker closed and a direction set.
+func _powered_up_eim(train_id: String) -> VehicleController:
     var physics_node: VehiclePhysicsNode = VehiclePhysicsNode.new()
-    physics_node.train_id = "TestEimInverters"
+    physics_node.train_id = train_id
     physics_node.driver_type = VehicleController.DRIVER_HEAD
     add_child_autofree(physics_node)
     var driven: VehicleController = physics_node.get_controller()
@@ -114,7 +113,6 @@ func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan()
     eim.cntrl_main_controller_position_count = 4
     eim.transmission_gear_teeth_motor = 48
     eim.transmission_gear_teeth_wheel = 251
-    # the Engine: line of dynamic/pkp/e186_v2/p160dc.fiz, without InvNo
     var line: MaszynaParser = MaszynaParser.new()
     line.initialize(("dfic=861 dfmax=1.84 p=2 cfu=43.7 cim=13.4 icif=0.679 Uzmax=2183 Uzh=2183 DU=20"
             + " I0=20 fcfu=43.7 F0=300 a1=0.4 Pmax=5600 Fh=150 Ph=2600 Vh0=5 Vh1=10 Imax=1950 abed=1"
@@ -138,10 +136,31 @@ func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan()
     for i in 5:
         eim.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
         await wait_idle_frames(1)
+    return driven
+
+
+func test_powered_vehicle_without_inverter_count_does_not_turn_forces_into_nan():
+    # Regression: without InvNo the Mover divides by InvertersNo (Mover.cpp:5627); the original
+    # gives a powered EIM one inverter (Mover.cpp:11302), the wrapper left it at 0 and every force
+    # of the vehicle became NaN as soon as a direction was set
+    var driven: VehicleController = await _powered_up_eim("TestEimInverters")
 
     assert_true(driven.state["main_switch_enabled"], "the line breaker should be closed")
     assert_false(is_nan(float(driven.state["velocity"])), "velocity should not be NaN")
     assert_false(is_nan(float(driven.state["Ft"])), "traction force should not be NaN")
+
+
+func test_driven_induction_motor_pulls_once_the_controller_moves():
+    # Regression: the setpoint of an integrated controller is computed by DynObj.cpp:3246-3283
+    # (CheckEIMIC), which the wrapper did not call - the controller moved and Ft stayed 0
+    var driven: VehicleController = await _powered_up_eim("TestEimTraction")
+    var engine: VehicleElectricEngine = driven.get_component(VehicleComponentType.COMPONENT_ENGINE)
+    driven.send_command("main_controller_increase")
+    for i in 30:
+        engine.set_pantograph_wire_voltage(VehicleElectricEngine.PANTOGRAPH_FIRST, 3000.0)
+        await wait_idle_frames(1)
+
+    assert_gt(float(driven.state["Ft"]), 0.0, "a driven induction motor should pull with the controller up")
 
 
 func test_apply_power_uses_canonical_current_collector_properties():

@@ -1,6 +1,6 @@
 #pragma once
 #include "../core/VehicleComponent.hpp"
-#include "../core/VehicleController.hpp"
+#include "../core/MoverVehicleController.hpp"
 #include "../maszyna/McZapkie/MOVER.h"
 
 /* The vendored Mover is the backend a component may happen to be implemented on. It is named
@@ -25,7 +25,7 @@ namespace godot {
         if (p_component == nullptr) {
             return nullptr;
         }
-        const VehicleController *controller = p_component->get_controller();
+        const MoverVehicleController *controller = Object::cast_to<MoverVehicleController>(p_component->get_controller());
         return controller != nullptr ? controller->get_mover() : nullptr;
     }
 } // namespace godot

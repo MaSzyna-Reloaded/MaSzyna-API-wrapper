@@ -177,7 +177,7 @@ namespace godot {
             };
         private:
             MAKE_MEMBER_GS_NR(
-                    TrainBrakeValve, valve_type, static_cast<TrainBrakeValve>(static_cast<int>(TBrakeValve::NoValve)));
+                    TrainBrakeValve, valve_type, BRAKE_VALVE_NO_VALVE);
             MAKE_MEMBER_GS(int, est_valve_size, 0);
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
             MAKE_MEMBER_GS(double, brake_force_max, 1.0);

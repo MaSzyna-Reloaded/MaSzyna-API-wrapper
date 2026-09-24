@@ -21,10 +21,9 @@ namespace godot {
      * which branch of a switch. Movement along the route, crossing endpoints, forcing switch
      * blades and the resulting world transform all live here.
      *
-     * What the vehicle *does* - forces, integration, couplers - belongs to
-     * BaseVehiclePhysicsServer and its backend. This server holds the vehicle's own RID and the
-     * handle of the simulated vehicle behind it, the way TrackRenderingServer holds a render RID
-     * next to the TrackManager RID it renders.
+     * What the vehicle *does* - forces, integration, couplers - belongs to its VehicleController
+     * and the simulation behind it. This server moves the vehicle and ties it to the tracks, the
+     * traction wires and the other servers; it holds the vehicle's RID and steps its controller.
      *
      * Ported from addons/libmaszyna/servers/rail_vehicle_physics_server.gd. */
     class RailVehicleServer : public Object {

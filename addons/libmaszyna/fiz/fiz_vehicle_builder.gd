@@ -203,7 +203,8 @@ static func build_model_at(fiz_path: String) -> VehicleModel:
     if model:
         return model
 
-    var root := VehicleController.new()
+    # FIZ is the Mover's own format, so the vehicle it describes is built on the Mover
+    var root: MoverVehicleController = MoverVehicleController.new()
     build_into(root, fiz_path)
     model = VehicleModel.new()
     model.properties = VehicleModel.capture(root)

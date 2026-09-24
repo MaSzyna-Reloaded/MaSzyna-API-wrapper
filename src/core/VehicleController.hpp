@@ -1,5 +1,4 @@
 #pragma once
-#include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleComponentType.hpp"
 #include "macros.hpp"
 #include <godot_cpp/classes/object.hpp>
@@ -9,7 +8,6 @@
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/variant/packed_int32_array.hpp>
 #include <godot_cpp/variant/typed_array.hpp>
-#include <unordered_map>
 
 
 namespace godot {
@@ -21,9 +19,10 @@ namespace godot {
     class TrainSystem;
 
 
-    /// The vehicle itself: the Mover, the components and the operations that change them. It is
-    /// not a node - VehiclePhysicsNode is the vehicle's presence in the tree, and it owns one of
-    /// these. Reached from outside by RID, through RailVehicleServer.
+    /// The vehicle itself: its configuration, its components and the operations that change them,
+    /// with no statement about what simulates it - that is the implementation's business
+    /// (MoverVehicleController). It is not a node - VehiclePhysicsNode is the vehicle's presence in
+    /// the tree, and it owns one of these. Reached from outside by RID, through RailVehicleServer.
     class VehicleController : public Object {
             GDCLASS(VehicleController, Object)
         public:
@@ -39,16 +38,8 @@ namespace godot {
 
 
         private:
-            /* Owned by MaszynaMoverPhysicsServer, which created it and will free it; this
-             * is a borrowed pointer, cached because every component reaches for it per
-             * frame. It is never deleted here. */
-            TMoverParameters *mover{};
-            /* This vehicle's handle in the simulation backend. */
-            RID physics_rid;
             DriverType driver_type = DRIVER_NOBODY;
-            void initialize_mover();
-            void initialize_mover_state();
-            /// state is rebuilt from the mover when it is asked for, not on every physics step:
+            /// state is rebuilt from the backend when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
             // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
             // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
@@ -65,29 +56,13 @@ namespace godot {
             uint64_t command_serial = 0;
             int prev_cabin_occupied = 0;
 
-            // Hasler speed recorder (Train.cpp:6917-6940 fTachoVelocity/fTachoVelocityJump/fTachoCount)
-            double tacho_velocity = 0.0;
-            double tacho_velocity_jump = 0.0;
-            double tacho_count = 0.0;
-            double tacho_time = 0.0;
-            bool tacho_clock_active = false;
-            void _update_tachometer(double p_delta);
-
+        protected:
             /// Writes the wrapper's configuration - the vehicle's and every component's - to the
             /// backend, then announces that the backend carries it.
             void apply_configuration();
-            void _handle_mover_update();
-            int _resolve_coupler_end(const Variant &p_where) const;
-            void _consume_coupler_sounds(TMoverParameters *p_mover);
-
-        protected:
-            /* _do_initialize_internal_mover() and _do_fetch_state_from_mover() are part of an internal interface
-             * for creating Train nodes. Pointer to `mover` and reference to `state` should stay "as is",
-             * because the mover initialization and state sharing routines can be changed in the future. */
-
-            // VehicleController mozna bedzie rozszerzac klasami pochodnymi i przeslaniac metody
-            void _do_update_internal_mover(TMoverParameters *p_mover) const;
-            void _fill_config_dictionary(Dictionary &p_config) const;
+            /* Creates the simulation behind the vehicle and writes its configuration there. */
+            virtual void _initialize_simulation() = 0;
+            virtual void _fill_config_dictionary(Dictionary &p_config) const = 0;
             /* The vehicle's own share of the dump - what every vehicle has, whatever it is
              * made of. Its components add theirs. */
             void _fill_state_dictionary(Dictionary &p_state) const;
@@ -97,34 +72,33 @@ namespace godot {
              * `battery_voltage` property next to it is the nominal one the vehicle is built with
              * and that the backend keeps as NominalBatteryVoltage (Mover.cpp:946) - the two are
              * only equal on a full battery. */
-            double get_live_battery_voltage() const;
-            double get_tachometer_speed() const;
-            double get_tachometer_speed_jump() const;
-            double get_tachometer_clock_speed() const;
-            int get_direction_absolute() const;
-            int get_cabin() const;
-            bool get_cabin_controleable() const;
-            int get_cabin_occupied() const;
-            bool get_battery_enabled() const;
-            bool get_radio_enabled() const;
-            bool get_radio_powered() const;
+            virtual double get_live_battery_voltage() const = 0;
+            virtual double get_tachometer_speed() const = 0;
+            virtual double get_tachometer_speed_jump() const = 0;
+            virtual double get_tachometer_clock_speed() const = 0;
+            virtual int get_direction_absolute() const = 0;
+            virtual int get_cabin() const = 0;
+            virtual bool get_cabin_controleable() const = 0;
+            virtual int get_cabin_occupied() const = 0;
+            virtual bool get_battery_enabled() const = 0;
+            virtual bool get_radio_enabled() const = 0;
+            virtual bool get_radio_powered() const = 0;
             int get_radio_channel() const;
-            double get_power24_voltage() const;
-            bool get_power24_available() const;
-            bool get_power110_available() const;
-            double get_current0() const;
-            double get_current1() const;
-            double get_current2() const;
-            bool get_relay_novolt() const;
-            bool get_relay_overvoltage() const;
-            bool get_relay_ground() const;
-            int get_train_damage() const;
-            int get_controller_second_position() const;
-            int get_controller_main_position() const;
-            int get_controller_joint_position() const;
-            int get_controller_main_actual_position() const;
-            int get_circuit_rlist_size() const;
-            void _process_mover(double p_delta);
+            virtual double get_power24_voltage() const = 0;
+            virtual bool get_power24_available() const = 0;
+            virtual bool get_power110_available() const = 0;
+            virtual double get_current0() const = 0;
+            virtual double get_current1() const = 0;
+            virtual double get_current2() const = 0;
+            virtual bool get_relay_novolt() const = 0;
+            virtual bool get_relay_overvoltage() const = 0;
+            virtual bool get_relay_ground() const = 0;
+            virtual int get_train_damage() const = 0;
+            virtual int get_controller_second_position() const = 0;
+            virtual int get_controller_main_position() const = 0;
+            virtual int get_controller_joint_position() const = 0;
+            virtual int get_controller_main_actual_position() const = 0;
+            virtual int get_circuit_rlist_size() const = 0;
 
 
         public:
@@ -220,17 +194,17 @@ namespace godot {
             Variant send_command(
                     const StringName &p_command, const Variant &p_p1 = Variant(),
                     const Variant &p_p2 = Variant()) const;
-            void battery(bool p_enabled) const;
-            void cab_activation(bool p_enabled) const;
-            void cab_activation_auto() const;
-            void cab_change(int p_direction) const;
-            void main_controller_increase(int p_step = 1) const;
-            void main_controller_decrease(int p_step = 1) const;
-            void second_controller_increase(int p_step = 1) const;
-            void second_controller_decrease(int p_step = 1) const;
-            void direction_increase() const;
-            void direction_decrease() const;
-            void radio(bool p_enabled);
+            virtual void battery(bool p_enabled) const = 0;
+            virtual void cab_activation(bool p_enabled) const = 0;
+            virtual void cab_activation_auto() const = 0;
+            virtual void cab_change(int p_direction) const = 0;
+            virtual void main_controller_increase(int p_step = 1) const = 0;
+            virtual void main_controller_decrease(int p_step = 1) const = 0;
+            virtual void second_controller_increase(int p_step = 1) const = 0;
+            virtual void second_controller_decrease(int p_step = 1) const = 0;
+            virtual void direction_increase() const = 0;
+            virtual void direction_decrease() const = 0;
+            virtual void radio(bool p_enabled) = 0;
             void radio_channel_set(int p_channel);
             void radio_channel_increase(int p_step = 1);
             void radio_channel_decrease(int p_step = 1);
@@ -252,44 +226,43 @@ namespace godot {
             /// Whether this vehicle's simulation exists yet. A vehicle is a vehicle from the
             /// moment it is built, but nothing can be coupled to it or read off it until the
             /// backend behind it is there.
-            bool is_simulation_ready() const;
+            virtual bool is_simulation_ready() const = 0;
             void attach_to_system();
             /// Lets go of everything this vehicle holds - its components, its registration and
             /// its simulation - without destroying the vehicle, so every reference to it stays
             /// valid across a rebuild.
-            void release();
+            virtual void release();
             void initialize();
             /* The reverse: the vehicle leaves TrainSystem and gives its commands back. */
             void shutdown();
             void process_components(double p_delta);
-            void update_state();
-            /// Straight from the mover, for the per-frame readers that only want this one number
+            virtual void update_state();
+            /// Straight from the backend, for the per-frame readers that only want this one number
             /// and would otherwise force the whole state dictionary to be rebuilt
-            double get_velocity() const;
+            virtual double get_velocity() const = 0;
             /// Straight from the backend, like get_velocity() - the speed readers want this
             /// one number, not the whole state
-            double get_speed() const;
+            virtual double get_speed() const = 0;
             /// The rest of what every vehicle has, whatever it is made of. Read straight from the
             /// backend - nothing is stored, and the dump is built from these.
-            double get_mass_total() const;
-            double get_total_distance() const;
-            int get_direction() const;
-            void apply_config();
-            double process_movement(double p_delta);
-            void update_location();
-            void update_neighbour(int p_end, VehicleController *p_other, int p_other_end, double p_track_distance);
-            void compute_forces(double p_delta);
-            void compute_movement(double p_delta);
-            void compute_fast_movement(double p_delta);
-            bool is_physics_active() const;
-            void couple(VehicleController *p_other, int p_end, int p_other_end, int p_coupling_type);
-            void uncouple(int p_end);
-            bool is_coupled(int p_end) const;
-            void coupler_connect(const Variant &p_where);
-            void coupler_disconnect(const Variant &p_where);
-            TMoverParameters *get_mover() const;
-            VehicleController *get_coupled_controller(int p_end) const;
-            int get_coupled_end(int p_end) const;
+            virtual double get_mass_total() const = 0;
+            virtual double get_total_distance() const = 0;
+            virtual int get_direction() const = 0;
+            virtual void apply_config() = 0;
+            virtual double process_movement(double p_delta) = 0;
+            virtual void update_location() = 0;
+            virtual void update_neighbour(int p_end, VehicleController *p_other, int p_other_end, double p_track_distance) = 0;
+            virtual void compute_forces(double p_delta) = 0;
+            virtual void compute_movement(double p_delta) = 0;
+            virtual void compute_fast_movement(double p_delta) = 0;
+            virtual bool is_physics_active() const = 0;
+            virtual void couple(VehicleController *p_other, int p_end, int p_other_end, int p_coupling_type) = 0;
+            virtual void uncouple(int p_end) = 0;
+            virtual bool is_coupled(int p_end) const = 0;
+            virtual void coupler_connect(const Variant &p_where) = 0;
+            virtual void coupler_disconnect(const Variant &p_where) = 0;
+            virtual VehicleController *get_coupled_controller(int p_end) const = 0;
+            virtual int get_coupled_end(int p_end) const = 0;
             void set_driver_type(DriverType p_value);
             DriverType get_driver_type() const;
             /* The cab the driver_type sits in, as the backend counts it: 1 for the front cab, -1 for
@@ -369,8 +342,6 @@ namespace godot {
             void unregister_component(VehicleComponent *p_component);
 
         private:
-            // coupled movers only know each other (TCoupling::Connected) - maps them back to controllers
-            static std::unordered_map<const TMoverParameters *, VehicleController *> controllers_by_mover;
             Vector<VehicleComponent *> components;
             void free_components();
             /* The lighting component, kept because the vehicle raises roof_light_changed for it.

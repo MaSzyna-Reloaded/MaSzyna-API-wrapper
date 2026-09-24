@@ -1,4 +1,5 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleDieselEngine.hpp"
 #include "MoverEngineBackend.hpp"
 #include "MoverDieselEngineBackend.hpp"

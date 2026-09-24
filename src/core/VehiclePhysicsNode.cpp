@@ -6,6 +6,14 @@
 
 namespace godot {
     const char *VehiclePhysicsNode::vehicle_changed_signal = "vehicle_changed";
+    StringName &VehiclePhysicsNode::controller_implementation() {
+        static StringName implementation;
+        return implementation;
+    }
+
+    void VehiclePhysicsNode::set_controller_implementation(const StringName &p_class) {
+        controller_implementation() = p_class;
+    }
 
     void VehiclePhysicsNode::_bind_methods() {
         ClassDB::bind_method(D_METHOD("set_model", "model"), &VehiclePhysicsNode::set_model);
@@ -83,7 +91,10 @@ namespace godot {
 
     void VehiclePhysicsNode::_build(const Ref<VehicleModel> &p_model) {
         if (controller == nullptr) {
-            controller = memnew(VehicleController);
+            controller = Object::cast_to<VehicleController>(
+                    ClassDBSingleton::get_singleton()->instantiate(controller_implementation()));
+            ERR_FAIL_NULL_MSG(
+                    controller, vformat("Unknown vehicle controller implementation: %s", controller_implementation()));
         } else {
             /* Rebuilding replaces what the vehicle is made of, not the vehicle. Destroying the
              * controller here left every reference taken to it dangling - a sound bank registered

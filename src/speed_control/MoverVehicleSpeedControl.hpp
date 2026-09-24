@@ -1,4 +1,5 @@
 #pragma once
+#include "../maszyna/McZapkie/MOVER.h"
 #include "VehicleSpeedControl.hpp"
 
 namespace godot {

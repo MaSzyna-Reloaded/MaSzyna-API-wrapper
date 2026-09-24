@@ -87,9 +87,8 @@ func _toggle_switch(state:CabinState, action:StringName, value:Variant) -> Varia
 
 # Train.cpp:6779-6827
 func _process(state:CabinState, delta:float) -> void:
-    var vehicle:Dictionary = state.vehicle_state()
     var linebreaker_state:int = state.data.get("linebreaker_state", OPEN)
-    var mains:bool = vehicle.get("main_switch_enabled", false)
+    var mains:bool = state.vehicle_state_value("main_switch_enabled", false)
     # sync with the vehicle - closed by someone else, or knocked out
     if linebreaker_state == OPEN and mains:
         linebreaker_state = CLOSED
@@ -98,17 +97,18 @@ func _process(state:CabinState, delta:float) -> void:
 
     var relay_timer:float = state.data.get("relay_timer", 0.0)
     if state.get_value(ON_BUTTON, false):
-        if vehicle.get("main_switch_closable", false):
+        if state.vehicle_state_value("main_switch_closable", false):
             relay_timer += delta
     else:
         relay_timer = 0.0
     if state.get_value(OFF_BUTTON, false):
         relay_timer = 0.0
 
-    if linebreaker_state == OPEN and relay_timer > float(vehicle.get("line_breaker_initial_delay", 0.0)):
+    if linebreaker_state == OPEN and relay_timer > float(
+            state.vehicle_state_value("line_breaker_initial_delay", 0.0)):
         linebreaker_state = READY
     if linebreaker_state == READY \
-            and not int(vehicle.get("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
+            and not int(state.vehicle_state_value("engine_type", 0)) == VehicleEngine.ELECTRIC_SERIES_MOTOR:
         linebreaker_state = CLOSED if state.send_vehicle_command("main_switch", true) else OPEN
 
     state.data["linebreaker_state"] = linebreaker_state

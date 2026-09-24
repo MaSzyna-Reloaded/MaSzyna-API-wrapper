@@ -32,6 +32,10 @@ namespace godot {
             void unregister_command(const String &p_command, const Callable &p_callback);
             Variant send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2);
             Dictionary get_vehicle_state();
+            /* The vehicle this component belongs to. A modder's script reads what it needs off it
+             * and off its other components, typed, the way the wrapper's own components do - the
+             * whole-vehicle dump above is for a script that wants a handful of unrelated values. */
+            VehicleController *get_controller() const;
             void log_debug(const String &p_line);
             void log_info(const String &p_line);
             void log_warning(const String &p_line);

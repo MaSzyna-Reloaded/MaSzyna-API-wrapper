@@ -102,6 +102,18 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   `cancelled` that the token loop checks, and the GDScript half of a loading task
   (`_count_includes`, which reads every included file) checks the same flag - so the join has
   something short to wait for.
+* **And the fix for that had a deadlock in it.** `drain()` drops the queued tasks - but a task in
+  this queue may `wait()` for a task it submitted, which the header says outright. Dropping a
+  queued task therefore left its waiter spinning in `wait()` for something that would never run,
+  the worker was never joined, and `wait_to_finish()` on the main thread blocked for good: the
+  window simply never closed. Named from a core taken with `kill -ABRT` on the hung process -
+  several threads in `SceneryLoadingTaskQueue::wait` (`:90`) reached from `_run` (`:146`), all on
+  the same queue. `wait()` and `is_done()` now give up while the queue is draining.
+* **Reading a hang costs nothing, and that is the lesson.** `ptrace_scope=1` blocks attaching a
+  debugger to a process that is not a child, but `/proc/<pid>/task/*/wchan` needs no privileges
+  and already said "main thread in futex_do_wait, 41 of 62 threads waiting" - and `kill -ABRT`
+  turns the hang into a core with a full, symbolised stack. Three guesses were spent before that;
+  the measurement took a minute.
 * **Not covered by a test, and the attempt is worth recording.** A test that frees a scenery
   mid-parse and asserts the teardown is quick passes *with and without* the fix: headless, the
   parse of `td.scn` is over before the test can interrupt it. A green test that cannot fail is

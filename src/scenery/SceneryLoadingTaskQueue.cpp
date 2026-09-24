@@ -65,8 +65,9 @@ namespace godot {
 
     bool SceneryLoadingTaskQueue::is_done(const int p_task_id) const {
         MutexLock lock(**mutex);
+        // a queue being torn down runs nothing more, so whoever polls this has to be let go
         const Task *task = tasks.getptr(p_task_id);
-        return task != nullptr && task->done;
+        return exiting || (task != nullptr && task->done);
     }
 
     /// Returns the task result and forgets the task; runs the awaited task here if it is queued.
@@ -74,6 +75,14 @@ namespace godot {
         while (true) {
             {
                 MutexLock lock(**mutex);
+                /* A task waits here for a task it submitted, and drain() drops what is queued -
+                 * so without this the waiter waits for something that will never run, its worker
+                 * is never joined, and the join blocks the main thread for good. Giving up is the
+                 * only answer: the result is not wanted any more either (see `FINDINGS.md`,
+                 * 2026-09-24). */
+                if (exiting) {
+                    return Variant();
+                }
                 const HashMap<int, Task>::Iterator task = tasks.find(p_task_id);
                 ERR_FAIL_COND_V_MSG(task == tasks.end(), Variant(), vformat("Unknown task id: %d", p_task_id));
                 if (task->value.done) {

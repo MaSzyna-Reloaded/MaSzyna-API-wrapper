@@ -443,7 +443,12 @@ namespace godot {
     }
 
     void VehicleController::attach_to_system() {
-        // the vehicle handle is RailVehicle3D's to create; the server hands it here
+        /* The name the scenery gave this vehicle goes to the server that owns its handle, so that
+         * whoever knows the vehicle only by name - an event, the console, a `.scn` command - can
+         * find the handle. Everything that already holds the vehicle uses the handle. */
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            server->vehicle_set_name(rid, train_id);
+        }
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
             system->register_train(train_id, this);
         }

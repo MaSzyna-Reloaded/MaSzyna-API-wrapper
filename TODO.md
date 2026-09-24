@@ -75,7 +75,17 @@ serialises without a line of per-component code.
   `PhysicsServer3D::body_get_direct_state(RID)` does. The interface/implementation split
   (`Vehicle<Domain>` / `Mover<Interface>`) is its own commit at the start. `GenericVehicleComponent`
   gets its dump for free from `get_property_list()` + `PROPERTY_USAGE_SCRIPT_VARIABLE`.~~
-* ~~**D - `VehicleController` stops being a `Node`.**~~ Done. It is an `Object` the vehicle owns:
+* **D - `VehicleController` stops being a `Node`.** The half that names it is done; two of its
+  three bullets are not, and this entry claimed the whole stage for months because it was written
+  when the first one landed:
+  * **not done:** the vehicle is still created by `VehiclePhysicsNode::_build()`, which
+    instantiates the controller by class name and owns it. It belongs in `vehicle_create()`, and
+    then the server owns the object it already owns the handle of - which is also what would
+    remove `VehiclePlacement::controller_id`, the id the server keeps only because somebody else
+    may free the controller under it.
+  * **not done:** registering with `TrainSystem` still hangs off the controller's
+    `attach_to_system()` rather than off the server creating and freeing the vehicle.
+  * done: it is an `Object` the vehicle owns:
   `attach_to_system()` registers the vehicle and its commands before any component attaches (a
   command of a train the system does not know yet is refused), `initialize()` then starts the
   Mover, and `RailVehicleServer`'s `process_frame` tick drives it. `RailVehicle3D` adopts the

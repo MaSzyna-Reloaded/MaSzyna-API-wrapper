@@ -37,6 +37,12 @@ namespace godot {
                 D_METHOD("vehicle_attach_controller", "vehicle", "controller_id"),
                 &RailVehicleServer::vehicle_attach_controller);
         ClassDB::bind_method(
+                D_METHOD("vehicle_set_name", "vehicle", "name"), &RailVehicleServer::vehicle_set_name);
+        ClassDB::bind_method(D_METHOD("vehicle_get_name", "vehicle"), &RailVehicleServer::vehicle_get_name);
+        ClassDB::bind_method(
+                D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
+
+        ClassDB::bind_method(
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
                 &RailVehicleServer::vehicle_set_track);
         ClassDB::bind_method(D_METHOD("vehicle_move", "vehicle", "distance"), &RailVehicleServer::vehicle_move);
@@ -124,10 +130,10 @@ namespace godot {
     }
 
     VehicleController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
-        if (p_placement.controller_id == 0) {
+        if (p_placement.controller_id.is_null()) {
             return nullptr;
         }
-        return Object::cast_to<VehicleController>(ObjectDB::get_instance(ObjectID(p_placement.controller_id)));
+        return Object::cast_to<VehicleController>(ObjectDB::get_instance(p_placement.controller_id));
     }
 
     RID RailVehicleServer::vehicle_create() {
@@ -145,6 +151,9 @@ namespace godot {
             return;
         }
         diagnostics_velocity.erase(placement->controller_id);
+        if (!placement->name.is_empty()) {
+            vehicles_by_name.erase(placement->name);
+        }
         vehicles.erase(p_vehicle);
         if (vehicles.is_empty()) {
             _set_stepping(false);
@@ -155,12 +164,44 @@ namespace godot {
         return vehicles.has(p_vehicle);
     }
 
+    void RailVehicleServer::vehicle_set_name(const RID &p_vehicle, const String &p_name) {
+        VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        if (placement == nullptr) {
+            return;
+        }
+        if (!placement->name.is_empty()) {
+            vehicles_by_name.erase(placement->name);
+        }
+        placement->name = p_name;
+        if (p_name.is_empty()) {
+            return;
+        }
+        /* Two vehicles of one name is a scenery's mistake, and the second one silently taking the
+         * name away from the first is how it stays invisible - an event or a console command then
+         * reaches a vehicle nobody meant. */
+        if (const RID *taken = vehicles_by_name.getptr(p_name); taken != nullptr && *taken != p_vehicle) {
+            UtilityFunctions::push_warning(
+                    vformat("Bad scenario: two vehicles named \"%s\" - the later one takes the name", p_name));
+        }
+        vehicles_by_name[p_name] = p_vehicle;
+    }
+
+    String RailVehicleServer::vehicle_get_name(const RID &p_vehicle) const {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        return placement != nullptr ? placement->name : String();
+    }
+
+    RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {
+        const RID *found = vehicles_by_name.getptr(p_name);
+        return found != nullptr ? *found : RID();
+    }
+
     void RailVehicleServer::vehicle_attach_controller(const RID &p_vehicle, const uint64_t p_controller_id) {
         VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         if (placement == nullptr) {
             return;
         }
-        placement->controller_id = p_controller_id;
+        placement->controller_id = ObjectID(p_controller_id);
         if (VehicleController *controller = _get_controller(*placement); controller != nullptr) {
             controller->set_vehicle_rid(p_vehicle);
             controller->emit_position_changed_if_needed();
@@ -392,7 +433,7 @@ namespace godot {
     RailVehicleServer::VehiclePlacement RailVehicleServer::_sample_placement(
             const VehiclePlacement &p_placement, const double p_distance) {
         VehiclePlacement sampled = p_placement;
-        sampled.controller_id = 0;
+        sampled.controller_id = ObjectID();
         _move_placement(sampled, p_distance, false);
         return sampled;
     }
@@ -893,7 +934,7 @@ namespace godot {
         // server distances are rear-relative, see the step's own note on this
         const double request_sign = p_end == 0 ? -1.0 : 1.0;
         VehiclePlacement cursor = p_placement;
-        cursor.controller_id = 0;
+        cursor.controller_id = ObjectID();
         cursor.rail_vehicle_id = 0;
         double scanned = 0.0;
         double min_along = 0.0;

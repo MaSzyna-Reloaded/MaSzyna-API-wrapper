@@ -86,8 +86,16 @@ namespace godot {
                     /* Per end: the neighbour was already reported as none, so reporting it again
                      * says nothing */
                     bool neighbour_cleared[2] = {false, false};
-                    /* The node driving this vehicle, held as an id rather than a pointer */
-                    uint64_t controller_id = 0;
+                    /* The object driving this vehicle, held as an id rather than a pointer: an
+                     * id says nothing about a lifetime this server does not own (AGENTS.md, and
+                     * PhysicsServer3D::body_attach_object_instance_id is the same shape). The
+                     * public method still takes the plain integer get_instance_id() returns,
+                     * because that is what crosses into GDScript. */
+                    ObjectID controller_id;
+                    /* What a scenery calls this vehicle. Only the things that know a vehicle by
+                     * name alone need it - an event, the console, the radio, a `.scn` command -
+                     * and they reach the vehicle through vehicle_get_rid_by_name(). */
+                    String name;
                     /* The RailVehicle3D that owns this handle, so the tick can hand it its new
                      * placement instead of letting it pull one a frame late */
                     uint64_t rail_vehicle_id = 0;
@@ -102,6 +110,7 @@ namespace godot {
             };
 
             HashMap<RID, VehiclePlacement> vehicles;
+            HashMap<String, RID> vehicles_by_name;
             int64_t next_vehicle_id = 0;
             bool diagnostics = false;
             HashMap<uint64_t, double> diagnostics_velocity;
@@ -148,6 +157,13 @@ namespace godot {
             /* The node driving this vehicle, by instance id - a public API carries no pointers
              * (PhysicsServer3D::body_attach_object_instance_id is the shape this follows). */
             void vehicle_attach_controller(const RID &p_vehicle, uint64_t p_controller_id);
+            /* The scenery's name for this vehicle, and the way back from one. A name is what a
+             * `.scn`, an event or the console has; everything that holds the vehicle uses its
+             * handle and never comes through here (TrackManager::track_get_rid_by_name() is the
+             * same shape, for the same reason). */
+            void vehicle_set_name(const RID &p_vehicle, const String &p_name);
+            String vehicle_get_name(const RID &p_vehicle) const;
+            RID vehicle_get_rid_by_name(const String &p_name) const;
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;

@@ -481,23 +481,11 @@ func _update_running_sounds(
             runtime.player.play(event_name, parameters)
             continue
         if not runtime.player.is_playing(event_name):
-            runtime.player.play(event_name, _loop_start_offset(runtime, event_name), parameters)
+            # every vehicle of a consist plays the same recording, and started together they
+            # comb-filter into a metallic ring heard from outside. Each one starts its own copy
+            # further into the sample (DynObj.cpp:6511, audiorenderer.cpp:99).
+            runtime.player.play(event_name, null, parameters, runtime.running_start_fraction)
         batch[event_name] = parameters
-
-
-## Where a looping running sound starts inside its own sample. Every wagon of a consist plays the
-## same recording, and started together they comb-filter into a metallic ring heard from outside -
-## which the original names at the one place it works around it: "to reduce chance of reverb effect
-## with multiple, looping copies playing" (audiorenderer.cpp:99). Its answer is a start offset
-## drawn once per vehicle, over the first 0.8 of the sample (DynObj.cpp:6511,
-## `m_outernoise.start(Random(0.0, 80.0) * 0.01)`), and the offset is a fraction of the sample
-## rather than a time, so a short recording is shifted as much as a long one.
-func _loop_start_offset(runtime:BankRuntime, event_name:StringName) -> float:
-    var event:SfxEvent = runtime.player.bank.get_event(event_name) if runtime.player.bank else null
-    if not event or not event.clips:
-        return 0.0
-    var stream:AudioStream = (event.clips[0] as SfxClip).stream
-    return runtime.running_start_fraction * stream.get_length() if stream else 0.0
 
 
 ## Controllers of the consist driven from the listener's cab - their outer noise is replaced by the

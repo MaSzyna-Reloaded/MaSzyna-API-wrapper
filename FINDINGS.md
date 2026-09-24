@@ -68,6 +68,45 @@ fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
   before suspecting whatever invalidates it. Here the invalidation was innocent, the cache hit
   correctly in the editor, and the whole defect was in one field's value.
 
+## 2026-09-24 - the simulation stepped after everything that reads it
+
+* **Symptom:** vehicles judder, worst seen from the external view; a single locomotive does it
+  too, so it is not the couplers.
+* **Two wrong turns first, both mine.** The frame-dependent `sub_step` looked like the cause, so
+  the step was made fixed - which made it *worse*: with a fixed 10 ms step and no interpolation
+  the drawn position advances 1 step on some frames and 0 on others, and the 20-step backlog cap
+  turns a stalled frame into a lurch. Then the cabin shake looked like it, until the operator said
+  the worst of it is the exterior view, which that shake cannot reach. Reverted both.
+* **What settled it:** `git log -S` on the old GDScript server. `4ec5490` had already fixed this
+  once and its message says the opposite of the first hypothesis - the *fixed tick* was what made
+  vehicles judder, and stepping on the rendered frame with a variable delta is what the original
+  does (`vehicle_table::update(Deltatime, Iterationcount)`, DynObj.cpp:8181). The same commit
+  added `process_priority = -100`, "so the step has to come first - otherwise the vehicles render
+  the position of the previous frame".
+* **Cause:** the C++ port kept the variable delta and the iteration count, but drove the step from
+  `SceneTree`'s `process_frame`, which is emitted **after** every node has been processed. It
+  compensated by pushing the new placement onto `RailVehicle3D` at the end of the step - which
+  fixes the vehicle's own transform and nothing else. Every other reader that takes a vehicle
+  transform in its own `_process` (`ExternalCamera._process()` computes the camera from
+  `_view_vehicle.global_transform`) still ran before the step and drew against the previous
+  frame's position.
+* **Fix:** `RailVehicleStepper`, a node with `process_priority = -100` that calls
+  `RailVehicleServer::step_frame()`. The simulation is deterministically through its physics
+  before any node is processed, so drawing and state both see the new data in the same frame -
+  which is what the priority guaranteed before the port. `process_frame` is left to the servers
+  whose work nothing reads back in the same frame.
+* **Rule:** `process_frame` is not "the start of the frame", it is the end of one. Anything a node
+  reads in its `_process` has to be produced before the `_process` phase, and the only ordering
+  Godot gives inside it is `process_priority`.
+* **Rule:** when a fix is being reinvented, find the commit that made it the first time
+  (`git log -S` on the moved code) and read its message before proposing the opposite. Two of the
+  three things tried here had already been decided, with reasons, in `4ec5490`.
+* **Trap it exposed:** `test_process_movement_with_invalid_controller_reference_is_noop` passed
+  only because the step used to run after GUT's coroutine resumed. Its premise was never true -
+  `controller = null` drops a GDScript reference and leaves the object attached to the vehicle. It
+  now detaches the controller from the vehicle, which is what "invalid reference" means to the
+  server.
+
 ## 2026-09-23 - a GDScript subclass silently replaced the native _ready()
 
 * **Symptom:** right after `Cabin3D` moved from GDScript to C++, the camera stopped entering the

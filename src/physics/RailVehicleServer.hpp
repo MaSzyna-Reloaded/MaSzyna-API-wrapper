@@ -94,7 +94,8 @@ namespace godot {
             HashMap<uint64_t, double> diagnostics_velocity;
             bool stepping = false;
             bool stepping_enabled = true;
-            uint64_t last_step_usec = 0;
+            /// The node that drives step_frame(); freed when stepping stops.
+            uint64_t stepper_id = 0;
             /* Bumped once per step; a dump older than this is stale. Comparing a
              * serial beats clearing every vehicle's dump each frame. */
             uint64_t step_serial = 1;
@@ -113,7 +114,6 @@ namespace godot {
                     int &p_endpoint_out);
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
             void _set_stepping(bool p_stepping);
-            void _on_process_frame();
             void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
             bool _find_vehicle(
@@ -155,6 +155,9 @@ namespace godot {
             /* One whole step of every registered vehicle. Driven by `process_frame`, and callable
              * directly with an explicit delta where the caller wants to decide when it happens. */
             void step(double p_delta);
+            /* One frame's worth of simulation, called by RailVehicleStepper before any node has
+             * been processed - see that class for why the timing matters. */
+            void step_frame(double p_delta);
             Transform3D vehicle_get_transform(const RID &p_vehicle) const;
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */

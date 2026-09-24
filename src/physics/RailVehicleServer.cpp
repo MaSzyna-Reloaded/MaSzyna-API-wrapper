@@ -1,4 +1,6 @@
 #include "RailVehicleServer.hpp"
+#include "RailVehicleStepper.hpp"
+#include <godot_cpp/classes/window.hpp>
 #include "../core/VehicleComponent.hpp"
 
 #include "../core/RailVehicle3D.hpp"
@@ -100,11 +102,15 @@ namespace godot {
         }
         stepping = p_stepping;
         if (p_stepping) {
-            last_step_usec = Time::get_singleton()->get_ticks_usec();
-            tree->connect("process_frame", callable_mp(this, &RailVehicleServer::_on_process_frame));
+            RailVehicleStepper *stepper = memnew(RailVehicleStepper);
+            stepper_id = stepper->get_instance_id();
+            tree->get_root()->add_child(stepper);
             return;
         }
-        tree->disconnect("process_frame", callable_mp(this, &RailVehicleServer::_on_process_frame));
+        if (Node *stepper = Object::cast_to<Node>(ObjectDB::get_instance(ObjectID(stepper_id))); stepper != nullptr) {
+            stepper->queue_free();
+        }
+        stepper_id = 0;
     }
 
     VehicleController *RailVehicleServer::_get_controller(const VehiclePlacement &p_placement) const {
@@ -656,14 +662,11 @@ namespace godot {
         _move_placement(*placement, distance, true);
     }
 
-    void RailVehicleServer::_on_process_frame() {
-        const uint64_t now = Time::get_singleton()->get_ticks_usec();
-        const double delta = static_cast<double>(now - last_step_usec) / 1000000.0;
-        last_step_usec = now;
-        if (!stepping_enabled || Engine::get_singleton()->is_editor_hint() || delta <= 0.0) {
+    void RailVehicleServer::step_frame(const double p_delta) {
+        if (!stepping_enabled || Engine::get_singleton()->is_editor_hint() || p_delta <= 0.0) {
             return;
         }
-        step(delta);
+        step(p_delta);
     }
 
     void RailVehicleServer::step(const double p_delta) {

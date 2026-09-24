@@ -429,6 +429,15 @@ widgets should ask the model to switch the light (`lights_state`) instead of pok
 
 ## Physics performance
 
+* **A stalled frame still lurches.** `RailVehicleServer::step_frame()` takes the frame delta as it
+  comes, and `iterations` is capped at `MAX_PHYSICS_ITERATIONS`, so a frame longer than
+  `MAX_PHYSICS_ITERATIONS * PHYSICS_STEP` (0.2 s) is integrated with a `sub_step` larger than
+  `PHYSICS_STEP` - which is the one thing the constants were chosen to prevent. The old server hid
+  it by resetting its clock when stepping began. Clamping the delta to that budget is the obvious
+  answer; what it costs is that a stall no longer catches up, and that is a decision to take
+  deliberately rather than in passing.
+
+
 * Those measurements were taken on a `make compile-debug` build, where the vendored `Mover.cpp` is
   compiled at `-O0`. Rebuilding the same code with optimizations (`make compile-profiling`) took
   `baltyk_skm1` from 31 to 44 fps - more than every code change of that session put together. Any

@@ -338,7 +338,9 @@ func test_process_movement_with_invalid_controller_reference_is_noop() -> void:
         TrackManager.DIRECTION_REVERSED
     )
 
-    controller = null
+    # what makes the reference invalid is the server losing it, not a local variable being
+    # dropped - the vehicle then has nothing to ask for a velocity and stays where it is
+    RailVehicleServer.vehicle_attach_controller(vehicle_rid, 0)
     await wait_idle_frames(1)
 
     RailVehicleServer.vehicle_process_movement(vehicle_rid, 1.0)

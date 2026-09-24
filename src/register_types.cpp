@@ -85,6 +85,7 @@
 #include "physics/BaseVehiclePhysicsServer.hpp"
 #include "physics/MaszynaMoverPhysicsServer.hpp"
 #include "physics/RailVehicleServer.hpp"
+#include "physics/RailVehicleStepper.hpp"
 #include "tracks/SpatialIndex.hpp"
 #include "tracks/TrackEndpointRef.hpp"
 #include "tracks/TrackManager.hpp"
@@ -132,6 +133,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_ABSTRACT_CLASS(BaseVehiclePhysicsServer);
         GDREGISTER_CLASS(MaszynaMoverPhysicsServer);
         GDREGISTER_CLASS(RailVehicleServer);
+        GDREGISTER_INTERNAL_CLASS(RailVehicleStepper);
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);

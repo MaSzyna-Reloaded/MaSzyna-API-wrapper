@@ -16,9 +16,10 @@ namespace godot {
             bool get_ready() const override;
             bool get_shut_off() const override;
             bool get_active() const override;
+            bool get_braking() const override;
             double get_cylinder_pressure() const override;
             void set_spring_brake_active(bool p_active) override;
-            void set_spring_brake_enabled(bool p_active) override;
+            void set_spring_brake_enabled(bool p_enabled) override;
             void spring_brake_release() override;
     };
 } // namespace godot

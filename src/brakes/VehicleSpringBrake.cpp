@@ -34,6 +34,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_braking"), &VehicleSpringBrake::get_braking);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "braking", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_braking");
         ClassDB::bind_method(D_METHOD("get_cylinder_pressure"), &VehicleSpringBrake::get_cylinder_pressure);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "cylinder_pressure", PROPERTY_HINT_NONE, "",

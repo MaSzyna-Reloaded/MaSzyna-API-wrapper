@@ -224,6 +224,11 @@ declared" after adding a class; never pass a bare `[]`/`{}` to a typed collectio
 * `CabinSwitch` has no `mesh_rotation_offset`/`mesh_position_offset`, so the MMD offset of a
   switch is dropped (`MMD_ANIMATION_UNSUPPORTED`), e.g. SM42 `dirkey: kier rot -0.09 0.01`. The
   original renders `value * scale + offset` (`Gauge.cpp:456`); `CabinButton` already does.
+* Spring brake, what is left after the parity pass (2026-09-24): `i-springbrakeinactive:`
+  (`Train.cpp:11698`, lit by `!SpringBrake.IsActive`) is unmapped - `CabinIndicator3D` has no
+  inverted state; `springbrakerelease` (`Train.cpp:6874`, the emergency release rod) and the
+  `springbrakepress:` gauge (`Train.cpp:12221`) have no cab control and no key, the game's
+  `eu07_input-keyboard.ini` binds the release to `none` as well.
 * Intermittent, not reproduced (2026-09-24): after the first entry into a cab, the releaser
   (num4, `releaser_bt`) and the drive shortcut (num6, `brake_level_drive`) sometimes do nothing
   until the brake handle is moved once (num3/num9). A headless probe entering every cab of

@@ -3,6 +3,31 @@
 Root causes that took a measurement to find. Each entry: the symptom, what proved the cause, the
 fix, and the rule it leaves behind. Open work belongs in `TODO.md`, not here.
 
+## 2026-09-24 - every spring brake started shut off, because the struct defaults were kept
+
+* **Symptom:** on `td_e186.scn` it was unclear whether the spring brake did anything at all, and
+  the debug window's "Enable" button shut it off.
+* **What proved it:** a headless probe building a vehicle with e186's `SpringBrake:` values and
+  printing `spring_brake/*` once a second: `shut_off=true` and `is_ready=false` from the first
+  frame. The cylinder was filled only through the pneumatic bypass (`BP`), never to `MaxSP`,
+  because `UpdateSpringBrake` takes `MSP = ShuttOff ? 0 : MaxSetPressure` (`Mover.cpp:4836`).
+  With the train brake released the spring brakes the vehicle whatever the driver does.
+* **Cause:** the original's `LoadFIZ_SpringBrake` ends with `ShuttOff = false; Activate = false;
+  IsReady = true;` (`Mover.cpp:11028`), and the struct defaults (`ShuttOff{true}`,
+  `IsReady{false}`) describe a vehicle *without* a spring brake. The port copied the parameters
+  and dropped those three lines. Putting them in the `if (!Cylinder)` branch did not help:
+  `CheckLocomotiveParameters()` creates a fallback cylinder (`Mover.cpp:8881`) before any
+  component is configured, so that branch never runs.
+* **Found on the way:** `set_spring_brake_enabled(true)` called `SpringBrakeShutOff(true)`, and
+  the test locked that inverted meaning in; the valve areas were read straight while the original
+  reads FIZ `ValveOnArea` into `ValveOffArea` and vice versa (`Mover.cpp:11025`); and
+  `MTC` defaulted to 0 instead of the original's 127, so a FIZ without it never passed the
+  command along the consist. `i-springbrakeactive` showed the switch (`Activate`) where the
+  original shows the spring braking (`IsActive`, `Train.cpp:9195`).
+* **Rule:** porting a FIZ section means porting the whole loader function, including the state it
+  sets at the end - not only the `extract_value` lines. A struct default is what a vehicle
+  without that section gets.
+
 ## 2026-09-24 - the Linux release would not start on most machines, because of the build host's glibc
 
 * **Symptom:** the Linux zip starts on the machine it was built on and fails on "many PCs".

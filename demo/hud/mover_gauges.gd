@@ -46,7 +46,7 @@ func _process(delta):
     $%SHPLight.enabled = true if state.get("cabsignal_blinking") else false
     $"%DoorsLocked".enabled = true if state.get("doors_locked") else false
     $VBoxContainer/HBoxContainer3/SpringBrakeActive.enabled = true if state.get("spring_brake/active") else false
-    $VBoxContainer/HBoxContainer3/SpringBrakeEnabled.enabled = true if state.get("spring_brake/shut_off") else false
+    $VBoxContainer/HBoxContainer3/SpringBrakeEnabled.enabled = not state.get("spring_brake/shut_off", true)
 
     LeftDoorsOpenLight.color_active = Color.ORANGE if state.get("doors_left_operating") else Color.LIME_GREEN
     LeftDoorsOpenLight.enabled = state.get("doors_left_open") or state.get("doors_left_operating")

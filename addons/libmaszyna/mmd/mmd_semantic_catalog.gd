@@ -403,7 +403,20 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Spring brake buttons (drivermouseinput.cpp:612-617 -> springbrakeenable/disable).
+        # Spring brake buttons (drivermouseinput.cpp:642-649 -> springbraketoggle/enable/disable).
+        # The toggle flips SpringBrake.Activate (Train.cpp:6780); its key is the game's
+        # eu07_input-keyboard.ini binding, the original has no default one.
+        "springbraketoggle_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "set_spring_brake_active",
+                "state_property": "spring_brake/active",
+                "action": "spring_brake_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         "springbrakeon_bt": {
             "widget_class": CabinButton,
             "fixed_fields": {
@@ -974,7 +987,8 @@ static func _ensure_built() -> void:
         },
         "i-springbrakeactive": {
             "widget_class": CabinIndicator3D,
-            "fixed_fields": { "state_property": "spring_brake/active" },
+            # Train.cpp:9195 - lit by SpringBrake.IsActive, the spring braking, not by the switch
+            "fixed_fields": { "state_property": "spring_brake/braking" },
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,

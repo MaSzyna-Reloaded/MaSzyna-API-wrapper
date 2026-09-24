@@ -9,6 +9,10 @@ extends HFlowContainer
             _do_update()
 
 var controller:VehicleController
+## Taken once per vehicle rather than looked up per frame - a component is a live view on the
+## vehicle, valid for as long as the vehicle is.
+var universal_controller:VehicleUniversalController
+
 
 func _ready() -> void:
     _do_update()
@@ -16,6 +20,9 @@ func _ready() -> void:
 func _do_update():
     var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
     controller = physics_node.get_controller() if physics_node else null
+    universal_controller = (
+            controller.get_component(VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER)
+            as VehicleUniversalController) if controller else null
     _propagate_vehicle_node(self, physics_node)
 
 ## The widgets below point at the vehicle's node, not at the controller it owns - a controller is

@@ -2,10 +2,9 @@ extends "res://hud/mover_switches_section.gd"
 
 @onready var POS = %MainCtrlPos
 
-func _process(delta: float) -> void:
-    if controller:
-        var state = controller.state
-        if "selector_position" in state:
-            POS.text = "Pos: " + str(state.get("selector_position", 0))
-        elif "controller_main_position" in state: # for fallback/older version compatibility if needed
-            POS.text = "Pos: " + str(state.get("controller_main_position", 0))
+## A vehicle without a universal controller has no selector to show, which is what the panel's
+## own emptiness says - there is no older shape of this to fall back to any more.
+func _process(_delta: float) -> void:
+    if not universal_controller:
+        return
+    POS.text = "Pos: " + str(universal_controller.get_selector_position())

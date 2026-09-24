@@ -1,5 +1,12 @@
 extends HFlowContainer
 
+## What each gauge's dial is scaled to - these are the ranges the gauges were drawn for, not
+## anything the vehicle declares.
+const ENGINE_RPM_FULL_SCALE:float = 1400.0
+const ENGINE_CURRENT_FULL_SCALE:float = 1500.0
+const PRESSURE_FULL_SCALE:float = 10.0
+const SPEED_FULL_SCALE:float = 100.0
+
 @export_node_path("VehiclePhysicsNode") var train_controller:NodePath = NodePath(""):
     set(x):
         if not train_controller == x:
@@ -12,12 +19,31 @@ extends HFlowContainer
 
 var controller:VehicleController
 
+## Taken once per vehicle, not looked up per frame: what a gauge shows is a typed property of the
+## component that owns it, and the component is a live view on the vehicle for as long as the
+## vehicle lives.
+var _engine:VehicleEngine
+var _brakes:VehicleBrake
+var _spring_brake:VehicleSpringBrake
+var _doors:VehicleDoors
+var _security:VehicleSecuritySystem
+
+
 func _do_update():
     var physics_node: VehiclePhysicsNode = get_node_or_null(train_controller) if train_controller else null
     controller = physics_node.get_controller() if physics_node else null
+    _engine = _component(VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
+    _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake
+    _spring_brake = _component(VehicleComponentType.COMPONENT_SPRING_BRAKE) as VehicleSpringBrake
+    _doors = _component(VehicleComponentType.COMPONENT_DOORS) as VehicleDoors
+    _security = _component(VehicleComponentType.COMPONENT_SECURITY) as VehicleSecuritySystem
     _propagate_vehicle_node(self, physics_node)
     modulate = Color.WHITE
     modulate.a = 1.0 if controller else 0.1
+
+func _component(type:VehicleComponentType.Type) -> VehicleComponent:
+    return controller.get_component(type) if controller else null
+
 
 ## The widgets below point at the vehicle's node, not at the controller it owns.
 func _propagate_vehicle_node(node: Node, physics_node: VehiclePhysicsNode) -> void:
@@ -29,27 +55,33 @@ func _propagate_vehicle_node(node: Node, physics_node: VehiclePhysicsNode) -> vo
 func _ready():
     _do_update()
 
-func _process(delta):
+func _process(_delta):
     if not controller:
         return
 
-    var state = controller.state
-
-    $EngineRPM.value = state.get("engine_rpm", 0.0) / 1400.0
-    $EngineCurrent.value = state.get("engine_current", 0.0) / 1500.0
-    $OilPressure.value = state.get("oil_pump_pressure", 0.0)
-    $BrakeCylinderPressure.value = state.get("brake_air_pressure", 0.0) / state.get("brake_tank_volume", 1.0)
-    $BrakePipePressure.value = state.get("pipe_pressure", 0.0)  / 10.0
-    $SpringBrakePressure.value = state.get("spring_brake/cylinder_pressure", 0.0)  / 10.0
-    $Speed.value = state.get("speed", 0.0) / 100.0
-    $%SecurityLight.enabled = true if state.get("blinking") else false
-    $%SHPLight.enabled = true if state.get("cabsignal_blinking") else false
-    $"%DoorsLocked".enabled = true if state.get("doors_locked") else false
-    $VBoxContainer/HBoxContainer3/SpringBrakeActive.enabled = true if state.get("spring_brake/active") else false
-    $VBoxContainer/HBoxContainer3/SpringBrakeEnabled.enabled = not state.get("spring_brake/shut_off", true)
-    %SpringBrakeBraking.enabled = state.get("spring_brake/braking", false)
-
-    LeftDoorsOpenLight.color_active = Color.ORANGE if state.get("doors_left_operating") else Color.LIME_GREEN
-    LeftDoorsOpenLight.enabled = state.get("doors_left_open") or state.get("doors_left_operating")
-    RightDoorsOpenLight.color_active = Color.ORANGE if state.get("doors_right_operating") else Color.LIME_GREEN
-    RightDoorsOpenLight.enabled = state.get("doors_right_open") or state.get("doors_right_operating")
+    if _engine:
+        $EngineRPM.value = _engine.get_rpm() / ENGINE_RPM_FULL_SCALE
+        $OilPressure.value = _engine.get_oil_pump_pressure()
+    var motor:VehicleElectricEngine = _engine as VehicleElectricEngine
+    $EngineCurrent.value = motor.get_motor_current() / ENGINE_CURRENT_FULL_SCALE if motor else 0.0
+    if _brakes:
+        var tank_volume:float = _brakes.get_tank_volume()
+        $BrakeCylinderPressure.value = (
+                _brakes.get_air_pressure() / tank_volume if tank_volume > 0.0 else 0.0)
+        $BrakePipePressure.value = _brakes.get_pipe_pressure() / PRESSURE_FULL_SCALE
+    if _spring_brake:
+        $SpringBrakePressure.value = _spring_brake.get_cylinder_pressure() / PRESSURE_FULL_SCALE
+        $VBoxContainer/HBoxContainer3/SpringBrakeActive.enabled = _spring_brake.get_active()
+        $VBoxContainer/HBoxContainer3/SpringBrakeEnabled.enabled = not _spring_brake.get_shut_off()
+        %SpringBrakeBraking.enabled = _spring_brake.get_braking()
+    $Speed.value = controller.get_speed() / SPEED_FULL_SCALE
+    if _security:
+        $%SecurityLight.enabled = _security.get_blinking()
+        $%SHPLight.enabled = _security.get_cabsignal_blinking()
+    if not _doors:
+        return
+    $"%DoorsLocked".enabled = _doors.get_locked()
+    LeftDoorsOpenLight.color_active = Color.ORANGE if _doors.get_left_operating() else Color.LIME_GREEN
+    LeftDoorsOpenLight.enabled = _doors.get_left_open() or _doors.get_left_operating()
+    RightDoorsOpenLight.color_active = Color.ORANGE if _doors.get_right_operating() else Color.LIME_GREEN
+    RightDoorsOpenLight.enabled = _doors.get_right_open() or _doors.get_right_operating()

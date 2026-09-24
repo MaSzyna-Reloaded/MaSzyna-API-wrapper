@@ -64,3 +64,6 @@ build-*/
 /.antigravitycli
 /build-profiling/
 /demo/build_number.txt
+
+# GIMP writes a sidecar next to an edited image; it is not project data
+.comments/

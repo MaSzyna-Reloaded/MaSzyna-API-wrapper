@@ -141,7 +141,7 @@ func _init(node: Node) -> void:
 @abstract func apply_visual_configuration() -> void
 
 
-## Applies the maszyna/shadows/* settings to the backend's directional lights.
+## Applies the scenery/shadows and cabin/shadows settings to the backend's directional lights.
 @abstract func apply_light_configuration() -> void
 
 

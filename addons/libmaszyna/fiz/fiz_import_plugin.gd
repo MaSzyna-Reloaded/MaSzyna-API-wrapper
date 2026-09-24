@@ -22,8 +22,11 @@ func _get_recognized_extensions() -> PackedStringArray:
     return PackedStringArray(["fiz"])
 
 
+## A .fiz imports into a VehicleModel, a plain Resource - `.scn` is the packed-scene extension
+## and ResourceSaver refuses anything else under it (ERR_FILE_UNRECOGNIZED), which left every
+## .fiz in the project unimported.
 func _get_save_extension() -> String:
-    return "scn"
+    return "res"
 
 
 func _get_resource_type() -> String:

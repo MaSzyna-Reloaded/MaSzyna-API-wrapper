@@ -23,7 +23,10 @@ var controller:VehicleController
 ## Taken once per vehicle, not looked up per frame: what a gauge shows is a typed property of the
 ## component that owns it, and the component is a live view on the vehicle for as long as the
 ## vehicle lives.
-var _engine:VehicleEngine
+## The revolutions and the oil pressure belong to a diesel, not to every engine - an electric one
+## has neither, and asking it for them is what broke this panel on an induction motor.
+var _diesel_engine:VehicleDieselEngine
+var _electric_engine:VehicleElectricEngine
 var _brakes:VehicleBrake
 var _spring_brake:VehicleSpringBrake
 var _doors:VehicleDoors
@@ -32,7 +35,9 @@ var _security:VehicleSecuritySystem
 
 func _do_update():
     controller = vehicle
-    _engine = _component(VehicleComponentType.COMPONENT_ENGINE) as VehicleEngine
+    var engine_component:VehicleComponent = _component(VehicleComponentType.COMPONENT_ENGINE)
+    _diesel_engine = engine_component as VehicleDieselEngine
+    _electric_engine = engine_component as VehicleElectricEngine
     _brakes = _component(VehicleComponentType.COMPONENT_BRAKES) as VehicleBrake
     _spring_brake = _component(VehicleComponentType.COMPONENT_SPRING_BRAKE) as VehicleSpringBrake
     _doors = _component(VehicleComponentType.COMPONENT_DOORS) as VehicleDoors
@@ -51,11 +56,12 @@ func _process(_delta):
     if not controller:
         return
 
-    if _engine:
-        $EngineRPM.value = _engine.get_rpm() / ENGINE_RPM_FULL_SCALE
-        $OilPressure.value = _engine.get_oil_pump_pressure()
-    var motor:VehicleElectricEngine = _engine as VehicleElectricEngine
-    $EngineCurrent.value = motor.get_motor_current() / ENGINE_CURRENT_FULL_SCALE if motor else 0.0
+    $EngineRPM.value = (
+            _diesel_engine.get_rpm() / ENGINE_RPM_FULL_SCALE if _diesel_engine else 0.0)
+    $OilPressure.value = _diesel_engine.get_oil_pump_pressure() if _diesel_engine else 0.0
+    $EngineCurrent.value = (
+            _electric_engine.get_motor_current() / ENGINE_CURRENT_FULL_SCALE
+            if _electric_engine else 0.0)
     if _brakes:
         var tank_volume:float = _brakes.get_tank_volume()
         $BrakeCylinderPressure.value = (

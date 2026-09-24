@@ -93,7 +93,7 @@ namespace godot {
             /// The model currently uses the node hierarchy (bogies, wheels, pantograph arms)
             bool model_detailed = true;
             bool force_detail_refresh = true;
-            Transform3D last_center_transform;
+            Transform3D last_body_transform;
             Node3D *low_poly_cabin = nullptr;
             TypedArray<ShaderMaterial> low_poly_emissive_materials;
             Ref<Tween> low_poly_emission_tween;

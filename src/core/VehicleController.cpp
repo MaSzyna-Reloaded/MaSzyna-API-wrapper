@@ -1238,7 +1238,7 @@ namespace godot {
     }
 
     Transform3D VehicleController::get_world_transform() const {
-        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        RailVehicleServer *server = RailVehicleServer::get_instance();
         if (server == nullptr || !rid.is_valid()) {
             return Transform3D();
         }

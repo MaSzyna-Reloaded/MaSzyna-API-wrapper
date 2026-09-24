@@ -1196,10 +1196,16 @@ namespace godot {
         if (server == nullptr) {
             return;
         }
-        const Transform3D center_transform = server->vehicle_get_transform(rid);
-        const bool moved = center_transform != last_center_transform;
-        last_center_transform = center_transform;
-        set_global_transform(center_transform);
+        const Transform3D body_transform = server->vehicle_get_transform(rid);
+        const bool moved = body_transform != last_body_transform;
+        last_body_transform = body_transform;
+
+        /* The body's transform is the server's answer and nothing else. It used to be written
+         * twice here - the server's, then one this node composed from the bogies - and the two
+         * differ on anything but straight track, so a parked vehicle on a curve flicked between
+         * them whenever something raised force_detail_refresh. The composition moved to the
+         * server, which owns the placement it is made of. */
+        set_global_transform(body_transform);
 
         if (!is_visible || (!moved && !force_detail_refresh)) {
             return;
@@ -1239,15 +1245,6 @@ namespace godot {
             return;
         }
         body_forward.normalize();
-        const Vector3 average_up =
-                (front_transform.basis.get_column(1) + rear_transform.basis.get_column(1)).normalized();
-        const Vector3 z_axis = -body_forward;
-        const Vector3 x_axis = average_up.cross(z_axis).normalized();
-        const Vector3 y_axis = z_axis.cross(x_axis).normalized();
-        set_global_transform(Transform3D(
-                Basis(x_axis, y_axis, z_axis).orthonormalized(),
-                (front_transform.origin + rear_transform.origin) * 0.5));
-
         const double body_yaw = Math::atan2(-body_forward.x, body_forward.z);
         Node3D *bogie_nodes[] = {front_bogie_node, rear_bogie_node};
         Transform3D bogie_transforms[] = {front_transform, rear_transform};

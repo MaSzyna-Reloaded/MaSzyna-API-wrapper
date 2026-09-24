@@ -22,6 +22,9 @@ namespace godot {
     class RailVehicle3D : public Node3D {
             GDCLASS(RailVehicle3D, Node3D)
 
+        public:
+            static const char *controller_changed_signal;
+
         private:
             NodePath model_instance_path;
             TypedDictionary<String, bool> lights;
@@ -125,6 +128,7 @@ namespace godot {
             void _on_low_poly_cabin_e3d_loaded();
             void _update_low_poly_cabs_visibility();
             void _on_roof_light_changed(bool p_enabled);
+
             void _set_low_poly_emission_energy(double p_value);
             void _update_detection_area();
             void _on_screen_entered();

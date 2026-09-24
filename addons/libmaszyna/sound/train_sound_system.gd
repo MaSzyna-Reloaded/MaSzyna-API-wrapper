@@ -174,9 +174,7 @@ func register_bank(player:SfxPlayer3D, registration:Dictionary) -> void:
         runtime.player = player
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
-    runtime.vehicle = registration.get("vehicle") as RailVehicle3D
-    if runtime.vehicle:
-        _banks_by_vehicle[runtime.vehicle] = runtime
+    _set_bank_vehicle(runtime, registration.get("vehicle") as RailVehicle3D)
     runtime.cabin_only = bool(registration.get("cabin_only", false))
     runtime.enabled = not runtime.cabin_only
     runtime.brake_sources = registration.get("brake_sources", {})
@@ -195,9 +193,7 @@ func register_trigger(player:SfxPlayer3D, descriptor:Dictionary) -> int:
     if not runtime:
         runtime = BankRuntime.new()
         runtime.player = player
-        runtime.vehicle = descriptor.get("vehicle") as RailVehicle3D
-        if runtime.vehicle:
-            _banks_by_vehicle[runtime.vehicle] = runtime
+        _set_bank_vehicle(runtime, descriptor.get("vehicle") as RailVehicle3D)
         runtime.controller = descriptor.get("controller") as VehicleController
         _banks[bank_id] = runtime
         player.tree_exiting.connect(_unregister_bank.bind(bank_id))
@@ -258,8 +254,6 @@ func _refresh_active_banks() -> void:
         runtime.active = false
     _active.clear()
     for runtime:BankRuntime in _banks.values():
-        if not is_instance_valid(runtime.controller):
-            _resolve_controller(runtime)
         if not runtime.controller or not runtime.enabled:
             continue
         if not runtime.events_built and runtime.brake_sources:
@@ -712,12 +706,52 @@ func _parameter_value(raw:Variant) -> float:
     return float(raw) if raw else 0.0
 
 
+## The one writer of a bank's vehicle: the announcement the bank reacts to is wired with it, so
+## the two can never disagree about which vehicle the bank is listening to.
+func _set_bank_vehicle(runtime:BankRuntime, vehicle:RailVehicle3D) -> void:
+    if runtime.vehicle == vehicle:
+        return
+    var previous:RailVehicle3D = runtime.vehicle
+    runtime.vehicle = vehicle
+    if previous and not _has_bank_of_vehicle_node(previous):
+        # a bank is unregistered from its player's tree_exiting, which is the vehicle being freed:
+        # by then the vehicle may already be gone, and it takes its connections with it
+        if is_instance_valid(previous):
+            previous.controller_changed.disconnect(_on_vehicle_controller_changed.bind(previous))
+        _banks_by_vehicle.erase(previous)
+    if not vehicle:
+        return
+    # One connection per vehicle rather than per bank: a vehicle carries several banks (exterior,
+    # cabin), connections live on the emitter, and two banks binding the same method to the same
+    # vehicle count as one - the second would never hear the announcement.
+    if not _banks_by_vehicle.has(vehicle):
+        # a bank is registered while its vehicle is still being built, so its controller comes
+        # from the vehicle's own announcement rather than being looked for again later
+        vehicle.controller_changed.connect(_on_vehicle_controller_changed.bind(vehicle))
+    _banks_by_vehicle[vehicle] = runtime
+
+
+## The vehicle has a different controller now - or its first one. Every bank it carries takes it.
+func _on_vehicle_controller_changed(vehicle:RailVehicle3D) -> void:
+    for runtime:BankRuntime in _banks.values():
+        if runtime.vehicle == vehicle:
+            _resolve_controller(runtime)
+            _refresh_bank_context(runtime)
+
+
+## Whether any bank still points at this vehicle - the connection above lives as long as one does.
+func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
+    for runtime:BankRuntime in _banks.values():
+        if runtime.vehicle == vehicle:
+            return true
+    return false
+
+
 func _unregister_bank(bank_id:int) -> void:
     var removed:BankRuntime = _banks.get(bank_id)
     if not removed:
         return
-    if removed.vehicle:
-        _banks_by_vehicle.erase(removed.vehicle)
+    _set_bank_vehicle(removed, null)
     _banks.erase(bank_id)
     if removed.vehicle_rid.is_valid() and not _has_bank_of_vehicle(removed.vehicle_rid):
         var counted:VehicleController = _coupler_sources.get(removed.vehicle_rid)

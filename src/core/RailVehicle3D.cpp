@@ -27,6 +27,8 @@
 #include <array>
 
 namespace godot {
+    const char *RailVehicle3D::controller_changed_signal = "controller_changed";
+
     namespace {
         struct LightStateBinding {
                 const char *light_name;
@@ -149,6 +151,10 @@ namespace godot {
 #undef BIND_RAIL_NODE_PATH_ARRAY
 #undef BIND_RAIL_NODE_PATH
 #undef BIND_RAIL_PROPERTY
+        /* The vehicle this node renders has changed - it has one now, it has a different one, or
+         * it has none. Whoever needs the vehicle reacts to this instead of looking for it again
+         * later: a consumer wired up before the vehicle is built would otherwise have to poll. */
+        ADD_SIGNAL(MethodInfo(controller_changed_signal));
     }
 
     void RailVehicle3D::enter_cabin(Node *p_player) {
@@ -374,6 +380,7 @@ namespace godot {
         }
         const Dictionary state = controller != nullptr ? controller->get_state() : Dictionary();
         _on_roof_light_changed(controller != nullptr && bool(state.get("roof_light_enabled", false)));
+        emit_signal(controller_changed_signal);
     }
 
     void RailVehicle3D::_enter_tree() {

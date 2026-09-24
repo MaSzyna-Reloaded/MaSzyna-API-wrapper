@@ -40,10 +40,12 @@ func is_pressed(control_id:StringName, action:StringName, value:Variant) -> bool
     return action == &"hold"
 
 
-# FIXME(#57): reads the per-frame copied VehicleController.state; see the refresh workaround in
-# TrainSystem::send_command for why a read right after a command could be stale.
+## The vehicle's state, through the cab's own system rather than by train_id through TrainSystem:
+## CabinSystem holds the vehicle's handle and builds the dump once per frame for every element of
+## every cab. A read right after a command is no longer stale either - the dump is keyed on the
+## vehicle's command counter as well as on the step (see `FINDINGS.md`, 2026-09-23).
 func vehicle_state() -> Dictionary:
-    return TrainSystem.get_train_state(train_id)
+    return CabinSystem.vehicle_state(train_id)
 
 
 func send_vehicle_command(command:String, p1:Variant = null, p2:Variant = null) -> Variant:

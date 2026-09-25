@@ -29,6 +29,8 @@ anything. Open work belongs in `TODO.md`.
   first. *(09-24 simulation stepped after readers)*
 * Many copies of one sound: the defect is phase, not level. Look for a start offset first.
   *(09-24 consist ringing)*
+* Prove a fix to a value by printing it where it is used, not where it is set. A later line
+  can overwrite it. *(09-24 consist ringing, the fix that did not work)*
 * Before changing a sound constant, dump the whole built bank (`track.volume_db` of every clip).
   *(09-21 +38 dB SfxTrack)*
 * A red test that survives many unrelated commits is no evidence of the commit that turned it red.

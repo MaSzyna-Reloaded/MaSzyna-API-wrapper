@@ -58,15 +58,17 @@ enum ControllerMode { OnOff, On, Off }
 ## a knob without positions: its value is then its position.
 @export var position_min:float = 0.0
 @export var position_max:float = 0.0
-## A sound per whole position (MMD soundN:/sound-N:), played when the knob comes to stand on it,
+## The cab's sound player whose bank holds the events below, filled by whoever builds the cab
+## (MmdCabinInstancer)
+@export var sound_player:SfxPlayer3D
+## An event per whole position (MMD soundN:/sound-N:), played when the knob comes to stand on it,
 ## and for a move that ends between positions (TGauge::UpdateValue, Gauge.cpp:302-343)
-@export var sound_positions:Dictionary[int, AudioStream] = {}
+@export var sound_position_events:Dictionary[int, StringName] = {}
 ## What the whole positions are called, position -> msgid for MaszynaLocale.gettext() (a brake
 ## valve's "drive", "cutoff", ...), from the MMD catalog and the vehicle's handle
 @export var position_names:Dictionary = {}
-@export var sound_increase_stream:AudioStream
-@export var sound_decrease_stream:AudioStream
-@export var sound_max_distance:float = 3.0
+@export var sound_increase_event:StringName
+@export var sound_decrease_event:StringName
 
 ## Mouse travel, in pixels, that takes the knob across its whole range
 const MOUSE_PIXELS_PER_RANGE:float = 400.0
@@ -88,8 +90,6 @@ var _target_mesh_rotation:Vector3 = Vector3.ZERO
 var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
-
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 ## The value the last sound was chosen for
 var _sounded_value:float = 0.0
@@ -121,8 +121,6 @@ func _update_state():
 
 func _ready():
     value_changed.connect(_on_value_changed)
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
     train_id_changed.connect(_update_state)
@@ -233,16 +231,16 @@ func _set_position_from_input(p_position:float) -> void:
 ## move sound already playing is not restarted - the original's exclusive mode for a knob that
 ## moves continuously.
 func _play_sound(previous_value:float) -> void:
+    if not sound_player:
+        return
     var position:float = _position()
     var whole:int = roundi(position)
-    if absf(position - whole) < POSITION_TOLERANCE and sound_positions.has(whole):
-        _sound.stream = sound_positions[whole]
-        _sound.play()
+    if absf(position - whole) < POSITION_TOLERANCE and sound_position_events.has(whole):
+        sound_player.play(sound_position_events[whole])
         return
-    var stream:AudioStream = sound_increase_stream if value > previous_value else sound_decrease_stream
-    if stream and not (_sound.playing and _sound.stream == stream):
-        _sound.stream = stream
-        _sound.play()
+    var event:StringName = sound_increase_event if value > previous_value else sound_decrease_event
+    if event and not sound_player.is_playing(event):
+        sound_player.play(event)
 
 func _set_value_from_input(p_value:float) -> void:
     var new_value:float = clampf(p_value, value_min, value_max)

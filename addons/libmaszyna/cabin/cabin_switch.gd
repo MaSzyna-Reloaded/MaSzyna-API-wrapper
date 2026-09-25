@@ -82,15 +82,15 @@ enum ControllerMode { OnOff, On, Off }
         _dirty = true
 
 @export var animation_speed = 10.0
-@export var sound_increase_stream:AudioStream
-@export var sound_decrease_stream:AudioStream
-@export var sound_neutral_position_stream:AudioStream
-@export var sound_override:Array[AudioStream]
-@export var sound_override_negative:Array[AudioStream]
-@export var sound_max_distance:float = 3.0:
-    set(x):
-        sound_max_distance = x
-        _sound.max_distance = x
+## The cab's sound player and the events of its bank this switch plays, filled by whoever builds
+## the cab (MmdCabinInstancer). sound_override_events[N - 1] belongs to position N,
+## sound_override_negative_events[N - 1] to position -N; an empty name leaves the position silent.
+@export var sound_player:SfxPlayer3D
+@export var sound_increase_event:StringName
+@export var sound_decrease_event:StringName
+@export var sound_neutral_position_event:StringName
+@export var sound_override_events:Array[StringName]
+@export var sound_override_negative_events:Array[StringName]
 
 @export var action_increase = ""
 @export var action_decrease = ""
@@ -107,14 +107,11 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 var _handle_actions:bool = true
 var _t:float = 0.0
 var _setup_phase:bool = true
 
 func _ready():
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     self.switch_position_changed.connect(self._on_switch_position_changed)
 
     if not Engine.is_editor_hint() and Console:
@@ -236,11 +233,6 @@ func _process_tool(delta):
 func _apply_control_value(p_value:Variant) -> void:
     switch_position = int(p_value)
 
-func _play_sound():
-
-    if _sound.stream:
-        _sound.play()
-
 ## The position under the caption: its name, on/off for a two-state switch, else its number.
 func _mouse_state() -> String:
     if position_names.has(switch_position):
@@ -251,19 +243,18 @@ func _mouse_state() -> String:
 
 func _on_switch_position_changed(previous, current):
     _set_mouse_state(_mouse_state())
-    if current == 0 and sound_neutral_position_stream:
-        _sound.stream = sound_neutral_position_stream
-    elif current > 0 and current <= sound_override.size():
-        _sound.stream = sound_override[current-1]
-    elif current < 0 and -current <= sound_override_negative.size():
-        _sound.stream = sound_override_negative[-current-1]
-    elif current == 0:
-        _sound.stream = null
-    else:
-        _sound.stream = sound_increase_stream if current > previous else sound_decrease_stream
+    var event:StringName = &""
+    if current == 0 and sound_neutral_position_event:
+        event = sound_neutral_position_event
+    elif current > 0 and current <= sound_override_events.size():
+        event = sound_override_events[current-1]
+    elif current < 0 and -current <= sound_override_negative_events.size():
+        event = sound_override_negative_events[-current-1]
+    elif not current == 0:
+        event = sound_increase_event if current > previous else sound_decrease_event
 
-    if _sound.stream:
-        _sound.play()
+    if sound_player and event:
+        sound_player.play(event)
 
 func _set_position_from_input(p_position:int) -> void:
     var previous_position:int = switch_position

@@ -76,12 +76,11 @@ enum ButtonType {
         mesh_rotation_offset = x
         _update_mesh_target()
 @export var speed = 10.0
-@export var sound_on:AudioStream
-@export var sound_off:AudioStream
-@export var sound_max_distance:float = 3.0:
-    set(x):
-        sound_max_distance = x
-        _sound.max_distance = x
+## The cab's sound player and the events of its bank this button plays, filled by whoever builds
+## the cab (MmdCabinInstancer)
+@export var sound_player:SfxPlayer3D
+@export var sound_on_event:StringName
+@export var sound_off_event:StringName
 
 @export var action = ""
 
@@ -100,11 +99,8 @@ var _t:float = 0.0
 
 var _enabled:bool = true
 var _setup_phase:bool = true
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 func _ready():
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
     train_id_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
@@ -187,9 +183,9 @@ func _apply_control_value(p_value:Variant) -> void:
     value = float(p_value)
 
 func _play_sound():
-    _sound.stream = sound_on if pushed else sound_off
-    if _sound.stream:
-        _sound.play()
+    var event:StringName = sound_on_event if pushed else sound_off_event
+    if sound_player and event:
+        sound_player.play(event)
 
 ## The state under the caption.
 func _mouse_state() -> String:

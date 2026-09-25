@@ -4,6 +4,22 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-25 - cab clicks cut each other off: the controls bypassed gnd-sfx
+
+* **Symptom:** with several cab controls moved in quick succession, the sounds cut each other
+  off and ignored the cab's bus.
+* **What proved it:** `CabinButton`, `CabinSwitch`, `CabinKnob` and `CabinSpotLight3D` each created
+  their own `AudioStreamPlayer3D` and swapped its `stream` on every click, so each control had a
+  single voice on `Master`. None of their sounds showed up in a bank dump.
+  The vehicle's `CabinSfxPlayer3D` holds only the internaldata sounds. Also, every widget sits at the
+  origin of the generated cab, so all the clicks came from one point.
+* **Fix:** `MmdCabinInstancer` builds one `SfxBank` per cab with one `SfxPlayer3D`
+  (`CabinControlsSfxPlayer3D`, bus `Cabin`, 16 voices). Each control sound is a polyphonic event
+  whose `spatial_config.position` is the control's submodel, as the original places it
+  (`Gauge.cpp:75-95`). The widgets hold that player and their event names.
+* **Rule:** a cab control gets its sound as an event in the cab's bank, placed at its submodel,
+  never as an `AudioStream` on the widget.
+
 ## 2026-09-25 - pantographs raised only with the master valve forced
 
 * **Symptom:** after the cab's pantograph switches were ported as in the original, `P` alone no

@@ -21,33 +21,40 @@ in any layer before.
    command/key triggers it in `~/src/maszyna/Train.cpp` + `command.h` +
    `eu07_input-keyboard.ini`. Never add a new field to the vendored file itself.
 
-2. **Wrapper command** - a method on the relevant `VehicleComponent` subclass
-   (`src/brakes/VehicleBrake.cpp`, `src/engines/VehicleEngine.cpp`,
-   `src/core/VehicleController.cpp`, etc.), following the existing sibling pattern
-   exactly:
-   - Declare in the `.hpp` next to its sibling (e.g. `brake_level_increase()` ->
-     `local_brake_increase()`).
-   - `ClassDB::bind_method(...)` in `_bind_methods()`.
-   - `register_command(...)`/`unregister_command(...)` in `_register_commands()`/
-     `_unregister_commands()` (both - forgetting `_unregister_commands()` leaks a
-     dangling command entry when the node is freed).
-   - Implementation: call the vendored method directly (`mover->IncLocalBrakeLevel(1)`),
-     matching this wrapper's existing step-size convention (a single command invocation
-     = one discrete notch/step, like `main_controller_increase(step=1)`) rather than
-     inventing a new continuous-time API - the original's own continuous key-hold
-     behavior is a UI-layer concern (repeat-fire), not something the command needs to
-     encode.
-   - If the field is already normalized (0..1) in the mover (`LocalBrakePosA`), a
-     `_set(double p_level)` variant can assign it directly after `CLAMP` - no need to
-     replicate the main brake's raw-Handle-position rescaling dance
-     (`brake_level_set`'s `Handle->GetPos(bh_MIN/MAX)` conversion) unless the field
-     genuinely uses a different unit.
+2. **Wrapper command** - every component is an interface/implementation pair, and the
+   backend never appears in the interface (`AGENTS.md`):
+   - **Interface** `VehicleX` (`src/brakes/VehicleBrake.hpp`, `src/engines/VehicleEngine.hpp`,
+     `src/core/VehicleController.hpp`, ...): declare the command as pure virtual next to its
+     sibling (`virtual void local_brake_increase() = 0;`, `VehicleBrake.hpp:262`), bind it with
+     `ClassDB::bind_method(...)` in `_bind_methods()`, and add it to both
+     `_register_commands()` and `_unregister_commands()` (`VehicleBrake.cpp:369,385`) - forgetting
+     the second leaks a dangling command entry when the node is freed.
+   - **Implementation** `MoverVehicleX` (`src/brakes/MoverVehicleBrake.cpp`,
+     `src/core/MoverVehicleController.cpp`, ...): the `override` takes the Mover with
+     `get_mover()` (from `MoverComponent`, `src/mover/MoverComponent.hpp`) and calls the vendored
+     method directly (`mover->IncLocalBrakeLevel(1)`, `MoverVehicleBrake.cpp:91`).
+   - Keep the existing step-size convention: one command invocation is one notch/step, like
+     `main_controller_increase(step=1)`, not a new continuous-time API. The original's
+     key-hold behavior is a UI-layer concern (repeat-fire).
+   - If the Mover field is already normalized (0..1, `LocalBrakePosA`), a `_set(double)` variant
+     assigns it after `CLAMP`. Do not replicate the main brake's `Handle->GetPos(bh_MIN/MAX)`
+     rescaling unless the field genuinely uses a different unit.
+   - Document the new method in `doc_classes/VehicleX.xml` (C++ API only).
 
-3. **State exposure** - if a UI widget needs to *read* the control's current position
-   (a knob/lever that shows where it is), add it in `_do_fetch_state_from_mover()`,
-   right next to the closest existing analogous field for grep-ability
-   (`brake_local_position_normalized` next to `brake_controller_position_normalized`).
-   Skip this for pure buttons that only ever get toggled, not displayed continuously.
+3. **State exposure** - if a UI widget needs to *read* the control's position (a knob/lever
+   that shows where it is), it becomes a typed state property. Skip this for pure buttons that
+   are only toggled, not displayed continuously.
+   - **Interface:** a pure virtual const getter plus a read-only `ADD_PROPERTY`
+     (`PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY`), next to the closest analogous one
+     (`get_local_position_normalized`, `VehicleBrake.hpp:34`, `VehicleBrake.cpp:290-294`).
+   - **Implementation:** the getter reads the Mover field and stores nothing
+     (`return mover != nullptr ? mover->LocalBrakePosA : 0.0;`, `MoverVehicleBrake.cpp:266`).
+     A getter never changes state - no filters, flags or signals in it (`CODE_STYLE.md`).
+   - **Dump key:** publish it in the implementation's `_fill_state_dictionary()` next to its
+     sibling (`p_state["brake_local_position_normalized"] = get_local_position_normalized();`,
+     `MoverVehicleBrake.cpp:351`). This key, as it appears in
+     `RailVehicleServer.vehicle_dump_state(rid)`, is what a catalog entry's `state_property` and
+     `CabinState.vehicle_state_value()` read.
 
 4. **MMD cabin catalog entry** (`addons/libmaszyna/mmd/mmd_semantic_catalog.gd`) - this
    is what makes the *mouse* reach the command. Find the real MMD label first
@@ -113,14 +120,18 @@ where the composition already holds that controller (e.g. `VehicleComponent`s).
 A new cab control that only maps to a vehicle command needs no code there, just the catalog entry.
 One whose original behaviour lives in `TTrain` gets a new `legacy_cabin/<name>.gd` behaviour that
 claims its control ids. Behaviours reach the train only through `CabinState.vehicle_state()` /
-`send_vehicle_command()`, never the Mover. Anything they need to read is exposed in
-`VehicleController.state` first.
+`send_vehicle_command()`, never the Mover. Anything they need to read must first be a key of the
+vehicle's dump (`_fill_state_dictionary()`, layer 3) - `CabinSystem` reads
+`RailVehicleServer.vehicle_dump_state(rid)`.
 
 ## Verifying
 
-Rebuild (`make compile-debug`) after any C++ change, then run the full GUT suite
-(`godot --path demo --headless -s addons/gut/gut_cmdln.gd -gdir=res://tests/ -gexit`) -
-331+ tests should stay green; a new command with no test coverage is fine to ship
-without one unless the operator asks for a test, but never skip the full-suite run
-before reporting a fix as done ([[feedback-architecture-rigor]] point 7 - a fix that
-"should work" from reading the wiring alone has burned this exact codebase before).
+- After any C++ change, rebuild with `make compile-debug` and check the result.
+- Parse-check each changed or added GDScript first:
+  `godot-double --headless --path demo --check-only -s res://<path>.gd`.
+- Run only the test scripts you wrote or modified, one at a time
+  (`-gdir=res://tests/ -gselect=<script name>`), with the output redirected to a file. Never run
+  the whole suite (`AGENTS.md`, Checks).
+- A new command needs no test of its own unless the operator asks for one. Do not report a fix
+  as done from reading the wiring alone, though: confirm that the command reaches the Mover and
+  that the dump key changes.

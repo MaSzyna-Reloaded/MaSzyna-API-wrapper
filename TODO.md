@@ -515,6 +515,11 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   `MaszynaIncludeNode` transform/visibility.
 * An `include` with no filename appears in the real data (`maszyna_include_importer.gd` reports it
   with the offset and skips it); source unknown - truncated file or tokenizer misread.
+* Unloading a scenery leaves its weather in `MaszynaEnvironmentNode` (the `atmo` precipitation,
+  fog, temperature): the menu keeps it (held silent by `MaszynaRuntime.pause()`) and a next scenery
+  without an `atmo` section inherits it.
+* `MaszynaRuntime.pause()` holds the vehicle step, the weather and the world's sounds only - the
+  environment clock, `TractionPowerServer`, `TrackManager` switches and the smoke keep running.
 
 ## Tests
 

@@ -232,7 +232,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
         track_manager_singleton = memnew(TrackManager);
-        rail_vehicle_server_singleton = memnew(RailVehicleServer);
         traction_power_server_singleton = memnew(TractionPowerServer);
         python_screen_server_singleton = memnew(PythonScreenServer);
         cabin_hud_mouse_system_singleton = memnew(CabinHUDMouseSystem);
@@ -245,6 +244,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
         Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);                      // 8
+        // after MaszynaRuntime is registered: the constructor follows its pause
+        rail_vehicle_server_singleton = memnew(RailVehicleServer);
         Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
         Engine::get_singleton()->register_singleton(
                 "TractionPowerServer", traction_power_server_singleton); // 11

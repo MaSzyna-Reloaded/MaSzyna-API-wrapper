@@ -10,6 +10,8 @@ namespace godot {
 
     const char *MaszynaRuntime::cache_clear_requested_signal = "cache_clear_requested";
     const char *MaszynaRuntime::language_changed_signal = "language_changed";
+    const char *MaszynaRuntime::paused_signal = "paused";
+    const char *MaszynaRuntime::unpaused_signal = "unpaused";
 
     namespace {
         constexpr const char *LANGUAGE_SECTION = "maszyna";
@@ -36,6 +38,12 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(language_changed_signal));
 
         ADD_SIGNAL(MethodInfo(cache_clear_requested_signal));
+
+        ClassDB::bind_method(D_METHOD("pause"), &MaszynaRuntime::pause);
+        ClassDB::bind_method(D_METHOD("unpause"), &MaszynaRuntime::unpause);
+        ClassDB::bind_method(D_METHOD("is_paused"), &MaszynaRuntime::is_paused);
+        ADD_SIGNAL(MethodInfo(paused_signal));
+        ADD_SIGNAL(MethodInfo(unpaused_signal));
     }
 
     void MaszynaRuntime::set_time_of_day(const double p_hours) {
@@ -76,6 +84,26 @@ namespace godot {
         const UserSettings *user_settings = UserSettings::get_instance();
         ERR_FAIL_NULL_V(user_settings, DEFAULT_LANGUAGE);
         return user_settings->get_setting(LANGUAGE_SECTION, LANGUAGE_KEY, DEFAULT_LANGUAGE);
+    }
+
+    void MaszynaRuntime::pause() {
+        if (paused) {
+            return;
+        }
+        paused = true;
+        emit_signal(paused_signal);
+    }
+
+    void MaszynaRuntime::unpause() {
+        if (!paused) {
+            return;
+        }
+        paused = false;
+        emit_signal(unpaused_signal);
+    }
+
+    bool MaszynaRuntime::is_paused() const {
+        return paused;
     }
 
     void MaszynaRuntime::clear_cache() {

@@ -105,6 +105,14 @@ func bind_nodes(world_environment: WorldEnvironment) -> void:
     weather = world_environment.get_node_or_null(NodePath(WEATHER_NAME)) as WeatherNode
 
 
+func pause_weather() -> void:
+    weather.process_mode = Node.PROCESS_MODE_DISABLED
+
+
+func unpause_weather() -> void:
+    weather.process_mode = Node.PROCESS_MODE_INHERIT
+
+
 ## Skydome's look value for [param property], cached.
 ##
 ## Caching is not an optimisation: almost every caller below writes the same property back scaled,

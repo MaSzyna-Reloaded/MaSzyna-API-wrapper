@@ -139,6 +139,7 @@ namespace godot {
                     const RID &p_track, int p_endpoint_index, bool p_force_switch_state, RID &p_track_out,
                     int &p_endpoint_out);
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
+            void _refresh_stepping();
             void _set_stepping(bool p_stepping);
             void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);

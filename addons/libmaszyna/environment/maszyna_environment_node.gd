@@ -197,10 +197,14 @@ func _ready() -> void:
 func _enter_tree() -> void:
     add_to_group(GROUP)
     UserSettings.config_changed.connect(_on_user_settings_changed)
+    MaszynaRuntime.paused.connect(_on_runtime_paused)
+    MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
 
 
 func _exit_tree() -> void:
     UserSettings.config_changed.disconnect(_on_user_settings_changed)
+    MaszynaRuntime.paused.disconnect(_on_runtime_paused)
+    MaszynaRuntime.unpaused.disconnect(_on_runtime_unpaused)
 
 
 func _process(delta: float) -> void:
@@ -367,6 +371,14 @@ func _apply_visual_configuration() -> void:
 
 func _on_user_settings_changed() -> void:
     _dirty_visuals = true
+
+
+func _on_runtime_paused() -> void:
+    _sky_environment.pause_weather()
+
+
+func _on_runtime_unpaused() -> void:
+    _sky_environment.unpause_weather()
 
 
 func _apply_time_configuration() -> void:

@@ -7,7 +7,7 @@ signal switch_released()
 
 enum ControllerMode { OnOff, On, Off }
 
-## What the positions are called, position -> msgid for MaszynaLocale.gettext() (the reverser's
+## What the positions are called, position -> msgid (the reverser's
 ## "forward"/"backward"), from the MMD catalog; a position without a name shows its number
 @export var position_names:Dictionary = {}
 
@@ -236,9 +236,9 @@ func _apply_control_value(p_value:Variant) -> void:
 ## The position under the caption: its name, on/off for a two-state switch, else its number.
 func _mouse_state() -> String:
     if position_names.has(switch_position):
-        return MaszynaLocale.gettext(position_names[switch_position])
+        return position_names[switch_position]
     if switch_min_position == 0 and switch_max_position == 1:
-        return MaszynaLocale.gettext(STATE_ON if switch_position else STATE_OFF)
+        return STATE_ON if switch_position else STATE_OFF
     return str(switch_position)
 
 func _on_switch_position_changed(previous, current):

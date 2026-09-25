@@ -354,6 +354,12 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * A tile's placeholder guesses its width (`TileGrid.PLACEHOLDER_STRETCH`) because
   `MaszynaSceneryInfo.Vehicle` has no length and FIZ `Dim=` is parsed nowhere.
 
+## Translations
+
+* The HUD's help (`demo/hud/help.gd`) shows `action.capitalize()` as a msgid, so a new input
+  action needs its capitalised name added to `demo/translations/*.po` by hand.
+* Units (`km/h`, `bar`, `%d m`, ...) are not msgids.
+
 ## Sounds
 
 * MMD offsets of non-running sounds are used raw - the `SfxPlayer3D`s are not turned 180 degrees

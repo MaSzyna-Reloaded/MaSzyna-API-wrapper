@@ -193,7 +193,7 @@ unique_name_in_owner = true
 visible = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
-text = "Skład"
+text = "Trainset"
 
 [node name="TrainsetList" parent="Content/HBoxContainer/DetailsPanel/VBoxContainer" unique_id=219649123 instance=ExtResource("6_list")]
 unique_name_in_owner = true
@@ -247,7 +247,7 @@ theme_override_styles/pressed = SubResource("StyleBoxFlat_load_pressed")
 theme_override_styles/hover = SubResource("StyleBoxFlat_load_hover")
 theme_override_styles/disabled = SubResource("StyleBoxFlat_load_disabled")
 disabled = true
-text = "Wczytaj"
+text = "Load"
 
 [node name="Footer" type="HBoxContainer" parent="." unique_id=116949608]
 layout_mode = 1

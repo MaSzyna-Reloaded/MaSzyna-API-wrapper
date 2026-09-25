@@ -109,7 +109,7 @@ func _set_mouse_control(mesh:Node3D, actions:PackedStringArray, pressed:Callable
             step_basis, step_position, drag, mouse_drag_signs)
 
 
-## A two-state control's state under its caption - msgids for MaszynaLocale.gettext(), from the
+## A two-state control's state under its caption - msgids the tooltip's Label translates, from the
 ## wrapper's own catalogue (addons/libmaszyna/translations)
 const STATE_ON:String = "on"
 const STATE_OFF:String = "off"

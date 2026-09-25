@@ -50,7 +50,7 @@
 	</methods>
 	<members>
 		<member name="language" type="String" setter="set_language" getter="get_language" default="&quot;en&quot;">
-			The language of the game's strings, named as its catalogue in the game's [code]lang/[/code] ([code]"pl"[/code] for [code]lang/pl.po[/code]); [code]"en"[/code] is the original's own strings, untranslated. Kept in the user settings; [MaszynaLocale] loads the catalogue.
+			The language of the game's strings, named as its catalogue in the game's [code]lang/[/code] ([code]"pl"[/code] for [code]lang/pl.po[/code]); [code]"en"[/code] is the original's own strings, untranslated. Kept in the user settings; [MaszynaTranslationServer] loads the catalogue.
 		</member>
 	</members>
 	<signals>

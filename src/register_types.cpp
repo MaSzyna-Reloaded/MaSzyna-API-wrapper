@@ -25,7 +25,7 @@
 #include "core/VehicleModel.hpp"
 #include "core/VehiclePhysicsNode.hpp"
 #include "core/TrainSystem.hpp"
-#include "core/MaszynaLocale.hpp"
+#include "core/MaszynaTranslationServer.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
 #include "doors/MoverVehicleDoors.hpp"
@@ -113,7 +113,7 @@ RailVehicleServer *rail_vehicle_server_singleton = nullptr;
 TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
-MaszynaLocale *maszyna_locale_singleton = nullptr;
+MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -128,7 +128,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
         GDREGISTER_CLASS(MaszynaRuntime);
-        GDREGISTER_CLASS(MaszynaLocale);
+        GDREGISTER_CLASS(MaszynaTranslationServer);
         GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
@@ -251,8 +251,9 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
                 "TractionPowerServer", traction_power_server_singleton); // 11
         Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
         // after UserSettings is registered: the constructor reads the game directory from it
-        maszyna_locale_singleton = memnew(MaszynaLocale);
-        Engine::get_singleton()->register_singleton("MaszynaLocale", maszyna_locale_singleton);                // 13
+        maszyna_translation_server_singleton = memnew(MaszynaTranslationServer);
+        Engine::get_singleton()->register_singleton(
+                "MaszynaTranslationServer", maszyna_translation_server_singleton); // 13
         Engine::get_singleton()->register_singleton("CabinHUDMouseSystem", cabin_hud_mouse_system_singleton); // 14
 
         e3d_resource_format_loader.instantiate();
@@ -287,12 +288,12 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         cabin_hud_mouse_system_singleton = nullptr;
     }
 
-    if (Engine::get_singleton()->has_singleton("MaszynaLocale")) {
-        Engine::get_singleton()->unregister_singleton("MaszynaLocale"); // 13
+    if (Engine::get_singleton()->has_singleton("MaszynaTranslationServer")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaTranslationServer"); // 13
     }
-    if (maszyna_locale_singleton != nullptr) {
-        memdelete(maszyna_locale_singleton);
-        maszyna_locale_singleton = nullptr;
+    if (maszyna_translation_server_singleton != nullptr) {
+        memdelete(maszyna_translation_server_singleton);
+        maszyna_translation_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("PythonScreenServer")) {

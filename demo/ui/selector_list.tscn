@@ -57,7 +57,7 @@ theme_override_colors/font_placeholder_color = Color(0.7, 0.8, 1, 0.4)
 theme_override_font_sizes/font_size = 18
 theme_override_styles/normal = SubResource("StyleBoxEmpty_search_field")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_search_field")
-placeholder_text = "Szukaj scenariusza"
+placeholder_text = "Search scenario"
 caret_blink = true
 
 [node name="ClearSearch" type="Button" parent="VBoxContainer/SearchPanel/Row" unique_id=1020544428]

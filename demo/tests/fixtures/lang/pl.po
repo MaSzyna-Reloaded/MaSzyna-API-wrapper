@@ -10,3 +10,7 @@ msgstr "nastawnik jazdy"
 
 msgid "battery"
 msgstr "bateria"
+
+# also in the wrapper's own catalogue - the game's translation wins
+msgid "forward"
+msgstr "naprzód"

@@ -40,6 +40,9 @@ var _direction: Vector3 = Vector3.ZERO
 var _smoothed_direction: Vector3 = Vector3.ZERO
 var _pending_mouse_delta: Vector2 = Vector2.ZERO
 var _mouse_look_velocity: Vector2 = Vector2.ZERO
+# Looking around while the right button is held - not whenever the mouse is captured, which a cab
+# lever drag does as well (CabinHUDMouseSystem)
+var _looking: bool = false
 
 # Keyboard state
 var _w: float = 0.0
@@ -66,6 +69,7 @@ func _input(event):
     if event is InputEventMouseButton:
         match event.button_index:
             MOUSE_BUTTON_RIGHT: # Only allows rotation if right click down
+                _looking = event.pressed
                 Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED if event.pressed else Input.MOUSE_MODE_VISIBLE)
             MOUSE_BUTTON_WHEEL_UP:
                 if hovered_control:
@@ -100,7 +104,7 @@ func _input(event):
             key_up:
                 _e = float(event.pressed)
 
-    if Input.get_mouse_mode() == Input.MOUSE_MODE_CAPTURED and event is InputEventMouseMotion:
+    if _looking and event is InputEventMouseMotion:
         _pending_mouse_delta += event.relative
 
 # Updates mouselook and movement every frame

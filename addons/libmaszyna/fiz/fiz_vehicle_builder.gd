@@ -21,7 +21,7 @@ const _INCLUDE_END_KEYWORD := "end"
 ## is otherwise silently served from a stale pre-fix cache entry until something touches that
 ## specific vehicle's file. Confirmed the hard way: a MotorParamTable0/nmax column-mapping fix
 ## had zero effect in a running game because of exactly this.
-const FIZ_PARSER_FORMAT_VERSION := 9
+const FIZ_PARSER_FORMAT_VERSION := 14
 
 ## Every kind a FIZ can produce, for walking a freshly built vehicle's components in a fixed order.
 const _COMPONENT_TYPES:Array[int] = [
@@ -33,7 +33,7 @@ const _COMPONENT_TYPES:Array[int] = [
     VehicleComponentType.COMPONENT_SWITCHES, VehicleComponentType.COMPONENT_AI_HINTS,
     VehicleComponentType.COMPONENT_HORNS, VehicleComponentType.COMPONENT_SECURITY,
     VehicleComponentType.COMPONENT_WHEELS, VehicleComponentType.COMPONENT_WIPERS,
-    VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER,
+    VehicleComponentType.COMPONENT_UNIVERSAL_CONTROLLER, VehicleComponentType.COMPONENT_RADIO,
 ]
 
 ## Ordered (longest-prefix-first where ambiguity is possible) table of recognized FIZ section
@@ -93,10 +93,7 @@ static func _static_init() -> void:
         {"prefix": "BuffCoupl.", "parser": buff_coupl_parser, "table_end": ""},
         # lighting / heating / power
         {"prefix": "Headlights:", "parser": lighting_parser, "table_end": ""},
-        # LightsList: rows write into Mover's Lights[][], which nothing in src/maszyna/ ever
-        # reads (the real per-current-draw field is the separate iLights[] - never fed from
-        # this section at all) - genuinely no consumer, discard-only like TurboPos:.
-        {"prefix": "LightsList:", "parser": null, "table_end": "endL"},
+        {"prefix": "LightsList:", "parser": lighting_parser, "table_end": "endL"},
         {"prefix": "Light:", "parser": lighting_parser, "table_end": ""},
         {"prefix": "Clima:", "parser": heating_parser, "table_end": ""},
         {"prefix": "Power:", "parser": power_parser, "table_end": ""},
@@ -163,6 +160,9 @@ static func build_into(target: VehicleController, fiz_path: String) -> void:
     # a matching section is found - every VehicleController gets one, same as a hand-authored scene
     # (e.g. sm_42v_1.tscn's own "Horns" node) would.
     target.add_component(MoverVehicleHorns.new())
+    # The train radio has no FIZ section either - in the original it is the cab's (TTrain's
+    # channel and volume) and the Mover's Radio flag, present on every vehicle
+    target.add_component(MoverVehicleRadio.new())
 
 ## Same on-disk cache used by E3DModelManager for parsed E3D models (addons/libmaszyna/e3d/
 ## e3d_model_manager.gd) - keyed by mtime+path like that cache's own _make_cache_hash(), so an
@@ -381,15 +381,22 @@ static func _dispatch_header(
     var line_parser := MaszynaParser.new()
     line_parser.initialize(line.substr(prefix.length()).to_utf8_buffer())
 
+    # A header ends whatever table is still open, also one that opens a table of its own - a
+    # LightsList: without its endL runs straight into WiperList: (dynamic/pkp/e186_v2/p160dc.fiz),
+    # as every section header ends the list before it in the original (Mover.cpp:9681)
+    if table_state["parser"] != null:
+        table_state["parser"].end_table(context)
+    table_state["prefix"] = ""
+    table_state["parser"] = null
+    table_state["end"] = ""
+
     if section["parser"] == null:
         context.warn_unmapped_section(prefix)
     else:
         section["parser"].parse(line_parser, context, prefix)
 
     # Cntrl. additionally opens the brake-position table (only when BrakeSystem != Individual,
-    # decided by Brake:/Cntrl. themselves inside VehicleBrake's own parser). Any other recognized
-    # header - including one encountered while a table (BPT or otherwise) is still active -
-    # ends whatever table was active, matching header-match precedence over table-row fallback.
+    # decided by Brake:/Cntrl. themselves inside VehicleBrake's own parser)
     if prefix == "Cntrl." and section["parser"] != null and section["parser"].wants_bpt_table(context):
         table_state["prefix"] = "BPT"
         table_state["parser"] = section["parser"]
@@ -398,9 +405,3 @@ static func _dispatch_header(
         table_state["prefix"] = prefix
         table_state["parser"] = section["parser"]
         table_state["end"] = section["table_end"]
-    else:
-        if table_state["parser"] != null:
-            table_state["parser"].end_table(context)
-        table_state["prefix"] = ""
-        table_state["parser"] = null
-        table_state["end"] = ""

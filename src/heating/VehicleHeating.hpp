@@ -27,6 +27,9 @@ namespace godot {
         public:
             /* Live state */
             virtual bool get_active() const = 0;
+            /* The heating switch's own state (HeatingAllow) - what trainheating_sw flips
+             * (Train.cpp:6674) */
+            virtual bool get_allowed() const = 0;
             virtual double get_power() const = 0;
 
             /* Original engine: OnCommand_heatingenable/disable (Train.cpp:5256-5296) ->

@@ -26,6 +26,11 @@ const _VARIABLE_ANIMATION_TYPES := ["rotvar", "movvar"]
 ## Original engine: Globals.h:123 PythonScreenUpdateRate - the shortest interval a Python screen is
 ## redrawn at, in milliseconds
 const PYTHON_SCREEN_UPDATE_TIME_MSEC:int = 200
+## How far a control's click carries - the range the cab widgets' own players had before the
+## sounds moved into the cab's bank
+const CONTROL_SOUND_MAX_DISTANCE:float = 3.0
+## Voices of the cab's control sounds together, so clicks of several controls overlap
+const CONTROL_SOUND_VOICE_COUNT:int = 16
 
 
 ## Parses an MMD file (with includes expanded) into a neutral MmdCabinDefinition for one cab.
@@ -138,6 +143,18 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
                 python_screens.append(screen)
             "pyscreenupdatetime:":
                 python_screen_update_time_msec = int(tokens[i])
+                i += 1
+            "{":
+                # DATA QUIRK: a block with no label in front of it - real data has a label that
+                # lost its colon, `radiocall3_sw { radio_3 rot 0 0 0 soundinc: ... }`
+                # (dynamic/pkp/e186_v2/base.mmd.inc:210). The original only reacts to labels it
+                # knows and walks over every other token (TTrain::InitializeCab), so it passes
+                # over the whole block. Read token by token here, its `soundinc:` looked like a
+                # label and every block after it was taken apart from the wrong end - the rest of
+                # the E186 cab (radiostop_sw, universal*, battery_sw, ...) never got built. The
+                # block is skipped whole instead.
+                while i < end_index and not tokens[i] == "}":
+                    i += 1
                 i += 1
             _:
                 if not label.ends_with(":"):
@@ -353,7 +370,8 @@ static func build_into(
     var model := E3DModelInstance.new()
     model.name = "CabModel"
     model.data_path = data_path
-    model.model_filename = model_relpath
+    # the resource itself rather than its filename, so the indicator lights can read its submodels
+    model.model = E3DModelManager.load_model(data_path, model_relpath)
     model.skins = resolve_skins(data_path, skin)
     # A cabin interior is self-contained (glass, instrument backlight glow, ...) and, unlike
     # mixed-purpose exterior E3D content, alpha-scissor's crisp cutout looks wrong across the
@@ -373,6 +391,16 @@ static func build_into(
     var submodel_index:Dictionary = {}
     _index_submodels(model, submodel_index)
 
+    # One bank for every control of this cab, rebuilt with it; each control's sounds are its events
+    var sound_bank := SfxBank.new()
+    var sound_player := SfxPlayer3D.new()
+    sound_player.name = "CabinControlsSfxPlayer3D"
+    sound_player.bus = &"Cabin"
+    sound_player.max_tracks = CONTROL_SOUND_VOICE_COUNT
+    sound_player.bank = sound_bank
+    generated_root.add_child(sound_player)
+    var sound_events:Array[SfxEvent] = []
+
     var built_labels:Dictionary = {}
     for descriptor:MmdInstrumentDescriptor in definition.instruments:
         if not MmdSemanticCatalog.has_label(descriptor.label):
@@ -386,8 +414,8 @@ static func build_into(
             # matched submodel instance, not just the first, unlike every other instrument label
             # (which only ever has one real target mesh).
             _build_indicator_lights(
-                    descriptor, entry, train_id, submodel_index, generated_root, definition.cab_number,
-                    definition.driver_pos, diagnostics)
+                    descriptor, entry, train_id, submodel_index, model, generated_root,
+                    definition.cab_number, definition.driver_pos, sound_player, sound_events, diagnostics)
             continue
         var widget:Node = _build_widget(descriptor, train_id, definition.cab_number, diagnostics)
         # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
@@ -404,7 +432,26 @@ static func build_into(
         # no common ancestor with `model`'s submodels until it's actually parented under the same
         # generated_root.
         _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
+        # a control sounds where its submodel is, or at the cab's origin without one (Gauge.cpp:75-95)
+        var mesh_path:NodePath = widget.get(entry["mesh_path_field"])
+        var sound_position:Vector3 = (
+                generated_root.to_local((widget.get_node(mesh_path) as Node3D).global_position) if mesh_path
+                else Vector3.ZERO)
+        _apply_sound(widget, descriptor, sound_player, sound_position, sound_events)
         widget.set_train_id(train_id)
+        # A gauge's own lamp: TGauge takes "<name>_on" as the lit state of the control, shown
+        # instead of the control while the flag its entry names is set (Gauge.cpp:204-210, 386-392)
+        var on_matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower() + "_on", [])
+        if entry.has("state_light") and on_matches:
+            var lamp := CabinIndicator3D.new()
+            lamp.name = "%s_%s_on" % [descriptor.label, descriptor.submodel_name]
+            for field_name:String in entry["state_light"]:
+                lamp.set(field_name, entry["state_light"][field_name])
+            generated_root.add_child(lamp)
+            lamp.on_target_path = lamp.get_path_to(on_matches[0])
+            if widget.get("mesh_path"):
+                lamp.off_target_path = lamp.get_path_to(widget.get_node(widget.get("mesh_path")))
+            lamp.set_train_id(train_id)
 
     for descriptor:MmdPythonScreenDescriptor in definition.python_screens:
         if not FileAccess.file_exists(descriptor.script_path + ".py"):
@@ -426,6 +473,8 @@ static func build_into(
         screen.parameters = descriptor.parameters
         screen.update_time_msec = descriptor.update_time_msec
         generated_root.add_child(screen)
+
+    sound_bank.events = sound_events
 
 
 static func _empty_cab_data() -> Dictionary:
@@ -743,6 +792,21 @@ static func _index_submodels(node:Node, index:Dictionary) -> void:
         _index_submodels(child, index)
 
 
+## MMD `type:` -> the control's gauge type, as TGauge::Load reads it (Gauge.cpp:243); no `type:`
+## is a toggle (Gauge.h:89)
+## An instrument's submodel of "none": a control with no model of its own
+const NO_SUBMODEL:String = "none"
+
+const BUTTON_TYPES:Dictionary[String, CabinButton.ButtonType] = {
+    "push": CabinButton.ButtonType.PUSH,
+    "impulse": CabinButton.ButtonType.PUSH,
+    "return": CabinButton.ButtonType.PUSH,
+    "delayed": CabinButton.ButtonType.PUSH_DELAYED,
+    "pushtoggle": CabinButton.ButtonType.PUSH_TOGGLE,
+    "toggle": CabinButton.ButtonType.TOGGLE,
+}
+
+
 static func _build_widget(
         descriptor:MmdInstrumentDescriptor, train_id:String,
         cab_number:int, diagnostics:Array[Dictionary]) -> Node:
@@ -755,6 +819,37 @@ static func _build_widget(
     for field_name:String in entry["fixed_fields"]:
         widget.set(field_name, entry["fixed_fields"][field_name])
 
+    # names of positions that lie where the vehicle says - a brake valve's, per its handle type
+    var position_names_config:Dictionary = entry.get("position_names_config", {})
+    if position_names_config and "position_names" in widget:
+        var names:Dictionary = {}
+        var config:Dictionary = CabinSystem.vehicle_config(train_id)
+        for config_key:String in position_names_config:
+            if config.has(config_key):
+                names[roundi(float(config[config_key]))] = position_names_config[config_key]
+        widget.set("position_names", names)
+
+    if widget is CabinButton:
+        var button_type:CabinButton.ButtonType = BUTTON_TYPES.get(
+                descriptor.button_type, CabinButton.ButtonType.TOGGLE)
+        widget.button_type = button_type
+        # A control whose original handler branches on its type (the catalog entry says which
+        # line) is shaped by it: a push springs back, and shows no state while at rest - the
+        # original returns it to neutral on release rather than to the vehicle's state
+        # (Train.cpp:2929, 11342). Every other control keeps the fixed shape of its entry.
+        if entry.get("shape_from_button_type", false):
+            var push:bool = bool(button_type & CabinButton.ButtonType.PUSH)
+            widget.monostable = push
+            if push:
+                widget.state_property = ""
+                widget.value_rest = entry.get("push_value_rest", 0.0)
+
+    # A switch whose kind is the vehicle's rather than the gauge's: the pantograph switches spring
+    # back when the vehicle's pantograph switches are impulse ones (PantSwitchType, Train.cpp:3170)
+    var monostable_property:String = entry.get("monostable_from_config", "")
+    if monostable_property and widget is CabinButton:
+        widget.monostable = bool(CabinSystem.vehicle_config(train_id).get(monostable_property, widget.monostable))
+
     var config_max_property:String = entry.get("config_max_property", "")
     if config_max_property:
         var fallback:Variant = widget.get("switch_max_position")
@@ -766,57 +861,74 @@ static func _build_widget(
     # no "rot"/"mov" shape at all, so there's nothing for _apply_animation_shape() to compute.
     if descriptor.animation_type:
         _apply_animation_shape(widget, descriptor, entry, train_id, cab_number, diagnostics)
-    _apply_sound(widget, descriptor)
 
     return widget
 
 
-## Wires parsed MMD sound_increase/sound_decrease/sound_positions onto whichever sound fields the
-## widget actually has (CabinButton: sound_on/sound_off; CabinSwitch: sound_increase_stream/
-## sound_decrease_stream/sound_override/sound_override_negative) - duck-typed the same way
-## mesh_path/target_mesh_path already are. CabinKnob/CabinGauge have no sound fields at all today
-## (see mmd_semantic_catalog.gd's scope notes), so this is a no-op for those widget types.
-static func _apply_sound(widget:Node, descriptor:MmdInstrumentDescriptor) -> void:
-    if "sound_on" in widget:
-        if descriptor.sound_increase:
-            widget.set("sound_on", _build_audio_stream(descriptor.sound_increase))
-        if descriptor.sound_decrease:
-            widget.set("sound_off", _build_audio_stream(descriptor.sound_decrease))
+## Adds the MMD soundinc:/sounddec:/soundN: of a control to the cab's bank as events and hands the
+## widget the player and the names of its events. Duck-typed the same way mesh_path/target_mesh_path
+## are: CabinButton and CabinSpotLight3D take on/off, CabinKnob an event per position, CabinSwitch
+## the override lists. CabinGauge has no sound, so this is a no-op for it.
+static func _apply_sound(
+        widget:Node, descriptor:MmdInstrumentDescriptor, sound_player:SfxPlayer3D,
+        sound_position:Vector3, events:Array[SfxEvent]) -> void:
+    if not "sound_player" in widget:
+        return
+    widget.set("sound_player", sound_player)
+    var increase:StringName = _add_control_sound(events, widget, "increase", descriptor.sound_increase, sound_position)
+    var decrease:StringName = _add_control_sound(events, widget, "decrease", descriptor.sound_decrease, sound_position)
+    if "sound_on_event" in widget:
+        widget.set("sound_on_event", increase)
+        widget.set("sound_off_event", decrease)
         return
 
-    if "sound_increase_stream" in widget:
-        if descriptor.sound_increase:
-            widget.set("sound_increase_stream", _build_audio_stream(descriptor.sound_increase))
-        if descriptor.sound_decrease:
-            widget.set("sound_decrease_stream", _build_audio_stream(descriptor.sound_decrease))
-        if descriptor.sound_positions:
-            var positive:Array[AudioStream] = []
-            var negative:Array[AudioStream] = []
-            for position:int in descriptor.sound_positions:
-                var stream:AudioStream = _build_audio_stream(descriptor.sound_positions[position])
-                if not stream:
-                    continue
-                if position > 0:
-                    while positive.size() < position:
-                        positive.append(null)
-                    positive[position - 1] = stream
-                elif position < 0:
-                    var idx:int = -position - 1
-                    while negative.size() <= idx:
-                        negative.append(null)
-                    negative[idx] = stream
-            if positive:
-                widget.set("sound_override", positive)
-            if negative:
-                widget.set("sound_override_negative", negative)
+    widget.set("sound_increase_event", increase)
+    widget.set("sound_decrease_event", decrease)
+    if "sound_position_events" in widget:
+        var position_events:Dictionary[int, StringName] = {}
+        for position:int in descriptor.sound_positions:
+            var event:StringName = _add_control_sound(
+                    events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position)
+            if event:
+                position_events[position] = event
+        widget.set("sound_position_events", position_events)
+        return
+
+    var positive:Array[StringName] = []
+    var negative:Array[StringName] = []
+    for position:int in descriptor.sound_positions:
+        if position == 0:
+            continue
+        var position_events:Array[StringName] = positive if position > 0 else negative
+        var index:int = absi(position) - 1
+        if position_events.size() <= index:
+            position_events.resize(index + 1)
+        position_events[index] = _add_control_sound(
+                events, widget, "position_%d" % position, descriptor.sound_positions[position], sound_position)
+    widget.set("sound_override_events", positive)
+    widget.set("sound_override_negative_events", negative)
 
 
-static func _build_audio_stream(filename:String) -> AudioStream:
+## One event of the cab's bank - a control's one-shot, sounding at `sound_position`. Returns its
+## name, or an empty one when the MMD gives no file.
+static func _add_control_sound(
+        events:Array[SfxEvent], widget:Node, sound_case:String, filename:String,
+        sound_position:Vector3) -> StringName:
     if not filename:
-        return null
+        return &""
     var stream := MaszynaAudioStream.new()
     stream.file_path = filename
-    return stream
+    var clip := SfxClip.new()
+    clip.stream = stream
+    var clips:Array[SfxClip] = [clip]
+    var event := SfxEvent.new()
+    event.name = StringName("%s_%s" % [widget.name, sound_case])
+    event.clips = clips
+    event.spatial_config = SfxSpatialConfig.new()
+    event.spatial_config.position = sound_position
+    event.spatial_config.max_distance = CONTROL_SOUND_MAX_DISTANCE
+    events.append(event)
+    return event.name
 
 
 ## Sets the widget's mesh_rotation/mesh_position "full-swing" target directly from this vehicle's
@@ -856,6 +968,10 @@ static func _apply_animation_shape(
         var range_min:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[0], 0.0))
         var range_max:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[1], 1.0))
         range_scale = range_max - range_min
+        # the same raw range is where the knob's whole positions lie (a brake valve's BCPN rows)
+        if "position_min" in widget:
+            widget.set("position_min", range_min)
+            widget.set("position_max", range_max)
 
     var mmd_scale:float = descriptor.scale * float(entry.get("mmd_scale_multiplier", 1.0))
 
@@ -924,6 +1040,11 @@ static func _apply_animation_shape(
 static func _wire_mesh_path(
         widget:Node, descriptor:MmdInstrumentDescriptor, submodel_index:Dictionary,
         mesh_path_field:String, cab_number:int, diagnostics:Array[Dictionary]) -> void:
+    # A control declared with no submodel (`pantfrontoff_sw: none`, dynamic/pkp/e186_v2/
+    # base.mmd.inc:187) is still a control of the cab - the original registers it all the same
+    # (Train.cpp:11907, m_controlmapper), and only its presence matters; there is nothing to draw
+    if descriptor.submodel_name.to_lower() == NO_SUBMODEL:
+        return
     # Submodel nodes carry Godot-validated names ("a.swmasz1" -> "a_swmasz1").
     var matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower(), [])
     if matches.size() == 1:
@@ -959,7 +1080,8 @@ static func _wire_mesh_path(
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, train_id:String,
-        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, driver_position:Vector3,
+        submodel_index:Dictionary, cab_model:E3DModelInstance, generated_root:Node3D, cab_number:int,
+        driver_position:Vector3, sound_player:SfxPlayer3D, sound_events:Array[SfxEvent],
         diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
@@ -980,17 +1102,21 @@ static func _build_indicator_lights(
             widget.set(field_name, entry["fixed_fields"][field_name])
         if widget is Light3D:
             (widget as Light3D).shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
-        # unlike _build_widget(), this doesn't go through _apply_animation_shape() (indicator
-        # descriptors never have a rot/mov shape - see _parse_indicator()) but DOES still need
-        # _apply_sound() for soundinc:/sounddec: (confirmed real: SU45's own
-        # "i-security_aware: { i-czuwak soundinc: ... sounddec: ... }" - the click sound that
-        # plays on each on/off transition, matching CabinSpotLight3D's own sound_on/sound_off).
-        _apply_sound(widget, descriptor)
         generated_root.add_child(widget)
 
         var on_node:Node3D = on_matches[i] if i < on_matches.size() else null
         var off_node:Node3D = off_matches[i] if i < off_matches.size() else null
-        _position_at_submodel_instance(widget, on_node if on_node else off_node)
+        var submodel:Node3D = on_node if on_node else off_node
+        _position_at_submodel_instance(widget, submodel)
+        # unlike _build_widget(), this doesn't go through _apply_animation_shape() (indicator
+        # descriptors never have a rot/mov shape - see _parse_indicator()) but DOES still need
+        # _apply_sound() for soundinc:/sounddec: (confirmed real: SU45's own
+        # "i-security_aware: { i-czuwak soundinc: ... sounddec: ... }" - the click sound that
+        # plays on each on/off transition, CabinSpotLight3D's sound_on_event/sound_off_event),
+        # sounding at the lamp's submodel
+        _apply_sound(
+                widget, descriptor, sound_player, generated_root.to_local(submodel.global_position),
+                sound_events)
         if entry.get("aim_at_driver", false) and widget is SpotLight3D:
             _aim_spotlight_at_driver(widget as SpotLight3D, generated_root, driver_position)
         if on_node:
@@ -1000,19 +1126,25 @@ static func _build_indicator_lights(
         widget.set_train_id(train_id)
 
         if entry.has("light_widget_class"):
-            var lamp:Node3D = on_node if on_node else off_node
             var light_points:Array[Vector3] = []
             if entry.get("spread_light_along_submodel", false):
-                light_points = _light_points_along_submodel(lamp)
+                light_points = _light_points_along_submodel(submodel)
+            # the lamp's own colour: its diffuse tints the greyscale lamp texture (Model3d.cpp:1918,
+            # openglrenderer.cpp:2779); the node path from the instance is the submodel's path
+            var lamp_submodel:E3DSubModel = (
+                    cab_model.model.get_node_or_null(cab_model.get_path_to(submodel))
+                    if entry.get("light_color_from_submodel", false) else null)
             for j:int in maxi(light_points.size(), 1):
                 var light:Light3D = entry["light_widget_class"].new()
                 light.name = "%s_%s_%d_light%s" % [
                         descriptor.label, descriptor.submodel_name, i, "_%d" % j if j else ""]
                 for field_name:String in entry["light_fixed_fields"]:
                     light.set(field_name, entry["light_fixed_fields"][field_name])
+                if lamp_submodel:
+                    light.light_color = lamp_submodel.diffuse_color
                 light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
                 generated_root.add_child(light)
-                _position_at_submodel_instance(light, lamp)
+                _position_at_submodel_instance(light, submodel)
                 if light_points:
                     light.global_position = light_points[j]
                 if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:

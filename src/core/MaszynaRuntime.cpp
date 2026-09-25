@@ -9,6 +9,12 @@
 namespace godot {
 
     const char *MaszynaRuntime::cache_clear_requested_signal = "cache_clear_requested";
+    const char *MaszynaRuntime::language_changed_signal = "language_changed";
+
+    namespace {
+        constexpr const char *LANGUAGE_SECTION = "maszyna";
+        constexpr const char *LANGUAGE_KEY = "language";
+    } // namespace
 
     void MaszynaRuntime::_bind_methods() {
         ClassDB::bind_method(D_METHOD("clear_cache"), &MaszynaRuntime::clear_cache);
@@ -24,6 +30,10 @@ namespace godot {
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "time_of_day"), "set_time_of_day", "get_time_of_day");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "light_level"), "set_light_level", "get_light_level");
         ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "air_temperature"), "set_air_temperature", "get_air_temperature");
+        ClassDB::bind_method(D_METHOD("set_language", "language"), &MaszynaRuntime::set_language);
+        ClassDB::bind_method(D_METHOD("get_language"), &MaszynaRuntime::get_language);
+        ADD_PROPERTY(PropertyInfo(Variant::STRING, "language"), "set_language", "get_language");
+        ADD_SIGNAL(MethodInfo(language_changed_signal));
 
         ADD_SIGNAL(MethodInfo(cache_clear_requested_signal));
     }
@@ -50,6 +60,22 @@ namespace godot {
 
     double MaszynaRuntime::get_air_temperature() const {
         return air_temperature;
+    }
+
+    void MaszynaRuntime::set_language(const String &p_language) {
+        if (p_language == get_language()) {
+            return;
+        }
+        UserSettings *user_settings = UserSettings::get_instance();
+        ERR_FAIL_NULL(user_settings);
+        user_settings->save_setting(LANGUAGE_SECTION, LANGUAGE_KEY, p_language);
+        emit_signal(language_changed_signal);
+    }
+
+    String MaszynaRuntime::get_language() const {
+        const UserSettings *user_settings = UserSettings::get_instance();
+        ERR_FAIL_NULL_V(user_settings, DEFAULT_LANGUAGE);
+        return user_settings->get_setting(LANGUAGE_SECTION, LANGUAGE_KEY, DEFAULT_LANGUAGE);
     }
 
     void MaszynaRuntime::clear_cache() {

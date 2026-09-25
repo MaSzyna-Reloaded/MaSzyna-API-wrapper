@@ -5,11 +5,14 @@ extends MaszynaGutTest
 
 var _rid: RID = RID()
 var _controller: VehicleController = null
+var _radio: VehicleRadio = null
 
 
 func before_each() -> void:
     _controller = build_vehicle("dump_cache_test")
     _controller.type_name = "test"
+    _radio = MoverVehicleRadio.new()
+    _controller.add_component(_radio)
     _rid = RailVehicleServer.vehicle_create()
     RailVehicleServer.vehicle_attach_controller(_rid, _controller.get_instance_id())
     await wait_idle_frames(2)
@@ -20,6 +23,7 @@ func after_each() -> void:
         RailVehicleServer.vehicle_free(_rid)
         _rid = RID()
     _controller = null
+    _radio = null
 
 
 func test_two_reads_in_one_step_see_the_same_values() -> void:
@@ -33,7 +37,7 @@ func test_two_reads_in_one_step_see_the_same_values() -> void:
 ## the step that actually applied it.
 func test_a_change_is_not_visible_until_the_next_step() -> void:
     var before: int = int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
-    _controller.radio_channel_set(before + 1)
+    _radio.channel_set(before + 1)
     assert_eq(
         int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before,

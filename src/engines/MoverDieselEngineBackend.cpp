@@ -1,73 +1,88 @@
-#include "MoverDieselEngineBackend.hpp"
-#include "VehicleDieselEngine.hpp"
+#include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
-#include "../core/VehicleController.hpp"
+#include "MoverDieselEngineBackend.hpp"
+#include "VehicleDieselEngine.hpp"
 
 namespace godot {
     double MoverDieselEngineBackend::get_rpm(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM() : 0.0;
+        return p_mover != nullptr ? p_mover->EngineRPMRatio() * p_mover->EngineMaxRPM() : 0.0;
     }
 
     bool MoverDieselEngineBackend::get_oil_pump_active(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->OilPump.is_active : false;
+        return p_mover != nullptr ? p_mover->OilPump.is_active : false;
     }
 
     bool MoverDieselEngineBackend::get_oil_pump_disabled(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->OilPump.is_disabled : false;
+        return p_mover != nullptr ? p_mover->OilPump.is_disabled : false;
     }
 
     double MoverDieselEngineBackend::get_oil_pump_pressure(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->OilPump.pressure : 0.0;
+        return p_mover != nullptr ? p_mover->OilPump.pressure : 0.0;
     }
 
     bool MoverDieselEngineBackend::get_fuel_pump_active(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->FuelPump.is_active : false;
+        return p_mover != nullptr ? p_mover->FuelPump.is_active : false;
+    }
+
+    bool MoverDieselEngineBackend::get_fuel_pump_enabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->FuelPump.is_enabled : false;
+    }
+
+    bool MoverDieselEngineBackend::get_oil_pump_enabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->OilPump.is_enabled : false;
+    }
+
+    bool MoverDieselEngineBackend::get_heat_malfunction(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.PA : false;
     }
 
     bool MoverDieselEngineBackend::get_fuel_pump_disabled(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->FuelPump.is_disabled : false;
+        return p_mover != nullptr ? p_mover->FuelPump.is_disabled : false;
     }
 
     bool MoverDieselEngineBackend::get_startup(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_startup : false;
+        return p_mover != nullptr ? p_mover->dizel_startup : false;
     }
 
     bool MoverDieselEngineBackend::get_ignition(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_ignition : false;
+        return p_mover != nullptr ? p_mover->dizel_ignition : false;
     }
 
     bool MoverDieselEngineBackend::get_spinup(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_spinup : false;
+        return p_mover != nullptr ? p_mover->dizel_spinup : false;
     }
 
     double MoverDieselEngineBackend::get_output_power(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_Power : 0.0;
+        return p_mover != nullptr ? p_mover->dizel_Power : 0.0;
     }
 
     double MoverDieselEngineBackend::get_torque(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_Torque : 0.0;
+        return p_mover != nullptr ? p_mover->dizel_Torque : 0.0;
     }
 
     double MoverDieselEngineBackend::get_fill(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->dizel_fill : 0.0;
+        return p_mover != nullptr ? p_mover->dizel_fill : 0.0;
     }
 
     double MoverDieselEngineBackend::get_max_rpm(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
-                return p_mover != nullptr ? p_mover->EngineMaxRPM() : 0.0;
+        return p_mover != nullptr ? p_mover->EngineMaxRPM() : 0.0;
     }
 
     void MoverDieselEngineBackend::apply_configuration(const VehicleDieselEngine *p_engine) const {
@@ -109,7 +124,8 @@ namespace godot {
             const Ref<CurvePointItem> &row = p_engine->get_torque_converter_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: p_engine->get_torque_converter_table() property is null at index " + String::num(i));
+                        "[VehicleDieselEngine]: p_engine->get_torque_converter_table() property is null at index " +
+                        String::num(i));
                 continue;
             }
             p_mover->hydro_TC_Table.emplace(row->get_x(), row->get_y());
@@ -120,7 +136,8 @@ namespace godot {
             const Ref<CurvePointItem> &row = p_engine->get_vel2nmax_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: p_engine->get_vel2nmax_table() property is null at index " + String::num(i));
+                        "[VehicleDieselEngine]: p_engine->get_vel2nmax_table() property is null at index " +
+                        String::num(i));
                 continue;
             }
             // matches readV2NMAXList (Mover.cpp:8476-8489): x unconverted, y (rpm) -> rev/s
@@ -148,15 +165,16 @@ namespace godot {
         const int throttle_table_size = static_cast<int>(p_engine->get_throttle_table_positions().size());
         if (throttle_table_size > MAX_THROTTLE_TABLE) {
             UtilityFunctions::push_warning(
-                    "[VehicleDieselEngine]: p_engine->get_throttle_table_positions() has " + String::num_int64(throttle_table_size) +
-                    " entries, exceeding the p_mover's limit of " + String::num_int64(MAX_THROTTLE_TABLE) +
-                    "; truncating.");
+                    "[VehicleDieselEngine]: p_engine->get_throttle_table_positions() has " +
+                    String::num_int64(throttle_table_size) + " entries, exceeding the p_mover's limit of " +
+                    String::num_int64(MAX_THROTTLE_TABLE) + "; truncating.");
         }
         for (int i = 0; i < std::min(MAX_THROTTLE_TABLE, throttle_table_size); i++) {
             const Ref<ThrottlePositionItem> &row = p_engine->get_throttle_table_positions()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: p_engine->get_throttle_table_positions() property is null at index " + String::num(i));
+                        "[VehicleDieselEngine]: p_engine->get_throttle_table_positions() property is null at index " +
+                        String::num(i));
                 continue;
             }
             p_mover->RList[i].Relay = row->get_throttle_position();
@@ -170,7 +188,8 @@ namespace godot {
             const Ref<CurvePointItem> &row = p_engine->get_torque_table()[i];
             if (row == nullptr || !row.is_valid()) {
                 UtilityFunctions::push_warning(
-                        "[VehicleDieselEngine]: p_engine->get_torque_table() property is null at index " + String::num(i));
+                        "[VehicleDieselEngine]: p_engine->get_torque_table() property is null at index " +
+                        String::num(i));
                 continue;
             }
             p_mover->dizel_Momentum_Table.emplace(row->get_x() / 60.0, row->get_y());
@@ -179,7 +198,7 @@ namespace godot {
 
     void MoverDieselEngineBackend::fill_config(const VehicleDieselEngine *p_engine, Dictionary &p_config) const {
         TMoverParameters *p_mover = owner.get_mover();
-                if (p_mover == nullptr) {
+        if (p_mover == nullptr) {
             return;
         }
         p_config["engine_shake_enabled"] = true;
@@ -195,5 +214,19 @@ namespace godot {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitch(p_enabled);
+    }
+
+    void
+    MoverDieselEngineBackend::oil_pump_switch_off(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->OilPumpSwitchOff(p_enabled);
+    }
+
+    void
+    MoverDieselEngineBackend::fuel_pump_switch_off(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->FuelPumpSwitchOff(p_enabled);
     }
 } // namespace godot

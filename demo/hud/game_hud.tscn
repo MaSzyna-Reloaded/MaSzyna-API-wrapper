@@ -15,6 +15,7 @@
 [ext_resource type="PackedScene" uid="uid://ctrktrct1on01" path="res://hud/track_traction_panel.tscn" id="22_tracktrac"]
 [ext_resource type="Script" path="res://hud/game_hud.gd" id="game_hud"]
 [ext_resource type="PackedScene" path="res://weather/weather_controls.tscn" id="5_weather_controls"]
+[ext_resource type="PackedScene" path="res://addons/libmaszyna/cabin/cabin_control_tooltip.tscn" id="23_cabin_tooltip"]
 
 [node name="GameHud" type="Control"]
 layout_mode = 3
@@ -263,6 +264,9 @@ title = "Help"
 
 [node name="Help" parent="ControlWindows/Help" unique_id=1102938475 instance=ExtResource("12_help")]
 layout_mode = 2
+
+[node name="CabinControlTooltip" parent="." instance=ExtResource("23_cabin_tooltip")]
+layout_mode = 0
 
 [connection signal="index_pressed" from="TopBar/HBoxContainer/MenuBar/PopupMenu" to="." method="_on_popup_menu_index_pressed"]
 [connection signal="toggled" from="TopBar/HBoxContainer/ToggleAllControls" to="." method="_on_show_all_controls_button_toggled"]

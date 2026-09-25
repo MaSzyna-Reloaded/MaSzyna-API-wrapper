@@ -1,0 +1,54 @@
+# Strings of the wrapper's own that the game's catalogue (lang/*.po) does not have - the state of a
+# cab control shown under its caption. MaszynaLocale.gettext() looks here after the game's catalogue.
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: zh\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "forward"
+msgstr "前进"
+
+msgid "neutral"
+msgstr "空挡"
+
+msgid "backward"
+msgstr "后退"
+
+msgid "on"
+msgstr "开"
+
+msgid "off"
+msgstr "关"
+
+msgid "pressed"
+msgstr "按下"
+
+msgid "released"
+msgstr "松开"
+
+msgid "high tone"
+msgstr "高音"
+
+msgid "low tone"
+msgstr "低音"
+
+msgid "filling"
+msgstr "充风"
+
+msgid "drive"
+msgstr "运转"
+
+msgid "cutoff"
+msgstr "保压"
+
+msgid "first braking step"
+msgstr "初制动"
+
+msgid "full braking"
+msgstr "全制动"
+
+msgid "emergency braking"
+msgstr "紧急制动"

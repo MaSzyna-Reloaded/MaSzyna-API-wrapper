@@ -36,17 +36,13 @@ var _target_light_energy = 0.0
 ## transition) - matches SM42's own hand-authored reference exactly (cabin_blinker.gd's `blink`
 ## signal, connected in sm_42_cabin.gd's _on_czuwak_blink(), plays a click on every single blink
 ## cycle while the alerter stays active, giving a realistic relay-clicking sound, not one click per
-## alert session). Field naming matches CabinButton's own sound_on/sound_off (so
-## MmdCabinInstancer._apply_sound()'s existing "sound_on" in widget duck-typed check already wires
-## soundinc:/sounddec: here with no extra catalog plumbing).
-@export var sound_on:AudioStream
-@export var sound_off:AudioStream
-@export var sound_max_distance:float = 3.0:
-    set(x):
-        sound_max_distance = x
-        _sound.max_distance = x
+## alert session). The events live in the cab's bank and are named like CabinButton's own
+## sound_on_event/sound_off_event, so MmdCabinInstancer._apply_sound() wires soundinc:/sounddec:
+## here the same way.
+@export var sound_player:SfxPlayer3D
+@export var sound_on_event:StringName
+@export var sound_off_event:StringName
 
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 var _sound_enabled_last:bool = false
 
 ## The original engine shows/hides a "<name>_on"/"<name>_off" submodel pair for these indicators
@@ -83,8 +79,6 @@ func _enter_tree():
     _setup_phase = true
 
 func _ready():
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     if blink_time > 0.0:
         _blink_timer = Timer.new()
         add_child(_blink_timer)
@@ -113,12 +107,12 @@ func _update_state():
         active_now = false
 
     # Compared against active_now (this flash's on/off state), not `enabled` (the overall alert
-    # session) - see this class's own header comment on sound_on/sound_off for why.
+    # session) - see this class's own header comment on sound_on_event/sound_off_event for why.
     if not active_now == _sound_enabled_last:
         _sound_enabled_last = active_now
-        _sound.stream = sound_on if active_now else sound_off
-        if _sound.stream:
-            _sound.play()
+        var event:StringName = sound_on_event if active_now else sound_off_event
+        if sound_player and event:
+            sound_player.play(event)
 
     _target_light_energy = (light_energy_on if active_now else light_energy_off) if light_enabled else 0.0
     if _on_target:

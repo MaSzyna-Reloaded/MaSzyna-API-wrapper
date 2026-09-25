@@ -16,8 +16,13 @@ var _off_target:Node3D
 var _dirty:bool = false
 var _update_elapsed:float = 0.0
 
+## When the lamp is lit by state_property: a flag, or the sign of a number - the reverser's
+## buttons light by the sign of DirActive (Train.cpp:8520)
+enum LitCondition { TRUE, POSITIVE, ZERO, NEGATIVE }
+
 @export var enabled:bool = false
 @export var state_property:String = ""
+@export var lit_condition:LitCondition = LitCondition.TRUE
 ## Lit while state_property is false - an "inactive" lamp of the same state (Train.cpp:9196).
 @export var invert_value:bool = false
 @export_node_path("Node3D") var on_target_path:NodePath = "":
@@ -53,7 +58,17 @@ func _process_dirty() -> void:
 
 func _update_state() -> void:
     if _train_id and state_property:
-        var value:bool = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
+        var state:Variant = CabinSystem.vehicle_state(_train_id).get(state_property, false)
+        var value:bool = false
+        match lit_condition:
+            LitCondition.TRUE:
+                value = true if state else false
+            LitCondition.POSITIVE:
+                value = float(state) > 0.0
+            LitCondition.ZERO:
+                value = float(state) == 0.0
+            LitCondition.NEGATIVE:
+                value = float(state) < 0.0
         enabled = not value if invert_value else value
     if _on_target:
         _on_target.visible = enabled

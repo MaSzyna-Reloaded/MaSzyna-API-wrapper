@@ -10,7 +10,7 @@ namespace godot {
     class VehicleController;
     class VehicleBrake : public VehicleComponent {
             GDCLASS(VehicleBrake, VehicleComponent)
-            
+
 
         public:
             VehicleComponentType::Type get_component_type() const override {
@@ -19,6 +19,7 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_alarm_chain_pulled() const = 0;
@@ -46,6 +47,9 @@ namespace godot {
             virtual double get_local_aeim_position() const = 0;
             virtual double get_edb_cylinder_pressure() const = 0;
             virtual bool get_releaser_active() const = 0;
+            /* The main pipe is cut off from the brake valve (LockPipe, the i-mainpipelock lamp,
+             * Train.cpp:11758) */
+            virtual bool get_main_pipe_locked() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -175,9 +179,9 @@ namespace godot {
                 BRAKE_VALVE_CV1_R,
                 BRAKE_VALVE_OTHER
             };
+
         private:
-            MAKE_MEMBER_GS_NR(
-                    TrainBrakeValve, valve_type, BRAKE_VALVE_NO_VALVE);
+            MAKE_MEMBER_GS_NR(TrainBrakeValve, valve_type, BRAKE_VALVE_NO_VALVE);
             MAKE_MEMBER_GS(int, est_valve_size, 0);
             MAKE_MEMBER_GS(int, friction_elements_per_axle, 1);
             MAKE_MEMBER_GS(double, brake_force_max, 1.0);
@@ -216,6 +220,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, main_pipe_blocking_pressure, 0.0);
             MAKE_MEMBER_GS(double, main_pipe_unblocking_pressure, 0.0);
             MAKE_MEMBER_GS(int, main_pipe_minimum_unblocking_handle_position, -3.0);
+
         public:
             virtual bool get_main_pipe_emergency_cuts_off_handle() const = 0;
             virtual void set_main_pipe_emergency_cuts_off_handle(const bool p_value) = 0;
@@ -246,11 +251,13 @@ namespace godot {
             MAKE_MEMBER_GS(bool, cntrl_release_parking_by_spring_brake_when_door_open, false);
             MAKE_MEMBER_GS(bool, cntrl_spring_brake_cuts_off_drive, true);
             MAKE_MEMBER_GS(double, cntrl_spring_brake_drive_emergency_velocity, -1.0);
+
         private:
             /* How much of the maximum force one block is making, 0..1. */
         protected:
             void _register_commands() override;
             void _unregister_commands() override;
+
         public:
             virtual void brake_releaser(bool p_pressed) = 0;
             virtual void brake_level_set(double p_level) = 0;
@@ -266,6 +273,8 @@ namespace godot {
             virtual void auto_rewident(int p_brake_delay) = 0;
             virtual void brake_level_charging(bool p_active) = 0;
             virtual void alarm_chain(bool p_pulled) = 0;
+            /* One of the vehicle's universal brake buttons (UBB1..3 in the FIZ), 0-based */
+            virtual void universal_brake_button(int p_button, bool p_pressed) = 0;
     };
 } // namespace godot
 VARIANT_ENUM_CAST(VehicleBrake::CompressorPower)

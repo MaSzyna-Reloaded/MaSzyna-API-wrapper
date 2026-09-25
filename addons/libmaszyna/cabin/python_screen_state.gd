@@ -39,6 +39,9 @@ const STATE_KEYS:Dictionary[String, String] = {
     "shp": "cabsignal_blinking",                    # SecuritySystem.is_cabsignal_blinking()
     "radio": "radio_enabled",                       # Radio
     "radio_channel": "radio_channel",
+    "radio_volume": "radio_volume",                 # TTrain::m_radiovolume
+    "distance_counter": "distance_counter",         # TTrain::m_distancecounter
+    "pipelock": "main_pipe_locked",                 # LockPipe
     "door_lock": "doors_lock_enabled",              # Doors.lock_enabled
     "door_step": "doors_step_enabled",              # Doors.step_enabled
     "door_permit_left": "doors_left_open_permit",   # Doors.instances[left].open_permit
@@ -118,6 +121,11 @@ static func compose(train_id:String, parameters:Dictionary) -> Dictionary:
         if CONTROLLED_STATE_KEYS[key] in controlled:
             result[key] = controlled[CONTROLLED_STATE_KEYS[key]]
     result["master"] = state.get("cabin_controleable", false)
+    # Train.cpp:783-790 - the cab's generic toggles, with universal3 standing for the instrument light
+    var cab_state:CabinState = CabinSystem.get_cabin_state(train_id, CabinSystem.occupied_cab(train_id))
+    for index:int in UNIVERSAL_COUNT:
+        result["universal%d" % index] = bool(cab_state.get_value(StringName("universal%d" % index), false))
+    result["universal3"] = state.get("devices_light_enabled", false)   # InstrumentLightActive
     result["mainctrl_pos_count"] = config.get("main_controller_position_max", 0)   # MainCtrlPosNo
     result["velocity"] = absf(state.get("speed", 0.0))   # abs(Vel), km/h
     result["manual_brake"] = state.get("brake_manual_position", 0) > 0

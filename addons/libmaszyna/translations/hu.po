@@ -1,0 +1,54 @@
+# Strings of the wrapper's own that the game's catalogue (lang/*.po) does not have - the state of a
+# cab control shown under its caption. MaszynaLocale.gettext() looks here after the game's catalogue.
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "forward"
+msgstr "előre"
+
+msgid "neutral"
+msgstr "semleges"
+
+msgid "backward"
+msgstr "hátra"
+
+msgid "on"
+msgstr "be"
+
+msgid "off"
+msgstr "ki"
+
+msgid "pressed"
+msgstr "lenyomva"
+
+msgid "released"
+msgstr "felengedve"
+
+msgid "high tone"
+msgstr "magas hang"
+
+msgid "low tone"
+msgstr "mély hang"
+
+msgid "filling"
+msgstr "töltés"
+
+msgid "drive"
+msgstr "menet"
+
+msgid "cutoff"
+msgstr "zárás"
+
+msgid "first braking step"
+msgstr "első fékfokozat"
+
+msgid "full braking"
+msgstr "teljes fékezés"
+
+msgid "emergency braking"
+msgstr "vészfékezés"

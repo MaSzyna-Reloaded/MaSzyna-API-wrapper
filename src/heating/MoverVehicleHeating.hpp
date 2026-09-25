@@ -16,6 +16,7 @@ namespace godot {
 
         public:
             bool get_active() const override;
+            bool get_allowed() const override;
             double get_power() const override;
             void heating(bool p_enabled) override;
             void _fill_state_dictionary(Dictionary &p_state) const override;

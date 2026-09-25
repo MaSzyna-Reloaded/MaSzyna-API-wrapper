@@ -66,7 +66,8 @@ namespace godot {
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, main_pipe_minimum_unblocking_handle_position, "main_pipe")
         BIND_PROPERTY(VehicleBrake, Variant::BOOL, main_pipe_emergency_cuts_off_handle, "main_pipe")
         BIND_PROPERTY_W_HINT_RES_ARRAY(
-                VehicleBrake, Variant::ARRAY, brake_pressure_table, PROPERTY_HINT_TYPE_STRING, "BrakePressureTableItem");
+                VehicleBrake, Variant::ARRAY, brake_pressure_table, PROPERTY_HINT_TYPE_STRING,
+                "BrakePressureTableItem");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleBrake, Variant::ARRAY, compressor_list, PROPERTY_HINT_TYPE_STRING, "CompressorListItem");
         BIND_PROPERTY(VehicleBrake, Variant::FLOAT, compressor_emergency_valve_area, "compressor")
@@ -236,127 +237,160 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &VehicleBrake::auto_rewident);
         ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &VehicleBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &VehicleBrake::alarm_chain);
+        ClassDB::bind_method(
+                D_METHOD("universal_brake_button", "button", "pressed"), &VehicleBrake::universal_brake_button);
 
         ClassDB::bind_method(D_METHOD("get_alarm_chain_pulled"), &VehicleBrake::get_alarm_chain_pulled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "alarm_chain_pulled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "alarm_chain_pulled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_alarm_chain_pulled");
         ClassDB::bind_method(D_METHOD("get_air_pressure"), &VehicleBrake::get_air_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "air_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "air_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_air_pressure");
         ClassDB::bind_method(D_METHOD("get_loco_pressure"), &VehicleBrake::get_loco_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "loco_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "loco_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_loco_pressure");
         ClassDB::bind_method(D_METHOD("get_pipe_brake_pressure"), &VehicleBrake::get_pipe_brake_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "pipe_brake_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "pipe_brake_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_pipe_brake_pressure");
         ClassDB::bind_method(D_METHOD("get_pipe_pressure"), &VehicleBrake::get_pipe_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "pipe_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "pipe_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_pipe_pressure");
         ClassDB::bind_method(D_METHOD("get_feed_pipe_pressure"), &VehicleBrake::get_feed_pipe_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "feed_pipe_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "feed_pipe_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_feed_pipe_pressure");
         ClassDB::bind_method(D_METHOD("get_tank_volume"), &VehicleBrake::get_tank_volume);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "tank_volume", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "tank_volume", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tank_volume");
         ClassDB::bind_method(D_METHOD("get_compressor_pressure"), &VehicleBrake::get_compressor_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "compressor_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_compressor_pressure");
         ClassDB::bind_method(D_METHOD("get_controller_position"), &VehicleBrake::get_controller_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "controller_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "controller_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_position");
-        ClassDB::bind_method(D_METHOD("get_controller_position_normalized"), &VehicleBrake::get_controller_position_normalized);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_position_normalized"), &VehicleBrake::get_controller_position_normalized);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "controller_position_normalized", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "controller_position_normalized", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_position_normalized");
         ClassDB::bind_method(D_METHOD("get_local_position_normalized"), &VehicleBrake::get_local_position_normalized);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "local_position_normalized", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "local_position_normalized", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_local_position_normalized");
         ClassDB::bind_method(D_METHOD("get_manual_position"), &VehicleBrake::get_manual_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "manual_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "manual_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_manual_position");
         ClassDB::bind_method(D_METHOD("get_unit_force"), &VehicleBrake::get_unit_force);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "unit_force", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "unit_force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_unit_force");
         ClassDB::bind_method(D_METHOD("get_force_ratio"), &VehicleBrake::get_force_ratio);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "force_ratio", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "force_ratio", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_force_ratio");
         ClassDB::bind_method(D_METHOD("get_emergency_valve_flow"), &VehicleBrake::get_emergency_valve_flow);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "emergency_valve_flow", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "emergency_valve_flow", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_emergency_valve_flow");
         ClassDB::bind_method(D_METHOD("get_main_valve_flow"), &VehicleBrake::get_main_valve_flow);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "main_valve_flow", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "main_valve_flow", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_valve_flow");
         ClassDB::bind_method(D_METHOD("get_local_valve_flow"), &VehicleBrake::get_local_valve_flow);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "local_valve_flow", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "local_valve_flow", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_local_valve_flow");
         ClassDB::bind_method(D_METHOD("get_loco_pressure_fall_rate"), &VehicleBrake::get_loco_pressure_fall_rate);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "loco_pressure_fall_rate", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "loco_pressure_fall_rate", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_loco_pressure_fall_rate");
         ClassDB::bind_method(D_METHOD("get_loco_pressure_rise_rate"), &VehicleBrake::get_loco_pressure_rise_rate);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "loco_pressure_rise_rate", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "loco_pressure_rise_rate", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_loco_pressure_rise_rate");
         ClassDB::bind_method(D_METHOD("get_control_pressure"), &VehicleBrake::get_control_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "control_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "control_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_control_pressure");
         ClassDB::bind_method(D_METHOD("get_handle_control_pressure"), &VehicleBrake::get_handle_control_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "handle_control_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "handle_control_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_handle_control_pressure");
         ClassDB::bind_method(D_METHOD("get_local_aeim_position"), &VehicleBrake::get_local_aeim_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "local_aeim_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "local_aeim_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_local_aeim_position");
         ClassDB::bind_method(D_METHOD("get_edb_cylinder_pressure"), &VehicleBrake::get_edb_cylinder_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "edb_cylinder_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "edb_cylinder_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_edb_cylinder_pressure");
         ClassDB::bind_method(D_METHOD("get_releaser_active"), &VehicleBrake::get_releaser_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "releaser_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "releaser_active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_releaser_active");
+        ClassDB::bind_method(D_METHOD("get_main_pipe_locked"), &VehicleBrake::get_main_pipe_locked);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_pipe_locked");
     }
 
     void VehicleBrake::_register_commands() {
@@ -373,6 +407,7 @@ namespace godot {
         register_command("auto_rewident", Callable(this, "auto_rewident"));
         register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
+        register_command("universal_brake_button", Callable(this, "universal_brake_button"));
     }
 
     void VehicleBrake::_unregister_commands() {
@@ -389,5 +424,6 @@ namespace godot {
         unregister_command("auto_rewident", Callable(this, "auto_rewident"));
         unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
+        unregister_command("universal_brake_button", Callable(this, "universal_brake_button"));
     }
 } // namespace godot

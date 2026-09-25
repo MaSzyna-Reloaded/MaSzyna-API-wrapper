@@ -12,6 +12,7 @@
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
 #include "cabin/Cabin3D.hpp"
+#include "cabin/CabinHUDMouseSystem.hpp"
 #include "traction/TractionPowerServer.hpp"
 #include "scripting/PythonScreenServer.hpp"
 #include "core/RailVehicle3D.hpp"
@@ -24,6 +25,7 @@
 #include "core/VehicleModel.hpp"
 #include "core/VehiclePhysicsNode.hpp"
 #include "core/TrainSystem.hpp"
+#include "core/MaszynaLocale.hpp"
 #include "core/MaszynaRuntime.hpp"
 #include "core/UserSettings.hpp"
 #include "doors/MoverVehicleDoors.hpp"
@@ -45,6 +47,8 @@
 #include "engines/VehicleEngine.hpp"
 #include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
+#include "radio/MoverVehicleRadio.hpp"
+#include "radio/VehicleRadio.hpp"
 #include "lighting/MoverVehicleLighting.hpp"
 #include "lighting/VehicleLighting.hpp"
 #include "load/MoverVehicleLoad.hpp"
@@ -109,6 +113,8 @@ RailVehicleServer *rail_vehicle_server_singleton = nullptr;
 TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
+MaszynaLocale *maszyna_locale_singleton = nullptr;
+CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
 
@@ -122,6 +128,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
         GDREGISTER_CLASS(MaszynaRuntime);
+        GDREGISTER_CLASS(MaszynaLocale);
         GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
@@ -172,9 +179,12 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         // the vehicles are simulated on the vendored Mover
         VehiclePhysicsNode::set_controller_implementation(MoverVehicleController::get_class_static());
         GDREGISTER_CLASS(Cabin3D);
+        GDREGISTER_CLASS(CabinHUDMouseSystem);
         GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
         GDREGISTER_CLASS(MoverVehicleHeating);
+        GDREGISTER_ABSTRACT_CLASS(VehicleRadio);
+        GDREGISTER_CLASS(MoverVehicleRadio);
         GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
         GDREGISTER_CLASS(MoverVehicleWheels);
         GDREGISTER_ABSTRACT_CLASS(VehicleSecuritySystem);
@@ -225,6 +235,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         rail_vehicle_server_singleton = memnew(RailVehicleServer);
         traction_power_server_singleton = memnew(TractionPowerServer);
         python_screen_server_singleton = memnew(PythonScreenServer);
+        cabin_hud_mouse_system_singleton = memnew(CabinHUDMouseSystem);
 
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
@@ -238,6 +249,10 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton(
                 "TractionPowerServer", traction_power_server_singleton); // 11
         Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
+        // after UserSettings is registered: the constructor reads the game directory from it
+        maszyna_locale_singleton = memnew(MaszynaLocale);
+        Engine::get_singleton()->register_singleton("MaszynaLocale", maszyna_locale_singleton);                // 13
+        Engine::get_singleton()->register_singleton("CabinHUDMouseSystem", cabin_hud_mouse_system_singleton); // 14
 
         e3d_resource_format_loader.instantiate();
         ogg_vorbis_format_loader.instantiate();
@@ -261,6 +276,22 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (e3d_resource_format_loader.is_valid()) {
         ResourceLoader::get_singleton()->remove_resource_format_loader(e3d_resource_format_loader);
         e3d_resource_format_loader.unref();
+    }
+
+    if (Engine::get_singleton()->has_singleton("CabinHUDMouseSystem")) {
+        Engine::get_singleton()->unregister_singleton("CabinHUDMouseSystem"); // 14
+    }
+    if (cabin_hud_mouse_system_singleton != nullptr) {
+        memdelete(cabin_hud_mouse_system_singleton);
+        cabin_hud_mouse_system_singleton = nullptr;
+    }
+
+    if (Engine::get_singleton()->has_singleton("MaszynaLocale")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaLocale"); // 13
+    }
+    if (maszyna_locale_singleton != nullptr) {
+        memdelete(maszyna_locale_singleton);
+        maszyna_locale_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("PythonScreenServer")) {

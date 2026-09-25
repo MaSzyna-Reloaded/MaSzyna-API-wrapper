@@ -13,6 +13,7 @@ var _controller:VehicleController = null
 func before_each() -> void:
     _controller = build_vehicle("cabin_state_test")
     _controller.type_name = "test"
+    _controller.add_component(MoverVehicleRadio.new())
     CabinSystem.register_vehicle("cabin_state_test")
     await wait_idle_frames(2)
 

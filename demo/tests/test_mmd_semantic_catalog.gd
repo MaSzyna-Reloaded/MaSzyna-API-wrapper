@@ -60,11 +60,13 @@ func test_radiochannelprev_sw_fires_decrease_once_per_press():
     assert_eq(entry["fixed_fields"]["action"], "radio_channel_decrease")
 
 
-func test_pantfront_sw_sends_front_selector_as_command_param():
+# LegacyCabinPantographs owns pantfront_sw - it springs back when the vehicle's pantograph
+# switches are impulse ones (Train.cpp:3170), and carries no vehicle command of its own
+func test_pantfront_sw_is_shaped_by_the_vehicles_switch_type():
     var entry:Dictionary = MmdSemanticCatalog.get_entry("pantfront_sw")
     assert_eq(entry["widget_class"], CabinButton)
-    assert_eq(entry["fixed_fields"]["command"], "pantograph")
-    assert_eq(entry["fixed_fields"]["command_param"], VehicleElectricEngine.PANTOGRAPH_FIRST)
+    assert_eq(entry["monostable_from_config"], "pantograph_switch_impulse")
+    assert_false(entry["fixed_fields"].has("command"))
     assert_eq(entry["fixed_fields"]["state_property"], "current_collector/pantograph_first_active")
 
 

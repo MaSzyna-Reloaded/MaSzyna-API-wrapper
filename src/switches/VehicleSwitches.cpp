@@ -29,8 +29,9 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_sand_active"), &VehicleSwitches::get_sand_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "sand_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "sand_active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_sand_active");
     }
 
@@ -42,5 +43,9 @@ namespace godot {
     void VehicleSwitches::_unregister_commands() {
         VehicleComponent::_unregister_commands();
         unregister_command("sand", Callable(this, "sand"));
+    }
+    // how the cab operates the pantographs (PantSwitchType, Train.cpp:3175, 3285)
+    void VehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {
+        p_config["pantograph_switch_impulse"] = get_pantograph_impulse();
     }
 } // namespace godot

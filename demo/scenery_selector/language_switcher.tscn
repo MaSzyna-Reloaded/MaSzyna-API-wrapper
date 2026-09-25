@@ -1,0 +1,85 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scenery_selector/language_switcher.gd" id="1_switcher"]
+[ext_resource type="Texture2D" path="res://scenery_selector/flags/en.svg" id="2_en"]
+[ext_resource type="Texture2D" path="res://scenery_selector/flags/pl.svg" id="3_pl"]
+[ext_resource type="Texture2D" path="res://scenery_selector/flags/cz.svg" id="4_cz"]
+[ext_resource type="Texture2D" path="res://scenery_selector/flags/hu.svg" id="5_hu"]
+[ext_resource type="Texture2D" path="res://scenery_selector/flags/zh.svg" id="6_zh"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_normal"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(0, 0, 0, 0.35)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(1, 1, 1, 0.12)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hover"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(1, 1, 1, 0.12)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.81, 0.88, 1, 0.6)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_pressed"]
+content_margin_left = 3.0
+content_margin_top = 3.0
+content_margin_right = 3.0
+content_margin_bottom = 3.0
+bg_color = Color(1, 0.85, 0.3, 0.18)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 0.85, 0.3, 1)
+corner_radius_top_left = 4
+corner_radius_top_right = 4
+corner_radius_bottom_right = 4
+corner_radius_bottom_left = 4
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
+
+[sub_resource type="Theme" id="Theme_switcher"]
+Button/colors/font_color = Color(0.81, 0.88, 1, 0.8)
+Button/colors/font_pressed_color = Color(1, 0.85, 0.3, 1)
+Button/font_sizes/font_size = 14
+Button/styles/focus = SubResource("StyleBoxEmpty_focus")
+Button/styles/hover = SubResource("StyleBoxFlat_hover")
+Button/styles/hover_pressed = SubResource("StyleBoxFlat_pressed")
+Button/styles/normal = SubResource("StyleBoxFlat_normal")
+Button/styles/pressed = SubResource("StyleBoxFlat_pressed")
+
+[node name="LanguageSwitcher" type="MarginContainer"]
+theme = SubResource("Theme_switcher")
+theme_override_constants/margin_left = 56
+script = ExtResource("1_switcher")
+flags = Dictionary[String, Texture2D]({
+"cz": ExtResource("4_cz"),
+"en": ExtResource("2_en"),
+"hu": ExtResource("5_hu"),
+"pl": ExtResource("3_pl"),
+"zh": ExtResource("6_zh")
+})
+
+[node name="Flags" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6

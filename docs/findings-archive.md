@@ -4,6 +4,98 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-25 - cab clicks cut each other off: the controls bypassed gnd-sfx
+
+* **Symptom:** with several cab controls moved in quick succession, the sounds cut each other
+  off and ignored the cab's bus.
+* **What proved it:** `CabinButton`, `CabinSwitch`, `CabinKnob` and `CabinSpotLight3D` each created
+  their own `AudioStreamPlayer3D` and swapped its `stream` on every click, so each control had a
+  single voice on `Master`. None of their sounds showed up in a bank dump.
+  The vehicle's `CabinSfxPlayer3D` holds only the internaldata sounds. Also, every widget sits at the
+  origin of the generated cab, so all the clicks came from one point.
+* **Fix:** `MmdCabinInstancer` builds one `SfxBank` per cab with one `SfxPlayer3D`
+  (`CabinControlsSfxPlayer3D`, bus `Cabin`, 16 voices). Each control sound is a polyphonic event
+  whose `spatial_config.position` is the control's submodel, as the original places it
+  (`Gauge.cpp:75-95`). The widgets hold that player and their event names.
+* **Rule:** a cab control gets its sound as an event in the cab's bank, placed at its submodel,
+  never as an `AudioStream` on the widget.
+
+## 2026-09-25 - pantographs raised only with the master valve forced
+
+* **Symptom:** after the cab's pantograph switches were ported as in the original, `P` alone no
+  longer raised the E186's pantograph. `MoverElectricEngineBackend::pantograph()` had opened the
+  pantographs' master valve on every raise since `1c0c044`, and taking that out broke it.
+* **What proved it:** `LoadFIZ_Cntrl` sets the master valve (`PantEPValveStart`) to automatic
+  by default and each pantograph's own valve (`PantValveStart`) to manual
+  (`Mover.cpp:10927-10946`). The struct default is manual (`MOVER.h:875`). The E186 FIZ declares
+  none of these keys. `grep` missed that at first, because the file is cp1250. So in the original
+  the master valve opens by itself when there is low voltage.
+* **Cause:** the wrapper never ported the five valve keys, so the Mover kept the struct default,
+  and the workaround covered the missing default.
+* **Fix:** `VehicleElectricEngine` carries the five keys as our own `StartMode`/bools, the FIZ
+  parser reads them, `MoverElectricEngineBackend` writes them into the Mover, and the workaround is
+  gone. The cab's switches send our `ValveOperation`, which is mapped to `operation_t` only in
+  the backend.
+* **Also found:** the original reads a legacy sound's files with `,` as a delimiter
+  (`audio/sound.cpp:105-111`), so `small-compressor: a.wav,b.wav,c.wav` is begin, main and end,
+  not a data error.
+* **Rule:** a workaround in a backend call is a sign that a FIZ key is not ported yet. Read the
+  key's default in `LoadFIZ_*` before keeping the workaround.
+
+## 2026-09-25 - the E186 cab half built: three data quirks and a missing gauge feature
+
+* **Symptom:** after the E186 controls were added to the catalog, the cab still did not react:
+  radiostop_sw, universal*, battery_sw, pantalloff_sw and more had no widget, the light selector
+  had no presets, and none of the three reverser lamps ever lit.
+* **What proved it:** a headless probe entering the cab on td_e186.scn and listing every widget
+  by control id, then MmdCabinInstancer.parse() on p160dc.mmd listing every descriptor - from
+  line 210 of base.mmd.inc on, each `label: { ... }` block came out as an instrument called
+  `soundinc`.
+* **Causes:**
+  * `radiocall3_sw { radio_3 ... }` has lost its colon. The original reacts only to labels it
+    knows and walks over every other token; the wrapper's parser takes any `x:` token for a label,
+    so it took the block's `soundinc:` for one and read every following block from the wrong end.
+  * `LightsList:` in p160dc.fiz has no `endL` and runs straight into `WiperList:`. The FIZ builder
+    ended an open table only when the next header opened none, so the WiperList header replaced
+    the light table without its end_table(), and all twelve presets were lost.
+  * TGauge takes `<name>_on` as the lit state of a control, shown instead of it while a flag is set
+    (Gauge.cpp:204-210, 386-392; the flags are bound in Train.cpp:11995-12040, the reverser
+    buttons to the sign of DirActive). The wrapper had no such thing, so kierunek_*_on stayed
+    hidden.
+* **Fix:** a block without a label is skipped whole; every FIZ section header ends the table
+  before it; the MMD factory builds a CabinIndicator3D on `<name>_on` for a catalog entry with
+  `state_light`.
+* **Rule:** a parser of the original's data mirrors the original's tolerance, not the format's
+  grammar - the data is full of lines only the original's "skip what you do not know" accepts.
+* **Rule:** a table section may end at the next header rather than at its end marker; every
+  header closes the open table.
+
+## 2026-09-25 - SU46 would not release its train: the converter never started
+
+* **Symptom:** some trains, passenger and freight, could hardly be released. SU46-054 with four
+  coaches on `zwierzyniec_osob.scn` stayed braked. The consist refactor (#184) was the first
+  suspect.
+* **What proved it:** one `get SU46-054` dump. The main reservoir was at 3.40 bar, the brake pipe
+  at 3.35, and `compressor_allowed` was false. An FV4a cannot charge the pipe above the main
+  reservoir, and the coaches' distributors hold their cylinders until the pipe comes back to
+  around 5 bar. The refactor was cleared by comparing every moved coupling and movement function
+  with its pre-refactor body.
+* **Cause:** SU46 declares `CompressorPower=Converter` and `Cntrl. ConverterStart=Automatic`. For
+  that compressor the Mover takes `CompressorAllow = ConverterAllow` (Mover.cpp:3886), and
+  `ConverterAllow = Mains` only when the converter start is automatic (Mover.cpp:1885). No parser
+  read `ConverterStart`, and the property existed only on `VehicleElectricEngine`, which a
+  diesel-electric does not have. So the Mover kept `start_t::manual`, and SU46's cab has no
+  converter switch to make up for it. A vehicle starting at velocity 0 begins with its main
+  reservoir at `0.55 * MinCP` (Mover.cpp:8932) and relies on the compressor from there.
+* **Fix:** `ConverterStart` and `ConverterStartDelay` are `VehicleController` properties, parsed
+  with `BatteryStart` and applied next to it, as `LoadFIZ_Cntrl` does (Mover.cpp:10909). After the
+  fix the operator's train pulled away.
+* **Found on the way:** `BrakeValveParams` is never set, so every ESt distributor is built as an
+  ESt4 (TODO.md). The test fixture's `W_Lu_L` valve has no distributor in the Mover (the factory
+  falls through to a plain `TBrake`), so the fixture shows pipe pressure but never a cylinder.
+* **Rule:** a `Cntrl.` key belongs to the vehicle. A property placed on one engine class silently
+  does not exist for the other engine types that read the same key.
+
 ## 2026-09-24 - Python cab screens: what the original's scripts actually need
 
 Porting `pyscreen:` meant running the original's own Python 2 scripts. Four things were only

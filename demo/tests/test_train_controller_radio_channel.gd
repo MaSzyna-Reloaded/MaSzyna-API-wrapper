@@ -9,16 +9,19 @@ extends MaszynaGutTest
 ## since nothing anywhere sets radio_channel_min/max.
 
 var train: VehicleController
+var radio: VehicleRadio
 
 func before_each():
     train = build_vehicle("TestTrain", load("res://tests/fixtures/sm42_vehicle.tres"))
+    radio = MoverVehicleRadio.new()
+    train.add_component(radio)
     train.battery_voltage = 110.0
     train.apply_configuration()
     await wait_idle_frames(2)
 
 func test_defaults_match_the_original_engines_universal_1_to_10_range():
-    assert_eq(train.radio_channel_min, 1)
-    assert_eq(train.radio_channel_max, 10)
+    assert_eq(radio.channel_min, 1)
+    assert_eq(radio.channel_max, 10)
 
 func test_radio_channel_starts_at_1_not_0():
     # confirmed real: vehicle/Driver.h defaults iRadioChannel to 1, not 0 - starting at 0 (below

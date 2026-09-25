@@ -36,6 +36,18 @@ func test_bare_multipart_horn_is_parsed_into_begin_main_end():
     assert_eq(horn1.sound_end, "horn-sn61-stop")
 
 
+# audio/sound.cpp:105-111 reads a legacy sound's files with "," among the delimiters
+func test_bare_multipart_joined_by_commas_is_parsed_into_begin_main_end():
+    var definitions:Array[MmdSoundSourceDefinition] = _parse()
+    var small_compressor:MmdSoundSourceDefinition = _find(definitions, "small-compressor")
+    assert_not_null(small_compressor)
+    assert_eq(small_compressor.sound_begin, "s-compressor-start")
+    assert_eq(small_compressor.sound_main, "s-compressor")
+    assert_eq(small_compressor.sound_end, "s-compressor-stop")
+    assert_eq(small_compressor.range, 20.0)
+    assert_eq(_find(definitions, "pantographup").sound_main, "pantup1")
+
+
 func test_block_begin_main_end_is_parsed():
     var battery:MmdSoundSourceDefinition = _find(_parse(), "battery")
     assert_not_null(battery)

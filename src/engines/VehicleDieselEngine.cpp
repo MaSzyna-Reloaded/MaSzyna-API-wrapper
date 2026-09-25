@@ -25,6 +25,15 @@ namespace godot {
     bool VehicleDieselEngine::get_fuel_pump_disabled() const {
         return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_disabled(this) : false;
     }
+    bool VehicleDieselEngine::get_fuel_pump_enabled() const {
+        return diesel_backend != nullptr ? diesel_backend->get_fuel_pump_enabled(this) : false;
+    }
+    bool VehicleDieselEngine::get_oil_pump_enabled() const {
+        return diesel_backend != nullptr ? diesel_backend->get_oil_pump_enabled(this) : false;
+    }
+    bool VehicleDieselEngine::get_heat_malfunction() const {
+        return diesel_backend != nullptr ? diesel_backend->get_heat_malfunction(this) : false;
+    }
     bool VehicleDieselEngine::get_startup() const {
         return diesel_backend != nullptr ? diesel_backend->get_startup(this) : false;
     }
@@ -108,8 +117,10 @@ namespace godot {
         BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, throttle_table_max_torque, "throttle_table_positions");
         BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, throttle_table_max_torque_rpm, "throttle_table_positions");
         BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, throttle_table_max_rpm_torque, "throttle_table_positions");
-        BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, throttle_table_nominal_fuel_dose, "throttle_table_positions");
-        BIND_PROPERTY(VehicleDieselEngine, Variant::FLOAT, throttle_table_resistance_torque, "throttle_table_positions");
+        BIND_PROPERTY(
+                VehicleDieselEngine, Variant::FLOAT, throttle_table_nominal_fuel_dose, "throttle_table_positions");
+        BIND_PROPERTY(
+                VehicleDieselEngine, Variant::FLOAT, throttle_table_resistance_torque, "throttle_table_positions");
         BIND_PROPERTY(
                 VehicleDieselEngine, Variant::FLOAT, throttle_table_nominal_fuel_consumption_rate,
                 "throttle_table_positions");
@@ -120,6 +131,26 @@ namespace godot {
                 VehicleDieselEngine, Variant::ARRAY, torque_table, PROPERTY_HINT_TYPE_STRING, "CurvePointItem");
         ClassDB::bind_method(D_METHOD("fuel_pump", "enabled"), &VehicleDieselEngine::fuel_pump);
         ClassDB::bind_method(D_METHOD("oil_pump", "enabled"), &VehicleDieselEngine::oil_pump);
+        ClassDB::bind_method(D_METHOD("fuel_pump_switch_off", "enabled"), &VehicleDieselEngine::fuel_pump_switch_off);
+        ClassDB::bind_method(D_METHOD("oil_pump_switch_off", "enabled"), &VehicleDieselEngine::oil_pump_switch_off);
+        ClassDB::bind_method(D_METHOD("get_fuel_pump_enabled"), &VehicleDieselEngine::get_fuel_pump_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "fuel_pump_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_fuel_pump_enabled");
+        ClassDB::bind_method(D_METHOD("get_oil_pump_enabled"), &VehicleDieselEngine::get_oil_pump_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "oil_pump_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_oil_pump_enabled");
+        ClassDB::bind_method(D_METHOD("get_heat_malfunction"), &VehicleDieselEngine::get_heat_malfunction);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "heat_malfunction", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_heat_malfunction");
 
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_AFTER_GEARBOX);
         BIND_ENUM_CONSTANT(RETARDER_PLACEMENT_BETWEEN_GEARBOX_AND_TC);
@@ -127,68 +158,81 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_rpm"), &VehicleDieselEngine::get_rpm);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "rpm", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "rpm", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_rpm");
         ClassDB::bind_method(D_METHOD("get_oil_pump_active"), &VehicleDieselEngine::get_oil_pump_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "oil_pump_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "oil_pump_active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_oil_pump_active");
         ClassDB::bind_method(D_METHOD("get_oil_pump_disabled"), &VehicleDieselEngine::get_oil_pump_disabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "oil_pump_disabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "oil_pump_disabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_oil_pump_disabled");
         ClassDB::bind_method(D_METHOD("get_oil_pump_pressure"), &VehicleDieselEngine::get_oil_pump_pressure);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "oil_pump_pressure", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "oil_pump_pressure", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_oil_pump_pressure");
         ClassDB::bind_method(D_METHOD("get_fuel_pump_active"), &VehicleDieselEngine::get_fuel_pump_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "fuel_pump_active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "fuel_pump_active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_fuel_pump_active");
         ClassDB::bind_method(D_METHOD("get_fuel_pump_disabled"), &VehicleDieselEngine::get_fuel_pump_disabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "fuel_pump_disabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "fuel_pump_disabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_fuel_pump_disabled");
         ClassDB::bind_method(D_METHOD("get_startup"), &VehicleDieselEngine::get_startup);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "startup", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "startup", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_startup");
         ClassDB::bind_method(D_METHOD("get_ignition"), &VehicleDieselEngine::get_ignition);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "ignition", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "ignition", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_ignition");
         ClassDB::bind_method(D_METHOD("get_spinup"), &VehicleDieselEngine::get_spinup);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "spinup", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "spinup", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_spinup");
         ClassDB::bind_method(D_METHOD("get_output_power"), &VehicleDieselEngine::get_output_power);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "output_power", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "output_power", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_output_power");
         ClassDB::bind_method(D_METHOD("get_torque"), &VehicleDieselEngine::get_torque);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "torque", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "torque", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_torque");
         ClassDB::bind_method(D_METHOD("get_fill"), &VehicleDieselEngine::get_fill);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "fill", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "fill", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_fill");
         ClassDB::bind_method(D_METHOD("get_max_rpm"), &VehicleDieselEngine::get_max_rpm);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "max_rpm", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "max_rpm", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_max_rpm");
     }
 
@@ -208,6 +252,9 @@ namespace godot {
         p_state["oil_pump_pressure"] = get_oil_pump_pressure();
         p_state["fuel_pump_active"] = get_fuel_pump_active();
         p_state["fuel_pump_disabled"] = get_fuel_pump_disabled();
+        p_state["diesel_heat_malfunction"] = get_heat_malfunction();
+        p_state["fuel_pump_enabled"] = get_fuel_pump_enabled();
+        p_state["oil_pump_enabled"] = get_oil_pump_enabled();
         p_state["diesel_startup"] = get_startup();
         p_state["diesel_ignition"] = get_ignition();
         p_state["diesel_spinup"] = get_spinup();
@@ -229,15 +276,31 @@ namespace godot {
         }
     }
 
+    void VehicleDieselEngine::oil_pump_switch_off(const bool p_enabled) {
+        if (diesel_backend != nullptr) {
+            diesel_backend->oil_pump_switch_off(this, p_enabled);
+        }
+    }
+
+    void VehicleDieselEngine::fuel_pump_switch_off(const bool p_enabled) {
+        if (diesel_backend != nullptr) {
+            diesel_backend->fuel_pump_switch_off(this, p_enabled);
+        }
+    }
+
     void VehicleDieselEngine::_register_commands() {
         VehicleEngine::_register_commands();
         register_command("oil_pump", Callable(this, "oil_pump"));
         register_command("fuel_pump", Callable(this, "fuel_pump"));
+        register_command("oil_pump_switch_off", Callable(this, "oil_pump_switch_off"));
+        register_command("fuel_pump_switch_off", Callable(this, "fuel_pump_switch_off"));
     }
 
     void VehicleDieselEngine::_unregister_commands() {
         VehicleEngine::_unregister_commands();
         unregister_command("oil_pump", Callable(this, "oil_pump"));
         unregister_command("fuel_pump", Callable(this, "fuel_pump"));
+        unregister_command("oil_pump_switch_off", Callable(this, "oil_pump_switch_off"));
+        unregister_command("fuel_pump_switch_off", Callable(this, "fuel_pump_switch_off"));
     }
 } // namespace godot

@@ -120,6 +120,28 @@
 			[code]Doors:DoorBlocked[/code]
 			Doors has locking mechanism
 		</member>
+		<member name="left_local_open" type="bool" setter="" getter="get_left_local_open" default="false">
+		</member>
+		<member name="left_open" type="bool" setter="" getter="get_left_open" default="false">
+		</member>
+		<member name="left_open_permit" type="bool" setter="" getter="get_left_open_permit" default="false">
+		</member>
+		<member name="left_operating" type="bool" setter="" getter="get_left_operating" default="false">
+		</member>
+		<member name="left_position" type="float" setter="" getter="get_left_position" default="0.0">
+		</member>
+		<member name="left_position_normalized" type="float" setter="" getter="get_left_position_normalized" default="0.0">
+		</member>
+		<member name="left_remote_open" type="bool" setter="" getter="get_left_remote_open" default="false">
+		</member>
+		<member name="left_step_operating" type="bool" setter="" getter="get_left_step_operating" default="false">
+		</member>
+		<member name="left_step_position" type="float" setter="" getter="get_left_step_position" default="0.0">
+		</member>
+		<member name="lock_enabled" type="bool" setter="" getter="get_lock_enabled" default="false">
+		</member>
+		<member name="locked" type="bool" setter="" getter="get_locked" default="false">
+		</member>
 		<member name="max_shift" type="float" setter="set_max_shift" getter="get_max_shift" default="0.5">
 			[code]Doors:DoorMaxShiftL[/code] or [code]Doors:DoorMaxShiftR[/code]
 			Width (or angle) of full door opening.
@@ -136,6 +158,8 @@
 		<member name="mirror_max_shift" type="float" setter="set_mirror_max_shift" getter="get_mirror_max_shift" default="90.0">
 			[code]Doors:MirrorMaxShift[/code]
 			Rotation angle for a fully unfolded mirror
+		</member>
+		<member name="open_control" type="int" setter="" getter="get_open_control" default="0">
 		</member>
 		<member name="open_delay" type="float" setter="set_open_delay" getter="get_open_delay" default="0.0">
 			[code]Doors:DoorOpenDelay[/code]
@@ -175,6 +199,8 @@
 			3 - Permission for both-sided doors
 			[/codeblocks]
 		</member>
+		<member name="permit_preset" type="int" setter="" getter="get_permit_preset" default="0">
+		</member>
 		<member name="permit_required" type="bool" setter="set_permit_required" getter="get_permit_required" default="false">
 			[code]Doors:DoorNeedPermit[/code]
 			Opening the doors by passengers requires permission from the train driver
@@ -194,6 +220,26 @@
 		<member name="platform_type" type="int" setter="set_platform_type" getter="get_platform_type" enum="VehicleDoors.PlatformType" default="1">
 			[code]Doors:PlatformOpenMethod[/code]
 			The type of the platform
+		</member>
+		<member name="right_local_open" type="bool" setter="" getter="get_right_local_open" default="false">
+		</member>
+		<member name="right_open" type="bool" setter="" getter="get_right_open" default="false">
+		</member>
+		<member name="right_open_permit" type="bool" setter="" getter="get_right_open_permit" default="false">
+		</member>
+		<member name="right_operating" type="bool" setter="" getter="get_right_operating" default="false">
+		</member>
+		<member name="right_position" type="float" setter="" getter="get_right_position" default="0.0">
+		</member>
+		<member name="right_position_normalized" type="float" setter="" getter="get_right_position_normalized" default="0.0">
+		</member>
+		<member name="right_remote_open" type="bool" setter="" getter="get_right_remote_open" default="false">
+		</member>
+		<member name="right_step_operating" type="bool" setter="" getter="get_right_step_operating" default="false">
+		</member>
+		<member name="right_step_position" type="float" setter="" getter="get_right_step_position" default="0.0">
+		</member>
+		<member name="step_enabled" type="bool" setter="" getter="get_step_enabled" default="false">
 		</member>
 		<member name="type" type="int" setter="set_type" getter="get_type" enum="VehicleDoors.Type" default="1">
 			[code]Doors:DoorOpenMethod[/code]

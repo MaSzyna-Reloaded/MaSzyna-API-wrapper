@@ -1,8 +1,8 @@
-#include "MoverVehicleBrake.hpp"
-#include "../mover/MoverBackend.hpp"
 #include "../brakes/VehicleBrake.hpp"
 #include "../core/VehicleController.hpp"
 #include "../core/utils.hpp"
+#include "../mover/MoverBackend.hpp"
+#include "MoverVehicleBrake.hpp"
 #include <algorithm>
 #include <cmath>
 #include <godot_cpp/classes/gd_extension.hpp>
@@ -12,14 +12,19 @@ namespace godot {
     void MoverVehicleBrake::_bind_methods() {}
 
 
-
-
     void MoverVehicleBrake::alarm_chain(const bool p_pulled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
         // Train.cpp:1839-1872 (OnCommand_alarmchaintoggle/enable/disable) ->
         // AlarmChainSwitch(State) - manual emergency brake pull cord.
         mover->AlarmChainSwitch(p_pulled);
+    }
+
+    // Original engine: TTrain::OnCommand_universalbrakebutton1..3 (Train.cpp:1897) -> UniversalBrakeButton()
+    void MoverVehicleBrake::universal_brake_button(const int p_button, const bool p_pressed) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->UniversalBrakeButton(p_button, p_pressed ? 1 : 0);
     }
 
     void MoverVehicleBrake::brake_releaser(const bool p_pressed) {
@@ -176,7 +181,12 @@ namespace godot {
         }
         p_config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
         p_config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
+        // the handle's named positions, per its type (TFV4aM::pos_table, hamulce.h:1140)
+        p_config["brakes_controller_position_filling"] = mover->Handle->GetPos(bh_FS);
+        p_config["brakes_controller_position_drive"] = mover->Handle->GetPos(bh_RP);
         p_config["brakes_controller_position_cutoff"] = mover->Handle->GetPos(bh_NP);
+        p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
+        p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
         p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
     }
 
@@ -333,6 +343,11 @@ namespace godot {
         return mover != nullptr ? mover->Hamulec && mover->Hamulec->Releaser() : false;
     }
 
+    bool MoverVehicleBrake::get_main_pipe_locked() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LockPipe : false;
+    }
+
     void MoverVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -362,6 +377,7 @@ namespace godot {
         p_state["brake_local_aeim_position"] = get_local_aeim_position();
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
+        p_state["main_pipe_locked"] = get_main_pipe_locked();
     }
 
     void MoverVehicleBrake::_apply_configuration() {
@@ -411,7 +427,8 @@ namespace godot {
             p_mover->BrakeCylNo = get_cylinder_count();
 
             if (get_cylinder_count() > 0) {
-                p_mover->MaxBrakePress[0] = get_max_aux_pressure() < 0.01 ? get_max_cylinder_pressure() : get_max_aux_pressure();
+                p_mover->MaxBrakePress[0] =
+                        get_max_aux_pressure() < 0.01 ? get_max_cylinder_pressure() : get_max_aux_pressure();
                 p_mover->MaxBrakePress[1] = get_max_tare_pressure();
                 p_mover->MaxBrakePress[2] = get_max_medium_pressure();
                 p_mover->MaxBrakePress[4] = get_max_antislip_pressure() < 0.01 ? 0.0 : get_max_antislip_pressure();
@@ -430,7 +447,8 @@ namespace godot {
 
                 p_mover->LoadFlag = (get_cylinder_gear_ratio_low() > 0.0 || get_max_tare_pressure() > 0.0) ? 1 : 0;
 
-                p_mover->BrakeVolume = M_PI * std::pow(get_cylinder_radius(), 2) * get_cylinder_distance() * get_cylinder_count();
+                p_mover->BrakeVolume =
+                        M_PI * std::pow(get_cylinder_radius(), 2) * get_cylinder_distance() * get_cylinder_count();
                 p_mover->BrakeVVolume = get_tank_volume_aux();
 
                 const std::unordered_map<BrakeMethod, int>::const_iterator lookup;

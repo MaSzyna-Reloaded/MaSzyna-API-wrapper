@@ -1,3 +1,4 @@
+#include "../radio/VehicleRadio.hpp"
 #include "../wheels/VehicleWheels.hpp"
 #include "RailVehicleServer.hpp"
 #include "RailVehicleStepper.hpp"
@@ -43,6 +44,7 @@ namespace godot {
                 D_METHOD("vehicle_get_rid_by_name", "name"), &RailVehicleServer::vehicle_get_rid_by_name);
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
+        ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
 
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
@@ -191,6 +193,24 @@ namespace godot {
     String RailVehicleServer::vehicle_get_name(const RID &p_vehicle) const {
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
         return placement != nullptr ? placement->name : String();
+    }
+
+    void RailVehicleServer::vehicle_radio_stop(const RID &p_vehicle) {
+        const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(sender);
+        const Vector3 origin = _placement_transform(*sender).origin;
+        for (const KeyValue<RID, VehiclePlacement> &entry: vehicles) {
+            VehicleController *controller = _get_controller(entry.value);
+            if (controller == nullptr ||
+                _placement_transform(entry.value).origin.distance_to(origin) > RADIO_STOP_RANGE) {
+                continue;
+            }
+            if (VehicleRadio *radio = Object::cast_to<VehicleRadio>(
+                        controller->get_component(VehicleComponentType::COMPONENT_RADIO));
+                radio != nullptr) {
+                radio->radio_stop_receive();
+            }
+        }
     }
 
     RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {

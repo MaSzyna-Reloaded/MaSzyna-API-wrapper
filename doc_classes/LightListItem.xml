@@ -9,8 +9,14 @@
 	<tutorials>
 	</tutorials>
 	<members>
+		<member name="cabin_a_end_signals" type="bool" setter="set_cabin_a_end_signals" getter="get_cabin_a_end_signals" default="false">
+			State of the end-of-train signal plates at cabin A (Maszyna [code]light::rearendsignals[/code])
+		</member>
 		<member name="cabin_a_head_light" type="bool" setter="set_cabin_a_head_light" getter="get_cabin_a_head_light" default="false">
 			State of the head light in cabin A indicating whether it is lit up or not
+		</member>
+		<member name="cabin_a_left_auxiliary_light" type="bool" setter="set_cabin_a_left_auxiliary_light" getter="get_cabin_a_left_auxiliary_light" default="false">
+			State of the left auxiliary light at cabin A indicating whether it is lit up or not
 		</member>
 		<member name="cabin_a_left_red_signal" type="bool" setter="set_cabin_a_left_red_signal" getter="get_cabin_a_left_red_signal" default="false">
 			State of the left red signal in cabin A indicating whether it is lit up or not
@@ -18,20 +24,32 @@
 		<member name="cabin_a_left_white_signal" type="bool" setter="set_cabin_a_left_white_signal" getter="get_cabin_a_left_white_signal" default="false">
 			State of the left white signal in cabin A indicating whether it is lit up or not
 		</member>
+		<member name="cabin_a_right_auxiliary_light" type="bool" setter="set_cabin_a_right_auxiliary_light" getter="get_cabin_a_right_auxiliary_light" default="false">
+			State of the right auxiliary light at cabin A indicating whether it is lit up or not
+		</member>
 		<member name="cabin_a_right_red_signal" type="bool" setter="set_cabin_a_right_red_signal" getter="get_cabin_a_right_red_signal" default="false">
 			State of the right red signal in cabin A indicating whether it is lit up or not
 		</member>
 		<member name="cabin_a_right_white_signal" type="bool" setter="set_cabin_a_right_white_signal" getter="get_cabin_a_right_white_signal" default="false">
 			State of the right white signal in cabin A indicating whether it is lit up or not
 		</member>
+		<member name="cabin_b_end_signals" type="bool" setter="set_cabin_b_end_signals" getter="get_cabin_b_end_signals" default="false">
+			State of the end-of-train signal plates at cabin B (Maszyna [code]light::rearendsignals[/code])
+		</member>
 		<member name="cabin_b_head_light" type="bool" setter="set_cabin_b_head_light" getter="get_cabin_b_head_light" default="false">
 			State of the head light in cabin B indicating whether it is lit up or not
+		</member>
+		<member name="cabin_b_left_auxiliary_light" type="bool" setter="set_cabin_b_left_auxiliary_light" getter="get_cabin_b_left_auxiliary_light" default="false">
+			State of the left auxiliary light at cabin B indicating whether it is lit up or not
 		</member>
 		<member name="cabin_b_left_red_signal" type="bool" setter="set_cabin_b_left_red_signal" getter="get_cabin_b_left_red_signal" default="false">
 			State of the left red signal in cabin B indicating whether it is lit up or not
 		</member>
 		<member name="cabin_b_left_white_signal" type="bool" setter="set_cabin_b_left_white_signal" getter="get_cabin_b_left_white_signal" default="false">
 			State of the left white signal in cabin B indicating whether it is lit up or not
+		</member>
+		<member name="cabin_b_right_auxiliary_light" type="bool" setter="set_cabin_b_right_auxiliary_light" getter="get_cabin_b_right_auxiliary_light" default="false">
+			State of the right auxiliary light at cabin B indicating whether it is lit up or not
 		</member>
 		<member name="cabin_b_right_red_signal" type="bool" setter="set_cabin_b_right_red_signal" getter="get_cabin_b_right_red_signal" default="false">
 			State of the right red signal in cabin B indicating whether it is lit up or not

@@ -18,6 +18,12 @@
 				Operate fuel pump
 			</description>
 		</method>
+		<method name="fuel_pump_switch_off">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="oil_pump">
 			<return type="void" />
 			<param index="0" name="enabled" type="bool" />
@@ -25,10 +31,30 @@
 				Operate oil pump
 			</description>
 		</method>
+		<method name="oil_pump_switch_off">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
+		<member name="fill" type="float" setter="" getter="get_fill" default="0.0">
+		</member>
+		<member name="fuel_pump_active" type="bool" setter="" getter="get_fuel_pump_active" default="false">
+		</member>
+		<member name="fuel_pump_disabled" type="bool" setter="" getter="get_fuel_pump_disabled" default="false">
+		</member>
+		<member name="fuel_pump_enabled" type="bool" setter="" getter="get_fuel_pump_enabled" default="false">
+		</member>
 		<member name="fuel_pump_start_mode" type="int" setter="set_fuel_pump_start_mode" getter="get_fuel_pump_start_mode" enum="VehicleEngine.StartMode" default="1">
 			[code]Cntrl.FuelStart[/code]
+		</member>
+		<member name="heat_malfunction" type="bool" setter="" getter="get_heat_malfunction" default="false">
+		</member>
+		<member name="ignition" type="bool" setter="" getter="get_ignition" default="false">
+		</member>
+		<member name="max_rpm" type="float" setter="" getter="get_max_rpm" default="0.0">
 		</member>
 		<member name="mechanical_clutch_disengage_speed" type="float" setter="set_mechanical_clutch_disengage_speed" getter="get_mechanical_clutch_disengage_speed" default="0.9">
 			[code]Engine:EDS[/code]
@@ -54,6 +80,14 @@
 			[code]Engine:nmin[/code]
 			Minimum engine speed, in RPM.
 		</member>
+		<member name="oil_pump_active" type="bool" setter="" getter="get_oil_pump_active" default="false">
+		</member>
+		<member name="oil_pump_disabled" type="bool" setter="" getter="get_oil_pump_disabled" default="false">
+		</member>
+		<member name="oil_pump_enabled" type="bool" setter="" getter="get_oil_pump_enabled" default="false">
+		</member>
+		<member name="oil_pump_pressure" type="float" setter="" getter="get_oil_pump_pressure" default="0.0">
+		</member>
 		<member name="oil_pump_pressure_maximum" type="float" setter="set_oil_pump_pressure_maximum" getter="get_oil_pump_pressure_maximum" default="0.65">
 			[code]Engine:OilMaxPressure[/code]
 			Minimum oil pressure required for the engine to start
@@ -64,6 +98,8 @@
 		</member>
 		<member name="oil_pump_start_mode" type="int" setter="set_oil_pump_start_mode" getter="get_oil_pump_start_mode" enum="VehicleEngine.StartMode" default="1">
 			[code]Cntrl.OilStart[/code]
+		</member>
+		<member name="output_power" type="float" setter="" getter="get_output_power" default="0.0">
 		</member>
 		<member name="retarder_fill_rate_decrease" type="float" setter="set_retarder_fill_rate_decrease" getter="get_retarder_fill_rate_decrease" default="1.0">
 			[code]Engine:R_FRD[/code]
@@ -97,6 +133,12 @@
 			[code]Engine:R_TII[/code]
 			Retarder torque constant proportional to the square of input RPM.
 		</member>
+		<member name="rpm" type="float" setter="" getter="get_rpm" default="0.0">
+		</member>
+		<member name="spinup" type="bool" setter="" getter="get_spinup" default="false">
+		</member>
+		<member name="startup" type="bool" setter="" getter="get_startup" default="false">
+		</member>
 		<member name="throttle_table_max_rpm_torque" type="float" setter="set_throttle_table_max_rpm_torque" getter="get_throttle_table_max_rpm_torque" default="2.0">
 			[code]DList:Mnmax[/code]
 			Torque at maximum RPM, in Nm.
@@ -124,6 +166,8 @@
 		<member name="throttle_table_resistance_torque" type="float" setter="set_throttle_table_resistance_torque" getter="get_throttle_table_resistance_torque" default="0.0">
 			[code]DList:Mstand[/code]
 			Engine's own resistance torque at zero RPM, in Nm.
+		</member>
+		<member name="torque" type="float" setter="" getter="get_torque" default="0.0">
 		</member>
 		<member name="torque_converter_coupling_point" type="float" setter="set_torque_converter_coupling_point" getter="get_torque_converter_coupling_point" default="0.85">
 			[code]Engine:TC_CP[/code]

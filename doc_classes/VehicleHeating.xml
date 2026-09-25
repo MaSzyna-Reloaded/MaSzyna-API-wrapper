@@ -18,6 +18,10 @@
 		</method>
 	</methods>
 	<members>
+		<member name="active" type="bool" setter="" getter="get_active" default="false">
+		</member>
+		<member name="allowed" type="bool" setter="" getter="get_allowed" default="false">
+		</member>
 		<member name="heating_generator_engine" type="int" setter="set_heating_generator_engine" getter="get_heating_generator_engine" enum="VehicleEngine.EngineType" default="8">
 			[code]Clima:HGeneratorEngine[/code]
 			Type of engine driving the heating generator, when [member heating_source] is Generator. Only
@@ -51,6 +55,8 @@
 		<member name="heating_source" type="int" setter="set_heating_source" getter="get_heating_source" enum="VehicleController.TrainPowerSource" default="3">
 			[code]Clima:Heating[/code]
 			Power source for the train heating circuit.
+		</member>
+		<member name="power" type="float" setter="" getter="get_power" default="0.0">
 		</member>
 	</members>
 </class>

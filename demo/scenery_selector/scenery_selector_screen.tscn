@@ -11,6 +11,7 @@
 [ext_resource type="PackedScene" path="res://ui/tile_grid.tscn" id="9_grid"]
 [ext_resource type="Resource" uid="uid://bg4cnurfltuxp" path="res://startup/ui_sounds.tres" id="10_sounds"]
 [ext_resource type="Texture2D" uid="uid://b7dxj0otp70ih" path="res://startup/eu07_parked_sketch.svg" id="11_sketch"]
+[ext_resource type="PackedScene" path="res://scenery_selector/language_switcher.tscn" id="12_language"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_background"]
 shader = ExtResource("2_shader")
@@ -275,6 +276,9 @@ theme_override_colors/font_color = Color(0.55, 0.75, 1, 1)
 theme_override_font_sizes/font_size = 16
 text = "https://maszyna-reloaded.pl"
 uri = "https://maszyna-reloaded.pl"
+
+[node name="LanguageSwitcher" parent="Footer" instance=ExtResource("12_language")]
+layout_mode = 2
 
 [connection signal="activated" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="focus_trainset_list"]
 [connection signal="cancelled" from="Content/HBoxContainer/LeftSlot/ListPanel/VBoxContainer/SceneryList" to="." method="request_quit"]

@@ -36,6 +36,8 @@ var _generated:Node3D
 var _diagnostics:Array[Dictionary] = []
 var _random_choices:Dictionary = {}
 var _last_cab_number:int = 0
+## The cab model's meshes as CabinHUDMouseSystem occluders - the desk hides what runs under it
+var _occluders:Array[RID] = []
 
 
 func _ready() -> void:
@@ -62,6 +64,7 @@ func _exit_tree() -> void:
     train_id_changed.disconnect(_on_train_id_changed)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
     set_train_id("")
+    _free_occluders()
 
 
 func get_diagnostics() -> Array[Dictionary]:
@@ -89,6 +92,7 @@ func _select_cab_number() -> int:
 
 
 func _rebuild_generated() -> void:
+    _free_occluders()
     if _generated:
         remove_child(_generated)
         _generated.queue_free()
@@ -130,6 +134,13 @@ func _rebuild_generated() -> void:
     MmdCabinInstancer.build_into(_generated, definition, get_train_id(), data_path, skin, build_diagnostics)
     _diagnostics.append_array(build_diagnostics)
 
+    var cab_model:E3DModelInstance = _generated.get_node_or_null("CabModel") as E3DModelInstance
+    if cab_model:
+        if cab_model.is_e3d_loaded():
+            _create_occluders(cab_model)
+        else:
+            cab_model.e3d_loaded.connect(_create_occluders.bind(cab_model), CONNECT_ONE_SHOT)
+
     _build_driver_aid_commands()
     # a cab with an i-cablight lamp already has its own ceiling light (MmdSemanticCatalog)
     if not definition.instruments.any(
@@ -151,6 +162,21 @@ func _rebuild_generated() -> void:
         _last_cab_number, abs_mmd_path, definition.instruments.size(), _generated.get_child_count()])
     for d:Dictionary in _diagnostics:
         print("  [%s] %s (label=%s submodel=%s)" % [d["severity"], d["message"], d["mmd_label"], d["submodel_name"]])
+
+
+## Every mesh of the cab model hides the controls behind it from the mouse, as the whole cab is
+## drawn into the original's pick buffer (opengl33renderer.cpp:1208). Control meshes are among
+## them and keep their own hits. Transparent submodels occlude as well, unlike the original's
+## opaque-only pick pass - see TODO.md.
+func _create_occluders(cab_model:E3DModelInstance) -> void:
+    for mesh:Node in cab_model.find_children("*", "MeshInstance3D", true, false):
+        _occluders.append(CabinHUDMouseSystem.occluder_create(mesh.get_instance_id()))
+
+
+func _free_occluders() -> void:
+    for occluder:RID in _occluders:
+        CabinHUDMouseSystem.occluder_free(occluder)
+    _occluders.clear()
 
 
 ## Keyboard-only driver aids that have no cabin lever/MMD instrument of their own (nothing to

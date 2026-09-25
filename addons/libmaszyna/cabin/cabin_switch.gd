@@ -7,6 +7,10 @@ signal switch_released()
 
 enum ControllerMode { OnOff, On, Off }
 
+## What the positions are called, position -> msgid for MaszynaLocale.gettext() (the reverser's
+## "forward"/"backward"), from the MMD catalog; a position without a name shows its number
+@export var position_names:Dictionary = {}
+
 @export var switch_position:int = 0:
     set(x):
         x = clampi(x, switch_min_position, switch_max_position)
@@ -156,22 +160,42 @@ func _input(event):
 
     if action_increase:
         if event.is_action_pressed(action_increase, repeat_on_hold, true):
-            _set_position_from_input(switch_position + 1)
-        if automatic_reset and event.is_action_released(action_increase, true):
-            _set_position_from_input(switch_reset_position)
+            increase()
+        if event.is_action_released(action_increase, true):
+            release()
     if action_decrease:
         if event.is_action_pressed(action_decrease, repeat_on_hold, true):
-            _set_position_from_input(switch_position - 1)
-        if automatic_reset and event.is_action_released(action_decrease, true):
-            _set_position_from_input(switch_reset_position)
+            decrease()
+        if event.is_action_released(action_decrease, true):
+            release()
     if action_toggle:
         if event.is_action_pressed(action_toggle, false, true):
-            if switch_position == switch_max_position:
-                _set_position_from_input(switch_min_position)
-            else:
-                _set_position_from_input(switch_max_position)
-        if automatic_reset and event.is_action_released(action_toggle, true):
-            _set_position_from_input(switch_reset_position)
+            toggle()
+        if event.is_action_released(action_toggle, true):
+            release()
+
+## The driver's hand on the switch (key or mouse), one position at a time.
+func increase() -> void:
+    _set_position_from_input(switch_position + 1)
+
+func decrease() -> void:
+    _set_position_from_input(switch_position - 1)
+
+func toggle() -> void:
+    if switch_position == switch_max_position:
+        _set_position_from_input(switch_min_position)
+    else:
+        _set_position_from_input(switch_max_position)
+
+## A spring-loaded switch returns to its rest position when let go.
+func release() -> void:
+    if automatic_reset:
+        _set_position_from_input(switch_reset_position)
+
+## A mouse click: a two-position switch flips, one with more positions is moved by dragging.
+func press() -> void:
+    if switch_max_position - switch_min_position == 1:
+        toggle()
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:
@@ -180,6 +204,9 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            _set_mouse_control(_mesh, [action_increase, action_decrease, action_toggle], press, release,
+                    increase, decrease, mesh_rotation, mesh_position)
+            _set_mouse_state(_mouse_state())
 
 func _process_tool(delta):
     _t += delta
@@ -214,7 +241,16 @@ func _play_sound():
     if _sound.stream:
         _sound.play()
 
+## The position under the caption: its name, on/off for a two-state switch, else its number.
+func _mouse_state() -> String:
+    if position_names.has(switch_position):
+        return MaszynaLocale.gettext(position_names[switch_position])
+    if switch_min_position == 0 and switch_max_position == 1:
+        return MaszynaLocale.gettext(STATE_ON if switch_position else STATE_OFF)
+    return str(switch_position)
+
 func _on_switch_position_changed(previous, current):
+    _set_mouse_state(_mouse_state())
     if current == 0 and sound_neutral_position_stream:
         _sound.stream = sound_neutral_position_stream
     elif current > 0 and current <= sound_override.size():

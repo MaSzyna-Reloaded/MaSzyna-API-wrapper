@@ -96,6 +96,7 @@ static func _ensure_built() -> void:
                 "command_increase": "direction_increase",
                 "command_decrease": "direction_decrease",
                 "state_property": "direction",
+                "position_names": {-1: "backward", 0: "neutral", 1: "forward"},
                 "action_increase": "direction_increase",
                 "action_decrease": "direction_decrease",
             },
@@ -111,6 +112,21 @@ static func _ensure_built() -> void:
                 "state_property": "brake_controller_position_normalized",
                 "action_increase": "brake_level_increase",
                 "action_decrease": "brake_level_decrease",
+                # Quirk: the grip heuristic of CabinHUDMouseSystem got SM42's valve backwards - its
+                # handle swings first down, then to the right towards full braking. Down and right
+                # brake, as the original's slider does for the train brake (mouse_slider,
+                # drivermouseinput.cpp:98-103: up releases).
+                "mouse_drag_signs": Vector2(1.0, 1.0),
+            },
+            # the valve's named positions, where its handle type puts them (hamulce.h:157-171);
+            # the later one wins where two share a position (FV4a: cutoff is also its minimum)
+            "position_names_config": {
+                "brakes_controller_position_filling": "filling",
+                "brakes_controller_position_drive": "drive",
+                "brakes_controller_position_cutoff": "cutoff",
+                "brakes_controller_position_first_step": "first braking step",
+                "brakes_controller_position_full": "full braking",
+                "brakes_controller_position_emergency": "emergency braking",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
@@ -302,6 +318,7 @@ static func _ensure_built() -> void:
                 "state_property": "horn",
                 "action_increase": "horn_low",
                 "action_decrease": "horn_high",
+                "position_names": {-1: "high tone", 0: "off", 1: "low tone"},
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",

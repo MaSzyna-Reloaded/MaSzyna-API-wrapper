@@ -532,6 +532,10 @@ generic_toggle_9={
 ]
 }
 
+[internationalization]
+
+locale/translations=PackedStringArray("res://addons/libmaszyna/translations/cz.po", "res://addons/libmaszyna/translations/hu.po", "res://addons/libmaszyna/translations/pl.po", "res://addons/libmaszyna/translations/zh.po")
+
 [maszyna]
 
 scenery/shadows/blur=0.4

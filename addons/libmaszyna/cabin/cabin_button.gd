@@ -85,6 +85,10 @@ enum ButtonType {
 
 @export var action = ""
 
+## A push button's state under its caption (a toggle shows STATE_ON/STATE_OFF)
+const STATE_PUSHED:String = "pressed"
+const STATE_RELEASED:String = "released"
+
 var _mesh:Node3D
 var _mesh_original_basis:Basis
 var _mesh_original_position:Vector3 = Vector3.ZERO
@@ -119,14 +123,21 @@ func _update_state():
 
 func _input(event):
     if _enabled and action:
-        if monostable:
-            if event.is_action_pressed(action, false, true):
-                pushed = true
-            elif event.is_action_released(action, true):
-                pushed = false
-        else:
-            if event.is_action_pressed(action, false, true):
-                pushed = not pushed
+        if event.is_action_pressed(action, false, true):
+            press()
+        elif event.is_action_released(action, true):
+            release()
+
+## The driver's hand on the button (key or mouse): a monostable one is held, any other toggles.
+func press() -> void:
+    if monostable:
+        pushed = true
+    else:
+        pushed = not pushed
+
+func release() -> void:
+    if monostable:
+        pushed = false
 
 func _update_mesh_target() -> void:
     _target_mesh_position = mesh_position_offset + mesh_position * value
@@ -139,6 +150,8 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            _set_mouse_control(_mesh, [action], press, release, Callable(), Callable(), Vector3.ZERO, Vector3.ZERO)
+            _set_mouse_state(_mouse_state())
     _update_state()
 
 func _process_tool(delta):
@@ -178,7 +191,14 @@ func _play_sound():
     if _sound.stream:
         _sound.play()
 
+## The state under the caption.
+func _mouse_state() -> String:
+    if monostable:
+        return MaszynaLocale.gettext(STATE_PUSHED if pushed else STATE_RELEASED)
+    return MaszynaLocale.gettext(STATE_ON if pushed else STATE_OFF)
+
 func _on_pushed_changed():
+    _set_mouse_state(_mouse_state())
     if pushed:
         button_pushed.emit()
 

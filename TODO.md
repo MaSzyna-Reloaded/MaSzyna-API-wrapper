@@ -200,6 +200,33 @@ about forty more gauges (speed control buttons, door permits, door step, ...), e
 state key and a catalog `state_light`. The lamps also light without low voltage - TGauge gates
 them on it (Gauge.cpp:379).
 
+### Mouse operation (CabinHUDMouseSystem) - not ported from drivermouseinput.cpp
+
+* Absolute slider for the `*set` levers (master controller, train and independent brake):
+  `mouse_slider` maps 60% of the window height onto the whole range and puts the cursor at the
+  current position (drivermouseinput.cpp:27-155). Here a drag moves a control relative to the
+  mouse - in steps, or smoothly with notches for a knob.
+* Right button as the control's second binding (decrease), panning only off a control
+  (drivermouseinput.cpp:405-414). Here the right button always looks around.
+* Varying repeat rate while a button is held, growing with the cursor's distance from where it was
+  pressed (drivermouseinput.cpp:437-443, 482-484), and the Shift "fast" variants (:418-428).
+* Debug-mode tooltip with the submodel name instead of the caption (drivermode.cpp:377-382).
+* Key hints only for the first widget of a label - the others have their actions cleared by the
+  instancer (mmd_cabin_instancer.gd:396), so their caption shows no keys.
+* **Brake valve drag direction - cause not found.** The grip heuristic
+  (`CabinHUDMouseSystem::_increase_signs`) got SM42's valve (`brakectrl: zasadniczy`) left-right
+  backwards in game, while a headless check on the same cab model (`6d_kabina`, camera at
+  `driver1sitpos`, the knob's own rotation applied) predicted the handle moving the way the drag
+  went. `brakectrl` now forces its signs in the catalog (`"mouse_drag_signs"`, down/right brakes).
+  Find what differs in game (the vehicle's own MMD - 6d/6d1/6da have opposite `rot` signs - the
+  occupied cab, the cab's transform) before trusting the heuristic for other valves, and drop the
+  force once it is found.
+* Captions are taken when a control is built - a language changed while sitting in a cab shows
+  after the cab is entered again.
+* Occluders are every mesh of a generated cab model, transparent ones included - the original's
+  pick pass draws only opaque submodels (`Render_cab(..., Alpha = false)`,
+  opengl33renderer.cpp:1208). Hand-authored cabin scenes register no occluders at all.
+
 ### DebugWindow
 
 * `debug_hud.tscn` (used by `examples/mover_demo.tscn`) hands the vehicle only to `MoverSwitches`,

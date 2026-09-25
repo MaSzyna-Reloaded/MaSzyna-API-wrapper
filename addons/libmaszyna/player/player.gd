@@ -42,6 +42,7 @@ func _ready() -> void:
     glow_material.set_shader_parameter(&"light_color", headlamp.light_color)
     # scenery content is registered, not built - it is streamed around this camera
     SceneryStreamingServer.set_camera(get_camera())
+    CabinHUDMouseSystem.set_camera(get_camera().get_instance_id())
 
 
 func _exit_tree() -> void:
@@ -96,6 +97,9 @@ func set_start_train_if_empty(train_id:String) -> void:
         start_train_id = train_id
 
 func _input(event):
+    if CabinHUDMouseSystem.input(event):
+        get_viewport().set_input_as_handled()
+        return
     if event.is_action_pressed("flashlight_toggle", false, true):
         var enabled:bool = headlamp.visible
         headlamp.visible = not enabled

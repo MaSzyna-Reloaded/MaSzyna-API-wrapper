@@ -795,6 +795,16 @@ static func _build_widget(
     for field_name:String in entry["fixed_fields"]:
         widget.set(field_name, entry["fixed_fields"][field_name])
 
+    # names of positions that lie where the vehicle says - a brake valve's, per its handle type
+    var position_names_config:Dictionary = entry.get("position_names_config", {})
+    if position_names_config and "position_names" in widget:
+        var names:Dictionary = {}
+        var config:Dictionary = CabinSystem.vehicle_config(train_id)
+        for config_key:String in position_names_config:
+            if config.has(config_key):
+                names[roundi(float(config[config_key]))] = position_names_config[config_key]
+        widget.set("position_names", names)
+
     if widget is CabinButton:
         var button_type:CabinButton.ButtonType = BUTTON_TYPES.get(
                 descriptor.button_type, CabinButton.ButtonType.TOGGLE)
@@ -833,16 +843,29 @@ static func _build_widget(
 
 
 ## Wires parsed MMD sound_increase/sound_decrease/sound_positions onto whichever sound fields the
-## widget actually has (CabinButton: sound_on/sound_off; CabinSwitch: sound_increase_stream/
-## sound_decrease_stream/sound_override/sound_override_negative) - duck-typed the same way
-## mesh_path/target_mesh_path already are. CabinKnob/CabinGauge have no sound fields at all today
-## (see mmd_semantic_catalog.gd's scope notes), so this is a no-op for those widget types.
+## widget actually has (CabinButton: sound_on/sound_off; CabinKnob: sound_increase_stream/
+## sound_decrease_stream/sound_positions; CabinSwitch: sound_increase_stream/sound_decrease_stream/
+## sound_override/sound_override_negative) - duck-typed the same way mesh_path/target_mesh_path
+## already are. CabinGauge has no sound fields, so this is a no-op for it.
 static func _apply_sound(widget:Node, descriptor:MmdInstrumentDescriptor) -> void:
     if "sound_on" in widget:
         if descriptor.sound_increase:
             widget.set("sound_on", _build_audio_stream(descriptor.sound_increase))
         if descriptor.sound_decrease:
             widget.set("sound_off", _build_audio_stream(descriptor.sound_decrease))
+        return
+
+    if "sound_positions" in widget:
+        if descriptor.sound_increase:
+            widget.set("sound_increase_stream", _build_audio_stream(descriptor.sound_increase))
+        if descriptor.sound_decrease:
+            widget.set("sound_decrease_stream", _build_audio_stream(descriptor.sound_decrease))
+        var positions:Dictionary[int, AudioStream] = {}
+        for position:int in descriptor.sound_positions:
+            var position_stream:AudioStream = _build_audio_stream(descriptor.sound_positions[position])
+            if position_stream:
+                positions[position] = position_stream
+        widget.set("sound_positions", positions)
         return
 
     if "sound_increase_stream" in widget:
@@ -917,6 +940,10 @@ static func _apply_animation_shape(
         var range_min:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[0], 0.0))
         var range_max:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[1], 1.0))
         range_scale = range_max - range_min
+        # the same raw range is where the knob's whole positions lie (a brake valve's BCPN rows)
+        if "position_min" in widget:
+            widget.set("position_min", range_min)
+            widget.set("position_max", range_max)
 
     var mmd_scale:float = descriptor.scale * float(entry.get("mmd_scale_multiplier", 1.0))
 

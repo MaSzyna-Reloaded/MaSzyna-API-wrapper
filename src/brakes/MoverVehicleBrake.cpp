@@ -183,7 +183,12 @@ namespace godot {
         }
         p_config["brakes_controller_position_min"] = mover->Handle->GetPos(bh_MIN);
         p_config["brakes_controller_position_max"] = mover->Handle->GetPos(bh_MAX);
+        // the handle's named positions, per its type (TFV4aM::pos_table, hamulce.h:1140)
+        p_config["brakes_controller_position_filling"] = mover->Handle->GetPos(bh_FS);
+        p_config["brakes_controller_position_drive"] = mover->Handle->GetPos(bh_RP);
         p_config["brakes_controller_position_cutoff"] = mover->Handle->GetPos(bh_NP);
+        p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
+        p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
         p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
     }
 

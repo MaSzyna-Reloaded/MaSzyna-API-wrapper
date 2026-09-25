@@ -1,4 +1,6 @@
 ## Code style
+Unless a section says otherwise, every rule here applies to GDScript and C++ alike.
+
 > [!IMPORTANT]  
 > Exported/All classes used in Godot do live in the `godot` namespace   
 > Your linter must be compatible with code style defined in `.clang-format`
@@ -28,19 +30,15 @@ func _process(delta):
     return delta * 2
 ```
 ### GDScript
-1. Do not add singleton existence guards like `Engine.has_singleton(...)` around normal project singleton usage unless explicitly requested
-2. Do not replace normal singleton/global access with `/root/...` lookups as a workaround
-3. Do not add `is_connected()` guard clutter for signal lifecycle issues; keep one direct `connect` and one matching direct `disconnect`
-4. Do not update node state directly in setters; use `_dirty`, `_process`, and `_process_dirty`
-5. In `if` conditions, do not use `!=`; use `not ... == ...`
-6. Send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API. Access a
-   `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
-7. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
+The short GDScript rules (singleton guards, `/root/...`, `is_connected()`, setters and `_dirty`,
+`not ... == ...`, `TrainSystem.send_command`) are listed in `AGENTS.md`.
+
+1. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
    signal goes into the scene's `[connection]` list - not into `_ready()`. The wiring then sits
    where the node does, the editor keeps it correct when the node is renamed or moved, and it
    exists before any script runs. `connect()` in code is for nodes the script instantiates itself
    (a row built in a loop, a player added by hand).
-8. **A long node path in code is an antipattern.** `get_node("A/B/C/D")`, `$A/B/C` and worst of
+2. **A long node path in code is an antipattern.** `get_node("A/B/C/D")`, `$A/B/C` and worst of
    all a `../..` that climbs out of the node's own scene: the node is then pinned to a layout it
    does not own, and moving one container breaks it. Inside its own scene a node is reached by its
    unique name (`%Name`); anything outside comes in through the scene root's own signals and
@@ -53,7 +51,7 @@ func _process(delta):
    What is worth cleaning is the tree itself: a container that wraps a single child earns nothing
    and lengthens every path through it, and a name has to say what the node is - `VehiclesScroll`,
    not `ScrollContainer`; `SceneryPanel`, not `ListPanel` when four lists share the screen.
-9. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
+3. **GDScript is interpreted and `_process` is not free.** Anything recurring is written in this
    order of preference:
    1. **C++** - a singleton connects itself to `SceneTree`'s `process_frame` and does the work
       natively (`SceneryStreamingServer::_process_streaming()`,
@@ -155,8 +153,6 @@ inside a single script as well as across objects: one writer per field, and the 
 
 ### Do not multiply entities (DRY, KISS)
 
-Applies to GDScript and C++ alike.
-
 * **A private function with one call site is not a helper.** Its body belongs at that call site.
   Splitting it out hides the order of what happens and buys nothing back.
 * **Never do the same thing twice to be safe.** An immediate call plus a deferred one, a direct
@@ -171,7 +167,7 @@ doubt as well, and it hides which of the two paths the behaviour actually comes 
 
 ### Never create an `ensure_*` API
 
-Applies to GDScript and C++ alike. Not `_ensure_built()`, not `_ensure_viewport()`, not
+Not `_ensure_built()`, not `_ensure_viewport()`, not
 `_ensure_sections()`, and not the same idea under a friendlier name.
 
 A function like that re-checks and re-derives, on every call, state the code already knew at the one
@@ -195,7 +191,7 @@ just invalidated - a `visible` toggle, a queued re-sort - and then silently does
 
 ### Separation of concerns, enforced
 
-Applies to GDScript and C++ alike, and it is the rule the rest of this file exists to protect.
+This is the rule the rest of this file exists to protect.
 
 A layer owns one kind of thing. A simulation backend owns physical quantities; a sound system owns
 what is audible; a rendering server owns what is drawn; a screen owns what is on it. **State that
@@ -229,7 +225,7 @@ void apply_config();
 
 ### No magic numbers
 
-Applies to GDScript and C++ alike. A literal that is not self-evident from the expression around
+A literal that is not self-evident from the expression around
 it gets a named constant: a threshold, a limit, an index base, a conversion factor, a count, a
 delay, a bitmask.
 
@@ -261,7 +257,7 @@ being addressed.
 
 ### A getter never changes state
 
-Applies to GDScript and C++ alike. A `get_*`, a property getter, a `_get()` - anything a *reader*
+A `get_*`, a property getter, a `_get()` - anything a *reader*
 calls - returns a value and does nothing else. It does not advance a filter, consume a flag, emit
 a signal, write to another object, or build what it returns on the way out.
 
@@ -292,7 +288,7 @@ belongs in the tick, against the owner's own member.
 
 ### Call a method, do not name it
 
-Applies to GDScript and C++ alike. When the class is known, include its header and call the
+When the class is known, include its header and call the
 method. `Object::call("name")` gives up every check the compiler would have made - the name, the
 argument count, the types - and a typo or a rename returns `null` at run time with nothing
 printed. It is the same class of silent failure as a bare `[]` passed to an `Array[T]` parameter
@@ -335,7 +331,7 @@ one class.
 
 ### Never work around a missing event
 
-Applies to GDScript and C++ alike. A value that is not there yet is an ordering defect, and the
+A value that is not there yet is an ordering defect, and the
 things that look like a fix are all the same mistake:
 
 ```cpp
@@ -364,7 +360,7 @@ rather than polling for its effect.
 
 ### Wiring is not per-frame work
 
-Applies to GDScript and C++ alike. Resolving a path, finding a node, connecting a signal,
+Resolving a path, finding a node, connecting a signal,
 subscribing to anything: that happens **once**, where the node comes into being - `_enter_tree()`,
 `_ready()`, or an init the owner calls. Never in `_process`/`_physics_process`, and a `_dirty`
 flag around it does not make it acceptable - the flag only hides that the wiring is being
@@ -392,7 +388,7 @@ the code that is not running. That deadlock is what this rule exists to prevent.
 
 ### Per-frame work
 
-Applies to C++ and GDScript alike - a loop in a native `_process` scales with the collection just
+A loop in a native `_process` scales with the collection just
 as badly, it only takes more objects to show.
 
 **Running per frame is a last resort.** Before writing one, ask whether the work can be

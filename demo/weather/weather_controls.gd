@@ -1,4 +1,4 @@
-extends VBoxContainer
+extends HFlowContainer
 
 ## Weather and time controls driving MaszynaEnvironmentNode, content of the "Weather and Time" HUD window
 ## (ported from forest-test-scene ui/WeatherControlsCanvas.gd).
@@ -15,29 +15,30 @@ var _time_slider_dragging: bool = false
 var _dirty: bool = true
 var _refresh_timer: Timer
 
-@onready var _wind_value_label: Label = $WeatherRow/WindGroup/Row/WindValueLabel
-@onready var _rain_value_label: Label = $WeatherRow/RainGroup/Row/RainValueLabel
-@onready var _cloud_value_label: Label = $WeatherRow/CloudGroup/Row/CloudValueLabel
-@onready var _fog_density_value_label: Label = $WeatherRow/FogDensityGroup/Row/FogDensityValueLabel
-@onready var _fog_distance_value_label: Label = $WeatherRow/FogDistanceGroup/Row/FogDistanceValueLabel
-@onready var _time_value_label: Label = $TimeRow/TimeGroup/Row/TimeValueLabel
-@onready var _day_value_label: Label = $TimeRow/DayGroup/Row/DayValueLabel
-@onready var _month_value_label: Label = $TimeRow/MonthGroup/Row/MonthValueLabel
-@onready var _year_value_label: Label = $TimeRow/YearGroup/Row/YearValueLabel
-@onready var _day_slider: HSlider = $TimeRow/DayGroup/Row/DaySlider
-@onready var _month_slider: HSlider = $TimeRow/MonthGroup/Row/MonthSlider
-@onready var _year_slider: HSlider = $TimeRow/YearGroup/Row/YearSlider
-@onready var _time_scale_value_label: Label = $TimeRow/TimeScaleGroup/Row/TimeScaleValueLabel
-@onready var _wind_strength_slider: HSlider = $WeatherRow/WindGroup/Row/WindSlider
-@onready var _wind_direction_slider: HSlider = $WeatherRow/WindDirectionGroup/Row/WindDirectionSlider
-@onready var _wind_direction_value_label: Label = $WeatherRow/WindDirectionGroup/Row/WindDirectionValueLabel
-@onready var _rain_slider: HSlider = $WeatherRow/RainGroup/Row/RainSlider
-@onready var _cloud_slider: HSlider = $WeatherRow/CloudGroup/Row/CloudSlider
-@onready var _fog_density_slider: HSlider = $WeatherRow/FogDensityGroup/Row/FogDensitySlider
-@onready var _fog_distance_slider: HSlider = $WeatherRow/FogDistanceGroup/Row/FogDistanceSlider
-@onready var _time_slider: HSlider = $TimeRow/TimeGroup/Row/TimeSlider
-@onready var _time_scale_slider: HSlider = $TimeRow/TimeScaleGroup/Row/TimeScaleSlider
-@onready var _system_time_check_box: CheckBox = $TimeRow/SystemTimeGroup/Row/SystemTimeCheckBox
+@onready var _wind_value_label: Label = %WindValueLabel
+@onready var _rain_value_label: Label = %RainValueLabel
+@onready var _cloud_value_label: Label = %CloudValueLabel
+@onready var _fog_density_value_label: Label = %FogDensityValueLabel
+@onready var _fog_distance_value_label: Label = %FogDistanceValueLabel
+@onready var _time_value_label: Label = %TimeValueLabel
+@onready var _day_value_label: Label = %DayValueLabel
+@onready var _month_value_label: Label = %MonthValueLabel
+@onready var _year_value_label: Label = %YearValueLabel
+@onready var _day_slider: HSlider = %DaySlider
+@onready var _month_slider: HSlider = %MonthSlider
+@onready var _year_slider: HSlider = %YearSlider
+@onready var _time_scale_value_label: Label = %TimeScaleValueLabel
+@onready var _wind_strength_slider: HSlider = %WindSlider
+@onready var _wind_direction_slider: HSlider = %WindDirectionSlider
+@onready var _wind_direction_value_label: Label = %WindDirectionValueLabel
+@onready var _rain_slider: HSlider = %RainSlider
+@onready var _cloud_slider: HSlider = %CloudSlider
+@onready var _fog_density_slider: HSlider = %FogDensitySlider
+@onready var _fog_distance_slider: HSlider = %FogDistanceSlider
+@onready var _time_slider: HSlider = %TimeSlider
+@onready var _time_scale_slider: HSlider = %TimeScaleSlider
+@onready var _system_time_check_box: CheckBox = %SystemTimeCheckBox
+@onready var _simulation_time_label: Label = %SimulationTime
 
 
 func _ready() -> void:
@@ -86,10 +87,12 @@ func _on_refresh_timeout() -> void:
 ## Mirrors the whole environment node, so presets and changes made elsewhere show up in the
 ## controls.
 func _process_dirty() -> void:
-    # the system clock drives the time and the date, the sliders only show them
+    # the system clock drives the time and the date, the sliders only show them - and it runs at
+    # its own pace, so the time speed means nothing either
     var editable: bool = not _environment_node.use_system_time
     _system_time_check_box.set_pressed_no_signal(_environment_node.use_system_time)
     _time_slider.editable = editable
+    _time_scale_slider.editable = editable
     _day_slider.editable = editable
     _month_slider.editable = editable
     _year_slider.editable = editable
@@ -122,6 +125,17 @@ func _refresh_clock() -> void:
         return
     _time_slider.set_value_no_signal(_environment_node.current_time)
     _time_value_label.text = _format_time_label(_environment_node.current_time)
+
+
+## The date and the time the simulation is at, down to the second - read once a second by the
+## scene's ClockTimer.
+func _on_clock_timer_timeout() -> void:
+    if not is_visible_in_tree():
+        return
+    var seconds_of_day: int = int(wrapf(_environment_node.current_time, 0.0, 24.0) * 3600.0)
+    _simulation_time_label.text = "%02d.%02d.%04d %02d:%02d:%02d" % [
+            _environment_node.day, _environment_node.month, _environment_node.year,
+            seconds_of_day / 3600, seconds_of_day / 60 % 60, seconds_of_day % 60]
 
 
 func _on_wind_strength_changed(value: float) -> void:

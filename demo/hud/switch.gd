@@ -38,6 +38,9 @@ enum SwitchType { MONOSTABLE, BISTABLE, TOGGLE }
         state_property = x
 
 @export var command:String
+## Sent before the switch's own state, for a command that also names what it switches
+## (pantograph(selector, enabled)); null sends the state alone
+@export var command_argument:Variant = null
 
 func _ready():
     _dirty = true
@@ -78,12 +81,19 @@ func _process(delta):
 
 func _on_switch_toggled(toggled_on):
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_RELEASE and _controller and command:
-        _controller.send_command(command, toggled_on)
+        _send(toggled_on)
 
 func _on_switch_pressed():
     if $Switch.action_mode == Button.ACTION_MODE_BUTTON_PRESS and _controller and command:
-        _controller.send_command(command, $Switch.button_pressed)
+        _send($Switch.button_pressed)
 
 func _on_switch_button_up():
     if not type == SwitchType.MONOSTABLE:
-        _controller.send_command(command, $Switch.button_pressed)
+        _send($Switch.button_pressed)
+
+
+func _send(enabled:bool) -> void:
+    if command_argument == null:
+        _controller.send_command(command, enabled)
+        return
+    _controller.send_command(command, command_argument, enabled)

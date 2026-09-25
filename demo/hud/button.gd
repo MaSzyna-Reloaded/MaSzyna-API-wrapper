@@ -16,8 +16,10 @@ var vehicle:VehicleController:
             _dirty = true
 
 @export var command:String
-@export var command_argument:String
-@export var convert_argument_to_bool:bool #In godot 4.5 there will be ability to export variable with variant type
+## Sent with the command as it is - a number, a word ("drive") or, with
+## convert_argument_to_bool, the text "true"/"false" as a bool
+@export var command_argument:Variant = ""
+@export var convert_argument_to_bool:bool
 func _ready():
     _dirty = true
 var _t = 0.0

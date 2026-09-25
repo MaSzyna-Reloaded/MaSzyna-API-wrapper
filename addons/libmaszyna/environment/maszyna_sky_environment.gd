@@ -185,6 +185,16 @@ func process(_delta: float) -> void:
     pass
 
 
+## Holds the weather (rain, lightning) still while the runtime is paused (MaszynaRuntime.pause()).
+## A backend without weather of its own has nothing to hold.
+func pause_weather() -> void:
+    pass
+
+
+func unpause_weather() -> void:
+    pass
+
+
 func _apply_directional_light_settings(light: DirectionalLight3D) -> void:
     # the cabin view needs sharp near shadows only, the exterior view far ones
     var cabin_view: bool = (environment_node as MaszynaEnvironmentNode).cabin_view

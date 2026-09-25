@@ -414,6 +414,12 @@ func _enter_tree():
         MaszynaSkyEnvironment.FOG_NIGHT_DISTANCE_FACTOR_DEFAULT, TYPE_FLOAT,
         PROPERTY_HINT_RANGE, "0.01,4.0,0.0001,or_greater"
     )
+    # The wrapper's own .po files; MaszynaTranslationServer merges them with the game's catalogue into
+    # the one translation TranslationServer uses, so they are not listed in Localization
+    add_custom_project_setting(
+        "maszyna/locale/translations", PackedStringArray(), TYPE_PACKED_STRING_ARRAY,
+        PROPERTY_HINT_TYPE_STRING, "%d/%d:*.po" % [TYPE_STRING, PROPERTY_HINT_FILE]
+    )
     add_import_plugin(fiz_import_plugin)
 
 func _exit_tree():

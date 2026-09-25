@@ -17,6 +17,8 @@ const CULLING_DISTANCE_SETTING:StringName = &"maszyna/sound/culling_distance"
 ## each source, so it belongs on the bus - the per-source share of it is soundproofing, which
 ## already attenuates an external source by sqrt(0.2) for a closed cab.
 const EXTERIOR_BUS:StringName = &"Exterior"
+## The cab's own sounds (MmdSoundBankInstancer puts a cabin-only bank on it)
+const CABIN_BUS:StringName = &"Cabin"
 ## Corner frequency and trim per listener context: outside, closed cab, cab with an open window.
 const WALL_OPEN_HZ:float = 20500.0
 const WALL_CABIN_HZ:float = 1600.0
@@ -161,6 +163,8 @@ func _ready() -> void:
     _sweep_timer.timeout.connect(_refresh_active_banks)
     add_child(_sweep_timer)
     _sweep_timer.start()
+    MaszynaRuntime.paused.connect(_on_runtime_paused)
+    MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
 
 
 func set_listener(listener:TrainSoundListener3D) -> void:
@@ -790,6 +794,21 @@ func _has_bank_of_vehicle_node(vehicle:RailVehicle3D) -> bool:
         if runtime.vehicle == vehicle:
             return true
     return false
+
+
+## The world is paused (MaszynaRuntime.pause()): the system stops updating the banks, and the
+## buses the vehicles are heard on go silent - with every voice on them, including those that start
+## while the pause lasts (a scenery being loaded)
+func _on_runtime_paused() -> void:
+    process_mode = Node.PROCESS_MODE_DISABLED
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), true)
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), true)
+
+
+func _on_runtime_unpaused() -> void:
+    process_mode = Node.PROCESS_MODE_INHERIT
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(CABIN_BUS), false)
+    AudioServer.set_bus_mute(AudioServer.get_bus_index(EXTERIOR_BUS), false)
 
 
 func _unregister_bank(bank_id:int) -> void:

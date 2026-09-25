@@ -38,10 +38,10 @@ func _refresh() -> void:
 
     _rows["Camera"].text = (
         "%.0f, %.0f, %.0f" % [camera_position.x, camera_position.y, camera_position.z]
-        if statistics["has_camera"] else "none - nothing is streamed"
+        if statistics["has_camera"] else tr("none - nothing is streamed")
     )
     _rows["Camera chunk"].text = "%d, %d" % [camera_chunk.x, camera_chunk.y]
-    _rows["Draw distance"].text = "%.0f m (chunk %.0f m)" % [statistics["draw_distance"], statistics["chunk_size"]]
+    _rows["Draw distance"].text = tr("%.0f m (chunk %.0f m)") % [statistics["draw_distance"], statistics["chunk_size"]]
     _rows["Chunks"].text = str(statistics["chunks"])
     _rows["Chunks in range"].text = str(statistics["active_chunks"])
     _rows["Registered"].text = str(registered)
@@ -62,7 +62,7 @@ func _refresh() -> void:
     # Real (spot/omni) lights of the streamed scenery models; "synth" are the ones the street lamp
     # quirk derived for models that light the scene without declaring a spotlight submodel
     var lights:Dictionary = E3DRenderingServer.get_light_statistics()
-    _rows["Scenery lights"].text = "%d lit / %d (%d spot, %d omni, %d synth)" % [
+    _rows["Scenery lights"].text = tr("%d lit / %d (%d spot, %d omni, %d synth)") % [
         lights["lit"], lights["spot"] + lights["omni"], lights["spot"], lights["omni"],
         lights["synthesized"],
     ]

@@ -56,7 +56,7 @@ func _ready() -> void:
     rich_label.anchor_bottom = 0.5
     rich_label.add_theme_stylebox_override("normal", style)
     control.add_child(rich_label)
-    rich_label.append_text("Development console.\n")
+    rich_label.append_text(tr("Development console.") + "\n")
     line_edit.anchor_top = 0.5
     line_edit.anchor_right = 1.0
     line_edit.anchor_bottom = 0.5
@@ -319,10 +319,10 @@ func on_text_entered(new_text : String) -> void:
             var arguments := text_split.slice(1)
 
             if arguments.size() < console_commands[text_command].required:
-                print_line("[color=light_coral]	ERROR:[/color] Too few arguments! Required < %d >" % console_commands[text_command].required)
+                print_line("[color=light_coral]	ERROR:[/color] " + tr("Too few arguments! Required < %d >") % console_commands[text_command].required)
                 return
             elif arguments.size() > console_commands[text_command].arguments.size():
-                print_line("[color=light_coral]	ERROR:[/color] Too many arguments! < %d > Max" % console_commands[text_command].arguments.size())
+                print_line("[color=light_coral]	ERROR:[/color] " + tr("Too many arguments! < %d > Max") % console_commands[text_command].arguments.size())
                 return
 
             # Functions fail to call if passed the incorrect number of arguments, so fill out with blank strings.
@@ -330,7 +330,7 @@ func on_text_entered(new_text : String) -> void:
             console_commands[text_command].function.callv(_coerce_argument_tokens(arguments))
         else:
             console_unknown_command.emit(text_command)
-            print_line("[color=light_coral]	ERROR:[/color] Command not found.")
+            print_line("[color=light_coral]	ERROR:[/color] " + tr("Command not found."))
 
     await get_tree().process_frame
     _restore_line_edit_focus()
@@ -380,7 +380,7 @@ func commands_list() -> void:
 
     for command in commands:
         var arguments_string := ""
-        var description : String = console_commands[command].description
+        var description : String = tr(console_commands[command].description)
         for i in range(console_commands[command].arguments.size()):
             if i < console_commands[command].required:
                 arguments_string += "  [color=cornflower_blue]<" + console_commands[command].arguments[i] + ">[/color]"

@@ -532,12 +532,9 @@ generic_toggle_9={
 ]
 }
 
-[internationalization]
-
-locale/translations=PackedStringArray("res://addons/libmaszyna/translations/cz.po", "res://addons/libmaszyna/translations/hu.po", "res://addons/libmaszyna/translations/pl.po", "res://addons/libmaszyna/translations/zh.po")
-
 [maszyna]
 
+locale/translations=PackedStringArray("res://addons/libmaszyna/translations/cz.po", "res://addons/libmaszyna/translations/hu.po", "res://addons/libmaszyna/translations/pl.po", "res://addons/libmaszyna/translations/zh.po", "res://translations/cz.po", "res://translations/hu.po", "res://translations/pl.po", "res://translations/zh.po")
 scenery/shadows/blur=0.4
 cabin/shadows/blur=0.4
 scenery/shadows/max_distance=300.0

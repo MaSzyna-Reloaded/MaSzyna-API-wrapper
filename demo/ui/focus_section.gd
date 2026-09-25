@@ -20,7 +20,7 @@ signal navigate_right
 signal navigate_up
 signal navigate_down
 ## Enter while this section had the focus. A section of plain controls needs nothing more than this
-## to be usable from the keyboard - the "Wczytaj" row is one.
+## to be usable from the keyboard - the "Load" row is one.
 signal activated
 ## Escape while this section had the focus: one step back, and what back means is the user's own
 ## decision - it wires this to the screen's own "focus that section" method, to a close(), to a

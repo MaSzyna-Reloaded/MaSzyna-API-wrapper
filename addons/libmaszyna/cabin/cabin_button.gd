@@ -190,8 +190,8 @@ func _play_sound():
 ## The state under the caption.
 func _mouse_state() -> String:
     if monostable:
-        return MaszynaLocale.gettext(STATE_PUSHED if pushed else STATE_RELEASED)
-    return MaszynaLocale.gettext(STATE_ON if pushed else STATE_OFF)
+        return STATE_PUSHED if pushed else STATE_RELEASED
+    return STATE_ON if pushed else STATE_OFF
 
 func _on_pushed_changed():
     _set_mouse_state(_mouse_state())

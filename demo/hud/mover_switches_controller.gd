@@ -12,7 +12,7 @@ func _on_refresh_timer_timeout() -> void:
     %Forward.modulate = Color.GREEN if direction > 0 else Color.WHITE
     %Reverse.modulate = Color.GREEN if direction < 0 else Color.WHITE
     if universal_controller:
-        %MainPosition.text = "Pos: " + str(universal_controller.get_selector_position())
+        %MainPosition.text = tr("Pos: %s") % universal_controller.get_selector_position()
     else:
-        %MainPosition.text = "Pos: " + str(controller.get_controller_main_position())
-    %SecondPosition.text = "Pos: " + str(controller.get_controller_second_position())
+        %MainPosition.text = tr("Pos: %s") % controller.get_controller_main_position()
+    %SecondPosition.text = tr("Pos: %s") % controller.get_controller_second_position()

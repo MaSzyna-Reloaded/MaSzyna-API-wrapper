@@ -4,6 +4,21 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-25 - catalogue swapped, UI unchanged
+
+* **Symptom:** a UI translated through Godot's i18n kept its old texts after the game directory
+  changed. The language stayed the same, so only the game's catalogue was replaced.
+* **What proved it:** a headless probe with a `Node` counting `NOTIFICATION_TRANSLATION_CHANGED`
+  (Godot 4.7). `set_locale()` to a new locale: one notification. `set_locale()` to the same
+  locale, `add_translation()` and `remove_translation()`: none. A node entering the tree gets one
+  of its own.
+* **Fix:** `MaszynaTranslationServer::load_translation()` sends
+  `MainLoop::NOTIFICATION_TRANSLATION_CHANGED` itself when the locale did not change, and calls
+  `set_locale()` only when it did, so the tree is told once either way.
+* **Rule:** whoever swaps a translation in an unchanged locale notifies the main loop; a composed
+  text is built in `_notification(NOTIFICATION_TRANSLATION_CHANGED)`, which also arrives on
+  entering the tree.
+
 ## 2026-09-25 - cab clicks cut each other off: the controls bypassed gnd-sfx
 
 * **Symptom:** with several cab controls moved in quick succession, the sounds cut each other

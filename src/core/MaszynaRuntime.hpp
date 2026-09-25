@@ -26,6 +26,7 @@ namespace godot {
             double time_of_day = 0.0;
             double light_level = 1.0;
             double air_temperature = 0.0;
+            bool paused = false;
 
         protected:
             static void _bind_methods();
@@ -33,6 +34,8 @@ namespace godot {
         public:
             static const char *cache_clear_requested_signal;
             static const char *language_changed_signal;
+            static const char *paused_signal;
+            static const char *unpaused_signal;
             /// The original's own strings, untranslated - no catalogue needed
             static constexpr const char *DEFAULT_LANGUAGE = "en";
 
@@ -57,6 +60,12 @@ namespace godot {
             /// ("pl" for lang/pl.po; Global.asLang, Globals.cpp:137). Kept in the user settings.
             void set_language(const String &p_language);
             String get_language() const;
+            /// Stops the world while something covers it (a loading screen, the spinner of "Exit to
+            /// menu"): whoever runs a part of the simulation, or its sound, holds it on "paused"
+            /// and lets it go on "unpaused"
+            void pause();
+            void unpause();
+            bool is_paused() const;
     };
 
 } // namespace godot

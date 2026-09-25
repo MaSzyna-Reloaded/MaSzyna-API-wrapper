@@ -1,0 +1,771 @@
+# Strings of the demo's own interface that the game's catalogue (lang/*.po) does not have.
+# MaszynaTranslationServer merges them under the game's catalogue (maszyna/locale/translations).
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Trainset"
+msgstr ""
+
+msgid "Load"
+msgstr ""
+
+msgid "Apply skin"
+msgstr ""
+
+msgid "Search scenario"
+msgstr ""
+
+msgid "Pre-Alpha Demo Release %s-%s-%s (build %s)"
+msgstr ""
+
+msgid "Pre-Alpha Demo Release (unbuilt)"
+msgstr ""
+
+msgid "Loading %s..."
+msgstr ""
+
+msgid "Exit to menu"
+msgstr ""
+
+msgid "Leave the scenery and go back to the menu?"
+msgstr ""
+
+msgid "MaSzyna game folder data is not set or invalid."
+msgstr ""
+
+msgid "Controls"
+msgstr ""
+
+msgid "Toggle controls"
+msgstr ""
+
+msgid "General"
+msgstr ""
+
+msgid "Engine"
+msgstr ""
+
+msgid "Brakes"
+msgstr ""
+
+msgid "Spring brake"
+msgstr ""
+
+msgid "Lights"
+msgstr ""
+
+msgid "Doors"
+msgstr ""
+
+msgid "Security"
+msgstr ""
+
+msgid "Controller"
+msgstr ""
+
+msgid "Mini Map"
+msgstr ""
+
+msgid "Scenery Streaming"
+msgstr ""
+
+msgid "Track & Traction"
+msgstr ""
+
+msgid "Weather and Time"
+msgstr ""
+
+msgid "Help"
+msgstr ""
+
+msgid "Couple front"
+msgstr ""
+
+msgid "Decouple front"
+msgstr ""
+
+msgid "Couple rear"
+msgstr ""
+
+msgid "Decouple rear"
+msgstr ""
+
+msgid "Battery"
+msgstr ""
+
+msgid "Horn low"
+msgstr ""
+
+msgid "Horn high"
+msgstr ""
+
+msgid "Whistle"
+msgstr ""
+
+msgid "Speed"
+msgstr ""
+
+msgid "Type: %s"
+msgstr ""
+
+msgid "Overload relay reset"
+msgstr ""
+
+msgid "Converter fuse reset"
+msgstr ""
+
+msgid "Main"
+msgstr ""
+
+msgid "Compressor"
+msgstr ""
+
+msgid "Oil Pump"
+msgstr ""
+
+msgid "Fuel Pump"
+msgstr ""
+
+msgid "RPM"
+msgstr ""
+
+msgid "Oil"
+msgstr ""
+
+msgid "Converter"
+msgstr ""
+
+msgid "Pantographs valve"
+msgstr ""
+
+msgid "First pantograph"
+msgstr ""
+
+msgid "Second pantograph"
+msgstr ""
+
+msgid "Pantograph compressor"
+msgstr ""
+
+msgid "Drop all pantographs"
+msgstr ""
+
+msgid "Current"
+msgstr ""
+
+msgid "Drive"
+msgstr ""
+
+msgid "Full"
+msgstr ""
+
+msgid "Emergency"
+msgstr ""
+
+msgid "EP Fuse"
+msgstr ""
+
+msgid "EP Level"
+msgstr ""
+
+msgid "Level"
+msgstr ""
+
+msgid "Releaser"
+msgstr ""
+
+msgid "Pipe"
+msgstr ""
+
+msgid "Cylinder"
+msgstr ""
+
+msgid "Forward"
+msgstr ""
+
+msgid "Backward"
+msgstr ""
+
+msgid "Main -"
+msgstr ""
+
+msgid "Main +"
+msgstr ""
+
+msgid "Shunt -"
+msgstr ""
+
+msgid "Shunt +"
+msgstr ""
+
+msgid "Pos: %s"
+msgstr ""
+
+msgid "On"
+msgstr ""
+
+msgid "Off"
+msgstr ""
+
+msgid "Enable"
+msgstr ""
+
+msgid "Disable"
+msgstr ""
+
+msgid "Release rod"
+msgstr ""
+
+msgid "Enabled"
+msgstr ""
+
+msgid "Active"
+msgstr ""
+
+msgid "Braking"
+msgstr ""
+
+msgid "Light selector -"
+msgstr ""
+
+msgid "Light selector +"
+msgstr ""
+
+msgid "Front end"
+msgstr ""
+
+msgid "Rear end"
+msgstr ""
+
+msgid "Dim headlights"
+msgstr ""
+
+msgid "Roof light"
+msgstr ""
+
+msgid "Devices light"
+msgstr ""
+
+msgid "Upper headlight"
+msgstr ""
+
+msgid "Left headlight"
+msgstr ""
+
+msgid "Right headlight"
+msgstr ""
+
+msgid "Left red marker"
+msgstr ""
+
+msgid "Right red marker"
+msgstr ""
+
+msgid "Open left doors"
+msgstr ""
+
+msgid "Open right doors"
+msgstr ""
+
+msgid "Permit left doors"
+msgstr ""
+
+msgid "Permit right doors"
+msgstr ""
+
+msgid "Lock doors"
+msgstr ""
+
+msgid "Permit Step"
+msgstr ""
+
+msgid "Doors Locked"
+msgstr ""
+
+msgid "Left Doors Open"
+msgstr ""
+
+msgid "Right Doors Open"
+msgstr ""
+
+msgid "CA/SHP"
+msgstr ""
+
+msgid "CA"
+msgstr ""
+
+msgid "SHP"
+msgstr ""
+
+msgid "Settings"
+msgstr ""
+
+msgid "Calendar"
+msgstr ""
+
+msgid "Weather"
+msgstr ""
+
+msgid "Fog"
+msgstr ""
+
+msgid "Wind"
+msgstr ""
+
+msgid "Dir"
+msgstr ""
+
+msgid "Rain"
+msgstr ""
+
+msgid "Clouds"
+msgstr ""
+
+msgid "Fog Distance"
+msgstr ""
+
+msgid "Time"
+msgstr ""
+
+msgid "Day"
+msgstr ""
+
+msgid "Month"
+msgstr ""
+
+msgid "Year"
+msgstr ""
+
+msgid "Time Speed"
+msgstr ""
+
+msgid "Use system time"
+msgstr ""
+
+msgid "Vehicle"
+msgstr ""
+
+msgid "Player"
+msgstr ""
+
+msgid "UI"
+msgstr ""
+
+msgid "Camera"
+msgstr ""
+
+msgid "Camera chunk"
+msgstr ""
+
+msgid "Draw distance"
+msgstr ""
+
+msgid "Chunks"
+msgstr ""
+
+msgid "Chunks in range"
+msgstr ""
+
+msgid "Registered"
+msgstr ""
+
+msgid "Streamed in"
+msgstr ""
+
+msgid "Pending builds"
+msgstr ""
+
+msgid "Pending nearby"
+msgstr ""
+
+msgid "Nearby ready"
+msgstr ""
+
+msgid "Pending clears"
+msgstr ""
+
+msgid "Planning"
+msgstr ""
+
+msgid "Builds/s"
+msgstr ""
+
+msgid "Budget"
+msgstr ""
+
+msgid "Last pass"
+msgstr ""
+
+msgid "Owners"
+msgstr ""
+
+msgid "Scenery lights"
+msgstr ""
+
+msgid "none - nothing is streamed"
+msgstr ""
+
+msgid "%.0f m (chunk %.0f m)"
+msgstr ""
+
+msgid "%d lit / %d (%d spot, %d omni, %d synth)"
+msgstr ""
+
+msgid "Frame"
+msgstr ""
+
+msgid "FPS"
+msgstr ""
+
+msgid "Process"
+msgstr ""
+
+msgid "Physics"
+msgstr ""
+
+msgid "Render CPU"
+msgstr ""
+
+msgid "Render GPU"
+msgstr ""
+
+msgid "Unaccounted"
+msgstr ""
+
+msgid "Physics steps"
+msgstr ""
+
+msgid "Objects"
+msgstr ""
+
+msgid "Draw calls"
+msgstr ""
+
+msgid "Primitives"
+msgstr ""
+
+msgid "Video memory"
+msgstr ""
+
+msgid "%.1f (max %d)"
+msgstr ""
+
+msgid "Track"
+msgstr ""
+
+msgid "Offset"
+msgstr ""
+
+msgid "Track length"
+msgstr ""
+
+msgid "Switch"
+msgstr ""
+
+msgid "Position"
+msgstr ""
+
+msgid "Pantograph 1"
+msgstr ""
+
+msgid "Wire 1"
+msgstr ""
+
+msgid "Pantograph 2"
+msgstr ""
+
+msgid "Wire 2"
+msgstr ""
+
+msgid "Slider"
+msgstr ""
+
+msgid "none"
+msgstr ""
+
+msgid "(no train id)"
+msgstr ""
+
+msgid "(unnamed)"
+msgstr ""
+
+msgid "yes, branch %d%s"
+msgstr ""
+
+msgid " (right)"
+msgstr ""
+
+msgid " (left)"
+msgstr ""
+
+msgid "no"
+msgstr ""
+
+msgid "not an electric vehicle"
+msgstr ""
+
+msgid "down"
+msgstr ""
+
+msgid "up, %.0f V"
+msgstr ""
+
+msgid "NO WIRE in reach"
+msgstr ""
+
+msgid "%.2f m above, %.0f V"
+msgstr ""
+
+msgid "%.3f m half width + %.3f m horn"
+msgstr ""
+
+msgid "%s (type: %s)"
+msgstr ""
+
+msgid "Toggle Weather Controls"
+msgstr ""
+
+msgid "Brake Level Increase"
+msgstr ""
+
+msgid "Brake Level Decrease"
+msgstr ""
+
+msgid "Brake Level Charging"
+msgstr ""
+
+msgid "Brake Level Drive"
+msgstr ""
+
+msgid "Local Brake Increase"
+msgstr ""
+
+msgid "Local Brake Decrease"
+msgstr ""
+
+msgid "Coupler Connect"
+msgstr ""
+
+msgid "Coupler Disconnect"
+msgstr ""
+
+msgid "Coupler Disconnect Occupied"
+msgstr ""
+
+msgid "Manual Brake Increase"
+msgstr ""
+
+msgid "Manual Brake Decrease"
+msgstr ""
+
+msgid "Direction Increase"
+msgstr ""
+
+msgid "Direction Decrease"
+msgstr ""
+
+msgid "Brake Release"
+msgstr ""
+
+msgid "Security Acknowledge"
+msgstr ""
+
+msgid "Devices Light Toggle"
+msgstr ""
+
+msgid "Cabin Light Toggle"
+msgstr ""
+
+msgid "Oil Pump Toggle"
+msgstr ""
+
+msgid "Fuel Pump Toggle"
+msgstr ""
+
+msgid "Radio Toggle"
+msgstr ""
+
+msgid "Main Switch On"
+msgstr ""
+
+msgid "Main Switch Off"
+msgstr ""
+
+msgid "Second Controller Increase"
+msgstr ""
+
+msgid "Second Controller Decrease"
+msgstr ""
+
+msgid "Flashlight Toggle"
+msgstr ""
+
+msgid "Main Controller Increase"
+msgstr ""
+
+msgid "Main Controller Decrease"
+msgstr ""
+
+msgid "Battery Toggle"
+msgstr ""
+
+msgid "Cab Activation Toggle"
+msgstr ""
+
+msgid "Spring Brake Toggle"
+msgstr ""
+
+msgid "Spring Brake Shut Off Toggle"
+msgstr ""
+
+msgid "Cabin Mode Toggle"
+msgstr ""
+
+msgid "External View Cycle"
+msgstr ""
+
+msgid "Hud Toggle"
+msgstr ""
+
+msgid "Change Vehicle"
+msgstr ""
+
+msgid "Horn Low"
+msgstr ""
+
+msgid "Horn High"
+msgstr ""
+
+msgid "Cabin Next"
+msgstr ""
+
+msgid "Cabin Previous"
+msgstr ""
+
+msgid "Converter Toggle"
+msgstr ""
+
+msgid "Compressor Toggle"
+msgstr ""
+
+msgid "Pantograph Front Toggle"
+msgstr ""
+
+msgid "Pantograph Rear Toggle"
+msgstr ""
+
+msgid "Fuse Reset"
+msgstr ""
+
+msgid "Converter Fuse Reset"
+msgstr ""
+
+msgid "Pantograph Compressor Activate"
+msgstr ""
+
+msgid "Pantograph Compressor Valve Toggle"
+msgstr ""
+
+msgid "Security Cabsignal Acknowledge"
+msgstr ""
+
+msgid "Pantographs Drop All Toggle"
+msgstr ""
+
+msgid "Wipers Switch Increase"
+msgstr ""
+
+msgid "Wipers Switch Decrease"
+msgstr ""
+
+msgid "Radio Channel Increase"
+msgstr ""
+
+msgid "Radio Channel Decrease"
+msgstr ""
+
+msgid "Headlight Left Toggle"
+msgstr ""
+
+msgid "Headlight Right Toggle"
+msgstr ""
+
+msgid "Headlight Upper Toggle"
+msgstr ""
+
+msgid "Redmarker Left Toggle"
+msgstr ""
+
+msgid "Redmarker Right Toggle"
+msgstr ""
+
+msgid "Headlight Rear Left Toggle"
+msgstr ""
+
+msgid "Headlight Rear Right Toggle"
+msgstr ""
+
+msgid "Headlight Rear Upper Toggle"
+msgstr ""
+
+msgid "Redmarker Rear Left Toggle"
+msgstr ""
+
+msgid "Redmarker Rear Right Toggle"
+msgstr ""
+
+msgid "Pantograph Toggle Selected"
+msgstr ""
+
+msgid "Lights Preset Next"
+msgstr ""
+
+msgid "Lights Preset Previous"
+msgstr ""
+
+msgid "Doors Permit Preset Next"
+msgstr ""
+
+msgid "Doors Permit Preset Previous"
+msgstr ""
+
+msgid "Headlights Dim Toggle"
+msgstr ""
+
+msgid "Radio Stop Send"
+msgstr ""
+
+msgid "Generic Toggle 0"
+msgstr ""
+
+msgid "Generic Toggle 1"
+msgstr ""
+
+msgid "Generic Toggle 2"
+msgstr ""
+
+msgid "Generic Toggle 3"
+msgstr ""
+
+msgid "Generic Toggle 4"
+msgstr ""
+
+msgid "Generic Toggle 5"
+msgstr ""
+
+msgid "Generic Toggle 6"
+msgstr ""
+
+msgid "Generic Toggle 7"
+msgstr ""
+
+msgid "Generic Toggle 8"
+msgstr ""
+
+msgid "Generic Toggle 9"
+msgstr ""

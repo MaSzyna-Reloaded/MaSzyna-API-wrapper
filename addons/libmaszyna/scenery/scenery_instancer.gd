@@ -114,7 +114,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
         PARSE_PROGRESS, 0.6
     )
-    await _report_progress(root, 0.6, "Building triangles")
+    await _report_progress(root, 0.6, "Building terrain")
     var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
 
     if root.use_cache and context.cacheable:
@@ -132,6 +132,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
 
 
 ## Reports the next loading stage and lets a frame be drawn (e.g. a loading screen) before it runs.
+## `message` is a msgid the loading screen's Label translates; one composed with a value is
+## translated before the value goes in.
 static func _report_progress(root:MaszynaIncludeNode, progress:float, message:String) -> void:
     root.load_progress.emit(progress, message)
     await root.get_tree().process_frame
@@ -194,7 +196,7 @@ static func _instantiate_server_data(
             root._e3d_rids.append(e3d_rid)
         built_count += 1
         await _report_progress_throttled(
-            root, lerpf(progress_from, progress_to, built_count / total), "Registering %s" % model_data.model_filename
+            root, lerpf(progress_from, progress_to, built_count / total), TranslationServer.translate("Registering %s") % model_data.model_filename
         )
 
 
@@ -258,7 +260,7 @@ static func _attach_objects(
         _apply_skin_overrides(root, node)
         root.add_child(node)
         var progress:float = lerpf(progress_from, progress_to, float(i) / float(objects.size()))
-        await _report_progress_throttled(root, progress, "Instancing %s" % node.name)
+        await _report_progress_throttled(root, progress, TranslationServer.translate("Instancing %s") % node.name)
     if Engine.is_editor_hint():
         root.SceneryEditor.update_owners(root)
 
@@ -508,7 +510,7 @@ func _parse_file_with_progress(root:MaszynaIncludeNode, parameters:Dictionary) -
         var parsed:float = minf(
             float(queue.get_completed_count() - parsed_before) / float(maxi(include_count, 1)), 1.0
         )
-        await _report_progress(root, PARSE_PROGRESS * parsed, "Parsing %s" % root.filename)
+        await _report_progress(root, PARSE_PROGRESS * parsed, tr("Parsing %s") % root.filename)
     var context:MaszynaImporterContext = queue.wait(task_id) as MaszynaImporterContext
     _active_queues.erase(queue)
     if not context:

@@ -1,0 +1,771 @@
+# Strings of the demo's own interface that the game's catalogue (lang/*.po) does not have.
+# MaszynaTranslationServer merges them under the game's catalogue (maszyna/locale/translations).
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: pl\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Trainset"
+msgstr "Skład"
+
+msgid "Load"
+msgstr "Wczytaj"
+
+msgid "Apply skin"
+msgstr "Zatwierdź skin"
+
+msgid "Search scenario"
+msgstr "Szukaj scenariusza"
+
+msgid "Pre-Alpha Demo Release %s-%s-%s (build %s)"
+msgstr "Pre-Alpha Demo %s-%s-%s (kompilacja %s)"
+
+msgid "Pre-Alpha Demo Release (unbuilt)"
+msgstr "Pre-Alpha Demo (bez kompilacji)"
+
+msgid "Loading %s..."
+msgstr "Wczytywanie %s..."
+
+msgid "Exit to menu"
+msgstr "Wyjdź do menu"
+
+msgid "Leave the scenery and go back to the menu?"
+msgstr "Opuścić scenerię i wrócić do menu?"
+
+msgid "MaSzyna game folder data is not set or invalid."
+msgstr "Katalog z danymi gry MaSzyna nie jest ustawiony lub jest nieprawidłowy."
+
+msgid "Controls"
+msgstr "Sterowanie"
+
+msgid "Toggle controls"
+msgstr "Przełącz sterowanie"
+
+msgid "General"
+msgstr "Ogólne"
+
+msgid "Engine"
+msgstr "Silnik"
+
+msgid "Brakes"
+msgstr "Hamulce"
+
+msgid "Spring brake"
+msgstr "Hamulec sprężynowy"
+
+msgid "Lights"
+msgstr "Światła"
+
+msgid "Doors"
+msgstr "Drzwi"
+
+msgid "Security"
+msgstr "Czuwak i SHP"
+
+msgid "Controller"
+msgstr "Nastawnik"
+
+msgid "Mini Map"
+msgstr "Minimapa"
+
+msgid "Scenery Streaming"
+msgstr "Strumieniowanie scenerii"
+
+msgid "Track & Traction"
+msgstr "Tor i sieć trakcyjna"
+
+msgid "Weather and Time"
+msgstr "Pogoda i czas"
+
+msgid "Help"
+msgstr "Pomoc"
+
+msgid "Couple front"
+msgstr "Sprzęgnij z przodu"
+
+msgid "Decouple front"
+msgstr "Rozprzęgnij z przodu"
+
+msgid "Couple rear"
+msgstr "Sprzęgnij z tyłu"
+
+msgid "Decouple rear"
+msgstr "Rozprzęgnij z tyłu"
+
+msgid "Battery"
+msgstr "Bateria"
+
+msgid "Horn low"
+msgstr "Syrena (ton niski)"
+
+msgid "Horn high"
+msgstr "Syrena (ton wysoki)"
+
+msgid "Whistle"
+msgstr "Gwizdawka"
+
+msgid "Speed"
+msgstr "Prędkość"
+
+msgid "Type: %s"
+msgstr "Typ: %s"
+
+msgid "Overload relay reset"
+msgstr "Przekaźnik nadmiarowy silników trakcyjnych"
+
+msgid "Converter fuse reset"
+msgstr "Przekaźnik nadmiarowy przetwornicy"
+
+msgid "Main"
+msgstr "Wyłącznik szybki"
+
+msgid "Compressor"
+msgstr "Sprężarka"
+
+msgid "Oil Pump"
+msgstr "Pompa oleju"
+
+msgid "Fuel Pump"
+msgstr "Pompa paliwa"
+
+msgid "RPM"
+msgstr "Obroty"
+
+msgid "Oil"
+msgstr "Olej"
+
+msgid "Converter"
+msgstr "Przetwornica"
+
+msgid "Pantographs valve"
+msgstr "Zawór pantografów"
+
+msgid "First pantograph"
+msgstr "Pantograf A"
+
+msgid "Second pantograph"
+msgstr "Pantograf B"
+
+msgid "Pantograph compressor"
+msgstr "Sprężarka pantografów"
+
+msgid "Drop all pantographs"
+msgstr "Opuść wszystkie pantografy"
+
+msgid "Current"
+msgstr "Prąd"
+
+msgid "Drive"
+msgstr "Jazda"
+
+msgid "Full"
+msgstr "Pełne"
+
+msgid "Emergency"
+msgstr "Nagłe"
+
+msgid "EP Fuse"
+msgstr "Bezpiecznik EP"
+
+msgid "EP Level"
+msgstr "Poziom EP"
+
+msgid "Level"
+msgstr "Poziom"
+
+msgid "Releaser"
+msgstr "Odluźniacz"
+
+msgid "Pipe"
+msgstr "Przewód główny"
+
+msgid "Cylinder"
+msgstr "Cylinder"
+
+msgid "Forward"
+msgstr "Do przodu"
+
+msgid "Backward"
+msgstr "Do tyłu"
+
+msgid "Main -"
+msgstr "Nastawnik -"
+
+msgid "Main +"
+msgstr "Nastawnik +"
+
+msgid "Shunt -"
+msgstr "Bocznik -"
+
+msgid "Shunt +"
+msgstr "Bocznik +"
+
+msgid "Pos: %s"
+msgstr "Poz.: %s"
+
+msgid "On"
+msgstr "Załącz"
+
+msgid "Off"
+msgstr "Wyłącz"
+
+msgid "Enable"
+msgstr "Włącz"
+
+msgid "Disable"
+msgstr "Odłącz"
+
+msgid "Release rod"
+msgstr "Cięgło odluźniacza"
+
+msgid "Enabled"
+msgstr "Włączony"
+
+msgid "Active"
+msgstr "Aktywny"
+
+msgid "Braking"
+msgstr "Hamuje"
+
+msgid "Light selector -"
+msgstr "Programator świateł -"
+
+msgid "Light selector +"
+msgstr "Programator świateł +"
+
+msgid "Front end"
+msgstr "Czoło przednie"
+
+msgid "Rear end"
+msgstr "Czoło tylne"
+
+msgid "Dim headlights"
+msgstr "Przyciemnienie reflektorów"
+
+msgid "Roof light"
+msgstr "Oświetlenie kabiny"
+
+msgid "Devices light"
+msgstr "Oświetlenie przyrządów"
+
+msgid "Upper headlight"
+msgstr "Reflektor górny"
+
+msgid "Left headlight"
+msgstr "Reflektor lewy"
+
+msgid "Right headlight"
+msgstr "Reflektor prawy"
+
+msgid "Left red marker"
+msgstr "Sygnał lewy"
+
+msgid "Right red marker"
+msgstr "Sygnał prawy"
+
+msgid "Open left doors"
+msgstr "Otwórz drzwi lewe"
+
+msgid "Open right doors"
+msgstr "Otwórz drzwi prawe"
+
+msgid "Permit left doors"
+msgstr "Zezwól na drzwi lewe"
+
+msgid "Permit right doors"
+msgstr "Zezwól na drzwi prawe"
+
+msgid "Lock doors"
+msgstr "Blokada drzwi"
+
+msgid "Permit Step"
+msgstr "Zezwól na stopień"
+
+msgid "Doors Locked"
+msgstr "Drzwi zablokowane"
+
+msgid "Left Doors Open"
+msgstr "Drzwi lewe otwarte"
+
+msgid "Right Doors Open"
+msgstr "Drzwi prawe otwarte"
+
+msgid "CA/SHP"
+msgstr "CA/SHP"
+
+msgid "CA"
+msgstr "CA"
+
+msgid "SHP"
+msgstr "SHP"
+
+msgid "Settings"
+msgstr "Ustawienia"
+
+msgid "Calendar"
+msgstr "Kalendarz"
+
+msgid "Weather"
+msgstr "Pogoda"
+
+msgid "Fog"
+msgstr "Mgła"
+
+msgid "Wind"
+msgstr "Wiatr"
+
+msgid "Dir"
+msgstr "Kier."
+
+msgid "Rain"
+msgstr "Deszcz"
+
+msgid "Clouds"
+msgstr "Chmury"
+
+msgid "Fog Distance"
+msgstr "Zasięg mgły"
+
+msgid "Time"
+msgstr "Czas"
+
+msgid "Day"
+msgstr "Dzień"
+
+msgid "Month"
+msgstr "Miesiąc"
+
+msgid "Year"
+msgstr "Rok"
+
+msgid "Time Speed"
+msgstr "Upływ czasu"
+
+msgid "Use system time"
+msgstr "Czas systemowy"
+
+msgid "Vehicle"
+msgstr "Pojazd"
+
+msgid "Player"
+msgstr "Gracz"
+
+msgid "UI"
+msgstr "Interfejs"
+
+msgid "Camera"
+msgstr "Kamera"
+
+msgid "Camera chunk"
+msgstr "Fragment kamery"
+
+msgid "Draw distance"
+msgstr "Zasięg widoczności"
+
+msgid "Chunks"
+msgstr "Fragmenty"
+
+msgid "Chunks in range"
+msgstr "Fragmenty w zasięgu"
+
+msgid "Registered"
+msgstr "Zarejestrowane"
+
+msgid "Streamed in"
+msgstr "Wczytane"
+
+msgid "Pending builds"
+msgstr "Oczekujące budowy"
+
+msgid "Pending nearby"
+msgstr "Oczekujące w pobliżu"
+
+msgid "Nearby ready"
+msgstr "Gotowe w pobliżu"
+
+msgid "Pending clears"
+msgstr "Oczekujące usunięcia"
+
+msgid "Planning"
+msgstr "Planowanie"
+
+msgid "Builds/s"
+msgstr "Budowy/s"
+
+msgid "Budget"
+msgstr "Budżet"
+
+msgid "Last pass"
+msgstr "Ostatni przebieg"
+
+msgid "Owners"
+msgstr "Właściciele"
+
+msgid "Scenery lights"
+msgstr "Światła scenerii"
+
+msgid "none - nothing is streamed"
+msgstr "brak - nic nie jest wczytywane"
+
+msgid "%.0f m (chunk %.0f m)"
+msgstr "%.0f m (fragment %.0f m)"
+
+msgid "%d lit / %d (%d spot, %d omni, %d synth)"
+msgstr "%d świeci / %d (%d punktowe, %d dookólne, %d syntet.)"
+
+msgid "Frame"
+msgstr "Klatka"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Process"
+msgstr "Proces"
+
+msgid "Physics"
+msgstr "Fizyka"
+
+msgid "Render CPU"
+msgstr "Render CPU"
+
+msgid "Render GPU"
+msgstr "Render GPU"
+
+msgid "Unaccounted"
+msgstr "Nieprzypisane"
+
+msgid "Physics steps"
+msgstr "Kroki fizyki"
+
+msgid "Objects"
+msgstr "Obiekty"
+
+msgid "Draw calls"
+msgstr "Wywołania rysowania"
+
+msgid "Primitives"
+msgstr "Prymitywy"
+
+msgid "Video memory"
+msgstr "Pamięć wideo"
+
+msgid "%.1f (max %d)"
+msgstr "%.1f (maks. %d)"
+
+msgid "Track"
+msgstr "Tor"
+
+msgid "Offset"
+msgstr "Przesunięcie"
+
+msgid "Track length"
+msgstr "Długość toru"
+
+msgid "Switch"
+msgstr "Rozjazd"
+
+msgid "Position"
+msgstr "Pozycja"
+
+msgid "Pantograph 1"
+msgstr "Pantograf 1"
+
+msgid "Wire 1"
+msgstr "Przewód 1"
+
+msgid "Pantograph 2"
+msgstr "Pantograf 2"
+
+msgid "Wire 2"
+msgstr "Przewód 2"
+
+msgid "Slider"
+msgstr "Ślizg"
+
+msgid "none"
+msgstr "brak"
+
+msgid "(no train id)"
+msgstr "(bez identyfikatora)"
+
+msgid "(unnamed)"
+msgstr "(bez nazwy)"
+
+msgid "yes, branch %d%s"
+msgstr "tak, odgałęzienie %d%s"
+
+msgid " (right)"
+msgstr " (prawy)"
+
+msgid " (left)"
+msgstr " (lewy)"
+
+msgid "no"
+msgstr "nie"
+
+msgid "not an electric vehicle"
+msgstr "nie jest pojazdem elektrycznym"
+
+msgid "down"
+msgstr "opuszczony"
+
+msgid "up, %.0f V"
+msgstr "podniesiony, %.0f V"
+
+msgid "NO WIRE in reach"
+msgstr "BRAK PRZEWODU w zasięgu"
+
+msgid "%.2f m above, %.0f V"
+msgstr "%.2f m nad, %.0f V"
+
+msgid "%.3f m half width + %.3f m horn"
+msgstr "%.3f m pół szerokości + %.3f m róg"
+
+msgid "%s (type: %s)"
+msgstr "%s (typ: %s)"
+
+msgid "Toggle Weather Controls"
+msgstr "Panel pogody"
+
+msgid "Brake Level Increase"
+msgstr "Hamulec zespolony: więcej"
+
+msgid "Brake Level Decrease"
+msgstr "Hamulec zespolony: mniej"
+
+msgid "Brake Level Charging"
+msgstr "Hamulec zespolony: napełnianie"
+
+msgid "Brake Level Drive"
+msgstr "Hamulec zespolony: jazda"
+
+msgid "Local Brake Increase"
+msgstr "Hamulec pomocniczy: więcej"
+
+msgid "Local Brake Decrease"
+msgstr "Hamulec pomocniczy: mniej"
+
+msgid "Coupler Connect"
+msgstr "Sprzęgnij"
+
+msgid "Coupler Disconnect"
+msgstr "Rozprzęgnij"
+
+msgid "Coupler Disconnect Occupied"
+msgstr "Rozprzęgnij zajmowany pojazd"
+
+msgid "Manual Brake Increase"
+msgstr "Hamulec ręczny: więcej"
+
+msgid "Manual Brake Decrease"
+msgstr "Hamulec ręczny: mniej"
+
+msgid "Direction Increase"
+msgstr "Nastawnik kierunku: do przodu"
+
+msgid "Direction Decrease"
+msgstr "Nastawnik kierunku: do tyłu"
+
+msgid "Brake Release"
+msgstr "Odluźniacz"
+
+msgid "Security Acknowledge"
+msgstr "Zbij czuwak"
+
+msgid "Devices Light Toggle"
+msgstr "Oświetlenie przyrządów"
+
+msgid "Cabin Light Toggle"
+msgstr "Oświetlenie kabiny"
+
+msgid "Oil Pump Toggle"
+msgstr "Pompa oleju"
+
+msgid "Fuel Pump Toggle"
+msgstr "Pompa paliwa"
+
+msgid "Radio Toggle"
+msgstr "Radio"
+
+msgid "Main Switch On"
+msgstr "Wyłącznik szybki: załącz"
+
+msgid "Main Switch Off"
+msgstr "Wyłącznik szybki: wyłącz"
+
+msgid "Second Controller Increase"
+msgstr "Bocznik: więcej"
+
+msgid "Second Controller Decrease"
+msgstr "Bocznik: mniej"
+
+msgid "Flashlight Toggle"
+msgstr "Latarka"
+
+msgid "Main Controller Increase"
+msgstr "Nastawnik jazdy: więcej"
+
+msgid "Main Controller Decrease"
+msgstr "Nastawnik jazdy: mniej"
+
+msgid "Battery Toggle"
+msgstr "Bateria"
+
+msgid "Cab Activation Toggle"
+msgstr "Aktywacja kabiny"
+
+msgid "Spring Brake Toggle"
+msgstr "Hamulec sprężynowy"
+
+msgid "Spring Brake Shut Off Toggle"
+msgstr "Odcięcie hamulca sprężynowego"
+
+msgid "Cabin Mode Toggle"
+msgstr "Tryb kabiny"
+
+msgid "External View Cycle"
+msgstr "Widok zewnętrzny"
+
+msgid "Hud Toggle"
+msgstr "HUD"
+
+msgid "Change Vehicle"
+msgstr "Zmień pojazd"
+
+msgid "Horn Low"
+msgstr "Syrena (ton niski)"
+
+msgid "Horn High"
+msgstr "Syrena (ton wysoki)"
+
+msgid "Cabin Next"
+msgstr "Następna kabina"
+
+msgid "Cabin Previous"
+msgstr "Poprzednia kabina"
+
+msgid "Converter Toggle"
+msgstr "Przetwornica"
+
+msgid "Compressor Toggle"
+msgstr "Sprężarka"
+
+msgid "Pantograph Front Toggle"
+msgstr "Pantograf przedni"
+
+msgid "Pantograph Rear Toggle"
+msgstr "Pantograf tylny"
+
+msgid "Fuse Reset"
+msgstr "Przekaźnik nadmiarowy silników trakcyjnych"
+
+msgid "Converter Fuse Reset"
+msgstr "Przekaźnik nadmiarowy przetwornicy"
+
+msgid "Pantograph Compressor Activate"
+msgstr "Sprężarka pantografów"
+
+msgid "Pantograph Compressor Valve Toggle"
+msgstr "Kurek trójdrogowy pantografów"
+
+msgid "Security Cabsignal Acknowledge"
+msgstr "Zbij SHP"
+
+msgid "Pantographs Drop All Toggle"
+msgstr "Opuść wszystkie pantografy"
+
+msgid "Wipers Switch Increase"
+msgstr "Wycieraczki: więcej"
+
+msgid "Wipers Switch Decrease"
+msgstr "Wycieraczki: mniej"
+
+msgid "Radio Channel Increase"
+msgstr "Kanał radia: następny"
+
+msgid "Radio Channel Decrease"
+msgstr "Kanał radia: poprzedni"
+
+msgid "Headlight Left Toggle"
+msgstr "Reflektor lewy"
+
+msgid "Headlight Right Toggle"
+msgstr "Reflektor prawy"
+
+msgid "Headlight Upper Toggle"
+msgstr "Reflektor górny"
+
+msgid "Redmarker Left Toggle"
+msgstr "Sygnał lewy"
+
+msgid "Redmarker Right Toggle"
+msgstr "Sygnał prawy"
+
+msgid "Headlight Rear Left Toggle"
+msgstr "Tylny reflektor lewy"
+
+msgid "Headlight Rear Right Toggle"
+msgstr "Tylny reflektor prawy"
+
+msgid "Headlight Rear Upper Toggle"
+msgstr "Tylny reflektor górny"
+
+msgid "Redmarker Rear Left Toggle"
+msgstr "Tylny sygnał lewy"
+
+msgid "Redmarker Rear Right Toggle"
+msgstr "Tylny sygnał prawy"
+
+msgid "Pantograph Toggle Selected"
+msgstr "Wybrany pantograf"
+
+msgid "Lights Preset Next"
+msgstr "Programator świateł: następny"
+
+msgid "Lights Preset Previous"
+msgstr "Programator świateł: poprzedni"
+
+msgid "Doors Permit Preset Next"
+msgstr "Zezwolenie na drzwi: następne"
+
+msgid "Doors Permit Preset Previous"
+msgstr "Zezwolenie na drzwi: poprzednie"
+
+msgid "Headlights Dim Toggle"
+msgstr "Przyciemnienie reflektorów"
+
+msgid "Radio Stop Send"
+msgstr "Radiostop"
+
+msgid "Generic Toggle 0"
+msgstr "Przełącznik ogólny 0"
+
+msgid "Generic Toggle 1"
+msgstr "Przełącznik ogólny 1"
+
+msgid "Generic Toggle 2"
+msgstr "Przełącznik ogólny 2"
+
+msgid "Generic Toggle 3"
+msgstr "Przełącznik ogólny 3"
+
+msgid "Generic Toggle 4"
+msgstr "Przełącznik ogólny 4"
+
+msgid "Generic Toggle 5"
+msgstr "Przełącznik ogólny 5"
+
+msgid "Generic Toggle 6"
+msgstr "Przełącznik ogólny 6"
+
+msgid "Generic Toggle 7"
+msgstr "Przełącznik ogólny 7"
+
+msgid "Generic Toggle 8"
+msgstr "Przełącznik ogólny 8"
+
+msgid "Generic Toggle 9"
+msgstr "Przełącznik ogólny 9"

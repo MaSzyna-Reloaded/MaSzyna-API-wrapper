@@ -1,0 +1,771 @@
+# Strings of the demo's own interface that the game's catalogue (lang/*.po) does not have.
+# MaszynaTranslationServer merges them under the game's catalogue (maszyna/locale/translations).
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Trainset"
+msgstr "Szerelvény"
+
+msgid "Load"
+msgstr "Betöltés"
+
+msgid "Apply skin"
+msgstr "Festés alkalmazása"
+
+msgid "Search scenario"
+msgstr "Forgatókönyv keresése"
+
+msgid "Pre-Alpha Demo Release %s-%s-%s (build %s)"
+msgstr "Pre-Alpha demó %s-%s-%s (build %s)"
+
+msgid "Pre-Alpha Demo Release (unbuilt)"
+msgstr "Pre-Alpha demó (nem buildelt)"
+
+msgid "Loading %s..."
+msgstr "%s betöltése..."
+
+msgid "Exit to menu"
+msgstr "Kilépés a menübe"
+
+msgid "Leave the scenery and go back to the menu?"
+msgstr "Kilépsz a pályáról és visszatérsz a menübe?"
+
+msgid "MaSzyna game folder data is not set or invalid."
+msgstr "A MaSzyna játékmappa nincs beállítva vagy érvénytelen."
+
+msgid "Controls"
+msgstr "Kezelőszervek"
+
+msgid "Toggle controls"
+msgstr "Kezelőszervek be/ki"
+
+msgid "General"
+msgstr "Általános"
+
+msgid "Engine"
+msgstr "Motor"
+
+msgid "Brakes"
+msgstr "Fékek"
+
+msgid "Spring brake"
+msgstr "Rugóerőtárolós fék"
+
+msgid "Lights"
+msgstr "Világítás"
+
+msgid "Doors"
+msgstr "Ajtók"
+
+msgid "Security"
+msgstr "Éberség és vonatbefolyásolás"
+
+msgid "Controller"
+msgstr "Menetszabályzó"
+
+msgid "Mini Map"
+msgstr "Minitérkép"
+
+msgid "Scenery Streaming"
+msgstr "Pálya streamelése"
+
+msgid "Track & Traction"
+msgstr "Pálya és felsővezeték"
+
+msgid "Weather and Time"
+msgstr "Időjárás és idő"
+
+msgid "Help"
+msgstr "Súgó"
+
+msgid "Couple front"
+msgstr "Kapcsolás elöl"
+
+msgid "Decouple front"
+msgstr "Szétkapcsolás elöl"
+
+msgid "Couple rear"
+msgstr "Kapcsolás hátul"
+
+msgid "Decouple rear"
+msgstr "Szétkapcsolás hátul"
+
+msgid "Battery"
+msgstr "Akkumulátor"
+
+msgid "Horn low"
+msgstr "Mély mozdonykürt"
+
+msgid "Horn high"
+msgstr "Magas mozdonykürt"
+
+msgid "Whistle"
+msgstr "Mozdonysíp"
+
+msgid "Speed"
+msgstr "Sebesség"
+
+msgid "Type: %s"
+msgstr "Típus: %s"
+
+msgid "Overload relay reset"
+msgstr "Motor túláramvédelem visszaállítása"
+
+msgid "Converter fuse reset"
+msgstr "Főtranszformátor túláramvédelem visszaállítása"
+
+msgid "Main"
+msgstr "Főmegszakító"
+
+msgid "Compressor"
+msgstr "Kompresszor"
+
+msgid "Oil Pump"
+msgstr "Olajszivattyú"
+
+msgid "Fuel Pump"
+msgstr "Üzemanyag-szivattyú"
+
+msgid "RPM"
+msgstr "Fordulatszám"
+
+msgid "Oil"
+msgstr "Olaj"
+
+msgid "Converter"
+msgstr "Főtranszformátor"
+
+msgid "Pantographs valve"
+msgstr "Áramszedő szelep"
+
+msgid "First pantograph"
+msgstr "A áramszedő"
+
+msgid "Second pantograph"
+msgstr "B áramszedő"
+
+msgid "Pantograph compressor"
+msgstr "Áramszedő kompresszor"
+
+msgid "Drop all pantographs"
+msgstr "Összes áramszedő leengedése"
+
+msgid "Current"
+msgstr "Áram"
+
+msgid "Drive"
+msgstr "Menet"
+
+msgid "Full"
+msgstr "Teljes"
+
+msgid "Emergency"
+msgstr "Vész"
+
+msgid "EP Fuse"
+msgstr "EP biztosíték"
+
+msgid "EP Level"
+msgstr "EP szint"
+
+msgid "Level"
+msgstr "Szint"
+
+msgid "Releaser"
+msgstr "Egyéni fékoldó"
+
+msgid "Pipe"
+msgstr "Fővezeték"
+
+msgid "Cylinder"
+msgstr "Fékhenger"
+
+msgid "Forward"
+msgstr "Előre"
+
+msgid "Backward"
+msgstr "Hátra"
+
+msgid "Main -"
+msgstr "Menetszabályzó -"
+
+msgid "Main +"
+msgstr "Menetszabályzó +"
+
+msgid "Shunt -"
+msgstr "Söntölés -"
+
+msgid "Shunt +"
+msgstr "Söntölés +"
+
+msgid "Pos: %s"
+msgstr "Áll.: %s"
+
+msgid "On"
+msgstr "Be"
+
+msgid "Off"
+msgstr "Ki"
+
+msgid "Enable"
+msgstr "Engedélyezés"
+
+msgid "Disable"
+msgstr "Tiltás"
+
+msgid "Release rod"
+msgstr "Oldórúd"
+
+msgid "Enabled"
+msgstr "Engedélyezve"
+
+msgid "Active"
+msgstr "Aktív"
+
+msgid "Braking"
+msgstr "Fékez"
+
+msgid "Light selector -"
+msgstr "Fényszóróséma -"
+
+msgid "Light selector +"
+msgstr "Fényszóróséma +"
+
+msgid "Front end"
+msgstr "Első homlok"
+
+msgid "Rear end"
+msgstr "Hátsó homlok"
+
+msgid "Dim headlights"
+msgstr "Fényszóró tompítás"
+
+msgid "Roof light"
+msgstr "Fülkevilágítás"
+
+msgid "Devices light"
+msgstr "Műszervilágítás"
+
+msgid "Upper headlight"
+msgstr "Felső fényszóró"
+
+msgid "Left headlight"
+msgstr "Bal fényszóró"
+
+msgid "Right headlight"
+msgstr "Jobb fényszóró"
+
+msgid "Left red marker"
+msgstr "Bal vörös fény"
+
+msgid "Right red marker"
+msgstr "Jobb vörös fény"
+
+msgid "Open left doors"
+msgstr "Bal ajtók nyitása"
+
+msgid "Open right doors"
+msgstr "Jobb ajtók nyitása"
+
+msgid "Permit left doors"
+msgstr "Bal ajtók engedélyezése"
+
+msgid "Permit right doors"
+msgstr "Jobb ajtók engedélyezése"
+
+msgid "Lock doors"
+msgstr "Ajtóreteszelés"
+
+msgid "Permit Step"
+msgstr "Utaslépcső engedélyezése"
+
+msgid "Doors Locked"
+msgstr "Ajtók reteszelve"
+
+msgid "Left Doors Open"
+msgstr "Bal ajtók nyitva"
+
+msgid "Right Doors Open"
+msgstr "Jobb ajtók nyitva"
+
+msgid "CA/SHP"
+msgstr "CA/SHP"
+
+msgid "CA"
+msgstr "CA"
+
+msgid "SHP"
+msgstr "SHP"
+
+msgid "Settings"
+msgstr "Beállítások"
+
+msgid "Calendar"
+msgstr "Naptár"
+
+msgid "Weather"
+msgstr "Időjárás"
+
+msgid "Fog"
+msgstr "Köd"
+
+msgid "Wind"
+msgstr "Szél"
+
+msgid "Dir"
+msgstr "Irány"
+
+msgid "Rain"
+msgstr "Eső"
+
+msgid "Clouds"
+msgstr "Felhőzet"
+
+msgid "Fog Distance"
+msgstr "Köd távolsága"
+
+msgid "Time"
+msgstr "Idő"
+
+msgid "Day"
+msgstr "Nap"
+
+msgid "Month"
+msgstr "Hónap"
+
+msgid "Year"
+msgstr "Év"
+
+msgid "Time Speed"
+msgstr "Idő sebessége"
+
+msgid "Use system time"
+msgstr "Rendszeridő használata"
+
+msgid "Vehicle"
+msgstr "Jármű"
+
+msgid "Player"
+msgstr "Játékos"
+
+msgid "UI"
+msgstr "Felület"
+
+msgid "Camera"
+msgstr "Kamera"
+
+msgid "Camera chunk"
+msgstr "Kamera blokk"
+
+msgid "Draw distance"
+msgstr "Látótávolság"
+
+msgid "Chunks"
+msgstr "Blokkok"
+
+msgid "Chunks in range"
+msgstr "Blokkok hatótávon belül"
+
+msgid "Registered"
+msgstr "Regisztrált"
+
+msgid "Streamed in"
+msgstr "Betöltve"
+
+msgid "Pending builds"
+msgstr "Függő építések"
+
+msgid "Pending nearby"
+msgstr "Függő a közelben"
+
+msgid "Nearby ready"
+msgstr "Közeli kész"
+
+msgid "Pending clears"
+msgstr "Függő törlések"
+
+msgid "Planning"
+msgstr "Tervezés"
+
+msgid "Builds/s"
+msgstr "Építés/s"
+
+msgid "Budget"
+msgstr "Keret"
+
+msgid "Last pass"
+msgstr "Utolsó menet"
+
+msgid "Owners"
+msgstr "Tulajdonosok"
+
+msgid "Scenery lights"
+msgstr "Pálya fényei"
+
+msgid "none - nothing is streamed"
+msgstr "nincs - semmi sem töltődik"
+
+msgid "%.0f m (chunk %.0f m)"
+msgstr "%.0f m (blokk %.0f m)"
+
+msgid "%d lit / %d (%d spot, %d omni, %d synth)"
+msgstr "%d világít / %d (%d spot, %d omni, %d szint.)"
+
+msgid "Frame"
+msgstr "Képkocka"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Process"
+msgstr "Process"
+
+msgid "Physics"
+msgstr "Fizika"
+
+msgid "Render CPU"
+msgstr "Render CPU"
+
+msgid "Render GPU"
+msgstr "Render GPU"
+
+msgid "Unaccounted"
+msgstr "Nem elszámolt"
+
+msgid "Physics steps"
+msgstr "Fizikai lépések"
+
+msgid "Objects"
+msgstr "Objektumok"
+
+msgid "Draw calls"
+msgstr "Rajzolási hívások"
+
+msgid "Primitives"
+msgstr "Primitívek"
+
+msgid "Video memory"
+msgstr "Videómemória"
+
+msgid "%.1f (max %d)"
+msgstr "%.1f (max. %d)"
+
+msgid "Track"
+msgstr "Vágány"
+
+msgid "Offset"
+msgstr "Eltolás"
+
+msgid "Track length"
+msgstr "Vágány hossza"
+
+msgid "Switch"
+msgstr "Kitérő"
+
+msgid "Position"
+msgstr "Pozíció"
+
+msgid "Pantograph 1"
+msgstr "1. áramszedő"
+
+msgid "Wire 1"
+msgstr "1. vezeték"
+
+msgid "Pantograph 2"
+msgstr "2. áramszedő"
+
+msgid "Wire 2"
+msgstr "2. vezeték"
+
+msgid "Slider"
+msgstr "Csúszósaru"
+
+msgid "none"
+msgstr "nincs"
+
+msgid "(no train id)"
+msgstr "(nincs azonosító)"
+
+msgid "(unnamed)"
+msgstr "(névtelen)"
+
+msgid "yes, branch %d%s"
+msgstr "igen, %d. ág%s"
+
+msgid " (right)"
+msgstr " (jobb)"
+
+msgid " (left)"
+msgstr " (bal)"
+
+msgid "no"
+msgstr "nem"
+
+msgid "not an electric vehicle"
+msgstr "nem villamos jármű"
+
+msgid "down"
+msgstr "leengedve"
+
+msgid "up, %.0f V"
+msgstr "felemelve, %.0f V"
+
+msgid "NO WIRE in reach"
+msgstr "NINCS VEZETÉK a közelben"
+
+msgid "%.2f m above, %.0f V"
+msgstr "%.2f m felette, %.0f V"
+
+msgid "%.3f m half width + %.3f m horn"
+msgstr "%.3f m félszélesség + %.3f m szarv"
+
+msgid "%s (type: %s)"
+msgstr "%s (típus: %s)"
+
+msgid "Toggle Weather Controls"
+msgstr "Időjárás panel"
+
+msgid "Brake Level Increase"
+msgstr "Fékezőszelep: több"
+
+msgid "Brake Level Decrease"
+msgstr "Fékezőszelep: kevesebb"
+
+msgid "Brake Level Charging"
+msgstr "Fékezőszelep: töltés"
+
+msgid "Brake Level Drive"
+msgstr "Fékezőszelep: menet"
+
+msgid "Local Brake Increase"
+msgstr "Mozdonyfék: több"
+
+msgid "Local Brake Decrease"
+msgstr "Mozdonyfék: kevesebb"
+
+msgid "Coupler Connect"
+msgstr "Kapcsolás"
+
+msgid "Coupler Disconnect"
+msgstr "Szétkapcsolás"
+
+msgid "Coupler Disconnect Occupied"
+msgstr "Elfoglalt jármű szétkapcsolása"
+
+msgid "Manual Brake Increase"
+msgstr "Kézifék: több"
+
+msgid "Manual Brake Decrease"
+msgstr "Kézifék: kevesebb"
+
+msgid "Direction Increase"
+msgstr "Irányváltó: előre"
+
+msgid "Direction Decrease"
+msgstr "Irányváltó: hátra"
+
+msgid "Brake Release"
+msgstr "Egyéni fékoldó"
+
+msgid "Security Acknowledge"
+msgstr "Éberségi nyugtázás"
+
+msgid "Devices Light Toggle"
+msgstr "Műszervilágítás"
+
+msgid "Cabin Light Toggle"
+msgstr "Fülkevilágítás"
+
+msgid "Oil Pump Toggle"
+msgstr "Olajszivattyú"
+
+msgid "Fuel Pump Toggle"
+msgstr "Üzemanyag-szivattyú"
+
+msgid "Radio Toggle"
+msgstr "Rádió"
+
+msgid "Main Switch On"
+msgstr "Főmegszakító: be"
+
+msgid "Main Switch Off"
+msgstr "Főmegszakító: ki"
+
+msgid "Second Controller Increase"
+msgstr "Söntölés: több"
+
+msgid "Second Controller Decrease"
+msgstr "Söntölés: kevesebb"
+
+msgid "Flashlight Toggle"
+msgstr "Zseblámpa"
+
+msgid "Main Controller Increase"
+msgstr "Menetszabályzó: több"
+
+msgid "Main Controller Decrease"
+msgstr "Menetszabályzó: kevesebb"
+
+msgid "Battery Toggle"
+msgstr "Akkumulátor"
+
+msgid "Cab Activation Toggle"
+msgstr "Vezetőállás aktiválása"
+
+msgid "Spring Brake Toggle"
+msgstr "Rugóerőtárolós fék"
+
+msgid "Spring Brake Shut Off Toggle"
+msgstr "Rugóerőtárolós fék elzárása"
+
+msgid "Cabin Mode Toggle"
+msgstr "Vezetőállás mód"
+
+msgid "External View Cycle"
+msgstr "Külső nézet"
+
+msgid "Hud Toggle"
+msgstr "HUD"
+
+msgid "Change Vehicle"
+msgstr "Jármű váltása"
+
+msgid "Horn Low"
+msgstr "Mély mozdonykürt"
+
+msgid "Horn High"
+msgstr "Magas mozdonykürt"
+
+msgid "Cabin Next"
+msgstr "Következő vezetőállás"
+
+msgid "Cabin Previous"
+msgstr "Előző vezetőállás"
+
+msgid "Converter Toggle"
+msgstr "Főtranszformátor"
+
+msgid "Compressor Toggle"
+msgstr "Kompresszor"
+
+msgid "Pantograph Front Toggle"
+msgstr "Első áramszedő"
+
+msgid "Pantograph Rear Toggle"
+msgstr "Hátsó áramszedő"
+
+msgid "Fuse Reset"
+msgstr "Motor túláramvédelem visszaállítása"
+
+msgid "Converter Fuse Reset"
+msgstr "Főtranszformátor túláramvédelem visszaállítása"
+
+msgid "Pantograph Compressor Activate"
+msgstr "Áramszedő kompresszor"
+
+msgid "Pantograph Compressor Valve Toggle"
+msgstr "Áramszedő 3 utas csap"
+
+msgid "Security Cabsignal Acknowledge"
+msgstr "Vonatbefolyásolás nyugtázása"
+
+msgid "Pantographs Drop All Toggle"
+msgstr "Összes áramszedő leengedése"
+
+msgid "Wipers Switch Increase"
+msgstr "Ablaktörlő: több"
+
+msgid "Wipers Switch Decrease"
+msgstr "Ablaktörlő: kevesebb"
+
+msgid "Radio Channel Increase"
+msgstr "Rádiócsatorna: következő"
+
+msgid "Radio Channel Decrease"
+msgstr "Rádiócsatorna: előző"
+
+msgid "Headlight Left Toggle"
+msgstr "Bal fényszóró"
+
+msgid "Headlight Right Toggle"
+msgstr "Jobb fényszóró"
+
+msgid "Headlight Upper Toggle"
+msgstr "Felső fényszóró"
+
+msgid "Redmarker Left Toggle"
+msgstr "Bal vörös fény"
+
+msgid "Redmarker Right Toggle"
+msgstr "Jobb vörös fény"
+
+msgid "Headlight Rear Left Toggle"
+msgstr "Hátsó bal fényszóró"
+
+msgid "Headlight Rear Right Toggle"
+msgstr "Hátsó jobb fényszóró"
+
+msgid "Headlight Rear Upper Toggle"
+msgstr "Hátsó felső fényszóró"
+
+msgid "Redmarker Rear Left Toggle"
+msgstr "Hátsó bal vörös fény"
+
+msgid "Redmarker Rear Right Toggle"
+msgstr "Hátsó jobb vörös fény"
+
+msgid "Pantograph Toggle Selected"
+msgstr "Kiválasztott áramszedő"
+
+msgid "Lights Preset Next"
+msgstr "Fényszóróséma: következő"
+
+msgid "Lights Preset Previous"
+msgstr "Fényszóróséma: előző"
+
+msgid "Doors Permit Preset Next"
+msgstr "Ajtóengedély: következő"
+
+msgid "Doors Permit Preset Previous"
+msgstr "Ajtóengedély: előző"
+
+msgid "Headlights Dim Toggle"
+msgstr "Fényszóró tompítás"
+
+msgid "Radio Stop Send"
+msgstr "Rádióstop"
+
+msgid "Generic Toggle 0"
+msgstr "Általános kapcsoló 0"
+
+msgid "Generic Toggle 1"
+msgstr "Általános kapcsoló 1"
+
+msgid "Generic Toggle 2"
+msgstr "Általános kapcsoló 2"
+
+msgid "Generic Toggle 3"
+msgstr "Általános kapcsoló 3"
+
+msgid "Generic Toggle 4"
+msgstr "Általános kapcsoló 4"
+
+msgid "Generic Toggle 5"
+msgstr "Általános kapcsoló 5"
+
+msgid "Generic Toggle 6"
+msgstr "Általános kapcsoló 6"
+
+msgid "Generic Toggle 7"
+msgstr "Általános kapcsoló 7"
+
+msgid "Generic Toggle 8"
+msgstr "Általános kapcsoló 8"
+
+msgid "Generic Toggle 9"
+msgstr "Általános kapcsoló 9"

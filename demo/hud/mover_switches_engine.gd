@@ -17,11 +17,17 @@ func _do_update():
         for constant:String in ClassDB.class_get_enum_constants(&"VehicleEngine", &"EngineType"):
             if ClassDB.class_get_integer_constant(&"VehicleEngine", constant) == engine.get_type():
                 type_name = constant
-    %EngineType.text = "Type: %s" % type_name
+    %EngineType.text = tr("Type: %s") % type_name
     %Diesel.visible = not _diesel_engine == null
     %Electric.visible = not _electric_engine == null
     # Traction motors, and with them the overload relay, are on an electric and a diesel-electric
     %FuseReset.visible = not _electric_engine == null or engine is VehicleDieselElectricEngine
+
+
+## The type caption is composed, not a msgid a Label translates itself
+func _notification(what:int) -> void:
+    if what == NOTIFICATION_TRANSLATION_CHANGED and is_node_ready():
+        _do_update()
 
 
 func _on_refresh_timer_timeout() -> void:

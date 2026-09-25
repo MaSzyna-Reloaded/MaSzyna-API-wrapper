@@ -37,8 +37,7 @@ namespace godot {
             static constexpr int MAX_PHYSICS_ITERATIONS = 20;
 
             static RailVehicleServer *get_instance() {
-                return Object::cast_to<RailVehicleServer>(
-                        Engine::get_singleton()->get_singleton("RailVehicleServer"));
+                return Object::cast_to<RailVehicleServer>(Engine::get_singleton()->get_singleton("RailVehicleServer"));
             }
 
         private:
@@ -139,6 +138,7 @@ namespace godot {
                     const RID &p_track, int p_endpoint_index, bool p_force_switch_state, RID &p_track_out,
                     int &p_endpoint_out);
             void _check_movement(const VehiclePlacement &p_placement, const Vector3 &p_start, double p_moved) const;
+            void _refresh_stepping();
             void _set_stepping(bool p_stepping);
             void _clear_neighbour(VehicleController *p_controller, VehiclePlacement &p_placement, int p_end);
             void _update_neighbours(const RID &p_vehicle, VehiclePlacement &p_placement);
@@ -170,8 +170,8 @@ namespace godot {
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
-            TypedArray<RID> vehicle_get_coupled(
-                    const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
+            TypedArray<RID>
+            vehicle_get_coupled(const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
             void vehicle_radio_stop(const RID &p_vehicle);
@@ -220,8 +220,8 @@ namespace godot {
              * while the vehicle is. A per-frame reader takes it once and reads its properties. */
             VehicleComponent *vehicle_component_get(const RID &p_vehicle, VehicleComponentType::Type p_type) const;
             /* Scripted components carrying a tag of the modder's own choosing */
-            TypedArray<VehicleComponent> generic_vehicle_component_find(
-                    const RID &p_vehicle, const StringName &p_tag) const;
+            TypedArray<VehicleComponent>
+            generic_vehicle_component_find(const RID &p_vehicle, const StringName &p_tag) const;
 
             Dictionary vehicle_dump_state(const RID &p_vehicle);
             Dictionary vehicle_dump_config(const RID &p_vehicle) const;

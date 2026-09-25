@@ -72,9 +72,9 @@ func _refresh() -> void:
         _rows["Offset"].text = "%.2f m" % float(placement["along"])
         _rows["Track length"].text = "%.2f m" % TrackManager.track_get_length(track)
         _rows["Switch"].text = (
-            "yes, branch %d%s" % [
+            tr("yes, branch %d%s") % [
                 TrackManager.switch_get_active_track(track),
-                " (right)" if TrackManager.switch_is_right(track) else " (left)",
+                tr(" (right)") if TrackManager.switch_is_right(track) else tr(" (left)"),
             ]
             if TrackManager.track_is_switch(track) else "no"
         )
@@ -102,7 +102,7 @@ func _refresh() -> void:
     var sliding_width:float = _engine.power_current_collector_sliding_width
     if sliding_width > 0.0:
         half_width = 0.5 * sliding_width
-    _rows["Slider"].text = "%.3f m half width + %.3f m horn" % [half_width, HORN_WIDTH]
+    _rows["Slider"].text = tr("%.3f m half width + %.3f m horn") % [half_width, HORN_WIDTH]
 
     _report_pantograph(
             vehicle, 1, vehicle.pantograph_front_offset, half_width,
@@ -123,7 +123,7 @@ func _report_pantograph(
         pantograph_row.text = "down"
         wire_row.text = "-"
         return
-    pantograph_row.text = "up, %.0f V" % voltage
+    pantograph_row.text = tr("up, %.0f V") % voltage
 
     var transform:Transform3D = vehicle.global_transform
     var contact_point:Vector3 = transform * offset
@@ -134,7 +134,7 @@ func _report_pantograph(
     if not wire.is_valid():
         wire_row.text = "NO WIRE in reach"
         return
-    wire_row.text = "%.2f m above, %.0f V" % [
+    wire_row.text = tr("%.2f m above, %.0f V") % [
         float(found["height"]), TractionPowerServer.wire_get_voltage(wire, voltage, 0.0),
     ]
 

@@ -7,6 +7,7 @@
 
 #include "../core/RailVehicle3D.hpp"
 #include "../core/GameLog.hpp"
+#include "../core/MaszynaRuntime.hpp"
 #include "../core/VehicleController.hpp"
 
 #include <godot_cpp/classes/curve3d.hpp>
@@ -24,6 +25,13 @@ namespace godot {
         ProjectSettings *settings = ProjectSettings::get_singleton();
         diagnostics = settings->get_setting(DIAGNOSTICS_SETTING, false);
         catch_up_limit = settings->get_setting(CATCH_UP_LIMIT_SETTING, DEFAULT_CATCH_UP_LIMIT);
+        // The world stands still while the runtime is paused. No explicit disconnect: callable_mp
+        // reports this instance as the callable's object, so the engine drops the connection when
+        // the instance dies.
+        MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        ERR_FAIL_NULL(runtime);
+        runtime->connect(MaszynaRuntime::paused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
+        runtime->connect(MaszynaRuntime::unpaused_signal, callable_mp(this, &RailVehicleServer::_refresh_stepping));
     }
 
     RailVehicleServer::~RailVehicleServer() {
@@ -98,11 +106,17 @@ namespace godot {
 
     void RailVehicleServer::set_stepping_enabled(const bool p_enabled) {
         stepping_enabled = p_enabled;
-        _set_stepping(p_enabled && !vehicles.is_empty());
+        _refresh_stepping();
     }
 
     bool RailVehicleServer::is_stepping_enabled() const {
         return stepping_enabled;
+    }
+
+    /// Steps while stepping is enabled, the runtime is not paused and the world holds a vehicle
+    void RailVehicleServer::_refresh_stepping() {
+        const MaszynaRuntime *runtime = MaszynaRuntime::get_instance();
+        _set_stepping(stepping_enabled && !vehicles.is_empty() && runtime != nullptr && !runtime->is_paused());
     }
 
     /// The step runs only while the world holds a vehicle, the same shape as E3DRenderingServer's
@@ -145,7 +159,7 @@ namespace godot {
         const RID vehicle_rid = UtilityFunctions::rid_from_int64(next_vehicle_id);
         VehiclePlacement placement;
         vehicles.insert(vehicle_rid, placement);
-        _set_stepping(stepping_enabled);
+        _refresh_stepping();
         return vehicle_rid;
     }
 

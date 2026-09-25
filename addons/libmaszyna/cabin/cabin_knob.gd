@@ -64,7 +64,7 @@ enum ControllerMode { OnOff, On, Off }
 ## An event per whole position (MMD soundN:/sound-N:), played when the knob comes to stand on it,
 ## and for a move that ends between positions (TGauge::UpdateValue, Gauge.cpp:302-343)
 @export var sound_position_events:Dictionary[int, StringName] = {}
-## What the whole positions are called, position -> msgid for MaszynaLocale.gettext() (a brake
+## What the whole positions are called, position -> msgid (a brake
 ## valve's "drive", "cutoff", ...), from the MMD catalog and the vehicle's handle
 @export var position_names:Dictionary = {}
 @export var sound_increase_event:StringName
@@ -177,7 +177,7 @@ func _on_value_changed() -> void:
         var position:float = _position()
         var whole:int = roundi(position)
         if absf(position - whole) < POSITION_TOLERANCE and position_names.has(whole):
-            _set_mouse_state(MaszynaLocale.gettext(position_names[whole]))
+            _set_mouse_state(position_names[whole])
             return
         _set_mouse_state("%.1f" % position)
     else:

@@ -305,6 +305,15 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   keeps `AccS` non-zero (`Mover.cpp:4603`) - same in the original.
 * A vehicle with its physics off keeps its last state (fetched only for active vehicles, as the
   original skips `Update()`).
+* The rest of `LoadFIZ_Cntrl`'s start modes never reach the Mover: `CompressorStart`,
+  `PantCompressorStart`, `MainStart` and `ConverterOverloadWhenMainIsOff` (Mover.cpp:10905-10925)
+  are not parsed, and their properties sit on `VehicleElectricEngine`, so a diesel could not
+  carry them anyway. `ConverterStart`/`ConverterStartDelay` moved to `VehicleController`; the
+  others belong there too. The `converter` command is still an electric engine's only.
+* `BrakeValveParams` (the raw `BrakeValve=` string, Mover.cpp:10397) is never set, so
+  `TNESt3::SetSize()` builds every ESt distributor as an ESt4: `TRapid` instead of `TRura` and no
+  `Podskok` for ESt3, and `AL2`, `PZZ`, `HBG300`, `3d`/`4d` and `-ED` are dropped. That covers
+  about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
 
 ## Rendering
 

@@ -57,6 +57,8 @@ anything. Open work belongs in `TODO.md`.
   *(09-20 blotchy ground)*
 * A vehicle that is not driven is not simulated (`CabActive`/`PhysicActivation`). *(09-23 loco
   with nobody in the cab)*
+* A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
+  for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
 * Every `OnCommand_*` works without its gauge. A control only in `MmdSemanticCatalog` is dead in a
   cab that does not model it. *(09-20 E186 Ctrl+J)*
 * A pantograph at 0 V has three causes (no wire in reach, dead wire, no contact). Report them

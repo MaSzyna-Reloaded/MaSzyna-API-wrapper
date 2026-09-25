@@ -126,8 +126,6 @@ namespace godot {
             MAKE_MEMBER_GS(double, circuit_tuhex_sum_3, 750.0);
 
             /* Cntrl. (elektryczne) */
-            MAKE_MEMBER_GS_NR(VehicleEngine::StartMode, cntrl_converter_start_mode, VehicleEngine::START_MODE_MANUAL);
-            MAKE_MEMBER_GS(double, cntrl_converter_start_delay, 0.0);
             MAKE_MEMBER_GS_NR(
                     VehicleEngine::StartMode, cntrl_converter_overload_relay_start_mode, VehicleEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_converter_overload_relay_off_when_main_is_off, false);

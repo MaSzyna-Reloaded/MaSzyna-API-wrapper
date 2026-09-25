@@ -330,6 +330,8 @@ namespace godot {
 
             /* Cntrl. (ogolne, bateria/przekaznik ziemnozwarciowy/oswietlenie przedzialow/aktywacja kabiny) */
             MAKE_MEMBER_GS_NR(StartMode, cntrl_battery_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS_NR(StartMode, cntrl_converter_start_mode, START_MODE_MANUAL);
+            MAKE_MEMBER_GS(double, cntrl_converter_start_delay, 0.0);
             MAKE_MEMBER_GS_NR(StartMode, cntrl_ground_relay_start_mode, START_MODE_MANUAL);
             MAKE_MEMBER_GS_NR(StartMode, cntrl_compartment_lights_start_mode, START_MODE_DISABLED);
             MAKE_MEMBER_GS(bool, cntrl_automatic_cab_activation, true);

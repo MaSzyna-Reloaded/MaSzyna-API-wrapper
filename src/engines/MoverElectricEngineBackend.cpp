@@ -261,8 +261,6 @@ namespace godot {
         p_mover->TUHEX_Sum2 = p_engine->get_circuit_tuhex_sum_2();
         p_mover->TUHEX_Sum3 = p_engine->get_circuit_tuhex_sum_3();
 
-        p_mover->ConverterStart = mover_start_mode(p_engine->get_cntrl_converter_start_mode());
-        p_mover->ConverterStartDelay = static_cast<float>(p_engine->get_cntrl_converter_start_delay());
         p_mover->ConverterOverloadRelayStart = mover_start_mode(p_engine->get_cntrl_converter_overload_relay_start_mode());
         p_mover->ConverterOverloadRelayOffWhenMainIsOff = p_engine->get_cntrl_converter_overload_relay_off_when_main_is_off();
         p_mover->PantographCompressorStart = mover_start_mode(p_engine->get_cntrl_pantograph_compressor_start_mode());

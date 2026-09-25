@@ -174,6 +174,10 @@ namespace godot {
                 VehicleController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(
+                VehicleController, Variant::INT, cntrl_converter_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(VehicleController, Variant::FLOAT, cntrl_converter_start_delay, "cntrl");
+        BIND_PROPERTY_W_HINT(
                 VehicleController, Variant::INT, cntrl_ground_relay_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY_W_HINT(

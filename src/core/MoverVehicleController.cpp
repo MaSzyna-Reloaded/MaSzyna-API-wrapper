@@ -420,6 +420,10 @@ namespace godot {
         mover->Floor = static_cast<float>(get_dimensions_floor_height());
 
         mover->BatteryStart = mover_start_mode(get_cntrl_battery_start_mode());
+        // a Cntrl. key of every vehicle, not of an electric engine (Mover.cpp:10909 LoadFIZ_Cntrl) -
+        // a diesel-electric's compressor runs off the converter too (CompressorPower=Converter)
+        mover->ConverterStart = mover_start_mode(get_cntrl_converter_start_mode());
+        mover->ConverterStartDelay = static_cast<float>(get_cntrl_converter_start_delay());
         mover->GroundRelayStart = mover_start_mode(get_cntrl_ground_relay_start_mode());
         mover->CompartmentLights.start_type = mover_start_mode(get_cntrl_compartment_lights_start_mode());
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();

@@ -310,6 +310,12 @@
 		<member name="cntrl_compartment_lights_start_mode" type="int" setter="set_cntrl_compartment_lights_start_mode" getter="get_cntrl_compartment_lights_start_mode" enum="VehicleController.StartMode" default="0">
 			[code]Cntrl.CompartmentLightsStart[/code]
 		</member>
+		<member name="cntrl_converter_start_delay" type="float" setter="set_cntrl_converter_start_delay" getter="get_cntrl_converter_start_delay" default="0.0">
+			[code]Cntrl.ConverterStartDelay[/code]
+		</member>
+		<member name="cntrl_converter_start_mode" type="int" setter="set_cntrl_converter_start_mode" getter="get_cntrl_converter_start_mode" enum="VehicleController.StartMode" default="1">
+			[code]Cntrl.ConverterStart[/code]
+		</member>
 		<member name="cntrl_ground_relay_start_mode" type="int" setter="set_cntrl_ground_relay_start_mode" getter="get_cntrl_ground_relay_start_mode" enum="VehicleController.StartMode" default="1">
 			[code]Cntrl.GroundRelayStart[/code]
 		</member>

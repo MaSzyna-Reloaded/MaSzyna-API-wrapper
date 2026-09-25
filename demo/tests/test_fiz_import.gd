@@ -39,6 +39,8 @@ func test_cntrl_general_subset():
     assert_true(controller.cntrl_automatic_cab_activation)
     assert_eq(controller.cntrl_battery_start_mode, VehicleController.START_MODE_MANUAL)
     assert_eq(controller.cntrl_ground_relay_start_mode, VehicleController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_converter_start_mode, VehicleController.START_MODE_AUTOMATIC)
+    assert_eq(controller.cntrl_converter_start_delay, 10.0)
 
 
 func test_wheels():

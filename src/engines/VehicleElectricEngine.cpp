@@ -186,10 +186,6 @@ namespace godot {
         BIND_PROPERTY(VehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum_2, "circuit/tuhex");
         BIND_PROPERTY(VehicleElectricEngine, Variant::FLOAT, circuit_tuhex_sum_3, "circuit/tuhex");
         BIND_PROPERTY_W_HINT(
-                VehicleElectricEngine, Variant::INT, cntrl_converter_start_mode, "cntrl", PROPERTY_HINT_ENUM,
-                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
-        BIND_PROPERTY(VehicleElectricEngine, Variant::FLOAT, cntrl_converter_start_delay, "cntrl");
-        BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, cntrl_converter_overload_relay_start_mode, "cntrl",
                 PROPERTY_HINT_ENUM, "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY(VehicleElectricEngine, Variant::BOOL, cntrl_converter_overload_relay_off_when_main_is_off, "cntrl");

@@ -4,6 +4,32 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-25 - SU46 would not release its train: the converter never started
+
+* **Symptom:** some trains, passenger and freight, could hardly be released. SU46-054 with four
+  coaches on `zwierzyniec_osob.scn` stayed braked. The consist refactor (#184) was the first
+  suspect.
+* **What proved it:** one `get SU46-054` dump. The main reservoir was at 3.40 bar, the brake pipe
+  at 3.35, and `compressor_allowed` was false. An FV4a cannot charge the pipe above the main
+  reservoir, and the coaches' distributors hold their cylinders until the pipe comes back to
+  around 5 bar. The refactor was cleared by comparing every moved coupling and movement function
+  with its pre-refactor body.
+* **Cause:** SU46 declares `CompressorPower=Converter` and `Cntrl. ConverterStart=Automatic`. For
+  that compressor the Mover takes `CompressorAllow = ConverterAllow` (Mover.cpp:3886), and
+  `ConverterAllow = Mains` only when the converter start is automatic (Mover.cpp:1885). No parser
+  read `ConverterStart`, and the property existed only on `VehicleElectricEngine`, which a
+  diesel-electric does not have. So the Mover kept `start_t::manual`, and SU46's cab has no
+  converter switch to make up for it. A vehicle starting at velocity 0 begins with its main
+  reservoir at `0.55 * MinCP` (Mover.cpp:8932) and relies on the compressor from there.
+* **Fix:** `ConverterStart` and `ConverterStartDelay` are `VehicleController` properties, parsed
+  with `BatteryStart` and applied next to it, as `LoadFIZ_Cntrl` does (Mover.cpp:10909). After the
+  fix the operator's train pulled away.
+* **Found on the way:** `BrakeValveParams` is never set, so every ESt distributor is built as an
+  ESt4 (TODO.md). The test fixture's `W_Lu_L` valve has no distributor in the Mover (the factory
+  falls through to a plain `TBrake`), so the fixture shows pipe pressure but never a cylinder.
+* **Rule:** a `Cntrl.` key belongs to the vehicle. A property placed on one engine class silently
+  does not exist for the other engine types that read the same key.
+
 ## 2026-09-24 - Python cab screens: what the original's scripts actually need
 
 Porting `pyscreen:` meant running the original's own Python 2 scripts. Four things were only

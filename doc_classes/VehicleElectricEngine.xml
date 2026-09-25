@@ -127,12 +127,6 @@
 		<member name="cntrl_converter_overload_relay_start_mode" type="int" setter="set_cntrl_converter_overload_relay_start_mode" getter="get_cntrl_converter_overload_relay_start_mode" enum="VehicleEngine.StartMode" default="1">
 			[code]Cntrl.ConverterOverloadRelayStart[/code]
 		</member>
-		<member name="cntrl_converter_start_delay" type="float" setter="set_cntrl_converter_start_delay" getter="get_cntrl_converter_start_delay" default="0.0">
-			[code]Cntrl.ConverterStartDelay[/code]
-		</member>
-		<member name="cntrl_converter_start_mode" type="int" setter="set_cntrl_converter_start_mode" getter="get_cntrl_converter_start_mode" enum="VehicleEngine.StartMode" default="1">
-			[code]Cntrl.ConverterStart[/code]
-		</member>
 		<member name="cntrl_main_switch_start_mode" type="int" setter="set_cntrl_main_switch_start_mode" getter="get_cntrl_main_switch_start_mode" enum="VehicleEngine.StartMode" default="1">
 			[code]Cntrl.MainStart[/code]
 		</member>

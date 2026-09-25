@@ -1,7 +1,7 @@
-#include "MoverVehicleHeating.hpp"
+#include "../core/VehicleController.hpp"
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
-#include "../core/VehicleController.hpp"
+#include "MoverVehicleHeating.hpp"
 
 namespace godot {
     void MoverVehicleHeating::_bind_methods() {}
@@ -28,8 +28,7 @@ namespace godot {
                 break;
             }
             case VehicleController::POWER_SOURCE_POWERCABLE: {
-                p_mover->HeatingPowerSource.RPowerCable.PowerTrans =
-                        mover_power_type(get_heating_power_cable_type());
+                p_mover->HeatingPowerSource.RPowerCable.PowerTrans = mover_power_type(get_heating_power_cable_type());
                 break;
             }
             default:
@@ -40,6 +39,11 @@ namespace godot {
     bool MoverVehicleHeating::get_active() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->Heating : false;
+    }
+
+    bool MoverVehicleHeating::get_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->HeatingAllow : false;
     }
 
     double MoverVehicleHeating::get_power() const {
@@ -59,6 +63,7 @@ namespace godot {
             return;
         }
         p_state["heating_enabled"] = get_active();
+        p_state["heating_allowed"] = get_allowed();
         p_state["heating_power"] = get_power();
     }
 } // namespace godot

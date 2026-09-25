@@ -1,17 +1,23 @@
 extends RefCounted
 class_name LegacyCabinCabActivation
 
-## Cab activation of a cabin whose MMD has no cabactivation_sw gauge (dynamic/pkp/e186_v2). The
-## original cab layer activates the cab regardless of the gauge -
-## TTrain::OnCommand_cabactivationtoggle/enable/disable (Train.cpp:3077-3140) only update
-## ggCabActivationButton, which does nothing when the cab has none - so the cab stays switchable
-## from the keyboard and CabinSystem.
+## Cab activation (cabactivation_sw), with or without its gauge (dynamic/pkp/e186_v2 has none) -
+## TTrain::OnCommand_cabactivationtoggle/enable/disable (Train.cpp:3075-3150). A press activates
+## the cab when none is active and deactivates it otherwise; the gauge only follows. A push-type
+## switch springs back to neutral when released (Train.cpp:3115) and switches nothing then.
 
 const CONTROL:StringName = &"cabactivation_sw"
-const ACTION:StringName = &"cab_activation_toggle"
+## The pose of an impulse switch: up on, down off, midway at rest (Train.cpp:3100, 3115, 3129)
+const SWITCH_OFF:float = 0.0
+const SWITCH_ON:float = 1.0
+const SWITCH_REST:float = 0.5
 
 var _train_id:String
 var _cab:int
+
+
+func control_ids() -> Array[StringName]:
+    return [CONTROL]
 
 
 func register(train_id:String, cab:int) -> void:
@@ -25,9 +31,14 @@ func unregister() -> void:
 
 
 func _cab_activation(state:CabinState, action:StringName, value:Variant) -> Variant:
-    if not action == &"toggle" and not action == &"set":
+    if action == &"release":
+        state.set_value(CONTROL, SWITCH_REST)
         return null
-    # Train.cpp:3083 - toggling activates the cab when none is active
-    var enabled:bool = state.vehicle_state_value("cabin", 0) == 0 if value == null else bool(value)
-    state.set_value(CONTROL, enabled)
+    if not action in [&"hold", &"toggle", &"set"]:
+        return null
+    # Train.cpp:3083 - a press activates the cab when none is active
+    var enabled:bool = (state.vehicle_state_value("cabin", 0) == 0
+            if value == null or action == &"hold" else bool(value))
+    # an impulse switch is pushed up to switch on and down to switch off, then rests midway
+    state.set_value(CONTROL, (SWITCH_ON if enabled else SWITCH_OFF) if action == &"hold" else enabled)
     return state.send_vehicle_command("cab_activation", enabled)

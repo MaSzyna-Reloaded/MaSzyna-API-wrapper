@@ -1,5 +1,5 @@
-#include "VehicleHeating.hpp"
 #include "../core/VehicleController.hpp"
+#include "VehicleHeating.hpp"
 
 namespace godot {
     void VehicleHeating::_bind_methods() {
@@ -22,13 +22,21 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("heating", "enabled"), &VehicleHeating::heating);
         ClassDB::bind_method(D_METHOD("get_active"), &VehicleHeating::get_active);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_allowed"), &VehicleHeating::get_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::BOOL, "allowed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_allowed");
         ClassDB::bind_method(D_METHOD("get_power"), &VehicleHeating::get_power);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power");
     }
 

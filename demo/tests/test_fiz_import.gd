@@ -39,6 +39,8 @@ func test_cntrl_general_subset():
     assert_true(controller.cntrl_automatic_cab_activation)
     assert_eq(controller.cntrl_battery_start_mode, VehicleController.START_MODE_MANUAL)
     assert_eq(controller.cntrl_ground_relay_start_mode, VehicleController.START_MODE_MANUAL)
+    assert_eq(controller.cntrl_converter_start_mode, VehicleController.START_MODE_AUTOMATIC)
+    assert_eq(controller.cntrl_converter_start_delay, 10.0)
 
 
 func test_wheels():
@@ -102,3 +104,21 @@ func test_wiper_list_reaches_the_vehicle():
     assert_eq(controller.config.get("wipers_switch_position_max", -1), 3)
     controller.send_command("wipers_switch_increase")
     assert_eq(controller.state.get("wipers_switch_position", -1), 1)
+
+
+# LoadFIZ_LightsList / readLightsList (Mover.cpp:11531, 8558): each row is the light bits of cabin
+# A's end and cabin B's (enum light, MOVER.h:189)
+func test_lights_list():
+    var lighting: VehicleLighting = controller.get_component(VehicleComponentType.COMPONENT_LIGHTING)
+    assert_true(lighting.lights_wrap_selector)
+    assert_eq(lighting.lights_default_selector_position, 2)
+    assert_eq(lighting.lights_list.size(), 2)
+    var first: LightListItem = lighting.lights_list[0]
+    assert_true(first.cabin_a_head_light, "4 - the upper headlight")
+    assert_true(first.cabin_b_left_red_signal, "34 - both red markers")
+    assert_true(first.cabin_b_right_red_signal)
+    assert_false(first.cabin_b_end_signals)
+    var second: LightListItem = lighting.lights_list[1]
+    assert_true(second.cabin_a_left_white_signal, "17 - both lower headlights")
+    assert_true(second.cabin_a_right_white_signal)
+    assert_true(second.cabin_b_end_signals, "64 - the end-of-train plates")

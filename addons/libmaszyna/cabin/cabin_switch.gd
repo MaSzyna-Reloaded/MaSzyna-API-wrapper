@@ -7,6 +7,10 @@ signal switch_released()
 
 enum ControllerMode { OnOff, On, Off }
 
+## What the positions are called, position -> msgid for MaszynaLocale.gettext() (the reverser's
+## "forward"/"backward"), from the MMD catalog; a position without a name shows its number
+@export var position_names:Dictionary = {}
+
 @export var switch_position:int = 0:
     set(x):
         x = clampi(x, switch_min_position, switch_max_position)
@@ -56,6 +60,17 @@ enum ControllerMode { OnOff, On, Off }
         mesh_rotation = x if x else Vector3.ZERO
         _dirty = true
 
+## Pose at position 0, the MMD offset (value * scale + offset, Gauge.cpp:456) - e.g. E186's master
+## controller rests turned back from its model's pose (nastawnik_mocy rot 0.0263 -0.0788)
+@export var mesh_position_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_position_offset = x
+        _dirty = true
+@export var mesh_rotation_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_rotation_offset = x
+        _dirty = true
+
 ## Some state domains don't start at the switch's own visual rest position - e.g. radio_channel's
 ## real range is 1..10 (channel 0 isn't valid), but the physical knob's first notch is still the
 ## visual "zero" position, so switch_position=1 must render as ONE STEP from rest, not two.
@@ -67,15 +82,15 @@ enum ControllerMode { OnOff, On, Off }
         _dirty = true
 
 @export var animation_speed = 10.0
-@export var sound_increase_stream:AudioStream
-@export var sound_decrease_stream:AudioStream
-@export var sound_neutral_position_stream:AudioStream
-@export var sound_override:Array[AudioStream]
-@export var sound_override_negative:Array[AudioStream]
-@export var sound_max_distance:float = 3.0:
-    set(x):
-        sound_max_distance = x
-        _sound.max_distance = x
+## The cab's sound player and the events of its bank this switch plays, filled by whoever builds
+## the cab (MmdCabinInstancer). sound_override_events[N - 1] belongs to position N,
+## sound_override_negative_events[N - 1] to position -N; an empty name leaves the position silent.
+@export var sound_player:SfxPlayer3D
+@export var sound_increase_event:StringName
+@export var sound_decrease_event:StringName
+@export var sound_neutral_position_event:StringName
+@export var sound_override_events:Array[StringName]
+@export var sound_override_negative_events:Array[StringName]
 
 @export var action_increase = ""
 @export var action_decrease = ""
@@ -92,14 +107,11 @@ var _target_mesh_position:Vector3 = Vector3.ZERO
 var _current_rotation:Vector3 = Vector3.ZERO
 var _current_position:Vector3 = Vector3.ZERO
 
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 var _handle_actions:bool = true
 var _t:float = 0.0
 var _setup_phase:bool = true
 
 func _ready():
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     self.switch_position_changed.connect(self._on_switch_position_changed)
 
     if not Engine.is_editor_hint() and Console:
@@ -118,8 +130,12 @@ func _on_train_id_changed() -> void:
 func _update_state() -> void:
     if state_property and _train_id:
         switch_position = int(_vehicle_state_value(state_property, switch_position))
-    _target_mesh_position = (switch_position - value_offset) * mesh_position
-    _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
+    _update_mesh_target()
+
+
+func _update_mesh_target() -> void:
+    _target_mesh_position = mesh_position_offset + (switch_position - value_offset) * mesh_position
+    _target_mesh_rotation = mesh_rotation_offset + (switch_position - value_offset) * mesh_rotation
 
 func _on_command_received(train_id:String, p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
     if not train_id == _train_id:
@@ -141,22 +157,42 @@ func _input(event):
 
     if action_increase:
         if event.is_action_pressed(action_increase, repeat_on_hold, true):
-            _set_position_from_input(switch_position + 1)
-        if automatic_reset and event.is_action_released(action_increase, true):
-            _set_position_from_input(switch_reset_position)
+            increase()
+        if event.is_action_released(action_increase, true):
+            release()
     if action_decrease:
         if event.is_action_pressed(action_decrease, repeat_on_hold, true):
-            _set_position_from_input(switch_position - 1)
-        if automatic_reset and event.is_action_released(action_decrease, true):
-            _set_position_from_input(switch_reset_position)
+            decrease()
+        if event.is_action_released(action_decrease, true):
+            release()
     if action_toggle:
         if event.is_action_pressed(action_toggle, false, true):
-            if switch_position == switch_max_position:
-                _set_position_from_input(switch_min_position)
-            else:
-                _set_position_from_input(switch_max_position)
-        if automatic_reset and event.is_action_released(action_toggle, true):
-            _set_position_from_input(switch_reset_position)
+            toggle()
+        if event.is_action_released(action_toggle, true):
+            release()
+
+## The driver's hand on the switch (key or mouse), one position at a time.
+func increase() -> void:
+    _set_position_from_input(switch_position + 1)
+
+func decrease() -> void:
+    _set_position_from_input(switch_position - 1)
+
+func toggle() -> void:
+    if switch_position == switch_max_position:
+        _set_position_from_input(switch_min_position)
+    else:
+        _set_position_from_input(switch_max_position)
+
+## A spring-loaded switch returns to its rest position when let go.
+func release() -> void:
+    if automatic_reset:
+        _set_position_from_input(switch_reset_position)
+
+## A mouse click: a two-position switch flips, one with more positions is moved by dragging.
+func press() -> void:
+    if switch_max_position - switch_min_position == 1:
+        toggle()
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:
@@ -165,13 +201,15 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            _set_mouse_control(_mesh, [action_increase, action_decrease, action_toggle], press, release,
+                    increase, decrease, mesh_rotation, mesh_position)
+            _set_mouse_state(_mouse_state())
 
 func _process_tool(delta):
     _t += delta
     if _t > 0.05:
         _t = 0.0
-        _target_mesh_position = (switch_position - value_offset) * mesh_position
-        _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
+        _update_mesh_target()
 
     if _setup_phase and mesh_path and not _mesh:
         _dirty = true
@@ -195,25 +233,28 @@ func _process_tool(delta):
 func _apply_control_value(p_value:Variant) -> void:
     switch_position = int(p_value)
 
-func _play_sound():
-
-    if _sound.stream:
-        _sound.play()
+## The position under the caption: its name, on/off for a two-state switch, else its number.
+func _mouse_state() -> String:
+    if position_names.has(switch_position):
+        return MaszynaLocale.gettext(position_names[switch_position])
+    if switch_min_position == 0 and switch_max_position == 1:
+        return MaszynaLocale.gettext(STATE_ON if switch_position else STATE_OFF)
+    return str(switch_position)
 
 func _on_switch_position_changed(previous, current):
-    if current == 0 and sound_neutral_position_stream:
-        _sound.stream = sound_neutral_position_stream
-    elif current > 0 and current <= sound_override.size():
-        _sound.stream = sound_override[current-1]
-    elif current < 0 and -current <= sound_override_negative.size():
-        _sound.stream = sound_override_negative[-current-1]
-    elif current == 0:
-        _sound.stream = null
-    else:
-        _sound.stream = sound_increase_stream if current > previous else sound_decrease_stream
+    _set_mouse_state(_mouse_state())
+    var event:StringName = &""
+    if current == 0 and sound_neutral_position_event:
+        event = sound_neutral_position_event
+    elif current > 0 and current <= sound_override_events.size():
+        event = sound_override_events[current-1]
+    elif current < 0 and -current <= sound_override_negative_events.size():
+        event = sound_override_negative_events[-current-1]
+    elif not current == 0:
+        event = sound_increase_event if current > previous else sound_decrease_event
 
-    if _sound.stream:
-        _sound.play()
+    if sound_player and event:
+        sound_player.play(event)
 
 func _set_position_from_input(p_position:int) -> void:
     var previous_position:int = switch_position

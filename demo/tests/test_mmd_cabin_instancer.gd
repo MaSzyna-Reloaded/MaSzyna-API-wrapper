@@ -108,6 +108,15 @@ func test_line_and_block_comments_are_stripped():
     assert_eq(security.submodel_name, "czuwak")
 
 
+# a label that lost its colon (dynamic/pkp/e186_v2/base.mmd.inc:210) is passed over whole, as the
+# original passes over tokens it does not know - its block must not swallow the controls after it
+func test_a_block_without_a_label_is_passed_over():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    assert_null(_find(definition, "soundinc"))
+    assert_eq(_find(definition, "radiostop_sw").submodel_name, "radio_rs")
+    assert_eq(_find(definition, "battery_sw").submodel_name, "bat")
+
+
 func test_duplicate_labels_are_preserved_in_order():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     var tachometers:Array[MmdInstrumentDescriptor] = []
@@ -288,7 +297,9 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var driver_position:Vector3 = Vector3(1.0, 2.0, 10.0)
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, generated_root, 1, driver_position, diagnostics)
+    var sound_events:Array[SfxEvent] = []
+    var sound_player:SfxPlayer3D = add_child_autofree(SfxPlayer3D.new())
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, driver_position, sound_player, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
     var widget:CabinSpotLight3D = generated_root.get_child(0)
@@ -300,8 +311,14 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
             Vector3.ONE * 0.0001)
     assert_eq(widget.get_node(widget.on_target_path), on_node)
     assert_eq(widget.get_node(widget.off_target_path), off_node)
-    assert_eq((widget.sound_on as MaszynaAudioStream).file_path, "light_ca_start")
-    assert_eq((widget.sound_off as MaszynaAudioStream).file_path, "light_ca_stop")
+    # the clicks are events of the cab's bank, sounding at the lamp's submodel
+    assert_eq(widget.sound_player, sound_player)
+    assert_eq(sound_events.size(), 2)
+    assert_eq(sound_events[0].name, widget.sound_on_event)
+    assert_eq((sound_events[0].clips[0].stream as MaszynaAudioStream).file_path, "light_ca_start")
+    assert_eq(sound_events[1].name, widget.sound_off_event)
+    assert_eq((sound_events[1].clips[0].stream as MaszynaAudioStream).file_path, "light_ca_stop")
+    assert_eq(sound_events[0].spatial_config.position, generated_root.to_local(on_node.global_position))
     assert_eq(diagnostics.size(), 0)
 
 
@@ -321,7 +338,8 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
+    var sound_events:Array[SfxEvent] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
 
@@ -335,7 +353,8 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, {}, generated_root, 1, Vector3.ZERO, diagnostics)
+    var sound_events:Array[SfxEvent] = []
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, {}, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 0)
     assert_eq(diagnostics.size(), 1)
@@ -359,8 +378,9 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
+    var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
+            descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -387,8 +407,9 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     var generated_root:Node3D = add_child_autofree(Node3D.new())
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
+    var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
+            descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -402,27 +423,42 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
 func test_build_radio_indicator_adds_radio_power_led_omnilight():
     var descriptor:MmdInstrumentDescriptor = MmdInstrumentDescriptor.new()
     descriptor.label = "i-radio"
-    descriptor.submodel_name = "radio_lamp"
+    descriptor.submodel_name = "rtf"
     var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
 
-    var on_node:Node3D = add_child_autofree(Node3D.new())
-    on_node.position = Vector3(1.0, 2.0, 3.0)
-    var submodel_index:Dictionary = {"radio_lamp_on": [on_node]}
+    # SM42 6da_kabina.e3d: rtf_on is textured with a greyscale lamp atlas, its diffuse is the hue
+    var lamp_submodel:E3DSubModel = E3DSubModel.new()
+    lamp_submodel.resource_name = "rtf_on"
+    lamp_submodel.diffuse_color = Color(0.0, 0.2196, 0.3451, 1.0)
+    var submodels:Array[E3DSubModel] = [lamp_submodel]
+    var e3d_model:E3DModel = E3DModel.new()
+    e3d_model.submodels = submodels
 
     var generated_root:Node3D = add_child_autofree(Node3D.new())
+    # without a model in the tree, it does not build; the model is handed over afterwards
+    var cab_model:E3DModelInstance = E3DModelInstance.new()
+    generated_root.add_child(cab_model)
+    cab_model.model = e3d_model
+    var on_node:Node3D = Node3D.new()
+    on_node.name = "rtf_on"
+    on_node.position = Vector3(1.0, 2.0, 3.0)
+    cab_model.add_child(on_node)
+    var submodel_index:Dictionary = {"rtf_on": [on_node]}
+
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
+    var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, generated_root, 1, Vector3.ZERO, diagnostics)
+            descriptor, entry, controller.train_id, submodel_index, cab_model, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
-    assert_eq(generated_root.get_child_count(), 2)
-    var indicator:CabinSpotLight3D = generated_root.get_child(0)
-    var light:CabinOmniLight3D = generated_root.get_child(1)
+    assert_eq(generated_root.get_child_count(), 3)
+    var indicator:CabinSpotLight3D = generated_root.get_child(1)
+    var light:CabinOmniLight3D = generated_root.get_child(2)
     assert_eq(indicator.get_node(indicator.on_target_path), on_node)
     assert_eq(indicator.state_property, "radio_enabled")
     assert_eq(light.global_position, on_node.global_position)
     assert_eq(light.state_property, "radio_powered")
-    assert_eq(light.light_color, Color(0.0, 0.738281, 0.121986, 1.0))
+    assert_eq(light.light_color, lamp_submodel.diffuse_color, "the glow takes the lamp's own colour")
     assert_eq(light.light_energy_on, 0.05)
     assert_almost_eq(light.omni_range, 0.1, 0.0001)
     assert_eq(diagnostics.size(), 0)

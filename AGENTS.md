@@ -114,6 +114,12 @@ Checks:
 
 * compile c++ plugin and check result
 * run Godot in headless mode outside sandbox, look for parse errors
+* REQUIRED: **short timeouts, never block the conversation on a run.** Pick the ceiling from what
+  the command should take: `--check-only` 5 s, a probe 15 s, `--import` 45 s (run it on its own
+  after a rebuild), one GUT script 60 s, an incremental `make compile-debug` 180 s - the tool's
+  own timeout to match. A batch of test scripts or a probe goes to the background; do not sit in
+  the turn waiting for it. A probe silent for 15 s is hung: kill it, do not wait. Never a
+  windowed Godot run
 * TESTS: never write a test that reads the game directory (`scenery/`, `dynamic/`, `textures/`) -
   CI has none. Everything a test needs is a fixture in `demo/tests/fixtures/` or
   `demo/tests/materials/`. A throwaway diagnostic script does not belong in `demo/tests/` either.

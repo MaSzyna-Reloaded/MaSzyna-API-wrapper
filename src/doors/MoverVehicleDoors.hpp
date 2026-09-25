@@ -10,11 +10,15 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         protected:
             void _apply_configuration() override;
             void _do_process_component(double p_delta) override;
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
+            int get_permit_preset() const override;
             bool get_locked() const override;
             bool get_lock_enabled() const override;
             bool get_step_enabled() const override;
@@ -48,6 +52,7 @@ namespace godot {
             void door_remote_control(bool p_state) override;
             void next_permit_preset() override;
             void previous_permit_preset() override;
+
         private:
             const std::map<Voltage, float> voltage_map = {
                     {VOLTAGE_0, 0.0f}, {VOLTAGE_12, 12.0f}, {VOLTAGE_24, 24.0f}, {VOLTAGE_112, 112.0f}};

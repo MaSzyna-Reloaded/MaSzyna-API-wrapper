@@ -32,6 +32,9 @@ namespace godot {
 
         public:
             static const char *cache_clear_requested_signal;
+            static const char *language_changed_signal;
+            /// The original's own strings, untranslated - no catalogue needed
+            static constexpr const char *DEFAULT_LANGUAGE = "en";
 
             static MaszynaRuntime *get_instance() {
                 return dynamic_cast<MaszynaRuntime *>(Engine::get_singleton()->get_singleton("MaszynaRuntime"));
@@ -50,6 +53,10 @@ namespace godot {
             /// Degrees Celsius
             void set_air_temperature(double p_temperature);
             double get_air_temperature() const;
+            /// The language of the game's strings, by the name of its catalogue in `lang/`
+            /// ("pl" for lang/pl.po; Global.asLang, Globals.cpp:137). Kept in the user settings.
+            void set_language(const String &p_language);
+            String get_language() const;
     };
 
 } // namespace godot

@@ -26,6 +26,9 @@ const _BARE_SINGLE_LABELS:Dictionary = {
     "fuelpump": true,
     "ignition": true,
     "shutdown": true,
+    # DynObj.cpp:6290, 6300 - sound_type::single
+    "pantographup": true,
+    "pantographdown": true,
     # buzzer:/buzzershp: (Train.cpp:10362-10363's own "buzzer:"/"buzzershp:" -> dsbBuzzer/
     # dsbBuzzerShp mapping table, sound_type::single) - bare form is usually a bracketed
     # random-choice list of variants (confirmed real: dynamic/pkp/sm42_v1/6d.mmd's
@@ -70,6 +73,10 @@ const _BARE_MULTIPART_LABELS:Dictionary = {
     "horn2": true,
     "horn3": true,
     "releaser": true,
+    # DynObj.cpp:6321, 6353 - read as sound_type::multipart with sound_parameters::range
+    "compressor": true,
+    "converter": true,
+    "small-compressor": true,
 }
 
 const _BARE_PARAMETERS:Dictionary = {
@@ -88,6 +95,9 @@ const _BARE_PARAMETERS:Dictionary = {
     "localbrakesound": [&"amplitude_factor", &"amplitude_offset"],
     "localbrakesound2": [&"amplitude_factor", &"amplitude_offset"],
     "releaser": [&"range"],
+    "compressor": [&"range"],
+    "converter": [&"range"],
+    "small-compressor": [&"range"],
     "tractionmotor": [&"range", &"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
     "ventilator": [&"range", &"amplitude_factor", &"amplitude_offset", &"frequency_factor", &"frequency_offset"],
     "curve": [&"range"],
@@ -264,6 +274,17 @@ static func _parse_one(
         var result:Dictionary = _read_random_set(tokens, i, context, source_file, definition.label)
         definition.sound_main = result["value"]
         i += int(result["consumed"])
+    elif _BARE_MULTIPART_LABELS.has(definition.label) and i < tokens.size() and "," in tokens[i]:
+        # The original reads a legacy sound's files with "," among the delimiters
+        # (audio/sound.cpp:105-111), so "a.wav,b.wav,c.wav" is begin, main and end
+        # (e.g. e186_v2 small-compressor:).
+        var parts:PackedStringArray = tokens[i].split(",", false)
+        definition.sound_begin = _normalize_sound_filename(parts[0])
+        if parts.size() > 1:
+            definition.sound_main = _normalize_sound_filename(parts[1])
+        if parts.size() > 2:
+            definition.sound_end = _normalize_sound_filename(parts[2])
+        i += 1
     elif _BARE_MULTIPART_LABELS.has(definition.label):
         for part:String in ["begin", "main", "end"]:
             var result:Dictionary = _read_random_set(tokens, i, context, source_file, "%s_%s" % [definition.label, part])

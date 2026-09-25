@@ -15,12 +15,16 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         protected:
             void _register_commands() override;
             void _unregister_commands() override;
+
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_locked() const = 0;
+            /* The selected door permit preset (Doors.permit_preset), 0-based */
+            virtual int get_permit_preset() const = 0;
             virtual bool get_lock_enabled() const = 0;
             virtual bool get_step_enabled() const = 0;
             virtual int get_open_control() const = 0;
@@ -81,6 +85,7 @@ namespace godot {
             virtual void door_remote_control(bool p_state) = 0;
             virtual void next_permit_preset() = 0;
             virtual void previous_permit_preset() = 0;
+
         private:
             MAKE_MEMBER_GS_NR(Type, type, Type::TYPE_ROTATE);
             MAKE_MEMBER_GS_NR(Controls, open_method, Controls::CONTROLS_PASSENGER);

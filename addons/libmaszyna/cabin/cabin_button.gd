@@ -5,15 +5,43 @@ signal pushed_changed()
 signal button_pushed()
 
 enum ControllerMode { OnOff, On, Off }
+## What kind of switch this is, as the MMD's `type:` says - the original's TGaugeType
+## (Gauge.h:24), bit for bit: a TOGGLE stays where it is put, a PUSH springs back, DELAYED acts on
+## release. Set by the MMD factory (Gauge.cpp:243). Data about the switch, not logic: the cabin
+## behaviour that owns the control branches on it, as TTrain's handlers branch on ggX.type().
+enum ButtonType {
+    TOGGLE = 1,
+    PUSH = 2,
+    PUSH_TOGGLE = 3,
+    DELAYED = 4,
+    PUSH_DELAYED = 6,
+    PUSH_TOGGLE_DELAYED = 7,
+}
 
 @export var pushed:bool = false:
     set(x):
         if not x == pushed:
             pushed = x
-            _update_mesh_target()
+            value = 1.0 if pushed else value_rest
             emit_signal("pushed_changed")
 
+## The pose shown, as TGauge's value: value * scale + offset (Gauge.cpp:456). It follows `pushed`
+## (1 pushed, value_rest released) unless the cabin logic sets one of its own - an impulse lever
+## doing two things is pushed up to 1 or down to 0 (Train.cpp:3773, 3815).
+@export var value:float = 0.0:
+    set(x):
+        value = x
+        _update_mesh_target()
+## Where the control rests released: 0, or 0.5 for an impulse lever with a neutral position
+## midway (battery_sw, main_sw, pantselected_sw - Train.cpp:11342, 11348, 3455)
+@export var value_rest:float = 0.0:
+    set(x):
+        value_rest = x
+        if not pushed:
+            value = value_rest
+
 @export var monostable:bool = false
+@export var button_type:ButtonType = ButtonType.TOGGLE
 @export_node_path("MeshInstance3D") var mesh_path:NodePath = "":
     set(x):
         mesh_path = x
@@ -48,14 +76,17 @@ enum ControllerMode { OnOff, On, Off }
         mesh_rotation_offset = x
         _update_mesh_target()
 @export var speed = 10.0
-@export var sound_on:AudioStream
-@export var sound_off:AudioStream
-@export var sound_max_distance:float = 3.0:
-    set(x):
-        sound_max_distance = x
-        _sound.max_distance = x
+## The cab's sound player and the events of its bank this button plays, filled by whoever builds
+## the cab (MmdCabinInstancer)
+@export var sound_player:SfxPlayer3D
+@export var sound_on_event:StringName
+@export var sound_off_event:StringName
 
 @export var action = ""
+
+## A push button's state under its caption (a toggle shows STATE_ON/STATE_OFF)
+const STATE_PUSHED:String = "pressed"
+const STATE_RELEASED:String = "released"
 
 var _mesh:Node3D
 var _mesh_original_basis:Basis
@@ -68,11 +99,8 @@ var _t:float = 0.0
 
 var _enabled:bool = true
 var _setup_phase:bool = true
-var _sound:AudioStreamPlayer3D = AudioStreamPlayer3D.new()
 
 func _ready():
-    add_child(_sound)
-    _sound.max_distance = sound_max_distance
     connect("pushed_changed", self._on_pushed_changed)
     train_id_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
@@ -91,18 +119,25 @@ func _update_state():
 
 func _input(event):
     if _enabled and action:
-        if monostable:
-            if event.is_action_pressed(action, false, true):
-                pushed = true
-            elif event.is_action_released(action, true):
-                pushed = false
-        else:
-            if event.is_action_pressed(action, false, true):
-                pushed = not pushed
+        if event.is_action_pressed(action, false, true):
+            press()
+        elif event.is_action_released(action, true):
+            release()
+
+## The driver's hand on the button (key or mouse): a monostable one is held, any other toggles.
+func press() -> void:
+    if monostable:
+        pushed = true
+    else:
+        pushed = not pushed
+
+func release() -> void:
+    if monostable:
+        pushed = false
 
 func _update_mesh_target() -> void:
-    _target_mesh_position = mesh_position_offset + (mesh_position if pushed else Vector3.ZERO)
-    _target_mesh_rotation = mesh_rotation_offset + (mesh_rotation if pushed else Vector3.ZERO)
+    _target_mesh_position = mesh_position_offset + mesh_position * value
+    _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * value
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:
@@ -111,6 +146,8 @@ func _process_dirty(delta):
             global_position = _mesh.global_position
             _mesh_original_basis = _mesh.transform.basis
             _mesh_original_position = _mesh.position
+            _set_mouse_control(_mesh, [action], press, release, Callable(), Callable(), Vector3.ZERO, Vector3.ZERO)
+            _set_mouse_state(_mouse_state())
     _update_state()
 
 func _process_tool(delta):
@@ -136,15 +173,28 @@ func _process_tool(delta):
         _mesh.transform.basis = new_basis
         _mesh.position = _mesh_original_position + _current_position
 
+## A flag from the cabin logic presses or releases the control; a number is the pose itself
+## (0, value_rest or 1), shown as it is.
 func _apply_control_value(p_value:Variant) -> void:
-    pushed = bool(p_value)
+    if p_value is bool:
+        pushed = p_value
+        return
+    pushed = not is_equal_approx(float(p_value), value_rest)
+    value = float(p_value)
 
 func _play_sound():
-    _sound.stream = sound_on if pushed else sound_off
-    if _sound.stream:
-        _sound.play()
+    var event:StringName = sound_on_event if pushed else sound_off_event
+    if sound_player and event:
+        sound_player.play(event)
+
+## The state under the caption.
+func _mouse_state() -> String:
+    if monostable:
+        return MaszynaLocale.gettext(STATE_PUSHED if pushed else STATE_RELEASED)
+    return MaszynaLocale.gettext(STATE_ON if pushed else STATE_OFF)
 
 func _on_pushed_changed():
+    _set_mouse_state(_mouse_state())
     if pushed:
         button_pushed.emit()
 

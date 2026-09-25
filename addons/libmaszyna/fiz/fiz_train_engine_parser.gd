@@ -28,6 +28,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             context.add_part("VehicleEngine", node)
             FizTrainEngineCommon.apply_engine_common(node, kv, context)
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
+            FizTrainEngineCommon.apply_cntrl_electric_subset(node as VehicleElectricEngine, context.cntrl_kv)
             FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_series_parser.apply_engine_fields(kv, node)
         VehicleEngine.DIESEL_ELECTRIC:
@@ -41,6 +42,7 @@ func parse(p: MaszynaParser, context: FizImportContext, _prefix: String = "") ->
             context.add_part("VehicleEngine", node)
             FizTrainEngineCommon.apply_engine_common(node, kv, context)
             FizTrainEngineCommon.apply_cntrl_engine_subset(node, context.cntrl_kv)
+            FizTrainEngineCommon.apply_cntrl_electric_subset(node as VehicleElectricEngine, context.cntrl_kv)
             FizTrainEngineCommon.apply_power(node, context.power_kv)
             electric_induction_parser.apply_engine_fields(kv, node)
         VehicleEngine.DIESEL, \

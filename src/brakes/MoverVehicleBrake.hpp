@@ -10,6 +10,7 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
             bool get_alarm_chain_pulled() const override;
@@ -36,6 +37,8 @@ namespace godot {
             double get_local_aeim_position() const override;
             double get_edb_cylinder_pressure() const override;
             bool get_releaser_active() const override;
+            bool get_main_pipe_locked() const override;
+
         private:
             const std::unordered_map<BrakeMethod, int> brake_method_map = {
                     {BrakeMethod::BRAKE_METHOD_P10_BGU, 1},  {BrakeMethod::BRAKE_METHOD_P10_BG, 2},
@@ -103,6 +106,7 @@ namespace godot {
                     {LOCAL_BRAKE_TYPE_HYDRAULIC, Maszyna::TLocalBrake::HydraulicBrake},
             };
             bool main_pipe_emergency_cuts_off_handle = false;
+
         public:
             bool get_main_pipe_emergency_cuts_off_handle() const override {
                 return main_pipe_emergency_cuts_off_handle;
@@ -110,15 +114,18 @@ namespace godot {
             void set_main_pipe_emergency_cuts_off_handle(const bool p_value) override {
                 main_pipe_emergency_cuts_off_handle = p_value;
             }
+
         private:
             double local_brake_pressure_previous = -1.0;
             double local_brake_pressure_change_rate = 0.0;
             static double _controller_position_normalized(const TMoverParameters *p_mover);
             static double _force_ratio(const TMoverParameters *p_mover);
+
         protected:
             void _apply_configuration() override;
             void _do_process_component(double p_delta) override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
+
         public:
             void brake_releaser(bool p_pressed) override;
             void brake_level_set(double p_level) override;
@@ -134,5 +141,6 @@ namespace godot {
             void auto_rewident(int p_brake_delay) override;
             void brake_level_charging(bool p_active) override;
             void alarm_chain(bool p_pulled) override;
+            void universal_brake_button(int p_button, bool p_pressed) override;
     };
 } // namespace godot

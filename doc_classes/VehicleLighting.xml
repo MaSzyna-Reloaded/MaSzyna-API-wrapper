@@ -20,6 +20,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="headlights_dim">
+			<return type="void" />
+			<param index="0" name="enabled" type="bool" />
+			<description>
+			</description>
+		</method>
 		<method name="increase_light_selector_position">
 			<return type="void" />
 			<description>
@@ -48,6 +54,28 @@
 		</method>
 	</methods>
 	<members>
+		<member name="active_headlight_left_enabled" type="bool" setter="" getter="get_active_headlight_left_enabled" default="false">
+		</member>
+		<member name="active_headlight_right_enabled" type="bool" setter="" getter="get_active_headlight_right_enabled" default="false">
+		</member>
+		<member name="active_headlight_upper_enabled" type="bool" setter="" getter="get_active_headlight_upper_enabled" default="false">
+		</member>
+		<member name="active_redmarker_left_enabled" type="bool" setter="" getter="get_active_redmarker_left_enabled" default="false">
+		</member>
+		<member name="active_redmarker_right_enabled" type="bool" setter="" getter="get_active_redmarker_right_enabled" default="false">
+		</member>
+		<member name="devices_light_enabled" type="bool" setter="" getter="get_devices_light_enabled" default="false">
+		</member>
+		<member name="front_headlight_left_enabled" type="bool" setter="" getter="get_front_headlight_left_enabled" default="false">
+		</member>
+		<member name="front_headlight_right_enabled" type="bool" setter="" getter="get_front_headlight_right_enabled" default="false">
+		</member>
+		<member name="front_headlight_upper_enabled" type="bool" setter="" getter="get_front_headlight_upper_enabled" default="false">
+		</member>
+		<member name="front_redmarker_left_enabled" type="bool" setter="" getter="get_front_redmarker_left_enabled" default="false">
+		</member>
+		<member name="front_redmarker_right_enabled" type="bool" setter="" getter="get_front_redmarker_right_enabled" default="false">
+		</member>
 		<member name="head_light_color" type="Color" setter="set_head_light_color" getter="get_head_light_color" default="Color(255, 255, 255, 1)">
 			Color of the headlights
 		</member>
@@ -62,6 +90,8 @@
 		</member>
 		<member name="head_light_normal_multiplier" type="float" setter="set_head_light_normal_multiplier" getter="get_head_light_normal_multiplier" default="1.0">
 			Multiplier of headlights intensity
+		</member>
+		<member name="headlights_dimmed" type="bool" setter="" getter="get_headlights_dimmed" default="false">
 		</member>
 		<member name="instrument_type" type="int" setter="set_instrument_type" getter="get_instrument_type" default="0">
 		</member>
@@ -83,11 +113,36 @@
 		<member name="lights_list" type="LightListItem[]" setter="set_lights_list" getter="get_lights_list" default="[]">
 			An array of LightListItem objects, each representing a light configuration for one selector position
 		</member>
-		<member name="lights_selector_position" type="int" setter="set_lights_selector_position" getter="get_lights_selector_position" default="0">
-			An integer representing the current position of the light selector
-		</member>
 		<member name="lights_wrap_selector" type="bool" setter="set_lights_wrap_selector" getter="get_lights_wrap_selector" default="false">
 			If true, rotating the selector past the last position will return to the first position. If false, it will stop at the last position.
+		</member>
+		<member name="opposite_headlight_left_enabled" type="bool" setter="" getter="get_opposite_headlight_left_enabled" default="false">
+		</member>
+		<member name="opposite_headlight_right_enabled" type="bool" setter="" getter="get_opposite_headlight_right_enabled" default="false">
+		</member>
+		<member name="opposite_headlight_upper_enabled" type="bool" setter="" getter="get_opposite_headlight_upper_enabled" default="false">
+		</member>
+		<member name="opposite_redmarker_left_enabled" type="bool" setter="" getter="get_opposite_redmarker_left_enabled" default="false">
+		</member>
+		<member name="opposite_redmarker_right_enabled" type="bool" setter="" getter="get_opposite_redmarker_right_enabled" default="false">
+		</member>
+		<member name="position" type="int" setter="" getter="get_position" default="0">
+		</member>
+		<member name="power" type="float" setter="" getter="get_power" default="0.0">
+		</member>
+		<member name="power_source" type="int" setter="" getter="get_power_source" default="0">
+		</member>
+		<member name="rear_headlight_left_enabled" type="bool" setter="" getter="get_rear_headlight_left_enabled" default="false">
+		</member>
+		<member name="rear_headlight_right_enabled" type="bool" setter="" getter="get_rear_headlight_right_enabled" default="false">
+		</member>
+		<member name="rear_headlight_upper_enabled" type="bool" setter="" getter="get_rear_headlight_upper_enabled" default="false">
+		</member>
+		<member name="rear_redmarker_left_enabled" type="bool" setter="" getter="get_rear_redmarker_left_enabled" default="false">
+		</member>
+		<member name="rear_redmarker_right_enabled" type="bool" setter="" getter="get_rear_redmarker_right_enabled" default="false">
+		</member>
+		<member name="roof_light_level" type="float" setter="" getter="get_roof_light_level" default="0.0">
 		</member>
 		<member name="source_accumulator_max_voltage" type="float" setter="set_source_accumulator_max_voltage" getter="get_source_accumulator_max_voltage" default="0.0">
 			Represents the highest voltage the accumulator can reach when fully charged.

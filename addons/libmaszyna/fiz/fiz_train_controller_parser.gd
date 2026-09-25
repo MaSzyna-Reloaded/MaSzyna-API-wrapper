@@ -100,6 +100,10 @@ func apply_cntrl(kv: Dictionary, context: FizImportContext) -> void:
         controller.cntrl_automatic_cab_activation = FizLineUtil.get_bool(kv, "AutomaticCabActivation")
     if kv.has("BatteryStart"):
         controller.cntrl_battery_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "BatteryStart"), VehicleController.START_MODE_MANUAL)
+    if kv.has("ConverterStart"):
+        controller.cntrl_converter_start_mode = parse_start_mode(FizLineUtil.get_string(kv, "ConverterStart"), VehicleController.START_MODE_MANUAL)
+    if kv.has("ConverterStartDelay"):
+        controller.cntrl_converter_start_delay = FizLineUtil.get_float(kv, "ConverterStartDelay")
 
     # GroundRelayStart's default depends on TrainType (EZT), which differs from the compiled
     # default - so this one is always applied, even when the key is absent.

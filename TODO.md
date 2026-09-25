@@ -187,6 +187,74 @@ moves to C++:
 
 ## Cabins
 
+### Controls whose original handler branches on the kind of switch
+
+The MMD factory gives every widget its `gauge_type`, and the catalog entries with
+`shape_from_gauge_type` are ported with their `type()` branches (battery_sw, cabactivation_sw,
+fuelpump_sw, oilpump_sw, trainheating_sw, pantalloff_sw, main_sw, pantselected_sw,
+pantselectedoff_sw, universal0..9). Not in the cab at all yet, so nothing to branch - each needs a
+catalog entry and, where missing, a vehicle command: `compartmentlights_sw` (Train.cpp:
+OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/`alloff_sw`,
+`epbrake_bt` (ggEPFuseButton, Train.cpp:2350), `doorrightpermit_sw` (Train.cpp:7263),
+`dooralloff_sw` (Train.cpp:7657, push_delayed), `compressorlist_sw`, `autosandallow_sw`.
+
+### E186 controls - what is still simplified
+
+* `pantselect_sw` / `PantsPreset` (choosing which pantographs the master valve raises,
+  Train.cpp:3529 change_pantograph_selection, update_pantograph_valves) is not ported.
+* `MoverElectricEngineBackend::pantograph()` still opens the master valve itself when a pantograph
+  is raised (added in 1c0c044 when no cab could reach the valve). The original opens it only from
+  pantselected_sw / pantvalves_sw, so with it a pantograph rises from its own key alone. Remove it
+  once every cab has a way to the master valve (pantvalves_sw is not in the catalog either).
+* Light presets: `SetLights` is run on a preset change only - the original also runs it on cab
+  (de)activation, battery and direction changes (Train.cpp:2924-3137). The model's lamp inventory
+  (iInventory) is not known, so a rear end that could show red markers or plates shows the markers
+  (DynObj.cpp:7367).
+* `headlights_dimmed` is state only - nothing renders a headlight beam to dim.
+* Distance counter: the double-press start (FIZ `DCMB`/`DCDPP`, not in the vendored Mover), the
+  switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
+* The radio volume is state only - the wrapper plays no radio messages.
+
+### Gauge lamps (`<name>_on`)
+
+Only the reverser buttons have their `state_light` so far. Train.cpp:11995-12040 binds a flag to
+about forty more gauges (speed control buttons, door permits, door step, ...), each needing a
+state key and a catalog `state_light`. The lamps also light without low voltage - TGauge gates
+them on it (Gauge.cpp:379).
+
+### Mouse operation (CabinHUDMouseSystem) - not ported from drivermouseinput.cpp
+
+* Absolute slider for the `*set` levers (master controller, train and independent brake):
+  `mouse_slider` maps 60% of the window height onto the whole range and puts the cursor at the
+  current position (drivermouseinput.cpp:27-155). Here a drag moves a control relative to the
+  mouse - in steps, or smoothly with notches for a knob.
+* Right button as the control's second binding (decrease), panning only off a control
+  (drivermouseinput.cpp:405-414). Here the right button always looks around.
+* Varying repeat rate while a button is held, growing with the cursor's distance from where it was
+  pressed (drivermouseinput.cpp:437-443, 482-484), and the Shift "fast" variants (:418-428).
+* Debug-mode tooltip with the submodel name instead of the caption (drivermode.cpp:377-382).
+* Key hints only for the first widget of a label - the others have their actions cleared by the
+  instancer (mmd_cabin_instancer.gd:396), so their caption shows no keys.
+* **Brake valve drag direction - cause not found.** The grip heuristic
+  (`CabinHUDMouseSystem::_increase_signs`) got SM42's valve (`brakectrl: zasadniczy`) left-right
+  backwards in game, while a headless check on the same cab model (`6d_kabina`, camera at
+  `driver1sitpos`, the knob's own rotation applied) predicted the handle moving the way the drag
+  went. `brakectrl` now forces its signs in the catalog (`"mouse_drag_signs"`, down/right brakes).
+  Find what differs in game (the vehicle's own MMD - 6d/6d1/6da have opposite `rot` signs - the
+  occupied cab, the cab's transform) before trusting the heuristic for other valves, and drop the
+  force once it is found.
+* Captions are taken when a control is built - a language changed while sitting in a cab shows
+  after the cab is entered again.
+* Occluders are every mesh of a generated cab model, transparent ones included - the original's
+  pick pass draws only opaque submodels (`Render_cab(..., Alpha = false)`,
+  opengl33renderer.cpp:1208). Hand-authored cabin scenes register no occluders at all.
+
+### DebugWindow
+
+Requested: basic gauges into General, the rest split into sections that match the components
+(the spring brake and its controls in one place), an Engine section showing the engine type with
+its switches and debug controls completed, a Lights section, and a font a few px smaller.
+
 ### Python integration
 
 `PythonScreenServer` runs the original's Python 2 screen scripts, `CabinPythonScreen` draws them on
@@ -302,6 +370,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Open cab window (`Global.CabWindowOpen`): the original plays the consist's outer noise and stops
   the cab running noise (`DynObj.cpp:4638`, `Train.cpp:8274`); no cab window state yet.
 * `pitchvariation:` (default 0.975-1.025, `sound.cpp:375`) is parsed, never applied.
+* `pantographup:`/`pantographdown:` play at the bank's position for both pantographs; the original
+  places them at the pantograph that moved (`DynObj.cpp:3881-3934`, `4007-4036`). The E186 bank
+  was not dumped after adding them, nor after `converter:`/`small-compressor:` were wired.
 * `brake_release_hiss` (`unbrake`) is the one pneumatic event the brake factory does not build - it
   goes through `TrainSoundSystem._update_triggers()` without `gain` or the `listener_inside`
   correction, so it is louder in the cab than the other hisses.
@@ -327,6 +398,15 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   keeps `AccS` non-zero (`Mover.cpp:4603`) - same in the original.
 * A vehicle with its physics off keeps its last state (fetched only for active vehicles, as the
   original skips `Update()`).
+* The rest of `LoadFIZ_Cntrl`'s start modes never reach the Mover: `CompressorStart`,
+  `PantCompressorStart`, `MainStart` and `ConverterOverloadWhenMainIsOff` (Mover.cpp:10905-10925)
+  are not parsed, and their properties sit on `VehicleElectricEngine`, so a diesel could not
+  carry them anyway. `ConverterStart`/`ConverterStartDelay` moved to `VehicleController`; the
+  others belong there too. The `converter` command is still an electric engine's only.
+* `BrakeValveParams` (the raw `BrakeValve=` string, Mover.cpp:10397) is never set, so
+  `TNESt3::SetSize()` builds every ESt distributor as an ESt4: `TRapid` instead of `TRura` and no
+  `Podskok` for ESt3, and `AL2`, `PZZ`, `HBG300`, `3d`/`4d` and `-ED` are dropped. That covers
+  about 200 FIZ files of the datapack (ESt3, ESt3AL2HBG300, ESt4HBG300-s216, ESt3d_PZZ, ...).
 
 ## Rendering
 

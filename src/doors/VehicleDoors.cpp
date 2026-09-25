@@ -76,115 +76,143 @@ namespace godot {
         BIND_ENUM_CONSTANT(TYPE_FOLD)
         BIND_ENUM_CONSTANT(TYPE_PLUG)
 
+        ClassDB::bind_method(D_METHOD("get_permit_preset"), &VehicleDoors::get_permit_preset);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::INT, "permit_preset", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_permit_preset");
         ClassDB::bind_method(D_METHOD("get_locked"), &VehicleDoors::get_locked);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "locked", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "locked", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_locked");
         ClassDB::bind_method(D_METHOD("get_lock_enabled"), &VehicleDoors::get_lock_enabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "lock_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "lock_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_lock_enabled");
         ClassDB::bind_method(D_METHOD("get_step_enabled"), &VehicleDoors::get_step_enabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "step_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "step_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_step_enabled");
         ClassDB::bind_method(D_METHOD("get_open_control"), &VehicleDoors::get_open_control);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "open_control", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "open_control", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_open_control");
         ClassDB::bind_method(D_METHOD("get_left_open"), &VehicleDoors::get_left_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_open");
         ClassDB::bind_method(D_METHOD("get_left_open_permit"), &VehicleDoors::get_left_open_permit);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_open_permit", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_open_permit", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_open_permit");
         ClassDB::bind_method(D_METHOD("get_left_local_open"), &VehicleDoors::get_left_local_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_local_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_local_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_local_open");
         ClassDB::bind_method(D_METHOD("get_left_remote_open"), &VehicleDoors::get_left_remote_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_remote_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_remote_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_remote_open");
         ClassDB::bind_method(D_METHOD("get_left_position"), &VehicleDoors::get_left_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "left_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "left_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_position");
         ClassDB::bind_method(D_METHOD("get_left_position_normalized"), &VehicleDoors::get_left_position_normalized);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "left_position_normalized", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "left_position_normalized", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_position_normalized");
         ClassDB::bind_method(D_METHOD("get_left_operating"), &VehicleDoors::get_left_operating);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_operating", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_operating", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_operating");
         ClassDB::bind_method(D_METHOD("get_left_step_position"), &VehicleDoors::get_left_step_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "left_step_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "left_step_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_step_position");
         ClassDB::bind_method(D_METHOD("get_left_step_operating"), &VehicleDoors::get_left_step_operating);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "left_step_operating", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "left_step_operating", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_left_step_operating");
         ClassDB::bind_method(D_METHOD("get_right_open"), &VehicleDoors::get_right_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_open");
         ClassDB::bind_method(D_METHOD("get_right_open_permit"), &VehicleDoors::get_right_open_permit);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_open_permit", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_open_permit", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_open_permit");
         ClassDB::bind_method(D_METHOD("get_right_local_open"), &VehicleDoors::get_right_local_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_local_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_local_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_local_open");
         ClassDB::bind_method(D_METHOD("get_right_remote_open"), &VehicleDoors::get_right_remote_open);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_remote_open", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_remote_open", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_remote_open");
         ClassDB::bind_method(D_METHOD("get_right_position"), &VehicleDoors::get_right_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "right_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "right_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_position");
         ClassDB::bind_method(D_METHOD("get_right_position_normalized"), &VehicleDoors::get_right_position_normalized);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "right_position_normalized", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "right_position_normalized", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_position_normalized");
         ClassDB::bind_method(D_METHOD("get_right_operating"), &VehicleDoors::get_right_operating);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_operating", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_operating", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_operating");
         ClassDB::bind_method(D_METHOD("get_right_step_position"), &VehicleDoors::get_right_step_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "right_step_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "right_step_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_step_position");
         ClassDB::bind_method(D_METHOD("get_right_step_operating"), &VehicleDoors::get_right_step_operating);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "right_step_operating", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "right_step_operating", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_right_step_operating");
     }
 

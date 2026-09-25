@@ -1,6 +1,6 @@
-#include "../core/VehicleController.hpp"
-#include "../core/VehicleComponent.hpp"
 #include "../core/TrainSystem.hpp"
+#include "../core/VehicleComponent.hpp"
+#include "../core/VehicleController.hpp"
 #include "../engines/VehicleEngine.hpp"
 #include "../lighting/VehicleLighting.hpp"
 #include "../physics/RailVehicleServer.hpp"
@@ -16,8 +16,6 @@ namespace godot {
     const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
     const char *VehicleController::power_changed_signal = "power_changed";
     const char *VehicleController::command_received = "command_received";
-    const char *VehicleController::radio_toggled = "radio_toggled";
-    const char *VehicleController::radio_channel_changed = "radio_channel_changed";
     const char *VehicleController::roof_light_changed = "roof_light_changed";
     const char *VehicleController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *VehicleController::config_changed = "config_changed";
@@ -68,12 +66,8 @@ namespace godot {
                 DEFVAL(1));
         ClassDB::bind_method(D_METHOD("direction_increase"), &VehicleController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &VehicleController::direction_decrease);
-        ClassDB::bind_method(D_METHOD("radio", "enabled"), &VehicleController::radio);
-        ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &VehicleController::radio_channel_set);
         ClassDB::bind_method(
-                D_METHOD("radio_channel_increase", "step"), &VehicleController::radio_channel_increase, DEFVAL(1));
-        ClassDB::bind_method(
-                D_METHOD("radio_channel_decrease", "step"), &VehicleController::radio_channel_decrease, DEFVAL(1));
+                D_METHOD("distance_counter_activate", "pressed"), &VehicleController::distance_counter_activate);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleController::apply_config);
         ClassDB::bind_method(D_METHOD("initialize"), &VehicleController::initialize);
         ClassDB::bind_method(D_METHOD("process_components", "delta"), &VehicleController::process_components);
@@ -91,8 +85,7 @@ namespace godot {
         /* Read by whoever caches this vehicle's dump: a command runs synchronously, in the middle
          * of a step, so the step alone does not say whether a dump is still current. */
         ClassDB::bind_method(D_METHOD("get_command_serial"), &VehicleController::get_command_serial);
-        ClassDB::bind_method(
-                D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
+        ClassDB::bind_method(D_METHOD("find_generic_components", "tag"), &VehicleController::find_generic_components);
         ClassDB::bind_method(D_METHOD("process_movement", "delta"), &VehicleController::process_movement);
         ClassDB::bind_method(D_METHOD("update_location"), &VehicleController::update_location);
         ClassDB::bind_method(
@@ -127,8 +120,6 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, max_velocity);
-        BIND_PROPERTY(VehicleController, Variant::INT, radio_channel_min, "radio_channel");
-        BIND_PROPERTY(VehicleController, Variant::INT, radio_channel_max, "radio_channel");
         /* FIXME: move to TrainPower section? */
         BIND_PROPERTY_W_HINT(VehicleController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
@@ -163,8 +154,7 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, dimensions_floor_height, "dimensions");
         BIND_PROPERTY(VehicleController, Variant::FLOAT, initial_velocity);
         BIND_PROPERTY_W_HINT(
-                VehicleController, Variant::INT, driver_type, "", PROPERTY_HINT_ENUM,
-                "Nobody,HeadDriver,RearDriver");
+                VehicleController, Variant::INT, driver_type, "", PROPERTY_HINT_ENUM, "Nobody,HeadDriver,RearDriver");
         BIND_ENUM_CONSTANT(DRIVER_NOBODY);
         BIND_ENUM_CONSTANT(DRIVER_HEAD);
         BIND_ENUM_CONSTANT(DRIVER_REAR);
@@ -173,6 +163,10 @@ namespace godot {
         BIND_PROPERTY_W_HINT(
                 VehicleController, Variant::INT, cntrl_battery_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY_W_HINT(
+                VehicleController, Variant::INT, cntrl_converter_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(VehicleController, Variant::FLOAT, cntrl_converter_start_delay, "cntrl");
         BIND_PROPERTY_W_HINT(
                 VehicleController, Variant::INT, cntrl_ground_relay_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
@@ -188,20 +182,19 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
-        ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
-        ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
         ADD_SIGNAL(MethodInfo(position_changed_signal, PropertyInfo(Variant::VECTOR3, "position")));
         ADD_SIGNAL(MethodInfo(consist_changed_signal));
-        const String coupling_element_hint = enum_hint({{"Coupler", COUPLING_ELEMENT_COUPLER},
-                           {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},
-                           {"MainHose", COUPLING_ELEMENT_MAINHOSE},
-                           {"Control", COUPLING_ELEMENT_CONTROL},
-                           {"Gangway", COUPLING_ELEMENT_GANGWAY},
-                           {"Heating", COUPLING_ELEMENT_HEATING},
-                           {"Permanent", COUPLING_ELEMENT_PERMANENT}});
+        const String coupling_element_hint = enum_hint(
+                {{"Coupler", COUPLING_ELEMENT_COUPLER},
+                 {"BrakeHose", COUPLING_ELEMENT_BRAKEHOSE},
+                 {"MainHose", COUPLING_ELEMENT_MAINHOSE},
+                 {"Control", COUPLING_ELEMENT_CONTROL},
+                 {"Gangway", COUPLING_ELEMENT_GANGWAY},
+                 {"Heating", COUPLING_ELEMENT_HEATING},
+                 {"Permanent", COUPLING_ELEMENT_PERMANENT}});
         ADD_SIGNAL(MethodInfo(
                 coupler_attached_signal,
                 PropertyInfo(Variant::INT, "element", PROPERTY_HINT_ENUM, coupling_element_hint)));
@@ -262,138 +255,158 @@ namespace godot {
 
         ClassDB::bind_method(D_METHOD("get_tachometer_speed"), &VehicleController::get_tachometer_speed);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "tachometer_speed", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "tachometer_speed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tachometer_speed");
         ClassDB::bind_method(D_METHOD("get_tachometer_speed_jump"), &VehicleController::get_tachometer_speed_jump);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "tachometer_speed_jump", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tachometer_speed_jump");
         ClassDB::bind_method(D_METHOD("get_tachometer_clock_speed"), &VehicleController::get_tachometer_clock_speed);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "tachometer_clock_speed", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_tachometer_clock_speed");
         ClassDB::bind_method(D_METHOD("get_direction_absolute"), &VehicleController::get_direction_absolute);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "direction_absolute", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "direction_absolute", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_direction_absolute");
         ClassDB::bind_method(D_METHOD("get_cabin"), &VehicleController::get_cabin);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "cabin", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "cabin", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_cabin");
         ClassDB::bind_method(D_METHOD("get_cabin_controleable"), &VehicleController::get_cabin_controleable);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "cabin_controleable", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "cabin_controleable", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_cabin_controleable");
         ClassDB::bind_method(D_METHOD("get_cabin_occupied"), &VehicleController::get_cabin_occupied);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "cabin_occupied", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "cabin_occupied", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_cabin_occupied");
         ClassDB::bind_method(D_METHOD("get_live_battery_voltage"), &VehicleController::get_live_battery_voltage);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "live_battery_voltage", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "live_battery_voltage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_live_battery_voltage");
         ClassDB::bind_method(D_METHOD("get_battery_enabled"), &VehicleController::get_battery_enabled);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_battery_enabled");
-        ClassDB::bind_method(D_METHOD("get_radio_enabled"), &VehicleController::get_radio_enabled);
+        ClassDB::bind_method(D_METHOD("get_distance_counter"), &VehicleController::get_distance_counter);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "radio_enabled", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_enabled");
-        ClassDB::bind_method(D_METHOD("get_radio_powered"), &VehicleController::get_radio_powered);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "radio_powered", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_powered");
-        ClassDB::bind_method(D_METHOD("get_radio_channel"), &VehicleController::get_radio_channel);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "radio_channel", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_channel");
+                PropertyInfo(
+                        Variant::FLOAT, "distance_counter", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_distance_counter");
         ClassDB::bind_method(D_METHOD("get_power24_voltage"), &VehicleController::get_power24_voltage);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power24_voltage");
         ClassDB::bind_method(D_METHOD("get_power24_available"), &VehicleController::get_power24_available);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "power24_available", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "power24_available", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power24_available");
         ClassDB::bind_method(D_METHOD("get_power110_available"), &VehicleController::get_power110_available);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "power110_available", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "power110_available", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_power110_available");
         ClassDB::bind_method(D_METHOD("get_current0"), &VehicleController::get_current0);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "current0", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "current0", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_current0");
         ClassDB::bind_method(D_METHOD("get_current1"), &VehicleController::get_current1);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "current1", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "current1", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_current1");
         ClassDB::bind_method(D_METHOD("get_current2"), &VehicleController::get_current2);
         ADD_PROPERTY(
-                PropertyInfo(Variant::FLOAT, "current2", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::FLOAT, "current2", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_current2");
         ClassDB::bind_method(D_METHOD("get_relay_novolt"), &VehicleController::get_relay_novolt);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "relay_novolt", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "relay_novolt", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_relay_novolt");
         ClassDB::bind_method(D_METHOD("get_relay_overvoltage"), &VehicleController::get_relay_overvoltage);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "relay_overvoltage", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "relay_overvoltage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_relay_overvoltage");
         ClassDB::bind_method(D_METHOD("get_relay_ground"), &VehicleController::get_relay_ground);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "relay_ground", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::BOOL, "relay_ground", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_relay_ground");
         ClassDB::bind_method(D_METHOD("get_train_damage"), &VehicleController::get_train_damage);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "train_damage", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "train_damage", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_train_damage");
-        ClassDB::bind_method(D_METHOD("get_controller_second_position"), &VehicleController::get_controller_second_position);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_second_position"), &VehicleController::get_controller_second_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "controller_second_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_second_position");
-        ClassDB::bind_method(D_METHOD("get_controller_main_position"), &VehicleController::get_controller_main_position);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_position"), &VehicleController::get_controller_main_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "controller_main_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_main_position");
-        ClassDB::bind_method(D_METHOD("get_controller_joint_position"), &VehicleController::get_controller_joint_position);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_joint_position"), &VehicleController::get_controller_joint_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "controller_joint_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "controller_joint_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_joint_position");
-        ClassDB::bind_method(D_METHOD("get_controller_main_actual_position"), &VehicleController::get_controller_main_actual_position);
+        ClassDB::bind_method(
+                D_METHOD("get_controller_main_actual_position"),
+                &VehicleController::get_controller_main_actual_position);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "controller_main_actual_position", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_controller_main_actual_position");
         ClassDB::bind_method(D_METHOD("get_circuit_rlist_size"), &VehicleController::get_circuit_rlist_size);
         ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "circuit_rlist_size", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                PropertyInfo(
+                        Variant::INT, "circuit_rlist_size", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_circuit_rlist_size");
     }
 
@@ -465,10 +478,7 @@ namespace godot {
         register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
         register_command("direction_increase", Callable(this, "direction_increase"));
         register_command("direction_decrease", Callable(this, "direction_decrease"));
-        register_command("radio", Callable(this, "radio"));
-        register_command("radio_channel_set", Callable(this, "radio_channel_set"));
-        register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-        register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        register_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
         register_command("coupler_connect", Callable(this, "coupler_connect"));
         register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
     }
@@ -479,7 +489,6 @@ namespace godot {
         _initialize_simulation();
         update_state();
         emit_signal(power_changed_signal, prev_is_powered);
-        emit_signal(radio_channel_changed, prev_radio_channel);
         emit_signal(roof_light_changed, prev_roof_light_enabled);
     }
 
@@ -500,17 +509,6 @@ namespace godot {
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(power_changed_signal, prev_is_powered);
-        }
-
-        if (const bool new_radio_enabled = get_radio_enabled() && new_is_powered;
-            prev_radio_enabled != new_radio_enabled) {
-            prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
-            emit_signal(radio_toggled, new_radio_enabled);
-        }
-
-        if (const int new_radio_channel = radio_channel; prev_radio_channel != new_radio_channel) {
-            prev_radio_channel = new_radio_channel; // FIXME: I don't like this
-            emit_signal(radio_channel_changed, new_radio_channel);
         }
 
         if (const bool new_roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
@@ -535,10 +533,6 @@ namespace godot {
     }
 
 
-    int VehicleController::get_radio_channel() const {
-        return is_simulation_ready() ? radio_channel : 0;
-    }
-
     void VehicleController::_fill_state_dictionary(Dictionary &p_state) const {
         if (!is_simulation_ready()) {
             return;
@@ -557,9 +551,7 @@ namespace godot {
         p_state["cabin_occupied"] = get_cabin_occupied();
         p_state["battery_enabled"] = get_battery_enabled();
         p_state["battery_voltage"] = get_live_battery_voltage();
-        p_state["radio_enabled"] = get_radio_enabled();
-        p_state["radio_powered"] = get_radio_powered();
-        p_state["radio_channel"] = get_radio_channel();
+        p_state["distance_counter"] = get_distance_counter();
         p_state["power24_voltage"] = get_power24_voltage();
         p_state["power24_available"] = get_power24_available();
         p_state["power110_available"] = get_power110_available();
@@ -610,8 +602,8 @@ namespace godot {
     TypedArray<VehicleComponent> VehicleController::find_generic_components(const StringName &p_tag) const {
         TypedArray<VehicleComponent> found;
         for (VehicleComponent *component: components) {
-            if (component->get_component_type() == VehicleComponentType::COMPONENT_GENERIC
-                && component->get_component_tag() == p_tag) {
+            if (component->get_component_type() == VehicleComponentType::COMPONENT_GENERIC &&
+                component->get_component_tag() == p_tag) {
                 found.push_back(component);
             }
         }
@@ -642,10 +634,7 @@ namespace godot {
         unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
         unregister_command("direction_increase", Callable(this, "direction_increase"));
         unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-        unregister_command("radio", Callable(this, "radio"));
-        unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
-        unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-        unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        unregister_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
         unregister_command("coupler_connect", Callable(this, "coupler_connect"));
         unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
@@ -693,11 +682,11 @@ namespace godot {
         return result;
     }
 
-    void
-    VehicleController::change_track(const String &p_track_name, const float p_track_offset, const int p_track_direction) {
+    void VehicleController::change_track(
+            const String &p_track_name, const float p_track_offset, const int p_track_direction) {
         UtilityFunctions::push_warning(
-                vformat("VehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d", p_track_name,
-                        p_track_offset, p_track_direction));
+                vformat("VehicleController::change_track() is managed by RailVehicle3D now: %s / %.3f / %d",
+                        p_track_name, p_track_offset, p_track_direction));
     }
 
     Vector3 VehicleController::get_world_position() const {
@@ -736,7 +725,8 @@ namespace godot {
         }
     }
 
-    Variant VehicleController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
+    Variant
+    VehicleController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
         TrainSystem *system = TrainSystem::get_instance();
         return system != nullptr ? system->send_command(train_id, String(p_command), p_p1, p_p2) : Variant();
     }
@@ -761,20 +751,6 @@ namespace godot {
             default:
                 return 0;
         }
-    }
-
-    void VehicleController::radio_channel_increase(const int p_step) {
-        const int step = p_step > 0 ? p_step : 1;
-        radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
-    }
-
-    void VehicleController::radio_channel_decrease(const int p_step) {
-        const int step = (p_step != 0) ? p_step : 1;
-        radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
-    }
-
-    void VehicleController::radio_channel_set(const int p_channel) {
-        radio_channel = Math::clamp(p_channel, radio_channel_min, radio_channel_max);
     }
 
 } // namespace godot

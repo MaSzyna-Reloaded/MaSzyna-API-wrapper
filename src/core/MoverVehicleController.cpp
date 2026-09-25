@@ -1,6 +1,6 @@
-#include "MoverVehicleController.hpp"
 #include "../mover/MoverComponent.hpp"
 #include "../mover/MoverTypes.hpp"
+#include "MoverVehicleController.hpp"
 #include "maszyna/utilities.h"
 #include <cmath>
 #include <godot_cpp/core/math.hpp>
@@ -230,6 +230,13 @@ namespace godot {
         }
         // the vehicle is moved by this distance (DynObj.cpp:2439), front-relative
         mover->dMoveLen += mover->V * p_delta;
+        // TTrain::add_distance (Train.cpp:10309) - counted towards the occupied cab, and switched
+        // off for good whenever the low voltage goes
+        if (distance_counter >= 0.0 && (mover->Power24vIsAvailable || mover->Power110vIsAvailable)) {
+            distance_counter += mover->V * p_delta * mover->CabOccupied;
+        } else {
+            distance_counter = DISTANCE_COUNTER_OFF;
+        }
     }
 
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
@@ -266,7 +273,7 @@ namespace godot {
     bool MoverVehicleController::is_coupled_by(const int p_end, const CouplingElement p_element) const {
         // indexed by CouplingElement
         static constexpr int flags[] = {coupling::coupler, coupling::brakehose, coupling::mainhose, coupling::control,
-                                        coupling::gangway, coupling::heating, coupling::permanent};
+                                        coupling::gangway, coupling::heating,   coupling::permanent};
         return mover != nullptr && TestFlag(mover->Couplers[p_end].CouplingFlag, flags[p_element]);
     }
 
@@ -383,8 +390,9 @@ namespace godot {
             const bool detaching = (coupler.sounds & sound::detach) != 0;
             for (int index = 0; index < 6; ++index) {
                 if ((coupler.sounds & flags[index]) != 0) {
-                    emit_signal(detaching ? coupler_detached_signal : coupler_attached_signal,
-                                static_cast<CouplingElement>(index));
+                    emit_signal(
+                            detaching ? coupler_detached_signal : coupler_attached_signal,
+                            static_cast<CouplingElement>(index));
                 }
             }
             coupler.sounds = sound::none;
@@ -420,6 +428,10 @@ namespace godot {
         mover->Floor = static_cast<float>(get_dimensions_floor_height());
 
         mover->BatteryStart = mover_start_mode(get_cntrl_battery_start_mode());
+        // a Cntrl. key of every vehicle, not of an electric engine (Mover.cpp:10909 LoadFIZ_Cntrl) -
+        // a diesel-electric's compressor runs off the converter too (CompressorPower=Converter)
+        mover->ConverterStart = mover_start_mode(get_cntrl_converter_start_mode());
+        mover->ConverterStartDelay = static_cast<float>(get_cntrl_converter_start_delay());
         mover->GroundRelayStart = mover_start_mode(get_cntrl_ground_relay_start_mode());
         mover->CompartmentLights.start_type = mover_start_mode(get_cntrl_compartment_lights_start_mode());
         mover->AutomaticCabActivation = get_cntrl_automatic_cab_activation();
@@ -483,14 +495,6 @@ namespace godot {
         return mover != nullptr ? mover->Battery : false;
     }
 
-    bool MoverVehicleController::get_radio_enabled() const {
-        return mover != nullptr ? mover->Radio : false;
-    }
-
-    bool MoverVehicleController::get_radio_powered() const {
-        return mover != nullptr ? mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable) : false;
-    }
-
     double MoverVehicleController::get_power24_voltage() const {
         return mover != nullptr ? mover->Power24vVoltage : 0.0;
     }
@@ -540,7 +544,11 @@ namespace godot {
     }
 
     int MoverVehicleController::get_controller_joint_position() const {
-        return mover != nullptr ? mover->LocalBrakePosA > 0.0 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo)) : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos) : 0;
+        return mover != nullptr
+                       ? mover->LocalBrakePosA > 0.0
+                                 ? static_cast<int>(std::round(-mover->LocalBrakePosA * LocalBrakePosNo))
+                                 : (mover->CoupledCtrl ? mover->MainCtrlPos + mover->ScndCtrlPos : mover->MainCtrlPos)
+                       : 0;
     }
 
     int MoverVehicleController::get_controller_main_actual_position() const {
@@ -626,7 +634,14 @@ namespace godot {
         mover->DirectionBackward();
     }
 
-    void MoverVehicleController::radio(const bool p_enabled) {
-        mover->Radio = p_enabled;
+    // Original engine: TTrain::OnCommand_distancecounteractivate (Train.cpp:1552), single-press form
+    void MoverVehicleController::distance_counter_activate(const bool p_pressed) {
+        if (p_pressed) {
+            distance_counter = 0.0;
+        }
+    }
+
+    double MoverVehicleController::get_distance_counter() const {
+        return distance_counter;
     }
 } // namespace godot

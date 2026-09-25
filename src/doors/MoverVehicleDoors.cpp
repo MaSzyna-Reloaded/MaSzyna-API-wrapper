@@ -1,14 +1,25 @@
-#include "MoverVehicleDoors.hpp"
 #include "../mover/MoverBackend.hpp"
+#include "MoverVehicleDoors.hpp"
+#include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
     void MoverVehicleDoors::_bind_methods() {}
 
 
+    int MoverVehicleDoors::get_permit_preset() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.permit_preset : 0;
+    }
 
-
-
+    // the door permit preset switch has one position per FIZ permit preset (Train.cpp:7304)
+    void MoverVehicleDoors::_fill_config_dictionary(Dictionary &p_config) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["doors_permit_preset_max"] = std::max(0, static_cast<int>(mover->Doors.permit_presets.size()) - 1);
+    }
 
     bool MoverVehicleDoors::get_locked() const {
         const TMoverParameters *mover = get_mover();
@@ -62,7 +73,9 @@ namespace godot {
 
     bool MoverVehicleDoors::get_left_operating() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing : false;
+        return mover != nullptr
+                       ? mover->Doors.instances[side::left].is_opening || mover->Doors.instances[side::left].is_closing
+                       : false;
     }
 
     double MoverVehicleDoors::get_left_step_position() const {
@@ -72,7 +85,9 @@ namespace godot {
 
     bool MoverVehicleDoors::get_left_step_operating() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Doors.instances[side::left].step_folding || mover->Doors.instances[side::left].step_unfolding : false;
+        return mover != nullptr ? mover->Doors.instances[side::left].step_folding ||
+                                          mover->Doors.instances[side::left].step_unfolding
+                                : false;
     }
 
     bool MoverVehicleDoors::get_right_open() const {
@@ -107,7 +122,9 @@ namespace godot {
 
     bool MoverVehicleDoors::get_right_operating() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Doors.instances[side::right].is_opening || mover->Doors.instances[side::right].is_closing : false;
+        return mover != nullptr ? mover->Doors.instances[side::right].is_opening ||
+                                          mover->Doors.instances[side::right].is_closing
+                                : false;
     }
 
     double MoverVehicleDoors::get_right_step_position() const {
@@ -117,7 +134,9 @@ namespace godot {
 
     bool MoverVehicleDoors::get_right_step_operating() const {
         const TMoverParameters *mover = get_mover();
-        return mover != nullptr ? mover->Doors.instances[side::right].step_folding || mover->Doors.instances[side::right].step_unfolding : false;
+        return mover != nullptr ? mover->Doors.instances[side::right].step_folding ||
+                                          mover->Doors.instances[side::right].step_unfolding
+                                : false;
     }
 
     void MoverVehicleDoors::_fill_state_dictionary(Dictionary &p_state) const {
@@ -126,6 +145,7 @@ namespace godot {
             return;
         }
         p_state["doors_locked"] = get_locked();
+        p_state["doors_permit_preset"] = get_permit_preset();
         p_state["doors_lock_enabled"] = get_lock_enabled();
         p_state["doors_step_enabled"] = get_step_enabled();
         p_state["doors_open_control"] = get_open_control();
@@ -264,7 +284,8 @@ namespace godot {
         p_mover->Doors.has_autowarning = get_close_auto_close_warning();
         p_mover->Doors.has_lock = get_has_lock();
         bool const remote_control = {
-                (get_open_method() == CONTROLS_DRIVER || get_open_method() == CONTROLS_CONDUCTOR || get_open_method() == CONTROLS_MIXED)};
+                (get_open_method() == CONTROLS_DRIVER || get_open_method() == CONTROLS_CONDUCTOR ||
+                 get_open_method() == CONTROLS_MIXED)};
 
         if (voltage_map.find(get_voltage()) != voltage_map.end()) {
             p_mover->Doors.voltage = voltage_map.at(get_voltage());

@@ -25,6 +25,10 @@ namespace godot {
 
         private:
             static void _bind_methods();
+
+        protected:
+            void _fill_config_dictionary(Dictionary &p_config) const override;
+
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_sand_active() const = 0;

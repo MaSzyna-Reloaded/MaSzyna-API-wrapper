@@ -80,6 +80,10 @@ func _notification(what: int) -> void:
     if what == NOTIFICATION_RESIZED:
         queue_redraw()
         _update_resize_handle_position()
+        return
+    # the title is drawn, not held by a Label, so it is translated here
+    if what == NOTIFICATION_TRANSLATION_CHANGED:
+        queue_redraw()
 
 
 func _process(_delta: float) -> void:
@@ -122,7 +126,7 @@ func _draw() -> void:
     draw_string(
         font,
         Vector2(TITLE_MARGIN_X, TITLE_BASELINE_OFFSET),
-        title,
+        atr(title),
         HORIZONTAL_ALIGNMENT_LEFT,
         -1.0,
         font_size

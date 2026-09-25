@@ -2,8 +2,8 @@ extends MarginContainer
 class_name LanguageSwitcher
 
 ## The language of the game's strings (MaszynaRuntime.language): one flag for every catalogue
-## MaszynaLocale finds in the game's lang/, English alone when there is none. Its left margin keeps
-## it clear of what stands before it in a row.
+## MaszynaTranslationServer finds in the game's lang/, English alone when there is none. Its left
+## margin keeps it clear of what stands before it in a row.
 
 ## How large a flag is drawn
 const FLAG_SIZE:Vector2 = Vector2(36.0, 24.0)
@@ -23,7 +23,7 @@ const LANGUAGE_NAMES:Dictionary[String, String] = {
 
 func _ready() -> void:
     var group:ButtonGroup = ButtonGroup.new()
-    for language:String in MaszynaLocale.get_languages():
+    for language:String in MaszynaTranslationServer.get_languages():
         var button:Button = Button.new()
         button.toggle_mode = true
         button.button_group = group

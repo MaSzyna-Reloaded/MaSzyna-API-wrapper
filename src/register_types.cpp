@@ -1,33 +1,31 @@
 #include "brakes/MoverVehicleBrake.hpp"
-#include "brakes/VehicleBrake.hpp"
 #include "brakes/MoverVehicleElectroPneumaticDynamicBrake.hpp"
-#include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
 #include "brakes/MoverVehicleSpringBrake.hpp"
+#include "brakes/VehicleBrake.hpp"
+#include "brakes/VehicleElectroPneumaticDynamicBrake.hpp"
 #include "brakes/VehicleSpringBrake.hpp"
 #include "buffers/MoverVehicleBuffCoupl.hpp"
 #include "buffers/VehicleBuffCoupl.hpp"
+#include "cabin/Cabin3D.hpp"
+#include "cabin/CabinHUDMouseSystem.hpp"
 #include "controllers/MoverVehicleUniversalController.hpp"
 #include "controllers/VehicleUniversalController.hpp"
 #include "core/GameLog.hpp"
 #include "core/GenericVehicleComponent.hpp"
 #include "core/GenericVehicleComponentNode.hpp"
-#include "cabin/Cabin3D.hpp"
-#include "cabin/CabinHUDMouseSystem.hpp"
-#include "traction/TractionPowerServer.hpp"
-#include "scripting/PythonScreenServer.hpp"
+#include "core/MaszynaRuntime.hpp"
+#include "core/MaszynaTranslationServer.hpp"
+#include "core/MoverVehicleController.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
-#include "core/VehicleController.hpp"
-#include "core/MoverVehicleController.hpp"
+#include "core/TrainSystem.hpp"
+#include "core/UserSettings.hpp"
 #include "core/VehicleComponent.hpp"
 #include "core/VehicleComponentModel.hpp"
 #include "core/VehicleComponentType.hpp"
+#include "core/VehicleController.hpp"
 #include "core/VehicleModel.hpp"
 #include "core/VehiclePhysicsNode.hpp"
-#include "core/TrainSystem.hpp"
-#include "core/MaszynaLocale.hpp"
-#include "core/MaszynaRuntime.hpp"
-#include "core/UserSettings.hpp"
 #include "doors/MoverVehicleDoors.hpp"
 #include "doors/VehicleDoors.hpp"
 #include "e3d/E3DModel.hpp"
@@ -36,19 +34,17 @@
 #include "e3d/E3DRenderingServer.hpp"
 #include "e3d/E3DSubModel.hpp"
 #include "engines/MoverVehicleDieselElectricEngine.hpp"
-#include "engines/VehicleDieselElectricEngine.hpp"
 #include "engines/MoverVehicleDieselEngine.hpp"
+#include "engines/MoverVehicleElectricInductionEngine.hpp"
+#include "engines/MoverVehicleElectricSeriesEngine.hpp"
+#include "engines/VehicleDieselElectricEngine.hpp"
 #include "engines/VehicleDieselEngine.hpp"
 #include "engines/VehicleElectricEngine.hpp"
-#include "engines/MoverVehicleElectricInductionEngine.hpp"
 #include "engines/VehicleElectricInductionEngine.hpp"
-#include "engines/MoverVehicleElectricSeriesEngine.hpp"
 #include "engines/VehicleElectricSeriesEngine.hpp"
 #include "engines/VehicleEngine.hpp"
 #include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
-#include "radio/MoverVehicleRadio.hpp"
-#include "radio/VehicleRadio.hpp"
 #include "lighting/MoverVehicleLighting.hpp"
 #include "lighting/VehicleLighting.hpp"
 #include "load/MoverVehicleLoad.hpp"
@@ -57,6 +53,10 @@
 #include "loaders/OggVorbisFormatLoader.hpp"
 #include "parsers/e3d_parser.hpp"
 #include "parsers/maszyna_parser.hpp"
+#include "physics/RailVehicleServer.hpp"
+#include "physics/RailVehicleStepper.hpp"
+#include "radio/MoverVehicleRadio.hpp"
+#include "radio/VehicleRadio.hpp"
 #include "register_types.h"
 #include "resources/brakes/BrakePressureTableItem.hpp"
 #include "resources/brakes/CompressorListItem.hpp"
@@ -74,25 +74,25 @@
 #include "scenery/SceneryLoadingTaskQueue.hpp"
 #include "scenery/SceneryStreamingServer.hpp"
 #include "scenery/SceneryTrianglesBuilder.hpp"
+#include "scripting/PythonScreenServer.hpp"
 #include "speed_control/MoverVehicleSpeedControl.hpp"
 #include "speed_control/VehicleSpeedControl.hpp"
 #include "switches/MoverVehicleSwitches.hpp"
 #include "switches/VehicleSwitches.hpp"
 #include "systems/MoverVehicleAIHints.hpp"
-#include "systems/VehicleAIHints.hpp"
 #include "systems/MoverVehicleHorns.hpp"
-#include "systems/VehicleHorns.hpp"
 #include "systems/MoverVehicleSecuritySystem.hpp"
+#include "systems/VehicleAIHints.hpp"
+#include "systems/VehicleHorns.hpp"
 #include "systems/VehicleSecuritySystem.hpp"
+#include "tracks/SpatialIndex.hpp"
+#include "tracks/TrackEndpointRef.hpp"
+#include "tracks/TrackManager.hpp"
+#include "traction/TractionPowerServer.hpp"
 #include "wheels/MoverVehicleWheels.hpp"
 #include "wheels/VehicleWheels.hpp"
 #include "wipers/MoverVehicleWipers.hpp"
 #include "wipers/VehicleWipers.hpp"
-#include "physics/RailVehicleServer.hpp"
-#include "physics/RailVehicleStepper.hpp"
-#include "tracks/SpatialIndex.hpp"
-#include "tracks/TrackEndpointRef.hpp"
-#include "tracks/TrackManager.hpp"
 #include <gdextension_interface.h>
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/os.hpp>
@@ -113,7 +113,7 @@ RailVehicleServer *rail_vehicle_server_singleton = nullptr;
 TractionPowerServer *traction_power_server_singleton = nullptr;
 SceneryStreamingServer *scenery_streaming_server_singleton = nullptr;
 PythonScreenServer *python_screen_server_singleton = nullptr;
-MaszynaLocale *maszyna_locale_singleton = nullptr;
+MaszynaTranslationServer *maszyna_translation_server_singleton = nullptr;
 CabinHUDMouseSystem *cabin_hud_mouse_system_singleton = nullptr;
 Ref<E3DResourceFormatLoader> e3d_resource_format_loader;
 Ref<OggVorbisFormatLoader> ogg_vorbis_format_loader;
@@ -128,7 +128,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
     if (p_level == MODULE_INITIALIZATION_LEVEL_SCENE) {
         GDREGISTER_CLASS(UserSettings);
         GDREGISTER_CLASS(MaszynaRuntime);
-        GDREGISTER_CLASS(MaszynaLocale);
+        GDREGISTER_CLASS(MaszynaTranslationServer);
         GDREGISTER_CLASS(ResourceCache);
         GDREGISTER_CLASS(E3DSubModel);
         GDREGISTER_CLASS(E3DModel);
@@ -232,7 +232,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
         e3d_rendering_server_singleton = memnew(E3DRenderingServer);
         track_manager_singleton = memnew(TrackManager);
-        rail_vehicle_server_singleton = memnew(RailVehicleServer);
         traction_power_server_singleton = memnew(TractionPowerServer);
         python_screen_server_singleton = memnew(PythonScreenServer);
         cabin_hud_mouse_system_singleton = memnew(CabinHUDMouseSystem);
@@ -245,13 +244,15 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
         Engine::get_singleton()->register_singleton("TrackManager", track_manager_singleton);                      // 8
-        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton); // 10
-        Engine::get_singleton()->register_singleton(
-                "TractionPowerServer", traction_power_server_singleton); // 11
-        Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton); // 12
+        // after MaszynaRuntime is registered: the constructor follows its pause
+        rail_vehicle_server_singleton = memnew(RailVehicleServer);
+        Engine::get_singleton()->register_singleton("RailVehicleServer", rail_vehicle_server_singleton);     // 10
+        Engine::get_singleton()->register_singleton("TractionPowerServer", traction_power_server_singleton); // 11
+        Engine::get_singleton()->register_singleton("PythonScreenServer", python_screen_server_singleton);   // 12
         // after UserSettings is registered: the constructor reads the game directory from it
-        maszyna_locale_singleton = memnew(MaszynaLocale);
-        Engine::get_singleton()->register_singleton("MaszynaLocale", maszyna_locale_singleton);                // 13
+        maszyna_translation_server_singleton = memnew(MaszynaTranslationServer);
+        Engine::get_singleton()->register_singleton(
+                "MaszynaTranslationServer", maszyna_translation_server_singleton);                            // 13
         Engine::get_singleton()->register_singleton("CabinHUDMouseSystem", cabin_hud_mouse_system_singleton); // 14
 
         e3d_resource_format_loader.instantiate();
@@ -286,12 +287,12 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         cabin_hud_mouse_system_singleton = nullptr;
     }
 
-    if (Engine::get_singleton()->has_singleton("MaszynaLocale")) {
-        Engine::get_singleton()->unregister_singleton("MaszynaLocale"); // 13
+    if (Engine::get_singleton()->has_singleton("MaszynaTranslationServer")) {
+        Engine::get_singleton()->unregister_singleton("MaszynaTranslationServer"); // 13
     }
-    if (maszyna_locale_singleton != nullptr) {
-        memdelete(maszyna_locale_singleton);
-        maszyna_locale_singleton = nullptr;
+    if (maszyna_translation_server_singleton != nullptr) {
+        memdelete(maszyna_translation_server_singleton);
+        maszyna_translation_server_singleton = nullptr;
     }
 
     if (Engine::get_singleton()->has_singleton("PythonScreenServer")) {

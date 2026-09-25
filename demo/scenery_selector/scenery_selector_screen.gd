@@ -1,7 +1,7 @@
 extends Control
 
 ## Full screen scenario selector: <game_dir>/scenery/*.scn on the left, details of the selected
-## one (MaszynaSceneryInfo) on the right, with the trainsets it declares. After "Wczytaj" the background dissolves into the
+## one (MaszynaSceneryInfo) on the right, with the trainsets it declares. After "Load" the background dissolves into the
 ## loading screen below. Escape asks to quit (quit_requested).
 
 signal scenery_selected(filename: String, train_id: String, skin_overrides: Dictionary)
@@ -70,15 +70,20 @@ func _ready() -> void:
         notes.append(file.get_basename().to_upper())
     # the list selects its first row and reports it back, so the details follow from here on
     %SceneryList.set_rows(_titles, notes)
-    %BuildLabel.text = "Pre-Alpha Demo Release %s (build %s)" % [
-        ProjectSettings.get_setting("application/config/version"), _build_number()
-    ]
 
 
-## The stamp of the build that is actually loaded; a checkout that was never built has none.
-func _build_number() -> String:
+## The build caption is composed, not a msgid a Label translates itself; the tree sends this on
+## entering it as well as on every change of the language
+func _notification(what:int) -> void:
+    if not what == NOTIFICATION_TRANSLATION_CHANGED:
+        return
+    # Both halves come from the file the build writes (cmake/write_build_number.cmake, stamped
+    # "%Y%m%d%H%M%S"), so the label names the library that is actually loaded. A date typed into
+    # project.godot cannot do that - it kept showing 2026-09-19 through every build after it.
     var stamp:String = MaszynaRuntime.get_build_number()
-    return stamp if stamp else "unbuilt"
+    %BuildLabel.text = (tr("Pre-Alpha Demo Release %s-%s-%s (build %s)") % [
+        stamp.substr(0, 4), stamp.substr(4, 2), stamp.substr(6, 2), stamp
+    ]) if stamp else tr("Pre-Alpha Demo Release (unbuilt)")
 
 
 func open() -> void:
@@ -109,7 +114,7 @@ func _input(event: InputEvent) -> void:
 
 
 ## Sections that have something to walk right now: the scenery list is gone under the viewer, the
-## trainsets need a scenery, the vehicles a trainset, the skins an open viewer, and "Wczytaj" needs
+## trainsets need a scenery, the vehicles a trainset, the skins an open viewer, and "Load" needs
 ## a scenery to load
 func _available_sections() -> Array[int]:
     var sections: Array[int] = []
@@ -201,7 +206,7 @@ func _on_trainset_list_item_selected(index: int) -> void:
 
 
 ## Loads the scenery the list has selected, and does nothing while a search has left none selected.
-## The "Wczytaj" button and Enter on a row are both wired straight to this, in the scene.
+## The "Load" button and Enter on a row are both wired straight to this, in the scene.
 func load_selected_scenery() -> void:
     var index: int = %SceneryList.get_selected()
     if index < 0:

@@ -50,7 +50,7 @@ func _refresh() -> void:
     # what none of the monitors above claims: engine internals, resource work, driver stalls
     _rows["Unaccounted"].text = "%.1f ms" % maxf(frame - process - physics - render_cpu, 0.0)
     # physics ticks Godot runs per rendered frame to catch up - each one is a full simulation step
-    _rows["Physics steps"].text = "%.1f (max %d)" % [
+    _rows["Physics steps"].text = tr("%.1f (max %d)") % [
         minf(frame / (1000.0 / Engine.physics_ticks_per_second), Engine.max_physics_steps_per_frame),
         Engine.max_physics_steps_per_frame,
     ]

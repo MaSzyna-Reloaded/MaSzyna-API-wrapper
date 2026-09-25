@@ -1,0 +1,771 @@
+# Strings of the demo's own interface that the game's catalogue (lang/*.po) does not have.
+# MaszynaTranslationServer merges them under the game's catalogue (maszyna/locale/translations).
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: zh\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Trainset"
+msgstr "编组"
+
+msgid "Load"
+msgstr "载入"
+
+msgid "Apply skin"
+msgstr "应用涂装"
+
+msgid "Search scenario"
+msgstr "搜索场景"
+
+msgid "Pre-Alpha Demo Release %s-%s-%s (build %s)"
+msgstr "Pre-Alpha 演示版 %s-%s-%s（构建 %s）"
+
+msgid "Pre-Alpha Demo Release (unbuilt)"
+msgstr "Pre-Alpha 演示版（未构建）"
+
+msgid "Loading %s..."
+msgstr "正在载入 %s..."
+
+msgid "Exit to menu"
+msgstr "返回菜单"
+
+msgid "Leave the scenery and go back to the menu?"
+msgstr "离开场景并返回菜单？"
+
+msgid "MaSzyna game folder data is not set or invalid."
+msgstr "未设置 MaSzyna 游戏数据文件夹或其无效。"
+
+msgid "Controls"
+msgstr "控制"
+
+msgid "Toggle controls"
+msgstr "切换控制"
+
+msgid "General"
+msgstr "常规"
+
+msgid "Engine"
+msgstr "动力"
+
+msgid "Brakes"
+msgstr "制动"
+
+msgid "Spring brake"
+msgstr "弹簧制动"
+
+msgid "Lights"
+msgstr "灯光"
+
+msgid "Doors"
+msgstr "车门"
+
+msgid "Security"
+msgstr "警惕与机车信号"
+
+msgid "Controller"
+msgstr "控制器"
+
+msgid "Mini Map"
+msgstr "小地图"
+
+msgid "Scenery Streaming"
+msgstr "场景流式加载"
+
+msgid "Track & Traction"
+msgstr "轨道与接触网"
+
+msgid "Weather and Time"
+msgstr "天气与时间"
+
+msgid "Help"
+msgstr "帮助"
+
+msgid "Couple front"
+msgstr "前端连挂"
+
+msgid "Decouple front"
+msgstr "前端摘解"
+
+msgid "Couple rear"
+msgstr "后端连挂"
+
+msgid "Decouple rear"
+msgstr "后端摘解"
+
+msgid "Battery"
+msgstr "蓄电池"
+
+msgid "Horn low"
+msgstr "低音风笛"
+
+msgid "Horn high"
+msgstr "高音风笛"
+
+msgid "Whistle"
+msgstr "风笛"
+
+msgid "Speed"
+msgstr "速度"
+
+msgid "Type: %s"
+msgstr "类型：%s"
+
+msgid "Overload relay reset"
+msgstr "牵引电机过载复位"
+
+msgid "Converter fuse reset"
+msgstr "变流机过载复位"
+
+msgid "Main"
+msgstr "断路器"
+
+msgid "Compressor"
+msgstr "压缩机"
+
+msgid "Oil Pump"
+msgstr "润滑油泵"
+
+msgid "Fuel Pump"
+msgstr "燃油泵"
+
+msgid "RPM"
+msgstr "转速"
+
+msgid "Oil"
+msgstr "润滑油"
+
+msgid "Converter"
+msgstr "变流机"
+
+msgid "Pantographs valve"
+msgstr "受电弓阀"
+
+msgid "First pantograph"
+msgstr "受电弓 A"
+
+msgid "Second pantograph"
+msgstr "受电弓 B"
+
+msgid "Pantograph compressor"
+msgstr "受电弓压缩机"
+
+msgid "Drop all pantographs"
+msgstr "降下所有受电弓"
+
+msgid "Current"
+msgstr "电流"
+
+msgid "Drive"
+msgstr "运转"
+
+msgid "Full"
+msgstr "全制动"
+
+msgid "Emergency"
+msgstr "紧急"
+
+msgid "EP Fuse"
+msgstr "电控制动保险"
+
+msgid "EP Level"
+msgstr "电控制动级位"
+
+msgid "Level"
+msgstr "级位"
+
+msgid "Releaser"
+msgstr "缓解"
+
+msgid "Pipe"
+msgstr "列车管"
+
+msgid "Cylinder"
+msgstr "制动缸"
+
+msgid "Forward"
+msgstr "向前"
+
+msgid "Backward"
+msgstr "向后"
+
+msgid "Main -"
+msgstr "主控手柄 -"
+
+msgid "Main +"
+msgstr "主控手柄 +"
+
+msgid "Shunt -"
+msgstr "磁场削弱 -"
+
+msgid "Shunt +"
+msgstr "磁场削弱 +"
+
+msgid "Pos: %s"
+msgstr "位置：%s"
+
+msgid "On"
+msgstr "施加"
+
+msgid "Off"
+msgstr "缓解"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Disable"
+msgstr "停用"
+
+msgid "Release rod"
+msgstr "缓解拉杆"
+
+msgid "Enabled"
+msgstr "已启用"
+
+msgid "Active"
+msgstr "作用中"
+
+msgid "Braking"
+msgstr "制动中"
+
+msgid "Light selector -"
+msgstr "灯光组合 -"
+
+msgid "Light selector +"
+msgstr "灯光组合 +"
+
+msgid "Front end"
+msgstr "前端"
+
+msgid "Rear end"
+msgstr "后端"
+
+msgid "Dim headlights"
+msgstr "头灯暗光"
+
+msgid "Roof light"
+msgstr "司机室灯"
+
+msgid "Devices light"
+msgstr "仪表灯"
+
+msgid "Upper headlight"
+msgstr "前照灯"
+
+msgid "Left headlight"
+msgstr "左前照灯"
+
+msgid "Right headlight"
+msgstr "右前照灯"
+
+msgid "Left red marker"
+msgstr "左侧红色标志灯"
+
+msgid "Right red marker"
+msgstr "右侧红色标志灯"
+
+msgid "Open left doors"
+msgstr "打开左侧车门"
+
+msgid "Open right doors"
+msgstr "打开右侧车门"
+
+msgid "Permit left doors"
+msgstr "容许左侧车门"
+
+msgid "Permit right doors"
+msgstr "容许右侧车门"
+
+msgid "Lock doors"
+msgstr "车门锁定"
+
+msgid "Permit Step"
+msgstr "容许渡板"
+
+msgid "Doors Locked"
+msgstr "车门已锁定"
+
+msgid "Left Doors Open"
+msgstr "左侧车门已开"
+
+msgid "Right Doors Open"
+msgstr "右侧车门已开"
+
+msgid "CA/SHP"
+msgstr "CA/SHP"
+
+msgid "CA"
+msgstr "CA"
+
+msgid "SHP"
+msgstr "SHP"
+
+msgid "Settings"
+msgstr "设置"
+
+msgid "Calendar"
+msgstr "日历"
+
+msgid "Weather"
+msgstr "天气"
+
+msgid "Fog"
+msgstr "雾"
+
+msgid "Wind"
+msgstr "风"
+
+msgid "Dir"
+msgstr "方向"
+
+msgid "Rain"
+msgstr "雨"
+
+msgid "Clouds"
+msgstr "云"
+
+msgid "Fog Distance"
+msgstr "雾距离"
+
+msgid "Time"
+msgstr "时间"
+
+msgid "Day"
+msgstr "日"
+
+msgid "Month"
+msgstr "月"
+
+msgid "Year"
+msgstr "年"
+
+msgid "Time Speed"
+msgstr "时间流速"
+
+msgid "Use system time"
+msgstr "使用系统时间"
+
+msgid "Vehicle"
+msgstr "车辆"
+
+msgid "Player"
+msgstr "玩家"
+
+msgid "UI"
+msgstr "界面"
+
+msgid "Camera"
+msgstr "摄像机"
+
+msgid "Camera chunk"
+msgstr "摄像机区块"
+
+msgid "Draw distance"
+msgstr "绘制距离"
+
+msgid "Chunks"
+msgstr "区块"
+
+msgid "Chunks in range"
+msgstr "范围内区块"
+
+msgid "Registered"
+msgstr "已注册"
+
+msgid "Streamed in"
+msgstr "已载入"
+
+msgid "Pending builds"
+msgstr "待构建"
+
+msgid "Pending nearby"
+msgstr "附近待构建"
+
+msgid "Nearby ready"
+msgstr "附近已就绪"
+
+msgid "Pending clears"
+msgstr "待清除"
+
+msgid "Planning"
+msgstr "规划"
+
+msgid "Builds/s"
+msgstr "构建/秒"
+
+msgid "Budget"
+msgstr "预算"
+
+msgid "Last pass"
+msgstr "上一轮"
+
+msgid "Owners"
+msgstr "所有者"
+
+msgid "Scenery lights"
+msgstr "场景灯光"
+
+msgid "none - nothing is streamed"
+msgstr "无 - 未加载任何内容"
+
+msgid "%.0f m (chunk %.0f m)"
+msgstr "%.0f 米（区块 %.0f 米）"
+
+msgid "%d lit / %d (%d spot, %d omni, %d synth)"
+msgstr "%d 点亮 / %d（%d 聚光，%d 全向，%d 合成）"
+
+msgid "Frame"
+msgstr "帧"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Process"
+msgstr "处理"
+
+msgid "Physics"
+msgstr "物理"
+
+msgid "Render CPU"
+msgstr "渲染 CPU"
+
+msgid "Render GPU"
+msgstr "渲染 GPU"
+
+msgid "Unaccounted"
+msgstr "未计入"
+
+msgid "Physics steps"
+msgstr "物理步数"
+
+msgid "Objects"
+msgstr "对象"
+
+msgid "Draw calls"
+msgstr "绘制调用"
+
+msgid "Primitives"
+msgstr "图元"
+
+msgid "Video memory"
+msgstr "显存"
+
+msgid "%.1f (max %d)"
+msgstr "%.1f（最大 %d）"
+
+msgid "Track"
+msgstr "轨道"
+
+msgid "Offset"
+msgstr "偏移"
+
+msgid "Track length"
+msgstr "轨道长度"
+
+msgid "Switch"
+msgstr "道岔"
+
+msgid "Position"
+msgstr "位置"
+
+msgid "Pantograph 1"
+msgstr "受电弓 1"
+
+msgid "Wire 1"
+msgstr "接触线 1"
+
+msgid "Pantograph 2"
+msgstr "受电弓 2"
+
+msgid "Wire 2"
+msgstr "接触线 2"
+
+msgid "Slider"
+msgstr "滑板"
+
+msgid "none"
+msgstr "无"
+
+msgid "(no train id)"
+msgstr "（无列车编号）"
+
+msgid "(unnamed)"
+msgstr "（未命名）"
+
+msgid "yes, branch %d%s"
+msgstr "是，分支 %d%s"
+
+msgid " (right)"
+msgstr "（右）"
+
+msgid " (left)"
+msgstr "（左）"
+
+msgid "no"
+msgstr "否"
+
+msgid "not an electric vehicle"
+msgstr "非电力车辆"
+
+msgid "down"
+msgstr "已降下"
+
+msgid "up, %.0f V"
+msgstr "已升起，%.0f V"
+
+msgid "NO WIRE in reach"
+msgstr "范围内无接触线"
+
+msgid "%.2f m above, %.0f V"
+msgstr "上方 %.2f 米，%.0f V"
+
+msgid "%.3f m half width + %.3f m horn"
+msgstr "半宽 %.3f 米 + 弓角 %.3f 米"
+
+msgid "%s (type: %s)"
+msgstr "%s（类型：%s）"
+
+msgid "Toggle Weather Controls"
+msgstr "天气面板"
+
+msgid "Brake Level Increase"
+msgstr "列车制动：加"
+
+msgid "Brake Level Decrease"
+msgstr "列车制动：减"
+
+msgid "Brake Level Charging"
+msgstr "列车制动：充风"
+
+msgid "Brake Level Drive"
+msgstr "列车制动：运转"
+
+msgid "Local Brake Increase"
+msgstr "机车制动：加"
+
+msgid "Local Brake Decrease"
+msgstr "机车制动：减"
+
+msgid "Coupler Connect"
+msgstr "连挂"
+
+msgid "Coupler Disconnect"
+msgstr "摘解"
+
+msgid "Coupler Disconnect Occupied"
+msgstr "摘解所驾驶车辆"
+
+msgid "Manual Brake Increase"
+msgstr "手制动：加"
+
+msgid "Manual Brake Decrease"
+msgstr "手制动：减"
+
+msgid "Direction Increase"
+msgstr "换向器：向前"
+
+msgid "Direction Decrease"
+msgstr "换向器：向后"
+
+msgid "Brake Release"
+msgstr "机车制动缓解"
+
+msgid "Security Acknowledge"
+msgstr "警惕确认"
+
+msgid "Devices Light Toggle"
+msgstr "仪表灯"
+
+msgid "Cabin Light Toggle"
+msgstr "司机室灯"
+
+msgid "Oil Pump Toggle"
+msgstr "润滑油泵"
+
+msgid "Fuel Pump Toggle"
+msgstr "燃油泵"
+
+msgid "Radio Toggle"
+msgstr "无线电"
+
+msgid "Main Switch On"
+msgstr "断路器：闭合"
+
+msgid "Main Switch Off"
+msgstr "断路器：断开"
+
+msgid "Second Controller Increase"
+msgstr "磁场削弱：加"
+
+msgid "Second Controller Decrease"
+msgstr "磁场削弱：减"
+
+msgid "Flashlight Toggle"
+msgstr "手电筒"
+
+msgid "Main Controller Increase"
+msgstr "主控手柄：加"
+
+msgid "Main Controller Decrease"
+msgstr "主控手柄：减"
+
+msgid "Battery Toggle"
+msgstr "蓄电池"
+
+msgid "Cab Activation Toggle"
+msgstr "启用司机室"
+
+msgid "Spring Brake Toggle"
+msgstr "弹簧制动"
+
+msgid "Spring Brake Shut Off Toggle"
+msgstr "弹簧制动切除"
+
+msgid "Cabin Mode Toggle"
+msgstr "司机室模式"
+
+msgid "External View Cycle"
+msgstr "外部视角"
+
+msgid "Hud Toggle"
+msgstr "HUD"
+
+msgid "Change Vehicle"
+msgstr "切换车辆"
+
+msgid "Horn Low"
+msgstr "低音风笛"
+
+msgid "Horn High"
+msgstr "高音风笛"
+
+msgid "Cabin Next"
+msgstr "下一司机室"
+
+msgid "Cabin Previous"
+msgstr "上一司机室"
+
+msgid "Converter Toggle"
+msgstr "变流机"
+
+msgid "Compressor Toggle"
+msgstr "压缩机"
+
+msgid "Pantograph Front Toggle"
+msgstr "前受电弓"
+
+msgid "Pantograph Rear Toggle"
+msgstr "后受电弓"
+
+msgid "Fuse Reset"
+msgstr "牵引电机过载复位"
+
+msgid "Converter Fuse Reset"
+msgstr "变流机过载复位"
+
+msgid "Pantograph Compressor Activate"
+msgstr "受电弓压缩机"
+
+msgid "Pantograph Compressor Valve Toggle"
+msgstr "受电弓供气三通阀"
+
+msgid "Security Cabsignal Acknowledge"
+msgstr "机车信号确认"
+
+msgid "Pantographs Drop All Toggle"
+msgstr "降下所有受电弓"
+
+msgid "Wipers Switch Increase"
+msgstr "雨刷：加"
+
+msgid "Wipers Switch Decrease"
+msgstr "雨刷：减"
+
+msgid "Radio Channel Increase"
+msgstr "无线电频道：下一个"
+
+msgid "Radio Channel Decrease"
+msgstr "无线电频道：上一个"
+
+msgid "Headlight Left Toggle"
+msgstr "左前照灯"
+
+msgid "Headlight Right Toggle"
+msgstr "右前照灯"
+
+msgid "Headlight Upper Toggle"
+msgstr "前照灯"
+
+msgid "Redmarker Left Toggle"
+msgstr "左侧红色标志灯"
+
+msgid "Redmarker Right Toggle"
+msgstr "右侧红色标志灯"
+
+msgid "Headlight Rear Left Toggle"
+msgstr "后左前照灯"
+
+msgid "Headlight Rear Right Toggle"
+msgstr "后右前照灯"
+
+msgid "Headlight Rear Upper Toggle"
+msgstr "后前照灯"
+
+msgid "Redmarker Rear Left Toggle"
+msgstr "后左侧红色标志灯"
+
+msgid "Redmarker Rear Right Toggle"
+msgstr "后右侧红色标志灯"
+
+msgid "Pantograph Toggle Selected"
+msgstr "所选受电弓"
+
+msgid "Lights Preset Next"
+msgstr "灯光组合：下一个"
+
+msgid "Lights Preset Previous"
+msgstr "灯光组合：上一个"
+
+msgid "Doors Permit Preset Next"
+msgstr "车门容许：下一个"
+
+msgid "Doors Permit Preset Previous"
+msgstr "车门容许：上一个"
+
+msgid "Headlights Dim Toggle"
+msgstr "头灯暗光"
+
+msgid "Radio Stop Send"
+msgstr "无线电停车"
+
+msgid "Generic Toggle 0"
+msgstr "通用开关 0"
+
+msgid "Generic Toggle 1"
+msgstr "通用开关 1"
+
+msgid "Generic Toggle 2"
+msgstr "通用开关 2"
+
+msgid "Generic Toggle 3"
+msgstr "通用开关 3"
+
+msgid "Generic Toggle 4"
+msgstr "通用开关 4"
+
+msgid "Generic Toggle 5"
+msgstr "通用开关 5"
+
+msgid "Generic Toggle 6"
+msgstr "通用开关 6"
+
+msgid "Generic Toggle 7"
+msgstr "通用开关 7"
+
+msgid "Generic Toggle 8"
+msgstr "通用开关 8"
+
+msgid "Generic Toggle 9"
+msgstr "通用开关 9"

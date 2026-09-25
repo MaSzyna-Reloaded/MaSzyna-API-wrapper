@@ -26,7 +26,7 @@ const loglevel_names = {
     }
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-    $%TrainName.text = "%s (type: %s)" % [train.train_id, train.type_name]
+    $%TrainName.text = tr("%s (type: %s)") % [train.train_id, train.type_name]
     GameLog.log_updated.connect(print_log_entry_to_godot_console)
 
 

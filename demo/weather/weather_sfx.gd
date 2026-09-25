@@ -17,6 +17,7 @@ const THUNDER_VOLUME_DB_MAX: float = 1.5
 @export var weather_path: NodePath
 
 var _weather: WeatherNode
+var _rain_bus_index: int
 var _rain_low_pass_filter: AudioEffectLowPassFilter
 var _rain_low_pass_tween: Tween
 
@@ -26,13 +27,14 @@ var _rain_low_pass_tween: Tween
 
 
 func _ready() -> void:
-    _rain_low_pass_filter = AudioServer.get_bus_effect(
-        AudioServer.get_bus_index(RAIN_BUS_NAME), 0
-    ) as AudioEffectLowPassFilter
+    _rain_bus_index = AudioServer.get_bus_index(RAIN_BUS_NAME)
+    _rain_low_pass_filter = AudioServer.get_bus_effect(_rain_bus_index, 0) as AudioEffectLowPassFilter
     _weather = get_node(weather_path) as WeatherNode
     _weather.thunder.connect(_on_weather_thunder)
     _weather.rain_strength_changed.connect(_on_weather_rain_strength_changed)
     _weather.rain_local_strength_changed.connect(_on_weather_rain_local_strength_changed)
+    MaszynaRuntime.paused.connect(_on_runtime_paused)
+    MaszynaRuntime.unpaused.connect(_on_runtime_unpaused)
     # The weather state was already applied while MaszynaEnvironmentNode got ready.
     _on_weather_rain_strength_changed(_weather.precipitation_intensity)
 
@@ -41,6 +43,17 @@ func _exit_tree() -> void:
     _weather.thunder.disconnect(_on_weather_thunder)
     _weather.rain_strength_changed.disconnect(_on_weather_rain_strength_changed)
     _weather.rain_local_strength_changed.disconnect(_on_weather_rain_local_strength_changed)
+    MaszynaRuntime.paused.disconnect(_on_runtime_paused)
+    MaszynaRuntime.unpaused.disconnect(_on_runtime_unpaused)
+
+
+## The rain and the thunder go silent while the world is paused
+func _on_runtime_paused() -> void:
+    AudioServer.set_bus_mute(_rain_bus_index, true)
+
+
+func _on_runtime_unpaused() -> void:
+    AudioServer.set_bus_mute(_rain_bus_index, false)
 
 
 func _on_weather_thunder(strength: float) -> void:

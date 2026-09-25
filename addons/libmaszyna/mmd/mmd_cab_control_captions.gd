@@ -1,8 +1,9 @@
 class_name MmdCabControlCaptions
 
 ## What a cab control is called, by its MMD label - the original's locale::label_cab_control()
-## (translation.cpp:170-352), shown on hover. Captions are the original's English msgids, looked up
-## in the game's own catalogue through MaszynaLocale. A label not listed has no caption.
+## (translation.cpp:170-352), shown on hover. Captions are the original's English msgids, which the
+## tooltip's Label translates from the game's own catalogue (MaszynaTranslationServer). A label not
+## listed has no caption.
 ##
 ## The original's "brakeopmode_sw" and "doormode_sw" entries miss the trailing colon and never
 ## match; here they do.
@@ -184,6 +185,4 @@ const CAPTIONS:Dictionary[StringName, String] = {
 
 
 static func caption(label:StringName) -> String:
-    if not CAPTIONS.has(label):
-        return ""
-    return MaszynaLocale.gettext(CAPTIONS[label])
+    return CAPTIONS.get(label, "")

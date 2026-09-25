@@ -354,6 +354,12 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * A tile's placeholder guesses its width (`TileGrid.PLACEHOLDER_STRETCH`) because
   `MaszynaSceneryInfo.Vehicle` has no length and FIZ `Dim=` is parsed nowhere.
 
+## Translations
+
+* The HUD's help (`demo/hud/help.gd`) shows `action.capitalize()` as a msgid, so a new input
+  action needs its capitalised name added to `demo/translations/*.po` by hand.
+* Units (`km/h`, `bar`, `%d m`, ...) are not msgids.
+
 ## Sounds
 
 * MMD offsets of non-running sounds are used raw - the `SfxPlayer3D`s are not turned 180 degrees
@@ -537,6 +543,11 @@ Checked headlessly: scenery `light_onNN` gets `emission_enabled`, energy 1.0 (`l
   `MaszynaIncludeNode` transform/visibility.
 * An `include` with no filename appears in the real data (`maszyna_include_importer.gd` reports it
   with the offset and skips it); source unknown - truncated file or tokenizer misread.
+* Unloading a scenery leaves its weather in `MaszynaEnvironmentNode` (the `atmo` precipitation,
+  fog, temperature): the menu keeps it (held silent by `MaszynaRuntime.pause()`) and a next scenery
+  without an `atmo` section inherits it.
+* `MaszynaRuntime.pause()` holds the vehicle step, the weather and the world's sounds only - the
+  environment clock, `TractionPowerServer`, `TrackManager` switches and the smoke keep running.
 
 ## Tests
 

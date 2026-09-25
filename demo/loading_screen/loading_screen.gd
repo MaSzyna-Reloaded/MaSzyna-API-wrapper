@@ -28,7 +28,7 @@ func _process(delta: float) -> void:
             get_tree().change_scene_to_packed(scene)
 
 func show_loading(p_name: String) -> void:
-    %Title.text = "Loading %s..." % p_name
+    %Title.text = tr("Loading %s...") % p_name
     visible = true
 
 func set_progress(p_progress: float, p_message: String) -> void:

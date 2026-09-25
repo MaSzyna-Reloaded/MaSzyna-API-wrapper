@@ -8,6 +8,9 @@ const MUSIC_MENU_VOLUME_DB: float = -6.0
 const MUSIC_LOADING_VOLUME_DB: float = -3.0
 ## Seconds of the loading screen fade out into the game
 const LOADING_FADE_OUT_TIME: float = 1.0
+## Seconds into the loading screen fade out before the world starts - the simulation and its sound
+## starting together with the fade make its first frames stutter
+const SIMULATION_START_DELAY: float = 0.5
 ## Frames given to the cabin to instantiate before the loading screen fades out
 const CABIN_SETTLE_FRAMES: int = 5
 ## Frames waited for the player to get its vehicle
@@ -38,6 +41,8 @@ func _on_scenery_selector_scenery_selected(
     filename: String, train_id: String, skin_overrides: Dictionary
 ) -> void:
     _play_music(MUSIC_LOADING_VOLUME_DB)
+    # the world starts while the loading screen fades out, not when it is built
+    MaszynaRuntime.pause()
     $GameHud.visible = false
     # The camera moves to the selected vehicle only after loading; planning before that point
     # streams the empty menu position and puts irrelevant work ahead of the starting area.
@@ -45,6 +50,9 @@ func _on_scenery_selector_scenery_selected(
     # the title from the .scn header ("//$n"), not the file name
     var info: MaszynaSceneryInfo = MaszynaSceneryInfo.read(filename)
     $LoadingScreen.show_loading(info.title if info.title else filename.get_basename())
+    # the selector dissolves into the loading screen and hides once it is done; the loading below
+    # blocks the main thread, so it waits for the dissolve not to stutter
+    await $ScenerySelectorScreen.hidden
     $MaszynaSceneryNode.filename = filename
     $MaszynaSceneryNode.skin_overrides.assign(skin_overrides)
     await $Player.clear_start_train()
@@ -56,6 +64,7 @@ func _on_scenery_selector_scenery_selected(
     await _wait_for_streaming()
     var tween: Tween = create_tween()
     tween.tween_property($LoadingScreen, "modulate:a", 0.0, LOADING_FADE_OUT_TIME)
+    tween.parallel().tween_callback(MaszynaRuntime.unpause).set_delay(SIMULATION_START_DELAY)
     await tween.finished
     $LoadingScreen.visible = false
     $LoadingScreen.modulate.a = 1.0
@@ -105,6 +114,8 @@ func _on_exit_to_menu_pressed() -> void:
 func _exit_to_menu() -> void:
     _play_music(MUSIC_MENU_VOLUME_DB)
     await $SpinnerOverlay.fade_in(EXIT_FADE_TIME)
+    # the world stops once the spinner covers it, and stays stopped until the next scenery shows
+    MaszynaRuntime.pause()
     $GameHud.visible = false
     SceneryStreamingServer.set_camera(null)
     await $Player.clear_start_train()

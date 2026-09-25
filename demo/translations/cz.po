@@ -1,0 +1,771 @@
+# Strings of the demo's own interface that the game's catalogue (lang/*.po) does not have.
+# MaszynaTranslationServer merges them under the game's catalogue (maszyna/locale/translations).
+# template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
+msgid ""
+msgstr ""
+"Language: cz\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Trainset"
+msgstr "Souprava"
+
+msgid "Load"
+msgstr "Načíst"
+
+msgid "Apply skin"
+msgstr "Použít vzhled"
+
+msgid "Search scenario"
+msgstr "Hledat scénář"
+
+msgid "Pre-Alpha Demo Release %s-%s-%s (build %s)"
+msgstr "Pre-Alpha demo %s-%s-%s (sestavení %s)"
+
+msgid "Pre-Alpha Demo Release (unbuilt)"
+msgstr "Pre-Alpha demo (nesestaveno)"
+
+msgid "Loading %s..."
+msgstr "Načítání %s..."
+
+msgid "Exit to menu"
+msgstr "Odejít do menu"
+
+msgid "Leave the scenery and go back to the menu?"
+msgstr "Opustit scenérii a vrátit se do menu?"
+
+msgid "MaSzyna game folder data is not set or invalid."
+msgstr "Složka s daty hry MaSzyna není nastavena nebo je neplatná."
+
+msgid "Controls"
+msgstr "Ovládání"
+
+msgid "Toggle controls"
+msgstr "Přepnout ovládání"
+
+msgid "General"
+msgstr "Obecné"
+
+msgid "Engine"
+msgstr "Motor"
+
+msgid "Brakes"
+msgstr "Brzdy"
+
+msgid "Spring brake"
+msgstr "Pružinová brzda"
+
+msgid "Lights"
+msgstr "Světla"
+
+msgid "Doors"
+msgstr "Dveře"
+
+msgid "Security"
+msgstr "Bdělost a VZ"
+
+msgid "Controller"
+msgstr "Kontrolér"
+
+msgid "Mini Map"
+msgstr "Minimapa"
+
+msgid "Scenery Streaming"
+msgstr "Streamování scenérie"
+
+msgid "Track & Traction"
+msgstr "Trať a trakční vedení"
+
+msgid "Weather and Time"
+msgstr "Počasí a čas"
+
+msgid "Help"
+msgstr "Nápověda"
+
+msgid "Couple front"
+msgstr "Spřáhnout vpředu"
+
+msgid "Decouple front"
+msgstr "Rozpojit vpředu"
+
+msgid "Couple rear"
+msgstr "Spřáhnout vzadu"
+
+msgid "Decouple rear"
+msgstr "Rozpojit vzadu"
+
+msgid "Battery"
+msgstr "Baterie"
+
+msgid "Horn low"
+msgstr "Houkačka (tón nízký)"
+
+msgid "Horn high"
+msgstr "Houkačka (tón vysoký)"
+
+msgid "Whistle"
+msgstr "Píšťala"
+
+msgid "Speed"
+msgstr "Rychlost"
+
+msgid "Type: %s"
+msgstr "Typ: %s"
+
+msgid "Overload relay reset"
+msgstr "Reset přetížení trakčních motorů"
+
+msgid "Converter fuse reset"
+msgstr "Relé přetížení měniče"
+
+msgid "Main"
+msgstr "Hlavní vypínač"
+
+msgid "Compressor"
+msgstr "Kompresor"
+
+msgid "Oil Pump"
+msgstr "Olejové čerpadlo"
+
+msgid "Fuel Pump"
+msgstr "Palivové čerpadlo"
+
+msgid "RPM"
+msgstr "Otáčky"
+
+msgid "Oil"
+msgstr "Olej"
+
+msgid "Converter"
+msgstr "Měnič napětí"
+
+msgid "Pantographs valve"
+msgstr "Ventil pantografů"
+
+msgid "First pantograph"
+msgstr "Pantograf A"
+
+msgid "Second pantograph"
+msgstr "Pantograf B"
+
+msgid "Pantograph compressor"
+msgstr "Kompresor pantografů"
+
+msgid "Drop all pantographs"
+msgstr "Stáhnout všechny pantografy"
+
+msgid "Current"
+msgstr "Proud"
+
+msgid "Drive"
+msgstr "Jízda"
+
+msgid "Full"
+msgstr "Plné"
+
+msgid "Emergency"
+msgstr "Nouzové"
+
+msgid "EP Fuse"
+msgstr "Pojistka EP"
+
+msgid "EP Level"
+msgstr "Úroveň EP"
+
+msgid "Level"
+msgstr "Úroveň"
+
+msgid "Releaser"
+msgstr "Cucák"
+
+msgid "Pipe"
+msgstr "Hlavní potrubí"
+
+msgid "Cylinder"
+msgstr "Válec"
+
+msgid "Forward"
+msgstr "Vpřed"
+
+msgid "Backward"
+msgstr "Vzad"
+
+msgid "Main -"
+msgstr "Kontrolér -"
+
+msgid "Main +"
+msgstr "Kontrolér +"
+
+msgid "Shunt -"
+msgstr "Šuntování -"
+
+msgid "Shunt +"
+msgstr "Šuntování +"
+
+msgid "Pos: %s"
+msgstr "Poz.: %s"
+
+msgid "On"
+msgstr "Zapnout"
+
+msgid "Off"
+msgstr "Vypnout"
+
+msgid "Enable"
+msgstr "Povolit"
+
+msgid "Disable"
+msgstr "Zakázat"
+
+msgid "Release rod"
+msgstr "Odbrzďovací táhlo"
+
+msgid "Enabled"
+msgstr "Povoleno"
+
+msgid "Active"
+msgstr "Aktivní"
+
+msgid "Braking"
+msgstr "Brzdí"
+
+msgid "Light selector -"
+msgstr "Programátor světel -"
+
+msgid "Light selector +"
+msgstr "Programátor světel +"
+
+msgid "Front end"
+msgstr "Přední čelo"
+
+msgid "Rear end"
+msgstr "Zadní čelo"
+
+msgid "Dim headlights"
+msgstr "Tlumení světlometů"
+
+msgid "Roof light"
+msgstr "Osvětlení kabiny"
+
+msgid "Devices light"
+msgstr "Osvětlení přístrojů"
+
+msgid "Upper headlight"
+msgstr "Horní světlomet"
+
+msgid "Left headlight"
+msgstr "Levý světlomet"
+
+msgid "Right headlight"
+msgstr "Pravý světlomet"
+
+msgid "Left red marker"
+msgstr "Levé červené světlo"
+
+msgid "Right red marker"
+msgstr "Pravé červené světlo"
+
+msgid "Open left doors"
+msgstr "Otevřít levé dveře"
+
+msgid "Open right doors"
+msgstr "Otevřít pravé dveře"
+
+msgid "Permit left doors"
+msgstr "Povolit levé dveře"
+
+msgid "Permit right doors"
+msgstr "Povolit pravé dveře"
+
+msgid "Lock doors"
+msgstr "Blokace dveří"
+
+msgid "Permit Step"
+msgstr "Povolit schod"
+
+msgid "Doors Locked"
+msgstr "Dveře zablokovány"
+
+msgid "Left Doors Open"
+msgstr "Levé dveře otevřeny"
+
+msgid "Right Doors Open"
+msgstr "Pravé dveře otevřeny"
+
+msgid "CA/SHP"
+msgstr "CA/SHP"
+
+msgid "CA"
+msgstr "CA"
+
+msgid "SHP"
+msgstr "SHP"
+
+msgid "Settings"
+msgstr "Nastavení"
+
+msgid "Calendar"
+msgstr "Kalendář"
+
+msgid "Weather"
+msgstr "Počasí"
+
+msgid "Fog"
+msgstr "Mlha"
+
+msgid "Wind"
+msgstr "Vítr"
+
+msgid "Dir"
+msgstr "Směr"
+
+msgid "Rain"
+msgstr "Déšť"
+
+msgid "Clouds"
+msgstr "Oblačnost"
+
+msgid "Fog Distance"
+msgstr "Dohled v mlze"
+
+msgid "Time"
+msgstr "Čas"
+
+msgid "Day"
+msgstr "Den"
+
+msgid "Month"
+msgstr "Měsíc"
+
+msgid "Year"
+msgstr "Rok"
+
+msgid "Time Speed"
+msgstr "Rychlost času"
+
+msgid "Use system time"
+msgstr "Systémový čas"
+
+msgid "Vehicle"
+msgstr "Vozidlo"
+
+msgid "Player"
+msgstr "Hráč"
+
+msgid "UI"
+msgstr "Rozhraní"
+
+msgid "Camera"
+msgstr "Kamera"
+
+msgid "Camera chunk"
+msgstr "Blok kamery"
+
+msgid "Draw distance"
+msgstr "Dohlednost"
+
+msgid "Chunks"
+msgstr "Bloky"
+
+msgid "Chunks in range"
+msgstr "Bloky v dosahu"
+
+msgid "Registered"
+msgstr "Registrováno"
+
+msgid "Streamed in"
+msgstr "Načteno"
+
+msgid "Pending builds"
+msgstr "Čekající sestavení"
+
+msgid "Pending nearby"
+msgstr "Čekající poblíž"
+
+msgid "Nearby ready"
+msgstr "Poblíž připraveno"
+
+msgid "Pending clears"
+msgstr "Čekající odstranění"
+
+msgid "Planning"
+msgstr "Plánování"
+
+msgid "Builds/s"
+msgstr "Sestavení/s"
+
+msgid "Budget"
+msgstr "Rozpočet"
+
+msgid "Last pass"
+msgstr "Poslední průchod"
+
+msgid "Owners"
+msgstr "Vlastníci"
+
+msgid "Scenery lights"
+msgstr "Světla scenérie"
+
+msgid "none - nothing is streamed"
+msgstr "žádná - nic se nenačítá"
+
+msgid "%.0f m (chunk %.0f m)"
+msgstr "%.0f m (blok %.0f m)"
+
+msgid "%d lit / %d (%d spot, %d omni, %d synth)"
+msgstr "%d svítí / %d (%d bodová, %d všesměrová, %d synt.)"
+
+msgid "Frame"
+msgstr "Snímek"
+
+msgid "FPS"
+msgstr "FPS"
+
+msgid "Process"
+msgstr "Proces"
+
+msgid "Physics"
+msgstr "Fyzika"
+
+msgid "Render CPU"
+msgstr "Render CPU"
+
+msgid "Render GPU"
+msgstr "Render GPU"
+
+msgid "Unaccounted"
+msgstr "Nepřiřazeno"
+
+msgid "Physics steps"
+msgstr "Kroky fyziky"
+
+msgid "Objects"
+msgstr "Objekty"
+
+msgid "Draw calls"
+msgstr "Volání vykreslení"
+
+msgid "Primitives"
+msgstr "Primitiva"
+
+msgid "Video memory"
+msgstr "Video paměť"
+
+msgid "%.1f (max %d)"
+msgstr "%.1f (max. %d)"
+
+msgid "Track"
+msgstr "Kolej"
+
+msgid "Offset"
+msgstr "Posun"
+
+msgid "Track length"
+msgstr "Délka koleje"
+
+msgid "Switch"
+msgstr "Výhybka"
+
+msgid "Position"
+msgstr "Poloha"
+
+msgid "Pantograph 1"
+msgstr "Pantograf 1"
+
+msgid "Wire 1"
+msgstr "Vodič 1"
+
+msgid "Pantograph 2"
+msgstr "Pantograf 2"
+
+msgid "Wire 2"
+msgstr "Vodič 2"
+
+msgid "Slider"
+msgstr "Smykadlo"
+
+msgid "none"
+msgstr "žádná"
+
+msgid "(no train id)"
+msgstr "(bez identifikátoru)"
+
+msgid "(unnamed)"
+msgstr "(bez názvu)"
+
+msgid "yes, branch %d%s"
+msgstr "ano, větev %d%s"
+
+msgid " (right)"
+msgstr " (pravá)"
+
+msgid " (left)"
+msgstr " (levá)"
+
+msgid "no"
+msgstr "ne"
+
+msgid "not an electric vehicle"
+msgstr "není elektrické vozidlo"
+
+msgid "down"
+msgstr "stažen"
+
+msgid "up, %.0f V"
+msgstr "zvednut, %.0f V"
+
+msgid "NO WIRE in reach"
+msgstr "ŽÁDNÝ VODIČ v dosahu"
+
+msgid "%.2f m above, %.0f V"
+msgstr "%.2f m nad, %.0f V"
+
+msgid "%.3f m half width + %.3f m horn"
+msgstr "%.3f m poloviční šířka + %.3f m roh"
+
+msgid "%s (type: %s)"
+msgstr "%s (typ: %s)"
+
+msgid "Toggle Weather Controls"
+msgstr "Panel počasí"
+
+msgid "Brake Level Increase"
+msgstr "Kombinovaná brzda: více"
+
+msgid "Brake Level Decrease"
+msgstr "Kombinovaná brzda: méně"
+
+msgid "Brake Level Charging"
+msgstr "Kombinovaná brzda: plnění"
+
+msgid "Brake Level Drive"
+msgstr "Kombinovaná brzda: jízda"
+
+msgid "Local Brake Increase"
+msgstr "Přímočinná brzda: více"
+
+msgid "Local Brake Decrease"
+msgstr "Přímočinná brzda: méně"
+
+msgid "Coupler Connect"
+msgstr "Spřáhnout"
+
+msgid "Coupler Disconnect"
+msgstr "Rozpojit"
+
+msgid "Coupler Disconnect Occupied"
+msgstr "Rozpojit obsazené vozidlo"
+
+msgid "Manual Brake Increase"
+msgstr "Ruční brzda: více"
+
+msgid "Manual Brake Decrease"
+msgstr "Ruční brzda: méně"
+
+msgid "Direction Increase"
+msgstr "Směrová páka: vpřed"
+
+msgid "Direction Decrease"
+msgstr "Směrová páka: vzad"
+
+msgid "Brake Release"
+msgstr "Cucák"
+
+msgid "Security Acknowledge"
+msgstr "Potvrdit bdělost"
+
+msgid "Devices Light Toggle"
+msgstr "Osvětlení přístrojů"
+
+msgid "Cabin Light Toggle"
+msgstr "Osvětlení kabiny"
+
+msgid "Oil Pump Toggle"
+msgstr "Olejové čerpadlo"
+
+msgid "Fuel Pump Toggle"
+msgstr "Palivové čerpadlo"
+
+msgid "Radio Toggle"
+msgstr "Vysílačka"
+
+msgid "Main Switch On"
+msgstr "Hlavní vypínač: zapnout"
+
+msgid "Main Switch Off"
+msgstr "Hlavní vypínač: vypnout"
+
+msgid "Second Controller Increase"
+msgstr "Šuntování: více"
+
+msgid "Second Controller Decrease"
+msgstr "Šuntování: méně"
+
+msgid "Flashlight Toggle"
+msgstr "Svítilna"
+
+msgid "Main Controller Increase"
+msgstr "Kontrolér jízdy: více"
+
+msgid "Main Controller Decrease"
+msgstr "Kontrolér jízdy: méně"
+
+msgid "Battery Toggle"
+msgstr "Baterie"
+
+msgid "Cab Activation Toggle"
+msgstr "Aktivace kabiny"
+
+msgid "Spring Brake Toggle"
+msgstr "Pružinová brzda"
+
+msgid "Spring Brake Shut Off Toggle"
+msgstr "Uzávěr pružinové brzdy"
+
+msgid "Cabin Mode Toggle"
+msgstr "Režim kabiny"
+
+msgid "External View Cycle"
+msgstr "Vnější pohled"
+
+msgid "Hud Toggle"
+msgstr "HUD"
+
+msgid "Change Vehicle"
+msgstr "Změnit vozidlo"
+
+msgid "Horn Low"
+msgstr "Houkačka (tón nízký)"
+
+msgid "Horn High"
+msgstr "Houkačka (tón vysoký)"
+
+msgid "Cabin Next"
+msgstr "Další kabina"
+
+msgid "Cabin Previous"
+msgstr "Předchozí kabina"
+
+msgid "Converter Toggle"
+msgstr "Měnič napětí"
+
+msgid "Compressor Toggle"
+msgstr "Kompresor"
+
+msgid "Pantograph Front Toggle"
+msgstr "Přední pantograf"
+
+msgid "Pantograph Rear Toggle"
+msgstr "Zadní pantograf"
+
+msgid "Fuse Reset"
+msgstr "Reset přetížení trakčních motorů"
+
+msgid "Converter Fuse Reset"
+msgstr "Relé přetížení měniče"
+
+msgid "Pantograph Compressor Activate"
+msgstr "Kompresor pantografů"
+
+msgid "Pantograph Compressor Valve Toggle"
+msgstr "Třícestný ventil pantografů"
+
+msgid "Security Cabsignal Acknowledge"
+msgstr "Potvrdit VZ"
+
+msgid "Pantographs Drop All Toggle"
+msgstr "Stáhnout všechny pantografy"
+
+msgid "Wipers Switch Increase"
+msgstr "Stěrače: více"
+
+msgid "Wipers Switch Decrease"
+msgstr "Stěrače: méně"
+
+msgid "Radio Channel Increase"
+msgstr "Kanál vysílačky: další"
+
+msgid "Radio Channel Decrease"
+msgstr "Kanál vysílačky: předchozí"
+
+msgid "Headlight Left Toggle"
+msgstr "Levý světlomet"
+
+msgid "Headlight Right Toggle"
+msgstr "Pravý světlomet"
+
+msgid "Headlight Upper Toggle"
+msgstr "Horní světlomet"
+
+msgid "Redmarker Left Toggle"
+msgstr "Levé červené světlo"
+
+msgid "Redmarker Right Toggle"
+msgstr "Pravé červené světlo"
+
+msgid "Headlight Rear Left Toggle"
+msgstr "Zadní levý světlomet"
+
+msgid "Headlight Rear Right Toggle"
+msgstr "Zadní pravý světlomet"
+
+msgid "Headlight Rear Upper Toggle"
+msgstr "Zadní horní světlomet"
+
+msgid "Redmarker Rear Left Toggle"
+msgstr "Zadní levé červené světlo"
+
+msgid "Redmarker Rear Right Toggle"
+msgstr "Zadní pravé červené světlo"
+
+msgid "Pantograph Toggle Selected"
+msgstr "Vybraný pantograf"
+
+msgid "Lights Preset Next"
+msgstr "Programátor světel: další"
+
+msgid "Lights Preset Previous"
+msgstr "Programátor světel: předchozí"
+
+msgid "Doors Permit Preset Next"
+msgstr "Povolení dveří: další"
+
+msgid "Doors Permit Preset Previous"
+msgstr "Povolení dveří: předchozí"
+
+msgid "Headlights Dim Toggle"
+msgstr "Tlumení světlometů"
+
+msgid "Radio Stop Send"
+msgstr "Radiostop"
+
+msgid "Generic Toggle 0"
+msgstr "Obecný přepínač 0"
+
+msgid "Generic Toggle 1"
+msgstr "Obecný přepínač 1"
+
+msgid "Generic Toggle 2"
+msgstr "Obecný přepínač 2"
+
+msgid "Generic Toggle 3"
+msgstr "Obecný přepínač 3"
+
+msgid "Generic Toggle 4"
+msgstr "Obecný přepínač 4"
+
+msgid "Generic Toggle 5"
+msgstr "Obecný přepínač 5"
+
+msgid "Generic Toggle 6"
+msgstr "Obecný přepínač 6"
+
+msgid "Generic Toggle 7"
+msgstr "Obecný přepínač 7"
+
+msgid "Generic Toggle 8"
+msgstr "Obecný přepínač 8"
+
+msgid "Generic Toggle 9"
+msgstr "Obecný přepínač 9"

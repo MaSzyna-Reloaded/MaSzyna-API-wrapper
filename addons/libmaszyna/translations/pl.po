@@ -1,5 +1,6 @@
 # Strings of the wrapper's own that the game's catalogue (lang/*.po) does not have - the state of a
-# cab control shown under its caption. MaszynaLocale.gettext() looks here after the game's catalogue.
+# cab control shown under its caption, the development console, the scenery loading stages.
+# MaszynaTranslationServer merges them under the game's catalogue.
 # template.po lists every msgid, as the game's lang/template.po does, for a new language to start from.
 msgid ""
 msgstr ""
@@ -52,3 +53,97 @@ msgstr "hamowanie pełne"
 
 msgid "emergency braking"
 msgstr "hamowanie nagłe"
+
+# the development console
+
+msgid "Development console."
+msgstr "Konsola deweloperska."
+
+msgid "Enter \"help\" for instructions"
+msgstr "Wpisz \"help\", aby zobaczyć instrukcję"
+
+msgid "Too few arguments! Required < %d >"
+msgstr "Za mało argumentów! Wymagane < %d >"
+
+msgid "Too many arguments! < %d > Max"
+msgstr "Za dużo argumentów! Maks. < %d >"
+
+msgid "Command not found."
+msgstr "Nie znaleziono polecenia."
+
+msgid "Exit game"
+msgstr "Wyjdź z gry"
+
+msgid "Clear console"
+msgstr "Wyczyść konsolę"
+
+msgid "Delete console history"
+msgstr "Usuń historię konsoli"
+
+msgid "Print this help"
+msgstr "Wypisz tę pomoc"
+
+msgid "Broadcast message to all trains"
+msgstr "Wyślij komunikat do wszystkich pociągów"
+
+msgid "Send message to a train"
+msgstr "Wyślij komunikat do pociągu"
+
+msgid "List trains"
+msgstr "Lista pociągów"
+
+msgid "List available train commands"
+msgstr "Lista dostępnych poleceń pociągu"
+
+msgid "Get train state / parameter"
+msgstr "Odczytaj stan / parametr pociągu"
+
+msgid "Get train config property"
+msgstr "Odczytaj właściwość konfiguracji pociągu"
+
+msgid "List train config properties"
+msgstr "Lista właściwości konfiguracji pociągu"
+
+msgid "Occupied cabin: controls | state | get [control] | increase|decrease|hold|release|toggle|set <control> [value]"
+msgstr "Zajmowana kabina: controls | state | get [control] | increase|decrease|hold|release|toggle|set <control> [value]"
+
+# loading a scenery, under the loading screen's progress bar
+
+msgid "Scanning includes"
+msgstr "Przeszukiwanie plików include"
+
+msgid "Parsing %s"
+msgstr "Wczytywanie %s"
+
+msgid "Reading cache"
+msgstr "Odczyt pamięci podręcznej"
+
+msgid "Saving cache"
+msgstr "Zapis pamięci podręcznej"
+
+msgid "Registering tracks and traction"
+msgstr "Rejestracja torów i sieci trakcyjnej"
+
+msgid "Registering tracks"
+msgstr "Rejestracja torów"
+
+msgid "Registering traction"
+msgstr "Rejestracja sieci trakcyjnej"
+
+msgid "Registering %s"
+msgstr "Rejestracja %s"
+
+msgid "Building terrain"
+msgstr "Budowanie terenu"
+
+msgid "Registering terrain"
+msgstr "Rejestracja terenu"
+
+msgid "Instancing objects"
+msgstr "Tworzenie obiektów"
+
+msgid "Instancing %s"
+msgstr "Tworzenie %s"
+
+msgid "Instancing vehicles"
+msgstr "Tworzenie pojazdów"

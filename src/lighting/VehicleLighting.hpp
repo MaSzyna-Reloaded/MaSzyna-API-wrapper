@@ -63,7 +63,6 @@ namespace godot {
             void _unregister_commands() override;
         public:
             static const char *selector_position_changed_signal;
-            MAKE_MEMBER_GS(int, lights_selector_position, 0);
             MAKE_MEMBER_GS(bool, lights_wrap_selector, false);
             MAKE_MEMBER_GS(int, lights_default_selector_position, 0);
             MAKE_MEMBER_GS_NR(
@@ -89,6 +88,9 @@ namespace godot {
             virtual void set_lights_list(const TypedArray<LightListItem> &p_list) = 0;
             virtual void increase_light_selector_position() = 0;
             virtual void decrease_light_selector_position() = 0;
+            /* The headlights dimmer (dimheadlights_sw:, Train.cpp:6125) */
+            virtual void headlights_dim(bool p_enabled) = 0;
+            virtual bool get_headlights_dimmed() const = 0;
             // Direct per-light override, independent of the selector/"light programator"
             // (LightsPos + light_position_list) system above - sets/clears a single bit of
             // iLights directly, for debugging/testing individual bulbs regardless of what the

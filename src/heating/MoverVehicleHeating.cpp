@@ -42,6 +42,11 @@ namespace godot {
         return mover != nullptr ? mover->Heating : false;
     }
 
+    bool MoverVehicleHeating::get_allowed() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->HeatingAllow : false;
+    }
+
     double MoverVehicleHeating::get_power() const {
         const TMoverParameters *mover = get_mover();
         return mover != nullptr ? mover->HeatingPower : 0.0;
@@ -59,6 +64,7 @@ namespace godot {
             return;
         }
         p_state["heating_enabled"] = get_active();
+        p_state["heating_allowed"] = get_allowed();
         p_state["heating_power"] = get_power();
     }
 } // namespace godot

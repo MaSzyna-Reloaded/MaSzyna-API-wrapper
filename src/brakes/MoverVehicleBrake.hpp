@@ -36,6 +36,7 @@ namespace godot {
             double get_local_aeim_position() const override;
             double get_edb_cylinder_pressure() const override;
             bool get_releaser_active() const override;
+            bool get_main_pipe_locked() const override;
         private:
             const std::unordered_map<BrakeMethod, int> brake_method_map = {
                     {BrakeMethod::BRAKE_METHOD_P10_BGU, 1},  {BrakeMethod::BRAKE_METHOD_P10_BG, 2},
@@ -134,5 +135,6 @@ namespace godot {
             void auto_rewident(int p_brake_delay) override;
             void brake_level_charging(bool p_active) override;
             void alarm_chain(bool p_pulled) override;
+            void universal_brake_button(int p_button, bool p_pressed) override;
     };
 } // namespace godot

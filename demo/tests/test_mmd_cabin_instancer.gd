@@ -108,6 +108,15 @@ func test_line_and_block_comments_are_stripped():
     assert_eq(security.submodel_name, "czuwak")
 
 
+# a label that lost its colon (dynamic/pkp/e186_v2/base.mmd.inc:210) is passed over whole, as the
+# original passes over tokens it does not know - its block must not swallow the controls after it
+func test_a_block_without_a_label_is_passed_over():
+    var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
+    assert_null(_find(definition, "soundinc"))
+    assert_eq(_find(definition, "radiostop_sw").submodel_name, "radio_rs")
+    assert_eq(_find(definition, "battery_sw").submodel_name, "bat")
+
+
 func test_duplicate_labels_are_preserved_in_order():
     var definition:MmdCabinDefinition = MmdCabinInstancer.parse(FIXTURE_PATH, 1, {})
     var tachometers:Array[MmdInstrumentDescriptor] = []

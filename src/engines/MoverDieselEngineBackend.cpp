@@ -30,6 +30,21 @@ namespace godot {
                 return p_mover != nullptr ? p_mover->FuelPump.is_active : false;
     }
 
+    bool MoverDieselEngineBackend::get_fuel_pump_enabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->FuelPump.is_enabled : false;
+    }
+
+    bool MoverDieselEngineBackend::get_oil_pump_enabled(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->OilPump.is_enabled : false;
+    }
+
+    bool MoverDieselEngineBackend::get_heat_malfunction(const VehicleDieselEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->dizel_heat.PA : false;
+    }
+
     bool MoverDieselEngineBackend::get_fuel_pump_disabled(const VehicleDieselEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->FuelPump.is_disabled : false;
@@ -195,5 +210,17 @@ namespace godot {
         TMoverParameters *p_mover = owner.get_mover();
         ASSERT_MOVER(p_mover);
         p_mover->FuelPumpSwitch(p_enabled);
+    }
+
+    void MoverDieselEngineBackend::oil_pump_switch_off(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->OilPumpSwitchOff(p_enabled);
+    }
+
+    void MoverDieselEngineBackend::fuel_pump_switch_off(const VehicleDieselEngine *p_engine, const bool p_enabled) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        ASSERT_MOVER(p_mover);
+        p_mover->FuelPumpSwitchOff(p_enabled);
     }
 } // namespace godot

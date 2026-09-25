@@ -9,7 +9,6 @@ namespace godot {
         BIND_PROPERTY(VehicleLighting, Variant::FLOAT, head_light_high_beam_dimmed_multiplier, "head_light/high_beam");
         BIND_PROPERTY(VehicleLighting, Variant::FLOAT, head_light_high_beam_normal_multiplier, "head_light/high_beam");
         BIND_PROPERTY(VehicleLighting, Variant::INT, lights_default_selector_position, "lights");
-        BIND_PROPERTY(VehicleLighting, Variant::INT, lights_selector_position, "lights");
         BIND_PROPERTY(VehicleLighting, Variant::BOOL, lights_wrap_selector, "lights");
         BIND_PROPERTY_W_HINT_RES_ARRAY(
                 VehicleLighting, Variant::ARRAY, lights_list, "lights", PROPERTY_HINT_TYPE_STRING, "LightListItem");
@@ -39,6 +38,12 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("light_switch", "light", "enabled"), &VehicleLighting::light_switch);
         ClassDB::bind_method(D_METHOD("roof_light", "enabled"), &VehicleLighting::roof_light);
         ClassDB::bind_method(D_METHOD("devices_light", "enabled"), &VehicleLighting::devices_light);
+        ClassDB::bind_method(D_METHOD("headlights_dim", "enabled"), &VehicleLighting::headlights_dim);
+        ClassDB::bind_method(D_METHOD("get_headlights_dimmed"), &VehicleLighting::get_headlights_dimmed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "headlights_dimmed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_headlights_dimmed");
         ADD_SIGNAL(MethodInfo(selector_position_changed_signal, PropertyInfo(Variant::INT, "position")));
 
         ClassDB::bind_method(D_METHOD("get_position"), &VehicleLighting::get_position);
@@ -179,6 +184,7 @@ namespace godot {
         register_command("light_switch", Callable(this, "light_switch"));
         register_command("roof_light", Callable(this, "roof_light"));
         register_command("devices_light", Callable(this, "devices_light"));
+        register_command("headlights_dim", Callable(this, "headlights_dim"));
         VehicleComponent::_register_commands();
     }
 
@@ -189,6 +195,7 @@ namespace godot {
         unregister_command("light_switch", Callable(this, "light_switch"));
         unregister_command("roof_light", Callable(this, "roof_light"));
         unregister_command("devices_light", Callable(this, "devices_light"));
+        unregister_command("headlights_dim", Callable(this, "headlights_dim"));
         VehicleComponent::_unregister_commands();
     }
 } // namespace godot

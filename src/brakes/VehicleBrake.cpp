@@ -236,6 +236,8 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("auto_rewident", "brake_delay"), &VehicleBrake::auto_rewident);
         ClassDB::bind_method(D_METHOD("brake_level_charging", "active"), &VehicleBrake::brake_level_charging);
         ClassDB::bind_method(D_METHOD("alarm_chain", "pulled"), &VehicleBrake::alarm_chain);
+        ClassDB::bind_method(
+                D_METHOD("universal_brake_button", "button", "pressed"), &VehicleBrake::universal_brake_button);
 
         ClassDB::bind_method(D_METHOD("get_alarm_chain_pulled"), &VehicleBrake::get_alarm_chain_pulled);
         ADD_PROPERTY(
@@ -357,6 +359,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "releaser_active", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_releaser_active");
+        ClassDB::bind_method(D_METHOD("get_main_pipe_locked"), &VehicleBrake::get_main_pipe_locked);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_main_pipe_locked");
     }
 
     void VehicleBrake::_register_commands() {
@@ -373,6 +380,7 @@ namespace godot {
         register_command("auto_rewident", Callable(this, "auto_rewident"));
         register_command("brake_level_charging", Callable(this, "brake_level_charging"));
         register_command("alarm_chain", Callable(this, "alarm_chain"));
+        register_command("universal_brake_button", Callable(this, "universal_brake_button"));
     }
 
     void VehicleBrake::_unregister_commands() {
@@ -389,5 +397,6 @@ namespace godot {
         unregister_command("auto_rewident", Callable(this, "auto_rewident"));
         unregister_command("brake_level_charging", Callable(this, "brake_level_charging"));
         unregister_command("alarm_chain", Callable(this, "alarm_chain"));
+        unregister_command("universal_brake_button", Callable(this, "universal_brake_button"));
     }
 } // namespace godot

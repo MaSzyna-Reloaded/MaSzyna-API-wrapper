@@ -39,8 +39,14 @@ namespace godot {
             double get_roof_light_level() const override;
             bool get_roof_light_enabled() const override;
         private:
+            /* Lights[2][17] - readLightsList refuses a row past index 16 (Mover.cpp:8566) */
+            static constexpr int LIGHTS_LIST_CAPACITY = 17;
+            /* the preset that lights both ends of every vehicle (DynObj.cpp:7337) */
+            static constexpr int LIGHTS_POSITION_ALL_ENDS = 18;
             TypedArray<LightListItem> light_position_list;
             bool roof_light_active = false;
+            /* DynObj's DimHeadlights - the vendored Mover has no dimmer of its own */
+            bool headlights_dimmed = false;
             bool devices_light_active = false;
             const std::unordered_map<LightEnd, Maszyna::end> light_end_map = {
                     {LIGHT_END_FRONT, Maszyna::end::front},
@@ -57,6 +63,7 @@ namespace godot {
             static LightEnd _active_end(const TMoverParameters *p_mover);
             static LightEnd _opposite_end(const TMoverParameters *p_mover);
             static bool _is_powered(const TMoverParameters *p_mover);
+            void _set_lights(TMoverParameters *p_mover) const;
         protected:
             void _apply_configuration() override;
             void _fill_config_dictionary(Dictionary &p_config) const override;
@@ -74,5 +81,7 @@ namespace godot {
             void light_switch(const String &p_light, bool p_enabled) override;
             void roof_light(bool p_enabled) override;
             void devices_light(bool p_enabled) override;
+            void headlights_dim(bool p_enabled) override;
+            bool get_headlights_dimmed() const override;
     };
 } // namespace godot

@@ -39,6 +39,7 @@ namespace godot {
                 COMPONENT_WIPERS,
                 COMPONENT_UNIVERSAL_CONTROLLER,
                 COMPONENT_GENERIC,
+                COMPONENT_RADIO,
             };
     };
 } // namespace godot

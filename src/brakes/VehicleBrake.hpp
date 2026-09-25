@@ -46,6 +46,9 @@ namespace godot {
             virtual double get_local_aeim_position() const = 0;
             virtual double get_edb_cylinder_pressure() const = 0;
             virtual bool get_releaser_active() const = 0;
+            /* The main pipe is cut off from the brake valve (LockPipe, the i-mainpipelock lamp,
+             * Train.cpp:11758) */
+            virtual bool get_main_pipe_locked() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.
@@ -266,6 +269,8 @@ namespace godot {
             virtual void auto_rewident(int p_brake_delay) = 0;
             virtual void brake_level_charging(bool p_active) = 0;
             virtual void alarm_chain(bool p_pulled) = 0;
+            /* One of the vehicle's universal brake buttons (UBB1..3 in the FIZ), 0-based */
+            virtual void universal_brake_button(int p_button, bool p_pressed) = 0;
     };
 } // namespace godot
 VARIANT_ENUM_CAST(VehicleBrake::CompressorPower)

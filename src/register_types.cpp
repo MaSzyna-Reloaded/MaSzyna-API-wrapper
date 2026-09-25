@@ -45,6 +45,8 @@
 #include "engines/VehicleEngine.hpp"
 #include "heating/MoverVehicleHeating.hpp"
 #include "heating/VehicleHeating.hpp"
+#include "radio/MoverVehicleRadio.hpp"
+#include "radio/VehicleRadio.hpp"
 #include "lighting/MoverVehicleLighting.hpp"
 #include "lighting/VehicleLighting.hpp"
 #include "load/MoverVehicleLoad.hpp"
@@ -175,6 +177,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(RailVehicle3D);
         GDREGISTER_ABSTRACT_CLASS(VehicleHeating);
         GDREGISTER_CLASS(MoverVehicleHeating);
+        GDREGISTER_ABSTRACT_CLASS(VehicleRadio);
+        GDREGISTER_CLASS(MoverVehicleRadio);
         GDREGISTER_ABSTRACT_CLASS(VehicleWheels);
         GDREGISTER_CLASS(MoverVehicleWheels);
         GDREGISTER_ABSTRACT_CLASS(VehicleSecuritySystem);

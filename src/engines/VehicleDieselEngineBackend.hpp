@@ -16,6 +16,9 @@ namespace godot {
             virtual double get_oil_pump_pressure(const VehicleDieselEngine *p_engine) const = 0;
             virtual bool get_fuel_pump_active(const VehicleDieselEngine *p_engine) const = 0;
             virtual bool get_fuel_pump_disabled(const VehicleDieselEngine *p_engine) const = 0;
+            virtual bool get_heat_malfunction(const VehicleDieselEngine *p_engine) const = 0;
+            virtual bool get_fuel_pump_enabled(const VehicleDieselEngine *p_engine) const = 0;
+            virtual bool get_oil_pump_enabled(const VehicleDieselEngine *p_engine) const = 0;
             virtual bool get_startup(const VehicleDieselEngine *p_engine) const = 0;
             virtual bool get_ignition(const VehicleDieselEngine *p_engine) const = 0;
             virtual bool get_spinup(const VehicleDieselEngine *p_engine) const = 0;
@@ -26,6 +29,8 @@ namespace godot {
             virtual void apply_configuration(const VehicleDieselEngine *p_engine) const = 0;
             virtual void oil_pump(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
             virtual void fuel_pump(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
+            virtual void oil_pump_switch_off(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
+            virtual void fuel_pump_switch_off(const VehicleDieselEngine *p_engine, bool p_enabled) const = 0;
             virtual void fill_config(const VehicleDieselEngine *p_engine, Dictionary &p_config) const = 0;
     };
 } // namespace godot

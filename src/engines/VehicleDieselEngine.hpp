@@ -25,6 +25,12 @@ namespace godot {
             double get_oil_pump_pressure() const;
             bool get_fuel_pump_active() const;
             bool get_fuel_pump_disabled() const;
+            /* The engine overheat alarm (dizel_heat.PA, the i-malfunction lamp, Train.cpp:9210) */
+            bool get_heat_malfunction() const;
+            /* The pump switches' own state (FuelPump/OilPump.is_enabled) - what a two-state
+             * switch flips (Train.cpp:3891, 3990) */
+            bool get_fuel_pump_enabled() const;
+            bool get_oil_pump_enabled() const;
             bool get_startup() const;
             bool get_ignition() const;
             bool get_spinup() const;
@@ -104,6 +110,10 @@ namespace godot {
         public:
             void oil_pump(bool p_enabled);
             void fuel_pump(bool p_enabled);
+            /* The "off" side of a two-state pump switch (FuelPumpSwitchOff/OilPumpSwitchOff,
+             * Train.cpp:3937, 3963) - an impulse switch has none */
+            void oil_pump_switch_off(bool p_enabled);
+            void fuel_pump_switch_off(bool p_enabled);
     };
 } // namespace godot
 VARIANT_ENUM_CAST(VehicleDieselEngine::RetarderPlacement)

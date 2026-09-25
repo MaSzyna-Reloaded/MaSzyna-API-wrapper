@@ -1,5 +1,6 @@
 #include "MoverVehicleDoors.hpp"
 #include "../mover/MoverBackend.hpp"
+#include <algorithm>
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
@@ -9,6 +10,20 @@ namespace godot {
 
 
 
+
+    int MoverVehicleDoors::get_permit_preset() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Doors.permit_preset : 0;
+    }
+
+    // the door permit preset switch has one position per FIZ permit preset (Train.cpp:7304)
+    void MoverVehicleDoors::_fill_config_dictionary(Dictionary &p_config) const {
+        const TMoverParameters *mover = get_mover();
+        if (mover == nullptr) {
+            return;
+        }
+        p_config["doors_permit_preset_max"] = std::max(0, static_cast<int>(mover->Doors.permit_presets.size()) - 1);
+    }
 
     bool MoverVehicleDoors::get_locked() const {
         const TMoverParameters *mover = get_mover();
@@ -126,6 +141,7 @@ namespace godot {
             return;
         }
         p_state["doors_locked"] = get_locked();
+        p_state["doors_permit_preset"] = get_permit_preset();
         p_state["doors_lock_enabled"] = get_lock_enabled();
         p_state["doors_step_enabled"] = get_step_enabled();
         p_state["doors_open_control"] = get_open_control();

@@ -59,11 +59,18 @@ namespace godot {
             double get_collector_pantograph_tank_pressure() const;
             bool get_collector_pantograph_pressure_switch_armed() const;
             bool get_collector_pantograph_compressor_valve() const;
+            /* The small compressor filling the pantograph tank is running (PantCompFlag) */
+            bool get_collector_pantograph_compressor_enabled() const;
             bool get_collector_overvoltage_relay() const;
             double get_collector_required_main_switch_voltage() const;
             bool get_collector_valve_active() const;
+            bool get_collector_valve_enabled() const;
             bool get_collector_pantographs_dropped() const;
             bool get_collector_pantograph_first_active() const;
+            /* A pantograph's own valve (Pantographs[].valve.is_enabled) - what pantfront_sw and
+             * pantrear_sw flip, together with is_active (Train.cpp:3161) */
+            bool get_collector_pantograph_first_valve_enabled() const;
+            bool get_collector_pantograph_second_valve_enabled() const;
             double get_collector_pantograph_first_voltage() const;
             bool get_collector_pantograph_second_active() const;
             double get_collector_pantograph_second_voltage() const;
@@ -82,6 +89,18 @@ namespace godot {
             enum PantographSelector {
                 PANTOGRAPH_FIRST,
                 PANTOGRAPH_SECOND,
+            };
+            /* What an operation does to the pantographs' master valve - Maszyna's operation_t
+             * (MOVER.h:177): ENABLE/DISABLE set it for a two-state switch, the *_ON/*_OFF pairs
+             * press and release one side of an impulse switch, NONE lets both sides go. */
+            enum ValveOperation {
+                VALVE_OPERATION_NONE,
+                VALVE_OPERATION_ENABLE,
+                VALVE_OPERATION_DISABLE,
+                VALVE_OPERATION_ENABLE_ON,
+                VALVE_OPERATION_ENABLE_OFF,
+                VALVE_OPERATION_DISABLE_ON,
+                VALVE_OPERATION_DISABLE_OFF,
             };
 
             static void _bind_methods();
@@ -132,6 +151,16 @@ namespace godot {
             MAKE_MEMBER_GS_NR(
                     VehicleEngine::StartMode, cntrl_pantograph_compressor_start_mode, VehicleEngine::START_MODE_MANUAL);
             MAKE_MEMBER_GS(bool, cntrl_pantograph_auto_valve, false);
+            /* The pantographs' valves (LoadFIZ_Cntrl, Mover.cpp:10927-10946): the master valve of
+             * them all opens by itself unless the FIZ says otherwise - "there was no pantographs
+             * valve" in older vehicles - while each pantograph's own valve is worked by hand */
+            MAKE_MEMBER_GS_NR(
+                    VehicleEngine::StartMode, cntrl_pantographs_valve_start_mode, VehicleEngine::START_MODE_AUTOMATIC);
+            MAKE_MEMBER_GS(bool, cntrl_pantographs_valve_spring, true);
+            MAKE_MEMBER_GS_NR(
+                    VehicleEngine::StartMode, cntrl_pantograph_valve_start_mode, VehicleEngine::START_MODE_MANUAL);
+            MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_spring, true);
+            MAKE_MEMBER_GS(bool, cntrl_pantograph_valve_solenoid, true);
             MAKE_MEMBER_GS_NR(VehicleEngine::StartMode, cntrl_main_switch_start_mode, VehicleEngine::START_MODE_MANUAL);
 
             /* Voltage of the overhead wire each pantograph is currently touching, fed in once
@@ -141,25 +170,38 @@ namespace godot {
             float pantograph_first_wire_voltage = 0.0f;
             float pantograph_second_wire_voltage = 0.0f;
 
+            static const char *pantograph_up_signal;
+            static const char *pantograph_down_signal;
+
             void set_power_source(VehicleController::TrainPowerSource p_source);
             VehicleController::TrainPowerSource get_power_source() const;
             void compressor(bool p_enabled);
             void converter(bool p_enabled);
             void converter_fuse_reset();
             void pantographs_valve(bool p_enabled);
+            void pantographs_valve_operate(ValveOperation p_operation);
             void pantographs_drop_all(bool p_enabled);
             void pantograph_compressor(bool p_enabled);
             void pantograph_compressor_valve(bool p_to_compressor);
             void pantograph(PantographSelector p_selector, bool p_enabled);
+            /* One pantograph's own valve, as the cab operates it (OnCommand_pantographraisefront/
+             * lowerfront, Train.cpp:3218-3300) - unlike pantograph(), it leaves the master valve alone */
+            void pantograph_valve_operate(PantographSelector p_selector, ValveOperation p_operation);
             void set_pantograph_wire_voltage(PantographSelector p_selector, float p_voltage);
             void _register_commands() override;
             void _unregister_commands() override;
 
         private:
+            /* Change detection for pantograph_up/pantograph_down, compared in
+             * _do_process_component() against this part's own members */
+            bool previous_pantograph_live[2] = {false, false};
+            bool previous_pantograph_active[2] = {false, false};
 
         protected:
             void _apply_configuration() override;
+            void _do_process_component(double p_delta) override;
     };
 } // namespace godot
 
 VARIANT_ENUM_CAST(VehicleElectricEngine::PantographSelector);
+VARIANT_ENUM_CAST(VehicleElectricEngine::ValveOperation);

@@ -116,6 +116,31 @@ static func _ensure_built() -> void:
             "state_property": "compressor_enabled",
             "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
         },
+        # sConverter runs while ConverterFlag is set (DynObj.cpp:4433-4450)
+        "converter": {
+            "event_name": &"converter",
+            "state_property": "converter_enabled",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
+        },
+        # sSmallCompressor runs while PantCompFlag is set (DynObj.cpp:4506)
+        "small-compressor": {
+            "event_name": &"small_compressor",
+            "state_property": "current_collector/pantograph_compressor_enabled",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.TOGGLE,
+        },
+        # A pantograph touching the wire and dropping (DynObj.cpp:3881-3934, 4007-4036),
+        # reported by VehicleElectricEngine.pantograph_up / pantograph_down and counted by
+        # TrainSoundSystem like the coupler events
+        "pantographup": {
+            "event_name": &"pantograph_up",
+            "state_property": "pantograph_sound/up",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
+        "pantographdown": {
+            "event_name": &"pantograph_down",
+            "state_property": "pantograph_sound/down",
+            "trigger_mode": TrainSoundTrigger.TriggerMode.CHANGE,
+        },
         # horn1/horn2/horn3 map onto VehicleHorns' low/high/whistle bits, in that fixed order -
         # confirmed via the original engine's Train.cpp (OnCommand_hornlowactivate/
         # OnCommand_hornhighactivate/OnCommand_whistleactivate) and DynObj.cpp's per-frame

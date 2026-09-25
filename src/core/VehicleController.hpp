@@ -41,16 +41,7 @@ namespace godot {
             DriverType driver_type = DRIVER_NOBODY;
             /// state is rebuilt from the backend when it is asked for, not on every physics step:
             /// a scenery runs hundreds of vehicles and almost none of them is ever read
-            // original engine defaults this to 1, not 0 (vehicle/Driver.h: "int iRadioChannel =
-            // 1") - 0 is never a valid channel (radio_channel_min defaults to 1 too), so starting
-            // at 0 meant the very first radio_channel_increase call was invisible: CabinSwitch's
-            // own switch_min_position clamp had already displayed the invalid 0 as channel 1
-            // before any command ran, so the real 0->1 transition produced no visible change.
-            int radio_channel = 1;
-
             bool prev_is_powered = false;
-            bool prev_radio_enabled = false;
-            int prev_radio_channel = radio_channel;
             bool prev_roof_light_enabled = false;
             /// Bumped by command_executed(); what tells a cached state dump that it is stale.
             uint64_t command_serial = 0;
@@ -88,9 +79,9 @@ namespace godot {
             virtual bool get_cabin_controleable() const = 0;
             virtual int get_cabin_occupied() const = 0;
             virtual bool get_battery_enabled() const = 0;
-            virtual bool get_radio_enabled() const = 0;
-            virtual bool get_radio_powered() const = 0;
-            int get_radio_channel() const;
+            /* Metres since the distance counter was started, or -1 while it is off
+             * (TTrain::m_distancecounter, Train.h:904) */
+            virtual double get_distance_counter() const = 0;
             virtual double get_power24_voltage() const = 0;
             virtual bool get_power24_available() const = 0;
             virtual bool get_power110_available() const = 0;
@@ -185,8 +176,6 @@ namespace godot {
             static const char *simulation_initialized_signal;
             static const char *power_changed_signal;
             static const char *command_received;
-            static const char *radio_toggled;
-            static const char *radio_channel_changed;
             static const char *roof_light_changed;
             static const char *cabin_occupied_changed;
             static const char *config_changed;
@@ -215,10 +204,8 @@ namespace godot {
             virtual void second_controller_decrease(int p_step = 1) const = 0;
             virtual void direction_increase() const = 0;
             virtual void direction_decrease() const = 0;
-            virtual void radio(bool p_enabled) = 0;
-            void radio_channel_set(int p_channel);
-            void radio_channel_increase(int p_step = 1);
-            void radio_channel_decrease(int p_step = 1);
+            /* distancecounter_sw: pressed starts the distance counter anew (Train.cpp:1552) */
+            virtual void distance_counter_activate(bool p_pressed) = 0;
             /* A command has run against this vehicle. Its state has moved on in the middle of a
              * step, which is the one thing a dump cached for that step cannot see by itself -
              * hence the serial below (RailVehicleServer::vehicle_dump_state). */
@@ -301,13 +288,6 @@ namespace godot {
             MAKE_MEMBER_GS(double, mass, 0.0);
             MAKE_MEMBER_GS(double, power, 0.0);
             MAKE_MEMBER_GS(double, max_velocity, 0.0);
-            // original engine hardcodes this same 1..10 range for every vehicle
-            // (OnCommand_radiochannelset: std::clamp((int)Command.param1, 1, 10)) - it is not
-            // actually per-vehicle configurable there, so these default to the same range rather
-            // than 0..0 (which silently clamped every radio_channel_increase/decrease/set call to
-            // a no-op on any vehicle that never overrides them, since none currently do).
-            MAKE_MEMBER_GS(int, radio_channel_min, 1);
-            MAKE_MEMBER_GS(int, radio_channel_max, 10);
             MAKE_MEMBER_GS_NR(Category, category, CATEGORY_TRAIN);
             MAKE_MEMBER_GS_NR(TrainType, train_type, TRAIN_TYPE_DEFAULT);
             MAKE_MEMBER_GS(double, reduced_mass, 0.0);

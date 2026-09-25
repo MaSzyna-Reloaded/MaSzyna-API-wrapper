@@ -25,6 +25,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "active", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_active");
+        ClassDB::bind_method(D_METHOD("get_allowed"), &VehicleHeating::get_allowed);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "allowed", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_allowed");
         ClassDB::bind_method(D_METHOD("get_power"), &VehicleHeating::get_power);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "power", PROPERTY_HINT_NONE, "",

@@ -9,6 +9,30 @@
 #include <cmath>
 
 namespace godot {
+    const char *VehicleElectricEngine::pantograph_up_signal = "pantograph_up";
+    const char *VehicleElectricEngine::pantograph_down_signal = "pantograph_down";
+
+    // Original engine: sPantUp plays when a pantograph's voltage rises from zero - it has
+    // just touched the wire (DynObj.cpp:3881-3934) - and sPantDown when a raised pantograph
+    // stops being active (DynObj.cpp:4007-4036). Detected once per tick against this part's own
+    // members, never in a getter.
+    void VehicleElectricEngine::_do_process_component(const double p_delta) {
+        VehicleEngine::_do_process_component(p_delta);
+        const bool live[2] = {get_collector_pantograph_first_voltage() > 0.0,
+                              get_collector_pantograph_second_voltage() > 0.0};
+        const bool active[2] = {get_collector_pantograph_first_active(), get_collector_pantograph_second_active()};
+        for (int selector = PANTOGRAPH_FIRST; selector <= PANTOGRAPH_SECOND; ++selector) {
+            if (live[selector] && !previous_pantograph_live[selector]) {
+                emit_signal(pantograph_up_signal, selector);
+            }
+            if (!active[selector] && previous_pantograph_active[selector]) {
+                emit_signal(pantograph_down_signal, selector);
+            }
+            previous_pantograph_live[selector] = live[selector];
+            previous_pantograph_active[selector] = active[selector];
+        }
+    }
+
     bool VehicleElectricEngine::get_converter_enabled() const {
         return electric_backend != nullptr ? electric_backend->get_converter_enabled(this) : false;
     }
@@ -51,6 +75,9 @@ namespace godot {
     bool VehicleElectricEngine::get_collector_pantograph_compressor_valve() const {
         return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_valve(this) : false;
     }
+    bool VehicleElectricEngine::get_collector_pantograph_compressor_enabled() const {
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_compressor_enabled(this) : false;
+    }
     bool VehicleElectricEngine::get_collector_overvoltage_relay() const {
         return electric_backend != nullptr ? electric_backend->get_collector_overvoltage_relay(this) : false;
     }
@@ -60,9 +87,21 @@ namespace godot {
     bool VehicleElectricEngine::get_collector_valve_active() const {
         return electric_backend != nullptr ? electric_backend->get_collector_valve_active(this) : false;
     }
+
+    bool VehicleElectricEngine::get_collector_valve_enabled() const {
+        return electric_backend != nullptr ? electric_backend->get_collector_valve_enabled(this) : false;
+    }
     bool VehicleElectricEngine::get_collector_pantographs_dropped() const {
         return electric_backend != nullptr ? electric_backend->get_collector_pantographs_dropped(this) : false;
     }
+    bool VehicleElectricEngine::get_collector_pantograph_first_valve_enabled() const {
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_valve_enabled(this, PANTOGRAPH_FIRST) : false;
+    }
+
+    bool VehicleElectricEngine::get_collector_pantograph_second_valve_enabled() const {
+        return electric_backend != nullptr ? electric_backend->get_collector_pantograph_valve_enabled(this, PANTOGRAPH_SECOND) : false;
+    }
+
     bool VehicleElectricEngine::get_collector_pantograph_first_active() const {
         return electric_backend != nullptr ? electric_backend->get_collector_pantograph_first_active(this) : false;
     }
@@ -194,6 +233,15 @@ namespace godot {
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         BIND_PROPERTY(VehicleElectricEngine, Variant::BOOL, cntrl_pantograph_auto_valve, "cntrl");
         BIND_PROPERTY_W_HINT(
+                VehicleElectricEngine, Variant::INT, cntrl_pantographs_valve_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(VehicleElectricEngine, Variant::BOOL, cntrl_pantographs_valve_spring, "cntrl");
+        BIND_PROPERTY_W_HINT(
+                VehicleElectricEngine, Variant::INT, cntrl_pantograph_valve_start_mode, "cntrl", PROPERTY_HINT_ENUM,
+                "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
+        BIND_PROPERTY(VehicleElectricEngine, Variant::BOOL, cntrl_pantograph_valve_spring, "cntrl");
+        BIND_PROPERTY(VehicleElectricEngine, Variant::BOOL, cntrl_pantograph_valve_solenoid, "cntrl");
+        BIND_PROPERTY_W_HINT(
                 VehicleElectricEngine, Variant::INT, cntrl_main_switch_start_mode, "cntrl", PROPERTY_HINT_ENUM,
                 "Disabled,Manual,Automatic,ManualWithAutoFallback,Converter,Battery,Direction");
         ClassDB::bind_method(D_METHOD("compressor", "enabled"), &VehicleElectricEngine::compressor);
@@ -209,11 +257,39 @@ namespace godot {
                 &VehicleElectricEngine::pantograph_compressor_valve);
         ClassDB::bind_method(D_METHOD("pantograph", "selector", "enabled"), &VehicleElectricEngine::pantograph);
         ClassDB::bind_method(
+                D_METHOD("pantograph_valve_operate", "selector", "operation"), &VehicleElectricEngine::pantograph_valve_operate);
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_first_valve_enabled"),
+                &VehicleElectricEngine::get_collector_pantograph_first_valve_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_first_valve_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_first_valve_enabled");
+        ClassDB::bind_method(
+                D_METHOD("get_collector_pantograph_second_valve_enabled"),
+                &VehicleElectricEngine::get_collector_pantograph_second_valve_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_second_valve_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_second_valve_enabled");
+        ClassDB::bind_method(
                 D_METHOD("set_pantograph_wire_voltage", "selector", "voltage"),
                 &VehicleElectricEngine::set_pantograph_wire_voltage);
 
+        ADD_SIGNAL(MethodInfo(pantograph_up_signal, PropertyInfo(Variant::INT, "selector")));
+        ADD_SIGNAL(MethodInfo(pantograph_down_signal, PropertyInfo(Variant::INT, "selector")));
+
         BIND_ENUM_CONSTANT(PANTOGRAPH_FIRST);
         BIND_ENUM_CONSTANT(PANTOGRAPH_SECOND);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_NONE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE_ON);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_ENABLE_OFF);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_ON);
+        BIND_ENUM_CONSTANT(VALVE_OPERATION_DISABLE_OFF);
+        ClassDB::bind_method(
+                D_METHOD("pantographs_valve_operate", "operation"), &VehicleElectricEngine::pantographs_valve_operate);
 
         ClassDB::bind_method(D_METHOD("get_converter_enabled"), &VehicleElectricEngine::get_converter_enabled);
         ADD_PROPERTY(
@@ -285,6 +361,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "collector_pantograph_compressor_valve", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_pantograph_compressor_valve");
+        ClassDB::bind_method(D_METHOD("get_collector_pantograph_compressor_enabled"), &VehicleElectricEngine::get_collector_pantograph_compressor_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_pantograph_compressor_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_pantograph_compressor_enabled");
         ClassDB::bind_method(D_METHOD("get_collector_overvoltage_relay"), &VehicleElectricEngine::get_collector_overvoltage_relay);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "collector_overvoltage_relay", PROPERTY_HINT_NONE, "",
@@ -300,6 +381,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "collector_valve_active", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_collector_valve_active");
+        ClassDB::bind_method(D_METHOD("get_collector_valve_enabled"), &VehicleElectricEngine::get_collector_valve_enabled);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::BOOL, "collector_valve_enabled", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_collector_valve_enabled");
         ClassDB::bind_method(D_METHOD("get_collector_pantographs_dropped"), &VehicleElectricEngine::get_collector_pantographs_dropped);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "collector_pantographs_dropped", PROPERTY_HINT_NONE, "",
@@ -462,11 +548,15 @@ namespace godot {
         p_state["current_collector/pantograph_tank_pressure"] = get_collector_pantograph_tank_pressure();
         p_state["current_collector/pantograph_pressure_switch_armed"] = get_collector_pantograph_pressure_switch_armed();
         p_state["current_collector/pantograph_compressor_valve"] = get_collector_pantograph_compressor_valve();
+        p_state["current_collector/pantograph_compressor_enabled"] = get_collector_pantograph_compressor_enabled();
         p_state["current_collector/overvoltage_relay"] = get_collector_overvoltage_relay();
         p_state["current_collector/required_main_switch_voltage"] = get_collector_required_main_switch_voltage();
         p_state["current_collector/valve_active"] = get_collector_valve_active();
+        p_state["current_collector/valve_enabled"] = get_collector_valve_enabled();
         p_state["current_collector/pantographs_dropped"] = get_collector_pantographs_dropped();
         p_state["current_collector/pantograph_first_active"] = get_collector_pantograph_first_active();
+        p_state["current_collector/pantograph_first_valve_enabled"] = get_collector_pantograph_first_valve_enabled();
+        p_state["current_collector/pantograph_second_valve_enabled"] = get_collector_pantograph_second_valve_enabled();
         p_state["current_collector/pantograph_first_voltage"] = get_collector_pantograph_first_voltage();
         p_state["current_collector/pantograph_second_active"] = get_collector_pantograph_second_active();
         p_state["current_collector/pantograph_second_voltage"] = get_collector_pantograph_second_voltage();
@@ -510,6 +600,12 @@ namespace godot {
         }
     }
 
+    void VehicleElectricEngine::pantographs_valve_operate(const ValveOperation p_operation) {
+        if (electric_backend != nullptr) {
+            electric_backend->pantographs_valve_operate(this, p_operation);
+        }
+    }
+
     void VehicleElectricEngine::pantographs_drop_all(const bool p_enabled) {
         if (electric_backend != nullptr) {
             electric_backend->pantographs_drop_all(this, p_enabled);
@@ -534,6 +630,13 @@ namespace godot {
         }
     }
 
+    void VehicleElectricEngine::pantograph_valve_operate(
+            const PantographSelector p_selector, const ValveOperation p_operation) {
+        if (electric_backend != nullptr) {
+            electric_backend->pantograph_valve_operate(this, p_selector, p_operation);
+        }
+    }
+
     void VehicleElectricEngine::set_pantograph_wire_voltage(const PantographSelector p_selector, const float p_voltage) {
         if (p_selector == PANTOGRAPH_FIRST) {
             pantograph_first_wire_voltage = p_voltage;
@@ -551,10 +654,12 @@ namespace godot {
         register_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         register_command("compressor", Callable(this, "compressor"));
         register_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        register_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
         register_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
         register_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
         register_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         register_command("pantograph", Callable(this, "pantograph"));
+        register_command("pantograph_valve_operate", Callable(this, "pantograph_valve_operate"));
     }
 
     void VehicleElectricEngine::_unregister_commands() {
@@ -563,10 +668,12 @@ namespace godot {
         unregister_command("converter_fuse_reset", Callable(this, "converter_fuse_reset"));
         unregister_command("compressor", Callable(this, "compressor"));
         unregister_command("pantographs_valve", Callable(this, "pantographs_valve"));
+        unregister_command("pantographs_valve_operate", Callable(this, "pantographs_valve_operate"));
         unregister_command("pantographs_drop_all", Callable(this, "pantographs_drop_all"));
         unregister_command("pantograph_compressor", Callable(this, "pantograph_compressor"));
         unregister_command("pantograph_compressor_valve", Callable(this, "pantograph_compressor_valve"));
         unregister_command("pantograph", Callable(this, "pantograph"));
+        unregister_command("pantograph_valve_operate", Callable(this, "pantograph_valve_operate"));
     }
 
 

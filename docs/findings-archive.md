@@ -4,6 +4,56 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-25 - pantographs raised only with the master valve forced
+
+* **Symptom:** after the cab's pantograph switches were ported as in the original, `P` alone no
+  longer raised the E186's pantograph. `MoverElectricEngineBackend::pantograph()` had opened the
+  pantographs' master valve on every raise since `1c0c044`, and taking that out broke it.
+* **What proved it:** `LoadFIZ_Cntrl` sets the master valve (`PantEPValveStart`) to automatic
+  by default and each pantograph's own valve (`PantValveStart`) to manual
+  (`Mover.cpp:10927-10946`). The struct default is manual (`MOVER.h:875`). The E186 FIZ declares
+  none of these keys. `grep` missed that at first, because the file is cp1250. So in the original
+  the master valve opens by itself when there is low voltage.
+* **Cause:** the wrapper never ported the five valve keys, so the Mover kept the struct default,
+  and the workaround covered the missing default.
+* **Fix:** `VehicleElectricEngine` carries the five keys as our own `StartMode`/bools, the FIZ
+  parser reads them, `MoverElectricEngineBackend` writes them into the Mover, and the workaround is
+  gone. The cab's switches send our `ValveOperation`, which is mapped to `operation_t` only in
+  the backend.
+* **Also found:** the original reads a legacy sound's files with `,` as a delimiter
+  (`audio/sound.cpp:105-111`), so `small-compressor: a.wav,b.wav,c.wav` is begin, main and end,
+  not a data error.
+* **Rule:** a workaround in a backend call is a sign that a FIZ key is not ported yet. Read the
+  key's default in `LoadFIZ_*` before keeping the workaround.
+
+## 2026-09-25 - the E186 cab half built: three data quirks and a missing gauge feature
+
+* **Symptom:** after the E186 controls were added to the catalog, the cab still did not react:
+  radiostop_sw, universal*, battery_sw, pantalloff_sw and more had no widget, the light selector
+  had no presets, and none of the three reverser lamps ever lit.
+* **What proved it:** a headless probe entering the cab on td_e186.scn and listing every widget
+  by control id, then MmdCabinInstancer.parse() on p160dc.mmd listing every descriptor - from
+  line 210 of base.mmd.inc on, each `label: { ... }` block came out as an instrument called
+  `soundinc`.
+* **Causes:**
+  * `radiocall3_sw { radio_3 ... }` has lost its colon. The original reacts only to labels it
+    knows and walks over every other token; the wrapper's parser takes any `x:` token for a label,
+    so it took the block's `soundinc:` for one and read every following block from the wrong end.
+  * `LightsList:` in p160dc.fiz has no `endL` and runs straight into `WiperList:`. The FIZ builder
+    ended an open table only when the next header opened none, so the WiperList header replaced
+    the light table without its end_table(), and all twelve presets were lost.
+  * TGauge takes `<name>_on` as the lit state of a control, shown instead of it while a flag is set
+    (Gauge.cpp:204-210, 386-392; the flags are bound in Train.cpp:11995-12040, the reverser
+    buttons to the sign of DirActive). The wrapper had no such thing, so kierunek_*_on stayed
+    hidden.
+* **Fix:** a block without a label is skipped whole; every FIZ section header ends the table
+  before it; the MMD factory builds a CabinIndicator3D on `<name>_on` for a catalog entry with
+  `state_light`.
+* **Rule:** a parser of the original's data mirrors the original's tolerance, not the format's
+  grammar - the data is full of lines only the original's "skip what you do not know" accepts.
+* **Rule:** a table section may end at the next header rather than at its end marker; every
+  header closes the open table.
+
 ## 2026-09-25 - SU46 would not release its train: the converter never started
 
 * **Symptom:** some trains, passenger and freight, could hardly be released. SU46-054 with four

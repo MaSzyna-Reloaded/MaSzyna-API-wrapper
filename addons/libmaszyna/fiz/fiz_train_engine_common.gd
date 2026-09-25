@@ -55,6 +55,30 @@ static func apply_engine_common(node: VehicleEngine, kv: Dictionary, context: Fi
 
 ## The controller-position-count subset of Cntrl. (stashed on context.cntrl_kv by
 ## FizTrainCntrlParser, since Cntrl. conventionally precedes Engine: in real files).
+## The pantographs of an electric engine - LoadFIZ_Cntrl (Mover.cpp:10919-10946): the pantograph
+## compressor, its automatic valve, the master valve and each pantograph's own. The defaults are
+## the properties' own: the master valve automatic, each pantograph's valve manual. PantAutoValve
+## defaults to true for an EZT in the original (Mover.cpp:10925) - not ported with the train type.
+static func apply_cntrl_electric_subset(node: VehicleElectricEngine, cntrl_kv: Dictionary) -> void:
+    if cntrl_kv.has("PantCompressorStart"):
+        node.cntrl_pantograph_compressor_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantCompressorStart"), VehicleEngine.START_MODE_MANUAL)
+    if cntrl_kv.has("PantAutoValve"):
+        node.cntrl_pantograph_auto_valve = FizLineUtil.get_bool(cntrl_kv, "PantAutoValve")
+    if cntrl_kv.has("PantEPValveStart"):
+        node.cntrl_pantographs_valve_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantEPValveStart"), VehicleEngine.START_MODE_AUTOMATIC)
+    if cntrl_kv.has("PantEPValveSpring"):
+        node.cntrl_pantographs_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantEPValveSpring")
+    if cntrl_kv.has("PantValveStart"):
+        node.cntrl_pantograph_valve_start_mode = FizTrainControllerParser.parse_start_mode(
+                FizLineUtil.get_string(cntrl_kv, "PantValveStart"), VehicleEngine.START_MODE_MANUAL)
+    if cntrl_kv.has("PantValveSpring"):
+        node.cntrl_pantograph_valve_spring = FizLineUtil.get_bool(cntrl_kv, "PantValveSpring")
+    if cntrl_kv.has("PantValveSolenoid"):
+        node.cntrl_pantograph_valve_solenoid = FizLineUtil.get_bool(cntrl_kv, "PantValveSolenoid")
+
+
 static func apply_cntrl_engine_subset(node: VehicleEngine, cntrl_kv: Dictionary) -> void:
     if not cntrl_kv:
         return

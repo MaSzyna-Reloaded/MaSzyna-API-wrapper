@@ -22,6 +22,13 @@ namespace godot {
         mover->AlarmChainSwitch(p_pulled);
     }
 
+    // Original engine: TTrain::OnCommand_universalbrakebutton1..3 (Train.cpp:1897) -> UniversalBrakeButton()
+    void MoverVehicleBrake::universal_brake_button(const int p_button, const bool p_pressed) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER_BRAKE(mover);
+        mover->UniversalBrakeButton(p_button, p_pressed ? 1 : 0);
+    }
+
     void MoverVehicleBrake::brake_releaser(const bool p_pressed) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER_BRAKE(mover);
@@ -333,6 +340,11 @@ namespace godot {
         return mover != nullptr ? mover->Hamulec && mover->Hamulec->Releaser() : false;
     }
 
+    bool MoverVehicleBrake::get_main_pipe_locked() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->LockPipe : false;
+    }
+
     void MoverVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -362,6 +374,7 @@ namespace godot {
         p_state["brake_local_aeim_position"] = get_local_aeim_position();
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
+        p_state["main_pipe_locked"] = get_main_pipe_locked();
     }
 
     void MoverVehicleBrake::_apply_configuration() {

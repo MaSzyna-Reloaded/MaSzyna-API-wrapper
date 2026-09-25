@@ -15,6 +15,8 @@ namespace godot {
             void _do_process_component(double p_delta) override;
         public:
             void _fill_state_dictionary(Dictionary &p_state) const override;
+            void _fill_config_dictionary(Dictionary &p_config) const override;
+            int get_permit_preset() const override;
             bool get_locked() const override;
             bool get_lock_enabled() const override;
             bool get_step_enabled() const override;

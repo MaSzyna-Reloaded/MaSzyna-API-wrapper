@@ -43,4 +43,8 @@ namespace godot {
         VehicleComponent::_unregister_commands();
         unregister_command("sand", Callable(this, "sand"));
     }
+    // how the cab operates the pantographs (PantSwitchType, Train.cpp:3175, 3285)
+    void VehicleSwitches::_fill_config_dictionary(Dictionary &p_config) const {
+        p_config["pantograph_switch_impulse"] = get_pantograph_impulse();
+    }
 } // namespace godot

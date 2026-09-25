@@ -76,6 +76,11 @@ namespace godot {
         BIND_ENUM_CONSTANT(TYPE_FOLD)
         BIND_ENUM_CONSTANT(TYPE_PLUG)
 
+        ClassDB::bind_method(D_METHOD("get_permit_preset"), &VehicleDoors::get_permit_preset);
+        ADD_PROPERTY(
+                PropertyInfo(Variant::INT, "permit_preset", PROPERTY_HINT_NONE, "",
+                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_permit_preset");
         ClassDB::bind_method(D_METHOD("get_locked"), &VehicleDoors::get_locked);
         ADD_PROPERTY(
                 PropertyInfo(Variant::BOOL, "locked", PROPERTY_HINT_NONE, "",

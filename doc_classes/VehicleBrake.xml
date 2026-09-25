@@ -101,10 +101,21 @@
 			<description>
 			</description>
 		</method>
+		<method name="universal_brake_button">
+			<return type="void" />
+			<param index="0" name="button" type="int" />
+			<param index="1" name="pressed" type="bool" />
+			<description>
+			</description>
+		</method>
 	</methods>
 	<members>
 		<member name="air_leak_multiplier" type="float" setter="set_air_leak_multiplier" getter="get_air_leak_multiplier" default="1.0">
 			Air leak speed multiplier for brakes.
+		</member>
+		<member name="air_pressure" type="float" setter="" getter="get_air_pressure" default="0.0">
+		</member>
+		<member name="alarm_chain_pulled" type="bool" setter="" getter="get_alarm_chain_pulled" default="false">
 		</member>
 		<member name="brake_force_max" type="float" setter="set_brake_force_max" getter="get_brake_force_max" default="1.0">
 			Maximum train braking force in kN (used by the simplified brake model).
@@ -215,6 +226,8 @@
 		<member name="compressor_power" type="int" setter="set_compressor_power" getter="get_compressor_power" enum="VehicleBrake.CompressorPower" default="0">
 			Compressor power source.
 		</member>
+		<member name="compressor_pressure" type="float" setter="" getter="get_compressor_pressure" default="0.0">
+		</member>
 		<member name="compressor_speed" type="float" setter="set_compressor_speed" getter="get_compressor_speed" default="0.0">
 			Compressor flow rate in m³/s.
 		</member>
@@ -222,6 +235,12 @@
 			Behavior upon overpressure in the main tank when the compressor is driven by an internal combustion engine:
 			false - the compressor pumps to the atmosphere, the tank slowly empties itself, after reaching [member compressor_cab_a_min_pressure], the compressor pumps to the tank
 			true - the compressor fully fills the tank, the valve releases pressure from the tank upon reaching [member compressor_cab_a_max_pressure]
+		</member>
+		<member name="control_pressure" type="float" setter="" getter="get_control_pressure" default="0.0">
+		</member>
+		<member name="controller_position" type="float" setter="" getter="get_controller_position" default="0.0">
+		</member>
+		<member name="controller_position_normalized" type="float" setter="" getter="get_controller_position_normalized" default="0.0">
 		</member>
 		<member name="cylinder_count" type="int" setter="set_cylinder_count" getter="get_cylinder_count" default="0">
 			Number of brake cylinders
@@ -245,22 +264,50 @@
 		<member name="cylinder_spring_force" type="float" setter="set_cylinder_spring_force" getter="get_cylinder_spring_force" default="0.0">
 			Return spring force per cylinder in kN.
 		</member>
+		<member name="edb_cylinder_pressure" type="float" setter="" getter="get_edb_cylinder_pressure" default="0.0">
+		</member>
+		<member name="emergency_valve_flow" type="float" setter="" getter="get_emergency_valve_flow" default="0.0">
+		</member>
 		<member name="est_valve_size" type="int" setter="set_est_valve_size" getter="get_est_valve_size" default="0">
 			Size index of the ESt family camshaft valve (e.g., 1–3). Used only with ESt/LSt-type valves.
 		</member>
+		<member name="feed_pipe_pressure" type="float" setter="" getter="get_feed_pipe_pressure" default="0.0">
+		</member>
+		<member name="force_ratio" type="float" setter="" getter="get_force_ratio" default="0.0">
+		</member>
 		<member name="friction_elements_per_axle" type="int" setter="set_friction_elements_per_axle" getter="get_friction_elements_per_axle" default="1">
 			Number of friction elements per axle (0–4).
+		</member>
+		<member name="handle_control_pressure" type="float" setter="" getter="get_handle_control_pressure" default="0.0">
+		</member>
+		<member name="local_aeim_position" type="float" setter="" getter="get_local_aeim_position" default="0.0">
+		</member>
+		<member name="local_position_normalized" type="float" setter="" getter="get_local_position_normalized" default="0.0">
+		</member>
+		<member name="local_valve_flow" type="float" setter="" getter="get_local_valve_flow" default="0.0">
+		</member>
+		<member name="loco_pressure" type="float" setter="" getter="get_loco_pressure" default="0.0">
+		</member>
+		<member name="loco_pressure_fall_rate" type="float" setter="" getter="get_loco_pressure_fall_rate" default="0.0">
+		</member>
+		<member name="loco_pressure_rise_rate" type="float" setter="" getter="get_loco_pressure_rise_rate" default="0.0">
 		</member>
 		<member name="main_pipe_blocking_pressure" type="float" setter="set_main_pipe_blocking_pressure" getter="get_main_pipe_blocking_pressure" default="0.0">
 			Main line blocking pressure
 		</member>
 		<member name="main_pipe_emergency_cuts_off_handle" type="bool" setter="set_main_pipe_emergency_cuts_off_handle" getter="get_main_pipe_emergency_cuts_off_handle" default="false">
 		</member>
+		<member name="main_pipe_locked" type="bool" setter="" getter="get_main_pipe_locked" default="false">
+		</member>
 		<member name="main_pipe_minimum_unblocking_handle_position" type="int" setter="set_main_pipe_minimum_unblocking_handle_position" getter="get_main_pipe_minimum_unblocking_handle_position" default="-3">
 			Minimum brake handle position in order to unblock the main pipe
 		</member>
 		<member name="main_pipe_unblocking_pressure" type="float" setter="set_main_pipe_unblocking_pressure" getter="get_main_pipe_unblocking_pressure" default="0.0">
 			Main line unblocking pressure
+		</member>
+		<member name="main_valve_flow" type="float" setter="" getter="get_main_valve_flow" default="0.0">
+		</member>
+		<member name="manual_position" type="int" setter="" getter="get_manual_position" default="0">
 		</member>
 		<member name="max_antislip_pressure" type="float" setter="set_max_antislip_pressure" getter="get_max_antislip_pressure" default="0.0">
 			Maximum anti-slip brake cylinder pressure in bar. Set to 0 to disable the limit.
@@ -277,6 +324,10 @@
 		<member name="max_tare_pressure" type="float" setter="set_max_tare_pressure" getter="get_max_tare_pressure" default="0.0">
 			Maximum brake cylinder pressure at tare (an empty) load in bar.
 		</member>
+		<member name="pipe_brake_pressure" type="float" setter="" getter="get_pipe_brake_pressure" default="0.0">
+		</member>
+		<member name="pipe_pressure" type="float" setter="" getter="get_pipe_pressure" default="0.0">
+		</member>
 		<member name="pipe_pressure_max" type="float" setter="set_pipe_pressure_max" getter="get_pipe_pressure_max" default="5.0">
 			Nominal high (charged) main pipe pressure in bar.
 		</member>
@@ -292,14 +343,20 @@
 		<member name="rapid_transfer" type="float" setter="set_rapid_transfer" getter="get_rapid_transfer" default="1.0">
 			High-to-low pressure ratio of braking in Rapid mode (dimensionless multiplier).
 		</member>
+		<member name="releaser_active" type="bool" setter="" getter="get_releaser_active" default="false">
+		</member>
 		<member name="rig_effectiveness" type="float" setter="set_rig_effectiveness" getter="get_rig_effectiveness" default="0.0">
 			Brake rigging efficiency coefficient (0..1).
+		</member>
+		<member name="tank_volume" type="float" setter="" getter="get_tank_volume" default="0.0">
 		</member>
 		<member name="tank_volume_aux" type="float" setter="set_tank_volume_aux" getter="get_tank_volume_aux" default="0.0">
 			Auxiliary reservoir volume in liters (l).
 		</member>
 		<member name="tank_volume_main" type="float" setter="set_tank_volume_main" getter="get_tank_volume_main" default="0.0">
 			Main reservoir volume in cubic meters (m³).
+		</member>
+		<member name="unit_force" type="float" setter="" getter="get_unit_force" default="0.0">
 		</member>
 		<member name="universal_brake_button_1" type="int" setter="set_universal_brake_button_1" getter="get_universal_brake_button_1" default="0">
 			[code]Brake:UBB1[/code]

@@ -230,6 +230,13 @@ namespace godot {
         }
         // the vehicle is moved by this distance (DynObj.cpp:2439), front-relative
         mover->dMoveLen += mover->V * p_delta;
+        // TTrain::add_distance (Train.cpp:10309) - counted towards the occupied cab, and switched
+        // off for good whenever the low voltage goes
+        if (distance_counter >= 0.0 && (mover->Power24vIsAvailable || mover->Power110vIsAvailable)) {
+            distance_counter += mover->V * p_delta * mover->CabOccupied;
+        } else {
+            distance_counter = DISTANCE_COUNTER_OFF;
+        }
     }
 
     // Original engine: TDynamicObject::AttachNext() couples with Enforce, without sound (DynObj.cpp:2590)
@@ -487,14 +494,6 @@ namespace godot {
         return mover != nullptr ? mover->Battery : false;
     }
 
-    bool MoverVehicleController::get_radio_enabled() const {
-        return mover != nullptr ? mover->Radio : false;
-    }
-
-    bool MoverVehicleController::get_radio_powered() const {
-        return mover != nullptr ? mover->Radio && (mover->Power24vIsAvailable || mover->Power110vIsAvailable) : false;
-    }
-
     double MoverVehicleController::get_power24_voltage() const {
         return mover != nullptr ? mover->Power24vVoltage : 0.0;
     }
@@ -630,7 +629,14 @@ namespace godot {
         mover->DirectionBackward();
     }
 
-    void MoverVehicleController::radio(const bool p_enabled) {
-        mover->Radio = p_enabled;
+    // Original engine: TTrain::OnCommand_distancecounteractivate (Train.cpp:1552), single-press form
+    void MoverVehicleController::distance_counter_activate(const bool p_pressed) {
+        if (p_pressed) {
+            distance_counter = 0.0;
+        }
+    }
+
+    double MoverVehicleController::get_distance_counter() const {
+        return distance_counter;
     }
 } // namespace godot

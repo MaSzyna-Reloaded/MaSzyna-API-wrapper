@@ -124,6 +124,47 @@ claims its control ids. Behaviours reach the train only through `CabinState.vehi
 vehicle's dump (`_fill_state_dictionary()`, layer 3) - `CabinSystem` reads
 `RailVehicleServer.vehicle_dump_state(rid)`.
 
+**Where the logic of a `Train.cpp` handler goes.** Split it by what it touches:
+- whatever changes the vehicle (a Mover call, a counter the vehicle keeps: `OperatePantographsValve`,
+  `FuelPumpSwitchOff`, the distance counter, Radio-Stop, the light presets) goes into the
+  matching `Mover*` component as a command - the cab only chooses which one to send;
+- whatever is about the physical control (its position, what a press or a release means for this
+  kind of switch) stays in the cab's `legacy_cabin/` behaviour.
+
+**The kind of switch (`TGaugeType`).** An MMD instrument may say `type: push|impulse|return|
+delayed|pushtoggle|toggle`; without one it is a toggle (`Gauge.h:89`). The MMD factory maps it
+(`MmdCabinInstancer.BUTTON_TYPES`, as `Gauge.cpp:243` reads it) onto
+`BaseCabinTool3D.button_type` of every widget - data, no logic. Some original handlers branch on it
+(`ggX.type()`; `rg -o 'gg\w+\.type\(\)' Train.cpp` lists them): for those the catalog entry
+carries `"shape_from_button_type": true` with a comment naming the handler line, and the factory
+then makes a push spring back (`monostable`) and show no state at rest (the original returns it to
+neutral on release). The behaviour owning the control gets its type from
+`LegacyCabinLogicDelegate._button_type(control_id)` when it is created, and ports the handler's
+branches on it - e.g. `pump.gd` (a push pump runs while held, a two-state one flips and sets
+`*SwitchOff`), `pantograph_selected.gd` (`ENABLE_ON`/`NONE` vs `ENABLE`/`DISABLE`),
+`main_switch.gd` (only an impulse switch reacts to its release). A control the cab does not model
+is a toggle, exactly like an undefined gauge in the original.
+
+Every other control keeps the fixed `monostable` of its entry: most original handlers act on press
+and release whatever the gauge (`sand_bt`, `security_reset_bt`), and flipping them by type would
+break them. The fixed `monostable` is also what the keyboard path of an unmodelled control
+(`unmodelled_controls.gd`) uses.
+
+How the factory builds such a control: a `CabinButton` shows `offset + mesh_rotation * value`, and
+`value_rest` is where a spring-back switch returns to (0.5 for a three-position lever). A catalog
+`state_light` (`{state_property, lit_condition}`) builds a `CabinIndicator3D` on the `<name>_on`
+submodel, which is how TGauge shows a lit control (`Gauge.cpp:204-210`). A submodel named `none` is
+not wired to any mesh.
+
+Keep the original's operation enums out of the interface. For example, the pantograph valves take
+our `VehicleElectricEngine.ValveOperation`, and only `MoverElectricEngineBackend` maps it to
+`operation_t`. Their start mode comes from the FIZ `Cntrl.` keys, with the defaults of
+`LoadFIZ_Cntrl`.
+
+A control of the cab alone, with no vehicle behind it (`universal0..9`, `generictoggle`,
+`Train.cpp:6720`), is a catalog entry without a `command`: `forward_commands.gd` then only keeps
+its position in `CabinState`, where `python_screen_state.gd` reads it.
+
 ## Verifying
 
 - After any C++ change, rebuild with `make compile-debug` and check the result.

@@ -210,6 +210,8 @@ static func _ensure_built() -> void:
         # toggle like compressor_sw/converter_sw.
         "trainheating_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggTrainHeatingButton.type(), Train.cpp:6687)
+            "shape_from_button_type": true,
             "fixed_fields": {
                 "monostable": false,
                 "command": "heating",
@@ -364,6 +366,10 @@ static func _ensure_built() -> void:
         # LegacyCabinMainSwitch; no key of its own, M / Shift+M reach main_on_bt/main_off_bt.
         "main_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggMainButton.type(), Train.cpp:3733)
+            "shape_from_button_type": true,
+            # an impulse one rests midway, between its two directions (Train.cpp:11348)
+            "push_value_rest": 0.5,
             "fixed_fields": {
                 "monostable": true,
             },
@@ -375,18 +381,24 @@ static func _ensure_built() -> void:
         "dirforward_bt": {
             "widget_class": CabinButton,
             "fixed_fields": { "monostable": true },
+            # its "_on" lamp follows the controlled vehicle's DirActive (m_dir*, Train.cpp:8520, 12037)
+            "state_light": {"state_property": "direction", "lit_condition": CabinIndicator3D.LitCondition.POSITIVE},
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
         "dirneutral_bt": {
             "widget_class": CabinButton,
             "fixed_fields": { "monostable": true },
+            # its "_on" lamp follows the controlled vehicle's DirActive (m_dir*, Train.cpp:8520, 12037)
+            "state_light": {"state_property": "direction", "lit_condition": CabinIndicator3D.LitCondition.ZERO},
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
         "dirbackward_bt": {
             "widget_class": CabinButton,
             "fixed_fields": { "monostable": true },
+            # its "_on" lamp follows the controlled vehicle's DirActive (m_dir*, Train.cpp:8520, 12037)
+            "state_light": {"state_property": "direction", "lit_condition": CabinIndicator3D.LitCondition.NEGATIVE},
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
@@ -441,6 +453,8 @@ static func _ensure_built() -> void:
         # Train.cpp:3336, Ctrl+P).
         "pantalloff_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggPantAllDownButton.type(), Train.cpp:3352)
+            "shape_from_button_type": true,
             "fixed_fields": {
                 "monostable": false,
                 "command": "pantographs_drop_all",
@@ -452,6 +466,8 @@ static func _ensure_built() -> void:
         },
         "fuelpump_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggFuelPumpButton.type(), Train.cpp:3879)
+            "shape_from_button_type": true,
             "fixed_fields": {
                 "monostable": true,
                 "command": "fuel_pump",
@@ -463,6 +479,8 @@ static func _ensure_built() -> void:
         },
         "oilpump_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggOilPumpButton.type(), Train.cpp:3978)
+            "shape_from_button_type": true,
             "fixed_fields": {
                 "monostable": true,
                 "command": "oil_pump",
@@ -671,6 +689,10 @@ static func _ensure_built() -> void:
         # proven in production via SM42's own hand-authored Battery node.
         "battery_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggBatteryButton.type(), Train.cpp:2929)
+            "shape_from_button_type": true,
+            # an impulse one rests midway, between its two directions (Train.cpp:11342)
+            "push_value_rest": 0.5,
             "fixed_fields": {
                 "monostable": false,
                 "command": "battery",
@@ -685,6 +707,10 @@ static func _ensure_built() -> void:
         # IsCabMaster() (Train.cpp:8020), exposed as cabin_controleable.
         "cabactivation_sw": {
             "widget_class": CabinButton,
+            # its original handler branches on the kind of switch (ggCabActivationButton.type(), Train.cpp:3100)
+            "shape_from_button_type": true,
+            # an impulse one rests midway, between its two directions (Train.cpp:3115)
+            "push_value_rest": 0.5,
             "fixed_fields": {
                 "monostable": false,
                 "command": "cab_activation",
@@ -824,37 +850,46 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Confirmed against VehicleElectricEngine.cpp:313-318 - pantograph(PantographSelector,bool)
-        # takes the selector as its FIRST argument (TrainSystem.cpp:203-209 maps send_command's p1
-        # to the Callable's first arg, p2 to the second) - command_param supplies the fixed
-        # PANTOGRAPH_FIRST selector, pushed supplies the enabled bool as p2. state_property
-        # confirmed against VehicleElectricEngine.cpp:201 (`Pantographs[0].is_active`) -
-        # MOVER.h:154's `end { front = 0, rear = 1 }` confirms index 0 really is the front
-        # pantograph, matching PANTOGRAPH_FIRST's own front mapping (VehicleElectricEngine.cpp:316).
+        # Front / rear pantograph switches: Train.cpp:11905-11906 -> OnCommand_pantographtogglefront/
+        # rear (drivermouseinput.cpp:855-860), keys P / O (driverkeyboardinput.cpp:201-202).
+        # LegacyCabinPantographs owns them - how the valve is operated depends on the vehicle's
+        # switch type. state_property: Pantographs[].is_active, index 0 the front one
+        # (MOVER.h:154 end { front = 0, rear = 1 }).
         "pantfront_sw": {
             "widget_class": CabinButton,
+            "monostable_from_config": "pantograph_switch_impulse",
             "fixed_fields": {
                 "monostable": false,
-                "command": "pantograph",
-                "command_param": VehicleElectricEngine.PANTOGRAPH_FIRST,
                 "state_property": "current_collector/pantograph_first_active",
                 "action": "pantograph_front_toggle",
             },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
-        # Same shape as pantfront_sw, PANTOGRAPH_SECOND/pantograph_second_active - pantograph()
-        # already takes the selector, no new C++ needed. Keybind confirmed against
-        # driverkeyboardinput.cpp:193 (plain "O" -> pantographtogglerear).
         "pantrear_sw": {
             "widget_class": CabinButton,
+            "monostable_from_config": "pantograph_switch_impulse",
             "fixed_fields": {
                 "monostable": false,
-                "command": "pantograph",
-                "command_param": VehicleElectricEngine.PANTOGRAPH_SECOND,
                 "state_property": "current_collector/pantograph_second_active",
                 "action": "pantograph_rear_toggle",
             },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # The lowering buttons: Train.cpp:11907-11908 -> OnCommand_pantographlowerfront/rear
+        # (drivermouseinput.cpp:861-866), owned by LegacyCabinPantographs. With an impulse switch
+        # type their presence alone is what lets a pantograph be lowered, which is why a cab may
+        # declare them with no submodel (dynamic/pkp/e186_v2/base.mmd.inc:187-188).
+        "pantfrontoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        "pantrearoff_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": { "monostable": true },
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
@@ -1367,6 +1402,300 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "",
             "position_at_submodel": true,
+        },
+        # Train.cpp:11911 ggPantSelectedButton -> OnCommand_pantographtoggleselected (Train.cpp:3403),
+        # Ctrl+Shift+O. Its handler branches on the kind of switch (ggPantSelectedButton.type(),
+        # Train.cpp:3434) - LegacyCabinPantographSelected owns it
+        "pantselected_sw": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            # an impulse one rests midway, between its two directions (Train.cpp:3455)
+            "push_value_rest": 0.5,
+            "fixed_fields": {
+                "monostable": true,
+                "state_property": "current_collector/valve_enabled",
+                "action": "pantograph_toggle_selected",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11912 ggPantSelectedDownButton -> OnCommand_pantographlowerselected (Train.cpp:3483),
+        # branching on ggPantSelectedDownButton.type() - LegacyCabinPantographSelected owns it
+        "pantselectedoff_sw": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": true,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11868 ggLightsButton -> OnCommand_lightspresetactivatenext/previous (Train.cpp:5193-5265),
+        # Shift+T / T; it shows LightsPos - 1
+        "lights_sw": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "command_increase": "increase_light_selector_position",
+                "command_decrease": "decrease_light_selector_position",
+                "state_property": "light_selector_position",
+                "action_increase": "lights_preset_next",
+                "action_decrease": "lights_preset_previous",
+            },
+            "config_max_property": "light_position_max",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11853 ggDoorPermitPresetButton -> OnCommand_doorpermitpresetactivatenext/previous
+        # (Train.cpp:7296-7317), Ctrl+Shift+. / Ctrl+Shift+,
+        "doorpermitpreset_sw": {
+            "widget_class": CabinSwitch,
+            "fixed_fields": {
+                "switch_min_position": 0,
+                "command_increase": "doors_next_permit_preset",
+                "command_decrease": "doors_previous_permit_preset",
+                "state_property": "doors_permit_preset",
+                "action_increase": "doors_permit_preset_next",
+                "action_decrease": "doors_permit_preset_previous",
+            },
+            "config_max_property": "doors_permit_preset_max",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11865 ggDimHeadlightsButton -> OnCommand_headlightsdimtoggle (Train.cpp:6125), Ctrl+L
+        "dimheadlights_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": false,
+                "command": "headlights_dim",
+                "state_property": "headlights_dimmed",
+                "action": "headlights_dim_toggle",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11897 ggRadioStop -> OnCommand_radiostopsend (Train.cpp:8149) - sends on the press,
+        # Ctrl+Shift+Pause
+        "radiostop_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_stop",
+                "action": "radio_stop_send",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11903 ggRadioVolumeNext -> OnCommand_radiovolumeincrease (Train.cpp:8246)
+        "radiovolumenext_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_volume_increase",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11902 ggRadioVolumePrevious -> OnCommand_radiovolumedecrease (Train.cpp:8263)
+        "radiovolumeprev_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_volume_decrease",
+                "controller_mode": CabinButton.ControllerMode.On,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11931 ggDistanceCounterButton -> OnCommand_distancecounteractivate (Train.cpp:1552),
+        # an impulse button starting the count on the press
+        "distancecounter_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "distance_counter_activate",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11838 ggUniveralBrakeButton1 -> OnCommand_universalbrakebutton1
+        # (Train.cpp:1897) - UniversalBrakeButton(0, held)
+        "universalbrake1_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_brake_button",
+                "command_param": 0,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11839 ggUniveralBrakeButton2 -> OnCommand_universalbrakebutton2
+        # (Train.cpp:1897) - UniversalBrakeButton(1, held)
+        "universalbrake2_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_brake_button",
+                "command_param": 1,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11840 ggUniveralBrakeButton3 -> OnCommand_universalbrakebutton3
+        # (Train.cpp:1897) - UniversalBrakeButton(2, held)
+        "universalbrake3_bt": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "universal_brake_button",
+                "command_param": 2,
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11758 - LockPipe, the main pipe cut off from the brake valve
+        "i-mainpipelock": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "main_pipe_locked" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Train.cpp:9218 btLampkaTempomat - SpeedCtrlUnit.IsActive
+        "i-tempomat": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "speed_control/active" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Train.cpp:9210 btLampkaMalfunction - the controlled vehicle's dizel_heat.PA
+        "i-malfunction": {
+            "widget_class": CabinIndicator3D,
+            "fixed_fields": { "state_property": "diesel_heat_malfunction" },
+            "config_max_property": "",
+            "mesh_path_field": "",
+            "position_at_submodel": true,
+        },
+        # Train.cpp:11935 ggUniversals[0] -> OnCommand_generictoggle0 (Train.cpp:6720), key 0: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal0": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_0",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11936 ggUniversals[1] -> OnCommand_generictoggle1 (Train.cpp:6720), key 1: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal1": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_1",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11937 ggUniversals[2] -> OnCommand_generictoggle2 (Train.cpp:6720), key 2: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal2": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_2",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11938 ggUniversals[3] -> OnCommand_generictoggle3 (Train.cpp:6720), key 3: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal3": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_3",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11939 ggUniversals[4] -> OnCommand_generictoggle4 (Train.cpp:6720), key 4: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal4": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_4",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11940 ggUniversals[5] -> OnCommand_generictoggle5 (Train.cpp:6720), key 5: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal5": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_5",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11941 ggUniversals[6] -> OnCommand_generictoggle6 (Train.cpp:6720), key 6: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal6": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_6",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11942 ggUniversals[7] -> OnCommand_generictoggle7 (Train.cpp:6720), key 7: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal7": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_7",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11943 ggUniversals[8] -> OnCommand_generictoggle8 (Train.cpp:6720), key 8: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal8": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_8",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11944 ggUniversals[9] -> OnCommand_generictoggle9 (Train.cpp:6720), key 9: a
+        # control of the cab alone, no vehicle behind it; pushes or toggles by its type (Train.cpp:6733)
+        "universal9": {
+            "widget_class": CabinButton,
+            "shape_from_button_type": true,
+            "fixed_fields": {
+                "monostable": false,
+                "action": "generic_toggle_9",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
         },
     }
 

@@ -56,6 +56,17 @@ enum ControllerMode { OnOff, On, Off }
         mesh_rotation = x if x else Vector3.ZERO
         _dirty = true
 
+## Pose at position 0, the MMD offset (value * scale + offset, Gauge.cpp:456) - e.g. E186's master
+## controller rests turned back from its model's pose (nastawnik_mocy rot 0.0263 -0.0788)
+@export var mesh_position_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_position_offset = x
+        _dirty = true
+@export var mesh_rotation_offset:Vector3 = Vector3.ZERO:
+    set(x):
+        mesh_rotation_offset = x
+        _dirty = true
+
 ## Some state domains don't start at the switch's own visual rest position - e.g. radio_channel's
 ## real range is 1..10 (channel 0 isn't valid), but the physical knob's first notch is still the
 ## visual "zero" position, so switch_position=1 must render as ONE STEP from rest, not two.
@@ -118,8 +129,12 @@ func _on_train_id_changed() -> void:
 func _update_state() -> void:
     if state_property and _train_id:
         switch_position = int(_vehicle_state_value(state_property, switch_position))
-    _target_mesh_position = (switch_position - value_offset) * mesh_position
-    _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
+    _update_mesh_target()
+
+
+func _update_mesh_target() -> void:
+    _target_mesh_position = mesh_position_offset + (switch_position - value_offset) * mesh_position
+    _target_mesh_rotation = mesh_rotation_offset + (switch_position - value_offset) * mesh_rotation
 
 func _on_command_received(train_id:String, p_command:String, p_p1:Variant, _p_p2:Variant) -> void:
     if not train_id == _train_id:
@@ -170,8 +185,7 @@ func _process_tool(delta):
     _t += delta
     if _t > 0.05:
         _t = 0.0
-        _target_mesh_position = (switch_position - value_offset) * mesh_position
-        _target_mesh_rotation = (switch_position - value_offset) * mesh_rotation
+        _update_mesh_target()
 
     if _setup_phase and mesh_path and not _mesh:
         _dirty = true

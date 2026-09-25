@@ -5,15 +5,43 @@ signal pushed_changed()
 signal button_pushed()
 
 enum ControllerMode { OnOff, On, Off }
+## What kind of switch this is, as the MMD's `type:` says - the original's TGaugeType
+## (Gauge.h:24), bit for bit: a TOGGLE stays where it is put, a PUSH springs back, DELAYED acts on
+## release. Set by the MMD factory (Gauge.cpp:243). Data about the switch, not logic: the cabin
+## behaviour that owns the control branches on it, as TTrain's handlers branch on ggX.type().
+enum ButtonType {
+    TOGGLE = 1,
+    PUSH = 2,
+    PUSH_TOGGLE = 3,
+    DELAYED = 4,
+    PUSH_DELAYED = 6,
+    PUSH_TOGGLE_DELAYED = 7,
+}
 
 @export var pushed:bool = false:
     set(x):
         if not x == pushed:
             pushed = x
-            _update_mesh_target()
+            value = 1.0 if pushed else value_rest
             emit_signal("pushed_changed")
 
+## The pose shown, as TGauge's value: value * scale + offset (Gauge.cpp:456). It follows `pushed`
+## (1 pushed, value_rest released) unless the cabin logic sets one of its own - an impulse lever
+## doing two things is pushed up to 1 or down to 0 (Train.cpp:3773, 3815).
+@export var value:float = 0.0:
+    set(x):
+        value = x
+        _update_mesh_target()
+## Where the control rests released: 0, or 0.5 for an impulse lever with a neutral position
+## midway (battery_sw, main_sw, pantselected_sw - Train.cpp:11342, 11348, 3455)
+@export var value_rest:float = 0.0:
+    set(x):
+        value_rest = x
+        if not pushed:
+            value = value_rest
+
 @export var monostable:bool = false
+@export var button_type:ButtonType = ButtonType.TOGGLE
 @export_node_path("MeshInstance3D") var mesh_path:NodePath = "":
     set(x):
         mesh_path = x
@@ -101,8 +129,8 @@ func _input(event):
                 pushed = not pushed
 
 func _update_mesh_target() -> void:
-    _target_mesh_position = mesh_position_offset + (mesh_position if pushed else Vector3.ZERO)
-    _target_mesh_rotation = mesh_rotation_offset + (mesh_rotation if pushed else Vector3.ZERO)
+    _target_mesh_position = mesh_position_offset + mesh_position * value
+    _target_mesh_rotation = mesh_rotation_offset + mesh_rotation * value
 
 func _process_dirty(delta):
     if not _mesh and mesh_path:
@@ -136,8 +164,14 @@ func _process_tool(delta):
         _mesh.transform.basis = new_basis
         _mesh.position = _mesh_original_position + _current_position
 
+## A flag from the cabin logic presses or releases the control; a number is the pose itself
+## (0, value_rest or 1), shown as it is.
 func _apply_control_value(p_value:Variant) -> void:
-    pushed = bool(p_value)
+    if p_value is bool:
+        pushed = p_value
+        return
+    pushed = not is_equal_approx(float(p_value), value_rest)
+    value = float(p_value)
 
 func _play_sound():
     _sound.stream = sound_on if pushed else sound_off

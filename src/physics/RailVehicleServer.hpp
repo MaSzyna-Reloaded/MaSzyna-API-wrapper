@@ -62,6 +62,8 @@ namespace godot {
             static constexpr double DIAGNOSTICS_MAX_ACCELERATION = 3.0;
             /* Movement below this is not worth walking the route for (m) */
             static constexpr double MOVEMENT_EPSILON = 0.0001;
+            /* How far a Radio-Stop carries (m) - basic_region::RadioStop, scene.cpp:1271 */
+            static constexpr double RADIO_STOP_RANGE = 2000.0;
             /* How far ahead and behind the transform samples the curve to find its heading (m) */
             static constexpr double HEADING_SAMPLE_DISTANCE = 0.1;
             /* Beyond this the track is straight as far as the running shape is concerned (m) */
@@ -170,6 +172,9 @@ namespace godot {
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */
             TypedArray<RID> vehicle_get_coupled(
                     const RID &p_vehicle, int p_end, VehicleController::CouplingElement p_element) const;
+            /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
+             * itself included (basic_region::RadioStop, scene.cpp:1269) */
+            void vehicle_radio_stop(const RID &p_vehicle);
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;

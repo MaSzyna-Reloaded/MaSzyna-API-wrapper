@@ -36,6 +36,9 @@ namespace godot {
             void initialize_mover_state();
             void _integrate(double p_delta, Integration p_integration);
             void _update_tachometer(double p_delta);
+            /* TTrain::m_distancecounter (Train.h:904) - metres since activation, -1 while off */
+            double distance_counter = DISTANCE_COUNTER_OFF;
+            static constexpr double DISTANCE_COUNTER_OFF = -1.0;
             int _resolve_coupler_end(const Variant &p_where) const;
             void _consume_coupler_sounds();
 
@@ -55,8 +58,6 @@ namespace godot {
             bool get_cabin_controleable() const override;
             int get_cabin_occupied() const override;
             bool get_battery_enabled() const override;
-            bool get_radio_enabled() const override;
-            bool get_radio_powered() const override;
             double get_power24_voltage() const override;
             bool get_power24_available() const override;
             bool get_power110_available() const override;
@@ -90,7 +91,8 @@ namespace godot {
             void second_controller_decrease(int p_step = 1) const override;
             void direction_increase() const override;
             void direction_decrease() const override;
-            void radio(bool p_enabled) override;
+            void distance_counter_activate(bool p_pressed) override;
+            double get_distance_counter() const override;
 
             bool is_simulation_ready() const override;
             void release() override;

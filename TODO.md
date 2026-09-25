@@ -165,6 +165,47 @@ moves to C++:
 
 ## Cabins
 
+### Controls whose original handler branches on the kind of switch
+
+The MMD factory gives every widget its `gauge_type`, and the catalog entries with
+`shape_from_gauge_type` are ported with their `type()` branches (battery_sw, cabactivation_sw,
+fuelpump_sw, oilpump_sw, trainheating_sw, pantalloff_sw, main_sw, pantselected_sw,
+pantselectedoff_sw, universal0..9). Not in the cab at all yet, so nothing to branch - each needs a
+catalog entry and, where missing, a vehicle command: `compartmentlights_sw` (Train.cpp:
+OnCommand_compartmentlights*), `waterpump_sw`, `motorblowersfront_sw`/`rear_sw`/`alloff_sw`,
+`epbrake_bt` (ggEPFuseButton, Train.cpp:2350), `doorrightpermit_sw` (Train.cpp:7263),
+`dooralloff_sw` (Train.cpp:7657, push_delayed), `compressorlist_sw`, `autosandallow_sw`.
+
+### E186 controls - what is still simplified
+
+* `pantselect_sw` / `PantsPreset` (choosing which pantographs the master valve raises,
+  Train.cpp:3529 change_pantograph_selection, update_pantograph_valves) is not ported.
+* `MoverElectricEngineBackend::pantograph()` still opens the master valve itself when a pantograph
+  is raised (added in 1c0c044 when no cab could reach the valve). The original opens it only from
+  pantselected_sw / pantvalves_sw, so with it a pantograph rises from its own key alone. Remove it
+  once every cab has a way to the master valve (pantvalves_sw is not in the catalog either).
+* Light presets: `SetLights` is run on a preset change only - the original also runs it on cab
+  (de)activation, battery and direction changes (Train.cpp:2924-3137). The model's lamp inventory
+  (iInventory) is not known, so a rear end that could show red markers or plates shows the markers
+  (DynObj.cpp:7367).
+* `headlights_dimmed` is state only - nothing renders a headlight beam to dim.
+* Distance counter: the double-press start (FIZ `DCMB`/`DCDPP`, not in the vendored Mover), the
+  switch-off after the train's length and its sound (Train.cpp:10153) are not ported.
+* The radio volume is state only - the wrapper plays no radio messages.
+
+### Gauge lamps (`<name>_on`)
+
+Only the reverser buttons have their `state_light` so far. Train.cpp:11995-12040 binds a flag to
+about forty more gauges (speed control buttons, door permits, door step, ...), each needing a
+state key and a catalog `state_light`. The lamps also light without low voltage - TGauge gates
+them on it (Gauge.cpp:379).
+
+### DebugWindow
+
+Requested: basic gauges into General, the rest split into sections that match the components
+(the spring brake and its controls in one place), an Engine section showing the engine type with
+its switches and debug controls completed, a Lights section, and a font a few px smaller.
+
 ### Python integration
 
 `PythonScreenServer` runs the original's Python 2 screen scripts, `CabinPythonScreen` draws them on
@@ -280,6 +321,9 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Open cab window (`Global.CabWindowOpen`): the original plays the consist's outer noise and stops
   the cab running noise (`DynObj.cpp:4638`, `Train.cpp:8274`); no cab window state yet.
 * `pitchvariation:` (default 0.975-1.025, `sound.cpp:375`) is parsed, never applied.
+* `pantographup:`/`pantographdown:` play at the bank's position for both pantographs; the original
+  places them at the pantograph that moved (`DynObj.cpp:3881-3934`, `4007-4036`). The E186 bank
+  was not dumped after adding them, nor after `converter:`/`small-compressor:` were wired.
 * `brake_release_hiss` (`unbrake`) is the one pneumatic event the brake factory does not build - it
   goes through `TrainSoundSystem._update_triggers()` without `gain` or the `listener_inside`
   correction, so it is louder in the cab than the other hisses.

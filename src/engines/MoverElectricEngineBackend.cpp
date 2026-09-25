@@ -3,8 +3,21 @@
 #include "../mover/MoverBackend.hpp"
 #include "../mover/MoverTypes.hpp"
 #include "../core/VehicleController.hpp"
+#include <unordered_map>
 
 namespace godot {
+    namespace {
+        const std::unordered_map<VehicleElectricEngine::ValveOperation, Maszyna::operation_t> VALVE_OPERATIONS = {
+                {VehicleElectricEngine::VALVE_OPERATION_NONE, Maszyna::operation_t::none},
+                {VehicleElectricEngine::VALVE_OPERATION_ENABLE, Maszyna::operation_t::enable},
+                {VehicleElectricEngine::VALVE_OPERATION_DISABLE, Maszyna::operation_t::disable},
+                {VehicleElectricEngine::VALVE_OPERATION_ENABLE_ON, Maszyna::operation_t::enable_on},
+                {VehicleElectricEngine::VALVE_OPERATION_ENABLE_OFF, Maszyna::operation_t::enable_off},
+                {VehicleElectricEngine::VALVE_OPERATION_DISABLE_ON, Maszyna::operation_t::disable_on},
+                {VehicleElectricEngine::VALVE_OPERATION_DISABLE_OFF, Maszyna::operation_t::disable_off},
+        };
+    } // namespace
+
     bool MoverElectricEngineBackend::get_converter_enabled(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->ConverterFlag : false;
@@ -75,6 +88,11 @@ namespace godot {
                 return p_mover != nullptr ? !p_mover->bPantKurek3 : false;
     }
 
+    bool MoverElectricEngineBackend::get_collector_pantograph_compressor_enabled(const VehicleElectricEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+                return p_mover != nullptr ? p_mover->PantCompFlag : false;
+    }
+
     bool MoverElectricEngineBackend::get_collector_overvoltage_relay(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->EnginePowerSource.CollectorParameters.OVP : false;
@@ -88,6 +106,11 @@ namespace godot {
     bool MoverElectricEngineBackend::get_collector_valve_active(const VehicleElectricEngine *p_engine) const {
         TMoverParameters *p_mover = owner.get_mover();
                 return p_mover != nullptr ? p_mover->PantsValve.is_active : false;
+    }
+
+    bool MoverElectricEngineBackend::get_collector_valve_enabled(const VehicleElectricEngine *p_engine) const {
+        TMoverParameters *p_mover = owner.get_mover();
+        return p_mover != nullptr ? p_mover->PantsValve.is_enabled : false;
     }
 
     bool MoverElectricEngineBackend::get_collector_pantographs_dropped(const VehicleElectricEngine *p_engine) const {
@@ -265,6 +288,14 @@ namespace godot {
         p_mover->ConverterOverloadRelayOffWhenMainIsOff = p_engine->get_cntrl_converter_overload_relay_off_when_main_is_off();
         p_mover->PantographCompressorStart = mover_start_mode(p_engine->get_cntrl_pantograph_compressor_start_mode());
         p_mover->PantAutoValve = p_engine->get_cntrl_pantograph_auto_valve();
+        // LoadFIZ_Cntrl (Mover.cpp:10927-10946) - the master valve and each pantograph's own
+        p_mover->PantsValve.start_type = mover_start_mode(p_engine->get_cntrl_pantographs_valve_start_mode());
+        p_mover->PantsValve.spring = p_engine->get_cntrl_pantographs_valve_spring();
+        for (auto &pantograph: p_mover->Pantographs) {
+            pantograph.valve.start_type = mover_start_mode(p_engine->get_cntrl_pantograph_valve_start_mode());
+            pantograph.valve.spring = p_engine->get_cntrl_pantograph_valve_spring();
+            pantograph.valve.solenoid = p_engine->get_cntrl_pantograph_valve_solenoid();
+        }
         p_mover->MainsStart = mover_start_mode(p_engine->get_cntrl_main_switch_start_mode());
     }
 
@@ -295,6 +326,15 @@ namespace godot {
         mover->OperatePantographsValve(p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
     }
 
+    // Train.cpp:3456-3510 OnCommand_pantographraiseselected/lowerselected - the selected
+    // pantographs' master valve
+    void MoverElectricEngineBackend::pantographs_valve_operate(
+            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::ValveOperation p_operation) const {
+        TMoverParameters *mover = owner.get_mover();
+        ASSERT_MOVER(mover);
+        mover->OperatePantographsValve(VALVE_OPERATIONS.at(p_operation));
+    }
+
     // Train.cpp:3336 OnCommand_pantographlowerall
     void MoverElectricEngineBackend::pantographs_drop_all(const VehicleElectricEngine *p_engine, const bool p_enabled) const {
         TMoverParameters *mover = owner.get_mover();
@@ -323,6 +363,23 @@ namespace godot {
         mover->bPantKurek3 = !p_to_compressor;
     }
 
+    bool MoverElectricEngineBackend::get_collector_pantograph_valve_enabled(
+            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector) const {
+        const TMoverParameters *mover = owner.get_mover();
+        const Maszyna::end end = p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
+        return mover != nullptr ? mover->Pantographs[end].valve.is_enabled : false;
+    }
+
+    // Train.cpp:3218-3300 OnCommand_pantographraisefront/lowerfront and their rear twins
+    void MoverElectricEngineBackend::pantograph_valve_operate(
+            const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
+            const VehicleElectricEngine::ValveOperation p_operation) const {
+        TMoverParameters *mover = owner.get_mover();
+        ASSERT_MOVER(mover);
+        const Maszyna::end end = p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST ? Maszyna::end::front : Maszyna::end::rear;
+        mover->OperatePantographValve(end, VALVE_OPERATIONS.at(p_operation));
+    }
+
     void MoverElectricEngineBackend::pantograph(
             const VehicleElectricEngine *p_engine, const VehicleElectricEngine::PantographSelector p_selector,
             const bool p_enabled) const {
@@ -330,21 +387,6 @@ namespace godot {
         ASSERT_MOVER(mover);
         const Maszyna::end end = (p_selector == VehicleElectricEngine::PANTOGRAPH_FIRST) ? Maszyna::end::front : Maszyna::end::rear;
         mover->OperatePantographValve(end, p_enabled ? Maszyna::operation_t::enable : Maszyna::operation_t::disable);
-        // The mover also gates every pantograph on a separate master air valve (PantsValve -
-        // PantographsCheck(), Mover.cpp) that the original engine opens from its own
-        // "raise selected pantograph" key command (Train.cpp's
-        // OnCommand_pantographraiseselected calls OperatePantographsValve itself) for vehicles -
-        // like every one wired through this wrapper's cabin today - that have no separate
-        // master-valve switch of their own ("pantvalves_sw:"/ggPantValvesButton in Train.cpp is
-        // genuinely absent from this vehicle's cabin, and nothing here has a keybind path
-        // either). Without this, no pantograph could ever be raised through the cabin, on any
-        // vehicle. Only opened here, never closed: PantographsCheck() ANDs it with each
-        // pantograph's own individual valve, so leaving it open doesn't keep a lowered
-        // pantograph powered - closing it here on every lower would also drop any OTHER,
-        // still-raised pantograph sharing the same master valve on a two-pantograph vehicle.
-        if (p_enabled) {
-            mover->OperatePantographsValve(Maszyna::operation_t::enable);
-        }
     }
 
     void MoverElectricEngineBackend::set_pantograph_wire_voltage(

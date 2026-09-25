@@ -21,6 +21,8 @@ namespace godot {
         public:
             /* Live state, read straight from the backend - nothing is stored. */
             virtual bool get_locked() const = 0;
+            /* The selected door permit preset (Doors.permit_preset), 0-based */
+            virtual int get_permit_preset() const = 0;
             virtual bool get_lock_enabled() const = 0;
             virtual bool get_step_enabled() const = 0;
             virtual int get_open_control() const = 0;

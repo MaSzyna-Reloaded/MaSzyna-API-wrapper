@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<class name="VehicleController" inherits="Node" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+<class name="VehicleController" inherits="Object" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
 	<brief_description>
 		Base train controller controlling all train systems
 	</brief_description>
@@ -12,10 +12,21 @@
 	<tutorials>
 	</tutorials>
 	<methods>
+		<method name="add_component">
+			<return type="void" />
+			<param index="0" name="component" type="VehicleComponent" />
+			<description>
+			</description>
+		</method>
 		<method name="apply_config" experimental="true">
 			<return type="void" />
 			<description>
 				Writes the vehicle's configuration into its simulation (should not be called directly)
+			</description>
+		</method>
+		<method name="apply_configuration">
+			<return type="void" />
+			<description>
 			</description>
 		</method>
 		<method name="battery" qualifiers="const">
@@ -111,8 +122,36 @@
 				Decrease direction by one step
 			</description>
 		</method>
+		<method name="distance_counter_activate">
+			<return type="void" />
+			<param index="0" name="pressed" type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="emit_config_changed">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="emit_position_changed_if_needed">
 			<return type="void" />
+			<description>
+			</description>
+		</method>
+		<method name="find_generic_components" qualifiers="const">
+			<return type="VehicleComponent[]" />
+			<param index="0" name="tag" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="get_command_serial" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_component" qualifiers="const">
+			<return type="VehicleComponent" />
+			<param index="0" name="type" type="int" enum="VehicleComponentType.Type" />
 			<description>
 			</description>
 		</method>
@@ -128,12 +167,32 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_direction" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_mass_total" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_occupied_cab" qualifiers="const">
+			<return type="int" />
+			<description>
+			</description>
+		</method>
 		<method name="get_rid" qualifiers="const">
 			<return type="RID" />
 			<description>
 			</description>
 		</method>
 		<method name="get_speed" qualifiers="const">
+			<return type="float" />
+			<description>
+			</description>
+		</method>
+		<method name="get_total_distance" qualifiers="const">
 			<return type="float" />
 			<description>
 			</description>
@@ -153,13 +212,30 @@
 			<description>
 			</description>
 		</method>
+		<method name="initialize">
+			<return type="void" />
+			<description>
+			</description>
+		</method>
 		<method name="is_coupled" qualifiers="const">
 			<return type="bool" />
 			<param index="0" name="end" type="int" />
 			<description>
 			</description>
 		</method>
+		<method name="is_coupled_by" qualifiers="const">
+			<return type="bool" />
+			<param index="0" name="end" type="int" />
+			<param index="1" name="element" type="int" enum="VehicleController.CouplingElement" />
+			<description>
+			</description>
+		</method>
 		<method name="is_physics_active" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="is_simulation_ready" qualifiers="const">
 			<return type="bool" />
 			<description>
 			</description>
@@ -178,36 +254,15 @@
 				Increase main controller position
 			</description>
 		</method>
-		<method name="process_movement">
-			<return type="float" />
+		<method name="process_components">
+			<return type="void" />
 			<param index="0" name="delta" type="float" />
 			<description>
 			</description>
 		</method>
-		<method name="radio">
-			<return type="void" />
-			<param index="0" name="enabled" type="bool" />
-			<description>
-				Turn on/off the radio
-			</description>
-		</method>
-		<method name="radio_channel_decrease">
-			<return type="void" />
-			<param index="0" name="step" type="int" default="1" />
-			<description>
-				Decrease radio channel
-			</description>
-		</method>
-		<method name="radio_channel_increase">
-			<return type="void" />
-			<param index="0" name="step" type="int" default="1" />
-			<description>
-				Increase radio channel
-			</description>
-		</method>
-		<method name="radio_channel_set">
-			<return type="void" />
-			<param index="0" name="channel" type="int" />
+		<method name="process_movement">
+			<return type="float" />
+			<param index="0" name="delta" type="float" />
 			<description>
 			</description>
 		</method>
@@ -263,12 +318,6 @@
 				This is a shortcut for [method TrainSystem.unregister_command].
 			</description>
 		</method>
-		<method name="update_config">
-			<return type="void" />
-			<param index="0" name="_unnamed_arg0" type="Dictionary" />
-			<description>
-			</description>
-		</method>
 		<method name="update_location">
 			<return type="void" />
 			<description>
@@ -291,15 +340,22 @@
 		</method>
 	</methods>
 	<members>
+		<member name="battery_enabled" type="bool" setter="" getter="get_battery_enabled" default="false">
+		</member>
 		<member name="battery_voltage" type="float" setter="set_battery_voltage" getter="get_battery_voltage" default="0.0">
 			[code]Light:LMaxVoltage[/code]
 		</member>
-		<member name="cabin_number" type="int" setter="set_cabin_number" getter="get_cabin_number" default="0">
-			Cab occupied at spawn: [code]1[/code] cab 1, [code]-1[/code] cab 2, [code]0[/code] none (falls back to cab 1). Set from the scenery driver type ([code]headdriver[/code]/[code]reardriver[/code]).
+		<member name="cabin" type="int" setter="" getter="get_cabin" default="0">
+		</member>
+		<member name="cabin_controleable" type="bool" setter="" getter="get_cabin_controleable" default="false">
+		</member>
+		<member name="cabin_occupied" type="int" setter="" getter="get_cabin_occupied" default="0">
 		</member>
 		<member name="category" type="int" setter="set_category" getter="get_category" enum="VehicleController.Category" default="1">
 			[code]Param.Category[/code]
 			The vehicle's category (train, road, ship, airplane).
+		</member>
+		<member name="circuit_rlist_size" type="int" setter="" getter="get_circuit_rlist_size" default="0">
 		</member>
 		<member name="cntrl_automatic_cab_activation" type="bool" setter="set_cntrl_automatic_cab_activation" getter="get_cntrl_automatic_cab_activation" default="true">
 			[code]Cntrl.AutomaticCabActivation[/code]
@@ -327,6 +383,20 @@
 			Returns a dictionary with all config properties of the train.
 			This is a shortcut for iterating over [method TrainSystem.get_supported_config_properties] to read each from [method TrainSystem.get_config_property].
 		</member>
+		<member name="controller_joint_position" type="int" setter="" getter="get_controller_joint_position" default="0">
+		</member>
+		<member name="controller_main_actual_position" type="int" setter="" getter="get_controller_main_actual_position" default="0">
+		</member>
+		<member name="controller_main_position" type="int" setter="" getter="get_controller_main_position" default="0">
+		</member>
+		<member name="controller_second_position" type="int" setter="" getter="get_controller_second_position" default="0">
+		</member>
+		<member name="current0" type="float" setter="" getter="get_current0" default="0.0">
+		</member>
+		<member name="current1" type="float" setter="" getter="get_current1" default="0.0">
+		</member>
+		<member name="current2" type="float" setter="" getter="get_current2" default="0.0">
+		</member>
 		<member name="dimensions_drag_coefficient" type="float" setter="set_dimensions_drag_coefficient" getter="get_dimensions_drag_coefficient" default="0.0">
 			[code]Dimensions:Cx[/code]
 			Aerodynamic drag coefficient.
@@ -347,6 +417,12 @@
 			[code]Dimensions:W[/code]
 			Vehicle width, in meters.
 		</member>
+		<member name="direction_absolute" type="int" setter="" getter="get_direction_absolute" default="0">
+		</member>
+		<member name="distance_counter" type="float" setter="" getter="get_distance_counter" default="-1.0">
+		</member>
+		<member name="driver_type" type="int" setter="set_driver_type" getter="get_driver_type" enum="VehicleController.DriverType" default="0">
+		</member>
 		<member name="heating_power" type="float" setter="set_heating_power" getter="get_heating_power" default="0.0">
 			[code]Param.HeatingP[/code]
 			Power drawn for heating, in kW.
@@ -357,6 +433,12 @@
 			[code]Param.LightP[/code]
 			Power drawn for lighting, in kW.
 		</member>
+		<member name="live_battery_voltage" type="float" setter="" getter="get_live_battery_voltage" default="0.0">
+		</member>
+		<member name="load_amount" type="float" setter="set_load_amount" getter="get_load_amount" default="0.0">
+		</member>
+		<member name="load_name" type="String" setter="set_load_name" getter="get_load_name" default="&quot;&quot;">
+		</member>
 		<member name="mass" type="float" setter="set_mass" getter="get_mass" default="0.0">
 			[code]Param.M[/code] Mass of the train
 		</member>
@@ -366,15 +448,21 @@
 		<member name="power" type="float" setter="set_power" getter="get_power" default="0.0">
 			[code]Param.PWR[/code]
 		</member>
-		<member name="radio_channel_max" type="int" setter="set_radio_channel_max" getter="get_radio_channel_max" default="10">
-			Maximum radio channel number
+		<member name="power24_available" type="bool" setter="" getter="get_power24_available" default="false">
 		</member>
-		<member name="radio_channel_min" type="int" setter="set_radio_channel_min" getter="get_radio_channel_min" default="1">
-			Minimum radio channel number
+		<member name="power24_voltage" type="float" setter="" getter="get_power24_voltage" default="0.0">
+		</member>
+		<member name="power110_available" type="bool" setter="" getter="get_power110_available" default="false">
 		</member>
 		<member name="reduced_mass" type="float" setter="set_reduced_mass" getter="get_reduced_mass" default="0.0">
 			[code]Param.Mred[/code]
 			Reduced (rotating) mass, added to [member mass] for braking calculations.
+		</member>
+		<member name="relay_ground" type="bool" setter="" getter="get_relay_ground" default="false">
+		</member>
+		<member name="relay_novolt" type="bool" setter="" getter="get_relay_novolt" default="false">
+		</member>
+		<member name="relay_overvoltage" type="bool" setter="" getter="get_relay_overvoltage" default="false">
 		</member>
 		<member name="sand_capacity" type="float" setter="set_sand_capacity" getter="get_sand_capacity" default="0.0">
 			[code]Param.SandCap[/code]
@@ -382,6 +470,14 @@
 		</member>
 		<member name="state" type="Dictionary" setter="" getter="get_state" default="{}">
 			Actual state of the train
+		</member>
+		<member name="tachometer_clock_speed" type="float" setter="" getter="get_tachometer_clock_speed" default="0.0">
+		</member>
+		<member name="tachometer_speed" type="float" setter="" getter="get_tachometer_speed" default="0.0">
+		</member>
+		<member name="tachometer_speed_jump" type="float" setter="" getter="get_tachometer_speed_jump" default="0.0">
+		</member>
+		<member name="train_damage" type="int" setter="" getter="get_train_damage" default="0">
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
 			Unique identifier of the train. See [method TrainSystem.register_train].
@@ -430,16 +526,6 @@
 			<description>
 			</description>
 		</signal>
-		<signal name="simulation_configured">
-			<description>
-				The simulation now carries the vehicle's configuration - its own and every component's.
-			</description>
-		</signal>
-		<signal name="simulation_initialized">
-			<description>
-				The simulation behind the vehicle exists and carries its configuration.
-			</description>
-		</signal>
 		<signal name="position_changed">
 			<param index="0" name="position" type="Vector3" />
 			<description>
@@ -451,25 +537,29 @@
 				Train power state changed
 			</description>
 		</signal>
-		<signal name="radio_channel_changed">
-			<param index="0" name="channel" type="int" />
-			<description>
-				Emitted when selected radio channel changes
-			</description>
-		</signal>
-		<signal name="radio_toggled">
-			<param index="0" name="is_enabled" type="bool" />
-			<description>
-				Train radio switched on or off
-			</description>
-		</signal>
 		<signal name="roof_light_changed">
 			<param index="0" name="is_enabled" type="bool" />
 			<description>
 			</description>
 		</signal>
+		<signal name="simulation_configured">
+			<description>
+				The simulation now carries the vehicle's configuration - its own and every component's.
+			</description>
+		</signal>
+		<signal name="simulation_initialized">
+			<description>
+				The simulation behind the vehicle exists and carries its configuration.
+			</description>
+		</signal>
 	</signals>
 	<constants>
+		<constant name="DRIVER_NOBODY" value="0" enum="DriverType">
+		</constant>
+		<constant name="DRIVER_HEAD" value="1" enum="DriverType">
+		</constant>
+		<constant name="DRIVER_REAR" value="2" enum="DriverType">
+		</constant>
 		<constant name="POWER_SOURCE_NOT_DEFINED" value="0" enum="TrainPowerSource">
 			Indicates that the power source is not defined.
 		</constant>
@@ -523,6 +613,8 @@
 		<constant name="COUPLING_ELEMENT_GANGWAY" value="4" enum="CouplingElement">
 		</constant>
 		<constant name="COUPLING_ELEMENT_HEATING" value="5" enum="CouplingElement">
+		</constant>
+		<constant name="COUPLING_ELEMENT_PERMANENT" value="6" enum="CouplingElement">
 		</constant>
 		<constant name="CATEGORY_TRAIN" value="1" enum="Category">
 		</constant>

@@ -139,6 +139,18 @@ static func parse(abs_mmd_path:String, cab_number:int, random_choices:Dictionary
             "pyscreenupdatetime:":
                 python_screen_update_time_msec = int(tokens[i])
                 i += 1
+            "{":
+                # DATA QUIRK: a block with no label in front of it - real data has a label that
+                # lost its colon, `radiocall3_sw { radio_3 rot 0 0 0 soundinc: ... }`
+                # (dynamic/pkp/e186_v2/base.mmd.inc:210). The original only reacts to labels it
+                # knows and walks over every other token (TTrain::InitializeCab), so it passes
+                # over the whole block. Read token by token here, its `soundinc:` looked like a
+                # label and every block after it was taken apart from the wrong end - the rest of
+                # the E186 cab (radiostop_sw, universal*, battery_sw, ...) never got built. The
+                # block is skipped whole instead.
+                while i < end_index and not tokens[i] == "}":
+                    i += 1
+                i += 1
             _:
                 if not label.ends_with(":"):
                     continue # stray value token, not a label - most likely a leftover from a
@@ -405,6 +417,19 @@ static func build_into(
         # generated_root.
         _wire_mesh_path(widget, descriptor, submodel_index, entry["mesh_path_field"], definition.cab_number, diagnostics)
         widget.set_train_id(train_id)
+        # A gauge's own lamp: TGauge takes "<name>_on" as the lit state of the control, shown
+        # instead of the control while the flag its entry names is set (Gauge.cpp:204-210, 386-392)
+        var on_matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower() + "_on", [])
+        if entry.has("state_light") and on_matches:
+            var lamp := CabinIndicator3D.new()
+            lamp.name = "%s_%s_on" % [descriptor.label, descriptor.submodel_name]
+            for field_name:String in entry["state_light"]:
+                lamp.set(field_name, entry["state_light"][field_name])
+            generated_root.add_child(lamp)
+            lamp.on_target_path = lamp.get_path_to(on_matches[0])
+            if widget.get("mesh_path"):
+                lamp.off_target_path = lamp.get_path_to(widget.get_node(widget.get("mesh_path")))
+            lamp.set_train_id(train_id)
 
     for descriptor:MmdPythonScreenDescriptor in definition.python_screens:
         if not FileAccess.file_exists(descriptor.script_path + ".py"):
@@ -743,6 +768,21 @@ static func _index_submodels(node:Node, index:Dictionary) -> void:
         _index_submodels(child, index)
 
 
+## MMD `type:` -> the control's gauge type, as TGauge::Load reads it (Gauge.cpp:243); no `type:`
+## is a toggle (Gauge.h:89)
+## An instrument's submodel of "none": a control with no model of its own
+const NO_SUBMODEL:String = "none"
+
+const BUTTON_TYPES:Dictionary[String, CabinButton.ButtonType] = {
+    "push": CabinButton.ButtonType.PUSH,
+    "impulse": CabinButton.ButtonType.PUSH,
+    "return": CabinButton.ButtonType.PUSH,
+    "delayed": CabinButton.ButtonType.PUSH_DELAYED,
+    "pushtoggle": CabinButton.ButtonType.PUSH_TOGGLE,
+    "toggle": CabinButton.ButtonType.TOGGLE,
+}
+
+
 static func _build_widget(
         descriptor:MmdInstrumentDescriptor, train_id:String,
         cab_number:int, diagnostics:Array[Dictionary]) -> Node:
@@ -754,6 +794,27 @@ static func _build_widget(
 
     for field_name:String in entry["fixed_fields"]:
         widget.set(field_name, entry["fixed_fields"][field_name])
+
+    if widget is CabinButton:
+        var button_type:CabinButton.ButtonType = BUTTON_TYPES.get(
+                descriptor.button_type, CabinButton.ButtonType.TOGGLE)
+        widget.button_type = button_type
+        # A control whose original handler branches on its type (the catalog entry says which
+        # line) is shaped by it: a push springs back, and shows no state while at rest - the
+        # original returns it to neutral on release rather than to the vehicle's state
+        # (Train.cpp:2929, 11342). Every other control keeps the fixed shape of its entry.
+        if entry.get("shape_from_button_type", false):
+            var push:bool = bool(button_type & CabinButton.ButtonType.PUSH)
+            widget.monostable = push
+            if push:
+                widget.state_property = ""
+                widget.value_rest = entry.get("push_value_rest", 0.0)
+
+    # A switch whose kind is the vehicle's rather than the gauge's: the pantograph switches spring
+    # back when the vehicle's pantograph switches are impulse ones (PantSwitchType, Train.cpp:3170)
+    var monostable_property:String = entry.get("monostable_from_config", "")
+    if monostable_property and widget is CabinButton:
+        widget.monostable = bool(CabinSystem.vehicle_config(train_id).get(monostable_property, widget.monostable))
 
     var config_max_property:String = entry.get("config_max_property", "")
     if config_max_property:
@@ -924,6 +985,11 @@ static func _apply_animation_shape(
 static func _wire_mesh_path(
         widget:Node, descriptor:MmdInstrumentDescriptor, submodel_index:Dictionary,
         mesh_path_field:String, cab_number:int, diagnostics:Array[Dictionary]) -> void:
+    # A control declared with no submodel (`pantfrontoff_sw: none`, dynamic/pkp/e186_v2/
+    # base.mmd.inc:187) is still a control of the cab - the original registers it all the same
+    # (Train.cpp:11907, m_controlmapper), and only its presence matters; there is nothing to draw
+    if descriptor.submodel_name.to_lower() == NO_SUBMODEL:
+        return
     # Submodel nodes carry Godot-validated names ("a.swmasz1" -> "a_swmasz1").
     var matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower(), [])
     if matches.size() == 1:

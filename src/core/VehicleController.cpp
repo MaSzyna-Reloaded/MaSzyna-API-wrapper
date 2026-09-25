@@ -16,8 +16,6 @@ namespace godot {
     const char *VehicleController::simulation_initialized_signal = "simulation_initialized";
     const char *VehicleController::power_changed_signal = "power_changed";
     const char *VehicleController::command_received = "command_received";
-    const char *VehicleController::radio_toggled = "radio_toggled";
-    const char *VehicleController::radio_channel_changed = "radio_channel_changed";
     const char *VehicleController::roof_light_changed = "roof_light_changed";
     const char *VehicleController::cabin_occupied_changed = "cabin_occupied_changed";
     const char *VehicleController::config_changed = "config_changed";
@@ -68,12 +66,7 @@ namespace godot {
                 DEFVAL(1));
         ClassDB::bind_method(D_METHOD("direction_increase"), &VehicleController::direction_increase);
         ClassDB::bind_method(D_METHOD("direction_decrease"), &VehicleController::direction_decrease);
-        ClassDB::bind_method(D_METHOD("radio", "enabled"), &VehicleController::radio);
-        ClassDB::bind_method(D_METHOD("radio_channel_set", "channel"), &VehicleController::radio_channel_set);
-        ClassDB::bind_method(
-                D_METHOD("radio_channel_increase", "step"), &VehicleController::radio_channel_increase, DEFVAL(1));
-        ClassDB::bind_method(
-                D_METHOD("radio_channel_decrease", "step"), &VehicleController::radio_channel_decrease, DEFVAL(1));
+        ClassDB::bind_method(D_METHOD("distance_counter_activate", "pressed"), &VehicleController::distance_counter_activate);
         ClassDB::bind_method(D_METHOD("apply_config"), &VehicleController::apply_config);
         ClassDB::bind_method(D_METHOD("initialize"), &VehicleController::initialize);
         ClassDB::bind_method(D_METHOD("process_components", "delta"), &VehicleController::process_components);
@@ -127,8 +120,6 @@ namespace godot {
         BIND_PROPERTY(VehicleController, Variant::FLOAT, mass);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, power);
         BIND_PROPERTY(VehicleController, Variant::FLOAT, max_velocity);
-        BIND_PROPERTY(VehicleController, Variant::INT, radio_channel_min, "radio_channel");
-        BIND_PROPERTY(VehicleController, Variant::INT, radio_channel_max, "radio_channel");
         /* FIXME: move to TrainPower section? */
         BIND_PROPERTY_W_HINT(VehicleController, Variant::FLOAT, battery_voltage, PROPERTY_HINT_RANGE, "0,500,1");
         BIND_PROPERTY_W_HINT(
@@ -192,8 +183,6 @@ namespace godot {
         ADD_SIGNAL(MethodInfo(simulation_configured_signal));
         ADD_SIGNAL(MethodInfo(simulation_initialized_signal));
         ADD_SIGNAL(MethodInfo(power_changed_signal, PropertyInfo(Variant::BOOL, "is_powered")));
-        ADD_SIGNAL(MethodInfo(radio_toggled, PropertyInfo(Variant::BOOL, "is_enabled")));
-        ADD_SIGNAL(MethodInfo(radio_channel_changed, PropertyInfo(Variant::INT, "channel")));
         ADD_SIGNAL(MethodInfo(roof_light_changed, PropertyInfo(Variant::BOOL, "is_enabled")));
         ADD_SIGNAL(MethodInfo(cabin_occupied_changed, PropertyInfo(Variant::INT, "cabin_occupied")));
         ADD_SIGNAL(MethodInfo(config_changed));
@@ -309,21 +298,11 @@ namespace godot {
                 PropertyInfo(Variant::BOOL, "battery_enabled", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_battery_enabled");
-        ClassDB::bind_method(D_METHOD("get_radio_enabled"), &VehicleController::get_radio_enabled);
+        ClassDB::bind_method(D_METHOD("get_distance_counter"), &VehicleController::get_distance_counter);
         ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "radio_enabled", PROPERTY_HINT_NONE, "",
+                PropertyInfo(Variant::FLOAT, "distance_counter", PROPERTY_HINT_NONE, "",
                              PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_enabled");
-        ClassDB::bind_method(D_METHOD("get_radio_powered"), &VehicleController::get_radio_powered);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::BOOL, "radio_powered", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_powered");
-        ClassDB::bind_method(D_METHOD("get_radio_channel"), &VehicleController::get_radio_channel);
-        ADD_PROPERTY(
-                PropertyInfo(Variant::INT, "radio_channel", PROPERTY_HINT_NONE, "",
-                             PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
-                "", "get_radio_channel");
+                "", "get_distance_counter");
         ClassDB::bind_method(D_METHOD("get_power24_voltage"), &VehicleController::get_power24_voltage);
         ADD_PROPERTY(
                 PropertyInfo(Variant::FLOAT, "power24_voltage", PROPERTY_HINT_NONE, "",
@@ -469,10 +448,7 @@ namespace godot {
         register_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
         register_command("direction_increase", Callable(this, "direction_increase"));
         register_command("direction_decrease", Callable(this, "direction_decrease"));
-        register_command("radio", Callable(this, "radio"));
-        register_command("radio_channel_set", Callable(this, "radio_channel_set"));
-        register_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-        register_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        register_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
         register_command("coupler_connect", Callable(this, "coupler_connect"));
         register_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
     }
@@ -483,7 +459,6 @@ namespace godot {
         _initialize_simulation();
         update_state();
         emit_signal(power_changed_signal, prev_is_powered);
-        emit_signal(radio_channel_changed, prev_radio_channel);
         emit_signal(roof_light_changed, prev_roof_light_enabled);
     }
 
@@ -504,17 +479,6 @@ namespace godot {
         if (prev_is_powered != new_is_powered) {
             prev_is_powered = new_is_powered; // FIXME: I don't like this
             emit_signal(power_changed_signal, prev_is_powered);
-        }
-
-        if (const bool new_radio_enabled = get_radio_enabled() && new_is_powered;
-            prev_radio_enabled != new_radio_enabled) {
-            prev_radio_enabled = new_radio_enabled; // FIXME: I don't like this
-            emit_signal(radio_toggled, new_radio_enabled);
-        }
-
-        if (const int new_radio_channel = radio_channel; prev_radio_channel != new_radio_channel) {
-            prev_radio_channel = new_radio_channel; // FIXME: I don't like this
-            emit_signal(radio_channel_changed, new_radio_channel);
         }
 
         if (const bool new_roof_light_enabled = lighting != nullptr && lighting->get_roof_light_enabled();
@@ -539,9 +503,6 @@ namespace godot {
     }
 
 
-    int VehicleController::get_radio_channel() const {
-        return is_simulation_ready() ? radio_channel : 0;
-    }
 
     void VehicleController::_fill_state_dictionary(Dictionary &p_state) const {
         if (!is_simulation_ready()) {
@@ -561,9 +522,7 @@ namespace godot {
         p_state["cabin_occupied"] = get_cabin_occupied();
         p_state["battery_enabled"] = get_battery_enabled();
         p_state["battery_voltage"] = get_live_battery_voltage();
-        p_state["radio_enabled"] = get_radio_enabled();
-        p_state["radio_powered"] = get_radio_powered();
-        p_state["radio_channel"] = get_radio_channel();
+        p_state["distance_counter"] = get_distance_counter();
         p_state["power24_voltage"] = get_power24_voltage();
         p_state["power24_available"] = get_power24_available();
         p_state["power110_available"] = get_power110_available();
@@ -646,10 +605,7 @@ namespace godot {
         unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
         unregister_command("direction_increase", Callable(this, "direction_increase"));
         unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-        unregister_command("radio", Callable(this, "radio"));
-        unregister_command("radio_channel_set", Callable(this, "radio_channel_set"));
-        unregister_command("radio_channel_increase", Callable(this, "radio_channel_increase"));
-        unregister_command("radio_channel_decrease", Callable(this, "radio_channel_decrease"));
+        unregister_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
         unregister_command("coupler_connect", Callable(this, "coupler_connect"));
         unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
         if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
@@ -765,20 +721,6 @@ namespace godot {
             default:
                 return 0;
         }
-    }
-
-    void VehicleController::radio_channel_increase(const int p_step) {
-        const int step = p_step > 0 ? p_step : 1;
-        radio_channel = Math::clamp(radio_channel + step, radio_channel_min, radio_channel_max);
-    }
-
-    void VehicleController::radio_channel_decrease(const int p_step) {
-        const int step = (p_step != 0) ? p_step : 1;
-        radio_channel = Math::clamp(radio_channel - step, radio_channel_min, radio_channel_max);
-    }
-
-    void VehicleController::radio_channel_set(const int p_channel) {
-        radio_channel = Math::clamp(p_channel, radio_channel_min, radio_channel_max);
     }
 
 } // namespace godot

@@ -57,6 +57,10 @@ anything. Open work belongs in `TODO.md`.
   *(09-20 blotchy ground)*
 * A vehicle that is not driven is not simulated (`CabActive`/`PhysicActivation`). *(09-23 loco
   with nobody in the cab)*
+* A parser of the original's data mirrors its tolerance: skip what is not known, and let every
+  section header close the open table. *(09-25 E186 cab half built)*
+* A workaround in a `Mover*` call is a sign that a FIZ key is not ported yet. Before keeping one,
+  read the key's default in `LoadFIZ_*`. *(09-25 pantographs raised only with the master valve forced)*
 * A `Cntrl.` key belongs to the vehicle, not to one engine type. Check that it reaches the Mover
   for every `EngineType` that uses it. *(09-25 SU46 would not release its train)*
 * Every `OnCommand_*` works without its gauge. A control only in `MmdSemanticCatalog` is dead in a

@@ -1086,6 +1086,8 @@ static func _ensure_built() -> void:
         # The E3D indicator follows the plain Radio flag, matching vehicle/Train.cpp:9160.
         # The separate OmniLight follows radio_powered and copies SM42's hand-authored
         # RadioPowerLed parameters; unlike the indicator mesh, its glow requires supply power.
+        # Its colour is the lamp submodel's diffuse, which tints the greyscale lamp texture
+        # (Model3d.cpp:1918, openglrenderer.cpp:2779).
         "i-radio": {
             "widget_class": CabinSpotLight3D,
             "fixed_fields": {
@@ -1095,9 +1097,9 @@ static func _ensure_built() -> void:
             "mesh_path_field": "",
             "position_at_submodel": true,
             "light_widget_class": CabinOmniLight3D,
+            "light_color_from_submodel": true,
             "light_fixed_fields": {
                 "state_property": "radio_powered",
-                "light_color": Color(0.0, 0.738281, 0.121986, 1.0),
                 "light_energy": 0.007,
                 "light_energy_on": 0.05,
                 "light_energy_off": 0.0,

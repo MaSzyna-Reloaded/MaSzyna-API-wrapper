@@ -370,7 +370,8 @@ static func build_into(
     var model := E3DModelInstance.new()
     model.name = "CabModel"
     model.data_path = data_path
-    model.model_filename = model_relpath
+    # the resource itself rather than its filename, so the indicator lights can read its submodels
+    model.model = E3DModelManager.load_model(data_path, model_relpath)
     model.skins = resolve_skins(data_path, skin)
     # A cabin interior is self-contained (glass, instrument backlight glow, ...) and, unlike
     # mixed-purpose exterior E3D content, alpha-scissor's crisp cutout looks wrong across the
@@ -413,8 +414,8 @@ static func build_into(
             # matched submodel instance, not just the first, unlike every other instrument label
             # (which only ever has one real target mesh).
             _build_indicator_lights(
-                    descriptor, entry, train_id, submodel_index, generated_root, definition.cab_number,
-                    definition.driver_pos, sound_player, sound_events, diagnostics)
+                    descriptor, entry, train_id, submodel_index, model, generated_root,
+                    definition.cab_number, definition.driver_pos, sound_player, sound_events, diagnostics)
             continue
         var widget:Node = _build_widget(descriptor, train_id, definition.cab_number, diagnostics)
         # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
@@ -1079,8 +1080,9 @@ static func _wire_mesh_path(
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
         descriptor:MmdInstrumentDescriptor, entry:Dictionary, train_id:String,
-        submodel_index:Dictionary, generated_root:Node3D, cab_number:int, driver_position:Vector3,
-        sound_player:SfxPlayer3D, sound_events:Array[SfxEvent], diagnostics:Array[Dictionary]) -> void:
+        submodel_index:Dictionary, cab_model:E3DModelInstance, generated_root:Node3D, cab_number:int,
+        driver_position:Vector3, sound_player:SfxPlayer3D, sound_events:Array[SfxEvent],
+        diagnostics:Array[Dictionary]) -> void:
     var base_name:String = descriptor.submodel_name.validate_node_name().to_lower()
     var on_matches:Array = submodel_index.get(base_name + "_on", [])
     var off_matches:Array = submodel_index.get(base_name + "_off", [])
@@ -1127,12 +1129,19 @@ static func _build_indicator_lights(
             var light_points:Array[Vector3] = []
             if entry.get("spread_light_along_submodel", false):
                 light_points = _light_points_along_submodel(submodel)
+            # the lamp's own colour: its diffuse tints the greyscale lamp texture (Model3d.cpp:1918,
+            # openglrenderer.cpp:2779); the node path from the instance is the submodel's path
+            var lamp_submodel:E3DSubModel = (
+                    cab_model.model.get_node_or_null(cab_model.get_path_to(submodel))
+                    if entry.get("light_color_from_submodel", false) else null)
             for j:int in maxi(light_points.size(), 1):
                 var light:Light3D = entry["light_widget_class"].new()
                 light.name = "%s_%s_%d_light%s" % [
                         descriptor.label, descriptor.submodel_name, i, "_%d" % j if j else ""]
                 for field_name:String in entry["light_fixed_fields"]:
                     light.set(field_name, entry["light_fixed_fields"][field_name])
+                if lamp_submodel:
+                    light.light_color = lamp_submodel.diffuse_color
                 light.shadow_reverse_cull_face = ProjectSettings.get_setting("maszyna/lights/reverse_cull_face", true)
                 generated_root.add_child(light)
                 _position_at_submodel_instance(light, submodel)

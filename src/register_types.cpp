@@ -89,6 +89,7 @@
 #include "scenario/MaszynaLegacyMultipleAction.hpp"
 #include "scenario/MaszynaLegacySwitchAction.hpp"
 #include "scenario/MaszynaLegacyTrackVelocityAction.hpp"
+#include "scenario/MaszynaLegacyVehicleCommandAction.hpp"
 #include "scenario/MaszynaLegacyVoltageAction.hpp"
 #include "scenario/ScenarioEventAction.hpp"
 #include "scenario/ScenarioEventCondition.hpp"
@@ -181,6 +182,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaLegacyVoltageAction);
         GDREGISTER_CLASS(MaszynaLegacyTrackVelocityAction);
         GDREGISTER_CLASS(MaszynaLegacyAnimationAction);
+        GDREGISTER_CLASS(MaszynaLegacyVehicleCommandAction);
         GDREGISTER_CLASS(MaszynaLegacyEventCondition);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);

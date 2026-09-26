@@ -26,9 +26,11 @@ func _run(_event:RID, _activator:RID) -> void:
     for player:SfxPlayer3D in players:
         if not is_instance_valid(player):
             continue
-        # exclusive, as the original plays it (sound_flags::exclusive)
-        player.stop()
-        if mode == Mode.PLAY:
-            player.play(PLAY_EVENT)
-        elif mode == Mode.LOOP:
-            player.play(LOOP_EVENT)
+        if mode == Mode.STOP:
+            player.stop()
+            continue
+        # exclusive, as the original plays it: a sound already playing is left as it is
+        # (sound_flags::exclusive, sound_source::play_basic(), sound.cpp:403-421)
+        if player.is_playing(PLAY_EVENT) or player.is_playing(LOOP_EVENT):
+            continue
+        player.play(PLAY_EVENT if mode == Mode.PLAY else LOOP_EVENT)

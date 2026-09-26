@@ -382,6 +382,10 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   `project.godot` override and are not verified by ear at 2.0 (`EXTERIOR_*` are 1.0).
 * The gnd-sfx tick is GDScript on a worker (12 ms/frame for 200 players, headless). If it limits,
   move the runtime to a C++ singleton beside `E3DRenderingServer`.
+* gnd-sfx: `SfxPlaybackRuntime._release_voice()` indexed an emptied `_active_voices` when a
+  scenery `sound` event called `stop()` and `play()` from the main thread while the tick ran
+  (stary_jawor_eszelon probe) - `_update_voice()` checks the index and the array changes before
+  it is used. The sound action no longer stops before playing; the race itself is in gnd-sfx.
 * `SfxGeneratorPlayback.update()` runs on the sfx worker (single producer into the ring buffer);
   revisit if a generator clip ever needs the scene tree.
 
@@ -589,8 +593,13 @@ closes both level crossings). Left:
   on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
   occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
 * **Isolated sections are not yet a semaphore system's sources** (`SemaphoreServer.system_add_source`).
-* **Event types without an action**: `getvalues`/`putvalues` (and the AI's passive scanning,
-  `Driver.cpp:459-640`; `putvalues CabSignal` reaches the player's cab through it), `whois`
+* **`putvalues`/`getvalues`** send the vehicle only `CabSignal` (`security_cabsignal_trigger`) and
+  `Emergency_brake` (`security_radiostop`); the driver's orders (`SetVelocity`, `Wait_for_orders`,
+  ... `TController::PutCommand()`, `Driver.cpp:4468-4906`) and the Mover's other commands (`Load=`,
+  `UnLoad=`, `BrakeDelay`, ... `Mover.cpp:12187-12720`) are dropped. A passive one (a signal command,
+  `Event.cpp:719-751`) runs when its track event fires, where the original's driver acts on it
+  while scanning the track ahead (`Driver.cpp:459-640`, `1396+`).
+* **Event types without an action**: `whois`
   (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
   `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
   `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a `sound` event with a radio channel
@@ -606,6 +615,9 @@ closes both level crossings). Left:
   `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
   train, not the camera), a click on a model firing the launcher of its name (`scene.cpp:33-43`).
   Timed launchers are global here; the original polls non-global ones only near the camera.
+* **Stary Jawor, eszelon** (headless probe, 2026-09-26): both stations run their logic, the
+  shunting signals open (Roztocze Tm18, then Tm19/Tm20 with switches 74-76a once SU46 reaches
+  `n176`), the 10:50 launcher fires; it stops where it waits for the AI's eszelon (below).
 * **No AI trains**: a scenario whose stages wait for a train the AI drives stops there - e.g.
   `stary_jawor_eszelon` waits for the eszelon to reach Roztocze (`n282:event2`,
   `skp/skp_eszelon_events.ctr`). The track events fire for any moving vehicle with a driver, but no
@@ -619,6 +631,9 @@ closes both level crossings). Left:
   `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
 
 ## Tests
+
+* `test_zzz_ep07_main_switch_trip_diagnostic.gd` fails at `9d9bff094` too - the vehicle does not
+  accelerate past 2 m/s across 5 notches (it reads the game directory, see below).
 
 * `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
   at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type

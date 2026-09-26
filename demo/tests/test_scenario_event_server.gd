@@ -189,6 +189,23 @@ func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
     _free_events([near, far, other_call])
 
 
+func test_putvalues_cab_signal_reaches_the_security_system() -> void:
+    var controller:VehicleController = build_vehicle("CabSignalTest", load("res://tests/fixtures/sm42_vehicle.tres"))
+    var vehicle:RID = controller.get_rid()
+    var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+    action.command = "CabSignal"
+    var event:RID = _create_event(action, 0.0)
+    watch_signals(RailVehicleServer)
+
+    ScenarioEventServer.event_queue(event, vehicle)
+    await wait_until(func() -> bool: return not ScenarioEventServer.event_is_queued(event), MAX_WAIT)
+
+    assert_signal_emitted_with_parameters(
+        RailVehicleServer, "vehicle_command_received", [vehicle, "security_cabsignal_trigger", null, null]
+    )
+    _free_events([event])
+
+
 func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
     var clock:float = MaszynaRuntime.time_of_day
     var event:RID = _create_event(RecordingAction.new(), NEVER)

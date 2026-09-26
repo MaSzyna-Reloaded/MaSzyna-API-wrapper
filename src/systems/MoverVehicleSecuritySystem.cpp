@@ -131,6 +131,18 @@ namespace godot {
         }
     }
 
+    void MoverVehicleSecuritySystem::security_cabsignal_trigger() {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->SecuritySystem.set_cabsignal();
+    }
+
+    void MoverVehicleSecuritySystem::security_radiostop(const bool p_enabled) {
+        TMoverParameters *mover = get_mover();
+        ASSERT_MOVER(mover);
+        mover->RadiostopSwitch(p_enabled);
+    }
+
     void MoverVehicleSecuritySystem::security_acknowledge(const bool p_enabled) {
         TMoverParameters *mover = get_mover();
         ASSERT_MOVER(mover);

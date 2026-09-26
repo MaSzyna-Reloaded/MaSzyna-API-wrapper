@@ -9,7 +9,8 @@ class_name MaszynaLegacyEventFactory
 ## every token it is not told to keep, parser.h:71).
 ##
 ## Built: `updatevalues`, `addvalues`, `copyvalues`, `multiple`, `lights`, `switch`, `trackvel`,
-## `voltage`, `animation` (rotate, translate), `sound`; conditions `memcompare`, `memcompareex`,
+## `voltage`, `animation` (rotate, translate), `sound`, `putvalues` and `getvalues` (the commands a
+## vehicle acts on); conditions `memcompare`, `memcompareex`,
 ## `probability`, `trackoccupied`, `trackfree`; a track's `event0/1/2`, `eventall0/1/2` and the
 ## events named `<track>:<slot>` (Track.cpp:970-983); the isolated sections with their own memory and
 ## `<section>:busy/:free/:inc/:dec` events. The other types get an event without an action (TODO.md).
@@ -125,16 +126,19 @@ static func build(
     # a scenery sound is a player of its own with a bank of its one file, played once or looped
     var players_by_name:Dictionary[String, SfxPlayer3D] = {}
     for sound:MaszynaSoundData in sounds:
+        # heard as far as a vehicle's sound of the same range (sound_source::range(), sound.cpp:364-389)
+        var source:MmdSoundSourceDefinition = MmdSoundSourceDefinition.new()
+        source.range = sound.range_max
+        var spatial_config:SfxSpatialConfig = MmdSoundEventBuilder._build_spatial_config(source)
         var bank:SfxBank = SfxBank.new()
         var bank_events:Array[SfxEvent] = [
-            _build_sound_event(MaszynaLegacySoundAction.PLAY_EVENT, sound.file, false),
-            _build_sound_event(MaszynaLegacySoundAction.LOOP_EVENT, sound.file, true),
+            _build_sound_event(MaszynaLegacySoundAction.PLAY_EVENT, sound.file, false, spatial_config),
+            _build_sound_event(MaszynaLegacySoundAction.LOOP_EVENT, sound.file, true, spatial_config),
         ]
         bank.events = bank_events
         var player:SfxPlayer3D = SfxPlayer3D.new()
         player.name = sound.name if sound.name else "sound"
         player.bank = bank
-        player.max_distance = int(sound.range_max)
         root.add_child(player)
         player.global_position = sound.position
         players_by_name[sound.name.to_lower()] = player
@@ -262,6 +266,19 @@ static func build(
                 var action:MaszynaLegacyVoltageAction = MaszynaLegacyVoltageAction.new()
                 action.power_sources = targets
                 action.voltage = float(event.parameters[0])
+                ScenarioEventServer.event_attach_action(rid, action)
+            "putvalues":
+                # <x> <y> <z> <command> <value1> <value2> (Event.cpp:700-767)
+                var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+                action.command = event.parameters[3]
+                action.value1 = float(event.parameters[4])
+                ScenarioEventServer.event_attach_action(rid, action)
+            "getvalues":
+                # the command is the first target memory's, read when the event runs (Event.cpp:577-597)
+                if event_memories.is_empty():
+                    continue
+                var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
+                action.source = event_memories[0]
                 ScenarioEventServer.event_attach_action(rid, action)
             "sound":
                 var players:Array[SfxPlayer3D] = []
@@ -454,7 +471,9 @@ static func _set_memcompare(
     condition.value2 = float(fields[2])
 
 
-static func _build_sound_event(event_name:StringName, file:String, loop:bool) -> SfxEvent:
+static func _build_sound_event(
+    event_name:StringName, file:String, loop:bool, spatial_config:SfxSpatialConfig
+) -> SfxEvent:
     var stream:MaszynaAudioStream = MaszynaAudioStream.new()
     stream.file_path = file
     stream.loop = loop
@@ -462,6 +481,7 @@ static func _build_sound_event(event_name:StringName, file:String, loop:bool) ->
     clip.stream = stream
     var event:SfxEvent = SfxEvent.new()
     event.name = event_name
+    event.spatial_config = spatial_config
     var clips:Array[SfxClip] = [clip]
     event.clips = clips
     return event

@@ -3,6 +3,7 @@ extends MaszynaGutTest
 const Order = MaszynaLegacyAIDriver.Order
 const MAX_WAIT:float = 5.0
 const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
+const SHUNT_SPEED:float = 40.0
 
 
 func test_a_driver_is_attached_to_a_vehicle_by_rids() -> void:
@@ -177,6 +178,45 @@ func test_the_driver_reads_its_trainset() -> void:
     assert_eq(state["trainset_mass"], float(train.state["mass_total"]))
     assert_almost_eq(state["trainset_gravity_acceleration"], 0.0, 0.0001, "on the flat nothing pulls")
     DriverSystem.driver_free(driver)
+
+
+func test_taking_control_back_takes_the_way_of_the_cab_left() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverTakeoverTest", SM42)
+    var vehicle:RID = train.get_rid()
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+    DriverSystem.vehicle_set_control_active(vehicle, false)
+    # the player walks to the other cab and leaves the vehicle there
+    RailVehicleServer.vehicle_send_command(vehicle, "cab_change", -1)
+    RailVehicleServer.vehicle_send_command(vehicle, "cab_change", -1)
+    var cab:int = CabinSystem.occupied_cab(vehicle)
+
+    DriverSystem.vehicle_set_control_active(vehicle, true)
+
+    assert_eq(cab, -1, "the crew sits in the rear cab")
+    assert_eq(ai.get_state(driver)["direction"], cab, "the driver drives the way of that cab")
+    DriverSystem.driver_free(driver)
+
+
+func test_a_turn_forgets_the_stop_of_a_signal_passed() -> void:
+    var vehicle:RID = build_vehicle("RouteTurnTest", SM42).get_rid()
+    var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
+    var timetable:MaszynaLegacyDriverTimetable = MaszynaLegacyDriverTimetable.new()
+    trainset.update(vehicle, 1, true)
+    route.update(vehicle, Order.SHUNT, false, SHUNT_SPEED, 0.0, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
+            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false)
+    # a signal at stop passed, behind it now
+    route.signal_velocity_last = 0.0
+
+    trainset.update(vehicle, -1, true)
+    route.update(vehicle, Order.SHUNT, false, SHUNT_SPEED, 0.0, MaszynaLegacyDriverSpeed.EASY_ACCELERATION,
+            MaszynaLegacyDriverSpeed.NO_LIMIT, trainset, timetable, 0.0, SHUNT_SPEED, 0.0, false)
+
+    assert_eq(route.signal_velocity_last, MaszynaLegacyDriverSpeed.NO_LIMIT,
+            "turned, the stop of the signal passed does not hold it (Driver.cpp:520-524)")
 
 
 func _create_driver(ai:MaszynaLegacyAIDriver) -> RID:

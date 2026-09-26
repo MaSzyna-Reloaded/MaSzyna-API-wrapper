@@ -4,6 +4,29 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-27 - the AI stood at a clear signal: a stop behind it, and a takeover that remembered
+
+* **Symptom:** on Stary Jawor the player drove the SU46 to the signal before the station, left the
+  cab, and when the SM42 and the eszelon had come and the signal cleared, the SU46 did not move.
+  Headless the same: the AI's SU46 turned on n176 and stood on n174 for good - shunting, 40
+  allowed, the signal ahead at 40, the engine ready, but 0 km/h wanted.
+* **What proved it:** the driver's route dumped where it stood: `velocity_limit = 0` from
+  `signal_velocity_last = 0` - the speed of the last signal passed, a stop it had passed before
+  turning, now behind it; the shunting signal ahead read 40.
+* **Causes:** two parts of the original not ported. Turning, the original clears its speed table
+  and lets go of a stop of the signal passed ("don't allow potential red light overrun keep us
+  from reversing", TableCheck(), Driver.cpp:510-526). Taking the vehicle over from a player, it
+  forgets the way it drove ("kierunek jazdy trzeba dopiero zgadnąć") and clears the table, "the
+  player may have driven against the signals" (TakeControl(), Driver.cpp:5700-5712), then guesses
+  the way from the active cab or the movement (PrepareDirection(), Driver.cpp:5088-5116).
+  `leave_cabin()` only switched the AI back on.
+* **Fix:** the route reads the tracks afresh when the driver's way changes - the events ahead not
+  taken as passed, no stop point done, the stop of a signal passed let go - and `forget()` makes
+  the next reading a fresh one. `DriverSystem.vehicle_set_control_active()` tells the delegate
+  (`_control_taken()`), which guesses the way again and forgets the route.
+* **Rule:** whatever the AI remembers of the tracks belongs to one way of driving; a turn or a
+  takeover starts it afresh.
+
 ## 2026-09-27 - couplers stiffened by a long frame
 
 * **Symptom:** once the physics ran at the simulation speed (the one clock, below), the eszelon

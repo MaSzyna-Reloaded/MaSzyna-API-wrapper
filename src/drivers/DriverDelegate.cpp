@@ -6,6 +6,7 @@ namespace godot {
         GDVIRTUAL_BIND(_driver_detached, "driver");
         GDVIRTUAL_BIND(_handle_command, "driver", "command", "value1", "value2", "position");
         GDVIRTUAL_BIND(_update, "driver");
+        GDVIRTUAL_BIND(_control_taken, "driver");
     }
 
     void DriverDelegate::driver_attached(const RID &p_driver) {
@@ -24,5 +25,9 @@ namespace godot {
 
     void DriverDelegate::update(const RID &p_driver) {
         GDVIRTUAL_CALL(_update, p_driver);
+    }
+
+    void DriverDelegate::control_taken(const RID &p_driver) {
+        GDVIRTUAL_CALL(_control_taken, p_driver);
     }
 } // namespace godot

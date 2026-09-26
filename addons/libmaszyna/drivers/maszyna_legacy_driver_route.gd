@@ -172,6 +172,8 @@ var _stops_done:Dictionary[RID, bool] = {}
 var _stops_moved:Dictionary[RID, float] = {}
 ## The next station's stop was read on this update (IsScheduledPassengerStopVisible)
 var _scheduled_stop_visible:bool = false
+## The way the driver drove when the tracks were last read (iTableDirection), 0 to read them afresh
+var _direction:int = 0
 ## The memories' commands it sent, by event, not to send them again until they change
 ## (StopCommandSent(), MemCell.cpp:196-205)
 var _sent:Dictionary[RID, String] = {}
@@ -193,6 +195,15 @@ func update(
     commands.clear()
     stop_orders.clear()
     at_passenger_stop = false
+    # read the other way, or afresh: what was ahead is not passed and no stop is done (TableClear()),
+    # and the stop of a signal passed does not keep it from reversing (TableCheck(), Driver.cpp:510-526)
+    if not trainset.direction == _direction:
+        _direction = trainset.direction
+        _ahead.clear()
+        _stops_done.clear()
+        _stops_moved.clear()
+        if signal_velocity_last == 0.0:
+            signal_velocity_last = NO_LIMIT
     _scheduled_stop_visible = false
     # IsCargoTrain (Driver.cpp:2303): keeps further from a stop, leaves a passenger stop at once
     var cargo:bool = int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) \
@@ -431,6 +442,12 @@ func _event_entry(event:RID, segment:TrackRouteSegment, start:float) -> Entry:
                 entry.kind = Kind.COMMAND
                 entry.velocity = 0.0
     return entry
+
+
+## What was read of the tracks is forgotten, read afresh on the next update - a player drove the
+## vehicle and may have driven it against the signals (TakeControl(), Driver.cpp:5707-5708)
+func forget() -> void:
+    _direction = 0
 
 
 ## A passenger stop on this reading (TableUpdateStopPoint(), Driver.cpp:1093-1380): another station's

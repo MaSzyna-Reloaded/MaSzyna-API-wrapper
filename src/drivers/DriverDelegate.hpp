@@ -24,6 +24,7 @@ namespace godot {
             GDVIRTUAL1(_driver_detached, RID)
             GDVIRTUAL5(_handle_command, RID, String, double, double, Vector3)
             GDVIRTUAL1(_update, RID)
+            GDVIRTUAL1(_control_taken, RID)
 
             /// Called by DriverSystem. A C++ delegate overrides these; the default forwards to the
             /// script.
@@ -35,5 +36,8 @@ namespace godot {
                     const Vector3 &p_position);
             /// The time the driver asked for has come (DriverSystem.driver_schedule_update())
             virtual void update(const RID &p_driver);
+            /// The driver drives its vehicle again - a player left the cab
+            /// (DriverSystem.vehicle_set_control_active()); the vehicle is as the player left it
+            virtual void control_taken(const RID &p_driver);
     };
 } // namespace godot

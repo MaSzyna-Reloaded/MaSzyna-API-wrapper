@@ -89,8 +89,19 @@ namespace godot {
         if (driver == nullptr) {
             return;
         }
-        if (DriverData *data = drivers.getptr(*driver); data != nullptr) {
-            data->control_active = p_active;
+        DriverData *data = drivers.getptr(*driver);
+        if (data == nullptr || data->control_active == p_active) {
+            return;
+        }
+        data->control_active = p_active;
+        // taken back: the delegate learns it drives a vehicle a player left as it is now
+        // (TController::TakeControl(), Driver.cpp:5700-5712)
+        if (p_active && data->delegate.is_valid()) {
+            // held, with the driver copied: the delegate may change the drivers, which rehashes the
+            // tables
+            const Ref<DriverDelegate> delegate = data->delegate;
+            const RID driver_rid = *driver;
+            delegate->control_taken(driver_rid);
         }
     }
 

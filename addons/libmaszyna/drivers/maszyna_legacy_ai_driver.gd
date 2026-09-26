@@ -153,6 +153,27 @@ func _driver_detached(driver:RID) -> void:
     _drivers.erase(driver)
 
 
+## A player left the cab: the driver drives the vehicle as it was left (TakeControl(),
+## Driver.cpp:5700-5712) - the way it drives guessed again (PrepareDirection(), Driver.cpp:5088-5116):
+## standing, towards the cab driven from; moving, the way it moves - and the tracks read afresh
+func _control_taken(driver:RID) -> void:
+    var state:DriverState = _drivers.get(driver)
+    var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
+    if not state or not vehicle.is_valid():
+        return
+    if float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < MaszynaLegacyDriverTrainset.NO_MOVEMENT_SPEED:
+        # the active cab, else the one the crew sits in; a vehicle with neither keeps its way
+        var cab:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", 0))
+        if cab == 0:
+            cab = CabinSystem.occupied_cab(vehicle)
+        if not cab == 0:
+            state.direction = cab
+    else:
+        state.direction = 1 if float(CabinSystem.vehicle_state_value(vehicle, "velocity", 0.0)) >= 0.0 else -1
+    state.direction_order = state.direction
+    state.route.forget()
+
+
 ## What the driver keeps: its orders and what they asked for
 func get_state(driver:RID) -> Dictionary:
     var state:DriverState = _drivers.get(driver)

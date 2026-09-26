@@ -39,6 +39,8 @@ const NO_MOVEMENT_SPEED:float = 0.05
 const FRONT_END:int = 0
 const REAR_END:int = 1
 
+## The way the driver drives along its vehicle (+1 or -1, iDirection)
+var direction:int = 1
 ## From the front, the way the driver drives
 var vehicles:Array[RID] = []
 ## fMass [kg], fLength [m]
@@ -63,8 +65,9 @@ var acceleration:float = 0.0
 var push_pull:bool = false
 
 
-## Reads the trainset of the vehicle the driver drives, `direction` +1 or -1 along the vehicle
-func update(vehicle:RID, direction:int, diesel_driven:bool) -> void:
+## Reads the trainset of the vehicle the driver drives, `driver_direction` +1 or -1 along the vehicle
+func update(vehicle:RID, driver_direction:int, diesel_driven:bool) -> void:
+    direction = driver_direction
     vehicles = RailVehicleServer.vehicle_get_coupled(
             vehicle, FRONT_END if direction >= 0 else REAR_END, VehicleController.COUPLING_ELEMENT_COUPLER)
     push_pull = false

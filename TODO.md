@@ -761,7 +761,19 @@ ported, into a delegate.
       braking point offset (`braking_distance_multiplier()`) in the target speed.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
    runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
-   6. The timetable: stations, departures, `@`.
+   6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
+      stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
+      parser does) - passed at speed where the train does not stop, else brought forward for the
+      train's length and the platform, stopped at, left at the departure time (a goods train at
+      once), the odd first number holding it for a clear signal; another station's stop close
+      ahead rewinds the timetable to it; `@` turns a push-pull train by its cab (a locomotive
+      goes on to its next order, `Disconnect` - not ported); the last station ends the
+      timetable. The timetable's speed per stretch (`TTVmax`).
+      Left: the load exchange and its waiting (`simulation::Station.update_load()`,
+      `WaitingSet()`, `fStopTime`), the doors, the announcements and the departure signal
+      (`tsGuardSignal`), the radio channel a station gives, the delay flag (`UpdateDelayFlag()`),
+      a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
+      `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
 
 ## Tests
 

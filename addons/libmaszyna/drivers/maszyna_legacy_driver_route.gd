@@ -13,9 +13,10 @@ class_name MaszynaLegacyDriverRoute
 ##
 ## The original keeps the table between updates and moves it by the distance driven; here it is
 ## read again on every update (RailVehicleServer.vehicle_trace_route()) and the events passed
-## since the last one take effect once. Not ported yet: the passenger stop points and the timetable
-## (part 6), the section and road speeds, stopping at an automatic block signal (spStopOnSBL), the
-## crossings, the turn back at the end of shunting (BackwardTraceRoute) - see TODO.md, "Drivers".
+## since the last one take effect once. The passenger stops (`PassengerStopPoint:`) are driven by
+## the timetable (TableUpdateStopPoint()). Not ported yet: the section and road speeds, stopping at an
+## automatic block signal (spStopOnSBL), the crossings, the turn back at the end of shunting
+## (BackwardTraceRoute), the load exchange and the doors at a stop - see TODO.md, "Drivers".
 
 ## How far ahead it reads [m]: at least MIN_RANGE; moving, MOVING_RANGE past the braking distance;
 ## standing, STANDING_DRIVER_DISTANCES of its distance to keep (Driver.cpp:4984-4990, fDriverDist 50)
@@ -66,12 +67,34 @@ const NO_LIMIT:float = -1.0
 const GO_SPEED:float = 1.0
 ## Sends a memory's command only nearly standing (check_route_ahead(), Driver.cpp:8340)
 const COMMAND_SPEED:float = 0.1
+## TableUpdateStopPoint() (Driver.cpp:866, 1093-1380): a passenger stop is reached within this [m] of
+## the front of the trainset, passed without stopping within PASSING_SHARE of it; another station's
+## stop nearer than REWIND_BRAKE_SHARE of the braking distance plus REWIND_DISTANCE [m] is where the
+## timetable goes on from
+const PASSENGER_STOP_MAX_DISTANCE:float = 400.0
+const PASSING_SHARE:float = 0.5
+const REWIND_BRAKE_SHARE:float = 1.15
+const REWIND_DISTANCE:float = 300.0
+## No signal read yet (d_to_next_sem, Driver.cpp:877)
+const NO_SIGNAL_DISTANCE:float = 10000.0
+## Standing still [km/h] (Driver.cpp:921, 1080)
+const STOPPED_SPEED:float = 0.01
+## An odd first number of a stop keeps the train there until the way is clear (Driver.cpp:1317)
+const HOLD_PARITY:int = 2
 ## The event lists of a track, by the way it is driven (CheckTrackEvent(), Driver.cpp:459-470)
 const EVENTS_TOWARD_END:int = ScenarioEventServer.TRACK_EVENT2
 const EVENTS_TOWARD_START:int = ScenarioEventServer.TRACK_EVENT1
 
 ## What an entry means (TSpeedPosFlag, Driver.h:127-149)
-enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION, COMMAND, OTHER }
+enum Kind { TRACK, SWITCH, LINE_END, SEMAPHORE, SHUNT_SEMAPHORE, OUTSIDE_STATION, COMMAND, STOP_POINT, OTHER }
+## What a passenger stop asks of the driver's orders, in the order asked (TableUpdateStopPoint()):
+## HOLD and GO set whether it waits for the way to be clear (moveStopHere); OBEY_TRAIN drives on as
+## a train; TURN_THEN_TRAIN and TURN_THEN_SHUNT turn a push-pull train by its cab, then drive on;
+## NEXT_ORDER takes the next order
+enum StopOrder { HOLD, GO, OBEY_TRAIN, TURN_THEN_TRAIN, TURN_THEN_SHUNT, NEXT_ORDER }
+## What a passenger stop is on this reading: an entry to take as it is, one to skip, or one that let
+## the train go (cm_Ready)
+enum StopResult { USE, SKIP, READY }
 
 ## One entry of the table (TSpeedPos)
 class Entry:
@@ -84,6 +107,8 @@ class Entry:
     var event:RID
     ## the command the event carries, read live from its memory (input_command())
     var command:String
+    ## the station of a passenger stop
+    var station:String
     var value1:float
     var value2:float
     ## where the event stands, sent with its command
@@ -110,6 +135,17 @@ var commands:Array[Array] = []
 ## The nearest vehicle ahead (Obstacle), null for none, and its speed [km/h]
 var obstacle:VehicleNeighbour = null
 var obstacle_speed:float = 0.0
+## Standing at its passenger stop (IsAtPassengerStop)
+var at_passenger_stop:bool = false
+## What its passenger stop asked of the orders on this update
+var stop_orders:Array[StopOrder] = []
+## The passenger stops done with, by event, until it has left them (TSpeedPos::iFlags = 0)
+var _stops_done:Dictionary[RID, bool] = {}
+## How far a passenger stop was brought forward for the train's length and the platform, by event
+## (TSpeedPos::fMoved)
+var _stops_moved:Dictionary[RID, float] = {}
+## The next station's stop was read on this update (IsScheduledPassengerStopVisible)
+var _scheduled_stop_visible:bool = false
 ## The memories' commands it sent, by event, not to send them again until they change
 ## (StopCommandSent(), MemCell.cpp:196-205)
 var _sent:Dictionary[RID, String] = {}
@@ -119,16 +155,35 @@ var _ahead:Dictionary[RID, Entry] = {}
 
 ## One reading of the tracks ahead (TableCheck(), TableUpdate(), check_route_ahead()) for the driver
 ## of `vehicle`: `allowed` is the speed allowed now (VelSignal), `speed` the trainset's along the way
-## it drives [km/h], `acceleration` the one preferred (AccPreferred) [m/s2]. The speed allowed
-## afterwards is `signal_velocity`, the orders it gives itself `commands`.
+## it drives [km/h], `acceleration` the one preferred (AccPreferred) [m/s2]; `timetable` how far it
+## got, at `hours` of the day. The speed allowed afterwards is `signal_velocity`, the orders it
+## gives itself `commands` and `stop_orders`.
 func update(
     vehicle:RID, order:int, stop_here:bool, allowed:float, speed:float, acceleration:float, velocity_max:float,
-    trainset:MaszynaLegacyDriverTrainset
+    trainset:MaszynaLegacyDriverTrainset, timetable:MaszynaLegacyDriverTimetable, hours:float
 ) -> void:
     commands.clear()
+    stop_orders.clear()
+    at_passenger_stop = false
+    _scheduled_stop_visible = false
     _determine_distances(vehicle, order, speed, trainset)
     reach = maxf(MIN_RANGE, MOVING_RANGE + brake_distance if absf(speed) > MOVEMENT_SPEED else STANDING_RANGE)
     var entries:Array[Entry] = _read(reach, trainset)
+    # the passenger stops left behind are forgotten
+    var read:Dictionary[RID, bool] = {}
+    for entry:Entry in entries:
+        if entry.kind == Kind.STOP_POINT:
+            read[entry.event] = true
+    for event:RID in _stops_done.keys():
+        if not read.has(event):
+            _stops_done.erase(event)
+    for event:RID in _stops_moved.keys():
+        if not read.has(event):
+            _stops_moved.erase(event)
+    # IsCargoTrain (Driver.cpp:2303): a goods train leaves a stop without waiting for the time
+    var cargo:bool = int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) \
+            == MaszynaLegacyDriverBraking.DELAY_SETTING_G
+    var signal_distance:float = NO_SIGNAL_DISTANCE
     var obey_train:bool = order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN
     # the events passed since the last update take effect once (TableUpdateEvent(), fDist < 0)
     var seen:Dictionary[RID, Entry] = {}
@@ -148,10 +203,18 @@ func update(
     var go:String = ""
     var command_entry:Entry = null
     for entry:Entry in entries:
+        if entry.kind == Kind.STOP_POINT:
+            var result:StopResult = _update_stop_point(entry, order, absf(speed), cargo, trainset, timetable, hours, signal_distance)
+            if result == StopResult.READY and go.is_empty():
+                go = "Ready"
+            if not result == StopResult.USE:
+                continue
         var velocity:float = entry.velocity
         var distance:float = entry.distance
         if entry.event.is_valid():
             if distance > 0.0:
+                if _is_proper_semaphore(entry.kind, obey_train):
+                    signal_distance = minf(distance, signal_distance)
                 if _is_proper_semaphore(entry.kind, obey_train) and not signal_found:
                     # the nearest signal (TableUpdateEvent(), Driver.cpp:1585-1602)
                     signal_found = true
@@ -231,7 +294,14 @@ func update(
     # no signal ahead any more: the last one's speed is forgotten on the line (Driver.cpp:1030-1034)
     if obey_train and not signal_found:
         signal_velocity_last = NO_LIMIT
-    velocity_limit = MaszynaLegacyDriverSpeed.min_speed(velocity_limit, signal_velocity_last)
+    # standing at its passenger stop, it holds there (Driver.cpp:1080-1082)
+    if at_passenger_stop and absf(speed) < STOPPED_SPEED:
+        velocity_limit = 0.0
+    else:
+        velocity_limit = MaszynaLegacyDriverSpeed.min_speed(velocity_limit, signal_velocity_last)
+    # a stop let it go: on at once, unless something ahead holds it (check_route_ahead(), cm_Ready)
+    if go == "Ready" and not velocity_next == 0.0 and timetable.stop_closer:
+        allowed = NO_LIMIT
     signal_velocity = allowed
     # the orders it gives itself (check_route_ahead(), Driver.cpp:8302-8356)
     match go:
@@ -324,13 +394,103 @@ func _event_entry(event:RID, segment:TrackRouteSegment, start:float) -> Entry:
             entry.velocity = NO_LIMIT
         _:
             if entry.command.begins_with(MaszynaLegacyEventFactory.PASSENGER_STOP_POINT):
-                entry.kind = Kind.OTHER
-                entry.velocity = NO_LIMIT
+                # a stop, until the timetable says otherwise (TSpeedPos::Set(), Driver.cpp:242-246)
+                entry.kind = Kind.STOP_POINT
+                entry.station = entry.command.trim_prefix(MaszynaLegacyEventFactory.PASSENGER_STOP_POINT)
+                entry.velocity = 0.0
             else:
                 # any other text is a command for a standing driver: it stops there for it
                 entry.kind = Kind.COMMAND
                 entry.velocity = 0.0
     return entry
+
+
+## A passenger stop on this reading (TableUpdateStopPoint(), Driver.cpp:1093-1380): another station's
+## is skipped or the timetable goes on from it; the next station's is passed at speed where the train
+## does not stop, else brought forward for the train and the platform, stopped at, and left at the
+## departure time - or turned at, or the end of the timetable. `speed` is the vehicle's [km/h].
+func _update_stop_point(
+    entry:Entry, order:int, speed:float, cargo:bool, trainset:MaszynaLegacyDriverTrainset,
+    timetable:MaszynaLegacyDriverTimetable, hours:float, signal_distance:float
+) -> StopResult:
+    var driving:int = (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT
+            | MaszynaLegacyAIDriver.Order.OBEY_TRAIN | MaszynaLegacyAIDriver.Order.BANK)
+    if not order & driving or _stops_done.has(entry.event):
+        return StopResult.SKIP
+    if not entry.station.to_lower() == timetable.next_stop.to_lower():
+        if not _scheduled_stop_visible and entry.distance > 0.0 \
+                and entry.distance < REWIND_BRAKE_SHARE * brake_distance + REWIND_DISTANCE:
+            timetable.rewind(entry.station)
+        return StopResult.SKIP
+    if not timetable.stop_point:
+        # coupling up or turning: it drives past
+        _stops_done[entry.event] = true
+        return StopResult.SKIP
+    _scheduled_stop_visible = true
+    if not timetable.is_stop():
+        # passed at speed, taken as reached a little before it
+        entry.velocity = NO_LIMIT
+        if entry.distance < PASSENGER_STOP_MAX_DISTANCE * PASSING_SHARE:
+            timetable.arrive(hours)
+            timetable.advance()
+            _stops_done[entry.event] = true
+            return StopResult.SKIP
+        return StopResult.USE
+    if not _stops_moved.has(entry.event):
+        # the first number: negative, where the front stops before it; positive, where the middle
+        # stops; the second: the platform's length, or negative - only for trains shorter than that
+        var place:float = entry.value1
+        var platform:float = entry.value2
+        if platform < 0.0 and trainset.length >= -platform:
+            _stops_done[entry.event] = true
+            return StopResult.SKIP
+        var moved:float = -place if place < 0.0 else place - min_proximity - trainset.length / 2.0
+        _stops_moved[entry.event] = maxf(0.0, minf(moved, absf(platform) - min_proximity - trainset.length))
+    var shift:float = _stops_moved[entry.event]
+    entry.distance -= shift
+    at_passenger_stop = entry.distance <= PASSENGER_STOP_MAX_DISTANCE and (
+            entry.distance + trainset.length + shift - min_proximity / 2.0
+                    <= maxf(absf(entry.value2), 2.0 * max_proximity + trainset.length)
+            if timetable.stop_closer else entry.distance < signal_distance)
+    if speed > MOVEMENT_SPEED:
+        return StopResult.USE
+    if not at_passenger_stop:
+        # standing short of it: let it draw up closer
+        entry.velocity = NO_LIMIT
+        return StopResult.USE
+    if timetable.arrive(hours) and timetable.turns_here():
+        # `@`: a push-pull train turns by its cab and stays, a locomotive goes on to its next order
+        if trainset.push_pull:
+            stop_orders.append(StopOrder.HOLD)
+            stop_orders.append(StopOrder.TURN_THEN_SHUNT if timetable.is_last_station() else StopOrder.TURN_THEN_TRAIN)
+        else:
+            timetable.pass_stops()
+            stop_orders.append(StopOrder.GO)
+        stop_orders.append(StopOrder.NEXT_ORDER)
+        timetable.stop_short()
+        _stops_done[entry.event] = true
+        return StopResult.SKIP
+    if order & (MaszynaLegacyAIDriver.Order.SHUNT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT):
+        stop_orders.append(StopOrder.OBEY_TRAIN)
+    if timetable.is_last_station():
+        # the end of the timetable: its next order, and it stays until told to go
+        timetable.finish()
+        timetable.stop_short()
+        if not trainset.push_pull:
+            timetable.pass_stops()
+        stop_orders.append(StopOrder.NEXT_ORDER)
+        stop_orders.append(StopOrder.HOLD)
+        _stops_done[entry.event] = true
+        return StopResult.SKIP
+    if cargo or timetable.is_time_to_go(hours):
+        at_passenger_stop = false
+        timetable.advance()
+        stop_orders.append(StopOrder.HOLD if floori(absf(entry.value1)) % HOLD_PARITY else StopOrder.GO)
+        timetable.draw_up_close()
+        _stops_done[entry.event] = true
+        return StopResult.READY
+    # waiting for the departure time
+    return StopResult.USE
 
 
 ## An event passed (TableUpdateEvent(), fDist < 0, Driver.cpp:1535-1700); returns the speed allowed

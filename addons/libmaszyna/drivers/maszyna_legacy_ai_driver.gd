@@ -94,9 +94,8 @@ class DriverState:
     ## fWarningDuration and the horn to sound
     var warning_duration:float = 0.0
     var warning_horn:int = 0
-    var timetable:Timetable = null
-    ## TTrainParameters::StationIndex - the station it drives to next
-    var station_index:int = 0
+    ## Its timetable and how far it got through it
+    var timetable:MaszynaLegacyDriverTimetable = MaszynaLegacyDriverTimetable.new()
     ## ReactionTime - until its next update
     var reaction_time:float = PREPARE_TIME
     ## What it read of its trainset on its last update
@@ -150,8 +149,10 @@ func get_state(driver:RID) -> Dictionary:
         "light_hints": state.light_hints,
         "warning_duration": state.warning_duration,
         "warning_horn": state.warning_horn,
-        "timetable": state.timetable,
-        "station_index": state.station_index,
+        "timetable": state.timetable.timetable,
+        "station_index": state.timetable.station_index,
+        "next_stop": state.timetable.next_stop,
+        "at_passenger_stop": state.route.at_passenger_stop,
         "trainset_vehicles": state.trainset.vehicles,
         "trainset_mass": state.trainset.mass,
         "trainset_ready": state.trainset.ready,
@@ -269,13 +270,31 @@ func _update(driver:RID) -> void:
     # the tracks ahead, and the orders the signals and memories there give (check_route_ahead())
     state.route.update(
             vehicle, state.orders[state.order_position], state.stop_here, state.velocity, directional_speed,
-            MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset)
+            MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset,
+            state.timetable, MaszynaRuntime.time_of_day)
     state.velocity = state.route.signal_velocity
+    # what its passenger stop asked of the orders (TableUpdateStopPoint(), Driver.cpp:1258-1370)
+    for stop_order:MaszynaLegacyDriverRoute.StopOrder in state.route.stop_orders:
+        match stop_order:
+            MaszynaLegacyDriverRoute.StopOrder.HOLD:
+                state.stop_here = true
+            MaszynaLegacyDriverRoute.StopOrder.GO:
+                state.stop_here = false
+            MaszynaLegacyDriverRoute.StopOrder.OBEY_TRAIN:
+                _order_next(state, Order.OBEY_TRAIN)
+            MaszynaLegacyDriverRoute.StopOrder.TURN_THEN_TRAIN, MaszynaLegacyDriverRoute.StopOrder.TURN_THEN_SHUNT:
+                if not state.orders[(state.order_position + 1) % MAX_ORDERS] == Order.CHANGE_DIRECTION:
+                    _order_push(state, Order.CHANGE_DIRECTION)
+                    _order_push(state,
+                            Order.OBEY_TRAIN if stop_order == MaszynaLegacyDriverRoute.StopOrder.TURN_THEN_TRAIN
+                            else Order.SHUNT)
+            MaszynaLegacyDriverRoute.StopOrder.NEXT_ORDER:
+                _jump_to_next_order(state)
     for command:Array in state.route.commands:
         _handle_command(driver, command[0], command[1], command[2], command[3])
     state.speed.pick(
             state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
-            state.shunt_velocity, state.timetable.velocity if state.timetable else 0.0,
+            state.shunt_velocity, state.timetable.velocity,
             directional_speed, state.trainset, state.route, EASY_REACTION_TIME)
     state.reaction_time = state.speed.reaction_time
     # a player drives it: the driver takes orders and reads the trainset, and touches nothing
@@ -422,13 +441,11 @@ static func _has_diesel_engine(vehicle:RID) -> bool:
 func _take_timetable(
     driver:RID, state:DriverState, name:String, velocity:float, minutes:float, position:Vector3
 ) -> void:
-    state.timetable = null
-    state.station_index = 0
+    var timetable:Timetable = null
     if not name == NO_TIMETABLE:
         var directory:String = UserSettings.get_maszyna_game_dir().path_join(SCENERY_DIRECTORY)
-        state.timetable = MaszynaLegacyTimetableFactory.load_timetable(directory, name, roundf(minutes))
-        if state.timetable:
-            state.station_index = 1
+        timetable = MaszynaLegacyTimetableFactory.load_timetable(directory, name, roundf(minutes))
+    state.timetable.take(timetable)
     if not position == Vector3.ZERO:
         state.direction_order = _direction_towards(driver, position, velocity)
     _orders_init(state, absf(velocity))
@@ -439,7 +456,7 @@ func _take_timetable(
 func _orders_init(state:DriverState, velocity:float) -> void:
     _orders_clear(state)
     _order_push(state, Order.PREPARE_ENGINE)
-    var entries:Array = state.timetable.entries if state.timetable else []
+    var entries:Array = state.timetable.get_entries()
     if entries.is_empty():
         _order_push(state, Order.SHUNT)
     else:
@@ -460,6 +477,9 @@ func _orders_init(state:DriverState, velocity:float) -> void:
         state.velocity = 0.0
         return
     state.stop_here = not (velocity >= 1.0 or velocity < SHUNT_START_VELOCITY_MAX)
+    if not state.stop_here:
+        # told to go: it draws up close to the next passenger stop (Driver.cpp:5305-5309)
+        state.timetable.draw_up_close()
     _jump_to_first_order(state)
     state.velocity = velocity if velocity >= 1.0 else 0.0
 
@@ -583,5 +603,9 @@ func _order_check(state:DriverState) -> void:
     var current:int = state.orders[state.order_position]
     if current & Order.CHANGE_DIRECTION:
         state.direction_order = -state.direction
+    elif current == Order.OBEY_TRAIN:
+        state.timetable.mind_stops()
+    elif current == Order.CONNECT:
+        state.timetable.pass_stops()
     elif current == Order.WAIT_FOR_ORDERS:
         _orders_clear(state)

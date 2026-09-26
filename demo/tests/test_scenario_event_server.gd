@@ -223,6 +223,17 @@ func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
     MaszynaRuntime.time_of_day = clock
 
 
+func test_a_passenger_stop_is_named_as_the_timetable_names_it() -> void:
+    var models:Array[MaszynaModelData] = []
+    _build_scenery("event w4_stopinfo putvalues 0 none 1 2 3 PassengerStopPoint:Jawor#2 -4 151 endevent", models)
+    var event:RID = ScenarioEventServer.event_get_rid_by_name(&"w4_stopinfo")
+    var action:MaszynaLegacyVehicleCommandAction = ScenarioEventServer.event_get_action(event)
+
+    assert_eq(action.command, "PassengerStopPoint:Jawor", "unique only past its #")
+    assert_true(ScenarioEventServer.event_is_passive(event), "read by the drivers ahead, never queued")
+    _free_events([event])
+
+
 func test_scenery_memcells_and_value_events() -> void:
     var root:MaszynaIncludeNode = _build_scenery(
         "node -1 0 Cell1 memcell 0 0 0 Start 1 2 none endmemcell "

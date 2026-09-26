@@ -33,6 +33,8 @@ const PASSIVE_PUT_COMMANDS:Array[String] = [
     "SetVelocity", "RoadVelocity", "SectionVelocity", "ShuntVelocity", "OutsideStation",
 ]
 const PASSENGER_STOP_POINT:String = "PassengerStopPoint:"
+## What follows it in a stop's name only makes the name unique
+const STOP_POINT_UNIQUE:String = "#"
 const PASSIVE_GET_COMMANDS:Array[String] = ["SetVelocity", "ShuntVelocity", "SetProximityVelocity"]
 ## A launcher's HHMM (EvLaunch.cpp:139-140)
 const HHMM_HOUR:int = 100
@@ -283,6 +285,9 @@ static func build(
                 # <x> <y> <z> <command> <value1> <value2> (Event.cpp:700-767)
                 var action:MaszynaLegacyVehicleCommandAction = MaszynaLegacyVehicleCommandAction.new()
                 action.command = event.parameters[3]
+                # a stop's name is unique past its `#`, the timetable knows it without (Event.cpp:719-722)
+                if action.command.begins_with(PASSENGER_STOP_POINT) and action.command.contains(STOP_POINT_UNIQUE):
+                    action.command = action.command.left(action.command.find(STOP_POINT_UNIQUE))
                 action.value1 = float(event.parameters[4])
                 action.value2 = float(event.parameters[5])
                 # the origin moves it, the rotation does not (Event.cpp:709-712)

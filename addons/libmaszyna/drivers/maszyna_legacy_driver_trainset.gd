@@ -58,12 +58,19 @@ var braked:bool = false
 var gravity_acceleration:float = 0.0
 ## AbsAccS - the trainset's acceleration along the way the driver drives [m/s2]
 var acceleration:float = 0.0
+## movePushPull - its front and rear are joined by the control line, a lone vehicle too: it turns
+## by changing the cab, not by shunting (Driver.cpp:2540-2549)
+var push_pull:bool = false
 
 
 ## Reads the trainset of the vehicle the driver drives, `direction` +1 or -1 along the vehicle
 func update(vehicle:RID, direction:int, diesel_driven:bool) -> void:
     vehicles = RailVehicleServer.vehicle_get_coupled(
             vehicle, FRONT_END if direction >= 0 else REAR_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+    push_pull = false
+    if vehicles:
+        push_pull = RailVehicleServer.vehicle_get_coupled(
+                vehicles[0], FRONT_END, VehicleController.COUPLING_ELEMENT_CONTROL).has(vehicles[-1])
     var driving:Vector3 = -RailVehicleServer.vehicle_get_transform(vehicle).basis.z * direction
     var driven:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
     ready = true

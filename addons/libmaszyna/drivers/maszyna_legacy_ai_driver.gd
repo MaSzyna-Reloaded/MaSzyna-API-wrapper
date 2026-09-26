@@ -63,6 +63,24 @@ const NO_MOVEMENT_SPEED:float = 0.05
 const MIN_MAIN_RESERVOIR_PRESSURE:float = 4.5
 ## Crew moves one cab at a time, 1 -> 0 -> -1 (TMoverParameters::ChangeCab(), Mover.cpp:784)
 const CAB_CHANGE_STEPS:int = 2
+## Uncoupling: it presses the buffers at this speed [km/h] (Driver.cpp:7334), with up to
+## PRESSING_FORCE of tractive force [N] (bufferscompress, driverhints.cpp:587-592)
+const PRESSING_VELOCITY:float = 2.0
+const PRESSING_FORCE:float = 50000.0
+## Coupling up: it starts within this of the vehicle ahead, and couples within ATTACH_DISTANCE [m]
+## (UpdateConnect(), Driver.cpp:7005-7040)
+const CONNECT_DISTANCE:float = 20.0
+const ATTACH_DISTANCE:float = 2.0
+## The coupling elements a `Shunt` asks for, by the original's bits (coupling::, MOVER.h:159-171);
+## the high voltage and the power lines have no element a shunter joins
+const COUPLING_BITS:Dictionary[int, VehicleController.CouplingElement] = {
+    1: VehicleController.COUPLING_ELEMENT_COUPLER,
+    2: VehicleController.COUPLING_ELEMENT_BRAKEHOSE,
+    4: VehicleController.COUPLING_ELEMENT_CONTROL,
+    16: VehicleController.COUPLING_ELEMENT_GANGWAY,
+    32: VehicleController.COUPLING_ELEMENT_MAINHOSE,
+    64: VehicleController.COUPLING_ELEMENT_HEATING,
+}
 
 
 ## What one driver keeps
@@ -86,6 +104,14 @@ class DriverState:
     var vehicle_count:int = -2
     var coupler:int = 0
     var stop_time:float = 0.0
+    ## iCouplingVehicle - the vehicle of the trainset that couples up and its end, while it does
+    ## (moveConnect)
+    var coupling_vehicle:RID = RID()
+    var coupling_end:int = FRONT_END
+    ## movePress - it presses the buffers to uncouple; iDirectionBackup - the way it drove before,
+    ## 0 for none
+    var pressing:bool = false
+    var direction_backup:int = 0
     ## vCommandLocation - where the last order about speed came from
     var command_position:Vector3 = Vector3.ZERO
     var radio_channel:int = -1
@@ -271,8 +297,14 @@ func _update(driver:RID) -> void:
     state.route.update(
             vehicle, state.orders[state.order_position], state.stop_here, state.velocity, directional_speed,
             MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset,
-            state.timetable, MaszynaRuntime.time_of_day)
+            state.timetable, MaszynaRuntime.time_of_day, state.shunt_velocity, state.speed.velocity_desired,
+            state.coupling_vehicle.is_valid())
     state.velocity = state.route.signal_velocity
+    # uncoupling: stand, then press the buffers at walking pace (pick_optimal_speed(), Driver.cpp:7330-7343)
+    if state.orders[state.order_position] & Order.DISCONNECT and state.vehicle_count >= 0:
+        var pressing:bool = state.pressing and state.direction == state.direction_order
+        state.velocity = PRESSING_VELOCITY if pressing else 0.0
+        state.velocity_next = 0.0
     # what its passenger stop asked of the orders (TableUpdateStopPoint(), Driver.cpp:1258-1370)
     for stop_order:MaszynaLegacyDriverRoute.StopOrder in state.route.stop_orders:
         match stop_order:
@@ -304,7 +336,8 @@ func _update(driver:RID) -> void:
     _control_security_system(vehicle, CabinSystem.occupied_cab(vehicle))
     # the power and the brakes, as the original's AI decides them on every update (UpdateSituation())
     MaszynaLegacyDriverTraction.control(
-            vehicle, CabinSystem.occupied_cab(vehicle), state.speed, state.trainset, directional_speed)
+            vehicle, CabinSystem.occupied_cab(vehicle), state.speed, state.trainset, state.route, directional_speed,
+            state.pressing)
     state.braking.control(
             vehicle, CabinSystem.occupied_cab(vehicle), state.orders[state.order_position], state.speed,
             state.trainset, directional_speed, elapsed)
@@ -322,6 +355,11 @@ func _update(driver:RID) -> void:
     if state.orders[state.order_position] == Order.RELEASE_ENGINE and standing:
         if _release_engine(state, vehicle, cab):
             _jump_to_next_order(state)
+    match state.orders[state.order_position]:
+        Order.CONNECT:
+            _update_connect(state)
+        Order.DISCONNECT:
+            _update_disconnect(state, vehicle, cab)
     if state.orders[state.order_position] & Order.CHANGE_DIRECTION and standing:
         _activation(state, vehicle)
         if state.direction == state.direction_order:
@@ -415,6 +453,97 @@ func _activation(state:DriverState, vehicle:RID) -> void:
     MaszynaLegacyDriverHints.set_direction(vehicle, cab, 1)
 
 
+## UpdateConnect() (Driver.cpp:6993-7055): within CONNECT_DISTANCE of the vehicle ahead the front
+## vehicle of the trainset starts coupling up; within ATTACH_DISTANCE the shunter joins an element
+## a time - the vehicle's `coupler_connect`, as the player's crew does - and once every element
+## asked for is joined, the next order follows. The coupler adapter is not ported (TODO.md).
+func _update_connect(state:DriverState) -> void:
+    if not state.coupling_vehicle.is_valid():
+        if state.route.obstacle and state.route.obstacle.distance <= CONNECT_DISTANCE and state.trainset.vehicles:
+            state.coupling_vehicle = state.trainset.vehicles[0]
+            state.coupling_end = FRONT_END if state.trainset.front_direction > 0 else REAR_END
+        return
+    if not _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
+        var neighbour:VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(
+                state.coupling_vehicle, state.coupling_end, MaszynaLegacyDriverRoute.OBSTACLE_RANGE)
+        if neighbour and neighbour.distance < ATTACH_DISTANCE:
+            RailVehicleServer.vehicle_send_command(state.coupling_vehicle, "coupler_connect", state.coupling_end)
+    # the command joins at once: coupled now, it drives on
+    if _is_coupled_as_asked(state.coupling_vehicle, state.coupling_end, state.coupler):
+        state.coupler = 0
+        state.coupling_vehicle = RID()
+        _jump_to_next_order(state)
+
+
+## UpdateDisconnect() (Driver.cpp:7101-7235): leaving all but `vehicle_count` vehicles from the
+## driver's. The train braked and the direction turned (2nd stage); the buffers pressed, the brakes
+## of the vehicles released and the coupler undone by the shunter - the vehicles' `brake_releaser`
+## and `coupler_disconnect`, as the player's crew does - (3rd); the direction restored and the next
+## order (4th, 5th). The coupler adapter is not ported (TODO.md).
+func _update_disconnect(state:DriverState, vehicle:RID, cab:int) -> void:
+    if state.vehicle_count >= 0:
+        if not state.direction == state.direction_order:
+            _reverse(state, vehicle, cab)
+        if state.pressing and state.direction == state.direction_order:
+            state.braking.release_local_brake(vehicle, cab)
+            if absf(float(CabinSystem.vehicle_state_value(vehicle, "Ft", 0.0))) < PRESSING_FORCE:
+                MaszynaLegacyDriverTraction.increase(vehicle, cab, state.trainset, true)
+            # from the driver's vehicle into the ones pressed, as many as stay; a unit counts once
+            var vehicles:Array[RID] = state.trainset.vehicles
+            var index:int = vehicles.find(vehicle)
+            var count:int = state.vehicle_count
+            var decoupled:RID = RID()
+            var end:int = FRONT_END
+            while index >= 0:
+                var current:RID = vehicles[index]
+                end = _end_towards_front(state.trainset, index)
+                if _is_coupled_by(current, end, VehicleController.COUPLING_ELEMENT_PERMANENT):
+                    count += 1
+                if not current == vehicle:
+                    # released, to be pressed together
+                    RailVehicleServer.vehicle_send_command(current, "brake_releaser", true)
+                if count == 0:
+                    decoupled = current
+                    break
+                index -= 1
+                count -= 1
+            if not decoupled.is_valid():
+                # nothing there to uncouple
+                state.vehicle_count = -2
+            else:
+                # refused until the buffers are pressed enough: it presses on
+                RailVehicleServer.vehicle_send_command(decoupled, "coupler_disconnect", end)
+                if not _is_coupled_by(decoupled, end, VehicleController.COUPLING_ELEMENT_COUPLER):
+                    state.vehicle_count = -2
+        if not state.pressing:
+            if state.direction_backup == 0:
+                state.direction_backup = state.direction
+            if not state.trainset.braked:
+                state.braking.apply_train_brake()
+            else:
+                state.direction_order = -state.direction
+                state.pressing = true
+    if state.vehicle_count < 0:
+        if not state.direction_backup == 0:
+            state.direction_order = state.direction_backup
+            state.direction_backup = 0
+        if not state.direction == state.direction_order:
+            _reverse(state, vehicle, cab)
+        if state.direction == state.direction_order:
+            state.pressing = false
+            _jump_to_next_order(state)
+
+
+## directionother (driverhints.cpp:935-946): the reverser the other way from the same cab, the
+## master controller at zero first; the driver's direction follows once the reverser has moved
+func _reverse(state:DriverState, vehicle:RID, cab:int) -> void:
+    MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
+    var cab_active:int = int(CabinSystem.vehicle_state_value(vehicle, "cabin", cab))
+    MaszynaLegacyDriverHints.set_direction(vehicle, cab, state.direction_order * cab_active)
+    if int(CabinSystem.vehicle_state_value(vehicle, "direction", 0)) == state.direction_order * cab_active:
+        state.direction = state.direction_order
+
+
 ## control_security_system() (Driver.cpp:6382-6408): the vigilance and the cab signal acknowledged
 ## while they flash, the reverser forward first if it stands at neutral. The train brake the
 ## security system applied is released by the driving (MaszynaLegacyDriverBraking). Radio-Stop's
@@ -506,8 +635,11 @@ func _take_shunt(driver:RID, state:DriverState, loose:bool, vehicles:float, coup
             state.direction_order = -state.direction
             _order_next(state, Order.CHANGE_DIRECTION)
     elif vehicles >= 0.0:
-        var behind:bool = _is_coupled(driver, REAR_END if state.direction > 0 else FRONT_END)
-        var ahead:bool = _is_coupled(driver, FRONT_END if state.direction > 0 else REAR_END)
+        var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
+        var behind:bool = _is_coupled_by(
+                vehicle, REAR_END if state.direction > 0 else FRONT_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+        var ahead:bool = _is_coupled_by(
+                vehicle, FRONT_END if state.direction > 0 else REAR_END, VehicleController.COUPLING_ELEMENT_COUPLER)
         if not behind and ahead:
             # the vehicles are in front: turn first, then leave them
             state.direction_order = -state.direction
@@ -539,11 +671,31 @@ func _direction_towards(driver:RID, position:Vector3, value:float) -> int:
     return 1 if (towards.x * front.x + towards.z * front.z) * value > 0.0 else -1
 
 
-## Whether something is coupled at the vehicle's end - the walk out through it starts beyond it
-func _is_coupled(driver:RID, end:int) -> bool:
-    var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
-    var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, end, VehicleController.COUPLING_ELEMENT_COUPLER)
+## Whether something is joined at the vehicle's end by `element` - the walk out through that end
+## starts beyond it
+static func _is_coupled_by(vehicle:RID, end:int, element:VehicleController.CouplingElement) -> bool:
+    var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(vehicle, end, element)
     return not coupled.is_empty() and not coupled[0] == vehicle
+
+
+## Whether every element `coupler` asks for (the original's bits) is joined at the vehicle's end
+static func _is_coupled_as_asked(vehicle:RID, end:int, coupler:int) -> bool:
+    for bit:int in COUPLING_BITS:
+        if coupler & bit and not _is_coupled_by(vehicle, end, COUPLING_BITS[bit]):
+            return false
+    return true
+
+
+## The end of the trainset's vehicle at `index` towards its front
+static func _end_towards_front(trainset:MaszynaLegacyDriverTrainset, index:int) -> int:
+    if index == 0:
+        return FRONT_END if trainset.front_direction > 0 else REAR_END
+    var vehicle:RID = trainset.vehicles[index]
+    var coupled:Array[RID] = RailVehicleServer.vehicle_get_coupled(
+            vehicle, FRONT_END, VehicleController.COUPLING_ELEMENT_COUPLER)
+    var position:int = coupled.find(vehicle)
+    # beyond the front end come first
+    return FRONT_END if position > 0 and coupled[position - 1] == trainset.vehicles[index - 1] else REAR_END
 
 
 func _orders_clear(state:DriverState) -> void:
@@ -607,5 +759,8 @@ func _order_check(state:DriverState) -> void:
         state.timetable.mind_stops()
     elif current == Order.CONNECT:
         state.timetable.pass_stops()
+    elif current == Order.DISCONNECT:
+        # uncoupling the locomotive: nothing stays with it
+        state.vehicle_count = maxi(state.vehicle_count, 0)
     elif current == Order.WAIT_FOR_ORDERS:
         _orders_clear(state)

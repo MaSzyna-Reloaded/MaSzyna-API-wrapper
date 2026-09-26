@@ -20,6 +20,9 @@ const POSITION_CHARGING:float = -1.0
 const POSITION_RUNNING:float = 0.0
 const POSITION_MIN:float = -2.0
 const POSITION_MAX:float = 6.0
+## Uncoupling brakes the train at this position before it presses the buffers (trainbrakeapply,
+## driverhints.cpp:810-817)
+const POSITION_UNCOUPLING:float = 3.0
 ## BrakingInitialLevel, BrakingLevelIncrease (Driver.h:449-450)
 const BRAKING_INITIAL_LEVEL:float = 1.0
 const BRAKING_LEVEL_INCREASE:float = 0.25
@@ -166,6 +169,17 @@ func _control_releaser(vehicle:RID, cab:int, acceleration:float) -> void:
             CabinSystem.act(vehicle, cab, RELEASER, &"hold")
     elif releasing:
         CabinSystem.act(vehicle, cab, RELEASER, &"release")
+
+
+## trainbrakeapply (driverhints.cpp:810-825): the train brake applied to uncouple; the handle takes
+## it on the next control(). The electro-pneumatic brake's own position is not ported (TODO.md).
+func apply_train_brake() -> void:
+    position = POSITION_UNCOUPLING
+
+
+## independentbrakerelease (driverhints.cpp:901-910): the local brake off, to press the buffers
+func release_local_brake(vehicle:RID, cab:int) -> void:
+    _set_local_brake(vehicle, cab, LOCAL_BRAKE_RELEASED)
 
 
 ## brakingforcesetzero (driverhints.cpp): DecBrake() until nothing is left to release

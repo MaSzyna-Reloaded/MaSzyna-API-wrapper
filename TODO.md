@@ -626,13 +626,9 @@ closes both level crossings). Left:
   simulation speed above 60 a minute can pass between two publishes and the launcher misses it
   (the original checks every frame).
 * The `queueevent` console command.
-* **Timetables** (`Timetable`, `TimetableEntry`, `MaszynaLegacyTimetableFactory`) are read but not
-  used yet - nothing loads a trainset's or a `Timetable:` command's timetable and no driver follows
-  one. `maszyna_trainset_importer.gd` takes the first token of `trainset <timetable> <track>
-  <offset> <velocity>` for the trainset's name; it is the timetable. Not read: the station
-  announcements (`load_sounds()`, `mtable.cpp:644-671`); `is_maintenance`, which the original tests
-  on the track count token (`mtable.cpp:535`) and is never true. A timetable file in UTF-8 rather
-  than cp1250 keeps mangled Polish letters in its labels (seen in `linia053/scenariusz_os`).
+* **Timetables** are followed by the drivers (Drivers, part 6). Not read: the station
+  announcements (`load_sounds()`, `mtable.cpp:644-671`). The original's quirks around them are in
+  `MASZYNA_ORIGINAL_QUIRKS.md`.
 * Events of one include cannot refer to events of another `MaszynaIncludeNode`.
 * Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
   `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
@@ -761,19 +757,41 @@ ported, into a delegate.
       braking point offset (`braking_distance_multiplier()`) in the target speed.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
    runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
+   **Open, since `382755556`:** in a headless run at simulation speed 5 the whole eszelon stops
+   dead within one frame (51 -> 5 km/h) on the plain track n151, and then stands at full power.
+   It happens only while SM42-099 drives too (22 km away, no vehicle of its own near the eszelon,
+   nothing foreign in the collision scan); with SM42-099 or every other driver switched off it
+   runs on. Not the physics catch-up jump - no "owed" warning before it. Cause not found.
    6. The timetable (`MaszynaLegacyDriverTimetable`, `TableUpdateStopPoint()`): the passenger
       stops of the next station (`PassengerStopPoint:<station>`, cut at `#` as the original's
       parser does) - passed at speed where the train does not stop, else brought forward for the
       train's length and the platform, stopped at, left at the departure time (a goods train at
       once), the odd first number holding it for a clear signal; another station's stop close
       ahead rewinds the timetable to it; `@` turns a push-pull train by its cab (a locomotive
-      goes on to its next order, `Disconnect` - not ported); the last station ends the
+      goes on to its next order, `Disconnect`); the last station ends the
       timetable. The timetable's speed per stretch (`TTVmax`).
       Left: the load exchange and its waiting (`simulation::Station.update_load()`,
       `WaitingSet()`, `fStopTime`), the doors, the announcements and the departure signal
       (`tsGuardSignal`), the radio channel a station gives, the delay flag (`UpdateDelayFlag()`),
       a player's stop left far behind (`AIControllFlag`, Driver.cpp:1190-1200), the
       `VelSignalLast` reset by a stop held at (`eSignNext`), `departuredelay`.
+   7. Coupling up and uncoupling (`UpdateConnect()`, `UpdateDisconnect()`,
+      `determine_proximity_ranges()`): within 20 m of the vehicle ahead the front vehicle starts
+      coupling, and within 2 m the shunter joins the elements the order's coupler number asks for
+      - the vehicle's `coupler_connect`, one element an update, as the player's crew does.
+      Uncoupling brakes the train, turns the reverser, presses the buffers at 2 km/h with up to
+      50 kN, releases the vehicles' brakes (`brake_releaser`) and undoes the coupler
+      (`coupler_disconnect`) the counted vehicles away, then turns back and takes the next order.
+      The distances kept and the speed margins (`fVelPlus`, `fVelMinus`) are the original's per
+      order now; they were the train's everywhere before.
+      **Not checked on a scenery** - Stary Jawor has no coupling; linia61 and calkowo do
+      (`l61_towarowy1_hn.scm`, `events_tartak.ctr`), too heavy for a headless probe so far.
+      Left: the coupler adapter (`couplingadapterattach/remove`); the high voltage and power
+      lines of a coupler number (no element a shunter joins); `coupler_connect` joins its elements
+      in a fixed order, so one asked for past a skipped one brings the skipped one too; the lights
+      after the trainset changed (`CheckVehicles()`); the electro-pneumatic brake's own
+      uncoupling position (`bh_EPB`); a coupling a player left half done under another order; the
+      margins of modern vehicles and of the weather, and a late train's (`moveLate`).
 
 ## Tests
 

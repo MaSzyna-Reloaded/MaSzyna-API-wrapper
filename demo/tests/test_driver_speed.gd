@@ -7,6 +7,7 @@ const Order = MaszynaLegacyAIDriver.Order
 const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
 const REACTION:float = MaszynaLegacyAIDriver.EASY_REACTION_TIME
 const SHUNT_VELOCITY:float = 25.0
+const BRAKING_DISTANCE:float = 50.0
 
 var speed:MaszynaLegacyDriverSpeed
 var trainset:MaszynaLegacyDriverTrainset
@@ -52,7 +53,10 @@ func test_the_track_limit_holds_and_too_fast_brakes():
 
 
 func test_a_vehicle_standing_close_ahead_stops_it():
-    route.obstacle = _vehicle_ahead(20.0)
+    # at 15 km/h it needs about 50 m to stop (determine_braking_distance()); the vehicle stands
+    # nearer than the least distance it keeps
+    route.brake_distance = BRAKING_DISTANCE
+    route.obstacle = _vehicle_ahead(route.min_proximity - 1.0)
     speed.pick(Order.SHUNT, true, false, SHUNT_VELOCITY, SHUNT_VELOCITY, -1.0, 15.0, trainset, route, REACTION)
 
     assert_eq(speed.velocity_desired, 0.0, "within the distance it keeps")

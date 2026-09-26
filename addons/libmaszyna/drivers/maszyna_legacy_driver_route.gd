@@ -38,9 +38,9 @@ const DECELERATION_FACTOR:float = 25.92
 const G_REACTION_FACTOR:float = 2.0
 ## A braking threshold past this [m/s2] takes the braking distance from the deceleration instead
 const THRESHOLD_BRAKING:float = 0.05
-## determine_proximity_ranges() (Driver.cpp:6684-6780) [m]: shunting 5/10 plus a vehicle each, at
-## most 25/50; train 5/10 plus a vehicle each within 10-15/15-40, standing 50 (the cargo train's 10
-## more waits for the braking table)
+## determine_proximity_ranges() (Driver.cpp:6684-6812) [m]: shunting 5/10 plus a vehicle each, at
+## most 25/50; train 5/10 plus a vehicle each within 10-15/15-40, a goods train 10 more, standing
+## 50; coupling up 2/5 and, once coupling, right up to it; uncoupling 1/10; anything else 5/10
 const SHUNT_MIN_BASE:float = 5.0
 const SHUNT_MIN_MAX:float = 25.0
 const SHUNT_MAX_BASE:float = 10.0
@@ -51,11 +51,34 @@ const TRAIN_MIN_HIGH:float = 15.0
 const TRAIN_MAX_BASE:float = 10.0
 const TRAIN_MAX_LOW:float = 15.0
 const TRAIN_MAX_HIGH:float = 40.0
+const CARGO_PROXIMITY:float = 10.0
 const STANDING_MAX_PROXIMITY:float = 50.0
 const STANDING_SPEED:float = 0.1
-## The original's defaults (Driver.h:417-421)
-const DEFAULT_MIN_PROXIMITY:float = 30.0
-const DEFAULT_MAX_PROXIMITY:float = 50.0
+const CONNECT_MIN_PROXIMITY:float = 2.0
+const CONNECT_MAX_PROXIMITY:float = 5.0
+const COUPLING_MIN_PROXIMITY:float = -1.0
+const COUPLING_MAX_PROXIMITY:float = 0.0
+const DISCONNECT_MIN_PROXIMITY:float = 1.0
+const DISCONNECT_MAX_PROXIMITY:float = 10.0
+const OTHER_MIN_PROXIMITY:float = 5.0
+const OTHER_MAX_PROXIMITY:float = 10.0
+## ... and the speed [km/h] run over a limit before braking (fVelPlus) and under it before adding
+## power (fVelMinus): shunting 2 and a tenth of the shunting speed, at most 3; a train 5% of the
+## speed wanted, 2-5 over and 1-5 under; coupling up 2/1, once coupling and uncoupling 1/0.5;
+## anything else 2/5
+const SHUNT_VELOCITY_PLUS:float = 2.0
+const SHUNT_VELOCITY_MINUS_SHARE:float = 0.1
+const SHUNT_VELOCITY_MINUS_MAX:float = 3.0
+const TRAIN_VELOCITY_SHARE:float = 0.05
+const TRAIN_VELOCITY_PLUS_LOW:float = 2.0
+const TRAIN_VELOCITY_MINUS_LOW:float = 1.0
+const TRAIN_VELOCITY_HIGH:float = 5.0
+const CONNECT_VELOCITY_PLUS:float = 2.0
+const CONNECT_VELOCITY_MINUS:float = 1.0
+const CLOSE_VELOCITY_PLUS:float = 1.0
+const CLOSE_VELOCITY_MINUS:float = 0.5
+const OTHER_VELOCITY_PLUS:float = 2.0
+const OTHER_VELOCITY_MINUS:float = 5.0
 ## TableUpdate() (Driver.cpp:940-960): the target's acceleration is eased towards the preferred one
 ## while further than this share of the braking distance
 const EASING_BRAKING_SHARE:float = 1.2
@@ -125,9 +148,12 @@ var signal_velocity_last:float = NO_LIMIT
 ## The limit TableUpdate() puts on the speed wanted (fVelDes)
 var velocity_limit:float = NO_LIMIT
 ## fMinProximityDist, fMaxProximityDist, fBrakeDist
-var min_proximity:float = DEFAULT_MIN_PROXIMITY
-var max_proximity:float = DEFAULT_MAX_PROXIMITY
+var min_proximity:float = OTHER_MIN_PROXIMITY
+var max_proximity:float = OTHER_MAX_PROXIMITY
 var brake_distance:float = 0.0
+## fVelPlus, fVelMinus [km/h]
+var velocity_plus:float = OTHER_VELOCITY_PLUS
+var velocity_minus:float = OTHER_VELOCITY_MINUS
 ## The speed allowed after this update (VelSignal) and the orders it gives itself: [command,
 ## value1, value2, position]
 var signal_velocity:float = 0.0
@@ -156,17 +182,22 @@ var _ahead:Dictionary[RID, Entry] = {}
 ## One reading of the tracks ahead (TableCheck(), TableUpdate(), check_route_ahead()) for the driver
 ## of `vehicle`: `allowed` is the speed allowed now (VelSignal), `speed` the trainset's along the way
 ## it drives [km/h], `acceleration` the one preferred (AccPreferred) [m/s2]; `timetable` how far it
-## got, at `hours` of the day. The speed allowed afterwards is `signal_velocity`, the orders it
-## gives itself `commands` and `stop_orders`.
+## got, at `hours` of the day; `shunt_velocity` and `velocity_desired` the driver's [km/h], `coupling`
+## whether it is coupling up now (moveConnect). The speed allowed afterwards is `signal_velocity`, the
+## orders it gives itself `commands` and `stop_orders`.
 func update(
     vehicle:RID, order:int, stop_here:bool, allowed:float, speed:float, acceleration:float, velocity_max:float,
-    trainset:MaszynaLegacyDriverTrainset, timetable:MaszynaLegacyDriverTimetable, hours:float
+    trainset:MaszynaLegacyDriverTrainset, timetable:MaszynaLegacyDriverTimetable, hours:float,
+    shunt_velocity:float, velocity_desired:float, coupling:bool
 ) -> void:
     commands.clear()
     stop_orders.clear()
     at_passenger_stop = false
     _scheduled_stop_visible = false
-    _determine_distances(vehicle, order, speed, trainset)
+    # IsCargoTrain (Driver.cpp:2303): keeps further from a stop, leaves a passenger stop at once
+    var cargo:bool = int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) \
+            == MaszynaLegacyDriverBraking.DELAY_SETTING_G
+    _determine_distances(vehicle, order, speed, trainset, shunt_velocity, velocity_desired, coupling, cargo)
     reach = maxf(MIN_RANGE, MOVING_RANGE + brake_distance if absf(speed) > MOVEMENT_SPEED else STANDING_RANGE)
     var entries:Array[Entry] = _read(reach, trainset)
     # the passenger stops left behind are forgotten
@@ -180,9 +211,6 @@ func update(
     for event:RID in _stops_moved.keys():
         if not read.has(event):
             _stops_moved.erase(event)
-    # IsCargoTrain (Driver.cpp:2303): a goods train leaves a stop without waiting for the time
-    var cargo:bool = int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) \
-            == MaszynaLegacyDriverBraking.DELAY_SETTING_G
     var signal_distance:float = NO_SIGNAL_DISTANCE
     var obey_train:bool = order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN
     # the events passed since the last update take effect once (TableUpdateEvent(), fDist < 0)
@@ -520,8 +548,12 @@ func _is_proper_semaphore(kind:Kind, obey_train:bool) -> bool:
     return kind == Kind.SEMAPHORE or kind == Kind.SHUNT_SEMAPHORE or kind == Kind.OUTSIDE_STATION
 
 
-## determine_braking_distance(), determine_proximity_ranges() (Driver.cpp:6597-6780)
-func _determine_distances(vehicle:RID, order:int, speed:float, trainset:MaszynaLegacyDriverTrainset) -> void:
+## determine_braking_distance(), determine_proximity_ranges() (Driver.cpp:6597-6812); the original's
+## margins for modern vehicles and for the weather are not ported (TODO.md)
+func _determine_distances(
+    vehicle:RID, order:int, speed:float, trainset:MaszynaLegacyDriverTrainset, shunt_velocity:float,
+    velocity_desired:float, coupling:bool, cargo:bool
+) -> void:
     var velocity_ceiling:float = maxf(BRAKING_SPEED_FLOOR, ceilf(absf(speed)))
     brake_distance = DRIVER_BRAKING * velocity_ceiling * (BRAKING_SPEED_OFFSET + velocity_ceiling)
     if trainset.mass > HEAVY_MASS:
@@ -532,15 +564,39 @@ func _determine_distances(vehicle:RID, order:int, speed:float, trainset:MaszynaL
     if int(RailVehicleServer.vehicle_dump_state(vehicle).get("brake_delay_setting", 0)) == MaszynaLegacyDriverBraking.DELAY_SETTING_G:
         brake_distance += G_REACTION_FACTOR * velocity_ceiling
     var vehicles:float = trainset.vehicles.size()
-    if order & MaszynaLegacyAIDriver.Order.OBEY_TRAIN:
-        min_proximity = clampf(TRAIN_MIN_BASE + vehicles, TRAIN_MIN_LOW, TRAIN_MIN_HIGH)
-        max_proximity = clampf(TRAIN_MAX_BASE + vehicles, TRAIN_MAX_LOW, TRAIN_MAX_HIGH)
-        if absf(speed) < STANDING_SPEED:
-            max_proximity = STANDING_MAX_PROXIMITY
-    elif order & MaszynaLegacyAIDriver.Order.SHUNT:
-        min_proximity = minf(SHUNT_MIN_BASE + vehicles, SHUNT_MIN_MAX)
-        max_proximity = minf(SHUNT_MAX_BASE + vehicles, SHUNT_MAX_MAX)
-    else:
-        min_proximity = DEFAULT_MIN_PROXIMITY
-        max_proximity = DEFAULT_MAX_PROXIMITY
+    match order:
+        MaszynaLegacyAIDriver.Order.CONNECT:
+            if coupling:
+                # stood close without a collision: right up to it
+                _set_ranges(COUPLING_MIN_PROXIMITY, COUPLING_MAX_PROXIMITY, CLOSE_VELOCITY_PLUS, CLOSE_VELOCITY_MINUS)
+            else:
+                _set_ranges(CONNECT_MIN_PROXIMITY, CONNECT_MAX_PROXIMITY, CONNECT_VELOCITY_PLUS, CONNECT_VELOCITY_MINUS)
+        MaszynaLegacyAIDriver.Order.DISCONNECT:
+            _set_ranges(DISCONNECT_MIN_PROXIMITY, DISCONNECT_MAX_PROXIMITY, CLOSE_VELOCITY_PLUS, CLOSE_VELOCITY_MINUS)
+        MaszynaLegacyAIDriver.Order.SHUNT:
+            _set_ranges(minf(SHUNT_MIN_BASE + vehicles, SHUNT_MIN_MAX), minf(SHUNT_MAX_BASE + vehicles, SHUNT_MAX_MAX),
+                    SHUNT_VELOCITY_PLUS, minf(SHUNT_VELOCITY_MINUS_SHARE * shunt_velocity, SHUNT_VELOCITY_MINUS_MAX))
+        MaszynaLegacyAIDriver.Order.LOOSE_SHUNT:
+            _set_ranges(COUPLING_MIN_PROXIMITY, COUPLING_MAX_PROXIMITY, SHUNT_VELOCITY_PLUS, CLOSE_VELOCITY_MINUS)
+        MaszynaLegacyAIDriver.Order.OBEY_TRAIN:
+            var extra:float = CARGO_PROXIMITY if cargo else 0.0
+            _set_ranges(clampf(TRAIN_MIN_BASE + vehicles, TRAIN_MIN_LOW, TRAIN_MIN_HIGH) + extra,
+                    clampf(TRAIN_MAX_BASE + vehicles, TRAIN_MAX_LOW, TRAIN_MAX_HIGH) + extra,
+                    clampf(ceilf(TRAIN_VELOCITY_SHARE * velocity_desired), TRAIN_VELOCITY_PLUS_LOW, TRAIN_VELOCITY_HIGH),
+                    clampf(roundf(TRAIN_VELOCITY_SHARE * velocity_desired), TRAIN_VELOCITY_MINUS_LOW, TRAIN_VELOCITY_HIGH))
+            if absf(speed) < STANDING_SPEED:
+                # stood too far: it does not draw up the last metres
+                max_proximity = STANDING_MAX_PROXIMITY
+        MaszynaLegacyAIDriver.Order.BANK:
+            # the original leaves them as they were (Driver.cpp:6803-6806)
+            pass
+        _:
+            _set_ranges(OTHER_MIN_PROXIMITY, OTHER_MAX_PROXIMITY, OTHER_VELOCITY_PLUS, OTHER_VELOCITY_MINUS)
+
+
+func _set_ranges(minimum:float, maximum:float, plus:float, minus:float) -> void:
+    min_proximity = minimum
+    max_proximity = maximum
+    velocity_plus = plus
+    velocity_minus = minus
 

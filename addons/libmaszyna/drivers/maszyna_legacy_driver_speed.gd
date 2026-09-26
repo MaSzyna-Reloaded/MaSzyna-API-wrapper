@@ -15,10 +15,6 @@ class_name MaszynaLegacyDriverSpeed
 const EASY_ACCELERATION:float = 0.85
 ## Below this [m/s2] the driver does not ask for power (EU07_AI_NOACCELERATION, Driver.h:23)
 const NO_ACCELERATION:float = -0.05
-## The speed [km/h] a train may run over a limit before it brakes, and under it before it adds
-## power (fVelPlus, fVelMinus, Driver.cpp:1882-1883)
-const VELOCITY_PLUS:float = 5.0
-const VELOCITY_MINUS:float = 5.0
 ## The deceleration a train starts braking at [m/s2] (fAccThreshold, Driver.cpp:1891-1894)
 const ACCELERATION_THRESHOLD:float = -0.2
 ## Standing, it holds itself back this much (Driver.cpp:7425)
@@ -141,7 +137,7 @@ func pick(
     if speed > velocity_desired:
         if velocity_desired == 0.0:
             acceleration_desired = minf(acceleration_desired, STOP_ACCELERATION)
-        elif speed > velocity_desired + VELOCITY_PLUS:
+        elif speed > velocity_desired + route.velocity_plus:
             acceleration_desired = minf(acceleration_desired, NO_ACCELERATION + ACCELERATION_THRESHOLD)
         else:
             acceleration_desired = minf(acceleration_desired, maxf(0.0, acceleration_preferred))
@@ -166,7 +162,7 @@ func _adjust_for_obstacle(order:int, speed:float, route:MaszynaLegacyDriverRoute
     if obstacle_distance <= OBSTACLE_NEAR:
         # whatever it does, close up match its speed, or slow down behind one standing
         velocity_desired = min_speed(velocity_desired, maxf(other_speed, OBSTACLE_NEAR_SPEED))
-        if speed > velocity_desired + VELOCITY_PLUS:
+        if speed > velocity_desired + route.velocity_plus:
             acceleration_preferred = minf(OBSTACLE_NEAR_ACCELERATION, acceleration_preferred)
     var coupling:int = MaszynaLegacyAIDriver.Order.CONNECT | MaszynaLegacyAIDriver.Order.LOOSE_SHUNT
     if obstacle_distance - route.max_proximity - route.brake_distance * OBSTACLE_BRAKE_SHARE >= 0.0:
@@ -246,7 +242,7 @@ func _adjust_for_target_speed(order:int, speed:float, route:MaszynaLegacyDriverR
         # closer than it keeps: stop, or go on over a small excess
         if next == 0.0:
             velocity_desired = next
-        elif speed <= next + VELOCITY_PLUS:
+        elif speed <= next + route.velocity_plus:
             acceleration_desired = maxf(0.0, acceleration_preferred)
         reaction_time = HURRIED_REACTION_TIME
 

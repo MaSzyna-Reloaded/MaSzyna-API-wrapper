@@ -22,18 +22,19 @@ const UPHILL_GRAVITY:float = -0.01
 const EXCESS_ACCELERATION:float = 10.05
 
 
-## One decision of the driver about the power (control_tractive_force(), Driver.cpp:7996-8040)
+## One decision of the driver about the power (control_tractive_force(), Driver.cpp:7996-8040):
+## `route` gives the margin under the speed wanted, `pressing` - it presses the buffers to uncouple
 static func control(
     vehicle:RID, cab:int, speed:MaszynaLegacyDriverSpeed, trainset:MaszynaLegacyDriverTrainset,
-    directional_speed:float
+    route:MaszynaLegacyDriverRoute, directional_speed:float, pressing:bool
 ) -> void:
     var velocity_desired:float = speed.velocity_desired
     var acceleration_desired:float = speed.acceleration_desired
     if acceleration_desired > MaszynaLegacyDriverSpeed.NO_ACCELERATION and trainset.acceleration < acceleration_desired:
-        var margin:float = 0.0 if velocity_desired == CRAWL_VELOCITY else MaszynaLegacyDriverSpeed.VELOCITY_MINUS
+        var margin:float = 0.0 if velocity_desired == CRAWL_VELOCITY else route.velocity_minus
         # no speed table yet: nothing ahead holds it back (ActualProximityDist > fMaxProximityDist)
         if directional_speed < velocity_desired - margin:
-            increase(vehicle, cab, trainset)
+            increase(vehicle, cab, trainset, pressing)
     if acceleration_desired <= MaszynaLegacyDriverSpeed.NO_ACCELERATION:
         MaszynaLegacyDriverHints.set_zero_speed(vehicle, cab)
     elif directional_speed > velocity_desired or (acceleration_desired < 0.0 if trainset.gravity_acceleration < UPHILL_GRAVITY
@@ -41,8 +42,9 @@ static func control(
         decrease(vehicle, cab)
 
 
-## IncSpeed() (Driver.cpp:3406): a step of power; true when the controllers moved
-static func increase(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset) -> bool:
+## IncSpeed() (Driver.cpp:3406): a step of power; true when the controllers moved. Pressing the
+## buffers to uncouple (movePress), it adds power against its own brakes.
+static func increase(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset, pressing:bool) -> bool:
     var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle)
     match int(state.get("engine_type", VehicleEngine.NONE)):
         VehicleEngine.DIESEL_ELECTRIC:
@@ -52,7 +54,7 @@ static func increase(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset)
                 return false
             if not (state.get("main_no_power_pos", false) or state.get("line_contactor_closed", false)):
                 return false
-            if not trainset.ready:
+            if not (trainset.ready or pressing):
                 return false
             return _step(vehicle, cab, MaszynaLegacyDriverHints.master_controller(vehicle, cab), &"increase",
                     "controller_main_position") \

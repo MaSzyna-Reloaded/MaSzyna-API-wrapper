@@ -4,6 +4,19 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-26 - semaphore lost its model
+
+* **Symptom:** `SemaphoreNode.model` in `demo_3d.tscn` was empty in the editor, and after the
+  operator moved the semaphore model and saved, the `model = NodePath(...)` line was gone.
+* **Proof:** packing a scene with the property set from code wrote
+  `node_paths=PackedStringArray("model")` into the node's header; the hand-written entry lacked it.
+  With the header added, the scene loads the node into the property.
+* **Cause:** a node-typed (`PROPERTY_HINT_NODE_TYPE`) property is stored as a `NodePath` and
+  resolved on instancing only for the names the header lists in `node_paths`.
+* **Fix:** the header lists `node_paths=PackedStringArray("model")`.
+* **Rule:** when writing a node-typed property into a `.tscn` by hand, add it to `node_paths` - or
+  set it once in the editor and let the editor write the scene.
+
 ## 2026-09-25 - catalogue swapped, UI unchanged
 
 * **Symptom:** a UI translated through Godot's i18n kept its old texts after the game directory

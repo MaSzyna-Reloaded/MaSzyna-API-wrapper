@@ -21,7 +21,12 @@ namespace godot {
             /// A scenery node's `lights`/`lightcolors` entry for one light
             /// (TAnimModel::Load(), AnimModel.cpp:335-361)
             struct LightDeclaration {
-                    float mode = 0.0; // ls_Off/ls_On/ls_Blink/ls_Dark/ls_Home plus its fraction
+                    int mode = 0;          // E3DRenderingServer::LightMode
+                    float threshold = 0.0; // LIGHT_MODE_DARK/HOME: light level it comes on at, 0 - default
+                    float on_time = 0.0;   // LIGHT_MODE_BLINK: seconds on, seconds off, shift of the cycle
+                    float off_time = 0.0;
+                    float phase = 0.0;
+                    bool blink_on = false; // LIGHT_MODE_BLINK: what the last resolve decided
                     Color color;
                     bool has_color = false;
             };

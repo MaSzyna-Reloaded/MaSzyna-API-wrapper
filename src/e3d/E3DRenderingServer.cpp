@@ -1,5 +1,6 @@
 #include "../scenery/SceneryStreamingServer.hpp"
 #include "E3DRenderingServer.hpp"
+#include "LegacyLightMode.hpp"
 #include <godot_cpp/classes/gpu_particles3d.hpp>
 #include <godot_cpp/classes/mesh.hpp>
 #include <godot_cpp/classes/project_settings.hpp>
@@ -11,6 +12,9 @@
 #include <godot_cpp/variant/utility_functions.hpp>
 
 namespace godot {
+    const char *E3DRenderingServer::instance_freed_signal = "instance_freed";
+    const char *E3DRenderingServer::instance_built_signal = "instance_built";
+
     void E3DRenderingServer::_bind_methods() {
         ClassDB::bind_method(
                 D_METHOD("instance_create", "model", "instancer", "instance_kind"),
@@ -50,6 +54,14 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("instance_set_lights_colors", "instance", "colors"),
                 &E3DRenderingServer::instance_set_lights_colors);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_light_mode", "instance", "light", "mode"),
+                &E3DRenderingServer::instance_set_light_mode);
+        ClassDB::bind_method(
+                D_METHOD("instance_get_light_count", "instance"), &E3DRenderingServer::instance_get_light_count);
+        ClassDB::bind_method(
+                D_METHOD("instance_set_light_blink", "instance", "light", "on_time", "off_time", "phase"),
+                &E3DRenderingServer::instance_set_light_blink);
         ClassDB::bind_method(
                 D_METHOD("emission_light_create", "instance", "light_name"),
                 &E3DRenderingServer::emission_light_create);
@@ -91,6 +103,9 @@ namespace godot {
         BIND_ENUM_CONSTANT(LIGHT_MODE_BLINK);
         BIND_ENUM_CONSTANT(LIGHT_MODE_DARK);
         BIND_ENUM_CONSTANT(LIGHT_MODE_HOME);
+
+        ADD_SIGNAL(MethodInfo(instance_freed_signal, PropertyInfo(Variant::RID, "instance")));
+        ADD_SIGNAL(MethodInfo(instance_built_signal, PropertyInfo(Variant::RID, "instance")));
     }
 
     E3DRenderingServer::E3DRenderingServer() {
@@ -109,6 +124,7 @@ namespace godot {
         smoke_objects.clear();
         smoke_order.clear();
         _set_smoke_processing(false);
+        _set_light_processing(false);
         for (KeyValue<RID, E3DInstanceData> &item: instances) {
             item.value.light_objects.clear();
             item.value.smoke_objects.clear();
@@ -180,12 +196,17 @@ namespace godot {
             MutexLock lock(**models_mutex);
             stream_models.erase(p_instance);
         }
+        if (blinking_instances.has(p_instance)) {
+            blinking_instances.erase(p_instance);
+            _set_light_processing(!blinking_instances.is_empty());
+        }
         E3DInstanceData clearing = data;
         _clear_instance_lights(clearing);
         _clear_instance_smoke_sources(clearing);
         if (clearing.built) {
             _get_backend(clearing).clear(clearing);
         }
+        emit_signal(instance_freed_signal, p_instance);
     }
 
     /// Builds (or rebuilds) the instance content. Later changes of options, attached node and
@@ -209,6 +230,7 @@ namespace godot {
         backend.build(*instance, material_resolver);
         _build_instance_lights(p_instance, *instance);
         _build_instance_smoke_sources(p_instance, *instance);
+        emit_signal(instance_built_signal, p_instance);
     }
 
     void E3DRenderingServer::instance_set_options(
@@ -294,8 +316,70 @@ namespace godot {
         E3DInstanceData *instance = instances.getptr(p_instance);
         ERR_FAIL_NULL(instance);
         for (int i = 0; i < p_modes.size(); i++) {
-            instance->light_declarations[_light_name_for_index(i)].mode = p_modes[i];
+            const LegacyLightMode parsed = LegacyLightMode::parse(p_modes[i]);
+            E3DInstanceData::LightDeclaration &declaration = instance->light_declarations[_light_name_for_index(i)];
+            declaration.mode = parsed.mode;
+            declaration.threshold = parsed.threshold;
+            declaration.on_time = parsed.on_time;
+            declaration.off_time = parsed.off_time;
+            declaration.phase = parsed.phase;
         }
+        _update_blinking(p_instance, *instance);
+        _resolve_lights(*instance);
+        _update_if_built(*instance);
+    }
+
+    /// One light by index, what `LightSet()` does for a `lights` event (AnimModel.cpp:664-670).
+    /// A LIGHT_MODE_BLINK set here blinks with the default times; see instance_set_light_blink().
+    /// The newest command wins: it drops a manual override of the same light, as LightSet()
+    /// replaces whatever the light was set to before.
+    void E3DRenderingServer::instance_set_light_mode(const RID &p_instance, const int p_light, const LightMode p_mode) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        const String light_name = _light_name_for_index(p_light);
+        instance->lights_override.erase(light_name);
+        E3DInstanceData::LightDeclaration &declaration = instance->light_declarations[light_name];
+        declaration.mode = p_mode;
+        declaration.threshold = 0.0;
+        declaration.on_time = LegacyLightMode::DEFAULT_ON_TIME;
+        declaration.off_time = LegacyLightMode::DEFAULT_OFF_TIME;
+        declaration.phase = 0.0;
+        _update_blinking(p_instance, *instance);
+        _resolve_lights(*instance);
+        _update_if_built(*instance);
+    }
+
+    /// TAnimModel::iNumLights (AnimModel.cpp:327-329): the highest index a light_onNN or
+    /// light_offNN pair has, plus one
+    int E3DRenderingServer::instance_get_light_count(const RID &p_instance) const {
+        const E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL_V(instance, 0);
+        int count = 0;
+        for (const E3DModelLight &light: instance->model_lights.lights) {
+            if (light.name.is_valid_int()) {
+                count = MAX(count, static_cast<int>(light.name.to_int()) + 1);
+            }
+        }
+        return count;
+    }
+
+    /// One light by index, blinking: on for p_on_time seconds, off for p_off_time, the cycle
+    /// shifted by p_phase seconds. Drops a manual override of the light, as above.
+    void E3DRenderingServer::instance_set_light_blink(
+            const RID &p_instance, const int p_light, const float p_on_time, const float p_off_time,
+            const float p_phase) {
+        E3DInstanceData *instance = instances.getptr(p_instance);
+        ERR_FAIL_NULL(instance);
+        ERR_FAIL_COND(p_on_time + p_off_time <= 0.0f);
+        const String light_name = _light_name_for_index(p_light);
+        instance->lights_override.erase(light_name);
+        E3DInstanceData::LightDeclaration &declaration = instance->light_declarations[light_name];
+        declaration.mode = LIGHT_MODE_BLINK;
+        declaration.threshold = 0.0;
+        declaration.on_time = p_on_time;
+        declaration.off_time = p_off_time;
+        declaration.phase = p_phase;
+        _update_blinking(p_instance, *instance);
         _resolve_lights(*instance);
         _update_if_built(*instance);
     }
@@ -878,6 +962,70 @@ namespace godot {
         tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_smoke));
     }
 
+    /// Advances the blinking lights. A light is resolved again only when its cycle crossed an
+    /// edge, so a frame between two edges does no more than the arithmetic.
+    void E3DRenderingServer::_process_lights() {
+        const int size = blinking_instances.size();
+        if (size == 0) {
+            return;
+        }
+        light_clock = static_cast<double>(Time::get_singleton()->get_ticks_usec()) / USEC_PER_SECOND;
+        const int visited = MIN(size, MAX_BLINKING_INSTANCES_PER_FRAME);
+        for (int i = 0; i < visited; i++) {
+            if (blinking_cursor >= size) {
+                blinking_cursor = 0;
+            }
+            E3DInstanceData *instance = instances.getptr(blinking_instances[blinking_cursor]);
+            blinking_cursor++;
+            if (instance == nullptr) {
+                continue;
+            }
+            for (const KeyValue<String, E3DInstanceData::LightDeclaration> &declaration:
+                 instance->light_declarations) {
+                if (declaration.value.mode == LIGHT_MODE_BLINK &&
+                    _is_light_on(declaration.value) != declaration.value.blink_on) {
+                    _resolve_lights(*instance);
+                    _update_if_built(*instance);
+                    break;
+                }
+            }
+        }
+    }
+
+    /// Keeps the instance on the blinking list while any of its lights blinks, and the tick
+    /// connected while the list holds anything
+    void E3DRenderingServer::_update_blinking(const RID &p_instance, const E3DInstanceData &p_instance_data) {
+        bool blinking = false;
+        for (const KeyValue<String, E3DInstanceData::LightDeclaration> &declaration:
+             p_instance_data.light_declarations) {
+            blinking = blinking || declaration.value.mode == LIGHT_MODE_BLINK;
+        }
+        const bool listed = blinking_instances.has(p_instance);
+        if (blinking && !listed) {
+            blinking_instances.push_back(p_instance);
+        } else if (!blinking && listed) {
+            blinking_instances.erase(p_instance);
+        }
+        _set_light_processing(!blinking_instances.is_empty());
+    }
+
+    void E3DRenderingServer::_set_light_processing(const bool p_processing) {
+        if (light_processing == p_processing) {
+            return;
+        }
+        SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
+        if (tree == nullptr) {
+            return;
+        }
+        light_processing = p_processing;
+        if (p_processing) {
+            light_clock = static_cast<double>(Time::get_singleton()->get_ticks_usec()) / USEC_PER_SECOND;
+            tree->connect("process_frame", callable_mp(this, &E3DRenderingServer::_process_lights));
+            return;
+        }
+        tree->disconnect("process_frame", callable_mp(this, &E3DRenderingServer::_process_lights));
+    }
+
     /// One emitter's share of a frame. Fractional particles are carried over, so a rate below one
     /// per second still spawns - the original accumulates the same way (particles.cpp:162).
     void E3DRenderingServer::_process_smoke_source(SmokeObject &p_smoke, const uint64_t p_now) {
@@ -976,17 +1124,20 @@ namespace godot {
         return String::num_int64(p_index).pad_zeros(2);
     }
 
-    /// TAnimModel::RaPrepare(), AnimModel.cpp:578-627. ls_Blink is not ported - it is used 15
-    /// times in the whole data set and needs a per-frame timer (see TODO.md), so it follows
-    /// ls_Dark for now.
-    bool E3DRenderingServer::_is_light_mode_on(const float p_mode) const {
-        const double mode = Math::abs(static_cast<double>(p_mode));
-        const double mode_integral = Math::floor(mode);
-        switch (static_cast<int>(mode_integral)) {
+    /// TAnimModel::RaPrepare(), AnimModel.cpp:578-627, and the timers of RaAnimate(),
+    /// AnimModel.cpp:534-540 - without the opacity transition, a blinking light is on or off.
+    /// The cycle runs on one clock for every light instead of a timer per model; the original's
+    /// timers all start at load, so they are in step as well.
+    bool E3DRenderingServer::_is_light_on(const E3DInstanceData::LightDeclaration &p_declaration) const {
+        switch (p_declaration.mode) {
             case LIGHT_MODE_OFF:
                 return false;
             case LIGHT_MODE_ON:
                 return true;
+            case LIGHT_MODE_BLINK: {
+                const double period = p_declaration.on_time + p_declaration.off_time;
+                return Math::fmod(light_clock + p_declaration.phase, period) < p_declaration.on_time;
+            }
             case LIGHT_MODE_HOME: {
                 // like dark, but forced off late at night
                 if (current_time >= HOME_LIGHTS_OFF_FROM_HOUR && current_time < HOME_LIGHTS_OFF_TO_HOUR) {
@@ -994,12 +1145,10 @@ namespace godot {
                 }
                 [[fallthrough]];
             }
-            case LIGHT_MODE_BLINK:
-            case LIGHT_MODE_DARK:
             default: {
                 // the fraction carries the light's own threshold, e.g. `lights 3.4` means 0.4
-                const double fraction = mode - mode_integral;
-                const double threshold = fraction < 0.01 ? DEFAULT_DARK_THRESHOLD : fraction;
+                const double threshold =
+                        p_declaration.threshold > 0.0 ? p_declaration.threshold : DEFAULT_DARK_THRESHOLD;
                 return light_level <= threshold;
             }
         }
@@ -1007,8 +1156,10 @@ namespace godot {
 
     void E3DRenderingServer::_resolve_lights(E3DInstanceData &p_instance) {
         Dictionary state;
-        for (const KeyValue<String, E3DInstanceData::LightDeclaration> &declaration: p_instance.light_declarations) {
-            state[declaration.key] = _is_light_mode_on(declaration.value.mode);
+        for (KeyValue<String, E3DInstanceData::LightDeclaration> &declaration: p_instance.light_declarations) {
+            const bool on = _is_light_on(declaration.value);
+            declaration.value.blink_on = on;
+            state[declaration.key] = on;
         }
         state.merge(p_instance.lights_override, true);
         p_instance.lights_state = state;

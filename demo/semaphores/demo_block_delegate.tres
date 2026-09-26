@@ -1,0 +1,6 @@
+[gd_resource type="SemaphoreSystemDelegate" format=3]
+
+[ext_resource type="Script" path="res://semaphores/demo_block_delegate.gd" id="1_delegate"]
+
+[resource]
+script = ExtResource("1_delegate")

@@ -11,7 +11,9 @@ class PendingInclude:
     var trainset_proxy:TrainSet3D = null
     var parent_trainset:TrainSet3D = null
 
-const RESULT_LISTS:Array[String] = ["tracks", "traction", "power_sources", "models", "terrains", "triangles"]
+const RESULT_LISTS:Array[String] = [
+    "tracks", "traction", "power_sources", "models", "light_events", "terrains", "triangles"
+]
 
 var _states: Array[Dictionary] = []
 var include_depth: int = 0
@@ -23,6 +25,7 @@ var tracks:Array[MaszynaTrackData] = []
 var traction:Array[MaszynaTractionData] = []
 var power_sources:Array[MaszynaPowerSourceData] = []
 var models:Array[MaszynaModelData] = []
+var light_events:Array[MaszynaLightsEventData] = []
 var terrains: Array = []
 var triangles: Array = []
 var dependencies:Dictionary = {}

@@ -53,6 +53,7 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
         "model":
             var model:MaszynaModelData = model_importer.import(p, context)
             if model:
+                model.name = name
                 # same context transform as for Node3D objects below
                 model.position = model.position.rotated(Vector3.UP, context.rotate.y) + context.origin
                 model.rotation += Vector3(context.rotate)

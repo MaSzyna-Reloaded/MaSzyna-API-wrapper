@@ -391,6 +391,15 @@ namespace godot {
                         Variant::BOOL, "main_pipe_locked", PROPERTY_HINT_NONE, "",
                         PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
                 "", "get_main_pipe_locked");
+        ClassDB::bind_method(D_METHOD("get_force"), &VehicleBrake::get_force);
+        ADD_PROPERTY(
+                PropertyInfo(
+                        Variant::FLOAT, "force", PROPERTY_HINT_NONE, "",
+                        PROPERTY_USAGE_EDITOR | PROPERTY_USAGE_READ_ONLY),
+                "", "get_force");
+        ClassDB::bind_method(D_METHOD("is_braking"), &VehicleBrake::is_braking);
+        ClassDB::bind_method(D_METHOD("is_holding"), &VehicleBrake::is_holding);
+        ClassDB::bind_method(D_METHOD("is_cut_off"), &VehicleBrake::is_cut_off);
     }
 
     void VehicleBrake::_register_commands() {

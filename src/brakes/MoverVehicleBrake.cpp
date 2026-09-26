@@ -348,6 +348,26 @@ namespace godot {
         return mover != nullptr ? mover->LockPipe : false;
     }
 
+    double MoverVehicleBrake::get_force() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr ? mover->Fb : 0.0;
+    }
+
+    bool MoverVehicleBrake::is_braking() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_on);
+    }
+
+    bool MoverVehicleBrake::is_holding() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_hld);
+    }
+
+    bool MoverVehicleBrake::is_cut_off() const {
+        const TMoverParameters *mover = get_mover();
+        return mover != nullptr && mover->Hamulec && (mover->Hamulec->GetBrakeStatus() & Maszyna::b_dmg);
+    }
+
     void MoverVehicleBrake::_fill_state_dictionary(Dictionary &p_state) const {
         TMoverParameters *mover = get_mover();
         if (mover == nullptr) {
@@ -378,6 +398,10 @@ namespace godot {
         p_state["brake_edb_cylinder_pressure"] = get_edb_cylinder_pressure();
         p_state["brake_releaser_active"] = get_releaser_active();
         p_state["main_pipe_locked"] = get_main_pipe_locked();
+        p_state["brake_force"] = get_force();
+        p_state["brake_is_braking"] = is_braking();
+        p_state["brake_is_holding"] = is_holding();
+        p_state["brake_is_cut_off"] = is_cut_off();
     }
 
     void MoverVehicleBrake::_apply_configuration() {

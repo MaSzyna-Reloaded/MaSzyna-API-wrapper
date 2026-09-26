@@ -690,6 +690,29 @@ ported, into a delegate.
    orders to the activator's driver. A future scenario kind (Lua...) is another delegate.
 4. **Driving** - the track ahead read over the existing topology (`_motion_connection`), the passive
    events' positions and the speed table, speed control through the cab, the timetable followed.
+   In `MaszynaLegacyAIDriver` (the delegate), acting through `CabinSystem.act()`; the topology walk
+   is a `TrackManager` query, the passive events `ScenarioEventServer`'s, the signals
+   `SemaphoreServer`'s. In order:
+   1. Done: what the driver reads of its trainset (`MaszynaLegacyDriverTrainset`,
+      `Driver.cpp:6033-6190`): readiness of the brakes (`Ready`, `fReady`, `IsConsistBraked`), the
+      gravity along the track (`fAccGravity`) and the trainset's acceleration (`AbsAccS`); the
+      vehicle publishes `acceleration`, `brake_force`, `brake_is_braking`/`_holding`/`_cut_off`
+      and `engine_idle_rpm_count`. Left: the stretched couplers, doors, light, the relays of the
+      other vehicles under control, the individual release of an overcharged vehicle, the parking
+      brake of a speed control unit, EP brakes in `IsConsistBraked`, the pipe pressure a brake
+      counts as applied at (`BrakePressureActual.PipePressureVal`, taken as 3.9).
+   2. The speed and acceleration wanted without a speed table: `VelDesired` from the orders and
+      the vehicle's limit, `AccPreferred` (`SetDriverPsyche()`), `AccDesired`
+      (`UpdateSituation()`, `Driver.cpp:7300-7420`).
+   3. Tractive force through the cab (`control_tractive_force()`, `IncSpeed()`/`DecSpeed()`,
+      `Driver.cpp:3406-3760, 7996-8063`): diesel and diesel-electric first (Stary Jawor), then the
+      electric series motor and the induction motor.
+   4. Braking through the cab (`control_braking_force()`, the AI's own handle position
+      `BrakeCtrlPosition`/`gbh_*`, `IncBrake()`/`DecBrake()`, the brake table `fBrake_a0/a1`,
+      `Driver.cpp:3014-3366, 8065-8190`), the releaser and the independent brake.
+   5. The speed table (`TableTraceRoute()`/`TableCheck()`): limits, signals and passive events
+      ahead; stopping at them.
+   6. The timetable: stations, departures, `@`.
 
 ## Tests
 

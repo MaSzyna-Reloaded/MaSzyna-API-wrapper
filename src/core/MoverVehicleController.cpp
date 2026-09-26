@@ -567,6 +567,10 @@ namespace godot {
         return mover != nullptr ? mover->Vel : 0.0;
     }
 
+    double MoverVehicleController::get_acceleration() const {
+        return mover != nullptr ? mover->AccS : 0.0;
+    }
+
     double MoverVehicleController::get_mass_total() const {
         return mover != nullptr ? mover->TotalMass : 0.0;
     }

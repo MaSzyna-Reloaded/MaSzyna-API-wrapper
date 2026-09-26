@@ -133,6 +133,24 @@ func test_the_engine_is_prepared_and_released_through_the_cab() -> void:
     CabinSystem.vehicle_attach_cab_logic(vehicle, null)
 
 
+func test_the_driver_reads_its_trainset() -> void:
+    var ai:MaszynaLegacyAIDriver = MaszynaLegacyAIDriver.new()
+    var train:VehicleController = build_vehicle("AIDriverTrainsetTest", SM42)
+    var vehicle:RID = train.get_rid()
+    var driver:RID = DriverSystem.driver_create()
+    DriverSystem.driver_attach_vehicle(driver, vehicle)
+    DriverSystem.driver_attach_delegate(driver, ai)
+
+    await wait_until(func() -> bool: return not ai.get_state(driver)["trainset_vehicles"].is_empty(), MAX_WAIT)
+
+    var state:Dictionary = ai.get_state(driver)
+    var alone:Array[RID] = [vehicle]
+    assert_eq(state["trainset_vehicles"], alone, "a vehicle on its own is its whole trainset")
+    assert_eq(state["trainset_mass"], float(train.state["mass_total"]))
+    assert_almost_eq(state["trainset_gravity_acceleration"], 0.0, 0.0001, "on the flat nothing pulls")
+    DriverSystem.driver_free(driver)
+
+
 func _create_driver(ai:MaszynaLegacyAIDriver) -> RID:
     var driver:RID = DriverSystem.driver_create()
     DriverSystem.driver_attach_vehicle(driver, build_vehicle("AIDriverTest").get_rid())

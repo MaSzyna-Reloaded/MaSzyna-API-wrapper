@@ -96,6 +96,8 @@ class DriverState:
     var station_index:int = 0
     ## ReactionTime - until its next update
     var reaction_time:float = PREPARE_TIME
+    ## What it read of its trainset on its last update
+    var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
 
     func _init() -> void:
         orders.resize(MAX_ORDERS)
@@ -141,6 +143,13 @@ func get_state(driver:RID) -> Dictionary:
         "warning_horn": state.warning_horn,
         "timetable": state.timetable,
         "station_index": state.station_index,
+        "trainset_vehicles": state.trainset.vehicles,
+        "trainset_mass": state.trainset.mass,
+        "trainset_ready": state.trainset.ready,
+        "trainset_brake_pressure_max": state.trainset.brake_pressure_max,
+        "trainset_braked": state.trainset.braked,
+        "trainset_gravity_acceleration": state.trainset.gravity_acceleration,
+        "trainset_acceleration": state.trainset.acceleration,
     }
 
 
@@ -233,6 +242,7 @@ func _update(driver:RID) -> void:
     if not state or not vehicle.is_valid():
         return
     state.reaction_time = EASY_REACTION_TIME
+    state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
     var cab:int = CabinSystem.occupied_cab(vehicle)
     var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
     # a vehicle somebody powered up gets ready to drive (the original's HACK, Driver.cpp:7226-7231)

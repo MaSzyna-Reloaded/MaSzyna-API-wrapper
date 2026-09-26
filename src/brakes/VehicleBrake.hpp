@@ -50,6 +50,13 @@ namespace godot {
             /* The main pipe is cut off from the brake valve (LockPipe, the i-mainpipelock lamp,
              * Train.cpp:11758) */
             virtual bool get_main_pipe_locked() const = 0;
+            /* Braking force of the vehicle [kN] (Fb) */
+            virtual double get_force() const = 0;
+            /* The brake's status (GetBrakeStatus(), hamulce.h:55-64): braking - the cylinder
+             * filling (b_on), holding its pressure (b_hld), cut off from the train brake (b_dmg) */
+            virtual bool is_braking() const = 0;
+            virtual bool is_holding() const = 0;
+            virtual bool is_cut_off() const = 0;
             /**
              * @enum BrakeMethod
              * Enumeration representing various brake methods used in train systems.

@@ -244,6 +244,8 @@ namespace godot {
             /// Straight from the backend, like get_velocity() - the speed readers want this
             /// one number, not the whole state
             virtual double get_speed() const = 0;
+            /// The acceleration along the track [m/s2], every force counted (AccS)
+            virtual double get_acceleration() const = 0;
             /// The rest of what every vehicle has, whatever it is made of. Read straight from the
             /// backend - nothing is stored, and the dump is built from these.
             virtual double get_mass_total() const = 0;

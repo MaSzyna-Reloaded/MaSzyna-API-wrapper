@@ -202,6 +202,11 @@ namespace godot {
             return;
         }
         p_config["engine_shake_enabled"] = true;
+        // the rotation the running engine idles at [1/s], as engine_rpm_count (enrot) counts it:
+        // the one the original's AI and spin-up compare with (Driver.cpp:6187, Mover.cpp:7897)
+        p_config["engine_idle_rpm_count"] = p_mover->EngineType == TEngineType::DieselEngine
+                                                    ? p_mover->dizel_nmin
+                                                    : p_mover->DElist[0].RPM / 60.0;
     }
 
     void MoverDieselEngineBackend::oil_pump(const VehicleDieselEngine *p_engine, const bool p_enabled) const {

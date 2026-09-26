@@ -73,6 +73,7 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("update_state"), &VehicleController::update_state);
         ClassDB::bind_method(D_METHOD("get_velocity"), &VehicleController::get_velocity);
         ClassDB::bind_method(D_METHOD("get_speed"), &VehicleController::get_speed);
+        ClassDB::bind_method(D_METHOD("get_acceleration"), &VehicleController::get_acceleration);
         ClassDB::bind_method(D_METHOD("get_mass_total"), &VehicleController::get_mass_total);
         ClassDB::bind_method(D_METHOD("get_total_distance"), &VehicleController::get_total_distance);
         ClassDB::bind_method(D_METHOD("get_direction"), &VehicleController::get_direction);
@@ -538,6 +539,7 @@ namespace godot {
         p_state["mass_total"] = get_mass_total();
         p_state["velocity"] = get_velocity();
         p_state["speed"] = get_speed();
+        p_state["acceleration"] = get_acceleration();
         p_state["tachometer_speed"] = get_tachometer_speed();
         p_state["tachometer_speed_jump"] = get_tachometer_speed_jump();
         p_state["tachometer_clock_speed"] = get_tachometer_clock_speed();

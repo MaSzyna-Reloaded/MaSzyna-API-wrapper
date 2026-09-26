@@ -38,6 +38,10 @@ namespace godot {
             double get_edb_cylinder_pressure() const override;
             bool get_releaser_active() const override;
             bool get_main_pipe_locked() const override;
+            double get_force() const override;
+            bool is_braking() const override;
+            bool is_holding() const override;
+            bool is_cut_off() const override;
 
         private:
             const std::unordered_map<BrakeMethod, int> brake_method_map = {

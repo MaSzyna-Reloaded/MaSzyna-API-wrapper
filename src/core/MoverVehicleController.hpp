@@ -99,6 +99,7 @@ namespace godot {
             void update_state() override;
             double get_velocity() const override;
             double get_speed() const override;
+            double get_acceleration() const override;
             double get_mass_total() const override;
             double get_total_distance() const override;
             int get_direction() const override;

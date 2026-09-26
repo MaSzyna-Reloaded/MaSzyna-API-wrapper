@@ -622,6 +622,13 @@ closes both level crossings). Left:
   simulation speed above 60 a minute can pass between two publishes and the launcher misses it
   (the original checks every frame).
 * The `queueevent` console command.
+* **Timetables** (`Timetable`, `TimetableEntry`, `MaszynaLegacyTimetableFactory`) are read but not
+  used yet - nothing loads a trainset's or a `Timetable:` command's timetable and no driver follows
+  one. `maszyna_trainset_importer.gd` takes the first token of `trainset <timetable> <track>
+  <offset> <velocity>` for the trainset's name; it is the timetable. Not read: the station
+  announcements (`load_sounds()`, `mtable.cpp:644-671`); `is_maintenance`, which the original tests
+  on the track count token (`mtable.cpp:535`) and is never true. A timetable file in UTF-8 rather
+  than cp1250 keeps mangled Polish letters in its labels (seen in `linia053/scenariusz_os`).
 * Events of one include cannot refer to events of another `MaszynaIncludeNode`.
 * Proxy nodes for editor-built scenes (`ScenarioEventNode`, `ScenarioMemoryNode`,
   `ScenarioLauncherNode`, the `SemaphoreNode` pattern).

@@ -94,6 +94,8 @@
 #include "scenario/ScenarioEventAction.hpp"
 #include "scenario/ScenarioEventCondition.hpp"
 #include "scenario/ScenarioEventServer.hpp"
+#include "scenario/Timetable.hpp"
+#include "scenario/TimetableEntry.hpp"
 #include "speed_control/MoverVehicleSpeedControl.hpp"
 #include "speed_control/VehicleSpeedControl.hpp"
 #include "switches/MoverVehicleSwitches.hpp"
@@ -183,6 +185,8 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MaszynaLegacyTrackVelocityAction);
         GDREGISTER_CLASS(MaszynaLegacyAnimationAction);
         GDREGISTER_CLASS(MaszynaLegacyVehicleCommandAction);
+        GDREGISTER_CLASS(TimetableEntry);
+        GDREGISTER_CLASS(Timetable);
         GDREGISTER_CLASS(MaszynaLegacyEventCondition);
         GDREGISTER_CLASS(MaszynaParser);
         GDREGISTER_CLASS(MaszynaTrianglesImporter);

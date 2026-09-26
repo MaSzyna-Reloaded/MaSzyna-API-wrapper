@@ -751,12 +751,10 @@ ported, into a delegate.
       Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL, the
       vehicles ahead (Obstacle), crossings, `BackwardTraceRoute`, the switch branch of an event
       on a switch, `ReactionTime` 0.1 close to a stop, the cargo train's distances.
-   **Open, blocks driving on Stary Jawor**: with an FV4a handle at running the brake pipe does not
-   charge to 5 bar - it stays at 4.2-4.9 or slowly falls (ST44-700 with 20 wagons, SU46, SM42-099),
-   so the wagons' brakes hold and the trainset is never ready; an MHZ_K8P (SM42-1273) holds 5.0.
-   Ruled out: the feed pipe (7 bar), `LockPipe`, `BrakeOpModeFlag`, the compressor, the handle's
-   position (`BrakeCtrlPosR`). The original starts a standing train cold the same way
-   (`DynObj.cpp:2034`). Next: the handle's `CP`/`RP`/surge and its flow while running.
+   Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
+   runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it. The
+   vehicles ahead (`Obstacle`) are not read: in a run with the route read backwards it drove into
+   a standing vehicle on n247 - a driver does not see a train or a wagon in its way.
    6. The timetable: stations, departures, `@`.
 
 ## Tests

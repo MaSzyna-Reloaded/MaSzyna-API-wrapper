@@ -765,9 +765,10 @@ namespace godot {
         bool is_switch = placement->track_is_switch;
         double length = tracks->track_get_length(track, branch);
         const double offset = CLAMP(placement->track_offset, 0.0, length);
-        // as _move_placement(): positive moves toward the branch end
+        // as _move_placement(): positive moves toward the branch end. Its distance counts from the
+        // rear, the vehicle's front (the mover's V > 0) is its negative (vehicle_process_movement())
         double movement_sign = (placement->track_direction == TrackManager::DIRECTION_NORMAL ? -1.0 : 1.0) *
-                               (p_direction < 0 ? -1.0 : 1.0);
+                               (p_direction < 0 ? 1.0 : -1.0);
         double covered = movement_sign > 0.0 ? length - offset : offset;
         double start = covered - length;
         while (true) {

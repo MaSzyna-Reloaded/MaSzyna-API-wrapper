@@ -9,7 +9,7 @@ class_name LegacyCabinForwardCommands
 
 var _controls_root:Node
 var _skip:Array[StringName] = []
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 var _handlers:Dictionary = {}
 
@@ -19,8 +19,8 @@ func _init(controls_root:Node, skip:Array[StringName]) -> void:
     _skip = skip
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
     for node:Node in _controls_root.find_children("*", "", true, false):
         var control_id:StringName = StringName(node.get("control_id")) if "control_id" in node else &""
@@ -32,12 +32,12 @@ func register(train_id:String, cab:int) -> void:
         wiring["control_id"] = control_id
         var handler:Callable = _handle.bind(wiring)
         _handlers[control_id] = handler
-        CabinSystem.register_control(train_id, cab, control_id, handler)
+        CabinSystem.register_control(vehicle_rid, cab, control_id, handler)
 
 
 func unregister() -> void:
     for control_id:StringName in _handlers:
-        CabinSystem.unregister_control(_train_id, _cab, control_id, _handlers[control_id])
+        CabinSystem.unregister_control(_vehicle_rid, _cab, control_id, _handlers[control_id])
     _handlers.clear()
 
 

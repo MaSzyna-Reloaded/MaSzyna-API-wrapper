@@ -14,7 +14,7 @@ class_name LegacyCabinUnmodelledControls
 const ACTION_FIELDS:Array[String] = ["action", "action_increase", "action_decrease"]
 
 var _controls_root:Node
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 var _handlers:Dictionary[StringName, Callable] = {}
 ## control_id -> fixed fields of its catalog entry
@@ -25,8 +25,8 @@ func _init(controls_root:Node) -> void:
     _controls_root = controls_root
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
     var taken_actions:Dictionary[String, bool] = {}
     var modelled:Dictionary[StringName, bool] = {}
@@ -48,7 +48,7 @@ func register(train_id:String, cab:int) -> void:
         actions = actions.filter(func(action:String) -> bool: return not action == "")
         if not actions or actions.any(func(action:String) -> bool: return taken_actions.has(action)):
             continue
-        var registered:bool = CabinSystem.has_control(train_id, cab, control_id)
+        var registered:bool = CabinSystem.has_control(vehicle_rid, cab, control_id)
         if not registered and not wiring:
             continue
         for action:String in actions:
@@ -58,12 +58,12 @@ func register(train_id:String, cab:int) -> void:
             continue
         wiring["control_id"] = control_id
         _handlers[control_id] = LegacyCabinForwardCommands._handle.bind(wiring)
-        CabinSystem.register_control(train_id, cab, control_id, _handlers[control_id])
+        CabinSystem.register_control(vehicle_rid, cab, control_id, _handlers[control_id])
 
 
 func unregister() -> void:
     for control_id:StringName in _handlers:
-        CabinSystem.unregister_control(_train_id, _cab, control_id, _handlers[control_id])
+        CabinSystem.unregister_control(_vehicle_rid, _cab, control_id, _handlers[control_id])
     _handlers.clear()
     _controls.clear()
 
@@ -74,23 +74,23 @@ func input(event:InputEvent) -> void:
         var fields:Dictionary = _controls[control_id]
         var repeat:bool = fields.get("repeat_on_hold", false)
         if fields.get("action_increase", "") and event.is_action_pressed(fields["action_increase"], repeat, true):
-            CabinSystem.act(_train_id, _cab, control_id, &"increase")
+            CabinSystem.act(_vehicle_rid, _cab, control_id, &"increase")
         elif fields.get("action_decrease", "") and event.is_action_pressed(fields["action_decrease"], repeat, true):
-            CabinSystem.act(_train_id, _cab, control_id, &"decrease")
+            CabinSystem.act(_vehicle_rid, _cab, control_id, &"decrease")
         if not fields.get("action", ""):
             continue
         if fields.get("monostable", false):
             if event.is_action_pressed(fields["action"], false, true):
-                CabinSystem.act(_train_id, _cab, control_id, &"hold")
+                CabinSystem.act(_vehicle_rid, _cab, control_id, &"hold")
             elif event.is_action_released(fields["action"], true):
-                CabinSystem.act(_train_id, _cab, control_id, &"release")
+                CabinSystem.act(_vehicle_rid, _cab, control_id, &"release")
         elif event.is_action_pressed(fields["action"], false, true):
             # a two-state control follows the vehicle, there is no widget holding its position
             var state_property:String = fields.get("state_property", "")
 
             CabinSystem.act(
-                    _train_id, _cab, control_id, &"toggle",
-                    not bool(CabinSystem.vehicle_state_value(_train_id, state_property, false))
+                    _vehicle_rid, _cab, control_id, &"toggle",
+                    not bool(CabinSystem.vehicle_state_value(_vehicle_rid, state_property, false))
                     if state_property else null)
 
 

@@ -24,8 +24,8 @@ against this file; the 09-24 list had already gone stale in G by the time it was
 
 * **A - done**, except `doc_classes/VehicleState.xml` (50 lines), which still publishes the deleted
   class. `doc_classes/RailVehicleServer.xml` is clean now.
-* **B - partial.** **Three caches where there should be one** - see the next block.
-  `TrainSystem.cpp:88,104` call `train->get_state()`/`get_config()` directly. None of the five
+* **B - partial.** **The hottest path misses the one state cache** - see the next block.
+  None of the five
   common values (`velocity`, `speed`, `mass_total`, `total_distance`, `direction`) is a property;
   only the first two have a server forwarder. `Dictionary config` has left the controller.
 * **C - partial.** Done: the component is an `Object`, fetch/tick split, interface/implementation
@@ -40,8 +40,8 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   the prefix (`brake_pipe_pressure` -> `brakes.pipe_pressure`); dump keys keep it.
 * **D - one of three.** The controller is an `Object`. Not done: it is still created and owned by
   `VehiclePhysicsNode::_build()` (`:94` creates it, `:114` takes the handle) - it belongs in
-  `vehicle_create()`, which would also remove `VehiclePlacement::controller_id`; registering with
-  `TrainSystem` still hangs off `attach_to_system()` (2 call sites) from `NOTIFICATION_ENTER_TREE`.
+  `vehicle_create()`, which would also remove `VehiclePlacement::controller_id`; registering the
+  name and the commands still hangs off `attach_to_system()` (2 call sites).
   `RailVehicle3D` creates a second handle of its own - a node that draws a vehicle should own none.
 * **E - not started.** Zero of the ~20 proxy nodes; no `VehicleControllerNode`.
 * **F - done**, what is left of the area:
@@ -66,22 +66,20 @@ against this file; the 09-24 list had already gone stale in G by the time it was
   `TMoverParameters::ComputeMovement`/`Update` and the three ordering bugs on record (#57 line
   breaker, `Mred`, `roof_light_enabled`). `test_vehicle_doors.gd` must exist first - `VehicleDoors`
   ticks and has no test.
-* **I - one of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone.
-  `TrainSystem.hpp:19,30` still holds `std::map<String, VehicleController *>` and hands the pointer
-  out; `train_id` is written in 34 files and has no unique default, so two vehicles with an empty
-  `train_id` collide and the second is never registered (`dynamic_rail_vehicle_3d.gd:45-49`).
-  `train_id` should have `RailVehicle3D` as its only writer, `TrainSystem` keeps `train_id -> RID`.
+* **I - two of four.** `MaszynaMoverPhysicsServer` and `vehicle_get_mover()` are gone, and so is
+  `TrainSystem`: vehicles are held and commanded by RID, and `train_id` is only the scenery name in
+  `RailVehicleServer`'s name registry, where it may be empty or repeated. Left: `train_id` is still
+  written by the physics node rather than having `RailVehicle3D` as its only writer.
 
 **One state cache, and it lives in the vehicle server.** Measured 2026-09-25: the state is cached
-twice and the hottest path misses both.
+in the server only (CabinSystem's own cache went with its move to RIDs, 2026-09-26), and the
+hottest path misses it.
 
 * `RailVehicleServer::vehicle_dump_state(rid)` (`:766`) holds the dump **per RID**, keyed on the
   physics step **and** the command serial. This is the right place and it works.
-* `CabinSystem` (`:32-34`, `:102-109`) caches the same thing again, keyed on the frame and the
-  serial, and on a miss calls the server's already-cached dump - a cache in front of a cache.
 * `VehicleController::get_state()` caches nothing: it composes the whole dictionary from every
   enabled component on every call. The dependency runs server -> controller, so every direct
-  reader (`RailVehicle3D` 4x, `TrainSoundSystem`, `TrainSystem.cpp:88`) rebuilds it and never
+  reader (`RailVehicle3D` 4x, `TrainSoundSystem`) rebuilds it and never
   touches the cache.
 
 The fix is to turn that dependency round. The body of `get_state()` becomes a private
@@ -96,11 +94,9 @@ frame, and the second half of the key is there for a recorded reason (`FINDINGS.
 command runs synchronously in the middle of a step, so keying on the step alone made the cab act
 one keypress late. Moving to a bare frame counter would bring that back.
 
-**The vehicle's name belongs to the vehicle server - half done.** `vehicle_set_name()` /
-`vehicle_get_name()` / `vehicle_get_rid_by_name()` exist on `RailVehicleServer`, like
-`TrackManager::track_get_rid_by_name()`. What is left: `TrainSystem` does not call them once
-(`vehicle_get_rid_by_name` has zero uses there) and keeps its own name -> pointer map, so it should
-shrink to a thin front for callers that only know a name (scenery, events, console, radio).
+**The vehicle's name belongs to the vehicle server - done.** `vehicle_set_name()` /
+`vehicle_get_name()` / `vehicle_get_rid_by_name()` on `RailVehicleServer`, like
+`TrackManager::track_get_rid_by_name()`, are the only name registry; TrainSystem is gone.
 `CabinSystem`'s whole vehicle-facing surface (`vehicle_state`, `vehicle_config`,
 `vehicle_component`, `vehicle_state_value`, `occupied_cab`) is keyed on `train_id` - flip it to the
 RID in one pass.
@@ -295,7 +291,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
   coupling without the element, a turned vehicle) or `PythonScreenState.compose()`; only checked
   with the E186 in `td_e186.scn`.
 * **Commands a script returns are not executed** (two scripts send `lightsset`); map
-  `simulation::commandMap` names onto `TrainSystem` commands (PyInt.cpp:138-194).
+  `simulation::commandMap` names onto vehicle commands (PyInt.cpp:138-194).
 * **Touch input** (`touches`, `screen_touch_list`, Train.cpp:10713) is always empty.
 * `pyrylandia` is referenced by an MMD and exists nowhere under `dynamic/`.
 

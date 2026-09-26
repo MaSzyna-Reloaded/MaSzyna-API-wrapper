@@ -9,18 +9,18 @@ const CONTROL:StringName = &"manualbrake"
 const ACTION_INCREASE:StringName = &"manual_brake_increase"
 const ACTION_DECREASE:StringName = &"manual_brake_decrease"
 
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
-    CabinSystem.register_control(train_id, cab, CONTROL, _manual_brake)
+    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _manual_brake)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_train_id, _cab, CONTROL, _manual_brake)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _manual_brake)
 
 
 func _manual_brake(state:CabinState, action:StringName, _value:Variant) -> Variant:

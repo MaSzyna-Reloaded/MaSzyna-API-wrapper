@@ -201,10 +201,11 @@ namespace godot {
             cabin->rotate_y(static_cast<real_t>(Math::deg_to_rad(180.0)));
         }
         add_child(cabin);
-        /* A cabin names the vehicle it sits in and takes everything else from CabinSystem. Told
-         * once it is in the tree, because building its interior puts nodes there, and told here
-         * rather than at the next controller change, which for an existing vehicle never comes. */
-        cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
+        /* A cabin holds the handle of the vehicle it sits in and takes everything else from
+         * CabinSystem. Told once it is in the tree, because building its interior puts nodes
+         * there, and told here rather than at the next controller change, which for an existing
+         * vehicle never comes. */
+        cabin->set_vehicle_rid(rid);
 
         cabin_show_frames = 2;
         get_tree()->connect("process_frame", Callable(this, "_show_cabin_after_frames"), Object::CONNECT_ONE_SHOT);
@@ -438,7 +439,7 @@ namespace godot {
             }
         }
         if (cabin != nullptr) {
-            cabin->set_train_id(controller != nullptr ? controller->get_train_id() : String());
+            cabin->set_vehicle_rid(rid);
         }
         _on_roof_light_changed(lighting != nullptr && lighting->get_roof_light_enabled());
         emit_signal(controller_changed_signal);

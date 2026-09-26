@@ -14,8 +14,10 @@ Code generation:
 * Keep code clean and do minimal code changes
 * Follow DRY and KISS principles
 * use english comments (if needed)
-* send train commands through the high-level `TrainSystem.send_command(train_id, ...)` API; call a
-  `TrainController` directly only where the composition already holds it (e.g. `TrainPart`s)
+* a vehicle is held by its `RailVehicleServer` RID and commanded with
+  `RailVehicleServer.vehicle_send_command(vehicle_rid, ...)`; its scenery name (`train_id`) may be
+  empty or repeated and is only for finding it (`vehicle_get_rid_by_name`). Call a
+  `VehicleController` directly only where the composition already holds it (e.g. `VehicleComponent`s)
 * for unclear/critical sections, or logic ported from the original engine instead of wrapped from Mover,
   leave a short comment pointing to the original source (e.g. `Train.cpp:8516`, `DynObj.cpp:1812`)
 * GDSCRIPT: avoid type interference, use explicit type declaration

@@ -18,17 +18,9 @@
 	<tutorials>
 	</tutorials>
 	<methods>
-		<method name="get_train_controller_node">
-			<return type="VehicleController" />
-			<description>
-				Returns bound [VehicleController] instance (may be null)
-			</description>
-		</method>
-		<method name="get_train_state">
+		<method name="get_vehicle_state">
 			<return type="Dictionary" />
 			<description>
-				Returns a [Dictionary] with a current state of the [VehicleController].
-				This is a shortcut for [method VehicleController.get_state] and [method TrainSystem.get_train_state].
 			</description>
 		</method>
 	</methods>

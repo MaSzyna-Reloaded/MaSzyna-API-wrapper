@@ -1,4 +1,3 @@
-#include "../core/TrainSystem.hpp"
 #include "../core/VehicleComponent.hpp"
 #include "../core/VehicleController.hpp"
 #include "../engines/VehicleEngine.hpp"
@@ -41,6 +40,7 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("send_command", "command", "p1", "p2"), &VehicleController::send_command, DEFVAL(Variant()),
                 DEFVAL(Variant()));
+        ClassDB::bind_method(D_METHOD("get_commands"), &VehicleController::get_commands);
 
         ClassDB::bind_method(
                 D_METHOD("broadcast_command", "command", "p1", "p2"), &VehicleController::broadcast_command,
@@ -48,8 +48,7 @@ namespace godot {
 
 
         ClassDB::bind_method(D_METHOD("register_command", "command", "callable"), &VehicleController::register_command);
-        ClassDB::bind_method(
-                D_METHOD("unregister_command", "command", "callable"), &VehicleController::unregister_command);
+        ClassDB::bind_method(D_METHOD("unregister_command", "command"), &VehicleController::unregister_command);
         ClassDB::bind_method(D_METHOD("battery", "enabled"), &VehicleController::battery);
         ClassDB::bind_method(D_METHOD("cab_activation", "enabled"), &VehicleController::cab_activation);
         ClassDB::bind_method(D_METHOD("cab_activation_auto"), &VehicleController::cab_activation_auto);
@@ -410,16 +409,21 @@ namespace godot {
                 "", "get_circuit_rlist_size");
     }
 
-    void VehicleController::register_command(const String &p_command, const Callable &p_callable) {
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->register_command(train_id, p_command, p_callable);
-        }
+    void VehicleController::register_command(const StringName &p_command, const Callable &p_callable) {
+        ERR_FAIL_COND_MSG(commands.has(p_command), vformat("Command is already registered: %s", p_command));
+        commands[p_command] = p_callable;
     }
 
-    void VehicleController::unregister_command(const String &p_command, const Callable &p_callable) {
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->unregister_command(train_id, p_command, p_callable);
+    void VehicleController::unregister_command(const StringName &p_command) {
+        commands.erase(p_command);
+    }
+
+    PackedStringArray VehicleController::get_commands() const {
+        PackedStringArray names;
+        for (const KeyValue<StringName, Callable> &entry: commands) {
+            names.push_back(entry.key);
         }
+        return names;
     }
 
     void VehicleController::_notification(const int p_what) {
@@ -446,11 +450,8 @@ namespace godot {
         emit_signal(simulation_configured_signal);
     }
 
-    /* Registering the vehicle and its commands used to wait for NOTIFICATION_ENTER_TREE. A
-     * vehicle is not in a tree any more, so it happens where the vehicle comes into being. */
-    /* Registering the vehicle and its own commands. It happens before any component attaches,
-     * because a component registers commands too and TrainSystem refuses those of a train it does
-     * not know yet. */
+    /* Registering the vehicle's name and its own commands, where the vehicle comes into being -
+     * it used to wait for NOTIFICATION_ENTER_TREE, which a vehicle outside a tree never gets. */
     /* A vehicle that is rebuilt keeps its identity - every reference taken to it stays valid -
      * so what it holds is handed back by name rather than by destroying the vehicle. */
     void VehicleController::release() {
@@ -464,9 +465,6 @@ namespace godot {
          * find the handle. Everything that already holds the vehicle uses the handle. */
         if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
             server->vehicle_set_name(rid, train_id);
-        }
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->register_train(train_id, this);
         }
         register_command("battery", Callable(this, "battery"));
         register_command("cab_change", Callable(this, "cab_change"));
@@ -624,22 +622,19 @@ namespace godot {
 
     /* Every component goes with the vehicle; nothing outside it holds one. */
     void VehicleController::shutdown() {
-        unregister_command("battery", Callable(this, "battery"));
-        unregister_command("cab_change", Callable(this, "cab_change"));
-        unregister_command("cab_activation", Callable(this, "cab_activation"));
-        unregister_command("cab_activation_auto", Callable(this, "cab_activation_auto"));
-        unregister_command("main_controller_increase", Callable(this, "main_controller_increase"));
-        unregister_command("main_controller_decrease", Callable(this, "main_controller_decrease"));
-        unregister_command("second_controller_increase", Callable(this, "second_controller_increase"));
-        unregister_command("second_controller_decrease", Callable(this, "second_controller_decrease"));
-        unregister_command("direction_increase", Callable(this, "direction_increase"));
-        unregister_command("direction_decrease", Callable(this, "direction_decrease"));
-        unregister_command("distance_counter_activate", Callable(this, "distance_counter_activate"));
-        unregister_command("coupler_connect", Callable(this, "coupler_connect"));
-        unregister_command("coupler_disconnect", Callable(this, "coupler_disconnect"));
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->unregister_train(train_id);
-        }
+        unregister_command("battery");
+        unregister_command("cab_change");
+        unregister_command("cab_activation");
+        unregister_command("cab_activation_auto");
+        unregister_command("main_controller_increase");
+        unregister_command("main_controller_decrease");
+        unregister_command("second_controller_increase");
+        unregister_command("second_controller_decrease");
+        unregister_command("direction_increase");
+        unregister_command("direction_decrease");
+        unregister_command("distance_counter_activate");
+        unregister_command("coupler_connect");
+        unregister_command("coupler_disconnect");
         // the handle belongs to RailVehicle3D, which frees it with itself
         rid = RID();
     }
@@ -720,15 +715,30 @@ namespace godot {
     }
 
     void VehicleController::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->broadcast_command(p_command, p_p1, p_p2);
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            server->broadcast_command(p_command, p_p1, p_p2);
         }
     }
 
-    Variant
-    VehicleController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) const {
-        TrainSystem *system = TrainSystem::get_instance();
-        return system != nullptr ? system->send_command(train_id, String(p_command), p_p1, p_p2) : Variant();
+    /* A handler takes as many of the two arguments as it declares; its return value says whether
+     * the command was accepted (#43), and Variant() means nothing handled it. */
+    Variant VehicleController::send_command(const StringName &p_command, const Variant &p_p1, const Variant &p_p2) {
+        Variant result;
+        if (const Callable *handler = commands.getptr(p_command); handler != nullptr) {
+            Array args;
+            const int argc = static_cast<int>(handler->get_argument_count());
+            if (argc > 0) {
+                args.append(p_p1);
+            }
+            if (argc > 1) {
+                args.append(p_p2);
+            }
+            result = handler->callv(args);
+        } else {
+            UtilityFunctions::push_error(vformat("%s: Unknown command: %s", train_id, p_command));
+        }
+        command_executed(p_command, p_p1, p_p2);
+        return result;
     }
 
     void VehicleController::set_driver_type(const DriverType p_value) {

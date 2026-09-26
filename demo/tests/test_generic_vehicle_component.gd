@@ -51,7 +51,7 @@ func test_the_component_reaches_its_vehicle() -> void:
 
 
 func test_a_command_registered_from_the_script_is_received() -> void:
-    TrainSystem.send_command(_vehicle.train_id, "probe_command", null, null)
+    RailVehicleServer.vehicle_send_command(_vehicle.get_controller().get_rid(), "probe_command", null, null)
     assert_eq(_probe.commands_received, 1, "register_command wired the script's handler")
 
 

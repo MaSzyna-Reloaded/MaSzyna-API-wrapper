@@ -23,7 +23,7 @@ var _raise_button_type:CabinButton.ButtonType
 var _lower_button_type:CabinButton.ButtonType
 ## Train.cpp:3429 - m_controlmapper.contains("pantselectedoff_sw:")
 var _has_lower_button:bool
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 
 
@@ -38,16 +38,16 @@ func control_ids() -> Array[StringName]:
     return [RAISE, LOWER]
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
-    CabinSystem.register_control(train_id, cab, RAISE, _raise)
-    CabinSystem.register_control(train_id, cab, LOWER, _lower)
+    CabinSystem.register_control(vehicle_rid, cab, RAISE, _raise)
+    CabinSystem.register_control(vehicle_rid, cab, LOWER, _lower)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_train_id, _cab, RAISE, _raise)
-    CabinSystem.unregister_control(_train_id, _cab, LOWER, _lower)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, RAISE, _raise)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, LOWER, _lower)
 
 
 # Train.cpp:3403 OnCommand_pantographtoggleselected

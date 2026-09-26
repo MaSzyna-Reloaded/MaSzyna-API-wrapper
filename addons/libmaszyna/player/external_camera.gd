@@ -90,7 +90,7 @@ func _process(delta:float) -> void:
 func _process_dirty() -> void:
     _orbit = Vector2.ZERO
     var controller:VehicleController = vehicle.get_controller()
-    var state:Dictionary = TrainSystem.get_train_state(controller.train_id)
+    var state:Dictionary = RailVehicleServer.vehicle_dump_state(vehicle.get_rid())
     var cabin_occupied:int = state.get("cabin_occupied", 0)
     var direction:int = state.get("direction", 0)
     var cab:int = 1 if cabin_occupied == 0 else cabin_occupied

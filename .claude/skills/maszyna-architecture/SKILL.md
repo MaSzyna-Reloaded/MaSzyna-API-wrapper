@@ -25,7 +25,7 @@ Read top to bottom: each layer may use the ones below it and must know nothing o
 | Backend adapters | `Mover*` classes (`MoverVehicleController`, `MoverVehicle<Domain>`, `MoverComponent`) | the only `TMoverParameters *` in the process | appear in any name, parameter or return type above this row |
 | Vehicle model | `VehicleController` (an `Object`), `VehicleComponent` + `Vehicle<Domain>` interfaces | a vehicle's state, configuration and the operations that change them | name the backend; be a `Node`; hold anything only a drawing, sound or UI layer needs |
 | Servers | `RailVehicleServer`, `TrackManager`, `TractionPowerServer`, `E3DRenderingServer`, `SceneryStreamingServer`, `PythonScreenServer`, and the GDScript rendering servers (`TrackRenderingServer`, `TractionRenderingServer`, `SceneryChunkRenderingServer`) | handles (`RID`), the placement and the composition of what they own, their own worker threads | hand out raw pointers, or hold state a single node could own |
-| Systems | `TrainSystem`, `CabinSystem`, `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
+| Systems | `CabinSystem`, `TrainSoundSystem`, `MaterialManager`, `SceneryInstancer` | cross-cutting bookkeeping keyed by handle, and the vocabulary the data uses | duplicate state the model already has; drive per-frame work that a server could do natively |
 | Nodes | `RailVehicle3D`, `VehiclePhysicsNode`, `Cabin3D`, `RailVehicleStepper`, cab widgets | what is drawn and what is in the scene tree | contain simulation; own a handle the server already owns; reach a vehicle by walking the tree |
 | Importers | `src/parsers/`, `addons/libmaszyna/fiz/`, `.../mmd/`, `.../importer/` | turning FIZ, MMD, E3D and `.scn` into model objects | build scene trees as their output, or keep parse results in nodes |
 
@@ -87,16 +87,12 @@ These are known and being removed. **They are not precedent** - do not copy thei
 not cite them as "how this codebase does it". Counts measured 2026-09-25; re-measure before
 relying on one.
 
-* `TrainSystem.hpp:19,30` keeps `std::map<String, VehicleController *>` and hands the pointer out.
-  The name-to-`RID` registry it should use lives on `RailVehicleServer`.
 * `VehiclePhysicsNode::_build()` creates, owns and frees the controller; `vehicle_create()` inserts
   an empty placement. The server should allocate and own it. `RailVehicle3D.cpp:449` creates a
   second handle on top of that - a node that draws a vehicle should own no handle.
 * `RailVehicle3D` still reads the whole dump four times (`:541`, `:553`, `:712`, `:1108` - the
   pantograph helpers, the roof light and the wiper positions), three of them per frame, instead of
   reading its components.
-* `CabinSystem`'s whole vehicle-facing surface is keyed on `train_id:String`, not on the handle
-  (`cabin_system.gd:97,118,122`).
 * There are no update phases: the step order is a hand-written sequence in
   `RailVehicleServer::step_frame()` (`:803`), and `UpdatePhase` exists nowhere.
 * The dump carries two key conventions - nine `prefix/key` namespaces against a majority of flat

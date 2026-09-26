@@ -10,6 +10,7 @@ var scenery:MaszynaSceneryNode
 var player:MaszynaPlayer
 var controller:VehicleController
 var train_id:String
+var vehicle_rid:RID
 
 
 func before_each():
@@ -29,6 +30,7 @@ func before_each():
             break
         await wait_seconds(0.5)
     train_id = controller.train_id if controller else ""
+    vehicle_rid = controller.get_rid() if controller else RID()
     player = load("res://addons/libmaszyna/player/player.tscn").instantiate()
     player.start_train_id = train_id
     add_child(player)
@@ -45,19 +47,19 @@ func _cab() -> int:
 
 
 func _power_up() -> void:
-    TrainSystem.send_command(train_id, "battery", true)
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "battery", true)
     await wait_idle_frames(2)
-    TrainSystem.send_command(train_id, "security_acknowledge", true)
-    TrainSystem.send_command(train_id, "security_acknowledge", false)
-    TrainSystem.send_command(train_id, "pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", true)
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "security_acknowledge", false)
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "pantograph", VehicleElectricEngine.PANTOGRAPH_FIRST, true)
     for i in range(20):
         await wait_seconds(0.5)
         if controller.state.get("current_collector/pantograph_first_voltage", 0.0) > 100.0:
             break
     # the ground relay only resets with a direction set (Mover.cpp:6038-6051)
-    TrainSystem.send_command(train_id, "direction_increase")
-    TrainSystem.send_command(train_id, "converter_fuse_reset")
-    TrainSystem.send_command(train_id, "fuse_reset")
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "direction_increase")
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "converter_fuse_reset")
+    RailVehicleServer.vehicle_send_command(vehicle_rid, "fuse_reset")
     await wait_idle_frames(2)
 
 
@@ -68,21 +70,21 @@ func test_main_switch_needs_hold_and_release() -> void:
     await _power_up()
     assert_true(controller.state.get("main_switch_closable", false), "main switch should be closable once powered")
 
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"hold")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"hold")
     await wait_seconds(0.2)
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"release")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"release")
     await wait_idle_frames(2)
     assert_false(controller.state.get("main_switch_enabled", true), "a short press must not close the breaker")
 
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"hold")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"hold")
     await wait_seconds(0.8)
     assert_false(controller.state.get("main_switch_enabled", true), "the breaker closes on release, not while held")
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"release")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"release")
     await wait_idle_frames(2)
     assert_true(controller.state.get("main_switch_enabled", false), "hold >= IniCDelay and release closes it")
 
-    CabinSystem.act(train_id, _cab(), &"main_off_bt", &"hold")
-    CabinSystem.act(train_id, _cab(), &"main_off_bt", &"release")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_off_bt", &"hold")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_off_bt", &"release")
     await wait_idle_frames(2)
     assert_false(controller.state.get("main_switch_enabled", true), "main_off_bt opens the breaker")
 
@@ -91,9 +93,9 @@ func test_main_switch_hold_without_power_does_nothing() -> void:
     assert_not_null(controller, "EP07-424 should exist")
     if not controller:
         return
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"hold")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"hold")
     await wait_seconds(0.8)
-    CabinSystem.act(train_id, _cab(), &"main_on_bt", &"release")
+    CabinSystem.act(vehicle_rid, _cab(), &"main_on_bt", &"release")
     await wait_idle_frames(2)
     assert_false(controller.state.get("main_switch_enabled", true), "no power - the hold timer must not run")
 
@@ -103,23 +105,23 @@ func test_cabin_controls_are_registered_and_forwarded() -> void:
     if not controller:
         return
     var cab:int = _cab()
-    assert_true(CabinSystem.has_control(train_id, cab, &"battery_sw"), "battery_sw should be registered")
-    var controls:Array = CabinSystem.get_controls(train_id, cab)
+    assert_true(CabinSystem.has_control(vehicle_rid, cab, &"battery_sw"), "battery_sw should be registered")
+    var controls:Array = CabinSystem.get_controls(vehicle_rid, cab)
     assert_has(controls, &"battery_sw")
     assert_has(controls, &"main_on_bt")
     # the console "cabin <train> controls" listing formats these arrays
     assert_string_contains("\n".join(controls), "main_on_bt")
     assert_string_contains(", ".join(CabinSystem.ACTIONS), "hold")
-    CabinSystem.act(train_id, cab, &"battery_sw", &"toggle", true)
+    CabinSystem.act(vehicle_rid, cab, &"battery_sw", &"toggle", true)
     await wait_idle_frames(2)
     assert_true(controller.state.get("battery_enabled", false), "battery_sw through CabinSystem switches the battery")
-    assert_eq(CabinSystem.get_control(train_id, cab, &"battery_sw"), true)
-    assert_null(CabinSystem.act(train_id, cab, &"no_such_control", &"hold"), "unknown control returns null")
+    assert_eq(CabinSystem.get_control(vehicle_rid, cab, &"battery_sw"), true)
+    assert_null(CabinSystem.act(vehicle_rid, cab, &"no_such_control", &"hold"), "unknown control returns null")
 
     player.start_train_id = ""
     await wait_idle_frames(5)
-    assert_false(CabinSystem.has_control(train_id, cab, &"battery_sw"), "leaving the cab unregisters callbacks")
-    assert_eq(CabinSystem.get_control(train_id, cab, &"battery_sw"), true, "cabin state survives leaving the cab")
+    assert_false(CabinSystem.has_control(vehicle_rid, cab, &"battery_sw"), "leaving the cab unregisters callbacks")
+    assert_eq(CabinSystem.get_control(vehicle_rid, cab, &"battery_sw"), true, "cabin state survives leaving the cab")
 
 
 ## #43 - the vehicle-level command returns whether it was accepted.
@@ -128,9 +130,9 @@ func test_send_command_returns_result() -> void:
     if not controller:
         return
     await _power_up()
-    assert_true(TrainSystem.send_command(train_id, "main_switch", true), "closing a closable breaker returns true")
-    assert_false(TrainSystem.send_command(train_id, "main_switch", true), "closing it again changes nothing")
-    assert_null(TrainSystem.send_command("no_such_train", "main_switch", true), "unknown train returns null")
+    assert_true(RailVehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing a closable breaker returns true")
+    assert_false(RailVehicleServer.vehicle_send_command(vehicle_rid, "main_switch", true), "closing it again changes nothing")
+    assert_false(RailVehicleServer.vehicle_get_rid_by_name("no_such_train").is_valid(), "an unknown name reaches no vehicle")
 
 
 ## Console "cabin <train> toggle battery_sw" - no value flips the control, and the cabin widget
@@ -148,12 +150,12 @@ func test_toggle_without_value_flips_control_and_widget() -> void:
     if not widget:
         return
 
-    CabinSystem.act(train_id, cab, &"battery_sw", &"toggle")
+    CabinSystem.act(vehicle_rid, cab, &"battery_sw", &"toggle")
     await wait_idle_frames(2)
     assert_true(controller.state.get("battery_enabled", false), "toggle without value switches the battery on")
     assert_true(widget.pushed, "the widget follows the cabin state")
 
-    CabinSystem.act(train_id, cab, &"battery_sw", &"toggle")
+    CabinSystem.act(vehicle_rid, cab, &"battery_sw", &"toggle")
     await wait_idle_frames(2)
     assert_false(controller.state.get("battery_enabled", true), "second toggle switches it off")
     assert_false(widget.pushed, "the widget follows the cabin state")

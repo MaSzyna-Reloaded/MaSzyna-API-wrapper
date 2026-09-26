@@ -18,7 +18,6 @@
 #include "core/MoverVehicleController.hpp"
 #include "core/RailVehicle3D.hpp"
 #include "core/ResourceCache.hpp"
-#include "core/TrainSystem.hpp"
 #include "core/UserSettings.hpp"
 #include "core/VehicleComponent.hpp"
 #include "core/VehicleComponentModel.hpp"
@@ -102,7 +101,6 @@
 
 using namespace godot;
 
-TrainSystem *train_system_singleton = nullptr;
 GameLog *game_log_singleton = nullptr;
 E3DParser *e3d_parser_singleton = nullptr;
 UserSettings *user_settings_singleton = nullptr;
@@ -193,7 +191,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(MoverVehicleHorns);
         GDREGISTER_ABSTRACT_CLASS(VehicleAIHints);
         GDREGISTER_CLASS(MoverVehicleAIHints);
-        GDREGISTER_CLASS(TrainSystem);
         GDREGISTER_ABSTRACT_CLASS(VehicleLighting)
         GDREGISTER_CLASS(MoverVehicleLighting)
         GDREGISTER_CLASS(GameLog);
@@ -226,7 +223,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
 
         user_settings_singleton = memnew(UserSettings);
         maszyna_runtime_singleton = memnew(MaszynaRuntime);
-        train_system_singleton = memnew(TrainSystem);
         game_log_singleton = memnew(GameLog);
         e3d_parser_singleton = memnew(E3DParser);
         scenery_streaming_server_singleton = memnew(SceneryStreamingServer);
@@ -239,7 +235,6 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->register_singleton("UserSettings", user_settings_singleton);                      // 1
         Engine::get_singleton()->register_singleton("E3DParser", e3d_parser_singleton);                            // 2
         Engine::get_singleton()->register_singleton("GameLog", game_log_singleton);                                // 3
-        Engine::get_singleton()->register_singleton("TrainSystem", train_system_singleton);                        // 4
         Engine::get_singleton()->register_singleton("SceneryStreamingServer", scenery_streaming_server_singleton); // 5
         Engine::get_singleton()->register_singleton("E3DRenderingServer", e3d_rendering_server_singleton);         // 6
         Engine::get_singleton()->register_singleton("MaszynaRuntime", maszyna_runtime_singleton);                  // 7
@@ -330,10 +325,6 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         Engine::get_singleton()->unregister_singleton("SceneryStreamingServer"); // 5
     }
 
-    if (Engine::get_singleton()->has_singleton("TrainSystem")) {
-        Engine::get_singleton()->unregister_singleton("TrainSystem"); // 4
-    }
-
     if (Engine::get_singleton()->has_singleton("GameLog")) {
         Engine::get_singleton()->unregister_singleton("GameLog"); // 3
     }
@@ -371,10 +362,6 @@ void uninitialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         scenery_streaming_server_singleton = nullptr;
     }
 
-    if (train_system_singleton != nullptr) { // 4
-        memdelete(train_system_singleton);
-        train_system_singleton = nullptr;
-    }
 
     if (game_log_singleton != nullptr) { // 3
         memdelete(game_log_singleton);

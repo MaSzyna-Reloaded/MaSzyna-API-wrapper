@@ -1,7 +1,6 @@
-#include "../core/TrainSystem.hpp"
 #include "../core/VehicleComponentType.hpp"
-#include "../core/VehicleController.hpp"
 #include "../engines/VehicleDieselEngine.hpp"
+#include "../physics/RailVehicleServer.hpp"
 #include "Cabin3D.hpp"
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/core/class_db.hpp>
@@ -9,11 +8,11 @@
 namespace godot {
     const char *Cabin3D::cabin_ready_signal = "cabin_ready";
     const char *Cabin3D::camera_configuration_changed_signal = "camera_configuration_changed";
-    const char *Cabin3D::train_id_changed_signal = "train_id_changed";
+    const char *Cabin3D::vehicle_rid_changed_signal = "vehicle_rid_changed";
 
     void Cabin3D::_bind_methods() {
-        ClassDB::bind_method(D_METHOD("set_train_id", "train_id"), &Cabin3D::set_train_id);
-        ClassDB::bind_method(D_METHOD("get_train_id"), &Cabin3D::get_train_id);
+        ClassDB::bind_method(D_METHOD("set_vehicle_rid", "vehicle_rid"), &Cabin3D::set_vehicle_rid);
+        ClassDB::bind_method(D_METHOD("get_vehicle_rid"), &Cabin3D::get_vehicle_rid);
         ClassDB::bind_method(D_METHOD("get_camera_transform"), &Cabin3D::get_camera_transform);
         ClassDB::bind_method(D_METHOD("get_camera_shake_offset"), &Cabin3D::get_camera_shake_offset);
         ClassDB::bind_method(D_METHOD("get_camera_shake_roll"), &Cabin3D::get_camera_shake_roll);
@@ -111,9 +110,9 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(cabin_ready_signal));
         /* The cab now sits in a different vehicle. A subclass reacts to this rather than
-         * overriding set_train_id(): a typed call from C++ reaches the native method, and a
+         * overriding set_vehicle_rid(): a typed call from C++ reaches the native method, and a
          * script's method of the same name would simply be skipped. */
-        ADD_SIGNAL(MethodInfo(train_id_changed_signal, PropertyInfo(Variant::STRING, "train_id")));
+        ADD_SIGNAL(MethodInfo(vehicle_rid_changed_signal, PropertyInfo(Variant::RID, "vehicle_rid")));
         /// Emitted after rebuilding the cabin's driver position and camera bounds.
         ADD_SIGNAL(MethodInfo(camera_configuration_changed_signal));
     }
@@ -143,16 +142,12 @@ namespace godot {
      * the original only a diesel does (its backend is the only one publishing the shake at all),
      * so the engine's own kind answers the question - no configuration is looked up for it. */
     double Cabin3D::_engine_revolutions() const {
-        TrainSystem *system = TrainSystem::get_instance();
-        if (system == nullptr || train_id.is_empty()) {
+        const RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (server == nullptr || !vehicle_rid.is_valid()) {
             return 0.0;
         }
-        VehicleController *vehicle = system->get_train(train_id);
-        if (vehicle == nullptr) {
-            return 0.0;
-        }
-        const VehicleDieselEngine *engine =
-                Object::cast_to<VehicleDieselEngine>(vehicle->get_component(VehicleComponentType::COMPONENT_ENGINE));
+        const VehicleDieselEngine *engine = Object::cast_to<VehicleDieselEngine>(
+                server->vehicle_component_get(vehicle_rid, VehicleComponentType::COMPONENT_ENGINE));
         return engine != nullptr ? Math::abs(engine->get_rpm_count()) : 0.0;
     }
 
@@ -188,24 +183,26 @@ namespace godot {
         }
     }
 
-    void Cabin3D::_propagate_train_id(Node *p_node) const {
+    /* The cab's elements are GDScript nodes (cabin_button.gd, legacy cabin behaviours, ...), whose
+     * classes this C++ node cannot know at build time - hence the call by name. */
+    void Cabin3D::_propagate_vehicle_rid(Node *p_node) const {
         for (int index = 0; index < p_node->get_child_count(); ++index) {
             Node *child = p_node->get_child(index);
-            _propagate_train_id(child);
-            if (child->has_method("set_train_id")) {
-                child->call("set_train_id", train_id);
+            _propagate_vehicle_rid(child);
+            if (child->has_method("set_vehicle_rid")) {
+                child->call("set_vehicle_rid", vehicle_rid);
             }
         }
     }
 
-    void Cabin3D::set_train_id(const String &p_train_id) {
-        train_id = p_train_id;
-        _propagate_train_id(this);
-        emit_signal(train_id_changed_signal, train_id);
+    void Cabin3D::set_vehicle_rid(const RID &p_vehicle_rid) {
+        vehicle_rid = p_vehicle_rid;
+        _propagate_vehicle_rid(this);
+        emit_signal(vehicle_rid_changed_signal, vehicle_rid);
     }
 
-    String Cabin3D::get_train_id() const {
-        return train_id;
+    RID Cabin3D::get_vehicle_rid() const {
+        return vehicle_rid;
     }
 
     Transform3D Cabin3D::get_camera_transform() const {

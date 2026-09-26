@@ -299,7 +299,7 @@ func test_build_indicator_lights_positions_at_on_submodel_and_wires_both_targets
     var driver_position:Vector3 = Vector3(1.0, 2.0, 10.0)
     var sound_events:Array[SfxEvent] = []
     var sound_player:SfxPlayer3D = add_child_autofree(SfxPlayer3D.new())
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, driver_position, sound_player, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, driver_position, sound_player, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 1, "should prefer the _on submodel over _off")
     var widget:CabinSpotLight3D = generated_root.get_child(0)
@@ -339,7 +339,7 @@ func test_build_indicator_lights_builds_one_widget_per_matched_instance():
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
 
@@ -354,7 +354,7 @@ func test_build_indicator_lights_reports_missing_on_and_off():
     var controller: VehicleController = build_vehicle()
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
-    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.train_id, {}, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+    MmdCabinInstancer._build_indicator_lights(descriptor, entry, controller.get_rid(), {}, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 0)
     assert_eq(diagnostics.size(), 1)
@@ -380,7 +380,7 @@ func test_build_cab_light_keeps_indicator_separate_from_spotlight():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -409,7 +409,7 @@ func test_build_instrument_light_keeps_indicator_separate_from_omnilight():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, null, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 2)
     var indicator:CabinIndicator3D = generated_root.get_child(0)
@@ -449,7 +449,7 @@ func test_build_radio_indicator_adds_radio_power_led_omnilight():
     var diagnostics:Array[Dictionary] = []
     var sound_events:Array[SfxEvent] = []
     MmdCabinInstancer._build_indicator_lights(
-            descriptor, entry, controller.train_id, submodel_index, cab_model, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
+            descriptor, entry, controller.get_rid(), submodel_index, cab_model, generated_root, 1, Vector3.ZERO, null, sound_events, diagnostics)
 
     assert_eq(generated_root.get_child_count(), 3)
     var indicator:CabinSpotLight3D = generated_root.get_child(1)
@@ -483,7 +483,7 @@ func test_localbrake_rotation_is_scaled_by_local_brake_position_count():
     var diagnostics:Array[Dictionary] = []
 
     MmdCabinInstancer._apply_animation_shape(
-        widget, descriptor, MmdSemanticCatalog.get_entry("localbrake"), controller.train_id, 1, diagnostics
+        widget, descriptor, MmdSemanticCatalog.get_entry("localbrake"), controller.get_rid(), 1, diagnostics
     )
 
     assert_almost_eq(widget.mesh_rotation.y, -0.0125 * 10.0 * 360.0, 0.0001)

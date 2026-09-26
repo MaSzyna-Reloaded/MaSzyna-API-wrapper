@@ -13,7 +13,7 @@ var _command:String
 var _switch_off_command:String
 var _enabled_state:String
 var _button_type:CabinButton.ButtonType
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 
 
@@ -32,14 +32,14 @@ func control_ids() -> Array[StringName]:
     return [_control]
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
-    CabinSystem.register_control(train_id, cab, _control, _pump)
+    CabinSystem.register_control(vehicle_rid, cab, _control, _pump)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_train_id, _cab, _control, _pump)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, _control, _pump)
 
 
 func _pump(state:CabinState, action:StringName, value:Variant) -> Variant:

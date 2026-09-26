@@ -42,12 +42,12 @@ func _ready() -> void:
 func _enter_tree() -> void:
     TrackManager.switch_active_track_changed.connect(_on_switch_changed)
     TrackManager.topology_changed.connect(_on_topology_changed)
-    TrainSystem.train_position_changed.connect(_on_train_position_changed)
+    RailVehicleServer.vehicle_moved.connect(_on_vehicle_moved)
 
 func _exit_tree() -> void:
     TrackManager.switch_active_track_changed.disconnect(_on_switch_changed)
     TrackManager.topology_changed.disconnect(_on_topology_changed)
-    TrainSystem.train_position_changed.disconnect(_on_train_position_changed)
+    RailVehicleServer.vehicle_moved.disconnect(_on_vehicle_moved)
 
     resized.disconnect(_sync_switch_handles)
 
@@ -63,7 +63,7 @@ func _process(_delta: float) -> void:
         _sync_switch_handles()
         queue_redraw()
 
-func _on_train_position_changed(_train_id: String, position: Vector3) -> void:
+func _on_vehicle_moved(_vehicle: RID, position: Vector3) -> void:
     if _cached_visible_rect.has_point(Vector2(position.x, position.z)):
         queue_redraw()
 
@@ -148,15 +148,16 @@ func _draw() -> void:
 
 func _draw_trains(visible_rect: Rect2, cam_pos: Vector2, cam_rot: float) -> void:
     if not Engine.is_editor_hint():
-        var trains: Array = TrainSystem.get_train_ids_in_rect(visible_rect)
-        for train_id: String in trains:
-            var train_position:Vector3 = TrainSystem.get_train_world_position(train_id)
-            var view_pos: Vector2 = _world_to_view_centered(train_position, cam_pos, cam_rot)
+        var vehicles: Array[RID] = RailVehicleServer.get_vehicles_in_rect(visible_rect)
+        for vehicle: RID in vehicles:
+            var vehicle_position:Vector3 = RailVehicleServer.vehicle_get_transform(vehicle).origin
+            var vehicle_name: String = RailVehicleServer.vehicle_get_name(vehicle)
+            var view_pos: Vector2 = _world_to_view_centered(vehicle_position, cam_pos, cam_rot)
             var square_size: float = 10.0
             draw_rect(Rect2(view_pos - Vector2(square_size / 2, square_size / 2), Vector2(square_size, square_size)), Color.GREEN)
 
             var font_size: int = 12
-            draw_string(_font, view_pos + Vector2(square_size * 0.7, font_size * 0.3), train_id, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.GREEN)
+            draw_string(_font, view_pos + Vector2(square_size * 0.7, font_size * 0.3), vehicle_name, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color.GREEN)
 
 func _draw_track_curves(
     curve1: MaszynaTrackCurve,

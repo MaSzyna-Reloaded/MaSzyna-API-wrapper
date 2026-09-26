@@ -16,8 +16,8 @@ func import(p:MaszynaParser, context: MaszynaImporterContext):
     # "none" is this format's sentinel for "no value given" everywhere (skin, load type, ...),
     # not a real name - treating it as one makes every "none"-named track/vehicle after the
     # first collide (TrackManager.track_update() rejects the duplicate and returns early,
-    # silently skipping that track's width/type/AABB setup entirely; DynamicRailVehicle3D.train_id
-    # collisions break TrainSystem lookups the same way).
+    # silently skipping that track's width/type/AABB setup entirely; a vehicle named "none" is
+    # left out of RailVehicleServer's name lookup the same way, Names.h:29).
     if name.to_lower() == "none":
         name = ""
 

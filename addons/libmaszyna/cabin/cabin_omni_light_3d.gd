@@ -2,15 +2,15 @@ extends OmniLight3D
 class_name CabinOmniLight3D
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_train_id(train_id:String) -> void:
-    if _train_id == train_id:
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    if _vehicle_rid == vehicle_rid:
         return
-    _train_id = train_id
+    _vehicle_rid = vehicle_rid
     _dirty = true
 
 
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
-var _train_id:String = ""
+var _vehicle_rid:RID
 
 var _dirty:bool = false
 var _t = 0.0
@@ -29,9 +29,9 @@ func _ready():
 
 func _update_state():
     var level:float = 1.0
-    if _train_id and state_property:
+    if _vehicle_rid and state_property:
         # a bool state or a 0..1 light level (e.g. roof_light_level)
-        level = float(CabinSystem.vehicle_state(_train_id).get(state_property, false))
+        level = float(CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false))
         enabled = level > 0.0
 
     _target_light_energy = lerpf(light_energy_off, light_energy_on, level) if enabled else light_energy_off
@@ -39,7 +39,7 @@ func _update_state():
 func _process(delta):
     if _dirty:
         _dirty = false
-        if _train_id:
+        if _vehicle_rid:
             _setup_phase = true
             _update_state()
 

@@ -41,23 +41,25 @@ Examples of High-Level Components in the game:
 #### Communication between game objects
 
 The communication between High-Level Components (a game objects) **must be**
-implemented through **High-Level API** like **TrainSystem**, **CabinSystem**.
+implemented through **High-Level API** like **RailVehicleServer**, **CabinSystem**.
 
 The communication is based on commands identified by unique string names. Commands are handled by High-Level API
-dispatchers like **TrainSystem**, where every vehicle or it's element can register own commands and handlers. Every
+dispatchers like **RailVehicleServer**, where every vehicle or its element can register own commands and handlers. Every
 game object can handle own subset of all commands, which can be inspected at runtime. Adding and removing commands
 is also possible at runtime, because commands are dynamic.
 
-For example, to enable battery in `train1` vehicle, you need to send a command like this:
+A vehicle is addressed by its `RailVehicleServer` handle (RID). One known only by its scenery name - which may be
+empty or shared by several vehicles - is found first. For example, to enable battery in the `train1` vehicle:
 ```gdscript
-TrainSystem.send_command("train1", "battery", true)
+var vehicle: RID = RailVehicleServer.vehicle_get_rid_by_name("train1")
+RailVehicleServer.vehicle_send_command(vehicle, "battery", true)
 ```
 
 Communication is asynchronous, because command execution may take the time (i.e. some systems must spin up). To check if
 the command was executed successfully, you must inspect the vehicle state:
 
 ```gdscript
-TrainSystem.get_train_state("train1").get("battery_enabled")
+RailVehicleServer.vehicle_dump_state(vehicle).get("battery_enabled")
 ```
 
 > **_NOTE_**
@@ -131,8 +133,8 @@ through **CommandsAPI**:
 
 func _process(delta):
     if something:
-        TrainSystem.send_command(
-            "example_train", "operate_custom_part", true)
+        RailVehicleServer.vehicle_send_command(
+            vehicle_rid, "operate_custom_part", true)
 ```
 
 This approach hides internal structure of the vehicle and creates a

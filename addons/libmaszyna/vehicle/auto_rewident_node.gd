@@ -186,4 +186,4 @@ func _rewident(controller:VehicleController, consist:Array[VehicleController]) -
             PASSENGER_TRAIN + BDELAY_P:
                 brake_delay = BDELAY_P
         if not member == controller:
-            TrainSystem.send_command(member.train_id, "auto_rewident", brake_delay)
+            RailVehicleServer.vehicle_send_command(member.get_rid(), "auto_rewident", brake_delay)

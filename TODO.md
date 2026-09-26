@@ -554,8 +554,8 @@ semaphore's kind is made of the `lights` events aimed at it, and the original's
 * **The isolated sections become the system's sources** once `TrackManager` has them (see
   Scenario events).
 * **The logical aspect for trains** - memcell `SetVelocity`/`ShuntVelocity` read through a passive
-  `getvalues` (`Driver.cpp:459-470`, `:292-419`) - has no counterpart; a delegate only publishes
-  its aspect with `system_publish_event`.
+  `getvalues` - is read by the driver's speed table (`MaszynaLegacyDriverRoute`); a semaphore
+  delegate still only publishes its aspect with `system_publish_event`.
 * **`ls_Dark`/`ls_Home` from a `lights` event** (value 3, 24 times in the data set): the semaphore
   API has no light that follows the daylight; the legacy kind factory warns and keeps the light.
 * **Semaphore arms** - the `animation` event on a named submodel (`Event.cpp:1569-1735`).
@@ -589,12 +589,16 @@ closes both level crossings). Left:
   on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
   occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
 * **Isolated sections are not yet a semaphore system's sources** (`SemaphoreServer.system_add_source`).
-* **`putvalues`/`getvalues`** send the vehicle only `CabSignal` (`security_cabsignal_trigger`) and
-  `Emergency_brake` (`security_radiostop`); the driver's orders (`SetVelocity`, `Wait_for_orders`,
-  ... `TController::PutCommand()`, `Driver.cpp:4468-4906`) and the Mover's other commands (`Load=`,
-  `UnLoad=`, `BrakeDelay`, ... `Mover.cpp:12187-12720`) are dropped. A passive one (a signal command,
-  `Event.cpp:719-751`) runs when its track event fires, where the original's driver acts on it
-  while scanning the track ahead (`Driver.cpp:459-640`, `1396+`).
+* **`putvalues`/`getvalues`**: the passive ones (`SetVelocity`, `ShuntVelocity`, `RoadVelocity`,
+  `SectionVelocity`, `OutsideStation`, `PassengerStopPoint:`; a `getvalues` of a memory holding
+  `SetVelocity`/`ShuntVelocity`/`SetProximityVelocity` at the start) are never run - the driver
+  reads them ahead (`ScenarioEventServer.event_is_passive()`). `CabSignal` stays active, acting on
+  the vehicle crossing it, unlike the original where the driver's table does it: a vehicle the
+  player drives has no driver here. The Mover's other commands (`Load=`, `UnLoad=`, `BrakeDelay`,
+  ... `Mover.cpp:12187-12720`) are dropped.
+* **`updatevalues`/`addvalues` of a memory on a track** give its command to the driver of every
+  vehicle on that track (`Event.cpp:538-547`) - how Stary Jawor's eszelon is set going. Its `:sent`
+  event (`StopCommandSent()`) is not ported.
 * **Event types without an action**: `whois`
   (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
   `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
@@ -736,8 +740,23 @@ ported, into a delegate.
    vehicle's driver off and on (`DriverSystem.vehicle_set_control_active()`); switched off it takes
    orders and reads its trainset, but touches no control. Left: the player's "AI driver on/off"
    keys.
-   5. The speed table (`TableTraceRoute()`/`TableCheck()`): limits, signals and passive events
-      ahead; stopping at them.
+   5. The speed table (`MaszynaLegacyDriverRoute`, `TableTraceRoute()`/`TableUpdate()`/
+      `TableUpdateEvent()`): the tracks ahead from `RailVehicleServer.vehicle_trace_route()` (the
+      next-track rule now `TrackManager.track_find_next()`, shared with the movement), their
+      limits, switches and the end of the line, the passive events of `event1`/`event2`, the
+      signals' orders to itself (`SetVelocity`, `ShuntVelocity`) and a memory's command sent once;
+      `MaszynaLegacyDriverSpeed` brakes to the next speed within `fMin/MaxProximityDist`. Read
+      again on every update rather than kept and moved. Checked on Stary Jawor only standing
+      (every train sees its stop); a run past signals waits for the train brake to release (below).
+      Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL, the
+      vehicles ahead (Obstacle), crossings, `BackwardTraceRoute`, the switch branch of an event
+      on a switch, `ReactionTime` 0.1 close to a stop, the cargo train's distances.
+   **Open, blocks driving on Stary Jawor**: with an FV4a handle at running the brake pipe does not
+   charge to 5 bar - it stays at 4.2-4.9 or slowly falls (ST44-700 with 20 wagons, SU46, SM42-099),
+   so the wagons' brakes hold and the trainset is never ready; an MHZ_K8P (SM42-1273) holds 5.0.
+   Ruled out: the feed pipe (7 bar), `LockPipe`, `BrakeOpModeFlag`, the compressor, the handle's
+   position (`BrakeCtrlPosR`). The original starts a standing train cold the same way
+   (`DynObj.cpp:2034`). Next: the handle's `CP`/`RP`/surge and its flow while running.
    6. The timetable: stations, departures, `@`.
 
 ## Tests

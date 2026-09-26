@@ -12,6 +12,7 @@ var vehicle:RID
 var braking:MaszynaLegacyDriverBraking
 var speed:MaszynaLegacyDriverSpeed
 var trainset:MaszynaLegacyDriverTrainset
+var route:MaszynaLegacyDriverRoute
 
 
 func before_each():
@@ -27,6 +28,7 @@ func before_each():
     speed = MaszynaLegacyDriverSpeed.new()
     trainset = MaszynaLegacyDriverTrainset.new()
     trainset.update(vehicle, 1, false)
+    route = MaszynaLegacyDriverRoute.new()
 
 
 func after_each():
@@ -34,7 +36,7 @@ func after_each():
 
 
 func test_standing_it_holds_the_locomotive_with_its_own_brake():
-    speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, -1.0, 0.0, trainset)
+    speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, 0.0, trainset, route)
 
     # the fixture's handle starts at lap: the train brake to running first, then the local brake
     braking.control(vehicle, 1, Order.SHUNT, speed, trainset, 0.0, STEP)
@@ -44,12 +46,12 @@ func test_standing_it_holds_the_locomotive_with_its_own_brake():
 
 
 func test_wanting_to_go_it_releases():
-    speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, -1.0, 0.0, trainset)
+    speed.pick(Order.SHUNT, false, false, 0.0, 0.0, -1.0, 0.0, trainset, route)
     braking.control(vehicle, 1, Order.SHUNT, speed, trainset, 0.0, STEP)
     braking.control(vehicle, 1, Order.SHUNT, speed, trainset, 0.0, STEP)
     assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_APPLIED)
 
-    speed.pick(Order.SHUNT, true, false, 20.0, 20.0, -1.0, -1.0, 0.0, trainset)
+    speed.pick(Order.SHUNT, true, false, 20.0, 20.0, -1.0, 0.0, trainset, route)
     braking.control(vehicle, 1, Order.SHUNT, speed, trainset, 0.0, STEP)
 
     assert_eq(float(train.state["brake_local_position_normalized"]), MaszynaLegacyDriverBraking.LOCAL_BRAKE_RELEASED)

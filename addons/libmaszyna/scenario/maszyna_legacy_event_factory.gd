@@ -25,6 +25,15 @@ const ONSTART:String = "onstart"
 const ALL_FIELDS:int = ScenarioEventServer.MEMORY_FIELD_TEXT | ScenarioEventServer.MEMORY_FIELD_VALUE1 | ScenarioEventServer.MEMORY_FIELD_VALUE2
 ## `<text> <value1> <value2>`
 const MEMCOMPARE_FIELDS:int = 3
+## The commands a driver reads on the tracks ahead rather than being sent them: a `putvalues`
+## with one of these (or a stop point) and a `getvalues` whose memory holds one of the others at
+## the start are passive - never run, only read (Event.cpp:577-597, 715-754). `CabSignal` stays active
+## unlike the original: a vehicle the player drives has no driver to read the magnet (TODO.md)
+const PASSIVE_PUT_COMMANDS:Array[String] = [
+    "SetVelocity", "RoadVelocity", "SectionVelocity", "ShuntVelocity", "OutsideStation",
+]
+const PASSENGER_STOP_POINT:String = "PassengerStopPoint:"
+const PASSIVE_GET_COMMANDS:Array[String] = ["SetVelocity", "ShuntVelocity", "SetProximityVelocity"]
 ## A launcher's HHMM (EvLaunch.cpp:139-140)
 const HHMM_HOUR:int = 100
 ## A launcher firing the first time it is in range (EvLaunch.cpp:182-186) - not ported (TODO.md)
@@ -120,6 +129,7 @@ static func build(
         root._memory_rids.append(memory)
         ScenarioEventServer.memory_set_name(memory, memcell.name)
         ScenarioEventServer.memory_set_values(memory, memcell.text, memcell.value1, memcell.value2)
+        ScenarioEventServer.memory_set_position(memory, memcell.position)
         if memcell.track:
             ScenarioEventServer.memory_set_track(memory, tracks_by_name.get(memcell.track, RID()))
         memories[memcell.name.to_lower()] = memory
@@ -280,6 +290,8 @@ static func build(
                     float(event.parameters[0]), float(event.parameters[1]), float(event.parameters[2])
                 )
                 ScenarioEventServer.event_attach_action(rid, action)
+                ScenarioEventServer.event_set_passive(
+                        rid, action.command in PASSIVE_PUT_COMMANDS or action.command.begins_with(PASSENGER_STOP_POINT))
             "getvalues":
                 # the command is the first target memory's, read when the event runs (Event.cpp:577-597)
                 if event_memories.is_empty():
@@ -291,6 +303,8 @@ static func build(
                         action.position = memory_positions[target]
                         break
                 ScenarioEventServer.event_attach_action(rid, action)
+                ScenarioEventServer.event_set_passive(
+                        rid, ScenarioEventServer.memory_get_text(action.source) in PASSIVE_GET_COMMANDS)
             "sound":
                 var players:Array[SfxPlayer3D] = []
                 for target:String in event.targets:

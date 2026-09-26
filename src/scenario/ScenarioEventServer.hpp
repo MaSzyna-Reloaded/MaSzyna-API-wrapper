@@ -80,6 +80,8 @@ namespace godot {
                     uint64_t queued_sequence = 0;
                     /// ...and the time the entry runs at
                     double run_time = 0.0;
+                    /// Never queued, only read (by drivers scanning the track ahead)
+                    bool passive = false;
             };
 
             struct MemoryData {
@@ -88,6 +90,7 @@ namespace godot {
                     double value1 = 0.0;
                     double value2 = 0.0;
                     RID track;
+                    Vector3 position;
             };
 
             struct LauncherData {
@@ -210,13 +213,17 @@ namespace godot {
             /// Up to this many seconds more, drawn each time the event is queued
             void event_set_random_delay(const RID &p_event, double p_seconds);
             double event_get_random_delay(const RID &p_event) const;
+            /// A passive event is never queued - nothing runs it; drivers read it on the tracks
+            /// ahead (the original's m_passive, Event.cpp:2380-2384)
+            void event_set_passive(const RID &p_event, bool p_passive);
+            bool event_is_passive(const RID &p_event) const;
             void event_attach_action(const RID &p_event, const Ref<ScenarioEventAction> &p_action);
             Ref<ScenarioEventAction> event_get_action(const RID &p_event) const;
             void event_attach_condition(const RID &p_event, const Ref<ScenarioEventCondition> &p_condition);
             Ref<ScenarioEventCondition> event_get_condition(const RID &p_event) const;
             /// Queues the event to run after its delay plus p_extra_delay. An event is queued once:
             /// while it waits, another request is refused and its activator is dropped
-            /// (event_manager::AddToQuery, Event.cpp:2380-2462).
+            /// (event_manager::AddToQuery, Event.cpp:2380-2462). A passive event is refused.
             bool event_queue(const RID &p_event, const RID &p_activator = RID(), double p_extra_delay = 0.0);
             bool event_is_queued(const RID &p_event) const;
             /// The time (get_time()) a queued event runs at, negative when it is not queued
@@ -236,6 +243,9 @@ namespace godot {
             /// The track the memory stands at (TMemCell::Track, MemCell.h:76)
             void memory_set_track(const RID &p_memory, const RID &p_track);
             RID memory_get_track(const RID &p_memory) const;
+            /// Where the memory stands - sent with its command to the drivers it reaches
+            void memory_set_position(const RID &p_memory, const Vector3 &p_position);
+            Vector3 memory_get_position(const RID &p_memory) const;
 
             /// Fires the event when a vehicle does what the slot says on the track
             void track_add_event(const RID &p_track, TrackEvent p_slot, const RID &p_event);

@@ -41,6 +41,9 @@ namespace godot {
             };
 
             /* Identifies one of the stored track curve endpoints. */
+            /* track_find_next(): entering the switch does not force a branch */
+            static constexpr int NO_FORCED_SWITCH_TRACK = -1;
+
             enum EndpointIndex {
                 CURVE1_P1 = 0,
                 CURVE1_P2 = 1,
@@ -138,7 +141,7 @@ namespace godot {
                     /* Speed limit in km/h, negative for none (TTrack::fVelocity, Track.cpp:851-858) */
                     double velocity = -1.0;
                     /* Vehicles on it, as RailVehicleServer reports them (TTrack::Dynamics) */
-                    int vehicle_count = 0;
+                    Vector<RID> vehicles;
                     /* The isolated sections it belongs to (TTrack::Isolated) */
                     Vector<RID> isolated;
                     double length = 0.0;
@@ -302,6 +305,7 @@ namespace godot {
             void track_vehicle_entered(const RID &p_track, const RID &p_vehicle);
             void track_vehicle_left(const RID &p_track, const RID &p_vehicle);
             bool track_is_occupied(const RID &p_track) const;
+            TypedArray<RID> track_get_vehicles(const RID &p_track) const;
 
             RID isolated_create();
             void isolated_free(const RID &p_isolated);
@@ -327,6 +331,13 @@ namespace godot {
             TypedArray<RID> tracks_find_in_aabb(const Rect2 &p_aabb) const;
             TypedArray<TrackEndpointRef> track_get_endpoint_connections(const RID &p_track, int p_endpoint_index);
             Ref<TrackBranchNeighbors> switch_track_get_neighbors(const RID &p_track, int p_switch_track);
+            /* The track a movement leaving p_track at p_endpoint_index continues onto, and the
+             * switch branch that entering it forces; false when the node is open or ambiguous */
+            bool track_find_next(
+                    const RID &p_track, int p_endpoint_index, RID &r_track, int &r_endpoint,
+                    int &r_forced_switch_track);
+            /* The endpoint of the track a movement continues onto, null when there is none */
+            Ref<TrackEndpointRef> track_get_next(const RID &p_track, int p_endpoint_index);
             bool track_is_switch(const RID &p_track) const;
             bool switch_is_right(const RID &p_track) const;
             int switch_get_active_track(const RID &p_track) const;

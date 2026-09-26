@@ -167,6 +167,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);
+        GDREGISTER_CLASS(TrackRouteSegment);
         GDREGISTER_CLASS(TrackBranchNeighbors);
         GDREGISTER_CLASS(TrackManager);
         GDREGISTER_CLASS(SemaphoreServer);

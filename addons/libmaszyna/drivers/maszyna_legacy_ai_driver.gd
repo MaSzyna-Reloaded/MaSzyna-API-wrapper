@@ -105,6 +105,8 @@ class DriverState:
     var speed:MaszynaLegacyDriverSpeed = MaszynaLegacyDriverSpeed.new()
     ## Its own train brake handle position and brake timing
     var braking:MaszynaLegacyDriverBraking = MaszynaLegacyDriverBraking.new()
+    ## What it reads of the tracks ahead
+    var route:MaszynaLegacyDriverRoute = MaszynaLegacyDriverRoute.new()
 
     func _init() -> void:
         orders.resize(MAX_ORDERS)
@@ -160,6 +162,9 @@ func get_state(driver:RID) -> Dictionary:
         "velocity_desired": state.speed.velocity_desired,
         "acceleration_desired": state.speed.acceleration_desired,
         "brake_position": state.braking.position,
+        "route_velocity_next": state.route.velocity_next,
+        "proximity_distance": state.route.proximity_distance,
+        "signal_velocity_next": state.route.signal_velocity_next,
     }
 
 
@@ -255,15 +260,23 @@ func _update(driver:RID) -> void:
     var elapsed:float = state.reaction_time
     state.reaction_time = EASY_REACTION_TIME
     state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
-    var track:RID = RailVehicleServer.vehicle_get_track_position(vehicle)["track_rid"]
     # DirectionalVel(), Driver.h:312: the speed, negative when it runs against the way it drives
     var directional_speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) \
             * signf(state.direction * float(CabinSystem.vehicle_state_value(vehicle, "velocity", 0.0)))
+    # shunting, the speed allowed is the shunting speed (pick_optimal_speed(), Driver.cpp:7320-7327)
+    if not state.orders[state.order_position] & (Order.OBEY_TRAIN | Order.BANK):
+        state.velocity = state.shunt_velocity
+    # the tracks ahead, and the orders the signals and memories there give (check_route_ahead())
+    state.route.update(
+            vehicle, state.orders[state.order_position], state.stop_here, state.velocity, directional_speed,
+            MaszynaLegacyDriverSpeed.EASY_ACCELERATION, state.trainset.velocity_max, state.trainset)
+    state.velocity = state.route.signal_velocity
+    for command:Array in state.route.commands:
+        _handle_command(driver, command[0], command[1], command[2], command[3])
     state.speed.pick(
             state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
             state.shunt_velocity, state.timetable.velocity if state.timetable else 0.0,
-            TrackManager.track_get_velocity(track) if track.is_valid() else MaszynaLegacyDriverSpeed.NO_LIMIT,
-            directional_speed, state.trainset)
+            directional_speed, state.trainset, state.route)
     # a player drives it: the driver takes orders and reads the trainset, and touches nothing
     if not DriverSystem.vehicle_is_control_active(vehicle):
         DriverSystem.driver_schedule_update(driver, state.reaction_time)

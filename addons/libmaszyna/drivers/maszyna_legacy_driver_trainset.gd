@@ -41,8 +41,13 @@ const REAR_END:int = 1
 
 ## From the front, the way the driver drives
 var vehicles:Array[RID] = []
-## fMass [kg]
+## fMass [kg], fLength [m]
 var mass:float = 0.0
+var length:float = 0.0
+## The way the front vehicle is driven along itself (+1 or -1)
+var front_direction:int = 1
+## fVelMax - the lowest top speed of the trainset [km/h], -1 for none
+var velocity_max:float = -1.0
 ## Ready - no brake of the trainset holds it back
 var ready:bool = false
 ## fReady - the highest brake cylinder pressure of the trainset [bar]
@@ -65,6 +70,8 @@ func update(vehicle:RID, direction:int, diesel_driven:bool) -> void:
     brake_pressure_max = 0.0
     braked = float(driven.get("pipe_pressure", 0.0)) < BRAKED_PIPE_PRESSURE + BRAKED_PIPE_MARGIN
     mass = 0.0
+    length = 0.0
+    velocity_max = MaszynaLegacyDriverSpeed.NO_LIMIT
     var gravity_force:float = 0.0
     var momentum_change:float = 0.0
     var moving:bool = float(driven.get("speed", 0.0)) > NO_MOVEMENT_SPEED
@@ -78,10 +85,15 @@ func update(vehicle:RID, direction:int, diesel_driven:bool) -> void:
         brake_pressure_max = maxf(brake_pressure, brake_pressure_max)
         var vehicle_mass:float = float(state.get("mass_total", 0.0))
         mass += vehicle_mass
+        var config:Dictionary = RailVehicleServer.vehicle_dump_config(other)
+        length += float(config.get("length", 0.0))
+        velocity_max = MaszynaLegacyDriverSpeed.min_speed(velocity_max, float(config.get("max_speed", MaszynaLegacyDriverSpeed.NO_LIMIT)))
         # the vehicle's front along the way the driver drives: its slope and its acceleration count
         # with that sign
         var front:Vector3 = -RailVehicleServer.vehicle_get_transform(other).basis.z
         var along:float = signf(front.dot(driving))
+        if other == vehicles[0]:
+            front_direction = -1 if along < 0.0 else 1
         gravity_force -= vehicle_mass * GRAVITY * front.y * along
         momentum_change += vehicle_mass * float(state.get("acceleration", 0.0)) * along
     gravity_acceleration = gravity_force / mass if mass > 0.0 else 0.0

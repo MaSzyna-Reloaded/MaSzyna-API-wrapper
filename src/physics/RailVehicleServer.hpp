@@ -259,6 +259,10 @@ namespace godot {
             Transform3D vehicle_get_transform_at_distance(const RID &p_vehicle, double p_distance);
             /* Track under the vehicle and its centre along that track, measured towards its front */
             Dictionary vehicle_get_track_position(const RID &p_vehicle) const;
+            /* The tracks ahead of the vehicle the way p_direction (+1 or -1 along the vehicle)
+             * leads, as far as p_distance [m], the one it stands on first */
+            TypedArray<TrackRouteSegment>
+            vehicle_trace_route(const RID &p_vehicle, int p_direction, double p_distance);
             /* Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */

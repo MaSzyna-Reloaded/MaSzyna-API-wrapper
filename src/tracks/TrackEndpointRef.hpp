@@ -48,4 +48,44 @@ namespace godot {
             void set_next_endpoint_index(int p_endpoint_index);
             int get_next_endpoint_index() const;
     };
+
+    /* One track of the route ahead of a vehicle (RailVehicleServer::vehicle_trace_route()). */
+    class TrackRouteSegment : public RefCounted {
+            GDCLASS(TrackRouteSegment, RefCounted)
+
+        private:
+            /* the track */
+            RID track_rid = RID();
+            /* from the vehicle to where the track is entered [m], negative for the one it stands on */
+            double distance = 0.0;
+            /* [m] */
+            double length = 0.0;
+            /* its speed limit [km/h], -1 for none */
+            double velocity = -1.0;
+            /* a switch, passed as it is set */
+            bool track_switch = false;
+            /* driven towards its end (event2), not its start (event1) */
+            bool toward_end = false;
+            /* nothing follows it */
+            bool line_end = false;
+
+        protected:
+            static void _bind_methods();
+
+        public:
+            void set_track_rid(const RID &p_track_rid);
+            RID get_track_rid() const;
+            void set_distance(double p_distance);
+            double get_distance() const;
+            void set_length(double p_length);
+            double get_length() const;
+            void set_velocity(double p_velocity);
+            double get_velocity() const;
+            void set_track_switch(bool p_track_switch);
+            bool get_track_switch() const;
+            void set_toward_end(bool p_toward_end);
+            bool get_toward_end() const;
+            void set_line_end(bool p_line_end);
+            bool get_line_end() const;
+    };
 } // namespace godot

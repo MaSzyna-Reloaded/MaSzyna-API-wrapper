@@ -100,6 +100,9 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_track_position", "vehicle"), &RailVehicleServer::vehicle_get_track_position);
         ClassDB::bind_method(
+                D_METHOD("vehicle_trace_route", "vehicle", "direction", "distance"),
+                &RailVehicleServer::vehicle_trace_route);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_rail_vehicle", "vehicle", "rail_vehicle_id"),
@@ -749,6 +752,66 @@ namespace godot {
         return result;
     }
 
+    TypedArray<TrackRouteSegment>
+    RailVehicleServer::vehicle_trace_route(const RID &p_vehicle, const int p_direction, const double p_distance) {
+        TypedArray<TrackRouteSegment> route;
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        TrackManager *tracks = TrackManager::get_instance();
+        if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
+            return route;
+        }
+        RID track = placement->track;
+        int branch = placement->switch_track;
+        bool is_switch = placement->track_is_switch;
+        double length = tracks->track_get_length(track, branch);
+        const double offset = CLAMP(placement->track_offset, 0.0, length);
+        // as _move_placement(): positive moves toward the branch end
+        double movement_sign = (placement->track_direction == TrackManager::DIRECTION_NORMAL ? -1.0 : 1.0) *
+                               (p_direction < 0 ? -1.0 : 1.0);
+        double covered = movement_sign > 0.0 ? length - offset : offset;
+        double start = covered - length;
+        while (true) {
+            Ref<TrackRouteSegment> segment;
+            segment.instantiate();
+            segment->set_track_rid(track);
+            segment->set_distance(start);
+            segment->set_length(length);
+            segment->set_velocity(tracks->track_get_velocity(track));
+            segment->set_track_switch(is_switch);
+            segment->set_toward_end(movement_sign > 0.0);
+            route.push_back(segment);
+            if (covered >= p_distance) {
+                break;
+            }
+            const int endpoint = is_switch ? (movement_sign > 0.0 ? tracks->switch_get_branch_end_endpoint(track, branch)
+                                                                  : tracks->switch_get_branch_start_endpoint(track, branch))
+                                           : (movement_sign > 0.0 ? TrackManager::CURVE1_P2 : TrackManager::CURVE1_P1);
+            RID next_track;
+            int next_endpoint = 0;
+            int forced_switch_track = TrackManager::NO_FORCED_SWITCH_TRACK;
+            if (!tracks->track_find_next(track, endpoint, next_track, next_endpoint, forced_switch_track)) {
+                segment->set_line_end(true);
+                break;
+            }
+            track = next_track;
+            is_switch = tracks->track_is_switch(track);
+            branch = TrackManager::TRACK_COMMON;
+            if (is_switch) {
+                // the branch it would be forced onto, or the one the node leads to
+                branch = forced_switch_track == TrackManager::NO_FORCED_SWITCH_TRACK
+                                 ? tracks->switch_get_endpoint_branch(track, next_endpoint)
+                                 : forced_switch_track;
+                movement_sign = next_endpoint == tracks->switch_get_branch_end_endpoint(track, branch) ? -1.0 : 1.0;
+            } else {
+                movement_sign = next_endpoint == TrackManager::CURVE1_P2 ? -1.0 : 1.0;
+            }
+            length = tracks->track_get_length(track, branch);
+            start = covered;
+            covered += length;
+        }
+        return route;
+    }
+
     Dictionary RailVehicleServer::vehicle_get_curve(const RID &p_vehicle, const double p_bogie_pivot_spacing) {
         Dictionary result;
         const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
@@ -777,96 +840,24 @@ namespace godot {
         return result;
     }
 
-    /* The single track a movement may continue onto, or false when the node is ambiguous. Entering
-     * a switch from a branch side physically selects that branch, so it is forced - but only after
-     * the connection has been proven unique, so an ambiguous node cannot change switch state as a
-     * side effect. */
+    /* The next track (TrackManager::track_find_next()); entering a switch from a branch side
+     * physically selects that branch, so it is forced here - after the connection was proven
+     * unique, so an ambiguous node cannot change switch state as a side effect. */
     bool RailVehicleServer::_motion_connection(
             const RID &p_track, const int p_endpoint_index, const bool p_force_switch_state, RID &p_track_out,
             int &p_endpoint_out) {
         TrackManager *tracks = TrackManager::get_instance();
-        if (tracks == nullptr || !tracks->track_exists(p_track)) {
+        if (tracks == nullptr) {
             return false;
         }
-        const TypedArray<TrackEndpointRef> connections =
-                tracks->track_get_endpoint_connections(p_track, p_endpoint_index);
-
-        bool has_unique = false;
-        RID unique_track;
-        int unique_endpoint = 0;
-        int unique_forced_switch_track = TrackManager::TRACK_COMMON;
-        bool has_unique_forced_switch_track = false;
-
-        for (int index = 0; index < connections.size(); ++index) {
-            const Ref<TrackEndpointRef> raw = connections[index];
-            RID candidate_track = raw->get_track_rid();
-            int candidate_endpoint = raw->get_endpoint_index();
-            int candidate_forced_switch_track = TrackManager::TRACK_COMMON;
-            bool has_candidate_forced_switch_track = false;
-
-            if (tracks->track_is_switch(candidate_track)) {
-                const PackedInt32Array common_endpoints = tracks->switch_get_common_endpoints(candidate_track);
-                if (common_endpoints.has(raw->get_endpoint_index())) {
-                    // Entering from the common point follows whichever branch is active; remap the
-                    // shared endpoint to the active branch endpoint at the same physical point.
-                    const int active_track = tracks->switch_get_active_track(candidate_track);
-                    const int branch_start = tracks->switch_get_branch_start_endpoint(candidate_track, active_track);
-                    candidate_endpoint =
-                            common_endpoints.has(branch_start)
-                                    ? branch_start
-                                    : tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
-                } else {
-                    candidate_forced_switch_track =
-                            tracks->switch_get_endpoint_branch(candidate_track, raw->get_endpoint_index());
-                    has_candidate_forced_switch_track = true;
-                }
-            }
-
-            // Discard endpoints that cannot be used for motion on the selected route. Branch-side
-            // switch entry is allowed because it will force that branch.
-            bool is_motion_accessible = false;
-            if (tracks->track_is_switch(candidate_track)) {
-                const int active_track = tracks->switch_get_active_track(candidate_track);
-                is_motion_accessible =
-                        candidate_endpoint == tracks->switch_get_branch_start_endpoint(candidate_track, active_track) ||
-                        candidate_endpoint == tracks->switch_get_branch_end_endpoint(candidate_track, active_track);
-            } else {
-                is_motion_accessible =
-                        candidate_endpoint == TrackManager::CURVE1_P1 || candidate_endpoint == TrackManager::CURVE1_P2;
-            }
-            if (!is_motion_accessible && !has_candidate_forced_switch_track) {
-                continue;
-            }
-
-            if (!has_unique) {
-                has_unique = true;
-                unique_track = candidate_track;
-                unique_endpoint = candidate_endpoint;
-                unique_forced_switch_track = candidate_forced_switch_track;
-                has_unique_forced_switch_track = has_candidate_forced_switch_track;
-                continue;
-            }
-
-            // More than one different usable target means the node is ambiguous. Identical
-            // candidates can happen at switch common points and still count as one route.
-            const bool is_same_candidate =
-                    unique_track == candidate_track && unique_endpoint == candidate_endpoint &&
-                    has_unique_forced_switch_track == has_candidate_forced_switch_track &&
-                    (!has_unique_forced_switch_track || unique_forced_switch_track == candidate_forced_switch_track);
-            if (!is_same_candidate) {
-                return false;
-            }
-        }
-
-        if (!has_unique) {
+        int forced_switch_track = TrackManager::NO_FORCED_SWITCH_TRACK;
+        if (!tracks->track_find_next(p_track, p_endpoint_index, p_track_out, p_endpoint_out, forced_switch_track)) {
             return false;
         }
-        if (has_unique_forced_switch_track && p_force_switch_state &&
-            tracks->switch_get_active_track(unique_track) != unique_forced_switch_track) {
-            tracks->switch_set_active_track(unique_track, unique_forced_switch_track);
+        if (p_force_switch_state && !(forced_switch_track == TrackManager::NO_FORCED_SWITCH_TRACK) &&
+            !(tracks->switch_get_active_track(p_track_out) == forced_switch_track)) {
+            tracks->switch_set_active_track(p_track_out, forced_switch_track);
         }
-        p_track_out = unique_track;
-        p_endpoint_out = unique_endpoint;
         return true;
     }
 

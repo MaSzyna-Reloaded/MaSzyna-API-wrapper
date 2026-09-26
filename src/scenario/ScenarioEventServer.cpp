@@ -25,6 +25,9 @@ namespace godot {
                 D_METHOD("event_set_random_delay", "event", "seconds"), &ScenarioEventServer::event_set_random_delay);
         ClassDB::bind_method(D_METHOD("event_get_random_delay", "event"), &ScenarioEventServer::event_get_random_delay);
         ClassDB::bind_method(
+                D_METHOD("event_set_passive", "event", "passive"), &ScenarioEventServer::event_set_passive);
+        ClassDB::bind_method(D_METHOD("event_is_passive", "event"), &ScenarioEventServer::event_is_passive);
+        ClassDB::bind_method(
                 D_METHOD("event_attach_action", "event", "action"), &ScenarioEventServer::event_attach_action);
         ClassDB::bind_method(D_METHOD("event_get_action", "event"), &ScenarioEventServer::event_get_action);
         ClassDB::bind_method(
@@ -50,6 +53,9 @@ namespace godot {
         ClassDB::bind_method(D_METHOD("memory_get_value2", "memory"), &ScenarioEventServer::memory_get_value2);
         ClassDB::bind_method(D_METHOD("memory_set_track", "memory", "track"), &ScenarioEventServer::memory_set_track);
         ClassDB::bind_method(D_METHOD("memory_get_track", "memory"), &ScenarioEventServer::memory_get_track);
+        ClassDB::bind_method(
+                D_METHOD("memory_set_position", "memory", "position"), &ScenarioEventServer::memory_set_position);
+        ClassDB::bind_method(D_METHOD("memory_get_position", "memory"), &ScenarioEventServer::memory_get_position);
 
         ClassDB::bind_method(
                 D_METHOD("track_add_event", "track", "slot", "event"), &ScenarioEventServer::track_add_event);
@@ -513,6 +519,18 @@ namespace godot {
         return event->random_delay;
     }
 
+    void ScenarioEventServer::event_set_passive(const RID &p_event, const bool p_passive) {
+        EventData *event = events.getptr(p_event);
+        ERR_FAIL_NULL(event);
+        event->passive = p_passive;
+    }
+
+    bool ScenarioEventServer::event_is_passive(const RID &p_event) const {
+        const EventData *event = events.getptr(p_event);
+        ERR_FAIL_NULL_V(event, false);
+        return event->passive;
+    }
+
     void ScenarioEventServer::event_attach_action(const RID &p_event, const Ref<ScenarioEventAction> &p_action) {
         EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL(event);
@@ -541,7 +559,7 @@ namespace godot {
     bool ScenarioEventServer::event_queue(const RID &p_event, const RID &p_activator, const double p_extra_delay) {
         EventData *event = events.getptr(p_event);
         ERR_FAIL_NULL_V(event, false);
-        if (event->queued_sequence > 0) {
+        if (event->passive || event->queued_sequence > 0) {
             return false;
         }
         const double run_time = time + event->delay + p_extra_delay + (event->random_delay * UtilityFunctions::randf());
@@ -639,6 +657,18 @@ namespace godot {
         const MemoryData *memory = memories.getptr(p_memory);
         ERR_FAIL_NULL_V(memory, RID());
         return memory->track;
+    }
+
+    void ScenarioEventServer::memory_set_position(const RID &p_memory, const Vector3 &p_position) {
+        MemoryData *memory = memories.getptr(p_memory);
+        ERR_FAIL_NULL(memory);
+        memory->position = p_position;
+    }
+
+    Vector3 ScenarioEventServer::memory_get_position(const RID &p_memory) const {
+        const MemoryData *memory = memories.getptr(p_memory);
+        ERR_FAIL_NULL_V(memory, Vector3());
+        return memory->position;
     }
 
     // --- track ---

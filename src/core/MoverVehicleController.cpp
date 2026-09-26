@@ -61,9 +61,12 @@ namespace godot {
 
         mover->MainCtrlPos = mover->MainCtrlNoPowerPos();
         mover->LocalBrakePosA = 0.0;
-        mover->BrakeCtrlPos = static_cast<int>(
+        // CheckLocomotiveParameters() puts the handle (BrakeCtrlPos, BrakeCtrlPosR) but not
+        // fBrakeCtrlPos, which BrakeLevelSet() compares with: set up a second time, it would find
+        // the position unchanged and leave the handle at lap (FINDINGS.md, 2026-09-26)
+        mover->fBrakeCtrlPos = mover->BrakeCtrlPosR;
+        mover->BrakeLevelSet(
                 std::floor(mover->Handle->GetPos(driver_active && get_driver_type() != DRIVER_NOBODY ? bh_RP : bh_NP)));
-        mover->BrakeLevelSet(mover->BrakeCtrlPos);
     }
 
     void MoverVehicleController::_initialize_simulation() {

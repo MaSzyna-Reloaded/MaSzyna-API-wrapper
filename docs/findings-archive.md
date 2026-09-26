@@ -4,6 +4,31 @@ The full entries behind the rules in `FINDINGS.md`: the symptom, what proved the
 and the rule. Headings keep their date and title, because comments in the code cite them
 (`see FINDINGS.md, 2026-09-23`). Open work belongs in `TODO.md`, not here.
 
+## 2026-09-26 - FV4a handle left at lap: the train brake never released
+
+* **Symptom:** Stary Jawor's eszelon (ST44, 20 wagons) would not start, or crawled as if braked
+  and stalled: with the FV4a handle at running the brake pipe stayed at 4.2-4.9 bar or slowly
+  fell, and the wagons' brakes held. SU46 and SM42-099 (FV4a) the same; SM42-1273 (MHZ_K8P) held
+  5.0 bar.
+* **Ruled out, by measurement:** the feed pipe (7 bar), `LockPipe`, the compressor, `BCPN`.
+* **Proof:** the driver's valve flow (`dpMainValve`) of every FV4a was exactly 0. A temporary
+  state key showed `fBrakeCtrlPos = 0`, `BrakeCtrlPos = 0` but `BrakeCtrlPosR = -2` (lap) already
+  after loading, before any driver acted. At lap FV4aM's flow is `PF(..., S = 0)` = 0.
+* **Cause:** the wrapper sets a vehicle up more than once (`apply_configuration()` itself runs
+  `CheckLocomotiveParameters()` and `initialize_mover_state()`). `CheckLocomotiveParameters()`
+  moves `BrakeCtrlPos` and `BrakeCtrlPosR` but not `fBrakeCtrlPos`; `initialize_mover_state()`
+  then asks `BrakeLevelSet()` for the position `fBrakeCtrlPos` already holds, which returns at
+  once - `BrakeCtrlPosR` stays where `CheckLocomotiveParameters()` put it. On FV4a lap is -2 while
+  running is 0; on MHZ_K8P both are 0, which is why it worked.
+* **Fix:** `initialize_mover_state()` aligns `fBrakeCtrlPos` with `BrakeCtrlPosR` before
+  `BrakeLevelSet()`. Found on the way, and also against the original: `BrakeOpModes` defaulted to
+  `PNEPMED` where the original has 0 (`Mover.cpp:10746`) - with `bom_PS` the Mover works the
+  handle only from an occupied cab.
+* **Rule:** the Mover's handle has three positions (`fBrakeCtrlPos`, `BrakeCtrlPos`,
+  `BrakeCtrlPosR`) and only `BrakeLevelSet()` moves them together, comparing with the first one;
+  after anything that sets them apart, re-align before setting. Read `dpMainValve` before theorising
+  about the pipe.
+
 ## 2026-09-26 - headless test crashes at teardown: the dummy renderer is not thread safe
 
 * **Symptom:** `test_zzz_ep07_cabin_main_switch` crashed in about half of the runs, in

@@ -132,6 +132,10 @@ anything. Open work belongs in `TODO.md`.
   and `add_translation()`/`remove_translation()` send no `NOTIFICATION_TRANSLATION_CHANGED`.
   The code that swaps it notifies the main loop. *(09-25 catalogue swapped, UI unchanged)*
 
+* The Mover's train brake handle has three positions and only `BrakeLevelSet()` moves them
+  together, comparing with `fBrakeCtrlPos`: a second setup leaves `BrakeCtrlPosR` at lap. A pipe
+  that will not charge - read `dpMainValve` first. *(09-26 FV4a handle left at lap)*
+
 ## Threads and teardown
 * Every worker needs an owner that stops it before the scripts go. A destructor runs too late. A
   stop must not wait for the whole job, and a drain must not drop tasks someone waits on.

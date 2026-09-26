@@ -144,8 +144,12 @@ namespace godot {
                 BRAKE_DELAY_GPR_MG = 15,
             };
             /* BrakeOpModes= */
+            /* BrakeOpModes= - the operating modes a brake can be set to (bom_PS/PN/EP/MED, MOVER.h:325-328);
+             * none when the FIZ does not say, as the original loads it (Mover.cpp:10743-10746) */
             enum BrakeOperationMode {
+                BRAKE_OP_MODE_NONE = 0,
                 BRAKE_OP_MODE_PN = 3,
+                BRAKE_OP_MODE_PNEP = 7,
                 BRAKE_OP_MODE_PNEPMED = 15,
             };
             /* BrakeSystem= */
@@ -246,7 +250,7 @@ namespace godot {
             MAKE_MEMBER_GS(double, cntrl_brake_delay_2, 3.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_3, 36.0);
             MAKE_MEMBER_GS(double, cntrl_brake_delay_4, 22.0);
-            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_PNEPMED);
+            MAKE_MEMBER_GS_NR(BrakeOperationMode, cntrl_brake_op_modes, BRAKE_OP_MODE_NONE);
             MAKE_MEMBER_GS_NR(BrakeHandleType, cntrl_brake_handle_type, BRAKE_HANDLE_TYPE_FV4A);
             MAKE_MEMBER_GS_NR(AntiSkidBrakeType, cntrl_anti_skid_brake_type, ANTI_SKID_BRAKE_MANUAL);
             MAKE_MEMBER_GS_NR(LocalBrakeType, cntrl_local_brake_type, LOCAL_BRAKE_TYPE_PNEUMATIC);

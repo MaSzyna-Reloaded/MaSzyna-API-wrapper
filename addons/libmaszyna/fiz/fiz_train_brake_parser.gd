@@ -214,7 +214,7 @@ func apply_cntrl(kv: Dictionary, node: VehicleBrake, context: FizImportContext) 
     match op_modes_str:
         "pn": node.cntrl_brake_op_modes = VehicleBrake.BRAKE_OP_MODE_PN
         "pnepmed": node.cntrl_brake_op_modes = VehicleBrake.BRAKE_OP_MODE_PNEPMED
-        "pnep": pass # TODO: exact bitmask for the intermediate PN+EP-only mode is unverified.
+        "pnep": node.cntrl_brake_op_modes = VehicleBrake.BRAKE_OP_MODE_PNEP
 
     var handle_str: String = FizLineUtil.get_string(kv, "BrakeHandle").to_lower()
     if _HANDLE_TYPE_MAP.has(handle_str):

@@ -103,6 +103,8 @@ class DriverState:
     var trainset:MaszynaLegacyDriverTrainset = MaszynaLegacyDriverTrainset.new()
     ## The speed and acceleration it wants
     var speed:MaszynaLegacyDriverSpeed = MaszynaLegacyDriverSpeed.new()
+    ## Its own train brake handle position and brake timing
+    var braking:MaszynaLegacyDriverBraking = MaszynaLegacyDriverBraking.new()
 
     func _init() -> void:
         orders.resize(MAX_ORDERS)
@@ -157,6 +159,7 @@ func get_state(driver:RID) -> Dictionary:
         "trainset_acceleration": state.trainset.acceleration,
         "velocity_desired": state.speed.velocity_desired,
         "acceleration_desired": state.speed.acceleration_desired,
+        "brake_position": state.braking.position,
     }
 
 
@@ -248,6 +251,8 @@ func _update(driver:RID) -> void:
     var vehicle:RID = DriverSystem.driver_get_vehicle(driver)
     if not state or not vehicle.is_valid():
         return
+    # the time since the last update is the reaction time it was scheduled with
+    var elapsed:float = state.reaction_time
     state.reaction_time = EASY_REACTION_TIME
     state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
     var track:RID = RailVehicleServer.vehicle_get_track_position(vehicle)["track_rid"]
@@ -267,8 +272,9 @@ func _update(driver:RID) -> void:
     # the power and the brakes, as the original's AI decides them on every update (UpdateSituation())
     MaszynaLegacyDriverTraction.control(
             vehicle, CabinSystem.occupied_cab(vehicle), state.speed, state.trainset, directional_speed)
-    MaszynaLegacyDriverBraking.control(
-            vehicle, CabinSystem.occupied_cab(vehicle), state.orders[state.order_position], state.speed)
+    state.braking.control(
+            vehicle, CabinSystem.occupied_cab(vehicle), state.orders[state.order_position], state.speed,
+            state.trainset, directional_speed, elapsed)
     var cab:int = CabinSystem.occupied_cab(vehicle)
     var standing:bool = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) < NO_MOVEMENT_SPEED
     # a vehicle somebody powered up gets ready to drive (the original's HACK, Driver.cpp:7226-7231)

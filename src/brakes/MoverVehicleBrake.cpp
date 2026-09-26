@@ -168,6 +168,10 @@ namespace godot {
         // available brake delay settings (bdelay_* flags) and main reservoir, used by AutoRewidentNode
         p_config["brake_delays"] = mover->BrakeDelays;
         p_config["brake_main_reservoir_volume"] = mover->VeselVolume;
+        // the train's brake system and its brake's delays [s], per delay setting (BDelay1-4)
+        p_config["brake_system"] = get_cntrl_brake_system();
+        p_config["brake_delay_times"] = PackedFloat64Array({get_cntrl_brake_delay_1(), get_cntrl_brake_delay_2(),
+                                                            get_cntrl_brake_delay_3(), get_cntrl_brake_delay_4()});
         // LocHandle is unconditionally non-null after mover init (Mover.cpp's own switch always
         // assigns a TDriverHandle default), so "!= nullptr" never actually distinguishes "has a
         // real local handle" from "has none" - get_cntrl_local_brake_handle_type() is the real signal.
@@ -188,6 +192,12 @@ namespace godot {
         p_config["brakes_controller_position_first_step"] = mover->Handle->GetPos(bh_MB);
         p_config["brakes_controller_position_full"] = mover->Handle->GetPos(bh_FB);
         p_config["brakes_controller_position_emergency"] = mover->Handle->GetPos(bh_EB);
+        // a handle that sets the pipe pressure by how long it is held, not by where it stands
+        // (TDriverHandle::Time, hamulce.cpp: MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405)
+        p_config["brake_handle_time_controlled"] = mover->Handle->Time;
+        // the pipe's running pressure and its working range (HighPipePress, DeltaPipePress)
+        p_config["brake_pipe_pressure_high"] = mover->HighPipePress;
+        p_config["brake_pipe_pressure_delta"] = mover->DeltaPipePress;
     }
 
     // Original engine: Train.cpp's m_localbrakepressurechange (10x the low-pass-filtered rate of
@@ -402,6 +412,10 @@ namespace godot {
         p_state["brake_is_braking"] = is_braking();
         p_state["brake_is_holding"] = is_holding();
         p_state["brake_is_cut_off"] = is_cut_off();
+        // the delay setting in use, a BrakeDelaySetting (BrakeDelayFlag)
+        p_state["brake_delay_setting"] = mover->BrakeDelayFlag;
+        // the distributor's control reservoir (GetCRP())
+        p_state["brake_control_reservoir_pressure"] = mover->Hamulec ? mover->Hamulec->GetCRP() : 0.0;
     }
 
     void MoverVehicleBrake::_apply_configuration() {
@@ -490,6 +504,8 @@ namespace godot {
         /* PipePress i HighPipePress musza byc skopiowane */
         p_mover->HighPipePress = get_pipe_pressure_max();
         p_mover->LowPipePress = get_pipe_pressure_min();
+        // Mover.cpp:10474 - LoadFIZ derives it; the time-controlled handles of the AI steer by it
+        p_mover->DeltaPipePress = p_mover->HighPipePress - p_mover->LowPipePress;
         p_mover->VeselVolume = get_tank_volume_main();
         p_mover->MinCompressor = get_compressor_cab_a_min_pressure();
         p_mover->MaxCompressor = get_compressor_cab_a_max_pressure();

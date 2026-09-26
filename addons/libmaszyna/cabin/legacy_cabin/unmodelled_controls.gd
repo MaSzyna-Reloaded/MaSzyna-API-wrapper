@@ -12,7 +12,8 @@ class_name LegacyCabinUnmodelledControls
 ## mainctrl share theirs, both would step the controller.
 
 const ACTION_FIELDS:Array[String] = LegacyCabinControls.ACTION_FIELDS
-## Only these are wired from a key: a knob takes a value, which a key does not give
+## Only these take their keys here: a knob takes a value, which a key does not give - it is
+## registered for whoever sets it (the AI driver), but its keys stay unwired
 const KEY_WIRED_KINDS:Array[StringName] = [&"button", &"switch"]
 
 var _cab_controls:LegacyCabinControls
@@ -39,8 +40,6 @@ func register(vehicle_rid:RID, cab:int) -> void:
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
         var fields:Dictionary = entry["fixed_fields"]
         var wiring:Dictionary = LegacyCabinForwardCommands.wiring(entry["widget_class"], fields)
-        if wiring and not wiring["kind"] in KEY_WIRED_KINDS:
-            wiring = {}
         var actions:Array = ACTION_FIELDS.map(func(field:String) -> String: return fields.get(field, ""))
         actions = actions.filter(func(action:String) -> bool: return not action == "")
         if not actions or actions.any(func(action:String) -> bool: return taken_actions.has(action)):
@@ -50,7 +49,8 @@ func register(vehicle_rid:RID, cab:int) -> void:
             continue
         for action:String in actions:
             taken_actions[action] = true
-        _controls[control_id] = fields
+        if registered or wiring["kind"] in KEY_WIRED_KINDS:
+            _controls[control_id] = fields
         if registered:
             continue
         wiring["control_id"] = control_id

@@ -457,6 +457,7 @@ namespace godot {
         p_config["max_speed"] = get_max_velocity();
         p_config["power"] = mover->Power;
         p_config["length"] = mover->Dim.L;
+        p_config["train_type"] = get_train_type();
     }
 
     double MoverVehicleController::get_tachometer_speed() const {

@@ -717,9 +717,25 @@ ported, into a delegate.
       `MotorParam`, sa134, WMB10), the electric series and induction motors, the cruise control,
       the stretched couplers, spring brake, doors and departure signal before adding power, the
       radio off after a Radio-Stop.
-   4. Braking through the cab (`control_braking_force()`, the AI's own handle position
-      `BrakeCtrlPosition`/`gbh_*`, `IncBrake()`/`DecBrake()`, the brake table `fBrake_a0/a1`,
-      `Driver.cpp:3014-3366, 8065-8190`), the releaser and the independent brake.
+   4. Braking through the cab done for shunting (`MaszynaLegacyDriverBraking`,
+      `control_braking_force()`, `IncBrake()`/`DecBrake()`, `control_releaser()`): the driver's
+      own handle position (`BrakeCtrlPosition`) put on an FV4a or MHZ_K8P/EN57 handle, the local
+      brake of an engine alone, the independent brake at a stop, the releaser. The vehicle
+      publishes `brake_system`, `brake_delay_times`, `brake_delay_setting`,
+      `brake_control_reservoir_pressure`, `brake_handle_time_controlled`,
+      `brake_pipe_pressure_high/_delta` and `train_type`; `DeltaPipePress` is now derived as
+      `LoadFIZ` does. Unmodelled knobs (`brakectrl`, `localbrake`) are registered for the AI to set.
+      Checked on Stary Jawor: SM42-1273 with five wagons stops from 20 km/h with the train brake;
+      SU46 alone with its local brake. Left: the braking table (`fBrake_a0/a1` from
+      `BrakeForceR()`, needed for train running - zero now, as for shunting), the time-controlled
+      handles (MHZ_K5P, MHZ_6P, M394, H14K1, St113, H1405: sa134, BR285 - the original moves them
+      every frame; an event-driven way is a short scheduled update back to lap), the EP and
+      EMU/DMU braking, `BrakeAccFactor()`, the manual brake, unlocking the pipe before the
+      releaser, the individual release of an overcharged wagon, the braking test.
+   A player in the cab takes over: `RailVehicle3D.enter_cabin()`/`leave_cabin()` switch the
+   vehicle's driver off and on (`DriverSystem.vehicle_set_control_active()`); switched off it takes
+   orders and reads its trainset, but touches no control. Left: the player's "AI driver on/off"
+   keys.
    5. The speed table (`TableTraceRoute()`/`TableCheck()`): limits, signals and passive events
       ahead; stopping at them.
    6. The timetable: stations, departures, `@`.

@@ -31,6 +31,12 @@ func test_catalog_controls_with_keys_are_registered_without_widgets():
         assert_true(CabinSystem.has_control(train.get_rid(), 1, control), "%s should be registered" % control)
 
 
+func test_knobs_are_registered_for_their_value():
+    # the AI sets them by value (MaszynaLegacyDriverBraking); a key has none to give
+    for control: StringName in [&"brakectrl", &"localbrake"]:
+        assert_true(CabinSystem.has_control(train.get_rid(), 1, control), "%s should be registered" % control)
+
+
 func test_controls_sharing_keys_are_registered_once():
     # mainctrl and jointctrl both take main_controller_increase/decrease
     var registered: int = 0

@@ -304,7 +304,7 @@ the cab submodel, `PythonScreenState` maps state onto `TTrain::GetTrainState()` 
 * Keyboard input per control, not per widget: each `CabinButton`/`CabinSwitch`/`CabinKnob` handles
   `action*` itself, so a repeated label (EP07 cab0 has two `cablight_sw:`) toggled itself back.
   The original maps a key to one command (`Cabine[].bLight`, `Train.cpp:10237`). Move key handling
-  to `CabinSystem`/`LegacyCabinLogicDelegate` (once per `control_id`), then drop the workaround in
+  to `CabinSystem`/`LegacyCabinLogic` (once per `control_id`), then drop the workaround in
   `MmdCabinInstancer.build_into()` clearing `action*` on repeated labels.
 * Diesel-electric shunt mode on the second controller: with `ShuntModeAllow`/`ShuntMode` the
   original moves `AnPos` by 0.025 per step, clamped 0..1 (`Train.cpp:1190-1197`, `1351-1357`);
@@ -647,11 +647,16 @@ ported, into a delegate.
    stays the magnet acting on the activator. Both stay in the event system, not in a driver.
    No test covers the broadcast: receiving it needs a vehicle with a driver, Radio-Stop fitted
    and the radio on.
-2. **Cab logic without the 3D cab** - the `CabinSystem` handlers, `CabinState` and
-   `LegacyCabinLogicDelegate` split off `DynamicTrainCabin`, so every driven vehicle has its controls
-   registered without the model and the widgets; the player's 3D cab adds the look and the mouse.
-   Read the cab thoroughly and agree the split before changing it.
-3. **Taking the orders done; carrying them out waits for 2.** `DriverSystem` (C++, not
+2. **Done: cab logic without the 3D cab** - `LegacyCabinLogic` (a `CabinLogic`) is the vehicle's,
+   attached with `CabinSystem.vehicle_attach_cab_logic()` by `DynamicTrainCabin` (player) and
+   `SceneryInstancer._build_drivers()` (AI), registered for the occupied cab and moved along when
+   the crew changes cabs. The cab's controls come from its MMD (`LegacyCabinControls`), not from the
+   widgets. Left widget-side, so an AI caller must pass what a widget would have worked out: the
+   knob and switch position limits and spring return, the horn's value. `LegacyCabinControls` parses
+   the MMD with no random choices - a cab with random includes may differ from the player's widgets.
+   The `brake_level_drive` `CabinCommand` node still carries its `command`/`command_param`, now only
+   as the guard of its key (the wiring is `LegacyCabinControls.BRAKE_LEVEL_DRIVE`).
+3. **Taking the orders done; carrying them out is next.** `DriverSystem` (C++, not
    `DriverServer`: the event action reaches it as a singleton), `DriverDelegate`,
    `MaszynaLegacyAIDriver` (GDScript, as it will act through `CabinSystem`): a driver for every
    crewed scenery vehicle (`SceneryInstancer._build_drivers()`), the order list and what the orders
@@ -680,6 +685,12 @@ ported, into a delegate.
 * `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
   at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type
   'Dictionary'") - not caused by the scenario work, not looked into.
+
+* `test_zzz_ep07_cabin_main_switch.gd` crashes (SIGSEGV) in about half of the runs, at `82cda7a30`
+  too (2 of 4): tearing the scenery down, `MaszynaInclude._free_owned_rids()` ->
+  `E3DRenderingServer::instance_free()` -> `RenderingServer::free_rid()`. Once it came with
+  "unimplemented base type encountered in renderer scene cull" (`instance_set_base`) during the
+  test. Not looked into.
 
 * **No HUD panel test on a non-diesel.** `mover_gauges.gd` broke on an induction motor (it asked
   `VehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `VehicleDieselEngine`'s);

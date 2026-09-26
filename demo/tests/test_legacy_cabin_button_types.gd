@@ -1,12 +1,12 @@
 extends MaszynaGutTest
 
 ## A control whose original handler branches on the kind of switch (TGaugeType) behaves by the type
-## the MMD factory gave it (BaseCabinTool3D.button_type), as TTrain branches on ggX.type().
+## the cab's MMD gives it (LegacyCabinControls.button_type()), as TTrain branches on ggX.type().
 
 const SM42:VehicleModel = preload("res://tests/fixtures/sm42_vehicle.tres")
 
 var train: VehicleController
-var cabin: Node3D
+var logic: LegacyCabinLogic
 
 
 func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
@@ -16,23 +16,16 @@ func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
         train.add_component(component)
     train.battery_voltage = 110.0
     train.apply_configuration()
-    cabin = Node3D.new()
+    var cab_controls: LegacyCabinControls = LegacyCabinControls.new()
     for control_id:StringName in controls:
-        var control := CabinButton.new()
-        control.control_id = control_id
-        control.button_type = controls[control_id]
-        cabin.add_child(control)
-    var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.vehicle_rid = train.get_rid()
-    logic.cab = 1
-    cabin.add_child(logic)
-    add_child(cabin)
+        cab_controls.add_control(control_id, CabinButton, {}, controls[control_id])
+    logic = LegacyCabinLogic.new(func(_cab: int) -> LegacyCabinControls: return cab_controls)
+    logic.register(train.get_rid(), 1)
     await wait_idle_frames(2)
 
 
 func after_each():
-    remove_child(cabin)
-    cabin.free()
+    logic.unregister()
 
 
 # Train.cpp:3914 - an impulse fuel pump switch runs the pump while it is held

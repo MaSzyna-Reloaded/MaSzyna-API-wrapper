@@ -5,7 +5,7 @@ extends MaszynaGutTest
 ## of the gauge (Train.cpp:3077).
 
 var train: VehicleController
-var cabin: Node3D
+var logic: LegacyCabinLogic
 
 
 func before_each():
@@ -13,18 +13,14 @@ func before_each():
     train.battery_voltage = 110.0
     train.apply_configuration()
     # a cabin with no controls at all
-    cabin = Node3D.new()
-    add_child(cabin)
-    var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.vehicle_rid = train.get_rid()
-    logic.cab = 1
-    cabin.add_child(logic)
+    var controls: LegacyCabinControls = LegacyCabinControls.new()
+    logic = LegacyCabinLogic.new(func(_cab: int) -> LegacyCabinControls: return controls)
+    logic.register(train.get_rid(), 1)
     await wait_idle_frames(2)
 
 
 func after_each():
-    remove_child(cabin)
-    cabin.free()
+    logic.unregister()
 
 
 func test_cab_without_the_gauge_registers_the_control():

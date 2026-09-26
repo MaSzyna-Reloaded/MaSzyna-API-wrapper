@@ -11,9 +11,11 @@ class_name LegacyCabinUnmodelledControls
 ## A control is left out when a control of the cab already takes one of its keys: jointctrl and
 ## mainctrl share theirs, both would step the controller.
 
-const ACTION_FIELDS:Array[String] = ["action", "action_increase", "action_decrease"]
+const ACTION_FIELDS:Array[String] = LegacyCabinControls.ACTION_FIELDS
+## Only these are wired from a key: a knob takes a value, which a key does not give
+const KEY_WIRED_KINDS:Array[StringName] = [&"button", &"switch"]
 
-var _controls_root:Node
+var _cab_controls:LegacyCabinControls
 var _vehicle_rid:RID
 var _cab:int
 var _handlers:Dictionary[StringName, Callable] = {}
@@ -21,29 +23,24 @@ var _handlers:Dictionary[StringName, Callable] = {}
 var _controls:Dictionary[StringName, Dictionary] = {}
 
 
-func _init(controls_root:Node) -> void:
-    _controls_root = controls_root
+func _init(cab_controls:LegacyCabinControls) -> void:
+    _cab_controls = cab_controls
 
 
 func register(vehicle_rid:RID, cab:int) -> void:
     _vehicle_rid = vehicle_rid
     _cab = cab
-    var taken_actions:Dictionary[String, bool] = {}
-    var modelled:Dictionary[StringName, bool] = {}
-    for node:Node in _controls_root.find_children("*", "", true, false):
-        if "control_id" in node:
-            modelled[StringName(node.get("control_id"))] = true
-        for field:String in ACTION_FIELDS:
-            if field in node and node.get(field):
-                taken_actions[node.get(field)] = true
+    var taken_actions:Dictionary[String, bool] = _cab_controls.get_actions()
 
     for label:String in MmdSemanticCatalog.get_labels():
         var control_id:StringName = StringName(label)
-        if modelled.has(control_id):
+        if _cab_controls.has_control(control_id):
             continue
         var entry:Dictionary = MmdSemanticCatalog.get_entry(label)
         var fields:Dictionary = entry["fixed_fields"]
-        var wiring:Dictionary = _wiring(entry["widget_class"], fields)
+        var wiring:Dictionary = LegacyCabinForwardCommands.wiring(entry["widget_class"], fields)
+        if wiring and not wiring["kind"] in KEY_WIRED_KINDS:
+            wiring = {}
         var actions:Array = ACTION_FIELDS.map(func(field:String) -> String: return fields.get(field, ""))
         actions = actions.filter(func(action:String) -> bool: return not action == "")
         if not actions or actions.any(func(action:String) -> bool: return taken_actions.has(action)):
@@ -93,14 +90,3 @@ func input(event:InputEvent) -> void:
                     not bool(CabinSystem.vehicle_state_value(_vehicle_rid, state_property, false))
                     if state_property else null)
 
-
-static func _wiring(widget_class:Variant, fields:Dictionary) -> Dictionary:
-    if widget_class == CabinButton:
-        return {"kind": &"button", "command": fields.get("command", ""),
-                "command_param": fields.get("command_param"),
-                "controller_mode": fields.get("controller_mode", CabinButton.ControllerMode.OnOff)}
-    if widget_class == CabinSwitch:
-        return {"kind": &"switch", "command_increase": fields.get("command_increase", ""),
-                "command_decrease": fields.get("command_decrease", ""),
-                "command_set": fields.get("command_set", "")}
-    return {}

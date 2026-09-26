@@ -182,6 +182,9 @@ static func _build_drivers(root:MaszynaIncludeNode) -> void:
         var driver:RID = DriverSystem.driver_create()
         root._driver_rids.append(driver)
         DriverSystem.driver_attach_vehicle(driver, controller.get_rid())
+        # the driver drives through the cab, like the player: its controls without the 3D cab
+        CabinSystem.vehicle_attach_cab_logic(
+                controller.get_rid(), LegacyCabinLogic.from_mmd(vehicle_node.data_path, vehicle_node.file_name))
         DriverSystem.driver_attach_delegate(driver, _ai_driver)
 
 

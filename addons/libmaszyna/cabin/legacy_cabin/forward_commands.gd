@@ -4,29 +4,28 @@ class_name LegacyCabinForwardCommands
 ## Direct control -> vehicle command wiring of an MMD-built cabin: every control that has no
 ## dedicated cabin behaviour is registered in CabinSystem with a handler translating its
 ## manipulations into the vehicle command it is wired to. The wiring (command, command_param,
-## controller mode, ...) is taken from the controls of this cabin, set there by the MMD cabin
-## factory from MmdSemanticCatalog; the controls themselves only report manipulations.
+## controller mode, ...) is the control's MmdSemanticCatalog entry, as the cab's MMD lists it
+## (LegacyCabinControls) - not read off the widgets, which a cab only the AI drives does not have.
 
-var _controls_root:Node
+var _controls:LegacyCabinControls
 var _skip:Array[StringName] = []
 var _vehicle_rid:RID
 var _cab:int
 var _handlers:Dictionary = {}
 
 
-func _init(controls_root:Node, skip:Array[StringName]) -> void:
-    _controls_root = controls_root
+func _init(controls:LegacyCabinControls, skip:Array[StringName]) -> void:
+    _controls = controls
     _skip = skip
 
 
 func register(vehicle_rid:RID, cab:int) -> void:
     _vehicle_rid = vehicle_rid
     _cab = cab
-    for node:Node in _controls_root.find_children("*", "", true, false):
-        var control_id:StringName = StringName(node.get("control_id")) if "control_id" in node else &""
-        if not control_id or control_id in _skip or _handlers.has(control_id):
+    for control_id:StringName in _controls.get_control_ids():
+        if control_id in _skip:
             continue
-        var wiring:Dictionary = _wiring(node)
+        var wiring:Dictionary = _controls.wiring(control_id)
         if not wiring:
             continue
         wiring["control_id"] = control_id
@@ -41,17 +40,22 @@ func unregister() -> void:
     _handlers.clear()
 
 
-static func _wiring(node:Node) -> Dictionary:
-    if node is CabinButton:
-        return {"kind": &"button", "command": node.command, "command_param": node.command_param,
-                "controller_mode": node.controller_mode}
-    if node is CabinSwitch:
-        return {"kind": &"switch", "command_increase": node.command_increase,
-                "command_decrease": node.command_decrease, "command_set": node.command_set}
-    if node is CabinKnob:
-        return {"kind": &"knob", "command": node.command}
-    if node is CabinCommand:
-        return {"kind": &"command", "command": node.command, "command_param": node.command_param}
+## The wiring of a control of the catalog class, by the fields of its catalog entry - the fields a
+## widget of that class would have been given (MmdCabinInstancer._build_widget); a gauge has none
+static func wiring(widget_class:Variant, fields:Dictionary) -> Dictionary:
+    if widget_class == CabinButton:
+        return {"kind": &"button", "command": fields.get("command", ""),
+                "command_param": fields.get("command_param"),
+                "controller_mode": fields.get("controller_mode", CabinButton.ControllerMode.OnOff)}
+    if widget_class == CabinSwitch:
+        return {"kind": &"switch", "command_increase": fields.get("command_increase", ""),
+                "command_decrease": fields.get("command_decrease", ""),
+                "command_set": fields.get("command_set", "")}
+    if widget_class == CabinKnob:
+        return {"kind": &"knob", "command": fields.get("command", "")}
+    if widget_class == CabinCommand:
+        return {"kind": &"command", "command": fields.get("command", ""),
+                "command_param": fields.get("command_param")}
     return {}
 
 

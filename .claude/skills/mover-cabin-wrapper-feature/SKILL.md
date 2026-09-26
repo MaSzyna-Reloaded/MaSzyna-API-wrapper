@@ -111,10 +111,12 @@ where the composition already holds that controller (e.g. `VehicleComponent`s).
 (`hold`/`release`/`toggle`/`increase`/`decrease`/`set`) with
 `CabinSystem.act(train_id, cab, control_id, action, value)`. `control_id` is the MMD label, set by
 `MmdCabinInstancer._build_widget()`. What a manipulation does is decided by handlers registered in
-`CabinSystem` by `LegacyCabinLogicDelegate` (`addons/libmaszyna/cabin/legacy_cabin/`), which
-`DynamicTrainCabin` adds to every MMD-built cabin:
-- `forward_commands.gd` wires every remaining control straight to its vehicle command (from the
-  control's `command`/`controller_mode`/`command_set`/... set from `MmdSemanticCatalog`);
+`CabinSystem` by `LegacyCabinLogic` (`addons/libmaszyna/cabin/legacy_cabin/cabin_logic.gd`), the
+vehicle's cab logic - attached with `CabinSystem.vehicle_attach_cab_logic()` by `DynamicTrainCabin`
+for the player and by `SceneryInstancer._build_drivers()` for the AI, and registered for the
+occupied cab. It needs no widget: the cab's controls are read from its MMD (`LegacyCabinControls`):
+- `forward_commands.gd` wires every remaining control straight to its vehicle command (the
+  `command`/`controller_mode`/`command_set`/... of its `MmdSemanticCatalog` entry);
 - controls with their own cab logic from `Train.cpp` (`OnCommand_*` state, timers) get a dedicated
   behaviour file, e.g. `main_switch.gd` (line breaker held for `InitialCtrlDelay`).
 
@@ -140,7 +142,7 @@ delayed|pushtoggle|toggle`; without one it is a toggle (`Gauge.h:89`). The MMD f
 carries `"shape_from_button_type": true` with a comment naming the handler line, and the factory
 then makes a push spring back (`monostable`) and show no state at rest (the original returns it to
 neutral on release). The behaviour owning the control gets its type from
-`LegacyCabinLogicDelegate._button_type(control_id)` when it is created, and ports the handler's
+`LegacyCabinControls.button_type(control_id)` when it is created, and ports the handler's
 branches on it - e.g. `pump.gd` (a push pump runs while held, a two-state one flips and sets
 `*SwitchOff`), `pantograph_selected.gd` (`ENABLE_ON`/`NONE` vs `ENABLE`/`DISABLE`),
 `main_switch.gd` (only an impulse switch reacts to its release). A control the cab does not model

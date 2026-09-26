@@ -91,16 +91,19 @@ static func open_line_breaker(vehicle:RID, cab:int) -> void:
 
 
 ## mastercontrollersetzerospeed (ZeroSpeed(), Driver.cpp:3683): both controllers back to no power,
-## a step at a time as the handle goes; the positions bound the steps. A cab with a joint
-## controller has it in place of the master controller.
+## a step at a time as the handle goes; the positions bound the steps.
 static func set_zero_speed(vehicle:RID, cab:int) -> void:
     for _step:int in int(CabinSystem.vehicle_state_value(vehicle, "controller_second_position", 0)):
         CabinSystem.act(vehicle, cab, SECOND_CONTROLLER, &"decrease")
-    var controller:StringName = (
-            MASTER_CONTROLLER if CabinSystem.has_control(vehicle, cab, MASTER_CONTROLLER)
-            else LegacyCabinJointController.CONTROL)
+    var controller:StringName = master_controller(vehicle, cab)
     for _step:int in int(CabinSystem.vehicle_state_value(vehicle, "controller_main_position", 0)):
         CabinSystem.act(vehicle, cab, controller, &"decrease")
+
+
+## The cab's master controller - a joint controller where the cab has one in its place (SM42's)
+static func master_controller(vehicle:RID, cab:int) -> StringName:
+    return (MASTER_CONTROLLER if CabinSystem.has_control(vehicle, cab, MASTER_CONTROLLER)
+            else LegacyCabinJointController.CONTROL)
 
 
 static func is_zero_speed(vehicle:RID) -> bool:

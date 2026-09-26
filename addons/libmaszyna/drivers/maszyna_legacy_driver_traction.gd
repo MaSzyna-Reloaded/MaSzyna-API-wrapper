@@ -11,7 +11,6 @@ class_name MaszynaLegacyDriverTraction
 ## anything here check the stretched couplers, the spring brake, the doors or the departure signal
 ## before adding power - see TODO.md, "Drivers".
 
-const MASTER_CONTROLLER:StringName = MaszynaLegacyDriverHints.MASTER_CONTROLLER
 const SECOND_CONTROLLER:StringName = MaszynaLegacyDriverHints.SECOND_CONTROLLER
 ## A limit of exactly this [km/h] is driven up to without the margin - under it a train would never
 ## move off (Driver.cpp:8008-8010)
@@ -55,7 +54,8 @@ static func increase(vehicle:RID, cab:int, trainset:MaszynaLegacyDriverTrainset)
                 return false
             if not trainset.ready:
                 return false
-            return _step(vehicle, cab, MASTER_CONTROLLER, &"increase", "controller_main_position") \
+            return _step(vehicle, cab, MaszynaLegacyDriverHints.master_controller(vehicle, cab), &"increase",
+                    "controller_main_position") \
                     or _step(vehicle, cab, SECOND_CONTROLLER, &"increase", "controller_second_position")
     return false
 
@@ -74,8 +74,9 @@ static func decrease(vehicle:RID, cab:int) -> bool:
             # DecMainCtrl(min(MainCtrlPowerPos(), 2 + MainCtrlPowerPos() / 2)), Driver.cpp:3708
             var main:int = int(state.get("controller_main_position", 0))
             var steps:int = mini(main, 2 + floori(main / 2.0))
+            var controller:StringName = MaszynaLegacyDriverHints.master_controller(vehicle, cab)
             for _step:int in steps:
-                CabinSystem.act(vehicle, cab, MASTER_CONTROLLER, &"decrease")
+                CabinSystem.act(vehicle, cab, controller, &"decrease")
             return steps > 0
     return false
 

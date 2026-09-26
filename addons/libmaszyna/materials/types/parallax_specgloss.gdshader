@@ -5,6 +5,11 @@ render_mode cull_back, depth_draw_opaque, diffuse_burley, specular_schlick_ggx;
 uniform sampler2D diffuse_texture : source_color, filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D normal_texture : filter_linear_mipmap_anisotropic, repeat_enable;
 uniform sampler2D specgloss_texture : filter_linear_mipmap_anisotropic, repeat_enable;
+// detail_parallax_specgloss: a tiled detail normal map added to the normal map (mat_detail_parallax_specgloss.frag)
+uniform sampler2D detail_normal_texture : filter_linear_mipmap_anisotropic, repeat_enable;
+uniform bool use_detail_normal = false;
+uniform float detail_scale = 1.0;
+uniform float detail_height_scale = 1.0;
 
 uniform vec4 albedo_multiplier : source_color = vec4(1.0);
 
@@ -35,7 +40,7 @@ varying float v_dist;
 void vertex() {
     v_tangent_view = normalize(MODELVIEW_NORMAL_MATRIX * TANGENT);
     v_normal_view = normalize(MODELVIEW_NORMAL_MATRIX * NORMAL);
-    v_binormal_view = normalize(cross(v_normal_view, v_tangent_view));
+    v_binormal_view = normalize(MODELVIEW_NORMAL_MATRIX * -BINORMAL);
 
     v_position_view = (MODELVIEW_MATRIX * vec4(VERTEX, 1.0)).xyz;
     v_dist = length(v_position_view);
@@ -158,6 +163,9 @@ void fragment() {
     vec4 normal_sample = texture(normal_texture, parallax_uv);
     vec4 specgloss_sample = texture(specgloss_texture, parallax_uv);
 
+#ifdef MASZYNA_ALPHA_BLEND
+    ALPHA = diffuse_sample.a;
+#endif
     if (alpha_test_failed(diffuse_sample.a)) {
         discard;
     }
@@ -181,7 +189,14 @@ void fragment() {
         METALLIC = clamp(source_metallic, 0.0, 1.0);
         ROUGHNESS = glossiness_to_roughness(source_glossiness);
 
-        NORMAL_MAP = decode_normal_from_rg(normal_sample);
+        vec3 normal = decode_normal_from_rg(normal_sample) * 2.0 - 1.0;
+        if (use_detail_normal) {
+            // normal.xy + detail.xy * detail_height_scale, detail tiled by detail_scale
+            vec2 detail_xy = (texture(detail_normal_texture, parallax_uv * detail_scale).rg * 2.0 - 1.0)
+                    * detail_height_scale;
+            normal = normalize(vec3(normal.xy + detail_xy, normal.z));
+        }
+        NORMAL_MAP = normal * 0.5 + 0.5;
         NORMAL_MAP_DEPTH = 1.0;
     }
 }

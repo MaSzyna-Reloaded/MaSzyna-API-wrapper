@@ -1,30 +1,141 @@
 extends Node3D
 class_name BaseCabinTool3D
 
-var _controller:TrainController
+## A cabin element knows which vehicle it sits in and nothing else about it: every read and every
+## manipulation goes through CabinSystem, which holds the vehicle's handle and is the only place
+## that talks to the vehicle servers. There is deliberately no path to a controller here - the
+## cabin root is told which vehicle it belongs to and passes that down.
+
+var _vehicle_rid:RID
 var _dirty:bool = false
+var _applying_control_value:bool = false
+## This control as CabinHUDMouseSystem knows it, once its mesh is found
+var _mouse_control:RID = RID()
 
-signal controller_changed
+signal vehicle_rid_changed
+## Emitted while the previous vehicle is still the one connected, for disconnecting from it.
+signal vehicle_rid_changing
 
-@export_node_path("TrainController") var controller_path:NodePath = "":
-    set(x):
-        controller_path = x
-        _controller = null
-        _dirty = true
+## Cabin control id (MMD label) - manipulations are reported to CabinSystem under this id; the
+## registered cabin logic decides what they do to the vehicle.
+@export var control_id:StringName = &""
+## Which way an increase goes when the control is dragged with the mouse, per mouse axis (x: +1
+## right, y: +1 down). Zero, the default, follows the control's grip on screen; the MMD catalog
+## sets it for a control where that does not work.
+@export var mouse_drag_signs:Vector2 = Vector2.ZERO
+
+
+## The vehicle this element sits in, as the cabin root hands it down.
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    if _vehicle_rid == vehicle_rid:
+        return
+    vehicle_rid_changing.emit()
+    _vehicle_rid = vehicle_rid
+    _dirty = true
+    if _vehicle_rid:
+        vehicle_rid_changed.emit()
+
+
+func get_vehicle_rid() -> RID:
+    return _vehicle_rid
+
+
+## One named value of the vehicle's state - what a control reads, being driven by a property name
+## out of the MMD. The dump behind it is built once a frame for the whole cab.
+func _vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
+    return CabinSystem.vehicle_state_value(_vehicle_rid, key, default_value)
+
+
+## The whole of it, for the few places that genuinely read several unrelated values at once.
+func _vehicle_state() -> Dictionary:
+    return CabinSystem.vehicle_state(_vehicle_rid)
+
+
+func _vehicle_config() -> Dictionary:
+    return CabinSystem.vehicle_config(_vehicle_rid)
+
+
+## Reports a manipulation of this control to CabinSystem, for the occupied cab of its vehicle.
+func _act(action:StringName, value:Variant = null) -> Variant:
+    if _applying_control_value or not _vehicle_rid or not control_id:
+        return null
+    return CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, action, value)
+
+
+# _notification runs on every class of the hierarchy, unlike _ready/_enter_tree overridden below.
+func _notification(what:int) -> void:
+    if what == NOTIFICATION_ENTER_TREE:
+        CabinSystem.control_changed.connect(_on_cabin_control_changed)
+    elif what == NOTIFICATION_EXIT_TREE:
+        CabinSystem.control_changed.disconnect(_on_cabin_control_changed)
+        if _mouse_control.is_valid():
+            CabinHUDMouseSystem.control_free(_mouse_control)
+            _mouse_control = RID()
+
+
+## Shows a control value set in CabinSystem (e.g. from the console) without reporting it back.
+func _on_cabin_control_changed(vehicle_rid:RID, _cab:int, p_control_id:StringName, value:Variant) -> void:
+    if not p_control_id == control_id or not _vehicle_rid or not vehicle_rid == _vehicle_rid:
+        return
+    _applying_control_value = true
+    _apply_control_value(value)
+    _applying_control_value = false
+
+
+func _apply_control_value(_value:Variant) -> void:
+    pass
+
+
+## Makes `mesh` operable by mouse with this control's own operations; an empty `increase` leaves
+## it click-only. `actions` are the keys that do the same, shown next to the caption
+## (drivermode.cpp:373). `step_rotation` (degrees, applied X, Y, Z as the widgets animate) and
+## `step_position` are how far one increase moves the mesh, so a drag follows the grip. A valid
+## `drag` takes the drag's travel in pixels in place of the increase/decrease steps.
+func _set_mouse_control(mesh:Node3D, actions:PackedStringArray, pressed:Callable, released:Callable,
+        increase:Callable, decrease:Callable, step_rotation:Vector3, step_position:Vector3,
+        drag:Callable = Callable()) -> void:
+    if _mouse_control.is_valid():
+        CabinHUDMouseSystem.control_free(_mouse_control)
+    var hints:PackedStringArray = []
+    for action_name:String in actions:
+        if action_name and InputMap.has_action(action_name):
+            for event:InputEvent in InputMap.action_get_events(action_name):
+                hints.append(event.as_text())
+    var step_basis:Basis = Basis(Vector3.RIGHT, deg_to_rad(step_rotation.x)) \
+            * Basis(Vector3.UP, deg_to_rad(step_rotation.y)) \
+            * Basis(Vector3.FORWARD, deg_to_rad(step_rotation.z))
+    _mouse_control = CabinHUDMouseSystem.control_create(mesh.get_instance_id(),
+            MmdCabControlCaptions.caption(control_id), " / ".join(hints), pressed, released, increase, decrease,
+            step_basis, step_position, drag, mouse_drag_signs)
+
+
+## A two-state control's state under its caption - msgids the tooltip's Label translates, from the
+## wrapper's own catalogue (addons/libmaszyna/translations)
+const STATE_ON:String = "on"
+const STATE_OFF:String = "off"
+
+
+## What the control shows now, for the caption under the cursor (CabinHUDMouseSystem).
+func _set_mouse_state(state:String) -> void:
+    if _mouse_control.is_valid():
+        CabinHUDMouseSystem.control_set_state(_mouse_control, state)
+
+
+func _exit_tree() -> void:
+    set_vehicle_rid(RID())
+    _dirty = true
+
 
 func _process_dirty(delta):
     pass
 
+
 func _process_tool(delta):
     pass
+
 
 func _process(delta):
     if _dirty:
         _dirty = false
-        if not _controller and controller_path:
-            _controller = get_node(controller_path)
-            controller_changed.emit()
-
-        if has_method("_process_dirty"):
-            call("_process_dirty", delta)
+        _process_dirty(delta)
     _process_tool(delta)

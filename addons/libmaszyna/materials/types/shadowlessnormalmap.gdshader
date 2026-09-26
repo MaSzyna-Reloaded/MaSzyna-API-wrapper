@@ -36,6 +36,9 @@ void fragment() {
 	vec2 base_uv = UV;
 
 	vec4 albedo_tex = texture(texture_albedo, base_uv);
+#ifdef MASZYNA_ALPHA_BLEND
+	ALPHA = albedo_tex.a;
+#endif
 	if (transparency == 2 && albedo_tex.a < alpha_scissor_threshold) {
 		discard;
 	}
@@ -50,7 +53,7 @@ void fragment() {
 	ROUGHNESS = roughness_tex * roughness;
 
     if(emission_enabled) {
-        EMISSION = emission_color.rgb * albedo_tex.rgb * emission_energy;
+        EMISSION = emission_color.rgb * albedo.rgb * albedo_tex.rgb * emission_energy;
     }
 
 

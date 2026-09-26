@@ -11,16 +11,9 @@ func _ready() -> void:
         if _player:
             _player.controlled_vehicle_changed.connect(_on_controlled_vehicle_changed)
 
+## The panels are handed the vehicle itself - what they show is its state, and a path to a node
+## inside it says nothing they need.
 func _on_controlled_vehicle_changed():
-    var controller:TrainController
-    if _player.controlled_vehicle and _player.controlled_vehicle.controller_path:
-        controller = _player.controlled_vehicle.get_controller()
-        $MoverSwitches.train_controller = $MoverSwitches.get_path_to(controller)
-        $Gauges.train_controller = $Gauges.get_path_to(controller)
-    else:
-        $MoverSwitches.train_controller = NodePath("")
-        $Gauges.train_controller = NodePath("")
-
-# Called every frame. 'delta' is the elapsed time since the previous frame.
-func _process(delta: float) -> void:
-    pass
+    var vehicle:RailVehicle3D = _player.controlled_vehicle
+    var controller:VehicleController = vehicle.get_controller() if vehicle else null
+    $MoverSwitches.vehicle = controller

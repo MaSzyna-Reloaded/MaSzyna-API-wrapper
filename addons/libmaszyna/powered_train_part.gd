@@ -1,19 +1,22 @@
-extends GenericTrainPart
+extends GenericVehicleComponentNode
 class_name PoweredTrainPart
 
-## Example of a customization based on a GenericTrainPart interface.
+## Example of a customization based on a GenericVehicleComponent interface.
 ## PoweredTrainPart will call [method _process_powered] when low power is
 ## available in a train (24V or 110V), [method _process_unpowered] otherwise.
 
 var locked = false
 
-func _enter_tree():
+func _ready():
     register_command("lock_power", self._on_lock_power)
 
 
-func _process_train_part(delta):
-    var state = get_train_state()
-    var power_avail = state.get("power24_available") or state.get("power110_available")
+func _process_component(delta):
+    # the two values this reads are the vehicle's own, so they are read off the vehicle rather
+    # than out of a dump composed of everything every component publishes
+    var controller:VehicleController = get_controller()
+    var power_avail:bool = controller and (
+            controller.get_power24_available() or controller.get_power110_available())
     if not locked and power_avail and has_method("_process_powered"):
         call("_process_powered", delta)
     elif (locked or not power_avail) and has_method("_process_unpowered"):

@@ -17,6 +17,7 @@ namespace godot {
     static constexpr const char *LIGHT_OFF_SUFFIX = "_off";
     static constexpr const char *LIGHT_ON_PREFIX = "light_on";
     static constexpr const char *LIGHT_OFF_PREFIX = "light_off";
+    static constexpr const char *SMOKE_SOURCE_PREFIX = "smokesource_";
 
     void E3DParser::_bind_methods() {
         ClassDB::bind_method(D_METHOD("parse", "file"), &E3DParser::parse);
@@ -289,6 +290,11 @@ namespace godot {
 
             if (submodel.material_idx >= 0 && submodel.material_idx < material_names.size()) {
                 submodel.material = String(material_names[submodel.material_idx]);
+                // Original engine: "colored" is the built-in diffuse-color material, same as texture
+                // index 0 (Model3d.cpp:369, 2084 - Fetch_Material("colored")), not a texture.
+                if (submodel.material.to_lower() == "colored") {
+                    submodel.is_material_colored = true;
+                }
             }
 
             if (submodel.matrix_idx >= 0 && submodel.matrix_idx < matrices.size()) {
@@ -533,21 +539,25 @@ namespace godot {
             }
         }
 
-        _register_lights(model, submodels, submodels_meta, parent_indices);
+        _register_lights(model, submodels, parent_indices);
+        _register_smoke_sources(model, submodels, parent_indices);
 
         return model;
     }
 
+    // Built from the submodels' final names (not the raw E3D name table), so unnamed transforms
+    // renamed to "banan" in _create_submodel() resolve the same way E3DModel::get_node_or_null() does.
     NodePath E3DParser::_build_submodel_path(
-            const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices, int p_index) const {
-        if (p_index < 0 || static_cast<size_t>(p_index) >= p_meta.size()) {
+            const std::vector<Ref<E3DSubModel>> &p_submodels, const std::vector<int> &p_parent_indices,
+            int p_index) const {
+        if (p_index < 0 || static_cast<size_t>(p_index) >= p_submodels.size()) {
             return NodePath();
         }
 
         std::vector<String> reversed_segments;
         int current_index = p_index;
-        while (current_index > -1 && static_cast<size_t>(current_index) < p_meta.size()) {
-            const String segment = p_meta.at(current_index).name;
+        while (current_index > -1 && static_cast<size_t>(current_index) < p_submodels.size()) {
+            const String segment = p_submodels.at(current_index)->get_name();
             if (segment.is_empty()) {
                 return NodePath();
             }
@@ -569,7 +579,7 @@ namespace godot {
 
     void E3DParser::_register_lights(
             const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
-            const std::vector<SubModelData> &p_meta, const std::vector<int> &p_parent_indices) const {
+            const std::vector<int> &p_parent_indices) const {
 
         std::unordered_set<size_t> used_off;
 
@@ -611,14 +621,18 @@ namespace godot {
 
             String light_name = base_name;
 
+            // Acceptable, e.g. wmb10.e3d: the original binds only the first match in tree order
+            // (TButton::Init() -> GetFromName(), Button.cpp:32); other copies stay hidden like any
+            // "_on" submodel (Model3d.cpp:252).
             if (p_model->get_lights().has(light_name)) {
-                UtilityFunctions::push_error("[E3DParser]: Duplicate light name: " + light_name);
+                UtilityFunctions::push_warning(
+                        "[E3DParser]: Duplicate light name (first one is used, as in the original): " + light_name);
                 continue;
             }
 
             Ref<E3DModelLightDefinition> entry;
             entry.instantiate();
-            entry->set_on_submodel_path(_build_submodel_path(p_meta, p_parent_indices, static_cast<int>(i)));
+            entry->set_on_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i)));
 
             String off_name_lower = off_name.to_lower();
             int found_off_index = -1;
@@ -631,10 +645,37 @@ namespace godot {
                 }
             }
             if (found_off_index > -1) {
-                entry->set_off_submodel_path(_build_submodel_path(p_meta, p_parent_indices, found_off_index));
+                entry->set_off_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, found_off_index));
             }
 
             p_model->register_light(light_name, entry);
+        }
+    }
+
+    /// Particle emitters: a transform submodel whose name starts with "smokesource_", the whole
+    /// name being the parameter file the original reads from data/ (TSubModel::is_emitter(),
+    /// Model3d.cpp:1417, TSubModel::find_smoke_sources(), Model3d.cpp:962). Matching is
+    /// case-insensitive like is_emitter(); the original's own discovery compares the raw name and
+    /// so misses a capitalised one.
+    void E3DParser::_register_smoke_sources(
+            const Ref<E3DModel> &p_model, const std::vector<Ref<E3DSubModel>> &p_submodels,
+            const std::vector<int> &p_parent_indices) const {
+
+        for (size_t i = 0; i < p_submodels.size(); i++) {
+            const Ref<E3DSubModel> &sm = p_submodels[i];
+            if (sm->get_submodel_type() != E3DSubModel::SUBMODEL_TRANSFORM) {
+                continue;
+            }
+            const String sm_name = sm->get_name();
+            if (!sm_name.to_lower().begins_with(SMOKE_SOURCE_PREFIX)) {
+                continue;
+            }
+
+            Ref<E3DModelSmokeSourceDefinition> entry;
+            entry.instantiate();
+            entry->set_template_name(sm_name.to_lower());
+            entry->set_submodel_path(_build_submodel_path(p_submodels, p_parent_indices, static_cast<int>(i)));
+            p_model->register_smoke_source(entry);
         }
     }
 } // namespace godot

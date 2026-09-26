@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://dacvr0rfpjx5a"]
+
+[ext_resource type="Script" uid="uid://b0r5vydn7ve4l" path="res://addons/libmaszyna/environment/maszyna_environment_node.gd" id="1_env"]
+[ext_resource type="PackedScene" uid="uid://dmhikrkk2qsjl" path="res://addons/libmaszyna/player/player.tscn" id="2_player"]
+[ext_resource type="Script" uid="uid://b1awg5iad35ss" path="res://addons/libmaszyna/scenery/maszyna_scenery.gd" id="3_scenery"]
+[ext_resource type="PackedScene" uid="uid://dgm10m7u26drx" path="res://addons/libmaszyna/console/developer_console.tscn" id="4_console"]
+[ext_resource type="Script" uid="uid://bdukhyjwpbfvl" path="res://demo_scenery_loading.gd" id="7_demo"]
+[ext_resource type="PackedScene" uid="uid://1djubq5jy2wx" path="res://loading_screen/loading_screen.tscn" id="11_loading_screen"]
+[ext_resource type="AudioStream" uid="uid://cn3nnquf55ipe" path="res://sounds/music/musinova-minimal-techno-ambient-loop-edit-483369.mp3" id="13_music"]
+[ext_resource type="PackedScene" path="res://weather/weather_sfx.tscn" id="6_weather_sfx"]
+[ext_resource type="PackedScene" path="res://scenery_selector/scenery_selector_screen.tscn" id="10_scenery_selector"]
+[ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="14_spinner"]
+[ext_resource type="Resource" path="res://sounds/player/player_sfx_bank.tres" id="player_sfx_bank"]
+[ext_resource type="PackedScene" path="res://hud/game_hud.tscn" id="game_hud_scene"]
+[ext_resource type="Script" path="res://addons/libmaszyna/scenario/scenario_keyboard.gd" id="scenario_keyboard"]
+
+[node name="DemoSceneryLoading" type="Node3D" unique_id=201292365]
+script = ExtResource("7_demo")
+
+[node name="MaszynaEnvironmentNode" type="Node" parent="." unique_id=343448235]
+script = ExtResource("1_env")
+current_time = 14.913
+day = 19
+month = 9
+wind_strength = 0.2
+fog_density = 0.015
+fog_distance = 235.0
+tonemap_white = 10.0
+tonemap_agx_white = 8.0
+tonemap_agx_contrast = 1.1
+
+[node name="Player" parent="." unique_id=88536137 instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 3, 615)
+sfx_bank = ExtResource("player_sfx_bank")
+
+[node name="MaszynaSceneryNode" type="Node3D" parent="." unique_id=552404885]
+script = ExtResource("3_scenery")
+environment_node_path = NodePath("../MaszynaEnvironmentNode")
+
+[node name="ScenarioKeyboard" type="Node" parent="."]
+script = ExtResource("scenario_keyboard")
+
+[node name="DeveloperConsole" parent="." unique_id=1071361171 instance=ExtResource("4_console")]
+
+[node name="WeatherSfx" parent="." unique_id=197956768 instance=ExtResource("6_weather_sfx")]
+weather_path = NodePath("../MaszynaEnvironmentNode/_WorldEnvironment/Weather")
+
+[node name="Music" type="AudioStreamPlayer" parent="." unique_id=168087480]
+stream = ExtResource("13_music")
+volume_db = -6.0
+autoplay = true
+
+[node name="GameHud" parent="." instance=ExtResource("game_hud_scene")]
+player_path = NodePath("../Player")
+environment_node_path = NodePath("../MaszynaEnvironmentNode")
+
+[node name="ExitToMenu" type="Button" parent="GameHud/MenuActions"]
+layout_mode = 0
+text = "Exit to menu"
+
+[node name="ExitConfirmation" type="ConfirmationDialog" parent="."]
+title = "Exit to menu"
+dialog_text = "Leave the scenery and go back to the menu?"
+
+[node name="LoadingScreen" parent="." unique_id=1493321315 instance=ExtResource("11_loading_screen")]
+scene_path = ""
+
+[node name="ScenerySelectorScreen" parent="." unique_id=969482359 instance=ExtResource("10_scenery_selector")]
+visible = false
+
+[node name="SpinnerOverlay" parent="." unique_id=1959235682 instance=ExtResource("14_spinner")]
+visible = false
+
+[node name="FadeLayer" type="CanvasLayer" parent="." unique_id=1782001293]
+layer = 200
+
+[node name="Black" type="ColorRect" parent="FadeLayer" unique_id=1343566047]
+modulate = Color(1, 1, 1, 0)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[connection signal="load_progress" from="MaszynaSceneryNode" to="LoadingScreen" method="set_progress"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="." method="_on_scenery_loaded"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="Player" method="set_start_train_if_empty"]
+[connection signal="scenery_loaded" from="MaszynaSceneryNode" to="ScenarioKeyboard" method="take_launchers"]
+[connection signal="quit_requested" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_quit_requested"]
+[connection signal="scenery_selected" from="ScenerySelectorScreen" to="." method="_on_scenery_selector_scenery_selected"]
+[connection signal="pressed" from="GameHud/MenuActions/ExitToMenu" to="." method="_on_exit_to_menu_pressed"]
+[connection signal="confirmed" from="ExitConfirmation" to="." method="_exit_to_menu"]
+
+[editable path="GameHud"]

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<class name="VehicleState" inherits="RefCounted" api_type="extension" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/godotengine/godot/master/doc/class.xsd">
+	<brief_description>
+	</brief_description>
+	<description>
+	</description>
+	<tutorials>
+	</tutorials>
+	<methods>
+		<method name="get_by_id" qualifiers="const">
+			<return type="Variant" />
+			<param index="0" name="property_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_float_by_id" qualifiers="const">
+			<return type="float" />
+			<param index="0" name="property_id" type="int" />
+			<description>
+			</description>
+		</method>
+		<method name="get_vehicle" qualifiers="const">
+			<return type="RID" />
+			<description>
+			</description>
+		</method>
+		<method name="is_valid" qualifiers="const">
+			<return type="bool" />
+			<description>
+			</description>
+		</method>
+		<method name="read_floats" qualifiers="const">
+			<return type="PackedFloat64Array" />
+			<param index="0" name="property_ids" type="PackedInt32Array" />
+			<description>
+			</description>
+		</method>
+		<method name="resolve" qualifiers="static">
+			<return type="int" />
+			<param index="0" name="name" type="StringName" />
+			<description>
+			</description>
+		</method>
+		<method name="snapshot" qualifiers="const">
+			<return type="Dictionary" />
+			<description>
+			</description>
+		</method>
+	</methods>
+</class>

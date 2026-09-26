@@ -1,0 +1,9 @@
+[gd_scene format=3 uid="uid://bwo8igsgw4w01"]
+
+[ext_resource type="Script" uid="uid://dgaec51cl4y4b" path="res://startup/startup.gd" id="1_startup"]
+[ext_resource type="PackedScene" path="res://startup/spinner_overlay.tscn" id="2_overlay"]
+
+[node name="Startup" type="Node" unique_id=153508326]
+script = ExtResource("1_startup")
+
+[node name="SpinnerOverlay" parent="." unique_id=1113334971 instance=ExtResource("2_overlay")]

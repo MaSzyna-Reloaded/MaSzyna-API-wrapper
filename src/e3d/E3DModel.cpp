@@ -14,13 +14,17 @@ namespace godot {
         }
         submodels.clear();
         lights.clear();
+        smoke_sources.clear();
     }
 
     void E3DModel::_bind_methods() {
         BIND_CONSTANT(FORMAT_VERSION);
         BIND_PROPERTY_W_HINT_RES_ARRAY(E3DModel, Variant::ARRAY, submodels, PROPERTY_HINT_ARRAY_TYPE, "E3DSubModel");
         BIND_PROPERTY(E3DModel, Variant::DICTIONARY, lights);
+        BIND_PROPERTY_W_HINT_RES_ARRAY(
+                E3DModel, Variant::ARRAY, smoke_sources, PROPERTY_HINT_ARRAY_TYPE, "E3DModelSmokeSourceDefinition");
         ClassDB::bind_method(D_METHOD("register_light", "p_name", "p_entry"), &E3DModel::register_light);
+        ClassDB::bind_method(D_METHOD("register_smoke_source", "p_entry"), &E3DModel::register_smoke_source);
         ClassDB::bind_method(D_METHOD("get_node", "p_path"), &E3DModel::get_node);
         ClassDB::bind_method(D_METHOD("get_node_or_null", "p_path"), &E3DModel::get_node_or_null);
     }
@@ -33,6 +37,14 @@ namespace godot {
         lights = p_lights;
     }
 
+    TypedArray<E3DModelSmokeSourceDefinition> E3DModel::get_smoke_sources() const {
+        return smoke_sources;
+    }
+
+    void E3DModel::set_smoke_sources(const TypedArray<E3DModelSmokeSourceDefinition> &p_smoke_sources) {
+        smoke_sources = p_smoke_sources;
+    }
+
     TypedArray<E3DSubModel> E3DModel::get_submodels() const {
         return submodels;
     }
@@ -43,6 +55,10 @@ namespace godot {
 
     void E3DModel::register_light(const String &p_name, const Ref<E3DModelLightDefinition> &p_entry) {
         lights[p_name] = p_entry;
+    }
+
+    void E3DModel::register_smoke_source(const Ref<E3DModelSmokeSourceDefinition> &p_entry) {
+        smoke_sources.append(p_entry);
     }
 
     void E3DModel::add_child(const Ref<E3DSubModel> &p_sub_model) {

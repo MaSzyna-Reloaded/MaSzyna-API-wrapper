@@ -17,7 +17,15 @@ namespace godot {
                 MODE_SET,
                 /// `addvalues`: the text is appended, the values added (MemCell.cpp:30-37)
                 MODE_ADD,
+                /// An isolated section's own memory when the section is taken: value 2 made odd
+                /// (TIsolated::Modify(), Track.cpp:155-156)
+                MODE_ISOLATED_BUSY,
+                /// ...and when it is free again: the low byte of value 2 cleared (Track.cpp:128-130)
+                MODE_ISOLATED_FREE,
             };
+
+            /// The part of value 2 a freed isolated section clears
+            static constexpr int ISOLATED_FREE_MASK = 0xFF;
 
         private:
             TypedArray<RID> memories;

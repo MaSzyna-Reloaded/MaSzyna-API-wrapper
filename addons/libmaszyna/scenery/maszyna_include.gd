@@ -55,6 +55,8 @@ var _launcher_rids:Array[RID] = []
 var _event_rids:Array[RID] = []
 var _memory_rids:Array[RID] = []
 var _event_track_rids:Array[RID] = []
+var _isolated_rids:Array[RID] = []
+var _event_isolated_rids:Array[RID] = []
 
 ## Initial loading (autoload) is deferred to the first _process.
 func _ready() -> void:
@@ -79,6 +81,8 @@ func _free_owned_rids(budget_msec:int = 0) -> void:
         [_event_rids, ScenarioEventServer.event_free],
         [_memory_rids, ScenarioEventServer.memory_free],
         [_event_track_rids, ScenarioEventServer.track_clear_events],
+        [_event_isolated_rids, ScenarioEventServer.isolated_clear_events],
+        [_isolated_rids, TrackManager.isolated_free],
         [_track_render_rids, TrackRenderingServer.free_track],
         [_track_rids, TrackManager.track_free],
         [_traction_rids, TractionRenderingServer.free_traction],

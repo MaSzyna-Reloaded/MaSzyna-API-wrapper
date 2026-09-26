@@ -1,6 +1,7 @@
 #pragma once
 #include "../core/VehicleComponentType.hpp"
 #include "../core/VehicleController.hpp"
+#include "../radio/VehicleRadio.hpp"
 
 #include "../tracks/TrackManager.hpp"
 
@@ -185,6 +186,7 @@ namespace godot {
             static const char *vehicle_heading_to_track_start_signal;
             static const char *vehicle_heading_to_track_end_signal;
             static const char *vehicle_stopped_on_track_signal;
+            static const char *vehicle_radio_called_signal;
 
             RailVehicleServer();
             ~RailVehicleServer() override;
@@ -224,6 +226,8 @@ namespace godot {
             /* Radio-Stop sent from this vehicle reaches every vehicle within RADIO_STOP_RANGE of it,
              * itself included (basic_region::RadioStop, scene.cpp:1269) */
             void vehicle_radio_stop(const RID &p_vehicle);
+            /* The vehicle's radio sent a call from where it stands (Event.cpp:2255-2268 listens) */
+            void vehicle_radio_call(const RID &p_vehicle, VehicleRadio::RadioCall p_call);
             /* The RailVehicle3D this handle belongs to, by instance id. */
             void vehicle_attach_rail_vehicle(const RID &p_vehicle, uint64_t p_rail_vehicle_id);
             uint64_t vehicle_get_rail_vehicle(const RID &p_vehicle) const;

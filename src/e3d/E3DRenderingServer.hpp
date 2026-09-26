@@ -119,6 +119,9 @@ namespace godot {
             static const char *instance_freed_signal;
             /// Emitted after an instance is built - its model, and so its lights, are known from then
             static const char *instance_built_signal;
+            /// A submodel reached what instance_set_submodel_rotation()/_translation() sent it to
+            /// (TAnimContainer's evDone, AnimModel.cpp:112-120, 175-180)
+            static const char *submodel_animation_finished_signal;
 
             static E3DRenderingServer *get_instance() {
                 return Object::cast_to<E3DRenderingServer>(
@@ -217,7 +220,10 @@ namespace godot {
             bool animation_processing = false;
             double light_clock = 0.0;   // seconds, the clock every blinking light cycles on
             double current_time = 12.0; // hours, 0..24
-            double light_level = 1.0;   // Global.fLuminance equivalent (simulationenvironment.cpp:184)
+            /// Simulated seconds per real second the submodels animate in, 0 while the world is
+            /// paused (Timer::GetDeltaTime())
+            double animation_speed = 1.0;
+            double light_level = 1.0; // Global.fLuminance equivalent (simulationenvironment.cpp:184)
             Callable model_loader;
             Callable smoke_source_resolver;
             HashMap<String, Ref<E3DModel>> models;
@@ -348,6 +354,9 @@ namespace godot {
             /// Pushed by MaszynaEnvironmentNode; the first two drive the automatic light modes,
             /// the wind drifts the particles of every emitter
             void set_current_time(double p_hours);
+            /// Pushed by MaszynaEnvironmentNode: the simulation speed, 0 while paused
+            void set_animation_speed(double p_speed);
+            double get_animation_speed() const;
             void set_light_level(double p_level);
             void set_wind(float p_strength, const Vector3 &p_direction);
             void set_wind_strength(float p_strength);

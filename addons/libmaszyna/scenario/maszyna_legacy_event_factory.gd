@@ -9,9 +9,10 @@ class_name MaszynaLegacyEventFactory
 ## every token it is not told to keep, parser.h:71).
 ##
 ## Built: `updatevalues`, `addvalues`, `copyvalues`, `multiple`, `lights`, `switch`, `trackvel`,
-## `voltage`, `animation` (rotate, translate); conditions `memcompare` and `probability`; a track's
-## `event0/1/2`, `eventall0/1/2` and the events named `<track>:<slot>` (Track.cpp:970-983). The other
-## types get an event without an action (TODO.md).
+## `voltage`, `animation` (rotate, translate), `sound`; conditions `memcompare`, `memcompareex`,
+## `probability`, `trackoccupied`, `trackfree`; a track's `event0/1/2`, `eventall0/1/2` and the
+## events named `<track>:<slot>` (Track.cpp:970-983); the isolated sections with their own memory and
+## `<section>:busy/:free/:inc/:dec` events. The other types get an event without an action (TODO.md).
 
 ## "Leave this field as it is" (Event.cpp:491-503)
 const FIELD_KEPT:String = "*"
@@ -36,6 +37,41 @@ const TRACK_EVENTS:Dictionary[String, ScenarioEventServer.TrackEvent] = {
     "eventall1": ScenarioEventServer.TRACK_EVENTALL1,
     "eventall2": ScenarioEventServer.TRACK_EVENTALL2,
 }
+## An isolated section's events by the suffix of their name (Track.cpp:110-116)
+const ISOLATED_EVENTS:Dictionary[String, ScenarioEventServer.IsolatedEvent] = {
+    ":busy": ScenarioEventServer.ISOLATED_BUSY,
+    ":free": ScenarioEventServer.ISOLATED_FREE,
+    ":inc": ScenarioEventServer.ISOLATED_INC,
+    ":dec": ScenarioEventServer.ISOLATED_DEC,
+}
+## What a section's own memory is marked with, and when
+const ISOLATED_MARKERS:Dictionary[MaszynaLegacyMemoryAction.Mode, ScenarioEventServer.IsolatedEvent] = {
+    MaszynaLegacyMemoryAction.MODE_ISOLATED_BUSY: ScenarioEventServer.ISOLATED_BUSY,
+    MaszynaLegacyMemoryAction.MODE_ISOLATED_FREE: ScenarioEventServer.ISOLATED_FREE,
+}
+## `memcompareex` (comparison.h:56-75); an unknown one is the original's legacy default
+const COMPARISON_PASSES:Dictionary[String, MaszynaLegacyEventCondition.Pass] = {
+    "all": MaszynaLegacyEventCondition.PASS_ALL,
+    "any": MaszynaLegacyEventCondition.PASS_ANY,
+    "none": MaszynaLegacyEventCondition.PASS_NONE,
+}
+const COMPARISON_OPERATORS:Dictionary[String, MaszynaLegacyEventCondition.Operator] = {
+    "==": MaszynaLegacyEventCondition.OPERATOR_EQUAL,
+    "!=": MaszynaLegacyEventCondition.OPERATOR_NOT_EQUAL,
+    "<": MaszynaLegacyEventCondition.OPERATOR_LESS,
+    ">": MaszynaLegacyEventCondition.OPERATOR_GREATER,
+    "<=": MaszynaLegacyEventCondition.OPERATOR_LESS_EQUAL,
+    ">=": MaszynaLegacyEventCondition.OPERATOR_GREATER_EQUAL,
+}
+## The fields of `<text> <value1> <value2>`, in their order
+const MEMORY_FIELDS:Array[int] = [
+    ScenarioEventServer.MEMORY_FIELD_TEXT, ScenarioEventServer.MEMORY_FIELD_VALUE1, ScenarioEventServer.MEMORY_FIELD_VALUE2
+]
+## A launcher's key that is a radio call (EvLaunch.cpp:67-79)
+const RADIO_CALLS:Dictionary[String, VehicleRadio.RadioCall] = {
+    "radio_call1": VehicleRadio.RADIO_CALL1,
+    "radio_call3": VehicleRadio.RADIO_CALL3,
+}
 ## `sound <mode>`: 1 plays, -1 loops, 0 stops (Event.cpp:1379-1390)
 const SOUND_MODES:Dictionary[int, MaszynaLegacySoundAction.Mode] = {
     0: MaszynaLegacySoundAction.Mode.STOP,
@@ -55,6 +91,7 @@ static func build(
     memcells:Array[MaszynaMemcellData],
     launchers:Array[MaszynaEventLauncherData],
     sounds:Array[MaszynaSoundData],
+    isolated_sections:Array[MaszynaIsolatedData],
     tracks:Array[MaszynaTrackData],
     track_rids:Array[RID],
     models:Array[MaszynaModelData],
@@ -101,6 +138,40 @@ static func build(
         root.add_child(player)
         player.global_position = sound.position
         players_by_name[sound.name.to_lower()] = player
+
+    # the isolated sections, named by a track's `isolated`, an `isolated` block or an `area`
+    var sections:Dictionary[String, RID] = {}
+    var section_names:PackedStringArray = []
+    for track_data:MaszynaTrackData in tracks:
+        if track_data.parameters.has("isolated"):
+            section_names.append(str(track_data.parameters["isolated"]).to_lower())
+    for block:MaszynaIsolatedData in isolated_sections:
+        section_names.append(block.name)
+        section_names.append_array(block.children)
+    for section_name:String in section_names:
+        if sections.has(section_name):
+            continue
+        var section:RID = TrackManager.isolated_create()
+        root._isolated_rids.append(section)
+        TrackManager.isolated_set_name(section, section_name)
+        sections[section_name] = section
+        # every section has a memory of its name, made if the scenery has none (Track.cpp:3556-3575)
+        if not memories.has(section_name):
+            var memory:RID = ScenarioEventServer.memory_create()
+            root._memory_rids.append(memory)
+            ScenarioEventServer.memory_set_name(memory, section_name)
+            memories[section_name] = memory
+    for index:int in tracks.size():
+        if tracks[index].parameters.has("isolated"):
+            TrackManager.isolated_add_track(
+                sections[str(tracks[index].parameters["isolated"]).to_lower()], track_rids[index]
+            )
+    for block:MaszynaIsolatedData in isolated_sections:
+        for track_name:String in block.tracks:
+            if tracks_by_name.has(track_name):
+                TrackManager.isolated_add_track(sections[block.name], tracks_by_name[track_name])
+        for child:String in block.children:
+            TrackManager.isolated_set_parent(sections[child], sections[block.name])
 
     # every event exists before any refers to another
     var event_rids:Array[RID] = []
@@ -215,6 +286,11 @@ static func build(
                 action.target = Vector3(float(event.parameters[2]), float(event.parameters[3]), float(event.parameters[4]))
                 action.speed = float(event.parameters[5])
                 ScenarioEventServer.event_attach_action(rid, action)
+                # the event an animation of the submodel runs when it is done (Event.cpp:1588-1592)
+                for target:String in event.targets:
+                    var done:String = target + "." + action.submodel.to_lower() + ":done"
+                    if instances_by_name.has(target) and events_by_name.has(done):
+                        ScenarioEventServer.animation_set_done_event(instances_by_name[target], action.submodel, events_by_name[done])
 
         # the targets of an event are the memories its `memcompare` reads (Event.cpp:1213-1233)
         var condition:MaszynaLegacyEventCondition = MaszynaLegacyEventCondition.new()
@@ -227,11 +303,51 @@ static func build(
                 _set_memcompare(condition, event_memories, event.condition.slice(position, position + MEMCOMPARE_FIELDS))
                 position += MEMCOMPARE_FIELDS
                 conditioned = true
+            elif keyword == "memcompareex":
+                # <all|any|none>, then per field `*` or `<operator> <value>` (Event.cpp:222-252)
+                condition.memories = event_memories
+                condition.pass = COMPARISON_PASSES.get(event.condition[position].to_lower(), MaszynaLegacyEventCondition.PASS_ALL)
+                position += 1
+                var mask:int = 0
+                for field:int in MEMCOMPARE_FIELDS:
+                    if event.condition[position] == FIELD_KEPT:
+                        position += 1
+                        continue
+                    var operator:MaszynaLegacyEventCondition.Operator = COMPARISON_OPERATORS.get(
+                        event.condition[position], MaszynaLegacyEventCondition.OPERATOR_EQUAL
+                    )
+                    var value:String = event.condition[position + 1]
+                    position += 2
+                    mask |= MEMORY_FIELDS[field]
+                    match MEMORY_FIELDS[field]:
+                        ScenarioEventServer.MEMORY_FIELD_TEXT:
+                            condition.text_operator = operator
+                            condition.text = value
+                        ScenarioEventServer.MEMORY_FIELD_VALUE1:
+                            condition.value1_operator = operator
+                            condition.value1 = float(value)
+                        ScenarioEventServer.MEMORY_FIELD_VALUE2:
+                            condition.value2_operator = operator
+                            condition.value2 = float(value)
+                condition.mask = mask
+                conditioned = true
             elif keyword == "probability" or keyword == "propability":
                 condition.probability = float(event.condition[position])
                 position += 1
                 conditioned = true
-            # memcompareex, trackfree and trackoccupied are not ported (TODO.md)
+            elif keyword == "trackoccupied" or keyword == "trackfree":
+                # the event's targets as tracks; one that is no track drops the test (Event.cpp:44-59)
+                var condition_tracks:Array[RID] = []
+                for target:String in event.targets:
+                    if tracks_by_name.has(target):
+                        condition_tracks.append(tracks_by_name[target])
+                if condition_tracks.size() == event.targets.size():
+                    condition.tracks = condition_tracks
+                    condition.track_test = (
+                        MaszynaLegacyEventCondition.TRACK_TEST_OCCUPIED if keyword == "trackoccupied"
+                        else MaszynaLegacyEventCondition.TRACK_TEST_FREE
+                    )
+                    conditioned = true
         if conditioned:
             ScenarioEventServer.event_attach_condition(rid, condition)
 
@@ -250,6 +366,25 @@ static func build(
         if bound:
             root._event_track_rids.append(track_rids[index])
 
+    # a section's own memory is marked before its named events run, as the original updates it at
+    # once (Track.cpp:128-130, 155-156) and the events are queued
+    for section_name:String in sections:
+        var section:RID = sections[section_name]
+        root._event_isolated_rids.append(section)
+        for marker_mode:MaszynaLegacyMemoryAction.Mode in ISOLATED_MARKERS:
+            var marker:RID = ScenarioEventServer.event_create()
+            root._event_rids.append(marker)
+            var marked:Array[RID] = [memories[section_name]]
+            var action:MaszynaLegacyMemoryAction = MaszynaLegacyMemoryAction.new()
+            action.memories = marked
+            action.mask = ScenarioEventServer.MEMORY_FIELD_VALUE2
+            action.mode = marker_mode
+            ScenarioEventServer.event_attach_action(marker, action)
+            ScenarioEventServer.isolated_add_event(section, ISOLATED_MARKERS[marker_mode], marker)
+        for suffix:String in ISOLATED_EVENTS:
+            if events_by_name.has(section_name + suffix):
+                ScenarioEventServer.isolated_add_event(section, ISOLATED_EVENTS[suffix], events_by_name[section_name + suffix])
+
     for launcher_data:MaszynaEventLauncherData in launchers:
         var launcher:RID = ScenarioEventServer.launcher_create()
         root._launcher_rids.append(launcher)
@@ -259,8 +394,10 @@ static func build(
         ScenarioEventServer.launcher_set_events(
             launcher, events_by_name.get(launcher_data.event1, RID()), events_by_name.get(launcher_data.event2, RID())
         )
-        # radio calls and key codes are not ported (TODO.md)
-        if launcher_data.key.length() == 1:
+        # key codes are not ported (TODO.md)
+        if RADIO_CALLS.has(launcher_data.key):
+            ScenarioEventServer.launcher_set_radio_call(launcher, RADIO_CALLS[launcher_data.key])
+        elif launcher_data.key.length() == 1:
             ScenarioEventServer.launcher_set_key(launcher, OS.find_keycode_from_string(launcher_data.key.to_upper()))
         if launcher_data.condition:
             var condition:MaszynaLegacyEventCondition = MaszynaLegacyEventCondition.new()

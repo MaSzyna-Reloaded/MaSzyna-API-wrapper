@@ -2,6 +2,7 @@ extends MaszynaGutTest
 
 const EventImporter = preload("res://addons/libmaszyna/importer/maszyna_event_importer.gd")
 const NodeImporter = preload("res://addons/libmaszyna/importer/maszyna_node_importer.gd")
+const IsolatedImporter = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd")
 const MAX_WAIT:float = 5.0
 ## Longer than any test runs, so the event stays queued
 const NEVER:float = 3600.0
@@ -164,6 +165,30 @@ func test_a_launcher_fires_only_when_its_condition_passes() -> void:
     _free_events([event])
 
 
+func test_a_radio_call_fires_the_launchers_listening_in_range() -> void:
+    var near:RID = _create_event(RecordingAction.new(), NEVER)
+    var far:RID = _create_event(RecordingAction.new(), NEVER)
+    var other_call:RID = _create_event(RecordingAction.new(), NEVER)
+    var launchers:Array[RID] = []
+    for setup:Array in [[near, VehicleRadio.RADIO_CALL3, Vector3.ZERO], [far, VehicleRadio.RADIO_CALL3, Vector3(500, 0, 0)],
+            [other_call, VehicleRadio.RADIO_CALL1, Vector3.ZERO]]:
+        var launcher:RID = ScenarioEventServer.launcher_create()
+        ScenarioEventServer.launcher_set_events(launcher, setup[0], RID())
+        ScenarioEventServer.launcher_set_radio_call(launcher, setup[1])
+        ScenarioEventServer.launcher_set_position(launcher, setup[2])
+        ScenarioEventServer.launcher_set_radius(launcher, 100.0)
+        launchers.append(launcher)
+
+    RailVehicleServer.vehicle_radio_called.emit(RID(), VehicleRadio.RADIO_CALL3, Vector3(10, 0, 0))
+
+    assert_true(ScenarioEventServer.event_is_queued(near), "call 3 within 100 m")
+    assert_false(ScenarioEventServer.event_is_queued(far), "out of range")
+    assert_false(ScenarioEventServer.event_is_queued(other_call), "listens to call 1")
+    for launcher:RID in launchers:
+        ScenarioEventServer.launcher_free(launcher)
+    _free_events([near, far, other_call])
+
+
 func test_a_launcher_fires_when_the_clock_shows_its_time() -> void:
     var clock:float = MaszynaRuntime.time_of_day
     var event:RID = _create_event(RecordingAction.new(), NEVER)
@@ -316,16 +341,23 @@ func test_scenery_animation_turns_the_submodel() -> void:
     var models:Array[MaszynaModelData] = [model_data]
     var instances:Dictionary[String, RID] = {"rog1": instance.get_e3d_instance()}
     var root:MaszynaIncludeNode = _build_scenery(
-        "event rog1on animation 0 rog1 rotate ramie01 0 0 90 900 endevent", models, instances
+        "node -1 0 c1 memcell 0 0 0 moving 0 0 none endmemcell "
+        + "event rog1on animation 0 rog1 rotate ramie01 0 0 90 900 endevent "
+        + "event rog1.ramie01:done updatevalues 0 c1 done * * endevent",
+        models, instances
     )
-
-    await _run_event(&"rog1on")
     var arm_node:Node3D = instance.find_child("Ramie01", true, false)
-    await wait_until(
-        func() -> bool: return arm_node.basis.is_equal_approx(Basis(Vector3(0, 0, 1), deg_to_rad(90.0))), MAX_WAIT
-    )
+    var cell:RID = ScenarioEventServer.memory_get_rid_by_name(&"c1")
+
+    E3DRenderingServer.set_animation_speed(0.0)
+    await _run_event(&"rog1on")
+    await get_tree().process_frame
+    assert_true(arm_node.basis.is_equal_approx(Basis()), "no motion while paused")
+    E3DRenderingServer.set_animation_speed(1.0)
+    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "done", MAX_WAIT)
 
     assert_true(arm_node.basis.is_equal_approx(Basis(Vector3(0, 0, 1), deg_to_rad(90.0))), "turned by 90 degrees about z")
+    assert_eq(ScenarioEventServer.memory_get_text(cell), "done", "the :done event runs when it arrives")
     root.free()
 
 
@@ -342,9 +374,10 @@ func test_scenery_voltage_event_sets_the_power_source() -> void:
     var tracks:Array[RID] = []
     var models:Array[MaszynaModelData] = []
     var model_rids:Array[RID] = []
+    var isolated_sections:Array[MaszynaIsolatedData] = []
     MaszynaLegacyEventFactory.build(
-        root, context.events, context.memcells, context.launchers, context.sounds, context.tracks, tracks, models,
-        model_rids, power_sources
+        root, context.events, context.memcells, context.launchers, context.sounds, isolated_sections, context.tracks,
+        tracks, models, model_rids, power_sources
     )
 
     await _run_event(&"keyctrl05")
@@ -371,6 +404,80 @@ func test_shift_and_a_digit_queue_the_keyctrl_event() -> void:
     _free_events([event])
 
 
+func test_scenery_isolated_section_fires_busy_and_marks_its_memory() -> void:
+    var track:RID = TrackManager.track_create()
+    var vehicle:RID = ScenarioEventServer.memory_create() # stands in for a vehicle
+    var tracks:Dictionary[String, RID] = {"t1": track}
+    var models:Array[MaszynaModelData] = []
+    var root:MaszynaIncludeNode = _build_scenery(
+        "node -1 0 c1 memcell 0 0 0 idle 0 0 none endmemcell "
+        + "isolated s1 t1 endisolated "
+        + "event s1:busy updatevalues 0 c1 busy * * endevent",
+        models, {}, tracks
+    )
+    var section:RID = TrackManager.isolated_get_rid_by_name(&"s1")
+    var cell:RID = ScenarioEventServer.memory_get_rid_by_name(&"c1")
+    var own_memory:RID = ScenarioEventServer.memory_get_rid_by_name(&"s1")
+    assert_true(own_memory.is_valid(), "a section has a memory of its name")
+
+    TrackManager.track_vehicle_entered(track, vehicle)
+    assert_true(TrackManager.isolated_is_occupied(section))
+    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_text(cell) == "busy", MAX_WAIT)
+    assert_eq(ScenarioEventServer.memory_get_text(cell), "busy")
+    assert_eq(int(ScenarioEventServer.memory_get_value2(own_memory)) & 1, 1, "value 2 made odd")
+
+    TrackManager.track_vehicle_left(track, vehicle)
+    assert_false(TrackManager.isolated_is_occupied(section))
+    await wait_until(func() -> bool: return ScenarioEventServer.memory_get_value2(own_memory) == 0.0, MAX_WAIT)
+    assert_eq(ScenarioEventServer.memory_get_value2(own_memory), 0.0, "the low byte cleared")
+    root.free()
+    TrackManager.track_free(track)
+    ScenarioEventServer.memory_free(vehicle)
+
+
+func test_memcompareex_and_track_tests() -> void:
+    var memory:RID = ScenarioEventServer.memory_create()
+    ScenarioEventServer.memory_set_values(memory, "b", 5.0, 0.0)
+    var memories:Array[RID] = [memory]
+    var condition:MaszynaLegacyEventCondition = MaszynaLegacyEventCondition.new()
+    condition.memories = memories
+    condition.text = "a"
+    condition.text_operator = MaszynaLegacyEventCondition.OPERATOR_GREATER
+    condition.value1 = 3.0
+    condition.value1_operator = MaszynaLegacyEventCondition.OPERATOR_LESS
+    condition.mask = ScenarioEventServer.MEMORY_FIELD_TEXT | ScenarioEventServer.MEMORY_FIELD_VALUE1
+    var action:RecordingAction = RecordingAction.new()
+    var event:RID = _create_event(action, 0.0)
+    ScenarioEventServer.event_attach_condition(event, condition)
+
+    condition.pass = MaszynaLegacyEventCondition.PASS_ANY
+    ScenarioEventServer.event_queue(event)
+    await wait_until(func() -> bool: return action.runs.size() == 1, MAX_WAIT)
+    condition.pass = MaszynaLegacyEventCondition.PASS_ALL
+    ScenarioEventServer.event_queue(event)
+    await wait_until(func() -> bool: return action.else_runs.size() == 1, MAX_WAIT)
+    assert_eq(action.runs.size(), 1, "any: \"b\" > \"a\" passes although 5 < 3 does not")
+    assert_eq(action.else_runs.size(), 1, "all: 5 < 3 fails")
+
+    var track:RID = TrackManager.track_create()
+    var condition_tracks:Array[RID] = [track]
+    condition.mask = 0
+    condition.tracks = condition_tracks
+    condition.track_test = MaszynaLegacyEventCondition.TRACK_TEST_OCCUPIED
+    ScenarioEventServer.event_queue(event)
+    await wait_until(func() -> bool: return action.else_runs.size() == 2, MAX_WAIT)
+    TrackManager.track_vehicle_entered(track, memory)
+    ScenarioEventServer.event_queue(event)
+    await wait_until(func() -> bool: return action.runs.size() == 2, MAX_WAIT)
+    assert_eq(action.else_runs.size(), 2, "an empty track is not occupied")
+    assert_eq(action.runs.size(), 2, "a track with a vehicle is")
+
+    TrackManager.track_vehicle_left(track, memory)
+    TrackManager.track_free(track)
+    _free_events([event])
+    ScenarioEventServer.memory_free(memory)
+
+
 func _create_event(action:ScenarioEventAction, delay:float) -> RID:
     var event:RID = ScenarioEventServer.event_create()
     ScenarioEventServer.event_set_delay(event, delay)
@@ -386,7 +493,8 @@ func _free_events(events:Array[RID]) -> void:
 ## Parses the scenery text and builds it through MaszynaLegacyEventFactory; the returned include
 ## frees what was built when it is freed
 func _build_scenery(
-    text:String, models:Array[MaszynaModelData], model_instances:Dictionary[String, RID] = {}
+    text:String, models:Array[MaszynaModelData], model_instances:Dictionary[String, RID] = {},
+    tracks:Dictionary[String, RID] = {}
 ) -> MaszynaIncludeNode:
     var context:MaszynaImporterContext = _parse(text)
     var root:MaszynaIncludeNode = MaszynaIncludeNode.new()
@@ -395,11 +503,17 @@ func _build_scenery(
     var model_rids:Array[RID] = []
     for model_data:MaszynaModelData in models:
         model_rids.append(model_instances.get(model_data.name, RID()))
+    var scenery_tracks:Array[MaszynaTrackData] = []
     var track_rids:Array[RID] = []
+    for track_name:String in tracks:
+        var track_data:MaszynaTrackData = MaszynaTrackData.new()
+        track_data.track_name = track_name
+        scenery_tracks.append(track_data)
+        track_rids.append(tracks[track_name])
     var power_sources:Array[MaszynaPowerSourceData] = []
     MaszynaLegacyEventFactory.build(
-        root, context.events, context.memcells, context.launchers, context.sounds, context.tracks, track_rids,
-        models, model_rids, power_sources
+        root, context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
+        scenery_tracks, track_rids, models, model_rids, power_sources
     )
     return root
 
@@ -410,6 +524,7 @@ func _parse(text:String) -> MaszynaImporterContext:
     var context:MaszynaImporterContext = MaszynaImporterContext.new()
     parser.register_handler("event", func(p:MaszynaParser) -> Array: return EventImporter.new().import(p, context))
     parser.register_handler("node", func(p:MaszynaParser) -> Array: return NodeImporter.new().import(p, context))
+    parser.register_handler("isolated", func(p:MaszynaParser) -> Array: return IsolatedImporter.new().import(p, context))
     parser.parse()
     return context
 

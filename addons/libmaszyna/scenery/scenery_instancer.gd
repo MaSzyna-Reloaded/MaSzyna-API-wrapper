@@ -17,8 +17,10 @@ static var include_importer = preload("res://addons/libmaszyna/importer/maszyna_
 static var trainset_importer = preload("res://addons/libmaszyna/importer/maszyna_trainset_importer.gd").new()
 static var endtrainset_importer = preload("res://addons/libmaszyna/importer/maszyna_endtrainset_importer.gd").new()
 static var firstinit_importer = preload("res://addons/libmaszyna/importer/maszyna_firstinit_importer.gd").new()
+static var isolated_importer = preload("res://addons/libmaszyna/importer/maszyna_isolated_importer.gd").new()
+static var area_importer = preload("res://addons/libmaszyna/importer/maszyna_area_importer.gd").new()
 const TRIANGLE_CHUNK_SIZE_M := 1000.0
-const CACHE_FORMAT_VERSION:int = 21
+const CACHE_FORMAT_VERSION:int = 22
 const CACHE_DIRECTORY:String = "scenery_compiled"
 ## Parameterless includes at least this large are parsed as cached subscenes (parse_subscene_task())
 const SUBSCENE_MIN_SIZE:int = 65536
@@ -101,6 +103,7 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
             compiled.memcells,
             compiled.launchers,
             compiled.sounds,
+            compiled.isolated_sections,
             0.3,
             0.6,
         )
@@ -119,7 +122,8 @@ func instantiate(root: MaszynaIncludeNode, parameters: Dictionary = {}) -> void:
     await _report_progress(root, PARSE_PROGRESS, "Registering tracks and traction")
     await _instantiate_server_data(
         root, world_3d, context.tracks, context.traction, context.power_sources, context.models,
-        context.events, context.memcells, context.launchers, context.sounds, PARSE_PROGRESS, 0.6
+        context.events, context.memcells, context.launchers, context.sounds, context.isolated_sections,
+        PARSE_PROGRESS, 0.6
     )
     await _report_progress(root, 0.6, "Building terrain")
     var triangle_chunks:Array[MaszynaTrianglesChunkData] = _build_triangle_chunk_data(context.triangles)
@@ -174,6 +178,7 @@ static func _instantiate_server_data(
     memcells:Array[MaszynaMemcellData],
     launchers:Array[MaszynaEventLauncherData],
     sounds:Array[MaszynaSoundData],
+    isolated_sections:Array[MaszynaIsolatedData],
     progress_from:float,
     progress_to:float,
 ) -> void:
@@ -221,7 +226,8 @@ static func _instantiate_server_data(
         )
     # the original's firstinit: everything the events are aimed at exists by now
     MaszynaLegacyEventFactory.build(
-        root, events, memcells, launchers, sounds, tracks, track_rids, models, model_rids, power_sources
+        root, events, memcells, launchers, sounds, isolated_sections, tracks, track_rids, models, model_rids,
+        power_sources
     )
 
 
@@ -327,6 +333,7 @@ static func _compile_scenery(
     compiled.memcells = context.memcells
     compiled.launchers = context.launchers
     compiled.sounds = context.sounds
+    compiled.isolated_sections = context.isolated_sections
     return compiled
 
 
@@ -496,6 +503,7 @@ func parse_subscene_task(
         cached.memcells.assign(compiled.memcells)
         cached.launchers.assign(compiled.launchers)
         cached.sounds.assign(compiled.sounds)
+        cached.isolated_sections.assign(compiled.isolated_sections)
         cached.triangles.assign(compiled.triangles)
         cached.dependencies = compiled.dependencies.duplicate(true)
         cached.objects = _instantiate_cached_nodes(compiled.nodes)
@@ -608,11 +616,13 @@ func open_parser(filename: String, parameters: Dictionary, context: MaszynaImpor
     parser.register_handler("trainset", _make_importer_callback(trainset_importer, context))
     parser.register_handler("endtrainset", _make_importer_callback(endtrainset_importer, context))
     parser.register_handler("firstinit", _make_importer_callback(firstinit_importer, context))
+    parser.register_handler("isolated", _make_importer_callback(isolated_importer, context))
+    parser.register_handler("area", _make_importer_callback(area_importer, context))
     return parser
 
 
 func _close_parser(parser:MaszynaParser, filename:String, context:MaszynaImporterContext) -> void:
-    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit"]:
+    for token in ["sky", "atmo", "config", "node", "event", "origin", "endorigin", "rotate", "terrain", "include", "trainset", "endtrainset", "firstinit", "isolated", "area"]:
         parser.unregister_handler(token)
     context.end_file(_get_source_path(filename))
 

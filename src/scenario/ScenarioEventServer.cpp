@@ -1,5 +1,7 @@
 #include "../core/MaszynaRuntime.hpp"
+#include "../e3d/E3DRenderingServer.hpp"
 #include "../physics/RailVehicleServer.hpp"
+#include "../tracks/TrackManager.hpp"
 #include "ScenarioEventServer.hpp"
 #include <godot_cpp/classes/scene_tree.hpp>
 #include <godot_cpp/classes/window.hpp>
@@ -53,6 +55,13 @@ namespace godot {
                 D_METHOD("track_add_event", "track", "slot", "event"), &ScenarioEventServer::track_add_event);
         ClassDB::bind_method(D_METHOD("track_get_events", "track", "slot"), &ScenarioEventServer::track_get_events);
         ClassDB::bind_method(D_METHOD("track_clear_events", "track"), &ScenarioEventServer::track_clear_events);
+        ClassDB::bind_method(
+                D_METHOD("isolated_add_event", "isolated", "slot", "event"), &ScenarioEventServer::isolated_add_event);
+        ClassDB::bind_method(
+                D_METHOD("isolated_clear_events", "isolated"), &ScenarioEventServer::isolated_clear_events);
+        ClassDB::bind_method(
+                D_METHOD("animation_set_done_event", "instance", "submodel", "event"),
+                &ScenarioEventServer::animation_set_done_event);
 
         ClassDB::bind_method(D_METHOD("launcher_create"), &ScenarioEventServer::launcher_create);
         ClassDB::bind_method(D_METHOD("launcher_free", "launcher"), &ScenarioEventServer::launcher_free);
@@ -85,6 +94,8 @@ namespace godot {
                 D_METHOD("launcher_set_time_of_day", "launcher", "hour", "minute"),
                 &ScenarioEventServer::launcher_set_time_of_day);
         ClassDB::bind_method(D_METHOD("get_launchers"), &ScenarioEventServer::get_launchers);
+        ClassDB::bind_method(
+                D_METHOD("launcher_set_radio_call", "launcher", "call"), &ScenarioEventServer::launcher_set_radio_call);
         ClassDB::bind_method(D_METHOD("launcher_fire", "launcher"), &ScenarioEventServer::launcher_fire);
         ClassDB::bind_method(D_METHOD("launcher_fire_shift", "launcher"), &ScenarioEventServer::launcher_fire_shift);
 
@@ -97,6 +108,10 @@ namespace godot {
         BIND_ENUM_CONSTANT(TRACK_EVENTALL0);
         BIND_ENUM_CONSTANT(TRACK_EVENTALL1);
         BIND_ENUM_CONSTANT(TRACK_EVENTALL2);
+        BIND_ENUM_CONSTANT(ISOLATED_BUSY);
+        BIND_ENUM_CONSTANT(ISOLATED_FREE);
+        BIND_ENUM_CONSTANT(ISOLATED_INC);
+        BIND_ENUM_CONSTANT(ISOLATED_DEC);
 
         ADD_SIGNAL(MethodInfo(
                 event_queued_signal, PropertyInfo(Variant::RID, "event"), PropertyInfo(Variant::RID, "activator")));
@@ -135,6 +150,30 @@ namespace godot {
                 callable_mp(this, &ScenarioEventServer::_on_vehicle_stopped_on_track));
         vehicles->connect(
                 RailVehicleServer::vehicle_freed_signal, callable_mp(this, &ScenarioEventServer::_on_vehicle_freed));
+        vehicles->connect(
+                RailVehicleServer::vehicle_radio_called_signal,
+                callable_mp(this, &ScenarioEventServer::_on_vehicle_radio_called));
+        // ...and the isolated sections' events on what the sections report
+        TrackManager *track_manager = TrackManager::get_instance();
+        ERR_FAIL_NULL(track_manager);
+        track_manager->connect(
+                TrackManager::isolated_occupied_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_occupied));
+        track_manager->connect(
+                TrackManager::isolated_freed_signal, callable_mp(this, &ScenarioEventServer::_on_isolated_freed));
+        track_manager->connect(
+                TrackManager::isolated_vehicle_entered_signal,
+                callable_mp(this, &ScenarioEventServer::_on_isolated_vehicle_entered));
+        track_manager->connect(
+                TrackManager::isolated_vehicle_left_signal,
+                callable_mp(this, &ScenarioEventServer::_on_isolated_vehicle_left));
+        // ...and the animations' `:done` events on what the rendering server reports
+        E3DRenderingServer *rendering = E3DRenderingServer::get_instance();
+        ERR_FAIL_NULL(rendering);
+        rendering->connect(
+                E3DRenderingServer::submodel_animation_finished_signal,
+                callable_mp(this, &ScenarioEventServer::_on_submodel_animation_finished));
+        rendering->connect(
+                E3DRenderingServer::instance_freed_signal, callable_mp(this, &ScenarioEventServer::_on_instance_freed));
     }
 
     ScenarioEventServer::~ScenarioEventServer() {
@@ -170,6 +209,24 @@ namespace godot {
                 continue;
             }
             launcher->armed = false;
+            _fire(launcher->condition, launcher->event);
+        }
+    }
+
+    /// event_manager::queue_receivers() (Event.cpp:2255-2268): only a launcher's first event, and
+    /// with no activator
+    void ScenarioEventServer::_on_vehicle_radio_called(
+            const RID &p_vehicle, const VehicleRadio::RadioCall p_call, const Vector3 &p_position) {
+        // copied: firing queues events, and a listener may create launchers
+        const Vector<RID> listening = radio_launchers;
+        for (const RID &rid: listening) {
+            const LauncherData *launcher = launchers.getptr(rid);
+            if (launcher == nullptr || !(launcher->radio_call == p_call)) {
+                continue;
+            }
+            if (launcher->radius >= 0.0 && launcher->position.distance_to(p_position) >= launcher->radius) {
+                continue;
+            }
             _fire(launcher->condition, launcher->event);
         }
     }
@@ -276,6 +333,52 @@ namespace godot {
 
     void ScenarioEventServer::_on_vehicle_freed(const RID &p_vehicle) {
         vehicles_on_tracks.erase(p_vehicle);
+    }
+
+    void ScenarioEventServer::_on_isolated_occupied(const RID &p_isolated, const RID &p_vehicle) {
+        _queue_isolated_events(p_isolated, ISOLATED_BUSY, p_vehicle);
+    }
+
+    void ScenarioEventServer::_on_isolated_freed(const RID &p_isolated, const RID &p_vehicle) {
+        _queue_isolated_events(p_isolated, ISOLATED_FREE, p_vehicle);
+    }
+
+    void ScenarioEventServer::_on_isolated_vehicle_entered(const RID &p_isolated, const RID &p_vehicle) {
+        _queue_isolated_events(p_isolated, ISOLATED_INC, p_vehicle);
+    }
+
+    void ScenarioEventServer::_on_isolated_vehicle_left(const RID &p_isolated, const RID &p_vehicle) {
+        _queue_isolated_events(p_isolated, ISOLATED_DEC, p_vehicle);
+    }
+
+    void ScenarioEventServer::_on_submodel_animation_finished(const RID &p_instance, const String &p_submodel) {
+        const HashMap<String, RID> *done_events = animation_done_events.getptr(p_instance);
+        if (done_events == nullptr) {
+            return;
+        }
+        const RID *event = done_events->getptr(p_submodel.to_lower());
+        if (event != nullptr && events.has(*event)) {
+            event_queue(*event);
+        }
+    }
+
+    void ScenarioEventServer::_on_instance_freed(const RID &p_instance) {
+        animation_done_events.erase(p_instance);
+    }
+
+    void ScenarioEventServer::_queue_isolated_events(
+            const RID &p_isolated, const IsolatedEvent p_slot, const RID &p_vehicle) {
+        const IsolatedEvents *bound = isolated_events.getptr(p_isolated);
+        if (bound == nullptr) {
+            return;
+        }
+        // copied: queueing emits event_queued, and a listener may bind events
+        const Vector<RID> slot_events = bound->events[p_slot];
+        for (const RID &event: slot_events) {
+            if (events.has(event)) {
+                event_queue(event, p_vehicle);
+            }
+        }
     }
 
     ScenarioEventServer::VehicleOnTrack &ScenarioEventServer::_place_vehicle(const RID &p_vehicle, const RID &p_track) {
@@ -562,6 +665,25 @@ namespace godot {
         track_events.erase(p_track);
     }
 
+    // --- isolated section ---
+
+    void
+    ScenarioEventServer::isolated_add_event(const RID &p_isolated, const IsolatedEvent p_slot, const RID &p_event) {
+        ERR_FAIL_INDEX(p_slot, ISOLATED_EVENT_MAX);
+        isolated_events[p_isolated].events[p_slot].push_back(p_event);
+    }
+
+    void ScenarioEventServer::isolated_clear_events(const RID &p_isolated) {
+        isolated_events.erase(p_isolated);
+    }
+
+    // --- animation ---
+
+    void
+    ScenarioEventServer::animation_set_done_event(const RID &p_instance, const String &p_submodel, const RID &p_event) {
+        animation_done_events[p_instance][p_submodel.to_lower()] = p_event;
+    }
+
     // --- launcher ---
 
     RID ScenarioEventServer::launcher_create() {
@@ -577,6 +699,7 @@ namespace godot {
         _rename(launchers_by_name, launcher->name, StringName(), p_launcher);
         launchers.erase(p_launcher);
         timed_launchers.erase(p_launcher);
+        radio_launchers.erase(p_launcher);
     }
 
     void ScenarioEventServer::launcher_set_name(const RID &p_launcher, const StringName &p_name) {
@@ -683,6 +806,15 @@ namespace godot {
             timed_launchers.erase(p_launcher);
         } else if (!timed_launchers.has(p_launcher)) {
             timed_launchers.push_back(p_launcher);
+        }
+    }
+
+    void ScenarioEventServer::launcher_set_radio_call(const RID &p_launcher, const VehicleRadio::RadioCall p_call) {
+        LauncherData *launcher = launchers.getptr(p_launcher);
+        ERR_FAIL_NULL(launcher);
+        launcher->radio_call = p_call;
+        if (!radio_launchers.has(p_launcher)) {
+            radio_launchers.push_back(p_launcher);
         }
     }
 

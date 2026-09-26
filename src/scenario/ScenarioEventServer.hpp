@@ -1,4 +1,5 @@
 #pragma once
+#include "../radio/VehicleRadio.hpp"
 #include "ScenarioEventAction.hpp"
 #include "ScenarioEventCondition.hpp"
 #include <functional>
@@ -43,6 +44,16 @@ namespace godot {
                 TRACK_EVENTALL1,
                 TRACK_EVENTALL2,
                 TRACK_EVENT_MAX,
+            };
+
+            /// An isolated section's events (TIsolated::AssignEvents(), Track.cpp:110-116): the first
+            /// vehicle came onto it, the last one left, a vehicle came onto it, a vehicle left it
+            enum IsolatedEvent {
+                ISOLATED_BUSY,
+                ISOLATED_FREE,
+                ISOLATED_INC,
+                ISOLATED_DEC,
+                ISOLATED_EVENT_MAX,
             };
 
             /// Simulated seconds one frame may advance at most (Timer.cpp:84)
@@ -91,6 +102,8 @@ namespace godot {
                     /// HH:MM it fires at, hour -1 for none; armed again once the hour is another
                     /// (iHour, iMinute, UpdatedTime - EvLaunch.cpp:197-211)
                     int hour = -1;
+                    /// The radio call it answers, when it is on radio_launchers
+                    VehicleRadio::RadioCall radio_call = VehicleRadio::RADIO_CALL1;
                     int minute = 0;
                     bool armed = true;
                     /// The sequence of its scheduled firing in the queue, 0 while none is
@@ -114,6 +127,10 @@ namespace godot {
                     Vector<RID> events[TRACK_EVENT_MAX];
             };
 
+            struct IsolatedEvents {
+                    Vector<RID> events[ISOLATED_EVENT_MAX];
+            };
+
             /// Where a vehicle is, as the track signals of RailVehicleServer said
             struct VehicleOnTrack {
                     RID track;
@@ -129,7 +146,12 @@ namespace godot {
             HashMap<RID, LauncherData> launchers;
             /// The launchers that fire at a time of day
             Vector<RID> timed_launchers;
+            /// ...and the ones a radio call fires (m_radiodrivenlaunchers, Event.h)
+            Vector<RID> radio_launchers;
             HashMap<RID, TrackEvents> track_events;
+            HashMap<RID, IsolatedEvents> isolated_events;
+            /// The `<model>.<submodel>:done` events, by E3DRenderingServer instance and submodel
+            HashMap<RID, HashMap<String, RID>> animation_done_events;
             HashMap<RID, VehicleOnTrack> vehicles_on_tracks;
             HashMap<StringName, RID> events_by_name;
             HashMap<StringName, RID> memories_by_name;
@@ -142,10 +164,19 @@ namespace godot {
 
             void _on_simulation_speed_changed();
             void _on_time_of_day_changed();
+            void
+            _on_vehicle_radio_called(const RID &p_vehicle, VehicleRadio::RadioCall p_call, const Vector3 &p_position);
             void _on_vehicle_heading_to_track_start(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_heading_to_track_end(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_stopped_on_track(const RID &p_vehicle, const RID &p_track);
             void _on_vehicle_freed(const RID &p_vehicle);
+            void _on_isolated_occupied(const RID &p_isolated, const RID &p_vehicle);
+            void _on_isolated_freed(const RID &p_isolated, const RID &p_vehicle);
+            void _on_isolated_vehicle_entered(const RID &p_isolated, const RID &p_vehicle);
+            void _on_isolated_vehicle_left(const RID &p_isolated, const RID &p_vehicle);
+            void _on_submodel_animation_finished(const RID &p_instance, const String &p_submodel);
+            void _on_instance_freed(const RID &p_instance);
+            void _queue_isolated_events(const RID &p_isolated, IsolatedEvent p_slot, const RID &p_vehicle);
             /// The vehicle on the track, its flags cleared when the track is a new one
             VehicleOnTrack &_place_vehicle(const RID &p_vehicle, const RID &p_track);
             /// Queues the track's events of the slot - the crew slot only for a vehicle with a driver
@@ -211,6 +242,14 @@ namespace godot {
             TypedArray<RID> track_get_events(const RID &p_track, TrackEvent p_slot) const;
             void track_clear_events(const RID &p_track);
 
+            /// Fires the event when the isolated section (TrackManager) does what the slot says
+            void isolated_add_event(const RID &p_isolated, IsolatedEvent p_slot, const RID &p_event);
+            void isolated_clear_events(const RID &p_isolated);
+
+            /// Fires the event when the submodel of the E3DRenderingServer instance finishes an
+            /// animation (TAnimContainer::EventAssign(), Event.cpp:1588-1592)
+            void animation_set_done_event(const RID &p_instance, const String &p_submodel, const RID &p_event);
+
             RID launcher_create();
             void launcher_free(const RID &p_launcher);
             void launcher_set_name(const RID &p_launcher, const StringName &p_name);
@@ -232,6 +271,9 @@ namespace godot {
             void launcher_set_interval(const RID &p_launcher, double p_seconds);
             /// Fires when the clock shows p_hour:p_minute, every day; p_hour -1 for never
             void launcher_set_time_of_day(const RID &p_launcher, int p_hour, int p_minute);
+            /// Fires when a vehicle's radio sends the call within the radius
+            /// (event_manager::queue_receivers(), Event.cpp:2255-2268)
+            void launcher_set_radio_call(const RID &p_launcher, VehicleRadio::RadioCall p_call);
             TypedArray<RID> get_launchers() const;
             /// Queues the launcher's event if its condition passes
             void launcher_fire(const RID &p_launcher);
@@ -242,3 +284,4 @@ namespace godot {
 
 VARIANT_BITFIELD_CAST(ScenarioEventServer::MemoryField)
 VARIANT_ENUM_CAST(ScenarioEventServer::TrackEvent)
+VARIANT_ENUM_CAST(ScenarioEventServer::IsolatedEvent)

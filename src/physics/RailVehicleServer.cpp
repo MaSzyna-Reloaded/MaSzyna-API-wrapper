@@ -27,6 +27,7 @@ namespace godot {
     const char *RailVehicleServer::vehicle_heading_to_track_start_signal = "vehicle_heading_to_track_start";
     const char *RailVehicleServer::vehicle_heading_to_track_end_signal = "vehicle_heading_to_track_end";
     const char *RailVehicleServer::vehicle_stopped_on_track_signal = "vehicle_stopped_on_track";
+    const char *RailVehicleServer::vehicle_radio_called_signal = "vehicle_radio_called";
 
     RailVehicleServer::RailVehicleServer() {
         ProjectSettings *settings = ProjectSettings::get_singleton();
@@ -69,6 +70,10 @@ namespace godot {
         ClassDB::bind_method(
                 D_METHOD("vehicle_get_coupled", "vehicle", "end", "element"), &RailVehicleServer::vehicle_get_coupled);
         ClassDB::bind_method(D_METHOD("vehicle_radio_stop", "vehicle"), &RailVehicleServer::vehicle_radio_stop);
+        ClassDB::bind_method(D_METHOD("vehicle_radio_call", "vehicle", "call"), &RailVehicleServer::vehicle_radio_call);
+        ADD_SIGNAL(MethodInfo(
+                vehicle_radio_called_signal, PropertyInfo(Variant::RID, "vehicle"), PropertyInfo(Variant::INT, "call"),
+                PropertyInfo(Variant::VECTOR3, "position")));
 
         ClassDB::bind_method(
                 D_METHOD("vehicle_set_track", "vehicle", "track", "track_offset", "track_direction"),
@@ -206,7 +211,11 @@ namespace godot {
         if (const RID *named = vehicles_by_name.getptr(placement->name); named != nullptr && *named == p_vehicle) {
             vehicles_by_name.erase(placement->name);
         }
+        const RID reported_track = placement->reported_track;
         vehicles.erase(p_vehicle);
+        if (TrackManager *tracks = TrackManager::get_instance(); tracks != nullptr && reported_track.is_valid()) {
+            tracks->track_vehicle_left(reported_track, p_vehicle);
+        }
         if (vehicles.is_empty()) {
             _set_stepping(false);
         }
@@ -268,6 +277,12 @@ namespace godot {
                 radio->radio_stop_receive();
             }
         }
+    }
+
+    void RailVehicleServer::vehicle_radio_call(const RID &p_vehicle, const VehicleRadio::RadioCall p_call) {
+        const VehiclePlacement *sender = vehicles.getptr(p_vehicle);
+        ERR_FAIL_NULL(sender);
+        emit_signal(vehicle_radio_called_signal, p_vehicle, p_call, _placement_transform(*sender).origin);
     }
 
     RID RailVehicleServer::vehicle_get_rid_by_name(const String &p_name) const {
@@ -1069,6 +1084,16 @@ namespace godot {
                                                                                    : HEADING_TO_START;
             if (heading == placement->reported_heading && placement->track == placement->reported_track) {
                 continue;
+            }
+            if (!(placement->track == placement->reported_track)) {
+                // the new track first, so a section both belong to never reads empty (TrkFoll.cpp:88-91)
+                TrackManager *tracks = TrackManager::get_instance();
+                ERR_CONTINUE(tracks == nullptr);
+                tracks->track_vehicle_entered(placement->track, stepped_vehicles[index]);
+                if (placement->reported_track.is_valid()) {
+                    tracks->track_vehicle_left(placement->reported_track, stepped_vehicles[index]);
+                }
+                placement = vehicles.getptr(stepped_vehicles[index]); // the section signals may have rehashed
             }
             placement->reported_heading = heading;
             placement->reported_track = placement->track;

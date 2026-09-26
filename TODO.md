@@ -571,32 +571,30 @@ semaphore's kind is made of the `lights` events aimed at it, and the original's
 `ScenarioEventServer` (events, the queue, the simulation time, memory, launchers, track events)
 runs the scenery's events; `MaszynaLegacyEventFactory` builds them from the `.scn` data once the
 include's server data is built. Built: `updatevalues`, `addvalues`, `copyvalues`, `multiple`,
-`lights`, `switch`, `trackvel`, `voltage`, `animation` (rotate, translate), `sound`; conditions
-`memcompare` and `probability`; a track's `event0/1/2`, `eventall0/1/2` and `<track>:<slot>`
-events; `onstart` and negative-delay events; Shift+0..9 (`keyctrl00-09`) and launcher keys
-(`ScenarioKeyboard`); the "Scenario and Events" HUD window. Checked on `td.scn` with a headless
-probe (Shift+8 closes both level crossings). Left:
+`lights`, `switch`, `trackvel`, `voltage`, `animation` (rotate, translate, with its
+`<model>.<submodel>:done`), `sound`; conditions `memcompare`, `memcompareex`, `probability`,
+`trackoccupied`, `trackfree`; a track's `event0/1/2`, `eventall0/1/2` and `<track>:<slot>` events;
+isolated sections (`TrackManager.isolated_*`, `isolated`/`area` blocks, `:busy/:free/:inc/:dec`, the
+section's own memory); `onstart` and negative-delay events; Shift+0..9 (`keyctrl00-09`), launcher
+keys (`ScenarioKeyboard`), HH:MM and radio call launchers (`radiocall1_sw`/`radiocall3_sw`,
+Backspace); the "Scenario and Events" HUD window. Checked on `td.scn` with a headless probe (Shift+8
+closes both level crossings). Left:
 
 * **Track events, as the original fires them**: the direction filter by the consist's intended
   direction (`eventfilter`, `TrkFoll.cpp:117-121`) - here the actual direction of travel decides;
   the vehicle's one placement point stands for the primary axle; events with a delay <= -1 queued
   on every move along the same track (`TrkFoll.cpp:249-260`); a crewed vehicle is one with a
   `driver_type`, the original's `Mechanik->primary()` is one per consist.
-* **Isolated sections** (`TIsolated`, `Track.cpp:110-170`, `isolated`/`area` blocks,
-  `simulationstateserializer.cpp:167-194`) - to `TrackManager` as `isolated_*` with
-  `isolated_occupied/freed(isolated, vehicle)`; the event server binds `:busy/:free/:inc/:dec`;
-  the automatic memcell named after the section (bit 0 of v2, `Track.cpp:3556-3575`).
-* **Conditions** `trackfree`/`trackoccupied` (`Event.cpp:44-59`) and `memcompareex` (operators,
-  all/any/none, `Event.cpp:200-254`, `comparison.h:56-75`).
+* **Occupancy counts vehicles, not axles**: a vehicle is on the one track its placement point is
+  on, where the original counts every axle (`TrkFoll.cpp:88-91`) - a vehicle across a joint
+  occupies only one of the two tracks, for isolated sections and `trackoccupied` alike.
+* **Isolated sections are not yet a semaphore system's sources** (`SemaphoreServer.system_add_source`).
 * **Event types without an action**: `getvalues`/`putvalues` (and the AI's passive scanning,
   `Driver.cpp:459-640`; `putvalues CabSignal` reaches the player's cab through it), `whois`
   (`Event.cpp:993-1153`), `logvalues`, `texture` (`:1474-1543`), `friction` (`:2100-2104`).
   `switch` ignores the blade speed and delay (`Event.cpp:1855-1873`); `animation` has no
-  `digital` or `.vmd` mode and no `<model>.<submodel>:done` event (`Event.cpp:1591`,
-  `AnimModel.cpp:120-209`); a `sound` event with a radio channel (`simulation::radio_message`) is
-  played as a plain sound.
-* **Submodel animations** run on the frame's real delta: they ignore the pause and the simulation
-  speed (`TAnimContainer` uses the simulation's `Timer::GetDeltaTime()`).
+  `digital` or `.vmd` mode (`Event.cpp:1654-1682`); a `sound` event with a radio channel
+  (`simulation::radio_message`) is played as a plain sound.
 * **Scenery sounds** use the player's defaults for everything but `max_distance` (the node's
   range); their bank was not dumped nor checked by ear.
 * **Memory and the AI**: pushing a memory to the vehicles on its track when it changes
@@ -604,7 +602,7 @@ probe (Shift+8 closes both level crossings). Left:
 * **`departuredelay`** is read and dropped - needs the activator's timetable (`Event.cpp:2412-2425`).
 * **Duplicate event names**: the later wins (with a warning); the original joins them as siblings
   and ignores the first (`Event.cpp:2296-2349`).
-* **Launchers**: radio calls (`queue_receivers`, `Event.cpp:2255-2268`), numeric key codes,
+* **Launchers**: numeric key codes,
   `-10000` (first time in range, `EvLaunch.cpp:182-186`), `traintriggered` (the distance to the
   train, not the camera), a click on a model firing the launcher of its name (`scene.cpp:33-43`).
   Timed launchers are global here; the original polls non-global ones only near the camera.
@@ -621,6 +619,10 @@ probe (Shift+8 closes both level crossings). Left:
   `ScenarioLauncherNode`, the `SemaphoreNode` pattern).
 
 ## Tests
+
+* `test_mmd_semantic_catalog.gd` `test_i_radio_indicator_and_powered_omnilight_are_separate` fails
+  at `5b5ad32e4` too ("Invalid access to property or key 'light_color' on a base object of type
+  'Dictionary'") - not caused by the scenario work, not looked into.
 
 * **No HUD panel test on a non-diesel.** `mover_gauges.gd` broke on an induction motor (it asked
   `VehicleEngine` for `get_rpm()`/`get_oil_pump_pressure()`, which are `VehicleDieselEngine`'s);

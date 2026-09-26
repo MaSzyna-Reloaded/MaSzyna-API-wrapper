@@ -137,6 +137,10 @@ namespace godot {
                     double sound_distance = -1.0;
                     /* Speed limit in km/h, negative for none (TTrack::fVelocity, Track.cpp:851-858) */
                     double velocity = -1.0;
+                    /* Vehicles on it, as RailVehicleServer reports them (TTrack::Dynamics) */
+                    int vehicle_count = 0;
+                    /* The isolated sections it belongs to (TTrack::Isolated) */
+                    Vector<RID> isolated;
                     double length = 0.0;
                     double length1 = 0.0;
                     double length2 = 0.0;
@@ -188,8 +192,19 @@ namespace godot {
                     int node_id = INVALID_NODE_ID;
             };
 
+            /* An isolated track section: a group of tracks whose occupancy is reported as one
+             * (TIsolated, Track.cpp:90-170), inside an optional parent section (`area`) */
+            struct IsolatedData {
+                    StringName name;
+                    RID parent;
+                    Vector<RID> tracks;
+                    int vehicle_count = 0;
+            };
+
             HashMap<RID, TrackSegment> tracks;
             HashMap<String, RID> named_tracks;
+            HashMap<RID, IsolatedData> isolated_sections;
+            HashMap<StringName, RID> isolated_by_name;
             Ref<SpatialIndex> spatial_index;
             int64_t next_track_id = 0;
             int next_graph_id = 0;
@@ -198,6 +213,9 @@ namespace godot {
             /* The switches whose blade is moving - the tick is connected only while this is not
              * empty, and disconnected again when the last one arrives. */
             Vector<RID> moving_switches;
+
+            /* Adds p_delta vehicles to the section and its parents, reporting the change */
+            void _count_isolated(const RID &p_isolated, int p_delta, const RID &p_vehicle);
             bool switch_processing = false;
             /* Timestamp of the previous blade step, the way E3DRenderingServer's smoke tick
              * measures its own delta - a SceneTree gives none. */
@@ -249,6 +267,12 @@ namespace godot {
             static const char *tracks_changed_signal;
             static const char *topology_rebuilt_signal;
             static const char *topology_changed_signal;
+            /* The first vehicle came onto the isolated section, the last one left it, a vehicle
+             * came onto it or left it (TIsolated::Modify(), `:busy`, `:free`, `:inc`, `:dec`) */
+            static const char *isolated_occupied_signal;
+            static const char *isolated_freed_signal;
+            static const char *isolated_vehicle_entered_signal;
+            static const char *isolated_vehicle_left_signal;
 
             /* The three values the callers used to read as GDScript constants. A C++ class cannot
              * expose a float constant, so they are read-only properties. */
@@ -273,6 +297,21 @@ namespace godot {
             double track_get_sound_distance(const RID &p_track) const;
             /* Speed limit in km/h, negative for none (TTrack::VelocitySet()) */
             void track_set_velocity(const RID &p_track, double p_velocity);
+            /* A vehicle came onto the track or left it - reported by RailVehicleServer, the new
+             * track first (TTrackFollower::SetCurrentTrack(), TrkFoll.cpp:88-91) */
+            void track_vehicle_entered(const RID &p_track, const RID &p_vehicle);
+            void track_vehicle_left(const RID &p_track, const RID &p_vehicle);
+            bool track_is_occupied(const RID &p_track) const;
+
+            RID isolated_create();
+            void isolated_free(const RID &p_isolated);
+            void isolated_set_name(const RID &p_isolated, const StringName &p_name);
+            StringName isolated_get_name(const RID &p_isolated) const;
+            RID isolated_get_rid_by_name(const StringName &p_name) const;
+            void isolated_add_track(const RID &p_isolated, const RID &p_track);
+            /* The section whose occupancy includes this one's (`area`) */
+            void isolated_set_parent(const RID &p_isolated, const RID &p_parent);
+            bool isolated_is_occupied(const RID &p_isolated) const;
             double track_get_velocity(const RID &p_track) const;
             PackedVector3Array track_get_endpoints(const RID &p_track);
             int track_get_common_endpoint_index(const RID &p_track) const;

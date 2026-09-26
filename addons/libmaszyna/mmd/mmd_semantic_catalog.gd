@@ -1503,6 +1503,29 @@ static func _ensure_built() -> void:
             "config_max_property": "",
             "mesh_path_field": "mesh_path",
         },
+        # Train.cpp:11899 ggRadioCall1 -> OnCommand_radiocall1send (Train.cpp:8209) - sends on the press
+        # to the scenery's radio launchers in range; no key (driverkeyboardinput.cpp)
+        "radiocall1_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_call1",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
+        # Train.cpp:11900 ggRadioCall3 -> OnCommand_radiocall3send (Train.cpp:8227), Backspace
+        # (driverkeyboardinput.cpp:158)
+        "radiocall3_sw": {
+            "widget_class": CabinButton,
+            "fixed_fields": {
+                "monostable": true,
+                "command": "radio_call3",
+                "action": "radio_call3_send",
+            },
+            "config_max_property": "",
+            "mesh_path_field": "mesh_path",
+        },
         # Train.cpp:11903 ggRadioVolumeNext -> OnCommand_radiovolumeincrease (Train.cpp:8246)
         "radiovolumenext_sw": {
             "widget_class": CabinButton,

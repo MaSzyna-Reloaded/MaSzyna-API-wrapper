@@ -375,10 +375,17 @@ func _on_user_settings_changed() -> void:
 
 func _on_runtime_paused() -> void:
     _sky_environment.pause_weather()
+    _publish_animation_speed()
 
 
 func _on_runtime_unpaused() -> void:
     _sky_environment.unpause_weather()
+    _publish_animation_speed()
+
+
+## Scenery submodels animate in the simulation's time: at its speed, and not at all while paused
+func _publish_animation_speed() -> void:
+    E3DRenderingServer.set_animation_speed(0.0 if MaszynaRuntime.is_paused() else simulation_speed)
 
 
 func _apply_time_configuration() -> void:
@@ -406,6 +413,7 @@ func _push_environment_state(delta: float) -> void:
     E3DRenderingServer.set_light_level(light_level)
     MaszynaRuntime.time_of_day = current_time
     MaszynaRuntime.simulation_speed = simulation_speed
+    _publish_animation_speed()
     MaszynaRuntime.light_level = light_level
     MaszynaRuntime.air_temperature = temperature
     E3DRenderingServer.set_wind(

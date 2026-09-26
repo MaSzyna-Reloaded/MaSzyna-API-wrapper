@@ -30,11 +30,17 @@ namespace godot {
                 "get_mask");
         ADD_PROPERTY(
                 PropertyInfo(
-                        Variant::INT, "mode", PROPERTY_HINT_ENUM, enum_hint({{"Set", MODE_SET}, {"Add", MODE_ADD}})),
+                        Variant::INT, "mode", PROPERTY_HINT_ENUM, enum_hint(
+                                {{"Set", MODE_SET},
+                                 {"Add", MODE_ADD},
+                                 {"Isolated busy", MODE_ISOLATED_BUSY},
+                                 {"Isolated free", MODE_ISOLATED_FREE}})),
                 "set_mode", "get_mode");
 
         BIND_ENUM_CONSTANT(MODE_SET);
         BIND_ENUM_CONSTANT(MODE_ADD);
+        BIND_ENUM_CONSTANT(MODE_ISOLATED_BUSY);
+        BIND_ENUM_CONSTANT(MODE_ISOLATED_FREE);
     }
 
     /// TMemCell::UpdateValues() (MemCell.cpp:28-50) on every memory
@@ -58,7 +64,20 @@ namespace godot {
                 memory_value1 = add ? memory_value1 + new_value1 : new_value1;
             }
             if (mask.has_flag(ScenarioEventServer::MEMORY_FIELD_VALUE2)) {
-                memory_value2 = add ? memory_value2 + new_value2 : new_value2;
+                switch (mode) {
+                    case MODE_SET:
+                        memory_value2 = new_value2;
+                        break;
+                    case MODE_ADD:
+                        memory_value2 += new_value2;
+                        break;
+                    case MODE_ISOLATED_BUSY:
+                        memory_value2 = static_cast<int>(memory_value2) | 1;
+                        break;
+                    case MODE_ISOLATED_FREE:
+                        memory_value2 = static_cast<int>(memory_value2) & ~ISOLATED_FREE_MASK;
+                        break;
+                }
             }
             server->memory_set_values(memory, memory_text, memory_value1, memory_value2);
         }

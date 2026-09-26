@@ -16,5 +16,6 @@ class_name MaszynaCompiledScenery
 @export var memcells:Array[MaszynaMemcellData] = []
 @export var launchers:Array[MaszynaEventLauncherData] = []
 @export var sounds:Array[MaszynaSoundData] = []
+@export var isolated_sections:Array[MaszynaIsolatedData] = []
 ## Merged triangle meshes, streamed by SceneryChunkRenderingServer (not nodes, so not in [member nodes])
 @export var triangle_chunks:Array[MaszynaTrianglesChunkData] = []

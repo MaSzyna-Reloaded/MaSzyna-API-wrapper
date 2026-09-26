@@ -40,6 +40,18 @@ namespace godot {
         server->vehicle_radio_stop(controller->get_rid());
     }
 
+    // Original engine: TTrain::OnCommand_radiocall1send/3send (Train.cpp:8209-8236) - on the press,
+    // from a powered radio on any channel but the one without calls
+    void MoverVehicleRadio::radio_call(const bool p_pressed, const RadioCall p_call) {
+        const VehicleController *controller = get_controller();
+        RailVehicleServer *server = RailVehicleServer::get_instance();
+        if (!p_pressed || !get_powered() || get_channel() == CHANNEL_NO_CALLS || controller == nullptr ||
+            server == nullptr) {
+            return;
+        }
+        server->vehicle_radio_call(controller->get_rid(), p_call);
+    }
+
     // Original engine: TDynamicObject::RadioStop (DynObj.cpp:7229) - a vehicle with somebody
     // driving it, Radio-Stop fitted and the radio on brakes in emergency; the driver's
     // "Emergency_brake" command lands in RadiostopSwitch (Driver.cpp:4487, Mover.cpp:9462)

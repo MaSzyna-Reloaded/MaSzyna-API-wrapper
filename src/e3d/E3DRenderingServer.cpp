@@ -15,6 +15,7 @@
 namespace godot {
     const char *E3DRenderingServer::instance_freed_signal = "instance_freed";
     const char *E3DRenderingServer::instance_built_signal = "instance_built";
+    const char *E3DRenderingServer::submodel_animation_finished_signal = "submodel_animation_finished";
 
     void E3DRenderingServer::_bind_methods() {
         ClassDB::bind_method(
@@ -87,6 +88,8 @@ namespace godot {
                 &E3DRenderingServer::instance_set_smoke_intensity);
         ClassDB::bind_method(D_METHOD("get_smoke_statistics"), &E3DRenderingServer::get_smoke_statistics);
         ClassDB::bind_method(D_METHOD("set_current_time", "hours"), &E3DRenderingServer::set_current_time);
+        ClassDB::bind_method(D_METHOD("set_animation_speed", "speed"), &E3DRenderingServer::set_animation_speed);
+        ClassDB::bind_method(D_METHOD("get_animation_speed"), &E3DRenderingServer::get_animation_speed);
         ClassDB::bind_method(D_METHOD("set_light_level", "level"), &E3DRenderingServer::set_light_level);
         ClassDB::bind_method(D_METHOD("set_wind", "strength", "direction"), &E3DRenderingServer::set_wind);
         ClassDB::bind_method(D_METHOD("set_wind_strength", "strength"), &E3DRenderingServer::set_wind_strength);
@@ -113,6 +116,9 @@ namespace godot {
 
         ADD_SIGNAL(MethodInfo(instance_freed_signal, PropertyInfo(Variant::RID, "instance")));
         ADD_SIGNAL(MethodInfo(instance_built_signal, PropertyInfo(Variant::RID, "instance")));
+        ADD_SIGNAL(MethodInfo(
+                submodel_animation_finished_signal, PropertyInfo(Variant::RID, "instance"),
+                PropertyInfo(Variant::STRING, "submodel")));
     }
 
     E3DRenderingServer::E3DRenderingServer() {
@@ -1115,10 +1121,12 @@ namespace godot {
     void E3DRenderingServer::_process_animations() {
         const SceneTree *tree = Object::cast_to<SceneTree>(Engine::get_singleton()->get_main_loop());
         ERR_FAIL_NULL(tree);
-        const double delta = tree->get_root()->get_process_delta_time();
+        const double delta = tree->get_root()->get_process_delta_time() * animation_speed;
         for (int index = animating_instances.size() - 1; index >= 0; index--) {
-            E3DInstanceData *instance = instances.getptr(animating_instances[index]);
+            const RID instance_rid = animating_instances[index];
+            E3DInstanceData *instance = instances.getptr(instance_rid);
             bool moving = false;
+            PackedStringArray finished;
             if (instance != nullptr) {
                 for (KeyValue<String, E3DInstanceData::SubmodelAnimation> &item: instance->submodel_animations) {
                     E3DInstanceData::SubmodelAnimation &animation = item.value;
@@ -1132,6 +1140,7 @@ namespace godot {
                         }
                         if (animation.angles == animation.target_angles) {
                             animation.rotate_speed = 0.0;
+                            finished.push_back(item.key);
                         } else {
                             moving = true;
                         }
@@ -1142,6 +1151,7 @@ namespace godot {
                         if (difference.length() <= MAX(step, ANIMATION_TRANSLATION_EPSILON)) {
                             animation.offset = animation.target_offset;
                             animation.translate_speed = 0.0;
+                            finished.push_back(item.key);
                         } else {
                             animation.offset += difference.normalized() * step;
                             moving = true;
@@ -1154,6 +1164,10 @@ namespace godot {
             }
             if (!moving) {
                 animating_instances.remove_at(index);
+            }
+            // after the list is settled: a listener may start another animation
+            for (const String &submodel: finished) {
+                emit_signal(submodel_animation_finished_signal, instance_rid, submodel);
             }
         }
         _set_animation_processing(!animating_instances.is_empty());
@@ -1338,6 +1352,14 @@ namespace godot {
                 _update_if_built(item.value);
             }
         }
+    }
+
+    void E3DRenderingServer::set_animation_speed(const double p_speed) {
+        animation_speed = p_speed;
+    }
+
+    double E3DRenderingServer::get_animation_speed() const {
+        return animation_speed;
     }
 
     void E3DRenderingServer::set_current_time(const double p_hours) {

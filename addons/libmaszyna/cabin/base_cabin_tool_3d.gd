@@ -6,15 +6,15 @@ class_name BaseCabinTool3D
 ## that talks to the vehicle servers. There is deliberately no path to a controller here - the
 ## cabin root is told which vehicle it belongs to and passes that down.
 
-var _train_id:String = ""
+var _vehicle_rid:RID
 var _dirty:bool = false
 var _applying_control_value:bool = false
 ## This control as CabinHUDMouseSystem knows it, once its mesh is found
 var _mouse_control:RID = RID()
 
-signal train_id_changed
+signal vehicle_rid_changed
 ## Emitted while the previous vehicle is still the one connected, for disconnecting from it.
-signal train_id_changing
+signal vehicle_rid_changing
 
 ## Cabin control id (MMD label) - manipulations are reported to CabinSystem under this id; the
 ## registered cabin logic decides what they do to the vehicle.
@@ -26,40 +26,40 @@ signal train_id_changing
 
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_train_id(train_id:String) -> void:
-    if _train_id == train_id:
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    if _vehicle_rid == vehicle_rid:
         return
-    train_id_changing.emit()
-    _train_id = train_id
+    vehicle_rid_changing.emit()
+    _vehicle_rid = vehicle_rid
     _dirty = true
-    if _train_id:
-        train_id_changed.emit()
+    if _vehicle_rid:
+        vehicle_rid_changed.emit()
 
 
-func get_train_id() -> String:
-    return _train_id
+func get_vehicle_rid() -> RID:
+    return _vehicle_rid
 
 
 ## One named value of the vehicle's state - what a control reads, being driven by a property name
 ## out of the MMD. The dump behind it is built once a frame for the whole cab.
 func _vehicle_state_value(key:String, default_value:Variant = null) -> Variant:
-    return CabinSystem.vehicle_state_value(_train_id, key, default_value)
+    return CabinSystem.vehicle_state_value(_vehicle_rid, key, default_value)
 
 
 ## The whole of it, for the few places that genuinely read several unrelated values at once.
 func _vehicle_state() -> Dictionary:
-    return CabinSystem.vehicle_state(_train_id)
+    return CabinSystem.vehicle_state(_vehicle_rid)
 
 
 func _vehicle_config() -> Dictionary:
-    return CabinSystem.vehicle_config(_train_id)
+    return CabinSystem.vehicle_config(_vehicle_rid)
 
 
 ## Reports a manipulation of this control to CabinSystem, for the occupied cab of its vehicle.
 func _act(action:StringName, value:Variant = null) -> Variant:
-    if _applying_control_value or not _train_id or not control_id:
+    if _applying_control_value or not _vehicle_rid or not control_id:
         return null
-    return CabinSystem.act(_train_id, CabinSystem.occupied_cab(_train_id), control_id, action, value)
+    return CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, action, value)
 
 
 # _notification runs on every class of the hierarchy, unlike _ready/_enter_tree overridden below.
@@ -74,8 +74,8 @@ func _notification(what:int) -> void:
 
 
 ## Shows a control value set in CabinSystem (e.g. from the console) without reporting it back.
-func _on_cabin_control_changed(train_id:String, _cab:int, p_control_id:StringName, value:Variant) -> void:
-    if not p_control_id == control_id or not _train_id or not train_id == _train_id:
+func _on_cabin_control_changed(vehicle_rid:RID, _cab:int, p_control_id:StringName, value:Variant) -> void:
+    if not p_control_id == control_id or not _vehicle_rid or not vehicle_rid == _vehicle_rid:
         return
     _applying_control_value = true
     _apply_control_value(value)
@@ -122,7 +122,7 @@ func _set_mouse_state(state:String) -> void:
 
 
 func _exit_tree() -> void:
-    set_train_id("")
+    set_vehicle_rid(RID())
     _dirty = true
 
 

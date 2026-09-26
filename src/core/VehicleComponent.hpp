@@ -1,6 +1,5 @@
 #pragma once
 #include "./GameLog.hpp"
-#include "./TrainSystem.hpp"
 #include "VehicleComponentType.hpp"
 #include "VehicleController.hpp"
 #include <functional>

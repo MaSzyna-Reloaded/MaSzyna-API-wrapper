@@ -31,7 +31,7 @@ func _process(delta):
 ```
 ### GDScript
 The short GDScript rules (singleton guards, `/root/...`, `is_connected()`, setters and `_dirty`,
-`not ... == ...`, `TrainSystem.send_command`) are listed in `AGENTS.md`.
+`not ... == ...`, `RailVehicleServer.vehicle_send_command`) are listed in `AGENTS.md`.
 
 1. **A signal of a scene node is connected in the scene.** If the node stands in the `.tscn`, its
    signal goes into the scene's `[connection]` list - not into `_ready()`. The wiring then sits
@@ -303,7 +303,7 @@ electric_engine->set_pantograph_wire_voltage(TrainElectricEngine::PANTOGRAPH_FIR
 ```
 
 A singleton is reached the same way - a typed `static X *get_instance()` and typed methods, the
-shape `TrainSystem`, `SceneryStreamingServer` and `MaszynaRuntime` already have. Not a name looked
+shape `RailVehicleServer`, `SceneryStreamingServer` and `MaszynaRuntime` already have. Not a name looked
 up on an `Object`, and not `get_tree()->get_root()->get_node_or_null(name)` standing in for one.
 
 A string call is allowed only where the class genuinely cannot be known at build time - a GDScript

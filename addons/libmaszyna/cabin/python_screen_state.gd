@@ -87,14 +87,13 @@ static var _neutral_state:Dictionary = {}
 
 
 ## `parameters` are the screen's own `parameters:` from the MMD (Train.cpp:706)
-static func compose(train_id:String, parameters:Dictionary) -> Dictionary:
+static func compose(vehicle:RID, parameters:Dictionary) -> Dictionary:
     var result:Dictionary = _neutral_state.duplicate()
     result.merge(parameters, true)
-    var vehicle:RID = CabinSystem.vehicle_rid(train_id)
     if not vehicle.is_valid():
         return result
-    var state:Dictionary = CabinSystem.vehicle_state(train_id)
-    var config:Dictionary = CabinSystem.vehicle_config(train_id)
+    var state:Dictionary = CabinSystem.vehicle_state(vehicle)
+    var config:Dictionary = CabinSystem.vehicle_config(vehicle)
 
     # the vehicles of this unit and of everything under its control, in the order find_vehicle()
     # searches them: this one, then towards the rear, then towards the front (DynObj.h:889)
@@ -122,7 +121,7 @@ static func compose(train_id:String, parameters:Dictionary) -> Dictionary:
             result[key] = controlled[CONTROLLED_STATE_KEYS[key]]
     result["master"] = state.get("cabin_controleable", false)
     # Train.cpp:783-790 - the cab's generic toggles, with universal3 standing for the instrument light
-    var cab_state:CabinState = CabinSystem.get_cabin_state(train_id, CabinSystem.occupied_cab(train_id))
+    var cab_state:CabinState = CabinSystem.get_cabin_state(vehicle, CabinSystem.occupied_cab(vehicle))
     for index:int in UNIVERSAL_COUNT:
         result["universal%d" % index] = bool(cab_state.get_value(StringName("universal%d" % index), false))
     result["universal3"] = state.get("devices_light_enabled", false)   # InstrumentLightActive

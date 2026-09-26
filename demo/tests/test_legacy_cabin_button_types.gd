@@ -23,7 +23,7 @@ func _build_cab(controls:Dictionary[StringName, CabinButton.ButtonType],
         control.button_type = controls[control_id]
         cabin.add_child(control)
     var logic: LegacyCabinLogicDelegate = LegacyCabinLogicDelegate.new()
-    logic.train_id = train.train_id
+    logic.vehicle_rid = train.get_rid()
     logic.cab = 1
     cabin.add_child(logic)
     add_child(cabin)
@@ -40,9 +40,9 @@ func test_push_fuel_pump_runs_only_while_held():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"fuelpump_sw": CabinButton.ButtonType.PUSH}
     await _build_cab(controls)
-    CabinSystem.act(train.train_id, 1, &"fuelpump_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
     assert_true(train.state["fuel_pump_enabled"], "held")
-    CabinSystem.act(train.train_id, 1, &"fuelpump_sw", &"release")
+    CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"release")
     assert_false(train.state["fuel_pump_enabled"], "released")
 
 
@@ -51,10 +51,10 @@ func test_two_state_fuel_pump_flips_on_a_press():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"fuelpump_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls)
-    CabinSystem.act(train.train_id, 1, &"fuelpump_sw", &"hold")
-    CabinSystem.act(train.train_id, 1, &"fuelpump_sw", &"release")
+    CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"release")
     assert_true(train.state["fuel_pump_enabled"], "stays on after the release")
-    CabinSystem.act(train.train_id, 1, &"fuelpump_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"fuelpump_sw", &"hold")
     assert_false(train.state["fuel_pump_enabled"], "the next press turns it off")
 
 
@@ -64,12 +64,12 @@ func test_push_battery_switch_flips_on_each_press():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"battery_sw": CabinButton.ButtonType.PUSH}
     await _build_cab(controls)
-    CabinSystem.act(train.train_id, 1, &"battery_sw", &"hold")
-    CabinSystem.act(train.train_id, 1, &"battery_sw", &"release")
+    CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"release")
     await wait_idle_frames(2)
     assert_true(train.state["battery_enabled"], "the first press switches it on")
-    CabinSystem.act(train.train_id, 1, &"battery_sw", &"hold")
-    CabinSystem.act(train.train_id, 1, &"battery_sw", &"release")
+    CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"battery_sw", &"release")
     await wait_idle_frames(2)
     assert_false(train.state["battery_enabled"], "the second one off")
 
@@ -78,7 +78,7 @@ func test_push_battery_switch_flips_on_each_press():
 func test_train_heating_without_its_gauge_does_nothing():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {}
     await _build_cab(controls)
-    assert_null(CabinSystem.act(train.train_id, 1, &"trainheating_sw", &"toggle"))
+    assert_null(CabinSystem.act(train.get_rid(), 1, &"trainheating_sw", &"toggle"))
 
 
 # Train.cpp:3815-3824 - without main_on_bt the closing key moves an impulse main_sw up, and its
@@ -87,10 +87,10 @@ func test_the_closing_key_moves_an_impulse_main_switch():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"main_sw": CabinButton.ButtonType.PUSH}
     await _build_cab(controls)
-    CabinSystem.act(train.train_id, 1, &"main_on_bt", &"hold")
-    assert_eq(CabinSystem.get_control(train.train_id, 1, &"main_sw"), LegacyCabinMainSwitch.LEVER_CLOSE)
-    CabinSystem.act(train.train_id, 1, &"main_on_bt", &"release")
-    assert_eq(CabinSystem.get_control(train.train_id, 1, &"main_sw"), LegacyCabinMainSwitch.LEVER_REST)
+    CabinSystem.act(train.get_rid(), 1, &"main_on_bt", &"hold")
+    assert_eq(CabinSystem.get_control(train.get_rid(), 1, &"main_sw"), LegacyCabinMainSwitch.LEVER_CLOSE)
+    CabinSystem.act(train.get_rid(), 1, &"main_on_bt", &"release")
+    assert_eq(CabinSystem.get_control(train.get_rid(), 1, &"main_sw"), LegacyCabinMainSwitch.LEVER_REST)
 
 
 # Train.cpp:3474, 3455 - an impulse pantselected_sw goes up to raise and comes back midway
@@ -99,10 +99,10 @@ func test_an_impulse_pantograph_lever_goes_up_and_back_to_rest():
         &"pantselected_sw": CabinButton.ButtonType.PUSH}
     var components:Array[VehicleComponent] = [MoverVehicleElectricSeriesEngine.new()]
     await _build_cab(controls, null, components)
-    CabinSystem.act(train.train_id, 1, &"pantselected_sw", &"hold")
-    assert_eq(CabinSystem.get_control(train.train_id, 1, &"pantselected_sw"), LegacyCabinPantographSelected.LEVER_UP)
-    CabinSystem.act(train.train_id, 1, &"pantselected_sw", &"release")
-    assert_eq(CabinSystem.get_control(train.train_id, 1, &"pantselected_sw"), LegacyCabinPantographSelected.LEVER_REST)
+    CabinSystem.act(train.get_rid(), 1, &"pantselected_sw", &"hold")
+    assert_eq(CabinSystem.get_control(train.get_rid(), 1, &"pantselected_sw"), LegacyCabinPantographSelected.LEVER_UP)
+    CabinSystem.act(train.get_rid(), 1, &"pantselected_sw", &"release")
+    assert_eq(CabinSystem.get_control(train.get_rid(), 1, &"pantselected_sw"), LegacyCabinPantographSelected.LEVER_REST)
 
 
 func _electric_components(impulse:bool) -> Array[VehicleComponent]:
@@ -121,11 +121,11 @@ func test_impulse_pantograph_switch_raises_and_lowers_through_its_valve():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"pantfront_sw": CabinButton.ButtonType.TOGGLE, &"pantfrontoff_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls, null, _electric_components(true))
-    CabinSystem.act(train.train_id, 1, &"pantfront_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"hold")
     assert_true(train.state["current_collector/pantograph_first_valve_enabled"], "held up")
-    CabinSystem.act(train.train_id, 1, &"pantfront_sw", &"release")
+    CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"release")
     assert_false(train.state["current_collector/pantograph_first_valve_enabled"], "let go")
-    CabinSystem.act(train.train_id, 1, &"pantfrontoff_sw", &"hold")
+    CabinSystem.act(train.get_rid(), 1, &"pantfrontoff_sw", &"hold")
     assert_false(train.state["current_collector/pantograph_first_valve_enabled"])
 
 
@@ -134,7 +134,7 @@ func test_impulse_pantograph_cannot_be_lowered_without_its_lowering_button():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"pantfront_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls, null, _electric_components(true))
-    assert_null(CabinSystem.act(train.train_id, 1, &"pantfrontoff_sw", &"hold"))
+    assert_null(CabinSystem.act(train.get_rid(), 1, &"pantfrontoff_sw", &"hold"))
 
 
 # Train.cpp:3239 - a two-state switch sets the valve and keeps it
@@ -142,7 +142,7 @@ func test_two_state_pantograph_switch_keeps_its_valve():
     var controls:Dictionary[StringName, CabinButton.ButtonType] = {
         &"pantfront_sw": CabinButton.ButtonType.TOGGLE}
     await _build_cab(controls, null, _electric_components(false))
-    CabinSystem.act(train.train_id, 1, &"pantfront_sw", &"toggle", true)
+    CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"toggle", true)
     assert_true(train.state["current_collector/pantograph_first_valve_enabled"])
-    CabinSystem.act(train.train_id, 1, &"pantfront_sw", &"toggle", false)
+    CabinSystem.act(train.get_rid(), 1, &"pantfront_sw", &"toggle", false)
     assert_false(train.state["current_collector/pantograph_first_valve_enabled"])

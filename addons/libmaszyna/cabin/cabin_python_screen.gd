@@ -9,7 +9,7 @@ class_name CabinPythonScreen
 const TEXTURE_PARAMETER:StringName = &"texture_albedo"
 const MSEC_PER_SEC:float = 1000.0
 
-var train_id:String = ""
+var vehicle_rid:RID
 ## Absolute path of the script, without ".py"
 var script_path:String = ""
 ## The screen's `parameters:` from the MMD
@@ -49,7 +49,7 @@ func _ready() -> void:
 
 
 func _render() -> void:
-    PythonScreenServer.screen_request_render(_screen, PythonScreenState.compose(train_id, parameters))
+    PythonScreenServer.screen_request_render(_screen, PythonScreenState.compose(vehicle_rid, parameters))
 
 
 ## "command;param1;param2" (PyInt.cpp:151) - the original's command names are not mapped to the

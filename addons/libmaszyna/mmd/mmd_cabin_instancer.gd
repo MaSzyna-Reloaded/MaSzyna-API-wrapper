@@ -356,7 +356,7 @@ static func parse_loads(abs_mmd_path:String) -> Dictionary[String, String]:
 ## scene tree. Appends any build-time diagnostics to `diagnostics` (caller-owned, merged with
 ## `definition.diagnostics` by DynamicTrainCabin.get_diagnostics()).
 static func build_into(
-        generated_root:Node3D, definition:MmdCabinDefinition, train_id:String,
+        generated_root:Node3D, definition:MmdCabinDefinition, vehicle_rid:RID,
         data_path:String, skin:String, diagnostics:Array[Dictionary]) -> void:
     if not definition.model_relpath:
         # Valid in the original (e.g. su46 cab0) - the low-poly interior is shown instead.
@@ -414,10 +414,10 @@ static func build_into(
             # matched submodel instance, not just the first, unlike every other instrument label
             # (which only ever has one real target mesh).
             _build_indicator_lights(
-                    descriptor, entry, train_id, submodel_index, model, generated_root,
+                    descriptor, entry, vehicle_rid, submodel_index, model, generated_root,
                     definition.cab_number, definition.driver_pos, sound_player, sound_events, diagnostics)
             continue
-        var widget:Node = _build_widget(descriptor, train_id, definition.cab_number, diagnostics)
+        var widget:Node = _build_widget(descriptor, vehicle_rid, definition.cab_number, diagnostics)
         # Quirk: a label repeated in one cab (EP07 cab0 has two cablight_sw switches) is one control
         # with one state in the original (e.g. "cablight_sw:" -> Cabine[].bLight, Train.cpp:10237) -
         # only its first widget takes the key, the others just follow the cabin state; every widget
@@ -438,7 +438,7 @@ static func build_into(
                 generated_root.to_local((widget.get_node(mesh_path) as Node3D).global_position) if mesh_path
                 else Vector3.ZERO)
         _apply_sound(widget, descriptor, sound_player, sound_position, sound_events)
-        widget.set_train_id(train_id)
+        widget.set_vehicle_rid(vehicle_rid)
         # A gauge's own lamp: TGauge takes "<name>_on" as the lit state of the control, shown
         # instead of the control while the flag its entry names is set (Gauge.cpp:204-210, 386-392)
         var on_matches:Array = submodel_index.get(descriptor.submodel_name.validate_node_name().to_lower() + "_on", [])
@@ -451,7 +451,7 @@ static func build_into(
             lamp.on_target_path = lamp.get_path_to(on_matches[0])
             if widget.get("mesh_path"):
                 lamp.off_target_path = lamp.get_path_to(widget.get_node(widget.get("mesh_path")))
-            lamp.set_train_id(train_id)
+            lamp.set_vehicle_rid(vehicle_rid)
 
     for descriptor:MmdPythonScreenDescriptor in definition.python_screens:
         if not FileAccess.file_exists(descriptor.script_path + ".py"):
@@ -468,7 +468,7 @@ static func build_into(
         var screen := CabinPythonScreen.new()
         screen.name = "PythonScreen_" + descriptor.target.validate_node_name()
         screen.mesh = mesh
-        screen.train_id = train_id
+        screen.vehicle_rid = vehicle_rid
         screen.script_path = descriptor.script_path
         screen.parameters = descriptor.parameters
         screen.update_time_msec = descriptor.update_time_msec
@@ -808,7 +808,7 @@ const BUTTON_TYPES:Dictionary[String, CabinButton.ButtonType] = {
 
 
 static func _build_widget(
-        descriptor:MmdInstrumentDescriptor, train_id:String,
+        descriptor:MmdInstrumentDescriptor, vehicle_rid:RID,
         cab_number:int, diagnostics:Array[Dictionary]) -> Node:
     var entry:Dictionary = MmdSemanticCatalog.get_entry(descriptor.label)
     var widget:Node = entry["widget_class"].new()
@@ -823,7 +823,7 @@ static func _build_widget(
     var position_names_config:Dictionary = entry.get("position_names_config", {})
     if position_names_config and "position_names" in widget:
         var names:Dictionary = {}
-        var config:Dictionary = CabinSystem.vehicle_config(train_id)
+        var config:Dictionary = CabinSystem.vehicle_config(vehicle_rid)
         for config_key:String in position_names_config:
             if config.has(config_key):
                 names[roundi(float(config[config_key]))] = position_names_config[config_key]
@@ -848,19 +848,19 @@ static func _build_widget(
     # back when the vehicle's pantograph switches are impulse ones (PantSwitchType, Train.cpp:3170)
     var monostable_property:String = entry.get("monostable_from_config", "")
     if monostable_property and widget is CabinButton:
-        widget.monostable = bool(CabinSystem.vehicle_config(train_id).get(monostable_property, widget.monostable))
+        widget.monostable = bool(CabinSystem.vehicle_config(vehicle_rid).get(monostable_property, widget.monostable))
 
     var config_max_property:String = entry.get("config_max_property", "")
     if config_max_property:
         var fallback:Variant = widget.get("switch_max_position")
         # the widget's class comes from the MMD descriptor and is not known here, which is the
         # one case CODE_STYLE.md allows a property to be reached by name
-        widget.set("switch_max_position", int(CabinSystem.vehicle_config(train_id).get(config_max_property, fallback)))
+        widget.set("switch_max_position", int(CabinSystem.vehicle_config(vehicle_rid).get(config_max_property, fallback)))
 
     # "i-*:" indicator descriptors (see _parse_indicator()) never set animation_type - they have
     # no "rot"/"mov" shape at all, so there's nothing for _apply_animation_shape() to compute.
     if descriptor.animation_type:
-        _apply_animation_shape(widget, descriptor, entry, train_id, cab_number, diagnostics)
+        _apply_animation_shape(widget, descriptor, entry, vehicle_rid, cab_number, diagnostics)
 
     return widget
 
@@ -944,7 +944,7 @@ static func _add_control_sound(
 ## of silently dropping it.
 ##
 ## `entry["animation_range_config_properties"]`, when present, is `[min_key, max_key]` into
-## CabinSystem.vehicle_config(train_id) - MMD's scale is calibrated against MaSzyna's raw value domain for a
+## CabinSystem.vehicle_config(vehicle_rid) - MMD's scale is calibrated against MaSzyna's raw value domain for a
 ## property (e.g. VehicleBrake's fBrakeCtrlPos), but the widget may be bound to an already-
 ## normalized (0..1) state_property instead (brakectrl: the command it sends,
 ## VehicleBrake::brake_level_set, itself expects a normalized level, so the widget's value/command
@@ -960,13 +960,13 @@ static func _add_control_sound(
 ## uses the implicit default of 1.0. This is the original engine's own fixed per-label
 ## correction factor, not a per-vehicle guess - confirmed by reading vehicle/Train.cpp directly.
 static func _apply_animation_shape(
-        widget:Node, descriptor:MmdInstrumentDescriptor, entry:Dictionary, train_id:String,
+        widget:Node, descriptor:MmdInstrumentDescriptor, entry:Dictionary, vehicle_rid:RID,
         cab_number:int, diagnostics:Array[Dictionary]) -> void:
     var range_scale:float = 1.0
     var range_properties:Array = entry.get("animation_range_config_properties", [])
     if range_properties.size() == 2:
-        var range_min:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[0], 0.0))
-        var range_max:float = float(CabinSystem.vehicle_config(train_id).get(range_properties[1], 1.0))
+        var range_min:float = float(CabinSystem.vehicle_config(vehicle_rid).get(range_properties[0], 0.0))
+        var range_max:float = float(CabinSystem.vehicle_config(vehicle_rid).get(range_properties[1], 1.0))
         range_scale = range_max - range_min
         # the same raw range is where the knob's whole positions lie (a brake valve's BCPN rows)
         if "position_min" in widget:
@@ -1079,7 +1079,7 @@ static func _wire_mesh_path(
 ## ".../czuwak_on" directly, and real-vehicle diagnostics confirmed the bare name is never found -
 ## EP09 uses base name "ca", so the real submodels there are "ca_on"/"ca_off").
 static func _build_indicator_lights(
-        descriptor:MmdInstrumentDescriptor, entry:Dictionary, train_id:String,
+        descriptor:MmdInstrumentDescriptor, entry:Dictionary, vehicle_rid:RID,
         submodel_index:Dictionary, cab_model:E3DModelInstance, generated_root:Node3D, cab_number:int,
         driver_position:Vector3, sound_player:SfxPlayer3D, sound_events:Array[SfxEvent],
         diagnostics:Array[Dictionary]) -> void:
@@ -1123,7 +1123,7 @@ static func _build_indicator_lights(
             widget.set("on_target_path", widget.get_path_to(on_node))
         if off_node:
             widget.set("off_target_path", widget.get_path_to(off_node))
-        widget.set_train_id(train_id)
+        widget.set_vehicle_rid(vehicle_rid)
 
         if entry.has("light_widget_class"):
             var light_points:Array[Vector3] = []
@@ -1149,7 +1149,7 @@ static func _build_indicator_lights(
                     light.global_position = light_points[j]
                 if entry.get("flip_upward_spotlight", false) and light is SpotLight3D:
                     _flip_spotlight_if_pointing_up(light as SpotLight3D, generated_root)
-                light.set_train_id(train_id)
+                light.set_vehicle_rid(vehicle_rid)
 
 
 ## Quirk for ceiling lamps: one lamp submodel may hold a whole row of bulbs (EP07 machine room

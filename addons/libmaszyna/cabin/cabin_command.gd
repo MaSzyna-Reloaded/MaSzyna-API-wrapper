@@ -10,16 +10,16 @@ class_name CabinCommand
 ## Cabin control id - the key press is reported to CabinSystem under this id.
 @export var control_id:StringName = &""
 
-var _train_id:String = ""
+var _vehicle_rid:RID
 
 
 ## The vehicle this element belongs to, as the cabin root hands it down.
-func set_train_id(train_id:String) -> void:
-    _train_id = train_id
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    _vehicle_rid = vehicle_rid
 
 
 func _input(event):
-    if not _train_id or not action_name or not command:
+    if not _vehicle_rid or not action_name or not command:
         return
     if event.is_action_pressed(action_name):
-        CabinSystem.act(_train_id, CabinSystem.occupied_cab(_train_id), control_id, &"hold")
+        CabinSystem.act(_vehicle_rid, CabinSystem.occupied_cab(_vehicle_rid), control_id, &"hold")

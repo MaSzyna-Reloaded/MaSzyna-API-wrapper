@@ -1,4 +1,4 @@
-#include "./TrainSystem.hpp"
+#include "../physics/RailVehicleServer.hpp"
 #include "VehicleComponent.hpp"
 #include "VehicleController.hpp"
 #include <godot_cpp/classes/engine.hpp>
@@ -94,10 +94,11 @@ namespace godot {
     }
 
     void VehicleComponent::log(const GameLog::LogLevel p_level, const String &p_line) {
-        if (train_controller_node != nullptr) {
-            if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-                system->log(train_controller_node->get_train_id(), p_level, p_line);
-            }
+        if (train_controller_node == nullptr) {
+            return;
+        }
+        if (GameLog *game_log = GameLog::get_instance(); game_log != nullptr) {
+            game_log->log(p_level, vformat(String("%s: %s"), train_controller_node->get_train_id(), p_line));
         }
     }
     void VehicleComponent::log_debug(const String &p_line) {
@@ -118,16 +119,14 @@ namespace godot {
 
     void VehicleComponent::register_command(const String &p_command, const Callable &p_callback) {
         ERR_FAIL_NULL_MSG(train_controller_node, "A component registers commands once it has a vehicle.");
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->register_command(train_controller_node->get_train_id(), p_command, p_callback);
-        }
+        train_controller_node->register_command(p_command, p_callback);
     }
 
+    /* The callback is not needed to find the registration - a vehicle holds one handler per
+     * command - but the pair keeps registering and unregistering symmetric at every call site. */
     void VehicleComponent::unregister_command(const String &p_command, const Callable &p_callback) {
         ERR_FAIL_NULL(train_controller_node);
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->unregister_command(train_controller_node->get_train_id(), p_command, p_callback);
-        }
+        train_controller_node->unregister_command(p_command);
     }
 
     void VehicleComponent::emit_config_changed_signal() {
@@ -211,15 +210,13 @@ namespace godot {
 
     void VehicleComponent::send_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
         if (train_controller_node != nullptr) {
-            if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-                system->send_command(train_controller_node->get_train_id(), p_command, p_p1, p_p2);
-            }
+            train_controller_node->send_command(p_command, p_p1, p_p2);
         }
     }
 
     void VehicleComponent::broadcast_command(const String &p_command, const Variant &p_p1, const Variant &p_p2) {
-        if (TrainSystem *system = TrainSystem::get_instance(); system != nullptr) {
-            system->broadcast_command(p_command, p_p1, p_p2);
+        if (RailVehicleServer *server = RailVehicleServer::get_instance(); server != nullptr) {
+            server->broadcast_command(p_command, p_p1, p_p2);
         }
     }
 

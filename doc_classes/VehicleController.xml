@@ -6,8 +6,8 @@
 	<description>
 		Base train controller node.
 		It allows building behaviour of the train by adding child nodes of the [VehicleComponent] class.
-		When node is added to the scene tree,
-		the train is automatically registered in the [TrainSystem] with an unique identifier [member VehicleController.train_id].
+		The vehicle holds its own commands and is reached by its [RailVehicleServer] handle;
+		[member train_id] is only its scenery name, registered with [method RailVehicleServer.vehicle_set_name].
 	</description>
 	<tutorials>
 	</tutorials>
@@ -149,6 +149,12 @@
 			<description>
 			</description>
 		</method>
+		<method name="get_commands" qualifiers="const">
+			<return type="PackedStringArray" />
+			<description>
+				Returns the commands this vehicle answers to.
+			</description>
+		</method>
 		<method name="get_component" qualifiers="const">
 			<return type="VehicleComponent" />
 			<param index="0" name="type" type="int" enum="VehicleComponentType.Type" />
@@ -268,11 +274,10 @@
 		</method>
 		<method name="register_command">
 			<return type="void" />
-			<param index="0" name="command" type="String" />
+			<param index="0" name="command" type="StringName" />
 			<param index="1" name="callable" type="Callable" />
 			<description>
-				Registers command for train controlled by this node.
-				This is a shortcut for [method TrainSystem.register_command].
+				Registers a command this vehicle answers to. A command registered twice is an error.
 			</description>
 		</method>
 		<method name="second_controller_decrease" qualifiers="const">
@@ -287,14 +292,13 @@
 			<description>
 			</description>
 		</method>
-		<method name="send_command" qualifiers="const">
+		<method name="send_command">
 			<return type="Variant" />
 			<param index="0" name="command" type="StringName" />
 			<param index="1" name="p1" type="Variant" default="null" />
 			<param index="2" name="p2" type="Variant" default="null" />
 			<description>
-				Sends command to train controlled by this node.
-				This is a shortcut for [method TrainSystem.send_command] and returns its result.
+				Runs a command of this vehicle and returns what its handler answered, or [code]null[/code] when the vehicle has no such command. See [method RailVehicleServer.vehicle_send_command].
 			</description>
 		</method>
 		<method name="set_vehicle_rid">
@@ -311,11 +315,9 @@
 		</method>
 		<method name="unregister_command">
 			<return type="void" />
-			<param index="0" name="command" type="String" />
-			<param index="1" name="callable" type="Callable" />
+			<param index="0" name="command" type="StringName" />
 			<description>
-				Removes command of a train controlled by this node from the registry.
-				This is a shortcut for [method TrainSystem.unregister_command].
+				Removes a command of this vehicle.
 			</description>
 		</method>
 		<method name="update_location">
@@ -381,7 +383,7 @@
 		</member>
 		<member name="config" type="Dictionary" setter="" getter="get_config" default="{}">
 			Returns a dictionary with all config properties of the train.
-			This is a shortcut for iterating over [method TrainSystem.get_supported_config_properties] to read each from [method TrainSystem.get_config_property].
+			The same as [method RailVehicleServer.vehicle_dump_config].
 		</member>
 		<member name="controller_joint_position" type="int" setter="" getter="get_controller_joint_position" default="0">
 		</member>
@@ -480,7 +482,7 @@
 		<member name="train_damage" type="int" setter="" getter="get_train_damage" default="0">
 		</member>
 		<member name="train_id" type="String" setter="set_train_id" getter="get_train_id" default="&quot;&quot;">
-			Unique identifier of the train. See [method TrainSystem.register_train].
+			The vehicle's scenery name. It may be empty or shared with another vehicle; it is only used to find the vehicle by name, see [method RailVehicleServer.vehicle_get_rid_by_name].
 		</member>
 		<member name="train_type" type="int" setter="set_train_type" getter="get_train_type" enum="VehicleController.TrainType" default="0">
 			[code]Param.Type[/code]

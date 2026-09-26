@@ -102,7 +102,7 @@ var _setup_phase:bool = true
 
 func _ready():
     connect("pushed_changed", self._on_pushed_changed)
-    train_id_changed.connect(_update_state)
+    vehicle_rid_changed.connect(_update_state)
     Console.console_toggled.connect(_on_console_toggled)
 
 func _enter_tree():
@@ -112,7 +112,7 @@ func _on_console_toggled(visible:bool):
     _enabled = not visible
 
 func _update_state():
-    if state_property and _train_id:
+    if state_property and _vehicle_rid:
         pushed = _vehicle_state_value(state_property, pushed)
     else:
         pushed = false

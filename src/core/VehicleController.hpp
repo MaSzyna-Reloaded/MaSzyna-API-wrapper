@@ -16,7 +16,6 @@ namespace godot {
     class VehicleEngine;
     class VehicleSecuritySystem;
     class VehicleLighting;
-    class TrainSystem;
 
 
     /// The vehicle itself: its configuration, its components and the operations that change them,
@@ -46,6 +45,10 @@ namespace godot {
             /// Bumped by command_executed(); what tells a cached state dump that it is stale.
             uint64_t command_serial = 0;
             int prev_cabin_occupied = 0;
+            /// What this vehicle answers to, registered by itself and its components. A vehicle
+            /// holds its own commands, so a scenery name shared by two vehicles, or none at all,
+            /// leaves every one of them commandable.
+            HashMap<StringName, Callable> commands;
 
         protected:
             /// Writes the wrapper's configuration - the vehicle's and every component's - to the
@@ -191,9 +194,9 @@ namespace godot {
             /* One of this vehicle's components (re)applied its configuration. */
             void emit_config_changed();
             void _notification(int p_what);
-            Variant send_command(
-                    const StringName &p_command, const Variant &p_p1 = Variant(),
-                    const Variant &p_p2 = Variant()) const;
+            Variant
+            send_command(const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            PackedStringArray get_commands() const;
             virtual void battery(bool p_enabled) const = 0;
             virtual void cab_activation(bool p_enabled) const = 0;
             virtual void cab_activation_auto() const = 0;
@@ -214,8 +217,8 @@ namespace godot {
             uint64_t get_command_serial() const;
             void broadcast_command(
                     const String &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
-            void register_command(const String &p_command, const Callable &p_callable);
-            void unregister_command(const String &p_command, const Callable &p_callable);
+            void register_command(const StringName &p_command, const Callable &p_callable);
+            void unregister_command(const StringName &p_command);
             /* One tick of everything the vehicle is made of, after its physics has moved. The
              * components have no _process of their own to be driven by a scene tree. */
             /* Brings the vehicle up: its simulation, its state and the signals whose initial
@@ -231,7 +234,7 @@ namespace godot {
             /// valid across a rebuild.
             virtual void release();
             void initialize();
-            /* The reverse: the vehicle leaves TrainSystem and gives its commands back. */
+            /* The reverse: the vehicle gives its commands back and lets go of its handle. */
             void shutdown();
             void process_components(double p_delta);
             virtual void update_state();

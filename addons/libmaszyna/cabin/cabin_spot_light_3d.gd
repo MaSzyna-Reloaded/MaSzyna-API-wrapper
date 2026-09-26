@@ -2,15 +2,15 @@ extends SpotLight3D
 class_name CabinSpotLight3D
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_train_id(train_id:String) -> void:
-    if _train_id == train_id:
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    if _vehicle_rid == vehicle_rid:
         return
-    _train_id = train_id
+    _vehicle_rid = vehicle_rid
     _dirty = true
 
 
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
-var _train_id:String = ""
+var _vehicle_rid:RID
 
 var _dirty:bool = false
 var _setup_phase: bool = true
@@ -90,8 +90,8 @@ func _on_blink_timeout():
     _update_state()
 
 func _update_state():
-    if _train_id and state_property:
-        enabled = true if CabinSystem.vehicle_state(_train_id).get(state_property, false) else false
+    if _vehicle_rid and state_property:
+        enabled = true if CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false) else false
 
     var active_now:bool
     if blink_time <= 0.0:
@@ -127,7 +127,7 @@ func _process(delta):
             _on_target = get_node_or_null(on_target_path)
         if not _off_target and off_target_path:
             _off_target = get_node_or_null(off_target_path)
-        if _train_id:
+        if _vehicle_rid:
             _update_state()
             _setup_phase = true
 

@@ -99,9 +99,10 @@ in any layer before.
    `BrakeLevelSet_Drive` there for the exact pattern:
    `action_name`/`command`/`command_param`/`controller_path`).
 
-**Sending commands:** code outside the train composition (player, UI, console) sends
-commands through the high-level API, `TrainSystem.send_command(train_id, command, p1, p2)`,
-using the train id it already tracks (e.g. `MaszynaPlayer.last_controlled_train_id`) - never
+**Sending commands:** code outside the vehicle composition (player, UI, console) sends
+commands by the vehicle's handle, `RailVehicleServer.vehicle_send_command(vehicle_rid, command,
+p1, p2)`, using the vehicle it already holds (e.g. `MaszynaPlayer.controlled_vehicle.get_rid()`);
+a vehicle known only by its scenery name is found with `vehicle_get_rid_by_name` - never
 `vehicle.get_controller().send_command(...)`. Direct `VehicleController` access is fine only
 where the composition already holds that controller (e.g. `VehicleComponent`s).
 

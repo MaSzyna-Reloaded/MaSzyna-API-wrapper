@@ -19,7 +19,7 @@ namespace godot {
         public:
             static const char *cabin_ready_signal;
             static const char *camera_configuration_changed_signal;
-            static const char *train_id_changed_signal;
+            static const char *vehicle_rid_changed_signal;
 
         private:
             static void _bind_methods();
@@ -29,7 +29,8 @@ namespace godot {
             static constexpr double SHAKE_STEP = 1.0 / 50.0;
             static constexpr double SPRING_REST_LENGTH = 0.01;
 
-            String train_id;
+            /// The RailVehicleServer handle of the vehicle this cab sits in
+            RID vehicle_rid;
             bool cabin_ready = false;
             double engine_angle = Math_PI * 0.5;
             Vector3 shake_velocity;
@@ -59,7 +60,7 @@ namespace godot {
             void _process_engine_shake(double p_delta);
             /* The cab's elements are GDScript nodes this class only hosts, so the name is handed
              * down by a named call - the one case `CODE_STYLE.md` allows. */
-            void _propagate_train_id(Node *p_node) const;
+            void _propagate_vehicle_rid(Node *p_node) const;
             double _engine_revolutions() const;
 
         public:
@@ -71,8 +72,8 @@ namespace godot {
 
             /// The vehicle this cab sits in, by name. There is deliberately no path to a
             /// controller here.
-            void set_train_id(const String &p_train_id);
-            String get_train_id() const;
+            void set_vehicle_rid(const RID &p_vehicle_rid);
+            RID get_vehicle_rid() const;
 
             Transform3D get_camera_transform() const;
             Vector3 get_camera_shake_offset() const;

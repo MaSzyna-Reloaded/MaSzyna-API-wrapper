@@ -108,7 +108,7 @@ func _enter_tree():
     _setup_phase = true
 
 func _update_state():
-    if _train_id:
+    if _vehicle_rid:
         if config_min_property:
             value_min = _vehicle_config().get(config_min_property, value_min)
         if config_max_property:
@@ -123,7 +123,7 @@ func _ready():
     value_changed.connect(_on_value_changed)
     if not Engine.is_editor_hint() and Console:
         Console.console_toggled.connect(_on_console_toggle)
-    train_id_changed.connect(_update_state)
+    vehicle_rid_changed.connect(_update_state)
 
 func _on_console_toggle(console_visible):
     _handle_actions = not console_visible

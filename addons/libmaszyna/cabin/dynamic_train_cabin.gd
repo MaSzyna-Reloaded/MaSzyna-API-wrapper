@@ -41,18 +41,18 @@ var _occluders:Array[RID] = []
 
 
 func _ready() -> void:
-    train_id_changed.connect(_on_train_id_changed)
+    vehicle_rid_changed.connect(_on_vehicle_rid_changed)
     # controller_path (inherited from Cabin3D) may already name the vehicle when this cab is
     # placed in a scene rather than built by RailVehicle3D.enter_cabin(), which names it itself.
     if controller_path:
         var physics_node:VehiclePhysicsNode = get_node_or_null(controller_path)
-        set_train_id(physics_node.train_id if physics_node else "")
+        set_vehicle_rid(physics_node.vehicle_rid if physics_node else "")
     # Cabin3D's own _ready() emits cabin_ready; the engine calls it beside this one.
 
 
-## Cabin3D announces the vehicle rather than letting a subclass override set_train_id(): the
+## Cabin3D announces the vehicle rather than letting a subclass override set_vehicle_rid(): the
 ## vehicle calls that method typed, so a script method of the same name would never run.
-func _on_train_id_changed(_train_id:String) -> void:
+func _on_vehicle_rid_changed(_vehicle_rid:RID) -> void:
     if not CabinSystem.vehicle_cabin_occupied_changed.is_connected(_on_cabin_occupied_changed):
         CabinSystem.vehicle_cabin_occupied_changed.connect(_on_cabin_occupied_changed)
     _rebuild_generated()
@@ -61,9 +61,9 @@ func _on_train_id_changed(_train_id:String) -> void:
 func _exit_tree() -> void:
     # the announcement goes first: clearing the vehicle would otherwise rebuild the cab on its
     # way out of the tree
-    train_id_changed.disconnect(_on_train_id_changed)
+    vehicle_rid_changed.disconnect(_on_vehicle_rid_changed)
     CabinSystem.vehicle_cabin_occupied_changed.disconnect(_on_cabin_occupied_changed)
-    set_train_id("")
+    set_vehicle_rid(RID())
     _free_occluders()
 
 
@@ -76,18 +76,18 @@ func reload() -> void:
 
 
 ## Rebuilds when the crew moves to another cab (cab0 = machine room, cab1, cab2).
-func _on_cabin_occupied_changed(train_id:String, _cabin_occupied:int) -> void:
-    if not train_id == get_train_id():
+func _on_cabin_occupied_changed(vehicle_rid:RID, _cabin_occupied:int) -> void:
+    if not vehicle_rid == get_vehicle_rid():
         return
     if not _select_cab_number() == _last_cab_number:
         _rebuild_generated()
 
 
 func _select_cab_number() -> int:
-    if not get_train_id():
+    if not get_vehicle_rid():
         return 1
     # Train.cpp:8684 (InitializeCab) - CabOccupied -1 loads cab2definition:, 0 cab0, 1 cab1.
-    var cabin_occupied:int = CabinSystem.vehicle_state(get_train_id()).get("cabin_occupied", 0)
+    var cabin_occupied:int = CabinSystem.vehicle_state(get_vehicle_rid()).get("cabin_occupied", 0)
     return 2 if cabin_occupied < 0 else cabin_occupied
 
 
@@ -99,7 +99,7 @@ func _rebuild_generated() -> void:
         _generated = null
 
     _diagnostics.clear()
-    if not mmd_filename or not get_train_id():
+    if not mmd_filename or not get_vehicle_rid():
         return
 
     _last_cab_number = _select_cab_number()
@@ -131,7 +131,7 @@ func _rebuild_generated() -> void:
     add_child(_generated, false, INTERNAL_MODE_BACK)
 
     var build_diagnostics:Array[Dictionary] = []
-    MmdCabinInstancer.build_into(_generated, definition, get_train_id(), data_path, skin, build_diagnostics)
+    MmdCabinInstancer.build_into(_generated, definition, get_vehicle_rid(), data_path, skin, build_diagnostics)
     _diagnostics.append_array(build_diagnostics)
 
     var cab_model:E3DModelInstance = _generated.get_node_or_null("CabModel") as E3DModelInstance
@@ -148,12 +148,12 @@ func _rebuild_generated() -> void:
         _build_cab_light(definition)
     var windscreen_wipers := CabinWindscreenWipers.new()
     windscreen_wipers.name = "WindscreenWipers"
-    windscreen_wipers.train_id = get_train_id()
+    windscreen_wipers.vehicle_rid = get_vehicle_rid()
     _generated.add_child(windscreen_wipers)
     # cabin logic of the original engine (CabinSystem callbacks) - added last, after every control
     var logic := LegacyCabinLogicDelegate.new()
     logic.name = "LegacyCabinLogic"
-    logic.train_id = get_train_id()
+    logic.vehicle_rid = get_vehicle_rid()
     logic.cab = cab_number
     _generated.add_child(logic)
     camera_configuration_changed.emit()
@@ -195,7 +195,7 @@ func _build_driver_aid_commands() -> void:
     release_to_drive.command = "brake_level_set_position"
     release_to_drive.command_param = "drive"
     _generated.add_child(release_to_drive)
-    release_to_drive.set_train_id(get_train_id())
+    release_to_drive.set_vehicle_rid(get_vehicle_rid())
 
 
 ## Cab interior lighting: the original lights the cab model with a tungsten ambient term
@@ -214,7 +214,7 @@ func _build_cab_light(definition:MmdCabinDefinition) -> void:
     light.omni_range = maxf((definition.bounds_max - definition.bounds_min).length(), 1.0)
     light.state_property = "roof_light_level"
     _generated.add_child(light)
-    light.set_train_id(get_train_id())
+    light.set_vehicle_rid(get_vehicle_rid())
 
     var cab_model:E3DModelInstance = _generated.get_node_or_null("CabModel") as E3DModelInstance
     if not cab_model:

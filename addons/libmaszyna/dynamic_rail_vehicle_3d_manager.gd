@@ -13,8 +13,8 @@ extends Node
 ## What is cached is a VehicleStructure - what the MMD says the vehicle is built from - and not a
 ## node tree: a vehicle is a model plus a cab plus a physics handle, which is cheap to assemble
 ## and costly to pack. train_id/initial_velocity/driver_type/load/head_display_material are not in it
-## at all, because they say which *instance* a vehicle is, and two wagons of the same type still
-## need distinct TrainSystem ids.
+## at all, because they say which *instance* a vehicle is, and two wagons of the same type are
+## still two vehicles.
 
 var _cache = ResourceCache.create("rail_vehicle")
 

@@ -42,11 +42,10 @@ class_name DynamicRailVehicle3D
             head_display_material = x
             _dirty = true
 
-## Forwarded to the generated FizVehiclePhysicsNode.train_id (TrainSystem registration/console
-## lookups). Not derived from any data file - every DynamicRailVehicle3D otherwise builds its
-## FizVehiclePhysicsNode with train_id left at "", so two or more dynamic vehicles all collide on
-## the same empty TrainSystem registry key. Must be set explicitly and kept unique per vehicle,
-## same as on a hand-authored VehicleController.
+## The scenery's name for this vehicle, forwarded to the generated FizVehiclePhysicsNode.train_id
+## and registered with RailVehicleServer.vehicle_set_name(), which is how an event, a scenario or
+## the console find a vehicle by name. It may be empty or repeated - everything that holds the
+## vehicle uses its RID, so only a lookup by that name is affected.
 @export var train_id:String = "":
     set(x):
         if not x == train_id:

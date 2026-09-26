@@ -129,6 +129,15 @@ namespace godot {
             HashMap<RID, Vector<RID>> track_vehicles;
 
             VehicleController *_get_controller(const VehiclePlacement &p_placement) const;
+            /* The controller's own events, relayed under the handle, so whoever follows a vehicle
+             * never holds its controller - connected when a controller is attached, disconnected
+             * when it is replaced or the vehicle is freed */
+            void _connect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
+            void _disconnect_relays(const RID &p_vehicle, const VehiclePlacement &p_placement);
+            void _on_vehicle_moved(const Vector3 &p_position, const RID &p_vehicle);
+            void _on_vehicle_command_received(
+                    const String &p_command, const Variant &p_p1, const Variant &p_p2, const RID &p_vehicle);
+            void _on_vehicle_cabin_occupied_changed(int p_cab, const RID &p_vehicle);
             void _move_placement(VehiclePlacement &p_placement, double p_distance, bool p_force_switch_state);
             VehiclePlacement _sample_placement(const VehiclePlacement &p_placement, double p_distance);
             Transform3D _compose_body_transform(VehiclePlacement &p_placement, const RID &p_vehicle);
@@ -151,6 +160,11 @@ namespace godot {
             static void _bind_methods();
 
         public:
+            static const char *vehicle_moved_signal;
+            static const char *vehicle_command_received_signal;
+            static const char *vehicle_occupied_cab_changed_signal;
+            static const char *vehicle_freed_signal;
+
             RailVehicleServer();
             ~RailVehicleServer() override;
 
@@ -167,6 +181,18 @@ namespace godot {
             void vehicle_set_name(const RID &p_vehicle, const String &p_name);
             String vehicle_get_name(const RID &p_vehicle) const;
             RID vehicle_get_rid_by_name(const String &p_name) const;
+            /* Every vehicle the server holds, and those whose position falls in p_rect (x, z) */
+            TypedArray<RID> get_vehicles() const;
+            TypedArray<RID> get_vehicles_in_rect(const Rect2 &p_rect) const;
+            /* A command to one vehicle, by handle; returns what its handler answered (#43), or
+             * Variant() when the vehicle has no such command */
+            Variant vehicle_send_command(
+                    const RID &p_vehicle, const StringName &p_command, const Variant &p_p1 = Variant(),
+                    const Variant &p_p2 = Variant());
+            /* The same command to every vehicle that has it */
+            void broadcast_command(
+                    const StringName &p_command, const Variant &p_p1 = Variant(), const Variant &p_p2 = Variant());
+            PackedStringArray vehicle_get_commands(const RID &p_vehicle) const;
             /* The vehicles joined to this one by p_element, in order: from the last of them beyond
              * p_end back through this one to the last on the other side (TDynamicObject::
              * GetFirstDynamic() + Next(), DynObj.cpp:501) */

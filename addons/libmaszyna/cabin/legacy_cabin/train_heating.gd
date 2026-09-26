@@ -9,7 +9,7 @@ class_name LegacyCabinTrainHeating
 const CONTROL:StringName = &"trainheating_sw"
 
 var _has_gauge:bool
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 
 
@@ -21,14 +21,14 @@ func control_ids() -> Array[StringName]:
     return [CONTROL]
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
-    CabinSystem.register_control(train_id, cab, CONTROL, _heating)
+    CabinSystem.register_control(vehicle_rid, cab, CONTROL, _heating)
 
 
 func unregister() -> void:
-    CabinSystem.unregister_control(_train_id, _cab, CONTROL, _heating)
+    CabinSystem.unregister_control(_vehicle_rid, _cab, CONTROL, _heating)
 
 
 func _heating(state:CabinState, action:StringName, value:Variant) -> Variant:

@@ -33,7 +33,7 @@ const MACHINE_ROOM_CAB:int = 0
 ## control -> whether the cab models it (m_controlmapper.contains)
 var _present:Dictionary[StringName, bool] = {}
 var _has_selector:bool
-var _train_id:String
+var _vehicle_rid:RID
 var _cab:int
 var _handlers:Dictionary[StringName, Callable] = {}
 
@@ -47,17 +47,17 @@ func control_ids() -> Array[StringName]:
     return SWITCHES.keys()
 
 
-func register(train_id:String, cab:int) -> void:
-    _train_id = train_id
+func register(vehicle_rid:RID, cab:int) -> void:
+    _vehicle_rid = vehicle_rid
     _cab = cab
     for control_id:StringName in SWITCHES:
         _handlers[control_id] = _switch.bind(control_id)
-        CabinSystem.register_control(train_id, cab, control_id, _handlers[control_id])
+        CabinSystem.register_control(vehicle_rid, cab, control_id, _handlers[control_id])
 
 
 func unregister() -> void:
     for control_id:StringName in _handlers:
-        CabinSystem.unregister_control(_train_id, _cab, control_id, _handlers[control_id])
+        CabinSystem.unregister_control(_vehicle_rid, _cab, control_id, _handlers[control_id])
     _handlers.clear()
 
 
@@ -67,7 +67,7 @@ func _switch(state:CabinState, action:StringName, value:Variant, control_id:Stri
         return null
     var selector:VehicleElectricEngine.PantographSelector = SWITCHES[control_id][0]
     var lowering_button:bool = SWITCHES[control_id][1]
-    var impulse:bool = CabinSystem.vehicle_config(state.train_id).get("pantograph_switch_impulse", false)
+    var impulse:bool = CabinSystem.vehicle_config(state.vehicle_rid).get("pantograph_switch_impulse", false)
     var pressed:bool = state.is_pressed(control_id, action, value) or action == &"toggle"
     state.set_value(control_id, state.is_pressed(control_id, action, value))
     if not pressed:

@@ -23,30 +23,52 @@ func _ready() -> void:
 
     GameLog.log_updated.connect(self.console_print_log)
 
+## The console knows a vehicle by its scenery name only, so it goes through the server's name
+## registry; a name that is empty, "none" or unknown reaches no vehicle.
+func _vehicle(train:String) -> RID:
+    var vehicle:RID = RailVehicleServer.vehicle_get_rid_by_name(train)
+    if not vehicle.is_valid():
+        GameLog.error("No vehicle named \"%s\"" % train)
+    return vehicle
+
 func console_get_config_value(train, property):
-    Console.print_line("%s" % TrainSystem.get_config_property(train, property))
+    var vehicle:RID = _vehicle(train)
+    if vehicle.is_valid():
+        Console.print_line("%s" % RailVehicleServer.vehicle_dump_config(vehicle).get(property))
 
 func console_get_config_properties(train):
-    var props = TrainSystem.get_supported_config_properties(train)
+    var vehicle:RID = _vehicle(train)
+    if not vehicle.is_valid():
+        return
+    var config:Dictionary = RailVehicleServer.vehicle_dump_config(vehicle)
     var lines = []
-    for prop in props:
-        lines.append("%s=%s" % [prop, TrainSystem.get_config_property(train, prop)])
+    for prop in config:
+        lines.append("%s=%s" % [prop, config[prop]])
     Console.print_line("%s" % "\n".join(lines))
 
 func console_broadcast(command, p1=null, p2=null):
-    #Console.print_line("Broadcasting command: %s(%s, %s)" % [command, p1, p2], true)
-    TrainSystem.broadcast_command(command, p1, p2)
+    RailVehicleServer.broadcast_command(command, p1, p2)
 
 func console_send(train, command, p1=null, p2=null):
-    TrainSystem.send_command(train, command, p1, p2)
+    var vehicle:RID = _vehicle(train)
+    if vehicle.is_valid():
+        RailVehicleServer.vehicle_send_command(vehicle, command, p1, p2)
 
 func console_list_trains():
-    Console.print_line("%s" % "\n".join(TrainSystem.get_registered_trains()))
+    var names:PackedStringArray = []
+    for vehicle:RID in RailVehicleServer.get_vehicles():
+        names.append(RailVehicleServer.vehicle_get_name(vehicle))
+    Console.print_line("%s" % "\n".join(names))
 
 func console_list_train_commands():
-    var commands = TrainSystem.get_supported_commands()
-    commands.sort()
-    Console.print_line("%s" % "\n".join(commands))
+    var commands:Dictionary[String, bool] = {}
+    for vehicle:RID in RailVehicleServer.get_vehicles():
+        for command:String in RailVehicleServer.vehicle_get_commands(vehicle):
+            commands[command] = true
+    var names:Array[String] = []
+    names.assign(commands.keys())
+    names.sort()
+    Console.print_line("%s" % "\n".join(names))
 
 func console_print_log(loglevel, line):
     if loglevel >= GameLog.LogLevel.ERROR:
@@ -57,23 +79,29 @@ func console_print_log(loglevel, line):
         Console.print_line("%s" % [line])
 
 func console_cabin(train, operation, control=null, value=null):
-    var cab:int = int(TrainSystem.get_train_state(train).get("cabin_occupied", 1))
+    var vehicle:RID = _vehicle(train)
+    if not vehicle.is_valid():
+        return
+    var cab:int = int(RailVehicleServer.vehicle_dump_state(vehicle).get("cabin_occupied", 1))
     if operation == "controls":
         Console.print_line("cab %d controls:\n%s\nactions: %s" % [
-            cab, "\n".join(CabinSystem.get_controls(train, cab)), ", ".join(CabinSystem.ACTIONS)])
+            cab, "\n".join(CabinSystem.get_controls(vehicle, cab)), ", ".join(CabinSystem.ACTIONS)])
     elif operation == "state" or (operation == "get" and not control):
-        Console.print_line("%s" % [CabinSystem.get_state(train, cab)])
+        Console.print_line("%s" % [CabinSystem.get_state(vehicle, cab)])
     elif operation == "get":
-        Console.print_line("%s" % [CabinSystem.get_control(train, cab, control)])
+        Console.print_line("%s" % [CabinSystem.get_control(vehicle, cab, control)])
     elif not StringName(operation) in CabinSystem.ACTIONS:
-        TrainSystem.log(train, GameLog.LogLevel.ERROR, "Unknown cabin operation: %s" % operation)
+        GameLog.error("%s: Unknown cabin operation: %s" % [train, operation])
     elif not control:
-        TrainSystem.log(train, GameLog.LogLevel.ERROR, "Cabin operation %s needs a control id" % operation)
+        GameLog.error("%s: Cabin operation %s needs a control id" % [train, operation])
     else:
-        Console.print_line("%s" % [CabinSystem.act(train, cab, control, operation, value)])
+        Console.print_line("%s" % [CabinSystem.act(vehicle, cab, control, operation, value)])
 
 func console_get_train_state(train, key=null):
-    var out = TrainSystem.get_train_state(train)
+    var vehicle:RID = _vehicle(train)
+    if not vehicle.is_valid():
+        return
+    var out = RailVehicleServer.vehicle_dump_state(vehicle)
     if key:
         out = out.get(key)
     Console.print_line("%s" % [out])

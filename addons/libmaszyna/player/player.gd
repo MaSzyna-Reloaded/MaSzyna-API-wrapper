@@ -16,7 +16,7 @@ signal cabin_view_changed(in_cabin:bool)
 ## Player's own sounds (the "flashlight" event with a "toggle" automation), provided by the game
 @export var sfx_bank:SfxBank
 
-var last_controlled_train_id:String = ""
+var last_controlled_vehicle:RailVehicle3D
 var controlled_vehicle:RailVehicle3D
 var _camera:FreeCamera3D
 @onready var train_sound_listener:TrainSoundListener3D = $TrainSoundListener3D
@@ -29,7 +29,10 @@ var _camera:FreeCamera3D
 @onready var sfx_player:SfxPlayer = $PlayerSfx
 var _dirty: bool = true
 var _auto_start_pending:bool = true
-var _released_train_id:String = ""
+## The vehicle the player chose in the world (or re-enters); a vehicle is held, never looked up by
+## its scenery name, which two vehicles may share and one may lack
+var _requested_vehicle:RailVehicle3D
+var _released_vehicle:RID
 var _cabin_view:bool = false
 
 func _ready() -> void:
@@ -65,10 +68,10 @@ func _process(_delta:float) -> void:
         if target_vehicle:
             controlled_vehicle = target_vehicle
             controlled_vehicle.enter_cabin(self)
-            last_controlled_train_id = start_train_id
+            last_controlled_vehicle = controlled_vehicle
             _dirty = false
             _changed = true
-        elif start_train_id or _auto_start_pending:
+        elif start_train_id or _requested_vehicle or _auto_start_pending:
             _dirty = true
 
         if _changed:
@@ -88,6 +91,7 @@ func _process(_delta:float) -> void:
 ## the scenery holding the vehicle is freed - the camera lives in the vehicle's cabin.
 func clear_start_train() -> void:
     start_train_id = ""
+    _request_vehicle(null)
     if controlled_vehicle:
         await controlled_vehicle_changed
 
@@ -115,16 +119,14 @@ func _input(event):
                 while _tmp and not _tmp is RailVehicle3D:
                     _tmp = _tmp.get_parent()
                 if _tmp and _tmp.cabin_scene:
-                    var candidate:RailVehicle3D = _tmp as RailVehicle3D
-                    var train_id:String = _get_vehicle_train_id(candidate)
-                    if train_id and (event.is_action_pressed("change_vehicle") or not last_controlled_train_id):
-                        start_train_id = train_id
+                    if event.is_action_pressed("change_vehicle") or not last_controlled_vehicle:
+                        _request_vehicle(_tmp as RailVehicle3D)
 
     # Train.cpp:6644-6720 - Home (cabchangeforward) / End (cabchangebackward).
     if controlled_vehicle and event.is_action_pressed("cabin_previous"):
-        TrainSystem.send_command(last_controlled_train_id, "cab_change", 1)
+        RailVehicleServer.vehicle_send_command(controlled_vehicle.get_rid(), "cab_change", 1)
     if controlled_vehicle and event.is_action_pressed("cabin_next"):
-        TrainSystem.send_command(last_controlled_train_id, "cab_change", -1)
+        RailVehicleServer.vehicle_send_command(controlled_vehicle.get_rid(), "cab_change", -1)
 
     if not controlled_vehicle:
         _walk_mode_input(event)
@@ -140,11 +142,13 @@ func _input(event):
         if external_camera.current:
             _set_external_view(false)
         elif not controlled_vehicle:
-            if last_controlled_train_id:
-                start_train_id = last_controlled_train_id
+            # the vehicle last driven may have gone with its scenery
+            if is_instance_valid(last_controlled_vehicle):
+                _request_vehicle(last_controlled_vehicle)
         else:
             start_train_id = ""
             _auto_start_pending = false
+            _request_vehicle(null)
 
 ## Walk mode: the brake releaser, the manual brake and coupling act on the vehicle nearest to the
 ## player - TTrain::OnCommand_independentbrakebailoff (Train.cpp:1580-1595),
@@ -152,12 +156,12 @@ func _input(event):
 ## OnCommand_nearestcarcouplingincrease/disconnect (Train.cpp:6207-6249) at its nearest coupler.
 func _walk_mode_input(event:InputEvent) -> void:
     if event.is_action_pressed("brake_release", false, true):
-        _released_train_id = _find_nearest_train_id()
-        if _released_train_id:
-            TrainSystem.send_command(_released_train_id, "brake_releaser", true)
-    elif event.is_action_released("brake_release", true) and _released_train_id:
-        TrainSystem.send_command(_released_train_id, "brake_releaser", false)
-        _released_train_id = ""
+        _released_vehicle = _find_nearest_vehicle()
+        if _released_vehicle.is_valid():
+            RailVehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", true)
+    elif event.is_action_released("brake_release", true) and _released_vehicle.is_valid():
+        RailVehicleServer.vehicle_send_command(_released_vehicle, "brake_releaser", false)
+        _released_vehicle = RID()
     elif event.is_action_pressed("manual_brake_increase", true, true):
         _send_to_nearest_train("manual_brake_increase")
     elif event.is_action_pressed("manual_brake_decrease", true, true):
@@ -169,26 +173,28 @@ func _walk_mode_input(event:InputEvent) -> void:
 
 
 func _send_to_nearest_train(command:String, p1:Variant = null) -> void:
-    var train_id:String = _find_nearest_train_id()
-    if train_id:
-        TrainSystem.send_command(train_id, command, p1)
+    var vehicle:RID = _find_nearest_vehicle()
+    if vehicle.is_valid():
+        RailVehicleServer.vehicle_send_command(vehicle, command, p1)
 
 
 ## TTrain::find_nearest_consist_vehicle() (Train.cpp:1023) scans up to 1500 m for the vehicle
 ## nearest to the camera.
-func _find_nearest_train_id() -> String:
+func _find_nearest_vehicle() -> RID:
     var position:Vector3 = get_camera().global_position
-    var nearest_train_id:String = ""
+    var nearest:RID = RID()
     var nearest_distance:float = 1500.0
-    for train_id:String in TrainSystem.get_registered_trains():
-        var distance:float = position.distance_to(TrainSystem.get_train_world_position(train_id))
+    for vehicle:RID in RailVehicleServer.get_vehicles():
+        var distance:float = position.distance_to(RailVehicleServer.vehicle_get_transform(vehicle).origin)
         if distance < nearest_distance:
             nearest_distance = distance
-            nearest_train_id = train_id
-    return nearest_train_id
+            nearest = vehicle
+    return nearest
 
 
 func _find_start_vehicle() -> RailVehicle3D:
+    if is_instance_valid(_requested_vehicle):
+        return _requested_vehicle
     var vehicles:Array[Node] = get_tree().get_root().find_children("", "RailVehicle3D", true, false)
     if start_train_id:
         for node:Node in vehicles:
@@ -200,12 +206,16 @@ func _find_start_vehicle() -> RailVehicle3D:
     if _auto_start_pending:
         for node:Node in vehicles:
             var vehicle:RailVehicle3D = node as RailVehicle3D
-            var train_id:String = _get_vehicle_train_id(vehicle) if vehicle else ""
-            if vehicle and train_id:
-                start_train_id = train_id
+            if vehicle and vehicle.get_controller():
                 _auto_start_pending = false
+                _request_vehicle(vehicle)
                 return vehicle
     return null
+
+## The one writer of the vehicle the player asked to enter; null asks to leave the cab
+func _request_vehicle(vehicle:RailVehicle3D) -> void:
+    _requested_vehicle = vehicle
+    _dirty = true
 
 func _get_vehicle_train_id(vehicle:RailVehicle3D) -> String:
     var controller:VehicleController = vehicle.get_controller()

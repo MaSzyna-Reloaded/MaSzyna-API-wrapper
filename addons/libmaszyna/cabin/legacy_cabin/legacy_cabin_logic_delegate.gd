@@ -4,14 +4,14 @@ class_name LegacyCabinLogicDelegate
 ## Cabin logic of the original engine (TTrain, Train.cpp) for an MMD-built cabin. Inserted by the
 ## MMD cabin factory (DynamicTrainCabin) after all controls are built; on _ready it composes the
 ## legacy behaviours and registers their callbacks in CabinSystem for this cabin's
-## (train_id, cab), unregistering them on _exit_tree. The cabin state itself stays in CabinSystem.
+## (vehicle_rid, cab), unregistering them on _exit_tree. The cabin state itself stays in CabinSystem.
 ##
 ## Behaviours with dedicated cabin logic claim their controls first; every remaining control is
 ## wired straight to its vehicle command by LegacyCabinForwardCommands.
 
 ## Set by the factory before the node enters the tree.
 ## Which vehicle this cabin logic drives; everything goes through CabinSystem.
-var train_id:String = ""
+var vehicle_rid:RID
 var cab:int = 1
 
 var _behaviours:Array = []
@@ -21,7 +21,6 @@ var _unmodelled_controls:LegacyCabinUnmodelledControls
 var _brake_charging:LegacyCabinBrakeCharging
 
 
-# FIXME(#184): train_id comes from the VehicleController, see BaseCabinTool3D._act().
 func _ready() -> void:
     var main_switch := LegacyCabinMainSwitch.new(
             _button_type(LegacyCabinMainSwitch.TOGGLE_SWITCH), _has_control(LegacyCabinMainSwitch.ON_BUTTON),
@@ -72,10 +71,10 @@ func _ready() -> void:
     _brake_charging = LegacyCabinBrakeCharging.new()
     _behaviours.append(_brake_charging)
     for behaviour:RefCounted in _behaviours:
-        behaviour.register(train_id, cab)
+        behaviour.register(vehicle_rid, cab)
     # last: whatever is registered by now is taken care of
     _unmodelled_controls = LegacyCabinUnmodelledControls.new(get_parent())
-    _unmodelled_controls.register(train_id, cab)
+    _unmodelled_controls.register(vehicle_rid, cab)
     _behaviours.append(_unmodelled_controls)
 
 
@@ -86,18 +85,18 @@ func _unhandled_input(event:InputEvent) -> void:
     # Train.cpp:6285 OnCommand_occupiedcarcouplingdisconnect - uncouples at the occupied cab's end
     # (cab_to_end(), Train.h:216), with or without a couplingdisconnect_sw: gauge
     if event.is_action_pressed(&"coupler_disconnect_occupied", false, true) and not cab == 0:
-        CabinSystem.get_cabin_state(train_id, cab).send_vehicle_command(
+        CabinSystem.get_cabin_state(vehicle_rid, cab).send_vehicle_command(
                 "coupler_disconnect", 1 if cab < 0 else 0)
     # Train.cpp:6836 OnCommand_springbrakeshutofftoggle - no cab models the shut-off valve
     if event.is_action_pressed(&"spring_brake_shut_off_toggle", false, true):
-        var state:CabinState = CabinSystem.get_cabin_state(train_id, cab)
+        var state:CabinState = CabinSystem.get_cabin_state(vehicle_rid, cab)
         # the command takes "enabled", the opposite of the valve, so the valve's state is the new value
         state.send_vehicle_command(
                 "set_spring_brake_enabled", bool(state.vehicle_state_value("spring_brake/shut_off", false)))
     if event.is_action_pressed(LegacyCabinBrakeCharging.ACTION, false, true):
-        CabinSystem.act(train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
+        CabinSystem.act(vehicle_rid, cab, LegacyCabinBrakeCharging.CONTROL, &"hold")
     elif event.is_action_released(LegacyCabinBrakeCharging.ACTION, true):
-        CabinSystem.act(train_id, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
+        CabinSystem.act(vehicle_rid, cab, LegacyCabinBrakeCharging.CONTROL, &"release")
 
 
 func _has_control(control_id:StringName) -> bool:

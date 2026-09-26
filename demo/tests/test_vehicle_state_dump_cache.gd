@@ -57,7 +57,7 @@ func test_a_change_is_not_visible_until_the_next_step() -> void:
 ## keypress (see FINDINGS.md, 2026-09-23).
 func test_a_command_shows_in_the_dump_without_waiting_for_a_step() -> void:
     var before: int = int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1))
-    TrainSystem.send_command("dump_cache_test", "radio_channel_set", before + 1, null)
+    RailVehicleServer.vehicle_send_command(_rid, "radio_channel_set", before + 1, null)
     assert_eq(
         int(RailVehicleServer.vehicle_dump_state(_rid).get("radio_channel", -1)),
         before + 1,

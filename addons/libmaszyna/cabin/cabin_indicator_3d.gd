@@ -2,15 +2,15 @@ extends Node3D
 class_name CabinIndicator3D
 
 ## The vehicle this element sits in, as the cabin root hands it down.
-func set_train_id(train_id:String) -> void:
-    if _train_id == train_id:
+func set_vehicle_rid(vehicle_rid:RID) -> void:
+    if _vehicle_rid == vehicle_rid:
         return
-    _train_id = train_id
+    _vehicle_rid = vehicle_rid
     _dirty = true
 
 
 ## Which vehicle this cabin element sits in; every read of it goes through CabinSystem.
-var _train_id:String = ""
+var _vehicle_rid:RID
 var _on_target:Node3D
 var _off_target:Node3D
 var _dirty:bool = false
@@ -57,8 +57,8 @@ func _process_dirty() -> void:
 
 
 func _update_state() -> void:
-    if _train_id and state_property:
-        var state:Variant = CabinSystem.vehicle_state(_train_id).get(state_property, false)
+    if _vehicle_rid and state_property:
+        var state:Variant = CabinSystem.vehicle_state(_vehicle_rid).get(state_property, false)
         var value:bool = false
         match lit_condition:
             LitCondition.TRUE:

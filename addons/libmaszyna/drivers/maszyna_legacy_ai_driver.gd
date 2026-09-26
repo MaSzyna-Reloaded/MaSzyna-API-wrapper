@@ -163,7 +163,8 @@ func get_state(driver:RID) -> Dictionary:
         "acceleration_desired": state.speed.acceleration_desired,
         "brake_position": state.braking.position,
         "route_velocity_next": state.route.velocity_next,
-        "proximity_distance": state.route.proximity_distance,
+        "proximity_distance": state.speed.proximity_distance,
+        "obstacle_distance": state.route.obstacle.distance if state.route.obstacle else -1.0,
         "signal_velocity_next": state.route.signal_velocity_next,
     }
 
@@ -258,7 +259,6 @@ func _update(driver:RID) -> void:
         return
     # the time since the last update is the reaction time it was scheduled with
     var elapsed:float = state.reaction_time
-    state.reaction_time = EASY_REACTION_TIME
     state.trainset.update(vehicle, state.direction, _has_diesel_engine(vehicle))
     # DirectionalVel(), Driver.h:312: the speed, negative when it runs against the way it drives
     var directional_speed:float = float(CabinSystem.vehicle_state_value(vehicle, "speed", 0.0)) \
@@ -276,7 +276,8 @@ func _update(driver:RID) -> void:
     state.speed.pick(
             state.orders[state.order_position], state.engine_active, state.stop_here, state.velocity,
             state.shunt_velocity, state.timetable.velocity if state.timetable else 0.0,
-            directional_speed, state.trainset, state.route)
+            directional_speed, state.trainset, state.route, EASY_REACTION_TIME)
+    state.reaction_time = state.speed.reaction_time
     # a player drives it: the driver takes orders and reads the trainset, and touches nothing
     if not DriverSystem.vehicle_is_control_active(vehicle):
         DriverSystem.driver_schedule_update(driver, state.reaction_time)

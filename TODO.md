@@ -748,13 +748,19 @@ ported, into a delegate.
       `MaszynaLegacyDriverSpeed` brakes to the next speed within `fMin/MaxProximityDist`. Read
       again on every update rather than kept and moved. Checked on Stary Jawor only standing
       (every train sees its stop); a run past signals waits for the train brake to release (below).
-      Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL, the
-      vehicles ahead (Obstacle), crossings, `BackwardTraceRoute`, the switch branch of an event
-      on a switch, `ReactionTime` 0.1 close to a stop, the cargo train's distances.
+      The vehicles ahead (`scan_obstacles()`, `adjust_desired_speed_for_obstacles()`): the nearest
+      vehicle along the route from the trainset's front (`RailVehicleServer.vehicle_find_vehicle()`,
+      the gap between the ends at every distance, not the original's centres beyond 100 m); the
+      speed class keeps `AccPreferred`, `VelNext` and `ActualProximityDist` narrowed by it, and
+      `ReactionTime` 0.1 close to a stop or a vehicle.
+      Left: the passenger stop points (part 6), section and road speeds, stopping at an SBL,
+      crossings, `BackwardTraceRoute`, the switch branch of an event on a switch, the cargo
+      train's distances; of the vehicles ahead: the scan from the rear end while rolling against
+      the way it drives (Driver.cpp:6642), a signal beyond a vehicle ahead being that vehicle's
+      (`isforsomeoneelse`, Driver.cpp:1566, 1709), the coupler adapters in the gap, and the
+      braking point offset (`braking_distance_multiplier()`) in the target speed.
    Checked on Stary Jawor: the eszelon (ST44, 20 wagons), set going by its memory, releases,
-   runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it. The
-   vehicles ahead (`Obstacle`) are not read: in a run with the route read backwards it drove into
-   a standing vehicle on n247 - a driver does not see a train or a wagon in its way.
+   runs to 51 km/h, brakes for a stop signal, takes the next one's 40 and runs on past it.
    6. The timetable: stations, departures, `@`.
 
 ## Tests

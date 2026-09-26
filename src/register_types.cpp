@@ -56,6 +56,7 @@
 #include "parsers/maszyna_parser.hpp"
 #include "physics/RailVehicleServer.hpp"
 #include "physics/RailVehicleStepper.hpp"
+#include "physics/VehicleNeighbour.hpp"
 #include "radio/MoverVehicleRadio.hpp"
 #include "radio/VehicleRadio.hpp"
 #include "register_types.h"
@@ -164,6 +165,7 @@ void initialize_libmaszyna_module(const ModuleInitializationLevel p_level) {
         GDREGISTER_CLASS(E3DResourceFormatLoader);
         GDREGISTER_CLASS(RailVehicleServer);
         GDREGISTER_INTERNAL_CLASS(RailVehicleStepper);
+        GDREGISTER_CLASS(VehicleNeighbour);
         GDREGISTER_CLASS(TractionPowerServer);
         GDREGISTER_CLASS(SpatialIndex);
         GDREGISTER_CLASS(TrackEndpointRef);

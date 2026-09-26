@@ -4,6 +4,7 @@
 #include "../radio/VehicleRadio.hpp"
 
 #include "../tracks/TrackManager.hpp"
+#include "VehicleNeighbour.hpp"
 
 #include <godot_cpp/classes/engine.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -264,6 +265,10 @@ namespace godot {
              * stands on first */
             TypedArray<TrackRouteSegment>
             vehicle_trace_route(const RID &p_vehicle, int p_direction, double p_distance);
+            /* The nearest vehicle along the route from the vehicle's p_end (0 front, 1 rear), on the
+             * tracks entered within p_distance [m] of its centre, null when there is none
+             * (TDynamicObject::find_vehicle(), DynObj.cpp:7688) */
+            Ref<VehicleNeighbour> vehicle_find_vehicle(const RID &p_vehicle, int p_end, double p_distance);
             /* Running shape of the bogies (DynObj.cpp:2950-2970): the curve radius from the yaw
              * difference of the bogie pivots, and the mean cant of both bogies in radians. Samples
              * the track twice - call it only when the radius is needed. */

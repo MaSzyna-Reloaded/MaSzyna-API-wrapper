@@ -103,6 +103,9 @@ namespace godot {
                 D_METHOD("vehicle_trace_route", "vehicle", "direction", "distance"),
                 &RailVehicleServer::vehicle_trace_route);
         ClassDB::bind_method(
+                D_METHOD("vehicle_find_vehicle", "vehicle", "end", "distance"),
+                &RailVehicleServer::vehicle_find_vehicle);
+        ClassDB::bind_method(
                 D_METHOD("vehicle_get_curve", "vehicle", "bogie_pivot_spacing"), &RailVehicleServer::vehicle_get_curve);
         ClassDB::bind_method(
                 D_METHOD("vehicle_attach_rail_vehicle", "vehicle", "rail_vehicle_id"),
@@ -811,6 +814,33 @@ namespace godot {
             covered += length;
         }
         return route;
+    }
+
+    Ref<VehicleNeighbour>
+    RailVehicleServer::vehicle_find_vehicle(const RID &p_vehicle, const int p_end, const double p_distance) {
+        const VehiclePlacement *placement = vehicles.getptr(p_vehicle);
+        const TrackManager *tracks = TrackManager::get_instance();
+        if (placement == nullptr || tracks == nullptr || !tracks->track_exists(placement->track)) {
+            return Ref<VehicleNeighbour>();
+        }
+        RID found;
+        int found_end = 0;
+        double found_distance = 0.0;
+        if (!_find_vehicle(p_vehicle, *placement, p_end, p_distance, found, found_end, found_distance)) {
+            return Ref<VehicleNeighbour>();
+        }
+        // the scan measures between the centres (MoverVehicleController::update_neighbour())
+        const VehicleController *controller = _get_controller(*placement);
+        const VehicleController *other = _get_controller(*vehicles.getptr(found));
+        const double half_lengths =
+                0.5 * ((controller != nullptr ? controller->get_dimensions_length() : 0.0) +
+                       (other != nullptr ? other->get_dimensions_length() : 0.0));
+        Ref<VehicleNeighbour> neighbour;
+        neighbour.instantiate();
+        neighbour->set_vehicle_rid(found);
+        neighbour->set_end(found_end);
+        neighbour->set_distance(found_distance - half_lengths);
+        return neighbour;
     }
 
     Dictionary RailVehicleServer::vehicle_get_curve(const RID &p_vehicle, const double p_bogie_pivot_spacing) {

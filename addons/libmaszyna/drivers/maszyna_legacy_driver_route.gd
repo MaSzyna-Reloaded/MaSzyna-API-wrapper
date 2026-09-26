@@ -15,12 +15,13 @@ class_name MaszynaLegacyDriverRoute
 ## read again on every update (RailVehicleServer.vehicle_trace_route()) and the events passed
 ## since the last one take effect once. Not ported yet: the passenger stop points and the timetable
 ## (part 6), the section and road speeds, stopping at an automatic block signal (spStopOnSBL), the
-## vehicles ahead (Obstacle), the crossings, the turn back at the end of shunting (BackwardTraceRoute)
-## - see TODO.md, "Drivers".
+## crossings, the turn back at the end of shunting (BackwardTraceRoute) - see TODO.md, "Drivers".
 
 ## How far ahead it reads [m]: at least MIN_RANGE; moving, MOVING_RANGE past the braking distance;
 ## standing, STANDING_DRIVER_DISTANCES of its distance to keep (Driver.cpp:4984-4990, fDriverDist 50)
 const MIN_RANGE:float = 750.0
+## The vehicles ahead are looked for at least this far [m] (scan_obstacles(), Driver.cpp:6663)
+const OBSTACLE_RANGE:float = 1000.0
 const MOVING_RANGE:float = 400.0
 const STANDING_RANGE:float = 1500.0
 ## Moving faster than this [km/h] (EU07_AI_MOVEMENT)
@@ -106,6 +107,9 @@ var brake_distance:float = 0.0
 ## value1, value2, position]
 var signal_velocity:float = 0.0
 var commands:Array[Array] = []
+## The nearest vehicle ahead (Obstacle), null for none, and its speed [km/h]
+var obstacle:VehicleNeighbour = null
+var obstacle_speed:float = 0.0
 ## The memories' commands it sent, by event, not to send them again until they change
 ## (StopCommandSent(), MemCell.cpp:196-205)
 var _sent:Dictionary[RID, String] = {}
@@ -242,6 +246,17 @@ func update(
             if absf(speed) < COMMAND_SPEED:
                 commands.append([command_entry.command, command_entry.value1, command_entry.value2, command_entry.position])
                 _sent[command_entry.event] = _signature(command_entry)
+    # the vehicles ahead, from the front of the trainset the way it drives (scan_obstacles(),
+    # Driver.cpp:6638-6680)
+    obstacle = null
+    obstacle_speed = 0.0
+    if trainset.vehicles:
+        obstacle = RailVehicleServer.vehicle_find_vehicle(
+                trainset.vehicles[0],
+                MaszynaLegacyDriverTrainset.FRONT_END if trainset.front_direction > 0 else MaszynaLegacyDriverTrainset.REAR_END,
+                maxf(OBSTACLE_RANGE, reach))
+    if obstacle:
+        obstacle_speed = RailVehicleServer.vehicle_get_speed(obstacle.vehicle_rid)
 
 
 ## The entries of the tracks ahead, nearest first (TableTraceRoute(), Driver.cpp:589-779)

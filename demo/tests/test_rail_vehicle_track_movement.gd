@@ -205,6 +205,39 @@ func test_move_on_track_crosses_connected_tracks_and_clamps_at_dead_end() -> voi
     _assert_vector_eq(vehicle.global_position, _rail_position(20.0, 0.0), "dead-end clamp should place vehicle at endpoint")
 
 
+func test_find_vehicle_measures_between_the_ends_across_tracks() -> void:
+    _register_track(
+        _curve(Vector3(0.0, 0.0, 0.0), Vector3(100.0, 0.0, 0.0)),
+        null,
+        TrackManager.TRACK_NORMAL,
+        "start"
+    )
+    _register_track(
+        _curve(Vector3(100.0, 0.0, 0.0), Vector3(200.0, 0.0, 0.0)),
+        null,
+        TrackManager.TRACK_NORMAL,
+        "next"
+    )
+    TrackManager.topology_rebuild()
+    var searching: Dictionary = await _create_vehicle("start", 10.0)
+    var standing: Dictionary = await _create_vehicle("next", 50.0)
+    var searching_rid: RID = (searching["vehicle"] as RailVehicle3D).get_rid()
+    var standing_rid: RID = (standing["vehicle"] as RailVehicle3D).get_rid()
+    var lengths: float = (searching["controller"] as VehicleController).get_dimensions_length() \
+            + (standing["controller"] as VehicleController).get_dimensions_length()
+
+    var ahead: VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 0, 1000.0)
+    var behind: VehicleNeighbour = RailVehicleServer.vehicle_find_vehicle(searching_rid, 1, 1000.0)
+    var found: VehicleNeighbour = ahead if ahead else behind
+
+    assert_not_null(found, "the other vehicle is on the next track")
+    assert_true(ahead == null or behind == null, "and only one way")
+    assert_eq(found.vehicle_rid, standing_rid)
+    _assert_float_eq(found.distance, 140.0 - 0.5 * lengths, "centres 140 m apart, less the half lengths")
+    assert_null(RailVehicleServer.vehicle_find_vehicle(searching_rid, 0 if ahead else 1, 80.0),
+            "its track begins 90 m ahead, past the range")
+
+
 func test_move_on_track_updates_direction_when_entering_track_end() -> void:
     _register_track(
         _curve(Vector3(0.0, 0.0, 0.0), Vector3(10.0, 0.0, 0.0)),
